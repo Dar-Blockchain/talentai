@@ -43,18 +43,8 @@ const getQuickPrompt = (description, companyLocation) => `
           {
             "name": "Soft Skill 1",
             "importance": "low/medium/high/critical",
-            "percentage": 0
+            "percentage": 100
           },
-          {
-            "name": "Soft Skill 2",
-            "importance": "low/medium/high/critical",
-            "percentage": 0
-          },
-          {
-            "name": "Soft Skill 3",
-            "importance": "low/medium/high/critical",
-            "percentage": 0
-          }
         ],
         "suggestedSkills": {
           "technical": [],
@@ -92,7 +82,8 @@ const getQuickPrompt = (description, companyLocation) => `
       - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
       - "low" → Bonus or additional skill, would be helpful
 
-    - The sum of all soft skill percentages must also equal 100%.
+    - Only one soft skill must be generated.
+    - The soft skill must always have percentage = 100.
     - The sum of all skill percentages must equal 100%.
     - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.
     - If not specified, distribute evenly and logically.
@@ -108,11 +99,11 @@ STRICT SKILL RULES:
 - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
 
 STRICT SOFT SKILL RULES:
-- Generate exactly 3 soft skills.
+- Generate exactly 1 soft skill — no more, no less.
+- The soft skill must always have percentage = 100%.
 - Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
 - Never use generic, vague, or irrelevant soft skills.
 - Importance values must follow: "low", "medium", "high", "critical".
-- The sum of soft skill percentages must be 100%.
 
 
     Job Description:
@@ -148,8 +139,9 @@ const getDetailedPrompt = (description, companyLocation) => `
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - The total sum of all percentages must equal exactly 100%.
-    - Soft skills must also include their own percentage field.
-    - The total sum of all soft skill percentages must equal exactly 100% as well.
+    - Only one soft skill must be generated.
+    - Soft skill importance must follow: "low", "medium", "high", "critical".
+    - The soft skill must always have percentage = 100 (since it is the only one).
     - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
@@ -202,18 +194,8 @@ const getDetailedPrompt = (description, companyLocation) => `
           {
             "name": "Soft Skill 1",
             "importance": "low/medium/high/critical",
-            "percentage": 0
-          },
-          {
-            "name": "Soft Skill 2",
-            "importance": "low/medium/high/critical",
-            "percentage": 0
-          },
-          {
-            "name": "Soft Skill 3",
-            "importance": "low/medium/high/critical",
-            "percentage": 0
-          }
+            "percentage": 100
+          },        
         ],
 
         "suggestedSkills": {
@@ -284,12 +266,12 @@ const getDetailedPrompt = (description, companyLocation) => `
 - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
 
 STRICT SOFT SKILL RULES:
-- REQUIRED: Generate exactly 3 soft skills — no more, no less.
-- Soft skills must be relevant to the job (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Critical thinking, Time management).
-- Do NOT generate vague, generic, or irrelevant soft skills.
-- Importance must follow ONLY these lowercase values: "low", "medium", "high", "critical".
-- Each soft skill must include a "percentage" field.
-- Soft skill percentages must add up to exactly 100%.
+- REQUIRED: Generate exactly 1 soft skill — no more, no less.
+- The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
+- The soft skill must include an "importance" field and a "percentage" field.
+- The percentage must always be 100.
+- Never use vague or irrelevant soft skills.
+
 
 `.trim();
 
