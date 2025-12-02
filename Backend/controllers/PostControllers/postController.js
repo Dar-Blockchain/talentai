@@ -5,8 +5,20 @@ const { sendPostEmail } = require("../../utils/mailing");
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
   try {
+    // Normalize body: if `skillAnalysis` (or its children) was sent as a JSON string
+    // (common when using form-data), parse it so Mongoose receives proper objects/arrays.
+    const incoming = { ...req.body };
+    try {
+      if (typeof incoming.skillAnalysis === 'string') {
+        incoming.skillAnalysis = JSON.parse(incoming.skillAnalysis);
+      }
+    } catch (parseErr) {
+      // If parsing fails, return a clear error to the client
+      return res.status(400).json({ success: false, error: 'Invalid JSON in skillAnalysis field' });
+    }
+
     const postData = {
-      ...req.body,
+      ...incoming,
       user: req.user._id,
     };
 
