@@ -206,7 +206,7 @@ async function calculateMatchScore(
   }
 
   // Load dynamic config
-  const cfg = await getMatchingConfig();
+  const cfg = await getMatchingConfig(idCompany);
   const MAX_HARD_SKILL_SCORE = cfg.weights.hardSkill;
   const MAX_EXPERIENCE_SCORE = cfg.weights.experience;
   const MAX_SALARY_SCORE = cfg.weights.salary;
