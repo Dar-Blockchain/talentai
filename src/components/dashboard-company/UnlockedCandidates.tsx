@@ -25,8 +25,11 @@ const StyledCard = styled(Box)(({ theme }) => ({
   borderRadius: "12px",
   border: "1px solid rgba(84,98,116,0.1)",
 }));
-
-const UnlockedCandidates: React.FC = () => {
+interface SectionProps {
+  onViewAll: () => void;
+  hidden: boolean;
+}
+const UnlockedCandidates: React.FC<SectionProps> = ({onViewAll, hidden}) => {
   const dispatch = useDispatch<AppDispatch>();
   const [viewAll, setViewAll] = useState(false);
   const { loading, error, candidates } = useSelector(
@@ -40,7 +43,7 @@ const UnlockedCandidates: React.FC = () => {
       dispatch(resetUnlockedData());
     };
   }, [dispatch]);
-
+  if (hidden) return null;
   return (
     <StyledCard>
       <Box
@@ -81,7 +84,7 @@ const UnlockedCandidates: React.FC = () => {
         <Box>
           <Button
             variant="outlined"
-            onClick={() => setViewAll(true)}
+            onClick={onViewAll}
             endIcon={<ArrowForward />}
             sx={{
               border: "none",
