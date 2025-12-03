@@ -213,7 +213,8 @@ async function calculateMatchScore(
   candidateSkills,
   jobDetails = {},
   candidateProfile = {},
-  idCompany
+  idCompany,
+  jobPostId
 ) {
   console.log("\n=== Matching Candidate ===");
   console.log(
@@ -238,7 +239,8 @@ async function calculateMatchScore(
 
 
   // Load dynamic config
-  const cfg = await getMatchingConfig(idCompany);
+  const jobId = jobDetails?._id || jobDetails?.id;
+  const cfg = await getMatchingConfig(idCompany, jobPostId);
   const MAX_HARD_SKILL_SCORE = cfg.weights.hardSkill;
   const MAX_SOFT_SKILL_SCORE = cfg.weights.SoftSkill;
   const MAX_EXPERIENCE_SCORE = cfg.weights.experience;
