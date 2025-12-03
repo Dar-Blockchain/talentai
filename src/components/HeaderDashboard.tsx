@@ -225,7 +225,7 @@ const HeaderDashboard = () => {
                     {formatNumber(tokenBalance)} tokens
                   </Typography>
                 )}
-                <Tooltip title="Purchase Tokens">
+                {userType === "company" && <Tooltip title="Purchase Tokens">
                   <IconButton
                     onClick={handleOpenModal}
                     sx={{
@@ -245,7 +245,7 @@ const HeaderDashboard = () => {
                       height={12}
                     />
                   </IconButton>
-                </Tooltip>
+                </Tooltip>}
               </Box>
 
               {/* Avatar */}
@@ -379,7 +379,7 @@ const HeaderDashboard = () => {
               {formatNumber(tokenBalance)} tokens
             </Typography>
           )}
-          <Tooltip title="Purchase Tokens">
+          {userType === "company" && <Tooltip title="Purchase Tokens">
             <IconButton
               onClick={handleOpenModal}
               sx={{
@@ -394,7 +394,7 @@ const HeaderDashboard = () => {
             >
               <Image src="/icons/plus.svg" alt="plus" width={14} height={14} />
             </IconButton>
-          </Tooltip>
+          </Tooltip>}
         </Box>
 
         <Divider sx={{ my: 2 }} />
