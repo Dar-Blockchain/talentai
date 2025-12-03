@@ -446,12 +446,39 @@ const JobPreview: React.FC<JobPreviewProps> = ({
               }}
             />
           ) : (
-            <Typography
-              variant="body2"
-              sx={{ color: "black", lineHeight: 1.6 }}
+            <Box
+              sx={{
+                color: "black",
+                lineHeight: 1.8,
+                fontSize: "0.875rem",
+                '& ul': {
+                  paddingLeft: '24px !important',
+                  margin: '12px 0 !important',
+                  listStyleType: 'disc !important',
+                  listStylePosition: 'outside !important',
+                },
+                '& ol': {
+                  paddingLeft: '24px !important',
+                  margin: '12px 0 !important',
+                  listStyleType: 'decimal !important',
+                  listStylePosition: 'outside !important',
+                },
+                '& li': {
+                  marginBottom: '6px !important',
+                  paddingLeft: '4px !important',
+                  display: 'list-item !important',
+                },
+                '& p': {
+                  margin: '8px 0 !important',
+                },
+                '& strong, & b': {
+                  fontWeight: '700 !important',
+                  color: '#0F172A !important',
+                },
+              }}
             >
-              {generatedJob.jobDetails.description}
-            </Typography>
+              <div dangerouslySetInnerHTML={{ __html: generatedJob.jobDetails.description }} />
+            </Box>
           )}
         </Box>
 
