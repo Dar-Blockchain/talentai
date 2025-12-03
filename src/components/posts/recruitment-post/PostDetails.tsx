@@ -9,9 +9,10 @@ const CLEAN_BACKGROUND = "#ffffff";
 
 interface PostDetailsProps {
   onReadyChange?: (ready: boolean) => void;
+  matchingConfig?: any;
 }
 
-const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChange }, ref) => {
+const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChange, matchingConfig }, ref) => {
   const [jobDescription, setJobDescription] = useState("");
   const [salaryRange, setSalaryRange] = useState<SalaryRange>({
     currency: "$",
@@ -35,10 +36,48 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
   );
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
   const [jobPostDialog, setJobPostDialog] = useState(false);
+  const [localMatchingConfig, setLocalMatchingConfig] = useState<any>(null);
 
   useEffect(() => {
     onReadyChange?.(generatedJob !== null && !isSaving);
   }, [generatedJob, isSaving, onReadyChange]);
+
+  // Create default matching config when job is generated (only if not already set by API)
+  useEffect(() => {
+    if (generatedJob && !localMatchingConfig) {
+      // Give a slight delay to allow API matching config to be set first
+      const timer = setTimeout(() => {
+        if (!localMatchingConfig) {
+          const defaultConfig = {
+            weights: {
+              hardSkill: 50,
+              SoftSkill: 10,
+              experience: 20,
+              salary: 5,
+              workMode: 5,
+              contract: 10,
+            },
+            importanceWeight: {
+              Junior: 1.5,
+              Mid_Level: 1.2,
+              Senior: 1,
+              Expert: 0.8,
+            },
+            exchangeRates: {
+              USD: 1,
+              EUR: 1.09,
+              TND: 0.33,
+            },
+            softSkills: generatedJob.skillAnalysis?.softSkills || [],
+          };
+          console.log('Using default matching config (API did not provide one)');
+          setLocalMatchingConfig(defaultConfig);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [generatedJob, localMatchingConfig]);
 
   // Helper Functions
   const isSalaryRangeValid = (): boolean => {
@@ -96,7 +135,13 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
         }
   
         const data = await response.json();
-  
+
+        // Store matching config if returned from API
+        if (data.matchingConfig) {
+          console.log('Matching config from API:', data.matchingConfig);
+          setLocalMatchingConfig(data.matchingConfig);
+        }
+
         // Transform the API response into our required structure
         // Clean location field if it contains work mode keywords
         let cleanedLocation = data.jobDetails.location;
@@ -718,6 +763,7 @@ ${jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to mak
           hasSharedToLinkedIn={hasSharedToLinkedIn}
           linkedinCopySuccess={linkedinCopySuccess}
           jobPostError={jobPostError}
+          matchingConfig={matchingConfig || localMatchingConfig}
         />
       </Box>
     </Box>
