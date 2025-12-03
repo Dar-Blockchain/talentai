@@ -43,6 +43,7 @@ import ErrorState from "@/components/dashboard-candidate/ErrorState";
 import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
 import TokenBalanceCard from "@/components/dashboard-candidate/TokenBalanceCard";
 import { skillCategories, softSkillNames, softSkills, technicalSkillsList } from "@/constants/skills";
+import HeaderDashboard from "@/components/HeaderDashboard";
 
 const GREEN_MAIN = "#8310FF";
 
@@ -595,6 +596,15 @@ export default function DashboardCandidate() {
 
   return (
     <CandidateOnly>
+            <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundColor: "rgba(251, 254, 255, 1)",
+          py: 2,
+        }}
+      >
+                <Container maxWidth="lg">
+
       {/* Show loading state */}
       {loading && (
         <LoadingState />
@@ -609,12 +619,8 @@ export default function DashboardCandidate() {
       {!loading && !error && profile && (
         <>
           {/* Navbar */}
-          <DashboardNavbar
-            profile={profile}
-            onLogout={handleLogout}
-            onEditProfile={() => setEditProfileOpen(true)}
-            isMobile={isMobile}
-          />
+          <HeaderDashboard />
+
           <Box
             sx={{
               minHeight: "100vh",
@@ -674,7 +680,7 @@ export default function DashboardCandidate() {
                    />
 
               {/* Token Balance Card */}
-              <TokenBalanceCard />
+              {/* <TokenBalanceCard /> */}
 
               {/* Recommended Opportunities */}
               <StyledCard sx={{ mb: 4 }}>
@@ -782,6 +788,8 @@ export default function DashboardCandidate() {
           </Box>
         </>
       )}
+      </Container>
+      </Box>
     </CandidateOnly>
   );
 }

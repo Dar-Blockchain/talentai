@@ -16,46 +16,60 @@ type WelcomeHeaderProps = {
   onCvBuilder: () => void;
 };
 
-export default function WelcomeHeader({ profile, quota, onStartTest, onHrInterview, onCvBuilder }: WelcomeHeaderProps) {
+export default function WelcomeHeader({
+  profile,
+  quota,
+  onStartTest,
+  onHrInterview,
+  onCvBuilder,
+}: WelcomeHeaderProps) {
   return (
-    <Card
+    <Box
       sx={{
-        mb: 4,
-        padding: 4,
-        borderRadius: 6,
-        border: "1px solid #E0E0E0",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-        background: "#ffffff",
+        background: "rgba(255, 255, 255, 1)",
+        color: "#000000",
+        px: 5,
+        py: 3,
+        marginBottom: 2,
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "12px",
+        border: "1px solid rgba(84,98,116,0.1)",
         display: "flex",
         flexDirection: { xs: "column", lg: "row" },
         gap: 4,
         alignItems: "flex-start",
         maxWidth: "100%",
+        justifyContent: "space-between",
       }}
     >
       {/* Left Section - Welcome and User Info (2/3 width) */}
-      <Box sx={{ flex: 2, width: "100%" }}>
+      <Box sx={{ flex: 1 }}>
         {/* Welcome Header */}
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 700,
             color: "#000000",
-            fontSize: { xs: "1.75rem", sm: "2.25rem", md: "2.5rem" },
+            fontSize: { xs: "1rem", sm: "1.75rem", md: "2rem" },
             mb: 1,
             lineHeight: 1.2,
+            fontFamily: "Poppins",
+            fontWeight: 600,
+            fontStyle: "normal",
+            letterSpacing: "0",
           }}
         >
-          Welcome back, {profile?.userId?.FirstName && profile?.userId?.LastName 
-            ? `${profile.userId.FirstName} ${profile.userId.LastName}` 
-            :  profile?.userId?.username || "User"}
+          Welcome back,{" "}
+          {profile?.firstName
+            ? `${profile?.firstName}`
+            : profile?.userId?.username}
         </Typography>
-        
+
         <Typography
           variant="body1"
           sx={{
             color: "#000000",
-            fontSize: { xs: "1rem", sm: "1.125rem" },
+            fontSize: "13px",
             mb: 3,
             fontWeight: 400,
             lineHeight: 1.4,
@@ -65,9 +79,19 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
         </Typography>
 
         {/* User Information - Horizontal Layout */}
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: { xs: 1, sm: 3 }, mb: 3, flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1, sm: 3 },
+            mb: 3,
+            flexWrap: "wrap",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <PersonIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
+            <PersonIcon
+              sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
+            />
             <Typography
               variant="body2"
               sx={{
@@ -76,14 +100,16 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
                 fontWeight: 400,
               }}
             >
-              {profile?.userId?.FirstName && profile?.userId?.LastName 
-                ? `${profile.userId.FirstName} ${profile.userId.LastName}` 
+              {profile?.userId?.FirstName && profile?.userId?.LastName
+                ? `${profile.userId.FirstName} ${profile.userId.LastName}`
                 : profile?.userId?.username || "User"}
             </Typography>
           </Box>
-          
+
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <EmailIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
+            <EmailIcon
+              sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
+            />
             <Typography
               variant="body2"
               sx={{
@@ -98,7 +124,9 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
 
           {profile?.targetRole && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <WorkIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
+              <WorkIcon
+                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
+              />
               <Typography
                 variant="body2"
                 sx={{
@@ -114,7 +142,9 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
 
           {profile?.requiredExperienceLevel && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <SchoolIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
+              <SchoolIcon
+                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
+              />
               <Typography
                 variant="body2"
                 sx={{
@@ -127,27 +157,31 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
               </Typography>
             </Box>
           )}
-          
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CalendarTodayIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#000000",
-                fontSize: "0.875rem",
-                fontWeight: 400,
-              }}
-            >
-              {profile?.userId?.createdAt 
-                ? new Date(profile.userId.createdAt).toLocaleDateString("en-US", { 
-                    month: "long", 
-                    day: "numeric", 
-                    year: "numeric" 
-                  })
-                : "June 10, 2025"
-              }
-            </Typography>
-          </Box>
+
+          {profile?.userId?.createdAt && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <CalendarTodayIcon
+                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.1rem" }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#000000",
+                  fontSize: "0.875rem",
+                  fontWeight: 400,
+                }}
+              >
+                {new Date(profile.userId.createdAt).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  }
+                )}
+              </Typography>
+            </Box>
+          )}
         </Box>
 
         {/* Action Buttons - Horizontal Layout */}
@@ -162,17 +196,18 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
             onClick={onStartTest}
             disabled={quota >= 5}
             sx={{
-              background: "linear-gradient(90deg, #8310FF 0%, #6B0BC7 100%)",
+              background: "rgba(163, 98, 239, 1)",
               color: "#ffffff",
               fontWeight: 600,
-              borderRadius: 2,
+              borderRadius: "38px",
               px: 3,
-              py: 1.5,
-              minWidth: { xs: "100%", sm: "140px" },
+              py: 1,
               textTransform: "none",
+              maxWidth: "230px",
               fontSize: "0.875rem",
+              width: "100%",
               "&:hover": {
-                background: "linear-gradient(90deg, #6B0BC7 0%, #5A0A9E 100%)",
+                background: "rgba(163, 98, 239, 0.8)",
                 transform: "translateY(-1px)",
                 boxShadow: "0 4px 12px rgba(131, 16, 255, 0.3)",
               },
@@ -184,24 +219,25 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
           >
             Start Test
           </Button>
-          
+
           <Button
             variant="outlined"
             startIcon={<PersonIcon />}
             onClick={onHrInterview}
             disabled={quota >= 5}
             sx={{
-              borderColor: "#000000",
+              border: "0.76px solid rgba(25, 25, 25, 1)",
               color: "#000000",
               fontWeight: 600,
-              borderRadius: 2,
+              borderRadius: "38px",
               px: 3,
-              py: 1.5,
-              minWidth: { xs: "100%", sm: "160px" },
+              py: 1,
+              maxWidth: "230px",
+              width: "100%",
               textTransform: "none",
               fontSize: "0.875rem",
               "&:hover": {
-                borderColor: "#333333",
+                borderColor: "0.76px solid rgba(25, 25, 25, 1)",
                 background: "rgba(0, 0, 0, 0.04)",
                 transform: "translateY(-1px)",
               },
@@ -213,23 +249,24 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
           >
             HR Interview Test
           </Button>
-          
+
           <Button
             variant="outlined"
             startIcon={<DescriptionIcon />}
             onClick={onCvBuilder}
             sx={{
-              borderColor: "#000000",
+              border: "0.76px solid rgba(25, 25, 25, 1)",
               color: "#000000",
               fontWeight: 600,
-              borderRadius: 2,
+              borderRadius: "38px",
               px: 3,
-              py: 1.5,
-              minWidth: { xs: "100%", sm: "120px" },
+              py: 1,
+              maxWidth: "230px",
+              width: "100%",
               textTransform: "none",
               fontSize: "0.875rem",
               "&:hover": {
-                borderColor: "#333333",
+                borderColor: "0.76px solid rgba(25, 25, 25, 1)",
                 background: "rgba(0, 0, 0, 0.04)",
                 transform: "translateY(-1px)",
               },
@@ -246,29 +283,29 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
           display: "flex",
           flexDirection: "column",
           gap: 2,
-          flex: 1,
-          minWidth: { xs: "100%", lg: "200px" },
         }}
       >
         {/* Tasks Completed Card */}
-        <Card
+        <Box
           sx={{
             padding: 3,
             borderRadius: 3,
             background: "#ffffff",
-            border: "1px solid #E0E0E0",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-            textAlign: "center",
+            boxShadow: "0px 0px 8.7px 0px rgba(0, 0, 0, 0.06)",
+            textAlign: "left",
+            height: "93px",
+            width: "205px",
+            border: "1px solid rgba(157, 61, 255, 0.18)",
           }}
         >
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
-              color: "#000000",
-              fontSize: { xs: "1.75rem", sm: "2rem" },
-              mb: 1,
-              lineHeight: 1.2,
+              fontWeight: 600,
+              color: "rgba(56, 68, 85, 1)",
+              fontSize: "24px",
+              mb: 2,
+              lineHeight: "18px",
             }}
           >
             {`${quota || 0}/5`}
@@ -276,34 +313,37 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
           <Typography
             variant="body2"
             sx={{
-              color: "#000000",
-              fontSize: "0.875rem",
+              color: "rgba(100, 113, 131, 1)",
+              fontSize: "17px",
+              lineHeight: "18px",
               fontWeight: 400,
             }}
           >
             Tasks completed
           </Typography>
-        </Card>
+        </Box>
 
         {/* Experience Level Card */}
-        <Card
+        <Box
           sx={{
             padding: 3,
             borderRadius: 3,
             background: "#ffffff",
-            border: "1px solid #E0E0E0",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-            textAlign: "center",
+            boxShadow: "0px 0px 8.7px 0px rgba(0, 0, 0, 0.06)",
+            textAlign: "left",
+            height: "93px",
+            width: "205px",
+            border: "1px solid rgba(157, 61, 255, 0.18)",
           }}
         >
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
-              color: "#000000",
-              fontSize: { xs: "1.75rem", sm: "2rem" },
-              mb: 1,
-              lineHeight: 1.2,
+              fontWeight: 600,
+              color: "rgba(56, 68, 85, 1)",
+              fontSize: "24px",
+              mb: 2,
+              lineHeight: "18px",
             }}
           >
             {profile?.requiredExperienceLevel || "Beginner"}
@@ -311,17 +351,16 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
           <Typography
             variant="body2"
             sx={{
-              color: "#000000",
-              fontSize: "0.875rem",
+              color: "rgba(100, 113, 131, 1)",
+              fontSize: "17px",
+              lineHeight: "18px",
               fontWeight: 400,
             }}
           >
             Experience Level
           </Typography>
-        </Card>
+        </Box>
       </Box>
-    </Card>
+    </Box>
   );
 }
-
-

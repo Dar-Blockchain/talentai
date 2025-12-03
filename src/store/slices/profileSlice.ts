@@ -44,6 +44,8 @@ export interface Profile {
   _id: string;
   userId: User;
   type: string;
+  firstName?: string;
+  lastName?: string;
   skills: Skill[];
   softSkills: SoftSkill[];
   requiredSkills: string[];
