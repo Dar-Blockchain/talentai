@@ -826,6 +826,47 @@ Make the next intelligent decision for interview progression. Consider question 
   }
 
   /**
+   * Update quality counters for consecutive bad/good answers
+   * Used to determine early termination (8 bad or 8 good answers)
+   */
+  async updateQualityCounters(sessionId, qualityScore) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session || !session.qualityTracking) return;
+
+      const tracking = session.qualityTracking;
+
+      const BAD_THRESHOLD = 40;
+      const GOOD_THRESHOLD = 75;
+
+      if (qualityScore < BAD_THRESHOLD) {
+        // Bad answer: increment bad counter, reset good counter
+        tracking.consecutiveBadAnswers++;
+        tracking.consecutiveGoodAnswers = 0;
+        tracking.totalBadAnswers++;
+        console.log(`❌ [Quality Counter] Bad answer ${tracking.consecutiveBadAnswers}/8 (score: ${qualityScore})`);
+      } else if (qualityScore >= GOOD_THRESHOLD) {
+        // Good answer: increment good counter, reset bad counter
+        tracking.consecutiveGoodAnswers++;
+        tracking.consecutiveBadAnswers = 0;
+        tracking.totalGoodAnswers++;
+        console.log(`✅ [Quality Counter] Good answer ${tracking.consecutiveGoodAnswers}/8 (score: ${qualityScore})`);
+      } else {
+        // Medium quality (40-74): reset both counters
+        tracking.consecutiveBadAnswers = 0;
+        tracking.consecutiveGoodAnswers = 0;
+        console.log(`📊 [Quality Counter] Medium answer (score: ${qualityScore}) - counters reset`);
+      }
+
+      tracking.lastQualityScore = qualityScore;
+
+      await this.sessionManager.updateSession(sessionId, { qualityTracking: tracking });
+    } catch (error) {
+      console.error('❌ Failed to update quality counters:', error.message);
+    }
+  }
+
+  /**
    * Find area with least questions asked (excluding current area)
    */
   findLeastAskedArea(coverageAreas, excludeArea = null) {
@@ -852,6 +893,67 @@ Make the next intelligent decision for interview progression. Consider question 
 
   async shouldEndInterview(session, totalDuration) {
     try {
+      // 🕐 TIME LIMIT CHECK (20 minutes max by default)
+      if (session.interviewStartTime) {
+        const elapsedMinutes = (Date.now() - session.interviewStartTime) / 60000;
+        const maxDuration = session.maxDurationMinutes || 20;
+
+        if (elapsedMinutes >= maxDuration) {
+          console.log(`⏰ [Time Limit] ${elapsedMinutes.toFixed(1)} minutes elapsed (max: ${maxDuration}) - ending interview`);
+          return {
+            shouldEnd: true,
+            confidence: 100,
+            reasoning: `Interview time limit of ${maxDuration} minutes has been reached.`,
+            completedObjectives: ['Time-based completion'],
+            remainingGaps: [],
+            recommendedAction: 'End interview - time limit reached',
+            terminationReason: 'time_limit_reached',
+            message: 'Thank you for your time. We\'ve completed our scheduled time for today.',
+            elapsedTime: elapsedMinutes,
+            score: 'time_limit'
+          };
+        }
+      }
+
+      // 📊 QUALITY-BASED TERMINATION: Check consecutive answer quality
+      if (session.qualityTracking) {
+        const tracking = session.qualityTracking;
+
+        // 8 CONSECUTIVE BAD ANSWERS → End with poor score
+        if (tracking.consecutiveBadAnswers >= 8) {
+          console.log(`🚫 [Poor Quality Termination] 8 consecutive bad answers - ending interview`);
+          return {
+            shouldEnd: true,
+            confidence: 95,
+            reasoning: `Candidate provided 8 consecutive low-quality responses (quality < 40), indicating consistent difficulty with technical questions.`,
+            completedObjectives: ['Performance assessment completed - insufficient technical competency'],
+            remainingGaps: [],
+            recommendedAction: 'End interview - insufficient technical competency demonstrated',
+            terminationReason: 'poor_quality',
+            message: 'Thank you for your time. Let\'s conclude our interview here.',
+            badAnswerCount: tracking.consecutiveBadAnswers,
+            score: 'poor'
+          };
+        }
+
+        // 8 CONSECUTIVE GOOD ANSWERS → End with excellent score
+        if (tracking.consecutiveGoodAnswers >= 8) {
+          console.log(`✅ [Excellent Quality Termination] 8 consecutive good answers - ending interview with good score`);
+          return {
+            shouldEnd: true,
+            confidence: 95,
+            reasoning: `Candidate demonstrated 8 consecutive high-quality responses (quality >= 75), showing strong technical competency.`,
+            completedObjectives: ['Technical competency validated', 'Strong performance demonstrated', 'Sufficient evidence of expertise'],
+            remainingGaps: [],
+            recommendedAction: 'End interview - candidate clearly qualified',
+            terminationReason: 'excellent_quality',
+            message: 'Excellent! You\'ve demonstrated strong understanding. Thank you for your time.',
+            goodAnswerCount: tracking.consecutiveGoodAnswers,
+            score: 'excellent'
+          };
+        }
+      }
+
       // EARLY TERMINATION: Calculate overall response quality across all areas
       const allQualityScores = session.conversation
         .filter(entry => entry.type === 'candidate')
@@ -876,8 +978,10 @@ Make the next intelligent decision for interview progression. Consider question 
           recommendedAction: 'End interview - insufficient technical competency demonstrated',
           earlyTermination: true,
           terminationReason: 'poor_performance',
+          message: 'Thank you for your time. Let\'s conclude our interview here.',
           qualityScore: overallQualityAverage,
-          responseCount: candidateResponseCount
+          responseCount: candidateResponseCount,
+          score: 'poor'
         };
       }
 
@@ -893,8 +997,10 @@ Make the next intelligent decision for interview progression. Consider question 
           recommendedAction: 'End interview - candidate clearly qualified',
           earlySuccess: true,
           terminationReason: 'excellent_performance',
+          message: 'Excellent! You\'ve demonstrated strong understanding. Thank you for your time.',
           qualityScore: overallQualityAverage,
-          responseCount: candidateResponseCount
+          responseCount: candidateResponseCount,
+          score: 'excellent'
         };
       }
 
@@ -1037,10 +1143,24 @@ class IntelligentInterviewService {
       configManager.validateConfig(config);
       console.log('✅ [Service] Config validated');
 
-      // Create session in Redis
+      // Create session in Redis with time tracking and quality counters
       console.log('💾 [Service] Calling createSession...');
       const session = await this.sessionManager.createSession(sessionId, config, candidateId);
       console.log('✅ [Service] Session created in Redis');
+
+      // Initialize interview timing and quality tracking
+      await this.sessionManager.updateSession(sessionId, {
+        interviewStartTime: Date.now(),
+        maxDurationMinutes: config.sessionSettings?.duration || 20,
+        qualityTracking: {
+          consecutiveBadAnswers: 0,
+          consecutiveGoodAnswers: 0,
+          totalBadAnswers: 0,
+          totalGoodAnswers: 0,
+          lastQualityScore: null
+        }
+      });
+      console.log('✅ [Service] Interview timing and quality tracking initialized');
 
       // Generate intelligent greeting with error handling
       let greeting;
@@ -1271,6 +1391,94 @@ class IntelligentInterviewService {
         };
 
         console.log(`💾 [Quality Storage] Stored quality score ${responseQuality.qualityScore}/100 for area: ${targetArea}`);
+
+        // 🚫 INTELLIGENT FILTER: Ignore off-topic/inappropriate responses
+        // Don't build questions from low-quality or irrelevant content
+        if (responseQuality.qualityScore < 30 || (responseQuality.completeness === 'avoided' && responseQuality.qualityScore < 50)) {
+          console.log(`🚫 [Low Quality Filter] Ignoring response content (quality: ${responseQuality.qualityScore}, completeness: ${responseQuality.completeness})`);
+          console.log(`   Response was off-topic, rude, or inappropriate - generating next question without using this content`);
+
+          // Update quality counters (for 8 bad answers termination)
+          await this.updateQualityCounters(sessionId, responseQuality.qualityScore);
+
+          // Check if should end interview due to poor quality
+          const endCheck = await this.shouldEndInterview(updatedSession);
+          if (endCheck.shouldEnd) {
+            return {
+              action: 'end_interview',
+              content: endCheck.message,
+              reasoning: endCheck.reason,
+              metadata: { terminationReason: endCheck.reason, score: endCheck.score }
+            };
+          }
+
+          // DON'T use this response for question generation
+          // Generate next question based on coverage gaps ONLY, not response content
+          const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
+            "[LOW QUALITY - IGNORING CONTENT]",  // Don't pass actual response
+            updatedSession.coverage,
+            updatedSession.config.intelligenceContext.focusAreas,
+            updatedSession.conversation.slice(0, -1)  // Exclude this bad response
+          );
+
+          // Update coverage (minimal impact for bad response)
+          if (coverageAnalysis.coverageUpdates) {
+            const updatedCoverage = await this.updateCoverageIntelligently(
+              sessionId,
+              updatedSession.coverage,
+              coverageAnalysis
+            );
+            await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
+          }
+
+          // Get refreshed session
+          const refreshedSession = await this.sessionManager.getSession(sessionId);
+
+          // Generate new question ignoring the bad response
+          const nextQuestion = await this.questionAI.generateIntelligentQuestion(
+            refreshedSession,
+            coverageAnalysis,
+            { previousQuestions: refreshedSession.conversation.filter(e => e.type === 'interviewer') }
+          );
+
+          // Store the generated question
+          await this.sessionManager.addConversationEntry(sessionId, {
+            type: 'interviewer',
+            content: nextQuestion.question,
+            timestamp: new Date().toISOString(),
+            metadata: {
+              aiGenerated: true,
+              targetAreas: nextQuestion.targetAreas,
+              reasoning: 'Previous response was off-topic/inappropriate - moving forward',
+              ignoredPreviousResponse: true
+            }
+          });
+
+          return {
+            action: 'continue_probing',
+            content: nextQuestion.question,
+            reasoning: 'Response was off-topic/inappropriate - moving to next question without referencing it',
+            targetAreas: nextQuestion.targetAreas,
+            metadata: {
+              ignoredResponse: true,
+              originalQuality: responseQuality.qualityScore
+            }
+          };
+        }
+
+        // Update quality counters for valid responses too
+        await this.updateQualityCounters(sessionId, responseQuality.qualityScore);
+
+        // Check if should end interview (time or quality thresholds)
+        const endCheck = await this.shouldEndInterview(updatedSession);
+        if (endCheck.shouldEnd) {
+          return {
+            action: 'end_interview',
+            content: endCheck.message,
+            reasoning: endCheck.reason,
+            metadata: { terminationReason: endCheck.reason, score: endCheck.score }
+          };
+        }
       }
 
       // Perform intelligent coverage analysis
