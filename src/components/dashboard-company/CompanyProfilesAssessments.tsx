@@ -159,13 +159,26 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
             px: 3,
             backgroundColor: "rgba(62, 233, 167, 0.03)",
             borderRadius: "8px",
-            border: '1px solid rgba(98, 111, 134, 0.18)',
+            border: "1px solid rgba(98, 111, 134, 0.18)",
             textAlign: "center",
           }}
         >
-          <SearchOff
-            sx={{ fontSize: 48, color: "rgba(19, 163, 108, 0.83)", mb: 2 }}
-          />
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(76, 217, 163, 0.2)",
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+            }}
+          >
+            <SearchOff
+              sx={{ fontSize: 48, color: "rgba(19, 163, 108, 0.83)" }}
+            />
+          </Box>
           <Typography
             variant="h6"
             sx={{
@@ -613,47 +626,46 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
             <MenuItem value="good">Good match (&gt;= 70)</MenuItem>
             <MenuItem value="poor">Poor match (&lt; 70)</MenuItem>
           </Select> */}
-<Select
-  size="small"
-  value={assessmentSort}
-  onChange={(e) => setAssessmentSort(e.target.value as string)}
-  displayEmpty
-  sx={{
-    height: "40px",
-    minWidth: 200,
-    borderRadius: "42px",
-    px: 2.5,
-    textTransform: "uppercase",
-    fontWeight: 400,
-    fontSize: "0.875rem",
-    backgroundColor: "white",
+          <Select
+            size="small"
+            value={assessmentSort}
+            onChange={(e) => setAssessmentSort(e.target.value as string)}
+            displayEmpty
+            sx={{
+              height: "40px",
+              minWidth: 200,
+              borderRadius: "42px",
+              px: 2.5,
+              textTransform: "uppercase",
+              fontWeight: 400,
+              fontSize: "0.875rem",
+              backgroundColor: "white",
 
-    color: "rgba(84, 98, 116, 1)",
+              color: "rgba(84, 98, 116, 1)",
 
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "rgba(165, 172, 181, 1)",
-      borderWidth: "1px",
-    },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(165, 172, 181, 1)",
+                borderWidth: "1px",
+              },
 
-    "&:hover .MuiOutlinedInput-notchedOutline": {
-      borderColor: "rgba(165, 172, 181, 0.8)",
-    },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(165, 172, 181, 0.8)",
+              },
 
-    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "rgba(165, 172, 181, 1)",
-    },
-  }}
->
-  <MenuItem value="date_desc">Newest first</MenuItem>
-  <MenuItem value="date_asc">Oldest first</MenuItem>
-  <MenuItem value="score_desc">Highest score</MenuItem>
-  <MenuItem value="score_asc">Lowest score</MenuItem>
-  <MenuItem value="candidate_asc">Candidate A→Z</MenuItem>
-  <MenuItem value="candidate_desc">Candidate Z→A</MenuItem>
-  <MenuItem value="job_asc">Job A→Z</MenuItem>
-  <MenuItem value="job_desc">Job Z→A</MenuItem>
-</Select>
-
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(165, 172, 181, 1)",
+              },
+            }}
+          >
+            <MenuItem value="date_desc">Newest first</MenuItem>
+            <MenuItem value="date_asc">Oldest first</MenuItem>
+            <MenuItem value="score_desc">Highest score</MenuItem>
+            <MenuItem value="score_asc">Lowest score</MenuItem>
+            <MenuItem value="candidate_asc">Candidate A→Z</MenuItem>
+            <MenuItem value="candidate_desc">Candidate Z→A</MenuItem>
+            <MenuItem value="job_asc">Job A→Z</MenuItem>
+            <MenuItem value="job_desc">Job Z→A</MenuItem>
+          </Select>
         </Box>
       </Box>
 

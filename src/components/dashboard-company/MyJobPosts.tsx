@@ -19,6 +19,7 @@ import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDia
 import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { SearchOff } from "@mui/icons-material";
 
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
@@ -313,13 +314,137 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           {jobsError}
         </Alert>
       ) : myJobs.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No job posts found.
-        </Alert>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            py: 8,
+            px: 4,
+            backgroundColor: "rgba(62, 233, 167, 0.03)",
+            borderRadius: "8px",
+            border: "1px solid rgba(98, 111, 134, 0.18)",
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(76, 217, 163, 0.2)",
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+            }}
+          >
+            <SearchOff
+              sx={{ fontSize: 48, color: "rgba(19, 163, 108, 0.83)" }}
+            />
+          </Box>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "rgba(19, 163, 108, 0.83)",
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontStyle: "medium",
+              fontSize: "20px",
+              lineHeight: "28px",
+              letterSpacing: "0",
+              mb: 2,
+            }}
+          >
+            You Haven’t Created Any Job Posts Yet
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "rgba(147, 147, 147, 1)",
+              maxWidth: "500px",
+              mb: 4,
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal", // "Regular" is not valid CSS → use "normal"
+              fontSize: "14px",
+              lineHeight: "25px",
+              letterSpacing: "0px",
+              textAlign: "center",
+              verticalAlign: "middle",
+            }}
+          >
+            Start by creating your first job post to begin attracting qualified
+            candidates. Your posted jobs will appear here.
+          </Typography>
+        </Box>
       ) : filteredAndSortedJobs.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No jobs match your search criteria. Try a different search term.
-        </Alert>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            py: 8,
+            px: 4,
+            backgroundColor: "rgba(62, 233, 167, 0.03)",
+            borderRadius: "8px",
+            border: "1px solid rgba(98, 111, 134, 0.18)",
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(76, 217, 163, 0.2)",
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+            }}
+          >
+            <SearchOff
+              sx={{ fontSize: 48, color: "rgba(19, 163, 108, 0.83)" }}
+            />
+          </Box>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "rgba(19, 163, 108, 0.83)",
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontStyle: "medium",
+              fontSize: "20px",
+              lineHeight: "28px",
+              letterSpacing: "0",
+              mb: 2,
+            }}
+          >
+            No Jobs Match Your Search Criteria
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "rgba(147, 147, 147, 1)",
+              maxWidth: "500px",
+              mb: 4,
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal", // "Regular" is not valid CSS → use "normal"
+              fontSize: "14px",
+              lineHeight: "25px",
+              letterSpacing: "0px",
+              textAlign: "center",
+              verticalAlign: "middle",
+            }}
+          >
+            Try adjusting your search terms or filters to find the job post
+            you're looking for.{" "}
+          </Typography>
+        </Box>
       ) : (
         <>
           <Box sx={{ display: "flex", flexDirection: "column" }}>
