@@ -85,7 +85,8 @@ async function addConfig(userId, payload = {}) {
     weights: payload.weights || defaultConfig().weights,
     importanceWeight: payload.importanceWeight || defaultConfig().importanceWeight,
     exchangeRates: payload.exchangeRates || defaultConfig().exchangeRates,
-    updatedBy: userId
+    updatedBy: userId,
+    job : payload.jobId ,
   };
 
   const created = await MatchingConfig.create(toCreate);
