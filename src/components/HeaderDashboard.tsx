@@ -225,32 +225,35 @@ const HeaderDashboard = () => {
                     {formatNumber(tokenBalance)} tokens
                   </Typography>
                 )}
-                {userType === "company" && <Tooltip title="Purchase Tokens">
-                  <IconButton
-                    onClick={handleOpenModal}
-                    sx={{
-                      ml: 1,
-                      width: 22,
-                      height: 22,
-                      backgroundColor: "white",
-                      border: "0.5px solid rgba(14, 194, 125, 0.27)",
-                      borderRadius: "16px",
-                      boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
-                    }}
-                  >
-                    <Image
-                      src="/icons/plus.svg"
-                      alt="plus"
-                      width={12}
-                      height={12}
-                    />
-                  </IconButton>
-                </Tooltip>}
+                {userType === "company" && (
+                  <Tooltip title="Purchase Tokens">
+                    <IconButton
+                      onClick={handleOpenModal}
+                      sx={{
+                        ml: 1,
+                        width: 22,
+                        height: 22,
+                        backgroundColor: "white",
+                        border: "0.5px solid rgba(14, 194, 125, 0.27)",
+                        borderRadius: "16px",
+                        boxShadow:
+                          "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
+                      }}
+                    >
+                      <Image
+                        src="/icons/plus.svg"
+                        alt="plus"
+                        width={12}
+                        height={12}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </Box>
 
               {/* Avatar */}
               <Box
-                onClick={() => router.push("/settings/profile") }
+                onClick={() => router.push("/settings/profile")}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -260,7 +263,7 @@ const HeaderDashboard = () => {
                   height: 40,
                   p: "0 10px",
                   gap: 1.5,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                 }}
               >
                 <Avatar
@@ -287,11 +290,12 @@ const HeaderDashboard = () => {
                     color: "rgba(56, 58, 61, 1)",
                   }}
                 >
-{
-  userType === "company"
-    ? (profile?.companyDetails?.name || profile?.userId?.username)
-    : `${profile?.firstName || ""} ${profile?.lastName || ""}`
-}                </Typography>
+                  {userType === "company"
+                    ? profile?.companyDetails?.name || profile?.userId?.username
+                    : `${profile?.firstName || ""} ${
+                        profile?.lastName || ""
+                      }`}{" "}
+                </Typography>
               </Box>
 
               {/* Logout */}
@@ -353,7 +357,9 @@ const HeaderDashboard = () => {
             sx={{ width: 40, height: 40 }}
           />
           <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
-            {profile?.userId?.username}
+            {userType === "company"
+              ? profile?.companyDetails?.name || profile?.userId?.username
+              : `${profile?.firstName || ""} ${profile?.lastName || ""}`}
           </Typography>
         </Box>
 
@@ -379,22 +385,29 @@ const HeaderDashboard = () => {
               {formatNumber(tokenBalance)} tokens
             </Typography>
           )}
-          {userType === "company" && <Tooltip title="Purchase Tokens">
-            <IconButton
-              onClick={handleOpenModal}
-              sx={{
-                width: 26,
-                height: 26,
-                marginLeft: "auto",
-                backgroundColor: "white",
-                border: "0.5px solid rgba(14, 194, 125, 0.27)",
-                borderRadius: "16px",
-                boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
-              }}
-            >
-              <Image src="/icons/plus.svg" alt="plus" width={14} height={14} />
-            </IconButton>
-          </Tooltip>}
+          {userType === "company" && (
+            <Tooltip title="Purchase Tokens">
+              <IconButton
+                onClick={handleOpenModal}
+                sx={{
+                  width: 26,
+                  height: 26,
+                  marginLeft: "auto",
+                  backgroundColor: "white",
+                  border: "0.5px solid rgba(14, 194, 125, 0.27)",
+                  borderRadius: "16px",
+                  boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
+                }}
+              >
+                <Image
+                  src="/icons/plus.svg"
+                  alt="plus"
+                  width={14}
+                  height={14}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
 
         <Divider sx={{ my: 2 }} />
