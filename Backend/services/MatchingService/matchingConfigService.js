@@ -34,6 +34,8 @@ module.exports = { getMatchingConfig };
  * @param {Object} payload
  */
 async function addConfig(userId, payload = {}) {
+  const Post = require('../../models/PostModel');
+  
   const toCreate = {
     name: payload.name || 'default',
     weights: payload.weights || defaultConfig().weights,
@@ -44,6 +46,16 @@ async function addConfig(userId, payload = {}) {
   };
 
   const created = await MatchingConfig.create(toCreate);
+  
+  // Ajouter la relation bidirectionnelle: sauvegarder l'ID de MatchingConfig dans le Post
+  if (payload.jobId) {
+    await Post.findByIdAndUpdate(
+      payload.jobId,
+      { MatchingConfig: created._id },
+      { new: true }
+    );
+  }
+  
   return created;
 }
 
