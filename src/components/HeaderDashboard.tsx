@@ -287,8 +287,11 @@ const HeaderDashboard = () => {
                     color: "rgba(56, 58, 61, 1)",
                   }}
                 >
-                  {profile?.companyDetails?.name || profile?.userId?.username}
-                </Typography>
+{
+  userType === "company"
+    ? (profile?.companyDetails?.name || profile?.userId?.username)
+    : `${profile?.firstName || ""} ${profile?.lastName || ""}`
+}                </Typography>
               </Box>
 
               {/* Logout */}
