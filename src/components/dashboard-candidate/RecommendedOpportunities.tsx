@@ -608,9 +608,39 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
                       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: '#000' }}>
                         About the role
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#333', whiteSpace: 'pre-line', lineHeight: 1.6 }}>
-                        {description}
-                      </Typography>
+                      <Box
+                        sx={{
+                          color: '#333',
+                          lineHeight: 1.8,
+                          fontSize: '0.875rem',
+                          '& ul': {
+                            paddingLeft: '24px !important',
+                            margin: '12px 0 !important',
+                            listStyleType: 'disc !important',
+                            listStylePosition: 'outside !important',
+                          },
+                          '& ol': {
+                            paddingLeft: '24px !important',
+                            margin: '12px 0 !important',
+                            listStyleType: 'decimal !important',
+                            listStylePosition: 'outside !important',
+                          },
+                          '& li': {
+                            marginBottom: '6px !important',
+                            paddingLeft: '4px !important',
+                            display: 'list-item !important',
+                          },
+                          '& p': {
+                            margin: '8px 0 !important',
+                          },
+                          '& strong, & b': {
+                            fontWeight: '700 !important',
+                            color: '#000 !important',
+                          },
+                        }}
+                      >
+                        <div dangerouslySetInnerHTML={{ __html: description }} />
+                      </Box>
                     </Box>
                   )}
 

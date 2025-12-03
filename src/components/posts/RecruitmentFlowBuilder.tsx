@@ -414,6 +414,7 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [postDetailsReady, setPostDetailsReady] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [matchingConfig, setMatchingConfig] = useState<any>(null);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
@@ -1136,7 +1137,10 @@ Ready to customize the content or add more triggers?`
               console.error('Failed to save matching config');
               toast.error('Warning: Matching configuration save failed. You can configure it later.');
             } else {
-              console.log('Matching config saved successfully');
+              const matchingConfigData = await matchingConfigResponse.json();
+              console.log('Matching config saved successfully:', matchingConfigData);
+              console.log('Setting matchingConfig to state:', matchingConfigData.data || matchingConfigPayload);
+              setMatchingConfig(matchingConfigData.data || matchingConfigPayload);
             }
           }
         } catch (matchingConfigError) {
@@ -1339,6 +1343,7 @@ Ready to customize the content or add more triggers?`
           <PostDetails
             ref={postDetailsRef}
             onReadyChange={setPostDetailsReady}
+            matchingConfig={matchingConfig}
           />
         );
       case 1:
