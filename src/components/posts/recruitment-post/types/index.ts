@@ -82,7 +82,7 @@ export interface JobPost {
 }
 
 export interface PostDetailsRef {
-  saveJob: () => Promise<{ success: boolean; jobId?: string }>;
+  saveJob: () => Promise<{ success: boolean; jobId?: string; jobData?: JobPost }>;
   canProceed: () => boolean;
   getJobTitle: () => string | undefined;
   getJobSkills: () => string[];

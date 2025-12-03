@@ -356,7 +356,7 @@ const handleInputChange = (field: string, value: any): void => {
   };
 
   // Update the saveJob function to handle the job data properly
-  const saveJob = async (): Promise<{ success: boolean; jobId?: string }> => {
+  const saveJob = async (): Promise<{ success: boolean; jobId?: string; jobData?: JobPost }> => {
     setIsSaving(true);
     try {
       // Use the updated job data if available, otherwise use the generated job
@@ -567,7 +567,11 @@ ${jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to mak
       setJobDescription("");
       setGeneratedJob(null);
       setUpdatedJobData(undefined); // Reset updated job data
-      return { success: true, jobId };
+      return {
+        success: true,
+        jobId,
+        jobData: jobDataToUse // Include the job data in the return
+      };
     } catch (error) {
        console.error("Error saving job:", error);
        return { success: false };
