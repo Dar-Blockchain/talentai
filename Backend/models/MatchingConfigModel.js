@@ -22,6 +22,7 @@ const matchingConfigSchema = new mongoose.Schema({
     default: { USD: 1, EUR: 1.1, TND: 0.32 },
   },  
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('MatchingConfig', matchingConfigSchema);

@@ -1142,11 +1142,22 @@ Ready to customize the content or add more triggers?`
           return;
         }
 
+        // Check if we have savedJobId from step 0
+        if (!savedJobId) {
+          setSaveError('Job ID is missing. Please go back and save the job post first.');
+          return;
+        }
+
+        // Extract soft skills from generated job data
+        const softSkills = generatedJobData?.skillAnalysis?.softSkills || [];
+
         const payload = {
+          jobId: savedJobId,
           name: `${jobTitle} - ${companyName}`,
           weights: matchingConfig.weights,
           importanceWeight: matchingConfig.importanceWeight,
           exchangeRates: matchingConfig.exchangeRates,
+          softSkills: softSkills,
         };
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}matchingConfig/`, {
