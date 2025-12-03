@@ -42,6 +42,7 @@ interface MatchingCandidate {
   targetRole: string;
   score: number;
   finalBid: number;
+  unlocked: boolean;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
@@ -66,6 +67,8 @@ const DashboardCompany = () => {
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);
   const myJobs = useSelector(selectMyPosts);
+  const [activeSection, setActiveSection] = useState<"jobs" | "unlockedCandidates" | "matches" | "all">("all");
+
   const [selectedJob, setSelectedJob] = useState("");
   const isLoadingJobs = useSelector(selectMyPostsLoading);
   const jobsError = useSelector(selectMyPostsError);
@@ -172,7 +175,10 @@ const DashboardCompany = () => {
             />
           )}
 
-          <UnlockedCandidates/>
+          <UnlockedCandidates   
+            onViewAll={() => setActiveSection("unlockedCandidates")}
+            hidden={activeSection !== "all" && activeSection !== "unlockedCandidates"}
+          />
 
           {/* HR Agents Section */}
           {/* {profile?._id && <HRAgentsTable companyId={profile._id} />} */}
