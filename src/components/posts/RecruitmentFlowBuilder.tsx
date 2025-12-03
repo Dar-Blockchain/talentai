@@ -1687,7 +1687,7 @@ Ready to customize the content or add more triggers?`
 
 
       <MainContent>
-        {activeStep === 2 && (
+        {activeStep === 3 && (
           <Sidebar>
             {menuItems.map((item) => {
               const IconComponent = item.icon;
