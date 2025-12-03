@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import {
 import { AppDispatch, RootState } from "@/store/store";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
+import { ArrowForward } from "@mui/icons-material";
 
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -27,6 +28,7 @@ const StyledCard = styled(Box)(({ theme }) => ({
 
 const UnlockedCandidates: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const [viewAll, setViewAll] = useState(false);
   const { loading, error, candidates } = useSelector(
     (state: RootState) => state.candidate.unlockedData
   );
@@ -51,32 +53,50 @@ const UnlockedCandidates: React.FC = () => {
           gap: 2,
         }}
       >
+        <Typography
+          variant="h5"
+          sx={{
+            color: "rgba(0, 0, 0, 1)",
+            fontFamily: "Poppins",
+            fontWeight: 600,
+            fontStyle: "normal",
+            fontSize: "20px",
+            lineHeight: "100%",
+            letterSpacing: "0",
+            position: "relative",
+            "&:after": {
+              content: '""',
+              position: "absolute",
+              bottom: "-8px",
+              left: 0,
+              width: "40px",
+              height: "5px",
+              backgroundColor: "rgba(222, 147, 0, 1)",
+              borderRadius: "2px",
+            },
+          }}
+        >
+          Unlocked Candidates
+        </Typography>
         <Box>
-          <Typography
-            variant="h5"
+          <Button
+            variant="outlined"
+            onClick={() => setViewAll(true)}
+            endIcon={<ArrowForward />}
             sx={{
-              color: "rgba(0, 0, 0, 1)",
-              fontFamily: "Poppins",
-              fontWeight: 600,
-              fontStyle: "normal",
-              fontSize: "20px",
-              lineHeight: "100%",
-              letterSpacing: "0",
-              position: "relative",
-              "&:after": {
-                content: '""',
-                position: "absolute",
-                bottom: "-8px",
-                left: 0,
-                width: "40px",
-                height: "5px",
-                backgroundColor: "rgba(222, 147, 0, 1)",
-                borderRadius: "2px",
+              border: "none",
+              background: "none",
+              color: "rgba(41, 210, 145, 1)",
+              textDecoration: "none",
+              "&:hover": {
+                background: "none",
+                textDecoration: "none",
+                color: "rgba(41, 210, 145, 0.8)",
               },
             }}
           >
-            Unlocked Candidates
-          </Typography>
+            View all
+          </Button>
         </Box>
       </Box>
 
