@@ -26,8 +26,9 @@ async function addConfig(req, res) {
 async function getConfig(req, res) {
   try {
     const userId = req.user && req.user._id;
+    const jobId = req.body.jobId;
     console.log(`🔍 [getConfig] Fetching matching configuration for user: ${userId}`);
-    const cfg = await matchingConfigService.getMatchingConfig();
+    const cfg = await matchingConfigService.getMatchingConfig(userId,jobId);
     return res.json({ success: true, config: cfg });
   } catch (err) {
     console.error('Error fetching matching config:', err.message);

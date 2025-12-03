@@ -77,7 +77,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import PostDetails from './recruitment-post/PostDetails';
 import { PostDetailsRef } from './recruitment-post/types';
-import MatchingConfig from './recruitment-post/components/MatchingConfig';
 import AgentConfigurationForm, { AgentConfigurationFormValues } from './AgentConfigurationForm';
 import PaymentConfirmationDialog from './PaymentConfirmationDialog';
 import { AppDispatch } from '@/store/store';
@@ -415,8 +414,6 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [postDetailsReady, setPostDetailsReady] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [generatedJobData, setGeneratedJobData] = useState<any>(null);
-  const [matchingConfig, setMatchingConfig] = useState<any>(null);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
@@ -712,7 +709,6 @@ const RecruitmentFlowBuilder: React.FC = () => {
 
   const steps = [
     'Job Details',
-    'Matching Config',
     'Agent Configuration',
     'Recruitment Flow',
   ];
@@ -1088,9 +1084,65 @@ Ready to customize the content or add more triggers?`
         setRegisteredAgentId(null);
         setRegisteredAgentName(null);
 
-        // Capture the generated job data for matching config display
-        const jobData = postDetailsRef.current?.getJobData();
-        setGeneratedJobData(jobData);
+        // Save matching config
+        try {
+          let token: string | undefined = Cookies.get("api_token");
+          if (!token && typeof window !== 'undefined') {
+            token =
+              window.localStorage.getItem('api_token') ||
+              window.localStorage.getItem('token') ||
+              undefined;
+          }
+
+          if (token) {
+            const matchingConfigPayload = {
+              jobId: saveResult.jobId,
+              name: saveResult.jobData?.jobDetails?.title || 'Untitled Position',
+              weights: {
+                hardSkill: 50,
+                SoftSkill: 10,
+                experience: 20,
+                salary: 5,
+                workMode: 5,
+                contract: 10,
+              },
+              importanceWeight: {
+                Junior: 1.5,
+                Mid_Level: 1.2,
+                Senior: 1,
+                Expert: 0.8,
+              },
+              exchangeRates: {
+                USD: 1,
+                EUR: 1.09,
+                TND: 0.33,
+              },
+              softSkills: saveResult.jobData?.skillAnalysis?.softSkills || [],
+            };
+
+            const matchingConfigResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}matchingConfig/`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(matchingConfigPayload),
+              }
+            );
+
+            if (!matchingConfigResponse.ok) {
+              console.error('Failed to save matching config');
+              toast.error('Warning: Matching configuration save failed. You can configure it later.');
+            } else {
+              console.log('Matching config saved successfully');
+            }
+          }
+        } catch (matchingConfigError) {
+          console.error('Error saving matching config:', matchingConfigError);
+          toast.error('Warning: Matching configuration save failed. You can configure it later.');
+        }
 
         try {
           await registerHRAgent(saveResult.jobId);
@@ -1111,86 +1163,6 @@ Ready to customize the content or add more triggers?`
     }
 
     if (activeStep === 1) {
-      // Save matching config before moving to next step
-      if (!matchingConfig) {
-        setSaveError('Matching configuration is missing. Please refresh and try again.');
-        return;
-      }
-
-      // Validate that weights total 100%
-      const totalWeights = Object.values(matchingConfig.weights || {}).reduce((sum: number, val: any) => sum + Number(val), 0);
-      if (totalWeights !== 100) {
-        setSaveError(`Matching weights must total 100%. Current total: ${totalWeights}%`);
-        return;
-      }
-
-      // Get job title from generated job data and company name from profile
-      const jobTitle = generatedJobData?.jobDetails?.title || 'Untitled Job';
-      const companyName = authProfile?.companyDetails?.name || 'Company';
-
-      setIsSavingJob(true);
-      setSaveError(null);
-
-      try {
-        let token: string | undefined = Cookies.get("api_token");
-        if (!token && typeof window !== 'undefined') {
-          token = window.localStorage.getItem('api_token') || window.localStorage.getItem('token') || undefined;
-        }
-
-        if (!token) {
-          setSaveError('No authentication token found. Please log in again.');
-          return;
-        }
-
-        // Check if we have savedJobId from step 0
-        if (!savedJobId) {
-          setSaveError('Job ID is missing. Please go back and save the job post first.');
-          return;
-        }
-
-        // Extract soft skills from generated job data
-        const softSkills = generatedJobData?.skillAnalysis?.softSkills || [];
-
-        const payload = {
-          jobId: savedJobId,
-          name: `${jobTitle} - ${companyName}`,
-          weights: matchingConfig.weights,
-          importanceWeight: matchingConfig.importanceWeight,
-          exchangeRates: matchingConfig.exchangeRates,
-          softSkills: softSkills,
-        };
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}matchingConfig/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Failed to save matching configuration (${response.status})`);
-        }
-
-        const result = await response.json();
-        console.log('Matching config saved successfully:', result);
-        toast.success('Matching configuration saved successfully!');
-
-      } catch (error) {
-        console.error('Error saving matching config:', error);
-        setSaveError(error instanceof Error ? error.message : 'Failed to save matching configuration. Please try again.');
-        return;
-      } finally {
-        setIsSavingJob(false);
-      }
-
-      setActiveStep((prev) => prev + 1);
-      return;
-    }
-
-    if (activeStep === 2) {
       if (!savedJobId) {
         setSaveError('No job ID available. Please save the job post before configuring the agent.');
         return;
@@ -1371,27 +1343,18 @@ Ready to customize the content or add more triggers?`
         );
       case 1:
         return (
-          <Box sx={{ flex: 1, height: '100%', overflow: 'auto' }}>
-            <MatchingConfig
-              jobData={generatedJobData}
-              onChange={setMatchingConfig}
-            />
-          </Box>
-        );
-      case 2:
-        return (
           <AgentConfigurationForm
             value={agentConfig}
             onChange={handleAgentConfigChange}
             disabled={!savedJobId || isSavingAgentConfig || isRegisteringAgent}
             loading={isSavingAgentConfig}
-            errorMessage={activeStep === 2 ? saveError : null}
+            errorMessage={activeStep === 1 ? saveError : null}
             agentSummary={{
               agentName: registeredAgentName ?? undefined,
             }}
           />
         );
-      case 3:
+      case 2:
         return (
           <Box sx={{ flex: 1, height: '100%', position: 'relative' }}>
             <ReactFlow
@@ -1687,7 +1650,7 @@ Ready to customize the content or add more triggers?`
 
 
       <MainContent>
-        {activeStep === 3 && (
+        {activeStep === 2 && (
           <Sidebar>
             {menuItems.map((item) => {
               const IconComponent = item.icon;

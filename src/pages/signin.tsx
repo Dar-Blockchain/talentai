@@ -42,6 +42,8 @@ export default function SignIn() {
     hasProfile: boolean;
     returnUrl?: string;
   } | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [canResend, setCanResend] = useState(true);
 
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -86,6 +88,9 @@ export default function SignIn() {
       setSuccess(
         `Please verify your email - we've sent a code to ${emailToSend}`
       );
+      // Start 60 second countdown
+      setCountdown(60);
+      setCanResend(false);
     } catch (err) {
       console.error('Registration failed:', err);
       if (typeof err === 'string') {
@@ -222,6 +227,18 @@ export default function SignIn() {
       setError(reduxError);
     }
   }, [reduxError]);
+
+  // Countdown timer for resend code
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0 && !canResend) {
+      setCanResend(true);
+    }
+  }, [countdown, canResend]);
   const userType = useSelector((state: RootState) => state.user.userType);
 
   // Set isClient to true on mount to prevent hydration issues
@@ -591,7 +608,7 @@ export default function SignIn() {
                   <InputAdornment position="end">
                     <Button
                       onClick={handleEmailSubmit(onEmailSubmit)}
-                      disabled={loading || isLoading || !email}
+                      disabled={loading || isLoading || !email || !canResend}
                       size="small"
                       sx={{
                         background:
@@ -601,6 +618,7 @@ export default function SignIn() {
                         color: "#fff", // Always white text
                         fontWeight: 700, // Bold for clarity
                         padding: "5px",
+                        minWidth: countdown > 0 ? "80px" : "auto",
                         "&:hover": {
                           background:
                             userType === "company"
@@ -608,10 +626,16 @@ export default function SignIn() {
                               : "rgba(131, 16, 255, 0.93)",
                           color: "#fff",
                         },
+                        "&.Mui-disabled": {
+                          background: "rgba(0, 0, 0, 0.12)",
+                          color: "rgba(255, 255, 255, 0.7)",
+                        },
                       }}
                     >
                       {loading || isLoading ? (
                         <CircularProgress size={16} sx={{ color: "#fff" }} />
+                      ) : countdown > 0 ? (
+                        `${countdown}s`
                       ) : (
                         "GET CODE"
                       )}

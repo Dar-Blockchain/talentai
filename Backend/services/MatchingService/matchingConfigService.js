@@ -1,74 +1,28 @@
 const MatchingConfig = require('../../models/MatchingConfigModel');
 
-// Simple in-memory cache to avoid hitting DB on every match calculation
-let _cache = null;
-let _cacheAt = 0;
-const CACHE_TTL_MS = 1000 * 60; // 1 minute
-
-const defaultConfig = () => ({
-  name: 'default',
-  weights: {
-    hardSkill: 40,
-    experience: 35,
-    salary: 10,
-    workMode: 7.5,
-    contract: 7.5,
-  },
-  importanceWeight: { Expert: 1.5, Senior: 1.2, Mid_Level: 1.0, Junior: 0.8 },
-  exchangeRates: { USD: 1, EUR: 1.1, TND: 0.32 },
-});
-
-async function getMatchingConfig(updatedBy) {
+async function getMatchingConfig(updatedBy, jobId) {
   try {
-    const now = Date.now();
-
-    // Use cache only for non-user-specific requests
-    if (!updatedBy && _cache && now - _cacheAt < CACHE_TTL_MS) return _cache;
-
-    let doc;
-    if (updatedBy) {
-      // try to fetch a config created/updated by this user
-      doc = await MatchingConfig.findOne({ updatedBy }).lean();
-      // fallback to global config if user-specific not found
-      if (!doc) doc = await MatchingConfig.findOne({}).lean();
-    } else {
-      doc = await MatchingConfig.findOne({}).lean();
+    let doc = null;
+    // 1. Chercher config spécifique au job (et user si fourni)
+    if (jobId && updatedBy) {
+      doc = await MatchingConfig.findOne({ job: jobId, updatedBy }).lean();
     }
-
-    if (!doc) {
-      // If no config exists yet, persist the default one so admins can edit it later
-      try {
-        const toCreate = defaultConfig();
-        const created = await MatchingConfig.create(toCreate);
-        doc = created.toObject ? created.toObject() : created;
-        console.log('MatchingConfig: default config created in DB');
-      } catch (createErr) {
-        console.warn('MatchingConfig: failed to create default config in DB, falling back to defaults', createErr.message);
-        if (!updatedBy) {
-          _cache = defaultConfig();
-          _cacheAt = now;
-          return _cache;
-        }
-        return defaultConfig();
-      }
-    }
-
-    // Merge defaults with stored values
-    const merged = Object.assign({}, defaultConfig(), {
-      weights: Object.assign({}, defaultConfig().weights, doc.weights || {}),
-      importanceWeight: Object.assign({}, defaultConfig().importanceWeight, doc.importanceWeight || {}),
-      exchangeRates: Object.assign({}, defaultConfig().exchangeRates, Object.fromEntries(Object.entries(doc.exchangeRates || {}))),
-    });
-
-    if (!updatedBy) {
-      _cache = merged;
-      _cacheAt = now;
-    }
-
-    return merged;
+    
+    return doc;
   } catch (err) {
     console.warn('getMatchingConfig error, falling back to defaults', err.message);
-    return defaultConfig();
+    return {
+      name: 'default',
+      weights: {
+        hardSkill: 40,
+        experience: 35,
+        salary: 10,
+        workMode: 7.5,
+        contract: 7.5,
+      },
+      importanceWeight: { Expert: 1.5, Senior: 1.2, Mid_Level: 1.0, Junior: 0.8 },
+      exchangeRates: { USD: 1, EUR: 1.1, TND: 0.32 },
+    };
   }
 }
 
@@ -80,15 +34,28 @@ module.exports = { getMatchingConfig };
  * @param {Object} payload
  */
 async function addConfig(userId, payload = {}) {
+  const Post = require('../../models/PostModel');
+  
   const toCreate = {
     name: payload.name || 'default',
     weights: payload.weights || defaultConfig().weights,
     importanceWeight: payload.importanceWeight || defaultConfig().importanceWeight,
     exchangeRates: payload.exchangeRates || defaultConfig().exchangeRates,
-    updatedBy: userId
+    updatedBy: userId,
+    job : payload.jobId ,
   };
 
   const created = await MatchingConfig.create(toCreate);
+  
+  // Ajouter la relation bidirectionnelle: sauvegarder l'ID de MatchingConfig dans le Post
+  if (payload.jobId) {
+    await Post.findByIdAndUpdate(
+      payload.jobId,
+      { MatchingConfig: created._id },
+      { new: true }
+    );
+  }
+  
   return created;
 }
 

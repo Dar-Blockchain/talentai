@@ -37,7 +37,7 @@ exports.matchCandidatesToJob = async (req, res) => {
         .filter((s) => s && s.name)
         .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-      const score = await calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate,idCompany);
+      const score = await calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate,idCompany,jobPostId);
       if (!score || score === 0) continue; // éliminer ceux sans hard skill matching
 
       matches.push({
