@@ -170,8 +170,8 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
                 `🔹 Salary range: ${data.jobDetails.salary.currency}${data.jobDetails.salary.min}-${data.jobDetails.salary.max}`
               ],
               skillsRequired: `💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
-              benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
-              callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
+              benefitsSection: data.linkedinPost?.benefitsSection || "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
+              callToAction: data.linkedinPost?.callToAction || "✨ Ready to make a difference? Pass the test and join our team!"
             },
             hashtags: [
               "#Hiring",
@@ -191,25 +191,25 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
                 apply: "✨"
               }
             },
-            finalPost: `🌟 We're Hiring: ${data.jobDetails.title} 🌟
-  
+            finalPost: data.linkedinPost?.finalPost || `🌟 We're Hiring: ${data.jobDetails.title} 🌟
+
   Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
-  
+
   Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.
-  
+
   As a ${data.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
-  
+
   🔹 Develop cutting-edge web applications
   🔹 Work with a team of talented developers
   🔹 ${data.jobDetails.location} work
   🔹 Salary range: ${data.jobDetails.salary.currency}${data.jobDetails.salary.min}-${data.jobDetails.salary.max}
-  
+
   💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.
-  
+
   🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
-  
-  ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/
-  
+
+  ${data.linkedinPost?.callToAction || "✨ Ready to make a difference? Pass the test and join our team!"}
+
   #Hiring #TechJobs #${data.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
           }
         };
@@ -476,7 +476,7 @@ const handleInputChange = (field: string, value: any): void => {
             benefitsSection:
               "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
             callToAction:
-              "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test",
+              jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to make a difference? Pass the test and join our team!",
           },
           hashtags: [
             "#Hiring",
@@ -496,7 +496,7 @@ const handleInputChange = (field: string, value: any): void => {
               apply: "✨",
             },
           },
-          finalPost: `🌟 We're Hiring: ${jobDataToUse.jobDetails.title} 🌟
+          finalPost: jobDataToUse.linkedinPost?.finalPost || `🌟 We're Hiring: ${jobDataToUse.jobDetails.title} 🌟
 
 Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
 
@@ -526,7 +526,7 @@ As a ${
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
-✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
+${jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to make a difference? Pass the test and join our team!"}
 
 #Hiring #TechJobs #${jobDataToUse.jobDetails.title.replace(
             /\s+/g,
