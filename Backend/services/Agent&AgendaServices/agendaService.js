@@ -22,34 +22,23 @@ function normalizeSkillName(name) {
 async function computeMatches(jobPostId, idCompany) {
   console.log(`\n=== MATCHING STARTED ===`);
   console.log(`Job: ${jobPostId} | Company: ${idCompany}`);
-  
   const candidates = await Profile.find({ type: "Candidate" })
     .populate("userId", "username email")
     .populate("companyBid.company", "username email")
     .select("userId skills companyDetails.name companyBid expectedSalary workModePreference preferredContractType softSkills")
     .lean();
 
-  console.log(`Found ${candidates.length} candidates\n`);
-
   const jobPost = await JobPost.findById(jobPostId)
     .select("skillAnalysis jobDetails")
     .lean();
 
-  if (!jobPost || !jobPost.skillAnalysis) {
-    console.log(`❌ Job post not found`);
-    return [];
-  }
+  if (!jobPost || !jobPost.skillAnalysis) return [];
 
   const requiredSkills = (jobPost.skillAnalysis.requiredSkills || [])
     .filter((s) => s && s.name)
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-  console.log(`JOB DETAILS:`);
-  console.log(`  Title: ${jobPost.jobDetails?.title}`);
-  console.log(`  Required Skills: ${requiredSkills.map(s => s.name).join(", ") || "None"}`);
-  console.log(`  Salary: ${jobPost.jobDetails?.salary?.min}-${jobPost.jobDetails?.salary?.max} ${jobPost.jobDetails?.salary?.currency}`);
-  console.log(`  Location: ${jobPost.jobDetails?.location}`);
-  console.log(`  Type: ${jobPost.jobDetails?.employmentType}\n`);
+  console.log(`JobTitle: ${jobPost.jobDetails?.title || 'Unknown'} | Required: ${requiredSkills.map(s => s.name).join(', ') || 'None'} | Salary: ${jobPost.jobDetails?.salary?.min || '-'}-${jobPost.jobDetails?.salary?.max || '-'} ${jobPost.jobDetails?.salary?.currency || ''} | Loc: ${jobPost.jobDetails?.location || 'N/A'} | Type: ${jobPost.jobDetails?.employmentType || 'N/A'}`);
 
   const matchesPromises = candidates.map(async (candidate) => {
     if (!candidate.userId) return null;
@@ -67,7 +56,7 @@ async function computeMatches(jobPostId, idCompany) {
       jobPostId
     );
 
-    console.log(`${candidate.userId.username}: Score = ${score}/100`);
+    if (score && score > 0) console.log(` - ${candidate.userId.username}: ${score}`);
 
     if (!score || score === 0) return null;
 
