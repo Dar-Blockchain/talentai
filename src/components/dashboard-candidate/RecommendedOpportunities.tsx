@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Box, Paper, Typography, IconButton, Chip } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Typography,
+  IconButton,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -13,70 +20,18 @@ import {
 import { SearchOff } from "@mui/icons-material";
 import PostDetailsModal from "../posts/PostDetailsModal";
 
-export type RecommendedOpportunity = {
-  _id?: string;
-  id?: string;
-  title?: string;
-  company?: string;
-  companyName?: string;
-  location?: string;
-  description?: string;
-  createdAt?: string | number | Date;
-  type?: string;
-  employmentType?: string;
-  firstStepId?: string;
-  requiredSkills?: string[];
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  skillAnalysis?: {
-    requiredSkills?: Array<{
-      name: string;
-      level?: string;
-      importance?: string;
-      category?: string;
-      percentage?: number;
-    }>;
-  };
-  jobDetails?: {
-    title?: string;
-    employmentType?: string;
-    location?: string;
-    requiredSkills?: string[];
-    salary?: {
-      min: number;
-      max: number;
-      currency: string;
-    };
-    company?: string;
-    companyName?: string;
-  };
-};
-
 export default function RecommendedOpportunities() {
   const dispatch = useDispatch<AppDispatch>();
-  const {
-    items: recommendedPosts,
-    loading,
-    error,
-  } = useSelector(selectRecommended);
+  const { items: recommendedPosts, loading } = useSelector(selectRecommended);
 
-  const [selectedJob, setSelectedJob] = useState<RecommendedOpportunity | null>(
-    null
-  );
+  const [selectedJob, setSelectedJob] = useState<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     dispatch(fetchRecommendedPosts());
   }, [dispatch]);
 
-  useEffect(() => {
-    console.log("Recommended opportunities data updated:", recommendedPosts);
-  }, [recommendedPosts]);
-
-  const handleOpen = async (row: RecommendedOpportunity) => {
+  const handleOpen = async (row: any) => {
     setSelectedJob(row);
   };
 
@@ -175,7 +130,29 @@ export default function RecommendedOpportunities() {
         </Box>
       </Box>
 
-      {recommendedPosts && recommendedPosts.length === 0 && (
+      {loading && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            py: 6,
+            px: 3,
+            backgroundColor: "rgba(131, 16, 255, 0.02)",
+            borderRadius: "8px",
+            border: "1px solid rgba(98, 111, 134, 0.18)",
+            textAlign: "center",
+          }}
+        >
+          {" "}
+          <CircularProgress
+            sx={{ color: "rgba(131, 16, 255, 1)", mb: 3 }}
+          />{" "}
+        </Box>
+      )}
+
+      {!loading && recommendedPosts && recommendedPosts.length === 0 && (
         <Box
           sx={{
             display: "flex",
@@ -240,7 +217,7 @@ export default function RecommendedOpportunities() {
           </Typography>
         </Box>
       )}
-      {recommendedPosts && recommendedPosts.length > 0 && (
+      {!loading && recommendedPosts && recommendedPosts.length > 0 && (
         <Box
           ref={scrollContainerRef}
           sx={{
@@ -260,7 +237,7 @@ export default function RecommendedOpportunities() {
             const salaryData = item?.jobDetails?.salary;
             if (salaryData) {
               const { currency, min, max } = salaryData;
-              salary = `${currency}${min.toLocaleString()}-${max.toLocaleString()}`;
+              salary = `${currency}${min.toLocaleString()}-${currency}${max.toLocaleString()}`;
             }
             const skills =
               item?.skillAnalysis?.requiredSkills?.map((skill) => skill.name) ||
@@ -278,7 +255,7 @@ export default function RecommendedOpportunities() {
                   p: 3,
                   borderRadius: 2,
                   background: "#ffffff",
-                  border: "1px solid #E0E0E0",
+                  border: "1px solid rgba(228, 229, 232, 1)",
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
                   position: "relative",
                   cursor: "pointer",
@@ -287,7 +264,6 @@ export default function RecommendedOpportunities() {
                   flexDirection: "column",
                   justifyContent: "space-between",
                   "&:hover": {
-                    transform: "translateY(-2px)",
                     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
                   },
                 }}
@@ -299,12 +275,12 @@ export default function RecommendedOpportunities() {
                     <Typography
                       variant="h6"
                       sx={{
-                        fontWeight: 700,
-                        color: "#000000",
-                        fontSize: "1.125rem",
-                        mb: 2,
-                        pr: 4,
-                        lineHeight: 1.3,
+                        color: "rgba(24, 25, 28, 1)",
+                        fontWeight: 500,
+                        fontSize: "18px",
+                        lineHeight: "28px",
+                        letterSpacing: "0%",
+                        mb: 0.5,
                       }}
                     >
                       {item?.jobDetails?.title}
@@ -323,15 +299,17 @@ export default function RecommendedOpportunities() {
                     >
                       {item?.jobDetails?.employmentType && (
                         <Chip
-                          label={item?.jobDetails?.employmentType}
+                          label={item?.jobDetails?.employmentType.toUpperCase()}
                           size="small"
                           sx={{
-                            backgroundColor: "#4CAF50",
-                            color: "#ffffff",
+                            backgroundColor: "rgba(231, 246, 234, 1)",
+                            color: "rgba(11, 160, 44, 1)",
                             fontWeight: 600,
-                            fontSize: "0.75rem",
-                            height: 24,
-                            borderRadius: 1,
+                            fontSize: "12px",
+                            height: "12px",
+                            borderRadius: "33px",
+                            px: 0.5,
+                            py: 1.5,
                           }}
                         />
                       )}
@@ -339,8 +317,10 @@ export default function RecommendedOpportunities() {
                         <Typography
                           variant="body2"
                           sx={{
-                            color: "#666666",
-                            fontSize: "0.875rem",
+                            color: "rgba(118, 127, 140, 1)",
+                            fontSize: "14px",
+                            fontWeight: 400,
+                            lineHeight: "20px",
                           }}
                         >
                           Salary: {salary}

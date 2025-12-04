@@ -7,6 +7,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import EmailIcon from "@mui/icons-material/Email";
 import WorkIcon from "@mui/icons-material/Work";
 import SchoolIcon from "@mui/icons-material/School";
+import Image from "next/image";
 
 type WelcomeHeaderProps = {
   profile: any;
@@ -222,7 +223,7 @@ export default function WelcomeHeader({
 
           <Button
             variant="outlined"
-            startIcon={<PersonIcon />}
+            startIcon={<Image src='/icons/cv.svg' alt='cv' width={16} height={16} />}
             onClick={onHrInterview}
             disabled={quota >= 5}
             sx={{
@@ -252,7 +253,7 @@ export default function WelcomeHeader({
 
           <Button
             variant="outlined"
-            startIcon={<DescriptionIcon />}
+            startIcon={<Image src='/icons/cv.svg' alt='cv' width={16} height={16} />}
             onClick={onCvBuilder}
             sx={{
               border: "0.76px solid rgba(25, 25, 25, 1)",
