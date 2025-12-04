@@ -184,46 +184,84 @@ function calculateSalaryScore(
   jobDetails,
   candidateProfile,
   EXCHANGE_RATES,
-  MAX_SALARY_SCORE
+  MAX_SALARY_SCORE,
+  // ratesArePerUSD = true  => EXCHANGE_RATES[c] = amount of currency per 1 USD (ex: TND:2.94)
+  // ratesArePerUSD = false => EXCHANGE_RATES[c] = amount of USD per 1 currency (ex: EUR:1.16)
+  ratesArePerUSD = true
 ) {
   console.log("\n--- Salary Score Calculation ---");
 
+  const jobSalary = jobDetails?.salary || {};
+  const candidateSalary = candidateProfile?.expectedSalary || {};
   let salaryScore = 0;
-  const jobSalary = jobDetails.salary || {};
-  const candidateSalary = candidateProfile.expectedSalary || {};
 
-  if (
+  function convertToUSD(amount, currency) {
+    if (amount == null || !currency) return null;
+
+    const rate = EXCHANGE_RATES && EXCHANGE_RATES[currency];
+    if (rate == null || rate === 0) {
+      console.warn(`[convertToUSD] Missing or invalid rate for currency=${currency}`);
+      return null;
+    }
+
+    // Si ratesArePerUSD === true => EXCHANGE_RATES[currency] = currency per 1 USD
+    // Exemple: TND: 2.945439 (1 USD = 2.945439 TND) => USD = amount / rate
+    if (ratesArePerUSD) {
+      return amount / rate;
+    }
+
+    // Sinon EXCHANGE_RATES[currency] = USD per 1 currency => USD = amount * rate
+    return amount * rate;
+  }
+
+  const requiredFieldsPresent =
     jobSalary.min != null &&
     jobSalary.max != null &&
+    jobSalary.currency &&
     candidateSalary.min != null &&
-    candidateSalary.max != null
+    candidateSalary.max != null &&
+    candidateSalary.currency;
+
+  if (!requiredFieldsPresent) {
+    console.log("Salary score skipped (missing min/max or currency)");
+    return 0;
+  }
+
+  const jobMinUSD = convertToUSD(jobSalary.min, jobSalary.currency);
+  const jobMaxUSD = convertToUSD(jobSalary.max, jobSalary.currency);
+  const candidateMinUSD = convertToUSD(candidateSalary.min, candidateSalary.currency);
+  const candidateMaxUSD = convertToUSD(candidateSalary.max, candidateSalary.currency);
+
+  if (
+    jobMinUSD == null ||
+    jobMaxUSD == null ||
+    candidateMinUSD == null ||
+    candidateMaxUSD == null
   ) {
-    const jobMinUSD = jobSalary.min * (EXCHANGE_RATES[jobSalary.currency] || 1);
-    const jobMaxUSD = jobSalary.max * (EXCHANGE_RATES[jobSalary.currency] || 1);
-    const candidateMinUSD =
-      candidateSalary.min * (EXCHANGE_RATES[candidateSalary.currency] || 1);
-    const candidateMaxUSD =
-      candidateSalary.max * (EXCHANGE_RATES[candidateSalary.currency] || 1);
-
-    console.log(
-      `Converted salaries to USD | Job: ${jobMinUSD}-${jobMaxUSD} | Candidate: ${candidateMinUSD}-${candidateMaxUSD}`
-    );
-
-    const overlapMin = Math.max(candidateMinUSD, jobMinUSD);
-    const overlapMax = Math.min(candidateMaxUSD, jobMaxUSD);
-
-    if (overlapMax > overlapMin) {
-      const overlap = overlapMax - overlapMin;
-      const jobRange = jobMaxUSD - jobMinUSD;
-      salaryScore = (overlap / jobRange) * MAX_SALARY_SCORE;
-    }
+    console.log("Salary score skipped (could not convert one of the currencies)");
+    return 0;
   }
 
   console.log(
-    `Salary score (${MAX_SALARY_SCORE}% max): ${salaryScore.toFixed(1)}`
+    `Converted salaries to USD | Job: ${jobMinUSD}-${jobMaxUSD} | Candidate: ${candidateMinUSD}-${candidateMaxUSD}`
   );
+
+  const overlapMin = Math.max(candidateMinUSD, jobMinUSD);
+  const overlapMax = Math.min(candidateMaxUSD, jobMaxUSD);
+
+  if (overlapMax > overlapMin) {
+    const overlap = overlapMax - overlapMin;
+    const jobRange = jobMaxUSD - jobMinUSD;
+
+    salaryScore = jobRange > 0 ? (overlap / jobRange) * MAX_SALARY_SCORE : MAX_SALARY_SCORE;
+  } else {
+    // pas de chevauchement => salaireScore reste 0
+  }
+
+  console.log(`Salary score (${MAX_SALARY_SCORE}% max): ${salaryScore.toFixed(1)}`);
   return salaryScore;
 }
+
 
 /* ------------------------------------------------
    4️⃣ Work Mode Score

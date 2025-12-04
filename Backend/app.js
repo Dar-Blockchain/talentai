@@ -61,6 +61,7 @@ require("dotenv").config();
 
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
+require("./cron/DailyExchangeRateUpdate");
 
 // Stripe payment routes
 
