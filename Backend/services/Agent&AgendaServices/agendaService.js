@@ -20,21 +20,37 @@ function normalizeSkillName(name) {
 }
 
 async function computeMatches(jobPostId, idCompany) {
+  console.log(`\n🔍 [computeMatches] Starting - JobPostId: ${jobPostId}, Company: ${idCompany}`);
+  
   const candidates = await Profile.find({ type: "Candidate" })
     .populate("userId", "username email")
     .populate("companyBid.company", "username email")
     .select("userId skills companyDetails.name companyBid")
     .lean();
 
+  console.log(`   📦 Found ${candidates.length} candidate(s)`);
+
   const jobPost = await JobPost.findById(jobPostId)
     .select("skillAnalysis.requiredSkills jobDetails")
     .lean();
 
-  if (!jobPost || !jobPost.skillAnalysis) return [];
+  console.log(`   📋 Job Post loaded: ${jobPost ? "✓" : "✗"}`);
+
+  if (!jobPost || !jobPost.skillAnalysis) {
+    console.log(`   ❌ Job post or skillAnalysis not found, returning empty array`);
+    return [];
+  }
 
   const requiredSkills = (jobPost.skillAnalysis.requiredSkills || [])
     .filter((s) => s && s.name)
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+  console.log(`   🎯 Required Skills: ${requiredSkills.map(s => s.name).join(", ")}`);
+  console.log(`   📊 Job Details:`);
+  console.log(`      - Title: ${jobPost.jobDetails?.title}`);
+  console.log(`      - Salary: ${JSON.stringify(jobPost.jobDetails?.salary)}`);
+  console.log(`      - Location: ${jobPost.jobDetails?.location}`);
+  console.log(`      - Employment Type: ${jobPost.jobDetails?.employmentType}\n`);
 
   const matchesPromises = candidates.map(async (candidate) => {
     if (!candidate.userId) return null;
@@ -42,6 +58,9 @@ async function computeMatches(jobPostId, idCompany) {
     const candidateSkills = (candidate.skills || [])
       .filter((s) => s && s.name)
       .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+    console.log(`   👤 Candidate: ${candidate.userId.username}`);
+    console.log(`      - Skills: ${candidateSkills.map(s => s.name).join(", ")}`);
 
     const score = await calculateMatchScore(
       requiredSkills,
@@ -51,6 +70,8 @@ async function computeMatches(jobPostId, idCompany) {
       idCompany, // <-- ici l'id correct
       jobPostId
     );
+
+    console.log(`      - Score: ${score}\n`);
 
     if (!score || score.score === 0) return null;
 
@@ -71,6 +92,8 @@ async function computeMatches(jobPostId, idCompany) {
   const matches = (await Promise.all(matchesPromises))
     .filter((m) => m)
     .sort((a, b) => b.score - a.score);
+
+  console.log(`   ✅ [computeMatches] Completed - ${matches.length} match(es) found\n`);
 
   return { jobTitle: jobPost.jobDetails?.title || "Unknown", matches };
 }
