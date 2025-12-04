@@ -27,7 +27,7 @@ async function computeMatches(jobPostId) {
     .lean();
 
   const jobPost = await JobPost.findById(jobPostId)
-    .select("skillAnalysis.requiredSkills jobDetails.title")
+    .select("skillAnalysis.requiredSkills jobDetails.title user")
     .lean();
 
   if (!jobPost || !jobPost.skillAnalysis) return [];
@@ -43,8 +43,9 @@ async function computeMatches(jobPostId) {
         .filter((s) => s && s.name)
         .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-      const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
-
+      //const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
+      const score = calculateSkillMatchScore(requiredSkills,candidateSkills,jobPost.jobDetails,candidate,jobPost.user,jobPostId);
+      
       return {
         candidateId: candidate.userId._id,
         name: candidate.userId.username || "Anonymous",
@@ -232,7 +233,7 @@ async function initializeAgenda() {
     }
 
     await agendaInstance.every(
-      "0 0 * * *",
+      "52 11 * * *",
       "agent:heartbeat",
       {},
       {
