@@ -38,6 +38,8 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import ErrorIcon from '@mui/icons-material/Error';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WarningIcon from '@mui/icons-material/Warning';
 import ProcessingIcon from '@mui/icons-material/Autorenew';
 import ReadyIcon from '@mui/icons-material/CheckCircle';
 import TimerIcon from '@mui/icons-material/Timer';
@@ -619,6 +621,11 @@ const IntelligentInterviewTest = () => {
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [realTimeReport, setRealTimeReport] = useState<RealTimeReport | null>(null);
 
+  // Interview Timer States
+  const [elapsedTime, setElapsedTime] = useState(0); // in seconds
+  const [timeWarning, setTimeWarning] = useState(false);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Audio and Recording States
   const [isRecording, setIsRecording] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -698,7 +705,6 @@ const IntelligentInterviewTest = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('info');
   const [duration, setDuration] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
 
   // Debug States
   const [debugMode, setDebugMode] = useState(false);
@@ -1332,6 +1338,34 @@ const IntelligentInterviewTest = () => {
       setInterviewStatus('active');
       setDuration(data.config.duration * 60 * 1000); // Convert to milliseconds
 
+      // Start elapsed time timer
+      setElapsedTime(0);
+      setTimeWarning(false);
+
+      // Clear any existing timer
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+
+      // Start new timer
+      const maxMinutes = data.config.duration || 20;
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime(prev => {
+          const newTime = prev + 1;
+
+          // Show warning at 2 minutes remaining
+          const remainingMinutes = maxMinutes - (newTime / 60);
+          if (remainingMinutes <= 2 && !timeWarning) {
+            setTimeWarning(true);
+            showNotification('2 minutes remaining', 'warning');
+          }
+
+          return newTime;
+        });
+      }, 1000);
+
+      console.log(`⏱️ Interview timer started (max: ${maxMinutes} minutes)`);
+
       // Configure backend silence intelligence
       if (data.config.silenceIntelligence) {
         setBackendSilenceConfig(data.config.silenceIntelligence);
@@ -1437,6 +1471,13 @@ const IntelligentInterviewTest = () => {
       console.log('🏁 Interview ended:', data);
       setInterviewStatus('ended');
       setIsRecording(false);
+
+      // Stop the timer
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+
       showNotification('Interview completed!', 'success');
 
       // Store session ID for results page
@@ -2865,6 +2906,27 @@ const IntelligentInterviewTest = () => {
                   fontWeight: 500
                 }}
               />
+
+              {/* Timer Chip - Only show when interview is active */}
+              {interviewStatus === 'active' && (
+                <Chip
+                  icon={timeWarning ? <WarningIcon /> : <AccessTimeIcon />}
+                  label={`${Math.floor(elapsedTime / 60)}:${String(elapsedTime % 60).padStart(2, '0')}`}
+                  color={timeWarning ? 'warning' : 'default'}
+                  variant="filled"
+                  sx={{
+                    color: 'white',
+                    bgcolor: timeWarning ? 'rgba(255, 152, 0, 0.4)' : 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: 500,
+                    fontFamily: 'monospace',
+                    fontSize: '1rem'
+                  }}
+                />
+              )}
+
               {interviewStatus === 'active' && (
                 <Chip
                   icon={

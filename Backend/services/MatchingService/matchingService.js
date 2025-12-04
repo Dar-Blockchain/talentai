@@ -1,7 +1,5 @@
-// services/MatchingService/matchingService.js
-
-const { getMatchingConfig } = require('./matchingConfigService');
-const UnlockCandidate = require('../../models/UnlockCandidateModel');
+const { getMatchingConfig } = require("./matchingConfigService");
+const UnlockCandidate = require("../../models/UnlockCandidateModel");
 
 const LEVELS = {
   Beginner: 1,
@@ -15,19 +13,27 @@ const LEVELS = {
   5: 5,
 };
 
-
 function convertLevelToNumber(level) {
   return LEVELS[level] || 1;
 }
+
 function normalizeSkillName(name) {
   if (!name) return "";
   const part = name.split(".")[0].trim();
   return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 }
 
-// 0️⃣ Hard Skills
-function calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT, MAX_HARD_SKILL_SCORE) {
+/* ------------------------------------------------
+   0️⃣ Hard Skills Score
+------------------------------------------------ */
+function calculateHardSkillsScore(
+  jobSkills,
+  candidateSkills,
+  IMPORTANCE_WEIGHT,
+  MAX_HARD_SKILL_SCORE
+) {
   console.log("\n--- Hard Skills Calculation ---");
+
   let hardSkillScore = 0;
   const totalPercentage = jobSkills.reduce(
     (sum, s) => sum + (s.percentage || 0),
@@ -46,35 +52,55 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT,
     const candidateSkill = candidateSkills.find(
       (s) => s.name?.toLowerCase() === jobSkill.name?.toLowerCase()
     );
+
     if (candidateSkill) {
       const jobLevel = convertLevelToNumber(jobSkill.level);
       const candidateLevel =
         candidateSkill.Levelconfirmed ||
         convertLevelToNumber(candidateSkill.proficiencyLevel);
+
       const importanceWeight = IMPORTANCE_WEIGHT[jobSkill.importance] || 1;
 
-      const skillScore =
-        Math.min((candidateLevel / jobLevel) * 100, 100) * importanceWeight;
-      hardSkillScore += skillScore * jobSkill.weight;
+      const rawScore = Math.min((candidateLevel / jobLevel) * 100, 100);
+      const weightedScore = rawScore * importanceWeight;
+      hardSkillScore += weightedScore * jobSkill.weight;
 
       console.log(
         `Matched skill: ${
           jobSkill.name
         } | CandidateLevel: ${candidateLevel} | JobLevel: ${jobLevel} | Importance: ${
           jobSkill.importance
-        } | WeightedScore: ${(skillScore * jobSkill.weight).toFixed(2)}`
+        } | WeightedScore: ${(weightedScore * jobSkill.weight).toFixed(2)}`
       );
     }
   });
 
-  hardSkillScore = Math.min((hardSkillScore / 100) * MAX_HARD_SKILL_SCORE, MAX_HARD_SKILL_SCORE);
-  console.log(`Hard skill score (${MAX_HARD_SKILL_SCORE}% max):`, hardSkillScore);
-  return hardSkillScore;
+  const finalScore = Math.min(
+    (hardSkillScore / 100) * MAX_HARD_SKILL_SCORE,
+    MAX_HARD_SKILL_SCORE
+  );
+  console.log(`Hard skill score (${MAX_HARD_SKILL_SCORE}% max): ${finalScore}`);
+
+  return finalScore;
 }
 
-// 1️⃣ Bis — Soft Skills
-function calculateSoftSkillsScore(jobSoftSkills, candidateSoftSkills, MAX_SOFT_SKILL_SCORE) {
+/* ------------------------------------------------
+   1️⃣ Soft Skills Score
+------------------------------------------------ */
+function calculateSoftSkillsScore(
+  jobSoftSkills,
+  candidateSoftSkills,
+  MAX_SOFT_SKILL_SCORE
+) {
   console.log("\n--- Soft Skills Calculation ---");
+  console.log(
+    "Job soft skills:",
+    jobSoftSkills.map((s) => s.name)
+  );
+  console.log(
+    "Candidate soft skills:",
+    candidateSoftSkills.map((s) => s.name)
+  );
 
   if (!jobSoftSkills?.length || !candidateSoftSkills?.length) {
     console.log("No soft skills provided.");
@@ -87,118 +113,211 @@ function calculateSoftSkillsScore(jobSoftSkills, candidateSoftSkills, MAX_SOFT_S
     const match = candidateSoftSkills.find(
       (s) => s.name?.toLowerCase() === jobSoft.name?.toLowerCase()
     );
-
     if (match) {
       matchCount++;
       console.log(`Matched soft skill: ${jobSoft.name}`);
     }
   });
 
-  const softSkillScore = (matchCount / jobSoftSkills.length) * MAX_SOFT_SKILL_SCORE;
-
-  console.log(`Soft skill score (${MAX_SOFT_SKILL_SCORE}% max):`, softSkillScore.toFixed(2));
+  const softSkillScore =
+    (matchCount / jobSoftSkills.length) * MAX_SOFT_SKILL_SCORE;
+  console.log(
+    `Soft skill score (${MAX_SOFT_SKILL_SCORE}% max):`,
+    softSkillScore.toFixed(2)
+  );
   return softSkillScore;
 }
 
-
-// 2️⃣ Experience
-function calculateExperienceScore(jobSkills, candidateSkills, MAX_EXPERIENCE_SCORE) {
+/* ------------------------------------------------
+   2️⃣ Experience Score
+------------------------------------------------ */
+function calculateExperienceScore(
+  jobSkills,
+  candidateSkills,
+  MAX_EXPERIENCE_SCORE
+) {
   console.log("\n--- Experience Score Calculation ---");
-  let totalExpScore = 0,
-    skillCount = 0;
+
+  let totalExpScore = 0;
+  let skillCount = 0;
 
   jobSkills.forEach((jobSkill) => {
     const candidateSkill = candidateSkills.find(
       (s) => s.name?.toLowerCase() === jobSkill.name?.toLowerCase()
     );
+
     if (candidateSkill) {
       const jobLevel = convertLevelToNumber(jobSkill.level);
       const candidateLevel =
         candidateSkill.Levelconfirmed ||
         convertLevelToNumber(candidateSkill.proficiencyLevel);
 
-      let skillExpScore = 0;
-      if (candidateLevel >= jobLevel) skillExpScore = 10;
-      else if (candidateLevel === jobLevel - 1) skillExpScore = 5;
+      let score = 0;
+      if (candidateLevel >= jobLevel) score = 10;
+      else if (candidateLevel === jobLevel - 1) score = 5;
 
-      totalExpScore += skillExpScore;
+      totalExpScore += score;
       skillCount++;
+
       console.log(
-        `Experience score for skill ${jobSkill.name}: ${skillExpScore} | CandidateLevel: ${candidateLevel} | JobLevel: ${jobLevel}`
+        `Experience score for ${jobSkill.name}: ${score} | CandidateLevel: ${candidateLevel} | JobLevel: ${jobLevel}`
       );
     }
   });
 
-  const experienceScore = skillCount > 0 ? (totalExpScore / skillCount) * (MAX_EXPERIENCE_SCORE / 10) : 0;
-  console.log(`Total Experience Score (${MAX_EXPERIENCE_SCORE}% max):`, experienceScore);
-  return experienceScore;
+  const finalScore =
+    skillCount > 0
+      ? (totalExpScore / skillCount) * (MAX_EXPERIENCE_SCORE / 10)
+      : 0;
+
+  console.log(
+    `Total Experience Score (${MAX_EXPERIENCE_SCORE}% max): ${finalScore}`
+  );
+
+  return finalScore;
 }
 
-// 3️⃣ Salary
-function calculateSalaryScore(jobDetails, candidateProfile, EXCHANGE_RATES, MAX_SALARY_SCORE) {
+/* ------------------------------------------------
+   3️⃣ Salary Score
+------------------------------------------------ */
+function calculateSalaryScore(
+  jobDetails,
+  candidateProfile,
+  EXCHANGE_RATES,
+  MAX_SALARY_SCORE,
+  // ratesArePerUSD = true  => EXCHANGE_RATES[c] = amount of currency per 1 USD (ex: TND:2.94)
+  // ratesArePerUSD = false => EXCHANGE_RATES[c] = amount of USD per 1 currency (ex: EUR:1.16)
+  ratesArePerUSD = true
+) {
   console.log("\n--- Salary Score Calculation ---");
-  let salaryScore = 0;
-  const jobSalary = jobDetails.salary || {};
-  const candidateSalary = candidateProfile.expectedSalary || {};
 
-  if (
+  const jobSalary = jobDetails?.salary || {};
+  const candidateSalary = candidateProfile?.expectedSalary || {};
+  let salaryScore = 0;
+
+  function convertToUSD(amount, currency) {
+    if (amount == null || !currency) return null;
+
+    const rate = EXCHANGE_RATES && EXCHANGE_RATES[currency];
+    if (rate == null || rate === 0) {
+      console.warn(`[convertToUSD] Missing or invalid rate for currency=${currency}`);
+      return null;
+    }
+
+    // Si ratesArePerUSD === true => EXCHANGE_RATES[currency] = currency per 1 USD
+    // Exemple: TND: 2.945439 (1 USD = 2.945439 TND) => USD = amount / rate
+    if (ratesArePerUSD) {
+      return amount / rate;
+    }
+
+    // Sinon EXCHANGE_RATES[currency] = USD per 1 currency => USD = amount * rate
+    return amount * rate;
+  }
+
+  const requiredFieldsPresent =
     jobSalary.min != null &&
     jobSalary.max != null &&
+    jobSalary.currency &&
     candidateSalary.min != null &&
-    candidateSalary.max != null
+    candidateSalary.max != null &&
+    candidateSalary.currency;
+
+  if (!requiredFieldsPresent) {
+    console.log("Salary score skipped (missing min/max or currency)");
+    return 0;
+  }
+
+  const jobMinUSD = convertToUSD(jobSalary.min, jobSalary.currency);
+  const jobMaxUSD = convertToUSD(jobSalary.max, jobSalary.currency);
+  const candidateMinUSD = convertToUSD(candidateSalary.min, candidateSalary.currency);
+  const candidateMaxUSD = convertToUSD(candidateSalary.max, candidateSalary.currency);
+
+  if (
+    jobMinUSD == null ||
+    jobMaxUSD == null ||
+    candidateMinUSD == null ||
+    candidateMaxUSD == null
   ) {
-    const jobMinUSD = jobSalary.min * (EXCHANGE_RATES[jobSalary.currency] || 1);
-    const jobMaxUSD = jobSalary.max * (EXCHANGE_RATES[jobSalary.currency] || 1);
-    const candidateMinUSD = candidateSalary.min * (EXCHANGE_RATES[candidateSalary.currency] || 1);
-    const candidateMaxUSD = candidateSalary.max * (EXCHANGE_RATES[candidateSalary.currency] || 1);
+    console.log("Salary score skipped (could not convert one of the currencies)");
+    return 0;
+  }
 
-    console.log(
-      `Converted salaries to USD | Job: ${jobMinUSD}-${jobMaxUSD} | Candidate: ${candidateMinUSD}-${candidateMaxUSD}`
-    );
-    const overlapMin = Math.max(candidateMinUSD, jobMinUSD);
-    const overlapMax = Math.min(candidateMaxUSD, jobMaxUSD);
+  console.log(
+    `Converted salaries to USD | Job: ${jobMinUSD}-${jobMaxUSD} | Candidate: ${candidateMinUSD}-${candidateMaxUSD}`
+  );
 
-    if (overlapMax > overlapMin) {
-      const overlap = overlapMax - overlapMin;
-      const jobRange = jobMaxUSD - jobMinUSD;
-      salaryScore = (overlap / jobRange) * MAX_SALARY_SCORE;
-    }
+  const overlapMin = Math.max(candidateMinUSD, jobMinUSD);
+  const overlapMax = Math.min(candidateMaxUSD, jobMaxUSD);
+
+  if (overlapMax > overlapMin) {
+    const overlap = overlapMax - overlapMin;
+    const jobRange = jobMaxUSD - jobMinUSD;
+
+    salaryScore = jobRange > 0 ? (overlap / jobRange) * MAX_SALARY_SCORE : MAX_SALARY_SCORE;
+  } else {
+    // pas de chevauchement => salaireScore reste 0
   }
 
   console.log(`Salary score (${MAX_SALARY_SCORE}% max): ${salaryScore.toFixed(1)}`);
   return salaryScore;
 }
 
-// 4️⃣ Work Mode
-function calculateWorkModeScore(jobDetails, candidateProfile, MAX_WORKMODE_SCORE) {
+
+/* ------------------------------------------------
+   4️⃣ Work Mode Score
+------------------------------------------------ */
+function calculateWorkModeScore(
+  jobDetails,
+  candidateProfile,
+  MAX_WORKMODE_SCORE
+) {
   console.log("\n--- Work Mode Score ---");
-  let score = 0;
-  if (jobDetails.employmentType && candidateProfile.workModePreference) {
-    score = jobDetails.location.toLowerCase() === candidateProfile.workModePreference.toLowerCase() ? MAX_WORKMODE_SCORE : MAX_WORKMODE_SCORE / 2;
-  }
+
+  if (!jobDetails.location || !candidateProfile.workModePreference) return 0;
+
+  const score =
+    jobDetails.location.toLowerCase() ===
+    candidateProfile.workModePreference.toLowerCase()
+      ? MAX_WORKMODE_SCORE
+      : MAX_WORKMODE_SCORE / 2;
+
   console.log(`WorkMode score (${MAX_WORKMODE_SCORE}% max): ${score}`);
   return score;
 }
 
-// 5️⃣ Contract
-function calculateContractScore(jobDetails, candidateProfile, MAX_CONTRACT_SCORE) {
+/* ------------------------------------------------
+   5️⃣ Contract Score
+------------------------------------------------ */
+function calculateContractScore(
+  jobDetails,
+  candidateProfile,
+  MAX_CONTRACT_SCORE
+) {
   console.log("\n--- Contract Type Score ---");
-  let score = 0;
-  if (jobDetails.employmentType && candidateProfile.preferredContractType) {
-    score = jobDetails.employmentType.toLowerCase() === candidateProfile.preferredContractType.toLowerCase() ? MAX_CONTRACT_SCORE : 0;
-  }
+
+  if (!jobDetails.employmentType || !candidateProfile.preferredContractType)
+    return 0;
+
+  const score =
+    jobDetails.employmentType.toLowerCase() ===
+    candidateProfile.preferredContractType.toLowerCase()
+      ? MAX_CONTRACT_SCORE
+      : 0;
+
   console.log(`Contract score (${MAX_CONTRACT_SCORE}% max): ${score}`);
   return score;
 }
 
-// 6️⃣ Check if candidate is already unlocked by company
+/* ------------------------------------------------
+   6️⃣ Check if unlocked
+------------------------------------------------ */
 async function checkIfCandidateUnlocked(idCompany, idCandidate) {
-  try {
-    const unlocked = await UnlockCandidate.findOne({
-      idCompany,
-      idCandidate,
-    });
+  console.log("\n--- Checking Unlock Status ---");
 
+  try {
+    const unlocked = await UnlockCandidate.findOne({ idCompany, idCandidate });
+
+    console.log(`Candidate is ${unlocked ? "UNLOCKED" : "LOCKED"}`);
     return !!unlocked;
   } catch (error) {
     console.error("Error checking unlock status:", error);
@@ -206,8 +325,9 @@ async function checkIfCandidateUnlocked(idCompany, idCandidate) {
   }
 }
 
-
-// Fonction principale
+/* ------------------------------------------------
+   MAIN FUNCTION
+------------------------------------------------ */
 async function calculateMatchScore(
   jobSkills,
   candidateSkills,
@@ -216,7 +336,10 @@ async function calculateMatchScore(
   idCompany,
   jobPostId
 ) {
-  console.log("\n=== Matching Candidate ===");
+  console.log("============================================");
+  console.log("⚡ MATCHING PROCESS STARTED");
+  console.log("============================================");
+
   console.log(
     "Job required skills:",
     jobSkills.map((s) => s.name)
@@ -226,8 +349,12 @@ async function calculateMatchScore(
     candidateSkills.map((s) => s.name)
   );
 
-  if (!jobSkills?.length || !candidateSkills?.length) return 0;
-  // Check if candidate is already unlocked by same company for same job
+  if (!jobSkills?.length || !candidateSkills?.length) {
+    console.log("❌ Missing skills → Score = 0");
+    return 0;
+  }
+
+  // Unlock check
   let unlocked = false;
 
   if (idCompany && candidateProfile.userId?._id) {
@@ -237,35 +364,83 @@ async function calculateMatchScore(
     );
   }
 
-
-  // Load dynamic config
+  console.log("\n--- Loading Matching Configuration ---");
   const cfg = await getMatchingConfig(idCompany, jobPostId);
+  console.log("✓ Config loaded.");
+
   const MAX_HARD_SKILL_SCORE = cfg.weights.hardSkill;
   const MAX_SOFT_SKILL_SCORE = cfg.weights.SoftSkill;
   const MAX_EXPERIENCE_SCORE = cfg.weights.experience;
   const MAX_SALARY_SCORE = cfg.weights.salary;
   const MAX_WORKMODE_SCORE = cfg.weights.workMode;
   const MAX_CONTRACT_SCORE = cfg.weights.contract;
-  const IMPORTANCE_WEIGHT = cfg.importanceWeight ;
+
+  const IMPORTANCE_WEIGHT = cfg.importanceWeight;
   const EXCHANGE_RATES = cfg.exchangeRates || { USD: 1, EUR: 1.1, TND: 0.32 };
 
-  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT, MAX_HARD_SKILL_SCORE);
+  const hardSkillScore = calculateHardSkillsScore(
+    jobSkills,
+    candidateSkills,
+    IMPORTANCE_WEIGHT,
+    MAX_HARD_SKILL_SCORE
+  );
+
   if (hardSkillScore === 0) {
-    console.log("❌ Candidate eliminated: no matching hard skills");
+    console.log("❌ Candidate eliminated: no hard skill match");
     return 0;
   }
 
-  const experienceScore = calculateExperienceScore(jobSkills, candidateSkills, MAX_EXPERIENCE_SCORE);
-  const salaryScore = calculateSalaryScore(jobDetails, candidateProfile, EXCHANGE_RATES, MAX_SALARY_SCORE);
-  const workModeScore = calculateWorkModeScore(jobDetails, candidateProfile, MAX_WORKMODE_SCORE);
-  const contractScore = calculateContractScore(jobDetails, candidateProfile, MAX_CONTRACT_SCORE);
+  const softSkillScore = calculateSoftSkillsScore(
+    jobDetails.skillAnalysis?.softSkills || [],
+    candidateProfile.softSkills || [],
+    MAX_SOFT_SKILL_SCORE
+  );
 
-  const totalScore = hardSkillScore + experienceScore + salaryScore + workModeScore + contractScore;
-  console.log("\n✅ Total Match Score:", totalScore.toFixed(1));
-return {
-  score: Math.round(totalScore * 10) / 10,
-  unlocked
-};
+  const experienceScore = calculateExperienceScore(
+    jobSkills,
+    candidateSkills,
+    MAX_EXPERIENCE_SCORE
+  );
+
+  const salaryScore = calculateSalaryScore(
+    jobDetails,
+    candidateProfile,
+    EXCHANGE_RATES,
+    MAX_SALARY_SCORE
+  );
+
+  const workModeScore = calculateWorkModeScore(
+    jobDetails,
+    candidateProfile,
+    MAX_WORKMODE_SCORE
+  );
+
+  const contractScore = calculateContractScore(
+    jobDetails,
+    candidateProfile,
+    MAX_CONTRACT_SCORE
+  );
+
+  const totalScore =
+    hardSkillScore +
+    softSkillScore +
+    experienceScore +
+    salaryScore +
+    workModeScore +
+    contractScore;
+
+  const finalScore = Math.round(totalScore * 10) / 10;
+
+  console.log("\n============================================");
+  console.log(`🏁 FINAL SCORE = ${finalScore}`);
+  console.log(`🔓 UNLOCKED = ${unlocked}`);
+  console.log("============================================");
+
+  return { score: finalScore, unlocked };
 }
 
-module.exports = { calculateMatchScore, normalizeSkillName, checkIfCandidateUnlocked };
+module.exports = {
+  calculateMatchScore,
+  normalizeSkillName,
+  checkIfCandidateUnlocked,
+};

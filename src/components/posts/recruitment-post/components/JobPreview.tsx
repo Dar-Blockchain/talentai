@@ -34,6 +34,7 @@ interface JobPreviewProps {
   hasSharedToLinkedIn: boolean;
   linkedinCopySuccess: boolean;
   jobPostError: string;
+  matchingConfig?: any;
 }
 
 const JobPreview: React.FC<JobPreviewProps> = ({
@@ -49,8 +50,15 @@ const JobPreview: React.FC<JobPreviewProps> = ({
   hasSharedToLinkedIn,
   linkedinCopySuccess,
   jobPostError,
+  matchingConfig,
 }) => {
   useEffect(()=> {console.log(editedJob, "editedJob")}, [editedJob])
+
+  useEffect(() => {
+    console.log('JobPreview matchingConfig:', matchingConfig);
+    console.log('Has weights?', matchingConfig?.weights);
+    console.log('Condition check:', matchingConfig && matchingConfig.weights);
+  }, [matchingConfig]);
   if (jobPostError) {
     return (
       <Box sx={{ p: 3 }}>
@@ -390,6 +398,107 @@ const JobPreview: React.FC<JobPreviewProps> = ({
           />
         )}
 
+        {/* Matching Configuration - Weights Only */}
+        {matchingConfig && matchingConfig.weights && (
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="h6"
+              sx={{ color: "#0F172A", mb: 2, fontWeight: 700 }}
+            >
+              Matching Weights
+            </Typography>
+            <Box
+              sx={{
+                p: 2.5,
+                backgroundColor: "#f0f9ff",
+                borderRadius: 2,
+                border: "1px solid #bae6fd",
+              }}
+            >
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: "white",
+                  borderRadius: 1.5,
+                  border: "1px solid #e0e7ff"
+                }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "#64748b", mb: 0.5 }}>
+                    Hard Skills
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }}>
+                    {matchingConfig.weights.hardSkill}%
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: "white",
+                  borderRadius: 1.5,
+                  border: "1px solid #e0e7ff"
+                }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "#64748b", mb: 0.5 }}>
+                    Soft Skills
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }}>
+                    {matchingConfig.weights.SoftSkill}%
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: "white",
+                  borderRadius: 1.5,
+                  border: "1px solid #e0e7ff"
+                }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "#64748b", mb: 0.5 }}>
+                    Experience
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }}>
+                    {matchingConfig.weights.experience}%
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: "white",
+                  borderRadius: 1.5,
+                  border: "1px solid #e0e7ff"
+                }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "#64748b", mb: 0.5 }}>
+                    Salary
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }}>
+                    {matchingConfig.weights.salary}%
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: "white",
+                  borderRadius: 1.5,
+                  border: "1px solid #e0e7ff"
+                }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "#64748b", mb: 0.5 }}>
+                    Work Mode
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }}>
+                    {matchingConfig.weights.workMode}%
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: "white",
+                  borderRadius: 1.5,
+                  border: "1px solid #e0e7ff"
+                }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "#64748b", mb: 0.5 }}>
+                    Contract
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#0c4a6e" }}>
+                    {matchingConfig.weights.contract}%
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        )}
+
         {/* Description */}
         <Box sx={{ mb: 3 }}>
           <Typography
@@ -446,12 +555,39 @@ const JobPreview: React.FC<JobPreviewProps> = ({
               }}
             />
           ) : (
-            <Typography
-              variant="body2"
-              sx={{ color: "black", lineHeight: 1.6 }}
+            <Box
+              sx={{
+                color: "black",
+                lineHeight: 1.8,
+                fontSize: "0.875rem",
+                '& ul': {
+                  paddingLeft: '24px !important',
+                  margin: '12px 0 !important',
+                  listStyleType: 'disc !important',
+                  listStylePosition: 'outside !important',
+                },
+                '& ol': {
+                  paddingLeft: '24px !important',
+                  margin: '12px 0 !important',
+                  listStyleType: 'decimal !important',
+                  listStylePosition: 'outside !important',
+                },
+                '& li': {
+                  marginBottom: '6px !important',
+                  paddingLeft: '4px !important',
+                  display: 'list-item !important',
+                },
+                '& p': {
+                  margin: '8px 0 !important',
+                },
+                '& strong, & b': {
+                  fontWeight: '700 !important',
+                  color: '#0F172A !important',
+                },
+              }}
             >
-              {generatedJob.jobDetails.description}
-            </Typography>
+              <div dangerouslySetInnerHTML={{ __html: generatedJob.jobDetails.description }} />
+            </Box>
           )}
         </Box>
 

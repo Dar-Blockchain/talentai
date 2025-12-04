@@ -109,17 +109,16 @@ const getQuickPrompt = (description, companyLocation) =>
 
     Job Description:
     ${description}
-
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
       "weights": {
-        "hardSkill": 40,
-        "SoftSkill": 10,
-        "experience": 30,
-        "salary": 5,
-        "workMode": 7.5,
-        "contract": 7.5
+        "hardSkill": "DYNAMIC based on job description, must be very close to 'experience' weight",
+        "experience": "DYNAMIC based on job description, must be very close to 'hardSkill' weight",
+        "SoftSkill": "DYNAMIC based on job description, smaller than 'hardSkill' and 'experience'",
+        "salary": "DYNAMIC but very small weight",
+        "workMode": "DYNAMIC but very small weight",
+        "contract": "DYNAMIC but very small weight"
       },
       "importanceWeight": {
         "Junior": 1.5,
@@ -134,16 +133,11 @@ const getQuickPrompt = (description, companyLocation) =>
       }
     },
 
-    The "weights" MUST be dynamically adjusted based on the job description context.  
-    For example:
-    - Increase "hardSkill" weight if the job description is highly technical.  
-    - Increase "SoftSkill" weight if the role requires leadership or communication.  
-    - Increase "experience" weight if seniority is emphasized.  
-    - Increase "salary" weight if compensation is a key factor in the job description.  
-    - Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
-
-    The final weight distribution MUST always sum to 100%.  
-    The assistant must return the adjusted weights inside "matchingConfig".
+    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.  
+    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".  
+    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.  
+    - The total sum of all weights must always equal 100%.  
+    - Return only the defined JSON fields; do NOT add any extra fields.
 
     The "exchangeRates" values must reflect today's real exchange rates.
 
@@ -311,17 +305,17 @@ const getDetailedPrompt = (description, companyLocation) =>
     - The soft skill must include an "importance" field and a "percentage" field.
     - The percentage must always be 100.
     - Never use vague or irrelevant soft skills.
-
+ 
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
       "weights": {
-        "hardSkill": 40,
-        "SoftSkill": 10,
-        "experience": 30,
-        "salary": 5,
-        "workMode": 7.5,
-        "contract": 7.5
+        "hardSkill": "DYNAMIC based on job description, must be very close to 'experience' weight",
+        "experience": "DYNAMIC based on job description, must be very close to 'hardSkill' weight",
+        "SoftSkill": "DYNAMIC based on job description, smaller than 'hardSkill' and 'experience'",
+        "salary": "DYNAMIC but very small weight",
+        "workMode": "DYNAMIC but very small weight",
+        "contract": "DYNAMIC but very small weight"
       },
       "importanceWeight": {
         "Junior": 1.5,
@@ -336,18 +330,14 @@ const getDetailedPrompt = (description, companyLocation) =>
       }
     },
 
-    The "weights" MUST be dynamically adjusted based on the job description context.  
-    For example:
-    - Increase "hardSkill" weight if the job description is highly technical.  
-    - Increase "SoftSkill" weight if the role requires leadership or communication.  
-    - Increase "experience" weight if seniority is emphasized.  
-    - Increase "salary" weight if compensation is a key factor in the job description.  
-    - Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
-
-    The final weight distribution MUST always sum to 100%.  
-    The assistant must return the adjusted weights inside "matchingConfig".
+    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.  
+    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".  
+    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.  
+    - The total sum of all weights must always equal 100%.  
+    - Return only the defined JSON fields; do NOT add any extra fields.
 
     The "exchangeRates" values must reflect today's real exchange rates.
+
 
 `.trim();
 
