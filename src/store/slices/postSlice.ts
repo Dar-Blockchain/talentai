@@ -10,6 +10,12 @@ interface Step {
   // Add other step properties as needed
 }
 
+interface RecommendedState {
+  items: any[];
+  loading: boolean;
+  error: string | null;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -27,6 +33,7 @@ interface PostState {
   currentJob: any | null;
   currentJobLoading: boolean;
   currentJobError: string | null;
+  recommended: RecommendedState;
 }
 
 // Initial state
@@ -47,7 +54,43 @@ const initialState: PostState = {
   currentJob: null,
   currentJobLoading: false,
   currentJobError: null,
+  recommended: {
+    items: [],
+    loading: false,
+    error: null,
+  },
 };
+
+// Async thunk: Recommended posts
+export const fetchRecommendedPosts = createAsyncThunk(
+  "post/fetchRecommendedPosts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("api_token="))
+        ?.split("=")[1];
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/adsPost`,
+        {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch recommended posts");
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? data : data.data || [];
+    } catch (error: any) {
+      return rejectWithValue(error.message || "An error occurred while fetching recommended posts");
+    }
+  }
+);
 
 // Async thunk for posting recruitment steps
 export const postRecruitmentSteps = createAsyncThunk(
@@ -231,6 +274,7 @@ const postSlice = createSlice({
       state.error = null;
       state.postStepsError = null;
       state.currentJobError = null;
+      state.recommended.error = null;
     },
     setSteps: (state, action: PayloadAction<any[]>) => {
       state.steps = action.payload;
@@ -320,6 +364,19 @@ const postSlice = createSlice({
       .addCase(fetchJobById.rejected, (state, action) => {
         state.currentJobLoading = false;
         state.currentJobError = action.payload as string;
+      })
+      // ---- RECOMMENDED POSTS ----
+      .addCase(fetchRecommendedPosts.pending, (state) => {
+        state.recommended.loading = true;
+        state.recommended.error = null;
+      })
+      .addCase(fetchRecommendedPosts.fulfilled, (state, action) => {
+        state.recommended.loading = false;
+        state.recommended.items = action.payload.posts || [];
+      })
+      .addCase(fetchRecommendedPosts.rejected, (state, action) => {
+        state.recommended.loading = false;
+        state.recommended.error = action.payload as string;
       });
   },
 });
@@ -353,3 +410,9 @@ export const selectCurrentJobError = (state: { post: PostState }) => state.post.
 // Selector to get a job from myPosts by ID (if already loaded)
 export const selectJobById = (jobId: string) => (state: { post: PostState }) =>
   state.post.myPosts.find((job: any) => (job._id || job.id) === jobId);
+
+export const selectRecommended = (state: { post: PostState }) => ({
+  items: state.post.recommended.items,
+  loading: state.post.recommended.loading,
+  error: state.post.recommended.error,
+});

@@ -1,14 +1,7 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getMyProfile,
-  selectProfile,
-  clearProfile,
-} from "@/store/slices/profileSlice";
-import {
-  logout,
-  setLoggingOut
-} from "@/store/slices/authSlice";
+import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+
 import { AppDispatch } from "@/store/store";
 import {
   Box,
@@ -16,33 +9,30 @@ import {
   Typography,
   Card,
   Alert,
-  CircularProgress,
   useTheme,
   Snackbar,
-  useMediaQuery,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useRouter } from "next/router";
-import Cookies from "js-cookie";
-import { signOut } from "next-auth/react";
 import { toast } from "react-hot-toast";
-import { isTokenExpired, handleTokenExpiration, validateAndSyncToken, isCookieExpired } from "@/utils/tokenUtils";
-import { resetRedirectState } from "@/utils/authRedirect";
 import CandidateOnly from "@/components/CandidateOnly";
 import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
- import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionDialog";
+import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionDialog";
 import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
 import AddSoftSkillDialog from "@/components/dashboard-candidate/AddSoftSkillDialog";
 import AddSkillDialog from "@/components/dashboard-candidate/AddSkillDialog";
 import EditProfileModal from "@/components/dashboard-candidate/EditProfileModal";
 import LoadingState from "@/components/dashboard-candidate/LoadingState";
 import ErrorState from "@/components/dashboard-candidate/ErrorState";
-import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
-import TokenBalanceCard from "@/components/dashboard-candidate/TokenBalanceCard";
-import { skillCategories, softSkillNames, softSkills, technicalSkillsList } from "@/constants/skills";
+import {
+  skillCategories,
+  softSkillNames,
+  softSkills,
+  technicalSkillsList,
+} from "@/constants/skills";
 import HeaderDashboard from "@/components/HeaderDashboard";
 
 const GREEN_MAIN = "#8310FF";
@@ -62,7 +52,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
     transform: "translateY(-4px)",
     boxShadow: "0 20px 50px rgba(0, 0, 0, 0.12), 0 0 30px rgba(0, 0, 0, 0.08)",
   },
- 
 }));
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
@@ -82,46 +71,6 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
     borderRadius: "3px",
   },
 }));
-
-const ProfileHeader = styled(Box)(({ theme }) => ({
-  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-  color: "#000000",
-  padding: theme.spacing(4, 2), // Reduced horizontal padding for mobile
-  borderRadius: "32px",
-  marginBottom: theme.spacing(6),
-  position: "relative",
-  overflow: "hidden",
-  boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1), 0 0 30px rgba(0, 0, 0, 0.06)",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    top: "0",
-    left: "0",
-    right: "0",
-    bottom: "0",
-    background:
-      "radial-gradient(circle at top right, rgba(0, 0, 0, 0.03) 0%, transparent 70%)",
-    zIndex: 1,
-  },
-  // Responsive padding
-  [theme.breakpoints.up("sm")]: {
-    padding: theme.spacing(6, 4),
-  },
-  [theme.breakpoints.up("md")]: {
-    padding: theme.spacing(8),
-  },
-}));
-
-interface Skill {
-  name: string;
-  proficiencyLevel: number;
-  value?: string;
-  requiresLanguage?: boolean;
-  subcategories?: Array<{
-    value: string;
-    label: string;
-  }>;
-}
 
 // Add helper function to map proficiency to experience level
 const getExperienceLevelFromProficiency = (
@@ -183,26 +132,20 @@ export default function DashboardCandidate() {
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
-    severity: 'error' | 'success' | 'info' | 'warning';
+    severity: "error" | "success" | "info" | "warning";
   }>({
     open: false,
-    message: '',
-    severity: 'error'
+    message: "",
+    severity: "error",
   });
-
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  // Profile fetching is handled by CandidateOnly wrapper component
-  // No need to fetch here to avoid duplicate requests
 
   useEffect(() => {
     if (profile) {
-      console.log('🔄 Profile data updated:', {
+      console.log("🔄 Profile data updated:", {
         username: profile.userId.username,
         email: profile.userId.email,
         experienceLevel: profile.requiredExperienceLevel,
-        targetRole: profile.targetRole
+        targetRole: profile.targetRole,
       });
       setFormData({
         username: profile.userId.username,
@@ -218,7 +161,7 @@ export default function DashboardCandidate() {
   };
 
   const handleCloseNotification = () => {
-    setNotification(prev => ({ ...prev, open: false }));
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,123 +189,103 @@ export default function DashboardCandidate() {
         targetRole: formData.targetRole,
       };
 
-      console.log('🔧 Sending profile update data:', profileUpdateData);
-      console.log('🔧 API Base URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-      console.log('🔧 Full URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`);
+      console.log("🔧 Sending profile update data:", profileUpdateData);
+      console.log("🔧 API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+      console.log(
+        "🔧 Full URL:",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`
+      );
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileUpdateData)
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(profileUpdateData),
+        }
+      );
 
-      console.log('📡 Profile update response status:', response.status);
+      console.log("📡 Profile update response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('❌ Profile update failed:', errorData);
-        throw new Error(errorData.message || 'Failed to update profile');
+        console.error("❌ Profile update failed:", errorData);
+        throw new Error(errorData.message || "Failed to update profile");
       }
 
       const result = await response.json();
-      console.log('✅ Profile updated successfully:', result);
-      console.log('🔍 Updated profile data:', result.profile);
+      console.log("✅ Profile updated successfully:", result);
+      console.log("🔍 Updated profile data:", result.profile);
 
       // Close modal and refresh profile data
       handleEditProfileClose();
-      console.log('🔄 Refreshing profile data...');
+      console.log("🔄 Refreshing profile data...");
       dispatch(getMyProfile());
 
       // Show success notification
       setNotification({
         open: true,
-        message: 'Profile updated successfully!',
-        severity: 'success'
+        message: "Profile updated successfully!",
+        severity: "success",
       });
-
     } catch (error) {
       console.error("Error updating profile:", error);
       setNotification({
         open: true,
-        message: error instanceof Error ? error.message : 'Failed to update profile',
-        severity: 'error'
+        message:
+          error instanceof Error ? error.message : "Failed to update profile",
+        severity: "error",
       });
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      // Set logout flag to prevent axios interceptors from triggering redirects
-      setLoggingOut(true);
-      resetRedirectState();
-      
-      // Clear Redux state FIRST to prevent components from trying to fetch
-      dispatch(clearProfile());
-      dispatch(logout());
-      
-      // Then clear the token and storage
-      localStorage.removeItem("api_token");
-      Cookies.remove("api_token", { path: "/" });
-      localStorage.clear();
-      
-      // Clear all other cookies
-      Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName, { path: "/" });
-      });
-
-      // Sign out from NextAuth (don't await to make redirect faster)
-      signOut({ redirect: false }).catch(console.error);
-
-      // Use replace instead of href to prevent returnUrl from being added
-      // replace() removes current page from history, preventing back button issues
-      window.location.replace("/signin");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      // Even on error, redirect to signin
-      setLoggingOut(true);
-      resetRedirectState();
-      window.location.replace("/signin");
-    }
-  };
-
-  const handleStartTest = useCallback((type?: "technical" | "soft", skill?: any) => {
-    if (type && skill) {
-      setSkillType(type);
-      if (type === "technical") {
-        setSelectedSkill(skill.name);
-        // Use default proficiency level of 1 if not defined
-        const proficiencyLevel = skill.proficiencyLevel || 1;
-        // Navigate to new HR interview route
-        router.push(
-          `/interview/hr/?type=technical&skill=${encodeURIComponent(skill.name)}&proficiency=${proficiencyLevel}`
-        );
-      } else {
-        setSoftSkillType(skill.name);
-        if (skill.name === "Communication") {
-          setSoftSkillLanguage(skill.category);
+  const handleStartTest = useCallback(
+    (type?: "technical" | "soft", skill?: any) => {
+      if (type && skill) {
+        setSkillType(type);
+        if (type === "technical") {
+          setSelectedSkill(skill.name);
+          // Use default proficiency level of 1 if not defined
+          const proficiencyLevel = skill.proficiencyLevel || 1;
+          // Navigate to new HR interview route
+          router.push(
+            `/interview/hr/?type=technical&skill=${encodeURIComponent(
+              skill.name
+            )}&proficiency=${proficiencyLevel}`
+          );
         } else {
-          setSoftSkillSubcategory(skill.category);
+          setSoftSkillType(skill.name);
+          if (skill.name === "Communication") {
+            setSoftSkillLanguage(skill.category);
+          } else {
+            setSoftSkillSubcategory(skill.category);
+          }
+          const proficiencyMap: { [key: string]: number } = {
+            "Entry Level": 1,
+            Junior: 2,
+            "Mid Level": 3,
+            Senior: 4,
+            Expert: 5,
+          };
+          setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
+          // Navigate to new HR interview route
+          router.push(
+            `/interview/hr/?type=soft&skill=${encodeURIComponent(
+              skill.name
+            )}&category=${encodeURIComponent(skill.category)}&proficiency=${
+              proficiencyMap[skill.experienceLevel] || 1
+            }`
+          );
         }
-        const proficiencyMap: { [key: string]: number } = {
-          "Entry Level": 1,
-          Junior: 2,
-          "Mid Level": 3,
-          Senior: 4,
-          Expert: 5,
-        };
-        setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
-        // Navigate to new HR interview route
-        router.push(
-          `/interview/hr/?type=soft&skill=${encodeURIComponent(skill.name)}&category=${encodeURIComponent(skill.category)}&proficiency=${proficiencyMap[skill.experienceLevel] || 1}`
-        );
+      } else {
+        setTestModalOpen(true);
       }
-    } else {
-      setTestModalOpen(true);
-    }
-  }, [router]);
+    },
+    [router]
+  );
 
   const handleCloseTestModal = useCallback(() => {
     setTestModalOpen(false);
@@ -383,28 +306,22 @@ export default function DashboardCandidate() {
     setSoftSkillProficiency(1);
   }, []);
 
-  const handleSkillTypeChange = useCallback((
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSkillType(event.target.value);
-    setSelectedSkill("");
-    setSoftSkillType("");
-    setSoftSkillLanguage("");
-  }, []);
-
+  const handleSkillTypeChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSkillType(event.target.value);
+      setSelectedSkill("");
+      setSoftSkillType("");
+      setSoftSkillLanguage("");
+    },
+    []
+  );
 
   // Add new handler for skill selection
   const handleSkillSelection = (value: string | null) => {
     setNewSkill((prev) => ({ ...prev, name: value || "" }));
   };
 
-
-
-  const languages = [
-    { value: "English", label: "English" },
-
-  ];
-
+  const languages = [{ value: "English", label: "English" }];
 
   const checkExistingSoftSkill = (skillName: string, category?: string) => {
     if (!profile?.softSkills?.length) return null;
@@ -466,331 +383,209 @@ export default function DashboardCandidate() {
     }
   };
 
-  const [adLoading, setAdLoading] = useState(false);
-  const [adError, setAdError] = useState<string | null>(null);
-  const [adPost, setAdPost] = useState<any[]>([]);
-  const adsFetchedRef = useRef(false);
-
-  useEffect(() => {
-    // Prevent duplicate API calls
-    if (adsFetchedRef.current) {
-      console.log('⏭️ [DASHBOARD] Ads already fetched, skipping...');
-      return;
-    }
-
-    console.log('🔄 [DASHBOARD] Fetching recommended posts...');
-    adsFetchedRef.current = true;
-    setAdLoading(true);
-    setAdError(null);
-    
-    // Check cookie expiration first
-    if (isCookieExpired() && localStorage.getItem("api_token")) {
-      console.warn('🔒 [DASHBOARD] Cookie expired before API call');
-      setAdLoading(false);
-      handleTokenExpiration();
-      return;
-    }
-
-    // Validate and sync token
-    if (!validateAndSyncToken()) {
-      console.warn('🔒 [DASHBOARD] Token validation failed before API call');
-      setAdLoading(false);
-      handleTokenExpiration();
-      return;
-    }
-
-    const token = localStorage.getItem("api_token") || Cookies.get("api_token");
-    
-    // Check if token is expired before making API call
-    if (token && isTokenExpired(token)) {
-      console.warn('🔒 [DASHBOARD] Token expired before API call');
-      setAdLoading(false);
-      handleTokenExpiration();
-      return;
-    }
-    
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
-    fetch(`${apiBase}post/adsPost`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((res) => {
-        // Handle 401 Unauthorized - token expired
-        if (res.status === 401) {
-          console.warn('🔒 [DASHBOARD] 401 Unauthorized - Token expired');
-          // Clear tokens
-          localStorage.removeItem('api_token');
-          Cookies.remove('api_token');
-          // Redirect will be handled by global interceptor, but we prevent further processing
-          throw new Error("Unauthorized - Please login again");
-        }
-        if (!res.ok) throw new Error("Failed to fetch ad post");
-        return res.json();
-      })
-      .then((json) => {
-        console.log('Ad Post API Response:', json);
-        
-        // Handle nested data structure: json.data.posts or json.data.data.posts
-        let posts = [];
-        
-        if (json.success && json.data) {
-          // Check for nested posts array
-          if (Array.isArray(json.data.posts)) {
-            posts = json.data.posts;
-          } else if (json.data.data && Array.isArray(json.data.data.posts)) {
-            posts = json.data.data.posts;
-          } else if (Array.isArray(json.data)) {
-            posts = json.data;
-          } else if (json.data.data && Array.isArray(json.data.data)) {
-            posts = json.data.data;
-          } else {
-            posts = [json.data];
-          }
-        }
-        
-        console.log('Processed posts:', posts);
-        console.log('Number of posts:', posts.length);
-        
-        if (posts.length > 0) {
-          setAdPost(posts);
-        } else {
-          setAdError("No ad data available");
-        }
-      })
-      .catch((e) => {
-        console.error("Error fetching ad post:", e);
-        setAdError(e.message || "Error fetching ad post");
-      })
-      .finally(() => {
-        setAdLoading(false);
-      });
-  }, []);
-
-  // Move all useMemo hooks here to ensure they're called every render
-  const memoizedAdData = useMemo(() => {
-    const processed = (adPost || []).map((ad: any) => {
-      const processedAd = {
-        _id: ad._id,
-        title: ad.jobDetails?.title,
-        description: ad.jobDetails?.description || '',
-        firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
-        // Include all job details for the RecommendedOpportunities component
-        jobDetails: ad.jobDetails,
-        employmentType: ad.jobDetails?.employmentType,
-        location: ad.jobDetails?.location,
-        salary: ad.jobDetails?.salary,
-        company: ad.jobDetails?.company,
-        companyName: ad.jobDetails?.companyName,
-        experienceLevel: ad.jobDetails?.experienceLevel,
-        requirements: ad.jobDetails?.requirements,
-        responsibilities: ad.jobDetails?.responsibilities,
-      };
-      return processedAd;
-    });
-    return processed;
-  }, [adPost, profile]);
-
-  const memoizedAdTotal = useMemo(() => {
-    return Array.isArray(adPost) ? adPost.length : 0;
-  }, [adPost]);
-
   return (
     <CandidateOnly>
-            <Box
+      <Box
         sx={{
           minHeight: "100vh",
           backgroundColor: "rgba(251, 254, 255, 1)",
           py: 2,
         }}
       >
+        <Container maxWidth="lg">
+          {/* Show loading state */}
+          {loading && <LoadingState />}
+
+          {/* Show error state */}
+          {error && !loading && (
+            <ErrorState
+              error={error}
+              onRetry={() => dispatch(getMyProfile())}
+            />
+          )}
+
+          {/* Show main content only when profile is available */}
+          {!loading && !error && profile && (
+            <>
+              {/* Navbar */}
+              <HeaderDashboard />
+
+              <Box
+                sx={{
+                  minHeight: "100vh",
+                  color: GREEN_MAIN,
+                  // padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
+                }}
+              >
                 <Container maxWidth="lg">
-
-      {/* Show loading state */}
-      {loading && (
-        <LoadingState />
-      )}
-
-      {/* Show error state */}
-      {error && !loading && (
-        <ErrorState error={error} onRetry={() => dispatch(getMyProfile())} />
-      )}
-
-      {/* Show main content only when profile is available */}
-      {!loading && !error && profile && (
-        <>
-          {/* Navbar */}
-          <HeaderDashboard />
-
-          <Box
-            sx={{
-              minHeight: "100vh",
-              color: GREEN_MAIN,
-              // padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
-            }}
-          >
-            <Container maxWidth="lg">
-              {/* Profile Header */}
+                  {/* Profile Header */}
                   <WelcomeHeader
                     profile={profile}
                     quota={profile?.quota || 0}
                     onStartTest={handleStartTest}
                     onHrInterview={() => {
-                      const experienceLevel = profile?.requiredExperienceLevel || 'Mid-Level';
-                      const role = profile?.targetRole || 'Software Engineer';
-                      router.push(`/interview/hr?type=hr&role=${encodeURIComponent(role)}&proficiency=${encodeURIComponent(experienceLevel)}`);
+                      const experienceLevel =
+                        profile?.requiredExperienceLevel || "Mid-Level";
+                      const role = profile?.targetRole || "Software Engineer";
+                      router.push(
+                        `/interview/hr?type=hr&role=${encodeURIComponent(
+                          role
+                        )}&proficiency=${encodeURIComponent(experienceLevel)}`
+                      );
                     }}
                     onCvBuilder={() => router.push("/resume-builder")}
                   />
-                                     {/* Edit Profile Modal */}
-                   <EditProfileModal
-                     open={editProfileOpen}
-                     onClose={handleEditProfileClose}
-                     formData={formData}
-                     onChange={handleInputChange}
-                     onSubmit={handleSubmit}
-                   />
+                  {/* Edit Profile Modal */}
+                  <EditProfileModal
+                    open={editProfileOpen}
+                    onClose={handleEditProfileClose}
+                    formData={formData}
+                    onChange={handleInputChange}
+                    onSubmit={handleSubmit}
+                  />
 
                   {/* Test Selection Modal */}
-                                     <TestSelectionDialog
-                     open={testModalOpen}
-                     onClose={handleCloseTestModal}
-                     primaryAccentColor={GREEN_MAIN}
-                     skillType={skillType}
-                     onSkillTypeChange={handleSkillTypeChange}
-                     skillCategories={skillCategories}
-                     selectedCategory={selectedCategory}
-                     onSelectedCategoryChange={(v) => setSelectedCategory(v)}
-                     technicalSkillsList={technicalSkillsList}
-                     selectedSkill={selectedSkill}
-                     onSelectedSkillChange={(v) => setSelectedSkill(v)}
-                     softSkills={softSkills}
-                     softSkillType={softSkillType}
-                     onSoftSkillChange={handleSoftSkillChange}
-                     languages={languages}
-                     softSkillLanguage={softSkillLanguage}
-                     onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
-                     softSkillSubcategory={softSkillSubcategory}
-                     onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
-                     softSkillProficiency={softSkillProficiency}
-                     router={router}
-                     toast={toast}
-                     getExperienceLevelFromProficiency={getExperienceLevelFromProficiency}
-                     profileSkills={profile?.skills || []}
-                     profileSoftSkills={profile?.softSkills || []}
-                   />
-
-              {/* Token Balance Card */}
-              {/* <TokenBalanceCard /> */}
-
-              {/* Recommended Opportunities */}
-              <StyledCard sx={{ mb: 4 }}>
-                {adLoading ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-                    <CircularProgress size={32} sx={{ color: '#8310FF' }} />
-                  </Box>
-                ) : adError ? (
-                  <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-                    <Typography>{adError}</Typography>
-                  </Box>
-                ) : (
-                  <RecommendedOpportunities
-                    profile={profile}
-                    data={memoizedAdData}
-                    total={memoizedAdTotal}
-                    emptyText="You need to pass a test with a score of 'Good' or >20% to see recommended opportunities"
-                  />
-                )}
-              </StyledCard>
-
-              {/* User Information */}
-                             <UserInfoCard
-                 profile={profile}
-                 SectionTitle={SectionTitle}
-                 StyledCard={StyledCard}
-                 ScoreCircle={ScoreCircle}
-                 GREEN_MAIN={GREEN_MAIN}
-                 softSkillNames={softSkillNames}
-                 visibleSkills={visibleSkills}
-                 setVisibleSkills={(updater: any) => setVisibleSkills(updater)}
-                 setAddSoftSkillDialogOpen={(open: boolean) => setAddSoftSkillDialogOpen(open)}
-                 setAddSkillDialogOpen={(open: boolean) => setAddSkillDialogOpen(open)}
-                 SkillBlock={SkillBlock}
-                 handleStartTest={handleStartTest}
-                 dispatch={dispatch}
-                 getMyProfile={getMyProfile}
-               />
-
-              {/* Interview Details Section */}
-              
-              <Box>
-                <StyledCard>
-                  <SectionTitle>Interview Details</SectionTitle>
-                  <InterviewDetailsTabs profile={profile} />
-                </StyledCard>
-              </Box>
-
-            
-              {/* Add Soft Skill Dialog */}
-              <AddSoftSkillDialog
-                open={addSoftSkillDialogOpen}
-                onClose={handleCloseAddSoftSkillModal}
-                primaryAccentColor={GREEN_MAIN}
-                softSkills={softSkills}
-                languages={languages}
-                softSkillType={softSkillType}
-                onSoftSkillChange={handleSoftSkillChange}
-                softSkillLanguage={softSkillLanguage}
-                onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
-                softSkillSubcategory={softSkillSubcategory}
-                onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
-                softSkillProficiency={softSkillProficiency}
-                router={router}
-              />
-              {/* Add Skill Dialog */}
-              <AddSkillDialog
-                open={addSkillDialogOpen}
-                onClose={() => setAddSkillDialogOpen(false)}
-                primaryAccentColor={GREEN_MAIN}
-                selectedCategory={selectedCategory}
-                onSelectedCategoryChange={(v) => setSelectedCategory(v)}
-                newSkillName={newSkill.name}
-                onSkillSelection={(v) => handleSkillSelection(v)}
-                skillCategories={skillCategories}
-                technicalSkillsList={technicalSkillsList}
-                profileSkills={profile?.skills}
-                router={router}
-                setNotification={setNotification}
-              />
-
-              {/* Add Snackbar for notifications */}
-              <Snackbar
-                open={notification.open}
-                autoHideDuration={4000}
-                onClose={handleCloseNotification}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              >
-                <Alert
-                  onClose={handleCloseNotification}
-                  severity={notification.severity}
-                  sx={{
-                    width: '100%',
-                    backgroundColor: notification.severity === 'error' ? '#ffebee' : '#e8f5e9',
-                    color: notification.severity === 'error' ? '#c62828' : '#2e7d32',
-                    '& .MuiAlert-icon': {
-                      color: notification.severity === 'error' ? '#c62828' : '#2e7d32'
+                  <TestSelectionDialog
+                    open={testModalOpen}
+                    onClose={handleCloseTestModal}
+                    primaryAccentColor={GREEN_MAIN}
+                    skillType={skillType}
+                    onSkillTypeChange={handleSkillTypeChange}
+                    skillCategories={skillCategories}
+                    selectedCategory={selectedCategory}
+                    onSelectedCategoryChange={(v) => setSelectedCategory(v)}
+                    technicalSkillsList={technicalSkillsList}
+                    selectedSkill={selectedSkill}
+                    onSelectedSkillChange={(v) => setSelectedSkill(v)}
+                    softSkills={softSkills}
+                    softSkillType={softSkillType}
+                    onSoftSkillChange={handleSoftSkillChange}
+                    languages={languages}
+                    softSkillLanguage={softSkillLanguage}
+                    onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
+                    softSkillSubcategory={softSkillSubcategory}
+                    onSoftSkillSubcategoryChange={
+                      handleSoftSkillSubcategoryChange
                     }
-                  }}
-                >
-                  {notification.message}
-                </Alert>
-              </Snackbar>
-            </Container>
-          </Box>
-        </>
-      )}
-      </Container>
+                    softSkillProficiency={softSkillProficiency}
+                    router={router}
+                    toast={toast}
+                    getExperienceLevelFromProficiency={
+                      getExperienceLevelFromProficiency
+                    }
+                    profileSkills={profile?.skills || []}
+                    profileSoftSkills={profile?.softSkills || []}
+                  />
+
+                  {/* Token Balance Card */}
+                  {/* <TokenBalanceCard /> */}
+
+                  <RecommendedOpportunities />
+
+                  {/* User Information */}
+                  <UserInfoCard
+                    profile={profile}
+                    SectionTitle={SectionTitle}
+                    StyledCard={StyledCard}
+                    ScoreCircle={ScoreCircle}
+                    GREEN_MAIN={GREEN_MAIN}
+                    softSkillNames={softSkillNames}
+                    visibleSkills={visibleSkills}
+                    setVisibleSkills={(updater: any) =>
+                      setVisibleSkills(updater)
+                    }
+                    setAddSoftSkillDialogOpen={(open: boolean) =>
+                      setAddSoftSkillDialogOpen(open)
+                    }
+                    setAddSkillDialogOpen={(open: boolean) =>
+                      setAddSkillDialogOpen(open)
+                    }
+                    SkillBlock={SkillBlock}
+                    handleStartTest={handleStartTest}
+                    dispatch={dispatch}
+                    getMyProfile={getMyProfile}
+                  />
+
+                  {/* Interview Details Section */}
+
+                  <Box>
+                    <StyledCard>
+                      <SectionTitle>Interview Details</SectionTitle>
+                      <InterviewDetailsTabs profile={profile} />
+                    </StyledCard>
+                  </Box>
+
+                  {/* Add Soft Skill Dialog */}
+                  <AddSoftSkillDialog
+                    open={addSoftSkillDialogOpen}
+                    onClose={handleCloseAddSoftSkillModal}
+                    primaryAccentColor={GREEN_MAIN}
+                    softSkills={softSkills}
+                    languages={languages}
+                    softSkillType={softSkillType}
+                    onSoftSkillChange={handleSoftSkillChange}
+                    softSkillLanguage={softSkillLanguage}
+                    onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
+                    softSkillSubcategory={softSkillSubcategory}
+                    onSoftSkillSubcategoryChange={
+                      handleSoftSkillSubcategoryChange
+                    }
+                    softSkillProficiency={softSkillProficiency}
+                    router={router}
+                  />
+                  {/* Add Skill Dialog */}
+                  <AddSkillDialog
+                    open={addSkillDialogOpen}
+                    onClose={() => setAddSkillDialogOpen(false)}
+                    primaryAccentColor={GREEN_MAIN}
+                    selectedCategory={selectedCategory}
+                    onSelectedCategoryChange={(v) => setSelectedCategory(v)}
+                    newSkillName={newSkill.name}
+                    onSkillSelection={(v) => handleSkillSelection(v)}
+                    skillCategories={skillCategories}
+                    technicalSkillsList={technicalSkillsList}
+                    profileSkills={profile?.skills}
+                    router={router}
+                    setNotification={setNotification}
+                  />
+
+                  {/* Add Snackbar for notifications */}
+                  <Snackbar
+                    open={notification.open}
+                    autoHideDuration={4000}
+                    onClose={handleCloseNotification}
+                    anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                  >
+                    <Alert
+                      onClose={handleCloseNotification}
+                      severity={notification.severity}
+                      sx={{
+                        width: "100%",
+                        backgroundColor:
+                          notification.severity === "error"
+                            ? "#ffebee"
+                            : "#e8f5e9",
+                        color:
+                          notification.severity === "error"
+                            ? "#c62828"
+                            : "#2e7d32",
+                        "& .MuiAlert-icon": {
+                          color:
+                            notification.severity === "error"
+                              ? "#c62828"
+                              : "#2e7d32",
+                        },
+                      }}
+                    >
+                      {notification.message}
+                    </Alert>
+                  </Snackbar>
+                </Container>
+              </Box>
+            </>
+          )}
+        </Container>
       </Box>
     </CandidateOnly>
   );
 }
-
