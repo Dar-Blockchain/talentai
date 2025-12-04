@@ -85,6 +85,8 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   totalPages = 1,
   onPageChange,
 }) => {
+  const router = useRouter();
+
   // Items per page selector - user can choose 5, 10, or 20
   const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
   const calculatedTotalPages = Math.ceil(
@@ -608,6 +610,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                     </Button>}
                     {candidate?.unlocked && <Button
             variant="outlined"
+            onClick={() => router.push(`/profile/${candidate.candidateId}`)}
             sx={{
               borderColor: "rgba(11, 82, 198, 1)",
               color: "rgba(11, 82, 198, 1)",
