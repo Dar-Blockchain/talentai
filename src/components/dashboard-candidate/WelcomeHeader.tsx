@@ -123,6 +123,31 @@ export default function WelcomeHeader({
             </Typography>
           </Box>
 
+                    {profile?.userId?.createdAt && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <CalendarTodayIcon
+                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.1rem" }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#000000",
+                  fontSize: "0.875rem",
+                  fontWeight: 400,
+                }}
+              >
+                {new Date(profile.userId.createdAt).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  }
+                )}
+              </Typography>
+            </Box>
+          )}
+
           {profile?.targetRole && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <WorkIcon
@@ -159,30 +184,7 @@ export default function WelcomeHeader({
             </Box>
           )}
 
-          {profile?.userId?.createdAt && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <CalendarTodayIcon
-                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.1rem" }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#000000",
-                  fontSize: "0.875rem",
-                  fontWeight: 400,
-                }}
-              >
-                {new Date(profile.userId.createdAt).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  }
-                )}
-              </Typography>
-            </Box>
-          )}
+
         </Box>
 
         {/* Action Buttons - Horizontal Layout */}

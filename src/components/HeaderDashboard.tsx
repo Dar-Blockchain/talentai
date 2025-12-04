@@ -158,7 +158,7 @@ const HeaderDashboard = () => {
                   }}
                   onClick={() => {
                     router.push(
-                      userType.toLowerCase() === "company" ? "/" : "/home/candidate"
+                      userType?.toLowerCase() === "company" ? "/" : "/home/candidate"
                     );
                   }}
                 >
@@ -225,7 +225,7 @@ const HeaderDashboard = () => {
                     {formatNumber(tokenBalance)} tokens
                   </Typography>
                 )}
-                {userType.toLowerCase() === "company" && (
+                {userType?.toLowerCase() === "company" && (
                   <Tooltip title="Purchase Tokens">
                     <IconButton
                       onClick={handleOpenModal}
@@ -290,7 +290,7 @@ const HeaderDashboard = () => {
                     color: "rgba(56, 58, 61, 1)",
                   }}
                 >
-                  {userType.toLowerCase() === "company"
+                  {userType?.toLowerCase() === "company"
                     ? profile?.companyDetails?.name || profile?.userId?.username
                     : `${profile?.firstName || ""} ${
                         profile?.lastName || ""
@@ -357,7 +357,7 @@ const HeaderDashboard = () => {
             sx={{ width: 40, height: 40 }}
           />
           <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
-            {userType.toLowerCase() === "company"
+            {userType?.toLowerCase() === "company"
               ? profile?.companyDetails?.name || profile?.userId?.username
               : `${profile?.firstName || ""} ${profile?.lastName || ""}`}
           </Typography>
@@ -385,7 +385,7 @@ const HeaderDashboard = () => {
               {formatNumber(tokenBalance)} tokens
             </Typography>
           )}
-          {userType.toLowerCase() === "company" && (
+          {userType?.toLowerCase() === "company" && (
             <Tooltip title="Purchase Tokens">
               <IconButton
                 onClick={handleOpenModal}
