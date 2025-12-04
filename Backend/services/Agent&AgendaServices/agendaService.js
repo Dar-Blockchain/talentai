@@ -3,7 +3,7 @@ const Agent = require("../../models/AgentModel");
 const JobPost = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
 const AgentConfig = require("../../models/AgentConfigModel");
-const { calculateSkillMatchScore } = require("../MatchingService/matchingForBidService");
+const { calculateMatchScore } = require("../MatchingService/matchingForBidService");
 const axios = require("axios");
 
 let agendaInstance;
@@ -36,15 +36,16 @@ async function computeMatches(jobPostId) {
     .filter((s) => s && s.name)
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-  const matches = candidates
-    .map((candidate) => {
+  const matchesPromises = candidates
+    .map(async (candidate) => {
       if (!candidate.userId) return null;
       const candidateSkills = (candidate.skills || [])
         .filter((s) => s && s.name)
         .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-      //const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
-      const score = calculateSkillMatchScore(requiredSkills,candidateSkills,jobPost.jobDetails,candidate,jobPost.user,jobPostId);
+      const score = await calculateMatchScore(requiredSkills,candidateSkills,jobPost.jobDetails,candidate,jobPost.user,jobPostId);
+      
+      console.log(`Candidate ${candidate.userId.username} scored : ${score} for job : ${jobPost.jobDetails.title}`);
       
       return {
         candidateId: candidate.userId._id,
@@ -57,7 +58,9 @@ async function computeMatches(jobPostId) {
         ),
         requiredSkills,
       };
-    })
+    });
+
+  const matches = (await Promise.all(matchesPromises))
     .filter((m) => m && m.score > 0)
     .sort((a, b) => b.score - a.score);
 
@@ -233,7 +236,7 @@ async function initializeAgenda() {
     }
 
     await agendaInstance.every(
-      "52 11 * * *",
+      "1 minute",
       "agent:heartbeat",
       {},
       {
@@ -244,7 +247,7 @@ async function initializeAgenda() {
       }
     );
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda started with agent:heartbeat job every hour");
+    console.log("⏱️ Agenda started with agent:heartbeat job every minute");
 
     // Verification: list scheduled jobs
     try {
@@ -289,7 +292,7 @@ async function initializeAgenda() {
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 24 * 3600000; // +1 hour in ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 60 * 1000; // +1 minute in ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   
