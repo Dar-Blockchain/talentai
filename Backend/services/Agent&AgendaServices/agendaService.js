@@ -20,24 +20,23 @@ function normalizeSkillName(name) {
 }
 
 async function computeMatches(jobPostId, idCompany) {
-  console.log(`\n🔍 [computeMatches] Starting - JobPostId: ${jobPostId}, Company: ${idCompany}`);
+  console.log(`\n=== MATCHING STARTED ===`);
+  console.log(`Job: ${jobPostId} | Company: ${idCompany}`);
   
   const candidates = await Profile.find({ type: "Candidate" })
     .populate("userId", "username email")
     .populate("companyBid.company", "username email")
-    .select("userId skills companyDetails.name companyBid")
+    .select("userId skills companyDetails.name companyBid expectedSalary workModePreference preferredContractType softSkills")
     .lean();
 
-  console.log(`   📦 Found ${candidates.length} candidate(s)`);
+  console.log(`Found ${candidates.length} candidates\n`);
 
   const jobPost = await JobPost.findById(jobPostId)
-    .select("skillAnalysis.requiredSkills jobDetails")
+    .select("skillAnalysis jobDetails")
     .lean();
 
-  console.log(`   📋 Job Post loaded: ${jobPost ? "✓" : "✗"}`);
-
   if (!jobPost || !jobPost.skillAnalysis) {
-    console.log(`   ❌ Job post or skillAnalysis not found, returning empty array`);
+    console.log(`❌ Job post not found`);
     return [];
   }
 
@@ -45,12 +44,12 @@ async function computeMatches(jobPostId, idCompany) {
     .filter((s) => s && s.name)
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-  console.log(`   🎯 Required Skills: ${requiredSkills.map(s => s.name).join(", ")}`);
-  console.log(`   📊 Job Details:`);
-  console.log(`      - Title: ${jobPost.jobDetails?.title}`);
-  console.log(`      - Salary: ${JSON.stringify(jobPost.jobDetails?.salary)}`);
-  console.log(`      - Location: ${jobPost.jobDetails?.location}`);
-  console.log(`      - Employment Type: ${jobPost.jobDetails?.employmentType}\n`);
+  console.log(`JOB DETAILS:`);
+  console.log(`  Title: ${jobPost.jobDetails?.title}`);
+  console.log(`  Required Skills: ${requiredSkills.map(s => s.name).join(", ") || "None"}`);
+  console.log(`  Salary: ${jobPost.jobDetails?.salary?.min}-${jobPost.jobDetails?.salary?.max} ${jobPost.jobDetails?.salary?.currency}`);
+  console.log(`  Location: ${jobPost.jobDetails?.location}`);
+  console.log(`  Type: ${jobPost.jobDetails?.employmentType}\n`);
 
   const matchesPromises = candidates.map(async (candidate) => {
     if (!candidate.userId) return null;
@@ -59,27 +58,23 @@ async function computeMatches(jobPostId, idCompany) {
       .filter((s) => s && s.name)
       .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-    console.log(`   👤 Candidate: ${candidate.userId.username}`);
-    console.log(`      - Skills: ${candidateSkills.map(s => s.name).join(", ")}`);
-
     const score = await calculateMatchScore(
       requiredSkills,
       candidateSkills,
-      { ...jobPost.jobDetails, skillAnalysis: jobPost.skillAnalysis }, // jobDetails + skillAnalysis
+      { ...jobPost.jobDetails, skillAnalysis: jobPost.skillAnalysis },
       candidate,
-      idCompany, // <-- ici l'id correct
+      idCompany,
       jobPostId
     );
 
-    console.log(`      - Score: ${score}\n`);
+    console.log(`${candidate.userId.username}: Score = ${score}/100`);
 
-    if (!score || score.score === 0) return null;
+    if (!score || score === 0) return null;
 
     return {
       candidateId: candidate.userId._id,
       name: candidate.userId.username || "Anonymous",
-      score: score.score,
-      unlocked: score.unlocked,
+      score,
       finalBid: candidate.companyBid?.finalBid || null,
       biddingCompany: candidate.companyBid?.company?.username || null,
       matchedSkills: candidateSkills.filter((cs) =>
@@ -93,7 +88,7 @@ async function computeMatches(jobPostId, idCompany) {
     .filter((m) => m)
     .sort((a, b) => b.score - a.score);
 
-  console.log(`   ✅ [computeMatches] Completed - ${matches.length} match(es) found\n`);
+  console.log(`=== RESULT: ${matches.length} match(es) found ===\n`);
 
   return { jobTitle: jobPost.jobDetails?.title || "Unknown", matches };
 }
@@ -268,7 +263,7 @@ async function initializeAgenda() {
     }
 
     await agendaInstance.every(
-      "1 minute",
+      "5 minute",
       "agent:heartbeat",
       {},
       {
