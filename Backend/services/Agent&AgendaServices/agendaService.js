@@ -8,6 +8,9 @@ const {
 } = require("../MatchingService/matchingForBidService");
 const axios = require("axios");
 const profileService = require("../../services/profileService/profileService");
+const {
+  submitEvaluationMessage,
+} = require("../../controllers/hrAgentController");
 
 let agendaInstance;
 let isInitialized = false;
@@ -221,17 +224,16 @@ async function initializeAgenda() {
                   // Submit evaluation message if autoSubmitTopMatch is enabled
                   if (autoSubmitTopMatch) {
                     try {
-                      await axios.post(
-                        `${process.env.BASE_URL_Backend}/hr-agents/submit-evaluation-message`,
-                        {
+                      await submitEvaluationMessage({
+                        body: {
                           agentAId: agent._id,
-                          agentBId: "68c2e127bf5357b2404443c2", // master
+                          agentBId: "68c2e127bf5357b2404443c2",
                           candidateId: topMatch.candidateId,
                           postId: agent.postId._id,
                           message: `Candidate review request (Score: ${topMatch.score}%, Bid: $${bidAmount})`,
                           bidAmount: bidAmount,
-                        }
-                      );
+                        },
+                      });
                       console.log(
                         `📤 [Agenda] Message sent for candidate ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount})`
                       );
