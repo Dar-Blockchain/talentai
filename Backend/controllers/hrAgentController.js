@@ -22,20 +22,10 @@ const {
 } = require("@hashgraphonline/standards-sdk");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
-const { calculateSkillMatchScore } = require("../services/MatchingService/matchingForBidService");
-
-// utilitaire pour normaliser les noms de skills
-function normalizeSkillName(name) {
-  if (!name) return "";
-  const part = name.split(".")[0].trim();
-  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-}
 
 // services/MatchingService/computeMatches.js
 
-const Profile = require("../../models/ProfileModel");
-const JobPost = require("../../models/PostModel");
-const { calculateMatchScore, normalizeSkillName } = require("./matchingService");
+const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matchingService");
 
 async function computeMatches(jobPostId, companyId) {
   // Charger les candidats
