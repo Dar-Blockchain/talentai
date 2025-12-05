@@ -31,48 +31,87 @@ function normalizeSkillName(name) {
   return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 }
 
-async function computeMatches(jobPostId) {
+// services/MatchingService/computeMatches.js
+
+const Profile = require("../../models/ProfileModel");
+const JobPost = require("../../models/PostModel");
+const { calculateMatchScore, normalizeSkillName } = require("./matchingService");
+
+async function computeMatches(jobPostId, companyId) {
+  // Charger les candidats
   const candidates = await Profile.find({ type: "Candidate" })
     .populate("userId", "username email")
     .populate("companyBid.company", "username email")
-    .select("userId skills companyDetails.name companyBid")
     .lean();
 
+  // Charger le job
   const jobPost = await JobPost.findById(jobPostId)
-    .select("skillAnalysis.requiredSkills jobDetails.title")
+    .select("skillAnalysis.requiredSkills skillAnalysis.softSkills jobDetails")
     .lean();
 
-  if (!jobPost || !jobPost.skillAnalysis) return [];
+  if (!jobPost || !jobPost.skillAnalysis) {
+    return { jobTitle: "Unknown", matches: [] };
+  }
 
-  const requiredSkills = (jobPost.skillAnalysis.requiredSkills || [])
+  /** ------------------------
+   * Préparation des skills
+   * ------------------------- */
+  const requiredHardSkills = (jobPost.skillAnalysis.requiredSkills || [])
     .filter((s) => s && s.name)
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-  const matches = candidates
-    .map((candidate) => {
-      if (!candidate.userId) return null;
-      const candidateSkills = (candidate.skills || [])
-        .filter((s) => s && s.name)
-        .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+  const requiredSoftSkills = jobPost.skillAnalysis.softSkills || [];
 
-      const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
+  /** ------------------------
+   * Matching
+   * ------------------------- */
+  const matches = [];
 
-      return {
-        candidateId: candidate.userId._id,
-        name: candidate.userId.username || "Anonymous",
-        score,
-        finalBid: candidate.companyBid?.finalBid || null,
-        biddingCompany: candidate.companyBid?.company?.username || null,
-        matchedSkills: candidateSkills.filter((cs) =>
-          requiredSkills.some((rs) => rs.name === cs.name)
-        ),
-        requiredSkills,
-      };
-    })
-    .filter((m) => m && m.score > 0)
-    .sort((a, b) => b.score - a.score);
+  for (const candidate of candidates) {
+    if (!candidate.userId) continue;
 
-  return { jobTitle: jobPost.jobDetails?.title || "Unknown", matches };
+    const candidateSkills = (candidate.skills || [])
+      .filter((s) => s && s.name)
+      .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+    /** ------------------------
+     * APPEL DE LA NOUVELLE LOGIQUE
+     * calculateMatchScore()
+     * ------------------------- */
+    const { score, unlocked } = await calculateMatchScore(
+      requiredHardSkills,
+      candidateSkills,
+      jobPost.jobDetails,
+      candidate,
+      companyId,
+      jobPostId
+    );
+
+    if (score <= 0) continue;
+
+    const matchedSkills = candidateSkills.filter((cs) =>
+      requiredHardSkills.some((rs) => rs.name === cs.name)
+    );
+
+    matches.push({
+      candidateId: candidate.userId._id,
+      name: candidate.userId.username || "Anonymous",
+      score,
+      unlocked,
+      finalBid: candidate.companyBid?.finalBid || null,
+      biddingCompany: candidate.companyBid?.company?.username || null,
+      matchedSkills,
+      requiredSkills: requiredHardSkills,
+    });
+  }
+
+  // Trier par score décroissant
+  matches.sort((a, b) => b.score - a.score);
+
+  return {
+    jobTitle: jobPost.jobDetails?.title || "Unknown",
+    matches,
+  };
 }
 
 // Coordinator diagnostic functions integrated into controller
@@ -1043,7 +1082,8 @@ const hrAgentController = {
           continue;
         }
 
-        const { jobTitle, matches } = await computeMatches(agent.postId._id);
+        const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
+
         totalMatches += matches.length;
 
         agentsWithMatches.push({
