@@ -196,19 +196,19 @@ async function initializeAgenda() {
                     console.error(`❌ [Agenda] Failed to send message for candidate ${topMatch.name}:`, err.message);
                   }
                 }
-
+                                
                 // Update final bid
                 try {
-                  const res = await axios.put(`${process.env.BASE_URL_Backend}/profiles/updateFinalBid`, {
-                    userId: topMatch.candidateId?.toString(),
-                    newBid: bidAmount,
-                    companyId: agent._id?.toString(),
-                    postId: agent.postId._id?.toString()
-                  });
-                  
-                  console.log(
-                    `📈 [Agenda] Bid updated for candidate ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount}) → FinalBid = $${res.data.profile.companyBid.finalBid}`
-                  );
+                      const updatedProfile = await profileService.updateFinalBid(
+                        topMatch.candidateId?.toString(),
+                        bidAmount,
+                        agent._id?.toString(),
+                        agent.postId._id?.toString()
+                      );
+
+                      console.log(
+                        `📈 [Agenda] Bid updated ✔ Candidate: ${topMatch.name} | Score: ${topMatch.score}% | New Bid: $${bidAmount} → FinalBid saved: $${updatedProfile.companyBid.finalBid}`
+                      );
                 } catch (err) {
                   const errorMsg = err.response?.data?.message || err.message;
                   
