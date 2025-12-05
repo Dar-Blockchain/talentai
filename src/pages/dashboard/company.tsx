@@ -181,7 +181,7 @@ const DashboardCompany = () => {
           />
 
           {/* HR Agents Section */}
-          {/* {profile?._id && <HRAgentsTable companyId={profile._id} />} */}
+          {profile?._id && <HRAgentsTable companyId={profile._id} />}
    
           {/* Add Bid Dialog */}
           <UnlockCandidate
