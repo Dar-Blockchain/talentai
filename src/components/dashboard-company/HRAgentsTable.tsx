@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -31,12 +31,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchHRAgents, selectHRAgents } from '@/store/slices/hrAgentsSlice';
 
+// Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(2),
   background: 'white',
-  borderRadius: '16px',
-  border: '1px solid #e5e7eb',
+  borderRadius: '12px',
+  border: '1px solid rgba(84,98,116,0.1)',
 }));
 
 const StatusChip = styled(Chip)<{ status: string }>(({ theme, status }) => ({
@@ -59,6 +60,7 @@ const StatusChip = styled(Chip)<{ status: string }>(({ theme, status }) => ({
   }),
 }));
 
+// Interfaces
 interface MatchedSkill {
   name: string;
   proficiencyLevel: number;
@@ -114,6 +116,74 @@ interface HRAgentsTableProps {
   companyId: string;
 }
 
+// Style constants
+const COMMON_STYLES = {
+  title: {
+    color: "rgba(0, 0, 0, 1)",
+    fontFamily: "Poppins",
+    fontWeight: 600,
+    fontStyle: "normal",
+    fontSize: "20px",
+    lineHeight: "100%",
+    letterSpacing: "0",
+    position: "relative",
+    "&:after": {
+      content: '""',
+      position: "absolute",
+      bottom: "-8px",
+      left: 0,
+      width: "40px",
+      height: "5px",
+      backgroundColor: "rgba(222, 147, 0, 1)",
+      borderRadius: "2px",
+    },
+  },
+  sectionTitle: {
+    color: 'rgba(0, 0, 0, 1)',
+    fontFamily: "Poppins",
+    fontWeight: 600,
+  },
+  button: {
+    backgroundColor: "rgba(224, 154, 16, 1)",
+    borderColor: "rgba(224, 154, 16, 1)",
+    color: "white",
+    textTransform: 'none',
+    fontWeight: 500,
+    fontSize: '0.875rem',
+    borderRadius: '38px',
+    height: '42px',
+    '&:hover': {
+      backgroundColor: "rgba(224, 154, 16, 0.8)",
+      borderColor: "rgba(224, 154, 16, 0.8)"
+    }
+  },
+  agentCard: {
+    background: "rgba(255, 251, 244, 1)",
+    borderRadius: '12px',
+    border: '1px solid rgba(222, 147, 0, 1)',
+    p: 3,
+    transition: 'all 0.2s',
+    '&:hover': {
+      boxShadow: '0 4px 12px rgba(222, 147, 0, 0.15)'
+    }
+  }
+} as const;
+
+// Utility functions
+const calculateValidScores = (matches: Match[]): number[] => {
+  return matches
+    .map(m => m.score)
+    .filter(score => !isNaN(score) && score !== null && score !== undefined);
+};
+
+const calculateMinBid = (matches: Match[]): number => {
+  if (matches.length === 0) return 0;
+  const validBids = matches
+    .map(m => m.finalBid || 0)
+    .filter(bid => bid > 0);
+  return validBids.length > 0 ? Math.min(...validBids) : 0;
+};
+
 const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: agents, status, error } = useSelector(selectHRAgents);
@@ -121,76 +191,78 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
+  // Fetch agents on mount
   useEffect(() => {
     if (companyId) {
       dispatch(fetchHRAgents(companyId));
     }
   }, [dispatch, companyId]);
 
-  // Transform the API data to match our expected format
-  const transformedAgents: TransformedHRAgent[] = agents?.map((agent: any) => ({
-    ...agent,
-    _id: agent.agentId,
-    company: 'HR Agency', // Default since not provided in API
-    email: 'contact@hragent.com', // Default since not provided in API
-    specialization: agent.jobTitle ? [agent.jobTitle] : ['General HR'],
-    experience: 5, // Default since not provided in API
-    rating: 4.5, // Default since not provided in API
-    bidAmount: agent.matches.length > 0 ? Math.min(...agent.matches.map((m: any) => m.finalBid || 0).filter((bid: number) => bid > 0)) : 0,
-    status: agent.matches.length > 0 ? 'available' : 'offline',
-    description: agent.message || 'Professional HR agent specializing in talent acquisition',
-    skills: agent.matches.length > 0 ? agent.matches[0].requiredSkills.map((s: any) => s.name) : [],
-    location: 'Remote', // Default since not provided in API
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  })) || [];
+  // Transform agents data (memoized)
+  const transformedAgents: TransformedHRAgent[] = useMemo(() => {
+    return agents?.map((agent: any) => ({
+      ...agent,
+      _id: agent.agentId,
+      company: 'HR Agency',
+      email: 'contact@hragent.com',
+      specialization: agent.jobTitle ? [agent.jobTitle] : ['General HR'],
+      experience: 5,
+      rating: 4.5,
+      bidAmount: calculateMinBid(agent.matches),
+      status: agent.matches.length > 0 ? 'available' as const : 'offline' as const,
+      description: agent.message || 'Professional HR agent specializing in talent acquisition',
+      skills: agent.matches.length > 0 ? agent.matches[0].requiredSkills.map((s: any) => s.name) : [],
+      location: 'Remote',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })) || [];
+  }, [agents]);
 
-  const totalPages = Math.max(1, Math.ceil((agents?.length || 0) / itemsPerPage));
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedAgents = agents?.slice(startIndex, endIndex) || [];
+  // Pagination calculations (memoized)
+  const { totalPages, startIndex, endIndex, paginatedAgents } = useMemo(() => {
+    const total = Math.max(1, Math.ceil((agents?.length || 0) / itemsPerPage));
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginated = agents?.slice(start, end) || [];
 
+    return {
+      totalPages: total,
+      startIndex: start,
+      endIndex: end,
+      paginatedAgents: paginated
+    };
+  }, [agents, page, itemsPerPage]);
+
+  // Reset page when items per page changes
   useEffect(() => {
     setPage(1);
   }, [itemsPerPage, agents?.length]);
 
+  // Ensure page doesn't exceed total pages
   useEffect(() => {
     if (page > totalPages) {
       setPage(totalPages);
     }
   }, [page, totalPages]);
 
-  const handleItemsPerPageChange = (event: any) => {
-    const value = Number(event.target.value);
-    setItemsPerPage(value);
-  };
+  // Event handlers (memoized)
+  const handleItemsPerPageChange = useCallback((event: any) => {
+    setItemsPerPage(Number(event.target.value));
+  }, []);
 
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = useCallback((_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
-  };
+  }, []);
 
-  const handleViewDetails = (agent: TransformedHRAgent) => {
+  const handleViewDetails = useCallback((agent: TransformedHRAgent) => {
     setSelectedAgent(agent);
-  };
+  }, []);
 
-  const handleCloseDetails = () => {
+  const handleCloseDetails = useCallback(() => {
     setSelectedAgent(null);
-  };
+  }, []);
 
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'success';
-      case 'busy':
-        return 'warning';
-      case 'offline':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
+  // Loading state
   if (status === 'loading') {
     return (
       <StyledCard>
@@ -204,6 +276,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     );
   }
 
+  // Error state
   if (status === 'failed') {
     return (
       <StyledCard>
@@ -214,10 +287,11 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     );
   }
 
+  // Empty state
   if (!agents || agents.length === 0) {
     return (
       <StyledCard>
-        <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700, mb: 3 }}>
+        <Typography variant="h5" sx={{ ...COMMON_STYLES.title, mb: 3 }}>
           HR Agents
         </Typography>
 
@@ -229,9 +303,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
           gap: 2,
           py: 8,
           px: 4,
-          background: '#f9fafb',
-          borderRadius: '12px',
-          border: '1px solid #e5e7eb',
+          backgroundColor: "rgba(62, 233, 167, 0.03)",
+          borderRadius: '8px',
+          border: '1px solid rgba(98, 111, 134, 0.18)',
           textAlign: 'center'
         }}>
           <Box sx={{
@@ -263,7 +337,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
       <StyledCard>
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700 }}>
+          <Typography variant="h5" sx={COMMON_STYLES.title}>
             HR Agents
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
@@ -304,7 +378,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
               }}
             />
             <Chip
-              label={`${agents.reduce((total, agent: any) => total + agent.matches.length, 0)} matches`}
+              label={`${agents.reduce((total: number, agent: any) => total + agent.matches.length, 0)} matches`}
               size="small"
               sx={{
                 backgroundColor: '#f0fdf4',
@@ -329,24 +403,14 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
         {/* Agent Cards */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {paginatedAgents.map((agent: any) => {
-            const topScore = agent.matches.length > 0 ? Math.max(...agent.matches.map((m: any) => m.score)) : 0;
-            const minBid = agent.matches.length > 0 ? Math.min(...agent.matches.map((m: any) => m.finalBid || 0).filter((bid: number) => bid > 0)) : 0;
+            const scores = calculateValidScores(agent.matches);
+            const topScore = scores.length > 0 ? Math.max(...scores) : 0;
+            const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length) : 0;
+            const minBid = calculateMinBid(agent.matches);
             const status = agent.matches.length > 0 ? 'available' : 'offline';
 
             return (
-              <Box
-                key={agent.agentId}
-                sx={{
-                  background: 'white',
-                  borderRadius: '12px',
-                  border: '1px solid #e5e7eb',
-                  p: 3,
-                  transition: 'border-color 0.2s',
-                  '&:hover': {
-                    borderColor: '#d1d5db'
-                  }
-                }}
-              >
+              <Box key={agent.agentId} sx={COMMON_STYLES.agentCard}>
                 <Box sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -439,9 +503,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   gap: 2,
                   mb: 2,
                   p: 2,
-                  background: '#f9fafb',
+                  background: 'white',
                   borderRadius: '12px',
-                  border: '1px solid #e5e7eb'
+                  border: '1px solid rgba(222, 147, 0, 0.3)'
                 }}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, fontSize: '1.25rem' }}>
@@ -461,7 +525,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, fontSize: '1.25rem' }}>
-                      {agent.matches.length > 0 ? Math.round(agent.matches.reduce((sum: number, m: any) => sum + m.score, 0) / agent.matches.length) : 0}%
+                      {avgScore}%
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '0.75rem' }}>
                       Avg Score
@@ -472,28 +536,16 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 {/* Action Button */}
                 <Box sx={{
                   pt: 2,
-                  borderTop: '1px solid #e5e7eb'
+                  borderTop: '1px solid rgba(222, 147, 0, 0.2)'
                 }}>
                   <Button
                     variant="outlined"
                     fullWidth
                     startIcon={<Visibility />}
                     onClick={() => handleViewDetails(transformedAgents.find(t => t._id === agent.agentId)!)}
-                    sx={{
-                      borderColor: '#3b82f6',
-                      color: '#3b82f6',
-                      textTransform: 'uppercase',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      borderRadius: '12px',
-                      py: 1.25,
-                      '&:hover': {
-                        borderColor: '#2563eb',
-                        backgroundColor: '#eff6ff'
-                      }
-                    }}
+                    sx={COMMON_STYLES.button}
                   >
-                    VIEW DETAILS
+                    View Details
                   </Button>
                 </Box>
               </Box>
@@ -546,9 +598,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '16px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e5e7eb'
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(84,98,116,0.1)'
           }
         }}
       >
@@ -557,13 +609,12 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
             <DialogTitle sx={{
               p: 3,
               pb: 2,
-              borderBottom: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb'
+              borderBottom: '1px solid rgba(84,98,116,0.1)',
+              backgroundColor: 'rgba(255, 251, 244, 0.3)'
             }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Typography variant="h6" sx={{
-                  color: '#111827',
-                  fontWeight: 700,
+                  ...COMMON_STYLES.sectionTitle,
                   fontSize: '1.25rem'
                 }}>
                   {selectedAgent.name}
@@ -580,8 +631,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" sx={{
-                    color: '#111827',
-                    fontWeight: 600,
+                    ...COMMON_STYLES.sectionTitle,
                     mb: 2,
                     fontSize: '1.125rem'
                   }}>
@@ -608,8 +658,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 </Box>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" sx={{
-                    color: '#111827',
-                    fontWeight: 600,
+                    ...COMMON_STYLES.sectionTitle,
                     mb: 2,
                     fontSize: '1.125rem'
                   }}>
@@ -627,10 +676,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
               </Box>
 
               <Box sx={{ width: '100%', mt: 3 }}>
-                <Divider sx={{ my: 2, borderColor: '#e5e7eb' }} />
+                <Divider sx={{ my: 2, borderColor: 'rgba(84,98,116,0.1)' }} />
                 <Typography variant="h6" sx={{
-                  color: '#111827',
-                  fontWeight: 600,
+                  ...COMMON_STYLES.sectionTitle,
                   mb: 2,
                   fontSize: '1.125rem'
                 }}>
@@ -639,9 +687,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 {(() => {
                   const filteredMatches = selectedAgent.matches
                     ? [...selectedAgent.matches]
-                        .filter((match) => match.finalBid && match.finalBid > 0) // Only show candidates with a price
-                        .sort((a, b) => b.score - a.score) // Sort by score descending
-                        .slice(0, 2) // Take only top 2
+                        .filter((match) => match.finalBid && match.finalBid > 0)
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, 2)
                     : [];
 
                   return filteredMatches.length > 0 ? (
@@ -650,9 +698,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                       <Box key={index} sx={{
                         mb: 2,
                         p: 3,
-                        border: '1px solid #e5e7eb',
+                        border: '1px solid rgba(222, 147, 0, 0.3)',
                         borderRadius: '12px',
-                        backgroundColor: '#f9fafb'
+                        backgroundColor: 'rgba(255, 251, 244, 0.5)'
                       }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                           <Typography variant="h6" sx={{
@@ -729,9 +777,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                     justifyContent: 'center',
                     py: 4,
                     px: 2,
-                    backgroundColor: '#f9fafb',
+                    backgroundColor: 'rgba(62, 233, 167, 0.03)',
                     borderRadius: '12px',
-                    border: '1px solid #e5e7eb'
+                    border: '1px solid rgba(98, 111, 134, 0.18)'
                   }}>
                     <Typography variant="body2" sx={{ color: '#6b7280' }}>
                       No matches found for this agent.
@@ -744,20 +792,16 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
             <DialogActions sx={{
               p: 3,
               pt: 2,
-              borderTop: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb'
+              borderTop: '1px solid rgba(84,98,116,0.1)',
+              backgroundColor: 'rgba(255, 251, 244, 0.3)'
             }}>
               <Button
                 onClick={handleCloseDetails}
+                variant="outlined"
                 sx={{
-                  textTransform: 'none',
-                  color: '#6b7280',
-                  fontWeight: 500,
-                  px: 3,
+                  ...COMMON_STYLES.button,
+                  px: 4,
                   py: 1,
-                  '&:hover': {
-                    backgroundColor: '#f3f4f6'
-                  }
                 }}
               >
                 Close
