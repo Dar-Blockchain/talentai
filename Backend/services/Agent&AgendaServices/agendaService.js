@@ -239,7 +239,7 @@ async function initializeAgenda() {
                       );
                     } catch (err) {
                       console.error(
-                        `❌ [Agenda] Failed to send message for candidate ${topMatch.name}:`,
+                        `ℹ️ [Agenda] Failed to send message for candidate ${topMatch.name}:`,
                         err.message
                       );
                     }
@@ -272,7 +272,7 @@ async function initializeAgenda() {
                       );
                     } else {
                       console.error(
-                        `❌ [Agenda] Failed updateFinalBid for candidate ${topMatch.name}:`,
+                        `ℹ️ [Agenda] Failed updateFinalBid for candidate ${topMatch.name}:`,
                         errorMsg
                       );
                     }
@@ -315,8 +315,9 @@ async function initializeAgenda() {
       );
     }
 
+    // Schedule job: every day at 00:00 (midnight) in configured timezone
     await agendaInstance.every(
-      "5 minute",
+      "0 0 * * *",
       "agent:heartbeat",
       {},
       {
@@ -327,7 +328,7 @@ async function initializeAgenda() {
       }
     );
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda started with agent:heartbeat job every minute");
+    console.log("⏱️ Agenda started with agent:heartbeat scheduled daily at 00:00 (timezone: " + (process.env.TZ || "Europe/Paris") + ")");
 
     // Verification: list scheduled jobs
     try {
@@ -381,34 +382,32 @@ async function initializeAgenda() {
       console.warn("⚠️  [Agenda] Unable to list scheduled jobs:", e?.message);
     }
 
-    // Countdown timer
+    // Countdown timer (for daily schedule)
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 60 * 1000; // +1 minute in ms
+        // Next expected at lastHeartbeat + 24 hours
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 24 * 60 * 60 * 1000; // +24 hours
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
 
-        if (remainingSeconds % 10 === 0 || remainingSeconds <= 10) {
-          // display every 10s + last 10 sec
-          const minutes = Math.floor(remainingSeconds / 60);
+        // Display every minute, more frequently in the last minute
+        if (remainingSeconds % 60 === 0 || remainingSeconds <= 60) {
+          const hours = Math.floor(remainingSeconds / 3600);
+          const minutes = Math.floor((remainingSeconds % 3600) / 60);
           const seconds = remainingSeconds % 60;
-          process.stdout.write(
-            `\r🕒 Next heartbeat in: ${minutes}m ${seconds}s `
-          );
+          process.stdout.write(`\r🕒 Next heartbeat in: ${hours}h ${minutes}m ${seconds}s `);
         }
 
-        // Watchdog: restart if not executed after 1min + 2s
+        // Watchdog: restart if not executed after 24h + 2s
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn(
-            "\n⚠️  [Agenda] No heartbeat detected (>1m2s). Restarting..."
-          );
+          console.warn("\n⚠️  [Agenda] No heartbeat detected (>24h2s). Restarting...");
           hasWarnedForCurrentCycle = true;
           agendaInstance.now("agent:heartbeat").catch((e) => {
             console.error("❌ [Agenda] Restart failed:", e?.message);
           });
         }
-      }, 2000);
+      }, 60000); // tick every minute
     }
   });
 
