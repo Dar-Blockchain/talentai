@@ -1349,13 +1349,13 @@ const IntelligentInterviewTest = () => {
 
       // Start new timer
       const maxMinutes = data.config.duration || 20;
+      const twoMinuteThreshold = (maxMinutes - 2) * 60; // Convert to seconds
       timerIntervalRef.current = setInterval(() => {
         setElapsedTime(prev => {
           const newTime = prev + 1;
 
-          // Show warning at 2 minutes remaining
-          const remainingMinutes = maxMinutes - (newTime / 60);
-          if (remainingMinutes <= 2 && !timeWarning) {
+          // Show warning exactly when crossing 2 minutes remaining threshold
+          if (newTime === twoMinuteThreshold && !timeWarning) {
             setTimeWarning(true);
             showNotification('2 minutes remaining', 'warning');
           }
@@ -2095,7 +2095,7 @@ const IntelligentInterviewTest = () => {
         open={showAlert}
         autoHideDuration={4000}
         onClose={() => setShowAlert(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity={alertSeverity} onClose={() => setShowAlert(false)}>
           {alertMessage}
@@ -2907,26 +2907,6 @@ const IntelligentInterviewTest = () => {
                 }}
               />
 
-              {/* Timer Chip - Only show when interview is active */}
-              {interviewStatus === 'active' && (
-                <Chip
-                  icon={timeWarning ? <WarningIcon /> : <AccessTimeIcon />}
-                  label={`${Math.floor(elapsedTime / 60)}:${String(elapsedTime % 60).padStart(2, '0')}`}
-                  color={timeWarning ? 'warning' : 'default'}
-                  variant="filled"
-                  sx={{
-                    color: 'white',
-                    bgcolor: timeWarning ? 'rgba(255, 152, 0, 0.4)' : 'rgba(255,255,255,0.2)',
-                    backdropFilter: 'blur(10px)',
-                    borderRadius: 2,
-                    px: 2,
-                    fontWeight: 500,
-                    fontFamily: 'monospace',
-                    fontSize: '1rem'
-                  }}
-                />
-              )}
-
               {interviewStatus === 'active' && (
                 <Chip
                   icon={
@@ -3188,6 +3168,38 @@ const IntelligentInterviewTest = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Fixed Timer at Bottom - Only show when interview is active */}
+      {interviewStatus === 'active' && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+          }}
+        >
+          <Chip
+            icon={timeWarning ? <WarningIcon /> : <AccessTimeIcon />}
+            label={`${Math.floor(elapsedTime / 60)}:${String(elapsedTime % 60).padStart(2, '0')}`}
+            color={timeWarning ? 'warning' : 'default'}
+            variant="filled"
+            sx={{
+              color: 'white',
+              bgcolor: timeWarning ? 'rgba(255, 152, 0, 0.9)' : 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 2,
+              px: 3,
+              py: 2.5,
+              fontWeight: 600,
+              fontFamily: 'monospace',
+              fontSize: '1.2rem',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            }}
+          />
+        </Box>
+      )}
       </Container>
     </>
   );
