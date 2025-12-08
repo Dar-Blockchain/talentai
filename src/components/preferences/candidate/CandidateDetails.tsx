@@ -29,19 +29,27 @@ const CandidateDetails = forwardRef(
 
         updateCandidateDetail(field, value);
 
-        // Validate salary range when either min or max changes
-        if (field === "salaryMin" || field === "salaryMax") {
-          const minValue = Number(field === "salaryMin" ? value : candidateDetails.salaryMin);
-          const maxValue = Number(field === "salaryMax" ? value : candidateDetails.salaryMax);
+        // Auto-populate max salary and validate range when min or max changes
+        if (field === "salaryMin") {
+          const minValue = Number(value);
+          if (minValue > 0) {
+            const suggestedMax = Math.round(minValue * 1.3); // 30% higher
+            updateCandidateDetail("salaryMax", suggestedMax.toString());
+            setErrors((prev) => ({ ...prev, salaryMax: "" }));
+          } else if (value === "") {
+            updateCandidateDetail("salaryMax", "");
+          }
+        } else if (field === "salaryMax") {
+          const minValue = Number(candidateDetails.salaryMin);
+          const maxValue = Number(value);
 
           if (minValue > 0 && maxValue > 0) {
-            const minRequired = Math.round(minValue * 1.3); // 30% higher
-            const maxRequired = Math.round(minValue * 1.5); // 50% higher
+            const minRequired = Math.round(minValue * 1.3); // 30% higher minimum
 
-            if (maxValue < minRequired || maxValue > maxRequired) {
+            if (maxValue < minRequired) {
               setErrors((prev) => ({
                 ...prev,
-                salaryMax: `Max salary should be between ${minRequired.toLocaleString()} and ${maxRequired.toLocaleString()} (30-50% higher than min)`,
+                salaryMax: `Max salary must be at least ${minRequired.toLocaleString()} (30% higher than min salary)`,
               }));
             } else {
               setErrors((prev) => ({ ...prev, salaryMax: "" }));
@@ -79,7 +87,7 @@ const CandidateDetails = forwardRef(
       )
         newErrors.salaryMax = "Enter a valid number";
 
-      // Validate salary range (30-50% higher)
+      // Validate salary range (must be at least 30% higher)
       if (
         candidateDetails.salaryMin &&
         candidateDetails.salaryMax &&
@@ -88,11 +96,10 @@ const CandidateDetails = forwardRef(
       ) {
         const minValue = Number(candidateDetails.salaryMin);
         const maxValue = Number(candidateDetails.salaryMax);
-        const minRequired = Math.round(minValue * 1.3); // 30% higher
-        const maxRequired = Math.round(minValue * 1.5); // 50% higher
+        const minRequired = Math.round(minValue * 1.3); // 30% higher minimum
 
-        if (maxValue < minRequired || maxValue > maxRequired) {
-          newErrors.salaryMax = `Max salary should be between ${minRequired.toLocaleString()} and ${maxRequired.toLocaleString()} (30-50% higher than min)`;
+        if (maxValue < minRequired) {
+          newErrors.salaryMax = `Max salary must be at least ${minRequired.toLocaleString()} (30% higher than min salary)`;
         }
       }
 
