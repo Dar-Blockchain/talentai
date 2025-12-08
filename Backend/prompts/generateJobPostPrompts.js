@@ -112,14 +112,14 @@ const getQuickPrompt = (description, companyLocation) =>
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
-      "weights": {
-        "hardSkill": "DYNAMIC based on job description, must be very close to 'experience' weight",
-        "experience": "DYNAMIC based on job description, must be very close to 'hardSkill' weight",
-        "SoftSkill": "DYNAMIC based on job description, smaller than 'hardSkill' and 'experience'",
-        "salary": "DYNAMIC but very small weight",
-        "workMode": "DYNAMIC but very small weight",
-        "contract": "DYNAMIC but very small weight"
-      },
+"weights": {
+  "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
+  "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
+  "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
+  "salary": "DYNAMIC based on job description, max 10",
+  "workMode": "DYNAMIC based on job description, max 10",
+  "contract": "DYNAMIC based on job description, max 10"
+}
       "importanceWeight": {
         "critical": 1.5,
         "high": 1.2,
@@ -310,14 +310,15 @@ const getDetailedPrompt = (description, companyLocation) =>
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
-      "weights": {
-        "hardSkill": "DYNAMIC based on job description, must be very close to 'experience' weight",
-        "experience": "DYNAMIC based on job description, must be very close to 'hardSkill' weight",
-        "SoftSkill": "DYNAMIC based on job description, smaller than 'hardSkill' and 'experience'",
-        "salary": "DYNAMIC but very small weight",
-        "workMode": "DYNAMIC but very small weight",
-        "contract": "DYNAMIC but very small weight"
-      },
+"weights": {
+  "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
+  "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
+  "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
+  "salary": "DYNAMIC based on job description, max 10",
+  "workMode": "DYNAMIC based on job description, max 10",
+  "contract": "DYNAMIC based on job description, max 10"
+}
+
       "importanceWeight": {
         "critical": 1.5,
         "high": 1.2,
