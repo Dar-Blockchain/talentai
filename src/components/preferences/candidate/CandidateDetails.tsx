@@ -44,12 +44,18 @@ const CandidateDetails = forwardRef(
           const maxValue = Number(value);
 
           if (minValue > 0 && maxValue > 0) {
-            const minRequired = Math.round(minValue * 1.3); // 30% higher minimum
+            const minRequired = Math.round(minValue * 1.3); // 30% higher
+            const maxRequired = Math.round(minValue * 1.5); // 50% higher
 
             if (maxValue < minRequired) {
               setErrors((prev) => ({
                 ...prev,
-                salaryMax: `Max salary must be at least ${minRequired.toLocaleString()} (30% higher than min salary)`,
+                salaryMax: `Maximum salary is too low. It should be at least ${minRequired.toLocaleString()} (30% above minimum)`,
+              }));
+            } else if (maxValue > maxRequired) {
+              setErrors((prev) => ({
+                ...prev,
+                salaryMax: `Maximum salary is too high. It should not exceed ${maxRequired.toLocaleString()} (50% above minimum)`,
               }));
             } else {
               setErrors((prev) => ({ ...prev, salaryMax: "" }));
@@ -87,7 +93,7 @@ const CandidateDetails = forwardRef(
       )
         newErrors.salaryMax = "Enter a valid number";
 
-      // Validate salary range (must be at least 30% higher)
+      // Validate salary range (must be between 30-50% higher)
       if (
         candidateDetails.salaryMin &&
         candidateDetails.salaryMax &&
@@ -96,10 +102,13 @@ const CandidateDetails = forwardRef(
       ) {
         const minValue = Number(candidateDetails.salaryMin);
         const maxValue = Number(candidateDetails.salaryMax);
-        const minRequired = Math.round(minValue * 1.3); // 30% higher minimum
+        const minRequired = Math.round(minValue * 1.3); // 30% higher
+        const maxRequired = Math.round(minValue * 1.5); // 50% higher
 
         if (maxValue < minRequired) {
-          newErrors.salaryMax = `Max salary must be at least ${minRequired.toLocaleString()} (30% higher than min salary)`;
+          newErrors.salaryMax = `Maximum salary is too low. It should be at least ${minRequired.toLocaleString()} (30% above minimum)`;
+        } else if (maxValue > maxRequired) {
+          newErrors.salaryMax = `Maximum salary is too high. It should not exceed ${maxRequired.toLocaleString()} (50% above minimum)`;
         }
       }
 
