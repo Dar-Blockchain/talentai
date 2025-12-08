@@ -94,9 +94,10 @@ const getQuickPrompt = (description, companyLocation) =>
     - Return only valid JSON. Avoid markdown or code blocks.
 
     STRICT SKILL RULES:
-    - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
+    - REQUIRED: Generate 1 to 3 hard skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
     - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
-    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Node.js, MongoDB, AWS, Docker, CI/CD, etc.).
+    - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
@@ -174,15 +175,8 @@ const getDetailedPrompt = (description, companyLocation) =>
       - "low" → Bonus or additional skill, would be helpful
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
-    - The total sum of all percentages must equal exactly 100%.
     - Only one soft skill must be generated.
-    - Soft skill importance must follow: "low", "medium", "high", "critical".
-    
-    - The total percentage of requiredSkills and softSkills combined must equal 100%.
-    - LIA must dynamically distribute the 90% among requiredSkills and SoftSkill based on importance, frequency, and context in the job description.
-    - Salary, workMode, and contract together account for the remaining 10%.
-    - Always return percentages as integers summing to exactly 100%.
-
+    - Soft skill importance must follow: "low", "medium", "high", "critical".  
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
     
@@ -207,28 +201,15 @@ const getDetailedPrompt = (description, companyLocation) =>
         }
       },
       "skillAnalysis": {
-        "requiredSkills": [
+       "requiredSkills": [
           {
             "name": "Skill 1",
             "level": "Required level (1-5) based on years of experience",
-            "importance": "low/medium/high/critica",
-            "category": "Frontend/Backend/DevOps/etc.",
-            "percentage": 0
-          },
-          {
-            "name": "Skill 2",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "low/medium/high/critica",
-            "category": "Frontend/Backend/DevOps/etc.",
-            "percentage": 0
-          },
-          {
-            "name": "Skill 3",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "low/medium/high/critica",
+            "importance": "low/medium/high/critical",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           }
+          // Optionally include 1 or 2 more skills if relevant to the job (max total 3)
         ],
         "softSkills": [
           {
@@ -297,9 +278,12 @@ const getDetailedPrompt = (description, companyLocation) =>
     }
 
         STRICT SKILL RULES:
-    - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
+    - REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
     - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
     - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+     - The total percentage of requiredSkills and softSkills combined must equal 100%.
+    - LIA must dynamically distribute the 90% among 1–3 requiredSkills and 1 soft skill based on importance, frequency, and context in the job description.
+    - Salary, workMode, and contract together account for the remaining 10%.
     - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
