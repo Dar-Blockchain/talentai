@@ -1,7 +1,10 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 const Company = require("../../models/ProfileModel");
-const { getQuickPrompt, getDetailedPrompt } = require("../../prompts/generateJobPostPrompts");
+const {
+  getQuickPrompt,
+  getDetailedPrompt,
+} = require("../../prompts/generateJobPostPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -17,7 +20,10 @@ async function generateJobPost(description, type = "detailed", user) {
     const company = user?.profile ? await Company.findById(user.profile) : null;
     const companyLocation = company?.companyDetails?.location || "";
 
-    const prompt = type === "quick" ? getQuickPrompt(description, companyLocation) : getDetailedPrompt(description, companyLocation);
+    const prompt =
+      type === "quick"
+        ? getQuickPrompt(description, companyLocation)
+        : getDetailedPrompt(description, companyLocation);
     const config =
       type === "quick"
         ? {
@@ -72,12 +78,12 @@ async function generateJobPost(description, type = "detailed", user) {
           .replace(/(:\s*)(\w+)(\s*[,}])/g, '$1"$2"$3')
           .replace(/(:\s*)\[([^\]]*)\]/g, (match, p1, p2) => {
             const fixedArray = p2
-              .split(',')
+              .split(",")
               .map((item) => {
                 const trimmed = item.trim();
                 return trimmed.startsWith('"') ? trimmed : `"${trimmed}"`;
               })
-              .join(',');
+              .join(",");
             return `${p1}[${fixedArray}]`;
           });
 
@@ -101,8 +107,8 @@ ${result.linkedinPost.formattedContent.roleOverview}
   
 ${format.requirements} Key Points:
 ${result.linkedinPost.formattedContent.keyPoints
-    .map((point) => `• ${point}`)
-    .join("\n")}
+  .map((point) => `• ${point}`)
+  .join("\n")}
   
 ${format.skills} Required Skills:
 ${result.linkedinPost.formattedContent.skillsRequired}
@@ -120,11 +126,13 @@ ${format.apply} ${result.linkedinPost.formattedContent.callToAction}
 ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
         } catch (inner) {
           // If building finalPost fails, ignore and return whatever parsed result we have
-          console.warn('Could not build finalPost:', inner.message || inner);
+          console.warn("Could not build finalPost:", inner.message || inner);
         }
       }
     } catch (e) {
-      const err = new Error(`Failed to parse response from LLM: ${e.message || e}`);
+      const err = new Error(
+        `Failed to parse response from LLM: ${e.message || e}`
+      );
       err.rawResponse = raw;
       throw err;
     }
