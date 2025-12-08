@@ -1,4 +1,4 @@
-const linkedinPostService = require("../../services/PosteServices/linkedinPostService");
+const generateJobPostService = require("../../services/PosteServices/generateJobPostService");
 
 module.exports.generateJobPost = async (req, res) => {
   try {
@@ -14,7 +14,7 @@ module.exports.generateJobPost = async (req, res) => {
       });
     }
 
-    const result = await linkedinPostService.generateJobPost(description, type, user);
+    const result = await generateJobPostService.generateJobPost(description, type, user);
     res.json(result);
   } catch (error) {
     console.error("Error in generateJobPost:", error);

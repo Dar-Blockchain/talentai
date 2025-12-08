@@ -8,7 +8,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const linkedinPostController = require("../controllers/PostControllers/linkedinPostController");
+const generateJobPostController = require("../controllers/PostControllers/generateJobPostController");
 
 
 // Import des middlewares
@@ -24,6 +24,6 @@ router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("Linked
 // POST /linkedin/generate-job-post
 // Body: { title, description, skills, ... }
 // Description: Génère un post LinkedIn attractif pour une offre d'emploi
-router.post("/generate-job-post", linkedinPostController.generateJobPost);
+router.post("/generate", generateJobPostController.generateJobPost);
 
 module.exports = router;
