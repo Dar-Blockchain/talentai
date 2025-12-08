@@ -1,7 +1,7 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 const Company = require("../../models/ProfileModel");
-const { getQuickPrompt, getDetailedPrompt } = require("../../prompts/linkedinJobPostPrompts");
+const { getQuickPrompt, getDetailedPrompt } = require("../../prompts/generateJobPostPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
