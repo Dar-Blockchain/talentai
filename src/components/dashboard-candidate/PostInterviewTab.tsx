@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -225,8 +225,10 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   const [submissionLinks, setSubmissionLinks] = useState<Record<string, string>>({});
   const [submittedTasks, setSubmittedTasks] = useState<Record<string, boolean>>({});
 
+  /* ------------------------- Callbacks ------------------------- */
+
   // Fetch candidate progress data
-  const fetchCandidateProgress = async () => {
+  const fetchCandidateProgress = useCallback(async () => {
     try {
       setProgressLoading(true);
       setProgressError(null);
@@ -336,12 +338,12 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     } finally {
       setProgressLoading(false);
     }
-  };
+  }, []);
 
   // Fetch progress on component mount
   useEffect(() => {
     fetchCandidateProgress();
-  }, []);
+  }, [fetchCandidateProgress]);
 
   // Refresh progress when returning from an interview
   useEffect(() => {
@@ -354,7 +356,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [fetchCandidateProgress]);
 
   // Debug logging
   useEffect(() => {
@@ -365,16 +367,16 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   }, [data, candidateProgress, progressLoading, progressError]);
 
   // Show notification
-  const showNotification = (message: string, severity: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+  const showNotification = useCallback((message: string, severity: 'success' | 'error' | 'info' | 'warning' = 'info') => {
     setNotification({
       open: true,
       message,
       severity
     });
-  };
+  }, []);
 
   // Validate progress data structure
-  const validateProgressData = (progress: CandidateProgress) => {
+  const validateProgressData = useCallback((progress: CandidateProgress) => {
     const issues = [];
     
     if (!progress.idPost?._id) {
@@ -388,12 +390,12 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     if (!progress.idCandidate?.email) {
       issues.push('Candidate email is missing');
     }
-    
+
     return issues;
-  };
+  }, []);
 
   // Handle task sending with PDF
-  const handleSendTask = async (progress: CandidateProgress, step: any) => {
+  const handleSendTask = useCallback(async (progress: CandidateProgress, step: any) => {
     const taskId = `${progress._id}-${step?.stepId?._id || step?._id}`;
     
     try {
@@ -486,10 +488,10 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     } finally {
       setSendingTask(null);
     }
-  };
+  }, [fetchCandidateProgress, showNotification, validateProgressData]);
 
   // Handle candidate task submission (GitHub link)
-  const handleSubmitTask = async (stepNodeId: string) => {
+  const handleSubmitTask = useCallback(async (stepNodeId: string) => {
     try {
       const token = localStorage.getItem('api_token');
       if (!token) {
@@ -549,23 +551,40 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     } finally {
       setSubmittingTask(null);
     }
-  };
+  }, [fetchCandidateProgress, showNotification, submissionLinks]);
 
-  const getScoreColor = (score: number) => {
+  const getScoreColor = useCallback((score: number) => {
     if (score >= 80) return '#4caf50';
     if (score >= 70) return '#2196f3';
     if (score >= 60) return '#ff9800';
     if (score >= 50) return '#f44336';
     return '#9e9e9e';
-  };
+  }, []);
 
-  const getScoreLabel = (score: number) => {
+  const getScoreLabel = useCallback((score: number) => {
     if (score >= 80) return 'Excellent';
     if (score >= 70) return 'Good';
     if (score >= 60) return 'Average';
     if (score >= 50) return 'Below Average';
     return 'Poor';
-  };
+  }, []);
+
+  /* ------------------------- Memoized Values ------------------------- */
+
+  // Check if we have any data (either post interview data or candidate progress)
+  const hasAnyData = useMemo(() => data.length > 0 || candidateProgress.length > 0, [data.length, candidateProgress.length]);
+
+  // Calculate total applications
+  const totalApplications = useMemo(() => data.length + candidateProgress.length, [data.length, candidateProgress.length]);
+
+  // Calculate passed interviews
+  const passedInterviews = useMemo(() =>
+    data.filter(item => item.overallScore && item.overallScore >= 70).length,
+    [data]
+  );
+
+  // Calculate active applications
+  const activeApplications = useMemo(() => candidateProgress.length, [candidateProgress.length]);
 
   if ((loading || progressLoading) && (!data || data.length === 0) && (!candidateProgress || candidateProgress.length === 0)) {
     return (
@@ -588,9 +607,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     );
   }
 
-    // Check if we have any data (either post interview data or candidate progress)
-  const hasAnyData = data.length > 0 || candidateProgress.length > 0;
-  
   if (!hasAnyData && !progressLoading) {
     return (
       <Box
@@ -742,7 +758,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                   </Box>
                 </Box>
                 <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-                  {data.length + candidateProgress.length}
+                  {totalApplications}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
                   Total Applications
@@ -802,7 +818,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                   </Box>
                 </Box>
                 <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-                  {data.filter(item => item.overallScore && item.overallScore >= 70).length}
+                  {passedInterviews}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
                   Passed Interviews
@@ -862,7 +878,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                   </Box>
                 </Box>
                 <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-                  {candidateProgress.length}
+                  {activeApplications}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
                   Active Applications
@@ -2475,4 +2491,4 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   );
 };
 
-export default PostInterviewTab;
+export default React.memo(PostInterviewTab);
