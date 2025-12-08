@@ -84,9 +84,12 @@ const getQuickPrompt = (description, companyLocation) =>
       - "low" → Bonus or additional skill, would be helpful
 
     - Only one soft skill must be generated.
-    - The soft skill must always have percentage = 100.
-    - The sum of all skill percentages must equal 100%.
-    - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.
+    - The total percentage of requiredSkills and softSkills combined must equal 100%.
+    - LIA must dynamically distribute the 90% among requiredSkills and SoftSkill based on importance, frequency, and context in the job description.
+    - Salary, workMode, and contract together account for the remaining 10%.
+    - Always return percentages as integers summing to exactly 100%.
+
+
     - If not specified, distribute evenly and logically.
     - Return only valid JSON. Avoid markdown or code blocks.
 
@@ -101,7 +104,6 @@ const getQuickPrompt = (description, companyLocation) =>
 
     STRICT SOFT SKILL RULES:
     - Generate exactly 1 soft skill — no more, no less.
-    - The soft skill must always have percentage = 100%.
     - Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
     - Never use generic, vague, or irrelevant soft skills.
     - Importance values must follow: "low", "medium", "high", "critical".
@@ -175,8 +177,12 @@ const getDetailedPrompt = (description, companyLocation) =>
     - The total sum of all percentages must equal exactly 100%.
     - Only one soft skill must be generated.
     - Soft skill importance must follow: "low", "medium", "high", "critical".
-    - The soft skill must always have percentage = 100 (since it is the only one).
-    - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
+    
+    - The total percentage of requiredSkills and softSkills combined must equal 100%.
+    - LIA must dynamically distribute the 90% among requiredSkills and SoftSkill based on importance, frequency, and context in the job description.
+    - Salary, workMode, and contract together account for the remaining 10%.
+    - Always return percentages as integers summing to exactly 100%.
+
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
     
@@ -228,7 +234,7 @@ const getDetailedPrompt = (description, companyLocation) =>
           {
             "name": "Soft Skill 1",
             "importance": "low/medium/high/critica",
-            "percentage": 100
+            "percentage": 0
           },        
         ],
 
@@ -304,7 +310,6 @@ const getDetailedPrompt = (description, companyLocation) =>
     - REQUIRED: Generate exactly 1 soft skill — no more, no less.
     - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
     - The soft skill must include an "importance" field and a "percentage" field.
-    - The percentage must always be 100.
     - Never use vague or irrelevant soft skills.
  
     Before generating the job details, include the following matching configuration exactly as structured:
