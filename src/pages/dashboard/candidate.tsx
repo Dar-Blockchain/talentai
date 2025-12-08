@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 
@@ -24,7 +24,6 @@ import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionD
 import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
 import AddSoftSkillDialog from "@/components/dashboard-candidate/AddSoftSkillDialog";
 import AddSkillDialog from "@/components/dashboard-candidate/AddSkillDialog";
-import EditProfileModal from "@/components/dashboard-candidate/EditProfileModal";
 import LoadingState from "@/components/dashboard-candidate/LoadingState";
 import ErrorState from "@/components/dashboard-candidate/ErrorState";
 import {
@@ -107,7 +106,6 @@ export default function DashboardCandidate() {
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
 
-  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [skillType, setSkillType] = useState("");
   const [selectedSkill, setSelectedSkill] = useState("");
@@ -117,13 +115,6 @@ export default function DashboardCandidate() {
   const [softSkillProficiency, setSoftSkillProficiency] = useState<number>(1);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [visibleSkills, setVisibleSkills] = useState(3); // Add this line for tracking visible skills
-
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    experienceLevel: "",
-    targetRole: "",
-  });
 
   const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({ name: "", proficiencyLevel: 1 });
@@ -139,107 +130,8 @@ export default function DashboardCandidate() {
     severity: "error",
   });
 
-  useEffect(() => {
-    if (profile) {
-      console.log("🔄 Profile data updated:", {
-        username: profile.userId.username,
-        email: profile.userId.email,
-        experienceLevel: profile.requiredExperienceLevel,
-        targetRole: profile.targetRole,
-      });
-      setFormData({
-        username: profile.userId.username,
-        email: profile.userId.email,
-        experienceLevel: profile.requiredExperienceLevel || "",
-        targetRole: profile.targetRole || "",
-      });
-    }
-  }, [profile]);
-
-  const handleEditProfileClose = () => {
-    setEditProfileOpen(false);
-  };
-
   const handleCloseNotification = () => {
     setNotification((prev) => ({ ...prev, open: false }));
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        console.error("No token found");
-        return;
-      }
-
-      // Prepare profile update data
-      const profileUpdateData = {
-        username: formData.username,
-        email: formData.email,
-        requiredExperienceLevel: formData.experienceLevel,
-        targetRole: formData.targetRole,
-      };
-
-      console.log("🔧 Sending profile update data:", profileUpdateData);
-      console.log("🔧 API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
-      console.log(
-        "🔧 Full URL:",
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`
-      );
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(profileUpdateData),
-        }
-      );
-
-      console.log("📡 Profile update response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("❌ Profile update failed:", errorData);
-        throw new Error(errorData.message || "Failed to update profile");
-      }
-
-      const result = await response.json();
-      console.log("✅ Profile updated successfully:", result);
-      console.log("🔍 Updated profile data:", result.profile);
-
-      // Close modal and refresh profile data
-      handleEditProfileClose();
-      console.log("🔄 Refreshing profile data...");
-      dispatch(getMyProfile());
-
-      // Show success notification
-      setNotification({
-        open: true,
-        message: "Profile updated successfully!",
-        severity: "success",
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      setNotification({
-        open: true,
-        message:
-          error instanceof Error ? error.message : "Failed to update profile",
-        severity: "error",
-      });
-    }
   };
 
   const handleStartTest = useCallback(
@@ -434,14 +326,6 @@ export default function DashboardCandidate() {
                       );
                     }}
                     onCvBuilder={() => router.push("/resume-builder")}
-                  />
-                  {/* Edit Profile Modal */}
-                  <EditProfileModal
-                    open={editProfileOpen}
-                    onClose={handleEditProfileClose}
-                    formData={formData}
-                    onChange={handleInputChange}
-                    onSubmit={handleSubmit}
                   />
 
                   {/* Test Selection Modal */}
