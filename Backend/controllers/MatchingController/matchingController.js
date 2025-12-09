@@ -5,7 +5,7 @@ const Profile = require("../../models/ProfileModel");
 const {
   calculateMatchScore,
   normalizeSkillName,
-} = require("../../services/MatchingService/matchingService");
+} = require("../../services/MatchingService/NewmatchingService");
 
 exports.matchCandidatesToJob = async (req, res) => {
   try {
