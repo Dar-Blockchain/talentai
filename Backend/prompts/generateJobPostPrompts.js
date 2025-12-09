@@ -21,21 +21,21 @@ const getQuickPrompt = (description, companyLocation) =>
           {
             "name": "Skill 1",
             "level": "1-5 (based on years of experience in the job post)",
-            "importance": "Senior",
+            "importance": "low/medium/high/critica",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 2",
             "level": "1-5 (based on years of experience in the job post)",
-            "importance": "Mid_Level",
+            "importance": "low/medium/high/critica",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 3",
             "level": "1-5 (based on years of experience in the job post)",
-            "importance": "Expert",
+            "importance": "low/medium/high/critica",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           }
@@ -43,8 +43,8 @@ const getQuickPrompt = (description, companyLocation) =>
         "softSkills": [
           {
             "name": "Soft Skill 1",
-            "importance": "Junior/Mid_Level/Senior/Expert",
-            "percentage": 100
+            "importance": "low/medium/high/critica",
+            "percentage": 0
           },
         ],
         "suggestedSkills": {
@@ -75,25 +75,29 @@ const getQuickPrompt = (description, companyLocation) =>
       - 10 years = level 4
       - 15+ years = level 5
 
-    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "Junior", "Mid_Level", "Senior", "Expert"
+    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
 
     - Set importance using these EXACT values:
-      - "Expert" → Must-have core requirement with years of experience required
-      - "Senior" → Required for the job, explicitly mentioned as "Required"
-      - "Mid_Level" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
-      - "Junior" → Bonus or additional skill, would be helpful
+      - "critical" → Must-have core requirement with years of experience required
+      - "high" → Required for the job, explicitly mentioned as "Required"
+      - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
+      - "low" → Bonus or additional skill, would be helpful
 
     - Only one soft skill must be generated.
-    - The soft skill must always have percentage = 100.
-    - The sum of all skill percentages must equal 100%.
-    - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.
+    - The total percentage of requiredSkills and softSkills combined must equal 100%.
+    - LIA must dynamically distribute the 90% among requiredSkills and SoftSkill based on importance, frequency, and context in the job description.
+    - Salary, workMode, and contract together account for the remaining 10%.
+    - Always return percentages as integers summing to exactly 100%.
+
+
     - If not specified, distribute evenly and logically.
     - Return only valid JSON. Avoid markdown or code blocks.
 
     STRICT SKILL RULES:
-    - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
+    - REQUIRED: Generate 1 to 3 hard skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
     - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
-    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Node.js, MongoDB, AWS, Docker, CI/CD, etc.).
+    - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
@@ -101,10 +105,9 @@ const getQuickPrompt = (description, companyLocation) =>
 
     STRICT SOFT SKILL RULES:
     - Generate exactly 1 soft skill — no more, no less.
-    - The soft skill must always have percentage = 100%.
     - Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
     - Never use generic, vague, or irrelevant soft skills.
-    - Importance values must follow: "Junior", "Mid_Level", "Senior", "Expert".
+    - Importance values must follow: "low", "medium", "high", "critical".
 
 
     Job Description:
@@ -112,19 +115,19 @@ const getQuickPrompt = (description, companyLocation) =>
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
-      "weights": {
-        "hardSkill": "DYNAMIC based on job description, must be very close to 'experience' weight",
-        "experience": "DYNAMIC based on job description, must be very close to 'hardSkill' weight",
-        "SoftSkill": "DYNAMIC based on job description, smaller than 'hardSkill' and 'experience'",
-        "salary": "DYNAMIC but very small weight",
-        "workMode": "DYNAMIC but very small weight",
-        "contract": "DYNAMIC but very small weight"
-      },
+"weights": {
+  "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
+  "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
+  "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
+  "salary": "DYNAMIC based on job description, max 10",
+  "workMode": "DYNAMIC based on job description, max 10",
+  "contract": "DYNAMIC based on job description, max 10"
+}
       "importanceWeight": {
-        "Junior": 1.5,
-        "Mid_Level": 1.2,
-        "Senior": 1.0,
-        "Expert": 0.8
+        "critical": 1.5,
+        "high": 1.2,
+        "medium": 1.0,
+        "low": 0.8
       },
       "exchangeRates": {
         "USD": 1,
@@ -163,20 +166,17 @@ const getDetailedPrompt = (description, companyLocation) =>
       - 5 years = level 3
       - 10 years = level 4
       - 15+ years = level 5
-    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "Junior", "Mid_Level", "Senior", "Expert"
+    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
 
     - Set importance using these EXACT values:
-      - "Expert" → Must-have core requirement with years of experience required
-      - "Senior" → Required for the job, explicitly mentioned as "Required"
-      - "Mid_Level" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
-      - "Junior" → Bonus or additional skill, would be helpful
+      - "critical" → Must-have core requirement with years of experience required
+      - "high" → Required for the job, explicitly mentioned as "Required"
+      - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
+      - "low" → Bonus or additional skill, would be helpful
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
-    - The total sum of all percentages must equal exactly 100%.
     - Only one soft skill must be generated.
-    - Soft skill importance must follow: "Junior", "Mid_Level", "Senior", "Expert".
-    - The soft skill must always have percentage = 100 (since it is the only one).
-    - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
+    - Soft skill importance must follow: "low", "medium", "high", "critical".  
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
     
@@ -201,34 +201,21 @@ const getDetailedPrompt = (description, companyLocation) =>
         }
       },
       "skillAnalysis": {
-        "requiredSkills": [
+       "requiredSkills": [
           {
             "name": "Skill 1",
             "level": "Required level (1-5) based on years of experience",
-            "importance": "Senior",
-            "category": "Frontend/Backend/DevOps/etc.",
-            "percentage": 0
-          },
-          {
-            "name": "Skill 2",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Mid_Level",
-            "category": "Frontend/Backend/DevOps/etc.",
-            "percentage": 0
-          },
-          {
-            "name": "Skill 3",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Expert",
+            "importance": "low/medium/high/critical",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           }
+          // Optionally include 1 or 2 more skills if relevant to the job (max total 3)
         ],
         "softSkills": [
           {
             "name": "Soft Skill 1",
-            "importance": "Junior/Mid_Level/Senior/Expert",
-            "percentage": 100
+            "importance": "low/medium/high/critica",
+            "percentage": 0
           },        
         ],
 
@@ -291,37 +278,41 @@ const getDetailedPrompt = (description, companyLocation) =>
     }
 
         STRICT SKILL RULES:
-    - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
+    - REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
     - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
     - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+     - The total percentage of requiredSkills and softSkills combined must equal 100%.
+    - LIA must dynamically distribute the 90% among 1–3 requiredSkills and 1 soft skill based on importance, frequency, and context in the job description.
+    - Salary, workMode, and contract together account for the remaining 10%.
     - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
     - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+    - Importance values must follow: "low", "medium", "high", "critical".
 
     STRICT SOFT SKILL RULES:
     - REQUIRED: Generate exactly 1 soft skill — no more, no less.
     - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
     - The soft skill must include an "importance" field and a "percentage" field.
-    - The percentage must always be 100.
     - Never use vague or irrelevant soft skills.
  
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
-      "weights": {
-        "hardSkill": "DYNAMIC based on job description, must be very close to 'experience' weight",
-        "experience": "DYNAMIC based on job description, must be very close to 'hardSkill' weight",
-        "SoftSkill": "DYNAMIC based on job description, smaller than 'hardSkill' and 'experience'",
-        "salary": "DYNAMIC but very small weight",
-        "workMode": "DYNAMIC but very small weight",
-        "contract": "DYNAMIC but very small weight"
-      },
+"weights": {
+  "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
+  "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
+  "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
+  "salary": "DYNAMIC based on job description, max 10",
+  "workMode": "DYNAMIC based on job description, max 10",
+  "contract": "DYNAMIC based on job description, max 10"
+}
+
       "importanceWeight": {
-        "Junior": 1.5,
-        "Mid_Level": 1.2,
-        "Senior": 1.0,
-        "Expert": 0.8
+        "critical": 1.5,
+        "high": 1.2,
+        "medium": 1.0,
+        "low": 0.8
       },
       "exchangeRates": {
         "USD": 1,

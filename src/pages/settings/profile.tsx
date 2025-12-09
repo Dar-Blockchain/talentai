@@ -570,32 +570,6 @@ const ProfileSettingsPage: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      setLoggingOut(true);
-      resetRedirectState();
-
-      dispatch(clearProfile());
-      dispatch(logout());
-
-      localStorage.removeItem('api_token');
-      Cookies.remove('api_token', { path: '/' });
-      localStorage.clear();
-
-      Object.keys(Cookies.get()).forEach(cookieName => {
-        Cookies.remove(cookieName, { path: '/' });
-      });
-
-      signOut({ redirect: false }).catch(console.error);
-
-      window.location.href = '/signin';
-    } catch (error) {
-      console.error('Logout failed:', error);
-      setLoggingOut(true);
-      resetRedirectState();
-      window.location.href = '/signin';
-    }
-  };
 
   // Different menu items for Candidate vs Company
   const getCandidateMenuItems = () => [

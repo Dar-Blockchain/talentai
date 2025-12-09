@@ -23,12 +23,8 @@ import {
   Email as EmailIcon,
 } from "@mui/icons-material";
 import type { RootState } from "../store/store";
-import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
-import { clearProfile } from '@/store/slices/profileSlice';
-import { logout, setLoggingOut } from '@/store/slices/authSlice';
-import { resetRedirectState } from '@/utils/authRedirect';
-import { signOut } from 'next-auth/react';
+import { logout } from '@/store/slices/authSlice';
 
 export default function UserAvatar() {
   const dispatch = useDispatch();
@@ -91,34 +87,14 @@ export default function UserAvatar() {
   const handleLogoutClick = async () => {
     handleMenuClose();
     try {
-      // Set logout flag to prevent axios interceptors from triggering redirects
-      setLoggingOut(true);
-      resetRedirectState();
-      
-      // Clear Redux state FIRST to prevent components from trying to fetch
-      dispatch(clearProfile());
-      dispatch(logout());
-      
-      // Then clear the token and storage
-      localStorage.removeItem('api_token');
-      Cookies.remove('api_token', { path: '/' });
-      localStorage.clear();
-      
-      // Clear all other cookies
-      Object.keys(Cookies.get()).forEach(cookieName => {
-        Cookies.remove(cookieName, { path: '/' });
-      });
+      // Dispatch logout action - all cleanup happens in Redux
+      await dispatch(logout() as any).unwrap();
 
-      // Sign out from NextAuth (don't await to make redirect faster)
-      signOut({ redirect: false }).catch(console.error);
-      
-      // Redirect immediately (don't wait for async operations)
+      // Redirect to signin page
       window.location.href = '/signin';
     } catch (error) {
       console.error('Logout failed:', error);
       // Even on error, redirect to signin
-      setLoggingOut(true);
-      resetRedirectState();
       window.location.href = '/signin';
     }
   };

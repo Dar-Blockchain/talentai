@@ -32,7 +32,9 @@ const authRouter = require("./routes/authenticationRouter");
 const dashboardRouter = require("./routes/dashboardRouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");
-const linkedinPostRouter = require("./routes/linkedinPostRouter");
+//const generateJobPostRouter = require("./routes/generateJobPostRouter");
+const linkedinPostRouter = require("./routes/generateJobPostRouter");
+
 const postRouter = require("./routes/postRouter");
 const matchingRoutes = require("./routes/matchingRouter");
 const resumeRouter = require("./routes/resumeRouter");
@@ -137,6 +139,7 @@ app.use("/dashboard", dashboardRouter);
 app.use("/profiles", profileRouter);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/evaluation", evaluationRouter);
+//app.use("/generateJobPos", generateJobPostRouter);
 app.use("/linkedinPost", linkedinPostRouter);
 app.use("/feedback", feedbackRouter);
 app.use("/post", postRouter);

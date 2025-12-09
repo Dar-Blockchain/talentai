@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, Button, Chip, IconButton, Typography, Paper, Tooltip } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -35,9 +35,6 @@ function SkillBlockComponent({ profile, skill, type, onStartTest, onDelete, gree
   const scoreTest = skill.ScoreTest || 0;
   const percentage = scoreTest; // ScoreTest is already a percentage
   
-  // Keep proficiency level for level badges
-  const proficiencyLevel = type === "technical" ? skill.proficiencyLevel : proficiencyMap[skill.experienceLevel] || 1;
-
   return (
     <Paper
       elevation={0}

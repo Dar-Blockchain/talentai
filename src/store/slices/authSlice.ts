@@ -202,6 +202,58 @@ export const verifyOTP = createAsyncThunk(
   }
 );
 
+// Async thunk for logout - handles all cleanup centrally
+export const logout = createAsyncThunk(
+  'auth/logout',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      console.log('🚪 Starting logout process...');
+
+      // Set logout flag to prevent axios interceptors from triggering
+      setLoggingOut(true);
+
+      // Import at runtime to avoid circular dependency
+      const { resetRedirectState } = await import('@/utils/authRedirect');
+      const { clearProfile, clearProfileCache } = await import('./profileSlice');
+      const Cookies = await import('js-cookie').then(m => m.default);
+
+      resetRedirectState();
+
+      // Clear Redux state - dispatch all slice clear actions
+      (dispatch as any)(clearProfile());
+      (dispatch as any)(clearProfileCache());
+
+      // Clear all storage
+      localStorage.removeItem('api_token');
+      Cookies.remove('api_token', { path: '/' });
+      localStorage.clear();
+
+      // Clear all cookies
+      Object.keys(Cookies.get()).forEach((cookieName) => {
+        Cookies.remove(cookieName, { path: '/' });
+      });
+
+      // Sign out from NextAuth if available
+      if (typeof window !== 'undefined') {
+        try {
+          const { signOut } = await import('next-auth/react');
+          await signOut({ redirect: false });
+        } catch (error) {
+          console.warn('NextAuth signOut failed:', error);
+        }
+      }
+
+      console.log('✅ Logout successful');
+    } catch (error: any) {
+      console.error('❌ Logout error:', error);
+      return rejectWithValue(error.message || 'Logout failed');
+    } finally {
+      // Reset logout flag
+      setLoggingOut(false);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -209,7 +261,7 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    logout: (state) => {
+    clearAuth: (state) => {
       state.profile = null;
       state.user = null;
       state.isLoading = false;
@@ -254,9 +306,30 @@ const authSlice = createSlice({
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(logout.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        // Reset to initial state
+        state.profile = null;
+        state.user = null;
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.error = null;
+        state.token = null;
+      })
+      .addCase(logout.rejected, (state, action) => {
+        // Even on error, clear auth state
+        state.profile = null;
+        state.user = null;
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.error = action.payload as string;
+        state.token = null;
       });
   }
 });
 
-export const { clearError, logout, setUser } = authSlice.actions;
+export const { clearError, clearAuth, setUser } = authSlice.actions;
 export default authSlice.reducer; 

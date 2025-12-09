@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
     Box,
@@ -153,17 +153,27 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
         };
     }, [tab, page, rowsPerPage, fetchData]);
 
-    const handleTabChange = (_: any, newValue: string) => {
+    /* -------------------------
+       Memoized Values
+    ------------------------- */
+    const normalizedTab = useMemo(() => (tab || "").toString().toLowerCase(), [tab]);
+
+    /* -------------------------
+       Callbacks
+    ------------------------- */
+    const handleTabChange = useCallback((_: any, newValue: string) => {
         setTab(newValue);
         setPage(0);
-    };
-    const handleChangePage = (_: any, newPage: number) => setPage(newPage);
-    const handleChangeRowsPerPage = (e: any) => {
+    }, []);
+
+    const handleChangePage = useCallback((_: any, newPage: number) => {
+        setPage(newPage);
+    }, []);
+
+    const handleChangeRowsPerPage = useCallback((e: any) => {
         setRowsPerPage(parseInt(e.target.value, 10));
         setPage(0);
-    };
-
-    const normalizedTab = (tab || "").toString().toLowerCase();
+    }, []);
 
     return (
         <Box sx={{ width: "100%" }}>

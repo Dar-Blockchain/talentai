@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   AppBar,
   Box,
@@ -26,12 +26,9 @@ import {
 import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
 import { formatNumber, stringAvatar } from "@/utils/functions";
 import { openModal } from "@/store/slices/tokenPurchaseSlice";
-import { logout, setLoggingOut } from "@/store/slices/authSlice";
-import { resetRedirectState } from "@/utils/authRedirect";
-import { clearProfile } from "@/store/slices/profileSlice";
-import Cookies from "js-cookie";
-import { signOut } from "next-auth/react";
+import { logout } from "@/store/slices/authSlice";
 
+// Styles
 const pulseDot = {
   width: 4,
   height: 4,
@@ -45,67 +42,176 @@ const pulseDot = {
   },
 };
 
+// Reusable Components
+const LoadingDots = () => (
+  <Box sx={{ display: "flex", gap: 0.6, alignItems: "center" }}>
+    <Box sx={pulseDot} />
+    <Box sx={{ ...pulseDot, animationDelay: "0.2s" }} />
+    <Box sx={{ ...pulseDot, animationDelay: "0.4s" }} />
+  </Box>
+);
+
+interface TokenDisplayProps {
+  balance: number;
+  loading: boolean;
+  isCompany: boolean;
+  onPurchase: () => void;
+  compact?: boolean;
+}
+
+const TokenDisplay: React.FC<TokenDisplayProps> = ({
+  balance,
+  loading,
+  isCompany,
+  onPurchase,
+  compact = false,
+}) => (
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      backgroundColor: compact ? "transparent" : "white",
+      borderRadius: compact ? 0 : "25px",
+      boxShadow: compact ? "none" : "0 4px 14px rgba(0,0,0,0.06)",
+      p: compact ? 0 : "0 12px",
+      height: compact ? "auto" : 40,
+      gap: 1.5,
+    }}
+  >
+    <Image src="/icons/token.svg" alt="token" width={compact ? 22 : 20} height={compact ? 22 : 20} />
+    {loading ? (
+      <LoadingDots />
+    ) : (
+      <Typography
+        sx={{
+          fontFamily: "Poppins",
+          fontWeight: 500,
+          fontSize: "14px",
+          color: "rgba(222, 147, 0, 1)",
+        }}
+      >
+        {formatNumber(balance)} tokens
+      </Typography>
+    )}
+    {isCompany && (
+      <Tooltip title="Purchase Tokens">
+        <IconButton
+          onClick={onPurchase}
+          sx={{
+            ml: compact ? "auto" : 1,
+            width: compact ? 26 : 22,
+            height: compact ? 26 : 22,
+            backgroundColor: "white",
+            border: "0.5px solid rgba(14, 194, 125, 0.27)",
+            borderRadius: "16px",
+            boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
+          }}
+        >
+          <Image src="/icons/plus.svg" alt="plus" width={compact ? 14 : 12} height={compact ? 14 : 12} />
+        </IconButton>
+      </Tooltip>
+    )}
+  </Box>
+);
+
+interface LogoutButtonProps {
+  onClick: () => void;
+  isLoading: boolean;
+  fullWidth?: boolean;
+}
+
+const LogoutButton: React.FC<LogoutButtonProps> = ({ onClick, isLoading, fullWidth = false }) => (
+  <Button
+    fullWidth={fullWidth}
+    variant="contained"
+    disabled={isLoading}
+    startIcon={<LogoutIcon sx={{ color: fullWidth ? undefined : "rgba(200, 65, 75, 1)" }} />}
+    sx={{
+      height: fullWidth ? "auto" : 40,
+      backgroundColor: "white",
+      color: "rgba(200, 65, 75, 1)",
+      border: fullWidth ? "0.25px solid rgba(200, 65, 75, 0.3)" : undefined,
+      borderRadius: "25px",
+      boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+      textTransform: "none",
+      "&:hover": {
+        boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
+        backgroundColor: "rgba(200, 65, 75, 0.08)",
+      },
+      "&:disabled": {
+        backgroundColor: "rgba(200, 65, 75, 0.1)",
+        color: "rgba(200, 65, 75, 0.5)",
+      },
+      py: fullWidth ? 1 : undefined,
+    }}
+    onClick={onClick}
+  >
+    {isLoading ? "Logging out..." : "Logout"}
+  </Button>
+);
+
 const HeaderDashboard = () => {
   const router = useRouter();
-
   const dispatch = useDispatch<AppDispatch>();
+
+  // Selectors
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
   const { profile } = useSelector((state: RootState) => state.profile);
-  const userType = profile?.type;
+  const { isLoading: isLoggingOut } = useSelector((state: RootState) => state.auth);
+
+  // Local state
   const [mobileOpen, setMobileOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
+  // Memoized values
+  const isCompany = useMemo(() => profile?.type?.toLowerCase() === "company", [profile?.type]);
+  const displayName = useMemo(() => {
+    if (isCompany) {
+      return profile?.companyDetails?.name || profile?.userId?.username;
+    }
+    return `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
+  }, [isCompany, profile]);
+
+  const logoSrc = useMemo(
+    () => profile?.type === "Candidate"
+      ? "/images/home/logocandidate.png"
+      : "/images/home/logocompany.png",
+    [profile?.type]
+  );
+
+  const homeRoute = useMemo(() => isCompany ? "/" : "/home/candidate", [isCompany]);
+
+  // Callbacks
+  const handleOpenModal = useCallback(() => dispatch(openModal()), [dispatch]);
+  const toggleDrawer = useCallback(() => setMobileOpen((prev) => !prev), []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      window.location.replace("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      window.location.replace("/");
+    }
+  }, [dispatch]);
+
+  const navigateToProfile = useCallback(() => router.push("/settings/profile"), [router]);
+  const navigateToHome = useCallback(() => router.push(homeRoute), [router, homeRoute]);
+
+  // Effects
   useEffect(() => {
     setToken(localStorage.getItem("api_token"));
   }, []);
 
-  const handleOpenModal = () => dispatch(openModal());
-  const toggleDrawer = () => setMobileOpen(!mobileOpen);
-
-  const handleLogout = async () => {
-    try {
-      // Set logout flag to prevent axios interceptors from triggering redirects
-      setLoggingOut(true);
-      resetRedirectState();
-
-      // Clear Redux state FIRST to prevent components from trying to fetch
-      dispatch(clearProfile());
-      dispatch(logout());
-
-      // Then clear the token and storage
-      localStorage.removeItem("api_token");
-      Cookies.remove("api_token", { path: "/" });
-      localStorage.clear();
-
-      // Clear all other cookies
-      Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName, { path: "/" });
-      });
-
-      // Sign out from NextAuth (don't await to make redirect faster)
-      signOut({ redirect: false }).catch(console.error);
-
-      // Redirect to company home page
-      window.location.replace("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      // Even on error, redirect to home
-      setLoggingOut(true);
-      resetRedirectState();
-      window.location.replace("/");
-    }
-  };
-
   useEffect(() => {
-    if (!token) return;
-    dispatch(fetchTokenBalance());
+    if (token) {
+      dispatch(fetchTokenBalance());
+    }
   }, [dispatch, token]);
 
   useEffect(() => {
-    const refreshBalance = router.query.refreshBalance;
-
-    if (refreshBalance === "true" && token) {
+    if (router.query.refreshBalance === "true" && token) {
       dispatch(fetchTokenBalance());
     }
   }, [router.query.refreshBalance, token, dispatch]);
@@ -156,19 +262,11 @@ const HeaderDashboard = () => {
                     justifyContent: "center",
                     cursor: "pointer",
                   }}
-                  onClick={() => {
-                    router.push(
-                      userType?.toLowerCase() === "company" ? "/" : "/home/candidate"
-                    );
-                  }}
+                  onClick={navigateToHome}
                 >
                   <Box
                     component="img"
-                    src={
-                      userType === "Candidate"
-                        ? "/images/home/logocandidate.png"
-                        : "/images/home/logocompany.png"
-                    }
+                    src={logoSrc}
                     alt="Logo"
                     style={{ height: 24 }}
                   />
@@ -189,71 +287,16 @@ const HeaderDashboard = () => {
               }}
             >
               {/* Token Box */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  backgroundColor: "white",
-                  borderRadius: "25px",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-                  p: "0 12px",
-                  height: 40,
-                  gap: 1,
-                }}
-              >
-                <Image
-                  src="/icons/token.svg"
-                  alt="token"
-                  width={20}
-                  height={20}
-                />
-                {tokenLoading ? (
-                  <Box sx={{ display: "flex", gap: 0.6, alignItems: "center" }}>
-                    <Box sx={pulseDot} />
-                    <Box sx={{ ...pulseDot, animationDelay: "0.2s" }} />
-                    <Box sx={{ ...pulseDot, animationDelay: "0.4s" }} />
-                  </Box>
-                ) : (
-                  <Typography
-                    sx={{
-                      fontFamily: "Poppins",
-                      fontWeight: 500,
-                      fontSize: "14px",
-                      color: "rgba(222, 147, 0, 1)",
-                    }}
-                  >
-                    {formatNumber(tokenBalance)} tokens
-                  </Typography>
-                )}
-                {userType?.toLowerCase() === "company" && (
-                  <Tooltip title="Purchase Tokens">
-                    <IconButton
-                      onClick={handleOpenModal}
-                      sx={{
-                        ml: 1,
-                        width: 22,
-                        height: 22,
-                        backgroundColor: "white",
-                        border: "0.5px solid rgba(14, 194, 125, 0.27)",
-                        borderRadius: "16px",
-                        boxShadow:
-                          "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
-                      }}
-                    >
-                      <Image
-                        src="/icons/plus.svg"
-                        alt="plus"
-                        width={12}
-                        height={12}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
+              <TokenDisplay
+                balance={tokenBalance}
+                loading={tokenLoading}
+                isCompany={isCompany}
+                onPurchase={handleOpenModal}
+              />
 
               {/* Avatar */}
               <Box
-                onClick={() => router.push("/settings/profile")}
+                onClick={navigateToProfile}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -290,36 +333,12 @@ const HeaderDashboard = () => {
                     color: "rgba(56, 58, 61, 1)",
                   }}
                 >
-                  {userType?.toLowerCase() === "company"
-                    ? profile?.companyDetails?.name || profile?.userId?.username
-                    : `${profile?.firstName || ""} ${
-                        profile?.lastName || ""
-                      }`}{" "}
+                  {displayName}
                 </Typography>
               </Box>
 
               {/* Logout */}
-              <Button
-                variant="contained"
-                startIcon={
-                  <LogoutIcon sx={{ color: "rgba(200, 65, 75, 1)" }} />
-                }
-                sx={{
-                  height: 40,
-                  backgroundColor: "white",
-                  color: "rgba(200, 65, 75, 1)",
-                  borderRadius: "25px",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-                  textTransform: "none",
-                  "&:hover": {
-                    boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
-                    backgroundColor: "rgba(200, 65, 75, 0.08)",
-                  },
-                }}
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
+              <LogoutButton onClick={handleLogout} isLoading={isLoggingOut} />
             </Box>
 
             {/* HAMBURGER (VISIBLE ONLY BELOW 750px) */}
@@ -353,87 +372,29 @@ const HeaderDashboard = () => {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
           <Avatar
-            {...stringAvatar(profile?.userId?.username || "User")}
+            {...stringAvatar(displayName || "User")}
             sx={{ width: 40, height: 40 }}
           />
           <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
-            {userType?.toLowerCase() === "company"
-              ? profile?.companyDetails?.name || profile?.userId?.username
-              : `${profile?.firstName || ""} ${profile?.lastName || ""}`}
+            {displayName}
           </Typography>
         </Box>
 
         <Divider sx={{ my: 2 }} />
 
         {/* Tokens */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-          }}
-        >
-          <Image src="/icons/token.svg" width={22} height={22} alt="token" />
-          {tokenLoading ? (
-            <Box sx={{ display: "flex", gap: 0.6, alignItems: "center" }}>
-              <Box sx={pulseDot} />
-              <Box sx={{ ...pulseDot, animationDelay: "0.2s" }} />
-              <Box sx={{ ...pulseDot, animationDelay: "0.4s" }} />
-            </Box>
-          ) : (
-            <Typography sx={{ color: "rgba(222,147,0,1)", fontWeight: 500 }}>
-              {formatNumber(tokenBalance)} tokens
-            </Typography>
-          )}
-          {userType?.toLowerCase() === "company" && (
-            <Tooltip title="Purchase Tokens">
-              <IconButton
-                onClick={handleOpenModal}
-                sx={{
-                  width: 26,
-                  height: 26,
-                  marginLeft: "auto",
-                  backgroundColor: "white",
-                  border: "0.5px solid rgba(14, 194, 125, 0.27)",
-                  borderRadius: "16px",
-                  boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
-                }}
-              >
-                <Image
-                  src="/icons/plus.svg"
-                  alt="plus"
-                  width={14}
-                  height={14}
-                />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
+        <TokenDisplay
+          balance={tokenBalance}
+          loading={tokenLoading}
+          isCompany={isCompany}
+          onPurchase={handleOpenModal}
+          compact
+        />
 
         <Divider sx={{ my: 2 }} />
 
         {/* Logout */}
-        <Button
-          fullWidth
-          variant="contained"
-          startIcon={<LogoutIcon />}
-          sx={{
-            backgroundColor: "white",
-            color: "rgba(200, 65, 75, 1)",
-            border: "0.25px solid rgba(200, 65, 75, 0.3)",
-            borderRadius: "25px",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-            textTransform: "none",
-            "&:hover": {
-              boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
-              backgroundColor: "rgba(200, 65, 75, 0.08)",
-            },
-            py: 1,
-          }}
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
+        <LogoutButton onClick={handleLogout} isLoading={isLoggingOut} fullWidth />
       </Drawer>
       <TokenPurchaseModal />
     </>
