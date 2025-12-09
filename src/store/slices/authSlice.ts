@@ -203,7 +203,7 @@ export const verifyOTP = createAsyncThunk(
 );
 
 // Async thunk for logout - handles all cleanup centrally
-export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
+export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { dispatch, rejectWithValue }) => {
     try {
@@ -220,8 +220,8 @@ export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
       resetRedirectState();
 
       // Clear Redux state - dispatch all slice clear actions
-      dispatch(clearProfile());
-      dispatch(clearProfileCache());
+      (dispatch as any)(clearProfile());
+      (dispatch as any)(clearProfileCache());
 
       // Clear all storage
       localStorage.removeItem('api_token');
