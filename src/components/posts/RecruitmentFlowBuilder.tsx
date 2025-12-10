@@ -1491,9 +1491,7 @@ Ready to customize the content or add more triggers?`
   };
 
   return (
-    <Container>
-      <Navbar profile={authProfile || {}} />
-      
+    <Container>      
       <Header>
         <Box sx={{ 
           display: 'flex', 

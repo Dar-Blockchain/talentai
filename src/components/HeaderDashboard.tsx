@@ -157,7 +157,7 @@ const HeaderDashboard = () => {
   // Selectors
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
-  const { profile } = useSelector((state: RootState) => state.profile);
+  const { profile } = useSelector((state: RootState) => state.auth);
   const { isLoading: isLoggingOut } = useSelector((state: RootState) => state.auth);
 
   // Local state
@@ -215,6 +215,8 @@ const HeaderDashboard = () => {
       dispatch(fetchTokenBalance());
     }
   }, [router.query.refreshBalance, token, dispatch]);
+
+  useEffect(() => {console.log(profile,'profile')}, [profile])
 
   return (
     <>

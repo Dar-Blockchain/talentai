@@ -32,7 +32,7 @@ import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
 
 // Update the MatchingCandidate interface
-interface MatchingCandidate {
+export interface MatchingCandidate {
   candidateId: string;
   name: string;
   firstName: string;

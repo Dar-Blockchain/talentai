@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-
+import Cookies from 'js-cookie';
+interface SavePostState {
+  loading: boolean;
+  error: string | null;
+  savedPost: any;
+}
 // Types
 interface Step {
   id: string;
@@ -34,6 +39,7 @@ interface PostState {
   currentJobLoading: boolean;
   currentJobError: string | null;
   recommended: RecommendedState;
+  savePost: SavePostState
 }
 
 // Initial state
@@ -59,7 +65,57 @@ const initialState: PostState = {
     loading: false,
     error: null,
   },
+  savePost: {
+    loading: false,
+    error: null,
+    savedPost: null,
+  },
 };
+
+export const savePost = createAsyncThunk(
+  "post/savePost",
+  async (
+    jobData: any,
+    { rejectWithValue }
+  ) => {
+    try {
+      if (!jobData) {
+        throw new Error("No job data available");
+      }
+
+      const token = Cookies.get("api_token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/save-post`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(jobData),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to save job");
+      }
+
+      const saved = await res.json();
+
+      const job = saved.data || saved;
+      console.log("Job saved successfully:", job);
+      return {
+        success: true,
+        jobData: job,
+      };
+
+    } catch (err: any) {
+      return rejectWithValue(err.message || "Error saving job");
+    }
+  }
+);
+
 
 // Async thunk: Recommended posts
 export const fetchRecommendedPosts = createAsyncThunk(
@@ -295,6 +351,20 @@ const postSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+          .addCase(savePost.pending, (state) => {
+        state.savePost.loading = true;
+        state.savePost.error = null;
+      })
+      .addCase(savePost.fulfilled, (state, action) => {
+        state.savePost.loading = false;
+        state.savePost.error = null;
+        state.savePost.savedPost = action.payload;
+        
+      })
+      .addCase(savePost.rejected, (state, action) => {
+        state.savePost.loading = false;
+        state.savePost.error = action.payload as string;
+      })
       // Post recruitment steps
       .addCase(postRecruitmentSteps.pending, (state) => {
         state.postStepsLoading = true;

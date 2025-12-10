@@ -21,6 +21,7 @@ import tokenReducer from './slices/tokenSlice';
 import agentConfigReducer from './slices/agentConfigSlice';
 import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
 import candidateReducer from './slices/candidateSlice';
+import postGenerationReducer from './slices/postGenerationSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
   agentConfig: agentConfigReducer,
   tokenPurchase: tokenPurchaseReducer,
   candidate: candidateReducer,
+  postGeneration: postGenerationReducer
 });
 
 const persistConfig = {
