@@ -1,6 +1,7 @@
 const { POST_STATUS } = require("../../constants/postConstants");
 const postService = require("../../services/PosteServices/postService");
 const { sendPostEmail } = require("../../utils/mailing");
+const matchingConfigService = require("../../services/MatchingService/matchingConfigService");
 
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
@@ -11,6 +12,10 @@ exports.createPost = async (req, res) => {
     try {
       if (typeof incoming.skillAnalysis === 'string') {
         incoming.skillAnalysis = JSON.parse(incoming.skillAnalysis);
+      }
+      // If matchingConfig was sent as JSON string (form-data), parse it too
+      if (typeof incoming.matchingConfig === 'string') {
+        incoming.matchingConfig = JSON.parse(incoming.matchingConfig);
       }
     } catch (parseErr) {
       // If parsing fails, return a clear error to the client
@@ -26,9 +31,22 @@ exports.createPost = async (req, res) => {
     const token = req.headers.authorization?.replace("Bearer ", "");
 
     const post = await postService.createPost(postData, token);
+
+    // If a matching config was provided in the request, create it and link to the post
+    let createdMatchingConfig = null;
+    if (incoming.matchingConfig) {
+      try {
+        const cfgPayload = { ...incoming.matchingConfig, jobId: post._id };
+        createdMatchingConfig = await matchingConfigService.addConfig(req.user._id, cfgPayload);
+      } catch (cfgErr) {
+        // Log error but do not fail the main request — post creation succeeded
+        console.error('Error creating matching config for post', post._id, cfgErr.message || cfgErr);
+      }
+    }
     res.status(201).json({
       success: true,
       data: post,
+      matchingConfig: createdMatchingConfig,
     });
   } catch (error) {
     res.status(400).json({

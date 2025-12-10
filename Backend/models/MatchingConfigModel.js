@@ -10,12 +10,7 @@ const matchingConfigSchema = new mongoose.Schema({
     workMode: { type: Number, default: 7.5 },
     contract: { type: Number, default: 7.5 },
   },
-  importanceWeight: {
-    low: { type: Number, default: 0.8 },
-    medium: { type: Number, default: 1.0 },
-    high: { type: Number, default: 1.2 },
-    critical: { type: Number, default: 1.5 },
-  },
+  // importanceWeight removed — weights are handled without per-importance multipliers
   exchangeRates: {
     type: Map,
     of: Number,

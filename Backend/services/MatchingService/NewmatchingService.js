@@ -13,7 +13,7 @@ const normalizeSkillName = (name) =>
 /* ------------------------------------------------
    0️⃣ HARD SKILLS (Optimisé — importance ignorée)
 ------------------------------------------------ */
-function calculateHardSkillsScore(jobSkills, candidateSkills, _IMPORTANCE, MAX) {
+function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
   console.log("\n--- Hard Skills Calculation (Optimized) ---");
   if (!jobSkills.length) return 0;
 
@@ -194,7 +194,7 @@ async function calculateMatchScore(
 
   const cfg = await getMatchingConfig(idCompany, jobPostId);
 
-  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, cfg.importanceWeight, cfg.weights.hardSkill);
+  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, cfg.weights.hardSkill);
   if (hardSkillScore === 0) {
     console.log("❌ Candidate eliminated: no hard skill match");
     return 0;
