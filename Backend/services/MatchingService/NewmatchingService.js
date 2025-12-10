@@ -13,8 +13,8 @@ const normalizeSkillName = (name) =>
 /* ------------------------------------------------
    0️⃣ HARD SKILLS (Optimisé — importance ignorée)
 ------------------------------------------------ */
-function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
-  console.log("\n--- Hard Skills Calculation (Updated: candLvl=0 → skill ignored) ---");
+function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) { 
+  console.log("\n--- Hard Skills Calculation (Updated: candLvl=0 OR null → skill ignored) ---");
 
   if (!jobSkills.length) return 0;
 
@@ -26,17 +26,18 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
   for (const job of jobSkills) {
     const candidate = candidateMap[job.name?.toLowerCase()];
 
-    if (!candidate) {
-      console.log(`❌ Candidate does not have skill: ${job.name}`);
-      continue; // pas trouvé → ignorée
+    // 🆕 Nouvelle règle : skill non trouvée → skill absente
+    if (!candidate || candidate.Levelconfirmed == null) {
+      console.log(`❌ Candidate does NOT have skill: ${job.name} (not found OR Levelconfirmed=null)`);
+      continue;
     }
 
     const jobLvl = convertLevelToNumber(job.level);
     const candidateLvl = convertLevelToNumber(candidate.Levelconfirmed);
 
-    // 🆕 Nouvelle règle : candLvl = 0 = skill absente → on ignore
+    // 🆕 Nouvelle règle : candLvl === 0 → skill absente
     if (candidate.Levelconfirmed === 0 || candidateLvl === 0) {
-      console.log(`⚪ Skill ignored (candLvl=0): ${job.name}`);
+      console.log(`⚪ Skill ignored (candLvl = 0): ${job.name}`);
       continue;
     }
 
@@ -54,6 +55,7 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
   console.log(`💯 Hard skill score (${MAX}% max): ${final.toFixed(2)}`);
   return final;
 }
+
 
 /* ------------------------------------------------
    1️⃣ SOFT SKILLS (Optimisé)
