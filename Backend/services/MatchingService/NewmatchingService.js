@@ -114,24 +114,37 @@ function calculateSalaryScore(jobDetails, candProf, RATES, MAX, perUSD = true) {
     return 0;
   }
 
-  const convert = (amt, cur) => perUSD ? amt / (RATES[cur] || 1) : amt * (RATES[cur] || 1);
+  const convert = (amt, cur) => perUSD ? amt * (RATES[cur] || 1) : amt / (RATES[cur] || 1);
   const jobMin = convert(job.min, job.currency);
   const jobMax = convert(job.max, job.currency);
   const candMin = convert(cand.min, cand.currency);
   const candMax = convert(cand.max, cand.currency);
 
-  const overlapMin = Math.max(jobMin, candMin);
-  const overlapMax = Math.min(jobMax, candMax);
+  console.log(`💡 Job Salary: ${jobMin.toFixed(2)}-${jobMax.toFixed(2)}, Cand Salary: ${candMin.toFixed(2)}-${candMax.toFixed(2)}`);
 
-  if (overlapMax <= overlapMin) {
-    console.log("❌ No salary overlap.");
-    return 0;
+  // Calcul de score partiel si pas de chevauchement
+  let score = 0;
+  if (candMax < jobMin) {
+    // Salaire candidat < job → score décroissant
+    score = ((candMax / jobMin) * MAX);
+    console.log("⚠️ Candidate salary below job range → Partial score applied");
+  } else if (candMin > jobMax) {
+    // Salaire candidat > job → score décroissant
+    score = ((jobMax / candMin) * MAX);
+    console.log("⚠️ Candidate salary above job range → Partial score applied");
+  } else {
+    // Chevauchement
+    const overlapMin = Math.max(jobMin, candMin);
+    const overlapMax = Math.min(jobMax, candMax);
+    score = ((overlapMax - overlapMin) / (jobMax - jobMin)) * MAX;
+    console.log("✅ Salary overlap → Normal score");
   }
 
-  const score = ((overlapMax - overlapMin) / (jobMax - jobMin)) * MAX;
+  score = Math.min(score, MAX);
   console.log(`💯 Salary score (${MAX}% max): ${score.toFixed(2)}`);
   return score;
 }
+
 
 /* ------------------------------------------------
    4️⃣ WORK MODE
