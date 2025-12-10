@@ -9,11 +9,6 @@ import {
   Box,
   Avatar,
   List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Divider,
-  Chip,
   IconButton,
   Button,
   DialogActions,
@@ -33,33 +28,71 @@ interface MatchingFlowModalProps {
   open: boolean;
   mode: "saving" | "matching" | "done";
   onClose?: () => void;
+  onContinue?: (shouldContinue: boolean) => void;
 }
 
 const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
   open,
   mode,
   onClose,
+  onContinue,
 }) => {
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
 
   const renderSaving = () => (
-    <Box display="flex" flexDirection="column" alignItems="center" py={4}>
+    <Box py={3} textAlign="center">
       <CircularProgress size={50} />
-      <Typography variant="h6" mt={3}>
-        Saving job...
+
+      <Typography
+        sx={{
+          fontSize: "14px",
+          fontWeight: 700,
+          lineHeight: "34px",
+          mt: 2,
+          mb: 1,
+        }}
+      >
+        Saving job…
       </Typography>
-      <Typography color="text.secondary">Please wait</Typography>
+
+      <Typography
+        sx={{
+          fontSize: "14px",
+          fontWeight: 400,
+          lineHeight: "34px",
+          color: "rgba(84,98,116,0.8)",
+        }}
+      >
+        Please wait while we prepare your job and create matching process.
+      </Typography>
     </Box>
   );
 
   const renderMatching = () => (
-    <Box display="flex" flexDirection="column" alignItems="center" py={4}>
+    <Box py={3} textAlign="center">
       <CircularProgress size={50} />
-      <Typography variant="h6" mt={3}>
-        Finding matching candidates...
+
+      <Typography
+        sx={{
+          fontSize: "14px",
+          fontWeight: 700,
+          lineHeight: "34px",
+          mt: 2,
+          mb: 1,
+        }}
+      >
+        Finding matching candidates…
       </Typography>
-      <Typography color="text.secondary">
-        Analyzing skills & job data
+
+      <Typography
+        sx={{
+          fontSize: "14px",
+          fontWeight: 400,
+          lineHeight: "34px",
+          color: "rgba(84,98,116,0.8)",
+        }}
+      >
+        Analyzing skills and job requirements to get the best matches.
       </Typography>
     </Box>
   );
@@ -307,55 +340,57 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         {mode === "done" && renderCandidates()}
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          p: 3,
-          borderTop: "1px solid rgba(227, 229, 233, 1)",
-        }}
-      >
-        <Button
-          variant="outlined"
-          onClick={() => {}}
+      {mode === "done" && (
+        <DialogActions
           sx={{
-            border: "none",
-            background: "none",
-            color: "rgba(133, 169, 227, 1)",
-            textDecoration: "none",
-            "&:hover": {
+            p: 3,
+            borderTop: "1px solid rgba(227, 229, 233, 1)",
+          }}
+        >
+          <Button
+            variant="outlined"
+            onClick={() => onContinue(true)}
+            sx={{
+              border: "none",
               background: "none",
+              color: "rgba(133, 169, 227, 1)",
               textDecoration: "none",
-              color: "rgba(133, 169, 227, 0.8)",
-            },
-          }}
-        >
-          Continue to Flow Setup
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => {}}
-          sx={{
-            borderColor: "rgba(222, 147, 0, 1)",
-            color: "rgba(222, 147, 0, 1)",
-            fontWeight: 600,
-            borderRadius: "38px",
-            py: 1.5,
-            maxWidth: "300px",
-            height: "42px",
-            textTransform: "none",
-            fontSize: "0.875rem",
-            borderWidth: "1px",
-            "&:hover": {
-              backgroundColor: "rgba(222, 147, 0, 0.08)",
-            },
-            "&.Mui-disabled": {
-              borderColor: "#e5e7eb",
-              color: "#9ca3af",
-            },
-          }}
-        >
-          Unlock Candidate Profiles
-        </Button>
-      </DialogActions>
+              "&:hover": {
+                background: "none",
+                textDecoration: "none",
+                color: "rgba(133, 169, 227, 0.8)",
+              },
+            }}
+          >
+            Continue to Flow Setup
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {}}
+            sx={{
+              borderColor: "rgba(222, 147, 0, 1)",
+              color: "rgba(222, 147, 0, 1)",
+              fontWeight: 600,
+              borderRadius: "38px",
+              py: 1.5,
+              maxWidth: "300px",
+              height: "42px",
+              textTransform: "none",
+              fontSize: "0.875rem",
+              borderWidth: "1px",
+              "&:hover": {
+                backgroundColor: "rgba(222, 147, 0, 0.08)",
+              },
+              "&.Mui-disabled": {
+                borderColor: "#e5e7eb",
+                color: "#9ca3af",
+              },
+            }}
+          >
+            Unlock Candidate Profiles
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

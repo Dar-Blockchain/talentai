@@ -13,16 +13,18 @@ import {
 import Check from "@mui/icons-material/Check";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
+
 import PostDetailsStep from "./PostDetailsStep";
 import RecruitmentFlowStep from "./RecruitmentFlowStep";
-import { fetchJobMatches, savePost } from "@/store/slices/postSlice";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
 import MatchingFlowModal from "./components/MatchingFlowModal";
-import { useState } from "react";
-import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 
+import { RootState } from "@/store/store";
+import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
+
+const steps = ["Job Details", "Agent Configuration", "Recruitment Flow"];
+
+// ------- Custom Stepper Styles -------
 const SplitLineConnector = styled(StepConnector)(() => ({
   [`&.MuiStepConnector-root`]: {
     top: "14px",
@@ -63,9 +65,10 @@ const StepIconRoot = styled("div")<{
   ownerState: { active?: boolean; completed?: boolean };
 }>(({ ownerState }) => ({
   zIndex: 1,
-  backgroundColor: ownerState?.active
-    ? "rgba(76, 217, 163, 0.5)"
-    : "rgba(210, 225, 238, 1)",
+  backgroundColor:
+    ownerState?.active || ownerState?.completed
+      ? "rgba(76, 217, 163, 0.5)"
+      : "rgba(210, 225, 238, 1)",
   color: "#fff",
   display: "flex",
   justifyContent: "center",
@@ -90,67 +93,16 @@ function CustomStepIcon(props: any) {
 
 const CreatePostStepper: React.FC = () => {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
+
   const { profile } = useSelector((state: RootState) => state.auth);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
-  const { loading, error, savedPost } = useSelector(
-    (state: any) => state.post.savePost
-  );
-  const steps = ["Job Details", "Agent Configuration", "Recruitment Flow"];
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
-    "saving"
-  );
 
-  const getJobSkills = (job: any): string[] => {
-    if (!job?.skillAnalysis) return [];
-
-    const skills: string[] = [];
-
-    if (job.skillAnalysis.requiredSkills) {
-      skills.push(
-        ...job.skillAnalysis.requiredSkills.map((skill) => skill.name)
-      );
-    }
-
-    if(job.skillAnalysis.softSkills) {
-      skills.push(
-        ...job.skillAnalysis.softSkills.map((skill) => skill.name)
-      );
-    }
-    return [...new Set(skills)];
-  };
-
-  const handleNext = async () => {
-    if (activeStep === 0) {
-      setModalOpen(true);
-      setModalMode("saving");
-      const result = await dispatch(savePost(generatedPost)).unwrap();
-      if (!result.success) {
-        setModalOpen(false);
-        return;
-      }
-      const agentData = {
-        jobId: result?.jobData?._id,
-        companyName: profile?.companyDetails?.name || "Company",
-        postTitle: result?.jobData?.jobDetails?.title,
-        companyId: profile?.userId,
-        jobSkills: getJobSkills(result?.jobData),
-      };
-      const agentResult = await dispatch(createHRAgent(agentData)).unwrap();
-      setModalMode("matching");
-      await dispatch(fetchJobMatches(result.jobData._id)).unwrap();
-      setModalMode("done");
-    }
-  };
-
-  const handleBack = () => {
-    setActiveStep((prev) => Math.max(prev - 1, 0));
-  };
+  const { activeStep, handleNext, handleBack, modalOpen, modalMode } =
+    useCreatePostStepper(generatedPost, profile);
 
   return (
     <Box sx={{ my: 5, position: "relative", pb: 10 }}>
+      {/* Header Section */}
       <Box
         sx={{
           px: 3,
@@ -208,22 +160,14 @@ const CreatePostStepper: React.FC = () => {
         <Box sx={{ flex: 1 }} />
       </Box>
 
+      {/* Step Content */}
       <Box sx={{ mt: 2 }}>
         {activeStep === 0 && <PostDetailsStep />}
-        {/* {activeStep === 1 &&           
-        <AgentConfigurationForm
-            value={agentConfig}
-            onChange={handleAgentConfigChange}
-            disabled={!savedJobId || isSavingAgentConfig || isRegisteringAgent}
-            loading={isSavingAgentConfig}
-            errorMessage={activeStep === 1 ? saveError : null}
-            agentSummary={{
-              agentName: registeredAgentName ?? undefined,
-            }}
-          />} */}
+        {activeStep === 1 && <RecruitmentFlowStep />}
         {activeStep === 2 && <RecruitmentFlowStep />}
       </Box>
 
+      {/* Bottom Buttons */}
       <Box
         sx={{
           position: "fixed",
@@ -258,7 +202,7 @@ const CreatePostStepper: React.FC = () => {
 
         <Button
           variant="contained"
-          onClick={handleNext}
+          onClick={() => handleNext(activeStep !== 0)}
           sx={{
             textTransform: "none",
             height: "42px",
@@ -273,7 +217,12 @@ const CreatePostStepper: React.FC = () => {
           {activeStep === steps.length - 1 ? "Finish" : "Next"}
         </Button>
       </Box>
-      <MatchingFlowModal open={modalOpen} mode={modalMode} />
+
+      <MatchingFlowModal
+        open={modalOpen}
+        mode={modalMode}
+        onContinue={handleNext}
+      />
     </Box>
   );
 };
