@@ -14,7 +14,8 @@ const normalizeSkillName = (name) =>
    0️⃣ HARD SKILLS (Optimisé — importance ignorée)
 ------------------------------------------------ */
 function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
-  console.log("\n--- Hard Skills Calculation (Optimized) ---");
+  console.log("\n--- Hard Skills Calculation (Updated: candLvl=0 → skill ignored) ---");
+
   if (!jobSkills.length) return 0;
 
   const totalPct = jobSkills.reduce((sum, s) => sum + (s.percentage || 0), 0) || jobSkills.length;
@@ -22,15 +23,23 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
 
   let hardSkillScore = 0;
 
-  jobSkills.forEach(job => {
+  for (const job of jobSkills) {
     const candidate = candidateMap[job.name?.toLowerCase()];
+
     if (!candidate) {
-      console.log(`❌ Skill not matched: ${job.name}`);
-      return;
+      console.log(`❌ Candidate does not have skill: ${job.name}`);
+      continue; // pas trouvé → ignorée
     }
 
     const jobLvl = convertLevelToNumber(job.level);
-    const candidateLvl = candidate.Levelconfirmed || convertLevelToNumber(candidate.proficiencyLevel);
+    const candidateLvl = convertLevelToNumber(candidate.Levelconfirmed);
+
+    // 🆕 Nouvelle règle : candLvl = 0 = skill absente → on ignore
+    if (candidate.Levelconfirmed === 0 || candidateLvl === 0) {
+      console.log(`⚪ Skill ignored (candLvl=0): ${job.name}`);
+      continue;
+    }
+
     const raw = Math.min((candidateLvl / jobLvl) * 100, 100);
     const weighted = raw * ((job.percentage || 0) / totalPct);
 
@@ -39,7 +48,7 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
     );
 
     hardSkillScore += weighted;
-  });
+  }
 
   const final = Math.min((hardSkillScore / 100) * MAX, MAX);
   console.log(`💯 Hard skill score (${MAX}% max): ${final.toFixed(2)}`);
@@ -88,7 +97,7 @@ function calculateExperienceScore(jobSkills, candidateSkills, MAX) {
     }
 
     const jobLvl = convertLevelToNumber(job.level);
-    const candLvl = cand.Levelconfirmed || convertLevelToNumber(cand.proficiencyLevel);
+    const candLvl = convertLevelToNumber(cand.Levelconfirmed);
     const score = candLvl >= jobLvl ? 10 : candLvl === jobLvl - 1 ? 5 : 0;
 
     console.log(`💡 Experience for ${job.name}: JobLvl=${jobLvl}, CandLvl=${candLvl}, Score=${score}`);
@@ -192,6 +201,7 @@ async function calculateMatchScore(
   jobPostId
 ) {
   console.log("\n========== MATCHING START ==========");
+  console.log(candidateProfile.firstName + " " + candidateProfile.lastName);
   console.log(`Job Skills: ${jobSkills.map(s => s.name).join(", ")}`);
   console.log(`Candidate Skills: ${candidateSkills.map(s => s.name).join(", ")}`);
 
