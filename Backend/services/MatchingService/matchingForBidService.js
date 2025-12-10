@@ -25,7 +25,7 @@ function normalizeSkillName(name) {
 }
 
 /* ------------------ Hard Skills ------------------ */
-function calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT, MAX_HARD_SKILL_SCORE) {
+function calculateHardSkillsScore(jobSkills, candidateSkills, MAX_HARD_SKILL_SCORE) {
   if (!jobSkills?.length || !candidateSkills?.length) return 0;
 
   let hardSkillScore = 0;
@@ -43,9 +43,9 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT,
     if (candidateSkill) {
       const jobLevel = convertLevelToNumber(jobSkill.level);
       const candidateLevel = candidateSkill.Levelconfirmed || convertLevelToNumber(candidateSkill.proficiencyLevel);
-      const importanceWeight = IMPORTANCE_WEIGHT[jobSkill.importance] || 1;
+      // importanceWeight removed — all importance levels are treated equally
       const rawScore = Math.min((candidateLevel / jobLevel) * 100, 100);
-      const weightedScore = rawScore * importanceWeight;
+      const weightedScore = rawScore;
       hardSkillScore += weightedScore * jobSkill.weight;
     }
   });
@@ -167,10 +167,8 @@ async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, 
   const MAX_SALARY_SCORE = cfg.weights.salary;
   const MAX_WORKMODE_SCORE = cfg.weights.workMode;
   const MAX_CONTRACT_SCORE = cfg.weights.contract;
-  const IMPORTANCE_WEIGHT = cfg.importanceWeight;
   const EXCHANGE_RATES = cfg.exchangeRates || { USD: 1, EUR: 1.1, TND: 0.32 };
-
-  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT, MAX_HARD_SKILL_SCORE);
+  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, MAX_HARD_SKILL_SCORE);
   if (hardSkillScore === 0) return 0;
 
   const softSkillScore = calculateSoftSkillsScore(jobDetails.skillAnalysis?.softSkills || [], candidateProfile.softSkills || [], MAX_SOFT_SKILL_SCORE);

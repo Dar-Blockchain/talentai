@@ -29,7 +29,6 @@ function normalizeSkillName(name) {
 function calculateHardSkillsScore(
   jobSkills,
   candidateSkills,
-  IMPORTANCE_WEIGHT,
   MAX_HARD_SKILL_SCORE
 ) {
   console.log("\n--- Hard Skills Calculation ---");
@@ -59,10 +58,9 @@ function calculateHardSkillsScore(
         candidateSkill.Levelconfirmed ||
         convertLevelToNumber(candidateSkill.proficiencyLevel);
 
-      const importanceWeight = IMPORTANCE_WEIGHT[jobSkill.importance] || 1;
-
+      // importanceWeight removed — treat all importance levels equally
       const rawScore = Math.min((candidateLevel / jobLevel) * 100, 100);
-      const weightedScore = rawScore * importanceWeight;
+      const weightedScore = rawScore; // no per-importance multiplier
       hardSkillScore += weightedScore * jobSkill.weight;
 
       console.log(
@@ -375,15 +373,9 @@ async function calculateMatchScore(
   const MAX_WORKMODE_SCORE = cfg.weights.workMode;
   const MAX_CONTRACT_SCORE = cfg.weights.contract;
 
-  const IMPORTANCE_WEIGHT = cfg.importanceWeight;
   const EXCHANGE_RATES = cfg.exchangeRates || { USD: 1, EUR: 1.1, TND: 0.32 };
 
-  const hardSkillScore = calculateHardSkillsScore(
-    jobSkills,
-    candidateSkills,
-    IMPORTANCE_WEIGHT,
-    MAX_HARD_SKILL_SCORE
-  );
+  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, MAX_HARD_SKILL_SCORE);
 
   if (hardSkillScore === 0) {
     console.log("❌ Candidate eliminated: no hard skill match");
