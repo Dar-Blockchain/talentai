@@ -308,36 +308,60 @@ const PostDetailsModal: React.FC<PostDetailsModalProps> = ({
           Close
         </Button>
 
-        {
-        selectedJob?.post_steps?.length > 0 &&  selectedJob?.post_steps[0]._id &&
-        profile?.quota < 5 ? (
-          <Link
-            href={`/posts/${selectedJob?._id}/interview?stepId=${
-              selectedJob?.post_steps[0]._id
-            }`}
-            passHref
-            legacyBehavior
-          >
+        {(() => {
+          // Extract and validate values
+          const postId = selectedJob?._id;
+          // Handle both 'post_steps' and 'post_Steps' (capital S)
+          const postSteps = selectedJob?.post_steps || selectedJob?.post_Steps;
+          const hasSteps = Array.isArray(postSteps) && postSteps.length > 0;
+
+          // IMPORTANT: post_Steps is an array of STRING IDs, not objects!
+          // Example: ["69382f00ce9031826d174e9b", "69382f00ce9031826d174eaa"]
+          // So we can directly use the first element as the ID
+          const firstStepId = hasSteps ? postSteps[0] : null;
+
+          const quotaExceeded = profile?.quota >= 5;
+          const canProceed = hasSteps && firstStepId && postId && !quotaExceeded;
+
+          // Determine button message with detailed reasons
+          let disabledMessage = "Interview Not Available";
+          if (quotaExceeded) {
+            disabledMessage = "Quota Limit Reached (5/5)";
+          } else if (!hasSteps) {
+            disabledMessage = "No Interview Steps Available";
+          } else if (!firstStepId) {
+            disabledMessage = "Step ID Missing";
+          } else if (!postId) {
+            disabledMessage = "Post ID Missing";
+          }
+
+          return canProceed ? (
+            <Link
+              href={`/posts/${postId}/interview?stepId=${firstStepId}`}
+              passHref
+              legacyBehavior
+            >
+              <Button
+                variant="contained"
+                sx={{ background: "#8310FF", textTransform: "none" }}
+              >
+                Proceed to Interview
+              </Button>
+            </Link>
+          ) : (
             <Button
               variant="contained"
-              sx={{ background: "#8310FF", textTransform: "none" }}
+              disabled
+              sx={{
+                background: "#cccccc",
+                textTransform: "none",
+                "&.Mui-disabled": { color: "#666" },
+              }}
             >
-              Proceed
+              {disabledMessage}
             </Button>
-          </Link>
-        ) : (
-          <Button
-            variant="contained"
-            disabled
-            sx={{
-              background: "#cccccc",
-              textTransform: "none",
-              "&.Mui-disabled": { color: "#666" },
-            }}
-          >
-            Interview Not Available
-          </Button>
-        )}
+          );
+        })()}
       </DialogActions>
     </Dialog>
   );
