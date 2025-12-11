@@ -62,10 +62,18 @@ exports.matchCandidatesToJob = async (req, res) => {
     /* -----------------------------------------
        2️⃣b Charger tous les unlocked en une seule requête
     ----------------------------------------- */
+    // Extraire tous les ids de candidats présents
+    const candidateIds = candidates
+      .filter(c => c.userId?._id)
+      .map(c => c.userId._id);
+
+    // Requête Mongo pour récupérer tous les unlocks
     const unlockedRecords = await UnlockCandidate.find(
-      { idCompany, job: jobPostId }, // filtre par job si nécessaire
+      { idCompany, idCandidate: { $in: candidateIds } },
       { idCandidate: 1, _id: 0 }
     ).lean();
+
+    // Créer un Set pour lookup rapide
     const unlockedSet = new Set(unlockedRecords.map(u => String(u.idCandidate)));
 
     /* -----------------------------------------
@@ -75,7 +83,10 @@ exports.matchCandidatesToJob = async (req, res) => {
       if (!candidate.userId) return null;
 
       const candidateSkills = prepareSkills(candidate.skills);
-
+    
+      // Vérifier unlock directement depuis le Set
+      unlockedSet.has(String(candidate.userId._id));
+    
       const score = await calculateMatchScore(
         requiredSkills,
         candidateSkills,
@@ -83,7 +94,7 @@ exports.matchCandidatesToJob = async (req, res) => {
         candidate,
         idCompany,
         matchingConfig,
-        unlockedSet // <-- nouveau paramètre
+        unlockedSet  // <-- nouveau paramètre
       );
 
       if (!score || score === 0) return null;
