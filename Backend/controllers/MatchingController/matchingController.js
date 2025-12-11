@@ -2,10 +2,7 @@
 
 const JobPost = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
-const {
-  calculateMatchScore,
-  normalizeSkillName,
-} = require("../../services/MatchingService/matchingService");
+const { calculateMatchScore } = require("../../services/MatchingService/matchingService");
 const { getMatchingConfig } = require("../../services/MatchingService/matchingConfigService");
 const UnlockCandidate = require("../../models/UnlockCandidateModel");
 const { prepareSkills } = require("../../helpers/matchingHelpers");
@@ -77,20 +74,27 @@ exports.matchCandidatesToJob = async (req, res) => {
     const matchPromises = candidates.map(async (candidate) => {
       if (!candidate.userId) return null;
 
-      const candidateSkills = prepareSkills(candidate.skills);
-    
-      // Vérifier unlock directement depuis le Set
-      unlockedSet.has(String(candidate.userId._id));
-    
-      const score = await calculateMatchScore(
-        requiredSkills,
-        candidateSkills,
-        jobData,
-        candidate,
-        idCompany,
-        matchingConfig,
-        unlockedSet  // <-- nouveau paramètre
-      );
+        const candidateSkills = prepareSkills(candidate.skills);
+
+        const candidateIdStr = String(candidate.userId._id);
+
+        // calcul du score avec protection individuelle : si une erreur survient
+        // pour un candidat, on loggue et on continue (ne casse pas tout)
+        let score;
+        try {
+          score = await calculateMatchScore(
+            requiredSkills,
+            candidateSkills,
+            jobData,
+            candidate,
+            idCompany,
+            matchingConfig,
+            unlockedSet
+          );
+        } catch (err) {
+          console.error(`Error matching candidate ${candidateIdStr}:`, err);
+          return null;
+        }
 
       if (!score || score === 0) return null;
 
