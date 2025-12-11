@@ -1068,34 +1068,40 @@ const hrAgentController = {
         });
       }
 
-      // Pour chaque agent, calculer les matches
-      const agentsWithMatches = [];
-      let totalMatches = 0;
-
-      for (const agent of agents) {
-        const agentLabel = agent.name || agent._id?.toString();
+      // Paralléliser le calcul des matches par agent (protection par agent)
+      const agentTasks = agents.map(async (agent) => {
+        const agentLabel = agent.name || String(agent._id);
 
         if (!agent.postId?._id) {
-          agentsWithMatches.push({
+          return {
             agentId: agent._id,
             name: agentLabel,
             matches: [],
             message: "Pas de post associé",
-          });
-          continue;
+          };
         }
 
-        const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
+        try {
+          const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
+          return {
+            agentId: agent._id,
+            name: agentLabel,
+            jobTitle,
+            matches,
+          };
+        } catch (err) {
+          console.error(`Error computing matches for agent ${agent._id}:`, err);
+          return {
+            agentId: agent._id,
+            name: agentLabel,
+            matches: [],
+            message: 'Erreur lors du calcul des matches',
+          };
+        }
+      });
 
-        totalMatches += matches.length;
-
-        agentsWithMatches.push({
-          agentId: agent._id,
-          name: agentLabel,
-          jobTitle: jobTitle,
-          matches: matches,
-        });
-      }
+      const agentsWithMatches = await Promise.all(agentTasks);
+      const totalMatches = agentsWithMatches.reduce((sum, a) => sum + (a.matches?.length || 0), 0);
 
       // Réponse JSON complète
       return res.status(200).json({
