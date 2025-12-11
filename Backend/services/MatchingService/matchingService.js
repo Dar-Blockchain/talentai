@@ -3,8 +3,12 @@ const UnlockCandidate = require("../../models/UnlockCandidateModel");
 /* ------------------------------------------------
    CONSTANTS & HELPERS
 ------------------------------------------------ */
-const LEVELS = { Beginner:1, Intermediate:3, Advanced:4, Expert:5, 1:1,2:2,3:3,4:4,5:5 };
-const convertLevelToNumber = (level) => LEVELS[level] || 1;
+const convertLevelToNumber = (level) => {
+  if (level == null) return 1;       // null, undefined → default = 1
+  const n = Number(level);           // convertit "3" → 3
+  return Number.isNaN(n) ? 1 : n;    // si ce n’est pas un nombre → 1
+};
+
 
 const normalizeSkillName = (name) =>
   name ? name.split(".")[0].trim().replace(/^./, c => c.toUpperCase()) : "";
@@ -176,19 +180,6 @@ const calculateContractScore = (job, cand, MAX) => {
   return score;
 };
 
-/* ------------------------------------------------
-   6️⃣ UNLOCK CHECK
------------------------------------------------- */
-async function checkIfCandidateUnlocked(companyId, candidateId) {
-  try {
-    const unlocked = await UnlockCandidate.findOne({ idCompany: companyId, idCandidate: candidateId });
-    console.log(`🔓 Candidate ${candidateId} unlocked: ${!!unlocked}`);
-    return !!unlocked;
-  } catch (err) {
-    console.log("❌ Error checking unlock status:", err);
-    return false;
-  }
-}
 
 /* ------------------------------------------------
    🚀 MAIN FUNCTION (Optimisée)
@@ -251,5 +242,4 @@ async function calculateMatchScore(
 module.exports = {
   calculateMatchScore,
   normalizeSkillName,
-  checkIfCandidateUnlocked,
 };
