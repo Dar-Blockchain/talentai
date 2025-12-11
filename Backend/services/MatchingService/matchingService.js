@@ -269,11 +269,12 @@ async function calculateMatchScore(
     : false;
 
   const cfg = matchingConfig;
+  const { hardSkill, SoftSkill, experience, salary, workMode, contract } = cfg.weights;
 
   const hardSkillScore = calculateHardSkillsScore(
     jobSkills,
     candidateSkills,
-    cfg.weights.hardSkill,
+    hardSkill,
     candidateProfile
   );
   if (hardSkillScore === 0) {
@@ -284,30 +285,30 @@ async function calculateMatchScore(
   const softSkillScore = calculateSoftSkillsScore(
     jobDetails.skillAnalysis?.softSkills || [],
     candidateProfile.softSkills || [],
-    cfg.weights.SoftSkill,
+    SoftSkill,
     candidateProfile
   );
   const experienceScore = calculateExperienceScore(
     jobSkills,
     candidateSkills,
-    cfg.weights.experience,
+    experience,
     candidateProfile
   );
   const salaryScore = calculateSalaryScore(
     jobDetails,
     candidateProfile,
     cfg.exchangeRates || {},
-    cfg.weights.salary
+    salary
   );
   const workModeScore = calculateWorkModeScore(
     jobDetails,
     candidateProfile,
-    cfg.weights.workMode
+    workMode
   );
   const contractScore = calculateContractScore(
     jobDetails,
     candidateProfile,
-    cfg.weights.contract
+    contract
   );
 
   const total =
