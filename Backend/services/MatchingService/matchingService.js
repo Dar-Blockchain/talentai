@@ -1,4 +1,3 @@
-const { getMatchingConfig } = require("./matchingConfigService");
 const UnlockCandidate = require("../../models/UnlockCandidateModel");
 
 /* ------------------------------------------------
@@ -200,7 +199,8 @@ async function calculateMatchScore(
   jobDetails = {},
   candidateProfile = {},
   idCompany,
-  jobPostId
+  jobPostId,
+  matchingConfig
 ) {
   console.log("\n========== MATCHING START ==========");
   console.log(candidateProfile.firstName + " " + candidateProfile.lastName);
@@ -217,7 +217,7 @@ async function calculateMatchScore(
       ? await checkIfCandidateUnlocked(idCompany, candidateProfile.userId._id)
       : false;
 
-  const cfg = await getMatchingConfig(idCompany, jobPostId);
+  const cfg = matchingConfig;
 
   const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, cfg.weights.hardSkill, candidateProfile);
   if (hardSkillScore === 0) {

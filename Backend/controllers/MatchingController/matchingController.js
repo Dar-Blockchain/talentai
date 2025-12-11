@@ -6,6 +6,7 @@ const {
   calculateMatchScore,
   normalizeSkillName,
 } = require("../../services/MatchingService/matchingService");
+const { getMatchingConfig } = require("../../services/MatchingService/matchingConfigService");
 
 /* Helper */
 const prepareSkills = (skills) =>
@@ -18,6 +19,11 @@ exports.matchCandidatesToJob = async (req, res) => {
     const { jobPostId } = req.params;
     const idCompany = req.user._id;
 
+    console.log("Fetching job post with ID:", jobPostId);
+    
+    // 0️⃣ Charger la config UNE SEULE FOIS
+    const matchingConfig = await getMatchingConfig(idCompany, jobPostId);
+
     /* -----------------------------------------
        1️⃣ Charger uniquement les champs utiles
     ----------------------------------------- */
@@ -29,16 +35,17 @@ exports.matchCandidatesToJob = async (req, res) => {
       .populate("companyBid.company", "username email")
       .lean();
 
+    console.log(`Found ${candidates.length} candidates.`);
+
     const jobPost = await JobPost.findById(jobPostId)
       .select(
         "skillAnalysis.requiredSkills " +
-        "skillAnalysis.suggestedSkills " +
-        "skillAnalysis.softSkills jobDetails"
+          "skillAnalysis.suggestedSkills " +
+          "skillAnalysis.softSkills jobDetails"
       )
       .lean();
 
-    if (!jobPost)
-      return res.status(404).json({ error: "Job post not found" });
+    if (!jobPost) return res.status(404).json({ error: "Job post not found" });
 
     /* -----------------------------------------
        2️⃣ Préparer les skills du job une seule fois
@@ -46,6 +53,7 @@ exports.matchCandidatesToJob = async (req, res) => {
     const requiredSkills = prepareSkills(
       jobPost.skillAnalysis?.requiredSkills || []
     );
+    console.log("Required skills for job:",requiredSkills.map((s) => s.name))
 
     const requiredNames = new Set(requiredSkills.map((s) => s.name));
 
@@ -70,7 +78,8 @@ exports.matchCandidatesToJob = async (req, res) => {
         jobData,
         candidate,
         idCompany,
-        jobPostId
+        jobPostId,
+        matchingConfig
       );
 
       if (!score || score === 0) return null;
