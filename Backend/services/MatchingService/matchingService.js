@@ -1,4 +1,3 @@
-const { getMatchingConfig } = require("./matchingConfigService");
 const UnlockCandidate = require("../../models/UnlockCandidateModel");
 
 /* ------------------------------------------------
@@ -13,8 +12,8 @@ const normalizeSkillName = (name) =>
 /* ------------------------------------------------
    0️⃣ HARD SKILLS (Optimisé — importance ignorée)
 ------------------------------------------------ */
-function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) { 
-  console.log("\n--- Hard Skills Calculation (Updated: candLvl=0 OR null → skill ignored) ---");
+function calculateHardSkillsScore(jobSkills, candidateSkills, MAX,candidateProfile) { 
+  console.log(`\n--- Hard Skills Calculation ${candidateProfile.firstName} ${candidateProfile.lastName} (Updated: candLvl=0 OR null → skill ignored) ---`);
 
   if (!jobSkills.length) return 0;
 
@@ -60,8 +59,8 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX) {
 /* ------------------------------------------------
    1️⃣ SOFT SKILLS (Optimisé)
 ------------------------------------------------ */
-function calculateSoftSkillsScore(jobSoft, candSoft, MAX) {
-  console.log("\n--- Soft Skills Calculation ---");
+function calculateSoftSkillsScore(jobSoft, candSoft, MAX,candidateProfile) {
+  console.log(`\n--- Soft Skills Calculation ${candidateProfile.firstName} ${candidateProfile.lastName}  --- `);
   if (!jobSoft.length || !candSoft.length) return 0;
 
   const candSet = new Set(candSoft.map(s => s.name?.toLowerCase()));
@@ -84,8 +83,8 @@ function calculateSoftSkillsScore(jobSoft, candSoft, MAX) {
 /* ------------------------------------------------
    2️⃣ EXPERIENCE (Optimisé)
 ------------------------------------------------ */
-function calculateExperienceScore(jobSkills, candidateSkills, MAX) {
-  console.log("\n--- Experience Score Calculation ---");
+function calculateExperienceScore(jobSkills, candidateSkills, MAX,candidateProfile) {
+  console.log(`\n--- Experience Score Calculation ${candidateProfile.firstName} ${candidateProfile.lastName}  --- `);
   const candidateMap = Object.fromEntries(candidateSkills.map(s => [s.name?.toLowerCase(), s]));
 
   let total = 0;
@@ -116,7 +115,7 @@ function calculateExperienceScore(jobSkills, candidateSkills, MAX) {
    3️⃣ SALARY (Optimisé)
 ------------------------------------------------ */
 function calculateSalaryScore(jobDetails, candProf, RATES, MAX, perUSD = true) {
-  console.log("\n--- Salary Score Calculation ---");
+  console.log(`\n--- Salary Score Calculation ${candProf.firstName} ${candProf.lastName}  --- `);
   const job = jobDetails?.salary;
   const cand = candProf?.expectedSalary;
 
@@ -200,7 +199,8 @@ async function calculateMatchScore(
   jobDetails = {},
   candidateProfile = {},
   idCompany,
-  jobPostId
+  jobPostId,
+  matchingConfig
 ) {
   console.log("\n========== MATCHING START ==========");
   console.log(candidateProfile.firstName + " " + candidateProfile.lastName);
@@ -217,16 +217,16 @@ async function calculateMatchScore(
       ? await checkIfCandidateUnlocked(idCompany, candidateProfile.userId._id)
       : false;
 
-  const cfg = await getMatchingConfig(idCompany, jobPostId);
+  const cfg = matchingConfig;
 
-  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, cfg.weights.hardSkill);
+  const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, cfg.weights.hardSkill, candidateProfile);
   if (hardSkillScore === 0) {
     console.log("❌ Candidate eliminated: no hard skill match");
     return 0;
   }
 
-  const softSkillScore = calculateSoftSkillsScore(jobDetails.skillAnalysis?.softSkills || [], candidateProfile.softSkills || [], cfg.weights.SoftSkill);
-  const experienceScore = calculateExperienceScore(jobSkills, candidateSkills, cfg.weights.experience);
+  const softSkillScore = calculateSoftSkillsScore(jobDetails.skillAnalysis?.softSkills || [], candidateProfile.softSkills || [], cfg.weights.SoftSkill,candidateProfile);
+  const experienceScore = calculateExperienceScore(jobSkills, candidateSkills, cfg.weights.experience,candidateProfile);
   const salaryScore = calculateSalaryScore(jobDetails, candidateProfile, cfg.exchangeRates || {}, cfg.weights.salary);
   const workModeScore = calculateWorkModeScore(jobDetails, candidateProfile, cfg.weights.workMode);
   const contractScore = calculateContractScore(jobDetails, candidateProfile, cfg.weights.contract);
@@ -234,13 +234,13 @@ async function calculateMatchScore(
   const total = hardSkillScore + softSkillScore + experienceScore + salaryScore + workModeScore + contractScore;
 
   console.log("---------- SCORES DETAIL ----------");
-  console.log(`Hard Skills: ${hardSkillScore.toFixed(2)}`);
-  console.log(`Soft Skills: ${softSkillScore.toFixed(2)}`);
-  console.log(`Experience: ${experienceScore.toFixed(2)}`);
-  console.log(`Salary: ${salaryScore.toFixed(2)}`);
-  console.log(`Work Mode: ${workModeScore.toFixed(2)}`);
-  console.log(`Contract: ${contractScore.toFixed(2)}`);
-  console.log(`💯 Total Score: ${total.toFixed(2)}, Unlocked: ${unlocked}`);
+  console.log(`Hard Skills ${candidateProfile.firstName} ${candidateProfile.lastName} : ${hardSkillScore.toFixed(2)}`);
+  console.log(`Soft Skills ${candidateProfile.firstName} ${candidateProfile.lastName} : ${softSkillScore.toFixed(2)}`);
+  console.log(`Experience ${candidateProfile.firstName} ${candidateProfile.lastName} : ${experienceScore.toFixed(2)}`);
+  console.log(`Salary ${candidateProfile.firstName} ${candidateProfile.lastName} : ${salaryScore.toFixed(2)}`);
+  console.log(`Work Mode ${candidateProfile.firstName} ${candidateProfile.lastName} : ${workModeScore.toFixed(2)}`);
+  console.log(`Contract ${candidateProfile.firstName} ${candidateProfile.lastName} : ${contractScore.toFixed(2)}`);
+  console.log(`💯 Total Score ${candidateProfile.firstName} ${candidateProfile.lastName} : ${total.toFixed(2)}, Unlocked: ${unlocked}`);
 
   return {
     score: Math.round(total * 10) / 10,
