@@ -26,6 +26,8 @@ const Profile = require("../models/ProfileModel");
 // services/MatchingService/computeMatches.js
 
 const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matchingService");
+const { getMatchingConfig } = require("../services/MatchingService/matchingConfigService");
+const UnlockCandidate = require("../models/UnlockCandidateModel"); 
 
 async function computeMatches(jobPostId, companyId) {
   // Charger les candidats
@@ -51,7 +53,8 @@ async function computeMatches(jobPostId, companyId) {
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
   const requiredSoftSkills = jobPost.skillAnalysis.softSkills || [];
-
+    // 0️⃣ Charger la config UNE SEULE FOIS
+    const matchingConfig = await getMatchingConfig(companyId, jobPostId);
   /** ------------------------
    * Matching
    * ------------------------- */
@@ -68,13 +71,23 @@ async function computeMatches(jobPostId, companyId) {
      * APPEL DE LA NOUVELLE LOGIQUE
      * calculateMatchScore()
      * ------------------------- */
+    /* -----------------------------------------
+       2️⃣b Charger tous les unlocked en une seule requête
+    ----------------------------------------- */
+    const unlockedRecords = await UnlockCandidate.find(
+      { companyId, job: jobPostId }, // filtre par job si nécessaire
+      { idCandidate: 1, _id: 0 }
+    ).lean();
+    const unlockedSet = new Set(unlockedRecords.map(u => String(u.idCandidate)));
+
     const { score, unlocked } = await calculateMatchScore(
       requiredHardSkills,
       candidateSkills,
       jobPost.jobDetails,
       candidate,
       companyId,
-      jobPostId
+      matchingConfig,
+      unlockedSet
     );
 
     if (score <= 0) continue;

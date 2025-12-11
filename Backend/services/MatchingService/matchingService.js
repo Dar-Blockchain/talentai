@@ -199,8 +199,8 @@ async function calculateMatchScore(
   jobDetails = {},
   candidateProfile = {},
   idCompany,
-  jobPostId,
-  matchingConfig
+  matchingConfig,
+  unlockedSet 
 ) {
   console.log("\n========== MATCHING START ==========");
   console.log(candidateProfile.firstName + " " + candidateProfile.lastName);
@@ -212,10 +212,10 @@ async function calculateMatchScore(
     return 0;
   }
 
-  const unlocked =
-    idCompany && candidateProfile.userId?._id
-      ? await checkIfCandidateUnlocked(idCompany, candidateProfile.userId._id)
-      : false;
+  // ✅ lookup dans Set au lieu de requête MongoDB
+  const unlocked = candidateProfile.userId?._id
+    ? unlockedSet.has(String(candidateProfile.userId._id))
+    : false;
 
   const cfg = matchingConfig;
 

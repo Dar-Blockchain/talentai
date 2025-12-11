@@ -7,6 +7,7 @@ const {
   normalizeSkillName,
 } = require("../../services/MatchingService/matchingService");
 const { getMatchingConfig } = require("../../services/MatchingService/matchingConfigService");
+const UnlockCandidate = require("../../models/UnlockCandidateModel"); 
 
 /* Helper */
 const prepareSkills = (skills) =>
@@ -50,36 +51,50 @@ exports.matchCandidatesToJob = async (req, res) => {
     /* -----------------------------------------
        2️⃣ Préparer les skills du job une seule fois
     ----------------------------------------- */
-    const requiredSkills = prepareSkills(
-      jobPost.skillAnalysis?.requiredSkills || []
-    );
-    console.log("Required skills for job:",requiredSkills.map((s) => s.name))
-
+    const requiredSkills = prepareSkills(jobPost.skillAnalysis?.requiredSkills || []);
     const requiredNames = new Set(requiredSkills.map((s) => s.name));
 
-    /* Cast jobDetails propre (important pour service) */
     const jobData = {
       ...jobPost.jobDetails,
       skillAnalysis: jobPost.skillAnalysis,
     };
 
     /* -----------------------------------------
-       3️⃣ Traitement en parallèle (max performance)
+       2️⃣b Charger tous les unlocked en une seule requête
+    ----------------------------------------- */
+    // Extraire tous les ids de candidats présents
+    const candidateIds = candidates
+      .filter(c => c.userId?._id)
+      .map(c => c.userId._id);
+
+    // Requête Mongo pour récupérer tous les unlocks
+    const unlockedRecords = await UnlockCandidate.find(
+      { idCompany, idCandidate: { $in: candidateIds } },
+      { idCandidate: 1, _id: 0 }
+    ).lean();
+
+    // Créer un Set pour lookup rapide
+    const unlockedSet = new Set(unlockedRecords.map(u => String(u.idCandidate)));
+
+    /* -----------------------------------------
+       3️⃣ Traitement en parallèle
     ----------------------------------------- */
     const matchPromises = candidates.map(async (candidate) => {
       if (!candidate.userId) return null;
 
       const candidateSkills = prepareSkills(candidate.skills);
-
-      // Le service gère tout ⇒ ne rien changer
+    
+      // Vérifier unlock directement depuis le Set
+      unlockedSet.has(String(candidate.userId._id));
+    
       const score = await calculateMatchScore(
         requiredSkills,
         candidateSkills,
         jobData,
         candidate,
         idCompany,
-        jobPostId,
-        matchingConfig
+        matchingConfig,
+        unlockedSet  // <-- nouveau paramètre
       );
 
       if (!score || score === 0) return null;
@@ -96,15 +111,12 @@ exports.matchCandidatesToJob = async (req, res) => {
         unlockPrice: 5,
         finalBid: candidate.companyBid?.finalBid || null,
         biddingCompany: candidate.companyBid?.company?.username || null,
-        matchedSkills: candidateSkills.filter((cs) =>
-          requiredNames.has(cs.name)
-        ),
+        matchedSkills: candidateSkills.filter((cs) => requiredNames.has(cs.name)),
         requiredSkills,
       };
     });
 
     const matches = (await Promise.all(matchPromises)).filter(Boolean);
-
     matches.sort((a, b) => b.score - a.score);
 
     res.json({
