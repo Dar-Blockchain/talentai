@@ -7,13 +7,8 @@ const {
   normalizeSkillName,
 } = require("../../services/MatchingService/matchingService");
 const { getMatchingConfig } = require("../../services/MatchingService/matchingConfigService");
-const UnlockCandidate = require("../../models/UnlockCandidateModel"); 
-
-/* Helper */
-const prepareSkills = (skills) =>
-  (skills || [])
-    .filter((s) => s?.name)
-    .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+const UnlockCandidate = require("../../models/UnlockCandidateModel");
+const { prepareSkills } = require("../../helpers/matchingHelpers");
 
 exports.matchCandidatesToJob = async (req, res) => {
   try {
