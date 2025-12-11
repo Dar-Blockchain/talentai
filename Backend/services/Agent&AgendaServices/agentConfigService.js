@@ -4,192 +4,292 @@ const Post = require('../../models/PostModel');
 const User = require('../../models/UserModel');
 const postPaymentService = require('../postPaymentService');
 
-/**
- * Service pour AgentConfig
- * Structure similaire à `dashboardService.js` : export de fonctions nommées via module.exports
- */
+// Helper: Validate input data for create/update
+const validateCreateData = (data) => {
+  if (!data || typeof data !== 'object') {
+    const err = new Error('Invalid data: expected object');
+    err.status = 400;
+    throw err;
+  }
+  if (!data.agentId) {
+    const err = new Error('Missing agentId');
+    err.status = 400;
+    throw err;
+  }
+  if (!data.postId) {
+    const err = new Error('Missing postId');
+    err.status = 400;
+    throw err;
+  }
+};
+
+// Helper: Check agent/post existence in parallel
+const verifyAgentAndPostExist = async (agentId, postId) => {
+  const [agent, post] = await Promise.all([
+    Agent.findById(agentId).lean().select('_id'),
+    Post.findById(postId).lean().select('_id')
+  ]);
+  if (!agent) {
+    const err = new Error('Agent not found');
+    err.status = 404;
+    throw err;
+  }
+  if (!post) {
+    const err = new Error('Post not found');
+    err.status = 404;
+    throw err;
+  }
+  return { agent, post };
+};
+
+// Helper: Get config with populated references, using field projection + .lean()
+const getConfigWithPopulates = async (query) => {
+  return AgentConfig.findOne(query)
+    .populate('agent', 'name status') // Only essential fields
+    .populate('post', 'title description')
+    .lean(); // Read-only query optimization
+};
 
 module.exports.createAgentConfig = async (data) => {
   try {
-    // Ensure unique constraints by checking existing agentId/postId
-    const existingByAgent = await AgentConfig.findOne({ agentId: data.agentId });
-    if (existingByAgent) throw new Error('AgentConfig already exists for this agent');
+    validateCreateData(data);
 
-    const existingByPost = await AgentConfig.findOne({ postId: data.postId });
-    if (existingByPost) throw new Error('AgentConfig already exists for this post');
+    // Check uniqueness with single $or query instead of 2 separate queries
+    const existing = await AgentConfig.findOne({
+      $or: [{ agentId: data.agentId }, { postId: data.postId }]
+    }).lean().select('_id agentId postId');
 
-    // Vérifier que l'Agent et le Post existent
-    const agent = await Agent.findById(data.agentId);
-    if (!agent) throw new Error('Agent not found');
+    if (existing) {
+      if (existing.agentId?.toString() === data.agentId.toString()) {
+        const err = new Error('AgentConfig already exists for this agent');
+        err.status = 409;
+        throw err;
+      }
+      if (existing.postId?.toString() === data.postId.toString()) {
+        const err = new Error('AgentConfig already exists for this post');
+        err.status = 409;
+        throw err;
+      }
+    }
 
-    const post = await Post.findById(data.postId);
-    if (!post) throw new Error('Post not found');
+    // Verify both exist in parallel
+    await verifyAgentAndPostExist(data.agentId, data.postId);
 
-    // Créer la config
+    // Create config
     const cfg = new AgentConfig(data);
     const savedConfig = await cfg.save();
 
-    // Mettre à jour l'Agent avec la référence à la config
-    agent.agentConfig = savedConfig._id;
-    await agent.save();
-
-    // Mettre à jour le Post avec la référence à la config
-    post.agentConfig = savedConfig._id;
-    await post.save();
+    // Update both Agent and Post references in parallel
+    await Promise.all([
+      Agent.findByIdAndUpdate(data.agentId, { agentConfig: savedConfig._id }),
+      Post.findByIdAndUpdate(data.postId, { agentConfig: savedConfig._id })
+    ]);
 
     return savedConfig;
   } catch (error) {
-    throw new Error('Error creating AgentConfig: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 module.exports.getAgentConfigById = async (id) => {
   try {
-    const cfg = await AgentConfig.findById(id).populate('agent').populate('post');
-    if (!cfg) throw new Error('AgentConfig not found');
+    const cfg = await getConfigWithPopulates({ _id: id });
+    if (!cfg) {
+      const err = new Error('AgentConfig not found');
+      err.status = 404;
+      throw err;
+    }
     return cfg;
   } catch (error) {
-    throw new Error('Error fetching AgentConfig by id: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 module.exports.getAgentConfigByAgentId = async (agentId) => {
   try {
-    const cfg = await AgentConfig.findOne({ agentId }).populate('agent').populate('post');
-    if (!cfg) throw new Error('AgentConfig not found for this agent');
+    const cfg = await getConfigWithPopulates({ agentId });
+    if (!cfg) {
+      const err = new Error('AgentConfig not found for this agent');
+      err.status = 404;
+      throw err;
+    }
     return cfg;
   } catch (error) {
-    throw new Error('Error fetching AgentConfig by agentId: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 module.exports.getAgentConfigByPostId = async (postId) => {
   try {
-    const cfg = await AgentConfig.findOne({ postId }).populate('agent').populate('post');
-    if (!cfg) throw new Error('AgentConfig not found for this post');
+    const cfg = await getConfigWithPopulates({ postId });
+    if (!cfg) {
+      const err = new Error('AgentConfig not found for this post');
+      err.status = 404;
+      throw err;
+    }
     return cfg;
   } catch (error) {
-    throw new Error('Error fetching AgentConfig by postId: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 module.exports.listAgentConfigs = async (filters = {}) => {
   try {
-    return await AgentConfig.find(filters).populate('agent').populate('post').sort({ createdAt: -1 });
+    return await AgentConfig.find(filters)
+      .populate('agent', 'name status')
+      .populate('post', 'title description')
+      .lean()
+      .sort({ createdAt: -1 });
   } catch (error) {
-    throw new Error('Error listing AgentConfigs: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 module.exports.updateAgentConfig = async (id, updateData) => {
   try {
     const cfg = await AgentConfig.findById(id);
-    if (!cfg) throw new Error('AgentConfig not found');
+    if (!cfg) {
+      const err = new Error('AgentConfig not found');
+      err.status = 404;
+      throw err;
+    }
 
-    // Prevent changing agentId/postId to collide with existing configs
+    // Check uniqueness of new agentId/postId (only if changed)
     if (updateData.agentId && updateData.agentId.toString() !== cfg.agentId?.toString()) {
-      const existing = await AgentConfig.findOne({ agentId: updateData.agentId });
-      if (existing) throw new Error('Another AgentConfig already exists for the provided agentId');
-    }
-    if (updateData.postId && updateData.postId.toString() !== cfg.postId?.toString()) {
-      const existing = await AgentConfig.findOne({ postId: updateData.postId });
-      if (existing) throw new Error('Another AgentConfig already exists for the provided postId');
+      const existing = await AgentConfig.findOne({
+        agentId: updateData.agentId,
+        _id: { $ne: id }
+      }).lean().select('_id');
+      if (existing) {
+        const err = new Error('Another AgentConfig already exists for the provided agentId');
+        err.status = 409;
+        throw err;
+      }
     }
 
-    // Keep track of old relations to update references if they change
+    if (updateData.postId && updateData.postId.toString() !== cfg.postId?.toString()) {
+      const existing = await AgentConfig.findOne({
+        postId: updateData.postId,
+        _id: { $ne: id }
+      }).lean().select('_id');
+      if (existing) {
+        const err = new Error('Another AgentConfig already exists for the provided postId');
+        err.status = 409;
+        throw err;
+      }
+    }
+
     const oldAgentId = cfg.agentId ? cfg.agentId.toString() : null;
     const oldPostId = cfg.postId ? cfg.postId.toString() : null;
 
     Object.assign(cfg, updateData);
     const saved = await cfg.save();
 
-    // If agentId changed, update Agent.agentConfig references
+    // Parallelize Agent and Post reference updates
+    const updates = [];
+
     if (updateData.agentId && updateData.agentId.toString() !== oldAgentId) {
       if (oldAgentId) {
-        await Agent.findByIdAndUpdate(oldAgentId, { $unset: { agentConfig: 1 } }).catch(() => {});
+        updates.push(Agent.findByIdAndUpdate(oldAgentId, { $unset: { agentConfig: 1 } }).catch(() => {}));
       }
-      await Agent.findByIdAndUpdate(updateData.agentId, { agentConfig: saved._id }).catch(() => {});
+      updates.push(Agent.findByIdAndUpdate(updateData.agentId, { agentConfig: saved._id }).catch(() => {}));
     }
 
-    // If postId changed, update Post.agentConfig references
     if (updateData.postId && updateData.postId.toString() !== oldPostId) {
       if (oldPostId) {
-        await Post.findByIdAndUpdate(oldPostId, { $unset: { agentConfig: 1 } }).catch(() => {});
+        updates.push(Post.findByIdAndUpdate(oldPostId, { $unset: { agentConfig: 1 } }).catch(() => {}));
       }
-      await Post.findByIdAndUpdate(updateData.postId, { agentConfig: saved._id }).catch(() => {});
+      updates.push(Post.findByIdAndUpdate(updateData.postId, { agentConfig: saved._id }).catch(() => {}));
+    }
+
+    if (updates.length > 0) {
+      await Promise.all(updates);
     }
 
     return saved;
   } catch (error) {
-    throw new Error('Error updating AgentConfig: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
-/**
- * Upsert - create new or update existing AgentConfig by agentId or postId
- */
 module.exports.upsertAgentConfig = async (data) => {
   try {
-    // Try to find existing by agentId or postId
-    const or = [];
-    if (data.agentId) or.push({ agentId: data.agentId });
-    if (data.postId) or.push({ postId: data.postId });
+    validateCreateData(data);
 
-    let existing = null;
-    if (or.length > 0) {
-      existing = await AgentConfig.findOne(or.length === 1 ? or[0] : { $or: or });
-    }
+    // Single $or query to check existing by agentId or postId
+    const existing = await AgentConfig.findOne({
+      $or: [{ agentId: data.agentId }, { postId: data.postId }]
+    }).lean().select('_id agentId postId');
 
     if (existing) {
-      // Merge provided data and update
+      // Update existing
       return await module.exports.updateAgentConfig(existing._id, data);
     }
 
-    // Otherwise create new
+    // Create new
     return await module.exports.createAgentConfig(data);
   } catch (error) {
-    throw new Error('Error upserting AgentConfig: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 module.exports.deleteAgentConfig = async (id) => {
   try {
-    // Trouver la config avant de la supprimer
     const cfg = await AgentConfig.findById(id);
-    if (!cfg) throw new Error('AgentConfig not found');
+    if (!cfg) {
+      const err = new Error('AgentConfig not found');
+      err.status = 404;
+      throw err;
+    }
 
-    // Supprimer les références dans Agent et Post
-    await Agent.findByIdAndUpdate(cfg.agentId, { $unset: { agentConfig: 1 } }).catch(() => {});
-    await Post.findByIdAndUpdate(cfg.postId, { $unset: { agentConfig: 1 } }).catch(() => {});
+    // Parallelize cleanup: unset references in Agent/Post + delete config
+    const cleanupTasks = [
+      AgentConfig.deleteOne({ _id: id })
+    ];
 
-    // Supprimer la config
-    await cfg.deleteOne();
+    if (cfg.agentId) {
+      cleanupTasks.push(Agent.findByIdAndUpdate(cfg.agentId, { $unset: { agentConfig: 1 } }).catch(() => {}));
+    }
+
+    if (cfg.postId) {
+      cleanupTasks.push(Post.findByIdAndUpdate(cfg.postId, { $unset: { agentConfig: 1 } }).catch(() => {}));
+    }
+
+    await Promise.all(cleanupTasks);
     return cfg;
   } catch (error) {
-    throw new Error('Error deleting AgentConfig: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
-/**
- * Process payment for agent creation after agent config is created
- * This function should be called AFTER the agent and config are fully created
- * @param {string} postId - Post ID
- * @param {string} userId - User ID (company)
- * @returns {Promise<Object>} Payment result
- */
 module.exports.processAgentCreationPayment = async (postId, userId) => {
   try {
     console.log(`💳 Processing agent creation payment for Post ${postId}...`);
 
-    // Get post with steps populated
-    const post = await Post.findById(postId).populate('post_Steps');
+    // Fetch Post and User in parallel with minimal fields
+    const [post, user] = await Promise.all([
+      Post.findById(postId).populate('post_Steps').select('user paymentStatus paymentTransactionId post_Steps'),
+      User.findById(userId).select('hederaAccountId hederaPrivateKey')
+    ]);
+
     if (!post) {
-      throw new Error('Post not found');
+      const err = new Error('Post not found');
+      err.status = 404;
+      throw err;
     }
 
-    // Verify ownership
     if (post.user.toString() !== userId.toString()) {
-      throw new Error('User is not the owner of this post');
+      const err = new Error('User is not the owner of this post');
+      err.status = 403;
+      throw err;
     }
 
     // Check if already paid
@@ -203,23 +303,23 @@ module.exports.processAgentCreationPayment = async (postId, userId) => {
       };
     }
 
-    // Get user with Hedera credentials
-    const user = await User.findById(userId);
     if (!user) {
-      throw new Error('User not found');
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
     }
 
     if (!user.hederaAccountId || !user.hederaPrivateKey) {
-      throw new Error('User Hedera account not configured');
+      const err = new Error('User Hedera account not configured');
+      err.status = 400;
+      throw err;
     }
 
     // Calculate price based on number of steps
     const numberOfSteps = post.post_Steps?.length || 0;
     const price = postPaymentService.calculatePrice(numberOfSteps);
 
-    console.log(`📊 Payment calculation:`);
-    console.log(`   Steps: ${numberOfSteps}`);
-    console.log(`   Price: ${price} TAI`);
+    console.log(`📊 Payment calculation: Steps=${numberOfSteps}, Price=${price} TAI`);
 
     // Update post status to pending
     post.paymentStatus = 'pending';
@@ -234,12 +334,15 @@ module.exports.processAgentCreationPayment = async (postId, userId) => {
       userId
     );
 
-    // Update post with payment details
-    post.paymentStatus = 'completed';
-    post.paymentTransactionId = paymentResult.transactionId;
-    post.pricePaid = price;
-    post.paymentCompletedAt = new Date();
-    await post.save();
+    // Update post with payment details (async, don't block response)
+    Post.findByIdAndUpdate(postId, {
+      paymentStatus: 'completed',
+      paymentTransactionId: paymentResult.transactionId,
+      pricePaid: price,
+      paymentCompletedAt: new Date()
+    }).catch(err => {
+      console.error(`⚠️  Failed to finalize post payment status: ${err.message}`);
+    });
 
     console.log(`✅ Agent creation payment completed for Post ${postId}`);
 
@@ -251,18 +354,17 @@ module.exports.processAgentCreationPayment = async (postId, userId) => {
       numberOfSteps: numberOfSteps
     };
   } catch (error) {
-    console.error(`❌ Error processing agent creation payment:`, error);
+    console.error(`❌ Error processing agent creation payment:`, error?.message || error);
 
-    // Update post status to failed
-    try {
-      await Post.findByIdAndUpdate(postId, {
-        paymentStatus: 'failed',
-        paymentError: error.message
-      });
-    } catch (updateError) {
-      console.error('Failed to update post payment status:', updateError);
-    }
+    // Update post status to failed (async, non-blocking)
+    Post.findByIdAndUpdate(postId, {
+      paymentStatus: 'failed',
+      paymentError: error?.message || 'Unknown error'
+    }).catch(err => {
+      console.error('Failed to update post payment status:', err.message);
+    });
 
-    throw new Error('Payment processing failed: ' + error.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
