@@ -20,7 +20,6 @@ async function getMatchingConfig(updatedBy, jobId) {
         workMode: 7.5,
         contract: 7.5,
       },
-      importanceWeight: { Expert: 1.5, Senior: 1.2, Mid_Level: 1.0, Junior: 0.8 },
       exchangeRates: { USD: 1, EUR: 1.1, TND: 0.32 },
     };
   }
@@ -39,7 +38,6 @@ async function addConfig(userId, payload = {}) {
   const toCreate = {
     name: payload.name || 'default',
     weights: payload.weights || defaultConfig().weights,
-    importanceWeight: payload.importanceWeight || defaultConfig().importanceWeight,
     exchangeRates: payload.exchangeRates || defaultConfig().exchangeRates,
     updatedBy: userId,
     job : payload.jobId ,
@@ -67,7 +65,6 @@ async function addConfig(userId, payload = {}) {
 async function updateConfig(userId, payload = {}) {
   const update = {};
   if (payload.weights) update.weights = payload.weights;
-  if (payload.importanceWeight) update.importanceWeight = payload.importanceWeight;
   if (payload.exchangeRates) update.exchangeRates = payload.exchangeRates;
   update.updatedBy = userId;
 
