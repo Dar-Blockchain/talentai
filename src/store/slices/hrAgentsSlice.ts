@@ -254,7 +254,7 @@ const hrAgentsSlice = createSlice({
       .addCase(createHRAgent.fulfilled, (state, action: PayloadAction<any>) => {
         state.createdAgent.status = "succeeded";
         state.createdAgent.data =
-          action.payload.agent || action.payload.data || action.payload;
+          action.payload.agent || action?.payload?.data[0] || action.payload;
       })
       .addCase(createHRAgent.rejected, (state, action) => {
         state.createdAgent.status = "failed";

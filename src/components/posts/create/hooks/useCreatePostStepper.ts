@@ -3,6 +3,8 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { savePost, fetchJobMatches } from "@/store/slices/postSlice";
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
+import { getJobSkills } from "@/utils/postHelpers";
+import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 
 export const useCreatePostStepper = (generatedPost: any, profile: any) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,8 +43,13 @@ export const useCreatePostStepper = (generatedPost: any, profile: any) => {
       setModalMode("done");
     }
 
-    if (shouldContinue) {
+    if (activeStep === 0 && shouldContinue) {
       setModalOpen(false);
+      setActiveStep((prev) => prev + 1);
+    }
+
+    if(activeStep === 1){
+      await dispatch(createAgentConfig()).unwrap();
       setActiveStep((prev) => prev + 1);
     }
   };
@@ -59,26 +66,4 @@ export const useCreatePostStepper = (generatedPost: any, profile: any) => {
     modalMode,
     setModalOpen,
   };
-};
-
-// ---------- UTILITY FUNCTION ----------
-
-const getJobSkills = (job: any): string[] => {
-  if (!job?.skillAnalysis) return [];
-
-  const skills: string[] = [];
-
-  if (job.skillAnalysis.requiredSkills) {
-    skills.push(
-      ...job.skillAnalysis.requiredSkills.map((skill: any) => skill.name)
-    );
-  }
-
-  if (job.skillAnalysis.softSkills) {
-    skills.push(
-      ...job.skillAnalysis.softSkills.map((skill: any) => skill.name)
-    );
-  }
-
-  return [...new Set(skills)];
 };

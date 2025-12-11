@@ -21,6 +21,8 @@ import MatchingFlowModal from "./components/MatchingFlowModal";
 
 import { RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
+import AgentConfigurationForm from "../AgentConfigurationForm";
+import AgentConfigurationStep from "./AgentConfigurationStep";
 
 const steps = ["Job Details", "Agent Configuration", "Recruitment Flow"];
 
@@ -96,6 +98,7 @@ const CreatePostStepper: React.FC = () => {
 
   const { profile } = useSelector((state: RootState) => state.auth);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
+  const { status: createConfigStatus } = useSelector((state: RootState) => state.agentConfig.createConfig);
 
   const { activeStep, handleNext, handleBack, modalOpen, modalMode } =
     useCreatePostStepper(generatedPost, profile);
@@ -163,7 +166,7 @@ const CreatePostStepper: React.FC = () => {
       {/* Step Content */}
       <Box sx={{ mt: 2 }}>
         {activeStep === 0 && <PostDetailsStep />}
-        {activeStep === 1 && <RecruitmentFlowStep />}
+        {activeStep === 1 && <AgentConfigurationStep />}
         {activeStep === 2 && <RecruitmentFlowStep />}
       </Box>
 
@@ -213,6 +216,7 @@ const CreatePostStepper: React.FC = () => {
             color: "black",
           }}
           disabled={!generatedPost}
+          loading={activeStep === 1 && createConfigStatus === "loading"}
         >
           {activeStep === steps.length - 1 ? "Finish" : "Next"}
         </Button>
