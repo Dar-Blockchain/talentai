@@ -1,7 +1,6 @@
 // postGenerationSlice.ts
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
 
 // ------------------------------------------------------
 // Types
@@ -9,7 +8,7 @@ import axios from "axios";
 
 export interface HardSkill {
   name: string;
-  level: string;
+  level: number;
   importance: string;
   category: string;
   percentage: number;
@@ -34,6 +33,7 @@ export interface JobDetails {
   responsibilities: string[];
   location: string;
   employmentType: string;
+  experienceLevel: string;
   salary: Salary;
 }
 
@@ -79,7 +79,6 @@ export interface PostGenerationState {
   workMode: string;
   employmentType: string;
   salary: Salary;
-  experienceLevel: string;
 
   loading: boolean;
   error: string | null;
@@ -99,7 +98,6 @@ const initialState: PostGenerationState = {
   workMode: "",
   employmentType: "",
   salary: { min: "", max: "", currency: "USD" },
-  experienceLevel: "",
 
   loading: false,
   error: null,
@@ -200,10 +198,6 @@ const postGenerationSlice = createSlice({
 
     setEmploymentType(state, action: PayloadAction<string>) {
       state.employmentType = action.payload;
-    },
-
-    setExperienceLevel(state, action: PayloadAction<string>) {
-      state.experienceLevel = action.payload;
     },
 
     setSalary(state, action: PayloadAction<Salary>) {
@@ -388,7 +382,6 @@ export const {
   setWorkMode,
   setEmploymentType,
   setSalary,
-  setExperienceLevel,
   updateSalaryField,
   editHardSkill,
   deleteHardSkill,

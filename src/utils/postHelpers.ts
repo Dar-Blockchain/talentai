@@ -17,3 +17,14 @@ export const getJobSkills = (job: any): string[] => {
 
   return [...new Set(skills)];
 };
+
+export const getLevelFromNumber = (level: number): string => {
+  const levelMap: { [key: number]: string } = {
+    1: "Entry Level",
+    2: "Junior",
+    3: "Mid Level",
+    4: "Senior",
+    5: "Expert",
+  };
+  return levelMap[level] || "Entry Level";
+};

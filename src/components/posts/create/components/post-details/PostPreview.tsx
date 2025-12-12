@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import {
   HardSkill,
-  setExperienceLevel,
   SoftSkill,
   deleteHardSkill,
   deleteSoftSkill,
@@ -25,6 +24,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import SkillEditorModal from "./SkillEditorModal";
 import { Add as AddIcon } from "@mui/icons-material";
+import { getLevelFromNumber } from "@/utils/postHelpers";
 
 const inputStyle = {
   height: 40,
@@ -37,13 +37,14 @@ const inputStyle = {
 
 const PostPreview = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { generatedPost, loading, experienceLevel } = useSelector(
+  const { generatedPost, loading } = useSelector(
     (state: any) => state.postGeneration
   );
 
   const {
     title = "",
     description = "",
+    experienceLevel = "",
     requirements = [],
     responsibilities = [],
   } = generatedPost?.jobDetails ?? {};
@@ -68,9 +69,6 @@ const PostPreview = () => {
     setOpen(true);
   };
 
-  useEffect(() => {
-    console.log(generatedPost, "generatedPost qqqq");
-  }, [generatedPost]);
   return (
     <Box
       sx={{
@@ -203,7 +201,7 @@ const PostPreview = () => {
             <TextField
               select
               value={experienceLevel}
-              onChange={(e) => dispatch(setExperienceLevel(e.target.value))}
+              onChange={(e: any) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))}
               fullWidth
               sx={inputStyle}
               InputProps={{
@@ -320,7 +318,7 @@ const PostPreview = () => {
               </Typography>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {hardSkills.map((skill: HardSkill, index: number) => {
-                  const label = `${skill.name} (${skill.importance}) - ${skill.percentage}%`;
+                  const label = `${skill.name} (${getLevelFromNumber(skill.level)}) - ${skill.percentage}%`;
                   return (
                     <SkillChip
                       key={index}
