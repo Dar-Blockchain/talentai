@@ -30,6 +30,8 @@ const inputStyle = {
   height: 40,
   "& .MuiInputBase-root": {
     height: 40,
+        fontSize: "12px",
+    fontWeight: 500,
   },
 };
 
@@ -218,12 +220,12 @@ const PostPreview = () => {
                 ),
               }}
             >
-              <MenuItem disabled value="">
+              <MenuItem disabled value="" sx={{fontSize: '12px', fontWeight: 500}}>
                 Experience Level
               </MenuItem>
 
               {experienceLevels.map((level) => (
-                <MenuItem key={level} value={level}>
+                <MenuItem key={level} value={level} sx={{fontSize: '12px', fontWeight: 500}}>
                   {level}
                 </MenuItem>
               ))}
@@ -466,7 +468,7 @@ const PostPreview = () => {
                 multiline
                 minRows={4}
                 fullWidth
-                sx={{ mt: 2 }}
+                sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: '12px', fontWeight: 500} }}
               />
             </Box>
 
@@ -487,7 +489,7 @@ const PostPreview = () => {
                 multiline
                 minRows={4}
                 fullWidth
-                sx={{ mt: 2 }}
+                sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: '12px', fontWeight: 500} }}
               />
             </Box>
 
@@ -508,7 +510,7 @@ const PostPreview = () => {
                 multiline
                 minRows={4}
                 fullWidth
-                sx={{ mt: 2 }}
+                sx={{ mt: 2,"& .MuiInputBase-root": { fontSize: '12px', fontWeight: 500} }}
               />
             </Box>
           </Box>

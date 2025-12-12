@@ -236,7 +236,8 @@ const HeaderDashboard = () => {
               justifyContent: "space-between",
               height: "50px",
               minHeight: "50px!important",
-              px: 0,
+              paddingLeft: '0!important', 
+              paddingRight: '0!important'
             }}
           >
             {/* Logo */}

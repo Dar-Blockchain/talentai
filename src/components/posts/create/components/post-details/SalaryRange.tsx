@@ -23,29 +23,33 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   errors = {},
   currencies = ["$", "€", "£"],
 }) => {
-  const handleChange = (field: "min" | "max" | "currency") => (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
+  const handleChange =
+    (field: "min" | "max" | "currency") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let value = e.target.value;
 
-    // For min/max, remove leading zeros and clamp to 0
-    if (field === "min" || field === "max") {
-      value = value.replace(/^0+/, '');
-      if (value === "") value = "0";
-      const numberValue = Math.max(0, parseInt(value, 10) || 0);
-      value = numberValue.toString();
-    }
+      // For min/max, remove leading zeros and clamp to 0
+      if (field === "min" || field === "max") {
+        value = value.replace(/^0+/, "");
+        if (value === "") value = "0";
+        const numberValue = Math.max(0, parseInt(value, 10) || 0);
+        value = numberValue.toString();
+      }
 
-    onSalaryChange(field, value);
-  };
+      onSalaryChange(field, value);
+    };
 
   const inputStyle = {
     height: 40,
     "& .MuiInputBase-root": {
       height: 40,
+      fontSize: "12px",
+      fontWeight: 500,
     },
   };
 
   return (
-    <Box sx={{mt: 1}}>
+    <Box sx={{ mt: 1 }}>
       <Typography
         variant="subtitle2"
         sx={{
@@ -64,7 +68,9 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         {/* Currency */}
         <Box sx={{ width: { xs: "100%", sm: "25%" } }}>
-          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>Currency</Typography>
+          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
+            Currency
+          </Typography>
           <TextField
             select
             value={salaryRange.currency || ""}
@@ -75,11 +81,19 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             helperText={errors.currency}
             sx={inputStyle}
           >
-            <MenuItem disabled value="">
+            <MenuItem
+              disabled
+              value=""
+              sx={{ fontSize: "12px", fontWeight: 500 }}
+            >
               Currency
             </MenuItem>
             {currencies.map((currency) => (
-              <MenuItem key={currency} value={currency}>
+              <MenuItem
+                key={currency}
+                value={currency}
+                sx={{ fontSize: "12px", fontWeight: 500 }}
+              >
                 {currency}
               </MenuItem>
             ))}
@@ -88,7 +102,9 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
 
         {/* Minimum Salary */}
         <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>Minimum Salary</Typography>
+          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
+            Minimum Salary
+          </Typography>
           <TextField
             fullWidth
             placeholder="Min"
@@ -102,7 +118,9 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
 
         {/* Maximum Salary */}
         <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>Maximum Salary</Typography>
+          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
+            Maximum Salary
+          </Typography>
           <TextField
             fullWidth
             placeholder="Max"

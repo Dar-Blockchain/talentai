@@ -114,7 +114,6 @@ const CreatePostStepper: React.FC = () => {
       {/* Header Section */}
       <Box
         sx={{
-          px: 3,
           width: "100%",
           display: "flex",
           justifyContent: "center",
