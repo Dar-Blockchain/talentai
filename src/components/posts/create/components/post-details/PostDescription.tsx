@@ -3,6 +3,7 @@
 import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 import {
   contractTypes,
   workModes,
@@ -27,16 +28,51 @@ const inputStyle = {
 
 const PostDescription = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const {
-    promptDescription,
-    salary,
-    workMode,
-    employmentType,
-    generationType,
-  } = useSelector((state: any) => state.postGeneration);
+  const { promptDescription, salary, workMode, employmentType } = useSelector(
+    (state: any) => state.postGeneration
+  );
 
+  // ------------------ VALIDATION STATE ------------------
+  const [errors, setErrors] = useState({
+    promptDescription: "",
+    salary: "",
+    employmentType: "",
+    workMode: "",
+  });
+
+  const validateFields = () => {
+    const newErrors: any = {};
+
+    if (!promptDescription.trim()) {
+      newErrors.promptDescription = "Description is required";
+    }
+
+    // Salary required
+    if (!salary.min || !salary.max || !salary.currency) {
+      newErrors.salary = "Salary range is required";
+    } else {
+      if (Number(salary.max) <= Number(salary.min)) {
+        newErrors.salary = "Max salary must be greater than min salary";
+      }
+    }
+
+    if (!employmentType) {
+      newErrors.employmentType = "Employment type is required";
+    }
+
+    if (!workMode) {
+      newErrors.workMode = "Work mode is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ------------------ HANDLERS ------------------
   const handleDescription = (value: string) => {
     dispatch(setPromptDescription(value));
+    if (errors.promptDescription)
+      setErrors({ ...errors, promptDescription: "" });
   };
 
   const handleSalaryChange = (
@@ -44,9 +80,12 @@ const PostDescription = () => {
     value: number | string
   ) => {
     dispatch(updateSalaryField({ field, value }));
+    if (errors.salary) setErrors({ ...errors, salary: "" });
   };
 
   const handleGenerate = (type: "quick" | "detailed") => {
+    if (!validateFields()) return;
+
     dispatch(setGenerationType(type));
 
     dispatch(
@@ -133,11 +172,24 @@ const PostDescription = () => {
           multiline
           minRows={10}
           fullWidth
+          error={!!errors.promptDescription}
+          helperText={errors.promptDescription}
           sx={{ mt: 2 }}
+          FormHelperTextProps={{
+            sx: {
+              marginLeft: 0,
+            },
+          }}
         />
 
         {/* SALARY */}
         <SalaryRange salaryRange={salary} onSalaryChange={handleSalaryChange} />
+
+        {errors.salary && (
+          <Typography color="error" sx={{ fontSize: 12, mt: 1 }}>
+            {errors.salary}
+          </Typography>
+        )}
 
         {/* EMPLOYMENT + WORK MODE */}
         <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
@@ -154,22 +206,27 @@ const PostDescription = () => {
                 fontSize: 13,
               }}
             >
-              {" "}
-              <Image
-                src="/icons/bag.svg"
-                alt="money"
-                width={20}
-                height={20}
-              />{" "}
-              Employment Type{" "}
+              <Image src="/icons/bag.svg" alt="money" width={20} height={20} />
+              Employment Type
             </Typography>
 
             <TextField
               select
               value={employmentType}
-              onChange={(e) => dispatch(setEmploymentType(e.target.value))}
+              onChange={(e) => {
+                dispatch(setEmploymentType(e.target.value));
+                if (errors.employmentType)
+                  setErrors({ ...errors, employmentType: "" });
+              }}
               fullWidth
+              error={!!errors.employmentType}
+              helperText={errors.employmentType}
               sx={inputStyle}
+              FormHelperTextProps={{
+                sx: {
+                  marginLeft: 0,
+                },
+              }}
             >
               <MenuItem disabled value="">
                 Employment Type
@@ -196,22 +253,31 @@ const PostDescription = () => {
                 fontSize: 13,
               }}
             >
-              {" "}
               <Image
                 src="/icons/building3.svg"
                 alt="money"
                 width={20}
                 height={20}
-              />{" "}
-              Work Mode{" "}
+              />
+              Work Mode
             </Typography>
 
             <TextField
               select
               value={workMode}
-              onChange={(e) => dispatch(setWorkMode(e.target.value))}
+              onChange={(e) => {
+                dispatch(setWorkMode(e.target.value));
+                if (errors.workMode) setErrors({ ...errors, workMode: "" });
+              }}
               fullWidth
+              error={!!errors.workMode}
+              helperText={errors.workMode}
               sx={inputStyle}
+              FormHelperTextProps={{
+                sx: {
+                  marginLeft: 0,
+                },
+              }}
             >
               <MenuItem disabled value="">
                 Work Mode
@@ -227,7 +293,7 @@ const PostDescription = () => {
         </Box>
 
         {/* Buttons */}
-        <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
+        <Box sx={{ display: "flex", gap: 2, mt: 5 }}>
           <Button
             variant="contained"
             onClick={() => handleGenerate("quick")}
@@ -253,9 +319,9 @@ const PostDescription = () => {
               px: 3,
             }}
           >
-            {" "}
-            Quick Generation{" "}
+            Quick Generation
           </Button>
+
           <Button
             variant="outlined"
             onClick={() => handleGenerate("detailed")}
@@ -281,8 +347,7 @@ const PostDescription = () => {
               px: 3,
             }}
           >
-            {" "}
-            Detailed Generation{" "}
+            Detailed Generation
           </Button>
         </Box>
       </Box>
