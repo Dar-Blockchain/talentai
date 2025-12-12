@@ -101,24 +101,21 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
       console.log('  - Filtering by status:', status);
     }
 
-    // Search filter - search in title, description, requirements, and skills
+    // Search filter - search only by jobDetails.title
     // Split search terms to match partial words (e.g., "full stack" matches "Full-Stack Developer")
     if (search) {
       const searchTerms = search.trim().split(/\s+/);
       const searchConditions = [];
       
-      // For each search term, search across multiple fields
+      // Search only in jobDetails.title - ALL terms must match
       searchTerms.forEach(term => {
         searchConditions.push(
-          { "jobDetails.title": { $regex: term, $options: "i" } },
-          { "jobDetails.description": { $regex: term, $options: "i" } },
-          { "jobDetails.requirements": { $regex: term, $options: "i" } },
-          { "skillAnalysis.requiredSkills.name": { $regex: term, $options: "i" } }
+          { "jobDetails.title": { $regex: term, $options: "i" } }
         );
       });
       
-      // Use $or to match any of the search conditions
-      query.$or = searchConditions;
+      // Use $and to match ALL search conditions (all terms must be present)
+      query.$and = searchConditions;
       
       console.log('  - Search terms:', searchTerms);
       console.log('  - Number of search conditions:', searchConditions.length);
