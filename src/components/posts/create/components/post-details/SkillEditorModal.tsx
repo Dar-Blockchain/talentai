@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import {
   Dialog,
@@ -16,17 +15,14 @@ import {
 } from "@mui/material";
 import { experienceLevels } from "@/components/preferences/data/candidateData";
 import { useDispatch } from "react-redux";
-
 import {
   editHardSkill,
   editSoftSkill,
   addHardSkill,
   addSoftSkill,
 } from "@/store/slices/postGenerationSlice";
-
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
-
 
 interface SkillEditorModalProps {
   open: boolean;
@@ -41,6 +37,8 @@ const inputStyle = {
   height: 40,
   "& .MuiInputBase-root": {
     height: 40,
+    fontSize: "12px",
+    fontWeight: 500,
   },
 };
 
@@ -94,9 +92,9 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
     onClose();
   };
 
-const titleText = `${mode === "edit" ? "Edit" : "Add New"} ${
-  skillType === "hard" ? "Hard Skill" : "Soft Skill"
-}`;
+  const titleText = `${mode === "edit" ? "Edit" : "Add New"} ${
+    skillType === "hard" ? "Hard Skill" : "Soft Skill"
+  }`;
 
   const buttonText = mode === "edit" ? "Edit Skill" : "Add Skill";
 
@@ -191,12 +189,20 @@ const titleText = `${mode === "edit" ? "Edit" : "Add New"} ${
                 ),
               }}
             >
-              <MenuItem disabled value="">
+              <MenuItem
+                disabled
+                value=""
+                sx={{ fontSize: "12px", fontWeight: 500 }}
+              >
                 Experience Level
               </MenuItem>
 
               {experienceLevels.map((level) => (
-                <MenuItem key={level} value={level}>
+                <MenuItem
+                  key={level}
+                  value={level}
+                  sx={{ fontSize: "12px", fontWeight: 500 }}
+                >
                   {level}
                 </MenuItem>
               ))}
