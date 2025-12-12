@@ -212,123 +212,90 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 };
 
 
-module.exports.createOrUpdateProfile = async (userId, profileData) => {
+exports.updateUserImage = async (userId, newFilename) => {
+  if (!userId) {
+    throw new Error("ID utilisateur manquant.");
+  }
+  if (!newFilename) {
+    throw new Error("Nom de fichier image manquant.");
+  }
+console.log("Updating profile image for userId:", userId.toString(), "with new filename:", newFilename);
+  // 1️⃣ Récupérer l'utilisateur existant pour connaître l'ancienne image
+const existingUser = await Profile.findOne({ userId: userId.toString() });
+  if (!existingUser) {
+    throw new Error("Profile non trouvé.");
+  }
+
+  const oldImage = existingUser.user_image;
+  console.log("Old image filename:", oldImage);
+  // 2️⃣ Mettre à jour l'image dans la base
+  const updatedUser = await Profile.findByIdAndUpdate(
+    existingUser._id,
+    { user_image: newFilename },
+    { new: true }
+  );
+
+  // 3️⃣ Supprimer l’ancienne image si elle existe
+  if (oldImage && oldImage !== newFilename) {
+    const oldImagePath = path.join(__dirname, "..", "public", "images", "Users", oldImage);
+console.log("Old image path to delete:", oldImagePath);
+    fs.access(oldImagePath, fs.constants.F_OK, (err) => {
+      if (!err) {
+        fs.unlink(oldImagePath, (unlinkErr) => {
+          if (unlinkErr) console.error("Erreur suppression ancienne image:", unlinkErr);
+          else console.log("Ancienne image supprimée :", oldImage);
+        });
+      }
+    });
+  }
+
+  return updatedUser;
+};
+
+
+// Récupérer un profil par ID utilisateur
+// services/profileService.js
+module.exports.getProfileByUserId = async (userId) => {
   try {
-    // Normaliser les champs d'entrée
-    const firstName = profileData.firstName || profileData.FirstName;
-    const lastName = profileData.lastName || profileData.LastName;
-    const type = profileData.type || "Candidate";
-    const skillsInput = Array.isArray(profileData.skills) ? profileData.skills : [];
-
-    // Récupérer l'utilisateur une seule fois
-    const user = await User.findById(userId);
-    if (!user) throw new Error("User not found");
-
-    // Mettre à jour l'utilisateur uniquement si nécessaire
-    const userUpdates = {};
-    if (firstName && user.FirstName !== firstName) userUpdates.FirstName = firstName;
-    if (lastName && user.LastName !== lastName) userUpdates.LastName = lastName;
-    if (user.role !== "Candidate") userUpdates.role = "Candidate";
-    if (Object.keys(userUpdates).length > 0) {
-      await User.findByIdAndUpdate(userId, userUpdates);
-    }
-
-    // Trouver le profil
-    let profile = await Profile.findOne({ userId });
-
-    // Helper pour normaliser expectedSalary
-    const buildExpectedSalary = (es) => {
-      if (!es) return undefined;
-      const min = es.min != null ? Number(es.min) : undefined;
-      const max = es.max != null ? Number(es.max) : undefined;
-      const currency = es.currency || "EUR";
-      return { ...(min !== undefined ? { min } : {}), ...(max !== undefined ? { max } : {}), currency };
-    };
+    const profile = await Profile.findOne({ userId }).populate("userId");
 
     if (!profile) {
-      // Création concise avec valeurs par défaut
-      profile = new Profile({
-        userId,
-        type,
-        firstName,
-        lastName,
-        age: profileData.age,
-        gender: profileData.gender,
-        educationLevel: profileData.educationLevel,
-        country: profileData.country,
-        language: profileData.language,
-        timeZone: profileData.timeZone,
-        expectedSalary: buildExpectedSalary(profileData.expectedSalary),
-        preferredContractType: profileData.preferredContractType,
-        workModePreference: profileData.workModePreference,
-        skills: skillsInput,
-        overallScore: typeof profileData.overallScore === 'number' ? profileData.overallScore : 0,
-      });
-      await profile.save();
-    } else {
-      // Mise à jour: n'écrire que les champs fournis
-      const updatableFields = {
-        firstName,
-        lastName,
-        age: profileData.age,
-        gender: profileData.gender,
-        educationLevel: profileData.educationLevel,
-        country: profileData.country,
-        language: profileData.language,
-        timeZone: profileData.timeZone,
-        preferredContractType: profileData.preferredContractType,
-        workModePreference: profileData.workModePreference,
-        type,
-      };
-
-      Object.keys(updatableFields).forEach((k) => {
-        const v = updatableFields[k];
-        if (v !== undefined && v !== null) profile[k] = v;
-      });
-
-      // Expected salary merge
-      if (profileData.expectedSalary) {
-        profile.expectedSalary = buildExpectedSalary(profileData.expectedSalary);
-      }
-
-      // Overall score
-      if (typeof profileData.overallScore === "number") {
-        profile.overallScore = profileData.overallScore;
-      }
-
-      // Merge skills en évitant doublons (par name)
-      if (skillsInput.length > 0) {
-        const existing = profile.skills || [];
-        const map = new Map();
-        existing.forEach((s) => { if (s && s.name) map.set(String(s.name).toLowerCase(), s); });
-        skillsInput.forEach((s) => {
-          if (!s) return;
-          const name = (s.name || s.skill || '').toString();
-          if (!name) return;
-          const key = name.toLowerCase();
-          const existingEntry = map.get(key) || {};
-          map.set(key, { ...existingEntry, ...s, name });
-        });
-        profile.skills = Array.from(map.values());
-
-        // Recalculer overallScore si non fourni explicitement
-        if (typeof profileData.overallScore !== 'number') {
-          const numericScores = profile.skills.map((s) => Number(s.ScoreTest)).filter(Number.isFinite);
-          profile.overallScore = numericScores.length ? Number((numericScores.reduce((a,b)=>a+b,0)/numericScores.length).toFixed(2)) : 0;
-        }
-      }
-
-      await profile.save();
-    }
-
-    // Mettre à jour la référence dans User seulement si nécessaire
-    if (!user.profile || user.profile.toString() !== profile._id.toString()) {
-      await User.findByIdAndUpdate(userId, { profile: profile._id });
+      // Aucun profil trouvé
+      return { message: "Aucun profil trouvé pour cet utilisateur." };
     }
 
     return profile;
   } catch (error) {
-    console.error("Error creating/updating candidate profile:", error);
+    console.error("Erreur lors de la récupération du profil :", error);
+    throw new Error("Impossible de récupérer le profil."); // message plus générique
+  }
+};
+
+module.exports.getProfileByPostId = async (postId) => {
+  try {
+    const post = await Post.findOne({ _id: postId }).populate({
+      path: "user",
+      populate: { path: "profile" },
+    });
+
+    if (!post || !post.user || !post.user.profile) {
+      return { message: "Aucun profil trouvé pour cet utilisateur." };
+    }
+
+    return post.user.profile;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du profil :", error);
+    throw new Error("Impossible de récupérer le profil."); // Message plus générique
+  }
+};
+
+// Récupérer tous les profils
+module.exports.getAllProfiles = async () => {
+  try {
+    const profiles = await Profile.find().populate("userId", "username email");
+    return profiles;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des profils:", error);
     throw error;
   }
 };

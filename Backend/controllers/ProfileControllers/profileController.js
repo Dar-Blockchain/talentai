@@ -10,32 +10,58 @@ const {
 module.exports.createOrUpdateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const raw = req.body || {};
+    const profileData = req.body;
 
-    // Normaliser clés
-    const profileData = {
-      ...raw,
-      firstName: raw.firstName || raw.FirstName,
-      lastName: raw.lastName || raw.LastName,
-    };
-
-    // Validation essentielle
-    if (!profileData.type) return res.status(400).json({ message: "Profile type is required" });
-    if (!profileData.firstName || !profileData.lastName) return res.status(400).json({ message: "First name and last name are required" });
-
-    // Age validation
-    if (profileData.age && Number.isNaN(Number(profileData.age))) return res.status(400).json({ message: "Age must be a valid number" });
-
-    // expectedSalary validation (compact)
-    if (profileData.expectedSalary) {
-      const { min, max, currency } = profileData.expectedSalary;
-      if (min != null && (Number.isNaN(Number(min)) || Number(min) < 0)) return res.status(400).json({ message: "Expected salary min must be a positive number" });
-      if (max != null && (Number.isNaN(Number(max)) || Number(max) < 0)) return res.status(400).json({ message: "Expected salary max must be a positive number" });
-      if (min != null && max != null && Number(min) > Number(max)) return res.status(400).json({ message: "Expected salary min cannot be greater than max" });
-      if (currency != null && typeof currency !== 'string') return res.status(400).json({ message: "Currency must be a valid string" });
+    // Validation: profile type is required
+    if (!profileData.type) {
+      return res.status(400).json({ message: "Profile type is required" });
     }
 
-    // Call service
+    // Validation: firstName and lastName (handle both camelCase and PascalCase)
+    const firstName = profileData.firstName || profileData.FirstName;
+    const lastName = profileData.lastName || profileData.LastName;
+
+    if (!firstName || !lastName) {
+      return res.status(400).json({ message: "First name and last name are required" });
+    }
+
+    // Validation: age should be a valid number if provided
+    if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
+      return res.status(400).json({ message: "Age must be a valid number" });
+    }
+
+    // Validation: preferredContractType (optional)
+    if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
+      return res.status(400).json({ message: "Preferred contract type must be a valid string" });
+    }
+
+    // Validation: location (optional)
+    if (profileData.location && typeof profileData.location !== "string") {
+      return res.status(400).json({ message: "Location must be a valid string" });
+    }
+
+    // Validation: expectedSalary structure (optional)
+    if (profileData.expectedSalary) {
+      const { min, max, currency } = profileData.expectedSalary;
+      
+      if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
+        return res.status(400).json({ message: "Expected salary min must be a positive number" });
+      }
+      
+      if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
+        return res.status(400).json({ message: "Expected salary max must be a positive number" });
+      }
+      
+      if (min !== null && max !== null && min > max) {
+        return res.status(400).json({ message: "Expected salary min cannot be greater than max" });
+      }
+      
+      if (currency && typeof currency !== "string") {
+        return res.status(400).json({ message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
+      }
+    }
+
+    // Create or update the profile
     const profile = await profileService.createOrUpdateProfile(userId, profileData);
 
     res.status(200).json({
