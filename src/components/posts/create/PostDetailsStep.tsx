@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
-import PostDescription from "./components/PostDescription";
-import PostPreview from "./components/PostPreview";
+import PostDescription from "./components/post-details/PostDescription";
+import PostPreview from "./components/post-details/PostPreview";
 
 const PostDetailsStep = () => {
   return (
