@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { savePost, fetchJobMatches } from "@/store/slices/postSlice";
+import {
+  savePost,
+  fetchJobMatches,
+  postRecruitmentSteps,
+} from "@/store/slices/postSlice";
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { getJobSkills } from "@/utils/postHelpers";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 
-export const useCreatePostStepper = (generatedPost: any, profile: any) => {
+export const useCreatePostStepper = (
+  generatedPost: any,
+  profile: any,
+  recruitmentFlow: any,
+  savedPost: any
+) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -14,6 +23,7 @@ export const useCreatePostStepper = (generatedPost: any, profile: any) => {
   const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
     "saving"
   );
+  const { nodes, edges } = recruitmentFlow;
 
   const handleNext = async (shouldContinue?: boolean) => {
     // Step 0 => Post saving + Agent creation + Matching
@@ -48,9 +58,30 @@ export const useCreatePostStepper = (generatedPost: any, profile: any) => {
       setActiveStep((prev) => prev + 1);
     }
 
-    if(activeStep === 1){
+    if (activeStep === 1) {
       await dispatch(createAgentConfig()).unwrap();
       setActiveStep((prev) => prev + 1);
+    }
+    if (activeStep === 2 && savedPost?.jobData?._id) {
+      const sequenceData = nodes.map((node, index) => ({
+        ...node,
+        order: index,
+        connections: edges
+          .filter((edge) => edge.source === node.id || edge.target === node.id)
+          .map((edge) => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            type: edge.source === node.id ? "outgoing" : "incoming",
+          })),
+      }));
+
+      await dispatch(
+        postRecruitmentSteps({
+          postId: savedPost?.jobData?._id,
+          steps: sequenceData,
+        })
+      );
     }
   };
 

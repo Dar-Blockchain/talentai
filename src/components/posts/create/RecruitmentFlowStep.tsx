@@ -1,6 +1,6 @@
 "use client";
 import { Box, Button, Tooltip } from "@mui/material";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useNodesState,
   useEdgesState,
@@ -15,6 +15,9 @@ import Image from "next/image";
 import { nodeTypes } from "./components/recruitment-flow/CustomNode";
 import NodeConfigurationModal from "./components/recruitment-flow/NodeConfigurationModal";
 import SidebarMenu from "./components/recruitment-flow/SidebarMenu";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { setFlowEdges, setFlowNodes } from "@/store/slices/postSlice";
 
 const ReactFlow = dynamic(
   () => import("reactflow").then((mod) => mod.default),
@@ -39,6 +42,7 @@ interface ChatMessage {
 }
 
 const RecruitmentFlowStep = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const flowWrapper = useRef<HTMLDivElement | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -98,6 +102,14 @@ const RecruitmentFlowStep = () => {
 
     setSelectedNodes([]);
   }, [selectedNodes, setNodes, setEdges]);
+
+  useEffect(() => {
+    dispatch(setFlowNodes(nodes));
+  }, [nodes]);
+
+  useEffect(() => {
+    dispatch(setFlowEdges(edges));
+  }, [edges]);
 
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", pt: 2 }}>

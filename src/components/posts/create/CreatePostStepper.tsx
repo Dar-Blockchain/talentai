@@ -21,8 +21,8 @@ import MatchingFlowModal from "./components/MatchingFlowModal";
 
 import { RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
-import AgentConfigurationForm from "../AgentConfigurationForm";
 import AgentConfigurationStep from "./AgentConfigurationStep";
+import { savePost } from "@/store/slices/postSlice";
 
 const steps = ["Job Details", "Agent Configuration", "Recruitment Flow"];
 
@@ -98,10 +98,16 @@ const CreatePostStepper: React.FC = () => {
 
   const { profile } = useSelector((state: RootState) => state.auth);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
-  const { status: createConfigStatus } = useSelector((state: RootState) => state.agentConfig.createConfig);
+  const { status: createConfigStatus } = useSelector(
+    (state: RootState) => state.agentConfig.createConfig
+  );
+  const recruitmentFlow = useSelector(
+    (state: any) => state.post.recruitmentFlow
+  );
+  const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
 
   const { activeStep, handleNext, handleBack, modalOpen, modalMode } =
-    useCreatePostStepper(generatedPost, profile);
+    useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost);
 
   return (
     <Box sx={{ my: 5, position: "relative", pb: 10 }}>
@@ -117,15 +123,27 @@ const CreatePostStepper: React.FC = () => {
       >
         <Box sx={{ flex: 1, display: { xs: "none", md: "flex" } }}>
           <Button
-            startIcon={<ArrowBack sx={{ color: "#10b981",transition: 'transform 0.2s easeIn',"&:hover": {transform: 'scale(1.1)' }, }} />}
+            startIcon={
+              <ArrowBack
+                sx={{
+                  color: "#10b981",
+                  transition: "transform 0.2s easeIn",
+                  "&:hover": { transform: "scale(1.1)" },
+                }}
+              />
+            }
             onClick={() => router.back()}
             sx={{
               textTransform: "none",
               px: 0,
               py: 0,
-              color: 'black',
-              transition: 'transform 0.2s easeIn',
-              "&:hover": { background: "transparent", color: "black", transform: 'scale(1.1)' },
+              color: "black",
+              transition: "transform 0.2s easeIn",
+              "&:hover": {
+                background: "transparent",
+                color: "black",
+                transform: "scale(1.1)",
+              },
             }}
           >
             Back
@@ -148,7 +166,7 @@ const CreatePostStepper: React.FC = () => {
                     sx={{
                       fontWeight: 500,
                       fontSize: "12px",
-                      lineHeight: '10px',
+                      lineHeight: "10px",
                       color:
                         steps.indexOf(label) === activeStep
                           ? "rgba(76,217,163,1)"

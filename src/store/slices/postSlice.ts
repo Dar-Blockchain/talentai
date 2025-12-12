@@ -1,18 +1,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
+
+interface RecruitmentFlowState {
+  nodes: any[];
+  edges: any[];
+}
+
 interface SavePostState {
   loading: boolean;
   error: string | null;
   savedPost: any;
-}
-// Types
-interface Step {
-  id: string;
-  title: string;
-  description: string;
-  order: number;
-  isCompleted: boolean;
-  // Add other step properties as needed
 }
 
 interface RecommendedState {
@@ -39,7 +36,8 @@ interface PostState {
   currentJobLoading: boolean;
   currentJobError: string | null;
   recommended: RecommendedState;
-  savePost: SavePostState
+  savePost: SavePostState;
+  recruitmentFlow: RecruitmentFlowState;
 }
 
 // Initial state
@@ -70,6 +68,10 @@ const initialState: PostState = {
     error: null,
     savedPost: null,
   },
+  recruitmentFlow: {
+    nodes: [],
+    edges: [],
+  }
 };
 
 export const savePost = createAsyncThunk(
@@ -104,7 +106,6 @@ export const savePost = createAsyncThunk(
       const saved = await res.json();
 
       const job = saved.data || saved;
-      console.log("Job saved successfully:", job);
       return {
         success: true,
         jobData: job,
@@ -348,6 +349,16 @@ const postSlice = createSlice({
     removeStep: (state, action: PayloadAction<string>) => {
       state.steps = state.steps.filter(step => step.id !== action.payload);
     },
+    setFlowNodes(state, action) {
+      state.recruitmentFlow.nodes = action.payload;
+    },
+    setFlowEdges(state, action) {
+      state.recruitmentFlow.edges = action.payload;
+    },
+    resetFlow(state) {
+      state.recruitmentFlow.nodes = [];
+      state.recruitmentFlow.edges = [];
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -452,7 +463,7 @@ const postSlice = createSlice({
 });
 
 // Export actions
-export const { clearError, setSteps, addStep, updateStep, removeStep } = postSlice.actions;
+export const { clearError, setSteps, addStep, updateStep, removeStep, setFlowNodes, setFlowEdges, resetFlow } = postSlice.actions;
 
 // Export reducer
 export default postSlice.reducer;
