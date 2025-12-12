@@ -117,13 +117,15 @@ const CreatePostStepper: React.FC = () => {
       >
         <Box sx={{ flex: 1, display: { xs: "none", md: "flex" } }}>
           <Button
-            startIcon={<ArrowBack sx={{ color: "#10b981" }} />}
+            startIcon={<ArrowBack sx={{ color: "#10b981",transition: 'transform 0.2s easeIn',"&:hover": {transform: 'scale(1.1)' }, }} />}
             onClick={() => router.back()}
             sx={{
               textTransform: "none",
               px: 0,
               py: 0,
-              "&:hover": { background: "transparent", color: "#059669" },
+              color: 'black',
+              transition: 'transform 0.2s easeIn',
+              "&:hover": { background: "transparent", color: "black", transform: 'scale(1.1)' },
             }}
           >
             Back
@@ -146,6 +148,7 @@ const CreatePostStepper: React.FC = () => {
                     sx={{
                       fontWeight: 500,
                       fontSize: "12px",
+                      lineHeight: '10px',
                       color:
                         steps.indexOf(label) === activeStep
                           ? "rgba(76,217,163,1)"
