@@ -39,7 +39,7 @@ const suggestedSkillSchema = new mongoose.Schema({
 
 const softSkillSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  level: { type: String },
+  importance: { type: String },
   percentage: {
     type: Number,
     min: 0,
