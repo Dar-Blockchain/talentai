@@ -1,84 +1,186 @@
-# Architecture du Backend — TalentAI
+# Architecture du Backend — TalentAI (détaillée)
 
-Ce document présente une vue d'ensemble de l'architecture backend du projet TalentAI, ses composants principaux, flux de données, points d'intégration et recommandations opérationnelles.
+Ce document décrit en détail l'architecture backend, les composants, les flux critiques, les variables d'environnement nécessaires, les endpoints clés, la configuration de Socket.IO et des recommandations opérationnelles.
 
-## Vue d'ensemble
+--------------------------------------------------------------------------------
 
-Le backend est une API RESTful construite sur Express.js et Node.js, complétée par des WebSockets (Socket.IO) pour les fonctionnalités temps réel. La base de données principale est MongoDB (connexion centralisée dans `config/database.js`). Des services complémentaires (agenda, cron jobs, microservices) gèrent la planification et l'intelligence métier.
+## 1. Vue d'ensemble
 
-## Composants principaux
+Le backend est une API Node.js/Express accompagnée de WebSockets via Socket.IO pour les fonctionnalités temps réel (notifications, interviews). MongoDB est la base de données principale, gérée via Mongoose. Des services et microservices complémentaires (ex: `chatbot-microservice`) fournissent la logique ML/IA.
 
-- **Entrée HTTP / Serveur**: géré par `Backend/app.js`. Le serveur initialise la DB, les tâches planifiées (Agenda), Socket.IO et charge les routes.
-- **Routes**: dossiers `Backend/routes` exposent les endpoints (auth, profiles, post, matching, payment, etc.).
-- **Contrôleurs**: `Backend/controllers` contient la logique métier par ressource (ex: `intelligentInterviewController`).
-- **Services**: `Backend/services` pour la logique réutilisable et intégrations externes (notification, hedra/hedera tools, agendaService, intelligentInterviewService).
-- **Modèles / DB**: `Backend/models` (Mongoose) définit les schémas et interactions avec MongoDB.
-- **Sockets**: `socket.js` + initialisation dans `Backend/app.js` exposent namespaces et handlers temps réel pour notifications et interviews.
-- **Cron / Jobs**: le dossier `cron/` contient les tâches périodiques (ex: `resetQuota`, `DailyExchangeRateUpdate`).
-- **Microservices**: `chatbot-microservice/` contient des composants ML/IA séparés exécutés indépendamment.
-- **Docs API**: Swagger exposé via `/api/docs` (fichier `swagger.json`).
+Architecture logicale:
 
-## Flux de données (typique)
+- Entrée HTTP: `Backend/app.js` initialise l'application, les middlewares, Swagger et les routes.
+- Services métier: `Backend/services` (notification, agenda, intelligentInterviewService, etc.).
+- Contrôleurs: `Backend/controllers` orchestrent les opérations et appellent les services/modèles.
+- Persistance: `Backend/models` (Mongoose schemas).
+- Temps réel: `socket.js` (initialisation) + handlers socket dans `app.js` et controllers.
+- Tâches planifiées: dossier `cron/` et `services/Agent&AgendaServices`.
 
-1. Le client appelle un endpoint Express (ex: POST `/auth/login`).
-2. Le routeur délègue au contrôleur correspondant, qui valide et utilise les services et modèles.
-3. Les opérations DB passent par Mongoose (models) connecté via `config/database.js`.
-4. Pour les actions temps réel, le contrôleur peut émettre des événements via Socket.IO aux rooms pertinentes.
-5. Les tâches récurrentes sont exécutées par des CRON ou par Agenda (initialisé après connexion DB).
+--------------------------------------------------------------------------------
 
-## Authentification & Sécurité
+## 2. Variables d'environnement importantes
 
-- Auth basée sur JWT (références dans `Backend/constants/jwtConstants.js` et routes `authenticationRouter`).
-- CORS global activé (dans `app.js`) — vérifier la configuration en prod pour limiter les origines.
-- Validation d'input à placer dans les routes/contrôleurs pour éviter les injections.
-- Stockage des secrets via variables d'environnement (fichier `.env`), et ne pas committer ces valeurs.
+- `MONGODB_URI` : URI de connexion MongoDB (obligatoire). (voir `config/database.js`)
+- `PORT` : port HTTP du serveur (ex: 3000)
+- `HOST` : host d'écoute (ex: 0.0.0.0)
+- `NODE_ENV` : environment (development|production)
+- `JWT_SECRET` : secret JWT pour authentification
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` : clés Stripe
+- `HEDERA_*` : clés d'API Hedera si utilisées
+- `REDIS_URL` : URL Redis (recommandé si on scale Socket.IO)
+- Autres clés spécifiques aux services (ex: API keys pour intégrations externes)
 
-## Déploiement et exécution
+Ajouter un fichier `.env.example` avec ces variables est recommandé.
 
-- Dockerfile présents (`Backend/Dockerfile`, racine) pour containerisation.
-- Déploiement Kubernetes / manifest disponible (`Backend/Backend-deployment.yaml`, `frontend-deployment.yaml`).
-- Process manager: `ecosystem.config.js` (PM2) utilisé en production possible.
+--------------------------------------------------------------------------------
 
-## Observabilité
+## 3. Configuration base de données
 
-- Logging: dossiers `logs/` et usage de `morgan` dans `app.js`.
-- Monitoring: ajouter métriques (Prometheus) et alerting pour la latence DB et erreurs 5xx.
+- Le connecteur est dans `Backend/config/database.js`.
+- Options importantes détectées:
+	- `maxPoolSize`, `minPoolSize`, `serverSelectionTimeoutMS`, `socketTimeoutMS`, `connectTimeoutMS`.
+	- Monitoring via `utils/dbMonitor` (logs périodiques et capture d'événements `error`, `disconnected`, `reconnected`).
 
-## Scalabilité
+Exemple de comportement à documenter pour l'exploitation:
+- Vérifier `MONGODB_URI` au démarrage (l'app exit si manquant).
+- En cas d'erreur de connexion, appliquer retry/backoff dans un futur refactor.
 
-- Stateless API: peut être scaled horizontalement derrière un load balancer si les sessions ne sont pas stockées en mémoire.
-- WebSockets: besoin d'un broker (Redis) pour scaler Socket.IO entre instances (adapter `socket.io-redis` si multi-instance).
-- Base de données: monitorer les connexions et mettre en place sharding/replicas selon charge.
+--------------------------------------------------------------------------------
 
-## Points d'intégration externes
+## 4. Socket.IO (temps réel)
 
-- Paiements: routes Stripe (`StripRouter` / `paymentRouter`).
-- Hedera / HCS11: intégrations dans `controllers` et `services` (hederaTools, hcs11).
-- Notifications: `services/notificationSystemService` utilisé par sockets et endpoints.
+- Initialisation centralisée: `socket.js`.
+- Paramètres observés:
+	- `cors.origin: '*'` (à restreindre en prod)
+	- `transports: ['websocket', 'polling']`
+	- `pingTimeout: 60000`, `pingInterval: 25000`
+	- `path: '/socket.io/'`
+	- `allowEIO3: true` (compatibilité avec Engine.IO v3)
 
-## Bonnes pratiques & recommandations
+- Recommandation pour scale:
+	- Utiliser Redis adapter (`socket.io-redis`) et fournir `REDIS_URL`.
+	- Désactiver `serveClient` en production (déjà false).
 
-- Isoler la logique métier dans `services/` et garder `controllers/` légers.
-- Ajouter des tests unitaires pour les services critiques (paiement, matching, évaluation).
-- Externaliser la gestion des files et tâches longues (par ex. RabbitMQ ou Bull + Redis).
-- Ajouter une suite d'intégration pour valider les contrats Swagger automatiquement.
+Handlers importants:
+- Namespace default: join rooms par `userId`, broadcast et création de notifications via `services/notificationSystemService`.
 
-## Fichiers clés (références)
+--------------------------------------------------------------------------------
+
+## 5. Endpoints et routes clés
+
+Les routeurs sont exposés dans `Backend/app.js`. Endpoints représentatifs:
+
+- `POST /auth/login`, `POST /auth/register` (authentification)
+- `GET /profiles/:id`, `PUT /profiles/:id` (profils)
+- `POST /post`, `GET /post/:id` (offres)
+- `POST /matching`, `GET /matching/config` (matching)
+- `POST /payment/stripe` (paiements via Stripe)
+- `GET /api/docs` (Swagger UI)
+
+Pour une liste complète, générer automatiquement à partir du dossier `Backend/routes` (commande script suggérée).
+
+--------------------------------------------------------------------------------
+
+## 6. Tâches planifiées (cron / agenda)
+
+- Fichiers: `cron/resetQuota`, `cron/DailyExchangeRateUpdate`.
+- Agenda initialisé via `services/Agent&AgendaServices/agendaService` après connexion DB.
+- Recommandations:
+	- Confirmer que cron jobs tournent sur une seule instance (leader election) ou utiliser un orchestrateur externe.
+
+--------------------------------------------------------------------------------
+
+## 7. Observabilité & runbook rapide
+
+- Logs: `morgan` pour requêtes, dossier `logs/` pour persistantes.
+- Erreurs fréquentes & procédures:
+	- MongoDB missing URI: l'app exit; vérifier `.env` et redémarrer.
+	- Socket.IO Engine connection error: vérifier l'URL client, headers et CORS.
+	- Stripe webhook failures: vérifier `STRIPE_WEBHOOK_SECRET` et logs d'événements.
+
+Runbook bref (exemples):
+- Problème: `MongoDB connection failed`
+	- Vérifier `MONGODB_URI` et accessibilité réseau.
+	- Vérifier quotas/replicasets côté MongoDB.
+	- Redémarrer service après correction.
+- Problème: WebSockets ne se connectent pas
+	- Tester endpoint `ws://HOST:PORT/socket.io/`.
+	- Vérifier `pingInterval/pingTimeout` côté client.
+
+--------------------------------------------------------------------------------
+
+## 8. Sécurité
+
+- Restreindre `CORS` en production.
+- Stocker secrets dans un vault (Hashicorp, Azure Key Vault) plutôt que `.env` pour production.
+- Limiter les permissions de la base de données (utilisateur avec droits minimum requis).
+
+--------------------------------------------------------------------------------
+
+## 9. Déploiement & CI/CD
+
+- Docker: `Backend/Dockerfile` présent. Image building + push vers registry.
+- Kubernetes: manifests (`Backend/Backend-deployment.yaml`) pour déploiement.
+- Process manager: `ecosystem.config.js` (PM2) disponible pour déploiement hors k8s.
+
+Pipeline recommandé (succinct):
+1. Lint + Tests unitaires
+2. Build Docker image
+3. Push vers registry
+4. Déployer via Helm/K8s manifests
+
+Commands utiles locales:
+```bash
+# Build backend
+docker build -t myregistry/talentai-backend:latest -f Backend/Dockerfile .
+
+# Run locally (avec .env)
+cd Backend
+npm install
+npm start
+```
+
+--------------------------------------------------------------------------------
+
+## 10. Diagramme mermaid (architecture simplifiée)
+
+```mermaid
+graph LR
+	Client -->|HTTP| API[Express API]
+	Client -->|WS| Socket[Socket.IO]
+	API -->|Mongoose| MongoDB[(MongoDB)]
+	API --> Services[Services (notifications, agenda, ml)]
+	Services --> Chatbot[chatbot-microservice]
+	Socket -->|publish| Services
+	API -->|Stripe| Stripe((Stripe))
+```
+
+--------------------------------------------------------------------------------
+
+## 11. Fichiers clés (références)
 
 - Serveur principal: [Backend/app.js](Backend/app.js)
-- Configuration DB: [config/database.js](config/database.js)
-- Sockets: [socket.js](socket.js)
+- Configuration DB: [Backend/config/database.js](Backend/config/database.js)
+- Sockets: [Backend/socket.js](Backend/socket.js)
 - Routes: dossier [Backend/routes](Backend/routes)
 - Controllers: dossier [Backend/controllers](Backend/controllers)
 - Services: dossier [Backend/services](Backend/services)
-- Cron jobs: dossier [cron](cron)
+- Cron jobs: dossier [Backend/cron](Backend/cron)
 - Microservice IA: dossier [chatbot-microservice](chatbot-microservice)
 
-## Prochaines étapes suggérées
+--------------------------------------------------------------------------------
 
-1. Générer un diagramme d'architecture (ex: draw.io, mermaid) basé sur cette doc.
-2. Ajouter une section « Runbook » pour erreurs fréquentes et procédures de récupération.
-3. Mettre en place un système de scaling Socket.IO (Redis) et tests de charge.
+## 12. Prochaines étapes suggérées (priorisées)
+
+1. Générer automatiquement la liste complète des endpoints à partir de `Backend/routes`.
+2. Produire un diagramme détaillé (draw.io ou Mermaid) couvrant namespaces Socket.IO et flows critiques.
+3. Ajouter un `README_RUNBOOK.md` dans `Backend/docs/` contenant procédures pas-à-pas pour incidents courants.
+4. Mettre en place Redis adapter pour Socket.IO et documenter `REDIS_URL` dans `.env.example`.
+
+---
+
+Document mis à jour — dites-moi quelle section vous voulez encore approfondir (diagramme détaillé, runbook pas-à-pas, ou extraction automatique des endpoints). 
 
 ---
 
