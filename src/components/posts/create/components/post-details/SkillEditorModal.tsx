@@ -53,7 +53,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   const dispatch = useDispatch();
 
   const [localSkill, setLocalSkill] = React.useState<any>(
-    skill || { name: "", importance: "", percentage: 0 }
+    skill || { name: "", importance: "", level: "", percentage: 0 }
   );
 
   React.useEffect(() => {

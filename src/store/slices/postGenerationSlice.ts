@@ -226,58 +226,22 @@ const postGenerationSlice = createSlice({
     },
 
     // ---------- Requirements (Array) ----------
-    editRequirement(
-      state,
-      action: PayloadAction<{ index: number; value: string }>
-    ) {
+    updateRequirements(state, action: PayloadAction<string>) {
       if (state.generatedPost) {
-        const reqs = state.generatedPost.jobDetails.requirements;
-        if (reqs[action.payload.index] !== undefined) {
-          reqs[action.payload.index] = action.payload.value;
-        }
-      }
-    },
-
-    addRequirement(state, action: PayloadAction<string>) {
-      if (state.generatedPost) {
-        state.generatedPost.jobDetails.requirements.push(action.payload);
-      }
-    },
-
-    deleteRequirement(state, action: PayloadAction<number>) {
-      if (state.generatedPost) {
-        state.generatedPost.jobDetails.requirements =
-          state.generatedPost.jobDetails.requirements.filter(
-            (_, i) => i !== action.payload
-          );
+        state.generatedPost.jobDetails.requirements = action.payload
+          .split("\n") // split by line
+          .map((r) => r.trim()) // trim spaces
+          .filter((r) => r); // remove empty lines
       }
     },
 
     // ---------- Responsibilities (Array) ----------
-    editResponsibility(
-      state,
-      action: PayloadAction<{ index: number; value: string }>
-    ) {
+    updateResponsibilities(state, action: PayloadAction<string>) {
       if (state.generatedPost) {
-        const resps = state.generatedPost.jobDetails.responsibilities;
-        if (resps[action.payload.index] !== undefined) {
-          resps[action.payload.index] = action.payload.value;
-        }
-      }
-    },
-
-    addResponsibility(state, action: PayloadAction<string>) {
-      if (state.generatedPost) {
-        state.generatedPost.jobDetails.responsibilities.push(action.payload);
-      }
-    },
-
-    deleteResponsibility(state, action: PayloadAction<number>) {
-      if (state.generatedPost) {
-        state.generatedPost.jobDetails.responsibilities =
-          state.generatedPost.jobDetails.responsibilities.filter(
-            (_, i) => i !== action.payload
-          );
+        state.generatedPost.jobDetails.responsibilities = action.payload
+          .split("\n") // split by line
+          .map((r) => r.trim()) // trim spaces
+          .filter((r) => r); // remove empty lines
       }
     },
 
@@ -391,12 +355,9 @@ export const {
   addSoftSkill,
 
   updateJobField,
-  editRequirement,
-  addRequirement,
-  deleteRequirement,
-  editResponsibility,
-  addResponsibility,
-  deleteResponsibility,
+  updateRequirements,
+  updateResponsibilities
+
 } = postGenerationSlice.actions;
 
 // ------------------------------------------------------

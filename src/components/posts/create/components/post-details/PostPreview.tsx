@@ -17,6 +17,8 @@ import {
   deleteHardSkill,
   deleteSoftSkill,
   updateJobField,
+  updateRequirements,
+  updateResponsibilities,
 } from "@/store/slices/postGenerationSlice";
 import { experienceLevels } from "@/components/preferences/data/candidateData";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -483,6 +485,7 @@ const PostPreview = () => {
               </Typography>
               <TextField
                 value={requirements.join("\n")}
+                onChange={(e) => dispatch(updateRequirements(e.target.value))}
                 placeholder="Job Requirements"
                 multiline
                 minRows={4}
@@ -504,6 +507,7 @@ const PostPreview = () => {
               </Typography>
               <TextField
                 value={responsibilities.join("\n")}
+                onChange={(e) => dispatch(updateResponsibilities(e.target.value))}
                 placeholder="Job Responsibilities"
                 multiline
                 minRows={4}
