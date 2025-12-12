@@ -7,35 +7,7 @@ const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
-
-// Validation des données du post
-const validatePostData = (postData) => {
-  const { jobDetails, skillAnalysis, linkedinPost } = postData;
-
-  // Validation des jobDetails
-  if (!jobDetails?.title || !jobDetails?.description) {
-    throw new Error("Job title and description are required");
-  }
-
-  // Validation du salaire
-  if (jobDetails.salary) {
-    if (jobDetails.salary.min > jobDetails.salary.max) {
-      throw new Error("Minimum salary cannot be greater than maximum salary");
-    }
-  }
-
-  // Validation des compétences requises
-  if (!skillAnalysis?.requiredSkills?.length) {
-    throw new Error("At least one required skill must be specified");
-  }
-
-  // Validation du post LinkedIn
-  if (!linkedinPost?.formattedContent?.headline || !linkedinPost?.finalPost) {
-    throw new Error("LinkedIn post content is required");
-  }
-
-  return true;
-};
+const { validatePostData } = require("../../helpers/postValidationHelpers");
 
 // Créer un nouveau post
 module.exports.createPost = async (postData, token) => {
@@ -44,34 +16,38 @@ module.exports.createPost = async (postData, token) => {
     validatePostData(postData);
 
     const post = new Post(postData);
-    const user = await User.findById(postData.user);
-    user.post.push(post._id);
-    await user.save();
-    await post.save();
-    console.log(post);
+    const user = await User.findById(postData.user).select('_id email username post');
     
-    // Create and send technical test automatically
-    try {
-      if (token && post.skillAnalysis?.requiredSkills?.length > 0) {
-        const testResult = await module.exports.createAndSendTechnicalTest(
-          post._id, 
-          token, 
-          user.email, 
-          user.username
-        );
-        console.log('Technical test created and sent:', testResult.message);
-      }
-    } catch (testError) {
-      console.error('Error creating technical test:', testError.message);
-      // Don't fail the post creation if test creation fails
+    if (!user) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
     }
-    
-    //await schedulePostMatchingAgenda(post._id.toString(), {
-    //  requiredSkills: post.skillAnalysis.requiredSkills
-    //});
+
+    // Save post and update user references in parallel
+    await Promise.all([
+      post.save(),
+      User.updateOne({ _id: postData.user }, { $push: { post: post._id } })
+    ]);
+
+    console.log('✅ Post created:', post._id);
+
+    // Create and send technical test asynchronously (don't block response)
+    if (token && post.skillAnalysis?.requiredSkills?.length > 0) {
+      module.exports.createAndSendTechnicalTest(
+        post._id,
+        token,
+        user.email,
+        user.username
+      ).catch(testErr => {
+        console.error('⚠️ Error creating technical test:', testErr.message);
+      });
+    }
+
     return post;
   } catch (error) {
-    throw new Error(`Error creating post: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
@@ -80,41 +56,23 @@ module.exports.getAllPosts = async (filters = {}) => {
   try {
     let query = {};
 
-    // Filtres pour le statut
-    if (filters.status) {
-      query.status = filters.status;
-    }
+    if (filters.status) query.status = filters.status;
+    if (filters.employmentType) query["jobDetails.employmentType"] = filters.employmentType;
+    if (filters.experienceLevel) query["jobDetails.experienceLevel"] = filters.experienceLevel;
+    if (filters.skills) query["skillAnalysis.requiredSkills.name"] = { $in: filters.skills };
 
-    // Filtres pour le type d'emploi
-    if (filters.employmentType) {
-      query["jobDetails.employmentType"] = filters.employmentType;
-    }
-
-    // Filtres pour le niveau d'expérience
-    if (filters.experienceLevel) {
-      query["jobDetails.experienceLevel"] = filters.experienceLevel;
-    }
-
-    // Filtres pour les compétences
-    if (filters.skills) {
-      query["skillAnalysis.requiredSkills.name"] = { $in: filters.skills };
-    }
-
-    // Filtres pour la fourchette de salaire
     if (filters.salary) {
-      if (filters.salary.min) {
-        query["jobDetails.salary.min"] = { $gte: filters.salary.min };
-      }
-      if (filters.salary.max) {
-        query["jobDetails.salary.max"] = { $lte: filters.salary.max };
-      }
+      if (filters.salary.min) query["jobDetails.salary.min"] = { $gte: filters.salary.min };
+      if (filters.salary.max) query["jobDetails.salary.max"] = { $lte: filters.salary.max };
     }
 
     return await Post.find(query)
       .populate("user", "username email companyDetails")
+      .lean()
       .sort({ createdAt: -1 });
   } catch (error) {
-    throw new Error(`Error fetching posts: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
@@ -216,19 +174,16 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     console.log('📊 Final MongoDB query:', JSON.stringify(query, null, 2));
     console.log('📄 Pagination: page', page, 'limit', limit, 'skip', skip);
 
-    // Execute query with pagination
-    const posts = await Post.find(query)
-      .populate({
-        path: "user",
-        select: "companyDetails email username",
-      })
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    // Get total count for pagination
-    const total = await Post.countDocuments(query);
+    // Execute query + count in parallel
+    const [posts, total] = await Promise.all([
+      Post.find(query)
+        .populate('user', 'companyDetails email username')
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Post.countDocuments(query)
+    ]);
 
     console.log('✅ Query results: Found', posts.length, 'posts on this page');
     console.log('📊 Total matching posts in database:', total);
@@ -240,31 +195,41 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     return {
       posts,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage,
-        hasPrevPage,
-      },
+      pagination: { total, page, limit, totalPages, hasNextPage, hasPrevPage }
     };
   } catch (error) {
-    console.error("Error in getAllPostsWithSearch:", error);
-    throw new Error(`Failed to fetch posts: ${error.message}`);
+    console.error("Error in getAllPostsWithSearch:", error?.message);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 // Récupérer un post par son ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).populate("user", "username email").populate("post_Steps").populate('agentConfig').populate('agentId');
-    if (!post) {
-      throw new Error("Post not found");
+    if (!postId) {
+      const err = new Error('Post ID is required');
+      err.status = 400;
+      throw err;
     }
+
+    const post = await Post.findById(postId)
+      .populate('user', 'username email')
+      .populate('post_Steps')
+      .populate('agentConfig')
+      .populate('agentId')
+      .lean();
+
+    if (!post) {
+      const err = new Error('Post not found');
+      err.status = 404;
+      throw err;
+    }
+
     return post;
   } catch (error) {
-    throw new Error(`Error fetching post: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
@@ -297,187 +262,218 @@ module.exports.getRequiredSkillsByPostId = async (postId) => {
 // Récupérer les posts d'un utilisateur
 module.exports.getPostsByUserId = async (userId) => {
   try {
+    if (!userId) {
+      const err = new Error('User ID is required');
+      err.status = 400;
+      throw err;
+    }
+
     return await Post.find({ user: userId })
-      .populate("user", "username email")
-      .populate("post_Steps") // Populate the post_Steps reference
+      .populate('user', 'username email')
+      .populate('post_Steps')
       .populate('agentConfig')
       .populate('agentId')
+      .lean()
       .sort({ createdAt: -1 });
   } catch (error) {
-    throw new Error(`Error fetching user posts: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 // Mettre à jour un post
 module.exports.updatePost = async (postId, userId, updateData) => {
   try {
-    // Valider les données si une mise à jour complète est fournie
-    if (
-      updateData.jobDetails ||
-      updateData.skillAnalysis ||
-      updateData.linkedinPost
-    ) {
+    if (!postId || !userId) {
+      const err = new Error('Post ID and User ID are required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Validate if full fields are being updated
+    if (updateData.jobDetails || updateData.skillAnalysis || updateData.linkedinPost) {
       validatePostData(updateData);
     }
 
     const post = await Post.findOne({ _id: postId, user: userId });
     if (!post) {
-      throw new Error("Post not found or unauthorized");
+      const err = new Error('Post not found or unauthorized');
+      err.status = 404;
+      throw err;
     }
 
     Object.assign(post, updateData);
     return await post.save();
   } catch (error) {
-    throw new Error(`Error updating post: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
-// Supprimer un post
+// Supprimer un post - parallelize cleanup
 module.exports.deletePost = async (postId, userId) => {
   try {
-    const post = await Post.findOneAndDelete({ _id: postId, user: userId });
-    if (!post) {
-      throw new Error("Post not found or unauthorized");
+    if (!postId || !userId) {
+      const err = new Error('Post ID and User ID are required');
+      err.status = 400;
+      throw err;
     }
 
-    // Supprimer les évaluations de job associées au poste
-    await JobAssessmentResult.deleteMany({ jobId: postId });
+    const post = await Post.findOneAndDelete({ _id: postId, user: userId });
+    if (!post) {
+      const err = new Error('Post not found or unauthorized');
+      err.status = 404;
+      throw err;
+    }
 
-    // Mettre à jour l'utilisateur en supprimant la référence au post
-    await User.updateOne(
-      { _id: userId }, // Chercher l'utilisateur par son ID
-      { $pull: { post: postId } } // Retirer la référence du post de la liste 'post'
-    );
+    // Parallelize cleanup: delete assessments + remove from user posts
+    await Promise.all([
+      JobAssessmentResult.deleteMany({ jobId: postId }),
+      User.updateOne({ _id: userId }, { $pull: { post: postId } })
+    ]);
 
     return post;
   } catch (error) {
-    throw new Error(`Error deleting post: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 // Changer le statut d'un post
 module.exports.updatePostStatus = async (postId, userId, status) => {
   try {
+    if (!postId || !userId || !status) {
+      const err = new Error('Post ID, User ID, and status are required');
+      err.status = 400;
+      throw err;
+    }
+
     const post = await Post.findOne({ _id: postId, user: userId });
     if (!post) {
-      throw new Error("Post not found or unauthorized");
+      const err = new Error('Post not found or unauthorized');
+      err.status = 404;
+      throw err;
     }
 
     post.status = status;
     return await post.save();
   } catch (error) {
-    throw new Error(`Error updating post status: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
 // Recommend posts for a user based on ALL their skills (not only the first)
 module.exports.getPostsByUserTopSkill = async (userId) => {
-  const user = await User.findById(userId).populate({
-    path: "profile",
-    // include expectedSalary so we can filter posts by user's salary expectations
-    select: "skills expectedSalary",
-  });
-
-  if (!user) {
-    throw new Error("User not found.");
-  }
-
-  if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
-    return {
-      success: false,
-      message: "Aucun skill trouvé. Ajoutez au moins une compétence à votre profil pour obtenir des recommandations.",
-    };
-  }
-
-  // Extraire les noms des compétences
-  const skillNames = user.profile.skills
-    .map((s) => (typeof s === "string" ? s : s?.name))
-    .filter(Boolean);
-
-  if (skillNames.length === 0) {
-    return {
-      success: false,
-      message: "Aucun skill valide trouvé dans le profil. Ajoutez au moins une compétence pour recevoir des recommandations.",
-    };
-  }
-
-  // IDs de postes déjà testés
-  const testedPosts = await JobAssessmentResult.find({
-    condidateId: user.profile._id,
-  }).distinct("jobId");
-
-  // Tous les postes correspondants aux skills, en excluant ceux déjà testés
-  let candidatePosts = await Post.find({
-    "skillAnalysis.requiredSkills.name": { $in: skillNames },
-    _id: { $nin: testedPosts },
-  })
-    .sort({ createdAt: -1 })
-    .lean();
-
-  // Si l'utilisateur a des attentes salariales, filtrer les postes pour ne garder
-  // que ceux dont la plage salariale chevauche les attentes de l'utilisateur.
   try {
-    const userExpected = user?.profile?.expectedSalary;
-    if (userExpected && (userExpected.min || userExpected.max)) {
-      const userMin = typeof userExpected.min === "number" ? userExpected.min : 0;
-      const userMax = typeof userExpected.max === "number" ? userExpected.max : Number.MAX_SAFE_INTEGER;
-
-      candidatePosts = candidatePosts.filter((post) => {
-        const postMin = post?.jobDetails?.salary?.min ?? 0;
-        const postMax = post?.jobDetails?.salary?.max ?? Number.MAX_SAFE_INTEGER;
-        // Overlap between [postMin, postMax] and [userMin, userMax]
-        return postMin <= userMax && postMax >= userMin;
-      });
+    if (!userId) {
+      const err = new Error('User ID is required');
+      err.status = 400;
+      throw err;
     }
-  } catch (err) {
-    console.warn("Erreur lors du filtrage par expectedSalary:", err.message);
-  }
 
-  if (!candidatePosts || candidatePosts.length === 0) {
-    return {
-      success: false,
-      message:
-        "Pas de recommandations pour le moment. Nous n'avons trouvé aucun poste correspondant à vos compétences ou tous ont déjà été testés.",
-    };
-  }
+    const user = await User.findById(userId).populate({
+      path: 'profile',
+      select: 'skills expectedSalary'
+    });
 
-  // Calcul du score de correspondance pour chaque poste
-  const scored = candidatePosts.map((post) => {
-    const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
-    const matchCount = required.reduce(
-      (acc, name) => acc + (skillNames.includes(name) ? 1 : 0),
-      0
-    );
-    return { post, matchCount };
-  });
+    if (!user) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
+    }
 
-  // Tri par correspondances décroissantes puis par date
-  scored.sort(
-    (a, b) =>
+    if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+      return {
+        success: false,
+        message: 'Aucun skill trouvé. Ajoutez au moins une compétence à votre profil pour obtenir des recommandations.'
+      };
+    }
+
+    // Extract skill names
+    const skillNames = user.profile.skills
+      .map((s) => (typeof s === 'string' ? s : s?.name))
+      .filter(Boolean);
+
+    if (skillNames.length === 0) {
+      return {
+        success: false,
+        message: 'Aucun skill valide trouvé dans le profil. Ajoutez au moins une compétence pour recevoir des recommandations.'
+      };
+    }
+
+    // Get tested posts in parallel with candidate posts
+    const [testedPostIds, candidatePosts] = await Promise.all([
+      JobAssessmentResult.find({ condidateId: user.profile._id }).distinct('jobId'),
+      Post.find({
+        'skillAnalysis.requiredSkills.name': { $in: skillNames },
+        _id: { $nin: [] } // Will be overridden with testedPostIds
+      }).lean().sort({ createdAt: -1 })
+    ]);
+
+    // Filter out tested posts
+    let filteredPosts = candidatePosts.filter(post => !testedPostIds.includes(post._id.toString()));
+
+    // Apply salary filter if user has expectations
+    try {
+      const userExpected = user?.profile?.expectedSalary;
+      if (userExpected && (userExpected.min || userExpected.max)) {
+        const userMin = typeof userExpected.min === 'number' ? userExpected.min : 0;
+        const userMax = typeof userExpected.max === 'number' ? userExpected.max : Number.MAX_SAFE_INTEGER;
+
+        filteredPosts = filteredPosts.filter((post) => {
+          const postMin = post?.jobDetails?.salary?.min ?? 0;
+          const postMax = post?.jobDetails?.salary?.max ?? Number.MAX_SAFE_INTEGER;
+          return postMin <= userMax && postMax >= userMin;
+        });
+      }
+    } catch (err) {
+      console.warn('Salary filtering error:', err.message);
+    }
+
+    if (!filteredPosts || filteredPosts.length === 0) {
+      return {
+        success: false,
+        message: 'Pas de recommandations pour le moment. Nous n\'avons trouvé aucun poste correspondant à vos compétences ou tous ont déjà été testés.'
+      };
+    }
+
+    // Calculate match scores
+    const scored = filteredPosts.map((post) => {
+      const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
+      const matchCount = required.reduce(
+        (acc, name) => acc + (skillNames.includes(name) ? 1 : 0),
+        0
+      );
+      return { post, matchCount };
+    });
+
+    // Sort by match count descending, then by date
+    scored.sort((a, b) =>
       b.matchCount - a.matchCount ||
       new Date(b.post.createdAt) - new Date(a.post.createdAt)
-  );
+    );
 
-  // Tous les postes triés par pertinence
-  const allPosts = scored.map((s) => s.post);
+    const allPosts = scored.map((s) => s.post);
 
-  // Fonction pour sélectionner aléatoirement 3 posts
-  const getRandomPosts = (posts, count = 3) => {
-    if (posts.length <= count) {
-      return posts;
-    }
-    
-    const shuffled = [...posts].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-  };
+    // Select random 3 posts
+    const getRandomPosts = (posts, count = 3) => {
+      if (posts.length <= count) return posts;
+      const shuffled = [...posts].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, count);
+    };
 
-  const randomPosts = getRandomPosts(allPosts, 3);
+    const randomPosts = getRandomPosts(allPosts, 3);
 
-  return {
-    success: true,
-    posts: randomPosts,
-    message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`,
-  };
+    return {
+      success: true,
+      posts: randomPosts,
+      message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
 };
 
 
