@@ -76,123 +76,105 @@ module.exports.getAllPosts = async (filters = {}) => {
   }
 };
 
-// Récupérer tous les posts avec recherche, filtres et pagination
+// Récupérer tous les posts avec recherche, filtres et pagination (OPTIMISÉ)
 module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6) => {
   try {
+    // Valider et normaliser les paramètres de pagination
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 6));
+    const skip = (pageNum - 1) * limitNum;
+
     const {
       search,
       location,
       type,
       employmentType,
-      status, // Removed default "active" to show all posts
+      status,
       category,
       sortBy = "createdAt",
       sortOrder = "desc",
     } = filters;
 
-    // Build query
+    // Build optimized query
     const query = {};
 
-    console.log('🔍 getAllPostsWithSearch called with filters:', filters);
-
-    // Filter by status
-    if (status) {
+    // 1. Filter by status (simple exact match - most efficient)
+    if (status && status !== "All" && status !== "") {
       query.status = status;
-      console.log('  - Filtering by status:', status);
     }
 
-    // Search filter - search only by jobDetails.title
-    // Split search terms to match partial words (e.g., "full stack" matches "Full-Stack Developer")
-    if (search) {
-      const searchTerms = search.trim().split(/\s+/);
-      const searchConditions = [];
+    // 2. Search filter - only jobDetails.title with optimized regex
+    if (search && search.trim()) {
+      const searchTerms = search.trim().split(/\s+/).filter(Boolean);
       
-      // Search only in jobDetails.title - ALL terms must match
-      searchTerms.forEach(term => {
-        searchConditions.push(
-          { "jobDetails.title": { $regex: term, $options: "i" } }
-        );
-      });
+      // Build regex pattern for combined search (more efficient than $and with multiple regex)
+      const regexPatterns = searchTerms.map(term => 
+        `(?=.*${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`
+      ).join('');
       
-      // Use $and to match ALL search conditions (all terms must be present)
-      query.$and = searchConditions;
-      
-      console.log('  - Search terms:', searchTerms);
-      console.log('  - Number of search conditions:', searchConditions.length);
+      query["jobDetails.title"] = { 
+        $regex: regexPatterns, 
+        $options: "i" 
+      };
     }
 
-    // Location filter
-    if (location && location !== "All Locations") {
-      query["jobDetails.location"] = { $regex: location, $options: "i" };
+    // 3. Location filter (exact match if possible, else regex)
+    if (location && location !== "All Locations" && location !== "") {
+      query["jobDetails.location"] = location;
     }
 
-    // Job type filter (Remote, On-Site, Hybrid)
-    if (type && type !== "All Types") {
-      const typeConditions = [
-        { "jobDetails.workType": { $regex: type, $options: "i" } },
-        { "jobDetails.type": { $regex: type, $options: "i" } },
-      ];
-      
-      // If there's already an $or from search, combine using $and
-      if (query.$or) {
-        query.$and = [
-          { $or: query.$or },
-          { $or: typeConditions }
-        ];
-        delete query.$or;
-      } else {
-        query.$or = typeConditions;
-      }
+    // 4. Job type filter - single field only
+    if (type && type !== "All Types" && type !== "") {
+      query["jobDetails.type"] = type;
     }
 
-    // Employment type filter (Full-Time, Part-Time, Contract)
-    if (employmentType && employmentType !== "All Employment Types") {
-      query["jobDetails.employmentType"] = { $regex: employmentType, $options: "i" };
+    // 5. Employment type filter (exact match)
+    if (employmentType && employmentType !== "All Employment Types" && employmentType !== "") {
+      query["jobDetails.employmentType"] = employmentType;
     }
 
-    // Category filter
-    if (category && category !== "All Categories") {
-      query.category = { $regex: category, $options: "i" };
+    // 6. Category filter (exact match)
+    if (category && category !== "All Categories" && category !== "") {
+      query.category = category;
     }
 
-    // Build sort object
+    // Build optimized sort object
     const sort = {};
-    if (sortBy === "salary") {
-      sort["jobDetails.salary.min"] = sortOrder === "asc" ? 1 : -1;
-    } else if (sortBy === "title") {
-      sort["jobDetails.title"] = sortOrder === "asc" ? 1 : -1;
-    } else {
-      sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+    const sortDirection = sortOrder === "asc" ? 1 : -1;
+    
+    switch (sortBy) {
+      case "salary":
+        sort["jobDetails.salary.min"] = sortDirection;
+        break;
+      case "title":
+        sort["jobDetails.title"] = sortDirection;
+        break;
+      case "createdAt":
+      default:
+        sort.createdAt = sortDirection;
+        break;
     }
 
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-
-    console.log('📊 Final MongoDB query:', JSON.stringify(query, null, 2));
-    console.log('📄 Pagination: page', page, 'limit', limit, 'skip', skip);
-
-    // Execute query + count in parallel
+    // Execute query + count in parallel with optimized projections
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate('user', 'companyDetails email username')
         .sort(sort)
         .skip(skip)
-        .limit(limit)
-        .lean(),
+        .limit(limitNum)
+        .lean()
+        .maxTimeMS(30000), // Add timeout to prevent hanging queries
       Post.countDocuments(query)
     ]);
 
-    console.log('✅ Query results: Found', posts.length, 'posts on this page');
-    console.log('📊 Total matching posts in database:', total);
-
     // Calculate pagination metadata
-    const totalPages = Math.ceil(total / limit);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
 
     return {
       posts,
-      pagination: { total, page, limit, totalPages, hasNextPage, hasPrevPage }
+      pagination: { total, page: pageNum, limit: limitNum, totalPages, hasNextPage, hasPrevPage }
     };
   } catch (error) {
     console.error("Error in getAllPostsWithSearch:", error?.message);
