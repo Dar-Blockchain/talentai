@@ -3,52 +3,7 @@ const Agent = require('../../models/AgentModel');
 const Post = require('../../models/PostModel');
 const User = require('../../models/UserModel');
 const postPaymentService = require('../postPaymentService');
-
-// Helper: Validate input data for create/update
-const validateCreateData = (data) => {
-  if (!data || typeof data !== 'object') {
-    const err = new Error('Invalid data: expected object');
-    err.status = 400;
-    throw err;
-  }
-  if (!data.agentId) {
-    const err = new Error('Missing agentId');
-    err.status = 400;
-    throw err;
-  }
-  if (!data.postId) {
-    const err = new Error('Missing postId');
-    err.status = 400;
-    throw err;
-  }
-};
-
-// Helper: Check agent/post existence in parallel
-const verifyAgentAndPostExist = async (agentId, postId) => {
-  const [agent, post] = await Promise.all([
-    Agent.findById(agentId).lean().select('_id'),
-    Post.findById(postId).lean().select('_id')
-  ]);
-  if (!agent) {
-    const err = new Error('Agent not found');
-    err.status = 404;
-    throw err;
-  }
-  if (!post) {
-    const err = new Error('Post not found');
-    err.status = 404;
-    throw err;
-  }
-  return { agent, post };
-};
-
-// Helper: Get config with populated references, using field projection + .lean()
-const getConfigWithPopulates = async (query) => {
-  return AgentConfig.findOne(query)
-    .populate('agent', 'name status') // Only essential fields
-    .populate('post', 'title description')
-    .lean(); // Read-only query optimization
-};
+const { validateCreateData, verifyAgentAndPostExist, getConfigWithPopulates } = require('../../helpers/agentConfigHelpers');
 
 module.exports.createAgentConfig = async (data) => {
   try {
@@ -94,7 +49,7 @@ module.exports.createAgentConfig = async (data) => {
 
 module.exports.getAgentConfigById = async (id) => {
   try {
-    const cfg = await getConfigWithPopulates({ _id: id });
+    const cfg = await getConfigWithPopulates(AgentConfig)({ _id: id });
     if (!cfg) {
       const err = new Error('AgentConfig not found');
       err.status = 404;
@@ -109,7 +64,7 @@ module.exports.getAgentConfigById = async (id) => {
 
 module.exports.getAgentConfigByAgentId = async (agentId) => {
   try {
-    const cfg = await getConfigWithPopulates({ agentId });
+    const cfg = await getConfigWithPopulates(AgentConfig)({ agentId });
     if (!cfg) {
       const err = new Error('AgentConfig not found for this agent');
       err.status = 404;
@@ -124,7 +79,7 @@ module.exports.getAgentConfigByAgentId = async (agentId) => {
 
 module.exports.getAgentConfigByPostId = async (postId) => {
   try {
-    const cfg = await getConfigWithPopulates({ postId });
+    const cfg = await getConfigWithPopulates(AgentConfig)({ postId });
     if (!cfg) {
       const err = new Error('AgentConfig not found for this post');
       err.status = 404;
