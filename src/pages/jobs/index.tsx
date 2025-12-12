@@ -9,6 +9,9 @@ import {
   Grid,
 } from "@mui/material";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchJobDetails } from "@/store/slices/jobDetailsSlice";
 import Header from "@/components/Header";
 import Footer from "@/components/home-page/Footer";
 import JobSearchBar from "@/components/jobs/JobSearchBar";
@@ -18,6 +21,13 @@ import { Job, transformJobData } from "@/utils/jobHelpers";
 
 const JobSearchPage: React.FC = () => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Redux state for job details
+  const { jobDetails, loading: jobDetailsLoading, error: jobDetailsError } = useSelector(
+    (state: RootState) => state.jobDetails
+  );
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +47,6 @@ const JobSearchPage: React.FC = () => {
 
   // Job details state
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [jobDetails, setJobDetails] = useState<any>(null);
-  const [jobDetailsLoading, setJobDetailsLoading] = useState(false);
-  const [jobDetailsError, setJobDetailsError] = useState<string | null>(null);
 
   // Fetch jobs from backend API
   const fetchJobs = useCallback(async () => {
@@ -132,45 +139,13 @@ const JobSearchPage: React.FC = () => {
     }
   };
 
-  // Fetch job details
-  const fetchJobDetails = async (jobId: string) => {
-    setJobDetailsLoading(true);
-    setJobDetailsError(null);
-
-    try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-      const apiUrl = `${baseUrl}post/details/${jobId}`;
-
-      console.log("🔍 Fetching job details from:", apiUrl);
-
-      const response = await fetch(apiUrl);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch job details");
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        setJobDetails(data.data);
-      } else {
-        setJobDetailsError(data.error || "Failed to fetch job details");
-      }
-    } catch (err) {
-      setJobDetailsError("Error loading job details. Please try again later.");
-      console.error("Error fetching job details:", err);
-    } finally {
-      setJobDetailsLoading(false);
-    }
-  };
-
   const handleJobClick = (jobId: string) => {
     // Find the selected job
     const job = jobs.find((j) => j.id === jobId);
     if (job) {
       setSelectedJob(job);
-      fetchJobDetails(jobId);
+      // Dispatch Redux action to fetch job details
+      dispatch(fetchJobDetails(jobId));
     }
   };
 
