@@ -2,18 +2,28 @@
 
 const JobPost = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
-const {
-  calculateMatchScore,
-  normalizeSkillName,
-} = require("../../services/MatchingService/NewmatchingService");
+const { calculateMatchScore } = require("../../services/MatchingService/matchingService");
+const { getMatchingConfig } = require("../../services/MatchingService/matchingConfigService");
+const UnlockCandidate = require("../../models/UnlockCandidateModel");
+const { prepareSkills } = require("../../helpers/matchingHelpers");
 
 exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
     const idCompany = req.user._id;
-    console.log("Fetching job post with ID:", jobPostId);
 
-    const candidates = await Profile.find({ type: "Candidate" })
+    console.log("Fetching job post with ID:", jobPostId);
+    
+    // 0️⃣ Charger la config UNE SEULE FOIS
+    const matchingConfig = await getMatchingConfig(idCompany, jobPostId);
+
+    /* -----------------------------------------
+       1️⃣ Charger uniquement les champs utiles
+    ----------------------------------------- */
+    const candidates = await Profile.find(
+      { type: "Candidate" },
+      "skills firstName lastName softSkills targetRole companyBid userId workModePreference preferredContractType expectedSalary"
+    )
       .populate("userId", "username email")
       .populate("companyBid.company", "username email")
       .lean();
@@ -22,64 +32,91 @@ exports.matchCandidatesToJob = async (req, res) => {
 
     const jobPost = await JobPost.findById(jobPostId)
       .select(
-        "skillAnalysis.requiredSkills skillAnalysis.suggestedSkills skillAnalysis.softSkills jobDetails"
+        "skillAnalysis.requiredSkills " +
+          "skillAnalysis.suggestedSkills " +
+          "skillAnalysis.softSkills jobDetails"
       )
       .lean();
 
     if (!jobPost) return res.status(404).json({ error: "Job post not found" });
 
-    const requiredSkills = (jobPost.skillAnalysis?.requiredSkills || [])
-      .filter((s) => s && s.name)
-      .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+    /* -----------------------------------------
+       2️⃣ Préparer les skills du job une seule fois
+    ----------------------------------------- */
+    const requiredSkills = prepareSkills(jobPost.skillAnalysis?.requiredSkills || []);
+    const requiredNames = new Set(requiredSkills.map((s) => s.name));
 
-    console.log(
-      "Required skills for job:",
-      requiredSkills.map((s) => s.name)
-    );
+    const jobData = {
+      ...jobPost.jobDetails,
+      skillAnalysis: jobPost.skillAnalysis,
+    };
 
-    const matches = [];
-    for (const candidate of candidates) {
-      if (!candidate.userId) continue;
+    /* -----------------------------------------
+       2️⃣b Charger tous les unlocked en une seule requête
+    ----------------------------------------- */
+    // Extraire tous les ids de candidats présents
+    const candidateIds = candidates
+      .filter(c => c.userId?._id)
+      .map(c => c.userId._id);
 
-      const candidateSkills = (candidate.skills || [])
-        .filter((s) => s && s.name)
-        .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+    // Requête Mongo pour récupérer tous les unlocks
+    const unlockedRecords = await UnlockCandidate.find(
+      { idCompany, idCandidate: { $in: candidateIds } },
+      { idCandidate: 1, _id: 0 }
+    ).lean();
 
-      const score = await calculateMatchScore(
-        requiredSkills,
-        candidateSkills,
-        { ...jobPost.jobDetails, skillAnalysis: jobPost.skillAnalysis }, // <-- ici
-        candidate,
-        idCompany,
-        jobPostId
-      );
-      if (!score || score === 0) continue; // éliminer ceux sans hard skill matching
+    // Créer un Set pour lookup rapide
+    const unlockedSet = new Set(unlockedRecords.map(u => String(u.idCandidate)));
 
-      matches.push({
+    /* -----------------------------------------
+       3️⃣ Traitement en parallèle
+    ----------------------------------------- */
+    const matchPromises = candidates.map(async (candidate) => {
+      if (!candidate.userId) return null;
+
+        const candidateSkills = prepareSkills(candidate.skills);
+
+        const candidateIdStr = String(candidate.userId._id);
+
+        // calcul du score avec protection individuelle : si une erreur survient
+        // pour un candidat, on loggue et on continue (ne casse pas tout)
+        let score;
+        try {
+          score = await calculateMatchScore(
+            requiredSkills,
+            candidateSkills,
+            jobData,
+            candidate,
+            idCompany,
+            matchingConfig,
+            unlockedSet
+          );
+        } catch (err) {
+          console.error(`Error matching candidate ${candidateIdStr}:`, err);
+          return null;
+        }
+
+      if (!score || score === 0) return null;
+
+      return {
         candidateId: candidate.userId._id,
-        name: candidate.userId?.username,
+        name: candidate.userId.username,
         firstName: candidate.firstName,
         lastName: candidate.lastName,
         targetRole: candidate.targetRole,
-        email: candidate.userId?.email,
+        email: candidate.userId.email,
         score: score.score,
         unlocked: score.unlocked,
         unlockPrice: 5,
         finalBid: candidate.companyBid?.finalBid || null,
         biddingCompany: candidate.companyBid?.company?.username || null,
-        matchedSkills: candidateSkills.filter((cs) =>
-          requiredSkills.some((js) => js.name === cs.name)
-        ),
+        matchedSkills: candidateSkills.filter((cs) => requiredNames.has(cs.name)),
         requiredSkills,
-      });
-    }
+      };
+    });
 
+    const matches = (await Promise.all(matchPromises)).filter(Boolean);
     matches.sort((a, b) => b.score - a.score);
-
-    console.log(`Total matches found: ${matches.length}`);
-    matches.forEach((m) =>
-      console.log(`Candidate ${m.name} -> Score: ${m.score}`)
-    );
 
     res.json({
       success: true,
@@ -92,7 +129,6 @@ exports.matchCandidatesToJob = async (req, res) => {
     res.status(500).json({
       error: "Matching failed",
       details: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };

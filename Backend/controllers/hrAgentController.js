@@ -26,6 +26,8 @@ const Profile = require("../models/ProfileModel");
 // services/MatchingService/computeMatches.js
 
 const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matchingService");
+const { getMatchingConfig } = require("../services/MatchingService/matchingConfigService");
+const UnlockCandidate = require("../models/UnlockCandidateModel"); 
 
 async function computeMatches(jobPostId, companyId) {
   // Charger les candidats
@@ -51,7 +53,8 @@ async function computeMatches(jobPostId, companyId) {
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
   const requiredSoftSkills = jobPost.skillAnalysis.softSkills || [];
-
+    // 0️⃣ Charger la config UNE SEULE FOIS
+    const matchingConfig = await getMatchingConfig(companyId, jobPostId);
   /** ------------------------
    * Matching
    * ------------------------- */
@@ -68,13 +71,23 @@ async function computeMatches(jobPostId, companyId) {
      * APPEL DE LA NOUVELLE LOGIQUE
      * calculateMatchScore()
      * ------------------------- */
+    /* -----------------------------------------
+       2️⃣b Charger tous les unlocked en une seule requête
+    ----------------------------------------- */
+    const unlockedRecords = await UnlockCandidate.find(
+      { companyId, job: jobPostId }, // filtre par job si nécessaire
+      { idCandidate: 1, _id: 0 }
+    ).lean();
+    const unlockedSet = new Set(unlockedRecords.map(u => String(u.idCandidate)));
+
     const { score, unlocked } = await calculateMatchScore(
       requiredHardSkills,
       candidateSkills,
       jobPost.jobDetails,
       candidate,
       companyId,
-      jobPostId
+      matchingConfig,
+      unlockedSet
     );
 
     if (score <= 0) continue;
@@ -1055,34 +1068,40 @@ const hrAgentController = {
         });
       }
 
-      // Pour chaque agent, calculer les matches
-      const agentsWithMatches = [];
-      let totalMatches = 0;
-
-      for (const agent of agents) {
-        const agentLabel = agent.name || agent._id?.toString();
+      // Paralléliser le calcul des matches par agent (protection par agent)
+      const agentTasks = agents.map(async (agent) => {
+        const agentLabel = agent.name || String(agent._id);
 
         if (!agent.postId?._id) {
-          agentsWithMatches.push({
+          return {
             agentId: agent._id,
             name: agentLabel,
             matches: [],
             message: "Pas de post associé",
-          });
-          continue;
+          };
         }
 
-        const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
+        try {
+          const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
+          return {
+            agentId: agent._id,
+            name: agentLabel,
+            jobTitle,
+            matches,
+          };
+        } catch (err) {
+          console.error(`Error computing matches for agent ${agent._id}:`, err);
+          return {
+            agentId: agent._id,
+            name: agentLabel,
+            matches: [],
+            message: 'Erreur lors du calcul des matches',
+          };
+        }
+      });
 
-        totalMatches += matches.length;
-
-        agentsWithMatches.push({
-          agentId: agent._id,
-          name: agentLabel,
-          jobTitle: jobTitle,
-          matches: matches,
-        });
-      }
+      const agentsWithMatches = await Promise.all(agentTasks);
+      const totalMatches = agentsWithMatches.reduce((sum, a) => sum + (a.matches?.length || 0), 0);
 
       // Réponse JSON complète
       return res.status(200).json({

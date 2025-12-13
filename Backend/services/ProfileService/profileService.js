@@ -126,87 +126,66 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
   }
 };
 
-// Create or update a Company profile
+// Create or update a Company profile (optimized)
 exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
   try {
+    if (!profileData || !profileData.name) {
+      throw new Error("Company name is required.");
+    }
+
+    // Récupérer l'utilisateur une seule fois
     const user = await User.findById(userId);
-    if (!user) {
-      throw new Error("User not found.");
-    }
+    if (!user) throw new Error("User not found.");
 
-    // Ensure user role is updated to Company
-    await User.findByIdAndUpdate(userId, { role: "Company" });
+    // Préparer mises à jour utilisateur minimales
+    const userUpdates = {};
+    if (user.role !== "Company") userUpdates.role = "Company";
 
-    // Create Hedera account if user doesn't have one
+    // Tenter la création d'un compte Hedera uniquement si nécessaire (non-blocking)
     if (!user.hederaAccountId) {
-      console.log('🔧 Creating Hedera account for new company user...');
       try {
-        const hederaAccount = await hederaService.createHederaAccount();
-
-        // Update user with Hedera account info
-        const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          {
-            hederaAccountId: hederaAccount.hederaAccountId,
-            hederaPrivateKey: hederaAccount.hederaPrivateKey,
-            hederaPublicKey: hederaAccount.hederaPublicKey
-          },
-          { new: true }
-        );
-
-        console.log(`✅ Hedera account created for company user: ${hederaAccount.hederaAccountId}`);
-        console.log('Updated user Hedera fields:', {
-          hederaAccountId: updatedUser.hederaAccountId,
-          hederaPublicKey: updatedUser.hederaPublicKey,
-          hasPrivateKey: !!updatedUser.hederaPrivateKey
-        });
-      } catch (hederaError) {
-        console.error('❌ Failed to create Hedera account during company profile creation:', hederaError);
-        console.error('Error details:', hederaError.message);
-        // Don't fail the entire profile creation if Hedera account creation fails
-        console.log('⚠️  Company profile will be created without Hedera account. Account can be created later during first payment.');
+        if (hederaService && typeof hederaService.createAccount === "function") {
+          const created = await hederaService.createAccount(userId).catch(() => null);
+          if (created && created.accountId) userUpdates.hederaAccountId = created.accountId;
+        }
+      } catch (e) {
+        console.warn("Warning: Hedera account creation failed (non-blocking)", e.message || e);
       }
-    } else {
-      console.log('ℹ️  User already has Hedera account:', user.hederaAccountId);
     }
 
-    let profile = await Profile.findOne({ userId });
-
-    const profileDataToSave = {
-      userId,
-      type: "Company",
-      companyDetails: {
-        email:profileData.email,
-        name: profileData.name,
-        industry: profileData.industry,
-        size: profileData.size,
-        location: profileData.location,
-        employmentType: profileData.employmentType, // Add employment type support
-      },
-      requiredSkills: profileData.requiredSkills || [],
-      requiredExperienceLevel:
-        profileData.requiredExperienceLevel || "Entry Level",
+    // Préparer l'objet à persister (préserver les autres champs du document)
+    const companyDetails = {
+      email: profileData.email,
+      name: profileData.name,
+      industry: profileData.industry,
+      size: profileData.size,
+      location: profileData.location,
+      employmentType: profileData.employmentType,
     };
 
-    if (profile) {
-      // Update existing profile
-      profile.type = "Company";
-      profile.companyDetails = profileDataToSave.companyDetails;
-      profile.requiredSkills = profileDataToSave.requiredSkills;
-      profile.requiredExperienceLevel =
-        profileDataToSave.requiredExperienceLevel;
-      await profile.save();
-    } else {
-      // Create new profile
-      profile = await Profile.create(profileDataToSave);
-    }
+    const setObj = {
+      type: "Company",
+      companyDetails,
+      requiredSkills: profileData.requiredSkills || [],
+      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",
+    };
 
-    // Update the user's profile reference
-    await User.findByIdAndUpdate(userId, { profile: profile._id });
+    // Upsert atomique: crée ou met à jour en une seule opération
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { $set: setObj, $setOnInsert: { userId } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    // Mettre à jour l'utilisateur seulement si nécessaire
+    if (Object.keys(userUpdates).length > 0 || !user.profile || user.profile.toString() !== profile._id.toString()) {
+      const finalUserUpdates = { ...userUpdates, profile: profile._id };
+      await User.findByIdAndUpdate(userId, finalUserUpdates);
+    }
 
     return profile;
   } catch (error) {
-    console.error("Error creating/updating company profile:", error.message);
+    console.error("Error creating/updating company profile:", error.message || error);
     throw error;
   }
 };

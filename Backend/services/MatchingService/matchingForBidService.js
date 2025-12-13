@@ -60,15 +60,38 @@ function calculateExperienceScore(jobSkills, candidateSkills, MAX) {
 function calculateSalaryScore(jobDetails, candProf, RATES, MAX, perUSD = true) {
   const job = jobDetails?.salary;
   const cand = candProf?.expectedSalary;
-  if (!job?.min || !job?.max || !job.currency || !cand?.min || !cand?.max || !cand.currency) return 0;
 
-  const convert = (amt, cur) => perUSD ? amt / (RATES[cur] || 1) : amt * (RATES[cur] || 1);
-  const overlapMin = Math.max(convert(job.min, job.currency), convert(cand.min, cand.currency));
-  const overlapMax = Math.min(convert(job.max, job.currency), convert(cand.max, cand.currency));
-  if (overlapMax <= overlapMin) return 0;
+  if (!job?.min || !job?.max || !job.currency || !cand?.min || !cand?.max || !cand.currency) {
+    return 0;
+  }
 
-  return ((overlapMax - overlapMin) / (convert(job.max, job.currency) - convert(job.min, job.currency))) * MAX;
+  const convert = (amt, cur) => perUSD ? amt * (RATES[cur] || 1) : amt / (RATES[cur] || 1);
+
+  const jobMin = convert(job.min, job.currency);
+  const jobMax = convert(job.max, job.currency);
+  const candMin = convert(cand.min, cand.currency);
+  const candMax = convert(cand.max, cand.currency);
+
+  let score = 0;
+
+  // Candidate salary entirely below job range
+  if (candMax < jobMin) {
+    score = (candMax / jobMin) * MAX;
+  }
+  // Candidate salary entirely above job range
+  else if (candMin > jobMax) {
+    score = (jobMax / candMin) * MAX;
+  }
+  // Overlap between ranges
+  else {
+    const overlapMin = Math.max(jobMin, candMin);
+    const overlapMax = Math.min(jobMax, candMax);
+    score = ((overlapMax - overlapMin) / (jobMax - jobMin)) * MAX;
+  }
+
+  return Math.min(score, MAX);
 }
+
 
 /* ------------------ WORK MODE ------------------ */
 const calculateWorkModeScore = (job, cand, MAX) =>

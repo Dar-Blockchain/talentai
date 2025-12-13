@@ -629,6 +629,69 @@ classDiagram
     Notification "0..*" -- "1" User : sent_to
 ```
 
+    ## Diagramme mis à jour — Infrastructure & Services
+
+    Ajouts importants : classes d'infrastructure et services temps réel/planification
+
+    ```mermaid
+    classDiagram
+        class API {
+            +expressApp
+            +routes
+        }
+
+        class SocketIO {
+            -path: '/socket.io/'
+            -transports: websocket,polling
+            -pingInterval
+        }
+
+        class AgendaService {
+            -jobs
+            -schedule()
+        }
+
+        class CronJob {
+            -name
+            -schedule
+        }
+
+        class Redis {
+            -url
+        }
+
+        class StripeService {
+            -webhookHandler()
+        }
+
+        class HederaService {
+            -hederaClient
+        }
+
+        class ChatbotMicroservice {
+            -model
+        }
+
+        class NotificationService {
+            -createSystemNotification()
+            -broadcastSystemNotification()
+        }
+
+        %% Relations infra
+        API <-- SocketIO : integrates
+        API --> AgendaService : schedules
+        API --> CronJob : triggers
+        API -->|calls| NotificationService
+        API -->|calls| StripeService
+        API -->|calls| HederaService
+        API -->|calls| ChatbotMicroservice
+        SocketIO <-- Redis : adapter
+        AgendaService --> Redis : optional_lock
+        CronJob --> Redis : leader_election
+        NotificationService --> SocketIO : publish
+        ChatbotMicroservice -->|async| API
+    ```
+
 ## Vue simplifiée : Entités principales
 
 ```mermaid
@@ -676,6 +739,29 @@ classDiagram
     InterviewDetails "*" -- "1" Profile : candidate
     InterviewDetails "*" -- "1" Profile : company
 ```
+
+## Flux mis à jour — inclusions infra
+
+### Notifications en temps réel
+```
+API -> NotificationService -> SocketIO -> Client (room by userId)
+```
+
+### Tâches planifiées
+```
+AgendaService/CronJob -> Services (resetQuota, DailyExchangeRateUpdate) -> MongoDB
+```
+
+## Remarques opérationnelles ajoutées
+- Socket.IO utilise le path `/socket.io/`; recommander d'ajouter `REDIS_URL` et adapter `socket.io-redis` pour multi-instance.
+- Agenda/cron doivent être exécutés de manière exclusive (leader election via Redis conseillé).
+- Stripe et Hedera sont des services externes critiques — surveiller webhooks et retry logic.
+
+---
+
+Diagramme mis à jour. Indiquez si vous voulez :
+- un diagramme d'interaction (sequence) pour le flow d'entretien,
+- ou un export PNG/SVG du mermaid.
 
 ## Flux de données principaux
 

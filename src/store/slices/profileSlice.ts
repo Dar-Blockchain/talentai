@@ -22,6 +22,10 @@ interface CompanyDetails {
   industry: string;
   size: string;
   location: string;
+  email?: string;
+  employmentType?: string;
+  requiredExperienceLevel?: string;
+  requiredSkills?: string[];
 }
 
 interface Skill {
@@ -50,12 +54,25 @@ export interface Profile {
   type: string;
   firstName?: string;
   lastName?: string;
+  gender?: string;
+  country?: string;
+  language?: string;
+  timezone?: string;
   skills: Skill[];
   softSkills: SoftSkill[];
   requiredSkills: string[];
   requiredExperienceLevel: string;
   targetRole?: string;
   companyDetails?: CompanyDetails;
+  contactInformation?: {
+    email?: string;
+    phone?: string;
+    address?: string;
+    linkedinUrl?: string;
+    githubUrl?: string;
+    personalWebsite?: string;
+    location?: string;
+  };
   createdAt: string;
   updatedAt: string;
   overallScore: string;
@@ -68,6 +85,8 @@ interface ProfileState {
   profile: Profile | null;
   loading: boolean;
   error: string | null;
+  uploadingImage: boolean;
+  saveSuccess: boolean;
   profileByIdData: {
     profileById: Profile | null;
     profileByIdLoading: boolean;
@@ -82,6 +101,8 @@ const initialState: ProfileState = {
   profile: null,
   loading: false,
   error: null,
+  uploadingImage: false,
+  saveSuccess: false,
   profileByIdData: {
     profileById: null,
     profileByIdLoading: false,
@@ -340,6 +361,137 @@ export const createOrUpdateProfile = createAsyncThunk<
   }
 });
 
+export const updateProfile = createAsyncThunk<
+  Profile,
+  any,
+  { rejectValue: string }
+>("profile/updateProfile", async (updatePayload, { rejectWithValue }) => {
+  console.log('🔄 [ProfileSlice] updateProfile CALLED with payload:', updatePayload);
+
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    console.error("❌ [ProfileSlice] No token found");
+    return rejectWithValue("No authentication token found");
+  }
+
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatePayload),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Failed to update profile" }));
+      console.error("❌ [ProfileSlice] API error:", error);
+      return rejectWithValue(error.message || "Failed to update profile");
+    }
+
+    const data = await response.json();
+    console.log('✅ [ProfileSlice] Profile updated successfully');
+    return data;
+  } catch (error: any) {
+    console.error("❌ [ProfileSlice] Exception while updating profile:", error);
+    return rejectWithValue("An error occurred while updating profile");
+  }
+});
+
+export const updateCompanyProfile = createAsyncThunk<
+  Profile,
+  any,
+  { rejectValue: string }
+>("profile/updateCompanyProfile", async (companyPayload, { rejectWithValue }) => {
+  console.log('🔄 [ProfileSlice] updateCompanyProfile CALLED with payload:', companyPayload);
+
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    console.error("❌ [ProfileSlice] No token found");
+    return rejectWithValue("No authentication token found");
+  }
+
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateCompanyProfile`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(companyPayload),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Failed to update company profile" }));
+      console.error("❌ [ProfileSlice] API error:", error);
+      return rejectWithValue(error.message || "Failed to update company profile");
+    }
+
+    const data = await response.json();
+    console.log('✅ [ProfileSlice] Company profile updated successfully');
+    return data;
+  } catch (error: any) {
+    console.error("❌ [ProfileSlice] Exception while updating company profile:", error);
+    return rejectWithValue("An error occurred while updating company profile");
+  }
+});
+
+export const uploadProfilePicture = createAsyncThunk<
+  { message: string; imagePath: string },
+  File,
+  { rejectValue: string }
+>("profile/uploadProfilePicture", async (file, { rejectWithValue }) => {
+  console.log('🔄 [ProfileSlice] uploadProfilePicture CALLED');
+
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    console.error("❌ [ProfileSlice] No token found");
+    return rejectWithValue("No authentication token found");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('user_image', file);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/Update_Profile_Picture`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Failed to upload profile picture" }));
+      console.error("❌ [ProfileSlice] API error:", error);
+      return rejectWithValue(error.message || "Failed to upload profile picture");
+    }
+
+    const data = await response.json();
+    console.log('✅ [ProfileSlice] Profile picture uploaded successfully');
+    return data;
+  } catch (error: any) {
+    console.error("❌ [ProfileSlice] Exception while uploading profile picture:", error);
+    return rejectWithValue("An error occurred while uploading profile picture");
+  }
+});
+
 const profileSlice = createSlice({
   name: "profile",
   initialState,
@@ -357,6 +509,9 @@ const profileSlice = createSlice({
     },
     clearProfileCache: (state: ProfileState) => {
       state.profileByIdData.profileCache = {};
+    },
+    setSaveSuccess: (state: ProfileState, action: PayloadAction<boolean>) => {
+      state.saveSuccess = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -422,11 +577,74 @@ const profileSlice = createSlice({
           state.profileByIdData.profileByIdLoading = false;
           state.profileByIdData.profileByIdError = action.payload || "An error occurred";
         }
+      )
+      // Handle updateProfile actions
+      .addCase(updateProfile.pending, (state: ProfileState) => {
+        state.loading = true;
+        state.error = null;
+        state.saveSuccess = false;
+      })
+      .addCase(
+        updateProfile.fulfilled,
+        (state: ProfileState, action: PayloadAction<Profile>) => {
+          state.loading = false;
+          state.profile = action.payload;
+          state.saveSuccess = true;
+        }
+      )
+      .addCase(
+        updateProfile.rejected,
+        (state: ProfileState, action: PayloadAction<string | undefined>) => {
+          state.loading = false;
+          state.error = action.payload || "An error occurred";
+          state.saveSuccess = false;
+        }
+      )
+      // Handle updateCompanyProfile actions
+      .addCase(updateCompanyProfile.pending, (state: ProfileState) => {
+        state.loading = true;
+        state.error = null;
+        state.saveSuccess = false;
+      })
+      .addCase(
+        updateCompanyProfile.fulfilled,
+        (state: ProfileState, action: PayloadAction<Profile>) => {
+          state.loading = false;
+          state.profile = action.payload;
+          state.saveSuccess = true;
+        }
+      )
+      .addCase(
+        updateCompanyProfile.rejected,
+        (state: ProfileState, action: PayloadAction<string | undefined>) => {
+          state.loading = false;
+          state.error = action.payload || "An error occurred";
+          state.saveSuccess = false;
+        }
+      )
+      // Handle uploadProfilePicture actions
+      .addCase(uploadProfilePicture.pending, (state: ProfileState) => {
+        state.uploadingImage = true;
+        state.error = null;
+      })
+      .addCase(
+        uploadProfilePicture.fulfilled,
+        (state: ProfileState) => {
+          state.uploadingImage = false;
+          state.saveSuccess = true;
+        }
+      )
+      .addCase(
+        uploadProfilePicture.rejected,
+        (state: ProfileState, action: PayloadAction<string | undefined>) => {
+          state.uploadingImage = false;
+          state.error = action.payload || "An error occurred";
+        }
       );
   },
 });
 
-export const { clearProfile, clearError, clearProfileById, clearProfileCache } = profileSlice.actions;
+export const { clearProfile, clearError, clearProfileById, clearProfileCache, setSaveSuccess } = profileSlice.actions;
 
 export const selectProfile = (state: RootState) => state.profile;
 export const selectProfileById = (state: RootState) => ({
