@@ -106,7 +106,7 @@ const CreatePostStepper: React.FC = () => {
   );
   const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
 
-  const { activeStep, handleNext, handleBack, modalOpen, modalMode } =
+  const { activeStep, handleNext, handleBack, modalOpen, modalMode, setModalOpen } =
     useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost);
 
   return (
@@ -244,6 +244,7 @@ const CreatePostStepper: React.FC = () => {
 
       <MatchingFlowModal
         open={modalOpen}
+        onClose={() => setModalOpen(false)}
         mode={modalMode}
         onContinue={handleNext}
       />

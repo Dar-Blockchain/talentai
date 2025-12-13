@@ -9,6 +9,7 @@ import {
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { getJobSkills } from "@/utils/postHelpers";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
+import { useToast } from "@/hooks/useToast";
 
 export const useCreatePostStepper = (
   generatedPost: any,
@@ -16,6 +17,7 @@ export const useCreatePostStepper = (
   recruitmentFlow: any,
   savedPost: any
 ) => {
+  const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -28,6 +30,17 @@ export const useCreatePostStepper = (
   const handleNext = async (shouldContinue?: boolean) => {
     // Step 0 => Post saving + Agent creation + Matching
     if (activeStep === 0 && !shouldContinue) {
+      const hardSkills = generatedPost?.skillAnalysis.requiredSkills || [];
+      const softSkills = generatedPost?.skillAnalysis.softSkills || [];
+      const allSkills = [...hardSkills, ...softSkills];
+      const total = allSkills.reduce((sum, s) => sum + (s.percentage || 0), 0);
+      if (total !== 100) {
+        showToast({
+          message: `Total skill percentage must equal 100%. Current total: ${total}%`,
+          severity: "error",
+        });
+        return;
+      }
       setModalOpen(true);
       setModalMode("saving");
 

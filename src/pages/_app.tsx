@@ -15,6 +15,8 @@ import {
   getToken,
 } from "@/utils/tokenUtils";
 import { Poppins } from "next/font/google";
+import MuiToast from "@/components/Toast";
+import { useToast, ToastProvider } from "@/hooks/useToast";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -153,13 +155,28 @@ export default function App({ Component, pageProps }: AppProps) {
             <link rel="icon" href="/favicon.ico" />
           </Head>
           <main className={poppins.variable}>
+            <ToastProvider>
+              <MuiToastWrapper/>
             <AuthWrapper>
               <Component {...pageProps} />
               <ScrollToTop />
             </AuthWrapper>
+            </ToastProvider>
           </main>
         </ThemeProvider>
       </Provider>
     </SessionProvider>
+  );
+}
+
+function MuiToastWrapper() {
+  const { open, toastOptions, closeToast } = useToast();
+  return (
+    <MuiToast
+      open={open}
+      message={toastOptions.message}
+      severity={toastOptions.severity}
+      onClose={closeToast}
+    />
   );
 }

@@ -328,9 +328,11 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
               ? "Job created ! What's Next?"
               : "Job created ! What's Next?"}
           </Typography>
-          <IconButton onClick={onClose} sx={{ color: "black" }}>
-            <CloseIcon />
-          </IconButton>
+          {mode === "done" && (
+            <IconButton onClick={onClose} sx={{ color: "black" }}>
+              <CloseIcon />
+            </IconButton>
+          )}
         </Box>
       </DialogTitle>
 
