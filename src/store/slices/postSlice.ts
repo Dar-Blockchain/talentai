@@ -117,6 +117,49 @@ export const savePost = createAsyncThunk(
   }
 );
 
+export const updatePost = createAsyncThunk(
+  "post/updatePost",
+  async (
+    { jobId, jobData }: { jobId: string | number; jobData: any },
+    { rejectWithValue }
+  ) => {
+    try {
+      if (!jobData || !jobId) {
+        throw new Error("Job ID or data is missing");
+      }
+
+      const token = Cookies.get("api_token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePost/${jobId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(jobData),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to update job");
+      }
+
+      const updated = await res.json();
+      const job = updated.data || updated;
+
+      return {
+        success: true,
+        jobData: job,
+      };
+    } catch (err: any) {
+      return rejectWithValue(err.message || "Error updating job");
+    }
+  }
+);
+
 
 // Async thunk: Recommended posts
 export const fetchRecommendedPosts = createAsyncThunk(
@@ -373,6 +416,20 @@ const postSlice = createSlice({
         
       })
       .addCase(savePost.rejected, (state, action) => {
+        state.savePost.loading = false;
+        state.savePost.error = action.payload as string;
+      })
+      .addCase(updatePost.pending, (state) => {
+        state.savePost.loading = true;
+        state.savePost.error = null;
+      })
+      .addCase(updatePost.fulfilled, (state, action) => {
+        state.savePost.loading = false;
+        state.savePost.error = null;
+        state.savePost.savedPost = action.payload;
+        
+      })
+      .addCase(updatePost.rejected, (state, action) => {
         state.savePost.loading = false;
         state.savePost.error = action.payload as string;
       })

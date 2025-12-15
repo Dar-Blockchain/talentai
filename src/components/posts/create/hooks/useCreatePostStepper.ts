@@ -5,6 +5,7 @@ import {
   savePost,
   fetchJobMatches,
   postRecruitmentSteps,
+  updatePost,
 } from "@/store/slices/postSlice";
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { getJobSkills } from "@/utils/postHelpers";
@@ -155,22 +156,28 @@ export const useCreatePostStepper = (
       setModalMode("saving");
 
       try {
-        const result = await dispatch(savePost(generatedPost)).unwrap();
+        const jobId = savedPost?.jobData?._id;
+        const jobData = generatedPost;
 
+        let result: any;
+
+        if (jobId) {
+          result = await dispatch(updatePost({ jobId, jobData })).unwrap();
+        } else {
+          result = await dispatch(savePost(jobData)).unwrap();
+          const agentData = {
+            jobId: result.jobData._id,
+            companyName: profile?.companyDetails?.name || "Company",
+            postTitle: result.jobData?.jobDetails?.title,
+            companyId: profile?.userId,
+            jobSkills: getJobSkills(result.jobData),
+          };
+          await dispatch(createHRAgent(agentData)).unwrap();
+        }
         if (!result?.success) {
           setModalOpen(false);
           return;
         }
-
-        const agentData = {
-          jobId: result.jobData._id,
-          companyName: profile?.companyDetails?.name || "Company",
-          postTitle: result.jobData?.jobDetails?.title,
-          companyId: profile?.userId,
-          jobSkills: getJobSkills(result.jobData),
-        };
-
-        await dispatch(createHRAgent(agentData)).unwrap();
 
         setModalMode("matching");
         await dispatch(fetchJobMatches(result.jobData._id)).unwrap();

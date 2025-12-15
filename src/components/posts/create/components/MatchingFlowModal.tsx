@@ -39,6 +39,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
 }) => {
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
 
+  const PROFILE_UNLOCK_PACK_PRICE = 1500;
+
   const renderSaving = () => (
     <Box py={3} textAlign="center">
       <CircularProgress size={50} />
@@ -117,12 +119,15 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         mb={2}
         sx={{ fontSize: "14px", fontWeight: 400, lineHeight: "34px" }}
       >
-        We've already found 3 matching candidates for you.
+        We've already found {matchingProfiles?.length} matching candidates for
+        you.
         <br />
         You can start reviewing and contacting them immediately by unlocking
         their profiles for{" "}
-        <b style={{ color: "rgba(222, 147, 0, 1)" }}>1500 tokens</b> , or you
-        can continue setting up your recruitment workflow.
+        <b style={{ color: "rgba(222, 147, 0, 1)" }}>
+          {PROFILE_UNLOCK_PACK_PRICE} tokens
+        </b>{" "}
+        , or you can continue setting up your recruitment workflow.
       </Typography>
       <Typography
         sx={{
@@ -292,9 +297,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         ))}
       </List>
       <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
-        Go directly to your matches and use{" "}
-        <b style={{ color: "rgba(222, 147, 0, 1)" }}>1500 Tokens</b> per profile
-        to view contact details and full resumes.
+        Go directly to your matches and unlock a profile to view contact details
+        and full resumes.
       </Typography>
     </Box>
   );
