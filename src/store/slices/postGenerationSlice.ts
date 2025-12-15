@@ -20,8 +20,8 @@ export interface SoftSkill {
 }
 
 export interface Salary {
-  min: string;
-  max: string;
+  min: number | null;
+  max: number | null;
   currency: string;
 }
 
@@ -96,7 +96,7 @@ const initialState: PostGenerationState = {
   generationType: "quick",
   workMode: "",
   employmentType: "",
-  salary: { min: "", max: "", currency: "USD" },
+  salary: { min: null, max: null, currency: "USD" },
 
   loading: false,
   error: null,
@@ -225,14 +225,14 @@ const postGenerationSlice = createSlice({
     },
 
     updateJobSalaryField(
-  state,
-  action: PayloadAction<{ field: keyof Salary; value: number | string }>
-) {
-  if (state.generatedPost) {
-    state.generatedPost.jobDetails.salary[action.payload.field] =
-      action.payload.value as never;
-  }
-},
+      state,
+      action: PayloadAction<{ field: keyof Salary; value: number | string }>
+    ) {
+      if (state.generatedPost) {
+        state.generatedPost.jobDetails.salary[action.payload.field] = action
+          .payload.value as never;
+      }
+    },
 
     // ---------- Requirements (Array) ----------
     updateRequirements(state, action: PayloadAction<string>) {
@@ -366,8 +366,7 @@ export const {
   updateJobField,
   updateJobSalaryField,
   updateRequirements,
-  updateResponsibilities
-
+  updateResponsibilities,
 } = postGenerationSlice.actions;
 
 // ------------------------------------------------------

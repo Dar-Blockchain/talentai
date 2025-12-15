@@ -5,10 +5,10 @@ import Image from "next/image";
 interface SalaryRangeProps {
   salaryRange: {
     currency: string; // USD | EUR | GBP
-    min: string;
-    max: string;
+    min: number;
+    max: number;
   };
-  onSalaryChange: (field: "min" | "max" | "currency", value: string) => void;
+  onSalaryChange: (field: "min" | "max" | "currency", value: number | string) => void;
   errors?: {
     currency?: string;
     min?: string;
@@ -32,12 +32,11 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   const handleChange =
     (field: "min" | "max" | "currency") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      let value = e.target.value;
+      let value: number | string = e.target.value;
 
       if (field === "min" || field === "max") {
-        value = value.replace(/^0+/, "");
-        if (value === "") value = "0";
-        value = Math.max(0, Number(value)).toString();
+        // Convert to number, ensure non-negative
+        value = Math.max(0, Number(value));
       }
 
       onSalaryChange(field, value);
