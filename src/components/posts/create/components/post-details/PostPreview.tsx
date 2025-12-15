@@ -27,12 +27,16 @@ import SkillEditorModal from "./SkillEditorModal";
 import { Add as AddIcon } from "@mui/icons-material";
 import { getLevelFromNumber } from "@/utils/postHelpers";
 import { experienceLevels } from "@/constants/candidate";
+import {
+  contractTypes,
+  workModes,
+} from "@/components/preferences/data/candidateData";
 
 const inputStyle = {
   height: 40,
   "& .MuiInputBase-root": {
     height: 40,
-        fontSize: "12px",
+    fontSize: "12px",
     fontWeight: 500,
   },
 };
@@ -47,6 +51,8 @@ const PostPreview = () => {
     title = "",
     description = "",
     experienceLevel = "",
+    employmentType = "",
+    location = "",
     requirements = [],
     responsibilities = [],
   } = generatedPost?.jobDetails ?? {};
@@ -182,7 +188,11 @@ const PostPreview = () => {
               fullWidth
               variant="outlined"
               value={title || ""}
-              onChange={(e: any) => dispatch(updateJobField({ field: "title", value: e.target.value }))}
+              onChange={(e: any) =>
+                dispatch(
+                  updateJobField({ field: "title", value: e.target.value })
+                )
+              }
               sx={inputStyle}
             />
           </Box>
@@ -196,41 +206,186 @@ const PostPreview = () => {
                 color: "rgba(84, 98, 116, 0.53)",
               }}
             >
-              {" "}
-              Experience Level{" "}
+              Work Mode
             </Typography>
 
             <TextField
               select
-              value={experienceLevel}
-              onChange={(e: any) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))}
+              value={location}
+              onChange={(e: any) =>
+                dispatch(
+                  updateJobField({
+                    field: "location",
+                    value: e.target.value,
+                  })
+                )
+              }
               fullWidth
               sx={inputStyle}
+              FormHelperTextProps={{
+                sx: {
+                  marginLeft: 0,
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <TrendingUpIcon
-                      sx={{
-                        color: "rgba(98, 111, 134, 1)",
-                        width: "16px",
-                        height: "14px",
-                      }}
+                    <Image
+                      src="/icons/building3.svg"
+                      alt="money"
+                      width={16}
+                      height={16}
                     />
                   </InputAdornment>
                 ),
               }}
             >
-              <MenuItem disabled value="" sx={{fontSize: '12px', fontWeight: 500}}>
-                Experience Level
+              <MenuItem
+                disabled
+                value=""
+                sx={{ fontSize: "12px", fontWeight: 500 }}
+              >
+                Work Mode
               </MenuItem>
 
-              {experienceLevels.map((level) => (
-                <MenuItem key={level} value={level} sx={{fontSize: '12px', fontWeight: 500}}>
-                  {level}
+              {workModes.map((mode) => (
+                <MenuItem
+                  key={mode}
+                  value={mode}
+                  sx={{ fontSize: "12px", fontWeight: 500 }}
+                >
+                  {mode}
                 </MenuItem>
               ))}
             </TextField>
           </Box>
+
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  lineHeight: "42px",
+                  fontWeight: 500,
+                  fontSize: "12px",
+                  color: "rgba(84, 98, 116, 0.53)",
+                }}
+              >
+                Employment Type
+              </Typography>
+
+              <TextField
+                select
+                value={employmentType}
+                onChange={(e: any) =>
+                  dispatch(
+                    updateJobField({
+                      field: "employmentType",
+                      value: e.target.value,
+                    })
+                  )
+                }
+                fullWidth
+                sx={inputStyle}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Image
+                        src="/icons/bag.svg"
+                        alt="money"
+                        width={16}
+                        height={16}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+                FormHelperTextProps={{
+                  sx: {
+                    marginLeft: 0,
+                  },
+                }}
+              >
+                <MenuItem
+                  disabled
+                  value=""
+                  sx={{ fontSize: "12px", fontWeight: 500 }}
+                >
+                  Employment Type
+                </MenuItem>
+
+                {contractTypes.map((mode) => (
+                  <MenuItem
+                    key={mode}
+                    value={mode}
+                    sx={{ fontSize: "12px", fontWeight: 500 }}
+                  >
+                    {mode}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  lineHeight: "42px",
+                  fontWeight: 500,
+                  fontSize: "12px",
+                  color: "rgba(84, 98, 116, 0.53)",
+                }}
+              >
+                {" "}
+                Experience Level{" "}
+              </Typography>
+
+              <TextField
+                select
+                value={experienceLevel}
+                onChange={(e: any) =>
+                  dispatch(
+                    updateJobField({
+                      field: "experienceLevel",
+                      value: e.target.value,
+                    })
+                  )
+                }
+                fullWidth
+                sx={inputStyle}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <TrendingUpIcon
+                        sx={{
+                          color: "rgba(98, 111, 134, 1)",
+                          width: "16px",
+                          height: "14px",
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+              >
+                <MenuItem
+                  disabled
+                  value=""
+                  sx={{ fontSize: "12px", fontWeight: 500 }}
+                >
+                  Experience Level
+                </MenuItem>
+
+                {experienceLevels.map((level) => (
+                  <MenuItem
+                    key={level}
+                    value={level}
+                    sx={{ fontSize: "12px", fontWeight: 500 }}
+                  >
+                    {level}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+          </Box>
+
           <Box sx={{ mt: 2 }}>
             <Box
               sx={{
@@ -320,7 +475,9 @@ const PostPreview = () => {
               </Typography>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {hardSkills.map((skill: HardSkill, index: number) => {
-                  const label = `${skill.name} (${getLevelFromNumber(skill.level)}) - ${skill.percentage}%`;
+                  const label = `${skill.name} (${getLevelFromNumber(
+                    skill.level
+                  )}) - ${skill.percentage}%`;
                   return (
                     <SkillChip
                       key={index}
@@ -463,12 +620,22 @@ const PostPreview = () => {
               </Typography>
               <TextField
                 value={description}
-                onChange={(e: any) => dispatch(updateJobField({ field: "description", value: e.target.value }))}
+                onChange={(e: any) =>
+                  dispatch(
+                    updateJobField({
+                      field: "description",
+                      value: e.target.value,
+                    })
+                  )
+                }
                 placeholder="Job Description"
                 multiline
                 minRows={4}
                 fullWidth
-                sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: '12px', fontWeight: 500} }}
+                sx={{
+                  mt: 2,
+                  "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 },
+                }}
               />
             </Box>
 
@@ -490,7 +657,10 @@ const PostPreview = () => {
                 multiline
                 minRows={4}
                 fullWidth
-                sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: '12px', fontWeight: 500} }}
+                sx={{
+                  mt: 2,
+                  "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 },
+                }}
               />
             </Box>
 
@@ -507,12 +677,17 @@ const PostPreview = () => {
               </Typography>
               <TextField
                 value={responsibilities.join("\n")}
-                onChange={(e) => dispatch(updateResponsibilities(e.target.value))}
+                onChange={(e) =>
+                  dispatch(updateResponsibilities(e.target.value))
+                }
                 placeholder="Job Responsibilities"
                 multiline
                 minRows={4}
                 fullWidth
-                sx={{ mt: 2,"& .MuiInputBase-root": { fontSize: '12px', fontWeight: 500} }}
+                sx={{
+                  mt: 2,
+                  "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 },
+                }}
               />
             </Box>
           </Box>
