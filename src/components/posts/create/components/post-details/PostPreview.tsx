@@ -20,13 +20,13 @@ import {
   updateRequirements,
   updateResponsibilities,
 } from "@/store/slices/postGenerationSlice";
-import { experienceLevels } from "@/components/preferences/data/candidateData";
 import InputAdornment from "@mui/material/InputAdornment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import SkillEditorModal from "./SkillEditorModal";
 import { Add as AddIcon } from "@mui/icons-material";
 import { getLevelFromNumber } from "@/utils/postHelpers";
+import { experienceLevels } from "@/constants/candidate";
 
 const inputStyle = {
   height: 40,
@@ -330,7 +330,7 @@ const PostPreview = () => {
                         handleEdit(
                           {
                             name: skill.name,
-                            importance: skill.importance,
+                            level: skill.level,
                             percentage: skill.percentage,
                           },
                           index,
@@ -391,7 +391,7 @@ const PostPreview = () => {
               </Typography>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {softSkills.map((skill: SoftSkill, index: number) => {
-                  const label = `${skill.name} (${skill.importance}) - ${skill.percentage}%`;
+                  const label = `${skill.name} (${skill.level}/5) - ${skill.percentage}%`;
 
                   return (
                     <SkillChip
@@ -402,7 +402,7 @@ const PostPreview = () => {
                         handleEdit(
                           {
                             name: skill.name,
-                            importance: skill.importance,
+                            level: skill.level,
                             percentage: skill.percentage,
                           },
                           index,

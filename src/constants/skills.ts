@@ -287,3 +287,18 @@ interface Skill {
       ],
     },
   ];
+
+export const hardSkillLevels = [
+  { label: "Entry Level", value: 1 },
+  { label: "Junior", value: 2 },
+  { label: "Mid Level", value: 3 },
+  { label: "Senior", value: 4 },
+  { label: "Expert", value: 5 },
+];
+export const softSkillLevels = [
+  { label: "1/5", value: 1 },
+  { label: "2/5", value: 2 },
+  { label: "3/5", value: 3 },
+  { label: "4/5", value: 4 },
+  { label: "5/5", value: 5 },
+];

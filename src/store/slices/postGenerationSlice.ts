@@ -9,14 +9,13 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 export interface HardSkill {
   name: string;
   level: number;
-  importance: string;
   category: string;
   percentage: number;
 }
 
 export interface SoftSkill {
   name: string;
-  importance: string;
+  level: number;
   percentage: number;
 }
 

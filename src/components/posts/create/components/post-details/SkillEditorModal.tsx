@@ -13,7 +13,6 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { experienceLevels } from "@/components/preferences/data/candidateData";
 import { useDispatch } from "react-redux";
 import {
   editHardSkill,
@@ -23,6 +22,7 @@ import {
 } from "@/store/slices/postGenerationSlice";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
+import { hardSkillLevels, softSkillLevels } from "@/constants/skills";
 
 interface SkillEditorModalProps {
   open: boolean;
@@ -53,8 +53,10 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   const dispatch = useDispatch();
 
   const [localSkill, setLocalSkill] = React.useState<any>(
-    skill || { name: "", importance: "", level: "", percentage: 0 }
+    skill || { name: "", level: null, percentage: 0 }
   );
+
+  const levels = skillType === "hard" ? hardSkillLevels : softSkillLevels;
 
   React.useEffect(() => {
     if (skill) setLocalSkill(skill);
@@ -171,8 +173,8 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
 
             <TextField
               select
-              value={localSkill.importance}
-              onChange={(e) => handleChange("importance", e.target.value)}
+              value={localSkill.level}
+              onChange={(e) => handleChange("level", e.target.value)}
               fullWidth
               sx={inputStyle}
               InputProps={{
@@ -197,13 +199,13 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
                 Experience Level
               </MenuItem>
 
-              {experienceLevels.map((level) => (
+              {levels.map((item) => (
                 <MenuItem
-                  key={level}
-                  value={level}
+                  key={item.value}
+                  value={item.value}
                   sx={{ fontSize: "12px", fontWeight: 500 }}
                 >
-                  {level}
+                  {item.label}
                 </MenuItem>
               ))}
             </TextField>
