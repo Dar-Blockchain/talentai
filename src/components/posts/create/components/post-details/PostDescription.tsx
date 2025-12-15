@@ -236,14 +236,20 @@ const PostDescription = () => {
                 },
               }}
             >
-              <MenuItem disabled value="" sx={{    fontSize: "12px",
-    fontWeight: 500}}>
+              <MenuItem
+                disabled
+                value=""
+                sx={{ fontSize: "12px", fontWeight: 500 }}
+              >
                 Employment Type
               </MenuItem>
 
               {contractTypes.map((mode) => (
-                <MenuItem key={mode} value={mode} sx={{    fontSize: "12px",
-    fontWeight: 500}}>
+                <MenuItem
+                  key={mode}
+                  value={mode}
+                  sx={{ fontSize: "12px", fontWeight: 500 }}
+                >
                   {mode}
                 </MenuItem>
               ))}
@@ -289,14 +295,20 @@ const PostDescription = () => {
                 },
               }}
             >
-              <MenuItem disabled value="" sx={{    fontSize: "12px",
-    fontWeight: 500}}>
+              <MenuItem
+                disabled
+                value=""
+                sx={{ fontSize: "12px", fontWeight: 500 }}
+              >
                 Work Mode
               </MenuItem>
 
               {workModes.map((mode) => (
-                <MenuItem key={mode} value={mode} sx={{    fontSize: "12px",
-    fontWeight: 500}}>
+                <MenuItem
+                  key={mode}
+                  value={mode}
+                  sx={{ fontSize: "12px", fontWeight: 500 }}
+                >
                   {mode}
                 </MenuItem>
               ))}
