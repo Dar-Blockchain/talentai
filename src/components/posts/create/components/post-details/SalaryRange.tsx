@@ -29,18 +29,21 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   errors = {},
   currencies = defaultCurrencies,
 }) => {
-  const handleChange =
-    (field: "min" | "max" | "currency") =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      let value: number | string = e.target.value;
+const handleChange =
+  (field: "min" | "max" | "currency") =>
+  (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value: string | number = e.target.value;
 
-      if (field === "min" || field === "max") {
-        // Convert to number, ensure non-negative
-        value = Math.max(0, Number(value));
-      }
+    if (field === "min" || field === "max") {
+      // Remove non-digits and leading zeros
+      value = value.replace(/\D/g, ""); // remove non-numeric
+      value = value.replace(/^0+/, ""); // remove leading zeros
+      value = value === "" ? 0 : Number(value); // default 0
+    }
 
-      onSalaryChange(field, value);
-    };
+    onSalaryChange(field, value);
+  };
+
 
   const inputStyle = {
     height: 40,
@@ -100,7 +103,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             Minimum Salary
           </Typography>
           <TextField
-            type="number"
+            type="text"
             value={salaryRange.min}
             onChange={handleChange("min")}
             error={!!errors.min}
@@ -115,7 +118,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             Maximum Salary
           </Typography>
           <TextField
-            type="number"
+            type="text"
             value={salaryRange.max}
             onChange={handleChange("max")}
             error={!!errors.max}
