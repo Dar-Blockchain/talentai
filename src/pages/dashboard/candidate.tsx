@@ -9,7 +9,6 @@ import {
   Typography,
   Card,
   Alert,
-  useTheme,
   Snackbar,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
