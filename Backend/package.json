@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node -r ./suppress-punycode.js app.js",
     "dev": "nodemon --exec \"node -r ./suppress-punycode.js app.js\"",
-    "create-token": "node scripts/createTalentAIToken.js"
+    "create-token": "node scripts/createTalentAIToken.js",
+    "seed:ai-candidates": "node seeders/seedAICandidates.js"
   },
   "dependencies": {
     "@hashgraph/sdk": "^2.63.0",
