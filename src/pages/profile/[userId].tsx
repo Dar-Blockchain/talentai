@@ -73,7 +73,7 @@ const ProfileByIdPage: React.FC = () => {
     ];
     const verifiedCount = verifiedSkills.length;
     const totalInterviews = profile?.interviewDetails?.length || 0;
-    const overallScore = profile?.overallScore || 0;
+    const overallScore = Number(profile?.overallScore) || 0;
 
     // Get top 3 verified skills with scores
     const topSkills = verifiedSkills
@@ -443,7 +443,7 @@ const ProfileByIdPage: React.FC = () => {
   ];
   const verifiedCount = verifiedSkills.length;
   const totalInterviews = profile?.interviewDetails?.length || 0;
-  const overallScore = profile?.overallScore || 0;
+  const overallScore = Number(profile?.overallScore) || 0;
 
   // Build rich meta description with all statistics
   const topSkillsList = verifiedSkills

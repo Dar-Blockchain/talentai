@@ -355,34 +355,85 @@ exports.getJobInterviewConfig = async (req, res) => {
     const companyName = post.user?.companyDetails?.name || 'Company';
     const jobTitle = post.jobDetails?.title || 'Position';
     const experienceLevel = post.jobDetails?.experienceLevel || 'Mid Level';
-    const requiredSkills = (post.skillAnalysis?.requiredSkills || []).map(
-      skill => typeof skill === 'string' ? skill : skill.name
+
+    // Extract and categorize skills
+    const allSkills = post.skillAnalysis?.requiredSkills || [];
+    const softSkillsFromPost = post.skillAnalysis?.softSkills || [];
+
+    // Separate technical skills from soft skills
+    const technicalSkills = allSkills.filter(skill => {
+      const skillName = (typeof skill === 'string' ? skill : skill.name).toLowerCase();
+      // Filter out soft skills
+      const softSkillKeywords = ['communication', 'teamwork', 'leadership', 'problem solving', 'adaptability', 'time management', 'collaboration'];
+      return !softSkillKeywords.some(keyword => skillName.includes(keyword));
+    }).map(skill => typeof skill === 'string' ? skill : skill.name);
+
+    // Format soft skills
+    const softSkills = (softSkillsFromPost || []).map(skill =>
+      typeof skill === 'string' ? skill : skill.name
     );
 
-    // Build interview configuration for HR interview
+    console.log('📊 Interview Skills Analysis:', {
+      companyName,
+      jobTitle,
+      experienceLevel,
+      technicalSkills,
+      softSkills,
+      totalSkills: technicalSkills.length + softSkills.length
+    });
+
+    // Build TECHNICAL interview configuration
     const config = {
-      interviewType: 'HR_INTERVIEW',
-      testReason: `Job Application Interview for ${jobTitle} at ${companyName}`,
+      interviewType: 'TECHNICAL_SKILL',
+      testReason: `Technical Skills Assessment for ${jobTitle} at ${companyName}`,
       context: {
         targetCompany: companyName,
         targetRole: jobTitle,
         experienceLevel: experienceLevel,
-        interviewGoal: `Assess candidate fit for ${jobTitle} position`,
-        requiredSkills: requiredSkills,
+
+        // Technical interview goal
+        interviewGoal: `Deep technical assessment for ${jobTitle} position - evaluate hands-on skills, problem-solving, and technical depth`,
+
+        // SEPARATED SKILLS
+        requiredSkills: technicalSkills,
+        softSkills: softSkills,
+
+        // Technical focus
+        technicalFocus: true,
+        assessmentDepth: 'deep',
+        questionTypes: [
+          'coding-proficiency',
+          'system-architecture',
+          'problem-solving',
+          'technical-implementation',
+          'best-practices',
+          'real-world-scenarios'
+        ],
+
+        // Job details
         jobDescription: post.jobDetails?.description || '',
         responsibilities: post.jobDetails?.responsibilities || '',
-        requirements: post.jobDetails?.requirements || ''
+        requirements: post.jobDetails?.requirements || '',
+
+        // Interview strategy
+        interviewStrategy: {
+          startWithBasics: false,
+          probeDepth: 'deep',
+          followUpOnVagueAnswers: true,
+          requireSpecificExamples: true,
+          assessPracticalExperience: true
+        }
       },
       models: {
-        fastModel: 'meta-llama/Llama-Guard-3-11B-Vision-Turbo',
+        fastModel: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
         thinkingModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
         analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
       },
       sessionSettings: {
-        duration: 30,
+        duration: 45,
         language: 'en',
         difficulty: 'intermediate',
-        silenceTimeout: 5,
+        silenceTimeout: 10,
         silenceIntelligence: {
           enabled: true,
           adaptiveThresholds: true,

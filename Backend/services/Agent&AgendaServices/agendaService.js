@@ -7,7 +7,7 @@ const {
   calculateMatchScore,
 } = require("../MatchingService/matchingForBidService");
 const axios = require("axios");
-const profileService = require("../../services/profileService/profileService");
+const profileService = require("../../services/ProfileService/profileService");
 const {
   submitEvaluationMessage,
 } = require("../../controllers/hrAgentController");
