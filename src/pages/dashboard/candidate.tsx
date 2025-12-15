@@ -26,6 +26,7 @@ import AddSoftSkillDialog from "@/components/dashboard-candidate/AddSoftSkillDia
 import AddSkillDialog from "@/components/dashboard-candidate/AddSkillDialog";
 import LoadingState from "@/components/dashboard-candidate/LoadingState";
 import ErrorState from "@/components/dashboard-candidate/ErrorState";
+import CandidateEngagementTasks from "@/components/dashboard-candidate/CandidateEngagementTasks";
 import {
   skillCategories,
   softSkillNames,
@@ -326,6 +327,13 @@ export default function DashboardCandidate() {
                       );
                     }}
                     onCvBuilder={() => router.push("/resume-builder")}
+                  />
+
+                  {/* Engagement Tasks Checklist */}
+                  <CandidateEngagementTasks
+                    profile={profile}
+                    onStartTest={handleStartTest}
+                    tokenBalance={0}
                   />
 
                   {/* Test Selection Modal */}

@@ -712,9 +712,55 @@ const IntelligentInterviewTest = () => {
   const [transcriptDebugLog, setTranscriptDebugLog] = useState<string[]>([]);
 
   // Parse URL query parameters and build dynamic interview config
+  // 🔥 NEW: Fetch job interview configuration from backend
+  const fetchJobInterviewConfig = async (jobId: string) => {
+    try {
+      const token = Cookies.get('api_token');
+      console.log('🔍 Fetching interview config for jobId:', jobId);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/interview-config/${jobId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch job config`);
+      }
+
+      const config = await response.json();
+      console.log('✅ Fetched job interview config:', config);
+
+      setInterviewConfig(config);
+
+      // Store jobId for saving interview results later
+      localStorage.setItem('interview_jobId', jobId);
+      localStorage.setItem('interview_type', 'hr');
+
+    } catch (error) {
+      console.error('❌ Error fetching job interview config:', error);
+      // Fallback to default HR config
+      const defaultConfig = buildInterviewConfigFromURL({ type: 'hr' });
+      setInterviewConfig(defaultConfig);
+    }
+  };
+
   useEffect(() => {
     if (!router.isReady) return;
 
+    // 🔥 NEW: Check for jobId parameter first
+    const { jobId } = router.query;
+    if (jobId && typeof jobId === 'string') {
+      console.log('🎯 Job-based interview detected, jobId:', jobId);
+      fetchJobInterviewConfig(jobId);
+      return; // Exit early, skip URL param processing
+    }
+
+    // Existing: Build config from URL params
     const urlParams: URLParams = {
       type: router.query.type as any,
       skill: router.query.skill as string,
@@ -741,6 +787,7 @@ const IntelligentInterviewTest = () => {
       localStorage.removeItem('interview_category');
       localStorage.removeItem('interview_proficiency');
       localStorage.removeItem('interview_role');
+      localStorage.removeItem('interview_jobId');
 
       // Store type (technical, soft, onboarding, etc.)
       if (urlParams.type) {

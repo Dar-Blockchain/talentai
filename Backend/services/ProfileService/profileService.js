@@ -181,6 +181,8 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
         industry: profileData.industry,
         size: profileData.size,
         location: profileData.location,
+        website: profileData.website,
+        linkedin: profileData.linkedin,
         employmentType: profileData.employmentType, // Add employment type support
       },
       requiredSkills: profileData.requiredSkills || [],

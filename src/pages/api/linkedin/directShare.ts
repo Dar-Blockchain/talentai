@@ -305,8 +305,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         // Handle specific errors
         if (postRes.status === 403) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: 'LinkedIn permission error. The w_member_social permission is required.',
+            suggestSimpleMethod: true,
             details: responseData
           });
         }

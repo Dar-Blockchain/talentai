@@ -96,7 +96,7 @@ module.exports.createHederaWallet = async () => {
     const pubKey = privKey.publicKey;
 
     let transaction = await new AccountCreateTransaction()
-      .setInitialBalance(new Hbar(1))
+      .setInitialBalance(new Hbar(10)) // 10 HBAR per agent for profile creation + messages
       .setKeyWithoutAlias(privKey.publicKey)
       .freezeWithSigner(wallet);
 

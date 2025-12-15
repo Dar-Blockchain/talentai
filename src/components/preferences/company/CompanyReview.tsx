@@ -163,6 +163,66 @@ const CompanyReview: React.FC<ReviewProps> = ({ preferences }: ReviewProps) => {
           </Typography>
         </Box>
 
+        {/* Website (if provided) */}
+        {companyDetails?.website && (
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 500,
+                fontSize: "16px",
+                color: "rgba(106, 106, 106, 1)",
+              }}
+            >
+              Website
+            </Typography>
+            <Typography
+              component="a"
+              href={companyDetails.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                fontWeight: 600,
+                fontSize: "16px",
+                color: "rgba(25, 25, 25, 1)",
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              {companyDetails.website}
+            </Typography>
+          </Box>
+        )}
+
+        {/* LinkedIn (if provided) */}
+        {companyDetails?.linkedin && (
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 500,
+                fontSize: "16px",
+                color: "rgba(106, 106, 106, 1)",
+              }}
+            >
+              LinkedIn
+            </Typography>
+            <Typography
+              component="a"
+              href={companyDetails.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                fontWeight: 600,
+                fontSize: "16px",
+                color: "rgba(25, 25, 25, 1)",
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              {companyDetails.linkedin}
+            </Typography>
+          </Box>
+        )}
+
         {/* Skills (span full width) */}
         <Box sx={{ gridColumn: "1 / -1" }}>
           <Box

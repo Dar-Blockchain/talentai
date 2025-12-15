@@ -307,6 +307,12 @@ export default function Test() {
 
   // Question Display States
   const [questionHighlight, setQuestionHighlight] = useState(false);
+  const [showEncouragement, setShowEncouragement] = useState(false);
+  const [encouragementMessage, setEncouragementMessage] = useState('');
+
+  // Calculate estimated TAI earned so far (33.33 TAI / total questions)
+  const taiPerQuestion = 33.33 / (questions.length || 10);
+  const estimatedTaiEarned = ((current + 1) * taiPerQuestion).toFixed(2);
 
   // Fetch questions from API
   const fetchQuestions = async () => {
@@ -1327,10 +1333,29 @@ export default function Test() {
   };
 
   const handleNext = () => {
+    // Show encouragement message if transcript exists
+    if (transcriptions[current]?.trim()) {
+      const encouragementMessages = [
+        `Great answer! +${taiPerQuestion.toFixed(2)} TAI 🎉`,
+        `Well done! Keep it up! 💪`,
+        `Excellent response! You're doing great! ⭐`,
+        `Nice work! Moving to the next question 🚀`,
+        `Impressive! Keep going strong! 🔥`
+      ];
+      const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+      setEncouragementMessage(randomMessage);
+      setShowEncouragement(true);
+
+      // Auto-hide after 2 seconds
+      setTimeout(() => {
+        setShowEncouragement(false);
+      }, 2000);
+    }
+
     // IMMEDIATELY block all incoming transcripts before state changes
     console.log('🛑 NEXT CLICKED - Blocking all transcripts immediately');
     isTransitioningRef.current = true;
-    
+
     // Increment session ID IMMEDIATELY to reject any pending transcripts
     const oldSessionId = questionSessionIdRef.current;
     questionSessionIdRef.current = questionSessionIdRef.current + 1;
@@ -1613,12 +1638,14 @@ export default function Test() {
       {/* Security Modal */}
       <SecurityModal open={showSecurityModal} onClose={() => { }}>
         <DialogTitle sx={{ fontWeight: 700, color: 'black', fontSize: '1.5rem' }}>
-          Security Violation
+          Let's Keep Your Test Secure
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
-
-            You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
+            To protect the integrity of your verified score, we need to end this session. Your test has been saved, and you're being redirected to your dashboard.
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#666', mt: 2, fontStyle: 'italic' }}>
+            💡 Tip: Complete tests in a quiet, private space for the best results.
           </Typography>
         </DialogContent>
       </SecurityModal>
@@ -1631,12 +1658,14 @@ export default function Test() {
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: 'black', pt: 3 }}>
-          Heads Up!
+          Stay Focused to Protect Your Score 🎯
         </DialogTitle>
         <DialogContent sx={{ pb: 0 }}>
           <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
-            For security reasons, leaving or capturing the test page is not allowed.<br />
-            <b>If you do this again, your test will end and you will be redirected.</b>
+            We noticed you left the test page. To keep your verified badge trustworthy, please stay on this page during the interview.
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic' }}>
+            <b>Important:</b> Another interruption will end your test session to protect the integrity of your score.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
@@ -1655,7 +1684,7 @@ export default function Test() {
               },
             }}
           >
-            Got it
+            Continue My Test
           </Button>
         </DialogActions>
       </FirstViolationModal>
@@ -1788,7 +1817,7 @@ export default function Test() {
         borderRadius: 0,
         mb: 0
       }}>
-        <Toolbar sx={{ 
+        <Toolbar sx={{
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'stretch', sm: 'center' },
           gap: { xs: 1, sm: 0 },
@@ -1806,16 +1835,44 @@ export default function Test() {
             Technical Skill Test ({current + 1}/{questions.length || '-'})
           </Typography>
           {hasStartedTest && (
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                mr: { xs: 0, sm: 2 },
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                textAlign: { xs: 'center', sm: 'left' },
-              }}
-            >
-              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
-            </Typography>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexDirection: { xs: 'column', sm: 'row' }
+            }}>
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: 'rgba(0, 255, 157, 0.15)',
+                px: 2,
+                py: 0.5,
+                borderRadius: 2,
+                border: '1px solid rgba(0, 255, 157, 0.3)'
+              }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, mr: 0.5 }}>💰</Typography>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    color: '#00FF9D'
+                  }}
+                >
+                  ~{estimatedTaiEarned} TAI earned
+                </Typography>
+              </Box>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mr: { xs: 0, sm: 2 },
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  textAlign: { xs: 'center', sm: 'left' },
+                }}
+              >
+                ⏱️ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
+              </Typography>
+            </Box>
           )}
           <Button
             startIcon={<CallEndIcon />}
@@ -1853,6 +1910,36 @@ export default function Test() {
       </Paper>
 
       <Container maxWidth="md" sx={{ py: 4, flexGrow: 1 }}>
+        {/* Encouragement Message */}
+        {showEncouragement && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 9999,
+              bgcolor: 'rgba(76, 175, 80, 0.95)',
+              color: '#fff',
+              px: 4,
+              py: 3,
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(76, 175, 80, 0.4)',
+              animation: 'bounceIn 0.5s ease-out',
+              '@keyframes bounceIn': {
+                '0%': { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 0 },
+                '50%': { transform: 'translate(-50%, -50%) scale(1.05)', opacity: 1 },
+                '70%': { transform: 'translate(-50%, -50%) scale(0.9)' },
+                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
+              }
+            }}
+          >
+            <Typography variant="h5" fontWeight={700} textAlign="center">
+              {encouragementMessage}
+            </Typography>
+          </Box>
+        )}
+
         {/* Prominent Question Panel - Always visible during test */}
         {hasStartedTest && !isGenerating && questions[current] && (
           <QuestionPanel
@@ -2157,13 +2244,92 @@ export default function Test() {
             <Typography variant="body1" color="text.secondary" mb={4}>
               Make sure you're in a quiet environment with your camera and microphone ready.
             </Typography>
+
+            {/* Reward Preview Card */}
+            <Paper elevation={3} sx={{
+              p: 4,
+              mb: 4,
+              maxWidth: 600,
+              mx: 'auto',
+              background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+              color: '#fff',
+              borderRadius: 3,
+              border: '2px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+                <Box sx={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 2
+                }}>
+                  <Typography variant="h3">🎁</Typography>
+                </Box>
+                <Typography variant="h5" fontWeight={700}>
+                  Complete This Test to Earn
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  p: 2,
+                  borderRadius: 2
+                }}>
+                  <Typography variant="h4" sx={{ mr: 2 }}>💰</Typography>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>Up to 33.33 TAI Tokens</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.9 }}>Based on your performance score</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  p: 2,
+                  borderRadius: 2
+                }}>
+                  <Typography variant="h4" sx={{ mr: 2 }}>✓</Typography>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>Verified Skill Badge</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.9 }}>Share on LinkedIn • Show employers</Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  p: 2,
+                  borderRadius: 2
+                }}>
+                  <Typography variant="h4" sx={{ mr: 2 }}>⭐</Typography>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>Global Ranking Points</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.9 }}>Climb the leaderboard • Get noticed</Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Typography variant="body2" sx={{ textAlign: 'center', opacity: 0.9, fontStyle: 'italic' }}>
+                💡 Higher score = More rewards! Average score: 75/100
+              </Typography>
+            </Paper>
+
             <Button
               variant="contained"
               size="large"
               onClick={startTest}
               disabled={isGenerating || isConnecting}
-              sx={{ 
-                px: 4, 
+              sx={{
+                px: 4,
                 py: 1.5,
                 background: GREEN_MAIN,
                 '&:hover': {

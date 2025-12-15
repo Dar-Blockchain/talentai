@@ -16,14 +16,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(500).json({ error: 'Server configuration error: LinkedIn credentials not found' });
     }
     
-    // Request OpenID Connect scopes for profile info along with w_member_social for posting
-    // This is the new LinkedIn authentication method using OpenID Connect
-    const scope = 'w_member_social openid profile';
-    
+    // Request both posting and profile reading permissions
+    // openid + profile: Modern OpenID Connect scopes for user profile access
+    // w_member_social: Required for posting on behalf of user
+    // r_liteprofile: Legacy scope for backward compatibility
+    // LinkedIn will grant whatever scopes the app has access to
+    const scope = 'openid profile w_member_social r_liteprofile';
+
     // Generate state for CSRF protection
     const state = Math.random().toString(36).substring(2);
-    
-    console.log('Redirecting to LinkedIn OAuth with scope:', scope);
+
+    console.log('Redirecting to LinkedIn OAuth with scopes:', scope);
 
     const params = new URLSearchParams({
       response_type: 'code',

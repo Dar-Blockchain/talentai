@@ -99,4 +99,8 @@ router.get("/payment/history", postPaymentController.getPostPaymentHistory);
 // Description: Get payment details for a specific post
 router.get("/payment/details/:postId", postPaymentController.getPostPaymentDetails);
 
+// GET /post/interview-config/:jobId
+// Description: Get interview configuration for job-based HR interview (prompt flow)
+router.get("/interview-config/:jobId", postController.getJobInterviewConfig);
+
 module.exports = router;

@@ -334,3 +334,72 @@ exports.getPublicStats = async (req, res) => {
     });
   }
 };
+
+// Get interview configuration for job-based HR interview (prompt flow)
+exports.getJobInterviewConfig = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const Post = require("../../models/PostModel");
+
+    // Fetch job post with user (company) info
+    const post = await Post.findById(jobId).populate('user');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job post not found'
+      });
+    }
+
+    // Extract company and job details
+    const companyName = post.user?.companyDetails?.name || 'Company';
+    const jobTitle = post.jobDetails?.title || 'Position';
+    const experienceLevel = post.jobDetails?.experienceLevel || 'Mid Level';
+    const requiredSkills = (post.skillAnalysis?.requiredSkills || []).map(
+      skill => typeof skill === 'string' ? skill : skill.name
+    );
+
+    // Build interview configuration for HR interview
+    const config = {
+      interviewType: 'HR_INTERVIEW',
+      testReason: `Job Application Interview for ${jobTitle} at ${companyName}`,
+      context: {
+        targetCompany: companyName,
+        targetRole: jobTitle,
+        experienceLevel: experienceLevel,
+        interviewGoal: `Assess candidate fit for ${jobTitle} position`,
+        requiredSkills: requiredSkills,
+        jobDescription: post.jobDetails?.description || '',
+        responsibilities: post.jobDetails?.responsibilities || '',
+        requirements: post.jobDetails?.requirements || ''
+      },
+      models: {
+        fastModel: 'meta-llama/Llama-Guard-3-11B-Vision-Turbo',
+        thinkingModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+        analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
+      },
+      sessionSettings: {
+        duration: 30,
+        language: 'en',
+        difficulty: 'intermediate',
+        silenceTimeout: 5,
+        silenceIntelligence: {
+          enabled: true,
+          adaptiveThresholds: true,
+          maxSilencePrompts: 3,
+          naturalPauseDetection: true,
+          contextAwareThresholds: true
+        }
+      }
+    };
+
+    res.json(config);
+
+  } catch (error) {
+    console.error('Error in getJobInterviewConfig:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
