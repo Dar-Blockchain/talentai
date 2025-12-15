@@ -97,6 +97,19 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
     </Box>
   );
 
+  const noCandidates = () => (
+    <Typography
+      variant="h6"
+      my={2}
+      sx={{ fontSize: "14px", fontWeight: 400, lineHeight: "34px" }}
+    >
+      Unfortunately, no matching candidates were found for this job.
+      <br />
+      You can continue setting up your recruitment workflow or adjust job
+      requirements to improve matching.
+    </Typography>
+  );
+
   const renderCandidates = () => (
     <Box py={2}>
       <Typography
@@ -339,7 +352,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
       <DialogContent>
         {mode === "saving" && renderSaving()}
         {mode === "matching" && renderMatching()}
-        {mode === "done" && renderCandidates()}
+        {mode === "done" && matchingProfiles?.length > 0 && renderCandidates()}
+        {mode === "done" && matchingProfiles?.length === 0 && noCandidates()}
       </DialogContent>
 
       {mode === "done" && (
@@ -366,31 +380,33 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           >
             Continue to Flow Setup
           </Button>
-          <Button
-            variant="outlined"
-            onClick={() => {}}
-            sx={{
-              borderColor: "rgba(222, 147, 0, 1)",
-              color: "rgba(222, 147, 0, 1)",
-              fontWeight: 600,
-              borderRadius: "38px",
-              py: 1.5,
-              maxWidth: "300px",
-              height: "42px",
-              textTransform: "none",
-              fontSize: "0.875rem",
-              borderWidth: "1px",
-              "&:hover": {
-                backgroundColor: "rgba(222, 147, 0, 0.08)",
-              },
-              "&.Mui-disabled": {
-                borderColor: "#e5e7eb",
-                color: "#9ca3af",
-              },
-            }}
-          >
-            Unlock Candidate Profiles
-          </Button>
+          {matchingProfiles?.length > 0 && (
+            <Button
+              variant="outlined"
+              onClick={() => {}}
+              sx={{
+                borderColor: "rgba(222, 147, 0, 1)",
+                color: "rgba(222, 147, 0, 1)",
+                fontWeight: 600,
+                borderRadius: "38px",
+                py: 1.5,
+                maxWidth: "300px",
+                height: "42px",
+                textTransform: "none",
+                fontSize: "0.875rem",
+                borderWidth: "1px",
+                "&:hover": {
+                  backgroundColor: "rgba(222, 147, 0, 0.08)",
+                },
+                "&.Mui-disabled": {
+                  borderColor: "#e5e7eb",
+                  color: "#9ca3af",
+                },
+              }}
+            >
+              Unlock Candidate Profiles
+            </Button>
+          )}
         </DialogActions>
       )}
     </Dialog>
