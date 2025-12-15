@@ -10,6 +10,9 @@ const {
   TransactionId
 } = require('@hashgraph/sdk');
 
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
 console.log('🔧 Payment controller loaded at:', new Date().toISOString());
 
 /**
@@ -660,3 +663,184 @@ module.exports.completePayment = async (req, res) => {
     });
   }
 };
+
+/**
+ * Complete payment and grant TAI tokens for Stripe payments (no Hedera distribution)
+ * Expects: { planId, sessionId }
+ */
+module.exports.completeStripePayment = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { planId, sessionId } = req.body;
+
+    console.log(`🎯 Complete Stripe payment initiated for user ${userId}, plan: ${planId}, session: ${sessionId}`);
+
+    if (!planId || !sessionId) {
+      return res.status(400).json({ success: false, message: 'Plan ID and Stripe session ID are required' });
+    }
+
+    // Idempotence: if we already have a completed transaction with this sessionId, return success
+    const existing = await TokenTransaction.findOne({ transactionId: sessionId });
+    if (existing && existing.status === 'completed') {
+      return res.status(200).json({ success: true, message: 'Payment already processed', data: { transactionId: sessionId } });
+    }
+
+    const plan = tokenService.PRICING_PLANS.find(p => p.id === planId);
+    if (!plan) {
+      return res.status(404).json({ success: false, message: 'Pricing plan not found' });
+    }
+
+    // Retrieve Stripe session to verify payment
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['payment_intent'] });
+    } catch (err) {
+      console.error('❌ Error retrieving Stripe session:', err.message || err);
+      return res.status(400).json({ success: false, message: 'Invalid Stripe session ID', error: err.message });
+    }
+
+    const paid = session.payment_status === 'paid' || session.status === 'complete' || session.payment_intent?.status === 'succeeded';
+    if (!paid) {
+      return res.status(400).json({ success: false, message: 'Stripe payment not completed yet', sessionStatus: session.status, payment_status: session.payment_status });
+    }
+
+    const taiTokens = tokenService.calculateTaiTokens(plan.priceUsd);
+
+    // Create or update transaction record as completed
+    const txData = {
+      userId,
+      type: 'purchase',
+      amount: taiTokens,
+      price: plan.priceUsd,
+      status: 'completed',
+      paymentMethod: 'stripe',
+      transactionId: sessionId,
+      stripePaymentIntent: session.payment_intent?.id || null,
+      description: `TAI Token Purchase - ${plan.name}`,
+      metadata: {
+        planId: plan.id,
+        planName: plan.name,
+        priceUsd: plan.priceUsd,
+        taiTokens,
+        stripeSession: session.id,
+        stripeCustomer: session.customer,
+        stripePaymentIntent: session.payment_intent?.id || null
+      },
+      completedAt: new Date(),
+      verifiedAt: new Date()
+    };
+
+    if (existing) {
+      await TokenTransaction.findByIdAndUpdate(existing._id, txData, { new: true });
+    } else {
+      const transaction = new TokenTransaction(txData);
+      await transaction.save();
+    }
+
+    // Grant tokens to user
+    await tokenService.updateUserBalance(userId, taiTokens);
+
+    console.log(`✅ Stripe payment processed: granted ${taiTokens} TAI to ${userId}`);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Stripe payment completed and tokens granted',
+      data: {
+        transactionId: sessionId,
+        taiTokens,
+        planName: plan.name
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error in completeStripePayment:', error);
+    return res.status(500).json({ success: false, message: 'Failed to complete Stripe payment', error: error.message });
+  }
+};
+
+/**
+ * Process a Stripe checkout session object and grant tokens.
+ * Returns an object { success, message, data }
+ */
+async function processStripeSession(session) {
+  try {
+    const planId = session.metadata?.planId;
+    const sessionId = session.id;
+
+    if (!planId || !sessionId) {
+      return { success: false, message: 'Missing planId or sessionId in Stripe session metadata' };
+    }
+
+    // Try to resolve user: prefer metadata.userId, otherwise try customer email
+    let userId = session.metadata?.userId || null;
+    if (!userId) {
+      const email = session.customer_details?.email || session.customer_email;
+      if (email) {
+        const user = await User.findOne({ email }).select('_id');
+        userId = user?._id || null;
+      }
+    }
+
+    if (!userId) {
+      console.warn('Stripe session has no userId and no matching user by email; skipping token grant', sessionId);
+      return { success: false, message: 'User not resolved from Stripe session' };
+    }
+
+    // Idempotence check
+    const existing = await TokenTransaction.findOne({ transactionId: sessionId });
+    if (existing && existing.status === 'completed') {
+      return { success: true, message: 'Payment already processed', data: { transactionId: sessionId } };
+    }
+
+    const plan = tokenService.PRICING_PLANS.find(p => p.id === planId);
+    if (!plan) {
+      return { success: false, message: 'Pricing plan not found' };
+    }
+
+    const paid = session.payment_status === 'paid' || session.status === 'complete' || session.payment_intent?.status === 'succeeded';
+    if (!paid) {
+      return { success: false, message: 'Stripe payment not completed', sessionStatus: session.status };
+    }
+
+    const taiTokens = tokenService.calculateTaiTokens(plan.priceUsd);
+
+    const txData = {
+      userId,
+      type: 'purchase',
+      amount: taiTokens,
+      price: plan.priceUsd,
+      status: 'completed',
+      paymentMethod: 'stripe',
+      transactionId: sessionId,
+      stripePaymentIntent: session.payment_intent?.id || null,
+      description: `TAI Token Purchase - ${plan.name}`,
+      metadata: {
+        planId: plan.id,
+        planName: plan.name,
+        priceUsd: plan.priceUsd,
+        taiTokens,
+        stripeSession: session.id,
+        stripeCustomer: session.customer,
+        stripePaymentIntent: session.payment_intent?.id || null
+      },
+      completedAt: new Date(),
+      verifiedAt: new Date()
+    };
+
+    if (existing) {
+      await TokenTransaction.findByIdAndUpdate(existing._id, txData, { new: true });
+    } else {
+      const transaction = new TokenTransaction(txData);
+      await transaction.save();
+    }
+
+    // Grant tokens
+    await tokenService.updateUserBalance(userId, taiTokens);
+
+    return { success: true, message: 'Stripe session processed', data: { transactionId: sessionId, taiTokens, planName: plan.name } };
+  } catch (err) {
+    console.error('Error in processStripeSession:', err);
+    return { success: false, message: err.message };
+  }
+}
+
+module.exports.processStripeSession = processStripeSession;

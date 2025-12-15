@@ -9,6 +9,7 @@ const stripeController = require('../controllers/PaymentContollers/stripeControl
 router.post('/create-checkout-session', stripeController.createCheckoutSession);
 
 // ✅ Webhook Stripe
+const paymentController = require('../controllers/paymentController');
 router.post(
   '/webhook',
   bodyParser.raw({ type: 'application/json' }),
@@ -32,12 +33,21 @@ router.post(
       const session = event.data.object;
       const planId = session.metadata?.planId || 'unknown';
 
-      console.log('🎉 Payment confirmed for plan:', planId);
+      console.log('🎉 Stripe webhook: checkout.session.completed for plan:', planId);
 
-      // TODO: Async handling
-      // - Grant tokens to user
-      // - Save transaction in DB
-      // - Send confirmation email
+      // Process asynchronously but respond quickly to Stripe
+      (async () => {
+        try {
+          const result = await paymentController.processStripeSession(session);
+          if (!result.success) {
+            console.warn('Stripe session processing warning:', result.message);
+          } else {
+            console.log('Stripe session processed:', result.data);
+          }
+        } catch (err) {
+          console.error('❌ Error processing Stripe session async:', err);
+        }
+      })();
     }
 
     // Réponse immédiate à Stripe
