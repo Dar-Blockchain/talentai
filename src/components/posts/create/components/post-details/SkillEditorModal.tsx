@@ -58,6 +58,11 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
 
   const levels = skillType === "hard" ? hardSkillLevels : softSkillLevels;
 
+  const isSaveDisabled =
+  !localSkill.name?.trim() ||
+  !localSkill.level ||
+  localSkill.percentage <= 0;
+
   React.useEffect(() => {
     if (skill) setLocalSkill(skill);
   }, [skill]);
@@ -228,6 +233,8 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
               fullWidth
               variant="outlined"
               value={localSkill.percentage}
+              type="number"
+              inputProps={{ min: 1, max: 100 }}
               onChange={(e) =>
                 handleChange("percentage", Number(e.target.value))
               }
@@ -262,6 +269,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
         <Button
           variant="outlined"
           onClick={handleSave}
+          disabled={isSaveDisabled}
           sx={{
             width: 130,
             borderColor: "rgba(77, 217, 163, 1)",
