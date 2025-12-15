@@ -224,6 +224,16 @@ const postGenerationSlice = createSlice({
       }
     },
 
+    updateJobSalaryField(
+  state,
+  action: PayloadAction<{ field: keyof Salary; value: number | string }>
+) {
+  if (state.generatedPost) {
+    state.generatedPost.jobDetails.salary[action.payload.field] =
+      action.payload.value as never;
+  }
+},
+
     // ---------- Requirements (Array) ----------
     updateRequirements(state, action: PayloadAction<string>) {
       if (state.generatedPost) {
@@ -354,6 +364,7 @@ export const {
   addSoftSkill,
 
   updateJobField,
+  updateJobSalaryField,
   updateRequirements,
   updateResponsibilities
 

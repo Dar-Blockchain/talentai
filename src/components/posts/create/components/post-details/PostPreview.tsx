@@ -17,6 +17,7 @@ import {
   deleteHardSkill,
   deleteSoftSkill,
   updateJobField,
+  updateJobSalaryField,
   updateRequirements,
   updateResponsibilities,
 } from "@/store/slices/postGenerationSlice";
@@ -31,6 +32,7 @@ import {
   contractTypes,
   workModes,
 } from "@/components/preferences/data/candidateData";
+import SalaryRange from "./SalaryRange";
 
 const inputStyle = {
   height: 40,
@@ -53,6 +55,7 @@ const PostPreview = () => {
     experienceLevel = "",
     employmentType = "",
     location = "",
+    salary = { min: "", max: "", currency: "USD" },
     requirements = [],
     responsibilities = [],
   } = generatedPost?.jobDetails ?? {};
@@ -76,6 +79,13 @@ const PostPreview = () => {
     setSelectedType(type);
     setOpen(true);
   };
+
+  const handleSalaryChange = (
+      field: "min" | "max" | "currency",
+      value: number | string
+    ) => {
+      dispatch(updateJobSalaryField({ field, value }));
+    };
 
   return (
     <Box
@@ -260,7 +270,7 @@ const PostPreview = () => {
             </TextField>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <Box sx={{ flex: 1 }}>
               <Typography
                 variant="subtitle2"
@@ -385,6 +395,8 @@ const PostPreview = () => {
               </TextField>
             </Box>
           </Box>
+
+          <SalaryRange salaryRange={salary} onSalaryChange={handleSalaryChange} />
 
           <Box sx={{ mt: 2 }}>
             <Box

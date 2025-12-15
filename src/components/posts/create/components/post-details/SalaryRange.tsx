@@ -4,7 +4,7 @@ import Image from "next/image";
 
 interface SalaryRangeProps {
   salaryRange: {
-    currency: string;
+    currency: string; // USD | EUR | GBP
     min: string;
     max: string;
   };
@@ -14,26 +14,30 @@ interface SalaryRangeProps {
     min?: string;
     max?: string;
   };
-  currencies?: string[];
+  currencies?: { value: string; label: string }[];
 }
+
+const defaultCurrencies = [
+  { value: "USD", label: "$" },
+  { value: "EUR", label: "€" },
+  { value: "GBP", label: "£" },
+];
 
 const SalaryRange: React.FC<SalaryRangeProps> = ({
   salaryRange,
   onSalaryChange,
   errors = {},
-  currencies = ["$", "€", "£"],
+  currencies = defaultCurrencies,
 }) => {
   const handleChange =
     (field: "min" | "max" | "currency") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = e.target.value;
 
-      // For min/max, remove leading zeros and clamp to 0
       if (field === "min" || field === "max") {
         value = value.replace(/^0+/, "");
         if (value === "") value = "0";
-        const numberValue = Math.max(0, parseInt(value, 10) || 0);
-        value = numberValue.toString();
+        value = Math.max(0, Number(value)).toString();
       }
 
       onSalaryChange(field, value);
@@ -75,59 +79,48 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             select
             value={salaryRange.currency || ""}
             onChange={handleChange("currency")}
-            variant="outlined"
             fullWidth
             error={!!errors.currency}
             helperText={errors.currency}
             sx={inputStyle}
           >
-            <MenuItem
-              disabled
-              value=""
-              sx={{ fontSize: "12px", fontWeight: 500 }}
-            >
+            <MenuItem disabled value="" sx={{fontSize: "12px", fontWeight: 500}}>
               Currency
             </MenuItem>
             {currencies.map((currency) => (
-              <MenuItem
-                key={currency}
-                value={currency}
-                sx={{ fontSize: "12px", fontWeight: 500 }}
-              >
-                {currency}
+              <MenuItem key={currency.value} value={currency.value} sx={{fontSize: "12px", fontWeight: 500}}>
+                {currency.label}
               </MenuItem>
             ))}
           </TextField>
         </Box>
 
-        {/* Minimum Salary */}
+        {/* Min */}
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
             Minimum Salary
           </Typography>
           <TextField
-            fullWidth
-            placeholder="Min"
             type="number"
-            value={salaryRange.min || ""}
+            value={salaryRange.min}
             onChange={handleChange("min")}
             error={!!errors.min}
+            fullWidth
             sx={inputStyle}
           />
         </Box>
 
-        {/* Maximum Salary */}
+        {/* Max */}
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569" }}>
             Maximum Salary
           </Typography>
           <TextField
-            fullWidth
-            placeholder="Max"
             type="number"
-            value={salaryRange.max || ""}
+            value={salaryRange.max}
             onChange={handleChange("max")}
             error={!!errors.max}
+            fullWidth
             sx={inputStyle}
           />
         </Box>

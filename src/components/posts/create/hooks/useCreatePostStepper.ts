@@ -29,6 +29,7 @@ export const useCreatePostStepper = (
   const { nodes, edges } = recruitmentFlow;
 
   // ✅ STEP 0 VALIDATION
+  // ✅ STEP 0 VALIDATION
   const validateStep0 = () => {
     const jobDetails = generatedPost?.jobDetails;
     const hardSkills = generatedPost?.skillAnalysis?.requiredSkills || [];
@@ -49,6 +50,56 @@ export const useCreatePostStepper = (
       return false;
     }
 
+    if (!jobDetails?.employmentType) {
+      showToast({ message: "Employment type is required", severity: "error" });
+      return false;
+    }
+
+    if (!jobDetails?.location?.trim()) {
+      showToast({ message: "Work mode is required", severity: "error" });
+      return false;
+    }
+
+    // Salary validation
+    if (
+      !jobDetails?.salary?.min ||
+      !jobDetails?.salary?.max ||
+      !jobDetails?.salary?.currency
+    ) {
+      showToast({
+        message: "Salary minimum, maximum, and currency are required",
+        severity: "error",
+      });
+      return false;
+    }
+
+    const minSalary = Number(jobDetails.salary.min);
+    const maxSalary = Number(jobDetails.salary.max);
+
+    if (isNaN(minSalary) || isNaN(maxSalary)) {
+      showToast({
+        message: "Salary must be a valid number",
+        severity: "error",
+      });
+      return false;
+    }
+
+    if (minSalary <= 0 || maxSalary <= 0) {
+      showToast({
+        message: "Salary must be greater than 0",
+        severity: "error",
+      });
+      return false;
+    }
+
+    if (minSalary > maxSalary) {
+      showToast({
+        message: "Minimum salary cannot be greater than maximum salary",
+        severity: "error",
+      });
+      return false;
+    }
+
     if (hardSkills.length === 0) {
       showToast({
         message: "At least one hard skill is required",
@@ -66,10 +117,7 @@ export const useCreatePostStepper = (
     }
 
     const allSkills = [...hardSkills, ...softSkills];
-    const total = allSkills.reduce(
-      (sum, s) => sum + (s.percentage || 0),
-      0
-    );
+    const total = allSkills.reduce((sum, s) => sum + (s.percentage || 0), 0);
 
     if (total !== 100) {
       showToast({
@@ -152,8 +200,7 @@ export const useCreatePostStepper = (
         order: index,
         connections: edges
           .filter(
-            (edge: any) =>
-              edge.source === node.id || edge.target === node.id
+            (edge: any) => edge.source === node.id || edge.target === node.id
           )
           .map((edge: any) => ({
             id: edge.id,
