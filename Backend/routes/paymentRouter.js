@@ -359,6 +359,6 @@ router.get("/stats", paymentController.getPaymentStats);
  */
 router.post("/complete", paymentController.completePayment);
 
-router.post('/complete-strip', paymentController.processStripeSession);
+router.post('/complete-stripe', paymentController.processStripeSession);
 
 module.exports = router;
