@@ -55,37 +55,28 @@ const StepCard: React.FC<StepCardProps> = ({
         {/* Step Number Circle */}
         <Box
           sx={{
-            width: 60,
-            height: 60,
-            borderRadius: '16px',
-            background:
-              step.status === 'done'
-                ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
-                : step.status === 'inProgress'
-                ? 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)'
-                : 'linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%)',
+            width: 56,
+            height: 56,
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontWeight: 700,
-            fontSize: '1rem',
-            border: '4px solid white',
-            boxShadow:
-              step.status === 'done'
-                ? '0 4px 16px rgba(76, 175, 80, 0.4)'
-                : step.status === 'inProgress'
-                ? '0 4px 16px rgba(255, 152, 0, 0.4)'
-                : '0 4px 12px rgba(0,0,0,0.1)',
+            fontWeight: 800,
+            fontSize: '1.1rem',
+            border: '3px solid white',
+            boxShadow: '0 4px 16px rgba(102, 126, 234, 0.25)',
             zIndex: 3,
             position: 'relative',
+            flexShrink: 0,
             transition: 'all 0.3s ease',
           }}
         >
           {step.status === 'done' ? (
-            <CheckCircleOutlineIcon sx={{ fontSize: 32 }} />
+            <CheckCircleOutlineIcon sx={{ fontSize: 28 }} />
           ) : (
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1.1rem' }}>
               {index + 1}
             </Typography>
           )}
@@ -95,43 +86,32 @@ const StepCard: React.FC<StepCardProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Card
             sx={{
-              p: 3,
-              borderRadius: 3,
-              border:
-                step.status === 'done'
-                  ? '3px solid transparent'
-                  : step.status === 'inProgress'
-                  ? '3px solid transparent'
-                  : '2px solid #e9ecef',
-              background:
-                step.status === 'done'
-                  ? 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #4caf50 0%, #45a049 100%) border-box'
-                  : step.status === 'inProgress'
-                  ? 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #ff9800 0%, #f57c00 100%) border-box'
-                  : '#ffffff',
-              backgroundColor:
-                step.status === 'done'
-                  ? 'rgba(76, 175, 80, 0.02)'
-                  : step.status === 'inProgress'
-                  ? 'rgba(255, 152, 0, 0.02)'
-                  : '#ffffff',
-              boxShadow:
-                step.status === 'done'
-                  ? '0 8px 24px rgba(76, 175, 80, 0.2)'
-                  : step.status === 'inProgress'
-                  ? '0 8px 24px rgba(255, 152, 0, 0.2)'
-                  : '0 4px 12px rgba(0,0,0,0.08)',
-              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              p: 4,
+              borderRadius: 4,
+              border: '2px solid #f0f0f0',
+              background: '#ffffff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                opacity: 0,
+                transition: 'opacity 0.3s ease',
+              },
               '&:hover': {
-                transform: 'translateY(-4px) scale(1.01)',
-                boxShadow:
-                  step.status === 'done'
-                    ? '0 12px 32px rgba(76, 175, 80, 0.3)'
-                    : step.status === 'inProgress'
-                    ? '0 12px 32px rgba(255, 152, 0, 0.3)'
-                    : '0 8px 20px rgba(0,0,0,0.15)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 24px rgba(102, 126, 234, 0.12)',
+                border: '2px solid #667eea',
+                '&::before': {
+                  opacity: 1,
+                },
               },
             }}
           >
@@ -141,25 +121,20 @@ const StepCard: React.FC<StepCardProps> = ({
                 <Typography
                   variant="h6"
                   sx={{
-                    fontWeight: 600,
-                    color:
-                      step.status === 'done'
-                        ? '#2e7d32'
-                        : step.status === 'inProgress'
-                        ? '#f57c00'
-                        : '#333',
+                    fontWeight: 700,
+                    color: '#1a1a1a',
                     mb: 0.5,
                   }}
                 >
                   {step.stepId?.data?.label || `Step ${index + 1}`}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 600 }}>
                   {step.stepId?.data?.type || 'Unknown Type'}
                 </Typography>
                 {submittedLink && (
                   <Typography variant="body2" sx={{ mt: 0.5 }}>
                     <strong>Submitted link: </strong>
-                    <a href={submittedLink} target="_blank" rel="noreferrer" style={{ color: '#1a73e8' }}>
+                    <a href={submittedLink} target="_blank" rel="noreferrer" style={{ color: '#667eea' }}>
                       {submittedLink}
                     </a>
                   </Typography>
@@ -169,60 +144,41 @@ const StepCard: React.FC<StepCardProps> = ({
               {/* Status Badge */}
               <Chip
                 label={
-                  step.status === 'done' ? '✓ Completed' : step.status === 'inProgress' ? '⟳ In Progress' : '⏱ Pending'
+                  step.status === 'done' ? '✓ Completed' : step.status === 'inProgress' ? 'In Progress' : 'Pending'
                 }
-                size="medium"
+                size="small"
                 sx={{
-                  background:
-                    step.status === 'done'
-                      ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(69, 160, 73, 0.2))'
-                      : step.status === 'inProgress'
-                      ? 'linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(245, 124, 0, 0.2))'
-                      : 'linear-gradient(135deg, rgba(158, 158, 158, 0.12), rgba(117, 117, 117, 0.15))',
-                  backdropFilter: 'blur(10px)',
-                  color:
-                    step.status === 'done' ? '#2e7d32' : step.status === 'inProgress' ? '#f57c00' : '#757575',
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08))',
+                  color: '#667eea',
                   fontWeight: 700,
-                  textTransform: 'capitalize',
+                  fontSize: '0.8rem',
                   px: 2,
-                  py: 2.5,
-                  fontSize: '0.85rem',
-                  border:
-                    step.status === 'done'
-                      ? '2px solid rgba(76, 175, 80, 0.3)'
-                      : step.status === 'inProgress'
-                      ? '2px solid rgba(255, 152, 0, 0.3)'
-                      : '2px solid rgba(158, 158, 158, 0.2)',
-                  boxShadow:
-                    step.status === 'done'
-                      ? '0 4px 12px rgba(76, 175, 80, 0.2)'
-                      : step.status === 'inProgress'
-                      ? '0 4px 12px rgba(255, 152, 0, 0.2)'
-                      : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                  py: 0.5,
+                  height: 28,
+                  border: '1.5px solid rgba(102, 126, 234, 0.2)',
                 }}
               />
             </Box>
 
             {/* Progress Bar */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                 <Typography
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: '#333',
-                    fontSize: '0.9rem',
+                    color: '#6b7280',
+                    fontSize: '0.875rem',
                   }}
                 >
-                  Progress
+                  Step Progress
                 </Typography>
                 <Typography
                   variant="body2"
                   sx={{
-                    fontWeight: 700,
-                    color:
-                      step.status === 'done' ? '#2e7d32' : step.status === 'inProgress' ? '#f57c00' : '#757575',
-                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    color: '#667eea',
+                    fontSize: '0.875rem',
                   }}
                 >
                   {step.status === 'done' ? '100%' : step.status === 'inProgress' ? '50%' : '0%'}
@@ -232,24 +188,13 @@ const StepCard: React.FC<StepCardProps> = ({
                 variant="determinate"
                 value={step.status === 'done' ? 100 : step.status === 'inProgress' ? 50 : 0}
                 sx={{
-                  height: 12,
-                  borderRadius: 6,
+                  height: 8,
+                  borderRadius: 4,
                   backgroundColor: '#f5f5f5',
                   '& .MuiLinearProgress-bar': {
-                    background:
-                      step.status === 'done'
-                        ? 'linear-gradient(90deg, #4caf50 0%, #66bb6a 50%, #4caf50 100%)'
-                        : step.status === 'inProgress'
-                        ? 'linear-gradient(90deg, #ff9800 0%, #ffa726 50%, #ff9800 100%)'
-                        : 'linear-gradient(90deg, #9e9e9e 0%, #bdbdbd 100%)',
-                    borderRadius: 6,
-                    transition: 'width 0.6s ease, background 0.3s ease',
-                    boxShadow:
-                      step.status === 'done'
-                        ? '0 2px 8px rgba(76, 175, 80, 0.4)'
-                        : step.status === 'inProgress'
-                        ? '0 2px 8px rgba(255, 152, 0, 0.4)'
-                        : 'none',
+                    background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                    borderRadius: 4,
+                    transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                   },
                 }}
               />

@@ -150,7 +150,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   return (
     <Box sx={{ width: '100%' }}>
       {/* Dashboard Header */}
-      <DashboardHeader onBrowseJobs={handleBrowseJobs} />
 
       {/* Summary Cards */}
       <SummaryCards
