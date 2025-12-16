@@ -764,7 +764,7 @@ module.exports.completeStripePayment = async (req, res) => {
 /**
  * Core logic for processing Stripe session
  */
-async function _processStripeSessionCore(session, planId) {
+async function _processStripeSessionCore(session, planId,userId) {
   const sessionId = session.id;
 
   if (!planId) {
@@ -772,14 +772,6 @@ async function _processStripeSessionCore(session, planId) {
   }
 
   // Try to resolve user: prefer metadata.userId, otherwise try customer email
-  let userId = session.metadata?.userId || null;
-  if (!userId) {
-    const email = session.customer_details?.email || session.customer_email;
-    if (email) {
-      const user = await User.findOne({ email }).select('_id');
-      userId = user?._id || null;
-    }
-  }
 
   if (!userId) {
     console.warn('Stripe session has no userId and no matching user by email; skipping token grant', sessionId);
@@ -847,6 +839,7 @@ async function _processStripeSessionCore(session, planId) {
 module.exports.processStripeSession = async (req, res) => {
   try {
     const { stripeSessionId } = req.body;
+    const userId = req.user._id;
 
     if (!stripeSessionId) {
       return res.status(400).json({ 
@@ -860,7 +853,7 @@ module.exports.processStripeSession = async (req, res) => {
 
    const { planId } = session?.metadata;
 
-    const result = await _processStripeSessionCore(session, planId);
+    const result = await _processStripeSessionCore(session, planId,userId);
     
     if (!result.success) {
       return res.status(400).json(result);
