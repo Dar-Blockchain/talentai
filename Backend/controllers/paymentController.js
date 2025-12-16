@@ -835,6 +835,7 @@ async function _processStripeSessionCore(session, planId,userId) {
 /**
  * HTTP handler for POST /completeStripPayment
  * Expects body: { stripeSessionId, planId }
+ * Includes token distribution via completeDistribution
  */
 module.exports.processStripeSession = async (req, res) => {
   try {
@@ -849,17 +850,99 @@ module.exports.processStripeSession = async (req, res) => {
     }
 
     // Retrieve Stripe session
-   const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    const { planId } = session?.metadata;
 
-   const { planId } = session?.metadata;
-
-    const result = await _processStripeSessionCore(session, planId,userId);
+    const result = await _processStripeSessionCore(session, planId, userId);
     
     if (!result.success) {
       return res.status(400).json(result);
     }
 
-    return res.status(200).json(result);
+    // Get user with Hedera account details
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // If user has Hedera account, perform token distribution
+    if (user.hederaAccountId && user.hederaPrivateKey) {
+      console.log(`🚀 Starting token distribution for Stripe payment...`);
+      
+      try {
+        const plan = tokenService.PRICING_PLANS.find(p => p.id === planId);
+        const taiTokens = tokenService.calculateTaiTokens(plan.priceUsd);
+
+        // Get pricing info to calculate gas fees
+        const pricingInfo = await hbarPricingService.getPricingInfo([plan.priceUsd]);
+        const conversion = pricingInfo.conversions[plan.priceUsd];
+
+        const distributionResult = await taiTokenDistributionService.completeDistribution(
+          user.hederaAccountId,
+          user.hederaPrivateKey,
+          taiTokens,
+          conversion.gasFeeHbar,
+          stripeSessionId
+        );
+
+        if (distributionResult.success) {
+          // Update user's gas fee balance
+          await User.findByIdAndUpdate(userId, {
+            $inc: { gasFeeBalance: conversion.gasFeeHbar }
+          });
+
+          console.log(`✅ Token distribution completed successfully`);
+
+          return res.status(200).json({
+            success: true,
+            message: 'Stripe payment processed and tokens distributed',
+            data: {
+              ...result.data,
+              gasFeeHbar: conversion.gasFeeHbar,
+              distributionResult
+            }
+          });
+        } else {
+          // Partial distribution
+          console.warn(`⚠️  Token distribution partially completed`);
+          
+          return res.status(207).json({
+            success: false,
+            message: 'Payment processed but token distribution partially failed',
+            data: {
+              ...result.data,
+              distributionResult
+            }
+          });
+        }
+      } catch (distributionError) {
+        console.error('❌ Distribution error:', distributionError);
+        
+        return res.status(207).json({
+          success: false,
+          message: 'Payment processed but token distribution failed',
+          data: {
+            ...result.data,
+            distributionError: distributionError.message
+          }
+        });
+      }
+    } else {
+      // No Hedera account - tokens granted but not distributed on chain
+      console.log(`ℹ️  User has no Hedera account, tokens granted but not distributed on chain`);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Stripe payment processed and tokens granted (no Hedera distribution)',
+        data: {
+          ...result.data,
+          note: 'User must create a Hedera account to receive distributed tokens'
+        }
+      });
+    }
   } catch (err) {
     console.error('Error in processStripeSession:', err);
     return res.status(500).json({ 
