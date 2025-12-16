@@ -6,15 +6,16 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ✅ Route pour créer une session de paiement Stripe
 const stripeController = require('../controllers/PaymentContollers/stripeController');
+
 router.post('/create-checkout-session', stripeController.createCheckoutSession);
 
-// ✅ Webhook Stripe
-const paymentController = require('../controllers/paymentController');
-router.post(
-  '/webhook',
-  bodyParser.raw({ type: 'application/json' }),
-  // Delegate webhook handling to controller (expects raw body)
-  paymentController.handleStripeWebhook
-);
+
+// // ✅ Webhook Stripe
+// router.post(
+//   '/webhook',
+//   bodyParser.raw({ type: 'application/json' }),
+//   // Delegate webhook handling to controller (expects raw body)
+//   paymentController.handleStripeWebhook
+// );
 
 module.exports = router;
