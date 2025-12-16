@@ -26,6 +26,9 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
       payment_method_types: ['card'],
       success_url,
       cancel_url,
+      metadata: {
+        planId,
+      },
       line_items: [
         {
           price_data: {

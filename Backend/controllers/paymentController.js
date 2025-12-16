@@ -846,17 +846,19 @@ async function _processStripeSessionCore(session, planId) {
  */
 module.exports.processStripeSession = async (req, res) => {
   try {
-    const { stripeSessionId, planId } = req.body;
+    const { stripeSessionId } = req.body;
 
-    if (!planId || !stripeSessionId) {
+    if (!stripeSessionId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Missing planId or stripeSessionId in request body' 
+        message: 'Missing stripeSessionId in request body' 
       });
     }
 
     // Retrieve Stripe session
-    const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+   const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+
+   const { planId } = session?.metadata;
 
     const result = await _processStripeSessionCore(session, planId);
     
