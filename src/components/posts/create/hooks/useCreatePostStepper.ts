@@ -23,6 +23,7 @@ export const useCreatePostStepper = (
 
   const [activeStep, setActiveStep] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
     "saving"
   );
@@ -202,6 +203,7 @@ export const useCreatePostStepper = (
 
     // ✅ STEP 2 — Recruitment flow
     if (activeStep === 2 && savedPost?.jobData?._id) {
+      setPaymentModalOpen(true)
       const sequenceData = nodes.map((node: any, index: number) => ({
         ...node,
         order: index,
@@ -217,12 +219,12 @@ export const useCreatePostStepper = (
           })),
       }));
 
-      await dispatch(
-        postRecruitmentSteps({
-          postId: savedPost.jobData._id,
-          steps: sequenceData,
-        })
-      );
+      // await dispatch(
+      //   postRecruitmentSteps({
+      //     postId: savedPost.jobData._id,
+      //     steps: sequenceData,
+      //   })
+      // );
     }
   };
 
@@ -232,10 +234,12 @@ export const useCreatePostStepper = (
 
   return {
     activeStep,
-    handleNext,
-    handleBack,
     modalOpen,
     modalMode,
+    paymentModalOpen,
     setModalOpen,
+    setPaymentModalOpen,
+    handleNext,
+    handleBack,
   };
 };

@@ -22,7 +22,7 @@ import MatchingFlowModal from "./components/MatchingFlowModal";
 import { RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
 import AgentConfigurationStep from "./AgentConfigurationStep";
-import { savePost } from "@/store/slices/postSlice";
+import PaymentConfirmationModal from "./components/PaymentConfirmationModal";
 
 const steps = ["Job Details", "Agent Configuration", "Recruitment Flow"];
 
@@ -106,8 +106,16 @@ const CreatePostStepper: React.FC = () => {
   );
   const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
 
-  const { activeStep, handleNext, handleBack, modalOpen, modalMode, setModalOpen } =
-    useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost);
+  const {
+    activeStep,
+    modalOpen,
+    modalMode,
+    paymentModalOpen,
+    handleNext,
+    handleBack,
+    setModalOpen,
+    setPaymentModalOpen,
+  } = useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost);
 
   return (
     <Box sx={{ my: 5, position: "relative", pb: 10 }}>
@@ -247,6 +255,10 @@ const CreatePostStepper: React.FC = () => {
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         onContinue={handleNext}
+      />
+      <PaymentConfirmationModal
+        open={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
       />
     </Box>
   );

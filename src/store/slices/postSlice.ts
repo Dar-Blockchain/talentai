@@ -18,6 +18,12 @@ interface RecommendedState {
   error: string | null;
 }
 
+interface PostPaymentState {
+  loading: boolean;
+  error: string | null;
+  data: any | null;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -38,6 +44,7 @@ interface PostState {
   recommended: RecommendedState;
   savePost: SavePostState;
   recruitmentFlow: RecruitmentFlowState;
+  postPayment: PostPaymentState;
 }
 
 // Initial state
@@ -71,7 +78,12 @@ const initialState: PostState = {
   recruitmentFlow: {
     nodes: [],
     edges: [],
-  }
+  },
+  postPayment: {
+    loading: false,
+    error: null,
+    data: null,
+  },
 };
 
 export const savePost = createAsyncThunk(
@@ -365,6 +377,45 @@ export const fetchJobById = createAsyncThunk(
   }
 );
 
+export const processPostPayment = createAsyncThunk(
+  "post/processPostPayment",
+  async (
+    { postId, agentId }: { postId: string; agentId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const token = Cookies.get("api_token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/payment/process`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            postId,
+            agentId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Payment processing failed");
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "An error occurred while processing payment"
+      );
+    }
+  }
+);
+
+
 // Post slice
 const postSlice = createSlice({
   name: 'post',
@@ -515,6 +566,19 @@ const postSlice = createSlice({
       .addCase(fetchRecommendedPosts.rejected, (state, action) => {
         state.recommended.loading = false;
         state.recommended.error = action.payload as string;
+      })
+      // ---- POST PAYMENT ----
+      .addCase(processPostPayment.pending, (state) => {
+        state.postPayment.loading = true;
+        state.postPayment.error = null;
+      })
+      .addCase(processPostPayment.fulfilled, (state, action) => {
+        state.postPayment.loading = false;
+        state.postPayment.data = action.payload;
+      })
+      .addCase(processPostPayment.rejected, (state, action) => {
+        state.postPayment.loading = false;
+        state.postPayment.error = action.payload as string;
       });
   },
 });
@@ -553,4 +617,10 @@ export const selectRecommended = (state: { post: PostState }) => ({
   items: state.post.recommended.items,
   loading: state.post.recommended.loading,
   error: state.post.recommended.error,
+});
+
+export const selectPostPayment = (state: { post: PostState }) => ({
+  data: state.post.postPayment.data,
+  loading: state.post.postPayment.loading,
+  error: state.post.postPayment.error,
 });
