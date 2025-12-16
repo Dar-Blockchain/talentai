@@ -13,34 +13,50 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import Link from "next/link";
+import { completeStripePayment } from "@/store/slices/tokenSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { useDispatch } from "react-redux";
+import { normalizeQueryParam } from "@/utils/functions";
+import { useSelector } from "react-redux";
 
 export default function PaymentResultPage() {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { status, session_id } = router.query;
 
   const [message, setMessage] = useState("");
+
+  const { loading } = useSelector(
+    (state: RootState) => state.token
+  );
+  const stripeSessionId = normalizeQueryParam(session_id);
 
   useEffect(() => {
     if (!status) return;
 
     if (status === "success") {
       setMessage("Thank you! Your payment was completed successfully.");
+      completePayment();
     } else if (status === "cancel") {
       setMessage("Your payment was canceled. No charges were made.");
     }
-  }, [status]);
+  }, [status, stripeSessionId]);
 
-  if (!status) {
+  const completePayment = async () => {
+    await dispatch(completeStripePayment({ stripeSessionId })).unwrap();
+  };
+
+  if (!status || loading) {
     return (
       <Box
         sx={{
           p: 5,
           textAlign: "center",
-          minHeight: "80vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           background: "linear-gradient(135deg, #fafafa 0%, #f1f1f1 100%)",
+          minHeight: '100vh'
         }}
       >
         <CircularProgress />
