@@ -10,7 +10,7 @@ const paymentController = require('../controllers/paymentController');
 
 router.post('/create-checkout-session', stripeController.createCheckoutSession);
 
-router.post('/complete', paymentController.processStripeSession);
+router.post('/completeStripPayment', paymentController.processStripeSession);
 
 
 // ✅ Webhook Stripe
