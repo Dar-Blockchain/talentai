@@ -19,7 +19,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
-const GREEN_MAIN = '#8310FF';
+const PRIMARY_COLOR = '#667eea';
+const SECONDARY_COLOR = '#764ba2';
 
 // Utility function to detect and convert URLs to clickable links
 const LinkifiedText = ({ text, ...props }: { text: string } & any) => {
@@ -44,10 +45,10 @@ const LinkifiedText = ({ text, ...props }: { text: string } & any) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{
-                                color: '#8310FF',
+                                color: PRIMARY_COLOR,
                                 textDecoration: 'underline',
                                 '&:hover': {
-                                    color: '#6B0BC7',
+                                    color: SECONDARY_COLOR,
                                     textDecoration: 'underline',
                                 }
                             }}
@@ -64,10 +65,10 @@ const LinkifiedText = ({ text, ...props }: { text: string } & any) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{
-                                color: '#8310FF',
+                                color: PRIMARY_COLOR,
                                 textDecoration: 'underline',
                                 '&:hover': {
-                                    color: '#6B0BC7',
+                                    color: SECONDARY_COLOR,
                                     textDecoration: 'underline',
                                 }
                             }}
@@ -103,10 +104,10 @@ const LinkifiedListItem = ({ text, style }: { text: string; style?: React.CSSPro
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{
-                                color: '#8310FF',
+                                color: PRIMARY_COLOR,
                                 textDecoration: 'underline',
                                 '&:hover': {
-                                    color: '#6B0BC7',
+                                    color: SECONDARY_COLOR,
                                     textDecoration: 'underline',
                                 }
                             }}
@@ -123,10 +124,10 @@ const LinkifiedListItem = ({ text, style }: { text: string; style?: React.CSSPro
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{
-                                color: '#8310FF',
+                                color: PRIMARY_COLOR,
                                 textDecoration: 'underline',
                                 '&:hover': {
-                                    color: '#6B0BC7',
+                                    color: SECONDARY_COLOR,
                                     textDecoration: 'underline',
                                 }
                             }}
@@ -146,9 +147,9 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
     marginTop: theme.spacing(4),
     background: '#fff',
-    borderRadius: '24px',
-    border: '1px solid #eee',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+    borderRadius: '16px',
+    border: '2px solid #f0f0f0',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
 }));
 
 export default function CandidateInterviewDetailPage() {
@@ -184,23 +185,54 @@ export default function CandidateInterviewDetailPage() {
     }, [id]);
 
     return (
-        <Container maxWidth="md" sx={{ minHeight: '100vh', py: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 4,
+                p: 3,
+                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.04) 0%, rgba(118, 75, 162, 0.04) 100%)',
+                borderRadius: 4,
+                border: '2px solid #f0f0f0'
+            }}>
                 <Button
                     startIcon={<ArrowBackIcon />}
                     onClick={() => router.push('/dashboard/candidate')}
-                    sx={{ color: GREEN_MAIN, fontWeight: 600 }}
+                    sx={{
+                        color: PRIMARY_COLOR,
+                        fontWeight: 700,
+                        textTransform: 'none',
+                        fontSize: '1rem',
+                        '&:hover': {
+                            background: 'rgba(102, 126, 234, 0.08)'
+                        }
+                    }}
                 >
                     Back to Dashboard
                 </Button>
-                {/* Télécharger PDF Button */}
+                {/* Download PDF Button */}
                 {(!loading && !error && data) && (
                     <Button
                         variant="contained"
-                        sx={{ background: GREEN_MAIN, color: '#fff', fontWeight: 700, borderRadius: 3, textTransform: 'none' }}
+                        sx={{
+                            background: `linear-gradient(135deg, ${PRIMARY_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
+                            color: '#fff',
+                            fontWeight: 700,
+                            borderRadius: 3,
+                            textTransform: 'none',
+                            px: 3,
+                            py: 1.5,
+                            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                            '&:hover': {
+                                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+                                transform: 'translateY(-2px)'
+                            },
+                            transition: 'all 0.3s ease'
+                        }}
                         onClick={() => window.print()}
                     >
-                        Télécharger PDF
+                        Download PDF
                     </Button>
                 )}
             </Box>
@@ -220,9 +252,24 @@ export default function CandidateInterviewDetailPage() {
             {/* Main interview content for printing */}
             <div id="printable-content">
                 <StyledPaper>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: GREEN_MAIN, mb: 2 }}>
-                        Interview Details
-                    </Typography>
+                    <Box sx={{
+                        mb: 4,
+                        pb: 3,
+                        borderBottom: '2px solid #f0f0f0'
+                    }}>
+                        <Typography variant="h3" sx={{
+                            fontWeight: 900,
+                            background: `linear-gradient(135deg, ${PRIMARY_COLOR} 0%, ${SECONDARY_COLOR} 100%)`,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            mb: 1
+                        }}>
+                            Interview Report
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#6b7280', fontWeight: 500 }}>
+                            Detailed analysis and assessment results
+                        </Typography>
+                    </Box>
                     {loading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                             <CircularProgress color="primary" />
@@ -244,31 +291,11 @@ export default function CandidateInterviewDetailPage() {
                                 }); 
                                 return null; 
                             })()}
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Type: <Chip label={data.type || 'onboarding'} color="primary" size="small" />
-                                </Typography>
-                                <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Overall Score: <Chip label={data.overallScore !== undefined ? `${data.overallScore}%` : '-'} color="success" size="small" />
-                                </Typography>
-                                {data.post?.jobDetails?.title && (
-                                    <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                        Post Name: {data.post.jobDetails.title}
-                                    </Typography>
-                                )}
-                                <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Date: {data.createdAt ? new Date(data.createdAt).toLocaleString() : data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '-'}
-                                </Typography>
-                                {data.post?.jobDetails?.status && (
-                                    <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                        Status: <Chip label={data.post.jobDetails.status} color="default" size="small" />
-                                    </Typography>
-                                )}
-                            </Box>
+                     
                             {/* Job Details Section */}
                             {data.post?.jobDetails && (
-                                <Box sx={{ mb: 4, p: 3, background: '#f8fafc', borderRadius: 3, border: '1px solid #eee' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                <Box sx={{ mb: 4, p: 3, background: '#ffffff', borderRadius: 4, border: '2px solid #f0f0f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                    <Typography variant="h6" sx={{ color: PRIMARY_COLOR, fontWeight: 800, mb: 2 }}>
                                         Job Details
                                     </Typography>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{data.post.jobDetails.title}</Typography>
@@ -279,107 +306,11 @@ export default function CandidateInterviewDetailPage() {
                                    */}
                                 </Box>
                             )}
-                            {/* Skill Analysis Section */}
-                            {/* {data.post?.skillAnalysis && (
-                                <Box sx={{ mb: 4, p: 3, background: '#f8fafc', borderRadius: 3, border: '1px solid #eee' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
-                                        Skill Analysis
-                                    </Typography>
-                                    {data.post.skillAnalysis.skillSummary && (
-                                        <>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Main Technologies:</Typography>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                                {data.post.skillAnalysis.skillSummary.mainTechnologies?.map((tech: string, idx: number) => (
-                                                    <Chip key={idx} label={tech} color="primary" variant="outlined" />
-                                                ))}
-                                            </Stack>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Complementary Skills:</Typography>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                                {data.post.skillAnalysis.skillSummary.complementarySkills?.map((skill: string, idx: number) => (
-                                                    <Chip key={idx} label={skill} color="secondary" variant="outlined" />
-                                                ))}
-                                            </Stack>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Learning Path:</Typography>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                                {data.post.skillAnalysis.skillSummary.learningPath?.map((lp: string, idx: number) => (
-                                                    <Chip key={idx} label={lp} color="success" variant="outlined" />
-                                                ))}
-                                            </Stack>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Stack Complexity:</Typography>
-                                            <Chip label={data.post.skillAnalysis.skillSummary.stackComplexity} color="default" variant="outlined" />
-                                        </>
-                                    )}
-                                    {data.post.skillAnalysis.requiredSkills && (
-                                        <>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Required Skills:</Typography>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                                {data.post.skillAnalysis.requiredSkills.map((skill: any) => (
-                                                    <Chip key={skill._id} label={`${skill.name} (${skill.level})`} color="primary" variant="outlined" />
-                                                ))}
-                                            </Stack>
-                                        </>
-                                    )}
-                                    {data.post.skillAnalysis.suggestedSkills && (
-                                        <>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Suggested Skills:</Typography>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                                {Object.entries(data.post.skillAnalysis.suggestedSkills).map(([cat, arr]) => (
-                                                    (arr as any[]).map((sugg, idx) => (
-                                                        <Chip key={sugg._id || idx} label={`${sugg.name}${sugg.priority ? ` (${sugg.priority})` : ''}`} color="info" variant="outlined" />
-                                                    ))
-                                                ))}
-                                            </Stack>
-                                        </>
-                                    )}
-                                </Box>
-                            )} */}
-                            {/* LinkedIn Post Section */}
-                            {/* {data.post?.linkedinPost && data.post.linkedinPost.formattedContent && (
-                                <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #eee' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
-                                        LinkedIn Post Preview
-                                    </Typography>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                                        {data.post.linkedinPost.formattedContent.headline}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                        {data.post.linkedinPost.formattedContent.introduction}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                        {data.post.linkedinPost.formattedContent.companyPitch}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                        {data.post.linkedinPost.formattedContent.roleOverview}
-                                    </Typography>
-                                    {data.post.linkedinPost.formattedContent.keyPoints && (
-                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                                            {data.post.linkedinPost.formattedContent.keyPoints.map((point: string, idx: number) => (
-                                                <li key={idx} style={{ color: '#333', marginBottom: 4 }}>{point}</li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                        {data.post.linkedinPost.formattedContent.skillsRequired}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>
-                                        {data.post.linkedinPost.formattedContent.benefitsSection}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ mb: 1, color: GREEN_MAIN, fontWeight: 600 }}>
-                                        {data.post.linkedinPost.formattedContent.callToAction}
-                                    </Typography>
-                                    {data.post.linkedinPost.hashtags && (
-                                        <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
-                                            {data.post.linkedinPost.hashtags.map((tag: string, idx: number) => (
-                                                <Chip key={idx} label={tag} color="secondary" variant="outlined" />
-                                            ))}
-                                        </Stack>
-                                    )}
-                                </Box>
-                            )} */}
+                   
                             {/* Assessment Result Section for onboarding/skill tests */}
                             {(data.type === 'onboarding' || data.type === 'skill' || !data.type) && data.overallScore !== undefined && (
-                                <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                <Box sx={{ mb: 4, p: 3, background: '#ffffff', borderRadius: 4, border: '2px solid #f0f0f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                    <Typography variant="h6" sx={{ color: PRIMARY_COLOR, fontWeight: 800, mb: 2 }}>
                                         {data.type === 'skill' ? 'Skill Assessment Summary' : 'Assessment Summary'}
                                     </Typography>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
@@ -390,8 +321,8 @@ export default function CandidateInterviewDetailPage() {
                                         <>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Skills Assessed:</Typography>
                                             {data.skillDetails.map((skill: any, idx: number) => (
-                                                <Box key={idx} sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #ddd' }}>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: GREEN_MAIN }}>
+                                                <Box key={idx} sx={{ mb: 3, p: 2, background: '#ffffff', borderRadius: 3, border: '2px solid #f0f0f0' }}>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: PRIMARY_COLOR }}>
                                                         {skill.name}
                                                     </Typography>
                                                     <Chip label={`Type: ${skill.type}`} size="small" sx={{ mr: 1, mb: 1 }} />
@@ -462,8 +393,8 @@ export default function CandidateInterviewDetailPage() {
                             
                             {/* Recommendations Section */}
                             {Array.isArray(data.recommendations) && data.recommendations.length > 0 && (
-                                <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #d1c4e9' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                <Box sx={{ mb: 4, p: 3, background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, rgba(118, 75, 162, 0.06) 100%)', borderRadius: 4, border: '2px solid #f0f0f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                    <Typography variant="h6" sx={{ color: PRIMARY_COLOR, fontWeight: 800, mb: 2 }}>
                                         📚 Learning Recommendations
                                     </Typography>
                                     <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
@@ -487,7 +418,7 @@ export default function CandidateInterviewDetailPage() {
                                                     minWidth: 24,
                                                     height: 24,
                                                     borderRadius: '50%',
-                                                    background: GREEN_MAIN,
+                                                    background: PRIMARY_COLOR,
                                                     color: '#fff',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -508,115 +439,12 @@ export default function CandidateInterviewDetailPage() {
                                 </Box>
                             )}
 
-                            {/* Candidate Information Section */}
-                            {data.candidateId && (
-                                <Box sx={{ mb: 4, p: 3, background: '#fef3ff', borderRadius: 3, border: '1px solid #d8b4fe' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
-                                        👤 Candidate Information
-                                    </Typography>
-
-                                    {/* Basic Info */}
-                                    <Box sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Personal Details:</Typography>
-                                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-                                            <Box>
-                                                <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Name:</Typography>
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                    {data.candidateId.firstName} {data.candidateId.lastName}
-                                                </Typography>
-                                            </Box>
-                                            {data.candidateId.age && (
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Age:</Typography>
-                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{data.candidateId.age}</Typography>
-                                                </Box>
-                                            )}
-                                            {data.candidateId.gender && (
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Gender:</Typography>
-                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{data.candidateId.gender}</Typography>
-                                                </Box>
-                                            )}
-                                            {data.candidateId.educationLevel && (
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Education:</Typography>
-                                                    <Chip label={data.candidateId.educationLevel} size="small" color="primary" />
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    </Box>
-
-                                    {/* Work Preferences */}
-                                    {(data.candidateId.preferredContractType || data.candidateId.workModePreference || data.candidateId.expectedSalary) && (
-                                        <Box sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Work Preferences:</Typography>
-                                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-                                                {data.candidateId.preferredContractType && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Contract Type:</Typography>
-                                                        <Chip label={data.candidateId.preferredContractType} size="small" color="info" />
-                                                    </Box>
-                                                )}
-                                                {data.candidateId.workModePreference && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Work Mode:</Typography>
-                                                        <Chip label={data.candidateId.workModePreference} size="small" color="info" />
-                                                    </Box>
-                                                )}
-                                                {data.candidateId.expectedSalary && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Expected Salary:</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                            {data.candidateId.expectedSalary.min} - {data.candidateId.expectedSalary.max} {data.candidateId.expectedSalary.currency}
-                                                        </Typography>
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        </Box>
-                                    )}
-
-                                    {/* Skills */}
-                                    {data.candidateId.skills && data.candidateId.skills.length > 0 && (
-                                        <Box sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Technical Skills:</Typography>
-                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                {data.candidateId.skills.map((skill: any, idx: number) => (
-                                                    <Chip
-                                                        key={idx}
-                                                        label={`${skill.name} (L${skill.proficiencyLevel})`}
-                                                        size="small"
-                                                        color={skill.ScoreTest >= 70 ? 'success' : skill.ScoreTest >= 50 ? 'warning' : 'default'}
-                                                        sx={{ fontSize: '0.75rem' }}
-                                                    />
-                                                ))}
-                                            </Box>
-                                        </Box>
-                                    )}
-
-                                    {/* Soft Skills */}
-                                    {data.candidateId.softSkills && data.candidateId.softSkills.length > 0 && (
-                                        <Box sx={{ p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Soft Skills:</Typography>
-                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                {data.candidateId.softSkills.map((skill: any, idx: number) => (
-                                                    <Chip
-                                                        key={idx}
-                                                        label={`${skill.name} - ${skill.category} (Score: ${skill.ScoreTest})`}
-                                                        size="small"
-                                                        color="secondary"
-                                                        sx={{ fontSize: '0.75rem' }}
-                                                    />
-                                                ))}
-                                            </Box>
-                                        </Box>
-                                    )}
-                                </Box>
-                            )}
+                      
 
                             {/* Technical Interview Assessment Section */}
                             {data.metadata && data.interviewData?.finalReport?.coverage && (
-                                <Box sx={{ mb: 4, p: 3, background: '#f0f9ff', borderRadius: 3, border: '1px solid #bae6fd' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                <Box sx={{ mb: 4, p: 3, background: '#ffffff', borderRadius: 4, border: '2px solid #f0f0f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                    <Typography variant="h6" sx={{ color: PRIMARY_COLOR, fontWeight: 800, mb: 2 }}>
                                         🎯 Technical Interview Assessment
                                     </Typography>
 
@@ -654,7 +482,7 @@ export default function CandidateInterviewDetailPage() {
                                                     width: 60,
                                                     height: 60,
                                                     borderRadius: '50%',
-                                                    background: GREEN_MAIN,
+                                                    background: PRIMARY_COLOR,
                                                     color: '#fff',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -678,7 +506,7 @@ export default function CandidateInterviewDetailPage() {
                                             {Object.entries(data.interviewData.finalReport.coverage.areas).map(([areaName, areaData]: [string, any]) => (
                                                 <Box key={areaName} sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, textTransform: 'capitalize' }}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY_COLOR, textTransform: 'capitalize' }}>
                                                             {areaName.replace(/_/g, ' ')}
                                                         </Typography>
                                                         <Chip
@@ -711,22 +539,55 @@ export default function CandidateInterviewDetailPage() {
                                                     {/* Indicators */}
                                                     {areaData.indicators && areaData.indicators.length > 0 && (
                                                         <Box sx={{ mt: 2 }}>
-                                                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Indicators:</Typography>
-                                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                                {areaData.indicators.map((indicator: any, idx: number) => (
-                                                                    <Chip
-                                                                        key={idx}
-                                                                        label={indicator.name || indicator}
-                                                                        size="small"
-                                                                        variant={indicator.covered ? 'filled' : 'outlined'}
-                                                                        color={indicator.covered ? 'success' : 'default'}
-                                                                        sx={{ fontSize: '0.75rem' }}
-                                                                    />
-                                                                ))}
+                                                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 2, color: '#1a1a1a' }}>Assessment Indicators:</Typography>
+                                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                                                                {(() => {
+                                                                    // Remove duplicates based on indicator name
+                                                                    const uniqueIndicators = areaData.indicators.reduce((acc: any[], indicator: any) => {
+                                                                        const name = indicator.name || indicator;
+                                                                        const exists = acc.find(i => (i.name || i) === name);
+                                                                        if (!exists) {
+                                                                            acc.push(indicator);
+                                                                        }
+                                                                        return acc;
+                                                                    }, []);
+
+                                                                    return uniqueIndicators.map((indicator: any, idx: number) => {
+                                                                        const indicatorName = indicator.name || indicator;
+                                                                        const formattedName = indicatorName
+                                                                            .replace(/^AI-detected:\s*/i, '')
+                                                                            .split('_')
+                                                                            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                                                                            .join(' ');
+
+                                                                        return (
+                                                                            <Chip
+                                                                                key={idx}
+                                                                                label={formattedName}
+                                                                                size="medium"
+                                                                                icon={indicator.covered ? <CheckCircleIcon /> : undefined}
+                                                                                sx={{
+                                                                                    fontSize: '0.875rem',
+                                                                                    fontWeight: 600,
+                                                                                    background: indicator.covered
+                                                                                        ? 'linear-gradient(135deg, #4caf5015 0%, #43e97b15 100%)'
+                                                                                        : '#f5f5f5',
+                                                                                    color: indicator.covered ? '#4caf50' : '#6b7280',
+                                                                                    border: indicator.covered
+                                                                                        ? '2px solid #4caf50'
+                                                                                        : '2px solid #e0e0e0',
+                                                                                    px: 2,
+                                                                                    py: 2.5,
+                                                                                    '& .MuiChip-icon': {
+                                                                                        color: '#4caf50',
+                                                                                        fontSize: '1.1rem'
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                        );
+                                                                    });
+                                                                })()}
                                                             </Box>
-                                                            <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
-                                                                {areaData.indicators.filter((i: any) => i.covered).length} of {areaData.indicators.length} indicators covered
-                                                            </Typography>
                                                         </Box>
                                                     )}
                                                 </Box>
@@ -759,14 +620,7 @@ export default function CandidateInterviewDetailPage() {
                                                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{data.interviewData.analytics.coveragePercentage}%</Typography>
                                                     </Box>
                                                 )}
-                                                {data.interviewData.analytics.completedAreas !== undefined && data.interviewData.analytics.totalAreas !== undefined && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Completed Areas</Typography>
-                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                            {data.interviewData.analytics.completedAreas} / {data.interviewData.analytics.totalAreas}
-                                                        </Typography>
-                                                    </Box>
-                                                )}
+                                               
                                                 {data.interviewData.analytics.interactionStyle && (
                                                     <Box>
                                                         <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 0.5 }}>Style</Typography>
@@ -785,53 +639,7 @@ export default function CandidateInterviewDetailPage() {
                                         </Box>
                                     )}
 
-                                    {/* AI Analysis Section */}
-                                    {data.interviewData.finalReport?.aiAnalysis && (
-                                        <Box sx={{ mt: 3, p: 2, background: '#fef3c7', borderRadius: 2, border: '1px solid #fde047' }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>AI Analysis:</Typography>
-
-                                            {data.interviewData.finalReport.aiAnalysis.strongestAreas && data.interviewData.finalReport.aiAnalysis.strongestAreas.length > 0 ? (
-                                                <Box sx={{ mb: 2 }}>
-                                                    <Typography variant="caption" sx={{ color: '#666', fontWeight: 600, display: 'block', mb: 1 }}>Strongest Areas:</Typography>
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                        {data.interviewData.finalReport.aiAnalysis.strongestAreas.map((area: string, idx: number) => (
-                                                            <Chip key={idx} label={area} size="small" color="success" />
-                                                        ))}
-                                                    </Box>
-                                                </Box>
-                                            ) : null}
-
-                                            {data.interviewData.finalReport.aiAnalysis.weakestAreas && data.interviewData.finalReport.aiAnalysis.weakestAreas.length > 0 ? (
-                                                <Box sx={{ mb: 2 }}>
-                                                    <Typography variant="caption" sx={{ color: '#666', fontWeight: 600, display: 'block', mb: 1 }}>Weakest Areas:</Typography>
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                        {data.interviewData.finalReport.aiAnalysis.weakestAreas.map((area: string, idx: number) => (
-                                                            <Chip key={idx} label={area} size="small" color="error" />
-                                                        ))}
-                                                    </Box>
-                                                </Box>
-                                            ) : null}
-
-                                            {data.interviewData.finalReport.aiAnalysis.recommendedFocus && data.interviewData.finalReport.aiAnalysis.recommendedFocus.length > 0 ? (
-                                                <Box>
-                                                    <Typography variant="caption" sx={{ color: '#666', fontWeight: 600, display: 'block', mb: 1 }}>Recommended Focus:</Typography>
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                        {data.interviewData.finalReport.aiAnalysis.recommendedFocus.map((focus: string, idx: number) => (
-                                                            <Chip key={idx} label={focus} size="small" color="warning" />
-                                                        ))}
-                                                    </Box>
-                                                </Box>
-                                            ) : null}
-
-                                            {(!data.interviewData.finalReport.aiAnalysis.strongestAreas || data.interviewData.finalReport.aiAnalysis.strongestAreas.length === 0) &&
-                                             (!data.interviewData.finalReport.aiAnalysis.weakestAreas || data.interviewData.finalReport.aiAnalysis.weakestAreas.length === 0) &&
-                                             (!data.interviewData.finalReport.aiAnalysis.recommendedFocus || data.interviewData.finalReport.aiAnalysis.recommendedFocus.length === 0) && (
-                                                <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic' }}>
-                                                    No detailed analysis available yet. The interview may still be in progress or incomplete.
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    )}
+                               
 
                                     {/* Recommendations Section */}
                                     {data.interviewData.finalReport?.recommendations && data.interviewData.finalReport.recommendations.length > 0 && (
@@ -844,7 +652,7 @@ export default function CandidateInterviewDetailPage() {
                                                             minWidth: 20,
                                                             height: 20,
                                                             borderRadius: '50%',
-                                                            background: GREEN_MAIN,
+                                                            background: PRIMARY_COLOR,
                                                             color: '#fff',
                                                             display: 'flex',
                                                             alignItems: 'center',
@@ -859,46 +667,14 @@ export default function CandidateInterviewDetailPage() {
                                                 ))}
                                             </Box>
                                         </Box>
-                                    )}
-
-                                    {/* Session Information */}
-                                    {(data.interviewData.sessionId || data.interviewData.interviewType) && (
-                                        <Box sx={{ mt: 3, p: 2, background: '#f3f4f6', borderRadius: 2, border: '1px solid #d1d5db' }}>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Session Information:</Typography>
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                {data.interviewData.sessionId && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666' }}>Session ID: </Typography>
-                                                        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>{data.interviewData.sessionId}</Typography>
-                                                    </Box>
-                                                )}
-                                                {data.interviewData.interviewType && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666' }}>Type: </Typography>
-                                                        <Chip label={data.interviewData.interviewType} size="small" sx={{ ml: 0.5 }} />
-                                                    </Box>
-                                                )}
-                                                {data.status && (
-                                                    <Box>
-                                                        <Typography variant="caption" sx={{ color: '#666' }}>Status: </Typography>
-                                                        <Chip
-                                                            label={data.status}
-                                                            size="small"
-                                                            color={data.status === 'completed' ? 'success' : 'default'}
-                                                            sx={{ ml: 0.5, textTransform: 'capitalize' }}
-                                                        />
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        </Box>
-                                    )}
+                                    )}                                
                                 </Box>
                             )}
 
                             {/* Assessment Result Section */}
                             {data.jobAssessmentResult?.analysis && (
-                                <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                <Box sx={{ mb: 4, p: 3, background: '#ffffff', borderRadius: 4, border: '2px solid #f0f0f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                    <Typography variant="h6" sx={{ color: PRIMARY_COLOR, fontWeight: 800, mb: 2 }}>
                                         Assessment Analysis
                                     </Typography>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>

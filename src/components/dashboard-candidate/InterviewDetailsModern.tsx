@@ -17,6 +17,7 @@ import {
     Fade,
     Grid,
     Avatar,
+    Pagination,
 } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
@@ -45,6 +46,8 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [limit] = useState(4);
     const router = useRouter();
 
     const profileIdRef = useRef(profile?._id);
@@ -56,7 +59,7 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
     }, [profile]);
 
     const fetchData = useCallback(
-        async (type: string, signal?: AbortSignal) => {
+        async (type: string, currentPage: number, signal?: AbortSignal) => {
             const requestId = ++requestIdRef.current;
             setLoading(true);
             setError(null);
@@ -64,7 +67,7 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
             try {
                 const token = localStorage.getItem("api_token");
                 const realProfileId = profileIdRef.current;
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=1&limit=100&type=${type}&candidateId=${realProfileId}`;
+                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=${currentPage}&limit=${limit}&type=${type}&candidateId=${realProfileId}`;
 
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -95,7 +98,7 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
                 }
             }
         },
-        []
+        [limit]
     );
 
     useEffect(() => {
@@ -105,12 +108,21 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
-        fetchData(tab, controller.signal);
+        fetchData(tab, page, controller.signal);
 
         return () => {
             controller.abort();
         };
-    }, [tab, fetchData]);
+    }, [tab, page, fetchData]);
+
+    const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+        setPage(value);
+    };
+
+    const handleTabChange = (newTab: string) => {
+        setTab(newTab);
+        setPage(1); // Reset to page 1 when changing tabs
+    };
 
     const normalizedTab = useMemo(() => {
         if (tab === "skill") return "skill";
@@ -128,59 +140,8 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
     };
 
     return (
-        <Box sx={{ width: "100%", px: { xs: 2, md: 4 }, py: 4 }}>
-            {/* Modern Header with Gradient */}
-            <Box
-                sx={{
-                    borderRadius: 4,
-                    border:"2px solid #e0e0e0",
-                    p: 4,
-                    mb: 4,
-                    position: "relative",
-                    overflow: "hidden",
-                    "&::before": {
-                        content: '""',
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: "radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)",
-                        pointerEvents: "none",
-                    },
-                }}
-            >
-                <Stack direction="row" alignItems="center" spacing={2} sx={{ position: "relative", zIndex: 1 }}>
-                    <Avatar
-                        sx={{
-                            width: 64,
-                            height: 64,
-                            background: "rgba(255, 255, 255, 0.2)",
-                            backdropFilter: "blur(10px)",
-                        }}
-                    >
-                        <EmojiEventsIcon sx={{ fontSize: 36, color: "black" }} />
-                    </Avatar>
-                    <Box>
-                        <Typography
-                            variant="h3"
-                            sx={{
-                                fontWeight: 800,
-                                color: "black",
-                                textShadow: "0 2px 10px rgba(0,0,0,0.2)",
-                                letterSpacing: "-0.02em",
-                            }}
-                        >
-                            Interview Performance
-                        </Typography>
-                        <Typography variant="body1" sx={{ color: "black", mt: 0.5 }}>
-                            Track your progress and achievements across all interview types
-                        </Typography>
-                    </Box>
-                </Stack>
-            </Box>
-
-            {/* Modern Tabs with Pills Design */}
+        <Box sx={{ width: "100%", px: { xs: 2, md: 2 }, py: 2 }}>
+         
             <Box
                 sx={{
                     mb: 4,
@@ -192,7 +153,7 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
             >
                 <Tabs
                     value={tab}
-                    onChange={(_, newValue) => setTab(newValue)}
+                    onChange={(_, newValue) => handleTabChange(newValue)}
                     variant="scrollable"
                     scrollButtons="auto"
                     sx={{
@@ -499,6 +460,37 @@ export default function InterviewDetailsModern({ profile }: InterviewDetailsTabs
                                             );
                                         })}
                                     </Grid>
+                                )}
+
+                                {/* Pagination */}
+                                {data.length > 0 && total > limit && (
+                                    <Box sx={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        mt: 4,
+                                        pb: 2
+                                    }}>
+                                        <Pagination
+                                            count={Math.ceil(total / limit)}
+                                            page={page}
+                                            onChange={handlePageChange}
+                                            color="primary"
+                                            size="large"
+                                            sx={{
+                                                '& .MuiPaginationItem-root': {
+                                                    fontWeight: 600,
+                                                    fontSize: '1rem',
+                                                    '&.Mui-selected': {
+                                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                        color: '#fff',
+                                                        '&:hover': {
+                                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                        }
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </Box>
                                 )}
                             </Box>
                         </Fade>
