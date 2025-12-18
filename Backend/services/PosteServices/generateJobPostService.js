@@ -9,7 +9,15 @@ const {
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 async function generateJobPost(description, type = "detailed", user) {
-  try {
+  // Configurable retry parameters via env
+  const MAX_RETRIES = parseInt(process.env.GENERATE_JOBPOST_MAX_RETRIES || "3", 10);
+  const BASE_DELAY_MS = parseInt(process.env.GENERATE_JOBPOST_BASE_DELAY_MS || "1000", 10);
+
+  // Helper sleep with jitter
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // Single attempt: call LLM and parse response
+  const attemptOnce = async () => {
     if (!description) {
       const err = new Error("Missing job description");
       err.status = 400;
@@ -138,9 +146,36 @@ ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
     }
 
     return result;
-  } catch (error) {
-    throw error;
+  };
+
+  // Retry loop
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await attemptOnce();
+      return res;
+    } catch (err) {
+      lastError = err;
+      const isParseError = (err.message || "").includes("Failed to parse response from LLM") || err.rawResponse;
+      const isLast = attempt === MAX_RETRIES;
+
+      if (isLast || !isParseError) {
+        // If it's not a parse/transient error or we've exhausted retries, rethrow
+        throw err;
+      }
+
+      // Otherwise wait with exponential backoff + jitter and retry
+      const backoff = Math.pow(2, attempt - 1) * BASE_DELAY_MS;
+      const jitter = Math.floor(Math.random() * Math.min(500, backoff));
+      const waitMs = backoff + jitter;
+      console.warn(`generateJobPost: parse error on attempt ${attempt}, retrying after ${waitMs}ms`);
+      await sleep(waitMs);
+      // continue loop
+    }
   }
+
+  // If somehow loop exits, throw last error
+  throw lastError || new Error("Unknown error in generateJobPost");
 }
 
 module.exports = {
