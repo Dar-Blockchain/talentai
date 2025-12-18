@@ -224,8 +224,27 @@ exports.getUserPosts = async (req, res) => {
       return res.status(401).json({ success: false, error: 'User not authenticated' });
     }
 
-    const posts = await postService.getPostsByUserId(req.user._id);
-    res.status(200).json({ success: true, data: posts });
+    const {
+      page = 1,
+      limit = 6,
+    } = req.query;
+
+    // Parse and validate pagination
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+
+    const result = await postService.getPostsByUserIdWithPagination(req.user._id, pageNum, limitNum);
+
+    res.status(200).json({
+      success: true,
+      results: result.posts,
+      total: result.pagination.total,
+      page: result.pagination.page,
+      limit: result.pagination.limit,
+      totalPages: result.pagination.totalPages,
+      hasNextPage: result.pagination.hasNextPage,
+      hasPrevPage: result.pagination.hasPrevPage,
+    });
   } catch (error) {
     handleError(res, error, 400);
   }
