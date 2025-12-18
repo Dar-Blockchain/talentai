@@ -2,23 +2,18 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { signOut } from "next-auth/react";
-import { clearProfile } from "@/store/slices/profileSlice";
-import { logout, setLoggingOut } from "@/store/slices/authSlice";
-import { resetRedirectState } from "@/utils/authRedirect";
 import Cookies from "js-cookie";
 import { usePreferences } from "@/components/preferences/hooks/usePreferences";
-import Header from "@/components/Header";
 import { Box, Card, Typography } from "@mui/material";
 import OnboardingStepper from "@/components/preferences/OnboardingStepper";
 
 function Preferences() {
   const router = useRouter();
-  const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const [isClient, setIsClient] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
 
   const  preferences = usePreferences();
   const { userType, setUserType, setIsTestJobReturnUrl } = preferences;
@@ -36,6 +31,7 @@ function Preferences() {
       const returnUrl = router.query.returnUrl as string;
       if (returnUrl && returnUrl.includes("/testjob/")) {
         setIsTestJobReturnUrl(true);
+        setIsCheckingProfile(false);
         return;
       }
 
@@ -47,6 +43,7 @@ function Preferences() {
           if (router.pathname !== "/signin") {
             router.push("/signin");
           }
+          setIsCheckingProfile(false);
           return;
         }
 
@@ -69,6 +66,7 @@ function Preferences() {
           if (router.pathname !== "/signin") {
             router.push("/signin");
           }
+          setIsCheckingProfile(false);
           return;
         }
 
@@ -83,6 +81,7 @@ function Preferences() {
             (data.type === "Candidate" || data.type === "Company");
 
           if (isProfileComplete) {
+            // Keep showing loading while redirecting
             // Immediate redirect for existing users
             if (returnUrl) {
               router.replace(decodeURIComponent(returnUrl));
@@ -95,13 +94,18 @@ function Preferences() {
             } else {
               router.replace("/dashboard/candidate");
             }
+            return; // Keep loading state during redirect
           }
           // If profile is not complete, stay on preferences page
+          setIsCheckingProfile(false);
+        } else {
+          // If profile doesn't exist or is invalid, stay on preferences page
+          setIsCheckingProfile(false);
         }
-        // If profile doesn't exist or is invalid, stay on preferences page
       } catch (error) {
         console.error("Error checking profile:", error);
         // Stay on preferences page to create profile
+        setIsCheckingProfile(false);
       }
     };
 
@@ -124,20 +128,30 @@ function Preferences() {
     return null;
   }
 
-  // Show loading state while preventing hydration
-  if (!isClient) {
+  // Show loading state while checking profile
+  if (isCheckingProfile) {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           minHeight: "100vh",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#f5f5f5",
+          background: 'rgba(251, 254, 255, 1)',
+          gap: 2,
         }}
       >
-        <h6 style={{ color: "#666" }}>Loading...</h6>
-      </div>
+        <Box
+          component="img"
+          src="/logo.svg"
+          alt="TalentAI Logo"
+          sx={{ height: 45 }}
+        />
+        <Typography sx={{ color: "#666", fontSize: "14px" }}>
+          Verifying your profile...
+        </Typography>
+      </Box>
     );
   }
 
