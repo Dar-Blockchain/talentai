@@ -6,10 +6,14 @@ import { Box, Container } from "@mui/material";
 import { AppDispatch } from "@/store/store";
 import { useDispatch } from "react-redux";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
+import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMethod";
+import { useSelector } from "react-redux";
+import { selectCreationType } from "@/store/slices/postGenerationSlice";
 
 const CreateJobPage2: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [mounted, setMounted] = useState(false);
+  const creationType = useSelector(selectCreationType)
 
   useEffect(() => setMounted(true), []);
 
@@ -30,7 +34,8 @@ const CreateJobPage2: React.FC = () => {
     >
       <Container maxWidth="lg">
         <HeaderDashboard />
-        <CreatePostStepper />
+        {!creationType && <JobPostCreationMethod/>}
+        {creationType && <CreatePostStepper />}
       </Container>
     </Box>
   );

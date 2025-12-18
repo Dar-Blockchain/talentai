@@ -61,6 +61,7 @@ export interface LinkedinPost {
 }
 
 export interface PostGenerationResponse {
+  creationType: "ai" | "manual" | null;
   jobDetails: JobDetails;
   skillAnalysis: SkillAnalysis;
   linkedinPost: LinkedinPost;
@@ -72,7 +73,7 @@ export interface PostGenerationResponse {
 
 export interface PostGenerationState {
   generatedPost: PostGenerationResponse | null;
-
+  creationType: "ai" | "manual" | null;
   promptDescription: string;
   generationType: "quick" | "detailed";
   workMode: string;
@@ -91,7 +92,7 @@ export interface PostGenerationState {
 
 const initialState: PostGenerationState = {
   generatedPost: null,
-
+  creationType: null,
   promptDescription: "",
   generationType: "quick",
   workMode: "",
@@ -181,6 +182,15 @@ const postGenerationSlice = createSlice({
       state.generatedPost = null;
       state.error = null;
       state.generatedAt = null;
+    },
+
+    setCreationType(state, action: PayloadAction<"ai" | "manual" | null>) {
+      state.creationType = action.payload;
+
+      // keep generated post in sync (if already generated)
+      if (state.generatedPost) {
+        state.generatedPost.creationType = action.payload;
+      }
     },
 
     setPromptDescription(state, action: PayloadAction<string>) {
@@ -350,6 +360,7 @@ const postGenerationSlice = createSlice({
 
 export const {
   clearPost,
+  setCreationType,
   setPromptDescription,
   setGenerationType,
   setWorkMode,
@@ -391,5 +402,8 @@ export const selectLinkedinPost = (state: any) =>
 export const selectLoading = (state: any) => state.postGeneration.loading;
 
 export const selectError = (state: any) => state.postGeneration.error;
+
+export const selectCreationType = (state: any) =>
+  state.postGeneration?.creationType;
 
 export default postGenerationSlice.reducer;

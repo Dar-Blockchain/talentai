@@ -6,6 +6,7 @@ import { Box, Container } from "@mui/material";
 import { AppDispatch } from "@/store/store";
 import { useDispatch } from "react-redux";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
+import RecruitmentFlowBuilder from "@/components/posts/RecruitmentFlowBuilder";
 
 const CreateJobPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -29,8 +30,7 @@ const CreateJobPage: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <HeaderDashboard />
-        <CreatePostStepper />
+        <RecruitmentFlowBuilder/>
       </Container>
     </Box>
   );

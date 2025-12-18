@@ -382,7 +382,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
               },
             }}
           >
-            Continue to Flow Setup
+            Configure Hiring Agent
           </Button>
           {matchingProfiles?.length > 0 && (
             <Button

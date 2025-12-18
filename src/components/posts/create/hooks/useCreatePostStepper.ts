@@ -11,15 +11,19 @@ import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { getJobSkills } from "@/utils/postHelpers";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { useToast } from "@/hooks/useToast";
+import { setCreationType } from "@/store/slices/postGenerationSlice";
+import { useRouter } from "next/router";
 
 export const useCreatePostStepper = (
   generatedPost: any,
   profile: any,
   recruitmentFlow: any,
-  savedPost: any
+  savedPost: any,
+  creationType: any
 ) => {
   const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
   const [activeStep, setActiveStep] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -30,8 +34,6 @@ export const useCreatePostStepper = (
 
   const { nodes, edges } = recruitmentFlow;
 
-  // ✅ STEP 0 VALIDATION
-  // ✅ STEP 0 VALIDATION
   const validateStep0 = () => {
     const jobDetails = generatedPost?.jobDetails;
     const hardSkills = generatedPost?.skillAnalysis?.requiredSkills || [];
@@ -150,7 +152,7 @@ export const useCreatePostStepper = (
 
   const handleNext = async (shouldContinue?: boolean) => {
     if (activeStep === 0 && !shouldContinue) {
-      const isValid = validateStep0();
+      const isValid = creationType === "ai" ? validateStep0() : validateManualStep0();
       if (!isValid) return;
 
       setModalOpen(true);
@@ -198,12 +200,21 @@ export const useCreatePostStepper = (
     // ✅ STEP 1
     if (activeStep === 1) {
       await dispatch(createAgentConfig()).unwrap();
-      setActiveStep((prev) => prev + 1);
+      if (creationType === "ai") {
+        router.push("/dashboard/company");
+        showToast({
+          message: "Job post created successfully.",
+          severity: "success",
+        });
+        return;
+      } else {
+        setActiveStep((prev) => prev + 1);
+      }
     }
 
     // ✅ STEP 2 — Recruitment flow
     if (activeStep === 2 && savedPost?.jobData?._id) {
-      setPaymentModalOpen(true)
+      setPaymentModalOpen(true);
       const sequenceData = nodes.map((node: any, index: number) => ({
         ...node,
         order: index,
@@ -229,6 +240,10 @@ export const useCreatePostStepper = (
   };
 
   const handleBack = () => {
+    if (activeStep === 0) {
+      dispatch(setCreationType(null));
+      return;
+    }
     setActiveStep((prev) => Math.max(prev - 1, 0));
   };
 

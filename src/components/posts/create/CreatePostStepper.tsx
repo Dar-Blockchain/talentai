@@ -12,19 +12,19 @@ import {
 } from "@mui/material";
 import Check from "@mui/icons-material/Check";
 import ArrowBack from "@mui/icons-material/ArrowBack";
-import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 
 import PostDetailsStep from "./PostDetailsStep";
 import RecruitmentFlowStep from "./RecruitmentFlowStep";
 import MatchingFlowModal from "./components/MatchingFlowModal";
 
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
 import AgentConfigurationStep from "./AgentConfigurationStep";
 import PaymentConfirmationModal from "./components/PaymentConfirmationModal";
-
-const steps = ["Job Details", "Agent Configuration", "Recruitment Flow"];
+import { selectCreationType, setCreationType } from "@/store/slices/postGenerationSlice";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/router";
 
 // ------- Custom Stepper Styles -------
 const SplitLineConnector = styled(StepConnector)(() => ({
@@ -94,7 +94,7 @@ function CustomStepIcon(props: any) {
 }
 
 const CreatePostStepper: React.FC = () => {
-  const router = useRouter();
+  const router = useRouter()
 
   const { profile } = useSelector((state: RootState) => state.auth);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
@@ -105,6 +105,8 @@ const CreatePostStepper: React.FC = () => {
     (state: any) => state.post.recruitmentFlow
   );
   const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
+  const creationType = useSelector(selectCreationType)
+  const steps = creationType === "ai" ? ["Job Details", "Agent Configuration"] : ["Job Details", "Agent Configuration", "Recruitment Flow"];
 
   const {
     activeStep,
@@ -115,7 +117,7 @@ const CreatePostStepper: React.FC = () => {
     handleBack,
     setModalOpen,
     setPaymentModalOpen,
-  } = useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost);
+  } = useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost, creationType);
 
   return (
     <Box sx={{ my: 5, position: "relative", pb: 10 }}>
@@ -215,7 +217,6 @@ const CreatePostStepper: React.FC = () => {
         }}
       >
         <Button
-          disabled={activeStep === 0}
           onClick={handleBack}
           sx={{
             textTransform: "none",
