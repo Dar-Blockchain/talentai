@@ -227,13 +227,25 @@ exports.getUserPosts = async (req, res) => {
     const {
       page = 1,
       limit = 6,
+      search = '',
+      sort = 'newest',
     } = req.query;
 
     // Parse and validate pagination
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
 
-    const result = await postService.getPostsByUserIdWithPagination(req.user._id, pageNum, limitNum);
+    // Validate sort option
+    const validSorts = ['newest', 'oldest', 'title_asc', 'title_desc'];
+    const sortOption = validSorts.includes(sort) ? sort : 'newest';
+
+    const result = await postService.getPostsByUserIdWithPagination(
+      req.user._id,
+      pageNum,
+      limitNum,
+      search,
+      sortOption
+    );
 
     res.status(200).json({
       success: true,
