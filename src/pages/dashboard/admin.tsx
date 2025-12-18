@@ -1,26 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
+import { AppDispatch } from '@/store/store';
 import {
     Box,
-    Container,
     Typography,
     Card,
     Button,
     IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
     Alert,
     CircularProgress,
     TextField,
     Paper,
     Stack,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Select,
     Tooltip,
     TableContainer,
     Table,
@@ -29,49 +20,18 @@ import {
     TableCell,
     TableBody,
     TablePagination,
-    Tabs,
-    Tab,
     Chip,
-    Avatar,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     ListItemButton,
-    Divider,
-    Drawer,
     useTheme,
     useMediaQuery,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
-    Dashboard as DashboardIcon,
-    People as PeopleIcon,
     Assessment as AssessmentIcon,
     Menu as MenuIcon,
-    Close as CloseIcon,
     Add as AddIcon,
-    Edit as EditIcon,
-    Delete as DeleteIcon,
     Visibility as VisibilityIcon,
-    TrendingUp as TrendingUpIcon,
-    TrendingDown as TrendingDownIcon,
-    Person as PersonIcon,
-    Email as EmailIcon,
-    Phone as PhoneIcon,
-    LocationOn as LocationIcon,
-    Work as WorkIcon,
-    School as SchoolIcon,
-    Star as StarIcon,
-    CheckCircle as CheckCircleIcon,
-    Cancel as CancelIcon,
-    Pending as PendingIcon,
-    BarChart as BarChartIcon,
-    PieChart as PieChartIcon,
-    ShowChart as ShowChartIcon,
-    Logout as LogoutIcon,
 } from '@mui/icons-material';
-import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import AdminOnly from '@/components/AdminOnly';
@@ -93,10 +53,6 @@ import AssessmentResults from '@/components/dashboard-admin/AssessmentResults';
 // Utilities
 import { getCountryName } from '@/utils/countryMappings';
 import { getRoleColor, getStatusColor, getTypeColor } from '@/utils/colorMappings';
-
-// Custom Hooks
-import { usePagination } from '@/hooks/usePagination';
-import { useAuthToken } from '@/hooks/useAuthToken';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
@@ -302,7 +258,6 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const DashboardAdmin = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const { profile, loading: profileLoading } = useSelector(selectProfile);
 

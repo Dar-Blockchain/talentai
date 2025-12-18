@@ -35,7 +35,7 @@ const tokenTransactionSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['hedera', 'hashpack', 'admin'],
+    enum: ['hedera', 'hashpack', 'admin','stripe'],
     // Only required for purchases
     required: function() {
       return this.type === 'purchase';

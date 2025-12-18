@@ -3,6 +3,8 @@ import {
   Autocomplete,
   Box,
   Button,
+  Card,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +20,9 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 
 type LanguageOption = { label: string; value: string };
 type SoftSkillSubcategory = { label: string; value: string };
@@ -260,6 +265,73 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
             />
           </RadioGroup>
         </FormControl>
+
+        {/* Reward Preview Card */}
+        {skillType && (selectedSkill || softSkillType) && (
+          <Card
+            sx={{
+              p: 3,
+              mb: 3,
+              background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+              color: '#fff',
+              borderRadius: 3,
+              border: '2px solid rgba(255, 255, 255, 0.2)',
+              animation: 'fadeIn 0.3s ease-in',
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0, transform: 'translateY(-10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' }
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <EmojiEventsIcon sx={{ fontSize: 28, mr: 1 }} />
+              <Typography variant="h6" fontWeight={700}>
+                Your Rewards for This Test
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
+              Complete this interview to unlock:
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+              <Chip
+                icon={<AccountBalanceWalletIcon sx={{ color: 'white !important' }} />}
+                label="Up to 33.33 TAI tokens"
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  '& .MuiChip-icon': { color: 'white' }
+                }}
+              />
+              <Chip
+                icon={<VerifiedIcon sx={{ color: 'white !important' }} />}
+                label={`Verified ${selectedSkill || softSkillType} Badge`}
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  '& .MuiChip-icon': { color: 'white' }
+                }}
+              />
+              <Chip
+                icon={<EmojiEventsIcon sx={{ color: 'white !important' }} />}
+                label="Ranking points"
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  '& .MuiChip-icon': { color: 'white' }
+                }}
+              />
+            </Box>
+            <Typography variant="caption" sx={{ display: 'block', mt: 2, opacity: 0.8, fontStyle: 'italic' }}>
+              💡 Rewards based on your score (higher score = more TAI tokens)
+            </Typography>
+          </Card>
+        )}
 
         {skillType === "technical" && (
           <Box>

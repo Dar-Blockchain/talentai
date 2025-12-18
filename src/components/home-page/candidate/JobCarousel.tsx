@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Card,
@@ -17,44 +17,75 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
-const JobCarousel = ({ jobs = [], loading }) => {
+const JobCarousel = ({ jobs = [], loading, autoPlayInterval = 5000 }) => {
   const theme = useTheme();
   const router = useRouter();
 
   // Responsive breakpoints
-  const isXs = useMediaQuery(theme.breakpoints.down("sm")); // <600px
-  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md")); // 600–900px
-  const isMdUp = useMediaQuery(theme.breakpoints.up("md")); // ≥900px
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [currentJobs, setCurrentJobs] = useState([]);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const itemsPerSlide = isXs ? 1 : isSm ? 2 : 3;
-  const totalSlides = Math.ceil(jobs.length / itemsPerSlide);
+  // Memoize items per slide calculation
+  const itemsPerSlide = useMemo(() => {
+    return isXs ? 1 : isSm ? 2 : 3;
+  }, [isXs, isSm]);
 
-  useEffect(() => {
+  // Memoize total slides calculation
+  const totalSlides = useMemo(() => {
+    if (jobs.length === 0) return 1;
+    return Math.ceil(jobs.length / itemsPerSlide);
+  }, [jobs.length, itemsPerSlide]);
+
+  // Memoize current jobs slice
+  const currentJobs = useMemo(() => {
     const startIndex = currentSlide * itemsPerSlide;
     const endIndex = startIndex + itemsPerSlide;
-    setCurrentJobs(jobs.slice(startIndex, endIndex));
+    return jobs.slice(startIndex, endIndex);
   }, [currentSlide, jobs, itemsPerSlide]);
 
+  // Reset to first slide when items per slide or jobs change
   useEffect(() => {
     setCurrentSlide(0);
   }, [itemsPerSlide, jobs.length]);
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? totalSlides - 1 : prev - 1));
-  };
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
-  };
-
-  const goToSlide = (index) => setCurrentSlide(index);
-
+  // Auto-play carousel
   useEffect(() => {
-    console.log(currentJobs, "currentJobs");
-  }, [currentJobs]);
+    if (loading || jobs.length <= itemsPerSlide || isPaused) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
+    }, autoPlayInterval);
+
+    return () => clearInterval(interval);
+  }, [loading, jobs.length, itemsPerSlide, isPaused, totalSlides, autoPlayInterval]);
+
+  // Memoized navigation functions
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev === 0 ? totalSlides - 1 : prev - 1));
+  }, [totalSlides]);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev === totalSlides - 1 ? 0 : prev + 1));
+  }, [totalSlides]);
+
+  const goToSlide = useCallback((index) => {
+    setCurrentSlide(index);
+  }, []);
+
+  // Memoized card click handler
+  const handleCardClick = useCallback((jobId) => {
+    router.push(`/jobs/${jobId}`);
+  }, [router]);
+
+  // Memoized arrow click handler to prevent propagation
+  const handleArrowClick = useCallback((e) => {
+    e.stopPropagation();
+  }, []);
 
   return (
     <Box
@@ -65,6 +96,8 @@ const JobCarousel = ({ jobs = [], loading }) => {
         flexDirection: "column",
         alignItems: "center",
       }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
       {/* Carousel Row (Arrows + Cards) */}
       <Box
@@ -74,18 +107,19 @@ const JobCarousel = ({ jobs = [], loading }) => {
           justifyContent: "center",
           width: "100%",
           maxWidth: 1300,
-          //   mx: "auto",
-          gap: { xs: 1, sm: 2, md: 3 }, // space between arrows and cards
+          gap: { xs: 1, sm: 2, md: 3 },
         }}
       >
         {/* Left Arrow */}
         {!loading && jobs.length > itemsPerSlide && (
           <IconButton
             onClick={prevSlide}
+            aria-label="Previous slide"
             sx={{
+              width: 40,
+              height: 40,
+              transition: "all 0.3s ease",
               "&:hover": {
-                width: 30,
-                height: 30,
                 backgroundColor: "rgba(211, 211, 211, 0.5)",
                 "& svg": { color: "#fff" },
               },
@@ -95,8 +129,7 @@ const JobCarousel = ({ jobs = [], loading }) => {
             <ArrowBackIosNewIcon
               sx={{
                 color: "rgba(211, 211, 211, 1)",
-                width: "12px",
-                height: "24px",
+                fontSize: 20,
               }}
             />
           </IconButton>
@@ -115,8 +148,8 @@ const JobCarousel = ({ jobs = [], loading }) => {
           >
             <CircularProgress sx={{ color: "#8310FF" }} />
           </Box>
-        ) : (
-          <Fade in timeout={500}>
+        ) : currentJobs.length > 0 ? (
+          <Fade in timeout={500} key={currentSlide}>
             <Box
               sx={{
                 display: "grid",
@@ -132,8 +165,8 @@ const JobCarousel = ({ jobs = [], loading }) => {
             >
               {currentJobs.map((job, index) => (
                 <Card
-                  key={job.id || index}
-                  onClick={() => router.push(`/jobs/${job.id}`)}
+                  key={job.id || `job-${currentSlide}-${index}`}
+                  onClick={() => handleCardClick(job.id)}
                   sx={{
                     borderRadius: 3,
                     border: "1px solid rgba(228, 229, 232, 1)",
@@ -259,13 +292,13 @@ const JobCarousel = ({ jobs = [], loading }) => {
                           </Typography>
                         </Box>
                       </Box>
-                      <Box>
+                      <Box onClick={handleArrowClick}>
                         <Image
-                          onClick={() => router.push(`/jobs/${job.id}`)}
                           src="/icons/arrow-up.svg"
-                          alt="search"
+                          alt="View job details"
                           width={24}
                           height={24}
+                          style={{ cursor: "pointer" }}
                         />
                       </Box>
                     </Box>
@@ -274,16 +307,32 @@ const JobCarousel = ({ jobs = [], loading }) => {
               ))}
             </Box>
           </Fade>
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: 200,
+              width: "100%",
+            }}
+          >
+            <Typography variant="body1" color="textSecondary">
+              No jobs available
+            </Typography>
+          </Box>
         )}
 
         {/* Right Arrow */}
         {!loading && jobs.length > itemsPerSlide && (
           <IconButton
             onClick={nextSlide}
+            aria-label="Next slide"
             sx={{
+              width: 40,
+              height: 40,
+              transition: "all 0.3s ease",
               "&:hover": {
-                width: 30,
-                height: 30,
                 backgroundColor: "rgba(211, 211, 211, 0.5)",
                 "& svg": { color: "#fff" },
               },
@@ -293,8 +342,7 @@ const JobCarousel = ({ jobs = [], loading }) => {
             <ArrowForwardIosIcon
               sx={{
                 color: "rgba(211, 211, 211, 1)",
-                width: "12px",
-                height: "24px",
+                fontSize: 20,
               }}
             />
           </IconButton>
@@ -314,11 +362,19 @@ const JobCarousel = ({ jobs = [], loading }) => {
         >
           {Array.from({ length: totalSlides }).map((_, index) => (
             <Box
-              key={index}
+              key={`dot-${index}`}
               onClick={() => goToSlide(index)}
+              role="button"
+              aria-label={`Go to slide ${index + 1}`}
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  goToSlide(index);
+                }
+              }}
               sx={{
                 width: index === currentSlide ? "30px" : "8px",
-                height: index === currentSlide ? "8px" : "8px",
+                height: "8px",
                 borderRadius: "20px",
                 backgroundColor:
                   index === currentSlide
@@ -326,6 +382,12 @@ const JobCarousel = ({ jobs = [], loading }) => {
                     : "rgba(211, 211, 211, 1)",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
+                "&:hover": {
+                  backgroundColor:
+                    index === currentSlide
+                      ? "rgba(189, 133, 255, 1)"
+                      : "rgba(169, 169, 169, 1)",
+                },
               }}
             />
           ))}
@@ -335,4 +397,4 @@ const JobCarousel = ({ jobs = [], loading }) => {
   );
 };
 
-export default JobCarousel;
+export default React.memo(JobCarousel);

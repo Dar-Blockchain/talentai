@@ -1,5 +1,6 @@
 import LandingPageLayout from "@/components/home-page/LandingPageLayout";
 import HowItWorksSection from "@/components/home-page/HowItWorksSection";
+import CandidateRewardsSection from "@/components/home-page/CandidateRewardsSection";
 import JobListingsSection from "@/components/home-page/JobListingsSection";
 import ModernFooter from "@/components/home-page/ModernFooter";
 import TestimonialsSection from "@/components/home-page/TestimonialsSection";
@@ -17,6 +18,7 @@ const JobSeekerLanding: React.FC = () => {
       heroSubtitle="For Who You Really Are"
     >
       <HowItWorksSection />
+      <CandidateRewardsSection />
       <JobListingsSection />
       {/* <TestimonialsSection /> */}
       {/* <FAQSection type="candidate"/> */}

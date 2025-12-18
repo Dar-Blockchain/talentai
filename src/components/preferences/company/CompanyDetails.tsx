@@ -187,6 +187,36 @@ const CompanyDetails = forwardRef(
                 ))}
               </TextField>
             </Box>
+
+            {/* Company Website (Optional) */}
+            <Box sx={{ width: "100%" }}>
+              <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
+                Company Website
+              </Typography>
+              <TextField
+                fullWidth
+                value={companyDetails.website || ""}
+                onChange={(e) => handleChange("website", e.target.value)}
+                placeholder="https://yourcompany.com"
+                variant="outlined"
+                type="url"
+              />
+            </Box>
+
+            {/* LinkedIn Profile (Optional) */}
+            <Box sx={{ width: "100%" }}>
+              <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
+                LinkedIn Profile
+              </Typography>
+              <TextField
+                fullWidth
+                value={companyDetails.linkedin || ""}
+                onChange={(e) => handleChange("linkedin", e.target.value)}
+                placeholder="https://linkedin.com/company/yourcompany"
+                variant="outlined"
+                type="url"
+              />
+            </Box>
           </Stack>
         </Box>
       </Box>

@@ -15,10 +15,42 @@ const configSchema = new mongoose.Schema(
     nodeNumber: Number,
     title: String,
     configured: Boolean,
-    lastPrompt: String, // Ajouté pour stocker le dernier prompt
-    generatedContent: String, // Ajouté pour stocker le contenu généré
+    lastPrompt: String,
+    generatedContent: String,
+
+    // Technical Skills Configuration
+    categories: [String],
+    skills: [{
+      name: String,
+      requiredLevel: Number,
+      _id: false
+    }],
+    assessmentLevel: String,
+    passThreshold: Number,
+
+    // Soft Skills Configuration
+    softSkills: [String],
+
+    // HR Interview Configuration
+    questions: [String],
+
+    // Task Configuration
+    taskType: String,
+    taskDescription: String,
+    taskDuration: Number,
+
+    // Email Configuration
+    emailType: String,
+    emailSubject: String,
+    emailBody: String,
+    emailTrigger: String,
+
+    // Condition Configuration
+    field: String,
+    operator: String,
+    value: mongoose.Schema.Types.Mixed,
   },
-  { _id: false }
+  { _id: false, strict: false }  // strict: false allows additional fields
 );
 
 const dataSchema = new mongoose.Schema(
@@ -71,4 +103,4 @@ const postStepSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Post_Steps", postStepSchema);
+module.exports = mongoose.models.Post_Steps || mongoose.model("Post_Steps", postStepSchema);

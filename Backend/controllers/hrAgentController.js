@@ -17,6 +17,8 @@ const {
   HCS11Client,
   AIAgentType,
   AIAgentCapability,
+  AgentBuilder,
+  InboundTopicType,
   Logger,
   ConnectionsManager,
 } = require("@hashgraphonline/standards-sdk");
@@ -25,9 +27,7 @@ const Profile = require("../models/ProfileModel");
 
 // services/MatchingService/computeMatches.js
 
-const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matchingService");
-const { getMatchingConfig } = require("../services/MatchingService/matchingConfigService");
-const UnlockCandidate = require("../models/UnlockCandidateModel"); 
+const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/NewmatchingService");
 
 async function computeMatches(jobPostId, companyId) {
   // Charger les candidats
@@ -53,8 +53,7 @@ async function computeMatches(jobPostId, companyId) {
     .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
   const requiredSoftSkills = jobPost.skillAnalysis.softSkills || [];
-    // 0️⃣ Charger la config UNE SEULE FOIS
-    const matchingConfig = await getMatchingConfig(companyId, jobPostId);
+
   /** ------------------------
    * Matching
    * ------------------------- */
@@ -71,23 +70,13 @@ async function computeMatches(jobPostId, companyId) {
      * APPEL DE LA NOUVELLE LOGIQUE
      * calculateMatchScore()
      * ------------------------- */
-    /* -----------------------------------------
-       2️⃣b Charger tous les unlocked en une seule requête
-    ----------------------------------------- */
-    const unlockedRecords = await UnlockCandidate.find(
-      { companyId, job: jobPostId }, // filtre par job si nécessaire
-      { idCandidate: 1, _id: 0 }
-    ).lean();
-    const unlockedSet = new Set(unlockedRecords.map(u => String(u.idCandidate)));
-
     const { score, unlocked } = await calculateMatchScore(
       requiredHardSkills,
       candidateSkills,
       jobPost.jobDetails,
       candidate,
       companyId,
-      matchingConfig,
-      unlockedSet
+      jobPostId
     );
 
     if (score <= 0) continue;
@@ -362,7 +351,29 @@ const hrAgentController = {
       const createdAgents = [];
 
       for (const config of agentConfigs) {
-        console.log(`🔄 Creating agent: ${config.name}`);
+        console.log(`🔄 Processing agent: ${config.name}`);
+
+        // Check if agent already exists for this post to prevent duplicates
+        const existingAgent = await AgentModel.findOne({
+          postId: config.postId,
+          Company: config.Company
+        });
+
+        let savedAgent;
+
+        if (existingAgent) {
+          console.log(`   ℹ️  Agent already exists for post ${config.postId}`);
+          console.log(`   🔄 Reusing existing agent: ${existingAgent._id}`);
+          console.log(`   📛 Agent name: ${existingAgent.name}`);
+          console.log(`   💼 Hedera Account: ${existingAgent.hederaAccountId || 'Not set'}`);
+
+          savedAgent = existingAgent;
+          createdAgents.push(savedAgent);
+
+          // Skip to next agent - don't create duplicate
+          continue;
+        }
+
         console.log(`   📝 Step 1: Creating Hedera wallet...`);
 
         // Create Hedera wallet for this agent
@@ -383,100 +394,44 @@ const hrAgentController = {
           pubkey: hederaWallet.pubkey,
         });
 
-        const savedAgent = await agent.save();
+        savedAgent = await agent.save();
         console.log(`   📦 Agent saved to database: ${savedAgent._id}`);
 
-        // Step 2: Create HCS-10 topics first (needed for HCS-11 profile integration)
-        console.log(`   📝 Step 2: Creating HCS-10 messaging topics...`);
-        let inboundTopicId = null;
-        let outboundTopicId = null;
+        // Step 2: Create HCS-10 topics and HCS-11 profile using new AgentBuilder API
+        // This single call creates everything without Mirror Node verification!
+        console.log(`   📝 Step 2: Creating HCS-10 topics and HCS-11 profile (no verification)...`);
+
+        let profileResult = { success: false, error: 'Profile creation not attempted' };
 
         try {
-          const topicResult = await hrAgentController.createAgentHCS11Profile(
-            savedAgent
-          );
-          if (topicResult.success) {
-            inboundTopicId = topicResult.inboundTopicId;
-            outboundTopicId = topicResult.outboundTopicId;
-            console.log(`   ✅ HCS-10 topics created successfully!`);
-            console.log(`   📥 Inbound: ${inboundTopicId}`);
-            console.log(`   📤 Outbound: ${outboundTopicId}`);
-          }
-        } catch (topicError) {
-          console.log(
-            `   ⚠️  HCS-10 topic creation failed: ${topicError.message}`
-          );
-        }
+          profileResult = await hrAgentController.createAgentHCS11Profile(savedAgent);
 
-        // Step 3: Create HCS-11 compliant profile using official SDK methods
-        console.log(
-          `   📝 Step 3: Creating HCS-11 profile with official SDK...`
-        );
-        let profileResult = { success: false };
-        try {
-          profileResult = await hrAgentController.setHCS11AccountMemo(
-            savedAgent,
-            inboundTopicId,
-            outboundTopicId
-          );
           if (profileResult.success) {
-            console.log(`   ✅ HCS-11 profile created successfully!`);
-            console.log(
-              `   📄 Profile Topic ID: ${profileResult.profileTopicId}`
-            );
-            console.log(`   🔗 Account memo updated automatically`);
-          } else {
-            console.log(
-              `   ⚠️  HCS-11 profile creation failed: ${profileResult.error}`
-            );
-          }
-        } catch (memoError) {
-          console.log(
-            `   ⚠️  HCS-11 profile setup failed: ${memoError.message}`
-          );
-          profileResult = { success: false, error: memoError.message };
-        }
+            console.log(`   ✅ Agent profile created successfully!`);
+            console.log(`   📄 Profile ID: ${profileResult.profileId}`);
+            console.log(`   📥 Inbound Topic: ${profileResult.inboundTopicId}`);
+            console.log(`   📤 Outbound Topic: ${profileResult.outboundTopicId}`);
+            if (profileResult.pfpTopicId) {
+              console.log(`   🆔 PFP Topic: ${profileResult.pfpTopicId}`);
+            }
 
-        try {
-          if (profileResult.success) {
-            savedAgent.hcs11Profile = profileResult.profile;
+            // Save profile data to agent
             savedAgent.inboundTopicId = profileResult.inboundTopicId;
             savedAgent.outboundTopicId = profileResult.outboundTopicId;
             savedAgent.profileId = profileResult.profileId;
-            if (profileResult.deploymentMessageId) {
-              savedAgent.deploymentMessageId =
-                profileResult.deploymentMessageId;
+            savedAgent.hcs11ProfileTopicId = profileResult.profileTopicId;
+            if (profileResult.pfpTopicId) {
+              savedAgent.pfpTopicId = profileResult.pfpTopicId;
             }
-            if (profileResult.registrationMessageId) {
-              savedAgent.profileRegistrationId =
-                profileResult.registrationMessageId;
-            }
+
             await savedAgent.save();
-            console.log(`   ✅ HCS-11 profile created successfully`);
-            console.log(`   🆔 Profile ID: ${profileResult.profileId}`);
-            console.log(`   📩 Inbound Topic: ${profileResult.inboundTopicId}`);
-            console.log(
-              `   📤 Outbound Topic: ${profileResult.outboundTopicId}`
-            );
-            if (profileResult.deploymentMessageId) {
-              console.log(
-                `   🚀 Deployment ID: ${profileResult.deploymentMessageId}`
-              );
-            }
-            if (profileResult.integrity) {
-              console.log(
-                `   🔐 Profile Hash: ${profileResult.integrity.profileHash}`
-              );
-            }
+            console.log(`   💾 Agent data saved to database`);
           } else {
-            console.log(
-              `   ⚠️  HCS-11 profile creation partially failed: ${profileResult.message}`
-            );
+            console.log(`   ⚠️  Profile creation failed: ${profileResult.error || 'Unknown error'}`);
           }
         } catch (profileError) {
-          console.error(
-            `   ❌ Failed to create HCS-11 profile: ${profileError.message}`
-          );
+          console.error(`   ❌ Failed to create HCS-11 profile: ${profileError.message}`);
+          profileResult = { success: false, error: profileError.message };
           // Continue with agent creation even if profile fails
         }
 
@@ -566,8 +521,9 @@ const hrAgentController = {
   },
 
   /**
-   * Create HCS-11 compliant agent profile with structured messaging and memo
-   * Based on HCS-11 standard for agent profile management and identity
+   * Create HCS-11 compliant agent profile using new AgentBuilder API
+   * This method uses the HCS10Client.createAgent() which does NOT verify via Mirror Node
+   * Based on official SDK demo: https://github.com/hashgraph-online/standards-sdk/blob/main/demo/hcs-11/inscribe-profile-with-uaid.ts
    */
   async createAgentHCS11Profile(agent) {
     try {
@@ -575,9 +531,10 @@ const hrAgentController = {
         `      🔧 Creating HCS-11 compliant profile for ${agent.name}...`
       );
 
-      // Initialize HCS10Client for the agent
+      // Initialize HCS10Client using agent's own account (funded with 10 HBAR)
+      // Agent pays for its own profile creation and messages
       const hcs10Client = new HCS10Client({
-        network: "testnet",
+        network: process.env.HEDERA_NETWORK || "testnet",
         operatorId: agent.hederaAccountId,
         operatorPrivateKey: agent.hederaPrivateKey,
         guardedRegistryBaseUrl:
@@ -586,293 +543,61 @@ const hrAgentController = {
         logLevel: "info",
       });
 
-      // Step 1: Create inbound topic for receiving messages with HCS-11 memo
-      console.log(`      📩 Creating inbound topic with HCS-11 memo...`);
-      let inboundTopicId;
-      try {
-        // Use HCS-11 protocol format for topics
-        const protocolStandard = "11";
-        const inboundTopicMemo = `hcs-11:hcs://${protocolStandard}/in-${agent.avatarName}`;
+      // Build agent configuration using AgentBuilder (new API - no Mirror Node verification!)
+      console.log(`      📝 Configuring agent with AgentBuilder API...`);
 
-        const inboundTopic = await hcs10Client.createTopic(
-          `${agent.name}-Inbound`,
-          inboundTopicMemo
-        );
-        inboundTopicId = inboundTopic.toString();
-        console.log(`      ✅ Inbound topic created: ${inboundTopicId}`);
-      } catch (topicError) {
-        console.error(
-          `      ❌ Failed to create inbound topic: ${topicError.message}`
-        );
-        throw new Error(`Inbound topic creation failed: ${topicError.message}`);
+      const builder = new AgentBuilder()
+        .setName(agent.name)
+        .setAlias(agent.avatarName || agent.name.toLowerCase().replace(/\s+/g, '-'))
+        .setBio(agent.description || `HR ${agent.role} Skills Evaluation Agent for TalentAI Platform`)
+        .setCapabilities([
+          AIAgentCapability.TEXT_GENERATION,
+          AIAgentCapability.LANGUAGE_TRANSLATION,
+          AIAgentCapability.KNOWLEDGE_RETRIEVAL,
+          AIAgentCapability.DATA_INTEGRATION,
+          ...(agent.role === 'Technical' ? [AIAgentCapability.CODE_GENERATION] : []),
+          ...(agent.role === 'Soft' ? [AIAgentCapability.SUMMARIZATION_EXTRACTION] : []),
+        ])
+        .setType('autonomous')
+        .setModel('LangChain-TogetherAI')
+        .setNetwork('testnet')
+        .setInboundTopicType(InboundTopicType.PUBLIC)
+        .setExistingAccount(agent.hederaAccountId, agent.hederaPrivateKey);
+
+      console.log(`      🚀 Creating agent via HCS10Client.createAgent() (no verification)...`);
+
+      // Create agent using new API - NO MIRROR NODE VERIFICATION!
+      const res = await hcs10Client.createAgent(builder);
+
+      if (!res || !res.inboundTopicId || !res.outboundTopicId) {
+        throw new Error('createAgent() failed to return topic IDs');
       }
 
-      // Step 2: Create outbound topic for sending messages with HCS-11 memo
-      console.log(`      📤 Creating outbound topic with HCS-11 memo...`);
-      let outboundTopicId;
-      try {
-        // Use HCS-11 protocol format for topics
-        const protocolStandard = "11";
-        const outboundTopicMemo = `hcs-11:hcs://${protocolStandard}/out-${agent.avatarName}`;
+      console.log(`      ✅ Agent created successfully via new API!`);
+      console.log(`      📥 Inbound Topic: ${res.inboundTopicId}`);
+      console.log(`      📤 Outbound Topic: ${res.outboundTopicId}`);
+      console.log(`      📄 Profile Topic: ${res.profileTopicId || 'N/A'}`);
+      console.log(`      🆔 PFP Topic: ${res.pfpTopicId || 'N/A'}`);
 
-        const outboundTopic = await hcs10Client.createTopic(
-          `${agent.name}-Outbound`,
-          outboundTopicMemo
-        );
-        outboundTopicId = outboundTopic.toString();
-        console.log(`      ✅ Outbound topic created: ${outboundTopicId}`);
-      } catch (topicError) {
-        console.error(
-          `      ❌ Failed to create outbound topic: ${topicError.message}`
-        );
-        throw new Error(
-          `Outbound topic creation failed: ${topicError.message}`
-        );
-      }
-
-      // Step 3: Create comprehensive HCS-11 standard compliant profile
-      const profileId = `agent_${agent._id.toString()}`;
-      const timestamp = new Date().toISOString();
-
-      const hcs11Profile = {
-        // Core HCS-11 standard fields
-        p: "hcs-11",
-        standard: "HCS-11",
-        version: "1.0.0",
-        type: "agent_profile",
-        op: "deploy",
-        timestamp: timestamp,
-
-        // Agent Identity Section
-        identity: {
-          agentId: profileId,
-          name: agent.name,
-          displayName: agent.name,
-          avatar: agent.avatarName,
-          role: agent.role,
-          description: agent.description,
-          organizationalUnit: "TalentAI_HR_Validation_System",
-        },
-
-        // Hedera Network Identity
-        hedera: {
-          accountId: agent.hederaAccountId,
-          publicKey: agent.hederaPublicKey,
-          network: process.env.HEDERA_NETWORK || "testnet",
-          isActive: agent.isActive,
-          createdAt: timestamp,
-        },
-
-        // Communication Configuration
-        communication: {
-          inbound: {
-            topicId: inboundTopicId,
-            purpose: "message_reception",
-            access: "controlled",
-          },
-          outbound: {
-            topicId: outboundTopicId,
-            purpose: "message_transmission",
-            access: "controlled",
-          },
-          protocols: {
-            supported: ["HCS-10", "HCS-11"],
-            primary: "HCS-11",
-          },
-          messageFormats: [
-            "structured_json",
-            "evaluation_data",
-            "conversation",
-          ],
-          maxMessageSize: 1024,
-          rateLimits: {
-            messagesPerMinute: 60,
-            burstLimit: 10,
-          },
-        },
-
-        // Agent Capabilities and Specialization - Enhanced with Custom Profile
-        capabilities: {
-          core: [
-            "conversational_ai",
-            "candidate_evaluation",
-            "collaborative_assessment",
-            "structured_messaging",
-            "hcs_consensus_participation",
-          ],
-          specialization: hrAgentController.getAgentSpecialization(agent.role),
-          customProfile: agent.hcs11CustomProfile || {},
-          agentPersonality: agent.hcs11CustomProfile?.agentPersonality || {
-            communicationStyle: "professional",
-            approachMethod: "standard_evaluation",
-            evaluationPhilosophy: "Comprehensive candidate assessment",
-          },
-          specializedCapabilities:
-            agent.hcs11CustomProfile?.specializedCapabilities || {},
-          evaluationFramework:
-            agent.hcs11CustomProfile?.evaluationFramework || {},
-          domainExpertise: agent.hcs11CustomProfile?.domainExpertise || {},
-          aiModel: {
-            provider: "openai",
-            version: "gpt-4",
-            specialTraining: "hr_evaluation_protocols",
-            customizedFor: agent.role,
-            personalityProfile: agent.hcs11CustomProfile?.agentPersonality,
-          },
-          languages: ["en"],
-          evaluationCriteria: hrAgentController.getEvaluationCriteria(
-            agent.role
-          ),
-        },
-
-        // Governance and Compliance
-        governance: {
-          permissions: {
-            evaluate: true,
-            communicate: true,
-            collaborate: true,
-            dataAccess: "evaluation_only",
-            networkParticipation: "consensus_messaging",
-          },
-          restrictions: {
-            personalDataStorage: false,
-            crossNetworkCommunication: false,
-            unauthorizedAccess: false,
-            scopeLimitation: "talent_evaluation_only",
-          },
-          compliance: {
-            standards: ["HCS-11", "ISO-27001", "GDPR"],
-            dataRetention: "evaluation_session_only",
-            auditLog: true,
-            privacy: "by_design",
-          },
-          authorization: {
-            registeredBy: agent.hederaAccountId,
-            authorizedScopes: ["hr_evaluation", "candidate_assessment"],
-            validUntil: new Date(
-              Date.now() + 365 * 24 * 60 * 60 * 1000
-            ).toISOString(), // 1 year
-          },
-        },
-
-        // Metadata and Versioning
-        metadata: {
-          creator: "TalentAI_System",
-          purpose:
-            "Autonomous HR agent for talent evaluation and candidate assessment",
-          category: "hr_validation_agent",
-          tags: [
-            "ai_agent",
-            "hr_evaluation",
-            "talent_assessment",
-            agent.avatarName,
-          ],
-          version: "1.0.0",
-          schemaVersion: "hcs-11-v1.0",
-          lastUpdated: timestamp,
-          checksum: hrAgentController.generateProfileChecksum(agent),
-          documentationUrl: "https://docs.talentai.bid/agents/hcs-11",
-        },
-
-        // Profile Hash and Integrity
-        integrity: {
-          profileHash: null, // Will be calculated after profile creation
-          signatureChain: [],
-          verificationStatus: "pending",
-        },
+      // Return standardized response
+      return {
+        success: true,
+        inboundTopicId: res.inboundTopicId,
+        outboundTopicId: res.outboundTopicId,
+        profileTopicId: res.profileTopicId || res.inboundTopicId,
+        pfpTopicId: res.pfpTopicId || null,
+        profileId: res.profileTopicId || agent.hederaAccountId,
+        method: "hcs10-createAgent-AgentBuilder",
+        type: "hcs11-standards-compliant",
       };
-
-      // Calculate profile hash for integrity
-      hcs11Profile.integrity.profileHash =
-        hrAgentController.calculateProfileHash(hcs11Profile);
-
-      // Step 4: Deploy profile using HCS-11 standard message format
-      console.log(`      📝 Deploying HCS-11 profile to network...`);
-      try {
-        const deploymentMessage = {
-          p: "hcs-11",
-          op: "deploy",
-          type: "agent_profile",
-          timestamp: timestamp,
-          agentId: profileId,
-          profile: hcs11Profile,
-          deployment: {
-            deployedBy: agent.hederaAccountId,
-            deploymentId: `deploy_${Date.now()}`,
-            status: "active",
-            network: process.env.HEDERA_NETWORK || "testnet",
-            consensusRequired: true,
-          },
-          m: `HCS-11 agent profile deployment for ${agent.role} validation agent`,
-        };
-
-        const deploymentResult = await hcs10Client.sendMessage(
-          inboundTopicId,
-          JSON.stringify(deploymentMessage)
-        );
-
-        console.log(
-          `      ✅ Profile deployed with consensus message ID: ${deploymentResult.toString()}`
-        );
-
-        // Step 5: Send profile registration to outbound topic for network discovery
-        const registrationMessage = {
-          p: "hcs-11",
-          op: "register",
-          type: "agent_announcement",
-          timestamp: new Date().toISOString(),
-          agentId: profileId,
-          announcement: {
-            name: agent.name,
-            role: agent.role,
-            capabilities: hcs11Profile.capabilities.core,
-            inboundTopic: inboundTopicId,
-            outboundTopic: outboundTopicId,
-            status: "online",
-            discoverable: true,
-          },
-          m: `Agent registration announcement for network discovery`,
-        };
-
-        await hcs10Client.sendMessage(
-          outboundTopicId,
-          JSON.stringify(registrationMessage)
-        );
-
-        console.log(`      📡 Agent registered for network discovery`);
-
-        return {
-          success: true,
-          profile: hcs11Profile,
-          inboundTopicId: inboundTopicId,
-          outboundTopicId: outboundTopicId,
-          deploymentMessageId: deploymentResult.toString(),
-          profileId: profileId,
-          integrity: hcs11Profile.integrity,
-        };
-      } catch (deploymentError) {
-        console.error(
-          `      ❌ Failed to deploy profile: ${deploymentError.message}`
-        );
-
-        // Return success with topics but note deployment failure
-        return {
-          success: true,
-          profile: hcs11Profile,
-          inboundTopicId: inboundTopicId,
-          outboundTopicId: outboundTopicId,
-          message: `Topics created but profile deployment failed: ${deploymentError.message}`,
-          profileId: profileId,
-        };
-      }
     } catch (error) {
       console.error(
         `      💥 HCS-11 profile creation failed: ${error.message}`
       );
+      console.error(`      📋 Error stack:`, error.stack);
       return {
         success: false,
         error: error.message,
-        profile: null,
         inboundTopicId: null,
         outboundTopicId: null,
       };
@@ -1068,48 +793,33 @@ const hrAgentController = {
         });
       }
 
-      // Paralléliser le calcul des matches par agent (protection par agent)
-      const agentTasks = agents.map(async (agent) => {
-        const agentLabel = agent.name || String(agent._id);
+      // Return agent information without calculating matches (expensive operation)
+      // Matching is now handled by:
+      // 1. Scheduled Agenda job (daily at midnight)
+      // 2. Separate on-demand endpoint: GET /hr-agents/:agentId/matches
+      const agentsWithMatches = [];
 
-        if (!agent.postId?._id) {
-          return {
-            agentId: agent._id,
-            name: agentLabel,
-            matches: [],
-            message: "Pas de post associé",
-          };
-        }
+      for (const agent of agents) {
+        const agentLabel = agent.name || agent._id?.toString();
 
-        try {
-          const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
-          return {
-            agentId: agent._id,
-            name: agentLabel,
-            jobTitle,
-            matches,
-          };
-        } catch (err) {
-          console.error(`Error computing matches for agent ${agent._id}:`, err);
-          return {
-            agentId: agent._id,
-            name: agentLabel,
-            matches: [],
-            message: 'Erreur lors du calcul des matches',
-          };
-        }
-      });
-
-      const agentsWithMatches = await Promise.all(agentTasks);
-      const totalMatches = agentsWithMatches.reduce((sum, a) => sum + (a.matches?.length || 0), 0);
+        agentsWithMatches.push({
+          agentId: agent._id,
+          name: agentLabel,
+          jobTitle: agent.postId?.jobDetails?.title || 'Unknown',
+          postId: agent.postId?._id,
+          hasPost: !!agent.postId?._id,
+          message: agent.postId ? undefined : "No post associated",
+          // Matches removed to improve performance - use separate endpoint if needed
+        });
+      }
 
       // Réponse JSON complète
       return res.status(200).json({
         success: true,
         companyId,
         totalAgents: agents.length,
-        totalMatches,
         agents: agentsWithMatches,
+        message: "Agents loaded successfully. Use GET /hr-agents/:agentId/matches for match data."
       });
     } catch (error) {
       console.error("Error fetching agents by company:", error);
@@ -1117,6 +827,63 @@ const hrAgentController = {
         success: false,
         message: "Internal server error",
         error: error.message,
+      });
+    }
+  },
+
+  /**
+   * Get matches for a specific agent
+   * This endpoint calculates matches on-demand and can be slow
+   * Use sparingly - prefer scheduled Agenda results when possible
+   */
+  async getAgentMatches(req, res) {
+    try {
+      const { agentId } = req.params;
+      const companyId = req.user._id;
+
+      // Find agent and verify ownership
+      const agent = await AgentModel.findOne(
+        { _id: agentId, Company: companyId }
+      ).populate('postId').lean();
+
+      if (!agent) {
+        return res.status(404).json({
+          success: false,
+          message: "Agent not found or access denied"
+        });
+      }
+
+      if (!agent.postId) {
+        return res.status(404).json({
+          success: false,
+          message: "Agent has no associated post"
+        });
+      }
+
+      console.log(`🔍 Calculating matches for agent ${agent.name}...`);
+      const startTime = Date.now();
+
+      // Calculate matches
+      const { jobTitle, matches } = await computeMatches(agent.postId._id, companyId);
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ Matches calculated in ${duration}ms: ${matches.length} candidates matched`);
+
+      return res.status(200).json({
+        success: true,
+        agentId,
+        agentName: agent.name,
+        jobTitle,
+        matches,
+        matchCount: matches.length,
+        calculationTime: duration
+      });
+    } catch (error) {
+      console.error("Error fetching agent matches:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message
       });
     }
   },
@@ -2686,20 +2453,52 @@ ${interviewNotes}
       );
       console.log(`      📝 Profile created using official HCS-11 SDK methods`);
 
-      // Create and inscribe profile in one step with automatic account memo update
-      const oneStepResult = await client.createAndInscribeProfile(
-        aiAgentProfile,
-        true, // Update account memo automatically
-        {
-          progressCallback: (progress) => {
-            console.log(
-              `      📊 ${progress.stage}: ${progress.progressPercent}%`
-            );
-          },
-        }
-      );
+      // Create and inscribe profile with retry logic for Mirror Node propagation delays
+      let oneStepResult = null;
+      const maxRetries = 3;
+      const retryDelays = [3000, 6000, 9000]; // Exponential backoff: 3s, 6s, 9s
 
-      if (oneStepResult.success) {
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          console.log(`      🔄 Attempt ${attempt + 1}/${maxRetries}...`);
+
+          oneStepResult = await client.createAndInscribeProfile(
+            aiAgentProfile,
+            true, // Update account memo automatically
+            {
+              progressCallback: (progress) => {
+                console.log(
+                  `      📊 ${progress.stage}: ${progress.progressPercent}%`
+                );
+              },
+            }
+          );
+
+          if (oneStepResult.success) {
+            console.log(`      ✅ Profile creation succeeded on attempt ${attempt + 1}`);
+            break; // Success - exit retry loop
+          } else {
+            throw new Error(oneStepResult.error || 'Profile creation returned failure status');
+          }
+        } catch (retryError) {
+          const isMirrorNodeError = retryError.message.includes('Failed to retrieve profile') ||
+                                    retryError.message.includes('does not have a valid HCS-11 memo');
+
+          if (isMirrorNodeError && attempt < maxRetries - 1) {
+            const delay = retryDelays[attempt];
+            console.log(`      ⏳ Mirror Node not ready. Waiting ${delay/1000}s before retry ${attempt + 2}...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            // Last attempt failed or non-mirror-node error
+            console.log(`      ⚠️  Attempt ${attempt + 1} failed: ${retryError.message}`);
+            if (attempt === maxRetries - 1) {
+              throw retryError; // Throw on last attempt to trigger fallback
+            }
+          }
+        }
+      }
+
+      if (oneStepResult && oneStepResult.success) {
         console.log(
           `      ✅ HCS-11 profile created and published successfully!`
         );
@@ -2710,8 +2509,9 @@ ${interviewNotes}
           `      🔗 Account memo should now be set automatically by the SDK.`
         );
 
-        // Wait a moment for the transaction to propagate before returning
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // Wait for the transaction to propagate on Hedera network before returning
+        // Increased delay to ensure memo is readable by SDK verification
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
         // Update agent record with profile information
         await AgentModel.findByIdAndUpdate(agent._id, {
@@ -2725,8 +2525,13 @@ ${interviewNotes}
         return {
           success: true,
           profileTopicId: oneStepResult.profileTopicId,
+          profileId: oneStepResult.profileTopicId, // profileId matches profileTopicId
+          inboundTopicId: inboundTopicId, // Include inbound topic
+          outboundTopicId: outboundTopicId, // Include outbound topic
           accountId: agent.hederaAccountId,
           accountMemo: oneStepResult.accountMemo,
+          deploymentMessageId: oneStepResult.deploymentMessageId, // Include if available
+          registrationMessageId: oneStepResult.registrationMessageId, // Include if available
           method: "official-hcs11-createAndInscribeProfile",
           type: "hcs11-standards-compliant",
         };
@@ -2734,10 +2539,15 @@ ${interviewNotes}
         console.error(
           `      ❌ 'createAndInscribeProfile' failed: ${oneStepResult.error}`
         );
-        throw new Error(oneStepResult.error);
+        console.error(
+          `      📋 Full result:`,
+          JSON.stringify(oneStepResult, null, 2)
+        );
+        throw new Error(oneStepResult.error || "Profile creation failed with unknown error");
       }
     } catch (hcs11Error) {
       console.log(`      ⚠️  HCS11Client failed: ${hcs11Error.message}`);
+      console.log(`      📋 Error details:`, hcs11Error.stack || hcs11Error);
       console.log(`      🔄 Trying fallback approach with Hedera SDK...`);
 
       // Fallback: Generate and set memo manually
@@ -2777,6 +2587,10 @@ ${interviewNotes}
         return {
           success: true,
           memo: hcs11Memo,
+          profileId: agent.hederaAccountId, // Use account ID as profile identifier
+          profileTopicId: agent.hederaAccountId, // For consistency
+          inboundTopicId: inboundTopicId, // Include inbound topic
+          outboundTopicId: outboundTopicId, // Include outbound topic
           transactionId: txResponse.transactionId.toString(),
           accountId: agent.hederaAccountId,
           method: "fallback-hedera-sdk",

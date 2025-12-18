@@ -29,17 +29,17 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
   const candidateMenuItems: MenuItem[] = [
     { id: 'personal', label: 'Personal Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
-    { id: 'resume', label: 'Resume & Documents', icon: <DescriptionIcon /> },
-    { id: 'preferences', label: 'Job Preferences', icon: <WorkIcon /> },
+    // { id: 'resume', label: 'Resume & Documents', icon: <DescriptionIcon /> },
+    // { id: 'preferences', label: 'Job Preferences', icon: <WorkIcon /> },
     { id: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
-    { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
+    // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 
   const companyMenuItems: MenuItem[] = [
     { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
     { id: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
-    { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
+    // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 
   const menuItems = profileType === 'Company' ? companyMenuItems : candidateMenuItems;

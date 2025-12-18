@@ -9,7 +9,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CloseIcon from "@mui/icons-material/Close";
 import DoneIcon from "@mui/icons-material/Done";
 import WorkIcon from "@mui/icons-material/Work";
@@ -29,12 +29,12 @@ interface JobPreviewProps {
   onCancel: () => void;
   onSave: () => void;
   onInputChange: (field: string, value: any) => void;
-  onShareLinkedIn: () => void;
-  isPosting: boolean;
-  hasSharedToLinkedIn: boolean;
-  linkedinCopySuccess: boolean;
+  onCopyInterviewLink: () => void;
+  isCopyingLink: boolean;
+  linkCopied: boolean;
   jobPostError: string;
   matchingConfig?: any;
+  jobId: string | null;
 }
 
 const JobPreview: React.FC<JobPreviewProps> = ({
@@ -45,12 +45,12 @@ const JobPreview: React.FC<JobPreviewProps> = ({
   onCancel,
   onSave,
   onInputChange,
-  onShareLinkedIn,
-  isPosting,
-  hasSharedToLinkedIn,
-  linkedinCopySuccess,
+  onCopyInterviewLink,
+  isCopyingLink,
+  linkCopied,
   jobPostError,
   matchingConfig,
+  jobId,
 }) => {
   useEffect(()=> {console.log(editedJob, "editedJob")}, [editedJob])
 
@@ -248,22 +248,22 @@ const JobPreview: React.FC<JobPreviewProps> = ({
                     <EditIcon sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Share on LinkedIn" arrow>
+                <Tooltip title="Copy Interview Link" arrow>
                   <Button
                     variant="contained"
                     startIcon={
-                      isPosting ? (
+                      isCopyingLink ? (
                         <CircularProgress size={16} sx={{ color: "white" }} />
                       ) : (
-                        <LinkedInIcon sx={{ fontSize: 18 }} />
+                        <ContentCopyIcon sx={{ fontSize: 18 }} />
                       )
                     }
-                    onClick={onShareLinkedIn}
-                    disabled={isPosting}
+                    onClick={onCopyInterviewLink}
+                    disabled={isCopyingLink || !jobId}
                     sx={{
-                      background: hasSharedToLinkedIn
+                      background: linkCopied
                         ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
-                        : "linear-gradient(135deg, #0077B5 0%, #005885 100%)",
+                        : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                       color: "white",
                       borderRadius: 3,
                       px: 3,
@@ -272,33 +272,31 @@ const JobPreview: React.FC<JobPreviewProps> = ({
                       fontWeight: 600,
                       textTransform: "none",
                       border: "1px solid rgba(255, 255, 255, 0.2)",
-                      boxShadow: hasSharedToLinkedIn
+                      boxShadow: linkCopied
                         ? "0 8px 32px rgba(5, 150, 105, 0.3)"
-                        : "0 8px 32px rgba(0, 119, 181, 0.3)",
+                        : "0 8px 32px rgba(16, 185, 129, 0.3)",
                       transition: "all 0.3s ease",
                       "&:hover": {
-                        background: hasSharedToLinkedIn
+                        background: linkCopied
                           ? "linear-gradient(135deg, #047857 0%, #065f46 100%)"
-                          : "linear-gradient(135deg, #005885 0%, #003d5c 100%)",
+                          : "linear-gradient(135deg, #059669 0%, #047857 100%)",
                         transform: "translateY(-2px)",
-                        boxShadow: hasSharedToLinkedIn
+                        boxShadow: linkCopied
                           ? "0 12px 40px rgba(5, 150, 105, 0.4)"
-                          : "0 12px 40px rgba(0, 119, 181, 0.4)",
+                          : "0 12px 40px rgba(16, 185, 129, 0.4)",
                       },
                       "&:disabled": {
-                        background: "rgba(0, 119, 181, 0.5)",
+                        background: "rgba(16, 185, 129, 0.5)",
                         color: "rgba(255, 255, 255, 0.7)",
                         transform: "none",
                       },
                     }}
                   >
-                    {isPosting
-                      ? "Sharing..."
-                      : linkedinCopySuccess
-                      ? "Shared!"
-                      : hasSharedToLinkedIn
-                      ? "Shared"
-                      : "Share"}
+                    {isCopyingLink
+                      ? "Copying..."
+                      : linkCopied
+                      ? "Copied!"
+                      : "Copy Link"}
                   </Button>
                 </Tooltip>
               </>

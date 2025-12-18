@@ -5,7 +5,6 @@ import {
 } from "@/store/slices/profileSlice";
 import { AppDispatch } from "@/store/store";
 import { Box, Container } from "@mui/material";
-import { useRouter } from "next/router";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -60,7 +59,6 @@ export interface MatchingCandidate {
 }
 
 const DashboardCompany = () => {
-  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile } = useSelector(selectProfile);
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];

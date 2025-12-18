@@ -52,6 +52,14 @@ import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { io } from 'socket.io-client';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
+import {
+  initializeCandidateProgress,
+  getCandidateProgress,
+  fetchPipelineInterviewParams,
+  updateStepStatus,
+  moveToNextStep,
+  type CandidateProgress
+} from '@/utils/pipelineInterviewApi';
 
 // Interview Configuration Types
 interface InterviewConfig {
@@ -571,6 +579,8 @@ const IntelligentInterviewTest = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const authUser = useSelector((state: RootState) => state.auth.user);
+  const profile = useSelector((state: RootState) => state.profile.profile);
   const userRole = useSelector((state: RootState) => state.user.userType);
 
   // WebSocket and Connection States
@@ -665,7 +675,7 @@ const IntelligentInterviewTest = () => {
   const MAX_ACCUMULATED_TURNS = 10; // Maximum turns to accumulate before forcing send
 
   // Camera States
-  const [cameraStatus, setCameraStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'error'>('idle');
+  const [cameraStatus, setCameraStatus] = useState<'iduser.le' | 'requesting' | 'granted' | 'denied' | 'error'>('idle');
   const [cameraError, setCameraError] = useState<string>('');
 
   // Agent State Tracking
@@ -711,10 +721,204 @@ const IntelligentInterviewTest = () => {
   const [silenceDebugLog, setSilenceDebugLog] = useState<string[]>([]);
   const [transcriptDebugLog, setTranscriptDebugLog] = useState<string[]>([]);
 
+  // Pipeline States
+  const [isPipelineJob, setIsPipelineJob] = useState(false);
+  const [candidateProgress, setCandidateProgress] = useState<any>(null);
+  const [currentPipelineStep, setCurrentPipelineStep] = useState<number | null>(null);
+  const [pipelineLoading, setPipelineLoading] = useState(false);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [showFailedModal, setShowFailedModal] = useState(false);
+  const [blockMessage, setBlockMessage] = useState('');
+
   // Parse URL query parameters and build dynamic interview config
+  // 🔥 ENHANCED: Fetch job interview configuration with pipeline detection
+  const fetchJobInterviewConfig = async (jobId: string) => {
+    try {
+      const token = Cookies.get('api_token');
+      setPipelineLoading(true);
+
+      console.log('🔍 Fetching interview config for jobId:', jobId);
+
+      // 1. Check if this is a pipeline job
+      const postResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/getPostById/${jobId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (!postResponse.ok) {
+        throw new Error('Failed to fetch job details');
+      }
+
+      const postData = await postResponse.json();
+      console.log('📋 Raw post data:', postData);
+      const post = postData.data || postData.post || postData;
+      const isPipeline = post?.creationType === 'pipeline';
+
+      console.log('📋 Job detection:', {
+        postId: post._id,
+        creationType: post.creationType,
+        isPipeline: isPipeline,
+        hasPostSteps: !!post.post_Steps,
+        postStepsCount: post.post_Steps?.length || 0
+      });
+      console.log('📋 Job type:', isPipeline ? 'Pipeline ⚡' : 'Regular');
+      setIsPipelineJob(isPipeline);
+      console.log('Session ID:', sessionIdRef.current);
+
+      if (isPipeline) {
+        // Pipeline job - MUST have user session
+        // Get candidate ID from Redux profile or auth state (not NextAuth session)
+        const candidateId = profile?._id || authUser?._id;
+
+        if (!candidateId) {
+          throw new Error('Pipeline jobs require authentication. Please log in to start the interview.');
+        }
+
+        console.log('🔍 Checking candidate progress for candidateId:', candidateId);
+
+        // Try to get existing progress
+        const progressResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        let progressData;
+
+        if (progressResponse.ok) {
+          // Progress exists - get current step config from database
+          progressData = await progressResponse.json();
+          console.log('✅ Progress found - resuming from step:', progressData.currentStep.stepNumber);
+        } else {
+          // No progress - initialize at step 1
+          console.log('📝 No progress found - initializing...');
+          const initResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/initialize`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ candidateId, jobId })
+            }
+          );
+
+          if (!initResponse.ok) {
+            throw new Error('Failed to initialize progress');
+          }
+
+          progressData = await initResponse.json();
+          console.log('✅ Progress initialized at step:', progressData.currentStepNumber);
+        }
+
+        // Extract current step from database
+        const currentStep = progressData.currentStep;
+
+        console.log('🎯 Current step config:', {
+          stepNumber: currentStep.stepNumber,
+          stepType: currentStep.stepType,
+          hasSkills: !!currentStep.interviewParams.skills,
+          hasSoftSkills: !!currentStep.interviewParams.softSkills,
+          passThreshold: currentStep.passThreshold
+        });
+
+        // Build interview config from current step params
+        const dynamicConfig = buildInterviewConfigFromURL({
+          type: currentStep.stepType,
+          ...currentStep.interviewParams,
+          // 🔥 Pass all pipeline-specific fields
+          skills: currentStep.interviewParams.skills,
+          categories: currentStep.interviewParams.categories,
+          assessmentLevel: currentStep.interviewParams.assessmentLevel,
+          passThreshold: currentStep.interviewParams.passThreshold || currentStep.passThreshold,
+          softSkills: currentStep.interviewParams.softSkills
+        } as any);
+
+        setInterviewConfig(dynamicConfig);
+        setCandidateProgress(progressData.progress);
+        setCurrentPipelineStep(currentStep.stepNumber);
+
+        // Store for interview_ended handler
+        localStorage.setItem('interview_jobId', jobId);
+        localStorage.setItem('interview_stepId', currentStep.stepId);
+        localStorage.setItem('interview_stepNumber', currentStep.stepNumber.toString());
+        localStorage.setItem('interview_passThreshold', (currentStep.passThreshold || 70).toString());
+        localStorage.setItem('interview_source', 'pipeline');
+
+        console.log('✅ Pipeline interview configured');
+
+      } else {
+        // Regular job (not pipeline) - use existing logic
+        console.log('📋 Regular interview - fetching standard config...');
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}post/interview-config/${jobId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('❌ Error from interview-config endpoint:', errorData);
+
+          // Check if it's a pipeline job error
+          if (errorData.isPipeline) {
+            throw new Error('This is a pipeline job - please refresh the page. The interview configuration is being loaded from the pipeline steps.');
+          }
+
+          throw new Error(`Failed to fetch job config: ${errorData.message || errorData.error || response.statusText}`);
+        }
+
+        const config = await response.json();
+        console.log('✅ Fetched standard interview config');
+
+        setInterviewConfig(config);
+
+        // Store jobId for saving interview results later
+        localStorage.setItem('interview_jobId', jobId);
+        localStorage.setItem('interview_type', 'hr');
+      }
+
+      setPipelineLoading(false);
+
+    } catch (error) {
+      console.error('❌ Error fetching job interview config:', error);
+      setPipelineLoading(false);
+      showNotification('Failed to load interview configuration', 'error');
+
+      // Fallback to default HR config
+      const defaultConfig = buildInterviewConfigFromURL({ type: 'hr' });
+      setInterviewConfig(defaultConfig);
+    }
+  };
+
   useEffect(() => {
     if (!router.isReady) return;
 
+    // 🔥 SIMPLIFIED: Only jobId is needed - everything else from database!
+    const { jobId } = router.query;
+
+    if (jobId && typeof jobId === 'string') {
+      console.log('🎯 Job-based interview detected, jobId:', jobId);
+      fetchJobInterviewConfig(jobId);  // No more stepNumber or source params!
+      return;
+    }
+
+    // Existing: Build config from URL params
     const urlParams: URLParams = {
       type: router.query.type as any,
       skill: router.query.skill as string,
@@ -741,6 +945,7 @@ const IntelligentInterviewTest = () => {
       localStorage.removeItem('interview_category');
       localStorage.removeItem('interview_proficiency');
       localStorage.removeItem('interview_role');
+      localStorage.removeItem('interview_jobId');
 
       // Store type (technical, soft, onboarding, etc.)
       if (urlParams.type) {
@@ -1349,13 +1554,13 @@ const IntelligentInterviewTest = () => {
 
       // Start new timer
       const maxMinutes = data.config.duration || 20;
+      const twoMinuteThreshold = (maxMinutes - 2) * 60; // Convert to seconds
       timerIntervalRef.current = setInterval(() => {
         setElapsedTime(prev => {
           const newTime = prev + 1;
 
-          // Show warning at 2 minutes remaining
-          const remainingMinutes = maxMinutes - (newTime / 60);
-          if (remainingMinutes <= 2 && !timeWarning) {
+          // Show warning exactly when crossing 2 minutes remaining threshold
+          if (newTime === twoMinuteThreshold && !timeWarning) {
             setTimeWarning(true);
             showNotification('2 minutes remaining', 'warning');
           }
@@ -1467,7 +1672,7 @@ const IntelligentInterviewTest = () => {
       }
     });
 
-    socket.on('interview_ended', (data) => {
+    socket.on('interview_ended', async (data) => {
       console.log('🏁 Interview ended:', data);
       setInterviewStatus('ended');
       setIsRecording(false);
@@ -1505,6 +1710,98 @@ const IntelligentInterviewTest = () => {
         console.log('✅ Analysis data stored successfully');
       } else {
         console.warn('⚠️ No analysis data received from socket event');
+      }
+
+      // 🔥 NEW: Update pipeline progress with pass/fail logic
+      const candidateId = profile?._id || authUser?._id;
+      if (isPipelineJob && candidateId) {
+        try {
+          const token = Cookies.get('api_token');
+          const jobId = localStorage.getItem('interview_jobId');
+          const stepId = localStorage.getItem('interview_stepId');
+          const passThreshold = parseInt(localStorage.getItem('interview_passThreshold') || '70');
+
+          // Extract final score from analytics/report
+          const finalScore = data.finalReport?.overallScore ||
+                            data.analytics?.overallScore ||
+                            data.analytics?.totalScore ||
+                            0;
+
+          // 🔥 Calculate pass/fail
+          const passed = finalScore >= passThreshold;
+
+          console.log(`📊 Interview Result: ${finalScore}% (threshold: ${passThreshold}%) - ${passed ? 'PASSED ✅' : 'FAILED ❌'}`);
+
+          if (jobId && stepId && data.sessionId) {
+            console.log('📊 Updating pipeline step progress...');
+
+            // Update step status with pass/fail and score
+            const updateResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/update-step`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  candidateId: session.user.id,
+                  jobId,
+                  stepId,
+                  interviewDetailsId: data.sessionId,
+                  status: 'done',
+                  passed: passed,
+                  finalScore: finalScore
+                })
+              }
+            );
+
+            const updateResult = await updateResponse.json();
+            console.log('✅ Pipeline step status updated:', updateResult);
+
+            if (passed) {
+              // Try to move to next step
+              console.log('✅ Step passed - checking for next step...');
+
+              const nextStepResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/next-step`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    candidateId: session.user.id,
+                    jobId
+                  })
+                }
+              );
+
+              const nextStepData = await nextStepResponse.json();
+
+              if (nextStepData.hasNextStep) {
+                console.log(`✅ Next step available: ${nextStepData.nextStepNumber}`);
+                localStorage.setItem('pipeline_has_next_step', 'true');
+                localStorage.setItem('pipeline_next_step', nextStepData.nextStepNumber.toString());
+              } else {
+                console.log('🎉 Pipeline complete!');
+                localStorage.setItem('pipeline_has_next_step', 'false');
+                localStorage.setItem('pipeline_complete', 'true');
+              }
+            } else {
+              // Failed - cannot continue
+              console.log('❌ Step failed - pipeline cannot continue');
+              localStorage.setItem('pipeline_has_next_step', 'false');
+              localStorage.setItem('pipeline_failed', 'true');
+              localStorage.setItem('pipeline_failed_score', finalScore.toString());
+              localStorage.setItem('pipeline_required_score', passThreshold.toString());
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error updating pipeline progress:', error);
+          // Don't block the user - just log the error
+        }
       }
 
       // Don't auto-redirect - let user click "View Results" button
@@ -2095,12 +2392,76 @@ const IntelligentInterviewTest = () => {
         open={showAlert}
         autoHideDuration={4000}
         onClose={() => setShowAlert(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity={alertSeverity} onClose={() => setShowAlert(false)}>
           {alertMessage}
         </Alert>
       </Snackbar>
+
+      {/* Pipeline Loading Modal */}
+      <Dialog open={pipelineLoading} maxWidth="sm" fullWidth>
+        <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+          <CircularProgress size={60} sx={{ mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            Loading Your Interview Step...
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Please wait while we prepare your interview
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* Step Blocked Modal */}
+      <Dialog open={showBlockedModal} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ bgcolor: 'warning.light', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningIcon />
+          <Typography variant="h6">Wrong Step</Typography>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {blockMessage}
+          </Alert>
+          <Typography variant="body1">
+            You will be redirected to your current step automatically.
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* Failed Previous Step Modal */}
+      <Dialog
+        open={showFailedModal}
+        maxWidth="sm"
+        fullWidth
+        onClose={() => router.push('/dashboard')}
+      >
+        <DialogTitle sx={{ bgcolor: 'error.light', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ErrorIcon />
+          <Typography variant="h6">Cannot Continue</Typography>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {blockMessage}
+          </Alert>
+          <Typography variant="body1" paragraph>
+            Unfortunately, you did not pass a previous step in this pipeline.
+            The interview cannot be started.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Please contact the company if you believe this is an error.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => router.push('/dashboard')}
+            fullWidth
+          >
+            Return to Dashboard
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Connection Status */}
       {isHydrated && connectionStatus !== 'connected' && (
@@ -2112,6 +2473,34 @@ const IntelligentInterviewTest = () => {
               {connectionStatus === 'error' && 'Connection Error - Please refresh the page'}
               {connectionStatus === 'disconnected' && 'Disconnected - Attempting to reconnect...'}
             </Typography>
+          </Box>
+        </Paper>
+      )}
+
+      {/* Pipeline Progress Indicator */}
+      {isPipelineJob && currentPipelineStep && candidateProgress && (
+        <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: '#f5f5ff', borderLeft: '4px solid #8310FF' }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center" gap={2}>
+              <Chip
+                label={`Step ${currentPipelineStep}`}
+                color="primary"
+                sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
+              />
+              <Typography variant="body1" color="text.primary">
+                Pipeline Interview
+              </Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="body2" color="text.secondary">
+                {candidateProgress.steps.filter((s: any) => s.status === 'done').length} / {candidateProgress.steps.length} completed
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={(candidateProgress.steps.filter((s: any) => s.status === 'done').length / candidateProgress.steps.length) * 100}
+                sx={{ width: 100, ml: 1 }}
+              />
+            </Box>
           </Box>
         </Paper>
       )}
@@ -2907,26 +3296,6 @@ const IntelligentInterviewTest = () => {
                 }}
               />
 
-              {/* Timer Chip - Only show when interview is active */}
-              {interviewStatus === 'active' && (
-                <Chip
-                  icon={timeWarning ? <WarningIcon /> : <AccessTimeIcon />}
-                  label={`${Math.floor(elapsedTime / 60)}:${String(elapsedTime % 60).padStart(2, '0')}`}
-                  color={timeWarning ? 'warning' : 'default'}
-                  variant="filled"
-                  sx={{
-                    color: 'white',
-                    bgcolor: timeWarning ? 'rgba(255, 152, 0, 0.4)' : 'rgba(255,255,255,0.2)',
-                    backdropFilter: 'blur(10px)',
-                    borderRadius: 2,
-                    px: 2,
-                    fontWeight: 500,
-                    fontFamily: 'monospace',
-                    fontSize: '1rem'
-                  }}
-                />
-              )}
-
               {interviewStatus === 'active' && (
                 <Chip
                   icon={
@@ -3188,6 +3557,38 @@ const IntelligentInterviewTest = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Fixed Timer at Bottom - Only show when interview is active */}
+      {interviewStatus === 'active' && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+          }}
+        >
+          <Chip
+            icon={timeWarning ? <WarningIcon /> : <AccessTimeIcon />}
+            label={`${Math.floor(elapsedTime / 60)}:${String(elapsedTime % 60).padStart(2, '0')}`}
+            color={timeWarning ? 'warning' : 'default'}
+            variant="filled"
+            sx={{
+              color: 'white',
+              bgcolor: timeWarning ? 'rgba(255, 152, 0, 0.9)' : 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 2,
+              px: 3,
+              py: 2.5,
+              fontWeight: 600,
+              fontFamily: 'monospace',
+              fontSize: '1.2rem',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            }}
+          />
+        </Box>
+      )}
       </Container>
     </>
   );

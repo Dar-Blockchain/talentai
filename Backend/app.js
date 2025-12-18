@@ -57,6 +57,7 @@ const stripRouter = require("./routes/StripRouter");
 const matchingConfigRoutes = require("./routes/matchingConfigRoutes");
 const paymentRouter = require("./routes/paymentRouter");
 const unlockCandidateRouter = require("./routes/unlockCandidateRouter");
+const pipelineInterviewRoutes = require("./routes/pipelineInterviewRoutes");
 
 require("dotenv").config();
 
@@ -163,6 +164,7 @@ app.use("/payment", paymentRouter);
 app.use("/matchingConfig", matchingConfigRoutes);
 app.use('/api/stripe', stripRouter);
 app.use('/unlock-candidate', unlockCandidateRouter);
+app.use('/api/pipeline-interview', pipelineInterviewRoutes);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");

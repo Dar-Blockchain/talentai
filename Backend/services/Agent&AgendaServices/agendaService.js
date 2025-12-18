@@ -7,7 +7,7 @@ const {
   calculateMatchScore,
 } = require("../MatchingService/matchingForBidService");
 const axios = require("axios");
-const profileService = require("../../services/profileService/profileService");
+const profileService = require("../../services/ProfileService/profileService");
 const {
   submitEvaluationMessage,
 } = require("../../controllers/hrAgentController");
@@ -104,7 +104,7 @@ async function initializeAgenda() {
 
   agendaInstance = new Agenda({
     db: { address: process.env.MONGODB_URI, collection: "agendaJobs" },
-    processEvery: "1 second", // Check every second for precision
+    processEvery: "30 minutes", // Check every 30 minutes (job runs daily at midnight, no need for frequent checks)
   });
 
   // Logs for observability of Agenda jobs
@@ -124,7 +124,7 @@ async function initializeAgenda() {
 
   agendaInstance.define(
     "agent:heartbeat",
-    { concurrency: 1, lockLifetime: 30000 },
+    { concurrency: 1, lockLifetime: 600000 }, // 10 minutes lock - prevents overlapping executions during long matching process
     async () => {
       try {
         console.log("🔄 [Agenda] Heartbeat started");
@@ -327,8 +327,10 @@ async function initializeAgenda() {
         insertOnly: true,
       }
     );
-    await agendaInstance.now("agent:heartbeat");
+    // Removed immediate trigger to prevent matching loop during agent creation
+    // Matching will run on daily schedule only (00:00 midnight)
     console.log("⏱️ Agenda started with agent:heartbeat scheduled daily at 00:00 (timezone: " + (process.env.TZ || "Europe/Paris") + ")");
+    console.log("💡 First heartbeat will run at next scheduled time (00:00) - immediate trigger disabled to prevent blocking agent creation");
 
     // Verification: list scheduled jobs
     try {

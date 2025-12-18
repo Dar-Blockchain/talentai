@@ -99,6 +99,22 @@ const interviewDetailsSchema = new mongoose.Schema(
       required: false,
     },
 
+    // Pipeline step tracking fields
+    stepId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post_Steps",
+      required: false,
+    },
+    stepNumber: {
+      type: Number,
+      required: false,
+    },
+    pipelineMetadata: {
+      source: { type: String, enum: ['pipeline', 'standalone'], default: 'standalone' },
+      nodeType: { type: String }, // technical, soft, interview
+      nodeConfig: { type: mongoose.Schema.Types.Mixed }, // Store original node configuration
+    },
+
     type: {
       type: String,
       enum: Object.values(INTERVIEW_TYPES),
@@ -138,4 +154,4 @@ interviewDetailsSchema.virtual("postSteps", {
 interviewDetailsSchema.set("toJSON", { virtuals: true });
 interviewDetailsSchema.set("toObject", { virtuals: true });
 
-module.exports = mongoose.model("InterviewDetails", interviewDetailsSchema);
+module.exports = mongoose.models.InterviewDetails || mongoose.model("InterviewDetails", interviewDetailsSchema);

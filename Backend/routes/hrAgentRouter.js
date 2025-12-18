@@ -70,6 +70,13 @@ router.get("/avatar/:avatarName",requireAuthUser, hrAgentController.getAgentByAv
 router.get("/role/:role",requireAuthUser, hrAgentController.getAgentsByRole);
 
 /**
+ * @route GET /hr-agents/:agentId/matches
+ * @desc Calculate and return matches for a specific agent (on-demand, can be slow)
+ * @access Private (requires authentication)
+ */
+router.get("/:agentId/matches", requireAuthUser, hrAgentController.getAgentMatches);
+
+/**
  * @route POST /hr-agents/send-validation-message
  * @desc Envoie un message de validation (Sinda → Coordinateur) via LangChain TogetherAI
  * @access Privé

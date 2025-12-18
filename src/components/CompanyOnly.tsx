@@ -5,7 +5,7 @@ import { AppDispatch } from '../store/store';
 import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
 import { isLoggingOutCheck } from '../store/slices/authSlice';
 import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
-import { isTokenExpired, handleTokenExpiration, validateAndSyncToken, isCookieExpired } from '@/utils/tokenUtils';
+import { isTokenExpired, handleTokenExpiration } from '@/utils/tokenUtils';
 import Cookies from 'js-cookie';
 import {
   Box,

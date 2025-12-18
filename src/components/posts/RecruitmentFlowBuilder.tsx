@@ -77,6 +77,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import PostDetails from './recruitment-post/PostDetails';
 import { PostDetailsRef } from './recruitment-post/types';
+import ManualJobDetailsForm, { ManualJobDetailsRef } from './recruitment-post/components/ManualJobDetailsForm';
 import AgentConfigurationForm, { AgentConfigurationFormValues } from './AgentConfigurationForm';
 import PaymentConfirmationDialog from './PaymentConfirmationDialog';
 import { AppDispatch } from '@/store/store';
@@ -85,6 +86,7 @@ import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { selectProfile } from '@/store/slices/profileSlice';
 import Navbar from '../dashboard-company/Navbar';
+import { NodeConfigRenderer } from './recruitment-flow-config';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -102,6 +104,83 @@ const DEFAULT_AGENT_CONFIG: AgentConfigurationFormValues = {
   autoSubmitTopMatch: true,
   maxDailySpending: 150,
   isActive: true,
+};
+
+// Function to generate default pipeline nodes with unique IDs
+const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
+  const timestamp = Date.now();
+  const randomSuffix1 = Math.random().toString(36).substr(2, 9);
+  const randomSuffix2 = Math.random().toString(36).substr(2, 9);
+  const randomSuffix3 = Math.random().toString(36).substr(2, 9);
+
+  const technicalId = `technical_${timestamp}_${randomSuffix1}`;
+  const softId = `soft_${timestamp}_${randomSuffix2}`;
+  const interviewId = `interview_${timestamp}_${randomSuffix3}`;
+
+  const nodes: Node[] = [
+    {
+      id: technicalId,
+      type: 'custom',
+      position: { x: 250, y: 50 },
+      data: {
+        label: 'Technical Skills 1',
+        type: 'technical',
+        subtitle: 'Validate technical skills',
+        config: {
+          nodeNumber: 1,
+          title: 'Technical Skills 1',
+          configured: false,
+        }
+      }
+    },
+    {
+      id: softId,
+      type: 'custom',
+      position: { x: 250, y: 180 },
+      data: {
+        label: 'Soft Skills 1',
+        type: 'soft',
+        subtitle: 'Assess soft skills',
+        config: {
+          nodeNumber: 2,
+          title: 'Soft Skills 1',
+          configured: false,
+        }
+      }
+    },
+    {
+      id: interviewId,
+      type: 'custom',
+      position: { x: 250, y: 310 },
+      data: {
+        label: 'HR Interview 1',
+        type: 'interview',
+        subtitle: 'Conduct HR interview',
+        config: {
+          nodeNumber: 3,
+          title: 'HR Interview 1',
+          configured: false,
+        }
+      }
+    }
+  ];
+
+  const edges: Edge[] = [
+    {
+      id: `edge-${technicalId}-${softId}`,
+      source: technicalId,
+      target: softId,
+      type: 'default'
+    },
+    {
+      id: `edge-${softId}-${interviewId}`,
+      source: softId,
+      target: interviewId,
+      type: 'default'
+    }
+  ];
+
+  return { nodes, edges };
 };
 
 // Styled components
@@ -387,18 +466,16 @@ const RecruitmentFlowBuilder: React.FC = () => {
   // Debug profile data
   console.log('RecruitmentFlowBuilder authProfile:', authProfile);
 
-  // React Flow state
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  // React Flow state - Initialize with default pipeline using unique IDs
+  const defaultPipeline = React.useMemo(() => generateDefaultPipelineNodes(), []);
+  const [nodes, setNodes, onNodesChange] = useNodesState(defaultPipeline.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(defaultPipeline.edges);
 
   // UI state
   const [modalOpen, setModalOpen] = useState(false);
   const [agentLoadingModalOpen, setAgentLoadingModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [currentPrompt, setCurrentPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
@@ -418,6 +495,11 @@ const RecruitmentFlowBuilder: React.FC = () => {
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
+  const manualJobDetailsRef = useRef<ManualJobDetailsRef>(null);
+
+  // Prompt flow flag - when true, skip pipeline and redirect after agent config
+  const [isPromptFlow, setIsPromptFlow] = useState<boolean | null>(null); // null = not chosen yet, true = prompt flow, false = pipeline flow
+  const [flowTypeSelected, setFlowTypeSelected] = useState(false);
 
   React.useEffect(() => {
     if (savedJobId) {
@@ -494,9 +576,10 @@ const RecruitmentFlowBuilder: React.FC = () => {
         throw new Error('Company profile not found - unable to determine company ID');
       }
 
-             // Get job title and skills from PostDetails component state
-       const postTitle = postDetailsRef.current?.getJobTitle?.() || 'Post';
-       const jobSkills = postDetailsRef.current?.getJobSkills?.() || [];
+      // Get job title and skills from the appropriate ref based on flow type
+      const currentRef = isPromptFlow ? postDetailsRef.current : manualJobDetailsRef.current;
+      const postTitle = currentRef?.getJobTitle?.() || 'Post';
+      const jobSkills = currentRef?.getJobSkills?.() || [];
 
        // Create agent name and avatar name in the format: company+_IdCompagny+{jobTitle}+_IdPost
        const agentName = `${companyName}_${companyId}${postTitle}_${jobId}`;
@@ -708,11 +791,12 @@ const RecruitmentFlowBuilder: React.FC = () => {
     }
   };
 
-  const steps = [
-    'Job Details',
-    'Agent Configuration',
-    'Recruitment Flow',
-  ];
+  // Dynamic steps based on flow type
+  const steps = !flowTypeSelected
+    ? ['Choose Creation Method', 'Job Details', 'Recruitment Flow', 'Agent Configuration'] // Selection step + all possible steps
+    : isPromptFlow
+    ? ['Choose Creation Method', 'Job Details', 'Agent Configuration'] // Prompt flow: 3 steps
+    : ['Choose Creation Method', 'Job Details', 'Recruitment Flow', 'Agent Configuration']; // Pipeline flow: 4 steps (reordered)
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
 
@@ -804,8 +888,13 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const addNode = useCallback((type: string) => {
     const menuItem = menuItems.find(item => item.type === type);
     const nodeCount = nodes.filter(node => node.data.type === type).length + 1;
+
+    // 🔥 FIXED: Generate truly unique node ID to avoid database conflicts
+    // Use timestamp + random string to ensure uniqueness across all posts
+    const uniqueId = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     const newNode: Node = {
-      id: `${type}_${Date.now()}`,
+      id: uniqueId,
       type: 'custom',
       position: {
         x: Math.random() * 300 + 100,
@@ -822,27 +911,67 @@ const RecruitmentFlowBuilder: React.FC = () => {
         }
       },
     };
+
+    console.log('➕ Adding new node with unique ID:', {
+      id: uniqueId,
+      type,
+      label: newNode.data.label
+    });
+
     setNodes((nds) => nds.concat(newNode));
   }, [setNodes, menuItems, nodes]);
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
-
-    // For condition nodes, don't start with chat - show form directly
-    if (node.data.type === 'condition') {
-      setChatMessages([]);
-    } else {
-      setChatMessages([
-        {
-          id: '1',
-          text: `Hi! I'm here to help you configure your ${node.data.label} step. What would you like this step to do?`,
-          isUser: false,
-          timestamp: new Date()
-        }
-      ]);
-    }
-    setCurrentPrompt('');
     setModalOpen(true);
+  }, []);
+
+  // Form save handlers for configuration forms
+  const handleFormSave = useCallback((config: any) => {
+    if (!selectedNode) return;
+
+    console.log('💾 Saving configuration for node:', {
+      nodeId: selectedNode.id,
+      nodeType: selectedNode.data.type,
+      nodeLabel: selectedNode.data.label,
+      newConfig: config,
+      configuredFlag: config.configured
+    });
+
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === selectedNode.id
+          ? {
+            ...node,
+            data: {
+              ...node.data,
+              config: {
+                ...node.data.config,
+                ...config
+              }
+            }
+          }
+          : node
+      )
+    );
+
+    setModalOpen(false);
+
+    // Log the updated node after state update
+    setTimeout(() => {
+      const updatedNode = nodes.find(n => n.id === selectedNode.id);
+      console.log('✅ Node updated in state:', {
+        nodeId: selectedNode.id,
+        configured: updatedNode?.data.config?.configured,
+        fullConfig: updatedNode?.data.config
+      });
+    }, 50);
+
+    toast.success('Configuration saved successfully!');
+  }, [selectedNode, setNodes, nodes]);
+
+  const handleFormCancel = useCallback(() => {
+    setModalOpen(false);
   }, []);
 
   const handleSendPrompt = async () => {
@@ -1040,16 +1169,163 @@ Ready to customize the content or add more triggers?`
     setModalOpen(false);
   };
 
+  // Extract all skills configured in pipeline nodes
+  const extractSkillsFromPipeline = useCallback((pipelineNodes: Node[]) => {
+    const allSkills: any[] = [];
+
+    pipelineNodes.forEach(node => {
+      const nodeType = node.data.type;
+      const config = node.data.config;
+
+      if (!config || !config.configured) return;
+
+      // Technical skills nodes
+      if (nodeType === 'technical' && config.skills) {
+        config.skills.forEach((skill: any) => {
+          allSkills.push({
+            name: skill.name,
+            level: config.assessmentLevel || 'Mid Level',
+            importance: 'high',
+            category: config.categories?.[0] || 'Technical',
+          });
+        });
+      }
+
+      // Soft skills nodes
+      if (nodeType === 'soft' && config.softSkills) {
+        config.softSkills.forEach((skillName: string) => {
+          allSkills.push({
+            name: skillName,
+            level: config.assessmentLevel || 'Mid Level',
+            importance: 'medium',
+            category: 'Soft Skills',
+          });
+        });
+      }
+    });
+
+    // Remove duplicates by skill name
+    const uniqueSkills = allSkills.filter((skill, index, self) =>
+      index === self.findIndex(s => s.name === skill.name)
+    );
+
+    return uniqueSkills;
+  }, []);
+
   // Payment success handler
-  const handlePaymentSuccess = () => {
-    console.log('Payment successful! Redirecting to dashboard...');
+  const handlePaymentSuccess = async () => {
+    console.log('💳 Payment successful! Creating agent and finalizing setup...');
     setShowPaymentDialog(false);
-    toast.success("Job post created successfully! Your recruitment flow has been saved and payment is complete.");
-    router.push('/dashboard/company');
+
+    try {
+      // 🔥 NEW: Create agent and agent config AFTER payment
+      if (!savedJobId) {
+        throw new Error('No job ID found');
+      }
+
+      toast.loading('Finalizing your recruitment setup...', { id: 'finalize' });
+
+      // 1. Register HR agent
+      console.log('1️⃣ Registering HR agent...');
+      const agentResult = await registerHRAgent(savedJobId);
+      const firstAgent =
+        (Array.isArray(agentResult?.data) && agentResult.data.length > 0 && agentResult.data[0]) ||
+        agentResult?.agent ||
+        null;
+
+      const agentIdToUse =
+        firstAgent?._id ||
+        firstAgent?.id ||
+        null;
+
+      if (!agentIdToUse) {
+        throw new Error('Failed to get agent ID from registration response');
+      }
+
+      console.log('✅ Agent registered with ID:', agentIdToUse);
+
+      // 2. Save agent configuration
+      console.log('2️⃣ Saving agent configuration...');
+      let token: string | undefined = Cookies.get("api_token");
+      if (!token && typeof window !== 'undefined') {
+        token =
+          window.localStorage.getItem('api_token') ||
+          window.localStorage.getItem('token') ||
+          undefined;
+      }
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const payload = {
+        agentId: agentIdToUse,
+        postId: savedJobId,
+        thresholdPercent: Number(agentConfig.thresholdPercent),
+        bidBudgetMin: Number(agentConfig.bidBudgetMin),
+        bidBudgetMax: Number(agentConfig.bidBudgetMax),
+        bidStep: Number(agentConfig.bidStep),
+        maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
+        agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
+        bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
+        autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
+        maxDailySpending: Number(agentConfig.maxDailySpending),
+        isActive: Boolean(agentConfig.isActive),
+      };
+
+      const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save agent configuration');
+      }
+
+      console.log('✅ Agent configuration saved');
+
+      // 3. Activate the post (change status from draft to open)
+      console.log('3️⃣ Activating post...');
+      const statusResponse = await fetch(
+        `${apiBaseUrl}post/updatePostStatus/${savedJobId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: 'open' }),
+        }
+      );
+
+      if (!statusResponse.ok) {
+        const statusError = await statusResponse.json().catch(() => ({}));
+        throw new Error(statusError.message || 'Failed to activate post');
+      }
+
+      console.log('✅ Post activated and ready for candidates!');
+
+      toast.success("Job post created successfully! Your recruitment flow is active.", { id: 'finalize' });
+      router.push('/dashboard/company');
+    } catch (error) {
+      console.error('❌ Error in post-payment setup:', error);
+      toast.error(`Setup error: ${error}. Please contact support.`, { id: 'finalize' });
+      // Don't redirect - allow user to retry or contact support
+    }
   };
 
   const handleNext = async () => {
     setSaveError(null);
+
+    // Step 0: Flow selection - handled by handleFlowSelection, should not reach here
+    if (activeStep === 0) {
+      return;
+    }
 
     if (!authProfile && authLoading) {
       setSaveError('Profile is still loading. Please wait a moment and try again.');
@@ -1061,15 +1337,23 @@ Ready to customize the content or add more triggers?`
       return;
     }
 
-    if (activeStep === 0) {
-      if (!postDetailsRef.current?.canProceed()) {
-        setSaveError('Please generate a job post before proceeding to the next step.');
+    // Step 1: Job Details
+    if (activeStep === 1) {
+      // Get the appropriate ref based on flow type
+      const currentRef = isPromptFlow ? postDetailsRef.current : manualJobDetailsRef.current;
+
+      if (!currentRef?.canProceed()) {
+        setSaveError(
+          isPromptFlow
+            ? 'Please generate a job post before proceeding to the next step.'
+            : 'Please fill in all required fields before proceeding.'
+        );
         return;
       }
 
       setIsSavingJob(true);
       try {
-        const saveResult: any = await postDetailsRef.current?.saveJob();
+        const saveResult: any = await currentRef?.saveJob();
         if (!saveResult?.success || !saveResult?.jobId) {
           setSaveError('Failed to save job post. Please try again.');
           return;
@@ -1148,12 +1432,7 @@ Ready to customize the content or add more triggers?`
           toast.error('Warning: Matching configuration save failed. You can configure it later.');
         }
 
-        try {
-          await registerHRAgent(saveResult.jobId);
-        } catch (agentError) {
-          console.error('Error registering HR agent:', agentError);
-          toast.error('Warning: HR agent registration failed. You can retry or specify the agent manually later.');
-        }
+        // Agent registration moved to Step 3 (Agent Configuration) - after pipeline is designed
       } catch (error) {
         console.error('Error during job save:', error);
         setSaveError('An error occurred while saving the job post. Please try again.');
@@ -1166,17 +1445,158 @@ Ready to customize the content or add more triggers?`
       return;
     }
 
-    if (activeStep === 1) {
+    // Step 2: Pipeline Builder (was Step 3)
+    if (activeStep === 2 && !isPromptFlow) {
+      if (!savedJobId) {
+        setSaveError('No job ID available. Please save the job post first.');
+        return;
+      }
+
+      // Validate that pipeline has at least one node
+      if (nodes.length === 0) {
+        setSaveError('Please add at least one step to your recruitment pipeline before continuing.');
+        return;
+      }
+
+      // 🔍 NEW: Check if any nodes are configured
+      const configuredNodes = nodes.filter(node => node.data.config?.configured);
+      const unconfiguredNodes = nodes.filter(node => !node.data.config?.configured);
+
+      console.log(`📊 Pipeline status: ${configuredNodes.length} configured, ${unconfiguredNodes.length} unconfigured`);
+
+      if (unconfiguredNodes.length > 0) {
+        console.warn('⚠️ Unconfigured nodes:', unconfiguredNodes.map(n => ({
+          id: n.id,
+          type: n.data.type,
+          label: n.data.label,
+          configured: n.data.config?.configured
+        })));
+
+        // Show warning to user
+        const shouldContinue = window.confirm(
+          `You have ${unconfiguredNodes.length} unconfigured node(s).\n\n` +
+          `Unconfigured: ${unconfiguredNodes.map(n => n.data.label).join(', ')}\n\n` +
+          `These nodes will be saved with generic/default configuration.\n\n` +
+          `Do you want to continue anyway?`
+        );
+
+        if (!shouldContinue) {
+          return;
+        }
+      }
+
+      try {
+        setIsSavingSteps(true);
+        const sequenceData = nodes.map((node, index) => ({
+          ...node,
+          order: index,
+          connections: edges
+            .filter(edge => edge.source === node.id || edge.target === node.id)
+            .map(edge => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              type: edge.source === node.id ? 'outgoing' : 'incoming'
+            }))
+        }));
+
+        console.log('📦 Sending pipeline steps to API:', sequenceData);
+
+        // 🔍 NEW: Detailed logging of each node's configuration
+        console.log('🔍 Node configurations being saved:');
+        sequenceData.forEach((node, index) => {
+          console.log(`  [${index}] ${node.data.type}:`, {
+            id: node.id,
+            label: node.data.label,
+            configured: node.data.config?.configured,
+            hasSkills: !!node.data.config?.skills,
+            skillCount: node.data.config?.skills?.length || 0,
+            hasSoftSkills: !!node.data.config?.softSkills,
+            softSkillCount: node.data.config?.softSkills?.length || 0,
+            assessmentLevel: node.data.config?.assessmentLevel,
+            fullConfig: node.data.config
+          });
+        });
+
+        const result = await dispatch(postRecruitmentSteps({
+          postId: savedJobId,
+          steps: sequenceData
+        }));
+
+        if (postRecruitmentSteps.fulfilled.match(result)) {
+          console.log('✅ Pipeline saved successfully:', result.payload);
+
+          // 🔍 NEW: Log what was actually saved
+          console.log('💾 Backend response:', {
+            success: result.payload.success,
+            count: result.payload.count,
+            created: result.payload.created,
+            updated: result.payload.updated,
+            steps: result.payload.data
+          });
+
+          toast.success('Pipeline saved successfully!');
+
+          // 🔥 NEW: Extract skills from pipeline nodes
+          const pipelineSkills = extractSkillsFromPipeline(nodes);
+          console.log('Extracted skills from pipeline:', pipelineSkills);
+
+          // Update post with creationType AND skills from pipeline
+          try {
+            let token: string | undefined = Cookies.get("api_token");
+            if (token) {
+              const updatePayload: any = {
+                creationType: 'pipeline',
+                // Keep status as 'draft' - will be activated after payment
+              };
+
+              // ✅ FIXED: Use dot notation to update nested field without triggering validation
+              if (pipelineSkills.length > 0) {
+                updatePayload['skillAnalysis.requiredSkills'] = pipelineSkills;
+                console.log('Updating post with pipeline skills:', pipelineSkills.map(s => s.name));
+              }
+
+              // 🔥 FIXED: Correct URL - use /updatePost/ not /update/
+              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePost/${savedJobId}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(updatePayload),
+              });
+              console.log('Updated post creationType to pipeline (status remains draft)');
+            }
+          } catch (error) {
+            console.error('Failed to update post:', error);
+            // Don't block the flow if this fails
+          }
+
+          // Proceed to Agent Configuration (Step 3)
+          setActiveStep((prev) => prev + 1);
+        } else {
+          console.error('Failed to save pipeline:', result.payload);
+          setSaveError(`Failed to save pipeline: ${result.payload}`);
+        }
+      } catch (error) {
+        console.error('Error saving pipeline:', error);
+        setSaveError('An error occurred while saving the pipeline. Please try again.');
+      } finally {
+        setIsSavingSteps(false);
+      }
+
+      return;
+    }
+
+    // Step 3: Agent Configuration (was Step 2) - OR Step 2 for Prompt Flow
+    if ((activeStep === 3 && !isPromptFlow) || (activeStep === 2 && isPromptFlow)) {
       if (!savedJobId) {
         setSaveError('No job ID available. Please save the job post before configuring the agent.');
         return;
       }
 
-      const normalizedAgentId = agentConfig.agentId?.trim();
-      if (!normalizedAgentId) {
-        setSaveError('Agent ID is missing. Please wait for the agent to finish registering or contact support.');
-        return;
-      }
+      // 🔥 CHANGED: Don't create agent or agent config yet - just validate fields
+      // Agent will be created AFTER payment succeeds (for pipeline flow) or immediately (for prompt flow)
 
       const numericFields: Array<keyof AgentConfigurationFormValues> = [
         'thresholdPercent',
@@ -1199,119 +1619,106 @@ Ready to customize the content or add more triggers?`
         return;
       }
 
-      let token: string | undefined = Cookies.get("api_token");
-      if (!token && typeof window !== 'undefined') {
-        token =
-          window.localStorage.getItem('api_token') ||
-          window.localStorage.getItem('token') ||
-          undefined;
-      }
-
-      if (!token) {
-        setSaveError('No authentication token found. Please log in again.');
-        return;
-      }
-
-      const payload = {
-        agentId: normalizedAgentId,
-        postId: savedJobId,
-        thresholdPercent: Number(agentConfig.thresholdPercent),
-        bidBudgetMin: Number(agentConfig.bidBudgetMin),
-        bidBudgetMax: Number(agentConfig.bidBudgetMax),
-        bidStep: Number(agentConfig.bidStep),
-        maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
-        agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
-        bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
-        autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
-        maxDailySpending: Number(agentConfig.maxDailySpending),
-        isActive: Boolean(agentConfig.isActive),
-      };
-
-      setIsSavingAgentConfig(true);
-      try {
-        const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const rawResponse = await response.text();
-        let responseBody: any = {};
+      // 🔥 PROMPT FLOW: Create agent and config immediately, then redirect
+      if (isPromptFlow) {
         try {
-          responseBody = rawResponse ? JSON.parse(rawResponse) : {};
-        } catch (parseError) {
-          console.warn('Failed to parse agent config response as JSON:', parseError);
+          setIsSavingAgentConfig(true);
+
+          // 1. Register agent
+          const agentResult = await registerHRAgent(savedJobId);
+          const firstAgent =
+            (Array.isArray(agentResult?.data) && agentResult.data.length > 0 && agentResult.data[0]) ||
+            agentResult?.agent ||
+            null;
+
+          const agentIdToUse =
+            firstAgent?._id ||
+            firstAgent?.id ||
+            null;
+
+          if (!agentIdToUse) {
+            throw new Error('Failed to get agent ID from registration response');
+          }
+
+          console.log('✅ Agent registered with ID:', agentIdToUse);
+
+          // 2. Save agent config
+          let token: string | undefined = Cookies.get("api_token");
+          if (!token && typeof window !== 'undefined') {
+            token =
+              window.localStorage.getItem('api_token') ||
+              window.localStorage.getItem('token') ||
+              undefined;
+          }
+
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+
+          const payload = {
+            agentId: agentIdToUse,
+            postId: savedJobId,
+            thresholdPercent: Number(agentConfig.thresholdPercent),
+            bidBudgetMin: Number(agentConfig.bidBudgetMin),
+            bidBudgetMax: Number(agentConfig.bidBudgetMax),
+            bidStep: Number(agentConfig.bidStep),
+            maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
+            agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
+            bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
+            autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
+            maxDailySpending: Number(agentConfig.maxDailySpending),
+            isActive: Boolean(agentConfig.isActive),
+          };
+
+          const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to save agent configuration');
+          }
+
+          // 🔥 NEW: Activate the post (change status from draft to open)
+          const statusResponse = await fetch(
+            `${apiBaseUrl}post/updatePostStatus/${savedJobId}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ status: 'open' }),
+            }
+          );
+
+          if (!statusResponse.ok) {
+            console.warn('Failed to activate post status - post may remain as draft');
+          } else {
+            console.log('✅ Post activated and ready for candidates!');
+          }
+
+          toast.success('Job posted successfully! Candidates can now apply and interview.');
+          router.push('/dashboard/company');
+        } catch (error) {
+          console.error('Error in prompt flow agent creation:', error);
+          setSaveError(`Failed to complete setup: ${error}`);
+          toast.error('An error occurred during setup. Please try again.');
+        } finally {
+          setIsSavingAgentConfig(false);
         }
-
-        if (!response.ok || responseBody?.success === false) {
-          const errorMessage =
-            (responseBody && typeof responseBody === 'object' && (responseBody.error || responseBody.message)) ||
-            `Failed to save agent configuration (HTTP ${response.status}).`;
-          setSaveError(errorMessage);
-          toast.error(errorMessage);
-          return;
-        }
-
-        toast.success('Agent configuration saved successfully.');
-        setActiveStep((prev) => prev + 1);
-      } catch (error) {
-        console.error('Error saving agent configuration:', error);
-        setSaveError('An error occurred while saving the agent configuration. Please try again.');
-        toast.error('An error occurred while saving the agent configuration.');
-      } finally {
-        setIsSavingAgentConfig(false);
-      }
-
-      return;
-    }
-
-    if (activeStep === steps.length - 1) {
-      if (!savedJobId) {
-        setSaveError('No job ID available. Please save the job post first.');
         return;
       }
 
-      try {
-        setIsSavingSteps(true);
-        const sequenceData = nodes.map((node, index) => ({
-          ...node,
-          order: index,
-          connections: edges
-            .filter(edge => edge.source === node.id || edge.target === node.id)
-            .map(edge => ({
-              id: edge.id,
-              source: edge.source,
-              target: edge.target,
-              type: edge.source === node.id ? 'outgoing' : 'incoming'
-            }))
-        }));
-
-        console.log('Sending steps to API:', sequenceData);
-
-        const result = await dispatch(postRecruitmentSteps({
-          postId: savedJobId,
-          steps: sequenceData
-        }));
-
-        if (postRecruitmentSteps.fulfilled.match(result)) {
-          console.log('Sequence saved successfully:', result.payload);
-
-          // Pipeline saved successfully - now trigger payment
-          console.log('Opening payment dialog for post:', savedJobId);
-          setShowPaymentDialog(true);
-        } else {
-          console.error('Failed to save sequence:', result.payload);
-          setSaveError(`Failed to save sequence: ${result.payload}`);
-        }
-      } catch (error) {
-        console.error('Error saving sequence:', error);
-        setSaveError('An error occurred while saving the sequence. Please try again.');
-      } finally {
-        setIsSavingSteps(false);
-      }
+      // PIPELINE FLOW: Just store config and proceed to payment
+      // Agent creation will happen in handlePaymentSuccess()
+      console.log('✅ Agent configuration validated. Proceeding to payment...');
+      setShowPaymentDialog(true);
+      return;
     }
   };
 
@@ -1333,157 +1740,454 @@ Ready to customize the content or add more triggers?`
   const handleBack = () => {
     if (activeStep > 0) {
       setActiveStep(activeStep - 1);
+      // If going back to step 0, reset the flow selection
+      if (activeStep === 1) {
+        setFlowTypeSelected(false);
+        setIsPromptFlow(null);
+      }
     }
+  };
+
+  const handleFlowSelection = (promptFlow: boolean) => {
+    setIsPromptFlow(promptFlow);
+    setFlowTypeSelected(true);
+    setActiveStep(1); // Move to Job Details step
   };
 
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
+        // Step 0: Choose Creation Method
         return (
-          <PostDetails
-            ref={postDetailsRef}
-            onReadyChange={setPostDetailsReady}
-            matchingConfig={matchingConfig}
-          />
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 4,
+            }}
+          >
+            <Box sx={{ maxWidth: 900, width: '100%' }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  textAlign: 'center',
+                  fontWeight: 700,
+                  mb: 2,
+                  color: '#111827',
+                }}
+              >
+                How would you like to create your job post?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  textAlign: 'center',
+                  color: '#6b7280',
+                  mb: 5,
+                  maxWidth: 600,
+                  mx: 'auto',
+                }}
+              >
+                Choose the method that best suits your needs. You can either use AI to quickly generate a post or build a custom recruitment pipeline.
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 3,
+                }}
+              >
+                {/* Prompt-Based Option */}
+                <Box
+                  onClick={() => handleFlowSelection(true)}
+                  sx={{
+                    p: 4,
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backgroundColor: 'white',
+                    '&:hover': {
+                      borderColor: '#10b981',
+                      boxShadow: '0 10px 30px rgba(16, 185, 129, 0.15)',
+                      transform: 'translateY(-4px)',
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 3,
+                    }}
+                  >
+                    <SmartToyIcon sx={{ fontSize: 32, color: 'white' }} />
+                  </Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1.5,
+                      color: '#111827',
+                    }}
+                  >
+                    AI-Powered Creation
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#6b7280',
+                      lineHeight: 1.7,
+                      mb: 3,
+                    }}
+                  >
+                    Describe your ideal candidate and let AI generate a comprehensive job post with matching configuration in minutes.
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: '#374151' }}>
+                        Quick & Easy (2 steps)
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: '#374151' }}>
+                        AI-generated job description
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: '#10b981',
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: '#374151' }}>
+                        Automatic candidate matching
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Chip
+                    label="Recommended"
+                    size="small"
+                    sx={{
+                      mt: 3,
+                      backgroundColor: '#d1fae5',
+                      color: '#065f46',
+                      fontWeight: 600,
+                    }}
+                  />
+                </Box>
+
+                {/* Pipeline-Based Option */}
+                <Box
+                  onClick={() => handleFlowSelection(false)}
+                  sx={{
+                    p: 4,
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    backgroundColor: 'white',
+                    '&:hover': {
+                      borderColor: '#6366f1',
+                      boxShadow: '0 10px 30px rgba(99, 102, 241, 0.15)',
+                      transform: 'translateY(-4px)',
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 3,
+                    }}
+                  >
+                    <ConditionIcon sx={{ fontSize: 32, color: 'white' }} />
+                  </Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1.5,
+                      color: '#111827',
+                    }}
+                  >
+                    Custom Pipeline Builder
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#6b7280',
+                      lineHeight: 1.7,
+                      mb: 3,
+                    }}
+                  >
+                    Design your own recruitment workflow with custom tests, interviews, and conditions for complete control.
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: '#6366f1',
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: '#374151' }}>
+                        Full customization (3 steps)
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: '#6366f1',
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: '#374151' }}>
+                        Visual pipeline builder
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: '#6366f1',
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: '#374151' }}>
+                        Custom evaluation steps
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Chip
+                    label="Advanced"
+                    size="small"
+                    sx={{
+                      mt: 3,
+                      backgroundColor: '#e0e7ff',
+                      color: '#4338ca',
+                      fontWeight: 600,
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         );
       case 1:
+        // Conditionally render based on flow type
+        if (isPromptFlow) {
+          // AI-Powered Flow: Use PostDetails for AI generation
+          return (
+            <PostDetails
+              ref={postDetailsRef}
+              onReadyChange={setPostDetailsReady}
+              matchingConfig={matchingConfig}
+            />
+          );
+        } else {
+          // Pipeline Flow: Use ManualJobDetailsForm for manual input
+          return (
+            <ManualJobDetailsForm
+              ref={manualJobDetailsRef}
+              onReadyChange={setPostDetailsReady}
+            />
+          );
+        }
+      case 2:
+        // Step 2: Pipeline Builder (for Pipeline Flow) OR Agent Configuration (for Prompt Flow)
+        if (isPromptFlow) {
+          // Prompt Flow: Agent Configuration
+          return (
+            <AgentConfigurationForm
+              value={agentConfig}
+              onChange={handleAgentConfigChange}
+              disabled={!savedJobId || isSavingAgentConfig || isRegisteringAgent}
+              loading={isSavingAgentConfig}
+              errorMessage={activeStep === 2 ? saveError : null}
+              agentSummary={{
+                agentName: registeredAgentName ?? undefined,
+              }}
+            />
+          );
+        } else {
+          // Pipeline Flow: Pipeline Builder
+          return (
+            <Box sx={{ flex: 1, height: '100%', position: 'relative' }}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={onNodeClick}
+                onSelectionChange={onSelectionChange}
+                nodeTypes={nodeTypes}
+                fitView
+                attributionPosition="bottom-left"
+              >
+                <Controls />
+                <MiniMap />
+                <Background variant={'dots' as any} gap={12} size={1} />
+              </ReactFlow>
+
+              {/* Empty Flow Message */}
+              {nodes.length === 0 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    zIndex: 1000,
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    padding: 4,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    border: '2px dashed #e1e5e9'
+                  }}
+                >
+                  <Box sx={{ mb: 2 }}>
+                    <SmartToyIcon sx={{ fontSize: 48, color: '#6b7280', mb: 1 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ color: '#374151', mb: 1, fontWeight: 600 }}>
+                    Build Your Recruitment Flow
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280', mb: 2, maxWidth: 300 }}>
+                    Add recruitment steps from the sidebar to create your hiring process.
+                    You need at least one step to continue.
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {['technical', 'soft', 'interview'].map((type) => {
+                      const item = menuItems.find(item => item.type === type);
+                      const IconComponent = item?.icon;
+                      return (
+                        <Button
+                          key={type}
+                          variant="outlined"
+                          size="small"
+                          startIcon={IconComponent && <IconComponent fontSize="small" />}
+                          onClick={() => addNode(type)}
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontSize: '12px',
+                            borderColor: '#e5e7eb',
+                            color: '#6b7280',
+                            '&:hover': {
+                              borderColor: '#d1d5db',
+                              backgroundColor: '#f9fafb'
+                            }
+                          }}
+                        >
+                          Add {item?.label}
+                        </Button>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Floating Delete Button */}
+              {selectedNodes.length > 0 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 20,
+                    right: 20,
+                    zIndex: 1000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    alignItems: 'center'
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={deleteSelectedNodes}
+                    sx={{
+                      borderRadius: '20px',
+                      px: 3,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+                      }
+                    }}
+                  >
+                    Delete {selectedNodes.length} item{selectedNodes.length > 1 ? 's' : ''}
+                  </Button>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      backgroundColor: 'rgba(0,0,0,0.7)',
+                      color: 'white',
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: '4px',
+                      fontSize: '10px'
+                    }}
+                  >
+                    Or press Delete/Backspace
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          );
+        }
+      case 3:
+        // Step 3: Agent Configuration (only for Pipeline Flow)
         return (
           <AgentConfigurationForm
             value={agentConfig}
             onChange={handleAgentConfigChange}
             disabled={!savedJobId || isSavingAgentConfig || isRegisteringAgent}
             loading={isSavingAgentConfig}
-            errorMessage={activeStep === 1 ? saveError : null}
+            errorMessage={activeStep === 3 ? saveError : null}
             agentSummary={{
               agentName: registeredAgentName ?? undefined,
             }}
           />
-        );
-      case 2:
-        return (
-          <Box sx={{ flex: 1, height: '100%', position: 'relative' }}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={onNodeClick}
-              onSelectionChange={onSelectionChange}
-              nodeTypes={nodeTypes}
-              fitView
-              attributionPosition="bottom-left"
-            >
-              <Controls />
-              <MiniMap />
-              <Background variant={'dots' as any} gap={12} size={1} />
-            </ReactFlow>
-
-            {/* Empty Flow Message */}
-            {nodes.length === 0 && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  zIndex: 1000,
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  padding: 4,
-                  borderRadius: 2,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  border: '2px dashed #e1e5e9'
-                }}
-              >
-                <Box sx={{ mb: 2 }}>
-                  <SmartToyIcon sx={{ fontSize: 48, color: '#6b7280', mb: 1 }} />
-                </Box>
-                <Typography variant="h6" sx={{ color: '#374151', mb: 1, fontWeight: 600 }}>
-                  Build Your Recruitment Flow
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#6b7280', mb: 2, maxWidth: 300 }}>
-                  Add recruitment steps from the sidebar to create your hiring process. 
-                  You need at least one step to continue.
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {['technical', 'soft', 'interview'].map((type) => {
-                    const item = menuItems.find(item => item.type === type);
-                    const IconComponent = item?.icon;
-                    return (
-                      <Button
-                        key={type}
-                        variant="outlined"
-                        size="small"
-                        startIcon={IconComponent && <IconComponent fontSize="small" />}
-                        onClick={() => addNode(type)}
-                        sx={{
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          fontSize: '12px',
-                          borderColor: '#e5e7eb',
-                          color: '#6b7280',
-                          '&:hover': {
-                            borderColor: '#d1d5db',
-                            backgroundColor: '#f9fafb'
-                          }
-                        }}
-                      >
-                        Add {item?.label}
-                      </Button>
-                    );
-                  })}
-                </Box>
-              </Box>
-            )}
-
-            {/* Floating Delete Button */}
-            {selectedNodes.length > 0 && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 20,
-                  right: 20,
-                  zIndex: 1000,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                  alignItems: 'center'
-                }}
-              >
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={deleteSelectedNodes}
-                  sx={{
-                    borderRadius: '20px',
-                    px: 3,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
-                    }
-                  }}
-                >
-                  Delete {selectedNodes.length} item{selectedNodes.length > 1 ? 's' : ''}
-                </Button>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    color: 'white',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: '4px',
-                    fontSize: '10px'
-                  }}
-                >
-                  Or press Delete/Backspace
-                </Typography>
-              </Box>
-            )}
-          </Box>
         );
       default:
         return null;
@@ -1653,7 +2357,7 @@ Ready to customize the content or add more triggers?`
 
 
       <MainContent>
-        {activeStep === 2 && (
+        {activeStep === 2 && !isPromptFlow && (
           <Sidebar>
             {menuItems.map((item) => {
               const IconComponent = item.icon;
@@ -1692,37 +2396,39 @@ Ready to customize the content or add more triggers?`
           gap: 2,
           width: { xs: '100%', sm: 'auto' },
         }}>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={handleBack}
-            disabled={activeStep === 0}
-            sx={{
-              borderRadius: '8px',
-              paddingX: { xs: 2, sm: 2.5 },
-              paddingY: { xs: 1, sm: 1.25 },
-              fontWeight: 500,
-              fontSize: { xs: '0.8rem', sm: '0.875rem' },
-              borderColor: '#64748b',
-              color: '#1e293b',
-              textTransform: 'none',
-              transition: 'all 0.3s ease',
-              flex: { xs: 1, sm: 'initial' },
-              '&:hover': {
-                backgroundColor: '#f1f5f9',
-                borderColor: '#475569',
-              },
-              '&.Mui-disabled': {
-                borderColor: '#cbd5e1',
-                color: '#94a3b8',
-                backgroundColor: '#f8fafc',
-              }
-            }}
-          >
-            Back
-          </Button>
+          {activeStep > 0 && (
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+              onClick={handleBack}
+              disabled={activeStep === 0}
+              sx={{
+                borderRadius: '8px',
+                paddingX: { xs: 2, sm: 2.5 },
+                paddingY: { xs: 1, sm: 1.25 },
+                fontWeight: 500,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                borderColor: '#64748b',
+                color: '#1e293b',
+                textTransform: 'none',
+                transition: 'all 0.3s ease',
+                flex: { xs: 1, sm: 'initial' },
+                '&:hover': {
+                  backgroundColor: '#f1f5f9',
+                  borderColor: '#475569',
+                },
+                '&.Mui-disabled': {
+                  borderColor: '#cbd5e1',
+                  color: '#94a3b8',
+                  backgroundColor: '#f8fafc',
+                }
+              }}
+            >
+              Back
+            </Button>
+          )}
 
-          {activeStep < steps.length - 1 ? (
+          {activeStep > 0 && (
             <Button
               variant="contained"
               endIcon={
@@ -1738,7 +2444,8 @@ Ready to customize the content or add more triggers?`
                 isSavingJob ||
                 isRegisteringAgent ||
                 isSavingAgentConfig ||
-                (activeStep === 0 && !postDetailsReady)
+                (activeStep === 1 && !postDetailsReady) ||
+                (activeStep === 2 && !isPromptFlow && nodes.length === 0)
               }
               sx={{
                 borderRadius: '8px',
@@ -1761,50 +2468,23 @@ Ready to customize the content or add more triggers?`
                 },
               }}
             >
-              {isSavingJob && activeStep === 1
-                ? 'Saving Matching Config...'
-                : isSavingJob
-                  ? 'Saving Job...'
+              {isSavingJob
+                ? 'Saving Job...'
+                : isSavingSteps
+                  ? 'Saving Pipeline...'
                   : isRegisteringAgent
                     ? 'Creating AI Agent...'
-                    : isSavingAgentConfig
-                      ? 'Saving Agent Config...'
-                      : postStepsLoading
-                        ? 'Confirm...'
-                        : activeStep === 1
-                          ? 'Save & Continue'
-                          : 'Next'}
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              endIcon={
-                isSavingSteps ? (
-                  <CircularProgress size={16} sx={{ color: 'white' }} />
-                ) : (
-                  <PlayArrowIcon />
-                )
-              }
-              disabled={isSavingSteps || nodes.length === 0}
-              onClick={handleNext}
-              sx={{
-                borderRadius: '8px',
-                px: { xs: 2, sm: 3 },
-                py: { xs: 1, sm: 1.5 },
-                fontWeight: 600,
-                fontSize: { xs: '0.8rem', sm: '0.9rem' },
-                textTransform: 'none',
-                color: '#ffffff',
-                background: 'linear-gradient(90deg, rgb(47, 212, 149) 0%, rgb(5, 150, 105) 100%)',
-                boxShadow: '0 2px 10px rgba(47, 212, 149, 0.4)',
-                transition: 'all 0.3s ease',
-                flex: { xs: 1, sm: 'initial' },
-                '&:hover': {
-                  background: 'linear-gradient(90deg, rgb(38, 180, 128) 0%, rgb(4, 120, 85) 100%)',
-                },
-              }}
-            >
-              {isSavingSteps ? 'Saving Flow...' : 'Launch Flow'}
+                    : isSavingAgentConfig && isPromptFlow
+                      ? 'Saving & Finishing...'
+                      : isSavingAgentConfig
+                        ? 'Saving Agent Config...'
+                        : activeStep === 2 && isPromptFlow
+                          ? 'Save & Finish'
+                          : activeStep === 2 && !isPromptFlow
+                            ? 'Save Pipeline'
+                            : activeStep === 3
+                              ? 'Save & Finish'
+                              : 'Next'}
             </Button>
           )}
         </Box>
@@ -1820,24 +2500,20 @@ Ready to customize the content or add more triggers?`
         <Box
           sx={{
             ...ModalStyle,
-            width: selectedNode?.data.type === 'condition' ? 550 : 700,
-            height: selectedNode?.data.type === 'condition' ? 'auto' : 600,
-            maxHeight: selectedNode?.data.type === 'condition' ? '80vh' : 600,
-            overflow: selectedNode?.data.type === 'condition' ? 'auto' : 'hidden'
+            width: { xs: '95vw', sm: 600, md: 700 },
+            maxWidth: 700,
+            height: 'auto',
+            maxHeight: '85vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {selectedNode?.data.type === 'condition' ? (
-                <ConditionIcon color="primary" />
-              ) : (
-                <SmartToyIcon color="primary" />
-              )}
-              <Typography variant="h6">
-                {selectedNode?.data.type === 'condition' ? 'Configure Condition' : 'AI Assistant'} - {selectedNode?.data.label}
-              </Typography>
-            </Box>
+            <Typography variant="h6">
+              Configure {selectedNode?.data.label}
+            </Typography>
             <IconButton onClick={() => setModalOpen(false)}>
               <CloseIcon />
             </IconButton>
@@ -1966,163 +2642,47 @@ Ready to customize the content or add more triggers?`
               )}
             </Box>
           ) : (
-            /* Chat Interface for other nodes */
-            <>
-              {/* Chat Messages Area */}
-              <Box
-                sx={{
-                  height: 400,
-                  overflowY: 'auto',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  p: 2,
-                  mb: 2,
-                  backgroundColor: '#fafafa'
-                }}
-              >
-                {chatMessages.map((message) => (
-                  <Box
-                    key={message.id}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: message.isUser ? 'flex-end' : 'flex-start',
-                      mb: 2
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        maxWidth: '80%',
-                        p: 2,
-                        borderRadius: '12px',
-                        backgroundColor: message.isUser ? '#1976d2' : '#fff',
-                        color: message.isUser ? '#fff' : '#000',
-                        border: message.isUser ? 'none' : '1px solid #e0e0e0',
-                        wordWrap: 'break-word'
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {message.text}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          opacity: 0.7,
-                          display: 'block',
-                          mt: 0.5,
-                          fontSize: '11px'
-                        }}
-                      >
-                        {message.timestamp.toLocaleTimeString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-
-                {isGenerating && (
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: '12px',
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0e0e0',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                        AI is thinking...
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-
-              {/* Input Area */}
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                <TextField
-                  fullWidth
-                  multiline
-                  maxRows={3}
-                  value={currentPrompt}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    setCurrentPrompt(e.target.value);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  placeholder={`Tell me what you want this ${selectedNode?.data.label.toLowerCase()} step to do...`}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendPrompt();
-                    }
-                  }}
-                  disabled={isGenerating}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '20px',
-                    }
-                  }}
-                />
-                <IconButton
-                  onClick={handleSendPrompt}
-                  disabled={!currentPrompt.trim() || isGenerating}
-                  color="primary"
-                  sx={{
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: '#1565c0',
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#e0e0e0',
-                    },
-                    width: 48,
-                    height: 48,
-                  }}
-                >
-                  <SendIcon />
-                </IconButton>
-              </Box>
-            </>
+            /* Configuration Forms for other node types */
+            <Box sx={{ maxHeight: '70vh', overflow: 'auto' }}>
+              <NodeConfigRenderer
+                nodeType={selectedNode?.data.type || ''}
+                initialConfig={selectedNode?.data.config}
+                onSave={handleFormSave}
+                onCancel={handleFormCancel}
+              />
+            </Box>
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 2 }}>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => {
-                if (selectedNode) {
-                  deleteNode(selectedNode.id);
-                  setModalOpen(false);
-                }
-              }}
-            >
-              Delete Node
-            </Button>
+          {selectedNode?.data.type === 'condition' && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => {
+                  if (selectedNode) {
+                    deleteNode(selectedNode.id);
+                    setModalOpen(false);
+                  }
+                }}
+              >
+                Delete Node
+              </Button>
 
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {selectedNode?.data.type === 'condition' ? (
-                <>
-                  <Button variant="outlined" onClick={() => setModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleConditionConfirm}
-                    disabled={!selectedNode?.data.config?.field || !selectedNode?.data.config?.operator || !selectedNode?.data.config?.value}
-                  >
-                    Confirm
-                  </Button>
-                </>
-              ) : (
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button variant="outlined" onClick={() => setModalOpen(false)}>
-                  Close
+                  Cancel
                 </Button>
-              )}
+                <Button
+                  variant="contained"
+                  onClick={handleConditionConfirm}
+                  disabled={!selectedNode?.data.config?.field || !selectedNode?.data.config?.operator || !selectedNode?.data.config?.value}
+                >
+                  Confirm
+                </Button>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
       </Modal>
 

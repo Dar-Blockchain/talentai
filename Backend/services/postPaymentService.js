@@ -73,7 +73,8 @@ class PostPaymentService {
    * @returns {number} Total TAI tokens required
    */
   calculatePrice(numberOfSteps) {
-    if (!numberOfSteps || numberOfSteps < 0) {
+    // Allow 0 steps for manual posts (just charge base fee)
+    if (numberOfSteps === undefined || numberOfSteps === null || numberOfSteps < 0) {
       throw new Error('Invalid number of steps');
     }
 
