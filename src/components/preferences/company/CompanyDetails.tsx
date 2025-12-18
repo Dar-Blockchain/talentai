@@ -178,7 +178,7 @@ const CompanyDetails = forwardRef(
                 helperText={errors.location && "Location is required"}
               >
                 <MenuItem disabled value="">
-                  Where is your company located?
+                  Select company location
                 </MenuItem>
                 {locations.map((loc) => (
                   <MenuItem key={loc} value={loc}>

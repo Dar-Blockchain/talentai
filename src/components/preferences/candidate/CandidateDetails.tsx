@@ -2,7 +2,7 @@
 import { Box, Typography, TextField, MenuItem, Stack } from "@mui/material";
 import { useState, forwardRef, useImperativeHandle } from "react";
 import { usePreferences } from "../hooks/usePreferences";
-import { contractTypes, currencies, genders, workModes } from "../data/candidateData";
+import { contractTypes, countries, currencies, genders, workModes } from "../data/candidateData";
 
 type CandidateDetailsProps = {
   preferences: ReturnType<typeof usePreferences>;
@@ -112,8 +112,11 @@ const CandidateDetails = forwardRef(
         }
       }
 
-      if (candidateDetails.location && candidateDetails.location.trim() === "")
-        newErrors.location = "Enter a valid location";
+      if (
+        candidateDetails.location &&
+        !countries.includes(candidateDetails.location)
+      )
+        newErrors.location = "Select a valid country";
 
       if (
         candidateDetails.salaryCurrency &&
@@ -282,14 +285,23 @@ const CandidateDetails = forwardRef(
               Location
             </Typography>
             <TextField
+              select
               fullWidth
-              placeholder="Current location"
-              variant="outlined"
-              value={candidateDetails.location}
+              value={candidateDetails.location || ""}
               onChange={handleChange("location")}
+              variant="outlined"
               error={!!errors.location}
               helperText={errors.location}
-            />
+            >
+              <MenuItem disabled value="">
+                Select your country
+              </MenuItem>
+              {countries.map((country) => (
+                <MenuItem key={country} value={country}>
+                  {country}
+                </MenuItem>
+              ))}
+            </TextField>
           </Box>
 
           <Box sx={{ flex: "1 1 45%", minWidth: "300px" }}>
