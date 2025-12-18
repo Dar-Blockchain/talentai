@@ -478,31 +478,69 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     mb: 1,
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: "rgba(24, 25, 28, 1)",
-                      fontFamily: "Poppins",
-                      fontWeight: 500,
-                      fontStyle: "medium",
-                      fontSize: {
-                        xs: "14px", // mobile
-                        sm: "16px", // small tablet
-                        md: "18px", // tablet/desktop
-                        lg: "18px", // large desktop
-                      },
-                      lineHeight: {
-                        xs: "20px",
-                        sm: "24px",
-                        md: "28px",
-                        lg: "28px",
-                      },
-                      letterSpacing: "0%",
-                      flex: 1,
-                    }}
-                  >
-                    {job.jobDetails.title}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "rgba(24, 25, 28, 1)",
+                        fontFamily: "Poppins",
+                        fontWeight: 500,
+                        fontStyle: "medium",
+                        fontSize: {
+                          xs: "14px", // mobile
+                          sm: "16px", // small tablet
+                          md: "18px", // tablet/desktop
+                          lg: "18px", // large desktop
+                        },
+                        lineHeight: {
+                          xs: "20px",
+                          sm: "24px",
+                          md: "28px",
+                          lg: "28px",
+                        },
+                        letterSpacing: "0%",
+                      }}
+                    >
+                      {job.jobDetails.title}
+                    </Typography>
+                    {/* Creation Type Badge */}
+                    {job.creationType && (
+                      <Chip
+                        label={
+                          job.creationType === 'ai'
+                            ? '🤖 AI Generated'
+                            : job.creationType === 'pipeline'
+                            ? '⚙️ Pipeline'
+                            : '✍️ Manual'
+                        }
+                        size="small"
+                        sx={{
+                          backgroundColor:
+                            job.creationType === 'ai'
+                              ? 'rgba(131, 16, 255, 0.1)'
+                              : job.creationType === 'pipeline'
+                              ? 'rgba(2, 226, 255, 0.1)'
+                              : 'rgba(255, 152, 0, 0.1)',
+                          color:
+                            job.creationType === 'ai'
+                              ? '#8310FF'
+                              : job.creationType === 'pipeline'
+                              ? '#02E2FF'
+                              : '#FF9800',
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          height: 22,
+                          border: `1px solid ${
+                            job.creationType === 'ai'
+                              ? '#8310FF'
+                              : job.creationType === 'pipeline'
+                              ? '#02E2FF'
+                              : '#FF9800'
+                          }`,
+                        }}
+                      />
+                    )}
+                  </Box>
                   {job.createdAt && (
                     <Typography
                       variant="caption"

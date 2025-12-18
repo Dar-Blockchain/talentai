@@ -86,6 +86,7 @@ import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { selectProfile } from '@/store/slices/profileSlice';
 import Navbar from '../dashboard-company/Navbar';
+import { NodeConfigRenderer } from './recruitment-flow-config';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -105,76 +106,82 @@ const DEFAULT_AGENT_CONFIG: AgentConfigurationFormValues = {
   isActive: true,
 };
 
-// Default pipeline nodes - Technical Test → Soft Skills Test → HR Interview
-const DEFAULT_PIPELINE_NODES: Node[] = [
-  {
-    id: 'technical_default',
-    type: 'custom',
-    position: { x: 250, y: 50 },
-    data: {
-      label: 'Technical Skills 1',
-      type: 'technical',
-      subtitle: 'Validate technical skills',
-      config: {
-        nodeNumber: 1,
-        title: 'Technical Skills 1',
-        configured: true,
-        lastPrompt: 'Assess candidate technical skills',
-        generatedContent: 'Technical skills assessment configured'
-      }
-    }
-  },
-  {
-    id: 'soft_default',
-    type: 'custom',
-    position: { x: 250, y: 180 },
-    data: {
-      label: 'Soft Skills 1',
-      type: 'soft',
-      subtitle: 'Assess soft skills',
-      config: {
-        nodeNumber: 1,
-        title: 'Soft Skills 1',
-        configured: true,
-        lastPrompt: 'Evaluate candidate soft skills',
-        generatedContent: 'Soft skills assessment configured'
-      }
-    }
-  },
-  {
-    id: 'interview_default',
-    type: 'custom',
-    position: { x: 250, y: 310 },
-    data: {
-      label: 'HR Interview 1',
-      type: 'interview',
-      subtitle: 'Conduct HR interview',
-      config: {
-        nodeNumber: 1,
-        title: 'HR Interview 1',
-        configured: true,
-        lastPrompt: 'Conduct structured HR interview',
-        generatedContent: 'HR interview configured'
-      }
-    }
-  }
-];
+// Function to generate default pipeline nodes with unique IDs
+const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
+  const timestamp = Date.now();
+  const randomSuffix1 = Math.random().toString(36).substr(2, 9);
+  const randomSuffix2 = Math.random().toString(36).substr(2, 9);
+  const randomSuffix3 = Math.random().toString(36).substr(2, 9);
 
-// Default pipeline edges - Connect the nodes in sequence
-const DEFAULT_PIPELINE_EDGES: Edge[] = [
-  {
-    id: 'edge-technical-soft',
-    source: 'technical_default',
-    target: 'soft_default',
-    type: 'default'
-  },
-  {
-    id: 'edge-soft-interview',
-    source: 'soft_default',
-    target: 'interview_default',
-    type: 'default'
-  }
-];
+  const technicalId = `technical_${timestamp}_${randomSuffix1}`;
+  const softId = `soft_${timestamp}_${randomSuffix2}`;
+  const interviewId = `interview_${timestamp}_${randomSuffix3}`;
+
+  const nodes: Node[] = [
+    {
+      id: technicalId,
+      type: 'custom',
+      position: { x: 250, y: 50 },
+      data: {
+        label: 'Technical Skills 1',
+        type: 'technical',
+        subtitle: 'Validate technical skills',
+        config: {
+          nodeNumber: 1,
+          title: 'Technical Skills 1',
+          configured: false,
+        }
+      }
+    },
+    {
+      id: softId,
+      type: 'custom',
+      position: { x: 250, y: 180 },
+      data: {
+        label: 'Soft Skills 1',
+        type: 'soft',
+        subtitle: 'Assess soft skills',
+        config: {
+          nodeNumber: 2,
+          title: 'Soft Skills 1',
+          configured: false,
+        }
+      }
+    },
+    {
+      id: interviewId,
+      type: 'custom',
+      position: { x: 250, y: 310 },
+      data: {
+        label: 'HR Interview 1',
+        type: 'interview',
+        subtitle: 'Conduct HR interview',
+        config: {
+          nodeNumber: 3,
+          title: 'HR Interview 1',
+          configured: false,
+        }
+      }
+    }
+  ];
+
+  const edges: Edge[] = [
+    {
+      id: `edge-${technicalId}-${softId}`,
+      source: technicalId,
+      target: softId,
+      type: 'default'
+    },
+    {
+      id: `edge-${softId}-${interviewId}`,
+      source: softId,
+      target: interviewId,
+      type: 'default'
+    }
+  ];
+
+  return { nodes, edges };
+};
 
 // Styled components
 const Container = styled(Box)({
@@ -459,18 +466,16 @@ const RecruitmentFlowBuilder: React.FC = () => {
   // Debug profile data
   console.log('RecruitmentFlowBuilder authProfile:', authProfile);
 
-  // React Flow state - Initialize with default pipeline
-  const [nodes, setNodes, onNodesChange] = useNodesState(DEFAULT_PIPELINE_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(DEFAULT_PIPELINE_EDGES);
+  // React Flow state - Initialize with default pipeline using unique IDs
+  const defaultPipeline = React.useMemo(() => generateDefaultPipelineNodes(), []);
+  const [nodes, setNodes, onNodesChange] = useNodesState(defaultPipeline.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(defaultPipeline.edges);
 
   // UI state
   const [modalOpen, setModalOpen] = useState(false);
   const [agentLoadingModalOpen, setAgentLoadingModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [currentPrompt, setCurrentPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
@@ -883,8 +888,13 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const addNode = useCallback((type: string) => {
     const menuItem = menuItems.find(item => item.type === type);
     const nodeCount = nodes.filter(node => node.data.type === type).length + 1;
+
+    // 🔥 FIXED: Generate truly unique node ID to avoid database conflicts
+    // Use timestamp + random string to ensure uniqueness across all posts
+    const uniqueId = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     const newNode: Node = {
-      id: `${type}_${Date.now()}`,
+      id: uniqueId,
       type: 'custom',
       position: {
         x: Math.random() * 300 + 100,
@@ -901,27 +911,67 @@ const RecruitmentFlowBuilder: React.FC = () => {
         }
       },
     };
+
+    console.log('➕ Adding new node with unique ID:', {
+      id: uniqueId,
+      type,
+      label: newNode.data.label
+    });
+
     setNodes((nds) => nds.concat(newNode));
   }, [setNodes, menuItems, nodes]);
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
-
-    // For condition nodes, don't start with chat - show form directly
-    if (node.data.type === 'condition') {
-      setChatMessages([]);
-    } else {
-      setChatMessages([
-        {
-          id: '1',
-          text: `Hi! I'm here to help you configure your ${node.data.label} step. What would you like this step to do?`,
-          isUser: false,
-          timestamp: new Date()
-        }
-      ]);
-    }
-    setCurrentPrompt('');
     setModalOpen(true);
+  }, []);
+
+  // Form save handlers for configuration forms
+  const handleFormSave = useCallback((config: any) => {
+    if (!selectedNode) return;
+
+    console.log('💾 Saving configuration for node:', {
+      nodeId: selectedNode.id,
+      nodeType: selectedNode.data.type,
+      nodeLabel: selectedNode.data.label,
+      newConfig: config,
+      configuredFlag: config.configured
+    });
+
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === selectedNode.id
+          ? {
+            ...node,
+            data: {
+              ...node.data,
+              config: {
+                ...node.data.config,
+                ...config
+              }
+            }
+          }
+          : node
+      )
+    );
+
+    setModalOpen(false);
+
+    // Log the updated node after state update
+    setTimeout(() => {
+      const updatedNode = nodes.find(n => n.id === selectedNode.id);
+      console.log('✅ Node updated in state:', {
+        nodeId: selectedNode.id,
+        configured: updatedNode?.data.config?.configured,
+        fullConfig: updatedNode?.data.config
+      });
+    }, 50);
+
+    toast.success('Configuration saved successfully!');
+  }, [selectedNode, setNodes, nodes]);
+
+  const handleFormCancel = useCallback(() => {
+    setModalOpen(false);
   }, []);
 
   const handleSendPrompt = async () => {
@@ -1119,12 +1169,154 @@ Ready to customize the content or add more triggers?`
     setModalOpen(false);
   };
 
+  // Extract all skills configured in pipeline nodes
+  const extractSkillsFromPipeline = useCallback((pipelineNodes: Node[]) => {
+    const allSkills: any[] = [];
+
+    pipelineNodes.forEach(node => {
+      const nodeType = node.data.type;
+      const config = node.data.config;
+
+      if (!config || !config.configured) return;
+
+      // Technical skills nodes
+      if (nodeType === 'technical' && config.skills) {
+        config.skills.forEach((skill: any) => {
+          allSkills.push({
+            name: skill.name,
+            level: config.assessmentLevel || 'Mid Level',
+            importance: 'high',
+            category: config.categories?.[0] || 'Technical',
+          });
+        });
+      }
+
+      // Soft skills nodes
+      if (nodeType === 'soft' && config.softSkills) {
+        config.softSkills.forEach((skillName: string) => {
+          allSkills.push({
+            name: skillName,
+            level: config.assessmentLevel || 'Mid Level',
+            importance: 'medium',
+            category: 'Soft Skills',
+          });
+        });
+      }
+    });
+
+    // Remove duplicates by skill name
+    const uniqueSkills = allSkills.filter((skill, index, self) =>
+      index === self.findIndex(s => s.name === skill.name)
+    );
+
+    return uniqueSkills;
+  }, []);
+
   // Payment success handler
-  const handlePaymentSuccess = () => {
-    console.log('Payment successful! Redirecting to dashboard...');
+  const handlePaymentSuccess = async () => {
+    console.log('💳 Payment successful! Creating agent and finalizing setup...');
     setShowPaymentDialog(false);
-    toast.success("Job post created successfully! Your recruitment flow has been saved and payment is complete.");
-    router.push('/dashboard/company');
+
+    try {
+      // 🔥 NEW: Create agent and agent config AFTER payment
+      if (!savedJobId) {
+        throw new Error('No job ID found');
+      }
+
+      toast.loading('Finalizing your recruitment setup...', { id: 'finalize' });
+
+      // 1. Register HR agent
+      console.log('1️⃣ Registering HR agent...');
+      const agentResult = await registerHRAgent(savedJobId);
+      const firstAgent =
+        (Array.isArray(agentResult?.data) && agentResult.data.length > 0 && agentResult.data[0]) ||
+        agentResult?.agent ||
+        null;
+
+      const agentIdToUse =
+        firstAgent?._id ||
+        firstAgent?.id ||
+        null;
+
+      if (!agentIdToUse) {
+        throw new Error('Failed to get agent ID from registration response');
+      }
+
+      console.log('✅ Agent registered with ID:', agentIdToUse);
+
+      // 2. Save agent configuration
+      console.log('2️⃣ Saving agent configuration...');
+      let token: string | undefined = Cookies.get("api_token");
+      if (!token && typeof window !== 'undefined') {
+        token =
+          window.localStorage.getItem('api_token') ||
+          window.localStorage.getItem('token') ||
+          undefined;
+      }
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const payload = {
+        agentId: agentIdToUse,
+        postId: savedJobId,
+        thresholdPercent: Number(agentConfig.thresholdPercent),
+        bidBudgetMin: Number(agentConfig.bidBudgetMin),
+        bidBudgetMax: Number(agentConfig.bidBudgetMax),
+        bidStep: Number(agentConfig.bidStep),
+        maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
+        agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
+        bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
+        autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
+        maxDailySpending: Number(agentConfig.maxDailySpending),
+        isActive: Boolean(agentConfig.isActive),
+      };
+
+      const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save agent configuration');
+      }
+
+      console.log('✅ Agent configuration saved');
+
+      // 3. Activate the post (change status from draft to open)
+      console.log('3️⃣ Activating post...');
+      const statusResponse = await fetch(
+        `${apiBaseUrl}post/updatePostStatus/${savedJobId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: 'open' }),
+        }
+      );
+
+      if (!statusResponse.ok) {
+        const statusError = await statusResponse.json().catch(() => ({}));
+        throw new Error(statusError.message || 'Failed to activate post');
+      }
+
+      console.log('✅ Post activated and ready for candidates!');
+
+      toast.success("Job post created successfully! Your recruitment flow is active.", { id: 'finalize' });
+      router.push('/dashboard/company');
+    } catch (error) {
+      console.error('❌ Error in post-payment setup:', error);
+      toast.error(`Setup error: ${error}. Please contact support.`, { id: 'finalize' });
+      // Don't redirect - allow user to retry or contact support
+    }
   };
 
   const handleNext = async () => {
@@ -1266,6 +1458,33 @@ Ready to customize the content or add more triggers?`
         return;
       }
 
+      // 🔍 NEW: Check if any nodes are configured
+      const configuredNodes = nodes.filter(node => node.data.config?.configured);
+      const unconfiguredNodes = nodes.filter(node => !node.data.config?.configured);
+
+      console.log(`📊 Pipeline status: ${configuredNodes.length} configured, ${unconfiguredNodes.length} unconfigured`);
+
+      if (unconfiguredNodes.length > 0) {
+        console.warn('⚠️ Unconfigured nodes:', unconfiguredNodes.map(n => ({
+          id: n.id,
+          type: n.data.type,
+          label: n.data.label,
+          configured: n.data.config?.configured
+        })));
+
+        // Show warning to user
+        const shouldContinue = window.confirm(
+          `You have ${unconfiguredNodes.length} unconfigured node(s).\n\n` +
+          `Unconfigured: ${unconfiguredNodes.map(n => n.data.label).join(', ')}\n\n` +
+          `These nodes will be saved with generic/default configuration.\n\n` +
+          `Do you want to continue anyway?`
+        );
+
+        if (!shouldContinue) {
+          return;
+        }
+      }
+
       try {
         setIsSavingSteps(true);
         const sequenceData = nodes.map((node, index) => ({
@@ -1281,7 +1500,23 @@ Ready to customize the content or add more triggers?`
             }))
         }));
 
-        console.log('Sending pipeline steps to API:', sequenceData);
+        console.log('📦 Sending pipeline steps to API:', sequenceData);
+
+        // 🔍 NEW: Detailed logging of each node's configuration
+        console.log('🔍 Node configurations being saved:');
+        sequenceData.forEach((node, index) => {
+          console.log(`  [${index}] ${node.data.type}:`, {
+            id: node.id,
+            label: node.data.label,
+            configured: node.data.config?.configured,
+            hasSkills: !!node.data.config?.skills,
+            skillCount: node.data.config?.skills?.length || 0,
+            hasSoftSkills: !!node.data.config?.softSkills,
+            softSkillCount: node.data.config?.softSkills?.length || 0,
+            assessmentLevel: node.data.config?.assessmentLevel,
+            fullConfig: node.data.config
+          });
+        });
 
         const result = await dispatch(postRecruitmentSteps({
           postId: savedJobId,
@@ -1289,8 +1524,53 @@ Ready to customize the content or add more triggers?`
         }));
 
         if (postRecruitmentSteps.fulfilled.match(result)) {
-          console.log('Pipeline saved successfully:', result.payload);
+          console.log('✅ Pipeline saved successfully:', result.payload);
+
+          // 🔍 NEW: Log what was actually saved
+          console.log('💾 Backend response:', {
+            success: result.payload.success,
+            count: result.payload.count,
+            created: result.payload.created,
+            updated: result.payload.updated,
+            steps: result.payload.data
+          });
+
           toast.success('Pipeline saved successfully!');
+
+          // 🔥 NEW: Extract skills from pipeline nodes
+          const pipelineSkills = extractSkillsFromPipeline(nodes);
+          console.log('Extracted skills from pipeline:', pipelineSkills);
+
+          // Update post with creationType AND skills from pipeline
+          try {
+            let token: string | undefined = Cookies.get("api_token");
+            if (token) {
+              const updatePayload: any = {
+                creationType: 'pipeline',
+                // Keep status as 'draft' - will be activated after payment
+              };
+
+              // ✅ FIXED: Use dot notation to update nested field without triggering validation
+              if (pipelineSkills.length > 0) {
+                updatePayload['skillAnalysis.requiredSkills'] = pipelineSkills;
+                console.log('Updating post with pipeline skills:', pipelineSkills.map(s => s.name));
+              }
+
+              // 🔥 FIXED: Correct URL - use /updatePost/ not /update/
+              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePost/${savedJobId}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(updatePayload),
+              });
+              console.log('Updated post creationType to pipeline (status remains draft)');
+            }
+          } catch (error) {
+            console.error('Failed to update post:', error);
+            // Don't block the flow if this fails
+          }
 
           // Proceed to Agent Configuration (Step 3)
           setActiveStep((prev) => prev + 1);
@@ -1315,50 +1595,8 @@ Ready to customize the content or add more triggers?`
         return;
       }
 
-      // Register agent first (if not already registered) and get agent ID immediately
-      let agentIdToUse = registeredAgentId;
-
-      if (!agentIdToUse) {
-        try {
-          const result = await registerHRAgent(savedJobId);
-
-          // Extract agent ID directly from response (don't wait for state update)
-          const firstAgent =
-            (Array.isArray(result?.data) && result.data.length > 0 && result.data[0]) ||
-            result?.agent ||
-            null;
-
-          agentIdToUse =
-            firstAgent?._id ||
-            firstAgent?.id ||
-            null;
-
-          if (!agentIdToUse) {
-            console.error('Failed to extract agent ID from response:', result);
-            setSaveError('Failed to get agent ID from registration response. Please try again.');
-            return;
-          }
-
-          console.log('✅ Agent registered with ID:', agentIdToUse);
-
-          // Update agentConfig immediately with the agent ID
-          setAgentConfig((prev) => ({
-            ...prev,
-            agentId: agentIdToUse,
-          }));
-
-        } catch (agentError) {
-          console.error('Error registering HR agent:', agentError);
-          setSaveError('Failed to register HR agent. Please try again or contact support.');
-          return;
-        }
-      }
-
-      const normalizedAgentId = agentIdToUse?.trim();
-      if (!normalizedAgentId) {
-        setSaveError('Agent ID is missing. Please wait for the agent to finish registering or contact support.');
-        return;
-      }
+      // 🔥 CHANGED: Don't create agent or agent config yet - just validate fields
+      // Agent will be created AFTER payment succeeds (for pipeline flow) or immediately (for prompt flow)
 
       const numericFields: Array<keyof AgentConfigurationFormValues> = [
         'thresholdPercent',
@@ -1381,82 +1619,105 @@ Ready to customize the content or add more triggers?`
         return;
       }
 
-      let token: string | undefined = Cookies.get("api_token");
-      if (!token && typeof window !== 'undefined') {
-        token =
-          window.localStorage.getItem('api_token') ||
-          window.localStorage.getItem('token') ||
-          undefined;
-      }
+      // 🔥 PROMPT FLOW: Create agent and config immediately, then redirect
+      if (isPromptFlow) {
+        try {
+          setIsSavingAgentConfig(true);
 
-      if (!token) {
-        setSaveError('No authentication token found. Please log in again.');
+          // 1. Register agent
+          const agentResult = await registerHRAgent(savedJobId);
+          const firstAgent =
+            (Array.isArray(agentResult?.data) && agentResult.data.length > 0 && agentResult.data[0]) ||
+            agentResult?.agent ||
+            null;
+
+          const agentIdToUse =
+            firstAgent?._id ||
+            firstAgent?.id ||
+            null;
+
+          if (!agentIdToUse) {
+            throw new Error('Failed to get agent ID from registration response');
+          }
+
+          console.log('✅ Agent registered with ID:', agentIdToUse);
+
+          // 2. Save agent config
+          let token: string | undefined = Cookies.get("api_token");
+          if (!token && typeof window !== 'undefined') {
+            token =
+              window.localStorage.getItem('api_token') ||
+              window.localStorage.getItem('token') ||
+              undefined;
+          }
+
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+
+          const payload = {
+            agentId: agentIdToUse,
+            postId: savedJobId,
+            thresholdPercent: Number(agentConfig.thresholdPercent),
+            bidBudgetMin: Number(agentConfig.bidBudgetMin),
+            bidBudgetMax: Number(agentConfig.bidBudgetMax),
+            bidStep: Number(agentConfig.bidStep),
+            maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
+            agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
+            bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
+            autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
+            maxDailySpending: Number(agentConfig.maxDailySpending),
+            isActive: Boolean(agentConfig.isActive),
+          };
+
+          const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to save agent configuration');
+          }
+
+          // 🔥 NEW: Activate the post (change status from draft to open)
+          const statusResponse = await fetch(
+            `${apiBaseUrl}post/updatePostStatus/${savedJobId}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ status: 'open' }),
+            }
+          );
+
+          if (!statusResponse.ok) {
+            console.warn('Failed to activate post status - post may remain as draft');
+          } else {
+            console.log('✅ Post activated and ready for candidates!');
+          }
+
+          toast.success('Job posted successfully! Candidates can now apply and interview.');
+          router.push('/dashboard/company');
+        } catch (error) {
+          console.error('Error in prompt flow agent creation:', error);
+          setSaveError(`Failed to complete setup: ${error}`);
+          toast.error('An error occurred during setup. Please try again.');
+        } finally {
+          setIsSavingAgentConfig(false);
+        }
         return;
       }
 
-      const payload = {
-        agentId: normalizedAgentId,
-        postId: savedJobId,
-        thresholdPercent: Number(agentConfig.thresholdPercent),
-        bidBudgetMin: Number(agentConfig.bidBudgetMin),
-        bidBudgetMax: Number(agentConfig.bidBudgetMax),
-        bidStep: Number(agentConfig.bidStep),
-        maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
-        agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
-        bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
-        autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
-        maxDailySpending: Number(agentConfig.maxDailySpending),
-        isActive: Boolean(agentConfig.isActive),
-      };
-
-      setIsSavingAgentConfig(true);
-      try {
-        const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const rawResponse = await response.text();
-        let responseBody: any = {};
-        try {
-          responseBody = rawResponse ? JSON.parse(rawResponse) : {};
-        } catch (parseError) {
-          console.warn('Failed to parse agent config response as JSON:', parseError);
-        }
-
-        if (!response.ok || responseBody?.success === false) {
-          const errorMessage =
-            (responseBody && typeof responseBody === 'object' && (responseBody.error || responseBody.message)) ||
-            `Failed to save agent configuration (HTTP ${response.status}).`;
-          setSaveError(errorMessage);
-          toast.error(errorMessage);
-          return;
-        }
-
-        toast.success('Agent configuration saved successfully.');
-
-        // 🔥 PROMPT FLOW: Skip pipeline, redirect to dashboard
-        if (isPromptFlow) {
-          toast.success('Job posted successfully! Candidates can now apply and interview.');
-          router.push('/dashboard/company');
-          return;
-        }
-
-        // PIPELINE FLOW: Trigger payment dialog
-        console.log('Opening payment dialog for post:', savedJobId);
-        setShowPaymentDialog(true);
-      } catch (error) {
-        console.error('Error saving agent configuration:', error);
-        setSaveError('An error occurred while saving the agent configuration. Please try again.');
-        toast.error('An error occurred while saving the agent configuration.');
-      } finally {
-        setIsSavingAgentConfig(false);
-      }
-
+      // PIPELINE FLOW: Just store config and proceed to payment
+      // Agent creation will happen in handlePaymentSuccess()
+      console.log('✅ Agent configuration validated. Proceeding to payment...');
+      setShowPaymentDialog(true);
       return;
     }
   };
@@ -2241,24 +2502,20 @@ Ready to customize the content or add more triggers?`
         <Box
           sx={{
             ...ModalStyle,
-            width: selectedNode?.data.type === 'condition' ? 550 : 700,
-            height: selectedNode?.data.type === 'condition' ? 'auto' : 600,
-            maxHeight: selectedNode?.data.type === 'condition' ? '80vh' : 600,
-            overflow: selectedNode?.data.type === 'condition' ? 'auto' : 'hidden'
+            width: { xs: '95vw', sm: 600, md: 700 },
+            maxWidth: 700,
+            height: 'auto',
+            maxHeight: '85vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {selectedNode?.data.type === 'condition' ? (
-                <ConditionIcon color="primary" />
-              ) : (
-                <SmartToyIcon color="primary" />
-              )}
-              <Typography variant="h6">
-                {selectedNode?.data.type === 'condition' ? 'Configure Condition' : 'AI Assistant'} - {selectedNode?.data.label}
-              </Typography>
-            </Box>
+            <Typography variant="h6">
+              Configure {selectedNode?.data.label}
+            </Typography>
             <IconButton onClick={() => setModalOpen(false)}>
               <CloseIcon />
             </IconButton>
@@ -2387,163 +2644,47 @@ Ready to customize the content or add more triggers?`
               )}
             </Box>
           ) : (
-            /* Chat Interface for other nodes */
-            <>
-              {/* Chat Messages Area */}
-              <Box
-                sx={{
-                  height: 400,
-                  overflowY: 'auto',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  p: 2,
-                  mb: 2,
-                  backgroundColor: '#fafafa'
-                }}
-              >
-                {chatMessages.map((message) => (
-                  <Box
-                    key={message.id}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: message.isUser ? 'flex-end' : 'flex-start',
-                      mb: 2
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        maxWidth: '80%',
-                        p: 2,
-                        borderRadius: '12px',
-                        backgroundColor: message.isUser ? '#1976d2' : '#fff',
-                        color: message.isUser ? '#fff' : '#000',
-                        border: message.isUser ? 'none' : '1px solid #e0e0e0',
-                        wordWrap: 'break-word'
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {message.text}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          opacity: 0.7,
-                          display: 'block',
-                          mt: 0.5,
-                          fontSize: '11px'
-                        }}
-                      >
-                        {message.timestamp.toLocaleTimeString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-
-                {isGenerating && (
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: '12px',
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0e0e0',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                        AI is thinking...
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-
-              {/* Input Area */}
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                <TextField
-                  fullWidth
-                  multiline
-                  maxRows={3}
-                  value={currentPrompt}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    setCurrentPrompt(e.target.value);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  placeholder={`Tell me what you want this ${selectedNode?.data.label.toLowerCase()} step to do...`}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendPrompt();
-                    }
-                  }}
-                  disabled={isGenerating}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '20px',
-                    }
-                  }}
-                />
-                <IconButton
-                  onClick={handleSendPrompt}
-                  disabled={!currentPrompt.trim() || isGenerating}
-                  color="primary"
-                  sx={{
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: '#1565c0',
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#e0e0e0',
-                    },
-                    width: 48,
-                    height: 48,
-                  }}
-                >
-                  <SendIcon />
-                </IconButton>
-              </Box>
-            </>
+            /* Configuration Forms for other node types */
+            <Box sx={{ maxHeight: '70vh', overflow: 'auto' }}>
+              <NodeConfigRenderer
+                nodeType={selectedNode?.data.type || ''}
+                initialConfig={selectedNode?.data.config}
+                onSave={handleFormSave}
+                onCancel={handleFormCancel}
+              />
+            </Box>
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 2 }}>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => {
-                if (selectedNode) {
-                  deleteNode(selectedNode.id);
-                  setModalOpen(false);
-                }
-              }}
-            >
-              Delete Node
-            </Button>
+          {selectedNode?.data.type === 'condition' && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => {
+                  if (selectedNode) {
+                    deleteNode(selectedNode.id);
+                    setModalOpen(false);
+                  }
+                }}
+              >
+                Delete Node
+              </Button>
 
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {selectedNode?.data.type === 'condition' ? (
-                <>
-                  <Button variant="outlined" onClick={() => setModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleConditionConfirm}
-                    disabled={!selectedNode?.data.config?.field || !selectedNode?.data.config?.operator || !selectedNode?.data.config?.value}
-                  >
-                    Confirm
-                  </Button>
-                </>
-              ) : (
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button variant="outlined" onClick={() => setModalOpen(false)}>
-                  Close
+                  Cancel
                 </Button>
-              )}
+                <Button
+                  variant="contained"
+                  onClick={handleConditionConfirm}
+                  disabled={!selectedNode?.data.config?.field || !selectedNode?.data.config?.operator || !selectedNode?.data.config?.value}
+                >
+                  Confirm
+                </Button>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
       </Modal>
 

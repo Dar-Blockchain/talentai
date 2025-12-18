@@ -74,10 +74,66 @@ const PostDetailsModal: React.FC<PostDetailsModalProps> = ({
             const company =
               details?.company;
 
-            const requiredSkills =
-              selectedJob?.skillAnalysis?.requiredSkills?.map(
+            // Extract skills based on job creation type
+            const requiredSkills = React.useMemo(() => {
+              // DEBUG: Log the entire selectedJob structure
+              console.log('🔍 DEBUG - PostDetailsModal selectedJob:', {
+                _id: selectedJob?._id,
+                creationType: selectedJob?.creationType,
+                hasPostSteps: !!selectedJob?.post_Steps,
+                postStepsType: Array.isArray(selectedJob?.post_Steps) ? 'array' : typeof selectedJob?.post_Steps,
+                postStepsCount: selectedJob?.post_Steps?.length || 0,
+                skillAnalysisSkillsCount: selectedJob?.skillAnalysis?.requiredSkills?.length || 0
+              });
+
+              // For pipeline jobs, extract skills from post_Steps
+              if (selectedJob?.creationType === 'pipeline' && selectedJob?.post_Steps) {
+                console.log('🔍 DEBUG - Processing pipeline job steps:', {
+                  stepsCount: selectedJob.post_Steps.length,
+                  steps: selectedJob.post_Steps.map((step: any, idx: number) => ({
+                    index: idx,
+                    stepId: step._id || step,
+                    type: step.type,
+                    dataType: step.data?.type,
+                    hasConfig: !!step.data?.config,
+                    hasSkills: !!step.data?.config?.skills,
+                    hasSoftSkills: !!step.data?.config?.softSkills,
+                    skillsCount: step.data?.config?.skills?.length || 0,
+                    softSkillsCount: step.data?.config?.softSkills?.length || 0
+                  }))
+                });
+
+                const pipelineSkills: string[] = [];
+
+                selectedJob.post_Steps.forEach((step: any, idx: number) => {
+                  // Technical skills from technical steps
+                  if (step.data?.type === 'technical' && step.data?.config?.skills) {
+                    console.log(`🔍 DEBUG - Technical skills found in step ${idx}:`, step.data.config.skills);
+                    step.data.config.skills.forEach((skill: any) => {
+                      pipelineSkills.push(skill.name);
+                    });
+                  }
+
+                  // Soft skills from soft skill steps
+                  if (step.data?.type === 'soft' && step.data?.config?.softSkills) {
+                    console.log(`🔍 DEBUG - Soft skills found in step ${idx}:`, step.data.config.softSkills);
+                    step.data.config.softSkills.forEach((softSkill: string) => {
+                      pipelineSkills.push(softSkill);
+                    });
+                  }
+                });
+
+                console.log('🔍 DEBUG - Final pipeline skills:', pipelineSkills);
+                return pipelineSkills;
+              }
+
+              // For AI/manual jobs, use skillAnalysis
+              const aiSkills = selectedJob?.skillAnalysis?.requiredSkills?.map(
                 (skill: any) => skill.name
               ) || [];
+              console.log('🔍 DEBUG - AI/Manual job skills:', aiSkills);
+              return aiSkills;
+            }, [selectedJob]);
   return (
     <Dialog
       open={open}

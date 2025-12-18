@@ -98,6 +98,9 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isHashConnectReady, setIsHashConnectReady] = useState(false);
+  const [showManualPairing, setShowManualPairing] = useState(false);
+  const [pairingUri, setPairingUri] = useState<string>('');
+  const [copiedUri, setCopiedUri] = useState(false);
 
   const steps = [
     'Connect HashPack Wallet',
@@ -173,6 +176,28 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
       console.error('Failed to connect wallet:', error);
       setErrorMessage(`Failed to connect wallet: ${error}`);
       setWalletStatus('error');
+    }
+  };
+
+  const handleManualPairing = async () => {
+    try {
+      setErrorMessage(null);
+      const uri = await hashConnectService.getConnectionUri();
+      setPairingUri(uri);
+      setShowManualPairing(true);
+    } catch (error) {
+      console.error('Failed to generate pairing URI:', error);
+      setErrorMessage(`Failed to generate pairing URI: ${error}`);
+    }
+  };
+
+  const handleCopyUri = async () => {
+    try {
+      await navigator.clipboard.writeText(pairingUri);
+      setCopiedUri(true);
+      setTimeout(() => setCopiedUri(false), 3000);
+    } catch (error) {
+      console.error('Failed to copy URI:', error);
     }
   };
 
@@ -378,6 +403,59 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
           >
             {!isHashConnectReady ? 'Loading HashConnect...' : 'Connect Wallet'}
           </ConnectButton>
+
+          {/* Manual Desktop Pairing Option */}
+          {isHashConnectReady && (
+            <Button
+              variant="outlined"
+              onClick={handleManualPairing}
+              sx={{ mt: 2, display: 'block', mx: 'auto' }}
+              color="inherit"
+            >
+              Desktop Pairing (Manual)
+            </Button>
+          )}
+
+          {/* Manual Pairing Instructions */}
+          {showManualPairing && pairingUri && (
+            <Alert severity="info" sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                Manual HashPack Connection:
+              </Typography>
+              <ol style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                <li><Typography variant="body2">Open HashPack desktop wallet</Typography></li>
+                <li><Typography variant="body2">Click the <strong>world icon</strong> (top right)</Typography></li>
+                <li><Typography variant="body2">Select <strong>"WalletConnect"</strong></Typography></li>
+                <li>
+                  <Typography variant="body2" sx={{ mb: 1 }}>Paste this URI:</Typography>
+                  <Box sx={{
+                    mt: 1,
+                    p: 1,
+                    bgcolor: '#f5f5f5',
+                    borderRadius: 1,
+                    border: '1px solid #e0e0e0',
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    wordBreak: 'break-all',
+                    maxHeight: '100px',
+                    overflow: 'auto'
+                  }}>
+                    {pairingUri}
+                  </Box>
+                </li>
+              </ol>
+              <Button
+                size="small"
+                onClick={handleCopyUri}
+                startIcon={copiedUri ? <CheckCircleIcon /> : <ContentCopyIcon />}
+                color={copiedUri ? 'success' : 'primary'}
+                variant="contained"
+                sx={{ mt: 1 }}
+              >
+                {copiedUri ? 'Copied!' : 'Copy URI'}
+              </Button>
+            </Alert>
+          )}
         </Box>
       )}
 

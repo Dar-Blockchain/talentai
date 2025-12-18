@@ -180,6 +180,7 @@ const ManualJobDetailsForm = forwardRef<ManualJobDetailsRef, ManualJobDetailsFor
             },
             finalPost: `We're Hiring: ${formData.title}\n\n${formData.workMode} | ${formData.employmentType}\nSalary: ${formData.salary.currency}${formData.salary.min.toLocaleString()} - ${formData.salary.currency}${formData.salary.max.toLocaleString()}`,
           },
+          creationType: 'manual', // Mark as manually created post
         };
 
         const token = Cookies.get("api_token");

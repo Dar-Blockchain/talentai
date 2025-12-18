@@ -85,7 +85,23 @@ export const fetchRecommendedPosts = createAsyncThunk(
       }
 
       const data = await response.json();
-      return Array.isArray(data) ? data : data.data || [];
+
+      // DEBUG: Log the API response structure
+      const posts = Array.isArray(data) ? data : data.data || [];
+      console.log('🔍 DEBUG - postSlice fetchRecommendedPosts response:', {
+        dataType: Array.isArray(data) ? 'array' : typeof data,
+        hasDataProperty: !!data.data,
+        postsCount: Array.isArray(posts) ? posts.length : 0,
+        firstPost: posts[0] ? {
+          _id: posts[0]._id,
+          creationType: posts[0].creationType,
+          hasPostSteps: !!posts[0].post_Steps,
+          postStepsType: Array.isArray(posts[0].post_Steps) ? 'array' : typeof posts[0].post_Steps,
+          postStepsCount: posts[0].post_Steps?.length || 0
+        } : null
+      });
+
+      return posts;
     } catch (error: any) {
       return rejectWithValue(error.message || "An error occurred while fetching recommended posts");
     }

@@ -53,8 +53,13 @@ const ProgressAccordionItem: React.FC<ProgressAccordionItemProps> = ({
     if (isTask) {
       onSendTask(progress, nextStep || progress.currentStep);
     } else {
-      const stepId = nextStep?.stepId._id || progress.currentStep._id;
-      onNavigate(`/posts/${progress.idPost?._id}/interview?stepId=${stepId}`);
+      // Navigate to pipeline interview with jobId and stepNumber
+      const stepId = nextStep?.stepId || progress.currentStep;
+      const stepNumber = stepId?.nodeNumber || 1;
+      const jobId = progress.idPost?._id;
+
+      // Use pipeline interview URL format
+      onNavigate(`/interview/hr?jobId=${jobId}&stepNumber=${stepNumber}&source=pipeline`);
     }
   };
 

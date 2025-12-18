@@ -13,6 +13,14 @@ export interface URLParams {
   language?: string;        // e.g., "en", "fr"
   difficulty?: string;      // "beginner", "intermediate", "expert"
   duration?: string;        // Interview duration in minutes
+
+  // 🔥 NEW: Pipeline-specific fields
+  skills?: Array<{name: string; requiredLevel: number}>; // All skills from pipeline technical node
+  categories?: string[];                                  // Skill categories (e.g., ["AI", "Web3"])
+  assessmentLevel?: string;                               // Overall assessment level
+  passThreshold?: number;                                 // Pass/fail threshold percentage
+  softSkills?: string[];                                  // Soft skills from pipeline soft node
+  focusAreas?: string[];                                  // HR interview focus areas
 }
 
 export interface InterviewConfig {
@@ -41,6 +49,16 @@ export interface InterviewConfig {
       naturalPauseDetection: boolean;
       contextAwareThresholds: boolean;
     };
+  };
+
+  // 🔥 NEW: Pipeline-specific configuration
+  pipelineConfig?: {
+    skills?: Array<{name: string; requiredLevel: number}>;
+    categories?: string[];
+    assessmentLevel?: string;
+    passThreshold?: number;
+    softSkills?: string[];
+    focusAreas?: string[];
   };
 }
 
@@ -123,6 +141,9 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
     testReason = 'Conduct behavioral and cultural fit assessment';
   }
 
+  // 🔥 NEW: Check if this is a pipeline interview (has pipeline-specific fields)
+  const hasPipelineConfig = !!(params.skills || params.softSkills || params.focusAreas || params.categories);
+
   const config: InterviewConfig = {
     interviewType,
     testReason,
@@ -151,6 +172,20 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
       }
     }
   };
+
+  // 🔥 NEW: Add pipeline configuration if present
+  if (hasPipelineConfig) {
+    config.pipelineConfig = {
+      skills: params.skills,
+      categories: params.categories,
+      assessmentLevel: params.assessmentLevel,
+      passThreshold: params.passThreshold,
+      softSkills: params.softSkills,
+      focusAreas: params.focusAreas
+    };
+
+    console.log('🎯 Pipeline config detected:', config.pipelineConfig);
+  }
 
   console.log('✅ Generated interview config:', config);
 

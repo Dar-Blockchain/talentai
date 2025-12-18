@@ -401,57 +401,101 @@ const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job,
         </Box>
 
         {/* Required Skills Section */}
-        {(job?.skillAnalysis?.requiredSkills ?? []).length > 0 && (
-          <Box sx={{
-            mb: 4,
-            p: 3,
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            border: '1px solid #e5e7eb'
-          }}>
-            <Typography variant="h6" sx={{
-              color: '#111827',
-              fontWeight: 700,
-              mb: 3,
-              fontSize: '1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
+        {(() => {
+          // Extract skills from pipeline steps or use skillAnalysis
+          const displaySkills = React.useMemo(() => {
+            if (job?.creationType === 'pipeline' && job?.post_Steps && Array.isArray(job.post_Steps)) {
+              const skills: Array<{name: string, level?: number, type: 'technical' | 'soft', importance?: string}> = [];
+
+              job.post_Steps.forEach((step: any) => {
+                // Technical skills from technical steps
+                if (step.data?.type === 'technical' && step.data?.config?.skills && Array.isArray(step.data.config.skills)) {
+                  step.data.config.skills.forEach((skill: any) => {
+                    skills.push({
+                      name: skill.name,
+                      level: skill.requiredLevel,
+                      type: 'technical',
+                      importance: 'Required'
+                    });
+                  });
+                }
+
+                // Soft skills from soft skill steps
+                if (step.data?.type === 'soft' && step.data?.config?.softSkills && Array.isArray(step.data.config.softSkills)) {
+                  step.data.config.softSkills.forEach((softSkill: string) => {
+                    skills.push({
+                      name: softSkill,
+                      type: 'soft',
+                      importance: 'Required'
+                    });
+                  });
+                }
+              });
+
+              return skills;
+            }
+
+            // For AI/manual jobs, use skillAnalysis
+            return (job?.skillAnalysis?.requiredSkills || []).map((skill: any) => ({
+              name: skill.name,
+              level: skill.level,
+              type: 'technical' as const,
+              importance: skill.importance || 'Required'
+            }));
+          }, [job]);
+
+          return displaySkills.length > 0 ? (
+            <Box sx={{
+              mb: 4,
+              p: 3,
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid #e5e7eb'
             }}>
-              <Box sx={{
-                width: 6,
-                height: 24,
-                backgroundColor: '#3b82f6',
-                borderRadius: '3px'
-              }} />
-              Required Skills
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              {job.skillAnalysis.requiredSkills.map((skill: any, idx: number) => (
-                <Chip
-                  key={idx}
-                  label={`${skill.name} ${skill.level ? `(Level ${skill.level})` : ''}`}
-                  sx={{
-                    backgroundColor: skill.importance === 'Required' ? '#dbeafe' : '#f3f4f6',
-                    color: skill.importance === 'Required' ? '#1e40af' : '#374151',
-                    fontWeight: 600,
-                    border: skill.importance === 'Required' ? '2px solid #93c5fd' : '2px solid #d1d5db',
-                    borderRadius: '12px',
-                    fontSize: '0.875rem',
-                    py: 2.5,
-                    px: 1,
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                    }
-                  }}
-                />
-              ))}
+              <Typography variant="h6" sx={{
+                color: '#111827',
+                fontWeight: 700,
+                mb: 3,
+                fontSize: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <Box sx={{
+                  width: 6,
+                  height: 24,
+                  backgroundColor: '#3b82f6',
+                  borderRadius: '3px'
+                }} />
+                Required Skills
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {displaySkills.map((skill: any, idx: number) => (
+                  <Chip
+                    key={idx}
+                    label={skill.level ? `${skill.name} (Level ${skill.level})` : skill.name}
+                    sx={{
+                      backgroundColor: skill.importance === 'Required' ? '#dbeafe' : '#f3f4f6',
+                      color: skill.importance === 'Required' ? '#1e40af' : '#374151',
+                      fontWeight: 600,
+                      border: skill.importance === 'Required' ? '2px solid #93c5fd' : '2px solid #d1d5db',
+                      borderRadius: '12px',
+                      fontSize: '0.875rem',
+                      py: 2.5,
+                      px: 1,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
-          </Box>
-        )}
+          ) : null;
+        })()}
 
         {/* Description Section */}
         {details?.description && (

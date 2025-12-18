@@ -9,6 +9,11 @@ const agentSchema = new mongoose.Schema({
   hederaAccountId: { type: String },
   hederaPrivateKey: { type: String },
   hederaPublicKey: { type: String },
+  taiTokenBalance: {
+    type: Number,
+    default: 0,
+    description: 'Current TAI token balance for this agent'
+  },
 
   // HCS-11 Profile Fields
   hcs11Profile: {
@@ -65,4 +70,4 @@ const agentSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Agent", agentSchema);
+module.exports = mongoose.models.Agent || mongoose.model("Agent", agentSchema);

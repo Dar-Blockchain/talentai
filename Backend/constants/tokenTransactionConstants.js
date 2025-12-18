@@ -4,6 +4,8 @@ const TOKEN_TRANSACTION_TYPES = Object.freeze({
   REFUND: "refund",
   BONUS: "bonus",
   ADJUSTMENT: "adjustment",
+  INITIAL_FUNDING: "initial_funding", // Agent initial token funding
+  AGENT_PAYMENT: "agent_payment", // Agent paying company
 });
 
 const TOKEN_TRANSACTION_STATUS = Object.freeze({

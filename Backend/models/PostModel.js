@@ -178,7 +178,15 @@ const postSchema = new mongoose.Schema({
   },
   MatchingConfig: { type: mongoose.Schema.Types.ObjectId, ref: 'MatchingConfig' },
 
+  // Post creation type
+  creationType: {
+    type: String,
+    enum: ['ai', 'pipeline', 'manual'],
+    default: 'ai',
+    description: 'How the post was created: AI generated, pipeline builder, or manual'
+  },
+
 });
 
-const Post = mongoose.model("Post", postSchema);
+const Post = mongoose.models.Post || mongoose.model("Post", postSchema);
 module.exports = Post;

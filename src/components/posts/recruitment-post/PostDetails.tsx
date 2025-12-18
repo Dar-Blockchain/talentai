@@ -397,7 +397,39 @@ const handleInputChange = (field: string, value: any): void => {
     setIsCopyingLink(true);
 
     try {
-      const interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}`;
+      // Check if post has pipeline steps to determine the correct link format
+      const token = Cookies.get("api_token");
+      let interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}`;
+
+      if (token) {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}post-steps/${postedJobId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            const hasSteps = data?.data?.length > 0;
+
+            if (hasSteps) {
+              // Pipeline post - use pipeline interview link
+              interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}&stepNumber=1&source=pipeline`;
+            } else {
+              // AI/Manual post - use standard HR interview link
+              interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}&type=hr`;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking for pipeline steps:', error);
+          // Fall back to basic link if API call fails
+        }
+      }
+
       await navigator.clipboard.writeText(interviewLink);
 
       setLinkCopied(true);
@@ -594,6 +626,7 @@ ${jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to mak
             ""
           )} #RemoteWork #TechCareers`,
         },
+        creationType: 'ai', // Mark as AI-generated post
       };
 
       // Log the complete job post data
