@@ -579,11 +579,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
       success: true,
       posts: randomPosts,
       message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`
-    };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
-  }
+    }
 };
 
 
