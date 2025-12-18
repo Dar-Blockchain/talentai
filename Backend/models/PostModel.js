@@ -39,7 +39,7 @@ const suggestedSkillSchema = new mongoose.Schema({
 
 const softSkillSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  importance: { type: String },
+  level: { type: String },
   percentage: {
     type: Number,
     min: 0,
@@ -190,3 +190,4 @@ const postSchema = new mongoose.Schema({
 
 const Post = mongoose.models.Post || mongoose.model("Post", postSchema);
 module.exports = Post;
+

@@ -2,28 +2,23 @@ const { POST_STATUS } = require("../../constants/postConstants");
 const postService = require("../../services/PosteServices/postService");
 const { sendPostEmail } = require("../../utils/mailing");
 const matchingConfigService = require("../../services/MatchingService/matchingConfigService");
+const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/postValidationHelpers");
+
+// Centralized error handler
+const handleError = (res, error, defaultStatus = 500) => {
+  console.error('Post error:', error?.message || error);
+  const status = error?.status || defaultStatus;
+  res.status(status).json({ success: false, error: error?.message || 'Internal error' });
+};
 
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
   try {
-    // Normalize body: if `skillAnalysis` (or its children) was sent as a JSON string
-    // (common when using form-data), parse it so Mongoose receives proper objects/arrays.
-    const incoming = { ...req.body };
-    try {
-      if (typeof incoming.skillAnalysis === 'string') {
-        incoming.skillAnalysis = JSON.parse(incoming.skillAnalysis);
-      }
-      // If matchingConfig was sent as JSON string (form-data), parse it too
-      if (typeof incoming.matchingConfig === 'string') {
-        incoming.matchingConfig = JSON.parse(incoming.matchingConfig);
-      }
-    } catch (parseErr) {
-      // If parsing fails, return a clear error to the client
-      return res.status(400).json({ success: false, error: 'Invalid JSON in skillAnalysis field' });
-    }
+    // Parse JSON fields safely from form-data
+    const parsedData = parseJsonFields(req.body);
 
     const postData = {
-      ...incoming,
+      ...parsedData,
       user: req.user._id,
     };
 
@@ -32,27 +27,26 @@ exports.createPost = async (req, res) => {
 
     const post = await postService.createPost(postData, token);
 
-    // If a matching config was provided in the request, create it and link to the post
+    // Create matching config if provided (non-blocking)
     let createdMatchingConfig = null;
-    if (incoming.matchingConfig) {
-      try {
-        const cfgPayload = { ...incoming.matchingConfig, jobId: post._id };
-        createdMatchingConfig = await matchingConfigService.addConfig(req.user._id, cfgPayload);
-      } catch (cfgErr) {
-        // Log error but do not fail the main request — post creation succeeded
-        console.error('Error creating matching config for post', post._id, cfgErr.message || cfgErr);
-      }
+    if (parsedData.matchingConfig) {
+      matchingConfigService.addConfig(req.user._id, {
+        ...parsedData.matchingConfig,
+        jobId: post._id
+      }).then(cfg => {
+        createdMatchingConfig = cfg;
+      }).catch(cfgErr => {
+        console.error('Error creating matching config:', cfgErr.message);
+      });
     }
+
     res.status(201).json({
       success: true,
       data: post,
       matchingConfig: createdMatchingConfig,
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
@@ -70,10 +64,7 @@ exports.getAllPosts = async (req, res) => {
       data: posts,
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
@@ -87,17 +78,16 @@ exports.getAllPostsWithSearch = async (req, res) => {
       location,
       type,
       employmentType,
-      status, // Removed default "active" to show all posts
+      status,
       category,
       sortBy = "createdAt",
       sortOrder = "desc",
     } = req.query;
 
-    // Parse pagination parameters
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
+    // Parse and validate pagination
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
 
-    // Build filters object
     const filters = {
       search,
       location,
@@ -109,7 +99,6 @@ exports.getAllPostsWithSearch = async (req, res) => {
       sortOrder,
     };
 
-    // Get posts from service
     const result = await postService.getAllPostsWithSearch(filters, pageNum, limitNum);
 
     res.status(200).json({
@@ -121,29 +110,21 @@ exports.getAllPostsWithSearch = async (req, res) => {
       totalPages: result.pagination.totalPages,
       hasNextPage: result.pagination.hasNextPage,
       hasPrevPage: result.pagination.hasPrevPage,
-      filters: {
-        search,
-        location,
-        type,
-        employmentType,
-        status,
-        category,
-        sortBy,
-        sortOrder,
-      },
+      filters,
     });
   } catch (error) {
-    console.error("Error in getAllPostsWithSearch controller:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message || "Failed to fetch posts",
-    });
+    console.error("Error in getAllPostsWithSearch:", error?.message);
+    handleError(res, error, 500);
   }
 };
 
-// Récupérer les détails d'un post par son ID (public, no auth required)
+// Récupérer les détails d'un post par son ID (public)
 exports.getPostDetailsPublic = async (req, res) => {
   try {
+    if (!req.params.id) {
+      return res.status(400).json({ success: false, error: 'Post ID is required' });
+    }
+
     const post = await postService.getPostById(req.params.id);
 
     console.log('📄 Public job details requested for ID:', req.params.id);
@@ -201,27 +182,22 @@ exports.getPostDetailsPublic = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.error('❌ Error fetching public job details:', error);
-    res.status(404).json({
-      success: false,
-      error: error.message || 'Job not found',
-    });
+    console.error('❌ Error fetching public job details:', error?.message);
+    handleError(res, error, 404);
   }
 };
 
 // Récupérer un post par son ID
 exports.getPostById = async (req, res) => {
   try {
+    if (!req.params.id) {
+      return res.status(400).json({ success: false, error: 'Post ID is required' });
+    }
+
     const post = await postService.getPostById(req.params.id);
-    res.status(200).json({
-      success: true,
-      data: post,
-    });
+    res.status(200).json({ success: true, data: post });
   } catch (error) {
-    res.status(404).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 404);
   }
 };
 
@@ -244,63 +220,59 @@ exports.getPipelineJobDetails = async (req, res) => {
 // Récupérer les posts d'un utilisateur
 exports.getUserPosts = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const posts = await postService.getPostsByUserId(userId);
-    res.status(200).json({
-      success: true,
-      data: posts,
-    });
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ success: false, error: 'User not authenticated' });
+    }
+
+    const posts = await postService.getPostsByUserId(req.user._id);
+    res.status(200).json({ success: true, data: posts });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
 // Mettre à jour un post
 exports.updatePost = async (req, res) => {
   try {
+    if (!req.params.id) {
+      return res.status(400).json({ success: false, error: 'Post ID is required' });
+    }
+
     const post = await postService.updatePost(
       req.params.id,
       req.user._id,
       req.body
     );
-    res.status(200).json({
-      success: true,
-      data: post,
-    });
+    res.status(200).json({ success: true, data: post });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
 // Supprimer un post
 exports.deletePost = async (req, res) => {
   try {
+    if (!req.params.id) {
+      return res.status(400).json({ success: false, error: 'Post ID is required' });
+    }
+
     await postService.deletePost(req.params.id, req.user._id);
-    res.status(200).json({
-      success: true,
-      message: "Post deleted successfully",
-    });
+    res.status(200).json({ success: true, message: "Post deleted successfully" });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
 // Changer le statut d'un post
 exports.updatePostStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    if (!req.params.id) {
+      return res.status(400).json({ success: false, error: 'Post ID is required' });
+    }
 
-    if (!Object.values(POST_STATUS).includes(status)) {
-      throw new Error("Invalid status");
+    const { status } = req.body;
+    if (!status || !Object.values(POST_STATUS).includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status' });
     }
 
     const post = await postService.updatePostStatus(
@@ -308,15 +280,9 @@ exports.updatePostStatus = async (req, res) => {
       req.user._id,
       status
     );
-    res.status(200).json({
-      success: true,
-      data: post,
-    });
+    res.status(200).json({ success: true, data: post });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
@@ -342,10 +308,7 @@ exports.getPostsByUserTopSkills = async (req, res) => {
       data: posts,
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
@@ -355,12 +318,8 @@ exports.sendTechnicalTest = async (req, res) => {
     const { postId, candidateEmail, candidateName } = req.body;
     const token = req.headers.authorization?.replace("Bearer ", "");
 
-    if (!postId || !candidateEmail || !candidateName) {
-      return res.status(400).json({
-        success: false,
-        error: "postId, candidateEmail, and candidateName are required",
-      });
-    }
+    // Validate input
+    validateTechnicalTestInput(postId, candidateEmail, candidateName);
 
     const result = await postService.createAndSendTechnicalTest(
       postId,
@@ -369,15 +328,9 @@ exports.sendTechnicalTest = async (req, res) => {
       candidateName
     );
 
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 400);
   }
 };
 
@@ -387,28 +340,19 @@ exports.getPublicStats = async (req, res) => {
     const User = require("../../models/UserModel");
     const Post = require("../../models/PostModel");
 
-    // Count total users
-    const userCount = await User.countDocuments();
-
-    // Count total posts
-    const postCount = await Post.countDocuments();
-
-    // Count companies from User table (where role is 'Company')
-    const companyCount = await User.countDocuments({ role: "Company" });
+    // Count in parallel with .lean() for read-only
+    const [userCount, postCount, companyCount] = await Promise.all([
+      User.countDocuments().lean(),
+      Post.countDocuments().lean(),
+      User.countDocuments({ role: "Company" }).lean()
+    ]);
 
     res.status(200).json({
       success: true,
-      data: {
-        users: userCount,
-        posts: postCount,
-        companies: companyCount,
-      },
+      data: { users: userCount, posts: postCount, companies: companyCount }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    handleError(res, error, 500);
   }
 };
 

@@ -9,7 +9,6 @@ import {
   Typography,
   Card,
   Alert,
-  useTheme,
   Snackbar,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
@@ -17,7 +16,7 @@ import { useRouter } from "next/router";
 import { toast } from "react-hot-toast";
 import CandidateOnly from "@/components/CandidateOnly";
 import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
-import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
+import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsModern";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
 import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionDialog";

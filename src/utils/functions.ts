@@ -32,3 +32,8 @@ export const formatNumber = (num: any) => {
       children: `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`,
     };
   }
+
+  export const normalizeQueryParam = (param?: string | string[]) => {
+  if (!param) return "";
+  return Array.isArray(param) ? param[0] : param;
+};

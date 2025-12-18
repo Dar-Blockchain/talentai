@@ -32,29 +32,7 @@ const ApplicationProgressSection: React.FC<ApplicationProgressSectionProps> = ({
   onUpdateLink,
 }) => {
   return (
-    <Box sx={{ mb: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5, letterSpacing: '-0.01em' }}>
-            My Application Progress
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Track your ongoing applications and interview steps
-          </Typography>
-        </Box>
-        <Chip
-          label={`${candidateProgress.length} Active`}
-          sx={{
-            backgroundColor: '#4facfe20',
-            color: '#4facfe',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            px: 2,
-            py: 2.5,
-          }}
-        />
-      </Box>
-
+    <Box sx={{ mb: 5 }}>
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <Box sx={{ width: '100%', maxWidth: 400 }}>
@@ -75,17 +53,17 @@ const ApplicationProgressSection: React.FC<ApplicationProgressSectionProps> = ({
         <Box
           sx={{
             textAlign: 'center',
-            py: 4,
+            py: 8,
             backgroundColor: '#f8f9fa',
-            borderRadius: 2,
-            border: '1px dashed #dee2e6',
+            borderRadius: 4,
+            border: '2px dashed #e0e0e0',
           }}
         >
-          <AssignmentIcon sx={{ fontSize: 48, color: '#dee2e6', mb: 2 }} />
-          <Typography variant="h6" color="textSecondary" gutterBottom>
+          <AssignmentIcon sx={{ fontSize: 64, color: '#dee2e6', mb: 2 }} />
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 1 }}>
             No Progress Data Available
           </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
             Your application progress will appear here once you start applying to positions.
           </Typography>
           <Button
@@ -93,10 +71,17 @@ const ApplicationProgressSection: React.FC<ApplicationProgressSectionProps> = ({
             startIcon={<AddIcon />}
             onClick={() => onNavigate('/candidate/dashboard')}
             sx={{
-              backgroundColor: '#02E2FF',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
+              fontWeight: 700,
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 4,
+              py: 1.5,
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
               '&:hover': {
-                backgroundColor: '#02C2E0',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 24px rgba(102, 126, 234, 0.5)',
               },
             }}
           >

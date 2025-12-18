@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, Avatar, Grid, Grow } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
   CheckCircle as CheckCircleIcon,
@@ -22,98 +22,99 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
       title: 'Total Applications',
       value: totalApplications,
       icon: AssessmentIcon,
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: '#667eea',
       label: 'TOTAL',
     },
     {
       title: 'Passed Interviews',
       value: passedInterviews,
       icon: CheckCircleIcon,
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      color: '#4caf50',
       label: 'PASSED',
     },
     {
       title: 'Active Applications',
       value: activeApplications,
       icon: AssignmentIcon,
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      color: '#4facfe',
       label: 'ACTIVE',
     },
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 5 }}>
+    <Grid container spacing={3} sx={{ mb: 4 }}>
       {cards.map((card, index) => (
-        <Box key={index} sx={{ flex: '1 1 280px', minWidth: '280px' }}>
-          <Card
-            sx={{
-              height: '100%',
-              background: card.gradient,
-              position: 'relative',
-              overflow: 'visible',
-              borderRadius: 3,
-              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-              '&:hover': {
-                transform: 'translateY(-8px) scale(1.02)',
-                boxShadow: '0 20px 40px rgba(102, 126, 234, 0.4)',
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
-                pointerEvents: 'none',
-              },
-            }}
-          >
-            <CardContent sx={{ color: 'white', position: 'relative', zIndex: 1, p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Box
+        <Grid size={{ xs: 12, md: 4 }} key={index}>
+          <Grow in timeout={800 + index * 200}>
+            <Card
+              sx={{
+                height: '100%',
+                minHeight: '160px',
+                borderRadius: 4,
+                background: '#ffffff',
+                border: '2px solid #f0f0f0',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                overflow: 'hidden',
+                position: 'relative',
+                '&:hover': {
+                  transform: 'translateY(-8px) scale(1.02)',
+                  boxShadow: '0 20px 40px rgba(102, 126, 234, 0.25)',
+                  border: `2px solid ${card.color}`,
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '140px',
+                  height: '140px',
+                  background: `radial-gradient(circle at top right, ${card.color}15 0%, transparent 70%)`,
+                  pointerEvents: 'none',
+                },
+              }}
+            >
+              <CardContent sx={{ p: 4, position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Avatar
                   sx={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: '16px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                    bgcolor: `${card.color}18`,
+                    color: card.color,
+                    width: 64,
+                    height: 64,
+                    flexShrink: 0,
+                    boxShadow: `0 6px 16px ${card.color}30`,
                   }}
                 >
                   <card.icon sx={{ fontSize: 32 }} />
-                </Box>
-                <Box
-                  sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)',
-                    px: 2,
-                    py: 0.5,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                    {card.label}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#9e9e9e', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.5px' }}>
+                      {card.label}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="h2"
+                    sx={{
+                      fontWeight: 900,
+                      mb: 0.5,
+                      color: card.color,
+                      lineHeight: 1,
+                      fontSize: { xs: '2.5rem', md: '3rem' },
+                    }}
+                  >
+                    {card.value}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                    {card.title}
                   </Typography>
                 </Box>
-              </Box>
-              <Typography
-                variant="h3"
-                sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}
-              >
-                {card.value}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
-                {card.title}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
+              </CardContent>
+            </Card>
+          </Grow>
+        </Grid>
       ))}
-    </Box>
+    </Grid>
   );
 };
 

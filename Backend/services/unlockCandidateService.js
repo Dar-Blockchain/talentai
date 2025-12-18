@@ -1,6 +1,7 @@
 const UnlockCandidate = require("../models/UnlockCandidateModel");
 const tokenService = require("../services/tokenService");
 const User = require("../models/UserModel");
+const postPaymentService = require('../services/postPaymentService');
 
 /**
  * Get all unlocked candidates by company
@@ -100,14 +101,24 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
       };
     }
 
-    const result = await tokenService.spendTokens(idCompany, {
-      amount : unlockPrice,
-      service : "Unlock Candidate",
-      description : `Unlocking candidate ${idCandidate} for job ${idJob}`,
-      metadata : { unlockCandidate: true, idCandidate, idJob }
-    });
+        // Process payment
+        const paymentResult = await postPaymentService.processPayment(
+          company.hederaAccountId,
+          company.hederaPrivateKey,
+          unlockPrice,
+          idJob,
+          company._id
+        );
+    
 
-    const transactionId = result.transaction.id; // Initially null since not paid yet
+    // const result = await tokenService.spendTokens(idCompany, {
+    //   amount : unlockPrice,
+    //   service : "Unlock Candidate",
+    //   description : `Unlocking candidate ${idCandidate} for job ${idJob}`,
+    //   metadata : { unlockCandidate: true, idCandidate, idJob }
+    // });
+
+    const transactionId = paymentResult.transactionId; // Initially null since not paid yet
 
     // Create unlock record
     const unlockRecord = new UnlockCandidate({

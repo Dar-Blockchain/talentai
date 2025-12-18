@@ -21,6 +21,8 @@ import tokenReducer from './slices/tokenSlice';
 import agentConfigReducer from './slices/agentConfigSlice';
 import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
 import candidateReducer from './slices/candidateSlice';
+import interviewReducer from './slices/interviewSlice';
+import jobDetailsReducer from './slices/jobDetailsSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -34,6 +36,8 @@ const rootReducer = combineReducers({
   agentConfig: agentConfigReducer,
   tokenPurchase: tokenPurchaseReducer,
   candidate: candidateReducer,
+  interview: interviewReducer,
+  jobDetails: jobDetailsReducer,
 });
 
 const persistConfig = {

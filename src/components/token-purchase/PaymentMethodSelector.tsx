@@ -63,6 +63,7 @@ const PaymentMethodSelector = () => {
       // For card payment, proceed directly to confirmation
       dispatch(selectPaymentMethod(paymentMethod));
       await payWithCard(selectedPlan?.id!);
+      onClose()
     }
   };
 

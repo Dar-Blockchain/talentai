@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../store';
-import axios from 'axios';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from "../store";
+import axios from "axios";
 
 // Types
 export interface TokenState {
@@ -17,18 +17,18 @@ export interface TokenState {
 
 export interface TokenTransaction {
   id: string;
-  type: 'purchase' | 'spend' | 'refund';
+  type: "purchase" | "spend" | "refund";
   amount: number;
   description: string;
   timestamp: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: "pending" | "completed" | "failed";
   transactionHash?: string;
   hederaAccountId?: string;
 }
 
 export interface PurchaseTokensPayload {
   amount: number;
-  paymentMethod: 'hedera' | 'hashpack';
+  paymentMethod: "hedera" | "hashpack";
   walletAddress?: string;
 }
 
@@ -76,33 +76,40 @@ const initialState: TokenState = {
 
 // Async thunks
 export const fetchTokenBalance = createAsyncThunk(
-  'token/fetchBalance',
+  "token/fetchBalance",
   async (_, { rejectWithValue }) => {
     try {
-      console.log('🔄 Fetching token balance from Hedera Mirror Node...');
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/balance`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('api_token')}`,
-        },
-      });
-      console.log('✅ Token balance received:', response.data);
+      console.log("🔄 Fetching token balance from Hedera Mirror Node...");
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/balance`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
+          },
+        }
+      );
+      console.log("✅ Token balance received:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error('Failed to fetch token balance:', error);
+      console.error("Failed to fetch token balance:", error);
 
       if (error.response) {
-        return rejectWithValue(error.response.data?.message || 'Failed to fetch token balance');
+        return rejectWithValue(
+          error.response.data?.message || "Failed to fetch token balance"
+        );
       } else if (error.request) {
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        return rejectWithValue(error.message || 'Failed to fetch token balance');
+        return rejectWithValue(
+          error.message || "Failed to fetch token balance"
+        );
       }
     }
   }
 );
 
 export const purchaseTokens = createAsyncThunk(
-  'token/purchase',
+  "token/purchase",
   async (payload: PurchaseTokensPayload, { rejectWithValue }) => {
     try {
       const response = await axios.post(
@@ -110,51 +117,58 @@ export const purchaseTokens = createAsyncThunk(
         payload,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('api_token')}`,
+            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
           },
         }
       );
       return response.data;
     } catch (error: any) {
-      console.error('Failed to purchase tokens:', error);
+      console.error("Failed to purchase tokens:", error);
 
       if (error.response) {
-        return rejectWithValue(error.response.data?.message || 'Failed to purchase tokens');
+        return rejectWithValue(
+          error.response.data?.message || "Failed to purchase tokens"
+        );
       } else if (error.request) {
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        return rejectWithValue(error.message || 'Failed to purchase tokens');
+        return rejectWithValue(error.message || "Failed to purchase tokens");
       }
     }
   }
 );
 
 export const fetchTokenTransactions = createAsyncThunk(
-  'token/fetchTransactions',
+  "token/fetchTransactions",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/transactions`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('api_token')}`,
-        },
-      });
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/transactions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
-      console.error('Failed to fetch token transactions:', error);
+      console.error("Failed to fetch token transactions:", error);
 
       if (error.response) {
-        return rejectWithValue(error.response.data?.message || 'Failed to fetch transactions');
+        return rejectWithValue(
+          error.response.data?.message || "Failed to fetch transactions"
+        );
       } else if (error.request) {
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        return rejectWithValue(error.message || 'Failed to fetch transactions');
+        return rejectWithValue(error.message || "Failed to fetch transactions");
       }
     }
   }
 );
 
 export const verifyPayment = createAsyncThunk(
-  'token/verifyPayment',
+  "token/verifyPayment",
   async (transactionHash: string, { rejectWithValue }) => {
     try {
       const response = await axios.post(
@@ -162,20 +176,22 @@ export const verifyPayment = createAsyncThunk(
         { transactionHash },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('api_token')}`,
+            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
           },
         }
       );
       return response.data;
     } catch (error: any) {
-      console.error('Failed to verify payment:', error);
+      console.error("Failed to verify payment:", error);
 
       if (error.response) {
-        return rejectWithValue(error.response.data?.message || 'Failed to verify payment');
+        return rejectWithValue(
+          error.response.data?.message || "Failed to verify payment"
+        );
       } else if (error.request) {
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        return rejectWithValue(error.message || 'Failed to verify payment');
+        return rejectWithValue(error.message || "Failed to verify payment");
       }
     }
   }
@@ -183,44 +199,52 @@ export const verifyPayment = createAsyncThunk(
 
 // Add the fetchPricingPlans async thunk
 export const fetchPricingPlans = createAsyncThunk(
-  'token/fetchPricingPlans',
+  "token/fetchPricingPlans",
   async (_, { rejectWithValue }) => {
     try {
       const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/plans`;
-      console.log('📊 Fetching pricing plans from:', apiUrl);
+      console.log("📊 Fetching pricing plans from:", apiUrl);
 
       const response = await axios.get(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('api_token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${
+            localStorage.getItem("token") || localStorage.getItem("api_token")
+          }`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch pricing plans');
+        throw new Error(
+          response.data.message || "Failed to fetch pricing plans"
+        );
       }
 
       return response.data.data;
     } catch (error: any) {
-      console.error('Error fetching pricing plans:', error);
+      console.error("Error fetching pricing plans:", error);
 
       if (error.response) {
-        return rejectWithValue(error.response.data?.message || 'Failed to fetch pricing plans');
+        return rejectWithValue(
+          error.response.data?.message || "Failed to fetch pricing plans"
+        );
       } else if (error.request) {
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
-        return rejectWithValue(error.message || 'Failed to fetch pricing plans');
+        return rejectWithValue(
+          error.message || "Failed to fetch pricing plans"
+        );
       }
     }
   }
 );
 
 export const completePayment = createAsyncThunk(
-  'token/completePayment',
+  "token/completePayment",
   async (
     {
       planId,
-      hederaTransactionId
+      hederaTransactionId,
     }: { planId: string; hederaTransactionId: string },
     { rejectWithValue }
   ) => {
@@ -228,7 +252,7 @@ export const completePayment = createAsyncThunk(
       const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/complete`;
 
       const token =
-        localStorage.getItem('token') || localStorage.getItem('api_token');
+        localStorage.getItem("token") || localStorage.getItem("api_token");
 
       const response = await axios.post(
         apiUrl,
@@ -236,23 +260,23 @@ export const completePayment = createAsyncThunk(
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
 
       return response.data;
     } catch (error: any) {
-      console.error('Failed to complete payment:', error);
+      console.error("Failed to complete payment:", error);
 
       if (error.response) {
         return rejectWithValue(
           error.response.data?.message ||
-            'Payment sent but backend processing failed'
+            "Payment sent but backend processing failed"
         );
       } else if (error.request) {
         return rejectWithValue(
-          'Network error: Unable to connect to server while completing payment'
+          "Network error: Unable to connect to server while completing payment"
         );
       } else {
         return rejectWithValue(error.message);
@@ -261,10 +285,51 @@ export const completePayment = createAsyncThunk(
   }
 );
 
+// Async thunk for completing Stripe payment
+export const completeStripePayment = createAsyncThunk(
+  "token/completeStripePayment",
+  async (
+    { stripeSessionId }: { stripeSessionId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/complete-stripe`;
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("api_token");
+
+      const response = await axios.post(
+        apiUrl,
+        { stripeSessionId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Failed to complete Stripe payment:", error);
+
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message || "Stripe payment failed on backend"
+        );
+      } else if (error.request) {
+        return rejectWithValue(
+          "Network error: Unable to connect to server while completing Stripe payment"
+        );
+      } else {
+        return rejectWithValue(error.message || "Stripe payment failed");
+      }
+    }
+  }
+);
 
 // Token slice
 const tokenSlice = createSlice({
-  name: 'token',
+  name: "token",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -278,13 +343,16 @@ const tokenSlice = createSlice({
     addTransaction: (state, action: PayloadAction<TokenTransaction>) => {
       state.transactions.unshift(action.payload);
     },
-    updateTransaction: (state, action: PayloadAction<{ id: string; updates: Partial<TokenTransaction> }>) => {
+    updateTransaction: (
+      state,
+      action: PayloadAction<{ id: string; updates: Partial<TokenTransaction> }>
+    ) => {
       const { id, updates } = action.payload;
-      const transactionIndex = state.transactions.findIndex(t => t.id === id);
+      const transactionIndex = state.transactions.findIndex((t) => t.id === id);
       if (transactionIndex !== -1) {
         state.transactions[transactionIndex] = {
           ...state.transactions[transactionIndex],
-          ...updates
+          ...updates,
         };
       }
     },
@@ -364,10 +432,10 @@ const tokenSlice = createSlice({
 
           // Update transaction status
           const transactionIndex = state.transactions.findIndex(
-            t => t.transactionHash === action.payload.transactionHash
+            (t) => t.transactionHash === action.payload.transactionHash
           );
           if (transactionIndex !== -1) {
-            state.transactions[transactionIndex].status = 'completed';
+            state.transactions[transactionIndex].status = "completed";
           }
         }
 
@@ -393,17 +461,30 @@ const tokenSlice = createSlice({
         state.pricingPlansError = action.payload as string;
       })
       .addCase(completePayment.pending, (state) => {
-    state.loading = true;
-  })
-  .addCase(completePayment.fulfilled, (state, action) => {
-    state.loading = false;
-    state.error = null;
-    // Optional: update token balance, transactions, etc.
-  })
-  .addCase(completePayment.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload as string;
-  });
+        state.loading = true;
+      })
+      .addCase(completePayment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        // Optional: update token balance, transactions, etc.
+      })
+      .addCase(completePayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Complete Stripe payment
+      .addCase(completeStripePayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(completeStripePayment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(completeStripePayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
@@ -411,15 +492,21 @@ const tokenSlice = createSlice({
 export const selectTokenBalance = (state: RootState) => state.token.balance;
 export const selectTokenLoading = (state: RootState) => state.token.loading;
 export const selectTokenError = (state: RootState) => state.token.error;
-export const selectTokenLastUpdated = (state: RootState) => state.token.lastUpdated;
-export const selectTokenTransactions = (state: RootState) => state.token.transactions;
-export const selectTokenTransactionsLoading = (state: RootState) => state.token.transactionsLoading;
+export const selectTokenLastUpdated = (state: RootState) =>
+  state.token.lastUpdated;
+export const selectTokenTransactions = (state: RootState) =>
+  state.token.transactions;
+export const selectTokenTransactionsLoading = (state: RootState) =>
+  state.token.transactionsLoading;
 export const selectTokenState = (state: RootState) => state.token;
 
 // New pricing plans selectors
-export const selectPricingPlans = (state: RootState) => state.token.pricingPlans;
-export const selectPricingPlansLoading = (state: RootState) => state.token.pricingPlansLoading;
-export const selectPricingPlansError = (state: RootState) => state.token.pricingPlansError;
+export const selectPricingPlans = (state: RootState) =>
+  state.token.pricingPlans;
+export const selectPricingPlansLoading = (state: RootState) =>
+  state.token.pricingPlansLoading;
+export const selectPricingPlansError = (state: RootState) =>
+  state.token.pricingPlansError;
 
 // Actions
 export const {

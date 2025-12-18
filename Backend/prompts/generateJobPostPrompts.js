@@ -57,6 +57,7 @@ const getQuickPrompt = (description, companyLocation) =>
         "softSkills": [
           {
             "name": "Soft Skill 1",
+            "level": "Required level (1-5) based on needs",
             "percentage": 0
           },        
         ],
@@ -130,25 +131,24 @@ const getQuickPrompt = (description, companyLocation) =>
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
     - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
-    - Importance values must follow: "low", "medium", "high", "critical".
 
     STRICT SOFT SKILL RULES:
     - REQUIRED: Generate exactly 1 soft skill — no more, no less.
     - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
-    - The soft skill must include an "importance" field and a "percentage" field.
+    - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
  
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
-"weights": {
-  "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
-  "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
-  "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
-  "salary": "DYNAMIC based on job description, max 10",
-  "workMode": "DYNAMIC based on job description, max 10",
-  "contract": "DYNAMIC based on job description, max 10"
-}
+        "weights": {
+          "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
+          "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
+          "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
+          "salary": "DYNAMIC based on job description, max 10",
+          "workMode": "DYNAMIC based on job description, max 10",
+          "contract": "DYNAMIC based on job description, max 10"
+        },
 
         "exchangeRates": {
           "USD": 1,
@@ -227,6 +227,7 @@ const getDetailedPrompt = (description, companyLocation) =>
         "softSkills": [
           {
             "name": "Soft Skill 1",
+            "level": "Required level (1-5) based on needs",
             "percentage": 0
           },        
         ],
@@ -300,12 +301,11 @@ const getDetailedPrompt = (description, companyLocation) =>
     - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
     - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
     - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
-    - Importance values must follow: "low", "medium", "high", "critical".
 
     STRICT SOFT SKILL RULES:
     - REQUIRED: Generate exactly 1 soft skill — no more, no less.
     - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
-    - The soft skill must include an "importance" field and a "percentage" field.
+    - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
  
     Before generating the job details, include the following matching configuration exactly as structured:

@@ -33,29 +33,19 @@ const StepTimeline: React.FC<StepTimelineProps> = ({
           mb: 4,
           p: 3,
           borderRadius: 3,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.04) 0%, rgba(118, 75, 162, 0.04) 100%)',
+          border: '2px solid #f0f0f0',
           position: 'relative',
           overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
-            pointerEvents: 'none',
-          },
         }}
       >
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           <Typography
-            variant="h5"
+            variant="h6"
             sx={{
-              fontWeight: 700,
-              color: 'white',
+              fontWeight: 800,
+              color: '#1a1a1a',
               mb: 0.5,
-              textShadow: '0 2px 8px rgba(0,0,0,0.15)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -64,7 +54,8 @@ const StepTimeline: React.FC<StepTimelineProps> = ({
           <Typography
             variant="body2"
             sx={{
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: '#6b7280',
+              fontWeight: 600,
               fontSize: '0.9rem',
             }}
           >
@@ -76,39 +67,21 @@ const StepTimeline: React.FC<StepTimelineProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(10px)',
             px: 3,
-            py: 2,
+            py: 1.5,
             borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08))',
+            border: '2px solid rgba(102, 126, 234, 0.15)',
             position: 'relative',
             zIndex: 1,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           }}
         >
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(79, 172, 254, 0.4)',
-            }}
-          >
-            {steps.filter((step) => step.status === 'done').length}
-          </Box>
           <Box>
             <Typography
               variant="caption"
               sx={{
-                color: 'rgba(255, 255, 255, 0.8)',
-                fontWeight: 500,
+                color: '#9e9e9e',
+                fontWeight: 600,
                 display: 'block',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
@@ -120,8 +93,8 @@ const StepTimeline: React.FC<StepTimelineProps> = ({
             <Typography
               variant="h6"
               sx={{
-                color: 'white',
-                fontWeight: 700,
+                color: '#667eea',
+                fontWeight: 800,
                 lineHeight: 1,
               }}
             >
@@ -137,31 +110,18 @@ const StepTimeline: React.FC<StepTimelineProps> = ({
         <Box
           sx={{
             position: 'absolute',
-            left: 28,
-            top: 0,
-            bottom: 0,
-            width: 4,
-            background: 'linear-gradient(180deg, #667eea 0%, #4facfe 50%, #00f2fe 100%)',
+            left: 30,
+            top: 30,
+            bottom: 30,
+            width: 3,
+            background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
             borderRadius: 2,
-            zIndex: 1,
-            opacity: 0.6,
-            boxShadow: '0 0 10px rgba(102, 126, 234, 0.3)',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 26,
-            top: 0,
-            bottom: 0,
-            width: 8,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 4,
             zIndex: 0,
+            opacity: 0.2,
           }}
         />
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {sortedSteps.map((step, index) => (
             <StepCard
               key={step.stepId?._id || index}

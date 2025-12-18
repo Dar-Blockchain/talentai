@@ -77,116 +77,143 @@ const ProgressAccordionItem: React.FC<ProgressAccordionItemProps> = ({
   return (
     <Accordion
       sx={{
-        borderRadius: 3,
-        border: '2px solid #e9ecef',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        borderRadius: 4,
+        border: '2px solid #f0f0f0',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
         overflow: 'hidden',
+        background: '#ffffff',
         '&:before': { display: 'none' },
         '&.Mui-expanded': {
-          margin: '8px 0',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          margin: 0,
+          boxShadow: '0 24px 48px rgba(102, 126, 234, 0.2)',
+          border: '2px solid #667eea',
         },
-        transition: 'all 0.3s ease',
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          transform: 'translateY(-2px)',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.1)',
+          transform: 'translateY(-6px)',
         },
       }}
     >
       <AccordionSummary
-        expandIcon={<ExpandMoreIcon sx={{ color: '#667eea' }} />}
+       
         sx={{
-          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-          borderBottom: '1px solid #e9ecef',
-          minHeight: 80,
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%)',
+          borderBottom: '1px solid #f0f0f0',
+          minHeight: 100,
+          px: 4,
+          py: 2,
           '&:hover': {
-            background: 'linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%)',
+            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
           },
           '&.Mui-expanded': {
             borderBottom: '2px solid #667eea',
+            minHeight: 100,
           },
           transition: 'all 0.3s ease',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 3,
+            width: '100%',
+          }}
+        >
+          <Box sx={{ flex: 1, width: '100%' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#1a1a1a', mb: 1, letterSpacing: '-0.02em' }}>
               {progress.idPost?.jobDetails?.title || 'Unknown Position'}
             </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {progress.idPost?.jobDetails?.location || 'Location not specified'} •{' '}
-              {progress.idPost?.jobDetails?.employmentType || 'Employment type not specified'}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Progress Indicator */}
-            <Box
-              sx={{
-                width: 70,
-                height: 70,
-                borderRadius: '50%',
-                border: '4px solid #e9ecef',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'white',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              }}
-            >
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#667eea', fontSize: '0.95rem' }}>
-                {progressPercentage}%
-              </Typography>
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -4,
-                  left: -4,
-                  right: -4,
-                  bottom: -4,
-                  borderRadius: '50%',
-                  background: `conic-gradient(from 0deg, #667eea 0deg, #4facfe ${progressPercentage * 3.6}deg, #e9ecef ${progressPercentage * 3.6}deg)`,
-                  mask: 'radial-gradient(transparent 60%, black 60%)',
-                  WebkitMask: 'radial-gradient(transparent 60%, black 60%)',
-                }}
-              />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  }}
+                />
+                <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                  {progress.idPost?.jobDetails?.location || 'Location not specified'}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  }}
+                />
+                <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                  {progress.idPost?.jobDetails?.employmentType || 'Employment type not specified'}
+                </Typography>
+              </Box>
             </Box>
-            <Chip
-              label={progress.currentStep?.data?.type || 'Unknown'}
-              size="small"
-              sx={{
-                backgroundColor: '#8310FF20',
-                color: '#8310FF',
-                fontWeight: 500,
-              }}
-            />
+          </Box>
+          <Box
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08))',
+              border: '2px solid rgba(102, 126, 234, 0.15)',
+            }}
+          >
+            <Typography variant="body2" sx={{ color: '#667eea', fontWeight: 800, fontSize: '0.95rem' }}>
+              {progressPercentage}% Complete
+            </Typography>
           </Box>
         </Box>
       </AccordionSummary>
       <AccordionDetails>
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 4 }}>
           {/* Progress Bar */}
-          <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" color="textSecondary">
+          <Box
+            sx={{
+              mb: 4,
+              p: 3,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%)',
+              border: '2px solid #f5f5f5',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 700, color: '#1a1a1a', fontSize: '0.95rem' }}>
                 Overall Progress
               </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 500 }}>
-                {progress.steps?.filter((step) => step.status === 'done').length || 0} /{' '}
-                {progress.steps?.length || 0} completed
-              </Typography>
+              <Box
+                sx={{
+                  px: 2,
+                  py: 0.5,
+                  borderRadius: 2,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.25)',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 800, color: 'white', fontSize: '0.85rem' }}>
+                  {progress.steps?.filter((step) => step.status === 'done').length || 0} /{' '}
+                  {progress.steps?.length || 0} Steps
+                </Typography>
+              </Box>
             </Box>
             <LinearProgress
               variant="determinate"
               value={progressPercentage}
               sx={{
-                height: 12,
-                borderRadius: 6,
-                backgroundColor: '#e9ecef',
+                height: 14,
+                borderRadius: 7,
+                backgroundColor: '#f5f5f5',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)',
                 '& .MuiLinearProgress-bar': {
-                  backgroundColor: '#02E2FF',
-                  borderRadius: 6,
-                  background: 'linear-gradient(90deg, #02E2FF 0%, #00B8D4 100%)',
+                  borderRadius: 7,
+                  background: 'linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.4)',
+                  transition: 'transform 0.4s ease',
                 },
               }}
             />
@@ -204,19 +231,36 @@ const ProgressAccordionItem: React.FC<ProgressAccordionItemProps> = ({
           )}
 
           {/* Action Buttons */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3, gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
+              mt: 4,
+              gap: 2,
+              pt: 3,
+              borderTop: '2px solid #f5f5f5',
+            }}
+          >
             <Button
               variant="outlined"
-              size="small"
               onClick={onRefresh}
               sx={{
-                borderColor: '#02E2FF',
-                color: '#02E2FF',
+                border: '2px solid transparent',
+                background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #667eea 0%, #764ba2 100%) border-box',
+                color: '#667eea',
                 textTransform: 'none',
-                fontWeight: 500,
+                fontWeight: 800,
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontSize: '0.95rem',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  borderColor: '#02C2E0',
-                  backgroundColor: '#02E2FF10',
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08)) padding-box, linear-gradient(135deg, #667eea 0%, #764ba2 100%) border-box',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 20px rgba(102, 126, 234, 0.2)',
                 },
               }}
             >
@@ -225,21 +269,28 @@ const ProgressAccordionItem: React.FC<ProgressAccordionItemProps> = ({
 
             <Button
               variant="contained"
-              size="small"
-              startIcon={isTask ? <EmailIcon /> : <AssignmentIcon />}
+              startIcon={isTask ? <EmailIcon sx={{ fontSize: 22 }} /> : <AssignmentIcon sx={{ fontSize: 22 }} />}
               disabled={allCompleted || isSending}
               onClick={handleActionClick}
               sx={{
-                backgroundColor: '#02E2FF',
+                background: allCompleted ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 color: 'white',
                 textTransform: 'none',
-                fontWeight: 500,
+                fontWeight: 800,
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontSize: '0.95rem',
+                boxShadow: allCompleted ? '0 4px 16px rgba(76, 175, 80, 0.4)' : '0 4px 16px rgba(102, 126, 234, 0.4)',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  backgroundColor: '#02C2E0',
+                  transform: 'translateY(-2px)',
+                  boxShadow: allCompleted ? '0 8px 24px rgba(76, 175, 80, 0.5)' : '0 8px 24px rgba(102, 126, 234, 0.5)',
                 },
                 '&.Mui-disabled': {
-                  backgroundColor: '#e0e0e0',
+                  background: 'linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%)',
                   color: '#9e9e9e',
+                  boxShadow: 'none',
                 },
               }}
             >

@@ -13,7 +13,8 @@ exports.createCheckoutSession = async (req, res) => {
     // 👉 Maintenant on retourne : url + sessionId
     return res.status(200).json({
       url: result.session.url,
-      sessionId: result.sessionId
+      sessionId: result.sessionId,
+      planId: planId
     });
 
   } catch (error) {
