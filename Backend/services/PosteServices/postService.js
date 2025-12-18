@@ -390,6 +390,49 @@ module.exports.getPostsByUserId = async (userId) => {
   }
 };
 
+// Récupérer les posts d'un utilisateur avec pagination
+module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6) => {
+  try {
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count and posts
+    const [posts, total] = await Promise.all([
+      Post.find({ user: userId })
+        .populate("user", "username email")
+        .populate("post_Steps")
+        .populate('agentConfig')
+        .populate('agentId')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Post.countDocuments({ user: userId })
+    ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    return {
+      posts,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasNextPage,
+        hasPrevPage
+      }
+    };
+  } catch (error) {
+    throw new Error(`Error fetching user posts with pagination: ${error.message}`);
+  }
+};
+
 // Mettre à jour un post
 module.exports.updatePost = async (postId, userId, updateData) => {
   try {
