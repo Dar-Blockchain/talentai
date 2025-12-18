@@ -575,25 +575,11 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
 
   const randomPosts = getRandomPosts(allPosts, 3);
 
-  // DEBUG: Log final posts being returned
-  console.log('🔍 DEBUG - Final posts being returned:', {
-    count: randomPosts.length,
-    posts: randomPosts.map(p => ({
-      _id: p._id,
-      title: p.jobDetails?.title,
-      creationType: p.creationType,
-      hasPostSteps: !!p.post_Steps,
-      postStepsIsArray: Array.isArray(p.post_Steps),
-      postStepsCount: p.post_Steps?.length || 0,
-      skillAnalysisSkillsCount: p.skillAnalysis?.requiredSkills?.length || 0
-    }))
-  });
-
-  return {
-    success: true,
-    posts: randomPosts,
-    message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`,
-  };
+    return {
+      success: true,
+      posts: randomPosts,
+      message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`
+    }
 };
 
 

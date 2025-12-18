@@ -27,7 +27,7 @@ const Profile = require("../models/ProfileModel");
 
 // services/MatchingService/computeMatches.js
 
-const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/NewmatchingService");
+const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matchingService");
 
 async function computeMatches(jobPostId, companyId) {
   // Charger les candidats
