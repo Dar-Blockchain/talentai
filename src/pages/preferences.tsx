@@ -39,9 +39,6 @@ function Preferences() {
         return;
       }
 
-      // Add a small delay to ensure token is stored
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       try {
         const token = localStorage.getItem("api_token");
 
@@ -86,16 +83,17 @@ function Preferences() {
             (data.type === "Candidate" || data.type === "Company");
 
           if (isProfileComplete) {
+            // Immediate redirect for existing users
             if (returnUrl) {
-              router.push(decodeURIComponent(returnUrl));
+              router.replace(decodeURIComponent(returnUrl));
               return;
             }
 
-            // If no returnUrl, redirect to appropriate dashboard
+            // If no returnUrl, redirect to appropriate dashboard immediately
             if (data.type === "Company") {
-              router.push("/dashboard/company");
+              router.replace("/dashboard/company");
             } else {
-              router.push("/dashboard/candidate");
+              router.replace("/dashboard/candidate");
             }
           }
           // If profile is not complete, stay on preferences page
