@@ -15,6 +15,8 @@ export const usePreferences = () => {
     industry: "",
     size: "",
     location: "",
+    website: "",
+    linkedin: "",
   });
 
   // Candidate details (UPDATED)

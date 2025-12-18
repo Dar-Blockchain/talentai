@@ -212,6 +212,88 @@ module.exports.getPostById = async (postId) => {
   }
 };
 
+// Get pipeline job details with all step configurations
+module.exports.getPipelineJobDetails = async (postId) => {
+  try {
+    const post = await Post.findById(postId)
+      .populate("user", "username email")
+      .populate("post_Steps")
+      .populate('agentConfig')
+      .populate('agentId');
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // If not a pipeline job, return standard response
+    if (post.creationType !== 'pipeline') {
+      return {
+        isPipeline: false,
+        post: post,
+        steps: []
+      };
+    }
+
+    // For pipeline jobs, extract and organize step configurations
+    const steps = post.post_Steps.map(step => ({
+      stepId: step._id,
+      nodeId: step.id,
+      type: step.data.type,
+      label: step.data.label,
+      position: step.position,
+      status: step.status,
+      config: {
+        nodeNumber: step.data.config.nodeNumber,
+        title: step.data.config.title,
+        configured: step.data.config.configured,
+
+        // Technical step fields
+        categories: step.data.config.categories || [],
+        skills: step.data.config.skills || [],
+        assessmentLevel: step.data.config.assessmentLevel,
+        passThreshold: step.data.config.passThreshold,
+
+        // Soft skills step fields
+        softSkills: step.data.config.softSkills || [],
+
+        // HR interview fields
+        questions: step.data.config.questions || [],
+
+        // Task fields
+        taskType: step.data.config.taskType,
+        taskDescription: step.data.config.taskDescription,
+
+        // Email fields
+        emailType: step.data.config.emailType,
+        emailSubject: step.data.config.emailSubject,
+        emailBody: step.data.config.emailBody
+      }
+    })).sort((a, b) => a.config.nodeNumber - b.config.nodeNumber);
+
+    return {
+      isPipeline: true,
+      post: {
+        _id: post._id,
+        jobDetails: post.jobDetails,
+        skillAnalysis: post.skillAnalysis,
+        linkedinPost: post.linkedinPost,
+        companyName: post.companyName,
+        status: post.status,
+        creationType: post.creationType,
+        user: post.user,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt
+      },
+      steps: steps,
+      totalSteps: steps.length,
+      interviewSteps: steps.filter(s => ['technical', 'soft', 'interview'].includes(s.type))
+    };
+
+  } catch (error) {
+    throw new Error(`Error fetching pipeline job details: ${error.message}`);
+  }
+};
+
 // Récupérer les required skills d'un post par son ID
 module.exports.getRequiredSkillsByPostId = async (postId) => {
   try {
@@ -344,6 +426,70 @@ module.exports.updatePostStatus = async (postId, userId, status) => {
 
 // Recommend posts for a user based on ALL their skills (not only the first)
 module.exports.getPostsByUserTopSkill = async (userId) => {
+  const user = await User.findById(userId).populate({
+    path: "profile",
+    // include expectedSalary so we can filter posts by user's salary expectations
+    select: "skills expectedSalary",
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+    return {
+      success: false,
+      message: "Aucun skill trouvé. Ajoutez au moins une compétence à votre profil pour obtenir des recommandations.",
+    };
+  }
+
+  // Extraire les noms des compétences
+  const skillNames = user.profile.skills
+    .map((s) => (typeof s === "string" ? s : s?.name))
+    .filter(Boolean);
+
+  if (skillNames.length === 0) {
+    return {
+      success: false,
+      message: "Aucun skill valide trouvé dans le profil. Ajoutez au moins une compétence pour recevoir des recommandations.",
+    };
+  }
+
+  // IDs de postes déjà testés
+  const testedPosts = await JobAssessmentResult.find({
+    condidateId: user.profile._id,
+  }).distinct("jobId");
+
+  // Tous les postes correspondants aux skills, en excluant ceux déjà testés
+  let candidatePosts = await Post.find({
+    "skillAnalysis.requiredSkills.name": { $in: skillNames },
+    _id: { $nin: testedPosts },
+  })
+    .populate('post_Steps')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // DEBUG: Log first post with post_Steps to verify population
+  if (candidatePosts.length > 0) {
+    console.log('🔍 DEBUG - First post structure:', {
+      _id: candidatePosts[0]._id,
+      creationType: candidatePosts[0].creationType,
+      hasPostSteps: !!candidatePosts[0].post_Steps,
+      postStepsCount: candidatePosts[0].post_Steps?.length || 0,
+      postStepsType: Array.isArray(candidatePosts[0].post_Steps) ? 'array' : typeof candidatePosts[0].post_Steps,
+      firstStepSample: candidatePosts[0].post_Steps?.[0] ? {
+        id: candidatePosts[0].post_Steps[0]._id || candidatePosts[0].post_Steps[0],
+        type: candidatePosts[0].post_Steps[0].type,
+        hasData: !!candidatePosts[0].post_Steps[0].data,
+        dataType: candidatePosts[0].post_Steps[0].data?.type,
+        hasConfig: !!candidatePosts[0].post_Steps[0].data?.config,
+        configKeys: candidatePosts[0].post_Steps[0].data?.config ? Object.keys(candidatePosts[0].post_Steps[0].data.config) : []
+      } : 'no steps'
+    });
+  }
+
+  // Si l'utilisateur a des attentes salariales, filtrer les postes pour ne garder
+  // que ceux dont la plage salariale chevauche les attentes de l'utilisateur.
   try {
     if (!userId) {
       const err = new Error('User ID is required');
@@ -444,15 +590,25 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
 
     const randomPosts = getRandomPosts(allPosts, 3);
 
-    return {
-      success: true,
-      posts: randomPosts,
-      message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`
-    };
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
-  }
+  // DEBUG: Log final posts being returned
+  console.log('🔍 DEBUG - Final posts being returned:', {
+    count: randomPosts.length,
+    posts: randomPosts.map(p => ({
+      _id: p._id,
+      title: p.jobDetails?.title,
+      creationType: p.creationType,
+      hasPostSteps: !!p.post_Steps,
+      postStepsIsArray: Array.isArray(p.post_Steps),
+      postStepsCount: p.post_Steps?.length || 0,
+      skillAnalysisSkillsCount: p.skillAnalysis?.requiredSkills?.length || 0
+    }))
+  });
+
+  return {
+    success: true,
+    posts: randomPosts,
+    message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`,
+  };
 };
 
 

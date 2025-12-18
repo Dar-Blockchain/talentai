@@ -313,10 +313,7 @@ class ConfigManager {
         ...userConfig.interviewerPersona
       },
 
-      intelligenceContext: {
-        ...baseConfig.intelligenceContext,
-        ...userConfig.intelligenceContext
-      },
+      intelligenceContext: this.buildIntelligenceContext(userConfig, baseConfig),
 
       sessionSettings: {
         duration: userConfig.sessionSettings?.duration || 45,
@@ -403,6 +400,124 @@ class ConfigManager {
     };
 
     return roleMap[context?.targetRole] || roleMap["Software Engineer"];
+  }
+
+  /**
+   * Build intelligence context - handles both regular and pipeline interviews
+   */
+  buildIntelligenceContext(userConfig, baseConfig) {
+    // 🔥 Check if this is a pipeline interview with specific skills
+    if (userConfig.pipelineConfig) {
+      console.log('🎯 Pipeline config detected, building custom intelligence context');
+      return this.buildPipelineIntelligenceContext(
+        userConfig.pipelineConfig,
+        userConfig.interviewType,
+        baseConfig.intelligenceContext
+      );
+    }
+
+    // Regular interview - merge base and user configs
+    return {
+      ...baseConfig.intelligenceContext,
+      ...userConfig.intelligenceContext
+    };
+  }
+
+  /**
+   * Build intelligence context specifically for pipeline interviews
+   * Generates focus areas from pipeline step skills
+   */
+  buildPipelineIntelligenceContext(pipelineConfig, interviewType, baseContext) {
+    const focusAreas = [];
+
+    // TECHNICAL SKILL INTERVIEW - Build from technical skills
+    if (interviewType === 'TECHNICAL_SKILL' && pipelineConfig.skills && Array.isArray(pipelineConfig.skills)) {
+      console.log(`🔧 Building focus areas for ${pipelineConfig.skills.length} technical skills`);
+
+      pipelineConfig.skills.forEach((skill, index) => {
+        const skillName = skill.name || skill;
+        const requiredLevel = skill.requiredLevel || 3;
+
+        focusAreas.push({
+          area: skillName.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+          weight: 1 / pipelineConfig.skills.length,
+          indicators: [
+            `${skillName} hands-on implementation experience`,
+            `${skillName} best practices and patterns`,
+            `Real-world ${skillName} project examples`,
+            `${skillName} problem-solving and debugging`,
+            `Understanding of ${skillName} ecosystem and tools`
+          ],
+          depth: `Assess practical ${skillName} proficiency at level ${requiredLevel}/5. Probe for implementation details, trade-offs, and real project experience.`,
+          skillLevel: requiredLevel,
+          skillName: skillName
+        });
+      });
+
+      console.log(`✅ Generated ${focusAreas.length} technical skill focus areas`);
+    }
+
+    // SOFT SKILL INTERVIEW - Build from soft skills
+    else if (interviewType === 'SOFT_SKILL' && pipelineConfig.softSkills && Array.isArray(pipelineConfig.softSkills)) {
+      console.log(`🗣️ Building focus areas for ${pipelineConfig.softSkills.length} soft skills`);
+
+      pipelineConfig.softSkills.forEach((softSkill, index) => {
+        const skillName = typeof softSkill === 'string' ? softSkill : softSkill.name;
+
+        focusAreas.push({
+          area: skillName.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+          weight: 1 / pipelineConfig.softSkills.length,
+          indicators: [
+            `${skillName} in workplace scenarios`,
+            `Examples demonstrating ${skillName}`,
+            `${skillName} development and improvement`,
+            `${skillName} application in team settings`,
+            `Impact of ${skillName} on work outcomes`
+          ],
+          depth: `Evaluate ${skillName} through behavioral questions and specific examples. Probe for situations, actions, and results.`,
+          skillName: skillName
+        });
+      });
+
+      console.log(`✅ Generated ${focusAreas.length} soft skill focus areas`);
+    }
+
+    // HR INTERVIEW - Use focus areas if provided
+    else if (interviewType === 'HR_INTERVIEW' && pipelineConfig.focusAreas && Array.isArray(pipelineConfig.focusAreas)) {
+      console.log(`💼 Building focus areas for HR interview with ${pipelineConfig.focusAreas.length} areas`);
+
+      pipelineConfig.focusAreas.forEach((area, index) => {
+        const areaName = typeof area === 'string' ? area : area.name;
+
+        focusAreas.push({
+          area: areaName.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+          weight: 1 / pipelineConfig.focusAreas.length,
+          indicators: [
+            `${areaName} competency`,
+            `${areaName} examples`,
+            `${areaName} impact`
+          ],
+          depth: `Assess ${areaName} through behavioral questions`,
+          focusArea: areaName
+        });
+      });
+
+      console.log(`✅ Generated ${focusAreas.length} HR focus areas`);
+    }
+
+    // If no focus areas were generated, fall back to base context
+    if (focusAreas.length === 0) {
+      console.warn('⚠️ No pipeline focus areas generated, using base context');
+      return baseContext;
+    }
+
+    return {
+      focusAreas: focusAreas,
+      conversationFlow: baseContext.conversationFlow,
+      adaptiveStrategy: baseContext.adaptiveStrategy,
+      pipelineMode: true,  // Flag to indicate this is a pipeline interview
+      pipelineConfig: pipelineConfig  // Store original pipeline config for reference
+    };
   }
 
   /**

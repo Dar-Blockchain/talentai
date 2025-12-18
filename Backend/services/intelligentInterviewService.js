@@ -616,9 +616,10 @@ Generate a targeted question to explore this competency area more deeply. Respon
  * Decision Engine AI - Makes intelligent interview flow decisions
  */
 class DecisionEngineAI {
-  constructor(together, sessionManager) {
+  constructor(together, sessionManager, serviceInstance) {
     this.together = together;
     this.sessionManager = sessionManager;
+    this.service = serviceInstance; // Reference to parent IntelligentInterviewService
     this.model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
   }
 
@@ -667,7 +668,7 @@ class DecisionEngineAI {
 
       if (currentArea && areaQuestionCounts[currentArea] > 0) {
         // Calculate average quality for responses in this area
-        const currentAreaQuality = this.calculateAreaQualityAverage(
+        const currentAreaQuality = this.service.calculateAreaQualityAverage(
           session.conversation,
           currentArea,
           areaQuestionCounts[currentArea]
@@ -697,7 +698,7 @@ class DecisionEngineAI {
                       (currentAreaQuality >= QUALITY_THRESHOLDS.GOOD
                         ? 'Good performance - moving on efficiently.'
                         : 'Limited value from additional questions - exploring other areas.'),
-            targetArea: this.findLeastAskedArea(session.coverage.areas, currentArea),
+            targetArea: this.service.findLeastAskedArea(session.coverage.areas, currentArea),
             strategy: "Move to fresh topic for time efficiency",
             confidence: 95,
             expectedDuration: "2-3 minutes",
@@ -777,6 +778,70 @@ Make the next intelligent decision for interview progression. Consider question 
     } catch (error) {
       console.error('Error in intelligent decision making:', error);
       throw error;
+    }
+  }
+
+}
+
+class IntelligentInterviewService {
+  constructor() {
+    this.together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+    this.sessionManager = redisSessionManager;
+    this.model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+
+    // Initialize AI service components
+    this.memoryAI = new MemoryAI(this.together, this.sessionManager);
+    this.coverageAI = new CoverageAnalysisAI(this.together, this.sessionManager);
+    this.questionAI = new QuestionGeneratorAI(this.together, this.sessionManager);
+    this.decisionAI = new DecisionEngineAI(this.together, this.sessionManager, this);
+  }
+
+  /**
+   * Initialize service
+   */
+  async initialize() {
+    try {
+      // Initialize Redis connection with timeout to prevent blocking
+      console.log('🔌 [Service] Attempting to connect to Redis...');
+      const redisInitialized = await Promise.race([
+        this.sessionManager.initialize(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Redis connection timeout after 5 seconds')), 5000)
+        )
+      ]).catch(err => {
+        console.error('⚠️  [Service] Redis initialization failed:', err.message);
+        console.warn('⚠️  [Service] Interview service will continue WITHOUT Redis (in-memory mode)');
+        console.warn('⚠️  [Service] Sessions will not persist across server restarts');
+        console.warn('💡 [Service] To fix: Run `redis-server` or `sudo service redis-server start` in WSL');
+        return false;
+      });
+
+      if (redisInitialized) {
+        console.log('✅ [Service] Intelligent Interview Service initialized with Redis');
+        console.log('💾 [Service] Sessions will be stored in Redis with 2-hour TTL');
+
+        // Test Redis connection with ping
+        try {
+          const pingTest = await this.sessionManager.client.ping();
+          console.log('🏓 [Service] Redis connectivity test:', pingTest);
+          console.log('📊 [Service] Redis status:', {
+            isConnected: this.sessionManager.isConnected,
+            isReady: this.sessionManager.isReady()
+          });
+        } catch (pingError) {
+          console.error('❌ [Service] Redis ping test failed:', pingError.message);
+          console.warn('⚠️  [Service] Redis may not be fully operational');
+        }
+      } else {
+        console.log('⚠️  [Service] Intelligent Interview Service initialized WITHOUT Redis (degraded mode)');
+        console.log('⚠️  [Service] Interview features may be limited');
+      }
+
+      return true;  // Always return true to not block server startup
+    } catch (error) {
+      console.error('❌ [Service] Failed to initialize Intelligent Interview Service:', error.message);
+      console.warn('⚠️  [Service] Server will continue without interview service');
+      return true;  // Don't block server startup
     }
   }
 
@@ -1053,68 +1118,6 @@ Determine if interview objectives have been sufficiently met to end the session.
     } catch (error) {
       console.error('Error determining interview end:', error);
       return { shouldEnd: false, confidence: 0, reasoning: "Analysis failed" };
-    }
-  }
-}
-
-class IntelligentInterviewService {
-  constructor() {
-    this.together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-    this.sessionManager = redisSessionManager;
-
-    // Initialize AI service components
-    this.memoryAI = new MemoryAI(this.together, this.sessionManager);
-    this.coverageAI = new CoverageAnalysisAI(this.together, this.sessionManager);
-    this.questionAI = new QuestionGeneratorAI(this.together, this.sessionManager);
-    this.decisionAI = new DecisionEngineAI(this.together, this.sessionManager);
-  }
-
-  /**
-   * Initialize service
-   */
-  async initialize() {
-    try {
-      // Initialize Redis connection with timeout to prevent blocking
-      console.log('🔌 [Service] Attempting to connect to Redis...');
-      const redisInitialized = await Promise.race([
-        this.sessionManager.initialize(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Redis connection timeout after 5 seconds')), 5000)
-        )
-      ]).catch(err => {
-        console.error('⚠️  [Service] Redis initialization failed:', err.message);
-        console.warn('⚠️  [Service] Interview service will continue WITHOUT Redis (in-memory mode)');
-        console.warn('⚠️  [Service] Sessions will not persist across server restarts');
-        console.warn('💡 [Service] To fix: Run `redis-server` or `sudo service redis-server start` in WSL');
-        return false;
-      });
-
-      if (redisInitialized) {
-        console.log('✅ [Service] Intelligent Interview Service initialized with Redis');
-        console.log('💾 [Service] Sessions will be stored in Redis with 2-hour TTL');
-
-        // Test Redis connection with ping
-        try {
-          const pingTest = await this.sessionManager.client.ping();
-          console.log('🏓 [Service] Redis connectivity test:', pingTest);
-          console.log('📊 [Service] Redis status:', {
-            isConnected: this.sessionManager.isConnected,
-            isReady: this.sessionManager.isReady()
-          });
-        } catch (pingError) {
-          console.error('❌ [Service] Redis ping test failed:', pingError.message);
-          console.warn('⚠️  [Service] Redis may not be fully operational');
-        }
-      } else {
-        console.log('⚠️  [Service] Intelligent Interview Service initialized WITHOUT Redis (degraded mode)');
-        console.log('⚠️  [Service] Interview features may be limited');
-      }
-
-      return true;  // Always return true to not block server startup
-    } catch (error) {
-      console.error('❌ [Service] Failed to initialize Intelligent Interview Service:', error.message);
-      console.warn('⚠️  [Service] Server will continue without interview service');
-      return true;  // Don't block server startup
     }
   }
 

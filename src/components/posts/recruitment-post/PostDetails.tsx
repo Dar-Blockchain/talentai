@@ -28,9 +28,8 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
   const [isEditing, setIsEditing] = useState(false);
   const [editedJob, setEditedJob] = useState<JobPost | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasSharedToLinkedIn, setHasSharedToLinkedIn] = useState(false);
-  const [isPosting, setIsPosting] = useState(false);
-  const [linkedinCopySuccess, setLinkedinCopySuccess] = useState(false);
+  const [isCopyingLink, setIsCopyingLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [updatedJobData, setUpdatedJobData] = useState<JobPost | undefined>(
     undefined
   );
@@ -263,9 +262,9 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
         console.log('Generated Job Post:', jobPost);
   
         setGeneratedJob(jobPost);
-  
-        // NOW reset the LinkedIn sharing status since we have a new job post
-        setHasSharedToLinkedIn(false);
+
+        // Reset the copy link status since we have a new job post
+        setLinkCopied(false);
   
       } catch (error) {
         console.error('Error generating job:', error);
@@ -389,15 +388,64 @@ const handleInputChange = (field: string, value: any): void => {
 };
 
 
-  const handleShareLinkedIn = async (): Promise<void> => {
-    setIsPosting(true);
-    // Simulate LinkedIn sharing
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setHasSharedToLinkedIn(true);
-    setLinkedinCopySuccess(true);
-    setIsPosting(false);
+  const handleCopyInterviewLink = async (): Promise<void> => {
+    if (!postedJobId) {
+      alert('Job ID not available. Please save the job first.');
+      return;
+    }
 
-    setTimeout(() => setLinkedinCopySuccess(false), 3000);
+    setIsCopyingLink(true);
+
+    try {
+      // Check if post has pipeline steps to determine the correct link format
+      const token = Cookies.get("api_token");
+      let interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}`;
+
+      if (token) {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}post-steps/${postedJobId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            const hasSteps = data?.data?.length > 0;
+
+            if (hasSteps) {
+              // Pipeline post - use pipeline interview link
+              interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}&stepNumber=1&source=pipeline`;
+            } else {
+              // AI/Manual post - use standard HR interview link
+              interviewLink = `${window.location.origin}/interview/hr?jobId=${postedJobId}&type=hr`;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking for pipeline steps:', error);
+          // Fall back to basic link if API call fails
+        }
+      }
+
+      await navigator.clipboard.writeText(interviewLink);
+
+      setLinkCopied(true);
+      alert('Interview link copied to clipboard!');
+
+      // Reset copied state after 3 seconds
+      setTimeout(() => {
+        setLinkCopied(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error copying link:', error);
+      alert('Failed to copy link. Please try again.');
+    } finally {
+      setIsCopyingLink(false);
+    }
   };
 
   // Update the saveJob function to handle the job data properly
@@ -578,6 +626,7 @@ ${jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to mak
             ""
           )} #RemoteWork #TechCareers`,
         },
+        creationType: 'ai', // Mark as AI-generated post
       };
 
       // Log the complete job post data
@@ -751,19 +800,19 @@ ${jobDataToUse.linkedinPost?.formattedContent?.callToAction || "✨ Ready to mak
         )}
         
         <JobPreview
-          generatedJob={generatedJob}
+          generatedJob={updatedJobData || generatedJob}
           editedJob={editedJob}
           isEditing={isEditing}
           onEdit={handleEdit}
           onCancel={handleCancel}
           onSave={handleSave}
           onInputChange={handleInputChange}
-          onShareLinkedIn={handleShareLinkedIn}
-          isPosting={isPosting}
-          hasSharedToLinkedIn={hasSharedToLinkedIn}
-          linkedinCopySuccess={linkedinCopySuccess}
+          onCopyInterviewLink={handleCopyInterviewLink}
+          isCopyingLink={isCopyingLink}
+          linkCopied={linkCopied}
           jobPostError={jobPostError}
-          matchingConfig={matchingConfig || localMatchingConfig}
+          matchingConfig={localMatchingConfig || matchingConfig}
+          jobId={postedJobId}
         />
       </Box>
     </Box>

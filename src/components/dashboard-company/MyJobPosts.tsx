@@ -15,11 +15,13 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDialog";
 import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { SearchOff } from "@mui/icons-material";
+import { toast } from "react-toastify";
 
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
@@ -168,6 +170,23 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
     setCurrentPage(1);
+  };
+
+  // Handler for copying interview link
+  const handleCopyInterviewLink = (jobId: string) => {
+    const interviewLink = `${window.location.origin}/interview/hr?jobId=${jobId}`;
+
+    navigator.clipboard.writeText(interviewLink)
+      .then(() => {
+        toast.success('Interview link copied to clipboard!', {
+          position: 'bottom-right',
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        console.error('Error copying link:', error);
+        toast.error('Failed to copy link');
+      });
   };
 
   return (
@@ -459,31 +478,69 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     mb: 1,
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: "rgba(24, 25, 28, 1)",
-                      fontFamily: "Poppins",
-                      fontWeight: 500,
-                      fontStyle: "medium",
-                      fontSize: {
-                        xs: "14px", // mobile
-                        sm: "16px", // small tablet
-                        md: "18px", // tablet/desktop
-                        lg: "18px", // large desktop
-                      },
-                      lineHeight: {
-                        xs: "20px",
-                        sm: "24px",
-                        md: "28px",
-                        lg: "28px",
-                      },
-                      letterSpacing: "0%",
-                      flex: 1,
-                    }}
-                  >
-                    {job.jobDetails.title}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "rgba(24, 25, 28, 1)",
+                        fontFamily: "Poppins",
+                        fontWeight: 500,
+                        fontStyle: "medium",
+                        fontSize: {
+                          xs: "14px", // mobile
+                          sm: "16px", // small tablet
+                          md: "18px", // tablet/desktop
+                          lg: "18px", // large desktop
+                        },
+                        lineHeight: {
+                          xs: "20px",
+                          sm: "24px",
+                          md: "28px",
+                          lg: "28px",
+                        },
+                        letterSpacing: "0%",
+                      }}
+                    >
+                      {job.jobDetails.title}
+                    </Typography>
+                    {/* Creation Type Badge */}
+                    {job.creationType && (
+                      <Chip
+                        label={
+                          job.creationType === 'ai'
+                            ? '🤖 AI Generated'
+                            : job.creationType === 'pipeline'
+                            ? '⚙️ Pipeline'
+                            : '✍️ Manual'
+                        }
+                        size="small"
+                        sx={{
+                          backgroundColor:
+                            job.creationType === 'ai'
+                              ? 'rgba(131, 16, 255, 0.1)'
+                              : job.creationType === 'pipeline'
+                              ? 'rgba(2, 226, 255, 0.1)'
+                              : 'rgba(255, 152, 0, 0.1)',
+                          color:
+                            job.creationType === 'ai'
+                              ? '#8310FF'
+                              : job.creationType === 'pipeline'
+                              ? '#02E2FF'
+                              : '#FF9800',
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          height: 22,
+                          border: `1px solid ${
+                            job.creationType === 'ai'
+                              ? '#8310FF'
+                              : job.creationType === 'pipeline'
+                              ? '#02E2FF'
+                              : '#FF9800'
+                          }`,
+                        }}
+                      />
+                    )}
+                  </Box>
                   {job.createdAt && (
                     <Typography
                       variant="caption"
@@ -611,9 +668,10 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     display: "flex",
                     gap: 2,
                     justifyContent: "space-between",
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
                   }}
                 >
-                  <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
+                  <Box sx={{ display: "flex", gap: 1, flex: 1, flexWrap: "wrap" }}>
                     <Button
                       variant="outlined"
                       fullWidth
@@ -660,6 +718,30 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                       }}
                     >
                       VIEW MATCHES
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<ContentCopyIcon />}
+                      onClick={() => handleCopyInterviewLink(job._id)}
+                      sx={{
+                        borderColor: "rgba(16, 185, 129, 1)",
+                        color: "rgba(16, 185, 129, 1)",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                        fontSize: "0.875rem",
+                        borderRadius: "38px",
+                        maxWidth: "250px",
+                        height: "42px",
+                        py: 1.25,
+                        backgroundColor: "rgba(16, 185, 129, 0.08)",
+                        "&:hover": {
+                          borderColor: "rgba(5, 150, 105, 1)",
+                          backgroundColor: "rgba(16, 185, 129, 0.12)",
+                        },
+                      }}
+                    >
+                      COPY LINK
                     </Button>
                   </Box>
                   <Button

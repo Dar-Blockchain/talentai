@@ -30,8 +30,8 @@ export const companyStepsInfo: StepInfo[] = [
   { title: "Welcome to" },
   { title: "Tell us about your company" },
   {
-    title: "Let's find the perfect skills for your team",
-    subtitle: "Tell us what you're looking for.",
+    title: "What roles are you hiring for?",
+    subtitle: "Select positions and their tech stack requirements.",
   },
   { title: "You're almost done!" },
 ];

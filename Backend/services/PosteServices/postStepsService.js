@@ -7,52 +7,129 @@ const CandidatePostStepProgress = require("../../models/candidate_Post_Step_Prog
 module.exports.createPostStep = async (postStepData) => {
   try {
     if (Array.isArray(postStepData)) {
+      console.log(`📦 createPostStep: Processing ${postStepData.length} steps`);
       postStepData.sort((a, b) => a.order - b.order);
 
       const savedPostSteps = [];
+      const errors = [];
 
-      for (const stepData of postStepData) {
-        if (!stepData.id) {
-          const timestamp = Date.now() + Math.random();
-          const nodeType = stepData.data?.type || stepData.type || "node";
-          stepData.id = `${nodeType}_${timestamp}`;
-        }
+      for (let i = 0; i < postStepData.length; i++) {
+        const stepData = postStepData[i];
 
-        if (stepData.data?.config) {
-          if (!stepData.data.config.nodeNumber) {
-            const nextNodeResult = await module.exports.getNextNodeNumber(
-              stepData.postId
-            );
-            if (nextNodeResult.success) {
-              stepData.data.config.nodeNumber = nextNodeResult.data;
+        try {
+          console.log(`\n🔍 [Step ${i + 1}/${postStepData.length}] Processing:`, {
+            id: stepData.id,
+            type: stepData.data?.type,
+            postId: stepData.postId,
+            nodeNumber: stepData.nodeNumber
+          });
+
+          if (!stepData.id) {
+            const timestamp = Date.now() + Math.random();
+            const nodeType = stepData.data?.type || stepData.type || "node";
+            stepData.id = `${nodeType}_${timestamp}`;
+            console.log(`  ⚠️ Generated ID for step: ${stepData.id}`);
+          }
+
+          if (stepData.data?.config) {
+            if (!stepData.data.config.nodeNumber) {
+              const nextNodeResult = await module.exports.getNextNodeNumber(
+                stepData.postId
+              );
+              if (nextNodeResult.success) {
+                stepData.data.config.nodeNumber = nextNodeResult.data;
+                console.log(`  📊 Assigned nodeNumber: ${nextNodeResult.data}`);
+              }
             }
           }
-        }
 
-        const postStep = new Post_Steps(stepData);
-        const savedPostStep = await postStep.save();
-        savedPostSteps.push(savedPostStep);
+          console.log(`  💾 Creating MongoDB document for step: ${stepData.id}`);
+          const postStep = new Post_Steps(stepData);
+
+          console.log(`  💾 Saving to MongoDB...`);
+          const savedPostStep = await postStep.save();
+
+          console.log(`  ✅ Successfully saved step: ${stepData.id}`, {
+            _id: savedPostStep._id,
+            id: savedPostStep.id,
+            nodeNumber: savedPostStep.nodeNumber
+          });
+
+          savedPostSteps.push(savedPostStep);
+
+        } catch (stepError) {
+          const errorMsg = `Failed to save step ${stepData.id}: ${stepError.message}`;
+          console.error(`  ❌ ${errorMsg}`);
+
+          // Check for duplicate key error
+          if (stepError.code === 11000) {
+            console.error(`  🚨 DUPLICATE KEY ERROR:`, {
+              id: stepData.id,
+              duplicateField: stepError.keyPattern,
+              duplicateValue: stepError.keyValue
+            });
+          }
+
+          errors.push({
+            stepId: stepData.id,
+            error: stepError.message,
+            code: stepError.code
+          });
+
+          // Continue processing other steps instead of throwing
+          console.log(`  ⏭️ Continuing to next step...`);
+        }
+      }
+
+      console.log(`\n📊 Summary: ${savedPostSteps.length} saved, ${errors.length} failed`);
+
+      if (savedPostSteps.length === 0) {
+        console.error(`❌ No steps were saved successfully. Errors:`, errors);
+        return {
+          success: false,
+          error: `Failed to save any steps`,
+          errors: errors,
+          count: 0
+        };
       }
 
       if (savedPostSteps.length > 0) {
         const postId = savedPostSteps[0].postId;
-        await module.exports.updatePostWithSteps(
-          postId,
-          savedPostSteps.map((step) => step._id)
-        );
+        console.log(`🔗 Updating post ${postId} with ${savedPostSteps.length} step references`);
+
+        try {
+          await module.exports.updatePostWithSteps(
+            postId,
+            savedPostSteps.map((step) => step._id)
+          );
+          console.log(`✅ Post updated with step references`);
+        } catch (updateError) {
+          console.error(`⚠️ Failed to update post with step references:`, updateError.message);
+        }
       }
 
       return {
         success: true,
         data: savedPostSteps,
         count: savedPostSteps.length,
+        errors: errors.length > 0 ? errors : undefined
       };
     } else {
+      console.log(`📦 createPostStep: Processing single step`);
+
       if (!postStepData.id) {
         const timestamp = Date.now();
         const nodeType = postStepData.data?.type || postStepData.type || "node";
         postStepData.id = `${nodeType}_${timestamp}`;
+        console.log(`⚠️ Generated ID for single step: ${postStepData.id}`);
       }
+
+      console.log(`🔍 Single step details:`, {
+        id: postStepData.id,
+        type: postStepData.data?.type,
+        postId: postStepData.postId,
+        nodeNumber: postStepData.nodeNumber
+      });
 
       if (postStepData.data?.config) {
         if (!postStepData.data.config.nodeNumber) {
@@ -61,21 +138,53 @@ module.exports.createPostStep = async (postStepData) => {
           );
           if (nextNodeResult.success) {
             postStepData.data.config.nodeNumber = nextNodeResult.data;
+            console.log(`📊 Assigned nodeNumber: ${nextNodeResult.data}`);
           }
         }
       }
 
+      console.log(`💾 Creating MongoDB document...`);
       const postStep = new Post_Steps(postStepData);
+
+      console.log(`💾 Saving to MongoDB...`);
       const savedPostStep = await postStep.save();
 
+      console.log(`✅ Successfully saved single step:`, {
+        _id: savedPostStep._id,
+        id: savedPostStep.id,
+        nodeNumber: savedPostStep.nodeNumber
+      });
+
+      console.log(`🔗 Updating post with step reference...`);
       await module.exports.updatePostWithSteps(savedPostStep.postId, [
         savedPostStep._id,
       ]);
+      console.log(`✅ Post updated with step reference`);
 
       return { success: true, data: savedPostStep, count: 1 };
     }
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error('❌ createPostStep critical error:', error);
+
+    // Check for duplicate key error
+    if (error.code === 11000) {
+      console.error(`🚨 DUPLICATE KEY ERROR:`, {
+        duplicateField: error.keyPattern,
+        duplicateValue: error.keyValue,
+        message: error.message
+      });
+    }
+
+    return {
+      success: false,
+      error: error.message,
+      code: error.code,
+      details: error.code === 11000 ? {
+        type: 'DUPLICATE_KEY',
+        field: error.keyPattern,
+        value: error.keyValue
+      } : undefined
+    };
   }
 };
 
@@ -153,10 +262,17 @@ module.exports.getPostStepById = async (id) => {
   }
 };
 
-// Retrieve a step by its unique ID (nodeId)
-module.exports.getPostStepByNodeId = async (nodeId) => {
+// Retrieve a step by its unique ID (nodeId) and optionally filter by postId
+module.exports.getPostStepByNodeId = async (nodeId, postId = null) => {
   try {
-    const postStep = await Post_Steps.findOne({ id: nodeId }).populate(
+    const query = { id: nodeId };
+
+    // If postId is provided, ensure we only find steps from that post
+    if (postId) {
+      query.postId = postId;
+    }
+
+    const postStep = await Post_Steps.findOne(query).populate(
       "postId",
       "title"
     );
@@ -513,12 +629,26 @@ module.exports.addStepsToPost = async (postId, stepsData) => {
     const results = [];
     let createdCount = 0;
     let updatedCount = 0;
+    const errors = [];  // 🔥 NEW: Track errors for each step
+
+    console.log(`📦 addStepsToPost: Processing ${stepsWithPostId.length} steps for post ${postId}`);
 
     for (const step of stepsWithPostId) {
       try {
-        const existingStep = await module.exports.getPostStepByNodeId(step.id);
+        console.log(`🔍 Processing step: ${step.id} (type: ${step.data?.type})`);
+
+        // 🔥 FIX: Pass postId to ensure we only find steps from THIS post
+        const existingStep = await module.exports.getPostStepByNodeId(step.id, postId);
 
         if (existingStep.success && existingStep.data) {
+          console.log(`  ↻ Updating existing step: ${step.id} for post: ${postId}`);
+
+          // 🔥 FIX: Update status if step is configured
+          if (step.data?.config?.configured && step.status === 'pending') {
+            step.status = 'done';
+            console.log(`  ✅ Status updated to 'done' (configured)`);
+          }
+
           const updateResult = await module.exports.updatePostStepByNodeId(
             step.id,
             step
@@ -526,28 +656,51 @@ module.exports.addStepsToPost = async (postId, stepsData) => {
           if (updateResult.success) {
             results.push(updateResult.data);
             updatedCount++;
+            console.log(`  ✅ Updated step: ${step.id}`);
           } else {
-            throw new Error(
-              `Error updating step ${step.id}: ${updateResult.error}`
-            );
+            const error = `Update failed for ${step.id}: ${updateResult.error}`;
+            errors.push(error);
+            console.error(`  ❌ ${error}`);
           }
         } else {
+          console.log(`  ➕ Creating new step: ${step.id} for post: ${postId}`);
+
+          // 🔥 FIX: Set status if step is configured
+          if (step.data?.config?.configured && !step.status) {
+            step.status = 'done';
+            console.log(`  ✅ Status set to 'done' (configured)`);
+          }
+
           const createResult = await module.exports.createPostStep([step]);
           if (createResult.success) {
             results.push(createResult.data[0]);
             createdCount++;
+            console.log(`  ✅ Created step: ${step.id}`);
           } else {
-            throw new Error(
-              `Error creating step ${step.id}: ${createResult.error}`
-            );
+            const error = `Create failed for ${step.id}: ${createResult.error}`;
+            errors.push(error);
+            console.error(`  ❌ ${error}`);
           }
         }
       } catch (stepError) {
-        throw new Error(
-          `Error processing step ${step.id}: ${stepError.message}`
-        );
+        const error = `Error processing ${step.id}: ${stepError.message}`;
+        errors.push(error);
+        console.error(`  ❌ ${error}`, stepError);
+        // 🔥 CHANGED: Don't throw - continue processing other steps
       }
     }
+
+    // 🔥 NEW: Return error if no steps were saved
+    if (results.length === 0 && errors.length > 0) {
+      console.error(`❌ Failed to save any steps:`, errors);
+      return {
+        success: false,
+        error: `Failed to save any steps: ${errors.join('; ')}`,
+        errors
+      };
+    }
+
+    console.log(`✅ addStepsToPost complete: ${results.length} saved (${createdCount} created, ${updatedCount} updated)`);
 
     return {
       success: true,
@@ -555,8 +708,10 @@ module.exports.addStepsToPost = async (postId, stepsData) => {
       count: results.length,
       created: createdCount,
       updated: updatedCount,
+      errors: errors.length > 0 ? errors : undefined  // 🔥 NEW: Include partial errors
     };
   } catch (error) {
+    console.error('❌ addStepsToPost error:', error);
     return { success: false, error: error.message };
   }
 };

@@ -79,6 +79,7 @@ export interface Profile {
   quota: number;
   quotaUpdatedAt: string;
   user_image?: string;
+  interviewDetails?: any[];  // Added for interview history tracking
 }
 
 interface ProfileState {

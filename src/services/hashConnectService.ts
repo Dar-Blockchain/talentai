@@ -78,12 +78,25 @@ class HederaWalletService {
    * Initialize DAppConnector
    */
   private async init(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {
+      console.log('✅ Already initialized');
+      return;
+    }
 
+    console.log('🔧 Initializing DAppConnector...');
     this.initializing = true;
+
     try {
       const ledgerId = this.env === 'mainnet' ? LedgerId.MAINNET : LedgerId.TESTNET;
       const chainId = this.env === 'mainnet' ? HederaChainId.Mainnet : HederaChainId.Testnet;
+
+      console.log('📋 Configuration:', {
+        appName: this.appMetadata.name,
+        projectId: this.projectId,
+        network: this.env,
+        ledgerId: ledgerId.toString(),
+        chainId: chainId
+      });
 
       this.dAppConnector = new DAppConnector(
         this.appMetadata,
@@ -94,17 +107,24 @@ class HederaWalletService {
         [chainId]
       );
 
+      console.log('✅ DAppConnector instance created');
+
       // Session callback
       this.dAppConnector.onSessionIframeCreated = (session) => {
+        console.log('📡 Session iframe created:', session);
         this.handleWalletConnected();
       };
 
+      console.log('🔄 Calling dAppConnector.init()...');
       await this.dAppConnector.init({ logger: 'error' });
+      console.log('✅ DAppConnector initialized successfully');
 
       this.initialized = true;
       this.events.onInitialized?.();
+      console.log('✅ HashConnect service ready');
     } catch (error) {
-      console.error('Init failed:', error);
+      console.error('❌ Init failed:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       this.events.onError?.(`Initialization failed: ${error}`);
     } finally {
       this.initializing = false;
@@ -176,27 +196,77 @@ class HederaWalletService {
   }
 
   /**
-   * Connect wallet
+   * Connect wallet - tries extension first, then opens modal
    */
   public async connectWallet(): Promise<void> {
+    console.log('🔌 Starting wallet connection...');
+
     await this.ensureInitialized();
 
     if (!this.dAppConnector) {
+      console.error('❌ DAppConnector not initialized');
       throw new Error('Not initialized');
     }
+
+    console.log('✅ DAppConnector initialized:', {
+      projectId: this.projectId,
+      network: this.env,
+      initialized: this.initialized
+    });
 
     // Check if already connected
     const existingAccount = this.getConnectedAccountId();
     if (existingAccount) {
+      console.log('✅ Already connected to:', existingAccount);
       await this.handleWalletConnected();
       return;
     }
 
     this.events.onConnectionStatusChange?.('connecting');
 
-    // Open modal
-    await this.dAppConnector.openModal();
-    await this.handleWalletConnected();
+    try {
+      // Try HashPack extension first (if available)
+      const extensions = this.dAppConnector.extensions || [];
+      const hashpackExt = extensions.find(ext =>
+        ext.name?.toLowerCase().includes('hashpack') && ext.available
+      );
+
+      if (hashpackExt) {
+        console.log('🔌 HashPack extension detected, connecting via extension...');
+        await this.dAppConnector.connectExtension(hashpackExt.id);
+      } else {
+        // Fallback to WalletConnect modal
+        console.log('📱 No extension found, opening WalletConnect modal...');
+        await this.dAppConnector.openModal();
+      }
+
+      console.log('✅ Connection completed');
+      await this.handleWalletConnected();
+    } catch (error) {
+      console.error('❌ Error connecting wallet:', error);
+      this.events.onError?.(`Failed to connect wallet: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get connection URI for manual pairing
+   */
+  public async getConnectionUri(): Promise<string> {
+    console.log('🔗 Generating connection URI for manual pairing...');
+
+    await this.ensureInitialized();
+
+    if (!this.dAppConnector) {
+      throw new Error('Not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.dAppConnector.connect((uri: string) => {
+        console.log('✅ Connection URI generated for manual pairing');
+        resolve(uri);
+      }).catch(reject);
+    });
   }
 
   /**

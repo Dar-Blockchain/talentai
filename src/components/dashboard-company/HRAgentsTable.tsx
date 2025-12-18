@@ -176,8 +176,8 @@ const calculateValidScores = (matches: Match[]): number[] => {
     .filter(score => !isNaN(score) && score !== null && score !== undefined);
 };
 
-const calculateMinBid = (matches: Match[]): number => {
-  if (matches.length === 0) return 0;
+const calculateMinBid = (matches: Match[] | undefined): number => {
+  if (!matches || matches.length === 0) return 0;
   const validBids = matches
     .map(m => m.finalBid || 0)
     .filter(bid => bid > 0);
@@ -208,13 +208,14 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
       specialization: agent.jobTitle ? [agent.jobTitle] : ['General HR'],
       experience: 5,
       rating: 4.5,
-      bidAmount: calculateMinBid(agent.matches),
-      status: agent.matches.length > 0 ? 'available' as const : 'offline' as const,
+      bidAmount: agent.matches ? calculateMinBid(agent.matches) : 0,
+      status: agent.hasPost ? 'available' as const : 'offline' as const,
       description: agent.message || 'Professional HR agent specializing in talent acquisition',
-      skills: agent.matches.length > 0 ? agent.matches[0].requiredSkills.map((s: any) => s.name) : [],
+      skills: agent.matches?.length > 0 ? agent.matches[0].requiredSkills.map((s: any) => s.name) : [],
       location: 'Remote',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      matches: agent.matches || [], // Ensure matches array exists (empty if not loaded)
     })) || [];
   }, [agents]);
 
@@ -378,7 +379,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
               }}
             />
             <Chip
-              label={`${agents.reduce((total: number, agent: any) => total + agent.matches.length, 0)} matches`}
+              label={`${agents.reduce((total: number, agent: any) => total + (agent.matches?.length || 0), 0)} matches`}
               size="small"
               sx={{
                 backgroundColor: '#f0fdf4',
@@ -403,11 +404,11 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
         {/* Agent Cards */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {paginatedAgents.map((agent: any) => {
-            const scores = calculateValidScores(agent.matches);
+            const scores = calculateValidScores(agent.matches || []);
             const topScore = scores.length > 0 ? Math.max(...scores) : 0;
             const avgScore = scores.length > 0 ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length) : 0;
             const minBid = calculateMinBid(agent.matches);
-            const status = agent.matches.length > 0 ? 'available' : 'offline';
+            const status = agent.matches?.length > 0 ? 'available' : 'offline';
 
             return (
               <Box key={agent.agentId} sx={COMMON_STYLES.agentCard}>
@@ -509,7 +510,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 }}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, fontSize: '1.25rem' }}>
-                      {agent.matches.length}
+                      {agent.matches?.length || 0}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '0.75rem' }}>
                       Matches

@@ -94,8 +94,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Properly encode the token for URL inclusion
       const token = encodeURIComponent(tokenData.access_token);
       console.log('Redirecting with token in URL (length: ' + tokenData.access_token.length + ')...');
-      
-      // Redirect to linkedin-auth-callback page with token in URL
+
+      // Redirect to generic linkedin-auth-callback page with token in URL
       return res.redirect(`/linkedin-auth-callback?token=${token}`);
     } catch (fetchError) {
       console.error('Error fetching LinkedIn token:', fetchError);

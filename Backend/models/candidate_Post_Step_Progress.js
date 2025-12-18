@@ -35,6 +35,19 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
         default: "pending",
         required: true,
       },
+      // 🔥 NEW: Pass/Fail tracking
+      passed: {
+        type: Boolean,
+        default: null,  // null = not attempted, true = passed, false = failed
+      },
+      finalScore: {
+        type: Number,
+        default: null,  // Final score from interview (0-100)
+      },
+      attempts: {
+        type: Number,
+        default: 0,  // Number of times this step was attempted
+      },
       completedAt: {
         type: Date,
         default: null,
@@ -45,7 +58,7 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model(
+module.exports = mongoose.models.candidate_Post_Step_Progress || mongoose.model(
   "candidate_Post_Step_Progress",
   candidate_Post_Step_ProgressSchema
 );

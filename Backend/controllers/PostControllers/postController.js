@@ -126,9 +126,61 @@ exports.getPostDetailsPublic = async (req, res) => {
     }
 
     const post = await postService.getPostById(req.params.id);
+
     console.log('📄 Public job details requested for ID:', req.params.id);
 
-    res.status(200).json({ success: true, data: post });
+    // For pipeline jobs, extract skills from Post_Steps instead of skillAnalysis
+    if (post.creationType === 'pipeline' && post.post_Steps && post.post_Steps.length > 0) {
+      console.log('🔄 Pipeline job detected - extracting skills from steps');
+
+      const pipelineSkills = [];
+      const pipelineSoftSkills = [];
+
+      // Extract skills from each technical/soft step
+      post.post_Steps.forEach(step => {
+        console.log(`📋 Checking step: type=${step.data?.type}, configured=${step.data?.config?.configured}`);
+
+        if (step.data?.type === 'technical' && step.data?.config?.skills) {
+          console.log(`  → Found ${step.data.config.skills.length} technical skills`);
+          // Add technical skills with their required level
+          step.data.config.skills.forEach(skill => {
+            pipelineSkills.push({
+              name: skill.name,
+              level: skill.requiredLevel || 'Intermediate'
+            });
+          });
+        }
+
+        if (step.data?.type === 'soft' && step.data?.config?.softSkills) {
+          console.log(`  → Found ${step.data.config.softSkills.length} soft skills`);
+          // Add soft skills
+          step.data.config.softSkills.forEach(softSkill => {
+            pipelineSoftSkills.push(softSkill);
+          });
+        }
+      });
+
+      // 🔥 ALWAYS override skillAnalysis for pipeline jobs to avoid showing default skills
+      post.skillAnalysis = post.skillAnalysis || {};
+
+      if (pipelineSkills.length > 0 || pipelineSoftSkills.length > 0) {
+        // Use extracted pipeline skills
+        post.skillAnalysis.requiredSkills = [
+          ...pipelineSkills,
+          ...pipelineSoftSkills.map(skill => ({ name: skill, level: 'Intermediate' }))
+        ];
+        console.log(`✅ Extracted ${pipelineSkills.length} technical + ${pipelineSoftSkills.length} soft skills from pipeline`);
+      } else {
+        // Clear default skills to avoid showing wrong data
+        post.skillAnalysis.requiredSkills = [];
+        console.log('⚠️ No skills found in pipeline steps - clearing default skills');
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: post,
+    });
   } catch (error) {
     console.error('❌ Error fetching public job details:', error?.message);
     handleError(res, error, 404);
@@ -146,6 +198,22 @@ exports.getPostById = async (req, res) => {
     res.status(200).json({ success: true, data: post });
   } catch (error) {
     handleError(res, error, 404);
+  }
+};
+
+// Get pipeline job details with all step configurations
+exports.getPipelineJobDetails = async (req, res) => {
+  try {
+    const jobDetails = await postService.getPipelineJobDetails(req.params.id);
+    res.status(200).json({
+      success: true,
+      ...jobDetails
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -220,12 +288,25 @@ exports.updatePostStatus = async (req, res) => {
 
 exports.getPostsByUserTopSkills = async (req, res) => {
   try {
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({ success: false, error: 'User not authenticated' });
-    }
+    const userId = req.user._id; // Adapté selon comment tu passes l'id (paramètre, JWT…)
+    const posts = await postService.getPostsByUserTopSkill(userId);
 
-    const posts = await postService.getPostsByUserTopSkill(req.user._id);
-    res.status(200).json({ success: true, data: posts });
+    // DEBUG: Log response structure before sending
+    console.log('🔍 DEBUG - Controller sending response:', {
+      success: posts.success,
+      postsCount: posts.posts?.length || 0,
+      firstPost: posts.posts?.[0] ? {
+        _id: posts.posts[0]._id,
+        creationType: posts.posts[0].creationType,
+        hasPostSteps: !!posts.posts[0].post_Steps,
+        postStepsLength: posts.posts[0].post_Steps?.length
+      } : null
+    });
+
+    res.status(200).json({
+      success: true,
+      data: posts,
+    });
   } catch (error) {
     handleError(res, error, 400);
   }
@@ -272,5 +353,148 @@ exports.getPublicStats = async (req, res) => {
     });
   } catch (error) {
     handleError(res, error, 500);
+  }
+};
+
+// Get interview configuration for job-based HR interview (prompt flow)
+exports.getJobInterviewConfig = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const candidateId = req.user?._id || req.query.candidateId;
+    const Post = require("../../models/PostModel");
+
+    // Fetch job post with user (company) info and post_Steps
+    const post = await Post.findById(jobId)
+      .populate('user')
+      .populate('post_Steps');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job post not found'
+      });
+    }
+
+    // ⚠️ IMPORTANT: This endpoint is ONLY for non-pipeline jobs
+    // Pipeline jobs should use /api/pipeline-interview/progress API instead
+    const isPipeline = post.creationType === 'pipeline';
+
+    if (isPipeline) {
+      console.log('❌ Pipeline job detected - rejecting request to use pipeline interview flow');
+      return res.status(400).json({
+        success: false,
+        error: 'This endpoint cannot be used for pipeline jobs',
+        message: 'Pipeline jobs must use the pipeline interview flow via /api/pipeline-interview/progress API',
+        hint: 'This job has a recruitment pipeline with configured steps. Use the pipeline progress API to get step-specific interview configuration.',
+        isPipeline: true,
+        jobId: jobId,
+        stepsCount: post.post_Steps?.length || 0
+      });
+    }
+
+    // Extract company and job details (for NON-pipeline jobs only)
+    const companyName = post.user?.companyDetails?.name || 'Company';
+    const jobTitle = post.jobDetails?.title || 'Position';
+    const experienceLevel = post.jobDetails?.experienceLevel || 'Mid Level';
+
+    let technicalSkills = [];
+    let softSkills = [];
+
+    // Extract skills from skillAnalysis (for non-pipeline jobs)
+    const allSkills = post.skillAnalysis?.requiredSkills || [];
+    const softSkillsFromPost = post.skillAnalysis?.softSkills || [];
+
+    // Separate technical skills from soft skills
+    technicalSkills = allSkills.filter(skill => {
+      const skillName = (typeof skill === 'string' ? skill : skill.name).toLowerCase();
+      // Filter out soft skills
+      const softSkillKeywords = ['communication', 'teamwork', 'leadership', 'problem solving', 'adaptability', 'time management', 'collaboration'];
+      return !softSkillKeywords.some(keyword => skillName.includes(keyword));
+    }).map(skill => typeof skill === 'string' ? skill : skill.name);
+
+    // Format soft skills
+    softSkills = (softSkillsFromPost || []).map(skill =>
+      typeof skill === 'string' ? skill : skill.name
+    );
+
+    console.log('📊 Non-Pipeline Interview Skills Analysis:', {
+      companyName,
+      jobTitle,
+      experienceLevel,
+      technicalSkills,
+      softSkills,
+      totalSkills: technicalSkills.length + softSkills.length
+    });
+
+    // Build TECHNICAL interview configuration (for non-pipeline jobs)
+    const config = {
+      interviewType: 'TECHNICAL_SKILL',
+      testReason: `Technical Skills Assessment for ${jobTitle} at ${companyName}`,
+      context: {
+        targetCompany: companyName,
+        targetRole: jobTitle,
+        experienceLevel: experienceLevel,
+
+        // Technical interview goal
+        interviewGoal: `Deep technical assessment for ${jobTitle} position - evaluate hands-on skills, problem-solving, and technical depth`,
+
+        // SEPARATED SKILLS
+        requiredSkills: technicalSkills,
+        softSkills: softSkills,
+
+        // Technical focus
+        technicalFocus: true,
+        assessmentDepth: 'deep',
+        questionTypes: [
+          'coding-proficiency',
+          'system-architecture',
+          'problem-solving',
+          'technical-implementation',
+          'best-practices',
+          'real-world-scenarios'
+        ],
+
+        // Job details
+        jobDescription: post.jobDetails?.description || '',
+        responsibilities: post.jobDetails?.responsibilities || '',
+        requirements: post.jobDetails?.requirements || '',
+
+        // Interview strategy
+        interviewStrategy: {
+          startWithBasics: false,
+          probeDepth: 'deep',
+          followUpOnVagueAnswers: true,
+          requireSpecificExamples: true,
+          assessPracticalExperience: true
+        }
+      },
+      models: {
+        fastModel: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        thinkingModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+        analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
+      },
+      sessionSettings: {
+        duration: 45,
+        language: 'en',
+        difficulty: 'intermediate',
+        silenceTimeout: 10,
+        silenceIntelligence: {
+          enabled: true,
+          adaptiveThresholds: true,
+          maxSilencePrompts: 3,
+          naturalPauseDetection: true,
+          contextAwareThresholds: true
+        }
+      }
+    };
+
+    res.json(config);
+
+  } catch (error) {
+    console.error('Error in getJobInterviewConfig:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
   }
 };
