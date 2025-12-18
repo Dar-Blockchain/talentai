@@ -503,6 +503,21 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     >
                       {job.jobDetails.title}
                     </Typography>
+                    {/* Draft Status Badge */}
+                    {job.status === 'draft' && (
+                      <Chip
+                        label="📝 Draft"
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                          color: '#6B7280',
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          height: 22,
+                          border: '1px solid #9CA3AF',
+                        }}
+                      />
+                    )}
                     {/* Creation Type Badge */}
                     {job.creationType && (
                       <Chip
@@ -671,12 +686,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     flexWrap: { xs: "wrap", sm: "nowrap" },
                   }}
                 >
-                  <Box sx={{ display: "flex", gap: 1, flex: 1, flexWrap: "wrap" }}>
+                  {job.status === 'draft' ? (
+                    // Draft status - only show View Details button
                     <Button
                       variant="outlined"
-                      fullWidth
                       onClick={() => handleViewJobDetails(job)}
-                      // onClick={() => router.push("/jobs/" + job._id)}
                       sx={{
                         borderColor: "rgba(11, 82, 198, 1)",
                         color: "rgba(11, 82, 198, 1)",
@@ -696,85 +710,114 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     >
                       VIEW DETAILS
                     </Button>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      onClick={() => onViewMatches(job._id)}
-                      sx={{
-                        borderColor: "rgba(84, 98, 116, 0.53)",
-                        color: "rgba(84, 98, 116, 1)",
-                        textTransform: "uppercase",
-                        fontWeight: 500,
-                        fontSize: "0.875rem",
-                        borderRadius: "38px",
-                        maxWidth: "250px",
-                        height: "42px",
-                        py: 1.25,
-                        backgroundColor: "rgba(84, 98, 116, 0.08)",
-                        "&:hover": {
-                          borderColor: "rgba(84, 98, 116, 0.53)",
-                          backgroundColor: "rgba(84, 98, 116, 0.04)",
-                        },
-                      }}
-                    >
-                      VIEW MATCHES
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<ContentCopyIcon />}
-                      onClick={() => handleCopyInterviewLink(job._id)}
-                      sx={{
-                        borderColor: "rgba(16, 185, 129, 1)",
-                        color: "rgba(16, 185, 129, 1)",
-                        textTransform: "uppercase",
-                        fontWeight: 500,
-                        fontSize: "0.875rem",
-                        borderRadius: "38px",
-                        maxWidth: "250px",
-                        height: "42px",
-                        py: 1.25,
-                        backgroundColor: "rgba(16, 185, 129, 0.08)",
-                        "&:hover": {
-                          borderColor: "rgba(5, 150, 105, 1)",
-                          backgroundColor: "rgba(16, 185, 129, 0.12)",
-                        },
-                      }}
-                    >
-                      COPY LINK
-                    </Button>
-                  </Box>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={
-                      <Image
-                        src="/icons/delete.svg"
-                        alt="search"
-                        width={20}
-                        height={20}
-                      />
-                    }
-                    onClick={() => onDeleteJob(job._id)}
-                    sx={{
-                      borderColor: "rgba(224, 62, 92, 1)",
-                      color: "rgba(224, 62, 92, 1)",
-                      textTransform: "none",
-                      fontWeight: 500,
-                      fontSize: "0.875rem",
-                      py: 1.25,
-                      borderRadius: "38px",
-                      maxWidth: "200px",
-                      height: "42px",
-                      backgroundColor: "rgba(224, 62, 92, 0.08)",
-                      "&:hover": {
-                        borderColor: "rgba(224, 62, 92, 1)",
-                        backgroundColor: "rgba(224, 62, 92, 0.04)",
-                      },
-                    }}
-                  >
-                    Delete Job
-                  </Button>
+                  ) : (
+                    // Active status - show all buttons
+                    <>
+                      <Box sx={{ display: "flex", gap: 1, flex: 1, flexWrap: "wrap" }}>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => handleViewJobDetails(job)}
+                          sx={{
+                            borderColor: "rgba(11, 82, 198, 1)",
+                            color: "rgba(11, 82, 198, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            py: 1.25,
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            backgroundColor: "rgba(11, 82, 198, 0.08)",
+                            "&:hover": {
+                              borderColor: "#2563eb",
+                              backgroundColor: "rgba(11, 82, 198, 0.04)",
+                            },
+                          }}
+                        >
+                          VIEW DETAILS
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => onViewMatches(job._id)}
+                          sx={{
+                            borderColor: "rgba(84, 98, 116, 0.53)",
+                            color: "rgba(84, 98, 116, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(84, 98, 116, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(84, 98, 116, 0.53)",
+                              backgroundColor: "rgba(84, 98, 116, 0.04)",
+                            },
+                          }}
+                        >
+                          VIEW MATCHES
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<ContentCopyIcon />}
+                          onClick={() => handleCopyInterviewLink(job._id)}
+                          sx={{
+                            borderColor: "rgba(16, 185, 129, 1)",
+                            color: "rgba(16, 185, 129, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(16, 185, 129, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(5, 150, 105, 1)",
+                              backgroundColor: "rgba(16, 185, 129, 0.12)",
+                            },
+                          }}
+                        >
+                          COPY LINK
+                        </Button>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={
+                          <Image
+                            src="/icons/delete.svg"
+                            alt="search"
+                            width={20}
+                            height={20}
+                          />
+                        }
+                        onClick={() => onDeleteJob(job._id)}
+                        sx={{
+                          borderColor: "rgba(224, 62, 92, 1)",
+                          color: "rgba(224, 62, 92, 1)",
+                          textTransform: "none",
+                          fontWeight: 500,
+                          fontSize: "0.875rem",
+                          py: 1.25,
+                          borderRadius: "38px",
+                          maxWidth: "200px",
+                          height: "42px",
+                          backgroundColor: "rgba(224, 62, 92, 0.08)",
+                          "&:hover": {
+                            borderColor: "rgba(224, 62, 92, 1)",
+                            backgroundColor: "rgba(224, 62, 92, 0.04)",
+                          },
+                        }}
+                      >
+                        Delete Job
+                      </Button>
+                    </>
+                  )}
                 </Box>
               </JobCard>
             ))}
