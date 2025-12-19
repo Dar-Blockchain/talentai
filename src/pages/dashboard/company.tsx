@@ -20,6 +20,7 @@ import {
   deletePost,
   selectDeletePostLoading,
 } from "@/store/slices/postSlice";
+import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
 import CompanyOnly from "@/components/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
@@ -67,6 +68,7 @@ const DashboardCompany = () => {
   const matchError = useSelector(selectJobMatchesError);
   const myJobs = useSelector(selectMyPosts);
   const pagination = useSelector(selectMyPostsPagination);
+  const unlockedCandidatesData = useSelector((state: any) => state.candidate.unlockedData);
   const [activeSection, setActiveSection] = useState<"jobs" | "unlockedCandidates" | "matches" | "all">("all");
 
   const [selectedJob, setSelectedJob] = useState("");
@@ -82,6 +84,10 @@ const DashboardCompany = () => {
   const [jobsPerPage] = useState(10); // Set items per page
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
+
+  // Unlocked candidates state
+  const [candidatesPage, setCandidatesPage] = useState(1);
+  const [candidatesPerPage] = useState(10);
 
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
@@ -113,6 +119,17 @@ const DashboardCompany = () => {
   useEffect(() => {
     fetchMyJobs();
   }, [currentPage, searchQuery, sortBy]); // Refetch when page, search, or sort changes
+
+  // Fetch unlocked candidates via Redux with pagination
+  const fetchCandidates = (page = candidatesPage, limit = candidatesPerPage) =>
+    dispatch(fetchUnlockedCandidates({ page, limit }));
+
+  useEffect(() => {
+    // Only fetch when in unlockedCandidates full view (not in "all" overview)
+    if (activeSection === "unlockedCandidates") {
+      fetchCandidates();
+    }
+  }, [candidatesPage, activeSection]); // Refetch when page or section changes
 
   const handleDeleteJob = async (jobId: string) => {
     await dispatch(deletePost(jobId));
@@ -211,12 +228,17 @@ const DashboardCompany = () => {
           {(activeSection === "all" || activeSection === "unlockedCandidates") && (
             <UnlockedCandidates
               onViewAll={() => setActiveSection("unlockedCandidates")}
+              onBackToAll={() => setActiveSection("all")}
               hidden={activeSection !== "all" && activeSection !== "unlockedCandidates"}
+              showViewAll={activeSection === "all"}
+              initialDisplayCount={3}
+              pagination={activeSection === "all" ? undefined : unlockedCandidatesData.pagination}
+              onPageChange={(page) => setCandidatesPage(page)}
             />
           )}
 
           {/* HR Agents Section - Only show when activeSection is "all" */}
-          {activeSection === "all" && profile?._id && <HRAgentsTable companyId={profile._id} />}
+          {/* {activeSection === "all" && profile?._id && <HRAgentsTable companyId={profile._id} />} */}
 
           {/* Add Bid Dialog */}
           <UnlockCandidate

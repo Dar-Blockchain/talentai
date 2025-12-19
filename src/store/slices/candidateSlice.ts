@@ -7,6 +7,15 @@ export interface UnlockResponse {
   message: string;
 }
 
+interface PaginationState {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 export interface CandidateState {
   loading: boolean;
   error: string | null;
@@ -15,6 +24,7 @@ export interface CandidateState {
     loading: boolean;
     error: string | null;
     candidates: any;
+    pagination: PaginationState;
   };
 }
 
@@ -27,6 +37,14 @@ const initialState: CandidateState = {
     loading: false,
     error: null,
     candidates: [],
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
   },
 };
 
@@ -67,18 +85,26 @@ export const unlockCandidate = createAsyncThunk<
 });
 
 export const fetchUnlockedCandidates = createAsyncThunk<
-  any[],
-  void,
+  { candidates: any[]; pagination: PaginationState },
+  { page?: number; limit?: number; search?: string; sort?: string } | void,
   { state: RootState }
 >(
   "candidate/fetchUnlocked",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
+      const { page = 1, limit = 10 } = params || {};
       const token =
         localStorage.getItem("token") || localStorage.getItem("api_token");
 
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+
+      });
+
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/unlocked`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/unlocked?${queryParams}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -92,7 +118,71 @@ export const fetchUnlockedCandidates = createAsyncThunk<
         );
       }
 
-      return response.data.data;
+      // Handle both paginated and non-paginated responses
+      const data = response.data;
+      console.log("Fetched unlocked candidates data:", data);
+
+      // If response has pagination data at root level (new format)
+      if (data.results && data.total !== undefined) {
+        console.log("Paginated unlocked candidates data:", data);
+        return {
+          candidates: data.results || [],
+          pagination: {
+            total: data.total || 0,
+            page: data.page || 1,
+            limit: data.limit || 10,
+            totalPages: data.totalPages || 1,
+            hasNextPage: data.hasNextPage || false,
+            hasPrevPage: data.hasPrevPage || false,
+          }
+        };
+      }
+
+      // If response has nested pagination object (alternative format)
+      if (data.results && data.pagination) {
+        console.log("Nested pagination unlocked candidates data:", data);
+        return {
+          candidates: data.results || [],
+          pagination: {
+            total: data.pagination.total || 0,
+            page: data.pagination.page || 1,
+            limit: data.pagination.limit || 10,
+            totalPages: data.pagination.totalPages || 1,
+            hasNextPage: data.pagination.hasNextPage || false,
+            hasPrevPage: data.pagination.hasPrevPage || false,
+          }
+        };
+      }
+
+      // If response data is in data.data (old format)
+      if (data.data) {
+        const candidates = Array.isArray(data.data) ? data.data : [];
+        return {
+          candidates,
+          pagination: {
+            total: candidates.length,
+            page: 1,
+            limit: candidates.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+          }
+        };
+      }
+
+      // If response is just an array (backward compatibility)
+      const candidates = Array.isArray(data) ? data : [];
+      return {
+        candidates,
+        pagination: {
+          total: candidates.length,
+          page: 1,
+          limit: candidates.length,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        }
+      };
     } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data?.message);
@@ -125,6 +215,14 @@ const candidateSlice = createSlice({
         loading: false,
         error: null,
         candidates: [],
+        pagination: {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
     },
   },
@@ -158,7 +256,8 @@ const candidateSlice = createSlice({
       })
       .addCase(fetchUnlockedCandidates.fulfilled, (state, action) => {
         state.unlockedData.loading = false;
-        state.unlockedData.candidates = action.payload;
+        state.unlockedData.candidates = action.payload.candidates;
+        state.unlockedData.pagination = action.payload.pagination;
       })
       .addCase(fetchUnlockedCandidates.rejected, (state, action) => {
         state.unlockedData.loading = false;
