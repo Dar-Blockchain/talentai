@@ -129,6 +129,10 @@ export const useCreatePostStepper = (
         })
       );
     }
+    if (activeStep === 1 && shouldContinue && creationType === "manual") {
+      setPaymentModalOpen(false);
+      setActiveStep((prev) => prev + 1);
+    }
   };
 
   const handleBack = () => {

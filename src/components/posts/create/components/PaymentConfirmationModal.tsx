@@ -27,6 +27,7 @@ import {
 interface PaymentConfirmationModalProps {
   open: boolean;
   onClose: () => void;
+  onContinue?: (shouldContinue: boolean) => void;
 }
 
 /* ================= Styles ================= */
@@ -50,19 +51,22 @@ const BreakdownRow = styled(Box)({
 
 /* ================= Component ================= */
 
-const PaymentConfirmationModal: React.FC<
-  PaymentConfirmationModalProps
-> = ({ open, onClose }) => {
+const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
+  open,
+  onClose,
+  onContinue,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
 
   /* ===== Redux State ===== */
   const saveStepsLoading = useSelector(selectPostStepsLoading);
-  const { data, loading: paymentLoading, error } =
-    useSelector(selectPostPayment);
+  const {
+    data,
+    loading: paymentLoading,
+    error,
+  } = useSelector(selectPostPayment);
 
-  const savedPost = useSelector(
-    (state: any) => state.post.savePost.savedPost
-  );
+  const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
   const recruitmentFlow = useSelector(
     (state: any) => state.post.recruitmentFlow
   );
@@ -78,9 +82,12 @@ const PaymentConfirmationModal: React.FC<
   const isProcessingPayment = paymentLoading;
   const isBusy = isSavingSteps || isProcessingPayment;
 
+  const stepsSavedSuccessfully = !isSavingSteps && !!savedPost;
+  const paymentSucceeded = !!data;
+
   const dialogTitle = isSavingSteps
-  ? "Saving Recruitment Pipeline"
-  : "Publish Job Post";
+    ? "Saving Recruitment Pipeline"
+    : "Publish Job Post";
 
   /* ===== Handlers ===== */
 
@@ -94,9 +101,8 @@ const PaymentConfirmationModal: React.FC<
   };
 
   const handleClose = () => {
-    if (!isBusy) {
-      onClose();
-    }
+    if (isBusy) return;
+    onClose();
   };
 
   /* ================= Render ================= */
@@ -106,11 +112,9 @@ const PaymentConfirmationModal: React.FC<
       {/* ===== Title ===== */}
       <DialogTitle>
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="h6" fontWeight={600}>
-              {dialogTitle}
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight={600}>
+            {dialogTitle}
+          </Typography>
           <IconButton onClick={handleClose} disabled={isBusy}>
             <CloseIcon />
           </IconButton>
@@ -139,35 +143,29 @@ const PaymentConfirmationModal: React.FC<
           </Box>
         )}
 
-        {/* STEP 3: Success */}
-        {!isSavingSteps && !isProcessingPayment && data && (
+        {/* STEP 3: Payment success */}
+        {!isSavingSteps && !isProcessingPayment && paymentSucceeded && (
           <Box textAlign="center" py={4}>
-            <CheckCircleIcon
-              sx={{ fontSize: 64, color: "#4caf50", mb: 2 }}
-            />
+            <CheckCircleIcon sx={{ fontSize: 64, color: "#4caf50", mb: 2 }} />
             <Typography variant="h6" fontWeight={600} gutterBottom>
-              Payment Successful!
+              Job Post Published!
             </Typography>
             <Typography color="text.secondary">
-              Your job post is now active and ready to receive applications.
+              Your job post is now live and visible to candidates.
             </Typography>
           </Box>
         )}
 
         {/* STEP 4: Payment confirmation */}
-        {!isSavingSteps && !isProcessingPayment && !data && (
+        {!isSavingSteps && !isProcessingPayment && !paymentSucceeded && (
           <>
-            <Alert
-              severity="info"
-              icon={<MonetizationOnIcon />}
-              sx={{ mb: 3 }}
-            >
+            <Alert severity="info" icon={<MonetizationOnIcon />} sx={{ mb: 3 }}>
               <Typography fontWeight={600} gutterBottom>
                 Pipeline Pricing
               </Typography>
               <Typography variant="body2">
-                Base Fee: <strong>1,000 TAI</strong> +{" "}
-                <strong>100 TAI</strong> per interview step
+                Base Fee: <strong>1,000 TAI</strong> + <strong>100 TAI</strong>{" "}
+                per interview step
               </Typography>
             </Alert>
 
@@ -201,33 +199,32 @@ const PaymentConfirmationModal: React.FC<
       </DialogContent>
 
       {/* ===== Actions ===== */}
-      {!isSavingSteps && <DialogActions sx={{ p: 3, pt: 0 }}>
-        <Button onClick={handleClose} disabled={isBusy}>
-          Cancel
-        </Button>
+      {!isSavingSteps && (
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={handleClose} disabled={isBusy}>
+            Cancel
+          </Button>
 
-        <Button
-          onClick={handleConfirm}
-          variant="contained"
-          disabled={isBusy || !!data}
-          startIcon={
-            isProcessingPayment && (
-              <CircularProgress size={16} color="inherit" />
-            )
-          }
-          sx={{
-            color: "white",
-            background:
-              "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            fontWeight: 600,
-            px: 3,
-          }}
-        >
-          {isProcessingPayment
-            ? "Processing Payment..."
-            : "Confirm Payment"}
-        </Button>
-      </DialogActions>}
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            disabled={isBusy || paymentSucceeded}
+            startIcon={
+              isProcessingPayment && (
+                <CircularProgress size={16} color="inherit" />
+              )
+            }
+            sx={{
+              color: "white",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              fontWeight: 600,
+              px: 3,
+            }}
+          >
+            {isProcessingPayment ? "Processing Payment..." : "Publish Job Post"}
+          </Button>
+        </DialogActions>
+      )}
     </StyledDialog>
   );
 };

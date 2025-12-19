@@ -264,7 +264,7 @@ const CreatePostStepper: React.FC = () => {
             color: "black",
           }}
           disabled={!generatedPost && creationType === "ai"}
-          loading={activeStep === 1 && createConfigStatus === "loading"}
+          loading={createConfigStatus === "loading"}
         >
           {activeStep === steps.length - 1 ? "Finish" : "Next"}
         </Button>
@@ -279,6 +279,7 @@ const CreatePostStepper: React.FC = () => {
       <PaymentConfirmationModal
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
+        onContinue={handleNext}
       />
     </Box>
   );
