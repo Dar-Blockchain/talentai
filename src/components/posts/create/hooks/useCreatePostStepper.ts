@@ -122,12 +122,12 @@ export const useCreatePostStepper = (
           })),
       }));
 
-      // await dispatch(
-      //   postRecruitmentSteps({
-      //     postId: savedPost.jobData._id,
-      //     steps: sequenceData,
-      //   })
-      // );
+      await dispatch(
+        postRecruitmentSteps({
+          postId: savedPost.jobData._id,
+          steps: sequenceData,
+        })
+      );
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 import { Box, Button, Tooltip } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useNodesState,
   useEdgesState,
@@ -41,12 +41,89 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+// Function to generate default pipeline nodes with unique IDs
+const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
+  const timestamp = Date.now();
+  const randomSuffix1 = Math.random().toString(36).substr(2, 9);
+  const randomSuffix2 = Math.random().toString(36).substr(2, 9);
+  const randomSuffix3 = Math.random().toString(36).substr(2, 9);
+
+  const technicalId = `technical_${timestamp}_${randomSuffix1}`;
+  const softId = `soft_${timestamp}_${randomSuffix2}`;
+  const interviewId = `interview_${timestamp}_${randomSuffix3}`;
+
+  const nodes: Node[] = [
+    {
+      id: technicalId,
+      type: 'custom',
+      position: { x: 250, y: 50 },
+      data: {
+        label: 'Technical Skills 1',
+        type: 'technical',
+        subtitle: 'Validate technical skills',
+        config: {
+          nodeNumber: 1,
+          title: 'Technical Skills 1',
+          configured: false,
+        }
+      }
+    },
+    {
+      id: softId,
+      type: 'custom',
+      position: { x: 250, y: 180 },
+      data: {
+        label: 'Soft Skills 1',
+        type: 'soft',
+        subtitle: 'Assess soft skills',
+        config: {
+          nodeNumber: 2,
+          title: 'Soft Skills 1',
+          configured: false,
+        }
+      }
+    },
+    {
+      id: interviewId,
+      type: 'custom',
+      position: { x: 250, y: 310 },
+      data: {
+        label: 'HR Interview 1',
+        type: 'interview',
+        subtitle: 'Conduct HR interview',
+        config: {
+          nodeNumber: 3,
+          title: 'HR Interview 1',
+          configured: false,
+        }
+      }
+    }
+  ];
+
+  const edges: Edge[] = [
+    {
+      id: `edge-${technicalId}-${softId}`,
+      source: technicalId,
+      target: softId,
+      type: 'default'
+    },
+    {
+      id: `edge-${softId}-${interviewId}`,
+      source: softId,
+      target: interviewId,
+      type: 'default'
+    }
+  ];
+
+  return { nodes, edges };
+};
+
 const RecruitmentFlowStep = () => {
   const dispatch = useDispatch<AppDispatch>();
   const flowWrapper = useRef<HTMLDivElement | null>(null);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const defaultPipeline = useMemo(() => generateDefaultPipelineNodes(), []);
+  const [nodes, setNodes, onNodesChange] = useNodesState(defaultPipeline.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(defaultPipeline.edges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);

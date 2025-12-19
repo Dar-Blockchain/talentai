@@ -19,6 +19,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { NodeConfigRenderer } from "@/components/posts/recruitment-flow-config";
+import { toast } from "react-hot-toast";
 
 interface ChatMessage {
   id: string;
@@ -66,146 +68,24 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
   const [currentPrompt, setCurrentPrompt] = useState("");
 
   const handleClose = () => {
-    setCurrentPrompt("")
-    setIsGenerating(false)
+    setCurrentPrompt("");
+    setIsGenerating(false);
     onClose();
-  }
-
-  const generateAIResponse = (nodeType: string, prompt: string): string => {
-    const responses: { [key: string]: string } = {
-      technical: `Based on your request "${prompt}", I've generated a technical skills assessment that includes:
-
-                    🔧 **Skills to Evaluate**: React, JavaScript, TypeScript, Node.js
-                    📊 **Assessment Type**: Coding challenges + Multiple choice
-                    ⏱️ **Duration**: 45 minutes
-                    🎯 **Difficulty**: Intermediate level
-
-                    **Sample Questions**:
-                    1. Implement a custom React hook for API data fetching
-                    2. Debug this TypeScript interface issue
-                    3. Optimize this JavaScript algorithm
-
-                    Would you like me to adjust the difficulty level or focus on specific technologies?`,
-
-      soft: `Perfect! For "${prompt}", I've created a soft skills evaluation framework:
-
-                    🧠 **Skills Focus**: Communication, Leadership, Problem-solving, Teamwork
-                    📋 **Format**: Scenario-based questions + Behavioral interviews
-                    🎭 **Situations**: Customer conflict, Team disagreement, Deadline pressure
-                    ⭐ **Scoring**: 1-5 scale with detailed rubrics
-
-                    **Example Scenario**: "A team member consistently misses deadlines. How would you handle this situation?"
-
-                    Ready to customize the scenarios or add specific competencies?`,
-
-      interview: `Great choice! For "${prompt}", here's your HR interview structure:
-
-                    👥 **Interview Format**: Structured behavioral interview
-                    📝 **Key Areas**: Culture fit, Career goals, Experience review
-                    ⏰ **Duration**: 30-45 minutes
-                    🎯 **Questions**: STAR method focused
-
-                    **Sample Questions**:
-                    - "Tell me about a challenging project you overcame"
-                    - "Where do you see yourself in 5 years?"
-                    - "Describe a time you had to learn something quickly"
-
-                    Want me to add company-specific questions or adjust the format?`,
-
-      task: `Excellent! Based on "${prompt}", I've designed a practical task:
-
-                    📋 **Task Type**: Real-world project simulation
-                    🎯 **Objective**: Build a mini feature/solve business problem
-                    ⏱️ **Time Limit**: 2-3 hours
-                    📊 **Evaluation**: Code quality, approach, documentation
-
-                    **Example Task**: "Create a simple todo app with React that syncs to localStorage and includes search functionality"
-
-                    **Deliverables**: 
-                    - Working code
-                    - Brief explanation of approach
-                    - Any trade-offs made
-
-                    Need me to adjust complexity or add specific requirements?`,
-
-      condition: `Perfect! I've set up a conditional routing system for "${prompt}":
-
-                    🔀 **Field**: Assessment Score  
-                    📊 **Condition**: score >= 75  
-                    ✅ **YES Path**: Candidate scored well - proceed to next step  
-                    ❌ **NO Path**: Score too low - send feedback/resources  
-
-                    **How it works:**
-                    - Green handle (YES): Routes candidates who meet the condition
-                    - Red handle (NO): Routes candidates who don't meet the condition  
-                    - You can connect each handle to different next steps
-
-                    The condition form lets you customize:
-                    - What field to check (score, experience, status, etc.)
-                    - Comparison operator (>, >=, <, <=, ==, !=) 
-                    - Value to compare against
-
-                    This creates branching logic in your assessment flow!`,
-
-      email: `Perfect! For "${prompt}", I've crafted your email automation:
-
-                    📧 **Email Type**: Assessment completion notification
-                    🎯 **Trigger**: When candidate completes evaluation
-                    📝 **Personalization**: Name, score, next steps
-
-                    **Subject**: "Next Steps in Your Application - [Company Name]"
-
-                    **Template**:
-                    "Hi {{candidateName}},
-
-                    Thank you for completing our assessment! Based on your performance (Score: {{score}}%), {{#if passed}}we're excited to invite you to the next round{{else}}we'd like to provide some resources for improvement{{/if}}.
-
-                    {{nextSteps}}
-
-                    Best regards,
-                    [Your Name]"
-
-                    Ready to customize the content or add more triggers?`,
-    };
-
-    return (
-      responses[nodeType] ||
-      `I've processed your request "${prompt}" and generated appropriate content for this ${nodeType} step. The configuration has been updated with relevant settings and templates.`
-    );
   };
 
-  const handleSendPrompt = async () => {
-    if (!currentPrompt.trim() || !selectedNode) return;
+  // Form save handlers for configuration forms
+  const handleFormSave = useCallback(
+    (config: any) => {
+      if (!selectedNode) return;
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      text: currentPrompt,
-      isUser: true,
-      timestamp: new Date(),
-    };
+      console.log("💾 Saving configuration for node:", {
+        nodeId: selectedNode.id,
+        nodeType: selectedNode.data.type,
+        nodeLabel: selectedNode.data.label,
+        newConfig: config,
+        configuredFlag: config.configured,
+      });
 
-    setChatMessages((prev) => [...prev, userMessage]);
-    const promptToProcess = currentPrompt;
-    setCurrentPrompt("");
-    setIsGenerating(true);
-
-    // Simulate AI response based on node type and prompt
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(
-        selectedNode.data.type,
-        promptToProcess
-      );
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        text: aiResponse,
-        isUser: false,
-        timestamp: new Date(),
-      };
-
-      setChatMessages((prev) => [...prev, aiMessage]);
-      setIsGenerating(false);
-
-      // Update node configuration
       setNodes((nds) =>
         nds.map((node) =>
           node.id === selectedNode.id
@@ -215,17 +95,24 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
                   ...node.data,
                   config: {
                     ...node.data.config,
-                    lastPrompt: promptToProcess,
-                    generatedContent: aiResponse,
-                    configured: true,
+                    ...config,
                   },
                 },
               }
             : node
         )
       );
-    }, 2000);
-  };
+
+      handleClose();
+
+      toast.success("Configuration saved successfully!");
+    },
+    [selectedNode, setNodes]
+  );
+
+  const handleFormCancel = useCallback(() => {
+    handleClose();
+  }, []);
 
   const deleteNode = useCallback(
     (nodeId: string) => {
@@ -288,14 +175,22 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
     handleClose();
   };
   return (
-    <Modal open={open} onClose={onClose} disableEnforceFocus disableAutoFocus>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      disableEnforceFocus
+      disableAutoFocus
+    >
       <Box
         sx={{
           ...ModalStyle,
-          width: selectedNode?.data.type === "condition" ? 550 : 700,
-          height: selectedNode?.data.type === "condition" ? "auto" : 600,
-          maxHeight: selectedNode?.data.type === "condition" ? "80vh" : 600,
-          overflow: selectedNode?.data.type === "condition" ? "auto" : "auto",
+          width: { xs: "95vw", sm: 600, md: 700 },
+          maxWidth: 700,
+          height: "auto",
+          maxHeight: "85vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -307,20 +202,10 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
             mb: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {selectedNode?.data.type === "condition" ? (
-              <ConditionIcon color="primary" />
-            ) : (
-              <SmartToyIcon color="primary" />
-            )}
-            <Typography variant="h6">
-              {selectedNode?.data.type === "condition"
-                ? "Configure Condition"
-                : "AI Assistant"}{" "}
-              - {selectedNode?.data.label}
-            </Typography>
-          </Box>
-          <IconButton onClick={onClose}>
+          <Typography variant="h6">
+            Configure {selectedNode?.data.label}
+          </Typography>
+          <IconButton onClick={handleClose}>
             <CloseIcon />
           </IconButton>
         </Box>
@@ -484,180 +369,58 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
               )}
           </Box>
         ) : (
-          /* Chat Interface for other nodes */
-          <>
-            {/* Chat Messages Area */}
-            <Box
-              sx={{
-                height: 400,
-                overflowY: "auto",
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px",
-                p: 2,
-                mb: 2,
-                backgroundColor: "#fafafa",
-              }}
-            >
-              {chatMessages.map((message) => (
-                <Box
-                  key={message.id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: message.isUser ? "flex-end" : "flex-start",
-                    mb: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      maxWidth: "80%",
-                      p: 2,
-                      borderRadius: "12px",
-                      backgroundColor: message.isUser ? "#1976d2" : "#fff",
-                      color: message.isUser ? "#fff" : "#000",
-                      border: message.isUser ? "none" : "1px solid #e0e0e0",
-                      wordWrap: "break-word",
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                      {message.text}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        opacity: 0.7,
-                        display: "block",
-                        mt: 0.5,
-                        fontSize: "11px",
-                      }}
-                    >
-                      {message.timestamp.toLocaleTimeString()}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-
-              {isGenerating && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-start",
-                    mb: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: "12px",
-                      backgroundColor: "#fff",
-                      border: "1px solid #e0e0e0",
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                      AI is thinking...
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-            </Box>
-
-            {/* Input Area */}
-            <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
-              <TextField
-                fullWidth
-                multiline
-                maxRows={3}
-                value={currentPrompt}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setCurrentPrompt(e.target.value);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                placeholder={`Tell me what you want this ${selectedNode?.data.label.toLowerCase()} step to do...`}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendPrompt();
-                  }
-                }}
-                disabled={isGenerating}
-                variant="outlined"
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "20px",
-                  },
-                }}
-              />
-              <IconButton
-                onClick={handleSendPrompt}
-                disabled={!currentPrompt.trim() || isGenerating}
-                color="primary"
-                sx={{
-                  backgroundColor: "#1976d2",
-                  color: "white",
-                  "&:hover": {
-                    backgroundColor: "#1565c0",
-                  },
-                  "&:disabled": {
-                    backgroundColor: "#e0e0e0",
-                  },
-                  width: 48,
-                  height: 48,
-                }}
-              >
-                <SendIcon />
-              </IconButton>
-            </Box>
-          </>
+          /* Configuration Forms for other node types */
+          <Box sx={{ maxHeight: "70vh", overflow: "auto" }}>
+            <NodeConfigRenderer
+              nodeType={selectedNode?.data.type || ""}
+              initialConfig={selectedNode?.data.config}
+              onSave={handleFormSave}
+              onCancel={handleFormCancel}
+            />
+          </Box>
         )}
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 2,
-            mt: 2,
-          }}
-        >
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteIcon />}
-            onClick={() => {
-              if (selectedNode) {
-                deleteNode(selectedNode.id);
-                handleClose();
-              }
+        {selectedNode?.data.type === "condition" && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 2,
+              mt: 2,
             }}
           >
-            Delete Node
-          </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => {
+                if (selectedNode) {
+                  deleteNode(selectedNode.id);
+                  handleClose();
+                }
+              }}
+            >
+              Delete Node
+            </Button>
 
-          <Box sx={{ display: "flex", gap: 1 }}>
-            {selectedNode?.data.type === "condition" ? (
-              <>
-                <Button variant="outlined" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={handleConditionConfirm}
-                  disabled={
-                    !selectedNode?.data.config?.field ||
-                    !selectedNode?.data.config?.operator ||
-                    !selectedNode?.data.config?.value
-                  }
-                >
-                  Confirm
-                </Button>
-              </>
-            ) : (
-              <Button variant="outlined" onClick={onClose}>
-                Close
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button variant="outlined" onClick={handleClose}>
+                Cancel
               </Button>
-            )}
+              <Button
+                variant="contained"
+                onClick={handleConditionConfirm}
+                disabled={
+                  !selectedNode?.data.config?.field ||
+                  !selectedNode?.data.config?.operator ||
+                  !selectedNode?.data.config?.value
+                }
+              >
+                Confirm
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        )}
       </Box>
     </Modal>
   );
