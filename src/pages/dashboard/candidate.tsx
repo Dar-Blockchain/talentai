@@ -325,7 +325,6 @@ export default function DashboardCandidate() {
                         )}&proficiency=${encodeURIComponent(experienceLevel)}`
                       );
                     }}
-                    onCvBuilder={() => router.push("/resume-builder")}
                   />
 
                   {/* Engagement Tasks Checklist */}
