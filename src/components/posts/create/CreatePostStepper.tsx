@@ -24,6 +24,7 @@ import AgentConfigurationStep from "./AgentConfigurationStep";
 import PaymentConfirmationModal from "./components/PaymentConfirmationModal";
 import { selectCreationType } from "@/store/slices/postGenerationSlice";
 import { useRouter } from "next/router";
+import TokenPurchaseModal from "@/components/token-purchase/TokenPurchaseModal";
 
 // ------- Custom Stepper Styles -------
 const SplitLineConnector = styled(StepConnector)(() => ({
@@ -272,6 +273,7 @@ const CreatePostStepper: React.FC = () => {
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
       />
+      <TokenPurchaseModal />
     </Box>
   );
 };

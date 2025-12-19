@@ -152,14 +152,6 @@ export const useCreatePostStepper = (
 
       return;
     }
-    if (activeStep === 2 && shouldContinue && creationType === "manual") {
-      setPaymentModalOpen(false);
-      router.push("/dashboard/company");
-      showToast({
-        message: "Job post created successfully.",
-        severity: "success",
-      });
-    }
   };
 
   const handleBack = () => {

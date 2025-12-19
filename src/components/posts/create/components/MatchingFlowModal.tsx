@@ -43,28 +43,20 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
 
   const renderSaving = () => (
     <Box py={3} textAlign="center">
-      <CircularProgress size={50} />
-
-      <Typography
-        sx={{
-          fontSize: "14px",
-          fontWeight: 700,
-          lineHeight: "34px",
-          mt: 2,
-          mb: 1,
-        }}
-      >
-        Saving job…
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: "14px",
-          fontWeight: 400,
-          lineHeight: "34px",
-          color: "rgba(84,98,116,0.8)",
-        }}
-      >
+            <CircularProgress
+              size={120}
+              thickness={2}
+              sx={{ color: "rgba(77, 217, 163, 1)" }}
+            />
+            <Typography
+              sx={{
+                mt: 2,
+                fontSize: "16px",
+                fontWeight: 400,
+                lineHeight: "22px",
+                color: "rgba(75, 85, 99, 1)",
+              }}
+            >
         Please wait while we prepare your job and create matching process.
       </Typography>
     </Box>

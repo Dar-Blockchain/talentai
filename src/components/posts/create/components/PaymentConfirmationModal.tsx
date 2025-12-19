@@ -26,6 +26,9 @@ import CheckIcon from "@mui/icons-material/Check";
 import Image from "next/image";
 import { Check, Close } from "@mui/icons-material";
 import { selectTokenBalance } from "@/store/slices/tokenSlice";
+import { useRouter } from "next/router";
+import { openModal } from "@/store/slices/tokenPurchaseSlice";
+import { fetchTokenBalance } from "@/store/slices/tokenSlice";
 
 interface PaymentConfirmationModalProps {
   open: boolean;
@@ -51,15 +54,19 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   open,
   onClose,
 }) => {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
   /* ===== Redux State ===== */
+  const { isProcessing } = useSelector(
+    (state: RootState) => state.tokenPurchase
+  );
   const tokenBalance = useSelector(selectTokenBalance);
 
-  const saveStepsLoading = useSelector(selectPostStepsLoading);
+  const isSavingSteps = useSelector(selectPostStepsLoading);
   const {
     data,
-    loading: paymentLoading,
+    loading: isProcessingPayment,
     error,
   } = useSelector(selectPostPayment);
 
@@ -75,11 +82,8 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   const numberOfSteps = recruitmentFlow?.nodes?.length || 0;
   const totalPrice = 1000 + numberOfSteps * 100;
 
-  const isSavingSteps = saveStepsLoading;
-  const isProcessingPayment = paymentLoading;
-  const isBusy = isSavingSteps || isProcessingPayment;
+  const isBusy = isSavingSteps || isProcessingPayment || isProcessing;
 
-  const stepsSavedSuccessfully = !isSavingSteps && !!savedPost;
   const paymentSucceeded = !!data;
 
   const dialogTitle = isSavingSteps
@@ -87,22 +91,32 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     : "Publish Job Post";
 
   const hasSufficientBalance = Number(tokenBalance) >= totalPrice;
-  
+
   /* ===== Handlers ===== */
 
-  const handleConfirm = () => {
-    dispatch(
-      processPostPayment({
-        postId: savedPost?.jobData?._id,
-        agentId: agent?.agentId,
-      })
-    );
+  const handleConfirm = async () => {
+    if (!hasSufficientBalance) {
+      dispatch(openModal());
+      onClose();
+      dispatch(resetPostPayment());
+    } else if (paymentSucceeded) {
+      handleClose();
+    } else {
+      dispatch(
+        processPostPayment({
+          postId: savedPost?.jobData?._id,
+          agentId: agent?.agentId,
+        })
+      );
+      dispatch(fetchTokenBalance());
+    }
   };
 
   const handleClose = () => {
     if (isBusy) return;
     onClose();
     dispatch(resetPostPayment());
+    router.push("/dashboard/company");
   };
 
   /* ================= Render ================= */
@@ -152,9 +166,21 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
         {/* STEP 1: Saving recruitment steps */}
         {isSavingSteps && (
           <Box textAlign="center" py={4}>
-            <CircularProgress size={40} />
-            <Typography mt={2} color="text.secondary">
-              Saving recruitment pipeline...
+            <CircularProgress
+              size={120}
+              thickness={2}
+              sx={{ color: "rgba(77, 217, 163, 1)" }}
+            />
+            <Typography
+              sx={{
+                mt: 2,
+                fontSize: "16px",
+                fontWeight: 400,
+                lineHeight: "22px",
+                color: "rgba(75, 85, 99, 1)",
+              }}
+            >
+              Please wait while we save your recruitment pipeline…
             </Typography>
           </Box>
         )}
@@ -164,11 +190,12 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
           <Box textAlign="center" py={4}>
             <CircularProgress
               size={120}
-              thickness={4}
+              thickness={2}
               sx={{ color: "rgba(77, 217, 163, 1)" }}
             />
             <Typography
               sx={{
+                mt: 2,
                 fontSize: "16px",
                 fontWeight: 400,
                 lineHeight: "22px",
@@ -214,6 +241,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
             </Box>
             <Typography
               sx={{
+                mt: 2,
                 fontSize: "16px",
                 fontWeight: 400,
                 lineHeight: "22px",
@@ -533,6 +561,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
         >
           <Button
             variant="outlined"
+            onClick={handleClose}
             sx={{
               border: "none",
               background: "none",
@@ -545,7 +574,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
               },
             }}
           >
-            Cancel
+            {paymentSucceeded ? "Cancel" : "View Job Post"}
           </Button>
 
           <Button
@@ -577,7 +606,13 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
               },
             }}
           >
-            {!hasSufficientBalance ? 'Top up wallet' : isProcessingPayment ? "Processing Payment..." : "Publish Job Post"}
+            {!hasSufficientBalance
+              ? "Top up wallet"
+              : paymentSucceeded
+              ? "View Job Post"
+              : isProcessingPayment
+              ? "Processing Payment..."
+              : "Publish Job Post"}
           </Button>
         </DialogActions>
       )}
