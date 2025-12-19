@@ -18,6 +18,7 @@ import SidebarMenu from "./components/recruitment-flow/SidebarMenu";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setFlowEdges, setFlowNodes } from "@/store/slices/postSlice";
+import { useSelector } from "react-redux";
 
 const ReactFlow = dynamic(
   () => import("reactflow").then((mod) => mod.default),
@@ -120,8 +121,13 @@ const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
 
 const RecruitmentFlowStep = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const isHydratedRef = useRef(false);
+
   const flowWrapper = useRef<HTMLDivElement | null>(null);
   const defaultPipeline = useMemo(() => generateDefaultPipelineNodes(), []);
+  const recruitmentFlow = useSelector(
+  (state: any) => state.post.recruitmentFlow
+);
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultPipeline.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultPipeline.edges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -179,6 +185,15 @@ const RecruitmentFlowStep = () => {
 
     setSelectedNodes([]);
   }, [selectedNodes, setNodes, setEdges]);
+
+//   useEffect(() => {
+//   if (recruitmentFlow?.nodes?.length) {
+//     setNodes(recruitmentFlow.nodes);
+//   }
+//   if (recruitmentFlow?.edges?.length) {
+//     setEdges(recruitmentFlow.edges);
+//   }
+// }, [recruitmentFlow, setNodes, setEdges]);
 
   useEffect(() => {
     dispatch(setFlowNodes(nodes));

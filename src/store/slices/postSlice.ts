@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import Cookies from 'js-cookie';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import Cookies from "js-cookie";
 
 interface RecruitmentFlowState {
   nodes: any[];
@@ -88,10 +88,7 @@ const initialState: PostState = {
 
 export const savePost = createAsyncThunk(
   "post/savePost",
-  async (
-    jobData: any,
-    { rejectWithValue }
-  ) => {
+  async (jobData: any, { rejectWithValue }) => {
     try {
       if (!jobData) {
         throw new Error("No job data available");
@@ -122,7 +119,6 @@ export const savePost = createAsyncThunk(
         success: true,
         jobData: job,
       };
-
     } catch (err: any) {
       return rejectWithValue(err.message || "Error saving job");
     }
@@ -172,7 +168,6 @@ export const updatePost = createAsyncThunk(
   }
 );
 
-
 // Async thunk: Recommended posts
 export const fetchRecommendedPosts = createAsyncThunk(
   "post/fetchRecommendedPosts",
@@ -193,52 +188,60 @@ export const fetchRecommendedPosts = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch recommended posts");
+        throw new Error(
+          errorData.message || "Failed to fetch recommended posts"
+        );
       }
 
       const data = await response.json();
 
       // DEBUG: Log the API response structure
       const posts = Array.isArray(data) ? data : data.data || [];
-      console.log('🔍 DEBUG - postSlice fetchRecommendedPosts response:', {
-        dataType: Array.isArray(data) ? 'array' : typeof data,
+      console.log("🔍 DEBUG - postSlice fetchRecommendedPosts response:", {
+        dataType: Array.isArray(data) ? "array" : typeof data,
         hasDataProperty: !!data.data,
         postsCount: Array.isArray(posts) ? posts.length : 0,
-        firstPost: posts[0] ? {
-          _id: posts[0]._id,
-          creationType: posts[0].creationType,
-          hasPostSteps: !!posts[0].post_Steps,
-          postStepsType: Array.isArray(posts[0].post_Steps) ? 'array' : typeof posts[0].post_Steps,
-          postStepsCount: posts[0].post_Steps?.length || 0
-        } : null
+        firstPost: posts[0]
+          ? {
+              _id: posts[0]._id,
+              creationType: posts[0].creationType,
+              hasPostSteps: !!posts[0].post_Steps,
+              postStepsType: Array.isArray(posts[0].post_Steps)
+                ? "array"
+                : typeof posts[0].post_Steps,
+              postStepsCount: posts[0].post_Steps?.length || 0,
+            }
+          : null,
       });
 
       return posts;
     } catch (error: any) {
-      return rejectWithValue(error.message || "An error occurred while fetching recommended posts");
+      return rejectWithValue(
+        error.message || "An error occurred while fetching recommended posts"
+      );
     }
   }
 );
 
 // Async thunk for posting recruitment steps
 export const postRecruitmentSteps = createAsyncThunk(
-  'post/postRecruitmentSteps',
+  "post/postRecruitmentSteps",
   async (
     { postId, steps }: { postId: string; steps: any[] },
     { rejectWithValue }
   ) => {
     try {
       const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('api_token='))
-        ?.split('=')[1];
+        .split("; ")
+        .find((row) => row.startsWith("api_token="))
+        ?.split("=")[1];
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post-steps/post/${postId}/steps`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(steps),
@@ -247,33 +250,37 @@ export const postRecruitmentSteps = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to post recruitment steps');
+        throw new Error(
+          errorData.message || "Failed to post recruitment steps"
+        );
       }
 
       const data = await response.json();
       return data;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'An error occurred while posting recruitment steps');
+      return rejectWithValue(
+        error.message || "An error occurred while posting recruitment steps"
+      );
     }
   }
 );
 
 // Async thunk to fetch company posts (my posts)
 export const fetchMyPosts = createAsyncThunk(
-  'post/fetchMyPosts',
+  "post/fetchMyPosts",
   async (_, { rejectWithValue }) => {
     try {
       const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('api_token='))
-        ?.split('=')[1];
+        .split("; ")
+        .find((row) => row.startsWith("api_token="))
+        ?.split("=")[1];
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
@@ -281,33 +288,35 @@ export const fetchMyPosts = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch my posts');
+        throw new Error(errorData.message || "Failed to fetch my posts");
       }
 
       const data = await response.json();
-      return Array.isArray(data) ? data : (data.data || []);
+      return Array.isArray(data) ? data : data.data || [];
     } catch (error: any) {
-      return rejectWithValue(error.message || 'An error occurred while fetching posts');
+      return rejectWithValue(
+        error.message || "An error occurred while fetching posts"
+      );
     }
   }
 );
 
 // Async thunk to fetch matches for a selected job post
 export const fetchJobMatches = createAsyncThunk(
-  'post/fetchJobMatches',
+  "post/fetchJobMatches",
   async (selectedJobId: string, { rejectWithValue }) => {
     try {
       const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('api_token='))
-        ?.split('=')[1];
+        .split("; ")
+        .find((row) => row.startsWith("api_token="))
+        ?.split("=")[1];
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
@@ -315,33 +324,35 @@ export const fetchJobMatches = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch job matches');
+        throw new Error(errorData.message || "Failed to fetch job matches");
       }
 
       const data = await response.json();
       return data && Array.isArray(data.matches) ? data.matches : [];
     } catch (error: any) {
-      return rejectWithValue(error.message || 'An error occurred while fetching matches');
+      return rejectWithValue(
+        error.message || "An error occurred while fetching matches"
+      );
     }
   }
 );
 
 // Async thunk to delete a post by id
 export const deletePost = createAsyncThunk(
-  'post/deletePost',
+  "post/deletePost",
   async (jobId: string, { rejectWithValue }) => {
     try {
       const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('api_token='))
-        ?.split('=')[1];
+        .split("; ")
+        .find((row) => row.startsWith("api_token="))
+        ?.split("=")[1];
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post/deletePost/${jobId}`,
         {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
@@ -349,32 +360,34 @@ export const deletePost = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to delete post');
+        throw new Error(errorData.message || "Failed to delete post");
       }
 
       return jobId;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'An error occurred while deleting post');
+      return rejectWithValue(
+        error.message || "An error occurred while deleting post"
+      );
     }
   }
 );
 
 // Async thunk to fetch a single job by ID
 export const fetchJobById = createAsyncThunk(
-  'post/fetchJobById',
+  "post/fetchJobById",
   async (jobId: string, { rejectWithValue }) => {
     try {
       const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('api_token='))
-        ?.split('=')[1];
+        .split("; ")
+        .find((row) => row.startsWith("api_token="))
+        ?.split("=")[1];
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post/details/${jobId}`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
@@ -382,13 +395,15 @@ export const fetchJobById = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch job');
+        throw new Error(errorData.message || "Failed to fetch job");
       }
 
       const data = await response.json();
       return data?.data;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'An error occurred while fetching the job');
+      return rejectWithValue(
+        error.message || "An error occurred while fetching the job"
+      );
     }
   }
 );
@@ -431,10 +446,9 @@ export const processPostPayment = createAsyncThunk(
   }
 );
 
-
 // Post slice
 const postSlice = createSlice({
-  name: 'post',
+  name: "post",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -449,15 +463,18 @@ const postSlice = createSlice({
     addStep: (state, action: PayloadAction<any>) => {
       state.steps.push(action.payload);
     },
-    updateStep: (state, action: PayloadAction<{ id: string; updates: Partial<any> }>) => {
+    updateStep: (
+      state,
+      action: PayloadAction<{ id: string; updates: Partial<any> }>
+    ) => {
       const { id, updates } = action.payload;
-      const stepIndex = state.steps.findIndex(step => step.id === id);
+      const stepIndex = state.steps.findIndex((step) => step.id === id);
       if (stepIndex !== -1) {
         state.steps[stepIndex] = { ...state.steps[stepIndex], ...updates };
       }
     },
     removeStep: (state, action: PayloadAction<string>) => {
-      state.steps = state.steps.filter(step => step.id !== action.payload);
+      state.steps = state.steps.filter((step) => step.id !== action.payload);
     },
     setFlowNodes(state, action) {
       state.recruitmentFlow.nodes = action.payload;
@@ -468,11 +485,16 @@ const postSlice = createSlice({
     resetFlow(state) {
       state.recruitmentFlow.nodes = [];
       state.recruitmentFlow.edges = [];
-    }
+    },
+    resetPostPayment(state) {
+      state.postPayment.loading = false;
+      state.postPayment.error = null;
+      state.postPayment.data = null;
+    },
   },
   extraReducers: (builder) => {
     builder
-          .addCase(savePost.pending, (state) => {
+      .addCase(savePost.pending, (state) => {
         state.savePost.loading = true;
         state.savePost.error = null;
       })
@@ -480,7 +502,6 @@ const postSlice = createSlice({
         state.savePost.loading = false;
         state.savePost.error = null;
         state.savePost.savedPost = action.payload;
-        
       })
       .addCase(savePost.rejected, (state, action) => {
         state.savePost.loading = false;
@@ -494,7 +515,6 @@ const postSlice = createSlice({
         state.savePost.loading = false;
         state.savePost.error = null;
         state.savePost.savedPost = action.payload;
-        
       })
       .addCase(updatePost.rejected, (state, action) => {
         state.savePost.loading = false;
@@ -521,10 +541,13 @@ const postSlice = createSlice({
         state.myPostsLoading = true;
         state.myPostsError = null;
       })
-      .addCase(fetchMyPosts.fulfilled, (state, action: PayloadAction<any[]>) => {
-        state.myPostsLoading = false;
-        state.myPosts = action.payload || [];
-      })
+      .addCase(
+        fetchMyPosts.fulfilled,
+        (state, action: PayloadAction<any[]>) => {
+          state.myPostsLoading = false;
+          state.myPosts = action.payload || [];
+        }
+      )
       .addCase(fetchMyPosts.rejected, (state, action) => {
         state.myPostsLoading = false;
         state.myPostsError = action.payload as string;
@@ -535,10 +558,13 @@ const postSlice = createSlice({
         state.jobMatchesError = null;
         state.jobMatches = [];
       })
-      .addCase(fetchJobMatches.fulfilled, (state, action: PayloadAction<any[]>) => {
-        state.jobMatchesLoading = false;
-        state.jobMatches = action.payload || [];
-      })
+      .addCase(
+        fetchJobMatches.fulfilled,
+        (state, action: PayloadAction<any[]>) => {
+          state.jobMatchesLoading = false;
+          state.jobMatches = action.payload || [];
+        }
+      )
       .addCase(fetchJobMatches.rejected, (state, action) => {
         state.jobMatchesLoading = false;
         state.jobMatchesError = action.payload as string;
@@ -550,7 +576,9 @@ const postSlice = createSlice({
       })
       .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
         state.deletePostLoading = false;
-        state.myPosts = state.myPosts.filter((p: any) => (p._id || p.id) !== action.payload);
+        state.myPosts = state.myPosts.filter(
+          (p: any) => (p._id || p.id) !== action.payload
+        );
       })
       .addCase(deletePost.rejected, (state, action) => {
         state.deletePostLoading = false;
@@ -600,30 +628,52 @@ const postSlice = createSlice({
 });
 
 // Export actions
-export const { clearError, setSteps, addStep, updateStep, removeStep, setFlowNodes, setFlowEdges, resetFlow } = postSlice.actions;
+export const {
+  clearError,
+  setSteps,
+  addStep,
+  updateStep,
+  removeStep,
+  setFlowNodes,
+  setFlowEdges,
+  resetFlow,
+  resetPostPayment,
+} = postSlice.actions;
 
 // Export reducer
 export default postSlice.reducer;
 
 // Selectors
 export const selectSteps = (state: { post: PostState }) => state.post.steps;
-export const selectPostStepsLoading = (state: { post: PostState }) => state.post.postStepsLoading;
-export const selectPostStepsError = (state: { post: PostState }) => state.post.postStepsError;
+export const selectPostStepsLoading = (state: { post: PostState }) =>
+  state.post.postStepsLoading;
+export const selectPostStepsError = (state: { post: PostState }) =>
+  state.post.postStepsError;
 
 export const selectMyPosts = (state: { post: PostState }) => state.post.myPosts;
-export const selectMyPostsLoading = (state: { post: PostState }) => state.post.myPostsLoading;
-export const selectMyPostsError = (state: { post: PostState }) => state.post.myPostsError;
+export const selectMyPostsLoading = (state: { post: PostState }) =>
+  state.post.myPostsLoading;
+export const selectMyPostsError = (state: { post: PostState }) =>
+  state.post.myPostsError;
 
-export const selectJobMatches = (state: { post: PostState }) => state.post.jobMatches;
-export const selectJobMatchesLoading = (state: { post: PostState }) => state.post.jobMatchesLoading;
-export const selectJobMatchesError = (state: { post: PostState }) => state.post.jobMatchesError;
+export const selectJobMatches = (state: { post: PostState }) =>
+  state.post.jobMatches;
+export const selectJobMatchesLoading = (state: { post: PostState }) =>
+  state.post.jobMatchesLoading;
+export const selectJobMatchesError = (state: { post: PostState }) =>
+  state.post.jobMatchesError;
 
-export const selectDeletePostLoading = (state: { post: PostState }) => state.post.deletePostLoading;
-export const selectDeletePostError = (state: { post: PostState }) => state.post.deletePostError;
+export const selectDeletePostLoading = (state: { post: PostState }) =>
+  state.post.deletePostLoading;
+export const selectDeletePostError = (state: { post: PostState }) =>
+  state.post.deletePostError;
 
-export const selectCurrentJob = (state: { post: PostState }) => state.post.currentJob;
-export const selectCurrentJobLoading = (state: { post: PostState }) => state.post.currentJobLoading;
-export const selectCurrentJobError = (state: { post: PostState }) => state.post.currentJobError;
+export const selectCurrentJob = (state: { post: PostState }) =>
+  state.post.currentJob;
+export const selectCurrentJobLoading = (state: { post: PostState }) =>
+  state.post.currentJobLoading;
+export const selectCurrentJobError = (state: { post: PostState }) =>
+  state.post.currentJobError;
 
 // Selector to get a job from myPosts by ID (if already loaded)
 export const selectJobById = (jobId: string) => (state: { post: PostState }) =>

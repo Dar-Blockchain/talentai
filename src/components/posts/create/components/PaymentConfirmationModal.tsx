@@ -10,24 +10,26 @@ import {
   CircularProgress,
   Alert,
   IconButton,
+  Divider,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   processPostPayment,
   selectPostPayment,
   selectPostStepsLoading,
+  resetPostPayment,
 } from "@/store/slices/postSlice";
+import CheckIcon from "@mui/icons-material/Check";
+import Image from "next/image";
+import { Check, Close } from "@mui/icons-material";
+import { selectTokenBalance } from "@/store/slices/tokenSlice";
 
 interface PaymentConfirmationModalProps {
   open: boolean;
   onClose: () => void;
-  onContinue?: (shouldContinue: boolean) => void;
 }
 
 /* ================= Styles ================= */
@@ -43,22 +45,17 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const BreakdownRow = styled(Box)({
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "8px 0",
-});
-
 /* ================= Component ================= */
 
 const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   open,
   onClose,
-  onContinue,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   /* ===== Redux State ===== */
+  const tokenBalance = useSelector(selectTokenBalance);
+
   const saveStepsLoading = useSelector(selectPostStepsLoading);
   const {
     data,
@@ -89,6 +86,8 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     ? "Saving Recruitment Pipeline"
     : "Publish Job Post";
 
+  const hasSufficientBalance = Number(tokenBalance) >= totalPrice;
+  
   /* ===== Handlers ===== */
 
   const handleConfirm = () => {
@@ -103,6 +102,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   const handleClose = () => {
     if (isBusy) return;
     onClose();
+    dispatch(resetPostPayment());
   };
 
   /* ================= Render ================= */
@@ -110,12 +110,38 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   return (
     <StyledDialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       {/* ===== Title ===== */}
-      <DialogTitle>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6" fontWeight={600}>
+      <DialogTitle
+        sx={{
+          borderBottom: "1px solid rgba(227, 229, 233, 1)",
+          color: "black",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              color: "rgba(41, 210, 145, 1)",
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              fontStyle: "normal",
+              fontSize: "20px",
+              lineHeight: "25px",
+              letterSpacing: "0px",
+            }}
+          >
             {dialogTitle}
           </Typography>
-          <IconButton onClick={handleClose} disabled={isBusy}>
+          <IconButton
+            onClick={handleClose}
+            disabled={isBusy}
+            sx={{ color: "black" }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
@@ -136,9 +162,21 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
         {/* STEP 2: Processing payment */}
         {!isSavingSteps && isProcessingPayment && (
           <Box textAlign="center" py={4}>
-            <CircularProgress size={40} />
-            <Typography mt={2} color="text.secondary">
-              Processing payment...
+            <CircularProgress
+              size={120}
+              thickness={4}
+              sx={{ color: "rgba(77, 217, 163, 1)" }}
+            />
+            <Typography
+              sx={{
+                fontSize: "16px",
+                fontWeight: 400,
+                lineHeight: "22px",
+                color: "rgba(75, 85, 99, 1)",
+              }}
+            >
+              Hold tight! We’re processing the payment for your recruitment
+              steps…
             </Typography>
           </Box>
         )}
@@ -146,11 +184,42 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
         {/* STEP 3: Payment success */}
         {!isSavingSteps && !isProcessingPayment && paymentSucceeded && (
           <Box textAlign="center" py={4}>
-            <CheckCircleIcon sx={{ fontSize: 64, color: "#4caf50", mb: 2 }} />
-            <Typography variant="h6" fontWeight={600} gutterBottom>
-              Job Post Published!
-            </Typography>
-            <Typography color="text.secondary">
+            <Box
+              sx={{
+                position: "relative",
+                display: "inline-flex",
+                width: 120,
+                height: 120,
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "4px solid rgba(77, 217, 163, 1)",
+                  background: "white",
+                  borderRadius: "50%",
+                }}
+              >
+                <CheckIcon
+                  sx={{ color: "rgba(77, 217, 163, 1)", fontSize: 60 }}
+                />
+              </Box>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: "16px",
+                fontWeight: 400,
+                lineHeight: "22px",
+                color: "rgba(75, 85, 99, 1)",
+              }}
+            >
               Your job post is now live and visible to candidates.
             </Typography>
           </Box>
@@ -158,70 +227,357 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
 
         {/* STEP 4: Payment confirmation */}
         {!isSavingSteps && !isProcessingPayment && !paymentSucceeded && (
-          <>
-            <Alert severity="info" icon={<MonetizationOnIcon />} sx={{ mb: 3 }}>
-              <Typography fontWeight={600} gutterBottom>
-                Pipeline Pricing
-              </Typography>
-              <Typography variant="body2">
-                Base Fee: <strong>1,000 TAI</strong> + <strong>100 TAI</strong>{" "}
-                per interview step
-              </Typography>
-            </Alert>
-
-            <Box
+          <Box sx={{ py: 2 }}>
+            <Typography
               sx={{
-                backgroundColor: "#f8fafc",
-                borderRadius: 2,
-                p: 2,
-                mb: 2,
+                color: "rgba(75, 85, 99, 1)",
+                fontFamily: "Inter",
+                fontWeight: 400,
+                fontStyle: "normal",
+                fontSize: "14px",
+                lineHeight: "22.4px",
+                letterSpacing: "0%",
+                verticalAlign: "middle",
               }}
             >
-              <BreakdownRow>
-                <Typography fontWeight={600}>Steps</Typography>
-                <Typography>{numberOfSteps}</Typography>
-              </BreakdownRow>
-              <BreakdownRow>
-                <Typography fontWeight={600}>Total</Typography>
-                <Typography fontWeight={700} color="primary">
-                  {totalPrice} TAI
-                </Typography>
-              </BreakdownRow>
-            </Box>
+              You're about to activate your recruitment flow with{" "}
+              <b style={{ color: "rgba(133, 169, 227, 1)" }}>
+                {numberOfSteps} interview steps
+              </b>
+              . Please review the payment breakdown below before confirming.
+            </Typography>
+            <Box
+              sx={{
+                mt: 2,
+                py: 2,
+                px: 2.5,
+                Background: "rgba(249, 250, 251, 1)",
+                borderRadius: "12px",
+                border: "1px solid rgba(229, 231, 235, 1)",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  lineHeight: "19.5px",
+                  textTransform: "uppercase",
+                  color: "rgba(55, 65, 81, 1)",
+                  mb: 2,
+                }}
+              >
+                Payment Summary
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  background: "rgba(255, 255, 255, 1)",
+                  border: "1px solid rgba(229, 231, 235, 1)",
+                  borderRadius: "8px",
+                  p: 1.5,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      background: "rgba(34, 197, 94, 0.1)",
+                      borderRadius: "8px",
+                      width: "40px",
+                      height: "40px",
+                    }}
+                  >
+                    <Image
+                      src="/icons/people2.svg"
+                      alt="people"
+                      width={20}
+                      height={20}
+                    />
+                  </Box>
 
-            <Alert severity="info" icon={<AccountBalanceWalletIcon />}>
-              Payment will be processed using your connected Hedera wallet.
-            </Alert>
-          </>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "21px",
+                      color: "rgba(31, 41, 55, 1)",
+                    }}
+                  >
+                    Interview Steps
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(243, 244, 246, 1)",
+                    borderRadius: "8px",
+                    width: "40px",
+                    height: "40px",
+                    color: "rgba(17, 24, 39, 1)",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    lineHeight: "27px",
+                  }}
+                >
+                  {numberOfSteps}
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                  background: "rgba(255, 255, 255, 1)",
+                  border: "1px solid rgba(229, 231, 235, 1)",
+                  borderRadius: "8px",
+                  p: 1.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    py: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: 400,
+                      fontSize: "13px",
+                      lineHeight: "21px",
+                      color: "rgba(75, 85, 99, 1)",
+                    }}
+                  >
+                    Base Fee
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "21px",
+                      color: "rgba(31, 41, 55, 1)",
+                    }}
+                  >
+                    1,000 TAI
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    py: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: 400,
+                      fontSize: "13px",
+                      lineHeight: "21px",
+                      color: "rgba(75, 85, 99, 1)",
+                    }}
+                  >
+                    Additional Fee{" "}
+                    <span
+                      style={{
+                        color: "rgba(156, 163, 175, 1)",
+                        fontSize: "12px",
+                      }}
+                    >
+                      ({numberOfSteps} × 100 TAI)
+                    </span>
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "21px",
+                      color: "rgba(31, 41, 55, 1)",
+                    }}
+                  >
+                    {numberOfSteps * 100} TAI
+                  </Typography>
+                </Box>
+                <Divider />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    py: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: "13px",
+                      lineHeight: "21px",
+                      color: "rgba(31, 41, 55, 1)",
+                    }}
+                  >
+                    Total Amount
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "18px",
+                      lineHeight: "27px",
+                      textTransform: "uppercase",
+                      color: "rgba(222, 147, 0, 1)",
+                    }}
+                  >
+                    {numberOfSteps * 100} TAI
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                backgroundColor: hasSufficientBalance
+                  ? "rgba(222, 147, 0, 0.07)"
+                  : "rgba(200, 65, 75, 0.07)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderRadius: "8px",
+                border: hasSufficientBalance
+                  ? "none"
+                  : "1px solid rgba(200, 65, 75, 1)",
+                mt: 2,
+                px: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+                <Box
+                  sx={{
+                    background: "white",
+                    borderRadius: "100%",
+                    height: "40px",
+                    width: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Image
+                    src={
+                      hasSufficientBalance
+                        ? "/icons/dollarOutline.svg"
+                        : "/icons/dollarOutlineRed.svg"
+                    }
+                    alt=""
+                    width={18}
+                    height={18}
+                  />
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", py: 2 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 400,
+                      fontSize: "12px",
+                      color: "rgba(75, 85, 99, 1)",
+                    }}
+                  >
+                    Your TAI Balance
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      color: hasSufficientBalance
+                        ? "rgba(17, 24, 39, 1)"
+                        : "rgba(200, 65, 75, 1)",
+                    }}
+                  >
+                    {tokenBalance} TAI
+                  </Typography>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: hasSufficientBalance
+                    ? "rgba(77, 217, 163, 1)"
+                    : "rgba(200, 65, 75, 1)",
+                  borderRadius: "38px",
+                  color: "white",
+                  height: "30px",
+                  px: 2.5,
+                  py: 1,
+                }}
+              >
+                {hasSufficientBalance ? (
+                  <Check sx={{ mr: 1, fontSize: "18px" }} />
+                ) : (
+                  <Close sx={{ mr: 1, fontSize: "18px" }} />
+                )}{" "}
+                {hasSufficientBalance ? "Sufficient" : "Insufficient"}
+              </Box>
+            </Box>
+          </Box>
         )}
 
         {error && <Alert severity="error">{error}</Alert>}
       </DialogContent>
 
       {/* ===== Actions ===== */}
-      {!isSavingSteps && (
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button onClick={handleClose} disabled={isBusy}>
+      {!isBusy && (
+        <DialogActions
+          sx={{ p: 3, borderTop: "1px solid rgba(227, 229, 233, 1)" }}
+        >
+          <Button
+            variant="outlined"
+            sx={{
+              border: "none",
+              background: "none",
+              color: "rgba(133, 169, 227, 1)",
+              textDecoration: "none",
+              "&:hover": {
+                background: "none",
+                textDecoration: "none",
+                color: "rgba(133, 169, 227, 0.8)",
+              },
+            }}
+          >
             Cancel
           </Button>
 
           <Button
             onClick={handleConfirm}
-            variant="contained"
-            disabled={isBusy || paymentSucceeded}
+            variant="outlined"
+            disabled={isBusy}
             startIcon={
               isProcessingPayment && (
                 <CircularProgress size={16} color="inherit" />
               )
             }
             sx={{
-              color: "white",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              borderColor: "rgba(222, 147, 0, 1)",
+              color: "rgba(222, 147, 0, 1)",
               fontWeight: 600,
-              px: 3,
+              borderRadius: "38px",
+              py: 1.5,
+              maxWidth: "300px",
+              height: "42px",
+              textTransform: "none",
+              fontSize: "0.875rem",
+              borderWidth: "1px",
+              "&:hover": {
+                backgroundColor: "rgba(222, 147, 0, 0.08)",
+              },
+              "&.Mui-disabled": {
+                borderColor: "#e5e7eb",
+                color: "#9ca3af",
+              },
             }}
           >
-            {isProcessingPayment ? "Processing Payment..." : "Publish Job Post"}
+            {!hasSufficientBalance ? 'Top up wallet' : isProcessingPayment ? "Processing Payment..." : "Publish Job Post"}
           </Button>
         </DialogActions>
       )}

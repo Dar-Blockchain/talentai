@@ -18,15 +18,11 @@ import PostDetailsStep from "./PostDetailsStep";
 import RecruitmentFlowStep from "./RecruitmentFlowStep";
 import MatchingFlowModal from "./components/MatchingFlowModal";
 
-import { AppDispatch, RootState } from "@/store/store";
+import { RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
 import AgentConfigurationStep from "./AgentConfigurationStep";
 import PaymentConfirmationModal from "./components/PaymentConfirmationModal";
-import {
-  selectCreationType,
-  setCreationType,
-} from "@/store/slices/postGenerationSlice";
-import { useDispatch } from "react-redux";
+import { selectCreationType } from "@/store/slices/postGenerationSlice";
 import { useRouter } from "next/router";
 
 // ------- Custom Stepper Styles -------
@@ -113,7 +109,7 @@ const CreatePostStepper: React.FC = () => {
   const steps =
     creationType === "ai"
       ? ["Job Details", "Agent Configuration"]
-      : ["Job Details", "Recruitment Flow", "Agent Configuration"];
+      : ["Job Details", "Agent Configuration", "Recruitment Flow"];
 
   const {
     activeStep,
@@ -210,13 +206,8 @@ const CreatePostStepper: React.FC = () => {
       {/* Step Content */}
       <Box sx={{ mt: 2 }}>
         {activeStep === 0 && <PostDetailsStep />}
-        {activeStep === 1 && creationType === "manual" && (
-          <RecruitmentFlowStep />
-        )}
-        {((activeStep === 2 && creationType === "manual") ||
-          (activeStep === 1 && creationType === "ai")) && (
-          <AgentConfigurationStep />
-        )}
+        {activeStep === 1 && <AgentConfigurationStep />}
+        {activeStep === 2 && <RecruitmentFlowStep />}
       </Box>
 
       {/* Bottom Buttons */}
@@ -231,8 +222,9 @@ const CreatePostStepper: React.FC = () => {
           py: 2,
           px: 3,
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           gap: 2,
+          zIndex: 3,
         }}
       >
         <Button
@@ -279,7 +271,6 @@ const CreatePostStepper: React.FC = () => {
       <PaymentConfirmationModal
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
-        onContinue={handleNext}
       />
     </Box>
   );
