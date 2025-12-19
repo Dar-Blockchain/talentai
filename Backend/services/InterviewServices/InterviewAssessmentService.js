@@ -31,6 +31,16 @@ function getExperienceLabel(level) {
 // Create a new assessment
 const createAssessment = async (data, metadata, rawInterviewData, userId) => {
   try {
+    // Idempotency: if an assessment already exists for this sessionId, return it
+    const sessionId = rawInterviewData?.sessionId;
+    if (sessionId) {
+      const existing = await InterviewAssessment.findOne({ 'interviewData.sessionId': sessionId }).select('_id');
+      if (existing) {
+        console.log(`Assessment already exists for sessionId ${sessionId}, returning existing assessment ${existing._id}`);
+        return await getAssessmentById(existing._id);
+      }
+    }
+
     // Translate metadata.type before saving to database
     if (data.metadata && data.metadata.type) {
       const rawType = data.metadata.type.toLowerCase();
