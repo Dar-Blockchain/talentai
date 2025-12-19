@@ -179,43 +179,13 @@ const io = socket.init(server);
 // Require services at module level (but don't initialize namespace yet)
 const intelligentInterviewService = require('./services/intelligentInterviewService');
 const intelligentInterviewController = require('./controllers/intelligentInterviewController');
+const socketHandlers = require('./socket-handlers');
 
 // Basic Socket.IO default namespace handler
 io.on('connection', (sock) => {
-  console.log('Utilisateur connecté à Socket.IO (default namespace):', sock.id);
-  sock.on('join', (userId) => {
-    sock.join(userId);
-    console.log(`Utilisateur ${userId} a rejoint sa room.`);
-  });
-  // Allow clients to request the server to create a system notification
-  sock.on('sendSystemNotification', async (data) => {
-    try {
-      const { recipient, content } = data || {};
-      const notificationService = require('./services/Notifications/notificationSystemService');
-      const notification = await notificationService.createSystemNotification(recipient, content);
-      // Acknowledge to sender
-      sock.emit('notificationCreated', notification);
-    } catch (err) {
-      console.error('Failed to create system notification via socket:', err);
-      sock.emit('notificationError', { error: err.message || 'Unknown error' });
-    }
-  });
-
-  // Allow broadcasting to multiple recipients via socket
-  sock.on('broadcastSystemNotification', async (data) => {
-    try {
-      const { recipients, content } = data || {};
-      const notificationService = require('./services/Notifications/notificationSystemService');
-      const results = await notificationService.broadcastSystemNotification(recipients, content);
-      sock.emit('broadcastCreated', { created: results.length });
-    } catch (err) {
-      console.error('Failed to broadcast system notifications via socket:', err);
-      sock.emit('notificationError', { error: err.message || 'Unknown error' });
-    }
-  });
-  sock.on('disconnect', () => {
-    console.log('Utilisateur déconnecté de Socket.IO :', sock.id);
-  });
+  console.log('👤 Utilisateur connecté à Socket.IO:', sock.id);
+  // Register all event handlers for this socket
+  socketHandlers.registerAllHandlers(sock);
 });
 
 // Initialize the application
