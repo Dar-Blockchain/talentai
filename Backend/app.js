@@ -36,7 +36,6 @@ const linkedinPostRouter = require("./routes/generateJobPostRouter");
 
 const postRouter = require("./routes/postRouter");
 const matchingRoutes = require("./routes/matchingRouter");
-const resumeRouter = require("./routes/resumeRouter");
 const todoRouter = require("./routes/todoRouter");
 const feedbackRouter = require("./routes/feedbackRoutes");
 const logRoutes = require("./routes/logRoutes");
@@ -141,7 +140,6 @@ app.use("/linkedinPost", linkedinPostRouter);
 app.use("/feedback", feedbackRouter);
 app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
-app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);

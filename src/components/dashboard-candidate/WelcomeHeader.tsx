@@ -14,7 +14,6 @@ type WelcomeHeaderProps = {
   quota: number;
   onStartTest: () => void;
   onHrInterview: () => void;
-  onCvBuilder: () => void;
 };
 
 export default function WelcomeHeader({
@@ -22,7 +21,6 @@ export default function WelcomeHeader({
   quota,
   onStartTest,
   onHrInterview,
-  onCvBuilder,
 }: WelcomeHeaderProps) {
   return (
     <Box
@@ -251,31 +249,6 @@ export default function WelcomeHeader({
             }}
           >
             HR Interview Test
-          </Button>
-
-          <Button
-            variant="outlined"
-            startIcon={<Image src='/icons/cv.svg' alt='cv' width={16} height={16} />}
-            onClick={onCvBuilder}
-            sx={{
-              border: "0.76px solid rgba(25, 25, 25, 1)",
-              color: "#000000",
-              fontWeight: 600,
-              borderRadius: "38px",
-              px: 3,
-              py: 1,
-              maxWidth: "230px",
-              width: "100%",
-              textTransform: "none",
-              fontSize: "0.875rem",
-              "&:hover": {
-                borderColor: "0.76px solid rgba(25, 25, 25, 1)",
-                background: "rgba(0, 0, 0, 0.04)",
-                transform: "translateY(-1px)",
-              },
-            }}
-          >
-            CV Builder
           </Button>
         </Stack>
       </Box>
