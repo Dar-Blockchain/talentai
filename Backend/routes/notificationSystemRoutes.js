@@ -5,7 +5,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // All routes require an authenticated user
-router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));
+router.use( authLogMiddleware('NotificationSystem'));
 
 // POST /notification-system/ — create a system notification
 router.post('/AddNotification', controller.createSystemNotification);

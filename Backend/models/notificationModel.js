@@ -23,16 +23,6 @@ const NotificationSchema = new mongoose.Schema(
       },
       default: "info",
     },
-    url: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: function (v) {
-          return !v || /^https?:\/\/.+$/.test(v); // Valid URL or empty
-        },
-        message: "Invalid notification URL.",
-      },
-    },
     read: {
       type: Boolean,
       default: false,
@@ -43,10 +33,6 @@ const NotificationSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Recipient is required."],
       index: true,
-    },
-    emailed: {
-      type: Boolean,
-      default: false,
     },
     createdAt: {
       type: Date,
@@ -81,9 +67,7 @@ NotificationSchema.statics.createSystem = function (recipient, content, url) {
     recipient,
     content,
     type: "system",
-    url: url || undefined,
     read: false,
-    emailed: false,
   });
   return notif.save();
 };
