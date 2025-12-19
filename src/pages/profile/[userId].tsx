@@ -33,6 +33,7 @@ import {
   LinkedIn as LinkedInIcon,
   Share as ShareIcon,
   Verified as VerifiedIcon,
+  EmojiEvents as EmojiEventsIcon,
 } from '@mui/icons-material';
 import { getProfileById, selectProfileById, clearProfileById } from '@/store/slices/profileSlice';
 import HeaderDashboard from '@/components/HeaderDashboard';
@@ -834,91 +835,143 @@ const ProfileByIdPage: React.FC = () => {
               sx={{
                 p: 4,
                 mb: 3,
-                borderRadius: 2,
+                borderRadius: 3,
                 backgroundColor: '#fff',
-                border: '1px solid #E5E7EB'
+                border: '1px solid #E5E7EB',
+                overflow: 'hidden'
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <CodeIcon sx={{ color: '#6B7280', fontSize: 24, mr: 1.5 }} />
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#1F2937' }}>
-                  Technical Skills
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mr: 2
+                    }}
+                  >
+                    <CodeIcon sx={{ color: '#fff', fontSize: 24 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#1F2937', mb: 0.5 }}>
+                      Technical Skills
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#6B7280' }}>
+                      {profile.skills.length} skills verified
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {profile.skills.map((skill) => (
-                  <Box key={skill._id} sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)', md: '1 1 calc(33.333% - 11px)' } }}>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>
+                {profile.skills.map((skill, index) => {
+                  const score = skill.ScoreTest || 0;
+                  const circumference = 2 * Math.PI * 36;
+                  const strokeDashoffset = circumference - (score / 100) * circumference;
+
+                  return (
                     <Card
-                      variant="outlined"
+                      key={skill._id}
+                      elevation={0}
                       sx={{
                         p: 2.5,
-                        height: '100%',
-                        borderRadius: 2,
-                        backgroundColor: '#FAFAFA',
+                        borderRadius: '12px',
+                        background: '#fff',
                         border: '1px solid #E5E7EB',
-                        boxShadow: 'none'
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.08)',
+                          borderColor: score > 80 ? '#10B981' : score > 50 ? '#3B82F6' : '#F59E0B',
+                        }
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {skill?.name || 'N/A'}
-                        </Typography>
-                        {skill.ScoreTest && skill.ScoreTest > 0 && (
-                          <Chip
-                            icon={<VerifiedIcon sx={{ fontSize: 14 }} />}
-                            label="Verified"
-                            size="small"
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* Circular Progress */}
+                        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                          <svg width="80" height="80">
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="36"
+                              stroke="#F3F4F6"
+                              strokeWidth="6"
+                              fill="none"
+                            />
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="36"
+                              stroke={score > 80 ? '#10B981' : score > 50 ? '#3B82F6' : '#F59E0B'}
+                              strokeWidth="6"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={strokeDashoffset}
+                              transform="rotate(-90 40 40)"
+                              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                            />
+                          </svg>
+                          <Box
                             sx={{
-                              backgroundColor: '#ECFDF5',
-                              color: '#10B981',
-                              fontWeight: 500,
-                              fontSize: '0.7rem',
-                              border: '1px solid #D1FAE5',
-                              height: 24,
-                              '& .MuiChip-icon': {
-                                color: '#10B981'
-                              }
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              textAlign: 'center'
                             }}
-                          />
-                        )}
-                      </Box>
-                      {skill.experienceLevel && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                          Level: {skill.experienceLevel}
-                        </Typography>
-                      )}
-                      {(skill.NumberTestPassed && skill.NumberTestPassed > 0) || (skill.ScoreTest && skill.ScoreTest > 0) ? (
-                        <Box sx={{ mt: 1 }}>
-                          {skill.NumberTestPassed && skill.NumberTestPassed > 0 && (
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                              Tests Passed: {skill.NumberTestPassed}
+                          >
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1F2937', lineHeight: 1, fontSize: '1.25rem' }}>
+                              {score}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 500, fontSize: '0.65rem' }}>
+                              %
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Skill Info */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 600,
+                              color: '#1F2937',
+                              mb: 0.5,
+                              fontSize: '0.95rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {skill?.name || 'N/A'}
+                          </Typography>
+
+                          {score > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                              <VerifiedIcon sx={{ fontSize: 14, color: '#10B981' }} />
+                              <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600, fontSize: '0.7rem' }}>
+                                Verified
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {skill.experienceLevel && (
+                            <Typography variant="caption" sx={{ color: '#6B7280', fontSize: '0.7rem' }}>
+                              {skill.experienceLevel}
                             </Typography>
                           )}
-                          {skill.ScoreTest && skill.ScoreTest > 0 && (
-                            <>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                                Score: {skill.ScoreTest}%
-                              </Typography>
-                              <LinearProgress
-                                variant="determinate"
-                                value={skill.ScoreTest}
-                                sx={{
-                                  height: 6,
-                                  borderRadius: 3,
-                                  backgroundColor: '#E5E7EB',
-                                  '& .MuiLinearProgress-bar': {
-                                    backgroundColor: '#10B981',
-                                    borderRadius: 3
-                                  }
-                                }}
-                              />
-                            </>
-                          )}
                         </Box>
-                      ) : null}
+                      </Box>
                     </Card>
-                  </Box>
-                ))}
+                  );
+                })}
               </Box>
             </Paper>
           )}
@@ -929,94 +982,143 @@ const ProfileByIdPage: React.FC = () => {
               elevation={0}
               sx={{
                 p: 4,
-                borderRadius: 2,
+                borderRadius: 3,
                 backgroundColor: '#fff',
-                border: '1px solid #E5E7EB'
+                border: '1px solid #E5E7EB',
+                overflow: 'hidden'
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <PsychologyIcon sx={{ color: '#6B7280', fontSize: 24, mr: 1.5 }} />
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#1F2937' }}>
-                  Soft Skills
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mr: 2
+                    }}
+                  >
+                    <PsychologyIcon sx={{ color: '#fff', fontSize: 24 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#1F2937', mb: 0.5 }}>
+                      Soft Skills
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#6B7280' }}>
+                      {profile.softSkills.length} skills assessed
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {profile.softSkills.map((skill) => (
-                  <Box key={skill._id} sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)', md: '1 1 calc(33.333% - 11px)' } }}>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2.5 }}>
+                {profile.softSkills.map((skill, index) => {
+                  const score = skill.ScoreTest || 0;
+                  const circumference = 2 * Math.PI * 36;
+                  const strokeDashoffset = circumference - (score / 100) * circumference;
+
+                  return (
                     <Card
-                      variant="outlined"
+                      key={skill._id}
+                      elevation={0}
                       sx={{
                         p: 2.5,
-                        height: '100%',
-                        borderRadius: 2,
-                        backgroundColor: '#FAFAFA',
+                        borderRadius: '12px',
+                        background: '#fff',
                         border: '1px solid #E5E7EB',
-                        boxShadow: 'none'
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.08)',
+                          borderColor: score > 80 ? '#EC4899' : score > 50 ? '#F472B6' : '#FBBF24',
+                        }
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {skill?.name || 'N/A'}
-                        </Typography>
-                        {skill.ScoreTest && skill.ScoreTest > 0 && (
-                          <Chip
-                            icon={<VerifiedIcon sx={{ fontSize: 14 }} />}
-                            label="Verified"
-                            size="small"
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* Circular Progress */}
+                        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                          <svg width="80" height="80">
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="36"
+                              stroke="#F3F4F6"
+                              strokeWidth="6"
+                              fill="none"
+                            />
+                            <circle
+                              cx="40"
+                              cy="40"
+                              r="36"
+                              stroke={score > 80 ? '#EC4899' : score > 50 ? '#F472B6' : '#FBBF24'}
+                              strokeWidth="6"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={strokeDashoffset}
+                              transform="rotate(-90 40 40)"
+                              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                            />
+                          </svg>
+                          <Box
                             sx={{
-                              backgroundColor: '#ECFDF5',
-                              color: '#10B981',
-                              fontWeight: 500,
-                              fontSize: '0.7rem',
-                              border: '1px solid #D1FAE5',
-                              height: 24,
-                              '& .MuiChip-icon': {
-                                color: '#10B981'
-                              }
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              textAlign: 'center'
                             }}
-                          />
-                        )}
-                      </Box>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                        {skill.category && (
-                          <Chip label={skill.category} size="small" variant="outlined" />
-                        )}
-                        {skill.experienceLevel && (
-                          <Chip label={skill.experienceLevel} size="small" color="secondary" />
-                        )}
-                      </Box>
-                      {(skill.NumberTestPassed > 0 || skill.ScoreTest > 0) && (
-                        <Box sx={{ mt: 1 }}>
-                          {skill.NumberTestPassed > 0 && (
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                              Tests Passed: {skill.NumberTestPassed}
+                          >
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1F2937', lineHeight: 1, fontSize: '1.25rem' }}>
+                              {score}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#9CA3AF', fontWeight: 500, fontSize: '0.65rem' }}>
+                              %
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Skill Info */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 600,
+                              color: '#1F2937',
+                              mb: 0.5,
+                              fontSize: '0.95rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {skill?.name || 'N/A'}
+                          </Typography>
+
+                          {score > 0 && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                              <VerifiedIcon sx={{ fontSize: 14, color: '#10B981' }} />
+                              <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600, fontSize: '0.7rem' }}>
+                                Verified
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {skill.category && (
+                            <Typography variant="caption" sx={{ color: '#6B7280', fontSize: '0.7rem', display: 'block' }}>
+                              {skill.category}
                             </Typography>
                           )}
-                          {skill.ScoreTest > 0 && (
-                            <>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                                Proficiency: {skill.ScoreTest}%
-                              </Typography>
-                              <LinearProgress
-                                variant="determinate"
-                                value={skill.ScoreTest}
-                                sx={{
-                                  height: 6,
-                                  borderRadius: 3,
-                                  backgroundColor: '#E5E7EB',
-                                  '& .MuiLinearProgress-bar': {
-                                    backgroundColor: '#10B981',
-                                    borderRadius: 3
-                                  }
-                                }}
-                              />
-                            </>
-                          )}
                         </Box>
-                      )}
+                      </Box>
                     </Card>
-                  </Box>
-                ))}
+                  );
+                })}
               </Box>
             </Paper>
           )}
