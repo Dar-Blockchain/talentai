@@ -11,15 +11,14 @@ class NotificationSystemService {
    * Create a system notification
    * @param {string} recipientId - User ID of the recipient
    * @param {string} content - Notification content
-   * @param {string} url - Optional URL link
    * @returns {Promise<Object>} Created notification document
    */
-  static async createSystemNotification(recipientId, content, url = null) {
+  static async createSystemNotification(recipientId, content) {
     if (!recipientId || !content) {
       throw new Error('Recipient ID and content are required.');
     }
 
-    const notification = await Notification.createSystem(recipientId, content, url);
+    const notification = await Notification.createSystem(recipientId, content);
 
     // Emit real-time notification via socket.io
     try {
@@ -98,6 +97,17 @@ class NotificationSystemService {
     const notification = await this.getNotificationById(notificationId, userId, userRole);
     notification.read = true;
     await notification.save();
+    // Emit update to recipient via Socket.IO
+    try {
+      const io = socket.getIO();
+      io.to(String(notification.recipient)).emit('notificationRead', { id: notification._id, notification });
+      // Also emit updated unread count
+      const unread = await this.getUnreadCount(notification.recipient);
+      io.to(String(notification.recipient)).emit('unreadCountUpdated', { unreadCount: unread });
+    } catch (err) {
+      console.warn('Socket emit failed on markNotificationAsRead:', err.message || err);
+    }
+
     return notification;
   }
 
@@ -116,6 +126,16 @@ class NotificationSystemService {
       { read: true }
     );
 
+    // Emit to the user's room that all notifications were marked as read
+    try {
+      const io = socket.getIO();
+      io.to(String(userId)).emit('notificationsMarkedRead', { modifiedCount: result.modifiedCount });
+      const unread = await this.getUnreadCount(userId);
+      io.to(String(userId)).emit('unreadCountUpdated', { unreadCount: unread });
+    } catch (err) {
+      console.warn('Socket emit failed on markAllAsRead:', err.message || err);
+    }
+
     return { modifiedCount: result.modifiedCount };
   }
 
@@ -129,6 +149,16 @@ class NotificationSystemService {
   static async deleteNotification(notificationId, userId, userRole = null) {
     const notification = await this.getNotificationById(notificationId, userId, userRole);
     await notification.remove();
+    // Emit deletion event
+    try {
+      const io = socket.getIO();
+      io.to(String(notification.recipient)).emit('notificationDeleted', { id: notification._id });
+      const unread = await this.getUnreadCount(notification.recipient);
+      io.to(String(notification.recipient)).emit('unreadCountUpdated', { unreadCount: unread });
+    } catch (err) {
+      console.warn('Socket emit failed on deleteNotification:', err.message || err);
+    }
+
     return notification;
   }
 
@@ -155,10 +185,9 @@ class NotificationSystemService {
    * Broadcast a system notification to multiple users
    * @param {Array<string>} recipientIds - Array of user IDs
    * @param {string} content - Notification content
-   * @param {string} url - Optional URL link
    * @returns {Promise<Array>} Array of created notifications
    */
-  static async broadcastSystemNotification(recipientIds, content, url = null) {
+  static async broadcastSystemNotification(recipientIds, content) {
     if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
       throw new Error('At least one recipient ID is required.');
     }
@@ -169,7 +198,7 @@ class NotificationSystemService {
     const notifications = [];
     for (const recipientId of recipientIds) {
       try {
-        const notif = await this.createSystemNotification(recipientId, content, url);
+        const notif = await this.createSystemNotification(recipientId, content);
         notifications.push(notif);
       } catch (error) {
         console.error(`Failed to create notification for user ${recipientId}:`, error.message);

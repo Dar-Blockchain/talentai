@@ -3,8 +3,8 @@ const notificationSystemService = require('../../services/Notifications/notifica
 // Create a system notification
 exports.createSystemNotification = async (req, res) => {
   try {
-    const { recipient, content, url } = req.body;
-    const notification = await notificationSystemService.createSystemNotification(recipient, content, url);
+    const { recipient, content } = req.body;
+    const notification = await notificationSystemService.createSystemNotification(recipient, content);
     res.status(201).json(notification);
   } catch (err) {
     res.status(400).json({ error: err.message });

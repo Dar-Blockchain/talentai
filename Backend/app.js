@@ -21,7 +21,6 @@ const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
-const resetQuotaJob = require("./cron/resetQuota");
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -61,12 +60,9 @@ const pipelineInterviewRoutes = require("./routes/pipelineInterviewRoutes");
 
 require("dotenv").config();
 
-
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
 require("./cron/DailyExchangeRateUpdate");
-
-// Stripe payment routes
 
 const app = express();
 const initializeApp = async () => {
@@ -194,9 +190,9 @@ io.on('connection', (sock) => {
   // Allow clients to request the server to create a system notification
   sock.on('sendSystemNotification', async (data) => {
     try {
-      const { recipient, content, url } = data || {};
-      const notificationService = require('./services/notificationSystemService');
-      const notification = await notificationService.createSystemNotification(recipient, content, url);
+      const { recipient, content } = data || {};
+      const notificationService = require('./services/Notifications/notificationSystemService');
+      const notification = await notificationService.createSystemNotification(recipient, content);
       // Acknowledge to sender
       sock.emit('notificationCreated', notification);
     } catch (err) {
@@ -208,9 +204,9 @@ io.on('connection', (sock) => {
   // Allow broadcasting to multiple recipients via socket
   sock.on('broadcastSystemNotification', async (data) => {
     try {
-      const { recipients, content, url } = data || {};
-      const notificationService = require('./services/notificationSystemService');
-      const results = await notificationService.broadcastSystemNotification(recipients, content, url);
+      const { recipients, content } = data || {};
+      const notificationService = require('./services/Notifications/notificationSystemService');
+      const results = await notificationService.broadcastSystemNotification(recipients, content);
       sock.emit('broadcastCreated', { created: results.length });
     } catch (err) {
       console.error('Failed to broadcast system notifications via socket:', err);

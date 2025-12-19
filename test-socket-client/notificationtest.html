@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <title>Notification System Test</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    .log { border: 1px solid #ccc; padding: 10px; margin: 10px 0; height: 300px; overflow-y: auto; background: #f9f9f9; }
+    button { padding: 8px 15px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+    button:hover { background: #0056b3; }
+    input { padding: 8px; margin: 5px; }
+  </style>
+</head>
+<body>
+  <h2>🔔 Notification System Socket.IO Test</h2>
+  
+  <div>
+    <label>User ID:</label>
+    <input type="text" id="userIdInput" value="USER_ID_DE_TEST" />
+    <button onclick="connectSocket()">Se connecter</button>
+    <button onclick="disconnectSocket()">Se déconnecter</button>
+  </div>
+
+  <div>
+    <label>Contenu notification:</label>
+    <input type="text" id="notifContent" value="Test Socket notification" />
+    <button onclick="sendTest()">Créer Notification</button>
+  </div>
+
+  <div class="log" id="logBox"></div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  let socket = null;
+
+  function addLog(msg) {
+    const log = document.getElementById('logBox');
+    const timestamp = new Date().toLocaleTimeString();
+    log.innerHTML += `<div>[${timestamp}] ${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function connectSocket() {
+    const userId = document.getElementById('userIdInput').value;
+    if (!userId) {
+      alert('Entrez un User ID');
+      return;
+    }
+    if (socket && socket.connected) {
+      addLog('❌ Déjà connecté');
+      return;
+    }
+
+    socket = io('http://localhost:5000'); // port 5000
+    
+    socket.on('connect', () => {
+      addLog(`✅ Connecté au serveur (Socket ID: ${socket.id})`);
+      socket.emit('join', userId);
+      addLog(`📍 Rejoint room: ${userId}`);
+    });
+    socket.on('connect', () => {
+      addLog(`✅ Connecté au serveur (Socket ID: ${socket.id})`);
+      socket.emit('join', userId);
+      addLog(`📍 Rejoint room: ${userId}`);
+    });
+
+    socket.on('connect_error', (error) => {
+      addLog(`❌ Erreur connexion: ${error.message}`);
+    });
+
+    socket.on('disconnect', () => {
+      addLog(`⚠️  Déconnecté du serveur`);
+    });
+
+    // Écoute des événements
+    ['notification','notificationRead','notificationsMarkedRead','notificationDeleted','unreadCountUpdated'].forEach(ev=>{
+      socket.on(ev, data => {
+        addLog(`📨 EVENT: <strong>${ev}</strong> → ${JSON.stringify(data)}`);
+      });
+    });
+  }
+
+  function disconnectSocket() {
+    if (socket) {
+      socket.disconnect();
+      addLog('🔌 Déconnecté');
+      socket = null;
+    }
+  }
+
+  // Exemple : demander au serveur de créer une notification
+  function sendTest() {
+    if (!socket || !socket.connected) {
+      alert('Connectez-vous d\'abord!');
+      return;
+    }
+    const userId = document.getElementById('userIdInput').value;
+    const content = document.getElementById('notifContent').value;
+    addLog(`⏳ Envoi notification...`);
+    socket.emit('sendSystemNotification', { recipient: userId, content: content, url: '/' });
+  }
+
+  // Exposed for direct console calls if needed
+  window.sendTest = sendTest;
+  window.connectSocket = connectSocket;
+  window.disconnectSocket = disconnectSocket;
+  window.addLog = addLog;
+</script>
+</body>
+</html>
