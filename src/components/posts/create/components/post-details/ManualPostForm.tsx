@@ -8,7 +8,6 @@ import {
   workModes,
 } from "@/components/preferences/data/candidateData";
 import SalaryRange from "./SalaryRange";
-import { updateJobField } from "@/store/slices/postGenerationSlice";
 import { updateJobDetails, updateLinkedinPost } from "@/store/slices/manualPostSlice";
 import { useEffect } from "react";
 
@@ -25,7 +24,7 @@ const ManualPostForm = () => {
   const dispatch = useDispatch<AppDispatch>();
   const manualPost = useSelector((state: any) => state.manualPost);
   const {
-    jobDetails: { title, employmentType, location, workMode, salary },
+    jobDetails: { title, employmentType, location, salary },
   } = manualPost;
 
   const handleSalaryChange = (
@@ -45,8 +44,7 @@ const ManualPostForm = () => {
   useEffect(() => {
     dispatch(
       updateJobDetails({
-        field: "description",
-        value: `${title} - ${employmentType} position. ${workMode} work arrangement. Competitive salary package offered.`,
+        "description": `${title} - ${employmentType} position. ${location} work arrangement. Competitive salary package offered.`,
       })
     );
     dispatch(
@@ -57,7 +55,7 @@ const ManualPostForm = () => {
             companyPitch: "Join our innovative team",
             roleOverview: `As a ${title}, you'll be at the heart of our team`,
             keyPoints: [
-              `${workMode} work`,
+              `${location} work`,
               `${employmentType} position`,
               `Salary: ${salary?.currency}${salary?.min?.toLocaleString()} - ${
                 salary?.currency
@@ -79,7 +77,7 @@ const ManualPostForm = () => {
               apply: "✨",
             },
           },
-          finalPost: `We're Hiring: ${title}\n\n${workMode} | ${employmentType}\nSalary: ${
+          finalPost: `We're Hiring: ${title}\n\n${location} | ${employmentType}\nSalary: ${
             salary?.currency
           }${salary?.min?.toLocaleString()} - ${
             salary?.currency
@@ -87,7 +85,7 @@ const ManualPostForm = () => {
         },
       )
     );
-  }, [title, employmentType, workMode, salary]);
+  }, [title, employmentType, location, salary]);
 
   return (
     <Box
@@ -128,7 +126,7 @@ const ManualPostForm = () => {
             value={title || ""}
             onChange={(e: any) =>
               dispatch(
-                updateJobField({ field: "title", value: e.target.value })
+                updateJobDetails({ "title": e.target.value })
               )
             }
             sx={inputStyle}
@@ -152,9 +150,8 @@ const ManualPostForm = () => {
             value={location}
             onChange={(e: any) =>
               dispatch(
-                updateJobField({
-                  field: "location",
-                  value: e.target.value,
+                updateJobDetails({
+                  "location": e.target.value,
                 })
               )
             }
@@ -217,9 +214,8 @@ const ManualPostForm = () => {
               value={employmentType}
               onChange={(e: any) =>
                 dispatch(
-                  updateJobField({
-                    field: "employmentType",
-                    value: e.target.value,
+                  updateJobDetails({
+                    "employmentType": e.target.value,
                   })
                 )
               }

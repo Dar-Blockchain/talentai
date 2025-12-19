@@ -22,7 +22,10 @@ import { AppDispatch, RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
 import AgentConfigurationStep from "./AgentConfigurationStep";
 import PaymentConfirmationModal from "./components/PaymentConfirmationModal";
-import { selectCreationType, setCreationType } from "@/store/slices/postGenerationSlice";
+import {
+  selectCreationType,
+  setCreationType,
+} from "@/store/slices/postGenerationSlice";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 
@@ -94,10 +97,11 @@ function CustomStepIcon(props: any) {
 }
 
 const CreatePostStepper: React.FC = () => {
-  const router = useRouter()
+  const router = useRouter();
 
   const { profile } = useSelector((state: RootState) => state.auth);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
+  const manualPost = useSelector((state: any) => state.manualPost);
   const { status: createConfigStatus } = useSelector(
     (state: RootState) => state.agentConfig.createConfig
   );
@@ -105,8 +109,11 @@ const CreatePostStepper: React.FC = () => {
     (state: any) => state.post.recruitmentFlow
   );
   const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
-  const creationType = useSelector(selectCreationType)
-  const steps = creationType === "ai" ? ["Job Details", "Agent Configuration"] : ["Job Details", "Agent Configuration", "Recruitment Flow"];
+  const creationType = useSelector(selectCreationType);
+  const steps =
+    creationType === "ai"
+      ? ["Job Details", "Agent Configuration"]
+      : ["Job Details", "Recruitment Flow", "Agent Configuration"];
 
   const {
     activeStep,
@@ -117,7 +124,14 @@ const CreatePostStepper: React.FC = () => {
     handleBack,
     setModalOpen,
     setPaymentModalOpen,
-  } = useCreatePostStepper(generatedPost, profile, recruitmentFlow, savedPost, creationType);
+  } = useCreatePostStepper(
+    generatedPost,
+    profile,
+    recruitmentFlow,
+    savedPost,
+    creationType,
+    manualPost
+  );
 
   return (
     <Box sx={{ my: 5, position: "relative", pb: 10 }}>
@@ -196,8 +210,13 @@ const CreatePostStepper: React.FC = () => {
       {/* Step Content */}
       <Box sx={{ mt: 2 }}>
         {activeStep === 0 && <PostDetailsStep />}
-        {activeStep === 1 && <AgentConfigurationStep />}
-        {activeStep === 2 && <RecruitmentFlowStep />}
+        {activeStep === 1 && creationType === "manual" && (
+          <RecruitmentFlowStep />
+        )}
+        {((activeStep === 2 && creationType === "manual") ||
+          (activeStep === 1 && creationType === "ai")) && (
+          <AgentConfigurationStep />
+        )}
       </Box>
 
       {/* Bottom Buttons */}
@@ -244,7 +263,7 @@ const CreatePostStepper: React.FC = () => {
             background: "rgba(0, 234, 144, 1)",
             color: "black",
           }}
-          disabled={!generatedPost}
+          disabled={!generatedPost && creationType === "ai"}
           loading={activeStep === 1 && createConfigStatus === "loading"}
         >
           {activeStep === steps.length - 1 ? "Finish" : "Next"}

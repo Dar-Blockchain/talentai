@@ -13,13 +13,18 @@ import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { useToast } from "@/hooks/useToast";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 import { useRouter } from "next/router";
+import {
+  validateAIPostStep0,
+  validateManualPostStep0,
+} from "@/validations/postValidation";
 
 export const useCreatePostStepper = (
   generatedPost: any,
   profile: any,
   recruitmentFlow: any,
   savedPost: any,
-  creationType: any
+  creationType: any,
+  manualPost: any
 ) => {
   const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
@@ -34,125 +39,12 @@ export const useCreatePostStepper = (
 
   const { nodes, edges } = recruitmentFlow;
 
-  const validateStep0 = () => {
-    const jobDetails = generatedPost?.jobDetails;
-    const hardSkills = generatedPost?.skillAnalysis?.requiredSkills || [];
-    const softSkills = generatedPost?.skillAnalysis?.softSkills || [];
-
-    if (!jobDetails?.title?.trim()) {
-      showToast({ message: "Job title is required", severity: "error" });
-      return false;
-    }
-
-    if (!jobDetails?.experienceLevel) {
-      showToast({ message: "Experience level is required", severity: "error" });
-      return false;
-    }
-
-    if (!jobDetails?.description?.trim()) {
-      showToast({ message: "Job description is required", severity: "error" });
-      return false;
-    }
-
-    if (!jobDetails?.employmentType) {
-      showToast({ message: "Employment type is required", severity: "error" });
-      return false;
-    }
-
-    if (!jobDetails?.location?.trim()) {
-      showToast({ message: "Work mode is required", severity: "error" });
-      return false;
-    }
-
-    // Salary validation
-    if (
-      !jobDetails?.salary?.min ||
-      !jobDetails?.salary?.max ||
-      !jobDetails?.salary?.currency
-    ) {
-      showToast({
-        message: "Salary minimum, maximum, and currency are required",
-        severity: "error",
-      });
-      return false;
-    }
-
-    const minSalary = Number(jobDetails.salary.min);
-    const maxSalary = Number(jobDetails.salary.max);
-
-    if (isNaN(minSalary) || isNaN(maxSalary)) {
-      showToast({
-        message: "Salary must be a valid number",
-        severity: "error",
-      });
-      return false;
-    }
-
-    if (minSalary <= 0 || maxSalary <= 0) {
-      showToast({
-        message: "Salary must be greater than 0",
-        severity: "error",
-      });
-      return false;
-    }
-
-    if (minSalary > maxSalary) {
-      showToast({
-        message: "Minimum salary cannot be greater than maximum salary",
-        severity: "error",
-      });
-      return false;
-    }
-
-    if (hardSkills.length === 0) {
-      showToast({
-        message: "At least one hard skill is required",
-        severity: "error",
-      });
-      return false;
-    }
-
-    if (softSkills.length === 0) {
-      showToast({
-        message: "At least one soft skill is required",
-        severity: "error",
-      });
-      return false;
-    }
-
-    const allSkills = [...hardSkills, ...softSkills];
-    const total = allSkills.reduce((sum, s) => sum + (s.percentage || 0), 0);
-
-    if (total !== 100) {
-      showToast({
-        message: `Total skill percentage must equal 100%. Current total: ${total}%`,
-        severity: "error",
-      });
-      return false;
-    }
-
-    if (!jobDetails?.requirements?.length) {
-      showToast({
-        message: "At least one requirement is required",
-        severity: "error",
-      });
-      return false;
-    }
-
-    if (!jobDetails?.responsibilities?.length) {
-      showToast({
-        message: "At least one responsibility is required",
-        severity: "error",
-      });
-      return false;
-    }
-
-    return true;
-  };
-
   const handleNext = async (shouldContinue?: boolean) => {
     if (activeStep === 0 && !shouldContinue) {
-      const isValid = creationType === "ai" ? validateStep0() : validateManualStep0();
+      const isValid =
+        creationType === "ai"
+          ? validateAIPostStep0(generatedPost, showToast)
+          : validateManualPostStep0(manualPost, showToast);
       if (!isValid) return;
 
       setModalOpen(true);
@@ -160,7 +52,7 @@ export const useCreatePostStepper = (
 
       try {
         const jobId = savedPost?.jobData?._id;
-        const jobData = generatedPost;
+        const jobData = creationType === "ai" ? generatedPost : manualPost;
 
         let result: any;
 
@@ -182,38 +74,38 @@ export const useCreatePostStepper = (
           return;
         }
 
-        setModalMode("matching");
-        await dispatch(fetchJobMatches(result.jobData._id)).unwrap();
-
-        setModalMode("done");
+        if (creationType === "ai") {
+          setModalMode("matching");
+          await dispatch(fetchJobMatches(result.jobData._id)).unwrap();
+          setModalMode("done");
+        }else{
+          setModalOpen(false);
+          setActiveStep((prev) => prev + 1);
+        }
       } catch (error) {
         setModalOpen(false);
       }
     }
 
     // ✅ Continue after modal
-    if (activeStep === 0 && shouldContinue) {
+    if (activeStep === 0 && shouldContinue && creationType === "ai") {
       setModalOpen(false);
       setActiveStep((prev) => prev + 1);
     }
 
     // ✅ STEP 1
-    if (activeStep === 1) {
+    if ((activeStep === 1 && creationType === "ai") || (activeStep === 2 && creationType === "manual")) {
       await dispatch(createAgentConfig()).unwrap();
-      if (creationType === "ai") {
-        router.push("/dashboard/company");
-        showToast({
-          message: "Job post created successfully.",
-          severity: "success",
-        });
-        return;
-      } else {
-        setActiveStep((prev) => prev + 1);
-      }
+      router.push("/dashboard/company");
+      showToast({
+        message: "Job post created successfully.",
+        severity: "success",
+      });
+      return;
     }
 
     // ✅ STEP 2 — Recruitment flow
-    if (activeStep === 2 && savedPost?.jobData?._id) {
+    if (activeStep === 1 && savedPost?.jobData?._id) {
       setPaymentModalOpen(true);
       const sequenceData = nodes.map((node: any, index: number) => ({
         ...node,
