@@ -7,10 +7,14 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// Import utilities & logger
+const logger = require('./utils/logger');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+
 // Import configurations
 const { registerMiddlewares } = require('./config/middleware');
 const { registerRoutes } = require('./config/routes');
-const socketHandlers = require('./socket-handlers');
+const { initializeSocketServer } = require('./socket-handlers/socketServer');
 
 // Import services
 const connectDB = require('./config/database');
@@ -39,22 +43,18 @@ process.on('warning', (warning) => {
 
 // Initialize Socket.IO
 const io = socket.init(server);
-
-io.on('connection', (sock) => {
-  console.log('👤 Utilisateur connecté à Socket.IO:', sock.id);
-  socketHandlers.registerAllHandlers(sock);
-});
+initializeSocketServer(io);
 
 /**
  * Application initialization sequence
  */
 const initializeApp = async () => {
-  console.log('🔄 Starting TalentAI Backend...');
-  console.log('📦 Loading environment configuration...');
+  logger.info('🔄 Starting TalentAI Backend...');
+  logger.info('📦 Loading environment configuration...');
 
   try {
     // Step 1: Connect to database
-    console.log('🔗 Connecting to database...');
+    logger.section('Connecting to database...');
     await connectDB();
 
     // Step 2: Initialize scheduler
@@ -66,45 +66,41 @@ const initializeApp = async () => {
     // Step 4: Register routes
     registerRoutes(app);
 
-    // Step 5: Initialize AI service
-    console.log('🤖 Initializing intelligent interview service...');
-    const serviceInitialized = await intelligentInterviewService.initialize();
-    console.log(
-      `${serviceInitialized ? '✅' : '⚠️ '} Interview service initialization ${
-        serviceInitialized ? 'completed' : 'completed with warnings'
-      }`
-    );
+    // Step 5: Register error handlers (MUST be last)
+    app.use(notFoundHandler);
+    app.use(errorHandler);
 
-    if (!serviceInitialized) {
-      console.warn('⚠️  Interview features may be limited');
+    // Step 6: Initialize AI service
+    logger.section('Initializing intelligent interview service...');
+    const serviceInitialized = await intelligentInterviewService.initialize();
+    
+    if (serviceInitialized) {
+      logger.success('Interview service initialization completed');
+    } else {
+      logger.warn('Interview service initialization completed with warnings - Interview features may be limited');
     }
 
-    // Step 6: Start HTTP server
-    console.log('⚡ Starting HTTP server...');
+    // Step 7: Start HTTP server
+    logger.section('Starting HTTP server...');
     const host = process.env.HOST || '0.0.0.0';
     const port = process.env.PORT || 5000;
 
     server.listen(port, host, () => {
-      console.log('');
-      console.log('🎉 TalentAI Backend successfully started!');
-      console.log(`🚀 Server running on ${host}:${port}`);
-      console.log(`🌐 Accessible from Windows at: http://172.23.207.114:${port}`);
-      console.log(`🌐 Accessible from WSL at: http://localhost:${port}`);
-      console.log('');
+      logger.header('TalentAI Backend successfully started!');
+      logger.success(`Server running on ${host}:${port}`);
+      logger.info(`Accessible from Windows at: http://172.23.207.114:${port}`);
+      logger.info(`Accessible from WSL at: http://localhost:${port}`);
+      logger.info(`API Documentation: http://localhost:${port}/api/docs`);
+      logger.info(`WebSocket endpoint: ws://172.23.207.114:${port}/socket.io/`);
 
-      // Step 7: Initialize WebSocket interview namespace
-      console.log('🎙️  Initializing interview WebSocket namespace...');
+      // Step 8: Initialize WebSocket interview namespace
+      logger.section('Initializing interview WebSocket namespace...');
       intelligentInterviewController.initializeHandlers(io);
-      console.log('✅ Interview namespace /interview initialized and ready');
-      console.log(`🔌 WebSocket endpoint: ws://172.23.207.114:${port}/socket.io/`);
-      console.log('');
-
-      console.log(`📖 API Documentation: http://localhost:${port}/api/docs`);
-      console.log(`💡 Hedera clients will initialize on first use (lazy loading)`);
-      console.log('');
+      logger.success('Interview namespace /interview initialized and ready');
+      logger.info('💡 Hedera clients will initialize on first use (lazy loading)');
     });
   } catch (error) {
-    console.error('❌ Failed to initialize application:', error);
+    logger.error('Failed to initialize application', error.message);
     process.exit(1);
   }
 };
