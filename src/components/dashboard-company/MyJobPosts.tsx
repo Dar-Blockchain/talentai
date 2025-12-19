@@ -248,108 +248,113 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           Job Posts
         </Typography>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <TextField
-            size="small"
-            placeholder="Search Jobs"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
-                  />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              width: 280,
-              height: "40px",
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "white",
-                borderRadius: "42px",
-                border: "1px solid rgba(165, 172, 181, 1)",
-                "& fieldset": {
-                  border: "none",
-                },
-                "&:hover": {
-                  borderColor: "rgba(165, 172, 181, 0.8)",
-                },
-              },
-            }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={
-              <Image
-                src="/icons/sort.svg"
-                alt="search"
-                width={24}
-                height={24}
+          {/* Search and Sort Controls - Only show in full view */}
+          {!showViewAll && (
+            <>
+              <TextField
+                size="small"
+                placeholder="Search Jobs"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon
+                        sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  width: 280,
+                  height: "40px",
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "white",
+                    borderRadius: "42px",
+                    border: "1px solid rgba(165, 172, 181, 1)",
+                    "& fieldset": {
+                      border: "none",
+                    },
+                    "&:hover": {
+                      borderColor: "rgba(165, 172, 181, 0.8)",
+                    },
+                  },
+                }}
               />
-            }
-            onClick={handleSortMenuOpen}
-            sx={{
-              height: "40px",
-              borderColor: "rgba(165, 172, 181, 1)",
-              color: "rgba(84, 98, 116, 1)",
-              textTransform: "uppercase",
-              fontWeight: 400,
-              fontSize: "0.875rem",
-              borderRadius: "42px",
-              px: 2.5,
-              "&:hover": {
-                borderColor: "rgba(165, 172, 181, 0.8)",
-                backgroundColor: "#f9fafb",
-              },
-            }}
-          >
-            SORT
-          </Button>
-          <Menu
-            anchorEl={sortMenuAnchor}
-            open={Boolean(sortMenuAnchor)}
-            onClose={handleSortMenuClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-          >
-            <MenuItem
-              onClick={() => handleSortChange("newest")}
-              selected={sortBy === "newest"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Newest First
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleSortChange("oldest")}
-              selected={sortBy === "oldest"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Oldest First
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleSortChange("title-asc")}
-              selected={sortBy === "title-asc"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Title (A-Z)
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleSortChange("title-desc")}
-              selected={sortBy === "title-desc"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Title (Z-A)
-            </MenuItem>
-          </Menu>
+              <Button
+                variant="outlined"
+                startIcon={
+                  <Image
+                    src="/icons/sort.svg"
+                    alt="search"
+                    width={24}
+                    height={24}
+                  />
+                }
+                onClick={handleSortMenuOpen}
+                sx={{
+                  height: "40px",
+                  borderColor: "rgba(165, 172, 181, 1)",
+                  color: "rgba(84, 98, 116, 1)",
+                  textTransform: "uppercase",
+                  fontWeight: 400,
+                  fontSize: "0.875rem",
+                  borderRadius: "42px",
+                  px: 2.5,
+                  "&:hover": {
+                    borderColor: "rgba(165, 172, 181, 0.8)",
+                    backgroundColor: "#f9fafb",
+                  },
+                }}
+              >
+                SORT
+              </Button>
+              <Menu
+                anchorEl={sortMenuAnchor}
+                open={Boolean(sortMenuAnchor)}
+                onClose={handleSortMenuClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <MenuItem
+                  onClick={() => handleSortChange("newest")}
+                  selected={sortBy === "newest"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Newest First
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("oldest")}
+                  selected={sortBy === "oldest"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Oldest First
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("title-asc")}
+                  selected={sortBy === "title-asc"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Title (A-Z)
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("title-desc")}
+                  selected={sortBy === "title-desc"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Title (Z-A)
+                </MenuItem>
+              </Menu>
+            </>
+          )}
 
-          {/* View All Button - After Sort */}
+          {/* View All Button */}
           {showViewAll && onViewAll && (
             <Button
               variant="outlined"
