@@ -23,6 +23,14 @@ interface PostPaymentState {
   error: string | null;
   data: any | null;
 }
+interface PaginationState {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
 
 interface PostState {
   steps: any[];
@@ -33,6 +41,7 @@ interface PostState {
   myPosts: any[];
   myPostsLoading: boolean;
   myPostsError: string | null;
+  myPostsPagination: PaginationState;
   jobMatches: any[];
   jobMatchesLoading: boolean;
   jobMatchesError: string | null;
@@ -57,6 +66,14 @@ const initialState: PostState = {
   myPosts: [],
   myPostsLoading: false,
   myPostsError: null,
+  myPostsPagination: {
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  },
   jobMatches: [],
   jobMatchesLoading: false,
   jobMatchesError: null,
@@ -267,16 +284,25 @@ export const postRecruitmentSteps = createAsyncThunk(
 
 // Async thunk to fetch company posts (my posts)
 export const fetchMyPosts = createAsyncThunk(
-  "post/fetchMyPosts",
-  async (_, { rejectWithValue }) => {
+  'post/fetchMyPosts',
+  async (params: { page?: number; limit?: number; search?: string; sort?: string } = {}, { rejectWithValue }) => {
     try {
+      const { page = 1, limit = 10, search = '', sort = 'newest' } = params;
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("api_token="))
         ?.split("=")[1];
 
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search }),
+        sort,
+      });
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts?${queryParams}`,
         {
           method: "GET",
           headers: {
@@ -292,7 +318,17 @@ export const fetchMyPosts = createAsyncThunk(
       }
 
       const data = await response.json();
-      return Array.isArray(data) ? data : data.data || [];
+      return {
+        posts: data.results || [],
+        pagination: {
+          total: data.total || 0,
+          page: data.page || 1,
+          limit: data.limit || 10,
+          totalPages: data.totalPages || 1,
+          hasNextPage: data.hasNextPage || false,
+          hasPrevPage: data.hasPrevPage || false,
+        }
+      };
     } catch (error: any) {
       return rejectWithValue(
         error.message || "An error occurred while fetching posts"
@@ -547,13 +583,11 @@ const postSlice = createSlice({
         state.myPostsLoading = true;
         state.myPostsError = null;
       })
-      .addCase(
-        fetchMyPosts.fulfilled,
-        (state, action: PayloadAction<any[]>) => {
-          state.myPostsLoading = false;
-          state.myPosts = action.payload || [];
-        }
-      )
+      .addCase(fetchMyPosts.fulfilled, (state, action: PayloadAction<any>) => {
+        state.myPostsLoading = false;
+        state.myPosts = action.payload.posts || [];
+        state.myPostsPagination = action.payload.pagination;
+      })
       .addCase(fetchMyPosts.rejected, (state, action) => {
         state.myPostsLoading = false;
         state.myPostsError = action.payload as string;
@@ -667,8 +701,6 @@ export const selectJobMatches = (state: { post: PostState }) =>
   state.post.jobMatches;
 export const selectJobMatchesLoading = (state: { post: PostState }) =>
   state.post.jobMatchesLoading;
-export const selectJobMatchesError = (state: { post: PostState }) =>
-  state.post.jobMatchesError;
 
 export const selectDeletePostLoading = (state: { post: PostState }) =>
   state.post.deletePostLoading;
@@ -681,6 +713,12 @@ export const selectCurrentJobLoading = (state: { post: PostState }) =>
   state.post.currentJobLoading;
 export const selectCurrentJobError = (state: { post: PostState }) =>
   state.post.currentJobError;
+export const selectMyPostsPagination = (state: { post: PostState }) => state.post.myPostsPagination;
+
+export const selectJobMatchesError = (state: { post: PostState }) => state.post.jobMatchesError;
+
+
+
 
 // Selector to get a job from myPosts by ID (if already loaded)
 export const selectJobById = (jobId: string) => (state: { post: PostState }) =>
@@ -690,7 +728,7 @@ export const selectRecommended = (state: { post: PostState }) => ({
   items: state.post.recommended.items,
   loading: state.post.recommended.loading,
   error: state.post.recommended.error,
-});
+})
 
 export const selectPostPayment = (state: { post: PostState }) => ({
   data: state.post.postPayment.data,

@@ -47,6 +47,75 @@ const getUnlockedCandidatesByCompany = async (idCompany) => {
 };
 
 /**
+ * Get all unlocked candidates by company with pagination
+ */
+const getUnlockedCandidatesByCompanyWithPagination = async (idCompany, page = 1, limit = 6) => {
+  try {
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count and candidates with pagination
+    const [unlockedCandidates, total] = await Promise.all([
+      UnlockCandidate.find({ idCompany })
+        .populate({
+          path: 'idCandidate',
+          select: 'email profile',
+          populate: { path: 'profile', select: 'firstName lastName targetRole' }
+        })
+        .populate('idJob', 'title description')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      UnlockCandidate.countDocuments({ idCompany })
+    ]);
+
+    // Map to return only requested fields from candidate profile
+    const result = unlockedCandidates.map((rec) => {
+      const candidate = rec.idCandidate || {};
+      const profile = candidate.profile || {};
+      return {
+        _id: rec._id,
+        idCandidate: candidate._id || null,
+        email: candidate.email || null,
+        firstName: profile.firstName || null,
+        lastName: profile.lastName || null,
+        targetRole: profile.targetRole || null,
+        idJob: rec.idJob || null,
+        unlockPrice: rec.unlockPrice,
+        transactionId: rec.transactionId,
+        createdAt: rec.createdAt,
+        updatedAt: rec.updatedAt
+      };
+    });
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    console.log("Unlocked candidates fetched with pagination:", { page: pageNum, limit: limitNum, total });
+
+    return {
+      unlockedCandidates: result,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasNextPage,
+        hasPrevPage
+      }
+    };
+  } catch (error) {
+    console.error("Error getting unlocked candidates with pagination:", error);
+    throw error;
+  }
+};
+
+/**
  * Get all unlock candidates by company (including pending)
  */
 const getUnlockCandidatesByCompany = async (idCompany) => {
@@ -184,6 +253,7 @@ const getUnlockById = async (unlockId) => {
 
 module.exports = {
   getUnlockedCandidatesByCompany,
+  getUnlockedCandidatesByCompanyWithPagination,
   getUnlockCandidatesByCompany,
   unlockCandidate,
   completeUnlock,

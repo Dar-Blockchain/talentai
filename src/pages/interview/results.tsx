@@ -1522,7 +1522,7 @@ export default function InterviewResults() {
                 </Typography>
               </Paper>
             </Box>
-
+{/* 
             {/* Duration */}
             <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
               <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
@@ -1531,7 +1531,8 @@ export default function InterviewResults() {
                 </Typography>
                 <Typography variant="h6" fontWeight={600} mt={1}>
                   {(() => {
-                    const totalSeconds = analysis.duration;
+                    // Convert milliseconds to seconds
+                    const totalSeconds = Math.floor(analysis.duration / 1000);
                     const hours = Math.floor(totalSeconds / 3600);
                     const minutes = Math.floor((totalSeconds % 3600) / 60);
                     const seconds = totalSeconds % 60;
@@ -1546,7 +1547,7 @@ export default function InterviewResults() {
                   })()}
                 </Typography>
               </Paper>
-            </Box>
+            </Box> 
 
             {/* Completed Date */}
             <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>

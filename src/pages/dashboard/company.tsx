@@ -12,6 +12,7 @@ import {
   selectMyPosts,
   selectMyPostsError,
   selectMyPostsLoading,
+  selectMyPostsPagination,
   fetchJobMatches,
   selectJobMatches,
   selectJobMatchesError,
@@ -19,6 +20,7 @@ import {
   deletePost,
   selectDeletePostLoading,
 } from "@/store/slices/postSlice";
+import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
 import CompanyOnly from "@/components/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
@@ -65,6 +67,8 @@ const DashboardCompany = () => {
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);
   const myJobs = useSelector(selectMyPosts);
+  const pagination = useSelector(selectMyPostsPagination);
+  const unlockedCandidatesData = useSelector((state: any) => state.candidate.unlockedData);
   const [activeSection, setActiveSection] = useState<"jobs" | "unlockedCandidates" | "matches" | "all">("all");
 
   const [selectedJob, setSelectedJob] = useState("");
@@ -76,6 +80,14 @@ const DashboardCompany = () => {
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [jobToDelete, setJobToDelete] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobsPerPage] = useState(10); // Set items per page
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
+
+  // Unlocked candidates state
+  const [candidatesPage, setCandidatesPage] = useState(1);
+  const [candidatesPerPage] = useState(10);
 
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
@@ -84,12 +96,40 @@ const DashboardCompany = () => {
     }
   }, [dispatch, profile?._id]);
 
-  // Fetch job posts via Redux
-  const fetchMyJobs = () => dispatch(fetchMyPosts());
+  // Map frontend sort values to backend format
+  const mapSortToBackend = (sort: "newest" | "oldest" | "title-asc" | "title-desc") => {
+    switch (sort) {
+      case "newest":
+        return "newest";
+      case "oldest":
+        return "oldest";
+      case "title-asc":
+        return "title_asc";
+      case "title-desc":
+        return "title_desc";
+      default:
+        return "newest";
+    }
+  };
+
+  // Fetch job posts via Redux with pagination, search, and sort
+  const fetchMyJobs = (page = currentPage, limit = jobsPerPage, search = searchQuery, sort = sortBy) =>
+    dispatch(fetchMyPosts({ page, limit, search, sort: mapSortToBackend(sort) }));
 
   useEffect(() => {
     fetchMyJobs();
-  }, []);
+  }, [currentPage, searchQuery, sortBy]); // Refetch when page, search, or sort changes
+
+  // Fetch unlocked candidates via Redux with pagination
+  const fetchCandidates = (page = candidatesPage, limit = candidatesPerPage) =>
+    dispatch(fetchUnlockedCandidates({ page, limit }));
+
+  useEffect(() => {
+    // Only fetch when in unlockedCandidates full view (not in "all" overview)
+    if (activeSection === "unlockedCandidates") {
+      fetchCandidates();
+    }
+  }, [candidatesPage, activeSection]); // Refetch when page or section changes
 
   const handleDeleteJob = async (jobId: string) => {
     await dispatch(deletePost(jobId));
@@ -159,6 +199,17 @@ const DashboardCompany = () => {
               isDeleting={isDeleting}
               onCancelDelete={handleCancelDelete}
               onConfirmDelete={() => handleDeleteJob(jobToDelete)}
+              pagination={activeSection === "all" ? undefined : pagination}
+              onPageChange={(page) => setCurrentPage(page)}
+              onSearchChange={(search) => setSearchQuery(search)}
+              onSortChange={(sort) => setSortBy(sort)}
+              searchQuery={searchQuery}
+              sortBy={sortBy}
+              onViewAll={() => setActiveSection("jobs")}
+              onBackToAll={() => setActiveSection("all")}
+              hidden={activeSection !== "all" && activeSection !== "jobs"}
+              showViewAll={activeSection === "all"}
+              initialDisplayCount={3}
             />
           ) : (
             <MatchingProfiles
@@ -173,14 +224,22 @@ const DashboardCompany = () => {
             />
           )}
 
-          <UnlockedCandidates   
-            onViewAll={() => setActiveSection("unlockedCandidates")}
-            hidden={activeSection !== "all" && activeSection !== "unlockedCandidates"}
-          />
+          {/* Only show when activeSection is "all" or "unlockedCandidates" */}
+          {(activeSection === "all" || activeSection === "unlockedCandidates") && (
+            <UnlockedCandidates
+              onViewAll={() => setActiveSection("unlockedCandidates")}
+              onBackToAll={() => setActiveSection("all")}
+              hidden={activeSection !== "all" && activeSection !== "unlockedCandidates"}
+              showViewAll={activeSection === "all"}
+              initialDisplayCount={3}
+              pagination={activeSection === "all" ? undefined : unlockedCandidatesData.pagination}
+              onPageChange={(page) => setCandidatesPage(page)}
+            />
+          )}
 
-          {/* HR Agents Section */}
-          {profile?._id && <HRAgentsTable companyId={profile._id} />}
-   
+          {/* HR Agents Section - Only show when activeSection is "all" */}
+          {/* {activeSection === "all" && profile?._id && <HRAgentsTable companyId={profile._id} />} */}
+
           {/* Add Bid Dialog */}
           <UnlockCandidate
             open={bidDialogOpen}
@@ -189,8 +248,9 @@ const DashboardCompany = () => {
             selectedJob={selectedJob}
             companyId={profile?.userId?._id || ""}
           />
-          {/* Company Profiles & Assessments Section */}
-          <CompanyProfilesAssessments profile={profile} />
+
+          {/* Company Profiles & Assessments Section - Only show when activeSection is "all" */}
+          {activeSection === "all" && <CompanyProfilesAssessments profile={profile} />}
         </Container>
       </Box>
     </CompanyOnly>

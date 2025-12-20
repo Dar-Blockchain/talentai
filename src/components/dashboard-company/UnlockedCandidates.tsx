@@ -5,18 +5,18 @@ import {
   Button,
   CircularProgress,
   Avatar,
+  Pagination,
 } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import {
   fetchUnlockedCandidates,
-  resetUnlockedData,
 } from "@/store/slices/candidateSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
-import { ArrowForward } from "@mui/icons-material";
+import { ArrowForward, ArrowBack } from "@mui/icons-material";
 
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -27,23 +27,53 @@ const StyledCard = styled(Box)(({ theme }) => ({
 }));
 interface SectionProps {
   onViewAll: () => void;
+  onBackToAll?: () => void;
   hidden: boolean;
+  showViewAll?: boolean;
+  initialDisplayCount?: number;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  onPageChange?: (page: number) => void;
 }
-const UnlockedCandidates: React.FC<SectionProps> = ({onViewAll, hidden}) => {
+
+const UnlockedCandidates: React.FC<SectionProps> = ({
+  onViewAll,
+  onBackToAll,
+  hidden,
+  showViewAll = true,
+  initialDisplayCount = 3,
+  pagination,
+  onPageChange,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
-  const [viewAll, setViewAll] = useState(false);
   const { loading, error, candidates } = useSelector(
     (state: RootState) => state.candidate.unlockedData
   );
 
   useEffect(() => {
-    dispatch(fetchUnlockedCandidates());
+    // Fetch candidates with or without pagination based on showViewAll
+    if (showViewAll) {
+      // Overview mode: fetch limited candidates
+      dispatch(fetchUnlockedCandidates({ page: 1, limit: initialDisplayCount }));
+    }
+    // Note: removed resetUnlockedData from cleanup to prevent clearing data
+  }, [dispatch, showViewAll, initialDisplayCount]);
 
-    return () => {
-      dispatch(resetUnlockedData());
-    };
-  }, [dispatch]);
   if (hidden) return null;
+
+  // Ensure candidates is an array
+  const candidatesArray = Array.isArray(candidates) ? candidates : [];
+
+  // Determine which candidates to display
+  const displayCandidates = showViewAll
+    ? candidatesArray.slice(0, initialDisplayCount)
+    : candidatesArray;
   return (
     <StyledCard>
       <Box
@@ -81,25 +111,55 @@ const UnlockedCandidates: React.FC<SectionProps> = ({onViewAll, hidden}) => {
         >
           Unlocked Candidates
         </Typography>
-        <Box>
-          <Button
-            variant="outlined"
-            onClick={onViewAll}
-            endIcon={<ArrowForward />}
-            sx={{
-              border: "none",
-              background: "none",
-              color: "rgba(41, 210, 145, 1)",
-              textDecoration: "none",
-              "&:hover": {
+
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          {/* View All Button */}
+          {showViewAll && onViewAll && (
+            <Button
+              variant="outlined"
+              onClick={onViewAll}
+              endIcon={<ArrowForward />}
+              sx={{
+                border: "none",
                 background: "none",
-                textDecoration: "none",
-                color: "rgba(41, 210, 145, 0.8)",
-              },
-            }}
-          >
-            View all
-          </Button>
+                color: "rgba(41, 210, 145, 1)",
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.875rem",
+                px: 2,
+                "&:hover": {
+                  background: "rgba(41, 210, 145, 0.04)",
+                  border: "none",
+                },
+              }}
+            >
+              View All
+            </Button>
+          )}
+
+          {/* Back Button */}
+          {!showViewAll && onBackToAll && (
+            <Button
+              variant="outlined"
+              onClick={onBackToAll}
+              startIcon={<ArrowBack />}
+              sx={{
+                border: "none",
+                background: "none",
+                color: "rgba(41, 210, 145, 1)",
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.875rem",
+                px: 2,
+                "&:hover": {
+                  background: "rgba(41, 210, 145, 0.04)",
+                  border: "none",
+                },
+              }}
+            >
+              Back
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -148,7 +208,7 @@ const UnlockedCandidates: React.FC<SectionProps> = ({onViewAll, hidden}) => {
             {error}
           </Typography>
         </Box>
-      ) : !candidates || candidates.length === 0 ? (
+      ) : candidatesArray.length === 0 ? (
         <Box
           sx={{
             display: "flex",
@@ -220,9 +280,10 @@ const UnlockedCandidates: React.FC<SectionProps> = ({onViewAll, hidden}) => {
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* Candidate Cards */}
-          {candidates.map((candidate: any) => (
+        <>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Candidate Cards */}
+            {displayCandidates.map((candidate: any) => (
             <Box
               key={candidate?._id}
               sx={{
@@ -348,7 +409,35 @@ const UnlockedCandidates: React.FC<SectionProps> = ({onViewAll, hidden}) => {
               </Button>
             </Box>
           ))}
-        </Box>
+          </Box>
+
+          {/* Pagination - Only show in full view */}
+          {!showViewAll && pagination && pagination.totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={pagination.totalPages}
+                page={pagination.page}
+                onChange={(_, page) => onPageChange && onPageChange(page)}
+                color="primary"
+                shape="rounded"
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    color: "#6b7280",
+                    fontWeight: 500,
+                    "&.Mui-selected": {
+                      backgroundColor: "#e0f2fe",
+                      color: "#0369a1",
+                      fontWeight: 600,
+                    },
+                    "&:hover": {
+                      backgroundColor: "#f3f4f6",
+                    },
+                  },
+                }}
+              />
+            </Box>
+          )}
+        </>
       )}
     </StyledCard>
   );

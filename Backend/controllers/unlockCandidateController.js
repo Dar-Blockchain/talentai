@@ -1,18 +1,36 @@
 const unlockCandidateService = require("../services/unlockCandidateService");
 
 /**
- * Get all unlocked candidates by company
+ * Get all unlocked candidates by company with pagination
  */
 module.exports.getUnlockedCandidatesByCompany = async (req, res) => {
   try {
     const idCompany = req.user._id;
+    const {
+      page = 1,
+      limit = 6,
+    } = req.query;
 
-    const unlockedCandidates = await unlockCandidateService.getUnlockedCandidatesByCompany(idCompany);
+    // Parse and validate pagination
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+
+    const result = await unlockCandidateService.getUnlockedCandidatesByCompanyWithPagination(
+      idCompany,
+      pageNum,
+      limitNum
+    );
 
     res.status(200).json({
       success: true,
       message: "Unlocked candidates retrieved successfully",
-      data: unlockedCandidates
+      results: result.unlockedCandidates,
+      total: result.pagination.total,
+      page: result.pagination.page,
+      limit: result.pagination.limit,
+      totalPages: result.pagination.totalPages,
+      hasNextPage: result.pagination.hasNextPage,
+      hasPrevPage: result.pagination.hasPrevPage,
     });
   } catch (error) {
     console.error("Error getting unlocked candidates:", error);

@@ -771,24 +771,44 @@ const hrAgentController = {
   },
 
   /**
-   * Get agents by company
+   * Get agents by company with pagination
    */
   async getAgentsByCompany(req, res) {
     try {
       const companyId = req.user._id;
+      const {
+        page = 1,
+        limit = 6,
+      } = req.query;
 
-      // Récupérer les agents
-      const agents = await AgentModel.find(
-        { Company: companyId },
-        { _id: 1, name: 1, postId: 1 }
-      )
-        .populate({ path: "postId", select: "jobDetails user" })
-        .lean();
+      // Parse and validate pagination
+      const pageNum = Math.max(1, parseInt(page, 10));
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+      const skip = (pageNum - 1) * limitNum;
+
+      // Get total count and agents with pagination
+      const [agents, total] = await Promise.all([
+        AgentModel.find(
+          { Company: companyId },
+          { _id: 1, name: 1, postId: 1 }
+        )
+          .populate({ path: "postId", select: "jobDetails user" })
+          .skip(skip)
+          .limit(limitNum)
+          .lean(),
+        AgentModel.countDocuments({ Company: companyId })
+      ]);
 
       if (!agents || agents.length === 0) {
         return res.status(200).json({
           success: true,
-          data: [],
+          results: [],
+          total: total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: pageNum < Math.ceil(total / limitNum),
+          hasPrevPage: pageNum > 1,
           message: "Aucun agent trouvé pour cette société",
         });
       }
@@ -813,12 +833,22 @@ const hrAgentController = {
         });
       }
 
-      // Réponse JSON complète
+      // Calculate pagination info
+      const totalPages = Math.ceil(total / limitNum);
+      const hasNextPage = pageNum < totalPages;
+      const hasPrevPage = pageNum > 1;
+
+      // Réponse JSON complète avec pagination
       return res.status(200).json({
         success: true,
         companyId,
-        totalAgents: agents.length,
-        agents: agentsWithMatches,
+        results: agentsWithMatches,
+        total: total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: totalPages,
+        hasNextPage: hasNextPage,
+        hasPrevPage: hasPrevPage,
         message: "Agents loaded successfully. Use GET /hr-agents/:agentId/matches for match data."
       });
     } catch (error) {

@@ -20,7 +20,7 @@ import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDia
 import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { SearchOff } from "@mui/icons-material";
+import { SearchOff, ArrowForward, ArrowBack } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
 // Styled Components
@@ -56,6 +56,24 @@ interface MyJobPostsProps {
   isDeleting: boolean;
   onCancelDelete: () => void;
   onConfirmDelete: () => void;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  onPageChange?: (page: number) => void;
+  onSearchChange?: (search: string) => void;
+  onSortChange?: (sort: "newest" | "oldest" | "title-asc" | "title-desc") => void;
+  searchQuery?: string;
+  sortBy?: "newest" | "oldest" | "title-asc" | "title-desc";
+  onViewAll?: () => void;
+  onBackToAll?: () => void;
+  hidden?: boolean;
+  showViewAll?: boolean;
+  initialDisplayCount?: number;
 }
 
 const MyJobPosts: React.FC<MyJobPostsProps> = ({
@@ -69,8 +87,24 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   isDeleting,
   onCancelDelete,
   onConfirmDelete,
+  pagination,
+  onPageChange,
+  onSearchChange,
+  onSortChange,
+  searchQuery: externalSearchQuery,
+  sortBy: externalSortBy,
+  onViewAll,
+  onBackToAll,
+  hidden = false,
+  showViewAll = false,
+  initialDisplayCount = 3,
 }) => {
   const router = useRouter();
+
+  // Early return if hidden
+  if (hidden) {
+    return null;
+  }
   // State for job details modal
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -80,55 +114,27 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
     ? myJobs.find((job: any) => job._id === selectedJobId)
     : null;
 
-  // State for search and sort
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<
+  // Use external search and sort if provided, otherwise use local state
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [localSortBy, setLocalSortBy] = useState<
     "newest" | "oldest" | "title-asc" | "title-desc"
   >("newest");
   const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(
     null
   );
 
-  // State for pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 2;
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : localSearchQuery;
+  const sortBy = externalSortBy !== undefined ? externalSortBy : localSortBy;
 
-  // Filter and sort jobs
-  const filteredAndSortedJobs = myJobs
-    .filter((job: any) => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        job.jobDetails.title?.toLowerCase().includes(query) ||
-        job.jobDetails.location?.toLowerCase().includes(query) ||
-        job.jobDetails.employmentType?.toLowerCase().includes(query) ||
-        job.jobDetails.description?.toLowerCase().includes(query)
-      );
-    })
-    .sort((a: any, b: any) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case "oldest":
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case "title-asc":
-          return a.jobDetails.title.localeCompare(b.jobDetails.title);
-        case "title-desc":
-          return b.jobDetails.title.localeCompare(a.jobDetails.title);
-        default:
-          return 0;
-      }
-    });
+  // When using server-side pagination, backend handles filtering and sorting
+  // When in overview mode (showViewAll && !pagination), limit displayed jobs
+  const displayJobs = showViewAll && !pagination
+    ? myJobs.slice(0, initialDisplayCount)
+    : myJobs;
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredAndSortedJobs.length / jobsPerPage);
-  const startIndex = (currentPage - 1) * jobsPerPage;
-  const endIndex = startIndex + jobsPerPage;
-  const currentJobs = filteredAndSortedJobs.slice(startIndex, endIndex);
+  const currentJobs = displayJobs;
+  const totalPages = pagination?.totalPages || 1;
+  const currentPage = pagination?.page || 1;
 
   // Handlers for job details modal
   const handleViewJobDetails = (job: any) => {
@@ -146,7 +152,10 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
     event: React.ChangeEvent<unknown>,
     value: number
   ) => {
-    setCurrentPage(value);
+    if (onPageChange) {
+      // Use server-side pagination
+      onPageChange(value);
+    }
   };
 
   // Handlers for sort menu
@@ -161,15 +170,34 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   const handleSortChange = (
     sortOption: "newest" | "oldest" | "title-asc" | "title-desc"
   ) => {
-    setSortBy(sortOption);
-    setCurrentPage(1); // Reset to first page when sorting
+    if (onSortChange) {
+      // Use parent callback for server-side sorting
+      onSortChange(sortOption);
+    } else {
+      // Fall back to local state
+      setLocalSortBy(sortOption);
+    }
+    // Reset to first page when sorting
+    if (onPageChange) {
+      onPageChange(1);
+    }
     handleSortMenuClose();
   };
 
   // Reset to first page when search changes
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-    setCurrentPage(1);
+    const value = event.target.value;
+    if (onSearchChange) {
+      // Use parent callback for server-side search
+      onSearchChange(value);
+    } else {
+      // Fall back to local state
+      setLocalSearchQuery(value);
+    }
+    // Reset to first page when searching
+    if (onPageChange) {
+      onPageChange(1);
+    }
   };
 
   // Handler for copying interview link
@@ -220,106 +248,159 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           Job Posts
         </Typography>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <TextField
-            size="small"
-            placeholder="Search Jobs"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+          {/* Search and Sort Controls - Only show in full view */}
+          {!showViewAll && (
+            <>
+              <TextField
+                size="small"
+                placeholder="Search Jobs"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon
+                        sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  width: 280,
+                  height: "40px",
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "white",
+                    borderRadius: "42px",
+                    border: "1px solid rgba(165, 172, 181, 1)",
+                    "& fieldset": {
+                      border: "none",
+                    },
+                    "&:hover": {
+                      borderColor: "rgba(165, 172, 181, 0.8)",
+                    },
+                  },
+                }}
+              />
+              <Button
+                variant="outlined"
+                startIcon={
+                  <Image
+                    src="/icons/sort.svg"
+                    alt="search"
+                    width={24}
+                    height={24}
                   />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              width: 280,
-              height: "40px",
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "white",
-                borderRadius: "42px",
-                border: "1px solid rgba(165, 172, 181, 1)",
-                "& fieldset": {
+                }
+                onClick={handleSortMenuOpen}
+                sx={{
+                  height: "40px",
+                  borderColor: "rgba(165, 172, 181, 1)",
+                  color: "rgba(84, 98, 116, 1)",
+                  textTransform: "uppercase",
+                  fontWeight: 400,
+                  fontSize: "0.875rem",
+                  borderRadius: "42px",
+                  px: 2.5,
+                  "&:hover": {
+                    borderColor: "rgba(165, 172, 181, 0.8)",
+                    backgroundColor: "#f9fafb",
+                  },
+                }}
+              >
+                SORT
+              </Button>
+              <Menu
+                anchorEl={sortMenuAnchor}
+                open={Boolean(sortMenuAnchor)}
+                onClose={handleSortMenuClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <MenuItem
+                  onClick={() => handleSortChange("newest")}
+                  selected={sortBy === "newest"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Newest First
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("oldest")}
+                  selected={sortBy === "oldest"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Oldest First
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("title-asc")}
+                  selected={sortBy === "title-asc"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Title (A-Z)
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("title-desc")}
+                  selected={sortBy === "title-desc"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Title (Z-A)
+                </MenuItem>
+              </Menu>
+            </>
+          )}
+
+          {/* View All Button */}
+          {showViewAll && onViewAll && (
+            <Button
+              variant="outlined"
+              onClick={onViewAll}
+              endIcon={<ArrowForward />}
+              sx={{
+                border: "none",
+                background: "none",
+                color: "rgba(41, 210, 145, 1)",
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.875rem",
+                px: 2,
+                "&:hover": {
+                  background: "rgba(41, 210, 145, 0.04)",
                   border: "none",
                 },
+              }}
+            >
+              View All
+            </Button>
+          )}
+
+          {/* Back Button - After Sort */}
+          {!showViewAll && onBackToAll && (
+            <Button
+              variant="outlined"
+              onClick={onBackToAll}
+              startIcon={<ArrowBack />}
+              sx={{
+                border: "none",
+                background: "none",
+                color: "rgba(41, 210, 145, 1)",
+                textTransform: "none",
+                fontWeight: 500,
+                fontSize: "0.875rem",
+                px: 2,
                 "&:hover": {
-                  borderColor: "rgba(165, 172, 181, 0.8)",
+                  background: "rgba(41, 210, 145, 0.04)",
+                  border: "none",
                 },
-              },
-            }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={
-              <Image
-                src="/icons/sort.svg"
-                alt="search"
-                width={24}
-                height={24}
-              />
-            }
-            onClick={handleSortMenuOpen}
-            sx={{
-              height: "40px",
-              borderColor: "rgba(165, 172, 181, 1)",
-              color: "rgba(84, 98, 116, 1)",
-              textTransform: "uppercase",
-              fontWeight: 400,
-              fontSize: "0.875rem",
-              borderRadius: "42px",
-              px: 2.5,
-              "&:hover": {
-                borderColor: "rgba(165, 172, 181, 0.8)",
-                backgroundColor: "#f9fafb",
-              },
-            }}
-          >
-            SORT
-          </Button>
-          <Menu
-            anchorEl={sortMenuAnchor}
-            open={Boolean(sortMenuAnchor)}
-            onClose={handleSortMenuClose}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-          >
-            <MenuItem
-              onClick={() => handleSortChange("newest")}
-              selected={sortBy === "newest"}
-              sx={{ fontSize: "0.875rem" }}
+              }}
             >
-              Newest First
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleSortChange("oldest")}
-              selected={sortBy === "oldest"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Oldest First
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleSortChange("title-asc")}
-              selected={sortBy === "title-asc"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Title (A-Z)
-            </MenuItem>
-            <MenuItem
-              onClick={() => handleSortChange("title-desc")}
-              selected={sortBy === "title-desc"}
-              sx={{ fontSize: "0.875rem" }}
-            >
-              Title (Z-A)
-            </MenuItem>
-          </Menu>
+              Back
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -398,7 +479,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
             candidates. Your posted jobs will appear here.
           </Typography>
         </Box>
-      ) : filteredAndSortedJobs.length === 0 ? (
+      ) : currentJobs.length === 0 ? (
         <Box
           sx={{
             display: "flex",
@@ -503,6 +584,21 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     >
                       {job.jobDetails.title}
                     </Typography>
+                    {/* Draft Status Badge */}
+                    {job.status === 'draft' && (
+                      <Chip
+                        label="📝 Draft"
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                          color: '#6B7280',
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          height: 22,
+                          border: '1px solid #9CA3AF',
+                        }}
+                      />
+                    )}
                     {/* Creation Type Badge */}
                     {job.creationType && (
                       <Chip
@@ -671,12 +767,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     flexWrap: { xs: "wrap", sm: "nowrap" },
                   }}
                 >
-                  <Box sx={{ display: "flex", gap: 1, flex: 1, flexWrap: "wrap" }}>
+                  {job.status === 'draft' ? (
+                    // Draft status - only show View Details button
                     <Button
                       variant="outlined"
-                      fullWidth
                       onClick={() => handleViewJobDetails(job)}
-                      // onClick={() => router.push("/jobs/" + job._id)}
                       sx={{
                         borderColor: "rgba(11, 82, 198, 1)",
                         color: "rgba(11, 82, 198, 1)",
@@ -696,85 +791,114 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     >
                       VIEW DETAILS
                     </Button>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      onClick={() => onViewMatches(job._id)}
-                      sx={{
-                        borderColor: "rgba(84, 98, 116, 0.53)",
-                        color: "rgba(84, 98, 116, 1)",
-                        textTransform: "uppercase",
-                        fontWeight: 500,
-                        fontSize: "0.875rem",
-                        borderRadius: "38px",
-                        maxWidth: "250px",
-                        height: "42px",
-                        py: 1.25,
-                        backgroundColor: "rgba(84, 98, 116, 0.08)",
-                        "&:hover": {
-                          borderColor: "rgba(84, 98, 116, 0.53)",
-                          backgroundColor: "rgba(84, 98, 116, 0.04)",
-                        },
-                      }}
-                    >
-                      VIEW MATCHES
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<ContentCopyIcon />}
-                      onClick={() => handleCopyInterviewLink(job._id)}
-                      sx={{
-                        borderColor: "rgba(16, 185, 129, 1)",
-                        color: "rgba(16, 185, 129, 1)",
-                        textTransform: "uppercase",
-                        fontWeight: 500,
-                        fontSize: "0.875rem",
-                        borderRadius: "38px",
-                        maxWidth: "250px",
-                        height: "42px",
-                        py: 1.25,
-                        backgroundColor: "rgba(16, 185, 129, 0.08)",
-                        "&:hover": {
-                          borderColor: "rgba(5, 150, 105, 1)",
-                          backgroundColor: "rgba(16, 185, 129, 0.12)",
-                        },
-                      }}
-                    >
-                      COPY LINK
-                    </Button>
-                  </Box>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={
-                      <Image
-                        src="/icons/delete.svg"
-                        alt="search"
-                        width={20}
-                        height={20}
-                      />
-                    }
-                    onClick={() => onDeleteJob(job._id)}
-                    sx={{
-                      borderColor: "rgba(224, 62, 92, 1)",
-                      color: "rgba(224, 62, 92, 1)",
-                      textTransform: "none",
-                      fontWeight: 500,
-                      fontSize: "0.875rem",
-                      py: 1.25,
-                      borderRadius: "38px",
-                      maxWidth: "200px",
-                      height: "42px",
-                      backgroundColor: "rgba(224, 62, 92, 0.08)",
-                      "&:hover": {
-                        borderColor: "rgba(224, 62, 92, 1)",
-                        backgroundColor: "rgba(224, 62, 92, 0.04)",
-                      },
-                    }}
-                  >
-                    Delete Job
-                  </Button>
+                  ) : (
+                    // Active status - show all buttons
+                    <>
+                      <Box sx={{ display: "flex", gap: 1, flex: 1, flexWrap: "wrap" }}>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => handleViewJobDetails(job)}
+                          sx={{
+                            borderColor: "rgba(11, 82, 198, 1)",
+                            color: "rgba(11, 82, 198, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            py: 1.25,
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            backgroundColor: "rgba(11, 82, 198, 0.08)",
+                            "&:hover": {
+                              borderColor: "#2563eb",
+                              backgroundColor: "rgba(11, 82, 198, 0.04)",
+                            },
+                          }}
+                        >
+                          VIEW DETAILS
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => onViewMatches(job._id)}
+                          sx={{
+                            borderColor: "rgba(84, 98, 116, 0.53)",
+                            color: "rgba(84, 98, 116, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(84, 98, 116, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(84, 98, 116, 0.53)",
+                              backgroundColor: "rgba(84, 98, 116, 0.04)",
+                            },
+                          }}
+                        >
+                          VIEW MATCHES
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<ContentCopyIcon />}
+                          onClick={() => handleCopyInterviewLink(job._id)}
+                          sx={{
+                            borderColor: "rgba(16, 185, 129, 1)",
+                            color: "rgba(16, 185, 129, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(16, 185, 129, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(5, 150, 105, 1)",
+                              backgroundColor: "rgba(16, 185, 129, 0.12)",
+                            },
+                          }}
+                        >
+                          COPY LINK
+                        </Button>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={
+                          <Image
+                            src="/icons/delete.svg"
+                            alt="search"
+                            width={20}
+                            height={20}
+                          />
+                        }
+                        onClick={() => onDeleteJob(job._id)}
+                        sx={{
+                          borderColor: "rgba(224, 62, 92, 1)",
+                          color: "rgba(224, 62, 92, 1)",
+                          textTransform: "none",
+                          fontWeight: 500,
+                          fontSize: "0.875rem",
+                          py: 1.25,
+                          borderRadius: "38px",
+                          maxWidth: "200px",
+                          height: "42px",
+                          backgroundColor: "rgba(224, 62, 92, 0.08)",
+                          "&:hover": {
+                            borderColor: "rgba(224, 62, 92, 1)",
+                            backgroundColor: "rgba(224, 62, 92, 0.04)",
+                          },
+                        }}
+                      >
+                        Delete Job
+                      </Button>
+                    </>
+                  )}
                 </Box>
               </JobCard>
             ))}

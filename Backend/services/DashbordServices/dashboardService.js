@@ -261,7 +261,6 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
 const Post = require('../../models/PostModel');
 const Feedback = require('../../models/feedbackModel');
 const Bid = require('../../models/BidModel');
-const Resume = require('../../models/resumeSchema');
 const Profile = require('../../models/ProfileModel');
 
 module.exports.getCounts = async () => {

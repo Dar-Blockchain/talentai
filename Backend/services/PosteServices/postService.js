@@ -390,6 +390,72 @@ module.exports.getPostsByUserId = async (userId) => {
   }
 };
 
+// Récupérer les posts d'un utilisateur avec pagination, recherche et tri
+module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest') => {
+  try {
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build query with search filter
+    let query = { user: userId };
+    if (search && search.trim() !== '') {
+      query['jobDetails.title'] = { $regex: search.trim(), $options: 'i' }; // Case-insensitive search
+    }
+
+    // Build sort object based on sort parameter
+    let sortObj = { createdAt: -1 }; // Default: newest
+    switch (sort) {
+      case 'oldest':
+        sortObj = { createdAt: 1 };
+        break;
+      case 'title_asc':
+        sortObj = { 'jobDetails.title': 1 };
+        break;
+      case 'title_desc':
+        sortObj = { 'jobDetails.title': -1 };
+        break;
+      case 'newest':
+      default:
+        sortObj = { createdAt: -1 };
+    }
+
+    // Get total count with search filter and posts
+    const [posts, total] = await Promise.all([
+      Post.find(query)
+        .populate("user", "username email")
+        .populate("post_Steps")
+        .populate('agentConfig')
+        .populate('agentId')
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Post.countDocuments(query)
+    ]);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    return {
+      posts,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasNextPage,
+        hasPrevPage
+      }
+    };
+  } catch (error) {
+    throw new Error(`Error fetching user posts with pagination: ${error.message}`);
+  }
+};
+
 // Mettre à jour un post
 module.exports.updatePost = async (postId, userId, updateData) => {
   try {
