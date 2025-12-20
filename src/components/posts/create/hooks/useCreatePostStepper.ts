@@ -17,6 +17,7 @@ import {
   validateAIPostStep0,
   validateManualPostStep0,
 } from "@/validations/postValidation";
+import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
 
 export const useCreatePostStepper = (
   generatedPost: any,
@@ -142,14 +143,35 @@ export const useCreatePostStepper = (
     if (activeStep === 2 && savedPost?.jobData?._id) {
       setPaymentModalOpen(true);
 
-      await dispatch(
-        postRecruitmentSteps({
-          postId: savedPost.jobData._id,
-          steps: buildRecruitmentSteps(),
-        })
-      ).unwrap();
+      try {
+        await dispatch(
+          postRecruitmentSteps({
+            postId: savedPost.jobData._id,
+            steps: buildRecruitmentSteps(),
+          })
+        ).unwrap();
 
-      return;
+        const pipelineSkills = extractSkillsFromPipeline(nodes);
+
+        const updatePayload: any = {
+          creationType: "pipeline",
+        };
+
+        if (pipelineSkills.length > 0) {
+          updatePayload["skillAnalysis.requiredSkills"] = pipelineSkills;
+        }
+
+        await dispatch(
+          updatePost({ jobId: savedPost.jobData._id, jobData: updatePayload })
+        ).unwrap();
+
+        console.log("Recruitment steps and post updated successfully.");
+      } catch (error) {
+        console.error(
+          "Failed to save recruitment steps or update post:",
+          error
+        );
+      }
     }
   };
 
