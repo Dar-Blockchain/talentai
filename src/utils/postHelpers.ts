@@ -28,3 +28,20 @@ export const getLevelFromNumber = (level: number): string => {
   };
   return levelMap[level] || "Entry Level";
 };
+
+export const validatePipelineNodes = (nodes: any[]) => {
+  const configuredNodes = nodes.filter(
+    node => node.data?.config?.configured
+  );
+
+  const unconfiguredNodes = nodes.filter(
+    node => !node.data?.config?.configured
+  );
+
+  return {
+    isValid: unconfiguredNodes.length === 0,
+    configuredNodes,
+    unconfiguredNodes,
+  };
+};
+

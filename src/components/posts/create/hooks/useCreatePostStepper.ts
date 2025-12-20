@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import { AppDispatch } from "@/store/store";
+
 import {
   savePost,
   fetchJobMatches,
@@ -11,13 +12,16 @@ import {
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
-import { getJobSkills } from "@/utils/postHelpers";
-import { useToast } from "@/hooks/useToast";
+
+import { getJobSkills, validatePipelineNodes } from "@/utils/postHelpers";
+import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
+
 import {
   validateAIPostStep0,
   validateManualPostStep0,
 } from "@/validations/postValidation";
-import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
+
+import { useToast } from "@/hooks/useToast";
 
 export const useCreatePostStepper = (
   generatedPost: any,
@@ -31,6 +35,8 @@ export const useCreatePostStepper = (
   const router = useRouter();
   const { showToast } = useToast();
 
+  const { nodes, edges } = recruitmentFlow;
+
   const [activeStep, setActiveStep] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [agentLoadingOpen, setAgentLoadingOpen] = useState(false);
@@ -39,7 +45,9 @@ export const useCreatePostStepper = (
     "saving"
   );
 
-  const { nodes, edges } = recruitmentFlow;
+  // ⚠️ pipeline warning state
+  const [pipelineWarningOpen, setPipelineWarningOpen] = useState(false);
+  const [unconfiguredNodes, setUnconfiguredNodes] = useState<any[]>([]);
 
   /* -------------------- Helpers -------------------- */
 
@@ -57,42 +65,7 @@ export const useCreatePostStepper = (
       return dispatch(updatePost({ jobId, jobData })).unwrap();
     }
 
-    const result = await dispatch(savePost(jobData)).unwrap();
-
-    return result;
-  };
-
-  const finalizeCreation = async (creationType: any) => {
-    setAgentLoadingOpen(true);
-    try {
-    await dispatch(
-      createHRAgent({
-        jobId: savedPost?.jobData?._id,
-        companyName: profile?.companyDetails?.name || "Company",
-        postTitle: savedPost?.jobData?.jobDetails?.title,
-        companyId: profile?.userId,
-        jobSkills: getJobSkills(savedPost?.jobData),
-      })
-    ).unwrap();
-    await dispatch(createAgentConfig()).unwrap();
-    if (creationType === "ai") {
-      setAgentLoadingOpen(false);
-      router.push("/dashboard/company");
-      showToast({
-        message: "Job post created successfully.",
-        severity: "success",
-      });
-      return;
-    }
-    setAgentLoadingOpen(false);
-    setActiveStep(2);
-    } catch (error) {
-    setAgentLoadingOpen(false);
-    showToast({
-      message: "Failed to configure hiring agent.",
-      severity: "error",
-    });
-  }
+    return dispatch(savePost(jobData)).unwrap();
   };
 
   const buildRecruitmentSteps = () =>
@@ -111,6 +84,78 @@ export const useCreatePostStepper = (
         })),
     }));
 
+  const savePipeline = async () => {
+    setPaymentModalOpen(true);
+
+    try {
+      await dispatch(
+        postRecruitmentSteps({
+          postId: savedPost.jobData._id,
+          steps: buildRecruitmentSteps(),
+        })
+      ).unwrap();
+
+      const pipelineSkills = extractSkillsFromPipeline(nodes);
+
+      const updatePayload: any = { creationType: "pipeline" };
+
+      if (pipelineSkills.length > 0) {
+        updatePayload["skillAnalysis.requiredSkills"] = pipelineSkills;
+      }
+
+      await dispatch(
+        updatePost({
+          jobId: savedPost.jobData._id,
+          jobData: updatePayload,
+        })
+      ).unwrap();
+
+    } catch (error) {
+      console.error("Pipeline save failed:", error);
+      showToast({
+        message: "Failed to save recruitment pipeline.",
+        severity: "error",
+      });
+    }
+  };
+
+  const finalizeCreation = async () => {
+    setAgentLoadingOpen(true);
+
+    try {
+      await dispatch(
+        createHRAgent({
+          jobId: savedPost?.jobData?._id,
+          companyName: profile?.companyDetails?.name || "Company",
+          postTitle: savedPost?.jobData?.jobDetails?.title,
+          companyId: profile?.userId,
+          jobSkills: getJobSkills(savedPost?.jobData),
+        })
+      ).unwrap();
+
+      await dispatch(createAgentConfig()).unwrap();
+
+      setAgentLoadingOpen(false);
+
+      if (creationType === "ai") {
+        router.push("/dashboard/company");
+        showToast({
+          message: "Job post created successfully.",
+          severity: "success",
+        });
+        return;
+      }
+
+      setActiveStep(2);
+    } catch {
+      setAgentLoadingOpen(false);
+      showToast({
+        message: "Failed to configure hiring agent.",
+        severity: "error",
+      });
+    }
+  };
+
   /* -------------------- Actions -------------------- */
 
   const handleNext = async (shouldContinue?: boolean) => {
@@ -123,7 +168,6 @@ export const useCreatePostStepper = (
 
       try {
         const result = await saveOrUpdatePost();
-        if (!result?.success) throw new Error();
 
         if (creationType === "ai") {
           setModalMode("matching");
@@ -131,6 +175,7 @@ export const useCreatePostStepper = (
           setModalMode("done");
           return;
         }
+
         setModalOpen(false);
         setActiveStep(1);
       } catch {
@@ -139,51 +184,26 @@ export const useCreatePostStepper = (
       return;
     }
 
-    if (activeStep === 0 && shouldContinue && creationType === "ai") {
-      setModalOpen(false);
-      setActiveStep(1);
-      return;
-    }
+    if (activeStep === 0 && shouldContinue && creationType === "ai") { setModalOpen(false); setActiveStep(1); return; }
 
     /* ---------- STEP 1 ---------- */
     if (activeStep === 1) {
-      await finalizeCreation(creationType);
+      await finalizeCreation();
       return;
     }
 
     /* ---------- STEP 2 ---------- */
     if (activeStep === 2 && savedPost?.jobData?._id) {
-      setPaymentModalOpen(true);
+      const { isValid, unconfiguredNodes } =
+        validatePipelineNodes(nodes);
 
-      try {
-        await dispatch(
-          postRecruitmentSteps({
-            postId: savedPost.jobData._id,
-            steps: buildRecruitmentSteps(),
-          })
-        ).unwrap();
-
-        const pipelineSkills = extractSkillsFromPipeline(nodes);
-
-        const updatePayload: any = {
-          creationType: "pipeline",
-        };
-
-        if (pipelineSkills.length > 0) {
-          updatePayload["skillAnalysis.requiredSkills"] = pipelineSkills;
-        }
-
-        await dispatch(
-          updatePost({ jobId: savedPost.jobData._id, jobData: updatePayload })
-        ).unwrap();
-
-        console.log("Recruitment steps and post updated successfully.");
-      } catch (error) {
-        console.error(
-          "Failed to save recruitment steps or update post:",
-          error
-        );
+      if (!isValid) {
+        setUnconfiguredNodes(unconfiguredNodes);
+        setPipelineWarningOpen(true);
+        return; // ⛔ block until user confirms
       }
+
+      await savePipeline();
     }
   };
 
@@ -192,7 +212,7 @@ export const useCreatePostStepper = (
       dispatch(setCreationType(null));
       return;
     }
-    setActiveStep((prev) => Math.max(prev - 1, 0));
+    setActiveStep(prev => Math.max(prev - 1, 0));
   };
 
   return {
@@ -201,9 +221,16 @@ export const useCreatePostStepper = (
     modalMode,
     paymentModalOpen,
     agentLoadingOpen,
+
+    pipelineWarningOpen,
+    unconfiguredNodes,
+
+    setPipelineWarningOpen,
     setModalOpen,
     setPaymentModalOpen,
+
     handleNext,
     handleBack,
+    savePipeline,
   };
 };
