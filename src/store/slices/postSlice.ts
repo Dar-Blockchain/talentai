@@ -23,6 +23,10 @@ interface PostPaymentState {
   error: string | null;
   data: any | null;
 }
+interface UpdatePostStatusState {
+  loading: boolean;
+  error: string | null;
+}
 interface PaginationState {
   total: number;
   page: number;
@@ -54,6 +58,7 @@ interface PostState {
   savePost: SavePostState;
   recruitmentFlow: RecruitmentFlowState;
   postPayment: PostPaymentState;
+  updatePostStatus: UpdatePostStatusState;
 }
 
 // Initial state
@@ -101,6 +106,10 @@ const initialState: PostState = {
     error: null,
     data: null,
   },
+  updatePostStatus: {
+    loading: false,
+    error: null,
+  }
 };
 
 export const savePost = createAsyncThunk(
@@ -482,6 +491,49 @@ export const processPostPayment = createAsyncThunk(
   }
 );
 
+export const updatePostStatus = createAsyncThunk(
+  "post/updatePostStatus",
+  async (
+    { postId, status }: { postId: string; status: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const token = Cookies.get("api_token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePostStatus/${postId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || "Failed to update post status"
+        );
+      }
+
+      const data = await response.json();
+      return {
+        postId,
+        status,
+        data,
+      };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Error updating post status"
+      );
+    }
+  }
+);
+
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
@@ -663,7 +715,20 @@ const postSlice = createSlice({
       .addCase(processPostPayment.rejected, (state, action) => {
         state.postPayment.loading = false;
         state.postPayment.error = action.payload as string;
-      });
+      })
+      // ---- UPDATE POST STATUS ----
+    .addCase(updatePostStatus.pending, (state) => {
+      state.updatePostStatus.loading = true;
+      state.updatePostStatus.error = null;
+    })
+    .addCase(updatePostStatus.fulfilled, (state, action) => {
+      state.updatePostStatus.loading = false;
+    })
+    .addCase(updatePostStatus.rejected, (state, action) => {
+      state.updatePostStatus.loading = false;
+      state.updatePostStatus.error = action.payload as string;
+    });
+
   },
 });
 

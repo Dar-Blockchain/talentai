@@ -21,6 +21,7 @@ import {
   selectPostPayment,
   selectPostStepsLoading,
   resetPostPayment,
+  updatePostStatus,
 } from "@/store/slices/postSlice";
 import CheckIcon from "@mui/icons-material/Check";
 import Image from "next/image";
@@ -102,13 +103,16 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     } else if (paymentSucceeded) {
       handleClose();
     } else {
-      dispatch(
+      await dispatch(
         processPostPayment({
           postId: savedPost?.jobData?._id,
           agentId: agent?.agentId,
         })
-      );
-      dispatch(fetchTokenBalance());
+      ).unwrap();
+      await dispatch(
+        updatePostStatus({ postId: savedPost?.jobData?._id, status: "open" })
+      ).unwrap();
+      await dispatch(fetchTokenBalance()).unwrap();
     }
   };
 
