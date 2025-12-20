@@ -1,14 +1,16 @@
 import React from "react";
-import { Box, Chip, Typography } from "@mui/material";
+import { Box, Button, Chip, Typography } from "@mui/material";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
-import RuleIcon from "@mui/icons-material/Rule";
+import ConditionIcon from '@mui/icons-material/AccountTree';
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
-import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import Image from "next/image";
+import { ArrowBack } from "@mui/icons-material";
+import { useRouter } from "next/router";
 
 const JobPostCreationMethod: React.FC = () => {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
   const handleSelectAI = () => {
@@ -30,32 +32,75 @@ const JobPostCreationMethod: React.FC = () => {
       }}
     >
       <Box sx={{ maxWidth: 900, width: "100%" }}>
-        {/* Title */}
-        <Typography
-          variant="h4"
+        {/* Header */}
+        <Box
           sx={{
-            textAlign: "center",
-            fontWeight: 700,
-            mb: 2,
-            color: "#111827",
+            position: "relative",
+            width: "100%",
+            mb: 6,
           }}
         >
-          How would you like to create your job post?
-        </Typography>
+          {/* Back button (left) */}
+          <Button
+            startIcon={
+              <ArrowBack
+                sx={{
+                  color: "#10b981",
+                  transition: "transform 0.2s easeIn",
+                }}
+              />
+            }
+            onClick={() => router.back()}
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              textTransform: "none",
+              px: 0,
+              color: "#111827",
+              "&:hover": {
+                background: "transparent",
+                transform: "scale(1.05)",
+              },
+            }}
+          >
+            Back
+          </Button>
 
-        <Typography
-          variant="body1"
-          sx={{
-            textAlign: "center",
-            color: "#6b7280",
-            mb: 5,
-            maxWidth: 600,
-            mx: "auto",
-          }}
-        >
-          Choose the method that best suits your needs. You can either use AI to
-          quickly generate a post or build a custom recruitment pipeline.
-        </Typography>
+          {/* Centered title */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                color: "#111827",
+                fontSize: '28px'
+              }}
+            >
+              How would you like to create your job post?
+            </Typography>
+
+            <Typography
+              variant="body1"
+              sx={{
+                color: "#6b7280",
+                maxWidth: 600,
+                fontSize: '14px'
+              }}
+            >
+              Choose the method that best suits your needs. You can either use AI
+              to quickly generate a post or build a custom recruitment pipeline.
+            </Typography>
+          </Box>
+        </Box>
 
         {/* Options */}
         <Box
@@ -69,7 +114,7 @@ const JobPostCreationMethod: React.FC = () => {
           <CreationCard
             title="AI-Powered Creation"
             description="Describe your ideal candidate and let AI generate a comprehensive job post with matching configuration in minutes."
-            icon={<SmartToyIcon sx={{ fontSize: 32, color: "white" }} />}
+            icon={SmartToyIcon}
             accent="#10b981"
             gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
             features={[
@@ -78,14 +123,14 @@ const JobPostCreationMethod: React.FC = () => {
               "Automatic candidate matching",
             ]}
             chip={{ label: "Recommended", bg: "#d1fae5", color: "#065f46" }}
-            onClick={handleSelectAI} // ✅ Redux dispatch
+            onClick={handleSelectAI}
           />
 
           {/* Pipeline Option */}
           <CreationCard
             title="Custom Pipeline Builder"
             description="Design your own recruitment workflow with custom tests, interviews, and conditions for complete control."
-            icon={<RuleIcon sx={{ fontSize: 32, color: "white" }} />}
+            icon={ConditionIcon}
             accent="#6366f1"
             gradient="linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
             features={[
@@ -94,7 +139,7 @@ const JobPostCreationMethod: React.FC = () => {
               "Custom evaluation steps",
             ]}
             chip={{ label: "Advanced", bg: "#e0e7ff", color: "#4338ca" }}
-            onClick={handleSelectPipeline} // ✅ Redux dispatch
+            onClick={handleSelectPipeline}
           />
         </Box>
       </Box>
@@ -104,10 +149,12 @@ const JobPostCreationMethod: React.FC = () => {
 
 export default JobPostCreationMethod;
 
+/* ========= Creation Card ========= */
+
 interface CreationCardProps {
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: any;
   accent: string;
   gradient: string;
   features: string[];
@@ -122,7 +169,7 @@ interface CreationCardProps {
 const CreationCard: React.FC<CreationCardProps> = ({
   title,
   description,
-  icon,
+  icon: Icon,
   accent,
   gradient,
   features,
@@ -132,49 +179,62 @@ const CreationCard: React.FC<CreationCardProps> = ({
   <Box
     onClick={onClick}
     sx={{
-      p: 4,
-      border: "2px solid #e5e7eb",
-      borderRadius: "16px",
+      p: 3, // ⬅️ reduced from 4
+      border: "1.5px solid #e5e7eb",
+      borderRadius: "12px", // ⬅️ smaller radius
       cursor: "pointer",
-      transition: "all 0.3s ease",
+      transition: "all 0.25s ease",
       backgroundColor: "white",
       "&:hover": {
         borderColor: accent,
-        boxShadow: `0 10px 30px ${accent}26`,
-        transform: "translateY(-4px)",
+        boxShadow: `0 6px 18px ${accent}26`,
+        transform: "translateY(-2px)", // ⬅️ softer hover
       },
     }}
   >
+    {/* Icon */}
     <Box
       sx={{
-        width: 60,
-        height: 60,
-        borderRadius: "12px",
+        width: 48, // ⬅️ smaller
+        height: 48,
+        borderRadius: "10px",
         background: gradient,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        mb: 3,
+        mb: 2,
       }}
     >
-      {icon}
+      <Icon sx={{ fontSize: 24, color: "white" }} />
+
     </Box>
 
+    {/* Title */}
     <Typography
-      variant="h5"
-      sx={{ fontWeight: 600, mb: 1.5, color: "#111827" }}
+      sx={{
+        fontWeight: 600,
+        mb: 1,
+        color: "#111827",
+        fontSize: "16px",
+      }}
     >
       {title}
     </Typography>
 
+    {/* Description */}
     <Typography
-      variant="body2"
-      sx={{ color: "#6b7280", lineHeight: 1.7, mb: 3 }}
+      sx={{
+        color: "#6b7280",
+        lineHeight: 1.6,
+        mb: 2,
+        fontSize: "13px",
+      }}
     >
       {description}
     </Typography>
 
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    {/* Features */}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
       {features.map((feature) => (
         <Box
           key={feature}
@@ -182,21 +242,23 @@ const CreationCard: React.FC<CreationCardProps> = ({
         >
           <Box
             sx={{
-              width: 6,
-              height: 6,
+              width: 5,
+              height: 5,
               borderRadius: "50%",
               backgroundColor: accent,
             }}
           />
-          <Typography variant="body2" sx={{ color: "#374151" }}>
+          <Typography sx={{ color: "#374151", fontSize: "12.5px" }}>
             {feature}
           </Typography>
         </Box>
       ))}
     </Box>
+
+    {/* Footer */}
     <Box
       sx={{
-        mt: 3,
+        mt: 2,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -206,12 +268,15 @@ const CreationCard: React.FC<CreationCardProps> = ({
         label={chip.label}
         size="small"
         sx={{
+          height: 22,
+          fontSize: "11px",
           backgroundColor: chip.bg,
           color: chip.color,
           fontWeight: 600,
         }}
       />
-      <Image src="/icons/arrow-up.svg" alt="arrowup" width={18} height={18} />
+      <Image src="/icons/arrow-up.svg" alt="arrowup" width={16} height={16} />
     </Box>
   </Box>
 );
+

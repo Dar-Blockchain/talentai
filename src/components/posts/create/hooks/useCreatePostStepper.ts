@@ -57,20 +57,19 @@ export const useCreatePostStepper = (
 
     const result = await dispatch(savePost(jobData)).unwrap();
 
-    await dispatch(
-      createHRAgent({
-        jobId: result.jobData._id,
-        companyName: profile?.companyDetails?.name || "Company",
-        postTitle: result.jobData?.jobDetails?.title,
-        companyId: profile?.userId,
-        jobSkills: getJobSkills(result.jobData),
-      })
-    ).unwrap();
-
     return result;
   };
 
   const finalizeCreation = async (creationType: any) => {
+    await dispatch(
+      createHRAgent({
+        jobId: savedPost?.jobData?._id,
+        companyName: profile?.companyDetails?.name || "Company",
+        postTitle: savedPost?.jobData?.jobDetails?.title,
+        companyId: profile?.userId,
+        jobSkills: getJobSkills(savedPost?.jobData),
+      })
+    ).unwrap();
     await dispatch(createAgentConfig()).unwrap();
     if (creationType === "ai") {
       router.push("/dashboard/company");

@@ -9,7 +9,7 @@ import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMeth
 import HeaderDashboard from "@/components/HeaderDashboard";
 import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
 import { resetManualPost } from "@/store/slices/manualPostSlice";
-import { resetFlow } from "@/store/slices/postSlice";
+import { resetFlow, resetSavePost } from "@/store/slices/postSlice";
 
 const CreateJobPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -24,6 +24,7 @@ const CreateJobPage: React.FC = () => {
       dispatch(clearPost())
       dispatch(resetManualPost())
       dispatch(resetFlow())
+      dispatch(resetSavePost())
     };
   }, []);
   if (!mounted) return null;

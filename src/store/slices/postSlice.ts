@@ -451,6 +451,12 @@ const postSlice = createSlice({
   name: "post",
   initialState,
   reducers: {
+    resetSavePost: (state) => {
+      state.savePost.loading= false;
+    state.savePost.error= null;
+    state.savePost.savedPost= null;
+  },
+    
     clearError: (state) => {
       state.error = null;
       state.postStepsError = null;
@@ -629,6 +635,7 @@ const postSlice = createSlice({
 
 // Export actions
 export const {
+  resetSavePost,
   clearError,
   setSteps,
   addStep,
