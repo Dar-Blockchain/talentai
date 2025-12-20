@@ -4,10 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { Box, Container } from "@mui/material";
 import { AppDispatch } from "@/store/store";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
-import { selectCreationType } from "@/store/slices/postGenerationSlice";
+import { clearPost, selectCreationType } from "@/store/slices/postGenerationSlice";
 import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMethod";
 import HeaderDashboard from "@/components/HeaderDashboard";
 import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
+import { resetManualPost } from "@/store/slices/manualPostSlice";
+import { resetFlow } from "@/store/slices/postSlice";
 
 const CreateJobPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -19,6 +21,9 @@ const CreateJobPage: React.FC = () => {
   useEffect(() => {
     return () => {
       dispatch(resetCreateConfig());
+      dispatch(clearPost())
+      dispatch(resetManualPost())
+      dispatch(resetFlow())
     };
   }, []);
   if (!mounted) return null;

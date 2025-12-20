@@ -182,6 +182,14 @@ const postGenerationSlice = createSlice({
       state.generatedPost = null;
       state.error = null;
       state.generatedAt = null;
+      state.creationType = null;
+      state.promptDescription = "";
+      state.generationType = "quick";
+      state.workMode = "";
+      state.employmentType = "";
+      state.salary = { min: null, max: null, currency: "USD" };
+
+      state.loading = false;
     },
 
     setCreationType(state, action: PayloadAction<"ai" | "manual" | null>) {
