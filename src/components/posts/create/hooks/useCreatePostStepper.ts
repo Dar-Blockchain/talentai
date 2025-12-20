@@ -8,6 +8,7 @@ import {
   fetchJobMatches,
   postRecruitmentSteps,
   updatePost,
+  updatePostStatus,
 } from "@/store/slices/postSlice";
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
@@ -45,7 +46,6 @@ export const useCreatePostStepper = (
     "saving"
   );
 
-  // ⚠️ pipeline warning state
   const [pipelineWarningOpen, setPipelineWarningOpen] = useState(false);
   const [unconfiguredNodes, setUnconfiguredNodes] = useState<any[]>([]);
 
@@ -109,7 +109,6 @@ export const useCreatePostStepper = (
           jobData: updatePayload,
         })
       ).unwrap();
-
     } catch (error) {
       console.error("Pipeline save failed:", error);
       showToast({
@@ -134,6 +133,12 @@ export const useCreatePostStepper = (
       ).unwrap();
 
       await dispatch(createAgentConfig()).unwrap();
+
+      if (creationType === "ai") {
+        await dispatch(
+          updatePostStatus({ postId: savedPost?.jobData?._id, status: "open" })
+        ).unwrap();
+      }
 
       setAgentLoadingOpen(false);
 
@@ -184,7 +189,11 @@ export const useCreatePostStepper = (
       return;
     }
 
-    if (activeStep === 0 && shouldContinue && creationType === "ai") { setModalOpen(false); setActiveStep(1); return; }
+    if (activeStep === 0 && shouldContinue && creationType === "ai") {
+      setModalOpen(false);
+      setActiveStep(1);
+      return;
+    }
 
     /* ---------- STEP 1 ---------- */
     if (activeStep === 1) {
@@ -194,8 +203,7 @@ export const useCreatePostStepper = (
 
     /* ---------- STEP 2 ---------- */
     if (activeStep === 2 && savedPost?.jobData?._id) {
-      const { isValid, unconfiguredNodes } =
-        validatePipelineNodes(nodes);
+      const { isValid, unconfiguredNodes } = validatePipelineNodes(nodes);
 
       if (!isValid) {
         setUnconfiguredNodes(unconfiguredNodes);
@@ -212,7 +220,7 @@ export const useCreatePostStepper = (
       dispatch(setCreationType(null));
       return;
     }
-    setActiveStep(prev => Math.max(prev - 1, 0));
+    setActiveStep((prev) => Math.max(prev - 1, 0));
   };
 
   return {
