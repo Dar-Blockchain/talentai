@@ -1,16 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import HeaderDashboard from "@/components/HeaderDashboard";
-import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Container } from "@mui/material";
 import { AppDispatch } from "@/store/store";
-import { useDispatch } from "react-redux";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
-import RecruitmentFlowBuilder from "@/components/posts/RecruitmentFlowBuilder";
+import { selectCreationType } from "@/store/slices/postGenerationSlice";
+import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMethod";
+import HeaderDashboard from "@/components/HeaderDashboard";
+import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
 
 const CreateJobPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [mounted, setMounted] = useState(false);
+  const creationType = useSelector(selectCreationType)
 
   useEffect(() => setMounted(true), []);
 
@@ -30,7 +32,9 @@ const CreateJobPage: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <RecruitmentFlowBuilder/>
+        <HeaderDashboard />
+        {!creationType && <JobPostCreationMethod/>}
+        {creationType && <CreatePostStepper />}
       </Container>
     </Box>
   );

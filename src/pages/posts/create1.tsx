@@ -1,19 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import HeaderDashboard from "@/components/HeaderDashboard";
-import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
+import { useDispatch } from "react-redux";
 import { Box, Container } from "@mui/material";
 import { AppDispatch } from "@/store/store";
-import { useDispatch } from "react-redux";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
-import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMethod";
-import { useSelector } from "react-redux";
-import { selectCreationType } from "@/store/slices/postGenerationSlice";
+import RecruitmentFlowBuilder from "@/components/posts/RecruitmentFlowBuilder";
 
-const CreateJobPage2: React.FC = () => {
+const CreateJobPage1: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [mounted, setMounted] = useState(false);
-  const creationType = useSelector(selectCreationType)
 
   useEffect(() => setMounted(true), []);
 
@@ -33,12 +28,10 @@ const CreateJobPage2: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <HeaderDashboard />
-        {!creationType && <JobPostCreationMethod/>}
-        {creationType && <CreatePostStepper />}
+        <RecruitmentFlowBuilder/>
       </Container>
     </Box>
   );
 };
 
-export default CreateJobPage2;
+export default CreateJobPage1;

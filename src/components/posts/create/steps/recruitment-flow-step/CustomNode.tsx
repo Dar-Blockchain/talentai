@@ -1,13 +1,6 @@
 "use client";
-import {
-  Box,
-  Typography,
-} from "@mui/material";
-import {
-  NodeTypes,
-  Handle,
-  Position,
-} from "reactflow";
+import { Box, Typography } from "@mui/material";
+import { NodeTypes, Handle, Position } from "reactflow";
 import "reactflow/dist/style.css";
 
 const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {

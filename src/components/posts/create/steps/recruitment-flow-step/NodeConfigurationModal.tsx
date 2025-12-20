@@ -14,13 +14,10 @@ import {
 import { useCallback, useState } from "react";
 import { Node } from "reactflow";
 import "reactflow/dist/style.css";
-import ConditionIcon from "@mui/icons-material/AccountTree";
 import CloseIcon from "@mui/icons-material/Close";
-import SendIcon from "@mui/icons-material/Send";
-import SmartToyIcon from "@mui/icons-material/SmartToy";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { NodeConfigRenderer } from "@/components/posts/recruitment-flow-config";
 import { toast } from "react-hot-toast";
+import { NodeConfigRenderer } from "./node-configuration";
 
 interface ChatMessage {
   id: string;

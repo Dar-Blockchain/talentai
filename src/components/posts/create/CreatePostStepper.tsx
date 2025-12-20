@@ -13,18 +13,16 @@ import {
 import Check from "@mui/icons-material/Check";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import { useSelector } from "react-redux";
-
-import PostDetailsStep from "./PostDetailsStep";
-import RecruitmentFlowStep from "./RecruitmentFlowStep";
-import MatchingFlowModal from "./components/MatchingFlowModal";
-
+import RecruitmentFlowStep from "./steps/recruitment-flow-step/RecruitmentFlowStep";
+import MatchingFlowModal from "./steps/post-details-step/MatchingFlowModal";
 import { RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
-import AgentConfigurationStep from "./AgentConfigurationStep";
-import PaymentConfirmationModal from "./components/PaymentConfirmationModal";
+import PaymentConfirmationModal from "./steps/recruitment-flow-step/PaymentConfirmationModal";
 import { selectCreationType } from "@/store/slices/postGenerationSlice";
 import { useRouter } from "next/router";
 import TokenPurchaseModal from "@/components/token-purchase/TokenPurchaseModal";
+import PostDetailsStep from "./steps/post-details-step/PostDetailsStep";
+import AgentConfigurationStep from "./steps/agent-configuration-step/AgentConfigurationStep";
 
 // ------- Custom Stepper Styles -------
 const SplitLineConnector = styled(StepConnector)(() => ({

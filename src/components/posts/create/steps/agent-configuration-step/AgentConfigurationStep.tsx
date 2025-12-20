@@ -1,12 +1,10 @@
 import { useCallback, useEffect } from "react";
 import { useSelector } from "react-redux";
-import AgentConfigurationForm, {
-  AgentConfigurationFormValues,
-} from "./components/AgentConfigurationForm";
 import { Box } from "@mui/material";
 import { updateCreateConfigValue } from "@/store/slices/agentConfigSlice";
 import { AppDispatch } from "@/store/store";
 import { useDispatch } from "react-redux";
+import AgentConfigurationForm, { AgentConfigurationFormValues } from "./AgentConfigurationForm";
 
 const AgentConfigurationStep = () => {
   const dispatch = useDispatch<AppDispatch>();

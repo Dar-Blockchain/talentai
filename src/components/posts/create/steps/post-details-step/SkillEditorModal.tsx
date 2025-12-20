@@ -59,9 +59,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   const levels = skillType === "hard" ? hardSkillLevels : softSkillLevels;
 
   const isSaveDisabled =
-  !localSkill.name?.trim() ||
-  !localSkill.level ||
-  localSkill.percentage <= 0;
+    !localSkill.name?.trim() || !localSkill.level || localSkill.percentage <= 0;
 
   React.useEffect(() => {
     if (skill) setLocalSkill(skill);

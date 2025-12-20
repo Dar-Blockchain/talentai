@@ -1,9 +1,9 @@
 import { Box } from "@mui/material";
-import PostDescription from "./components/post-details/PostDescription";
-import PostPreview from "./components/post-details/PostPreview";
-import ManualPostForm from "./components/post-details/ManualPostForm";
 import { useSelector } from "react-redux";
 import { selectCreationType } from "@/store/slices/postGenerationSlice";
+import PostDescription from "./PostDescription";
+import PostPreview from "./PostPreview";
+import ManualPostForm from "./ManualPostForm";
 
 const PostDetailsStep = () => {
   const creationType = useSelector(selectCreationType);

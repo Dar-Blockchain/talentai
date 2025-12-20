@@ -12,13 +12,12 @@ import {
 import "reactflow/dist/style.css";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { nodeTypes } from "./components/recruitment-flow/CustomNode";
-import NodeConfigurationModal from "./components/recruitment-flow/NodeConfigurationModal";
-import SidebarMenu from "./components/recruitment-flow/SidebarMenu";
+import { nodeTypes } from "./CustomNode";
+import NodeConfigurationModal from "./NodeConfigurationModal";
+import SidebarMenu from "./SidebarMenu";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setFlowEdges, setFlowNodes } from "@/store/slices/postSlice";
-import { useSelector } from "react-redux";
 
 const ReactFlow = dynamic(
   () => import("reactflow").then((mod) => mod.default),
@@ -43,7 +42,7 @@ interface ChatMessage {
 }
 
 // Function to generate default pipeline nodes with unique IDs
-const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
+const generateDefaultPipelineNodes = (): { nodes: Node[]; edges: Edge[] } => {
   const timestamp = Date.now();
   const randomSuffix1 = Math.random().toString(36).substr(2, 9);
   const randomSuffix2 = Math.random().toString(36).substr(2, 9);
@@ -56,49 +55,49 @@ const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
   const nodes: Node[] = [
     {
       id: technicalId,
-      type: 'custom',
+      type: "custom",
       position: { x: 250, y: 50 },
       data: {
-        label: 'Technical Skills 1',
-        type: 'technical',
-        subtitle: 'Validate technical skills',
+        label: "Technical Skills 1",
+        type: "technical",
+        subtitle: "Validate technical skills",
         config: {
           nodeNumber: 1,
-          title: 'Technical Skills 1',
+          title: "Technical Skills 1",
           configured: false,
-        }
-      }
+        },
+      },
     },
     {
       id: softId,
-      type: 'custom',
+      type: "custom",
       position: { x: 250, y: 180 },
       data: {
-        label: 'Soft Skills 1',
-        type: 'soft',
-        subtitle: 'Assess soft skills',
+        label: "Soft Skills 1",
+        type: "soft",
+        subtitle: "Assess soft skills",
         config: {
           nodeNumber: 2,
-          title: 'Soft Skills 1',
+          title: "Soft Skills 1",
           configured: false,
-        }
-      }
+        },
+      },
     },
     {
       id: interviewId,
-      type: 'custom',
+      type: "custom",
       position: { x: 250, y: 310 },
       data: {
-        label: 'HR Interview 1',
-        type: 'interview',
-        subtitle: 'Conduct HR interview',
+        label: "HR Interview 1",
+        type: "interview",
+        subtitle: "Conduct HR interview",
         config: {
           nodeNumber: 3,
-          title: 'HR Interview 1',
+          title: "HR Interview 1",
           configured: false,
-        }
-      }
-    }
+        },
+      },
+    },
   ];
 
   const edges: Edge[] = [
@@ -106,14 +105,14 @@ const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
       id: `edge-${technicalId}-${softId}`,
       source: technicalId,
       target: softId,
-      type: 'default'
+      type: "default",
     },
     {
       id: `edge-${softId}-${interviewId}`,
       source: softId,
       target: interviewId,
-      type: 'default'
-    }
+      type: "default",
+    },
   ];
 
   return { nodes, edges };
@@ -121,13 +120,10 @@ const generateDefaultPipelineNodes = (): { nodes: Node[], edges: Edge[] } => {
 
 const RecruitmentFlowStep = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const isHydratedRef = useRef(false);
 
   const flowWrapper = useRef<HTMLDivElement | null>(null);
   const defaultPipeline = useMemo(() => generateDefaultPipelineNodes(), []);
-  const recruitmentFlow = useSelector(
-  (state: any) => state.post.recruitmentFlow
-);
+
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultPipeline.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultPipeline.edges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -185,15 +181,6 @@ const RecruitmentFlowStep = () => {
 
     setSelectedNodes([]);
   }, [selectedNodes, setNodes, setEdges]);
-
-//   useEffect(() => {
-//   if (recruitmentFlow?.nodes?.length) {
-//     setNodes(recruitmentFlow.nodes);
-//   }
-//   if (recruitmentFlow?.edges?.length) {
-//     setEdges(recruitmentFlow.edges);
-//   }
-// }, [recruitmentFlow, setNodes, setEdges]);
 
   useEffect(() => {
     dispatch(setFlowNodes(nodes));

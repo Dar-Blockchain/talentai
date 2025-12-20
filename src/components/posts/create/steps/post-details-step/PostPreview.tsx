@@ -81,11 +81,11 @@ const PostPreview = () => {
   };
 
   const handleSalaryChange = (
-      field: "min" | "max" | "currency",
-      value: number | string
-    ) => {
-      dispatch(updateJobSalaryField({ field, value }));
-    };
+    field: "min" | "max" | "currency",
+    value: number | string
+  ) => {
+    dispatch(updateJobSalaryField({ field, value }));
+  };
 
   return (
     <Box
@@ -396,7 +396,10 @@ const PostPreview = () => {
             </Box>
           </Box>
 
-          <SalaryRange salaryRange={salary} onSalaryChange={handleSalaryChange} />
+          <SalaryRange
+            salaryRange={salary}
+            onSalaryChange={handleSalaryChange}
+          />
 
           <Box sx={{ mt: 2 }}>
             <Box

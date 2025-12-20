@@ -4,11 +4,14 @@ import Image from "next/image";
 
 interface SalaryRangeProps {
   salaryRange: {
-    currency: string; // USD | EUR | GBP
+    currency: string;
     min: number;
     max: number;
   };
-  onSalaryChange: (field: "min" | "max" | "currency", value: number | string) => void;
+  onSalaryChange: (
+    field: "min" | "max" | "currency",
+    value: number | string
+  ) => void;
   errors?: {
     currency?: string;
     min?: string;
@@ -29,21 +32,20 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   errors = {},
   currencies = defaultCurrencies,
 }) => {
-const handleChange =
-  (field: "min" | "max" | "currency") =>
-  (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value: string | number = e.target.value;
+  const handleChange =
+    (field: "min" | "max" | "currency") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let value: string | number = e.target.value;
 
-    if (field === "min" || field === "max") {
-      // Remove non-digits and leading zeros
-      value = value.replace(/\D/g, ""); // remove non-numeric
-      value = value.replace(/^0+/, ""); // remove leading zeros
-      value = value === "" ? 0 : Number(value); // default 0
-    }
+      if (field === "min" || field === "max") {
+        // Remove non-digits and leading zeros
+        value = value.replace(/\D/g, ""); // remove non-numeric
+        value = value.replace(/^0+/, ""); // remove leading zeros
+        value = value === "" ? 0 : Number(value); // default 0
+      }
 
-    onSalaryChange(field, value);
-  };
-
+      onSalaryChange(field, value);
+    };
 
   const inputStyle = {
     height: 40,
@@ -86,11 +88,19 @@ const handleChange =
             helperText={errors.currency}
             sx={inputStyle}
           >
-            <MenuItem disabled value="" sx={{fontSize: "12px", fontWeight: 500}}>
+            <MenuItem
+              disabled
+              value=""
+              sx={{ fontSize: "12px", fontWeight: 500 }}
+            >
               Currency
             </MenuItem>
             {currencies.map((currency) => (
-              <MenuItem key={currency.value} value={currency.value} sx={{fontSize: "12px", fontWeight: 500}}>
+              <MenuItem
+                key={currency.value}
+                value={currency.value}
+                sx={{ fontSize: "12px", fontWeight: 500 }}
+              >
                 {currency.label}
               </MenuItem>
             ))}
