@@ -33,6 +33,7 @@ export const useCreatePostStepper = (
 
   const [activeStep, setActiveStep] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [agentLoadingOpen, setAgentLoadingOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
     "saving"
@@ -62,6 +63,8 @@ export const useCreatePostStepper = (
   };
 
   const finalizeCreation = async (creationType: any) => {
+    setAgentLoadingOpen(true);
+    try {
     await dispatch(
       createHRAgent({
         jobId: savedPost?.jobData?._id,
@@ -73,6 +76,7 @@ export const useCreatePostStepper = (
     ).unwrap();
     await dispatch(createAgentConfig()).unwrap();
     if (creationType === "ai") {
+      setAgentLoadingOpen(false);
       router.push("/dashboard/company");
       showToast({
         message: "Job post created successfully.",
@@ -80,7 +84,15 @@ export const useCreatePostStepper = (
       });
       return;
     }
+    setAgentLoadingOpen(false);
     setActiveStep(2);
+    } catch (error) {
+    setAgentLoadingOpen(false);
+    showToast({
+      message: "Failed to configure hiring agent.",
+      severity: "error",
+    });
+  }
   };
 
   const buildRecruitmentSteps = () =>
@@ -188,6 +200,7 @@ export const useCreatePostStepper = (
     modalOpen,
     modalMode,
     paymentModalOpen,
+    agentLoadingOpen,
     setModalOpen,
     setPaymentModalOpen,
     handleNext,

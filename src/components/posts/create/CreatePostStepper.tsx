@@ -23,6 +23,7 @@ import { useRouter } from "next/router";
 import TokenPurchaseModal from "@/components/token-purchase/TokenPurchaseModal";
 import PostDetailsStep from "./steps/post-details-step/PostDetailsStep";
 import AgentConfigurationStep from "./steps/agent-configuration-step/AgentConfigurationStep";
+import AgentConfigurationLoadingModal from "./steps/agent-configuration-step/LoadingModal";
 
 // ------- Custom Stepper Styles -------
 const SplitLineConnector = styled(StepConnector)(() => ({
@@ -114,6 +115,7 @@ const CreatePostStepper: React.FC = () => {
     activeStep,
     modalOpen,
     modalMode,
+    agentLoadingOpen,
     paymentModalOpen,
     handleNext,
     handleBack,
@@ -267,6 +269,7 @@ const CreatePostStepper: React.FC = () => {
         mode={modalMode}
         onContinue={handleNext}
       />
+      <AgentConfigurationLoadingModal open={agentLoadingOpen} />
       <PaymentConfirmationModal
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
