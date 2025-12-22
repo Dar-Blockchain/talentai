@@ -1,3 +1,5 @@
+import {Node} from 'reactflow';
+
 export interface Job {
   id: string;
   title: string;
@@ -78,3 +80,45 @@ export const transformJobData = (job: any): Job => {
     logo: job.user?.companyDetails?.logo || undefined,
   };
 };
+
+  export const extractSkillsFromPipeline = (pipelineNodes: Node[]) => {
+    const allSkills: any[] = [];
+
+    pipelineNodes.forEach(node => {
+      const nodeType = node.data.type;
+      const config = node.data.config;
+
+      if (!config || !config.configured) return;
+
+      // Technical skills nodes
+      if (nodeType === 'technical' && config.skills) {
+        config.skills.forEach((skill: any) => {
+          allSkills.push({
+            name: skill.name,
+            level: config.assessmentLevel || 'Mid Level',
+            importance: 'high',
+            category: config.categories?.[0] || 'Technical',
+          });
+        });
+      }
+
+      // Soft skills nodes
+      if (nodeType === 'soft' && config.softSkills) {
+        config.softSkills.forEach((skillName: string) => {
+          allSkills.push({
+            name: skillName,
+            level: config.assessmentLevel || 'Mid Level',
+            importance: 'medium',
+            category: 'Soft Skills',
+          });
+        });
+      }
+    });
+
+    // Remove duplicates by skill name
+    const uniqueSkills = allSkills.filter((skill, index, self) =>
+      index === self.findIndex(s => s.name === skill.name)
+    );
+
+    return uniqueSkills;
+  };

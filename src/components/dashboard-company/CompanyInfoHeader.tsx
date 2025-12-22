@@ -121,6 +121,12 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
           >
             Post Job
           </GradientButton>
+          {/* <GradientButton
+            onClick={() => router.push("/posts/create1")}
+            startIcon={<AddIcon />}
+          >
+            Post Job 1
+          </GradientButton> */}
         </Box>
 
         {/* Info Cards */}

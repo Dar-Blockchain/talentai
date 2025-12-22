@@ -157,7 +157,7 @@ const HeaderDashboard = () => {
   // Selectors
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
-  const { profile } = useSelector((state: RootState) => state.profile);
+  const { profile } = useSelector((state: RootState) => state.auth);
   const { isLoading: isLoggingOut } = useSelector((state: RootState) => state.auth);
 
   // Local state
@@ -216,6 +216,8 @@ const HeaderDashboard = () => {
     }
   }, [router.query.refreshBalance, token, dispatch]);
 
+  useEffect(() => {console.log(profile,'profile')}, [profile])
+
   return (
     <>
       <AppBar
@@ -234,7 +236,8 @@ const HeaderDashboard = () => {
               justifyContent: "space-between",
               height: "50px",
               minHeight: "50px!important",
-              px: 0,
+              paddingLeft: '0!important', 
+              paddingRight: '0!important'
             }}
           >
             {/* Logo */}

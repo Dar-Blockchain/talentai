@@ -6,6 +6,9 @@ export const workModes = ["On-site", "Remote", "Hybrid"];
 
 export const currencies = ["$", "€", "£", "TND"];
 
+export const experienceLevels = [
+  "Junior", "Mid-level", "Senior", "Expert"];
+  
 export const countries = [
   "United States",
   "Canada",

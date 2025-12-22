@@ -21,8 +21,10 @@ import tokenReducer from './slices/tokenSlice';
 import agentConfigReducer from './slices/agentConfigSlice';
 import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
 import candidateReducer from './slices/candidateSlice';
+import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
 import jobDetailsReducer from './slices/jobDetailsSlice';
+import manualPostReducer from './slices/manualPostSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -36,8 +38,10 @@ const rootReducer = combineReducers({
   agentConfig: agentConfigReducer,
   tokenPurchase: tokenPurchaseReducer,
   candidate: candidateReducer,
+  postGeneration: postGenerationReducer,
   interview: interviewReducer,
   jobDetails: jobDetailsReducer,
+  manualPost: manualPostReducer
 });
 
 const persistConfig = {
