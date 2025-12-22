@@ -111,6 +111,61 @@ module.exports.unlockCandidate = async (req, res) => {
 };
 
 /**
+ * Create unlock candidate pack (5 candidates for 25 tokens)
+ */
+module.exports.unlockCandidatePack = async (req, res) => {
+  try {
+    const idCompany = req.user._id;
+    const { candidateIds, idJob } = req.body;
+
+    // Pack configuration
+    const PACK_SIZE = 5;
+    const PACK_PRICE = 25;
+
+    // Validate required fields
+    if (!candidateIds || !idJob) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: candidateIds (array), idJob"
+      });
+    }
+
+    // Validate array format
+    if (!Array.isArray(candidateIds)) {
+      return res.status(400).json({
+        success: false,
+        message: "candidateIds must be an array"
+      });
+    }
+
+    // Validate pack size
+    if (candidateIds.length !== PACK_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: `Pack must contain exactly ${PACK_SIZE} candidates. Received ${candidateIds.length}`
+      });
+    }
+
+    const result = await unlockCandidateService.unlockCandidatePack(
+      idCompany,
+      candidateIds,
+      idJob,
+      PACK_PRICE
+    );
+
+    const statusCode = result.success ? 201 : 400;
+    res.status(statusCode).json(result);
+  } catch (error) {
+    console.error("Error creating unlock candidate pack:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create unlock candidate pack",
+      error: error.message
+    });
+  }
+};
+
+/**
  * Complete unlock after payment
  */
 module.exports.completeUnlock = async (req, res) => {

@@ -212,6 +212,55 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
 };
 
 /**
+ * Unlock candidate pack (5 candidates for 25 tokens)
+ */
+const unlockCandidatePack = async (idCompany, candidateIds, idJob, packPrice) => {
+  try {
+    const unlockedRecords = [];
+
+    // Create an unlock record for each candidate in the pack
+    for (const idCandidate of candidateIds) {
+      // Validate candidate and job exist
+      const [candidateExists, jobExists] = await Promise.all([
+        User.findById(idCandidate),
+        User.findById(idJob) // Assuming idJob is a job ID reference
+      ]);
+
+      if (!candidateExists) {
+        throw new Error(`Candidate ${idCandidate} not found`);
+      }
+
+      if (!jobExists) {
+        throw new Error(`Job ${idJob} not found`);
+      }
+
+      // Create unlock record for this candidate
+      const unlockRecord = new UnlockCandidate({
+        idCompany,
+        idCandidate,
+        idJob,
+        unlockPrice: packPrice, // Same price for all candidates in pack
+        status: 'pending'
+      });
+
+      await unlockRecord.save();
+      unlockedRecords.push(unlockRecord);
+    }
+
+    return {
+      success: true,
+      message: `Pack of ${unlockedRecords.length} candidates created successfully`,
+      data: unlockedRecords,
+      packPrice: packPrice,
+      packSize: unlockedRecords.length
+    };
+  } catch (error) {
+    console.error("Error creating unlock candidate pack:", error);
+    throw error;
+  }
+};
+
+/**
  * Complete unlock after payment
  */
 const completeUnlock = async (unlockId, transactionId) => {
@@ -256,6 +305,7 @@ module.exports = {
   getUnlockedCandidatesByCompanyWithPagination,
   getUnlockCandidatesByCompany,
   unlockCandidate,
+  unlockCandidatePack,
   completeUnlock,
   getUnlockById
 };
