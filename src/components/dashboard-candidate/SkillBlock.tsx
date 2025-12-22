@@ -6,10 +6,8 @@ import VerifiedIcon from "@mui/icons-material/Verified";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { SkillEvidence, evaluateSkillBadge, ProficiencyLevel, getAllStackProgressionsForSkill } from "@/utils/badgeEvaluationEngine";
 import BadgeVerificationModal from "@/components/badges/BadgeVerificationModal";
-import { formatTimeAgo } from "@/utils/timeAgo";
 
 export type SkillBlockProps = {
   skill: any;
@@ -195,23 +193,6 @@ function SkillBlockComponent({ profile, skill, type, onStartTest, onDelete, gree
           >
             {skill.category}
           </Typography>
-        )}
-
-        {/* Timestamp */}
-        {skill.createdAt && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
-            <AccessTimeIcon sx={{ fontSize: 16, color: '#6B7280' }} />
-            <Typography
-              variant="caption"
-              sx={{
-                color: '#6B7280',
-                fontSize: '0.8rem',
-                fontWeight: 500,
-              }}
-            >
-              Added {formatTimeAgo(skill.createdAt)}
-            </Typography>
-          </Box>
         )}
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
