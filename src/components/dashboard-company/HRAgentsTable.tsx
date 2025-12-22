@@ -200,7 +200,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
 
   // Transform agents data (memoized)
   const transformedAgents: TransformedHRAgent[] = useMemo(() => {
-    return agents?.map((agent: any) => ({
+    if (!agents || !Array.isArray(agents)) return [];
+
+    return agents.map((agent: any) => ({
       ...agent,
       _id: agent.agentId,
       company: 'HR Agency',

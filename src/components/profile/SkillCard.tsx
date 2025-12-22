@@ -1,6 +1,7 @@
 import React from 'react';
-import { Card, Box, Typography } from '@mui/material';
-import { Verified as VerifiedIcon } from '@mui/icons-material';
+import { Card, Box, Typography, LinearProgress } from '@mui/material';
+import { Verified as VerifiedIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
+import { formatTimeAgo } from '@/utils/timeAgo';
 
 interface SkillCardProps {
   skill: {
@@ -9,14 +10,13 @@ interface SkillCardProps {
     ScoreTest?: number;
     experienceLevel?: string;
     category?: string;
+    createdAt?: string;
   };
   type: 'technical' | 'soft';
 }
 
 const SkillCard: React.FC<SkillCardProps> = React.memo(({ skill, type }) => {
   const score = skill.ScoreTest || 0;
-  const circumference = 2 * Math.PI * 36;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
 
   // Color schemes based on type and score
   const getColors = () => {
@@ -35,7 +35,7 @@ const SkillCard: React.FC<SkillCardProps> = React.memo(({ skill, type }) => {
   };
 
   const colors = getColors();
-  const strokeColor = score > 80 ? colors.high : score > 50 ? colors.medium : colors.low;
+  const barColor = score > 80 ? colors.high : score > 50 ? colors.medium : colors.low;
 
   return (
     <Card
@@ -50,77 +50,18 @@ const SkillCard: React.FC<SkillCardProps> = React.memo(({ skill, type }) => {
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 8px 16px rgba(0, 0, 0, 0.08)',
-          borderColor: strokeColor,
+          borderColor: barColor,
         },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        {/* Circular Progress */}
-        <Box sx={{ position: 'relative', flexShrink: 0 }}>
-          <svg width="80" height="80">
-            <circle
-              cx="40"
-              cy="40"
-              r="36"
-              stroke="#F3F4F6"
-              strokeWidth="6"
-              fill="none"
-            />
-            <circle
-              cx="40"
-              cy="40"
-              r="36"
-              stroke={strokeColor}
-              strokeWidth="6"
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              transform="rotate(-90 40 40)"
-              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-            />
-          </svg>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                color: '#1F2937',
-                lineHeight: 1,
-                fontSize: '1.25rem',
-              }}
-            >
-              {score}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: '#9CA3AF',
-                fontWeight: 500,
-                fontSize: '0.65rem',
-              }}
-            >
-              %
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Skill Info */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+      {/* Skill Info */}
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Typography
             variant="subtitle1"
             sx={{
               fontWeight: 600,
               color: '#1F2937',
-              mb: 0.5,
               fontSize: '0.95rem',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -130,8 +71,22 @@ const SkillCard: React.FC<SkillCardProps> = React.memo(({ skill, type }) => {
             {skill?.name || 'N/A'}
           </Typography>
 
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: '#1F2937',
+              fontSize: '1.1rem',
+              ml: 2,
+            }}
+          >
+            {score}%
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 1 }}>
           {score > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <VerifiedIcon sx={{ fontSize: 14, color: '#10B981' }} />
               <Typography
                 variant="caption"
@@ -142,22 +97,50 @@ const SkillCard: React.FC<SkillCardProps> = React.memo(({ skill, type }) => {
             </Box>
           )}
 
-          {skill.experienceLevel && !skill.category && (
-            <Typography variant="caption" sx={{ color: '#6B7280', fontSize: '0.7rem' }}>
-              {skill.experienceLevel}
-            </Typography>
-          )}
-
-          {skill.category && (
-            <Typography
-              variant="caption"
-              sx={{ color: '#6B7280', fontSize: '0.7rem', display: 'block' }}
-            >
-              {skill.category}
-            </Typography>
+          {skill.createdAt && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <AccessTimeIcon sx={{ fontSize: 14, color: '#6B7280' }} />
+              <Typography
+                variant="caption"
+                sx={{ color: '#6B7280', fontWeight: 500, fontSize: '0.7rem' }}
+              >
+                {formatTimeAgo(skill.createdAt)}
+              </Typography>
+            </Box>
           )}
         </Box>
+
+        {skill.experienceLevel && !skill.category && (
+          <Typography variant="caption" sx={{ color: '#6B7280', fontSize: '0.7rem', display: 'block', mb: 1 }}>
+            {skill.experienceLevel}
+          </Typography>
+        )}
+
+        {skill.category && (
+          <Typography
+            variant="caption"
+            sx={{ color: '#6B7280', fontSize: '0.7rem', display: 'block', mb: 1 }}
+          >
+            {skill.category}
+          </Typography>
+        )}
       </Box>
+
+      {/* Linear Progress Bar */}
+      <LinearProgress
+        variant="determinate"
+        value={score}
+        sx={{
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: '#F3F4F6',
+          '& .MuiLinearProgress-bar': {
+            borderRadius: 4,
+            backgroundColor: barColor,
+            transition: 'transform 0.8s ease',
+          },
+        }}
+      />
     </Card>
   );
 });

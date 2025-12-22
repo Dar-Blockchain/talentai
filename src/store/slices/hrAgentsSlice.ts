@@ -154,7 +154,7 @@ const hrAgentsSlice = createSlice({
       })
       .addCase(fetchHRAgents.fulfilled, (state, action: PayloadAction<any>) => {
         state.agents.status = "succeeded";
-        state.agents.data = action.payload.agents || action.payload.data || action.payload;
+        state.agents.data = action.payload.results || action.payload.agents || action.payload.data || action.payload;
       })
       .addCase(fetchHRAgents.rejected, (state, action) => {
         state.agents.status = "failed";
