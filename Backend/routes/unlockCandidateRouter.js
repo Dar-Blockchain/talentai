@@ -27,9 +27,7 @@ router.get("/:unlockId", unlockCandidateController.getUnlockById);
 // Create unlock candidate record
 router.post("/create", unlockCandidateController.unlockCandidate);
 
-// POST /unlock-candidate/create-pack
-// Create pack of 5 candidates for 25 tokens
-router.post("/create-pack", unlockCandidateController.unlockCandidatePack);
+// NOTE: pack logic merged into `/create` endpoint. Removed separate pack route.
 
 // POST /unlock-candidate/complete
 // Complete unlock after payment

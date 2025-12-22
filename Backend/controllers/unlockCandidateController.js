@@ -72,23 +72,54 @@ module.exports.getUnlockCandidatesByCompany = async (req, res) => {
 module.exports.unlockCandidate = async (req, res) => {
   try {
     const idCompany = req.user._id;
-    const { idCandidate, idJob } = req.body;
+    const { idCandidate, idJob, candidateIds } = req.body;
 
-    const unlockPrice = 5; // Example fixed price, could be dynamic
+    // If candidateIds array is provided, treat as pack. Otherwise single candidate.
+    const PACK_SIZE = 5;
+    const PACK_PRICE = 25;
 
-    // Validate required fields
-    if (!idCandidate || !idJob || unlockPrice === undefined) {
+    // Validate job
+    if (!idJob) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: idCandidate, idJob, unlockPrice"
+        message: "Missing required field: idJob"
       });
     }
 
+    // Pack flow
+    if (candidateIds) {
+      if (!Array.isArray(candidateIds)) {
+        return res.status(400).json({ success: false, message: "candidateIds must be an array" });
+      }
+
+      if (candidateIds.length < 1 || candidateIds.length > PACK_SIZE) {
+        return res.status(400).json({
+          success: false,
+          message: `Pack must contain between 1 and ${PACK_SIZE} candidates. Received ${candidateIds.length}`
+        });
+      }
+
+      const result = await unlockCandidateService.unlockCandidate(
+        idCompany,
+        candidateIds,
+        idJob,
+        PACK_PRICE,
+        { pack: true }
+      );
+
+      const statusCode = result.success ? 201 : 400;
+      return res.status(statusCode).json(result);
+    }
+
+    // Single candidate flow
+    const unlockPrice = 5; // fixed single unlock price
+
+    if (!idCandidate) {
+      return res.status(400).json({ success: false, message: "Missing required field: idCandidate" });
+    }
+
     if (unlockPrice < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Unlock price cannot be negative"
-      });
+      return res.status(400).json({ success: false, message: "Unlock price cannot be negative" });
     }
 
     const result = await unlockCandidateService.unlockCandidate(
@@ -105,61 +136,6 @@ module.exports.unlockCandidate = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to create unlock candidate",
-      error: error.message
-    });
-  }
-};
-
-/**
- * Create unlock candidate pack (5 candidates for 25 tokens)
- */
-module.exports.unlockCandidatePack = async (req, res) => {
-  try {
-    const idCompany = req.user._id;
-    const { candidateIds, idJob } = req.body;
-
-    // Pack configuration
-    const PACK_SIZE = 5;
-    const PACK_PRICE = 25;
-
-    // Validate required fields
-    if (!candidateIds || !idJob) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields: candidateIds (array), idJob"
-      });
-    }
-
-    // Validate array format
-    if (!Array.isArray(candidateIds)) {
-      return res.status(400).json({
-        success: false,
-        message: "candidateIds must be an array"
-      });
-    }
-
-    // Validate pack size
-    if (candidateIds.length !== PACK_SIZE) {
-      return res.status(400).json({
-        success: false,
-        message: `Pack must contain exactly ${PACK_SIZE} candidates. Received ${candidateIds.length}`
-      });
-    }
-
-    const result = await unlockCandidateService.unlockCandidatePack(
-      idCompany,
-      candidateIds,
-      idJob,
-      PACK_PRICE
-    );
-
-    const statusCode = result.success ? 201 : 400;
-    res.status(statusCode).json(result);
-  } catch (error) {
-    console.error("Error creating unlock candidate pack:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to create unlock candidate pack",
       error: error.message
     });
   }
