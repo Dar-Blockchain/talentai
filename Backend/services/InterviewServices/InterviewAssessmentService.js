@@ -156,6 +156,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
                 'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
                 'softSkills.$[elem].experienceLevel': experienceLevel,
                 'softSkills.$[elem].Levelconfirmed': proficiencyLevel - 1,
+                'softSkills.$[elem].updatedAt': new Date(),
               },
             },
             {
@@ -168,7 +169,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           // Add new soft skill
           await Profile.findByIdAndUpdate(
             candidateId,
-            { $inc: { quota: 1 },$addToSet: { softSkills: softSkill } },
+            { $inc: { quota: 1 }, $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
             { new: true }
           );
           console.log(`Soft skill "${skillNameFromMeta}" added`);
@@ -194,6 +195,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
                   'skills.$[elem].proficiencyLevel': proficiencyLevel,
                   'skills.$[elem].experienceLevel': experienceLevel,
                   'skills.$[elem].Levelconfirmed': proficiencyLevel - 1,
+                  'skills.$[elem].updatedAt': new Date(),
                 },
               },
               {
@@ -213,6 +215,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
                   'skills.$[elem].proficiencyLevel': proficiencyLevel,
                   'skills.$[elem].experienceLevel': experienceLevel,
                   'skills.$[elem].Levelconfirmed': proficiencyLevel - 1,
+                  'skills.$[elem].updatedAt': new Date(),
                 },
               },
               {
@@ -226,7 +229,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           // Add new skill
           await Profile.findByIdAndUpdate(
             candidateId,
-            { $inc: { quota: 1 },$addToSet: { skills: skill } },
+            { $inc: { quota: 1 }, $addToSet: { skills: { ...skill, createdAt: new Date(), updatedAt: new Date() } } },
             { new: true }
           );
           console.log(`Skill "${skillNameFromMeta}" added as new`);
@@ -397,6 +400,7 @@ const updateAssessment = async (id, updateData, metadata) => {
             $set: {
               'softSkills.$[elem].ScoreTest': overallScore,
               'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+              'softSkills.$[elem].updatedAt': new Date(),
             },
           },
           {
@@ -411,6 +415,7 @@ const updateAssessment = async (id, updateData, metadata) => {
             $set: {
               'skills.$[elem].ScoreTest': overallScore,
               'skills.$[elem].proficiencyLevel': proficiencyLevel,
+              'skills.$[elem].updatedAt': new Date(),
             },
           },
           {
