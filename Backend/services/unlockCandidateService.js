@@ -134,9 +134,13 @@ const getUnlockCandidatesByCompany = async (idCompany) => {
 };
 
 /**
- * Create unlock candidate record
+ * Create unlock candidate record (single or pack)
+ * @param {ObjectId} idCompany - Company ID
+ * @param {Array} candidateIds - Array of candidate IDs (1 = single, 2-5 = pack)
+ * @param {ObjectId} idJob - Job ID
+ * @param {Number} price - Total price (5 for single, 25 for pack)
  */
-const unlockCandidate = async (idCompany, idCandidateOrArray, idJob, unlockPrice, options = {}) => {
+const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
   try {
     // Validate company exists
     const company = await User.findById(idCompany);
@@ -150,154 +154,48 @@ const unlockCandidate = async (idCompany, idCandidateOrArray, idJob, unlockPrice
       throw new Error("Job not found");
     }
 
-    // If pack flow
-    if (options.pack && Array.isArray(idCandidateOrArray)) {
-      const candidateIds = idCandidateOrArray;
-
-      // Validate candidates exist
-      const candidates = await User.find({ _id: { $in: candidateIds } });
-      if (candidates.length !== candidateIds.length) {
-        throw new Error("One or more candidates not found");
-      }
-
-      // Compute per-candidate share
-      const count = candidateIds.length;
-      const perCandidateShare = Number((unlockPrice / count).toFixed(8));
-
-      // Process single payment for the whole pack
-      const paymentResult = await postPaymentService.processPayment(
-        company.hederaAccountId,
-        company.hederaPrivateKey,
-        unlockPrice,
-        idJob,
-        company._id
-      );
-
-      const transactionId = paymentResult.transactionId;
-      const unlockedRecords = [];
-
-      // Create unlock records for each candidate
-      for (const idCandidate of candidateIds) {
-        // Check if already unlocked
-        const existingUnlock = await UnlockCandidate.findOne({ idCompany, idCandidate });
-        if (existingUnlock) {
-          unlockedRecords.push(existingUnlock);
-          continue;
-        }
-
-        const unlockRecord = new UnlockCandidate({
-          idCompany,
-          idCandidate,
-          idJob,
-          unlockPrice: perCandidateShare,
-          transactionId
-        });
-
-        await unlockRecord.save();
-        unlockedRecords.push(unlockRecord);
-      }
-
-      return {
-        success: true,
-        message: `Pack of ${unlockedRecords.length} candidates processed successfully`,
-        data: unlockedRecords,
-        packPrice: unlockPrice,
-        packSize: unlockedRecords.length,
-        transactionId
-      };
+    // Validate candidateIds is always an array
+    if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
+      throw new Error("candidateIds must be a non-empty array");
     }
 
-    // Single candidate flow
-    const idCandidate = idCandidateOrArray;
-
-    // Validate candidate exists
-    const candidate = await User.findById(idCandidate);
-    if (!candidate) {
-      throw new Error("Candidate not found");
+    // Validate candidates exist
+    const candidates = await User.find({ _id: { $in: candidateIds } });
+    if (candidates.length !== candidateIds.length) {
+      throw new Error("One or more candidates not found");
     }
 
-    // Check if already unlocked
-    const existingUnlock = await UnlockCandidate.findOne({ idCompany, idCandidate });
-    if (existingUnlock) {
-      return { success: false, message: "Candidate already unlocked for this Company", data: existingUnlock };
-    }
+    // Compute per-candidate share
+    const count = candidateIds.length;
+    const perCandidateShare = Number((price / count).toFixed(8));
 
-    // Process payment
+    // Process single payment for all candidates
     const paymentResult = await postPaymentService.processPayment(
       company.hederaAccountId,
       company.hederaPrivateKey,
-      unlockPrice,
+      price,
       idJob,
       company._id
     );
 
     const transactionId = paymentResult.transactionId;
-
-    // Create unlock record
-    const unlockRecord = new UnlockCandidate({ idCompany, idCandidate, idJob, unlockPrice, transactionId });
-    await unlockRecord.save();
-
-    return { success: true, message: "Unlock candidate record created", data: unlockRecord };
-  } catch (error) {
-    console.error("Error creating unlock candidate:", error);
-    throw error;
-  }
-};
-
-/**
- * Unlock candidate pack (5 candidates for 25 tokens)
- */
-const unlockCandidatePack = async (idCompany, candidateIds, idJob, packPrice) => {
-  try {
     const unlockedRecords = [];
 
-    // Validate company exists
-    const company = await User.findById(idCompany);
-    if (!company) {
-      throw new Error("Company not found");
-    }
-
-    // Validate Job exists
-    const job = await require("../models/PostModel").findById(idJob);
-    if (!job) {
-      throw new Error("Job not found");
-    }
-
-    // Compute per-candidate share of the pack price
-    const count = candidateIds.length;
-    const perCandidateShare = Number((packPrice / count).toFixed(8));
-
-    // Process single payment for the whole pack
-    const paymentResult = await postPaymentService.processPayment(
-      company.hederaAccountId,
-      company.hederaPrivateKey,
-      packPrice,
-      idJob,
-      company._id
-    );
-
-    const transactionId = paymentResult.transactionId;
-
-    // Create an unlock record for each candidate in the pack
+    // Create unlock records for each candidate
     for (const idCandidate of candidateIds) {
-      // Validate candidate exists
-      const candidateExists = await User.findById(idCandidate);
-      if (!candidateExists) {
-        throw new Error(`Candidate ${idCandidate} not found`);
+      // Check if already unlocked
+      const existingUnlock = await UnlockCandidate.findOne({ idCompany, idCandidate });
+      if (existingUnlock) {
+        unlockedRecords.push(existingUnlock);
+        continue;
       }
 
-      // Create unlock record for this candidate with pack metadata
       const unlockRecord = new UnlockCandidate({
         idCompany,
         idCandidate,
         idJob,
         unlockPrice: perCandidateShare,
-        pack: true,
-        packTotalPrice: packPrice,
-        packSize: count,
-        packShare: perCandidateShare,
-        transactionId,
-        status: 'pending'
+        transactionId
       });
 
       await unlockRecord.save();
@@ -306,14 +204,15 @@ const unlockCandidatePack = async (idCompany, candidateIds, idJob, packPrice) =>
 
     return {
       success: true,
-      message: `Pack of ${unlockedRecords.length} candidates created successfully`,
+      message: `${count === 1 ? 'Single' : 'Pack'} unlock processed successfully (${count} candidate${count > 1 ? 's' : ''})`,
       data: unlockedRecords,
-      packPrice: packPrice,
-      packSize: unlockedRecords.length,
+      totalPrice: price,
+      pricePerCandidate: perCandidateShare,
+      candidateCount: count,
       transactionId
     };
   } catch (error) {
-    console.error("Error creating unlock candidate pack:", error);
+    console.error("Error creating unlock candidate:", error);
     throw error;
   }
 };

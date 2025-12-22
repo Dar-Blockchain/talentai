@@ -67,18 +67,21 @@ module.exports.getUnlockCandidatesByCompany = async (req, res) => {
 };
 
 /**
- * Create unlock candidate record
+ * Create unlock candidate record (single or pack)
+ * Body:
+ *   Single (1 candidate): { candidateIds: ["id"], idJob: "jobId" } → 5 tokens
+ *   Pack (2-5 candidates): { candidateIds: ["id1", "id2", ...], idJob: "jobId" } → 25 tokens
  */
 module.exports.unlockCandidate = async (req, res) => {
   try {
     const idCompany = req.user._id;
-    const { idCandidate, idJob, candidateIds } = req.body;
+    const { idJob, candidateIds } = req.body;
 
-    // If candidateIds array is provided, treat as pack. Otherwise single candidate.
     const PACK_SIZE = 5;
+    const SINGLE_PRICE = 5;
     const PACK_PRICE = 25;
 
-    // Validate job
+    // Validate required fields
     if (!idJob) {
       return res.status(400).json({
         success: false,
@@ -86,47 +89,31 @@ module.exports.unlockCandidate = async (req, res) => {
       });
     }
 
-    // Pack flow
-    if (candidateIds) {
-      if (!Array.isArray(candidateIds)) {
-        return res.status(400).json({ success: false, message: "candidateIds must be an array" });
-      }
-
-      if (candidateIds.length < 1 || candidateIds.length > PACK_SIZE) {
-        return res.status(400).json({
-          success: false,
-          message: `Pack must contain between 1 and ${PACK_SIZE} candidates. Received ${candidateIds.length}`
-        });
-      }
-
-      const result = await unlockCandidateService.unlockCandidate(
-        idCompany,
-        candidateIds,
-        idJob,
-        PACK_PRICE,
-        { pack: true }
-      );
-
-      const statusCode = result.success ? 201 : 400;
-      return res.status(statusCode).json(result);
+    if (!candidateIds || !Array.isArray(candidateIds)) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required field: candidateIds (must be an array)"
+      });
     }
 
-    // Single candidate flow
-    const unlockPrice = 5; // fixed single unlock price
-
-    if (!idCandidate) {
-      return res.status(400).json({ success: false, message: "Missing required field: idCandidate" });
+    if (candidateIds.length < 1 || candidateIds.length > PACK_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: `candidateIds must contain between 1 and ${PACK_SIZE} candidates. Received ${candidateIds.length}`
+      });
     }
 
-    if (unlockPrice < 0) {
-      return res.status(400).json({ success: false, message: "Unlock price cannot be negative" });
-    }
+    // Determine flow: single (1 candidate) or pack (2-5 candidates)
+    const isPack = candidateIds.length > 1;
+    const price = isPack ? PACK_PRICE : SINGLE_PRICE;
 
+    // Call service with unified interface
     const result = await unlockCandidateService.unlockCandidate(
       idCompany,
-      idCandidate,
+      candidateIds,
       idJob,
-      unlockPrice
+      price,
+      { pack: isPack }
     );
 
     const statusCode = result.success ? 201 : 400;
