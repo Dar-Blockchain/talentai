@@ -9,6 +9,7 @@ interface Skill {
   ScoreTest?: number;
   experienceLevel?: string;
   category?: string;
+  createdAt?: string;
 }
 
 interface SkillsSectionProps {

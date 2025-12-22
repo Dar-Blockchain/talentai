@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { Box, Button, Typography, Paper, Pagination } from "@mui/material";
+import { Box, Button, Typography, Paper, Pagination, Fade } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
 export type UserInfoCardProps = {
@@ -213,6 +213,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
 
   const [technicalSkillsPage, setTechnicalSkillsPage] = useState(1);
   const [softSkillsPage, setSoftSkillsPage] = useState(1);
+  const [deletingSkills, setDeletingSkills] = useState<Set<string>>(new Set());
 
   // Memoize filtered technical skills
   const technicalSkills = useMemo(
@@ -220,44 +221,79 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
     [profile?.skills, softSkillNames]
   );
 
-  // Generic delete handler
+  // Generic delete handler with optimistic update and fade animation
   const handleDeleteSkill = useCallback(async (
     endpoint: string,
-    payload: Record<string, string>
+    payload: Record<string, string>,
+    skillName: string
   ) => {
+    // Optimistically mark skill as deleting (triggers fade out)
+    setDeletingSkills(prev => new Set(prev).add(skillName));
+
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
         console.error("Authentication token not found");
+        setDeletingSkills(prev => {
+          const next = new Set(prev);
+          next.delete(skillName);
+          return next;
+        });
         return;
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      // Wait for fade animation to complete before making API call
+      setTimeout(async () => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(payload),
+            }
+          );
 
-      if (response.ok) {
-        dispatch(getMyProfile());
-      }
+          if (response.ok) {
+            // Refresh profile to get updated data
+            await dispatch(getMyProfile());
+          } else {
+            // On error, remove from deleting set to restore skill
+            setDeletingSkills(prev => {
+              const next = new Set(prev);
+              next.delete(skillName);
+              return next;
+            });
+          }
+        } catch (error) {
+          console.error("Error deleting skill:", error);
+          // On error, remove from deleting set to restore skill
+          setDeletingSkills(prev => {
+            const next = new Set(prev);
+            next.delete(skillName);
+            return next;
+          });
+        }
+      }, 300); // Match fade animation duration
     } catch (error) {
       console.error("Error deleting skill:", error);
+      setDeletingSkills(prev => {
+        const next = new Set(prev);
+        next.delete(skillName);
+        return next;
+      });
     }
   }, [dispatch, getMyProfile]);
 
   const deleteTechnicalSkill = useCallback((skillName: string) => {
-    handleDeleteSkill("profiles/deleteHardSkill", { skillToDelete: skillName });
+    handleDeleteSkill("profiles/deleteHardSkill", { skillToDelete: skillName }, skillName);
   }, [handleDeleteSkill]);
 
   const deleteSoftSkill = useCallback((skillName: string) => {
-    handleDeleteSkill("profiles/deleteSoftSkills", { softSkillToDelete: skillName });
+    handleDeleteSkill("profiles/deleteSoftSkills", { softSkillToDelete: skillName }, skillName);
   }, [handleDeleteSkill]);
 
   // Paginated skills
@@ -340,14 +376,23 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
             <>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {paginatedSoftSkills.map((skill: any) => (
-                  <SkillBlock
-                    profile={profile}
+                  <Fade
                     key={`${skill.name}-${skill.category}`}
-                    skill={skill}
-                    type="soft"
-                    onStartTest={() => handleStartTest("soft", skill)}
-                    onDelete={() => deleteSoftSkill(skill.name)}
-                  />
+                    in={!deletingSkills.has(skill.name)}
+                    timeout={300}
+                    unmountOnExit
+                  >
+                    <Box>
+                      <SkillBlock
+                        profile={profile}
+                        skill={skill}
+                        type="soft"
+                        onStartTest={() => handleStartTest("soft", skill)}
+                        onDelete={() => deleteSoftSkill(skill.name)}
+                        allSkills={profile?.skills || []}
+                      />
+                    </Box>
+                  </Fade>
                 ))}
               </Box>
 
@@ -388,14 +433,23 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
             <>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {paginatedTechnicalSkills.map((skill: any) => (
-                  <SkillBlock
-                    profile={profile}
+                  <Fade
                     key={skill.name}
-                    skill={skill}
-                    type="technical"
-                    onStartTest={() => handleStartTest("technical", skill)}
-                    onDelete={() => deleteTechnicalSkill(skill.name)}
-                  />
+                    in={!deletingSkills.has(skill.name)}
+                    timeout={300}
+                    unmountOnExit
+                  >
+                    <Box>
+                      <SkillBlock
+                        profile={profile}
+                        skill={skill}
+                        type="technical"
+                        onStartTest={() => handleStartTest("technical", skill)}
+                        onDelete={() => deleteTechnicalSkill(skill.name)}
+                        allSkills={technicalSkills}
+                      />
+                    </Box>
+                  </Fade>
                 ))}
               </Box>
 

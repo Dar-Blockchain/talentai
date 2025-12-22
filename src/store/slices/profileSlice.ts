@@ -37,6 +37,7 @@ interface Skill {
   ScoreTest?: number;
   Levelconfirmed?: number;
   isPrimary?: boolean;
+  createdAt?: string;
 }
 
 interface SoftSkill {
@@ -46,6 +47,7 @@ interface SoftSkill {
   experienceLevel: string;
   NumberTestPassed: number;
   ScoreTest: number;
+  createdAt?: string;
 }
 
 export interface Profile {
