@@ -13,11 +13,11 @@ router.use(requireAuthUser, authLogMiddleware("UnlockCandidate"));
 
 // GET /unlock-candidate/unlocked
 // Get all unlocked candidates by company
-router.get("/unlocked", unlockCandidateController.getUnlockedCandidatesByCompany);
+router.get("/", unlockCandidateController.getUnlockedCandidatesByCompany);
 
 // GET /unlock-candidate/all
 // Get all unlock candidates by company (including pending)
-router.get("/all", unlockCandidateController.getUnlockCandidatesByCompany);
+// router.get("/all", unlockCandidateController.getUnlockCandidatesByCompany);
 
 // GET /unlock-candidate/:unlockId
 // Get unlock record by ID
@@ -25,12 +25,12 @@ router.get("/:unlockId", unlockCandidateController.getUnlockById);
 
 // POST /unlock-candidate/create
 // Create unlock candidate record
-router.post("/create", unlockCandidateController.unlockCandidate);
+router.post("/", unlockCandidateController.unlockCandidate);
 
 // NOTE: pack logic merged into `/create` endpoint. Removed separate pack route.
 
 // POST /unlock-candidate/complete
 // Complete unlock after payment
-router.post("/complete", unlockCandidateController.completeUnlock);
+// router.post("/complete", unlockCandidateController.completeUnlock);
 
 module.exports = router;
