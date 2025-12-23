@@ -50,16 +50,16 @@ const initialState: CandidateState = {
 
 export const unlockCandidate = createAsyncThunk<
   UnlockResponse,
-  { idCandidate: string; idJob: string },
+  { candidateIds: string[]; idJob: string },
   { state: RootState }
->("candidate/unlock", async ({ idCandidate, idJob }, { rejectWithValue }) => {
+>("candidate/unlock", async ({ candidateIds, idJob }, { rejectWithValue }) => {
   try {
     const token =
       localStorage.getItem("token") || localStorage.getItem("api_token");
 
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/create`,
-      { idCandidate, idJob },
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate`,
+      { candidateIds, idJob },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -104,7 +104,7 @@ export const fetchUnlockedCandidates = createAsyncThunk<
       });
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/unlocked?${queryParams}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/?${queryParams}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

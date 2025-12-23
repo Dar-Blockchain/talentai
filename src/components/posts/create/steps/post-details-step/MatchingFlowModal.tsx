@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,10 +14,12 @@ import {
   Button,
   DialogActions,
 } from "@mui/material";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import CloseIcon from "@mui/icons-material/Close";
 import { selectJobMatches } from "@/store/slices/postSlice";
 import { MatchingCandidate } from "@/pages/dashboard/company";
-import CloseIcon from "@mui/icons-material/Close";
+import { unlockCandidate } from "@/store/slices/candidateSlice";
+import { AppDispatch } from "@/store/store";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -24,6 +27,7 @@ const noCopyStyle = {
   MozUserSelect: "none" as const,
   msUserSelect: "none" as const,
 };
+
 interface MatchingFlowModalProps {
   open: boolean;
   mode: "saving" | "matching" | "done";
@@ -37,9 +41,48 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
   onClose,
   onContinue,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
+  const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
+  const firstFiveUnlocked = matchingProfiles
+    .slice(0, 5)
+    .every((candidate) => candidate.unlocked === true);
+    
+  const PROFILE_UNLOCK_PACK_PRICE = 500;
 
-  const PROFILE_UNLOCK_PACK_PRICE = 1500;
+  // Loading state for unlock action
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const handleConfirmUnlock = async () => {
+    try {
+      const candidateIds: string[] = matchingProfiles
+        .slice(0, 5)
+        .map((profile) => profile?.candidateId)
+        .filter((id): id is string => Boolean(id));
+
+      if (!candidateIds.length) return;
+
+      if (!savedPost?.jobData?._id) {
+        console.error("Job ID missing");
+        return;
+      }
+
+      setIsUnlocking(true);
+
+      await dispatch(
+        unlockCandidate({
+          candidateIds,
+          idJob: savedPost.jobData._id,
+        })
+      ).unwrap();
+
+      onContinue?.(true);
+    } catch (error) {
+      console.error("Unlock candidate failed:", error);
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
 
   const renderSaving = () => (
     <Box py={3} textAlign="center">
@@ -133,7 +176,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
       </Typography>
 
       <List sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        {matchingProfiles.slice(0, 5).map((candidate, index) => (
+        {matchingProfiles.slice(0, 5).map((candidate) => (
           <Box
             key={candidate.candidateId}
             sx={{
@@ -151,13 +194,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                 alignItems: "center",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: 1,
-                }}
-              >
+              <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
                 <Box
                   sx={{
                     display: "flex",
@@ -180,13 +217,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                     {candidate.name?.charAt(0)?.toUpperCase()}
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        gap: 1,
-                        alignItems: "center",
-                      }}
-                    >
+                    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                       <Typography
                         variant="h6"
                         sx={{
@@ -202,30 +233,30 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                           candidate?.name}
                       </Typography>
                       {candidate?.targetRole && (
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            color: "rgba(24, 25, 28, 1)",
-                            fontWeight: 500,
-                            fontSize: "16px",
-                            lineHeight: "28px",
-                          }}
-                        >
-                          |
-                        </Typography>
-                      )}
-                      {candidate?.targetRole && (
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            color: "rgba(84, 98, 116, 0.53)",
-                            fontWeight: 400,
-                            fontSize: "16px",
-                            lineHeight: "28px",
-                          }}
-                        >
-                          {candidate?.targetRole}
-                        </Typography>
+                        <>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: "rgba(24, 25, 28, 1)",
+                              fontWeight: 500,
+                              fontSize: "16px",
+                              lineHeight: "28px",
+                            }}
+                          >
+                            |
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: "rgba(84, 98, 116, 0.53)",
+                              fontWeight: 400,
+                              fontSize: "16px",
+                              lineHeight: "28px",
+                            }}
+                          >
+                            {candidate?.targetRole}
+                          </Typography>
+                        </>
                       )}
                     </Box>
                     <Typography
@@ -277,7 +308,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                         ? "rgba(255, 193, 7, 0.42)"
                         : "rgba(246, 128, 128, 0.42)",
                     fontWeight: 600,
-                    fontSize: "12",
+                    fontSize: "12px",
                     mt: 0.5,
                   }}
                 >
@@ -288,7 +319,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           </Box>
         ))}
       </List>
-      <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+
+      <Typography sx={{ fontSize: "14px", fontWeight: 500, mt: 2 }}>
         Go directly to your matches and unlock a profile to view contact details
         and full resumes.
       </Typography>
@@ -334,8 +366,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
             {mode === "saving"
               ? "Saving Job"
               : mode === "matching"
-              ? "Job created ! What's Next?"
-              : "Job created ! What's Next?"}
+              ? "Job created! What's Next?"
+              : "Job created! What's Next?"}
           </Typography>
           {mode === "done" && (
             <IconButton onClick={onClose} sx={{ color: "black" }}>
@@ -376,10 +408,12 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           >
             Configure Hiring Agent
           </Button>
+
           {matchingProfiles?.length > 0 && (
             <Button
               variant="outlined"
-              onClick={() => {}}
+              onClick={handleConfirmUnlock}
+              disabled={isUnlocking || firstFiveUnlocked} // disable while loading
               sx={{
                 borderColor: "rgba(222, 147, 0, 1)",
                 color: "rgba(222, 147, 0, 1)",
@@ -391,16 +425,18 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                 textTransform: "none",
                 fontSize: "0.875rem",
                 borderWidth: "1px",
-                "&:hover": {
-                  backgroundColor: "rgba(222, 147, 0, 0.08)",
-                },
-                "&.Mui-disabled": {
-                  borderColor: "#e5e7eb",
-                  color: "#9ca3af",
-                },
+                "&:hover": { backgroundColor: "rgba(222, 147, 0, 0.08)" },
+                "&.Mui-disabled": { borderColor: "#e5e7eb", color: "#9ca3af" },
               }}
             >
-              Unlock Candidate Profiles
+              {isUnlocking ? (
+                <CircularProgress
+                  size={20}
+                  sx={{ color: "rgba(222, 147, 0, 1)" }}
+                />
+              ) : (
+                "Unlock Candidate Profiles"
+              )}
             </Button>
           )}
         </DialogActions>
