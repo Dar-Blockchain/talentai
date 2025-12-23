@@ -27,6 +27,8 @@ import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
 import { formatNumber, stringAvatar } from "@/utils/functions";
 import { openModal } from "@/store/slices/tokenPurchaseSlice";
 import { logout } from "@/store/slices/authSlice";
+import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // Styles
 const pulseDot = {
@@ -157,8 +159,12 @@ const HeaderDashboard = () => {
   // Selectors
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
-  const { profile } = useSelector((state: RootState) => state.auth);
+  const authProfile = useSelector((state: RootState) => state.auth.profile);
+  const { profile: fullProfile } = useSelector(selectProfile);
   const { isLoading: isLoggingOut } = useSelector((state: RootState) => state.auth);
+
+  // Use fullProfile if available, otherwise fallback to authProfile
+  const profile = fullProfile || authProfile;
 
   // Local state
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -170,6 +176,7 @@ const HeaderDashboard = () => {
     if (isCompany) {
       return profile?.companyDetails?.name || profile?.userId?.username;
     }
+    console.log(profile, 'profile in display name')
     return `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
   }, [isCompany, profile]);
 
@@ -216,7 +223,51 @@ const HeaderDashboard = () => {
     }
   }, [router.query.refreshBalance, token, dispatch]);
 
-  useEffect(() => {console.log(profile,'profile')}, [profile])
+  useEffect(() => { console.log(profile, 'profile') }, [profile])
+
+  // Show loading screen during logout
+  if (isLoggingOut) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          background: "white",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 3,
+        }}
+      >
+        {/* Logo */}
+        <Box
+          component="img"
+          src={logoSrc}
+          alt="Logo"
+          sx={{
+            height: 40,
+            mb: 2,
+          }}
+        />
+
+        {/* Loading Spinner */}
+        <CircularProgress size={60} sx={{ color: isCompany ? "#00FF9D" : "#8310FF" }} />
+
+        {/* Logging out text */}
+        <Typography
+          sx={{
+            fontFamily: "Poppins",
+            fontSize: "1.125rem",
+            fontWeight: 500,
+            color: "#6B7280",
+            mt: 1,
+          }}
+        >
+          Logging out...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -236,7 +287,7 @@ const HeaderDashboard = () => {
               justifyContent: "space-between",
               height: "50px",
               minHeight: "50px!important",
-              paddingLeft: '0!important', 
+              paddingLeft: '0!important',
               paddingRight: '0!important'
             }}
           >
@@ -315,8 +366,8 @@ const HeaderDashboard = () => {
                 <Avatar
                   {...stringAvatar(
                     profile?.companyDetails?.name ||
-                      profile?.userId?.username ||
-                      "User"
+                    profile?.userId?.username ||
+                    "User"
                   )}
                   sx={{
                     width: 30,
