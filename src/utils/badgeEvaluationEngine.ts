@@ -49,7 +49,7 @@ export type Badge = SkillBadge | StackBadge;
  * Maps skills to their canonical names and categories
  */
 const SKILL_ALIASES: Record<string, string[]> = {
-  // Technical Skills
+  // Web Development
   'JavaScript': ['js', 'javascript', 'ecmascript', 'es6', 'es2015', 'vanilla js'],
   'TypeScript': ['ts', 'typescript'],
   'React': ['react', 'react.js', 'reactjs', 'react js'],
@@ -73,6 +73,159 @@ const SKILL_ALIASES: Record<string, string[]> = {
   'Django': ['django', 'django rest'],
   'Flask': ['flask'],
   'FastAPI': ['fastapi', 'fast api'],
+
+  // Design Tools
+  'Figma': ['figma'],
+  'Adobe XD': ['xd', 'adobe xd', 'adobexd'],
+  'Photoshop': ['photoshop', 'ps', 'adobe photoshop'],
+  'Illustrator': ['illustrator', 'ai', 'adobe illustrator'],
+  'InDesign': ['indesign', 'adobe indesign'],
+  'After Effects': ['after effects', 'ae', 'adobe after effects'],
+  'Premiere Pro': ['premiere', 'premiere pro', 'adobe premiere'],
+  'Sketch': ['sketch', 'sketch app'],
+  'Prototyping': ['prototyping', 'wireframing', 'mockups'],
+  'User Research': ['user research', 'ux research', 'user testing'],
+  'Typography': ['typography', 'type design', 'font design'],
+  'Animation': ['animation', '2d animation', 'motion design'],
+  'Video Editing': ['video editing', 'editing', 'post production'],
+
+  // Mobile Development
+  'Swift': ['swift', 'swift language'],
+  'iOS Development': ['ios', 'ios development', 'iphone development'],
+  'Xcode': ['xcode', 'xcode ide'],
+  'UIKit': ['uikit', 'ui kit'],
+  'Kotlin': ['kotlin'],
+  'Android Development': ['android', 'android development'],
+  'Android Studio': ['android studio'],
+  'React Native': ['react native', 'react-native', 'rn'],
+  'Flutter': ['flutter', 'dart flutter'],
+  'Mobile Development': ['mobile development', 'mobile app development'],
+
+  // Data & Analytics
+  'Excel': ['excel', 'microsoft excel', 'spreadsheets'],
+  'SQL': ['sql', 'structured query language', 'database querying'],
+  'Tableau': ['tableau'],
+  'Data Visualization': ['data visualization', 'data viz', 'dashboards'],
+  'Machine Learning': ['machine learning', 'ml', 'supervised learning'],
+  'Statistics': ['statistics', 'statistical analysis', 'stats'],
+  'Data Analysis': ['data analysis', 'data analytics', 'analytics'],
+  'Business Intelligence': ['business intelligence', 'bi', 'data warehousing'],
+  'Requirements Analysis': ['requirements analysis', 'business requirements', 'requirements gathering'],
+
+  // Business & Finance
+  'Finance': ['finance', 'financial analysis', 'corporate finance'],
+  'Accounting': ['accounting', 'financial accounting', 'bookkeeping'],
+  'Financial Modeling': ['financial modeling', 'financial models', 'modeling'],
+  'Budgeting': ['budgeting', 'budget planning', 'budget management'],
+  'Financial Reporting': ['financial reporting', 'financial reports', 'reporting'],
+  'Investment Analysis': ['investment analysis', 'investments', 'portfolio management'],
+  'Risk Management': ['risk management', 'risk analysis', 'risk assessment'],
+  'Valuation': ['valuation', 'company valuation', 'business valuation'],
+  'Economics': ['economics', 'macroeconomics', 'microeconomics'],
+  'Project Management': ['project management', 'pm', 'pmp'],
+
+  // Marketing & SEO
+  'SEO': ['seo', 'search engine optimization', 'search optimization'],
+  'Google Analytics': ['google analytics', 'ga', 'analytics'],
+  'Social Media Marketing': ['social media marketing', 'smm', 'social marketing'],
+  'Content Marketing': ['content marketing', 'inbound marketing'],
+  'Content Writing': ['content writing', 'blog writing', 'article writing'],
+  'Copywriting': ['copywriting', 'copy writing', 'advertising copy'],
+  'Social Media': ['social media', 'social networks'],
+  'Content Strategy': ['content strategy', 'editorial strategy'],
+  'Community Management': ['community management', 'community building'],
+  'Analytics': ['analytics', 'web analytics', 'marketing analytics'],
+
+  // Security & Testing
+  'Network Security': ['network security', 'cybersecurity', 'infosec'],
+  'Penetration Testing': ['penetration testing', 'pen testing', 'ethical hacking'],
+  'Security Analysis': ['security analysis', 'threat analysis', 'vulnerability assessment'],
+  'Encryption': ['encryption', 'cryptography', 'data encryption'],
+  'Manual Testing': ['manual testing', 'qa testing', 'functional testing'],
+  'Automated Testing': ['automated testing', 'test automation', 'selenium'],
+  'Test Planning': ['test planning', 'test strategy', 'test cases'],
+  'Bug Tracking': ['bug tracking', 'defect tracking', 'issue tracking'],
+
+  // Blockchain & Web3
+  'Solidity': ['solidity', 'solidity language'],
+  'Smart Contracts': ['smart contracts', 'blockchain contracts'],
+  'Web3': ['web3', 'web3.js', 'web 3.0'],
+  'Ethereum': ['ethereum', 'eth', 'ether'],
+
+  // Game Development
+  'Unity': ['unity', 'unity3d', 'unity engine'],
+  'C#': ['c#', 'csharp', 'c sharp'],
+  'Game Design': ['game design', 'level design', 'gameplay design'],
+  '3D Modeling': ['3d modeling', '3d modelling', 'blender', 'maya'],
+
+  // AI & Deep Learning
+  'Deep Learning': ['deep learning', 'neural networks', 'dl'],
+  'TensorFlow': ['tensorflow', 'tf', 'tensor flow'],
+  'PyTorch': ['pytorch', 'torch'],
+  'NLP': ['nlp', 'natural language processing', 'text processing'],
+  'Computer Vision': ['computer vision', 'cv', 'image processing'],
+  'Data Science': ['data science', 'data scientist'],
+
+  // DevOps & Cloud (Docker, Kubernetes, AWS already defined above)
+  'Azure': ['azure', 'microsoft azure'],
+  'GCP': ['gcp', 'google cloud', 'google cloud platform'],
+  'CI/CD': ['ci/cd', 'cicd', 'continuous integration', 'continuous deployment'],
+  'Jenkins': ['jenkins', 'jenkins ci'],
+  'DevOps': ['devops', 'dev ops'],
+  'Agile': ['agile', 'agile methodology'],
+  'Scrum': ['scrum', 'scrum master'],
+
+  // Programming Languages
+  'C++': ['c++', 'cpp', 'cplusplus'],
+  'Go': ['go', 'golang'],
+  'Rust': ['rust', 'rust language'],
+  'Ruby': ['ruby', 'ruby language'],
+  'PHP': ['php', 'php language'],
+
+  // Databases (MySQL already defined above)
+  'NoSQL': ['nosql', 'no sql', 'document database'],
+  'Redis': ['redis', 'cache'],
+  'GraphQL': ['graphql', 'graph ql'],
+  'REST API': ['rest api', 'rest', 'restful', 'restful api'],
+
+  // Frontend Tools
+  'Sass': ['sass', 'scss'],
+  'Webpack': ['webpack', 'bundler'],
+  'Jest': ['jest', 'jest testing'],
+  'Mocha': ['mocha', 'mocha testing'],
+  'Cypress': ['cypress', 'cypress testing'],
+  'Playwright': ['playwright', 'playwright testing'],
+
+  // Backend Frameworks
+  'Laravel': ['laravel', 'php laravel'],
+
+  // Web3 Additional
+  'DeFi': ['defi', 'decentralized finance', 'defi protocol'],
+  'NFTs': ['nft', 'nfts', 'non-fungible token'],
+  'Hardhat': ['hardhat'],
+  'Truffle': ['truffle', 'truffle suite'],
+  'Token Economics': ['token economics', 'tokenomics'],
+  'DAO Governance': ['dao', 'dao governance', 'decentralized autonomous organization'],
+  'Polkadot': ['polkadot', 'dot'],
+  'Solana': ['solana', 'sol'],
+  'Polygon': ['polygon', 'matic'],
+
+  // Sales & Business
+  'Sales': ['sales', 'selling', 'sales strategy'],
+  'Negotiation': ['negotiation', 'negotiating', 'deal making'],
+  'Customer Success': ['customer success', 'customer satisfaction', 'cs'],
+  'Operations': ['operations', 'ops', 'business operations'],
+  'Entrepreneurship': ['entrepreneurship', 'entrepreneur', 'startup'],
+  'Product Management': ['product management', 'product manager'],
+  'Strategy': ['strategy', 'strategic planning', 'business strategy'],
+  'Business Analysis': ['business analysis', 'business analyst'],
+  'Email Marketing': ['email marketing', 'email campaigns'],
+  'Branding': ['branding', 'brand strategy'],
+  'Market Research': ['market research', 'market analysis'],
+  'Advertising': ['advertising', 'ad campaigns'],
+  'Digital Marketing': ['digital marketing', 'online marketing'],
+  'Growth Hacking': ['growth hacking', 'growth marketing'],
+  'Influencer Marketing': ['influencer marketing', 'influencer relations'],
 
   // Soft Skills
   'Communication': ['communication', 'verbal communication', 'written communication', 'communicating'],
@@ -158,6 +311,218 @@ export const TECHNOLOGY_STACKS = {
     minProficiency: 'Bronze' as ProficiencyLevel,
     description: 'Core web development essentials',
     category: 'technical'
+  },
+  // Design & Creative
+  'UI/UX Designer': {
+    coreSkills: ['Figma', 'Adobe XD', 'Prototyping', 'User Research'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Complete UI/UX design workflow',
+    category: 'design'
+  },
+  'Graphic Designer': {
+    coreSkills: ['Photoshop', 'Illustrator', 'InDesign', 'Typography'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Professional graphic design mastery',
+    category: 'design'
+  },
+  'Motion Graphics': {
+    coreSkills: ['After Effects', 'Premiere Pro', 'Animation', 'Video Editing'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Motion design and video production',
+    category: 'design'
+  },
+  // Data & Analytics
+  'Data Analyst': {
+    coreSkills: ['Excel', 'SQL', 'Tableau', 'Data Visualization'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Data analysis and business intelligence',
+    category: 'data'
+  },
+  'Data Scientist': {
+    coreSkills: ['Python', 'Machine Learning', 'Statistics', 'Data Analysis'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Advanced data science and ML',
+    category: 'data'
+  },
+  'Business Analyst': {
+    coreSkills: ['Excel', 'SQL', 'Business Intelligence', 'Requirements Analysis'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Business analysis and strategy',
+    category: 'business'
+  },
+  // Business & Finance
+  'Financial Analyst': {
+    coreSkills: ['Finance', 'Financial Modeling', 'Excel', 'Financial Reporting'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Financial analysis and reporting',
+    category: 'business'
+  },
+  'Accountant': {
+    coreSkills: ['Accounting', 'Financial Reporting', 'Budgeting', 'Excel'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Accounting and financial management',
+    category: 'business'
+  },
+  'Investment Analyst': {
+    coreSkills: ['Investment Analysis', 'Finance', 'Valuation', 'Financial Modeling'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Investment analysis and portfolio management',
+    category: 'business'
+  },
+  'Project Manager': {
+    coreSkills: ['Project Management', 'Leadership', 'Communication', 'Time Management'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Project planning and execution',
+    category: 'business'
+  },
+  // Mobile Development
+  'iOS Developer': {
+    coreSkills: ['Swift', 'iOS Development', 'Xcode', 'UIKit'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Native iOS app development',
+    category: 'mobile'
+  },
+  'Android Developer': {
+    coreSkills: ['Kotlin', 'Android Development', 'Android Studio', 'Java'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Native Android app development',
+    category: 'mobile'
+  },
+  'Cross-Platform Mobile': {
+    coreSkills: ['React Native', 'Flutter', 'Mobile Development', 'JavaScript'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Cross-platform mobile apps',
+    category: 'mobile'
+  },
+  // Marketing & Content
+  'Digital Marketer': {
+    coreSkills: ['SEO', 'Google Analytics', 'Social Media Marketing', 'Content Marketing'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Comprehensive digital marketing',
+    category: 'marketing'
+  },
+  'Content Creator': {
+    coreSkills: ['Content Writing', 'Copywriting', 'SEO', 'Social Media'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Content creation and strategy',
+    category: 'marketing'
+  },
+  'Social Media Manager': {
+    coreSkills: ['Social Media Marketing', 'Content Strategy', 'Analytics', 'Community Management'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Social media strategy and management',
+    category: 'marketing'
+  },
+  // Security & Testing
+  'Cybersecurity Specialist': {
+    coreSkills: ['Network Security', 'Penetration Testing', 'Security Analysis', 'Encryption'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Cybersecurity and ethical hacking',
+    category: 'security'
+  },
+  'QA Engineer': {
+    coreSkills: ['Manual Testing', 'Automated Testing', 'Test Planning', 'Bug Tracking'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Quality assurance and testing',
+    category: 'testing'
+  },
+  // Blockchain & Web3
+  'Blockchain Developer': {
+    coreSkills: ['Solidity', 'Smart Contracts', 'Web3', 'Ethereum'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Blockchain and cryptocurrency development',
+    category: 'blockchain'
+  },
+  // Game Development
+  'Game Developer': {
+    coreSkills: ['Unity', 'C#', 'Game Design', '3D Modeling'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Video game development',
+    category: 'gaming'
+  },
+  // AI & Machine Learning
+  'AI Engineer': {
+    coreSkills: ['Machine Learning', 'Deep Learning', 'TensorFlow', 'Python'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Artificial intelligence and ML engineering',
+    category: 'ai'
+  },
+  // DevOps & Cloud
+  'Cloud Architect': {
+    coreSkills: ['AWS', 'Azure', 'GCP', 'DevOps'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Cloud infrastructure and architecture',
+    category: 'technical'
+  },
+  // Web3 & Blockchain
+  'DeFi Developer': {
+    coreSkills: ['Solidity', 'Smart Contracts', 'DeFi', 'Web3'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'DeFi protocol development',
+    category: 'blockchain'
+  },
+  'NFT Developer': {
+    coreSkills: ['Solidity', 'Smart Contracts', 'NFTs', 'Ethereum'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'NFT and digital collectibles',
+    category: 'blockchain'
+  },
+  'Web3 Marketer': {
+    coreSkills: ['Web3', 'Token Economics', 'Community Management', 'Social Media Marketing'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Web3 and crypto marketing',
+    category: 'marketing'
+  },
+  // Sales & Product
+  'Product Manager': {
+    coreSkills: ['Product Management', 'Strategy', 'Business Analysis', 'Agile'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Product strategy and management',
+    category: 'business'
+  },
+  'Sales Executive': {
+    coreSkills: ['Sales', 'Negotiation', 'Customer Success', 'Communication'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Sales and business development',
+    category: 'business'
+  },
+  // Data Science
+  'ML Engineer': {
+    coreSkills: ['Machine Learning', 'PyTorch', 'TensorFlow', 'Python'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Machine learning engineering',
+    category: 'ai'
+  },
+  'NLP Specialist': {
+    coreSkills: ['NLP', 'Python', 'Machine Learning', 'Deep Learning'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Natural language processing',
+    category: 'ai'
+  },
+  'Computer Vision Engineer': {
+    coreSkills: ['Computer Vision', 'Deep Learning', 'Python', 'PyTorch'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Computer vision and image processing',
+    category: 'ai'
+  },
+  // Marketing Specialist
+  'Growth Marketer': {
+    coreSkills: ['Growth Hacking', 'SEO', 'Google Analytics', 'Digital Marketing'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Growth and performance marketing',
+    category: 'marketing'
+  },
+  'Email Marketing Specialist': {
+    coreSkills: ['Email Marketing', 'Copywriting', 'Analytics', 'Marketing'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Email campaigns and automation',
+    category: 'marketing'
+  },
+  'Brand Manager': {
+    coreSkills: ['Branding', 'Market Research', 'Strategy', 'Advertising'],
+    minProficiency: 'Silver' as ProficiencyLevel,
+    description: 'Brand strategy and management',
+    category: 'marketing'
   }
 };
 

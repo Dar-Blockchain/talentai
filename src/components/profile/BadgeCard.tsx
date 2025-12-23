@@ -5,19 +5,23 @@ import { ProficiencyLevel } from '@/utils/badgeEvaluationEngine';
 
 interface BadgeCardProps {
   badge: {
-    type: 'individual' | 'stack';
+    type: 'individual' | 'stack' | 'progress';
     skillName?: string;
     stackName?: string;
     proficiencyLevel: ProficiencyLevel;
     confidenceScore?: number;
     coreSkills?: string[];
+    progress?: number;
+    completedSkills?: string[];
+    missingSkills?: string[];
   };
   type: 'technical' | 'soft';
 }
 
 const BadgeCard: React.FC<BadgeCardProps> = React.memo(({ badge, type }) => {
   const isStackBadge = badge.type === 'stack';
-  const badgeName = isStackBadge ? badge.stackName : badge.skillName;
+  const isProgressBadge = badge.type === 'progress';
+  const badgeName = (isStackBadge || isProgressBadge) ? badge.stackName : badge.skillName;
 
   // Color schemes based on type
   const bgGradient = type === 'technical'
@@ -113,9 +117,104 @@ const BadgeCard: React.FC<BadgeCardProps> = React.memo(({ badge, type }) => {
             letterSpacing: 0.5,
           }}
         >
-          {isStackBadge ? `${type} Stack` : `${type} Skill`}
+          {isProgressBadge ? 'In Progress' : isStackBadge ? `${type} Stack` : `${type} Skill`}
         </Typography>
       </Box>
+
+      {/* Progress Information */}
+      {isProgressBadge && badge.progress !== undefined && (
+        <Box sx={{ mt: 2 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: '#6B7280',
+              fontSize: '0.75rem',
+              display: 'block',
+              mb: 1,
+              textAlign: 'center',
+              fontWeight: 600,
+            }}
+          >
+            {badge.completedSkills?.length}/{badge.coreSkills?.length} skills completed
+          </Typography>
+
+          {/* Progress Bar */}
+          <Box
+            sx={{
+              width: '100%',
+              height: 6,
+              backgroundColor: '#E5E7EB',
+              borderRadius: 1,
+              overflow: 'hidden',
+              mb: 1.5,
+            }}
+          >
+            <Box
+              sx={{
+                width: `${badge.progress}%`,
+                height: '100%',
+                background: type === 'technical'
+                  ? 'linear-gradient(90deg, #667eea, #764ba2)'
+                  : 'linear-gradient(90deg, #f093fb, #f5576c)',
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </Box>
+
+          {/* Missing Skills */}
+          {badge.missingSkills && badge.missingSkills.length > 0 && (
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#6B7280',
+                  fontSize: '0.7rem',
+                  display: 'block',
+                  mb: 0.75,
+                  textAlign: 'center',
+                }}
+              >
+                Need {badge.missingSkills.length} more:
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 0.5,
+                  justifyContent: 'center',
+                }}
+              >
+                {badge.missingSkills.slice(0, 3).map((skill, idx) => (
+                  <Typography
+                    key={idx}
+                    variant="caption"
+                    sx={{
+                      color: '#9CA3AF',
+                      fontSize: '0.65rem',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {skill}
+                    {idx < Math.min(badge.missingSkills!.length, 3) - 1 ? ' •' : ''}
+                  </Typography>
+                ))}
+                {badge.missingSkills.length > 3 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#9CA3AF',
+                      fontSize: '0.65rem',
+                      fontWeight: 500,
+                    }}
+                  >
+                    +{badge.missingSkills.length - 3} more
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
+        </Box>
+      )}
 
       {/* Core Skills (for stack badges) */}
       {isStackBadge && badge.coreSkills && badge.coreSkills.length > 0 && (

@@ -5,12 +5,16 @@ import BadgeCard from './BadgeCard';
 import { ProficiencyLevel } from '@/types/badge';
 
 interface Badge {
-  type: 'individual' | 'stack';
+  type: 'individual' | 'stack' | 'progress';
   skillName?: string;
   stackName?: string;
   proficiencyLevel: ProficiencyLevel;
   confidenceScore?: number;
   coreSkills?: string[];
+  category?: string;
+  progress?: number;
+  completedSkills?: string[];
+  missingSkills?: string[];
 }
 
 interface BadgesSectionProps {
