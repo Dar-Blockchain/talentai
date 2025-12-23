@@ -4,10 +4,12 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import { ProficiencyLevel } from '@/utils/badgeEvaluationEngine';
 
 interface ShieldBadgeProps {
-  proficiencyLevel: ProficiencyLevel;
-  skillName: string;
+  proficiency: ProficiencyLevel;
   size?: 'small' | 'medium' | 'large';
 }
+
+export { ShieldBadge };
+export type { ShieldBadgeProps };
 
 const BADGE_COLORS: Record<ProficiencyLevel, { top: string; bottom: string; ribbon: string }> = {
   Bronze: {
@@ -60,11 +62,10 @@ const SIZE_CONFIG = {
 };
 
 const ShieldBadge: React.FC<ShieldBadgeProps> = ({
-  proficiencyLevel,
-  skillName,
+  proficiency,
   size = 'medium'
 }) => {
-  const colors = BADGE_COLORS[proficiencyLevel];
+  const colors = BADGE_COLORS[proficiency];
   const config = SIZE_CONFIG[size];
 
   return (
@@ -174,27 +175,7 @@ const ShieldBadge: React.FC<ShieldBadgeProps> = ({
             px: 1
           }}
         >
-          {proficiencyLevel}
-        </Typography>
-
-        {/* Skill Name */}
-        <Typography
-          sx={{
-            color: 'rgba(255,255,255,0.7)',
-            fontWeight: 600,
-            fontSize: size === 'small' ? '0.55rem' : size === 'medium' ? '0.65rem' : '0.75rem',
-            textAlign: 'center',
-            px: 1,
-            lineHeight: 1.2,
-            maxWidth: '90%',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical'
-          }}
-        >
-          {skillName}
+          {proficiency}
         </Typography>
 
         {/* Decorative Lines */}

@@ -37,8 +37,10 @@ import HeaderDashboard from '@/components/HeaderDashboard';
 import SimpleFooter from '@/components/SimpleFooter';
 import ShareProfileModal from '@/components/profile/ShareProfileModal';
 import SkillsSection from '@/components/profile/SkillsSection';
+import BadgesSection from '@/components/profile/BadgesSection';
 import { useLinkedInShare } from '@/hooks/useLinkedInShare';
 import { useProfileShareData } from '@/hooks/useProfileShareData';
+import { generateBadgesFromProfile } from '@/utils/generateProfileBadges';
 
 const ProfileByIdPage: React.FC = () => {
   const router = useRouter();
@@ -111,6 +113,12 @@ const ProfileByIdPage: React.FC = () => {
         day: 'numeric',
       }) : 'N/A',
     };
+  }, [profile]);
+
+  // Generate badges from profile skills
+  const { technicalBadges, softBadges } = useMemo(() => {
+    if (!profile) return { technicalBadges: [], softBadges: [] };
+    return generateBadgesFromProfile(profile.skills || [], profile.softSkills || []);
   }, [profile]);
 
   // Loading skeleton
@@ -577,6 +585,28 @@ const ProfileByIdPage: React.FC = () => {
               )}
             </Box>
           </Paper>
+
+          {/* Technical Badges Section */}
+          {!isCompany && technicalBadges.length > 0 && (
+            <BadgesSection
+              title="Technical Badges"
+              badges={technicalBadges}
+              icon={EmojiEventsIcon}
+              gradientColors="linear-gradient(135deg, #f6d365 0%, #fda085 100%)"
+              type="technical"
+            />
+          )}
+
+          {/* Soft Skill Badges Section */}
+          {!isCompany && softBadges.length > 0 && (
+            <BadgesSection
+              title="Soft Skill Badges"
+              badges={softBadges}
+              icon={EmojiEventsIcon}
+              gradientColors="linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)"
+              type="soft"
+            />
+          )}
 
           {/* Technical Skills Section */}
           {!isCompany && (
