@@ -1,4 +1,4 @@
-import { Box, TextField, Button, InputAdornment, CircularProgress } from "@mui/material";
+import { Box, TextField, Button, InputAdornment, CircularProgress, Typography } from "@mui/material";
 import { LockClock as LockClockIcon, ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { UseFormRegister, FieldErrors } from "react-hook-form";
 
@@ -74,23 +74,24 @@ export const VerificationCodeForm: React.FC<VerificationCodeFormProps> = ({
                     color: "#fff",
                     fontWeight: 700,
                     padding: "5px",
-                    minWidth: countdown > 0 ? "80px" : "auto",
+                    minWidth: countdown > 0 ? "110px" : "auto",
                     "&:hover": {
                       background: themeColors.primaryLight,
                       color: "#fff",
                     },
                     "&.Mui-disabled": {
-                      background: "rgba(0, 0, 0, 0.12)",
-                      color: "rgba(255, 255, 255, 0.7)",
+                      background: "rgba(0, 0, 0, 0.26)",
+                      color: "#1e1c1cff",
+                      fontWeight: 600,
                     },
                   }}
                 >
                   {loading || isLoading ? (
                     <CircularProgress size={16} sx={{ color: "#fff" }} />
                   ) : countdown > 0 ? (
-                    `${countdown}s`
+                    `Resend (${countdown}s)`
                   ) : (
-                    "GET CODE"
+                    "SEND CODE"
                   )}
                 </Button>
               </InputAdornment>
@@ -100,6 +101,23 @@ export const VerificationCodeForm: React.FC<VerificationCodeFormProps> = ({
           inputLabel: textFieldLabelProps,
         }}
       />
+
+      {/* Helper text - shown during countdown */}
+      {countdown > 0 && (
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            color: "rgba(0, 0, 0, 0.6)",
+            fontSize: "0.75rem",
+            mt: 0.5,
+            mb: 2,
+            textAlign: "center",
+          }}
+        >
+          Code sent! Wait {countdown} seconds before requesting a new code
+        </Typography>
+      )}
 
       {/* VERIFY BUTTON */}
       <Button
