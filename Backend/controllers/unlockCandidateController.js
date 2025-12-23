@@ -79,7 +79,7 @@ module.exports.unlockCandidate = async (req, res) => {
 
     const PACK_SIZE = 5;
     const SINGLE_PRICE = 5;
-    const PACK_PRICE = 25;
+    const PACK_PRICE = 500;
 
     // Validate required fields
     if (!idJob) {
