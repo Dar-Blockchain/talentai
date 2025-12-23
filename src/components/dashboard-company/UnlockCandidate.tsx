@@ -57,7 +57,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
   const [isCandidateUnlocked, setIsCandidateUnlocked] = useState(false);
   const handleConfirmUnlock = async () => {
     const data = {
-      idCandidate: selectedCandidate.candidateId,
+      candidateIds: [selectedCandidate.candidateId],
       idJob: selectedJob,
     };
     await dispatch(unlockCandidate(data));
