@@ -146,11 +146,10 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
         );
 
         if (existingSoft && existingSoft.softSkills.length > 0) {
-          // Update existing soft skill
+          // Update existing soft skill (no quota increment - already done above)
           await Profile.findByIdAndUpdate(
             candidateId,
             {
-              $inc: { quota: 1 },
               $set: {
                 'softSkills.$[elem].ScoreTest': overallScore,
                 'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
@@ -166,10 +165,10 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           );
           console.log(`Soft skill "${skillNameFromMeta}" updated`);
         } else {
-          // Add new soft skill
+          // Add new soft skill (no quota increment - already done above)
           await Profile.findByIdAndUpdate(
             candidateId,
-            { $inc: { quota: 1 }, $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
+            { $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
             { new: true }
           );
           console.log(`Soft skill "${skillNameFromMeta}" added`);
@@ -184,11 +183,11 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
         if (existingSkill && existingSkill.skills.length > 0) {
           // If we deleted previous assessments (this is a replacement), reset NumberTestPassed to 1,
           // otherwise increment the counter by 1.
+          // NOTE: quota already incremented above, don't increment again here
           if (previousDeletedCount > 0) {
             await Profile.findByIdAndUpdate(
               candidateId,
               {
-                $inc: { quota: 1 },
                 $set: {
                   'skills.$[elem].NumberTestPassed': 1,
                   'skills.$[elem].ScoreTest': overallScore,
@@ -205,7 +204,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
             );
             console.log(`Skill "${skillNameFromMeta}" updated (replaced) - NumberTestPassed reset to 1`);
           } else {
-            // Update existing skill (increment tests passed)
+            // Update existing skill (increment tests passed, no quota increment - already done above)
             await Profile.findByIdAndUpdate(
               candidateId,
               {
@@ -226,10 +225,10 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
             console.log(`Skill "${skillNameFromMeta}" updated - NumberTestPassed incremented`);
           }
         } else {
-          // Add new skill
+          // Add new skill (no quota increment - already done above)
           await Profile.findByIdAndUpdate(
             candidateId,
-            { $inc: { quota: 1 }, $addToSet: { skills: { ...skill, createdAt: new Date(), updatedAt: new Date() } } },
+            { $addToSet: { skills: { ...skill, createdAt: new Date(), updatedAt: new Date() } } },
             { new: true }
           );
           console.log(`Skill "${skillNameFromMeta}" added as new`);
