@@ -45,3 +45,8 @@ export const validatePipelineNodes = (nodes: any[]) => {
   };
 };
 
+  export const formatSalary = (salary: any) => {
+    return `${salary.currency} ${salary.min.toLocaleString()} - ${
+      salary.currency
+    } ${salary.max.toLocaleString()}`;
+  };
