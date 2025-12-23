@@ -728,7 +728,7 @@ const PostPreview = () => {
 
 export default PostPreview;
 
-const SkillChip: React.FC<{
+export const SkillChip: React.FC<{
   label: string;
   onDelete?: () => void;
   onClick?: () => void;

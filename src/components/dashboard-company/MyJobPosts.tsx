@@ -831,6 +831,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                           variant="outlined"
                           fullWidth
                           onClick={() => handleViewJobDetails(job)}
+                          // onClick={() => router.push('/posts/'+job._id)}
                           sx={{
                             borderColor: "rgba(11, 82, 198, 1)",
                             color: "rgba(11, 82, 198, 1)",
