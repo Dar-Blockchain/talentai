@@ -606,8 +606,8 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                           job.creationType === 'ai'
                             ? '🤖 AI Generated'
                             : job.creationType === 'pipeline'
-                            ? '⚙️ Pipeline'
-                            : '✍️ Manual'
+                              ? '⚙️ Pipeline'
+                              : '✍️ Manual'
                         }
                         size="small"
                         sx={{
@@ -615,24 +615,23 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                             job.creationType === 'ai'
                               ? 'rgba(131, 16, 255, 0.1)'
                               : job.creationType === 'pipeline'
-                              ? 'rgba(2, 226, 255, 0.1)'
-                              : 'rgba(255, 152, 0, 0.1)',
+                                ? 'rgba(2, 226, 255, 0.1)'
+                                : 'rgba(255, 152, 0, 0.1)',
                           color:
                             job.creationType === 'ai'
                               ? '#8310FF'
                               : job.creationType === 'pipeline'
-                              ? '#02E2FF'
-                              : '#FF9800',
+                                ? '#02E2FF'
+                                : '#FF9800',
                           fontWeight: 600,
                           fontSize: '0.7rem',
                           height: 22,
-                          border: `1px solid ${
-                            job.creationType === 'ai'
+                          border: `1px solid ${job.creationType === 'ai'
                               ? '#8310FF'
                               : job.creationType === 'pipeline'
-                              ? '#02E2FF'
-                              : '#FF9800'
-                          }`,
+                                ? '#02E2FF'
+                                : '#FF9800'
+                            }`,
                         }}
                       />
                     )}
@@ -769,29 +768,61 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                 >
                   {job.status === 'draft' ? (
                     // Draft status - only show View Details button
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleViewJobDetails(job)}
-                      // onClick={() => router.push('/posts/'+job._id)}
-                      sx={{
-                        borderColor: "rgba(11, 82, 198, 1)",
-                        color: "rgba(11, 82, 198, 1)",
-                        textTransform: "uppercase",
-                        fontWeight: 500,
-                        fontSize: "0.875rem",
-                        py: 1.25,
-                        borderRadius: "38px",
-                        maxWidth: "250px",
-                        height: "42px",
-                        backgroundColor: "rgba(11, 82, 198, 0.08)",
-                        "&:hover": {
-                          borderColor: "#2563eb",
-                          backgroundColor: "rgba(11, 82, 198, 0.04)",
-                        },
-                      }}
-                    >
-                      VIEW DETAILS
-                    </Button>
+                    <>
+                      <Button
+                        variant="outlined"
+                        onClick={() => handleViewJobDetails(job)}
+                        sx={{
+                          borderColor: "rgba(11, 82, 198, 1)",
+                          color: "rgba(11, 82, 198, 1)",
+                          textTransform: "uppercase",
+                          fontWeight: 500,
+                          fontSize: "0.875rem",
+                          py: 1.25,
+                          borderRadius: "38px",
+                          maxWidth: "250px",
+                          height: "42px",
+                          backgroundColor: "rgba(11, 82, 198, 0.08)",
+                          "&:hover": {
+                            borderColor: "#2563eb",
+                            backgroundColor: "rgba(11, 82, 198, 0.04)",
+                          },
+                        }}
+                      >
+                        VIEW DETAILS
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={
+                          <Image
+                            src="/icons/delete.svg"
+                            alt="search"
+                            width={20}
+                            height={20}
+                          />
+                        }
+                        onClick={() => onDeleteJob(job._id)}
+                        sx={{
+                          borderColor: "rgba(224, 62, 92, 1)",
+                          color: "rgba(224, 62, 92, 1)",
+                          textTransform: "none",
+                          fontWeight: 500,
+                          fontSize: "0.875rem",
+                          py: 1.25,
+                          borderRadius: "38px",
+                          maxWidth: "200px",
+                          height: "42px",
+                          backgroundColor: "rgba(224, 62, 92, 0.08)",
+                          "&:hover": {
+                            borderColor: "rgba(224, 62, 92, 1)",
+                            backgroundColor: "rgba(224, 62, 92, 0.04)",
+                          },
+                        }}
+                      >
+                        Delete Job
+                      </Button>
+                    </>
                   ) : (
                     // Active status - show all buttons
                     <>

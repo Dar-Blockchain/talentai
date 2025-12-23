@@ -1,6 +1,33 @@
 const mongoose = require("mongoose");
 const TodoList = require("../models/todoListModel");
 
+// Sub-schemas for skills and softSkills to enable per-item timestamps
+const skillSchema = new mongoose.Schema(
+  {
+    name: String,
+    proficiencyLevel: Number,
+    experienceLevel: String,
+    NumberTestPassed: Number,
+    ScoreTest: Number,
+    Levelconfirmed: Number,
+    isPrimary: Boolean,
+  },
+  { timestamps: true }
+);
+
+const softSkillSchema = new mongoose.Schema(
+  {
+    name: String,
+    category: String,
+    proficiencyLevel: Number, // 0-5
+    experienceLevel: String, // NoLevel , Entry Level..
+    ScoreTest: Number,
+    isPrimary: Boolean,
+    Levelconfirmed: Number,
+  },
+  { timestamps: true }
+);
+
 const profileSchema = new mongoose.Schema(
   {
     userId: {
@@ -65,30 +92,10 @@ const profileSchema = new mongoose.Schema(
    // overallScore: { type: Number, default: 0 },
 
     // Hard Skills
-    skills: [
-      {
-        name: String,
-        proficiencyLevel: Number,
-        experienceLevel: String,
-        NumberTestPassed: Number,
-        ScoreTest: Number,
-        Levelconfirmed: Number,
-        isPrimary: Boolean,
-      },
-    ],
+    skills: [skillSchema],
 
     // Soft Skills
-    softSkills: [
-      {
-        name: String,
-        category: String,
-        proficiencyLevel: Number, // 0-5
-        experienceLevel: String, // NoLevel , Entry Level..
-        ScoreTest: Number,
-        isPrimary: Boolean,
-        Levelconfirmed: Number,
-      },
-    ],
+    softSkills: [softSkillSchema],
 
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
     //interviewDetails for profile of type Candidate - references to InterviewAssessment

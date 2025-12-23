@@ -67,35 +67,53 @@ module.exports.getUnlockCandidatesByCompany = async (req, res) => {
 };
 
 /**
- * Create unlock candidate record
+ * Create unlock candidate record (single or pack)
+ * Body:
+ *   Single (1 candidate): { candidateIds: ["id"], idJob: "jobId" } → 5 tokens
+ *   Pack (2-5 candidates): { candidateIds: ["id1", "id2", ...], idJob: "jobId" } → 25 tokens
  */
 module.exports.unlockCandidate = async (req, res) => {
   try {
     const idCompany = req.user._id;
-    const { idCandidate, idJob } = req.body;
+    const { idJob, candidateIds } = req.body;
 
-    const unlockPrice = 5; // Example fixed price, could be dynamic
+    const PACK_SIZE = 5;
+    const SINGLE_PRICE = 5;
+    const PACK_PRICE = 25;
 
     // Validate required fields
-    if (!idCandidate || !idJob || unlockPrice === undefined) {
+    if (!idJob) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: idCandidate, idJob, unlockPrice"
+        message: "Missing required field: idJob"
       });
     }
 
-    if (unlockPrice < 0) {
+    if (!candidateIds || !Array.isArray(candidateIds)) {
       return res.status(400).json({
         success: false,
-        message: "Unlock price cannot be negative"
+        message: "Missing required field: candidateIds (must be an array)"
       });
     }
 
+    if (candidateIds.length < 1 || candidateIds.length > PACK_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: `candidateIds must contain between 1 and ${PACK_SIZE} candidates. Received ${candidateIds.length}`
+      });
+    }
+
+    // Determine flow: single (1 candidate) or pack (2-5 candidates)
+    const isPack = candidateIds.length > 1;
+    const price = isPack ? PACK_PRICE : SINGLE_PRICE;
+
+    // Call service with unified interface
     const result = await unlockCandidateService.unlockCandidate(
       idCompany,
-      idCandidate,
+      candidateIds,
       idJob,
-      unlockPrice
+      price,
+      { pack: isPack }
     );
 
     const statusCode = result.success ? 201 : 400;
