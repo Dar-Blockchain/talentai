@@ -97,8 +97,8 @@ class NotificationSystemService {
    * @param {string} userRole - User role for admin override
    * @returns {Promise<Object>} Updated notification document
    */
-  static async markNotificationAsRead(notificationId, userId, userRole = null) {
-    const notification = await this.getNotificationById(notificationId, userId, userRole);
+  static async markNotificationAsRead(notificationId, userId) {
+    const notification = await this.getNotificationById(notificationId, userId);
     notification.read = true;
     await notification.save();
     // Emit update to recipient via Socket.IO
