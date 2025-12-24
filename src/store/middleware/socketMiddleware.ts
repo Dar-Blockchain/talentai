@@ -10,6 +10,13 @@ import {
 
 let socket: Socket | null = null;
 
+interface SocketAction {
+  type: string;
+  payload?: {
+    userId?: string;
+  };
+}
+
 const formatTimestamp = (date: Date): string => {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
@@ -35,10 +42,12 @@ const mapNotificationData = (data: any) => ({
 });
 
 export const socketMiddleware: Middleware = (store) => {
-  return (next) => (action) => {
+  return (next) => (action: unknown) => {
+    const socketAction = action as SocketAction;
+
     // Check if we need to initialize socket connection
-    if (action.type === 'socket/connect') {
-      const { userId } = action.payload;
+    if (socketAction.type === 'socket/connect') {
+      const userId = socketAction.payload?.userId;
 
       if (!userId) {
         return next(action);
@@ -133,7 +142,7 @@ export const socketMiddleware: Middleware = (store) => {
     }
 
     // Check if we need to disconnect socket
-    if (action.type === 'socket/disconnect') {
+    if (socketAction.type === 'socket/disconnect') {
       if (socket) {
         socket.close();
         socket = null;

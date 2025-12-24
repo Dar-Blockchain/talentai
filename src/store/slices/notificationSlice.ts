@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { io, Socket } from 'socket.io-client';
 
 interface Notification {
   id: string;
