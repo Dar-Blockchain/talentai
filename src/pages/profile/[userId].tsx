@@ -33,8 +33,8 @@ import {
   EmojiEvents as EmojiEventsIcon,
 } from '@mui/icons-material';
 import { getProfileById, selectProfileById, clearProfileById } from '@/store/slices/profileSlice';
-import HeaderDashboard from '@/components/HeaderDashboard';
-import SimpleFooter from '@/components/SimpleFooter';
+import HeaderDashboard from '@/components/layout/HeaderDashboard';
+import Footer from '@/components/layout/Footer';
 import ShareProfileModal from '@/components/profile/ShareProfileModal';
 import SkillsSection from '@/components/profile/SkillsSection';
 import BadgesSection from '@/components/profile/BadgesSection';
@@ -177,7 +177,7 @@ const ProfileByIdPage: React.FC = () => {
             {error}
           </Alert>
         </Container>
-        <SimpleFooter />
+        <Footer />
       </>
     );
   }
@@ -188,7 +188,7 @@ const ProfileByIdPage: React.FC = () => {
       <>
         <HeaderDashboard />
         {renderSkeleton()}
-        <SimpleFooter />
+        <Footer />
       </>
     );
   }
@@ -631,7 +631,7 @@ const ProfileByIdPage: React.FC = () => {
           )}
         </Container>
       </Box>
-      <SimpleFooter />
+      <Footer />
 
       {/* Share Profile Modal */}
       {shareData && (

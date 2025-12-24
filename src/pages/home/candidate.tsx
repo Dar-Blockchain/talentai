@@ -5,7 +5,7 @@ import JobListingsSection from "@/components/home-page/JobListingsSection";
 import ModernFooter from "@/components/home-page/ModernFooter";
 import TestimonialsSection from "@/components/home-page/TestimonialsSection";
 import FAQSection from "@/components/home-page/FAQSection";
-import Footer from "@/components/home-page/Footer";
+import Footer from "@/components/layout/Footer";
 
 const JobSeekerLanding: React.FC = () => {
   return (

@@ -25,6 +25,8 @@ import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
 import jobDetailsReducer from './slices/jobDetailsSlice';
 import manualPostReducer from './slices/manualPostSlice';
+import notificationReducer from './slices/notificationSlice';
+import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -41,7 +43,8 @@ const rootReducer = combineReducers({
   postGeneration: postGenerationReducer,
   interview: interviewReducer,
   jobDetails: jobDetailsReducer,
-  manualPost: manualPostReducer
+  manualPost: manualPostReducer,
+  notifications: notificationReducer
 });
 
 const persistConfig = {
@@ -59,7 +62,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
       }
-    })
+    }).concat(socketMiddleware)
 });
 
 export const persistor = persistStore(store);

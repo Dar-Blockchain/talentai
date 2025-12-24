@@ -6,7 +6,7 @@ import { AppDispatch } from "@/store/store";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
 import { clearPost, selectCreationType } from "@/store/slices/postGenerationSlice";
 import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMethod";
-import HeaderDashboard from "@/components/HeaderDashboard";
+import HeaderDashboard from "@/components/layout/HeaderDashboard";
 import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
 import { resetManualPost } from "@/store/slices/manualPostSlice";
 import { resetFlow, resetSavePost } from "@/store/slices/postSlice";

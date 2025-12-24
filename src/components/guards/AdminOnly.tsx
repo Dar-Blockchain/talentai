@@ -1,9 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '../store/store';
-import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
-import { isLoggingOutCheck } from '../store/slices/authSlice';
 import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
 import { isTokenExpired, handleTokenExpiration } from '@/utils/tokenUtils';
 import Cookies from 'js-cookie';
@@ -12,12 +9,15 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { getMyProfile, selectProfile } from '@/store/slices/profileSlice';
+import { isLoggingOutCheck } from '@/store/slices/authSlice';
+import { AppDispatch } from '@/store/store';
 
-interface CompanyOnlyProps {
+interface AdminOnlyProps {
   children: React.ReactNode;
 }
 
-export default function CompanyOnly({ children }: CompanyOnlyProps) {
+export default function AdminOnly({ children }: AdminOnlyProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading: profileLoading, error: profileError } = useSelector(selectProfile);
@@ -63,28 +63,18 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
         hasRedirectedRef.current = true;
         localStorage.removeItem('api_token');
         setIsChecking(false);
-        // Check if logging out - if so, just go to signin without returnUrl
-        if (isLoggingOutCheck()) {
-          router.replace('/signin');
-        } else {
-          redirectToLogin(router);
-        }
+        redirectToLogin(router);
         return;
       }
-
+      
       const token = cookieToken || localToken;
-
+      
       // If no token at all, redirect
       if (!token) {
         hasRedirectedRef.current = true;
         setIsChecking(false);
         console.log("🔒 No token found, redirecting to signin");
-        // Check if logging out - if so, just go to signin without returnUrl
-        if (isLoggingOutCheck()) {
-          router.replace('/signin');
-        } else {
-          redirectToLogin(router);
-        }
+        redirectToLogin(router);
         return;
       }
 
@@ -93,12 +83,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
         hasRedirectedRef.current = true;
         setIsChecking(false);
         console.log("🔒 Token expired (JWT), clearing and redirecting to signin");
-        // Check if logging out - if so, just go to signin without returnUrl
-        if (isLoggingOutCheck()) {
-          router.replace('/signin');
-        } else {
-          handleTokenExpiration();
-        }
+        handleTokenExpiration();
         return;
       }
 
@@ -124,12 +109,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       hasRedirectedRef.current = true;
       setIsChecking(false);
       console.log("🔒 Profile fetch failed (401/expired), redirecting to signin");
-      // Check if logging out - if so, just go to signin without returnUrl
-      if (isLoggingOutCheck()) {
-        router.replace('/signin');
-      } else {
-        redirectToLogin(router);
-      }
+      redirectToLogin(router);
       return;
     }
 
@@ -168,12 +148,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
             } else if (!tokenStillExists && !hasRedirectedRef.current) {
               hasRedirectedRef.current = true;
               setIsChecking(false);
-              // Check if logging out - if so, just go to signin without returnUrl
-              if (isLoggingOutCheck()) {
-                router.replace('/signin');
-              } else {
-                redirectToLogin(router);
-              }
+              redirectToLogin(router);
             }
           }, 1000);
           return;
@@ -183,39 +158,22 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
             hasRedirectedRef.current = true;
             setIsChecking(false);
             console.log("🔒 Profile not found after retries, redirecting to signin");
-            // Check if logging out - if so, just go to signin without returnUrl
-            if (isLoggingOutCheck()) {
-              router.replace('/signin');
-            } else {
-              redirectToLogin(router);
-            }
+            redirectToLogin(router);
           }
           return;
         }
       }
 
       // Profile exists - check role
-      const role = profile?.userId?.role;
-      if (role === 'Candidate') {
-        router.push('/dashboard/candidate');
-        return;
-      } else if (role === 'Admin') {
-        router.push('/dashboard/admin');
-        return;
-      } else if (role !== 'Company') {
+      if (profile.userId.role !== 'Admin') {
         if (!hasRedirectedRef.current) {
           hasRedirectedRef.current = true;
-          // Check if logging out - if so, just go to signin without returnUrl
-          if (isLoggingOutCheck()) {
-            router.replace('/signin');
-          } else {
-            redirectToLogin(router);
-          }
+          router.push('/unauthorized');
         }
         return;
       }
 
-      // User is a company, allow access
+      // User is admin, allow access
       setIsChecking(false);
     }
   }, [profile, profileLoading, profileError, router, retryCount, dispatch]);
@@ -233,14 +191,14 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       }}>
         <CircularProgress size={60} />
         <Alert severity="info" sx={{ maxWidth: 400 }}>
-          {retryCount > 0 ? `Verifying company permissions... (Retry ${retryCount}/3)` : "Verifying company permissions..."}
+          {retryCount > 0 ? `Verifying admin permissions... (Retry ${retryCount}/3)` : "Verifying admin permissions..."}
         </Alert>
       </Box>
     );
   }
 
-  // Show error if user is not a company
-  if (!profileLoading && profile && profile.userId.role !== 'Company') {
+  // Show error if user is not admin
+  if (!profileLoading && profile && profile.userId.role !== 'Admin') {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -249,12 +207,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
         height: '100vh' 
       }}>
         <Alert severity="error" sx={{ maxWidth: 400 }}>
-          Access Denied. This page is only for companies.
+          Access Denied. You do not have permission to view this page.
         </Alert>
       </Box>
     );
   }
 
-  // User is a company, render the children
+  // User is admin, render the children
   return <>{children}</>;
 } 

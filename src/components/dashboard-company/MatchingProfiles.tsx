@@ -14,7 +14,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter } from "next/router";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
-import { GradientCircle } from "../GradientCircle";
+import { GradientCircle } from "../ui/GradientCircle";
 
 const noCopyStyle = {
   userSelect: "none" as const,
