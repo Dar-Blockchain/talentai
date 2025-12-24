@@ -1,17 +1,10 @@
-import React, { useEffect } from "react";
-import { AppDispatch } from "@/store/store";
-import { useRouter } from "next/router";
-import { useDispatch } from "react-redux";
+import React from "react";
 import {
-  fetchJobById,
   selectCurrentJob,
-  selectCurrentJobError,
-  selectCurrentJobLoading,
 } from "@/store/slices/postSlice";
 import {
   Box,
   Button,
-  Container,
   Typography,
   Divider,
   Stack,
@@ -20,27 +13,20 @@ import {
   ListItem,
   ListItemText
 } from "@mui/material";
-import HeaderDashboard from "@/components/HeaderDashboard";
-import { ArrowBack } from "@mui/icons-material";
+import { CalendarMonth } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import Image from "next/image";
-import { formatSalary, getLevelFromNumber } from "@/utils/postHelpers";
+import { formatSalary, getLevelFromNumber, getPostSkills, Skill } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
-import { getJobTypeColor, getJobTypeTextColor } from "@/utils/jobHelpers";
-import {
-  Work as WorkIcon,
-  AttachMoney as MoneyIcon,
-} from "@mui/icons-material";
 import { SkillChip } from "../create/steps/post-details-step/PostPreview";
-import { HardSkill, SoftSkill } from "@/store/slices/postGenerationSlice";
 
 const PostBasicDetails: React.FC = () => {
   const job = useSelector(selectCurrentJob);
-  const loading = useSelector(selectCurrentJobLoading);
-  const error = useSelector(selectCurrentJobError);
-  const hardSkills = job?.skillAnalysis?.requiredSkills || [];
-  const softSkills = job?.skillAnalysis?.softSkills || [];
+
+  const displaySkills = React.useMemo(() => getPostSkills(job), [job]);
+
   if (!job) return;
+
   return (
     <Box
       sx={{
@@ -57,7 +43,7 @@ const PostBasicDetails: React.FC = () => {
           justifyContent: "space-between",
         }}
       >
-        <Typography
+        <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}><Typography
           variant="h5"
           sx={{
             position: "relative",
@@ -78,7 +64,20 @@ const PostBasicDetails: React.FC = () => {
           }}
         >
           {job?.jobDetails?.title}
-        </Typography>
+        </Typography>{job.status === 'draft' && (
+                      <Chip
+                        label="📝 Draft"
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                          color: '#6B7280',
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          height: 22,
+                          border: '1px solid #9CA3AF',
+                        }}
+                      />
+                    )}                    </Box>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <Button
             variant="outlined"
@@ -257,6 +256,21 @@ const PostBasicDetails: React.FC = () => {
               />
             }
           />
+          <Chip
+            label={formatDate(job.createdAt)}
+            size="small"
+            sx={{
+              backgroundColor: "rgba(95, 168, 211, 0.1)",
+              color: "rgba(84, 98, 116, 1)",
+              fontWeight: 500,
+              fontSize: "0.75rem",
+              height: 24,
+              border: "0.25px solid rgba(95, 168, 211, 1)",
+            }}
+            icon={
+              <CalendarMonth color='rgba(95, 168, 211, 1)' sx={{color: 'rgba(95, 168, 211, 1)', width: '16px', height: '16px'}}/>
+            }
+          />
         </Stack>
         {/* REQUIRED SKILLS */}
         <Box sx={{ mt: 2, width: '700px' }}>
@@ -272,15 +286,10 @@ const PostBasicDetails: React.FC = () => {
             Required Skills
           </Typography>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            {hardSkills.map((skill: HardSkill, index: number) => {
+            {displaySkills.map((skill: Skill, index: number) => {
               const label = `${skill.name} (${getLevelFromNumber(
                 skill.level
-              )}) - ${skill.percentage}%`;
-              return <SkillChip key={index} label={label} />;
-            })}
-            {softSkills.map((skill: SoftSkill, index: number) => {
-              const label = `${skill.name} (${skill.level}/5) - ${skill.percentage}%`;
-
+              )}) - ${skill.importance}%`;
               return <SkillChip key={index} label={label} />;
             })}
           </Box>

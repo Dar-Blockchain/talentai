@@ -128,7 +128,6 @@ const RecruitmentFlowStep = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultPipeline.edges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
 
   const onConnect = useCallback(
@@ -145,20 +144,6 @@ const RecruitmentFlowStep = () => {
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
-
-    // For condition nodes, don't start with chat - show form directly
-    if (node.data.type === "condition") {
-      setChatMessages([]);
-    } else {
-      setChatMessages([
-        {
-          id: "1",
-          text: `Hi! I'm here to help you configure your ${node.data.label} step. What would you like this step to do?`,
-          isUser: false,
-          timestamp: new Date(),
-        },
-      ]);
-    }
     setModalOpen(true);
   }, []);
 
@@ -294,8 +279,6 @@ const RecruitmentFlowStep = () => {
         onClose={() => setModalOpen(false)}
         onSelectedNodeChange={setSelectedNode}
         onSelectedNodesChange={setSelectedNodes}
-        chatMessages={chatMessages}
-        setChatMessages={setChatMessages}
       />
     </Box>
   );

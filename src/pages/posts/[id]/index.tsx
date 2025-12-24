@@ -7,12 +7,13 @@ import { Box, Button, Container } from "@mui/material";
 import HeaderDashboard from "@/components/HeaderDashboard";
 import { ArrowBack } from "@mui/icons-material";
 import PostBasicDetails from "@/components/posts/details/PostBasicDetails";
+import RecruitmentFlowDetails from "@/components/posts/details/RecruitmentFlowDetails";
+import AgentConfigurationDetails from "@/components/posts/details/AgentConfigurationDetails";
 
 const PostDetails: React.FC = () => {
-
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { id } = router.query;
-  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (id) {
@@ -53,8 +54,10 @@ const PostDetails: React.FC = () => {
           >
             Back
           </Button>
-          <Box sx={{p: 2, border: '1px solid rgba(238, 240, 242, 1)', borderRadius: '12px', background: 'rgba(255, 255, 255, 1)'}}>
+          <Box sx={{display: 'flex', flexDirection:'column', gap: 2, p: 2, border: '1px solid rgba(238, 240, 242, 1)', borderRadius: '12px', background: 'rgba(255, 255, 255, 1)'}}>
             <PostBasicDetails/>
+            <RecruitmentFlowDetails/>
+            <AgentConfigurationDetails/>
           </Box>
       </Container>
     </Box>
