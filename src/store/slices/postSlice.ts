@@ -609,6 +609,7 @@ const postSlice = createSlice({
         state.savePost.loading = false;
         state.savePost.error = null;
         state.savePost.savedPost = action.payload;
+        state.currentJob = action.payload; 
       })
       .addCase(updatePost.rejected, (state, action) => {
         state.savePost.loading = false;

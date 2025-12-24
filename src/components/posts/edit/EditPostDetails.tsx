@@ -1,36 +1,36 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   MenuItem,
   TextField,
   Typography,
 } from "@mui/material";
+import { Formik } from "formik";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import {
-  HardSkill,
-  SoftSkill,
   deleteHardSkill,
   deleteSoftSkill,
-  updateJobField,
-  updateJobSalaryField,
-  updateRequirements,
-  updateResponsibilities,
 } from "@/store/slices/postGenerationSlice";
 import InputAdornment from "@mui/material/InputAdornment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import { Add as AddIcon } from "@mui/icons-material";
-import { getLevelFromNumber } from "@/utils/postHelpers";
+import {
+  getHardSkills,
+  getLevelFromNumber,
+  getSoftSkills,
+  Skill,
+} from "@/utils/postHelpers";
 import { experienceLevels } from "@/constants/candidate";
 import {
   contractTypes,
   workModes,
 } from "@/components/preferences/data/candidateData";
+import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import SalaryRange from "../create/steps/post-details-step/SalaryRange";
 import SkillEditorModal from "../create/steps/post-details-step/SkillEditorModal";
 
@@ -44,27 +44,29 @@ const inputStyle = {
 };
 
 interface EditPostDetailsProps {
-  onCancel: () => void
+  onCancel: () => void;
 }
 
-const EditPostDetails : React.FC<EditPostDetailsProps> = ({onCancel}) => {
+const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { generatedPost, loading } = useSelector(
-    (state: any) => state.postGeneration
-  );
+  const job = useSelector(selectCurrentJob);
 
-  const {
-    title = "",
-    description = "",
-    experienceLevel = "",
-    employmentType = "",
-    location = "",
-    salary = { min: "", max: "", currency: "USD" },
-    requirements = [],
-    responsibilities = [],
-  } = generatedPost?.jobDetails ?? {};
-  const hardSkills = generatedPost?.skillAnalysis?.requiredSkills || [];
-  const softSkills = generatedPost?.skillAnalysis?.softSkills || [];
+  const getInitialValues = (job: any) => ({
+    title: job?.jobDetails?.title || "",
+    location: job?.jobDetails?.location || "",
+    employmentType: job?.jobDetails?.employmentType || "",
+    experienceLevel: job?.jobDetails?.experienceLevel || "",
+    description: job?.jobDetails?.description || "",
+    requirements: job?.jobDetails?.requirements || [],
+    responsibilities: job?.jobDetails?.responsibilities || [],
+    salary: job?.jobDetails?.salary || {
+      min: 0,
+      max: 0,
+      currency: "USD",
+    },
+  });
+  const hardSkills = getHardSkills(job) || [];
+  const softSkills = getSoftSkills(job) || [];
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -84,648 +86,655 @@ const EditPostDetails : React.FC<EditPostDetailsProps> = ({onCancel}) => {
     setOpen(true);
   };
 
-  const handleSalaryChange = (
-    field: "min" | "max" | "currency",
-    value: number | string
-  ) => {
-    dispatch(updateJobSalaryField({ field, value }));
-  };
-
   return (
-    <Box
-      sx={{
-        width: { xs: "100%", lg: "50%" },
-        minHeight: { xs: 300, lg: "100vh" },
-        p: { xs: 1, sm: 2, md: 3 },
-        overflowY: { xs: "visible", lg: "auto" },
-        boxShadow: "0px 0px 6px rgba(0,0,0,0.06)",
-        bgcolor: "rgba(253, 255, 255, 1)",
-        borderTopRightRadius: 2,
-        borderBottomRightRadius: 2,
-      }}
-    >
-      {/* ✅ Loading state */}
-      {loading && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
-            height: "100%",
-          }}
-        >
-          {" "}
-          <CircularProgress sx={{ color: "rgba(19, 163, 108, 0.83)" }} />
-          <Typography
-            sx={{
-              mt: 2,
-              color: "rgba(147, 147, 147, 1)",
-              fontSize: "14px",
-              fontWeight: 400,
-            }}
-          >
-            Generating job post... please wait
-          </Typography>
-        </Box>
-      )}
-
-      {/* ✅ No data state */}
-      {!loading && !generatedPost && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
-            height: "100%",
-          }}
-        >
-          <Box
-            sx={{
-              width: 100,
-              height: 100,
-              background: "rgba(76, 217, 163, 0.2)",
-              borderRadius: "50%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Image
-              src="/icons/suitcaselinear.svg"
-              alt="suitcaselinear"
-              width={44}
-              height={44}
-            />
-          </Box>
-          <Typography
-            sx={{
-              mt: 2,
-              color: "rgba(147, 147, 147, 1)",
-              fontSize: "14px",
-              fontWeight: 400,
-            }}
-          >
-            Generated job post will appear here
-          </Typography>
-        </Box>
-      )}
-
-      {/* ✅ Display job data */}
-      {!loading && generatedPost && (
-        <Box>
-          <Typography
-            sx={{
-              mb: 0.5,
-              color: "rgba(84, 98, 116, 1)",
-              fontWeight: 600,
-              fontSize: "20px",
-            }}
-          >
-            Job Details
-          </Typography>
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              sx={{
-                lineHeight: "42px",
-                fontWeight: 500,
-                fontSize: "12px",
-                color: "rgba(84, 98, 116, 0.53)",
-              }}
-            >
-              Job Title
-            </Typography>
-            <TextField
-              fullWidth
-              variant="outlined"
-              value={title || ""}
-              onChange={(e: any) =>
-                dispatch(
-                  updateJobField({ field: "title", value: e.target.value })
-                )
-              }
-              sx={inputStyle}
-            />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                lineHeight: "42px",
-                fontWeight: 500,
-                fontSize: "12px",
-                color: "rgba(84, 98, 116, 0.53)",
-              }}
-            >
-              Work Mode
-            </Typography>
-
-            <TextField
-              select
-              value={location}
-              onChange={(e: any) =>
-                dispatch(
-                  updateJobField({
-                    field: "location",
-                    value: e.target.value,
-                  })
-                )
-              }
-              fullWidth
-              sx={inputStyle}
-              FormHelperTextProps={{
-                sx: {
-                  marginLeft: 0,
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Image
-                      src="/icons/building3.svg"
-                      alt="money"
-                      width={16}
-                      height={16}
-                    />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              <MenuItem
-                disabled
-                value=""
-                sx={{ fontSize: "12px", fontWeight: 500 }}
-              >
-                Work Mode
-              </MenuItem>
-
-              {workModes.map((mode) => (
-                <MenuItem
-                  key={mode}
-                  value={mode}
-                  sx={{ fontSize: "12px", fontWeight: 500 }}
-                >
-                  {mode}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Box>
-
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  lineHeight: "42px",
-                  fontWeight: 500,
-                  fontSize: "12px",
-                  color: "rgba(84, 98, 116, 0.53)",
-                }}
-              >
-                Employment Type
-              </Typography>
-
-              <TextField
-                select
-                value={employmentType}
-                onChange={(e: any) =>
-                  dispatch(
-                    updateJobField({
-                      field: "employmentType",
-                      value: e.target.value,
-                    })
-                  )
-                }
-                fullWidth
-                sx={inputStyle}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Image
-                        src="/icons/bag.svg"
-                        alt="money"
-                        width={16}
-                        height={16}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-                FormHelperTextProps={{
-                  sx: {
-                    marginLeft: 0,
-                  },
-                }}
-              >
-                <MenuItem
-                  disabled
-                  value=""
-                  sx={{ fontSize: "12px", fontWeight: 500 }}
-                >
-                  Employment Type
-                </MenuItem>
-
-                {contractTypes.map((mode) => (
-                  <MenuItem
-                    key={mode}
-                    value={mode}
-                    sx={{ fontSize: "12px", fontWeight: 500 }}
-                  >
-                    {mode}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  lineHeight: "42px",
-                  fontWeight: 500,
-                  fontSize: "12px",
-                  color: "rgba(84, 98, 116, 0.53)",
-                }}
-              >
-                {" "}
-                Experience Level{" "}
-              </Typography>
-
-              <TextField
-                select
-                value={experienceLevel}
-                onChange={(e: any) =>
-                  dispatch(
-                    updateJobField({
-                      field: "experienceLevel",
-                      value: e.target.value,
-                    })
-                  )
-                }
-                fullWidth
-                sx={inputStyle}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <TrendingUpIcon
-                        sx={{
-                          color: "rgba(98, 111, 134, 1)",
-                          width: "16px",
-                          height: "14px",
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              >
-                <MenuItem
-                  disabled
-                  value=""
-                  sx={{ fontSize: "12px", fontWeight: 500 }}
-                >
-                  Experience Level
-                </MenuItem>
-
-                {experienceLevels.map((level) => (
-                  <MenuItem
-                    key={level}
-                    value={level}
-                    sx={{ fontSize: "12px", fontWeight: 500 }}
-                  >
-                    {level}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-          </Box>
-
-          <SalaryRange
-            salaryRange={salary}
-            onSalaryChange={handleSalaryChange}
-          />
-
-          <Box sx={{ mt: 2 }}>
+    <Box sx={{ p: 2 }}>
+      <Formik
+        enableReinitialize
+        initialValues={getInitialValues(job)}
+        onSubmit={async (values, { resetForm }) => {
+          console.log("FINAL FORM VALUES:", values);
+          await dispatch(
+            updatePost({
+              jobId: job?._id,
+              jobData: { ...job, jobDetails: values },
+            })
+          ).unwrap();
+          resetForm();
+          onCancel();
+        }}
+      >
+        {({ values, handleChange, setFieldValue, handleSubmit, resetForm }) => (
+          <>
+            {" "}
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                mb: 1,
                 justifyContent: "space-between",
+                mb: 2,
               }}
             >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(84, 98, 116, 1)",
-                  fontSize: "20px",
-                  fontWeight: 600,
-                }}
-              >
-                Required Skills
-              </Typography>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(77, 217, 163, 1)",
-                  fontSize: "12px",
-                }}
-              >
-                Total: 100%
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1,
-                p: 1,
-                borderRadius: "12px",
-                background: "rgba(240, 249, 255, 1)",
-                border: "1px solid rgba(122, 200, 240, 1)",
-              }}
-            >
-              <Image
-                src="/icons/lightinfooutline.svg"
-                alt="skills chart"
-                width={18}
-                height={18}
-              />
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography
-                  variant="subtitle2"
+              {/* Title */}
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Box
                   sx={{
-                    color: "rgba(84, 98, 116, 1)",
-                    fontSize: "13px",
-                    fontWeight: 600,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    background: "rgba(234, 255, 247, 1)",
+                    width: 45,
+                    height: 45,
+                    borderRadius: "5px",
                   }}
                 >
-                  About Skill Percentages
-                </Typography>
-                <Typography
-                  variant="subtitle2"
+                  <Image
+                    src="/icons/edit.svg"
+                    alt="file"
+                    width={25}
+                    height={25}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography
+                    sx={{
+                      color: "rgba(41, 210, 145, 1)",
+                      fontWeight: 600,
+                      fontSize: "20px",
+                    }}
+                  >
+                    Edit Job Post
+                  </Typography>
+
+                  <Typography sx={{ fontSize: "12px", color: "#546274" }}>
+                    Update the job details for this position
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Actions */}
+              <Box sx={{ display: "flex", gap: 1 }}>
+                {/* Cancel */}
+
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    resetForm();
+                    onCancel();
+                  }}
                   sx={{
-                    color: "rgba(84, 98, 116, 1)",
+                    border: "none",
+                    background: "none",
+                    color: "rgba(133, 169, 227, 1)",
+                    textDecoration: "none",
+                    "&:hover": {
+                      background: "none",
+                      textDecoration: "none",
+                      color: "rgba(133, 169, 227, 0.8)",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+
+                {/* Save */}
+                <Button
+                  variant="contained"
+                  onClick={() => handleSubmit()}
+                  sx={{
+                    textTransform: "none",
+                    height: "42px",
+                    width: "120px",
+                    maxWidth: "230px",
+                    borderRadius: "38px",
+                    background: "rgba(0, 234, 144, 1)",
+                    color: "white",
+                  }}
+                >
+                  Save
+                </Button>
+              </Box>
+            </Box>
+            {/* Job Details */}
+            <Box sx={{ mt: 1 }}>
+              <Typography
+                sx={{
+                  color: "rgba(84, 98, 116, 1)",
+                  fontWeight: 600,
+                  fontSize: "20px",
+                }}
+              >
+                Job Details
+              </Typography>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    lineHeight: "42px",
+                    fontWeight: 500,
                     fontSize: "12px",
-                    fontWeight: 400,
+                    color: "rgba(84, 98, 116, 0.53)",
                   }}
                 >
-                  The percentages represent the <b>relative importance</b> of
-                  each skill for this role. These percentages will be used to{" "}
-                  <b>match candidates</b> to your job requirements. Skills with
-                  higher percentages will have more weight in the matching
-                  algorittim, helping you find candidates who best fit your most
-                  critical skill needs. The total must equal 100% to ensure
-                  accurate candidate matching.
+                  Job Title
                 </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(84, 98, 116, 1)",
-                  fontSize: "20px",
-                  fontWeight: 600,
-                }}
-              >
-                Hard Skills
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {hardSkills.map((skill: HardSkill, index: number) => {
-                  const label = `${skill.name} (${getLevelFromNumber(
-                    skill.level
-                  )}) - ${skill.percentage}%`;
-                  return (
-                    <SkillChip
-                      key={index}
-                      label={label}
-                      onDelete={() => dispatch(deleteHardSkill(index))}
-                      onClick={() =>
-                        handleEdit(
-                          {
-                            name: skill.name,
-                            level: skill.level,
-                            percentage: skill.percentage,
-                          },
-                          index,
-                          "hard"
-                        )
-                      }
-                    />
-                  );
-                })}
-                <Button
+                <TextField
+                  fullWidth
+                  name="title"
                   variant="outlined"
-                  startIcon={
-                    <AddIcon
-                      sx={{
-                        color: "rgba(98, 111, 134, 1)",
-                        width: "16px",
-                        height: "16px",
-                      }}
-                    />
-                  }
-                  onClick={() => handleAdd("hard")}
+                  value={values.title}
+                  onChange={handleChange}
+                  sx={inputStyle}
+                />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="subtitle2"
                   sx={{
-                    height: "29px",
-                    border: "0.5px solid rgba(98, 111, 134, 1)",
-                    borderStyle: "dashed",
-                    borderDashArray: "6 6",
-                    backgroundColor: "rgba(48, 185, 216, 0.06)",
-                    color: "rgba(95, 168, 211, 1)",
+                    lineHeight: "42px",
                     fontWeight: 500,
-                    borderRadius: "15px",
-                    py: 1.5,
-                    textTransform: "none",
-                    fontSize: "13px",
-                    "&:hover": {
-                      backgroundColor: "rgba(77, 217, 163, 0.08)",
-                    },
-                    "&.Mui-disabled": {
-                      borderColor: "#e5e7eb",
-                      color: "#9ca3af",
-                    },
+                    fontSize: "12px",
+                    color: "rgba(84, 98, 116, 0.53)",
                   }}
                 >
-                  Add Skill
-                </Button>
-              </Box>
-            </Box>
+                  Work Mode
+                </Typography>
 
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(84, 98, 116, 1)",
-                  fontSize: "20px",
-                  fontWeight: 600,
-                }}
-              >
-                Soft Skills
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {softSkills.map((skill: SoftSkill, index: number) => {
-                  const label = `${skill.name} (${skill.level}/5) - ${skill.percentage}%`;
-
-                  return (
-                    <SkillChip
-                      key={index}
-                      label={label}
-                      onDelete={() => dispatch(deleteSoftSkill(index))}
-                      onClick={() =>
-                        handleEdit(
-                          {
-                            name: skill.name,
-                            level: skill.level,
-                            percentage: skill.percentage,
-                          },
-                          index,
-                          "soft"
-                        )
-                      }
-                    />
-                  );
-                })}
-                <Button
-                  variant="outlined"
-                  startIcon={
-                    <AddIcon
-                      sx={{
-                        color: "rgba(98, 111, 134, 1)",
-                        width: "16px",
-                        height: "16px",
-                      }}
-                    />
-                  }
-                  onClick={() => handleAdd("soft")}
-                  sx={{
-                    height: "29px",
-                    border: "0.5px solid rgba(98, 111, 134, 1)",
-                    borderStyle: "dashed",
-                    borderDashArray: "6 6",
-                    backgroundColor: "rgba(48, 185, 216, 0.06)",
-                    color: "rgba(95, 168, 211, 1)",
-                    fontWeight: 500,
-                    borderRadius: "15px",
-                    py: 1.5,
-                    textTransform: "none",
-                    fontSize: "13px",
-                    "&:hover": {
-                      backgroundColor: "rgba(77, 217, 163, 0.08)",
-                    },
-                    "&.Mui-disabled": {
-                      borderColor: "#e5e7eb",
-                      color: "#9ca3af",
+                <TextField
+                  select
+                  name="location"
+                  value={values.location}
+                  onChange={handleChange}
+                  fullWidth
+                  sx={inputStyle}
+                  FormHelperTextProps={{
+                    sx: {
+                      marginLeft: 0,
                     },
                   }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Image
+                          src="/icons/building3.svg"
+                          alt="money"
+                          width={16}
+                          height={16}
+                        />
+                      </InputAdornment>
+                    ),
+                  }}
                 >
-                  Add Skill
-                </Button>
+                  <MenuItem
+                    disabled
+                    value=""
+                    sx={{ fontSize: "12px", fontWeight: 500 }}
+                  >
+                    Work Mode
+                  </MenuItem>
+
+                  {workModes.map((mode) => (
+                    <MenuItem
+                      key={mode}
+                      value={mode}
+                      sx={{ fontSize: "12px", fontWeight: 500 }}
+                    >
+                      {mode}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      lineHeight: "42px",
+                      fontWeight: 500,
+                      fontSize: "12px",
+                      color: "rgba(84, 98, 116, 0.53)",
+                    }}
+                  >
+                    Employment Type
+                  </Typography>
+
+                  <TextField
+                    select
+                    name="employmentType"
+                    value={values.employmentType}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={inputStyle}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Image
+                            src="/icons/bag.svg"
+                            alt="money"
+                            width={16}
+                            height={16}
+                          />
+                        </InputAdornment>
+                      ),
+                    }}
+                    FormHelperTextProps={{
+                      sx: {
+                        marginLeft: 0,
+                      },
+                    }}
+                  >
+                    <MenuItem
+                      disabled
+                      value=""
+                      sx={{ fontSize: "12px", fontWeight: 500 }}
+                    >
+                      Employment Type
+                    </MenuItem>
+
+                    {contractTypes.map((mode) => (
+                      <MenuItem
+                        key={mode}
+                        value={mode}
+                        sx={{ fontSize: "12px", fontWeight: 500 }}
+                      >
+                        {mode}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      lineHeight: "42px",
+                      fontWeight: 500,
+                      fontSize: "12px",
+                      color: "rgba(84, 98, 116, 0.53)",
+                    }}
+                  >
+                    {" "}
+                    Experience Level{" "}
+                  </Typography>
+
+                  <TextField
+                    select
+                    name="experienceLevel"
+                    value={values.experienceLevel}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={inputStyle}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <TrendingUpIcon
+                            sx={{
+                              color: "rgba(98, 111, 134, 1)",
+                              width: "16px",
+                              height: "14px",
+                            }}
+                          />
+                        </InputAdornment>
+                      ),
+                    }}
+                  >
+                    <MenuItem
+                      disabled
+                      value=""
+                      sx={{ fontSize: "12px", fontWeight: 500 }}
+                    >
+                      Experience Level
+                    </MenuItem>
+
+                    {experienceLevels.map((level) => (
+                      <MenuItem
+                        key={level}
+                        value={level}
+                        sx={{ fontSize: "12px", fontWeight: 500 }}
+                      >
+                        {level}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              </Box>
+
+              <SalaryRange
+                salaryRange={values.salary}
+                onSalaryChange={(field, value) =>
+                  setFieldValue(`salary.${field}`, value)
+                }
+              />
+
+              <Box sx={{ mt: 2 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 1,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(84, 98, 116, 1)",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Required Skills
+                  </Typography>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(77, 217, 163, 1)",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Total: 100%
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1,
+                    p: 1,
+                    borderRadius: "12px",
+                    background: "rgba(240, 249, 255, 1)",
+                    border: "1px solid rgba(122, 200, 240, 1)",
+                  }}
+                >
+                  <Image
+                    src="/icons/lightinfooutline.svg"
+                    alt="skills chart"
+                    width={18}
+                    height={18}
+                  />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: "rgba(84, 98, 116, 1)",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      About Skill Percentages
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: "rgba(84, 98, 116, 1)",
+                        fontSize: "12px",
+                        fontWeight: 400,
+                      }}
+                    >
+                      The percentages represent the <b>relative importance</b>{" "}
+                      of each skill for this role. These percentages will be
+                      used to <b>match candidates</b> to your job requirements.
+                      Skills with higher percentages will have more weight in
+                      the matching algorittim, helping you find candidates who
+                      best fit your most critical skill needs. The total must
+                      equal 100% to ensure accurate candidate matching.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(84, 98, 116, 1)",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Hard Skills
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    {hardSkills.map((skill: Skill, index: number) => {
+                      const label = `${skill.name} (${getLevelFromNumber(
+                        skill.level
+                      )}) - ${skill.importance}%`;
+                      return (
+                        <SkillChip
+                          key={index}
+                          label={label}
+                          onDelete={() => dispatch(deleteHardSkill(index))}
+                          onClick={() =>
+                            handleEdit(
+                              {
+                                name: skill.name,
+                                level: skill.level,
+                                percentage: skill.importance,
+                              },
+                              index,
+                              "hard"
+                            )
+                          }
+                        />
+                      );
+                    })}
+                    <Button
+                      variant="outlined"
+                      startIcon={
+                        <AddIcon
+                          sx={{
+                            color: "rgba(98, 111, 134, 1)",
+                            width: "16px",
+                            height: "16px",
+                          }}
+                        />
+                      }
+                      onClick={() => handleAdd("hard")}
+                      sx={{
+                        height: "29px",
+                        border: "0.5px solid rgba(98, 111, 134, 1)",
+                        borderStyle: "dashed",
+                        borderDashArray: "6 6",
+                        backgroundColor: "rgba(48, 185, 216, 0.06)",
+                        color: "rgba(95, 168, 211, 1)",
+                        fontWeight: 500,
+                        borderRadius: "15px",
+                        py: 1.5,
+                        textTransform: "none",
+                        fontSize: "13px",
+                        "&:hover": {
+                          backgroundColor: "rgba(77, 217, 163, 0.08)",
+                        },
+                        "&.Mui-disabled": {
+                          borderColor: "#e5e7eb",
+                          color: "#9ca3af",
+                        },
+                      }}
+                    >
+                      Add Skill
+                    </Button>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(84, 98, 116, 1)",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Soft Skills
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    {softSkills.map((skill: Skill, index: number) => {
+                      const label = `${skill.name} (${skill.level}/5) - ${skill.importance}%`;
+
+                      return (
+                        <SkillChip
+                          key={index}
+                          label={label}
+                          onDelete={() => dispatch(deleteSoftSkill(index))}
+                          onClick={() =>
+                            handleEdit(
+                              {
+                                name: skill.name,
+                                level: skill.level,
+                                percentage: skill.importance,
+                              },
+                              index,
+                              "soft"
+                            )
+                          }
+                        />
+                      );
+                    })}
+                    <Button
+                      variant="outlined"
+                      startIcon={
+                        <AddIcon
+                          sx={{
+                            color: "rgba(98, 111, 134, 1)",
+                            width: "16px",
+                            height: "16px",
+                          }}
+                        />
+                      }
+                      onClick={() => handleAdd("soft")}
+                      sx={{
+                        height: "29px",
+                        border: "0.5px solid rgba(98, 111, 134, 1)",
+                        borderStyle: "dashed",
+                        borderDashArray: "6 6",
+                        backgroundColor: "rgba(48, 185, 216, 0.06)",
+                        color: "rgba(95, 168, 211, 1)",
+                        fontWeight: 500,
+                        borderRadius: "15px",
+                        py: 1.5,
+                        textTransform: "none",
+                        fontSize: "13px",
+                        "&:hover": {
+                          backgroundColor: "rgba(77, 217, 163, 0.08)",
+                        },
+                        "&.Mui-disabled": {
+                          borderColor: "#e5e7eb",
+                          color: "#9ca3af",
+                        },
+                      }}
+                    >
+                      Add Skill
+                    </Button>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(84, 98, 116, 1)",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Description
+                  </Typography>
+                  <TextField
+                    name="description"
+                    value={values.description}
+                    onChange={handleChange}
+                    placeholder="Job Description"
+                    multiline
+                    minRows={4}
+                    fullWidth
+                    sx={{
+                      mt: 2,
+                      "& .MuiInputBase-root": {
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(84, 98, 116, 1)",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Requirements
+                  </Typography>
+                  <TextField
+                    value={values.requirements.join("\n")}
+                    onChange={(e) =>
+                      setFieldValue("requirements", e.target.value.split("\n"))
+                    }
+                    placeholder="Job Requirements"
+                    multiline
+                    minRows={4}
+                    fullWidth
+                    sx={{
+                      mt: 2,
+                      "& .MuiInputBase-root": {
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: "rgba(84, 98, 116, 1)",
+                      fontSize: "20px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Responsibilities
+                  </Typography>
+                  <TextField
+                    value={values.responsibilities.join("\n")}
+                    onChange={(e) =>
+                      setFieldValue(
+                        "responsibilities",
+                        e.target.value.split("\n")
+                      )
+                    }
+                    placeholder="Job Responsibilities"
+                    multiline
+                    minRows={4}
+                    fullWidth
+                    sx={{
+                      mt: 2,
+                      "& .MuiInputBase-root": {
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      },
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(84, 98, 116, 1)",
-                  fontSize: "20px",
-                  fontWeight: 600,
-                }}
-              >
-                Description
-              </Typography>
-              <TextField
-                value={description}
-                onChange={(e: any) =>
-                  dispatch(
-                    updateJobField({
-                      field: "description",
-                      value: e.target.value,
-                    })
-                  )
-                }
-                placeholder="Job Description"
-                multiline
-                minRows={4}
-                fullWidth
-                sx={{
-                  mt: 2,
-                  "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 },
+            {open && (
+              <SkillEditorModal
+                open={open}
+                mode={selectedSkill ? "edit" : "add"}
+                skill={selectedSkill}
+                index={selectedIndex}
+                skillType={selectedType}
+                onClose={() => {
+                  setOpen(false);
+                  setSelectedSkill(null);
                 }}
               />
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(84, 98, 116, 1)",
-                  fontSize: "20px",
-                  fontWeight: 600,
-                }}
-              >
-                Requirements
-              </Typography>
-              <TextField
-                value={requirements.join("\n")}
-                onChange={(e) => dispatch(updateRequirements(e.target.value))}
-                placeholder="Job Requirements"
-                multiline
-                minRows={4}
-                fullWidth
-                sx={{
-                  mt: 2,
-                  "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 },
-                }}
-              />
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: "rgba(84, 98, 116, 1)",
-                  fontSize: "20px",
-                  fontWeight: 600,
-                }}
-              >
-                Responsibilities
-              </Typography>
-              <TextField
-                value={responsibilities.join("\n")}
-                onChange={(e) =>
-                  dispatch(updateResponsibilities(e.target.value))
-                }
-                placeholder="Job Responsibilities"
-                multiline
-                minRows={4}
-                fullWidth
-                sx={{
-                  mt: 2,
-                  "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 },
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      {open && (
-        <SkillEditorModal
-          open={open}
-          mode={selectedSkill ? "edit" : "add"}
-          skill={selectedSkill}
-          index={selectedIndex}
-          skillType={selectedType}
-          onClose={() => {
-            setOpen(false);
-            setSelectedSkill(null);
-          }}
-        />
-      )}
+            )}
+          </>
+        )}
+      </Formik>
     </Box>
   );
 };

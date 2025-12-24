@@ -57,55 +57,58 @@ export const validatePipelineNodes = (nodes: any[]) => {
     } ${salary.max.toLocaleString()}`;
   };
 
-export const getPostSkills = (job: any): Skill[] => {
+export const getHardSkills = (job: any): Skill[] => {
   if (!job) return [];
 
-  // For pipeline jobs
-  if (job.creationType === 'pipeline' && job.post_Steps && Array.isArray(job.post_Steps)) {
-    const skills: Skill[] = [];
-
-    job.post_Steps.forEach((step: any) => {
-      // Technical skills
-      if (step.data?.type === 'technical' && step.data?.config?.skills && Array.isArray(step.data.config.skills)) {
-        step.data.config.skills.forEach((skill: any) => {
-          skills.push({
-            name: skill.name,
-            level: skill.requiredLevel,
-            type: 'technical',
-            importance: 'Required',
-          });
-        });
-      }
-
-      // Soft skills
-      if (step.data?.type === 'soft' && step.data?.config?.softSkills && Array.isArray(step.data.config.softSkills)) {
-        step.data.config.softSkills.forEach((softSkill: string) => {
-          skills.push({
-            name: softSkill,
-            type: 'soft',
-            importance: 'Required',
-          });
-        });
-      }
-    });
-
-    return skills;
+  // Pipeline jobs
+  if (job.creationType === 'pipeline' && Array.isArray(job.post_Steps)) {
+    return job.post_Steps
+      .filter((step: any) => step.data?.type === 'technical')
+      .flatMap((step: any) =>
+        (step.data?.config?.skills || []).map((skill: any) => ({
+          name: skill.name,
+          level: skill.requiredLevel,
+          type: 'technical',
+          importance: 'Required',
+        }))
+      );
   }
 
-  // For AI/manual jobs
-  const technicalSkills = (job.skillAnalysis?.requiredSkills || []).map((skill: any) => ({
+  // AI / Manual jobs
+  return (job.skillAnalysis?.requiredSkills || []).map((skill: any) => ({
     name: skill.name,
     level: skill.level,
-    type: 'technical' as const,
+    type: 'technical',
     importance: skill.percentage || 0,
   }));
-
-  const softSkills = (job.skillAnalysis?.softSkills || []).map((skill: any) => ({
-    name: skill.name,
-    type: 'soft' as const,
-    level: skill.level,
-    importance: skill.percentage || 0,
-  }));
-
-  return [...technicalSkills, ...softSkills];
 };
+
+export const getSoftSkills = (job: any): Skill[] => {
+  if (!job) return [];
+
+  // Pipeline jobs
+  if (job.creationType === 'pipeline' && Array.isArray(job.post_Steps)) {
+    return job.post_Steps
+      .filter((step: any) => step.data?.type === 'soft')
+      .flatMap((step: any) =>
+        (step.data?.config?.softSkills || []).map((name: string) => ({
+          name,
+          type: 'soft',
+          importance: 'Required',
+        }))
+      );
+  }
+
+  // AI / Manual jobs
+  return (job.skillAnalysis?.softSkills || []).map((skill: any) => ({
+    name: skill.name,
+    level: skill.level,
+    type: 'soft',
+    importance: skill.percentage || 0,
+  }));
+};
+
+export const getPostSkills = (job: any): Skill[] => [
+  ...getHardSkills(job),
+  ...getSoftSkills(job),
+];
