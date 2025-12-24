@@ -28,6 +28,11 @@ const NotificationSchema = new mongoose.Schema(
       default: false,
       index: true, // Index for quick filtering of unread notifications
     },
+      archived: {
+        type: Boolean,
+        default: false,
+        index: true, // Index for quick filtering of archived notifications
+      },
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

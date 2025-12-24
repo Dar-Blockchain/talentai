@@ -11,6 +11,26 @@ exports.createSystemNotification = async (req, res) => {
   }
 };
 
+// Generic create notification by type
+const createNotificationByType = (type) => {
+  return async (req, res) => {
+    try {
+      const { recipient, content } = req.body;
+      const notification = await notificationSystemService.createNotification(recipient, content, type);
+      res.status(201).json(notification);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  };
+};
+
+// Create notifications for each type
+exports.createInfoNotification = createNotificationByType('info');
+exports.createSuccessNotification = createNotificationByType('success');
+exports.createWarningNotification = createNotificationByType('warning');
+exports.createErrorNotification = createNotificationByType('error');
+exports.createCustomNotification = createNotificationByType('custom');
+
 // List system notifications (optional: filter by unread)
 exports.listForUser = async (req, res) => {
   try {
@@ -78,6 +98,19 @@ exports.deleteNotification = async (req, res) => {
     const userRole = req.user && req.user.role;
     const notification = await notificationSystemService.deleteNotification(req.params.id, userId, userRole);
     res.json({ message: 'Notification deleted.', notification });
+  } catch (err) {
+    const statusCode = err.message === 'Access denied.' ? 403 : 404;
+    res.status(statusCode).json({ error: err.message });
+  }
+};
+
+// Archive a notification
+exports.archiveNotification = async (req, res) => {
+  try {
+    const userId = req.user && req.user._id;
+    const userRole = req.user && req.user.role;
+    const notification = await notificationSystemService.archiveNotification(req.params.id, userId, userRole);
+    res.json({ message: 'Notification archived.', notification });
   } catch (err) {
     const statusCode = err.message === 'Access denied.' ? 403 : 404;
     res.status(statusCode).json({ error: err.message });
