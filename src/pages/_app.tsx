@@ -1,8 +1,8 @@
 import "@/styles/globals.css";
 import "@/styles/walletconnect-override.css";
 import type { AppProps } from "next/app";
-import { Provider } from "react-redux";
-import { store } from "../store/store";
+import { Provider, useSelector } from "react-redux";
+import { store, RootState } from "../store/store";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect } from "react";
@@ -17,6 +17,7 @@ import {
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -44,6 +45,8 @@ const theme = createTheme({
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
+  const profile = useSelector((state: RootState) => state.profile.profile);
+  const userId = profile?.userId?._id;
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -140,7 +143,11 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <NotificationProvider userId={userId}>
+      {children}
+    </NotificationProvider>
+  );
 }
 
 export default function App({ Component, pageProps }: AppProps) {

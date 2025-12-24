@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { io } from 'socket.io-client';
 
 interface Notification {
   id: string;
@@ -38,8 +38,22 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children, userId }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+
+  // Helper function to format timestamps (memoized to prevent re-creation)
+  const formatTimestamp = useCallback((date: Date): string => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+  }, []);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -47,33 +61,52 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
     const newSocket = io(socketUrl, {
-      query: { userId },
       transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => {
-      console.log('✅ WebSocket connected for notifications');
       setIsConnected(true);
+      newSocket.emit('join', userId);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('❌ WebSocket disconnected');
       setIsConnected(false);
     });
 
-    // Listen for new notifications
+    // Listen for new notifications from backend
     newSocket.on('notification', (data: any) => {
-      console.log('🔔 New notification received:', data);
       const newNotification: Notification = {
-        id: data.id || Date.now().toString(),
-        type: data.type || 'info',
-        title: data.title || 'Notification',
-        message: data.message || '',
-        timestamp: formatTimestamp(new Date()),
-        isRead: false,
-        icon: data.type || 'info',
+        id: data._id || data.id || Date.now().toString(),
+        type: data.type === 'system' ? 'info' : (data.type || 'info'),
+        title: data.title || 'System Notification',
+        message: data.content || data.message || '',
+        timestamp: formatTimestamp(data.createdAt ? new Date(data.createdAt) : new Date()),
+        isRead: data.read || data.isRead || false,
+        icon: data.type === 'system' ? 'info' : (data.type || 'info'),
       };
       setNotifications((prev) => [newNotification, ...prev]);
+    });
+
+    // Listen for notification read events
+    newSocket.on('notificationRead', (data: any) => {
+      const notifId = data.id || data.notificationId || data._id;
+      if (notifId) {
+        setNotifications((prev) =>
+          prev.map((notif) => (notif.id === String(notifId) ? { ...notif, isRead: true } : notif))
+        );
+      }
+    });
+
+    // Listen for notifications marked read event
+    newSocket.on('notificationsMarkedRead', () => {
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+    });
+
+    // Listen for notification deleted event
+    newSocket.on('notificationDeleted', (data: any) => {
+      if (data.notificationId) {
+        setNotifications((prev) => prev.filter((notif) => notif.id !== data.notificationId));
+      }
     });
 
     // Listen for interview completion notifications
@@ -118,26 +151,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       setNotifications((prev) => [notification, ...prev]);
     });
 
-    setSocket(newSocket);
-
     return () => {
       newSocket.close();
     };
-  }, [userId]);
-
-  const formatTimestamp = (date: Date): string => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
-    return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
-  };
+  }, [userId, formatTimestamp]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
     const newNotification: Notification = {
@@ -149,14 +166,32 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     setNotifications((prev) => [newNotification, ...prev]);
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
     setNotifications((prev) =>
       prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif))
     );
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      await fetch(`${apiUrl}/notification-system/markAsRead/${id}/read`, {
+        method: 'PATCH',
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      await fetch(`${apiUrl}/notification-system/mark-all-read?userId=${userId}`, {
+        method: 'PATCH',
+      });
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   const clearNotifications = () => {

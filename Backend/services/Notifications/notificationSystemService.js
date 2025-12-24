@@ -22,9 +22,13 @@ class NotificationSystemService {
 
     // Emit real-time notification via socket.io
     try {
-      socket.getIO().to(recipientId).emit('notification', notification);
+      const io = socket.getIO();
+      const roomName = String(recipientId);
+      const notificationData = notification.toObject ? notification.toObject() : notification;
+
+      io.to(roomName).emit('notification', notificationData);
     } catch (error) {
-      console.warn('Socket emit failed for system notification:', error.message || error);
+      console.error('Socket emit failed for system notification:', error.message || error);
     }
 
     return notification;
