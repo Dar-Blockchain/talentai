@@ -17,8 +17,6 @@ import {
   selectJobMatches,
   selectJobMatchesError,
   selectJobMatchesLoading,
-  deletePost,
-  selectDeletePostLoading,
 } from "@/store/slices/postSlice";
 import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
@@ -75,11 +73,8 @@ const DashboardCompany = () => {
   const isLoadingJobs = useSelector(selectMyPostsLoading);
   const jobsError = useSelector(selectMyPostsError);
   const [displayCount, setDisplayCount] = useState(3); // Change initial display count to 3
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const isDeleting = useSelector(selectDeletePostLoading);
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
-  const [jobToDelete, setJobToDelete] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [jobsPerPage] = useState(10); // Set items per page
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,18 +126,6 @@ const DashboardCompany = () => {
     }
   }, [candidatesPage, activeSection]); // Refetch when page or section changes
 
-  const handleDeleteJob = async (jobId: string) => {
-    await dispatch(deletePost(jobId));
-    setDeleteDialogOpen(false);
-    setJobToDelete("");
-    // Refresh list to be safe
-    fetchMyJobs();
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setJobToDelete("");
-  };
 
   // Add handler for bid dialog
   const handleBidDialogOpen = (candidate: any) => {
@@ -190,15 +173,7 @@ const DashboardCompany = () => {
                 setSelectedJob(jobId);
                 dispatch(fetchJobMatches(jobId));
               }}
-              onDeleteJob={(jobId) => {
-                setJobToDelete(jobId);
-                setDeleteDialogOpen(true);
-              }}
               onRefresh={fetchMyJobs}
-              deleteDialogOpen={deleteDialogOpen}
-              isDeleting={isDeleting}
-              onCancelDelete={handleCancelDelete}
-              onConfirmDelete={() => handleDeleteJob(jobToDelete)}
               pagination={activeSection === "all" ? undefined : pagination}
               onPageChange={(page) => setCurrentPage(page)}
               onSearchChange={(search) => setSearchQuery(search)}

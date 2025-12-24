@@ -1,7 +1,5 @@
 import React from "react";
-import {
-  selectCurrentJob,
-} from "@/store/slices/postSlice";
+import { selectCurrentJob } from "@/store/slices/postSlice";
 import {
   Box,
   Button,
@@ -11,19 +9,43 @@ import {
   Chip,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
 } from "@mui/material";
 import { CalendarMonth } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import Image from "next/image";
-import { formatSalary, getLevelFromNumber, getPostSkills, Skill } from "@/utils/postHelpers";
+import {
+  formatSalary,
+  getLevelFromNumber,
+  getPostSkills,
+  Skill,
+} from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
 import { SkillChip } from "../create/steps/post-details-step/PostPreview";
+import DeletePostModal from "../delete/DeletePostModal";
+import { useDeletePost } from "../delete/useDeletePost";
+import { useToast } from "@/hooks/useToast";
 
 const PostBasicDetails: React.FC = () => {
+  const { showToast } = useToast();
   const job = useSelector(selectCurrentJob);
 
   const displaySkills = React.useMemo(() => getPostSkills(job), [job]);
+
+  const deletePost = useDeletePost({
+    postId: job?._id,
+    redirectTo: "/dashboard/company",
+    onSuccess: () =>
+      showToast({
+        message: "Post deleted successfully",
+        severity: "success",
+      }),
+    onError: () => () =>
+      showToast({
+        message: "Failed to delete post",
+        severity: "success",
+      }),
+  });
 
   if (!job) return;
 
@@ -43,41 +65,44 @@ const PostBasicDetails: React.FC = () => {
           justifyContent: "space-between",
         }}
       >
-        <Box sx={{display: 'flex', gap: 1, alignItems: 'center'}}><Typography
-          variant="h5"
-          sx={{
-            position: "relative",
-            fontWeight: 600,
-            fontSize: "20px",
-            lineHeight: "35px",
-            color: "rgba(23, 43, 77, 1)",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              left: 0,
-              bottom: 0,
-              width: "38px",
-              height: "5px",
-              backgroundColor: "rgba(41, 210, 145, 0.83)",
-              borderRadius: "2px",
-            },
-          }}
-        >
-          {job?.jobDetails?.title}
-        </Typography>{job.status === 'draft' && (
-                      <Chip
-                        label="📝 Draft"
-                        size="small"
-                        sx={{
-                          backgroundColor: 'rgba(156, 163, 175, 0.1)',
-                          color: '#6B7280',
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          height: 22,
-                          border: '1px solid #9CA3AF',
-                        }}
-                      />
-                    )}                    </Box>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <Typography
+            variant="h5"
+            sx={{
+              position: "relative",
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: "35px",
+              color: "rgba(23, 43, 77, 1)",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                left: 0,
+                bottom: 0,
+                width: "38px",
+                height: "5px",
+                backgroundColor: "rgba(41, 210, 145, 0.83)",
+                borderRadius: "2px",
+              },
+            }}
+          >
+            {job?.jobDetails?.title}
+          </Typography>
+          {job.status === "draft" && (
+            <Chip
+              label="📝 Draft"
+              size="small"
+              sx={{
+                backgroundColor: "rgba(156, 163, 175, 0.1)",
+                color: "#6B7280",
+                fontWeight: 600,
+                fontSize: "0.7rem",
+                height: 22,
+                border: "1px solid #9CA3AF",
+              }}
+            />
+          )}{" "}
+        </Box>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <Button
             variant="outlined"
@@ -153,7 +178,7 @@ const PostBasicDetails: React.FC = () => {
                   height={18}
                 />
               }
-              // onClick={() => onDeleteJob(job._id)}
+              onClick={deletePost.handleOpen}
               sx={{
                 borderColor: "rgba(224, 62, 92, 1)",
                 color: "rgba(224, 62, 92, 1)",
@@ -268,19 +293,25 @@ const PostBasicDetails: React.FC = () => {
               border: "0.25px solid rgba(95, 168, 211, 1)",
             }}
             icon={
-              <CalendarMonth color='rgba(95, 168, 211, 1)' sx={{color: 'rgba(95, 168, 211, 1)', width: '16px', height: '16px'}}/>
+              <CalendarMonth
+                sx={{
+                  color: "rgba(95, 168, 211, 1)",
+                  width: "16px",
+                  height: "16px",
+                }}
+              />
             }
           />
         </Stack>
         {/* REQUIRED SKILLS */}
-        <Box sx={{ mt: 2, width: '700px' }}>
+        <Box sx={{ mt: 2, width: "700px" }}>
           <Typography
             variant="subtitle2"
             sx={{
               color: "rgba(98, 111, 134, 1)",
               fontSize: "15px",
               fontWeight: 500,
-              lineHeight: '42px'
+              lineHeight: "42px",
             }}
           >
             Required Skills
@@ -303,7 +334,7 @@ const PostBasicDetails: React.FC = () => {
               color: "rgba(98, 111, 134, 1)",
               fontSize: "15px",
               fontWeight: 500,
-              lineHeight: '42px'
+              lineHeight: "42px",
             }}
           >
             Description
@@ -314,7 +345,7 @@ const PostBasicDetails: React.FC = () => {
               color: "rgba(0, 0, 0, 1)",
               fontSize: "12px",
               fontWeight: 400,
-              maxWidth: '600px'
+              maxWidth: "600px",
             }}
           >
             {job.jobDetails.description}
@@ -333,41 +364,39 @@ const PostBasicDetails: React.FC = () => {
           >
             Requirements
           </Typography>
-            <List
-              sx={{
-                ml: 0.75,
-                maxWidth: "600px",
-                pl: 2,
-                listStyleType: "disc",
-                "& .MuiListItem-root": {
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                },
-              }}
-            >
-  {job.jobDetails.requirements.map((req: string, index: number) => (
-    <ListItem
-      key={index}
-      sx={{
-        display: "list-item",
-        pl: 0,
-      }}
-    >
-      <ListItemText
-        primary={req}
-        sx={{ m: 0 }}
-        primaryTypographyProps={{
-          fontSize: "12px",
-          fontWeight: 400,
-          lineHeight: "18px",
-          color: "rgba(0, 0, 0, 1)",
-        }}
-      />
-    </ListItem>
-  ))}
-</List>
-
-
+          <List
+            sx={{
+              ml: 0.75,
+              maxWidth: "600px",
+              pl: 2,
+              listStyleType: "disc",
+              "& .MuiListItem-root": {
+                paddingTop: 0,
+                paddingBottom: 0,
+              },
+            }}
+          >
+            {job.jobDetails.requirements.map((req: string, index: number) => (
+              <ListItem
+                key={index}
+                sx={{
+                  display: "list-item",
+                  pl: 0,
+                }}
+              >
+                <ListItemText
+                  primary={req}
+                  sx={{ m: 0 }}
+                  primaryTypographyProps={{
+                    fontSize: "12px",
+                    fontWeight: 400,
+                    lineHeight: "18px",
+                    color: "rgba(0, 0, 0, 1)",
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
         </Box>
         {/* RESPONSIBILIES */}
         <Box sx={{ mt: 2 }}>
@@ -381,41 +410,49 @@ const PostBasicDetails: React.FC = () => {
           >
             Responsibilities
           </Typography>
-                      <List
-              sx={{
-                ml: 0.75,
-                maxWidth: "600px",
-                pl: 2,
-                listStyleType: "disc",
-                "& .MuiListItem-root": {
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                },
-              }}
-            >
-  {job.jobDetails.responsibilities.map((req: string, index: number) => (
-    <ListItem
-      key={index}
-      sx={{
-        display: "list-item",
-        pl: 0,
-      }}
-    >
-      <ListItemText
-        primary={req}
-        sx={{ m: 0 }}
-        primaryTypographyProps={{
-          fontSize: "12px",
-          fontWeight: 400,
-          lineHeight: "18px",
-          color: "rgba(0, 0, 0, 1)",
-        }}
-      />
-    </ListItem>
-  ))}
-</List>
+          <List
+            sx={{
+              ml: 0.75,
+              maxWidth: "600px",
+              pl: 2,
+              listStyleType: "disc",
+              "& .MuiListItem-root": {
+                paddingTop: 0,
+                paddingBottom: 0,
+              },
+            }}
+          >
+            {job.jobDetails.responsibilities.map(
+              (req: string, index: number) => (
+                <ListItem
+                  key={index}
+                  sx={{
+                    display: "list-item",
+                    pl: 0,
+                  }}
+                >
+                  <ListItemText
+                    primary={req}
+                    sx={{ m: 0 }}
+                    primaryTypographyProps={{
+                      fontSize: "12px",
+                      fontWeight: 400,
+                      lineHeight: "18px",
+                      color: "rgba(0, 0, 0, 1)",
+                    }}
+                  />
+                </ListItem>
+              )
+            )}
+          </List>
         </Box>
       </Box>
+      <DeletePostModal
+        open={deletePost.open}
+        onClose={deletePost.handleClose}
+        onDelete={deletePost.handleDelete}
+        isDeleting={deletePost.isDeleting}
+      />
     </Box>
   );
 };

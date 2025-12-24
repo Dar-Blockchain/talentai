@@ -16,12 +16,14 @@ import {
 import { styled } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDialog";
 import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { SearchOff, ArrowForward, ArrowBack } from "@mui/icons-material";
 import { toast } from "react-toastify";
+import { useToast } from "@/hooks/useToast";
+import DeletePostModal from "../posts/delete/DeletePostModal";
+import { useDeletePost } from "../posts/delete/useDeletePost";
 
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
@@ -50,12 +52,7 @@ interface MyJobPostsProps {
   isLoadingJobs: boolean;
   jobsError: string | null;
   onViewMatches: (jobId: string) => void;
-  onDeleteJob: (jobId: string) => void;
   onRefresh?: () => void;
-  deleteDialogOpen: boolean;
-  isDeleting: boolean;
-  onCancelDelete: () => void;
-  onConfirmDelete: () => void;
   pagination?: {
     total: number;
     page: number;
@@ -81,12 +78,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   isLoadingJobs,
   jobsError,
   onViewMatches,
-  onDeleteJob,
   onRefresh,
-  deleteDialogOpen,
-  isDeleting,
-  onCancelDelete,
-  onConfirmDelete,
   pagination,
   onPageChange,
   onSearchChange,
@@ -100,6 +92,8 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   initialDisplayCount = 3,
 }) => {
   const router = useRouter();
+    const { showToast } = useToast();
+  
 
   // Early return if hidden
   if (hidden) {
@@ -108,6 +102,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   // State for job details modal
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [jobToDeleteId, setJobToDeleteId] = useState<string | null>(null);
 
   // Get the latest job data from myJobs array based on selectedJobId
   const selectedJobForDetails = selectedJobId
@@ -135,6 +130,21 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   const currentJobs = displayJobs;
   const totalPages = pagination?.totalPages || 1;
   const currentPage = pagination?.page || 1;
+
+    const deletePost = useDeletePost({
+      postId: jobToDeleteId!,
+      refetchAfterDelete: true,
+      onSuccess: () =>
+        showToast({
+          message: "Post deleted successfully",
+          severity: "success",
+        }),
+      onError: () => () =>
+        showToast({
+          message: "Failed to delete post",
+          severity: "success",
+        }),
+    });
 
   // Handlers for job details modal
   const handleViewJobDetails = (job: any) => {
@@ -216,6 +226,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         toast.error('Failed to copy link');
       });
   };
+
+  const handleCloseDeleteModal = () => {
+  deletePost.handleClose();
+  setJobToDeleteId(null);
+};
 
   return (
     <StyledCard>
@@ -771,7 +786,8 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     <>
                       <Button
                         variant="outlined"
-                        onClick={() => handleViewJobDetails(job)}
+                        onClick={() => router.push('/posts/'+job._id)}
+                        //onClick={() => handleViewJobDetails(job)}
                         sx={{
                           borderColor: "rgba(11, 82, 198, 1)",
                           color: "rgba(11, 82, 198, 1)",
@@ -781,6 +797,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                           py: 1.25,
                           borderRadius: "38px",
                           maxWidth: "250px",
+                          width: '250px',
                           height: "42px",
                           backgroundColor: "rgba(11, 82, 198, 0.08)",
                           "&:hover": {
@@ -802,7 +819,10 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                             height={20}
                           />
                         }
-                        onClick={() => onDeleteJob(job._id)}
+                        onClick={() => {
+                          setJobToDeleteId(job._id);
+                          deletePost.handleOpen();
+                        }}
                         sx={{
                           borderColor: "rgba(224, 62, 92, 1)",
                           color: "rgba(224, 62, 92, 1)",
@@ -830,8 +850,8 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                         <Button
                           variant="outlined"
                           fullWidth
-                          onClick={() => handleViewJobDetails(job)}
-                          // onClick={() => router.push('/posts/'+job._id)}
+                          // onClick={() => handleViewJobDetails(job)}
+                          onClick={() => router.push('/posts/'+job._id)}
                           sx={{
                             borderColor: "rgba(11, 82, 198, 1)",
                             color: "rgba(11, 82, 198, 1)",
@@ -910,7 +930,10 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                             height={20}
                           />
                         }
-                        onClick={() => onDeleteJob(job._id)}
+                                                onClick={() => {
+                          setJobToDeleteId(job._id);
+                          deletePost.handleOpen();
+                        }}
                         sx={{
                           borderColor: "rgba(224, 62, 92, 1)",
                           color: "rgba(224, 62, 92, 1)",
@@ -972,13 +995,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         job={selectedJobForDetails}
         onRefresh={onRefresh}
       />
-
-      {/* Delete Job Post Dialog */}
-      <DeleteJobPostDialog
-        open={deleteDialogOpen}
-        onClose={onCancelDelete}
-        onDelete={onConfirmDelete}
-        isDeleting={isDeleting}
+      <DeletePostModal
+        open={deletePost.open}
+        onClose={handleCloseDeleteModal}
+        onDelete={deletePost.handleDelete}
+        isDeleting={deletePost.isDeleting}
       />
     </StyledCard>
   );
