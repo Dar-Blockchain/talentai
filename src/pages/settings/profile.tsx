@@ -91,7 +91,7 @@ const ProfileSettingsPage: React.FC = () => {
             )}
 
             {activeTab === 'notifications' && (
-              <NotificationsTab notifications={staticNotifications} />
+              <NotificationsTab />
             )}
 
             {activeTab !== 'personal' && activeTab !== 'contact' && activeTab !== 'notifications' && (

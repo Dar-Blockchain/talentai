@@ -12,8 +12,8 @@ const { registerNotificationHandlers } = require('./notificationHandlers');
 function registerAllHandlers(socket) {
   // User join handler (common to all users)
   socket.on('join', (userId) => {
-    socket.join(userId);
-    console.log(`✅ Utilisateur ${userId} a rejoint sa room`);
+    const roomName = String(userId);
+    socket.join(roomName);
   });
 
   // Register all domain-specific handlers
@@ -21,7 +21,7 @@ function registerAllHandlers(socket) {
 
   // Disconnect handler
   socket.on('disconnect', () => {
-    console.log('🔌 Utilisateur déconnecté de Socket.IO:', socket.id);
+    // Socket disconnected
   });
 }
 

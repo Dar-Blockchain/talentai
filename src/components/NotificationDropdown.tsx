@@ -37,55 +37,6 @@ interface NotificationDropdownProps {
   onViewAll: () => void;
 }
 
-// Static sample notifications for display
-const sampleNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'success',
-    title: 'Interview Completed',
-    message: 'Your React Developer technical interview has been completed successfully. Results are now available for review.',
-    timestamp: '2 hours ago',
-    isRead: false,
-    icon: 'success'
-  },
-  {
-    id: '2',
-    type: 'info',
-    title: 'New Match Found',
-    message: 'A new candidate matches your Senior Frontend Developer position with 95% compatibility.',
-    timestamp: '5 hours ago',
-    isRead: false,
-    icon: 'info'
-  },
-  {
-    id: '3',
-    type: 'success',
-    title: 'Purchase Successful',
-    message: 'Candidate profile for John Smith has been successfully revealed. You can now view full details.',
-    timestamp: '1 day ago',
-    isRead: true,
-    icon: 'success'
-  },
-  {
-    id: '4',
-    type: 'warning',
-    title: 'Bid Update',
-    message: 'Another company has placed a higher bid on candidate Jane Doe. Current price: 5000 TAI.',
-    timestamp: '2 days ago',
-    isRead: true,
-    icon: 'warning'
-  },
-  {
-    id: '5',
-    type: 'info',
-    title: 'Profile Viewed',
-    message: '3 new candidates have viewed your job posting for Full Stack Developer position.',
-    timestamp: '3 days ago',
-    isRead: true,
-    icon: 'info'
-  },
-];
-
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   anchorEl,
   open,
@@ -95,8 +46,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onMarkAllAsRead,
   onViewAll,
 }) => {
-  // Use sample data if no notifications provided
-  const displayNotifications = notifications.length > 0 ? notifications : sampleNotifications;
+  const displayNotifications = notifications;
   const getNotificationIcon = (type: string) => {
     switch(type) {
       case 'success': return <CheckCircleIcon sx={{ fontSize: 20 }} />;
