@@ -53,6 +53,21 @@ exports.markAsRead = async (req, res) => {
   }
 };
 
+// Mark all notifications as read for a user
+exports.markAllAsRead = async (req, res) => {
+  try {
+    const userId = req.user && req.user._id ? req.user._id : req.query.userId;
+    console.log('markAllAsRead called with userId:', userId);
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    const result = await notificationSystemService.markAllAsRead(userId);
+    res.json({ message: 'All notifications marked as read.', result });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 // Delete a notification
 exports.deleteNotification = async (req, res) => {
   try {
