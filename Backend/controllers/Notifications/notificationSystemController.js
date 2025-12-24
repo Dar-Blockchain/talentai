@@ -39,12 +39,7 @@ exports.listForUser = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-    const options = {
-      unread: req.query.unread === 'true',
-      limit: req.query.limit,
-      offset: req.query.offset,
-    };
-    const list = await notificationSystemService.getUserNotifications(userId, options);
+    const list = await notificationSystemService.getUserNotifications(userId);
     const unreadCount = await notificationSystemService.getUnreadCount(userId);
     res.json({ notifications: list, unreadCount });
   } catch (err) {

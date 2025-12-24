@@ -67,24 +67,12 @@ async function createNotification(recipientId, content, type ) {
 }
 
 
-async function getUserNotifications(userId, options = {}) {
+async function getUserNotifications(userId, ) {
   if (!userId) {
     throw new Error('User ID is required.');
   }
 
-  const filter = { recipient: userId, type: 'system' };
-  if (options.unread === true) {
-    filter.read = false;
-  }
-
-  const query = Notification.find(filter).sort({ createdAt: -1 });
-
-  if (options.limit) {
-    query.limit(parseInt(options.limit, 10));
-  }
-  if (options.offset) {
-    query.skip(parseInt(options.offset, 10));
-  }
+  const query = Notification.find({ recipient: userId }).sort({ createdAt: -1 });
 
   return query.exec();
 }
