@@ -55,6 +55,36 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
   }, []);
 
+  // Load existing notifications from database on mount
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadNotifications = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiUrl}/notification-system/GetMyNotification?userId=${userId}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          const mappedNotifications: Notification[] = data.map((notif: any) => ({
+            id: notif._id || notif.id,
+            type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
+            title: notif.title || 'System Notification',
+            message: notif.content || notif.message || '',
+            timestamp: formatTimestamp(new Date(notif.createdAt)),
+            isRead: notif.read || notif.isRead || false,
+            icon: notif.type === 'system' ? 'info' : (notif.type || 'info'),
+          }));
+          setNotifications(mappedNotifications);
+        }
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    };
+
+    loadNotifications();
+  }, [userId, formatTimestamp]);
+
   // Initialize WebSocket connection
   useEffect(() => {
     if (!userId) return;
