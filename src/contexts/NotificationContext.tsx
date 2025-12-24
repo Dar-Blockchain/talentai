@@ -55,6 +55,43 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
   }, []);
 
+  // Load existing notifications from database on mount
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadNotifications = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const token = localStorage.getItem('api_token');
+
+        const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const mappedNotifications: Notification[] = data.map((notif: any) => ({
+            id: notif._id || notif.id,
+            type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
+            title: notif.title || 'System Notification',
+            message: notif.content || notif.message || '',
+            timestamp: formatTimestamp(new Date(notif.createdAt)),
+            isRead: notif.read || notif.isRead || false,
+            icon: notif.type === 'system' ? 'info' : (notif.type || 'info'),
+          }));
+          setNotifications(mappedNotifications);
+        }
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    };
+
+    loadNotifications();
+  }, [userId, formatTimestamp]);
+
   // Initialize WebSocket connection
   useEffect(() => {
     if (!userId) return;
@@ -173,8 +210,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('api_token');
+
       await fetch(`${apiUrl}/notification-system/markAsRead/${id}/read`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -186,8 +229,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      await fetch(`${apiUrl}/notification-system/mark-all-read?userId=${userId}`, {
+      const token = localStorage.getItem('api_token');
+
+      await fetch(`${apiUrl}/notification-system/mark-all-read`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
