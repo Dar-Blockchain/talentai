@@ -155,7 +155,7 @@ export const registerUser = createAsyncThunk(
 
 export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
-  async ({ email, otp, location }: { email: string; otp: string; location?: any }, { rejectWithValue }) => {
+  async ({ email, otp, location }: { email: string; otp: string; location?: any }, { rejectWithValue, dispatch }) => {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`,
@@ -177,7 +177,28 @@ export const verifyOTP = createAsyncThunk(
         // Store token in localStorage
         if (response.data.token) {
           localStorage.setItem('token', response.data.token);
+          localStorage.setItem('api_token', response.data.token);
         }
+
+        // Send welcome notification after successful account creation
+        // Wait a bit for the backend notification to be created and Socket.IO to connect
+        console.log('✅ Account created, scheduling welcome notification...');
+        setTimeout(() => {
+          console.log('⏰ Sending welcome notification now...');
+          import('../slices/notificationSlice').then(({ createNotification }) => {
+            dispatch(createNotification({
+              type: 'success',
+              content: 'Welcome to TalentAI! 🎉 We\'re excited to have you on board. Start exploring amazing opportunities and connect with top talent.'
+            }) as any)
+            .then(() => {
+              console.log('✅ Welcome notification sent successfully!');
+            })
+            .catch((err: any) => {
+              console.error('❌ Welcome notification failed:', err);
+            });
+          });
+        }, 2000);
+
         return response.data;
       } else {
         // Handle 4xx errors (like 400 Bad Request)

@@ -10,14 +10,20 @@ import {
   Delete as DeleteIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { createNotification } from '@/store/slices/notificationSlice';
 
 interface NotificationsTabProps {
   notifications?: any[]; // Keep for backwards compatibility but won't use it
 }
 
 const NotificationsTab: React.FC<NotificationsTabProps> = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
   // Use real notifications from Socket.IO context
   const {
     notifications,
@@ -27,6 +33,13 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
     clearNotifications,
     isConnected,
   } = useNotifications();
+
+  const handleSendTestNotification = () => {
+    dispatch(createNotification({
+      type: 'success',
+      content: 'This is a test success notification! Everything is working perfectly. 🎉'
+    }));
+  };
 
   const totalNotifications = notifications.length;
   const unreadNotifications = unreadCount;
@@ -76,6 +89,22 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                 color={isConnected ? 'success' : 'error'}
                 sx={{ fontWeight: 600 }}
               />
+              {/* Test Notification Button */}
+              <Button
+                size="small"
+                startIcon={<SendIcon />}
+                onClick={handleSendTestNotification}
+                sx={{
+                  textTransform: 'none',
+                  color: '#10b981',
+                  fontWeight: 600,
+                  '&:hover': {
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  },
+                }}
+              >
+                Send Test
+              </Button>
               {/* Mark All As Read Button */}
               {unreadNotifications > 0 && (
                 <Button
