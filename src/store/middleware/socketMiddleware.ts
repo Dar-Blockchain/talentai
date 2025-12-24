@@ -37,7 +37,7 @@ const mapNotificationData = (data: any) => ({
   title: data.title || 'System Notification',
   message: data.content || data.message || '',
   timestamp: formatTimestamp(data.createdAt ? new Date(data.createdAt) : new Date()),
-  isRead: data.read || data.isRead || false,
+  isRead: data.read !== undefined ? data.read : (data.isRead || false),
   icon: data.type === 'system' ? 'info' : (data.type || 'info'),
 });
 

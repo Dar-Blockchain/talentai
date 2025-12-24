@@ -63,13 +63,17 @@ export const fetchNotifications = createAsyncThunk(
       }
 
       const data = await response.json();
-      return data.map((notif: any) => ({
+
+      // Handle both array response and object with notifications property
+      const notificationsArray = Array.isArray(data) ? data : (data.notifications || []);
+
+      return notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
         title: notif.title || 'System Notification',
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
-        isRead: notif.read || notif.isRead || false,
+        isRead: notif.read !== undefined ? notif.read : (notif.isRead || false),
         icon: notif.type === 'system' ? 'info' : (notif.type || 'info'),
       }));
     } catch (error: any) {
