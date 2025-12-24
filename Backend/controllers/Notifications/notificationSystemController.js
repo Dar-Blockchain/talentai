@@ -15,7 +15,8 @@ exports.createSystemNotification = async (req, res) => {
 const createNotificationByType = (type) => {
   return async (req, res) => {
     try {
-      const { recipient, content } = req.body;
+      const { content } = req.body;
+      const recipient = req.user._id;
       const notification = await notificationSystemService.createNotification(recipient, content, type);
       res.status(201).json(notification);
     } catch (err) {

@@ -32,7 +32,7 @@ async function createSystemNotification(recipientId, content) {
   return notification;
 }
 
-async function createNotification(recipientId, content, type = 'info') {
+async function createNotification(recipientId, content, type ) {
   /**
    * Create a notification with a specific type
    * @param {string} recipientId - User ID of the recipient
@@ -66,8 +66,6 @@ async function createNotification(recipientId, content, type = 'info') {
   return notification;
 }
 
-  return notification;
-}
 
 async function getUserNotifications(userId, options = {}) {
   if (!userId) {
