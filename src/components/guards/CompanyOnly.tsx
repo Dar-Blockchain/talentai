@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '../store/store';
-import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
-import { isLoggingOutCheck } from '../store/slices/authSlice';
+import { AppDispatch } from '../../store/store';
+import { selectProfile, getMyProfile } from '../../store/slices/profileSlice';
+import { isLoggingOutCheck } from '../../store/slices/authSlice';
 import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
 import { isTokenExpired, handleTokenExpiration } from '@/utils/tokenUtils';
 import Cookies from 'js-cookie';
@@ -13,11 +13,11 @@ import {
   Alert,
 } from '@mui/material';
 
-interface AdminOnlyProps {
+interface CompanyOnlyProps {
   children: React.ReactNode;
 }
 
-export default function AdminOnly({ children }: AdminOnlyProps) {
+export default function CompanyOnly({ children }: CompanyOnlyProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading: profileLoading, error: profileError } = useSelector(selectProfile);
@@ -63,18 +63,28 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
         hasRedirectedRef.current = true;
         localStorage.removeItem('api_token');
         setIsChecking(false);
-        redirectToLogin(router);
+        // Check if logging out - if so, just go to signin without returnUrl
+        if (isLoggingOutCheck()) {
+          router.replace('/signin');
+        } else {
+          redirectToLogin(router);
+        }
         return;
       }
-      
+
       const token = cookieToken || localToken;
-      
+
       // If no token at all, redirect
       if (!token) {
         hasRedirectedRef.current = true;
         setIsChecking(false);
         console.log("🔒 No token found, redirecting to signin");
-        redirectToLogin(router);
+        // Check if logging out - if so, just go to signin without returnUrl
+        if (isLoggingOutCheck()) {
+          router.replace('/signin');
+        } else {
+          redirectToLogin(router);
+        }
         return;
       }
 
@@ -83,7 +93,12 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
         hasRedirectedRef.current = true;
         setIsChecking(false);
         console.log("🔒 Token expired (JWT), clearing and redirecting to signin");
-        handleTokenExpiration();
+        // Check if logging out - if so, just go to signin without returnUrl
+        if (isLoggingOutCheck()) {
+          router.replace('/signin');
+        } else {
+          handleTokenExpiration();
+        }
         return;
       }
 
@@ -109,7 +124,12 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
       hasRedirectedRef.current = true;
       setIsChecking(false);
       console.log("🔒 Profile fetch failed (401/expired), redirecting to signin");
-      redirectToLogin(router);
+      // Check if logging out - if so, just go to signin without returnUrl
+      if (isLoggingOutCheck()) {
+        router.replace('/signin');
+      } else {
+        redirectToLogin(router);
+      }
       return;
     }
 
@@ -148,7 +168,12 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
             } else if (!tokenStillExists && !hasRedirectedRef.current) {
               hasRedirectedRef.current = true;
               setIsChecking(false);
-              redirectToLogin(router);
+              // Check if logging out - if so, just go to signin without returnUrl
+              if (isLoggingOutCheck()) {
+                router.replace('/signin');
+              } else {
+                redirectToLogin(router);
+              }
             }
           }, 1000);
           return;
@@ -158,22 +183,39 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
             hasRedirectedRef.current = true;
             setIsChecking(false);
             console.log("🔒 Profile not found after retries, redirecting to signin");
-            redirectToLogin(router);
+            // Check if logging out - if so, just go to signin without returnUrl
+            if (isLoggingOutCheck()) {
+              router.replace('/signin');
+            } else {
+              redirectToLogin(router);
+            }
           }
           return;
         }
       }
 
       // Profile exists - check role
-      if (profile.userId.role !== 'Admin') {
+      const role = profile?.userId?.role;
+      if (role === 'Candidate') {
+        router.push('/dashboard/candidate');
+        return;
+      } else if (role === 'Admin') {
+        router.push('/dashboard/admin');
+        return;
+      } else if (role !== 'Company') {
         if (!hasRedirectedRef.current) {
           hasRedirectedRef.current = true;
-          router.push('/unauthorized');
+          // Check if logging out - if so, just go to signin without returnUrl
+          if (isLoggingOutCheck()) {
+            router.replace('/signin');
+          } else {
+            redirectToLogin(router);
+          }
         }
         return;
       }
 
-      // User is admin, allow access
+      // User is a company, allow access
       setIsChecking(false);
     }
   }, [profile, profileLoading, profileError, router, retryCount, dispatch]);
@@ -191,14 +233,14 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
       }}>
         <CircularProgress size={60} />
         <Alert severity="info" sx={{ maxWidth: 400 }}>
-          {retryCount > 0 ? `Verifying admin permissions... (Retry ${retryCount}/3)` : "Verifying admin permissions..."}
+          {retryCount > 0 ? `Verifying company permissions... (Retry ${retryCount}/3)` : "Verifying company permissions..."}
         </Alert>
       </Box>
     );
   }
 
-  // Show error if user is not admin
-  if (!profileLoading && profile && profile.userId.role !== 'Admin') {
+  // Show error if user is not a company
+  if (!profileLoading && profile && profile.userId.role !== 'Company') {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -207,12 +249,12 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
         height: '100vh' 
       }}>
         <Alert severity="error" sx={{ maxWidth: 400 }}>
-          Access Denied. You do not have permission to view this page.
+          Access Denied. This page is only for companies.
         </Alert>
       </Box>
     );
   }
 
-  // User is admin, render the children
+  // User is a company, render the children
   return <>{children}</>;
 } 

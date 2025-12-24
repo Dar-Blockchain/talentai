@@ -8,15 +8,8 @@ import {
   selectCurrentJobError,
   selectCurrentJobLoading,
 } from "@/store/slices/postSlice";
-import {
-  Box,
-  Button,
-  Container,
-  CircularProgress,
-  Alert,
-  Typography,
-} from "@mui/material";
-import HeaderDashboard from "@/components/HeaderDashboard";
+import { Box, Button, Container, Alert } from "@mui/material";
+import HeaderDashboard from "@/components/layout/HeaderDashboard";
 import { ArrowBack } from "@mui/icons-material";
 import PostBasicDetails from "@/components/posts/details/PostBasicDetails";
 import RecruitmentFlowDetails from "@/components/posts/details/RecruitmentFlowDetails";

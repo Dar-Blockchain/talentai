@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material';
 import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
-import AdminOnly from '@/components/AdminOnly';
+import AdminOnly from '@/components/guards/AdminOnly';
 import { selectProfile, clearProfile } from '@/store/slices/profileSlice';
 import { logout, setLoggingOut } from '@/store/slices/authSlice';
 import { resetRedirectState } from '@/utils/authRedirect';

@@ -7,8 +7,8 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
-import Header from '@/components/Header';
-import SimpleFooter from '@/components/SimpleFooter';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
 // Extracted Components
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
@@ -110,7 +110,7 @@ const ProfileSettingsPage: React.FC = () => {
         </Box>
       </Container>
 
-      <SimpleFooter />
+      <Footer />
 
       <SnackbarNotifications
         error={error || null}

@@ -8,14 +8,14 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect } from "react";
 import Cookies from "js-cookie";
 import Head from "next/head";
-import ScrollToTop from "@/components/ScrollToTop";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 import {
   handleTokenExpiration,
   isTokenExpired,
   getToken,
 } from "@/utils/tokenUtils";
 import { Poppins } from "next/font/google";
-import MuiToast from "@/components/Toast";
+import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 

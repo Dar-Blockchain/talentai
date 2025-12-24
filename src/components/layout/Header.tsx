@@ -32,7 +32,7 @@ import {
 } from "@/store/slices/profileSlice";
 import dynamic from "next/dynamic";
 import { setUserType } from "@/store/slices/userSlice";
-import UserAvatar from "./UserAvatar";
+import UserAvatar from "../UserAvatar";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -41,7 +41,7 @@ import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useNotifications } from "@/contexts/NotificationContext";
-import NotificationDropdown from "./NotificationDropdown";
+import NotificationDropdown from "../NotificationDropdown";
 
 type NavItem = {
   label: string;

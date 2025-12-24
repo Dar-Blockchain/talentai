@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '../store/store';
-import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
-import { isLoggingOutCheck } from '../store/slices/authSlice';
+import { AppDispatch } from '../../store/store';
+import { selectProfile, getMyProfile } from '../../store/slices/profileSlice';
+import { isLoggingOutCheck } from '../../store/slices/authSlice';
 import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
 import { isTokenExpired, handleTokenExpiration } from '@/utils/tokenUtils';
 import Cookies from 'js-cookie';
