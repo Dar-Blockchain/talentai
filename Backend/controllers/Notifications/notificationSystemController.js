@@ -14,14 +14,18 @@ exports.createSystemNotification = async (req, res) => {
 // List system notifications (optional: filter by unread)
 exports.listForUser = async (req, res) => {
   try {
-    const userId = req.user && req.user._id ? req.user._id : req.query.userId;
+    const userId = req.user && req.user._id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
     const options = {
       unread: req.query.unread === 'true',
       limit: req.query.limit,
       offset: req.query.offset,
     };
     const list = await notificationSystemService.getUserNotifications(userId, options);
-    res.json(list);
+    const unreadCount = await notificationSystemService.getUnreadCount(userId);
+    res.json({ notifications: list, unreadCount });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -44,8 +48,7 @@ exports.getById = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const userId = req.user && req.user._id;
-    const userRole = req.user && req.user.role;
-    const notification = await notificationSystemService.markNotificationAsRead(req.params.id, userId, userRole);
+    const notification = await notificationSystemService.markNotificationAsRead(req.params.id, userId);
     res.json({ message: 'Marked as read.', notification });
   } catch (err) {
     const statusCode = err.message === 'Access denied.' ? 403 : 404;
@@ -56,7 +59,7 @@ exports.markAsRead = async (req, res) => {
 // Mark all notifications as read for a user
 exports.markAllAsRead = async (req, res) => {
   try {
-    const userId = req.user && req.user._id ? req.user._id : req.query.userId;
+    const userId = req.user._id;
     console.log('markAllAsRead called with userId:', userId);
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
