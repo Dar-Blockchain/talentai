@@ -14,7 +14,7 @@ router.post('/AddNotification', controller.createSystemNotification);
 router.get('/GetMyNotification', controller.listForUser);
 
 // GET /notification-system/:id — retrieve a notification
-router.get('/GetNotificationByID/:id', controller.getById);
+// router.get('/GetNotificationByID/:id', controller.getById);
 
 // PATCH /notification-system/:id/read — mark as read
 router.patch('/markAsRead/:id/read', controller.markAsRead);
