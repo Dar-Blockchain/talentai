@@ -2,232 +2,191 @@ const Notification = require('../../models/notificationModel');
 const socket = require('../../socket');
 
 /**
- * Notification System Service
- * Handles all business logic for system notifications
+ * Notification System Service (functional API)
+ * Exports functions that mirror the previous static class methods.
  */
 
-class NotificationSystemService {
+async function createSystemNotification(recipientId, content) {
   /**
    * Create a system notification
    * @param {string} recipientId - User ID of the recipient
    * @param {string} content - Notification content
    * @returns {Promise<Object>} Created notification document
    */
-  static async createSystemNotification(recipientId, content) {
-    if (!recipientId || !content) {
-      throw new Error('Recipient ID and content are required.');
-    }
-
-    const notification = await Notification.createSystem(recipientId, content);
-
-    // Emit real-time notification via socket.io
-    try {
-      const io = socket.getIO();
-      const roomName = String(recipientId);
-      const notificationData = notification.toObject ? notification.toObject() : notification;
-
-      io.to(roomName).emit('notification', notificationData);
-    } catch (error) {
-      console.error('Socket emit failed for system notification:', error.message || error);
-    }
-
-    return notification;
+  if (!recipientId || !content) {
+    throw new Error('Recipient ID and content are required.');
   }
 
-  /**
-   * Get all notifications for a user
-   * @param {string} userId - User ID
-   * @param {Object} options - Filter options (unread, limit, offset)
-   * @returns {Promise<Array>} Array of notifications
-   */
-  static async getUserNotifications(userId, options = {}) {
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
+  const notification = await Notification.createSystem(recipientId, content);
 
-    const filter = { recipient: userId, type: 'system' };
-    if (options.unread === true) {
-      filter.read = false;
-    }
+  try {
+    const io = socket.getIO();
+    const roomName = String(recipientId);
+    const notificationData = notification.toObject ? notification.toObject() : notification;
 
-    const query = Notification.find(filter).sort({ createdAt: -1 });
-
-    if (options.limit) {
-      query.limit(parseInt(options.limit, 10));
-    }
-    if (options.offset) {
-      query.skip(parseInt(options.offset, 10));
-    }
-
-    return query.exec();
+    io.to(roomName).emit('notification', notificationData);
+  } catch (error) {
+    console.error('Socket emit failed for system notification:', error.message || error);
   }
 
-  /**
-   * Get a notification by ID with access control
-   * @param {string} notificationId - Notification ID
-   * @param {string} userId - User ID requesting the notification
-   * @param {string} userRole - User role for admin override
-   * @returns {Promise<Object>} Notification document
-   */
-  static async getNotificationById(notificationId, userId, userRole = null) {
-    if (!notificationId) {
-      throw new Error('Notification ID is required.');
-    }
-
-    const notification = await Notification.findById(notificationId);
-    if (!notification) {
-      throw new Error('Notification not found.');
-    }
-
-    // Check access: owner or admin
-    const isOwner = notification.recipient.toString() === String(userId);
-    const isAdmin = userRole === 'admin';
-
-    if (!isOwner && !isAdmin) {
-      throw new Error('Access denied.');
-    }
-
-    return notification;
-  }
-
-  /**
-   * Mark a notification as read
-   * @param {string} notificationId - Notification ID
-   * @param {string} userId - User ID requesting the action
-   * @param {string} userRole - User role for admin override
-   * @returns {Promise<Object>} Updated notification document
-   */
-  static async markNotificationAsRead(notificationId, userId) {
-    const notification = await this.getNotificationById(notificationId, userId);
-    notification.read = true;
-    await notification.save();
-    // Emit update to recipient via Socket.IO
-    try {
-      const io = socket.getIO();
-      io.to(String(notification.recipient)).emit('notificationRead', { id: notification._id, notification });
-      // Also emit updated unread count
-      const unread = await this.getUnreadCount(notification.recipient);
-      io.to(String(notification.recipient)).emit('unreadCountUpdated', { unreadCount: unread });
-    } catch (err) {
-      console.warn('Socket emit failed on markNotificationAsRead:', err.message || err);
-    }
-
-    return notification;
-  }
-
-  /**
-   * Mark all notifications as read for a user
-   * @param {string} userId - User ID
-   * @returns {Promise<Object>} Result with modified count
-   */
-  static async markAllAsRead(userId) {
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
-    const result = await Notification.updateMany(
-      { recipient: userId, type: 'system', read: false },
-      { read: true }
-    );
-
-    // Emit to the user's room that all notifications were marked as read
-    try {
-      const io = socket.getIO();
-      io.to(String(userId)).emit('notificationsMarkedRead', { modifiedCount: result.modifiedCount });
-      const unread = await this.getUnreadCount(userId);
-      io.to(String(userId)).emit('unreadCountUpdated', { unreadCount: unread });
-    } catch (err) {
-      console.warn('Socket emit failed on markAllAsRead:', err.message || err);
-    }
-
-    return { modifiedCount: result.modifiedCount };
-  }
-
-  /**
-   * Delete a notification
-   * @param {string} notificationId - Notification ID
-   * @param {string} userId - User ID requesting the action
-   * @param {string} userRole - User role for admin override
-   * @returns {Promise<Object>} Deleted notification document
-   */
-  static async deleteNotification(notificationId, userId, userRole = null) {
-    const notification = await this.getNotificationById(notificationId, userId, userRole);
-    await notification.remove();
-    // Emit deletion event
-    try {
-      const io = socket.getIO();
-      io.to(String(notification.recipient)).emit('notificationDeleted', { id: notification._id });
-      const unread = await this.getUnreadCount(notification.recipient);
-      io.to(String(notification.recipient)).emit('unreadCountUpdated', { unreadCount: unread });
-    } catch (err) {
-      console.warn('Socket emit failed on deleteNotification:', err.message || err);
-    }
-
-    return notification;
-  }
-
-  /**
-   * Get unread notification count for a user
-   * @param {string} userId - User ID
-   * @returns {Promise<number>} Count of unread notifications
-   */
-  static async getUnreadCount(userId) {
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
-    const count = await Notification.countDocuments({
-      recipient: userId,
-      type: 'system',
-      read: false,
-    });
-
-    return count;
-  }
-
-  /**
-   * Broadcast a system notification to multiple users
-   * @param {Array<string>} recipientIds - Array of user IDs
-   * @param {string} content - Notification content
-   * @returns {Promise<Array>} Array of created notifications
-   */
-  static async broadcastSystemNotification(recipientIds, content) {
-    if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
-      throw new Error('At least one recipient ID is required.');
-    }
-    if (!content) {
-      throw new Error('Notification content is required.');
-    }
-
-    const notifications = [];
-    for (const recipientId of recipientIds) {
-      try {
-        const notif = await this.createSystemNotification(recipientId, content);
-        notifications.push(notif);
-      } catch (error) {
-        console.error(`Failed to create notification for user ${recipientId}:`, error.message);
-      }
-    }
-
-    return notifications;
-  }
-
-  /**
-   * Delete old notifications (e.g., older than 30 days)
-   * @param {number} daysOld - Number of days to consider old
-   * @returns {Promise<Object>} Result with deleted count
-   */
-  static async deleteOldNotifications(daysOld = 30) {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-
-    const result = await Notification.deleteMany({
-      type: 'system',
-      createdAt: { $lt: cutoffDate },
-    });
-
-    return { deletedCount: result.deletedCount };
-  }
+  return notification;
 }
 
-module.exports = NotificationSystemService;
+async function getUserNotifications(userId, options = {}) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const filter = { recipient: userId, type: 'system' };
+  if (options.unread === true) {
+    filter.read = false;
+  }
+
+  const query = Notification.find(filter).sort({ createdAt: -1 });
+
+  if (options.limit) {
+    query.limit(parseInt(options.limit, 10));
+  }
+  if (options.offset) {
+    query.skip(parseInt(options.offset, 10));
+  }
+
+  return query.exec();
+}
+
+async function getNotificationById(notificationId, userId, userRole = null) {
+  if (!notificationId) {
+    throw new Error('Notification ID is required.');
+  }
+
+  const notification = await Notification.findById(notificationId);
+  if (!notification) {
+    throw new Error('Notification not found.');
+  }
+
+  // Check access: owner or admin
+  const isOwner = notification.recipient.toString() === String(userId);
+  const isAdmin = userRole === 'admin';
+
+  if (!isOwner && !isAdmin) {
+    throw new Error('Access denied.');
+  }
+
+  return notification;
+}
+
+async function markNotificationAsRead(notificationId, userId) {
+  const notification = await getNotificationById(notificationId, userId);
+  notification.read = true;
+  await notification.save();
+  // Emit update to recipient via Socket.IO
+  try {
+    const io = socket.getIO();
+    io.to(String(notification.recipient)).emit('notificationRead', { id: notification._id, notification });
+    // Also emit updated unread count
+    const unread = await getUnreadCount(notification.recipient);
+    io.to(String(notification.recipient)).emit('unreadCountUpdated', { unreadCount: unread });
+  } catch (err) {
+    console.warn('Socket emit failed on markNotificationAsRead:', err.message || err);
+  }
+
+  return notification;
+}
+
+async function markAllAsRead(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const result = await Notification.updateMany(
+    { recipient: userId, type: 'system', read: false },
+    { read: true }
+  );
+
+  // Emit to the user's room that all notifications were marked as read
+  try {
+    const io = socket.getIO();
+    io.to(String(userId)).emit('notificationsMarkedRead', { modifiedCount: result.modifiedCount });
+    const unread = await getUnreadCount(userId);
+    io.to(String(userId)).emit('unreadCountUpdated', { unreadCount: unread });
+  } catch (err) {
+    console.warn('Socket emit failed on markAllAsRead:', err.message || err);
+  }
+
+  return { modifiedCount: result.modifiedCount };
+}
+
+async function deleteNotification(notificationId, userId, userRole = null) {
+  const notification = await getNotificationById(notificationId, userId, userRole);
+  await notification.remove();
+  // Emit deletion event
+  try {
+    const io = socket.getIO();
+    io.to(String(notification.recipient)).emit('notificationDeleted', { id: notification._id });
+    const unread = await getUnreadCount(notification.recipient);
+    io.to(String(notification.recipient)).emit('unreadCountUpdated', { unreadCount: unread });
+  } catch (err) {
+    console.warn('Socket emit failed on deleteNotification:', err.message || err);
+  }
+
+  return notification;
+}
+
+async function getUnreadCount(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const count = await Notification.countDocuments({
+    recipient: userId,
+    type: 'system',
+    read: false,
+  });
+
+  return count;
+}
+
+async function broadcastSystemNotification(recipientIds, content) {
+  if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
+    throw new Error('At least one recipient ID is required.');
+  }
+  if (!content) {
+    throw new Error('Notification content is required.');
+  }
+
+  const notifications = [];
+  for (const recipientId of recipientIds) {
+    try {
+      const notif = await createSystemNotification(recipientId, content);
+      notifications.push(notif);
+    } catch (error) {
+      console.error(`Failed to create notification for user ${recipientId}:`, error.message);
+    }
+  }
+
+  return notifications;
+}
+
+async function deleteOldNotifications(daysOld = 30) {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+  const result = await Notification.deleteMany({
+    type: 'system',
+    createdAt: { $lt: cutoffDate },
+  });
+
+  return { deletedCount: result.deletedCount };
+}
+
+module.exports = {
+  createSystemNotification,
+  getUserNotifications,
+  getNotificationById,
+  markNotificationAsRead,
+  markAllAsRead,
+  deleteNotification,
+  getUnreadCount,
+  broadcastSystemNotification,
+  deleteOldNotifications,
+};
