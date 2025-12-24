@@ -35,16 +35,11 @@ exports.createCustomNotification = createNotificationByType('custom');
 // List system notifications (optional: filter by unread)
 exports.listForUser = async (req, res) => {
   try {
-    const userId = req.user && req.user._id;
+    const userId = req.user._id;
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-    const options = {
-      unread: req.query.unread === 'true',
-      limit: req.query.limit,
-      offset: req.query.offset,
-    };
-    const list = await notificationSystemService.getUserNotifications(userId, options);
+    const list = await notificationSystemService.getUserNotifications(userId);
     const unreadCount = await notificationSystemService.getUnreadCount(userId);
     res.json({ notifications: list, unreadCount });
   } catch (err) {

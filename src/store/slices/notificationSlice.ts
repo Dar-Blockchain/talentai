@@ -54,20 +54,33 @@ export const fetchNotifications = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('api_token');
+
+      console.log('🔍 Fetching notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
+      console.log('🔑 Token exists:', !!token);
+
       const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
         headers: getApiHeaders(),
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
+        const errorText = await response.text();
+        console.error('❌ Fetch failed:', response.status, errorText);
+        throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('📦 Raw API response:', data);
 
-      // Handle both array response and object with notifications property
-      const notificationsArray = Array.isArray(data) ? data : (data.notifications || []);
+      // Backend returns { notifications: [...], unreadCount: number }
+      // Handle both formats for backwards compatibility
+      const notificationsArray = data.notifications || (Array.isArray(data) ? data : []);
 
-      return notificationsArray.map((notif: any) => ({
+      console.log('📋 Notifications array length:', notificationsArray.length);
+
+      const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
         title: notif.title || 'System Notification',
@@ -76,7 +89,11 @@ export const fetchNotifications = createAsyncThunk(
         isRead: notif.read !== undefined ? notif.read : (notif.isRead || false),
         icon: notif.type === 'system' ? 'info' : (notif.type || 'info'),
       }));
+
+      console.log('✅ Mapped notifications:', mapped);
+      return mapped;
     } catch (error: any) {
+      console.error('❌ Error fetching notifications:', error);
       return rejectWithValue(error.message);
     }
   }
@@ -118,6 +135,30 @@ export const markAllNotificationsAsRead = createAsyncThunk(
       }
 
       return true;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Create notification by type
+export const createNotification = createAsyncThunk(
+  'notifications/create',
+  async ({ type, content }: { type: 'info' | 'success' | 'warning' | 'error' | 'custom'; content: string }, { rejectWithValue }) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/notification-system/AddNotification/${type}`, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create ${type} notification`);
+      }
+
+      const data = await response.json();
+      return data;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
