@@ -62,7 +62,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const loadNotifications = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiUrl}/notification-system/GetMyNotification?userId=${userId}`);
+        const token = localStorage.getItem('api_token');
+
+        const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -203,8 +210,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('api_token');
+
       await fetch(`${apiUrl}/notification-system/markAsRead/${id}/read`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -216,8 +229,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      await fetch(`${apiUrl}/notification-system/mark-all-read?userId=${userId}`, {
+      const token = localStorage.getItem('api_token');
+
+      await fetch(`${apiUrl}/notification-system/mark-all-read`, {
         method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
