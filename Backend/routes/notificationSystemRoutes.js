@@ -10,6 +10,21 @@ router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));
 // POST /notification-system/AddNotification — create a system notification
 router.post('/AddNotification', controller.createSystemNotification);
 
+// POST /notification-system/AddNotification/info — create info notification
+router.post('/AddNotification/info', controller.createInfoNotification);
+
+// POST /notification-system/AddNotification/success — create success notification
+router.post('/AddNotification/success', controller.createSuccessNotification);
+
+// POST /notification-system/AddNotification/warning — create warning notification
+router.post('/AddNotification/warning', controller.createWarningNotification);
+
+// POST /notification-system/AddNotification/error — create error notification
+router.post('/AddNotification/error', controller.createErrorNotification);
+
+// POST /notification-system/AddNotification/custom — create custom notification
+router.post('/AddNotification/custom', controller.createCustomNotification);
+
 // GET /notification-system/GetMyNotification — list system notifications for current user
 router.get('/GetMyNotification', controller.listForUser);
 

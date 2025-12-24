@@ -32,6 +32,41 @@ async function createSystemNotification(recipientId, content) {
   return notification;
 }
 
+async function createNotification(recipientId, content, type ) {
+  /**
+   * Create a notification with a specific type
+   * @param {string} recipientId - User ID of the recipient
+   * @param {string} content - Notification content
+   * @param {string} type - Type of notification (info, success, warning, error, custom, system)
+   * @returns {Promise<Object>} Created notification document
+   */
+  if (!recipientId || !content) {
+    throw new Error('Recipient ID and content are required.');
+  }
+
+  const notification = new Notification({
+    recipient: recipientId,
+    content,
+    type,
+    read: false,
+  });
+
+  await notification.save();
+
+  try {
+    const io = socket.getIO();
+    const roomName = String(recipientId);
+    const notificationData = notification.toObject ? notification.toObject() : notification;
+
+    io.to(roomName).emit('notification', notificationData);
+  } catch (error) {
+    console.error('Socket emit failed for notification:', error.message || error);
+  }
+
+  return notification;
+}
+
+
 async function getUserNotifications(userId, options = {}) {
   if (!userId) {
     throw new Error('User ID is required.');
@@ -196,6 +231,7 @@ async function deleteOldNotifications(daysOld = 30) {
 
 module.exports = {
   createSystemNotification,
+  createNotification,
   getUserNotifications,
   getNotificationById,
   markNotificationAsRead,

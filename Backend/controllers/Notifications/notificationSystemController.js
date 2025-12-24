@@ -11,6 +11,27 @@ exports.createSystemNotification = async (req, res) => {
   }
 };
 
+// Generic create notification by type
+const createNotificationByType = (type) => {
+  return async (req, res) => {
+    try {
+      const { content } = req.body;
+      const recipient = req.user._id;
+      const notification = await notificationSystemService.createNotification(recipient, content, type);
+      res.status(201).json(notification);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  };
+};
+
+// Create notifications for each type
+exports.createInfoNotification = createNotificationByType('info');
+exports.createSuccessNotification = createNotificationByType('success');
+exports.createWarningNotification = createNotificationByType('warning');
+exports.createErrorNotification = createNotificationByType('error');
+exports.createCustomNotification = createNotificationByType('custom');
+
 // List system notifications (optional: filter by unread)
 exports.listForUser = async (req, res) => {
   try {
