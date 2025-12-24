@@ -1,46 +1,54 @@
-import React, { useEffect } from "react";
-import { AppDispatch } from "@/store/store";
-import { useRouter } from "next/router";
-import { useDispatch } from "react-redux";
-import {
-  fetchJobById,
-  selectCurrentJob,
-  selectCurrentJobError,
-  selectCurrentJobLoading,
-} from "@/store/slices/postSlice";
+import React from "react";
+import { selectCurrentJob } from "@/store/slices/postSlice";
 import {
   Box,
   Button,
-  Container,
   Typography,
   Divider,
   Stack,
   Chip,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
 } from "@mui/material";
-import HeaderDashboard from "@/components/HeaderDashboard";
-import { ArrowBack } from "@mui/icons-material";
+import { CalendarMonth } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import Image from "next/image";
-import { formatSalary, getLevelFromNumber } from "@/utils/postHelpers";
-import { formatDate } from "@/utils/functions";
-import { getJobTypeColor, getJobTypeTextColor } from "@/utils/jobHelpers";
 import {
-  Work as WorkIcon,
-  AttachMoney as MoneyIcon,
-} from "@mui/icons-material";
+  formatSalary,
+  getLevelFromNumber,
+  getPostSkills,
+  Skill,
+} from "@/utils/postHelpers";
+import { formatDate } from "@/utils/functions";
 import { SkillChip } from "../create/steps/post-details-step/PostPreview";
-import { HardSkill, SoftSkill } from "@/store/slices/postGenerationSlice";
+import DeletePostModal from "../delete/DeletePostModal";
+import { useDeletePost } from "../delete/useDeletePost";
+import { useToast } from "@/hooks/useToast";
 
 const PostBasicDetails: React.FC = () => {
+  const { showToast } = useToast();
   const job = useSelector(selectCurrentJob);
-  const loading = useSelector(selectCurrentJobLoading);
-  const error = useSelector(selectCurrentJobError);
-  const hardSkills = job?.skillAnalysis?.requiredSkills || [];
-  const softSkills = job?.skillAnalysis?.softSkills || [];
+
+  const displaySkills = React.useMemo(() => getPostSkills(job), [job]);
+
+  const deletePost = useDeletePost({
+    postId: job?._id,
+    redirectTo: "/dashboard/company",
+    onSuccess: () =>
+      showToast({
+        message: "Post deleted successfully",
+        severity: "success",
+      }),
+    onError: () => () =>
+      showToast({
+        message: "Failed to delete post",
+        severity: "success",
+      }),
+  });
+
   if (!job) return;
+
   return (
     <Box
       sx={{
@@ -57,28 +65,44 @@ const PostBasicDetails: React.FC = () => {
           justifyContent: "space-between",
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{
-            position: "relative",
-            fontWeight: 600,
-            fontSize: "20px",
-            lineHeight: "35px",
-            color: "rgba(23, 43, 77, 1)",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              left: 0,
-              bottom: 0,
-              width: "38px",
-              height: "5px",
-              backgroundColor: "rgba(41, 210, 145, 0.83)",
-              borderRadius: "2px",
-            },
-          }}
-        >
-          {job?.jobDetails?.title}
-        </Typography>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <Typography
+            variant="h5"
+            sx={{
+              position: "relative",
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: "35px",
+              color: "rgba(23, 43, 77, 1)",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                left: 0,
+                bottom: 0,
+                width: "38px",
+                height: "5px",
+                backgroundColor: "rgba(41, 210, 145, 0.83)",
+                borderRadius: "2px",
+              },
+            }}
+          >
+            {job?.jobDetails?.title}
+          </Typography>
+          {job.status === "draft" && (
+            <Chip
+              label="📝 Draft"
+              size="small"
+              sx={{
+                backgroundColor: "rgba(156, 163, 175, 0.1)",
+                color: "#6B7280",
+                fontWeight: 600,
+                fontSize: "0.7rem",
+                height: 22,
+                border: "1px solid #9CA3AF",
+              }}
+            />
+          )}{" "}
+        </Box>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <Button
             variant="outlined"
@@ -154,7 +178,7 @@ const PostBasicDetails: React.FC = () => {
                   height={18}
                 />
               }
-              // onClick={() => onDeleteJob(job._id)}
+              onClick={deletePost.handleOpen}
               sx={{
                 borderColor: "rgba(224, 62, 92, 1)",
                 color: "rgba(224, 62, 92, 1)",
@@ -257,30 +281,46 @@ const PostBasicDetails: React.FC = () => {
               />
             }
           />
+          <Chip
+            label={formatDate(job.createdAt)}
+            size="small"
+            sx={{
+              backgroundColor: "rgba(95, 168, 211, 0.1)",
+              color: "rgba(84, 98, 116, 1)",
+              fontWeight: 500,
+              fontSize: "0.75rem",
+              height: 24,
+              border: "0.25px solid rgba(95, 168, 211, 1)",
+            }}
+            icon={
+              <CalendarMonth
+                sx={{
+                  color: "rgba(95, 168, 211, 1)",
+                  width: "16px",
+                  height: "16px",
+                }}
+              />
+            }
+          />
         </Stack>
         {/* REQUIRED SKILLS */}
-        <Box sx={{ mt: 2, width: '700px' }}>
+        <Box sx={{ mt: 2, width: "700px" }}>
           <Typography
             variant="subtitle2"
             sx={{
               color: "rgba(98, 111, 134, 1)",
               fontSize: "15px",
               fontWeight: 500,
-              lineHeight: '42px'
+              lineHeight: "42px",
             }}
           >
             Required Skills
           </Typography>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            {hardSkills.map((skill: HardSkill, index: number) => {
+            {displaySkills.map((skill: Skill, index: number) => {
               const label = `${skill.name} (${getLevelFromNumber(
                 skill.level
-              )}) - ${skill.percentage}%`;
-              return <SkillChip key={index} label={label} />;
-            })}
-            {softSkills.map((skill: SoftSkill, index: number) => {
-              const label = `${skill.name} (${skill.level}/5) - ${skill.percentage}%`;
-
+              )}) - ${skill.importance}%`;
               return <SkillChip key={index} label={label} />;
             })}
           </Box>
@@ -294,7 +334,7 @@ const PostBasicDetails: React.FC = () => {
               color: "rgba(98, 111, 134, 1)",
               fontSize: "15px",
               fontWeight: 500,
-              lineHeight: '42px'
+              lineHeight: "42px",
             }}
           >
             Description
@@ -305,7 +345,7 @@ const PostBasicDetails: React.FC = () => {
               color: "rgba(0, 0, 0, 1)",
               fontSize: "12px",
               fontWeight: 400,
-              maxWidth: '600px'
+              maxWidth: "600px",
             }}
           >
             {job.jobDetails.description}
@@ -324,41 +364,39 @@ const PostBasicDetails: React.FC = () => {
           >
             Requirements
           </Typography>
-            <List
-              sx={{
-                ml: 0.75,
-                maxWidth: "600px",
-                pl: 2,
-                listStyleType: "disc",
-                "& .MuiListItem-root": {
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                },
-              }}
-            >
-  {job.jobDetails.requirements.map((req: string, index: number) => (
-    <ListItem
-      key={index}
-      sx={{
-        display: "list-item",
-        pl: 0,
-      }}
-    >
-      <ListItemText
-        primary={req}
-        sx={{ m: 0 }}
-        primaryTypographyProps={{
-          fontSize: "12px",
-          fontWeight: 400,
-          lineHeight: "18px",
-          color: "rgba(0, 0, 0, 1)",
-        }}
-      />
-    </ListItem>
-  ))}
-</List>
-
-
+          <List
+            sx={{
+              ml: 0.75,
+              maxWidth: "600px",
+              pl: 2,
+              listStyleType: "disc",
+              "& .MuiListItem-root": {
+                paddingTop: 0,
+                paddingBottom: 0,
+              },
+            }}
+          >
+            {job.jobDetails.requirements.map((req: string, index: number) => (
+              <ListItem
+                key={index}
+                sx={{
+                  display: "list-item",
+                  pl: 0,
+                }}
+              >
+                <ListItemText
+                  primary={req}
+                  sx={{ m: 0 }}
+                  primaryTypographyProps={{
+                    fontSize: "12px",
+                    fontWeight: 400,
+                    lineHeight: "18px",
+                    color: "rgba(0, 0, 0, 1)",
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
         </Box>
         {/* RESPONSIBILIES */}
         <Box sx={{ mt: 2 }}>
@@ -372,41 +410,49 @@ const PostBasicDetails: React.FC = () => {
           >
             Responsibilities
           </Typography>
-                      <List
-              sx={{
-                ml: 0.75,
-                maxWidth: "600px",
-                pl: 2,
-                listStyleType: "disc",
-                "& .MuiListItem-root": {
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                },
-              }}
-            >
-  {job.jobDetails.responsibilities.map((req: string, index: number) => (
-    <ListItem
-      key={index}
-      sx={{
-        display: "list-item",
-        pl: 0,
-      }}
-    >
-      <ListItemText
-        primary={req}
-        sx={{ m: 0 }}
-        primaryTypographyProps={{
-          fontSize: "12px",
-          fontWeight: 400,
-          lineHeight: "18px",
-          color: "rgba(0, 0, 0, 1)",
-        }}
-      />
-    </ListItem>
-  ))}
-</List>
+          <List
+            sx={{
+              ml: 0.75,
+              maxWidth: "600px",
+              pl: 2,
+              listStyleType: "disc",
+              "& .MuiListItem-root": {
+                paddingTop: 0,
+                paddingBottom: 0,
+              },
+            }}
+          >
+            {job.jobDetails.responsibilities.map(
+              (req: string, index: number) => (
+                <ListItem
+                  key={index}
+                  sx={{
+                    display: "list-item",
+                    pl: 0,
+                  }}
+                >
+                  <ListItemText
+                    primary={req}
+                    sx={{ m: 0 }}
+                    primaryTypographyProps={{
+                      fontSize: "12px",
+                      fontWeight: 400,
+                      lineHeight: "18px",
+                      color: "rgba(0, 0, 0, 1)",
+                    }}
+                  />
+                </ListItem>
+              )
+            )}
+          </List>
         </Box>
       </Box>
+      <DeletePostModal
+        open={deletePost.open}
+        onClose={deletePost.handleClose}
+        onDelete={deletePost.handleDelete}
+        isDeleting={deletePost.isDeleting}
+      />
     </Box>
   );
 };

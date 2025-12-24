@@ -19,13 +19,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { NodeConfigRenderer } from "./node-configuration";
 
-interface ChatMessage {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
-
 const ModalStyle = {
   position: "absolute" as "absolute",
   top: "50%",
@@ -46,8 +39,6 @@ interface NodeConfigurationModalProps {
   onSelectedNodesChange?: (nodes: Node[]) => void;
   setNodes?: any;
   setEdges?: any;
-  chatMessages?: ChatMessage[];
-  setChatMessages?: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 }
 
 const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
@@ -58,15 +49,9 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
   onClose,
   onSelectedNodeChange,
   onSelectedNodesChange,
-  chatMessages,
-  setChatMessages,
 }) => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [currentPrompt, setCurrentPrompt] = useState("");
 
   const handleClose = () => {
-    setCurrentPrompt("");
-    setIsGenerating(false);
     onClose();
   };
 
@@ -74,14 +59,6 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
   const handleFormSave = useCallback(
     (config: any) => {
       if (!selectedNode) return;
-
-      console.log("💾 Saving configuration for node:", {
-        nodeId: selectedNode.id,
-        nodeType: selectedNode.data.type,
-        nodeLabel: selectedNode.data.label,
-        newConfig: config,
-        configuredFlag: config.configured,
-      });
 
       setNodes((nds) =>
         nds.map((node) =>
@@ -209,6 +186,7 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
 
         {/* Condition Form */}
         {selectedNode?.data.type === "condition" ? (
+          <Box sx={{maxHeight: "70vh", overflow: "auto"}}>
           <Box
             sx={{
               display: "flex",
@@ -365,19 +343,6 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
                 </Box>
               )}
           </Box>
-        ) : (
-          /* Configuration Forms for other node types */
-          <Box sx={{ maxHeight: "70vh", overflow: "auto" }}>
-            <NodeConfigRenderer
-              nodeType={selectedNode?.data.type || ""}
-              initialConfig={selectedNode?.data.config}
-              onSave={handleFormSave}
-              onCancel={handleFormCancel}
-            />
-          </Box>
-        )}
-
-        {selectedNode?.data.type === "condition" && (
           <Box
             sx={{
               display: "flex",
@@ -416,6 +381,18 @@ const NodeConfigurationModal: React.FC<NodeConfigurationModalProps> = ({
                 Confirm
               </Button>
             </Box>
+          </Box>
+        
+          </Box>
+        ) : (
+          /* Configuration Forms for other node types */
+          <Box sx={{ maxHeight: "70vh", overflow: "auto" }}>
+            <NodeConfigRenderer
+              nodeType={selectedNode?.data.type || ""}
+              initialConfig={selectedNode?.data.config}
+              onSave={handleFormSave}
+              onCancel={handleFormCancel}
+            />
           </Box>
         )}
       </Box>
