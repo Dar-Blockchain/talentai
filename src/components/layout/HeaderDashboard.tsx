@@ -23,12 +23,12 @@ import {
   selectTokenBalance,
   selectTokenLoading,
 } from "@/store/slices/tokenSlice";
-import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
 import { formatNumber, stringAvatar } from "@/utils/functions";
 import { openModal } from "@/store/slices/tokenPurchaseSlice";
 import { logout } from "@/store/slices/authSlice";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import CircularProgress from "@mui/material/CircularProgress";
+import TokenPurchaseModal from "../token-purchase/TokenPurchaseModal";
 
 // Styles
 const pulseDot = {

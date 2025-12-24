@@ -20,13 +20,13 @@ import {
 } from "@/store/slices/postSlice";
 import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
-import CompanyOnly from "@/components/CompanyOnly";
+import CompanyOnly from "@/components/guards/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
 import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
-import HeaderDashboard from "@/components/HeaderDashboard";
+import HeaderDashboard from "@/components/layout/HeaderDashboard";
 import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
 

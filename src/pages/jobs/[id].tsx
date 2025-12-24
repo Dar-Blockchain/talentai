@@ -23,7 +23,7 @@ import {
   CalendarToday as CalendarIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import { AppDispatch } from "@/store/store";
 import {
   fetchJobById,
@@ -31,8 +31,8 @@ import {
   selectCurrentJobLoading,
   selectCurrentJobError,
 } from "@/store/slices/postSlice";
-import Footer from "@/components/home-page/Footer";
-import HeaderDashboard from "@/components/HeaderDashboard";
+import Footer from "@/components/layout/Footer";
+import HeaderDashboard from "@/components/layout/HeaderDashboard";
 
 const JobDetailPage: React.FC = () => {
   const router = useRouter();
