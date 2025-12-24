@@ -5,7 +5,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // All routes require an authenticated user
-router.use( authLogMiddleware('NotificationSystem'));
+router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));
 
 // POST /notification-system/ — create a system notification
 router.post('/AddNotification', controller.createSystemNotification);
@@ -18,6 +18,9 @@ router.get('/GetNotificationByID/:id', controller.getById);
 
 // PATCH /notification-system/:id/read — mark as read
 router.patch('/markAsRead/:id/read', controller.markAsRead);
+
+// PATCH /notification-system/mark-all-read — mark all as read for user
+router.patch('/mark-all-read', controller.markAllAsRead);
 
 // DELETE /notification-system/:id — delete
 router.delete('/deleteNotification/:id', controller.deleteNotification);
