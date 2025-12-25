@@ -31,7 +31,7 @@ const DEFAULT_AGENT_CONFIG: AgentConfigurationFormValues = {
   isActive: true,
 };
 
-interface AgentConfigUpdatePayload {
+export interface AgentConfigUpdatePayload {
   thresholdPercent?: number;
   bidBudgetMin?: number;
   bidBudgetMax?: number;

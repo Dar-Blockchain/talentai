@@ -254,3 +254,63 @@ export const JOB_LOCATIONS = [
   'Zambia',
   'Zimbabwe'
 ];
+
+export const AGENT_CONFIG_NUMBER_FIELDS = [
+  {
+    key: "thresholdPercent",
+    label: "Match Threshold (%)",
+    helper: "Score required before automated actions can run",
+    min: 0,
+    max: 100,
+    step: 1,
+  },
+  {
+    key: "bidBudgetMin",
+    label: "Minimum Bid Budget ($)",
+    helper: "Lowest amount the agent can bid",
+    min: 0,
+    step: 1,
+  },
+  {
+    key: "bidBudgetMax",
+    label: "Maximum Bid Budget ($)",
+    helper: "Highest allowed bid",
+    min: 0,
+    step: 1,
+  },
+  {
+    key: "bidStep",
+    label: "Bid Increment ($)",
+    helper: "Increment used when increasing bids",
+    min: 1,
+    step: 1,
+  },
+  {
+    key: "maxCandidatesToBid",
+    label: "Max Candidates to Bid",
+    helper: "Concurrent candidates the agent can engage",
+    min: 1,
+    step: 1,
+  },
+  {
+    key: "maxDailySpending",
+    label: "Daily Spending Limit ($)",
+    helper: "Maximum daily agent spending",
+    min: 0,
+    step: 1,
+  },
+  {
+    key: "agentLifetimeDays",
+    label: "Agent Lifetime (days)",
+    helper: "Auto-deactivation period",
+    min: 1,
+    step: 1,
+  },
+  {
+    key: "bidLifetimeDays",
+    label: "Bid Lifetime (days)",
+    helper: "How long a bid remains valid",
+    min: 1,
+    step: 1,
+  },
+]

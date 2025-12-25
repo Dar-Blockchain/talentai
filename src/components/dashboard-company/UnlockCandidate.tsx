@@ -73,7 +73,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
     if (unlockResult && unlockResult.success) {
       setIsCandidateUnlocked(true);
       dispatch(fetchTokenBalance());
-      dispatch(fetchJobMatches(selectedJob));
+      dispatch(fetchJobMatches({ selectedJobId: selectedJob, page: 1, limit: 10 }));
     }
   }, [unlockResult, selectedJob]);
 

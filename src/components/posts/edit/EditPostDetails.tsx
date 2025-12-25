@@ -122,13 +122,11 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
         enableReinitialize
         initialValues={getInitialValues(job)}
         onSubmit={async (values, { resetForm }) => {
-          const isValid = validateEditPost(
+          if (!validateEditPost(
             values,
             showToast,
             job?.creationType
-          );
-
-          if (!isValid) return;
+          )) return;
           await dispatch(
             updatePost({
               jobId: job?._id,
@@ -141,6 +139,10 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
           ).unwrap();
           resetForm();
           onCancel();
+                    showToast({
+      message: "Post details updated successfully",
+      severity: "success",
+    });
         }}
       >
         {({ values, handleChange, setFieldValue, handleSubmit, resetForm }) => (
