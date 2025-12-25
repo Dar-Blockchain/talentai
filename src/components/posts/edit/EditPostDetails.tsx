@@ -11,20 +11,11 @@ import { Formik } from "formik";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import {
-  deleteHardSkill,
-  deleteSoftSkill,
-} from "@/store/slices/postGenerationSlice";
 import InputAdornment from "@mui/material/InputAdornment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import { Add as AddIcon } from "@mui/icons-material";
-import {
-  getHardSkills,
-  getLevelFromNumber,
-  getSoftSkills,
-  Skill,
-} from "@/utils/postHelpers";
+import { getLevelFromNumber, Skill } from "@/utils/postHelpers";
 import { experienceLevels } from "@/constants/candidate";
 import {
   contractTypes,
@@ -116,9 +107,9 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
         : [...values.skillAnalysis.softSkills];
 
     if (selectedIndex === null) {
-      updated.push(skill); // ADD
+      updated.push(skill);
     } else {
-      updated[selectedIndex] = skill; // EDIT
+      updated[selectedIndex] = skill;
     }
 
     setFieldValue(field, updated);
@@ -715,7 +706,10 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                   <TextField
                     value={values.jobDetails.requirements.join("\n")}
                     onChange={(e) =>
-                      setFieldValue("jobDetails.requirements", e.target.value.split("\n"))
+                      setFieldValue(
+                        "jobDetails.requirements",
+                        e.target.value.split("\n")
+                      )
                     }
                     placeholder="Job Requirements"
                     multiline

@@ -7,6 +7,7 @@ import {
   Alert,
   Stack,
   Chip,
+  Button,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
@@ -17,6 +18,7 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateCreateConfigValue } from "@/store/slices/agentConfigSlice";
+import Image from "next/image";
 
 export interface AgentConfigurationFormValues {
   agentId: string;
@@ -201,14 +203,94 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
 
   return (
     <Box sx={{ pb: 2, width: "100%" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 2,
+        }}
+      >
+        {/* Title */}
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              background: "rgba(234, 255, 247, 1)",
+              width: 45,
+              height: 45,
+              borderRadius: "5px",
+            }}
+          >
+            <Image src="/icons/edit.svg" alt="file" width={25} height={25} />
+          </Box>
+
+          <Box>
+            <Typography
+              sx={{
+                color: "rgba(41, 210, 145, 1)",
+                fontWeight: 600,
+                fontSize: "20px",
+              }}
+            >
+              Edit Agent Configuration
+            </Typography>
+
+            <Typography sx={{ fontSize: "12px", color: "#546274" }}>
+              Update the settings for your recruitment agent below.
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Actions */}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {/* Cancel */}
+
+          <Button
+            variant="outlined"
+            onClick={() => {
+              onCancel();
+            }}
+            sx={{
+              border: "none",
+              background: "none",
+              color: "rgba(133, 169, 227, 1)",
+              textDecoration: "none",
+              "&:hover": {
+                background: "none",
+                textDecoration: "none",
+                color: "rgba(133, 169, 227, 0.8)",
+              },
+            }}
+          >
+            Cancel
+          </Button>
+
+          {/* Save */}
+          <Button
+            variant="contained"
+            onClick={() => {}}
+            sx={{
+              textTransform: "none",
+              height: "42px",
+              width: "120px",
+              maxWidth: "230px",
+              borderRadius: "38px",
+              background: "rgba(0, 234, 144, 1)",
+              color: "white",
+            }}
+          >
+            Save
+          </Button>
+        </Box>
+      </Box>
       {/* ------------------ HEADER ------------------ */}
       <Box
         sx={{
-          p: 3,
           borderRadius: 2,
-          backgroundColor: "#ffffff",
           mb: 4,
-          border: "1px solid #eef0f2",
         }}
       >
         {/* HEADER ROW */}
@@ -230,15 +312,51 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
 
           {/* TEXT BLOCK */}
           <Box>
-            <Typography
-              sx={{
-                fontWeight: 600,
-                fontSize: "20px",
-                color: "#0f172a",
-              }}
-            >
-              Agent Control Center
-            </Typography>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "20px",
+                  color: "#0f172a",
+                }}
+              >
+                Agent Control Center
+              </Typography>
+              {/* CHIPS ROW */}
+              <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap" }}>
+                <Chip
+                  label={
+                    agentConfig.isActive ? "Status: Active" : "Status: Paused"
+                  }
+                  size="small"
+                  sx={{
+                    backgroundColor: agentConfig.isActive
+                      ? "#ecfeff"
+                      : "#f1f5f9",
+                    color: agentConfig.isActive ? "#0e7490" : "#334155",
+                    borderRadius: 2,
+                  }}
+                />
+
+                <Chip
+                  label={
+                    agentConfig.autoSubmitTopMatch
+                      ? "Automation: Enabled"
+                      : "Automation: Manual"
+                  }
+                  size="small"
+                  sx={{
+                    backgroundColor: agentConfig.autoSubmitTopMatch
+                      ? "#eef2ff"
+                      : "#f1f5f9",
+                    color: agentConfig.autoSubmitTopMatch
+                      ? "#4f46e5"
+                      : "#334155",
+                    borderRadius: 2,
+                  }}
+                />
+              </Box>
+            </Box>
 
             <Typography
               sx={{
@@ -250,35 +368,6 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
               Configure bidding behavior, automation rules, and spending limits.
             </Typography>
           </Box>
-        </Box>
-
-        {/* CHIPS ROW */}
-        <Box sx={{ mt: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-          <Chip
-            label={agentConfig.isActive ? "Status: Active" : "Status: Paused"}
-            size="small"
-            sx={{
-              backgroundColor: agentConfig.isActive ? "#ecfeff" : "#f1f5f9",
-              color: agentConfig.isActive ? "#0e7490" : "#334155",
-              borderRadius: 2,
-            }}
-          />
-
-          <Chip
-            label={
-              agentConfig.autoSubmitTopMatch
-                ? "Automation: Enabled"
-                : "Automation: Manual"
-            }
-            size="small"
-            sx={{
-              backgroundColor: agentConfig.autoSubmitTopMatch
-                ? "#eef2ff"
-                : "#f1f5f9",
-              color: agentConfig.autoSubmitTopMatch ? "#4f46e5" : "#334155",
-              borderRadius: 2,
-            }}
-          />
         </Box>
       </Box>
 
