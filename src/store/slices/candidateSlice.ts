@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { RootState } from "../store";
+import { broadcastSystemNotification } from "./notificationSlice";
 
 export interface UnlockResponse {
   success: boolean;
@@ -52,7 +53,7 @@ export const unlockCandidate = createAsyncThunk<
   UnlockResponse,
   { candidateIds: string[]; idJob: string },
   { state: RootState }
->("candidate/unlock", async ({ candidateIds, idJob }, { rejectWithValue }) => {
+>("candidate/unlock", async ({ candidateIds, idJob }, { rejectWithValue, dispatch }) => {
   try {
     const token =
       localStorage.getItem("token") || localStorage.getItem("api_token");
@@ -70,6 +71,18 @@ export const unlockCandidate = createAsyncThunk<
 
     if (!response.data.success) {
       return rejectWithValue(response.data.message || "Unlock failed");
+    }
+
+    // Send notification to unlocked candidates
+    try {
+      console.log('📢 [Unlock] Sending notification to candidates:', candidateIds);
+      await dispatch(broadcastSystemNotification({
+        content: "Great news! A company has unlocked your profile and is interested in your qualifications. Check your dashboard for more details! 🎉",
+        recipientIds: candidateIds
+      })).unwrap();
+    } catch (notifError) {
+      console.error('❌ [Unlock] Failed to send notification:', notifError);
+      // Don't fail the unlock if notification fails
     }
 
     return response.data;

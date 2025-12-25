@@ -165,6 +165,47 @@ export const createNotification = createAsyncThunk(
   }
 );
 
+// Broadcast system notification to multiple recipients
+export const broadcastSystemNotification = createAsyncThunk(
+  'notifications/broadcast',
+  async ({ content, recipientIds }: { content: string; recipientIds: string[] }, { rejectWithValue }) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('api_token');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      console.log('📢 [BroadcastThunk] Sending broadcast to:', recipientIds.length, 'recipients');
+
+      const response = await fetch(`${apiUrl}/notification-system/broadcastSystemNotification`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          recipientIds,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to broadcast notification: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ [BroadcastThunk] Notification sent successfully:', result);
+      return result;
+    } catch (error: any) {
+      console.error('❌ [BroadcastThunk] Error broadcasting notification:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const notificationSlice = createSlice({
   name: 'notifications',
   initialState,
@@ -225,6 +266,18 @@ const notificationSlice = createSlice({
       // Mark all as read
       .addCase(markAllNotificationsAsRead.fulfilled, (state) => {
         state.notifications.forEach(n => n.isRead = true);
+      })
+      // Broadcast notification
+      .addCase(broadcastSystemNotification.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(broadcastSystemNotification.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(broadcastSystemNotification.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

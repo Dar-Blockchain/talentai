@@ -78,6 +78,13 @@ export const socketMiddleware: Middleware = (store) => {
         store.dispatch(addNotification(notification));
       });
 
+      // Listen for broadcast system notifications
+      socket.on('broadcast_notification', (data: any) => {
+        console.log('📢 [Socket] Received broadcast notification:', data);
+        const notification = mapNotificationData(data);
+        store.dispatch(addNotification(notification));
+      });
+
       // Listen for notification read events
       socket.on('notificationRead', (data: any) => {
         const notifId = data.id || data.notificationId || data._id;
