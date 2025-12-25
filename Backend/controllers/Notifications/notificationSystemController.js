@@ -103,7 +103,9 @@ exports.deleteNotification = async (req, res) => {
 // Archive a notification
 exports.archiveNotification = async (req, res) => {
   try {
-    const notification = await notificationSystemService.archiveNotification(req.params.id);
+    const userId = req.user && req.user._id;
+    const userRole = req.user && req.user.role;
+    const notification = await notificationSystemService.archiveNotification(req.params.id, userId, userRole);
     console.log('archiveNotification succeeded for id:', notification);
     res.json({ message: 'Notification archived.', notification });
   } catch (err) {
