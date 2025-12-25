@@ -11,6 +11,10 @@ exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
     const idCompany = req.user._id;
+    
+    // 🔢 Pagination parameters
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit) || 20));
 
     console.log("Fetching job post with ID:", jobPostId);
     
@@ -118,11 +122,26 @@ exports.matchCandidatesToJob = async (req, res) => {
     const matches = (await Promise.all(matchPromises)).filter(Boolean);
     matches.sort((a, b) => b.score - a.score);
 
+    /* -----------------------------------------
+       4️⃣ Pagination
+    ----------------------------------------- */
+    const totalMatches = matches.length;
+    const totalPages = Math.ceil(totalMatches / limit);
+    const offset = (page - 1) * limit;
+    const paginatedMatches = matches.slice(offset, offset + limit);
+
     res.json({
       success: true,
       jobTitle: jobPost.jobDetails?.title || "Unknown Job",
-      matches,
-      count: matches.length,
+      matches: paginatedMatches,
+      pagination: {
+        page,
+        limit,
+        totalMatches,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error in matchCandidatesToJob:", error);
