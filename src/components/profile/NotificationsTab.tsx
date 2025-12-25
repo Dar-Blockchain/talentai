@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, Card, CardContent, Typography, IconButton, Button, Chip } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Card, CardContent, Typography, IconButton, Button, Chip, Tabs, Tab } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   Info as InfoIcon,
@@ -11,11 +11,17 @@ import {
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
   Send as SendIcon,
+  Archive as ArchiveIcon,
 } from '@mui/icons-material';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
-import { createNotification } from '@/store/slices/notificationSlice';
+import {
+  createNotification,
+  fetchArchivedNotifications,
+  selectArchivedNotifications,
+  selectArchivedLoading
+} from '@/store/slices/notificationSlice';
 
 interface NotificationsTabProps {
   notifications?: any[]; // Keep for backwards compatibility but won't use it
@@ -23,6 +29,7 @@ interface NotificationsTabProps {
 
 const NotificationsTab: React.FC<NotificationsTabProps> = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const [activeTab, setActiveTab] = useState(0);
 
   // Use real notifications from Socket.IO context
   const {
@@ -31,8 +38,20 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
     markAsRead,
     markAllAsRead,
     clearNotifications,
+    archive,
     isConnected,
   } = useNotifications();
+
+  // Archived notifications from Redux
+  const archivedNotifications = useSelector(selectArchivedNotifications);
+  const archivedLoading = useSelector(selectArchivedLoading);
+
+  // Fetch archived notifications when switching to archived tab
+  React.useEffect(() => {
+    if (activeTab === 1) {
+      dispatch(fetchArchivedNotifications());
+    }
+  }, [activeTab, dispatch]);
 
   const handleSendTestNotification = () => {
     dispatch(createNotification({
@@ -65,6 +84,9 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
       default: return { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' };
     }
   };
+
+  const displayNotifications = activeTab === 0 ? notifications : archivedNotifications;
+  const isLoading = activeTab === 1 && archivedLoading;
 
   return (
     <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
@@ -145,6 +167,30 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
           </Box>
         </Box>
 
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+              },
+              '& .Mui-selected': {
+                color: '#8310FF',
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#8310FF',
+              },
+            }}
+          >
+            <Tab label={`Active (${notifications.length})`} />
+            <Tab label={`Archived (${archivedNotifications.length})`} />
+          </Tabs>
+        </Box>
+
         {/* Notification Stats */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(4, 1fr)' }, gap: 2, mb: 4 }}>
           <Box sx={{ p: 3, borderRadius: 2, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', textAlign: 'center' }}>
@@ -167,7 +213,17 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
 
         {/* Notifications List */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <Box sx={{
+              py: 8,
+              px: 3,
+              textAlign: 'center',
+            }}>
+              <Typography variant="body1" sx={{ color: '#6b7280' }}>
+                Loading archived notifications...
+              </Typography>
+            </Box>
+          ) : displayNotifications.length === 0 ? (
             <Box sx={{
               py: 8,
               px: 3,
@@ -190,21 +246,23 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                 <InfoIcon sx={{ fontSize: 40, color: '#9ca3af' }} />
               </Box>
               <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600, mb: 1 }}>
-                No notifications yet
+                {activeTab === 0 ? 'No notifications yet' : 'No archived notifications'}
               </Typography>
               <Typography variant="body2" sx={{ color: '#9ca3af' }}>
-                {isConnected
-                  ? "You're all caught up! We'll notify you when something arrives."
-                  : "Connecting to notification service..."}
+                {activeTab === 0
+                  ? (isConnected
+                    ? "You're all caught up! We'll notify you when something arrives."
+                    : "Connecting to notification service...")
+                  : "You haven't archived any notifications yet."}
               </Typography>
             </Box>
           ) : (
-            notifications.map((notification) => {
+            displayNotifications.map((notification) => {
               const colors = getNotificationColor(notification.type);
               return (
                 <Box
                   key={notification.id}
-                  onClick={() => !notification.isRead && markAsRead(notification.id)}
+                  onClick={() => activeTab === 0 && !notification.isRead && markAsRead(notification.id)}
                   sx={{
                     p: 3,
                     borderRadius: 2,
@@ -213,7 +271,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                     display: 'flex',
                     gap: 2,
                     transition: 'all 0.2s',
-                    cursor: notification.isRead ? 'default' : 'pointer',
+                    cursor: (activeTab === 0 && !notification.isRead) ? 'pointer' : 'default',
                     '&:hover': {
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                       transform: 'translateY(-2px)'
@@ -255,6 +313,22 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                       )}
                     </Box>
                   </Box>
+                  {activeTab === 0 && (
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        archive(notification.id);
+                      }}
+                      sx={{
+                        alignSelf: 'flex-start',
+                        '&:hover': { backgroundColor: '#f3f4f6' }
+                      }}
+                      title="Archive notification"
+                    >
+                      <ArchiveIcon sx={{ fontSize: 20, color: '#9ca3af' }} />
+                    </IconButton>
+                  )}
                 </Box>
               );
             })

@@ -15,6 +15,7 @@ import {
   AccessTime as AccessTimeIcon,
   Settings as SettingsIcon,
   MarkEmailRead as MarkEmailReadIcon,
+  Archive as ArchiveIcon,
 } from '@mui/icons-material';
 
 interface Notification {
@@ -35,6 +36,7 @@ interface NotificationDropdownProps {
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onViewAll: () => void;
+  onArchive: (id: string) => void;
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
@@ -45,6 +47,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onMarkAsRead,
   onMarkAllAsRead,
   onViewAll,
+  onArchive,
 }) => {
   const displayNotifications = notifications;
   const getNotificationIcon = (type: string) => {
@@ -256,6 +259,20 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                       )}
                     </Box>
                   </Box>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive(notification.id);
+                    }}
+                    sx={{
+                      alignSelf: 'flex-start',
+                      '&:hover': { backgroundColor: '#f3f4f6' }
+                    }}
+                    title="Archive notification"
+                  >
+                    <ArchiveIcon sx={{ fontSize: 18, color: '#9ca3af' }} />
+                  </IconButton>
                 </Box>
                 {index < displayedNotifications.length - 1 && <Divider />}
               </React.Fragment>

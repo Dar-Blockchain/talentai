@@ -129,12 +129,14 @@ const Header = ({ logo, type }: HeaderProps) => {
   let notificationsList: any[] = [];
   let markAsRead = (id: string) => {};
   let markAllAsRead = () => {};
+  let archive = (id: string) => {};
   try {
     const notifications = useNotifications();
     unreadCount = notifications.unreadCount;
     notificationsList = notifications.notifications;
     markAsRead = notifications.markAsRead;
     markAllAsRead = notifications.markAllAsRead;
+    archive = notifications.archive;
   } catch (e) {
     // NotificationProvider not available
   }
@@ -541,6 +543,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                     onMarkAsRead={markAsRead}
                     onMarkAllAsRead={markAllAsRead}
                     onViewAll={handleViewAllNotifications}
+                    onArchive={archive}
                   />
 
                   <Box

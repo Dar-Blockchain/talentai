@@ -8,20 +8,27 @@ interface Notification {
   timestamp: string;
   isRead: boolean;
   icon: string;
+  archived?: boolean;
 }
 
 interface NotificationState {
   notifications: Notification[];
+  archivedNotifications: Notification[];
   isConnected: boolean;
   loading: boolean;
   error: string | null;
+  archivedLoading: boolean;
+  archivedError: string | null;
 }
 
 const initialState: NotificationState = {
   notifications: [],
+  archivedNotifications: [],
   isConnected: false,
   loading: false,
   error: null,
+  archivedLoading: false,
+  archivedError: null,
 };
 
 // Helper to format timestamps
@@ -206,6 +213,74 @@ export const broadcastSystemNotification = createAsyncThunk(
   }
 );
 
+// Archive notification
+export const archiveNotification = createAsyncThunk(
+  'notifications/archive',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/notification-system/archiveNotification/${id}`, {
+        method: 'PATCH',
+        headers: getApiHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive notification');
+      }
+
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Fetch archived notifications
+export const fetchArchivedNotifications = createAsyncThunk(
+  'notifications/fetchArchived',
+  async (_, { rejectWithValue }) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetArchivedNotifications`);
+
+      const response = await fetch(`${apiUrl}/notification-system/GetArchivedNotifications`, {
+        headers: getApiHeaders(),
+      });
+
+      console.log('📡 Archived response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Fetch archived failed:', response.status, errorText);
+        throw new Error(`Failed to fetch archived notifications: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📦 Raw archived API response:', data);
+
+      const notificationsArray = data.notifications || (Array.isArray(data) ? data : []);
+
+      const mapped = notificationsArray.map((notif: any) => ({
+        id: notif._id || notif.id,
+        type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
+        title: notif.title || 'System Notification',
+        message: notif.content || notif.message || '',
+        timestamp: formatTimestamp(new Date(notif.createdAt)),
+        isRead: true, // Archived notifications are always read
+        icon: notif.type === 'system' ? 'info' : (notif.type || 'info'),
+        archived: true,
+      }));
+
+      console.log('✅ Mapped archived notifications:', mapped);
+      return mapped;
+    } catch (error: any) {
+      console.error('❌ Error fetching archived notifications:', error);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const notificationSlice = createSlice({
   name: 'notifications',
   initialState,
@@ -278,6 +353,24 @@ const notificationSlice = createSlice({
       .addCase(broadcastSystemNotification.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Archive notification
+      .addCase(archiveNotification.fulfilled, (state, action) => {
+        // Remove the archived notification from the list
+        state.notifications = state.notifications.filter(n => n.id !== action.payload);
+      })
+      // Fetch archived notifications
+      .addCase(fetchArchivedNotifications.pending, (state) => {
+        state.archivedLoading = true;
+        state.archivedError = null;
+      })
+      .addCase(fetchArchivedNotifications.fulfilled, (state, action) => {
+        state.archivedLoading = false;
+        state.archivedNotifications = action.payload;
+      })
+      .addCase(fetchArchivedNotifications.rejected, (state, action) => {
+        state.archivedLoading = false;
+        state.archivedError = action.payload as string;
       });
   },
 });
@@ -299,3 +392,6 @@ export const selectUnreadCount = (state: { notifications: NotificationState }) =
   state.notifications.notifications.filter(n => !n.isRead).length;
 export const selectIsConnected = (state: { notifications: NotificationState }) => state.notifications.isConnected;
 export const selectNotificationsLoading = (state: { notifications: NotificationState }) => state.notifications.loading;
+export const selectArchivedNotifications = (state: { notifications: NotificationState }) => state.notifications.archivedNotifications;
+export const selectArchivedLoading = (state: { notifications: NotificationState }) => state.notifications.archivedLoading;
+export const selectArchivedError = (state: { notifications: NotificationState }) => state.notifications.archivedError;

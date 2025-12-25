@@ -6,6 +6,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   clearNotifications as clearNotificationsAction,
+  archiveNotification,
   selectNotifications,
   selectUnreadCount,
   selectIsConnected,
@@ -58,12 +59,17 @@ export const useNotifications = () => {
     dispatch(clearNotificationsAction());
   };
 
+  const archive = (id: string) => {
+    dispatch(archiveNotification(id));
+  };
+
   return {
     notifications,
     unreadCount,
     markAsRead,
     markAllAsRead,
     clearNotifications,
+    archive,
     isConnected,
   };
 };
