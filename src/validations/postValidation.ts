@@ -136,3 +136,97 @@ const validateSalary = (salary: any, showToast: ToastFn): boolean => {
 
   return true;
 };
+
+/* =========================
+       EDIT POST 
+========================= */
+
+export const validateEditPost = (
+  values: any,
+  showToast: ToastFn,
+  creationType?: string
+): boolean => {
+  const jobDetails = values?.jobDetails;
+  const hardSkills = values?.skillAnalysis?.requiredSkills || [];
+  const softSkills = values?.skillAnalysis?.softSkills || [];
+
+  if (!jobDetails?.title?.trim()) {
+    showToast({ message: "Job title is required", severity: "error" });
+    return false;
+  }
+
+  if (!jobDetails?.experienceLevel) {
+    showToast({ message: "Experience level is required", severity: "error" });
+    return false;
+  }
+
+  if (!jobDetails?.description?.trim()) {
+    showToast({ message: "Job description is required", severity: "error" });
+    return false;
+  }
+
+  if (!jobDetails?.employmentType) {
+    showToast({ message: "Employment type is required", severity: "error" });
+    return false;
+  }
+
+  if (!jobDetails?.location?.trim()) {
+    showToast({ message: "Work mode is required", severity: "error" });
+    return false;
+  }
+
+  if (!validateSalary(jobDetails?.salary, showToast)) {
+    return false;
+  }
+
+  // AI jobs only
+  if (creationType === "ai") {
+    if (!hardSkills.length) {
+      showToast({
+        message: "At least one hard skill is required",
+        severity: "error",
+      });
+      return false;
+    }
+
+    if (!softSkills.length) {
+      showToast({
+        message: "At least one soft skill is required",
+        severity: "error",
+      });
+      return false;
+    }
+
+    const total = [...hardSkills, ...softSkills].reduce(
+      (sum, s) => sum + (s.percentage || 0),
+      0
+    );
+
+    if (total !== 100) {
+      showToast({
+        message: `Total skill percentage must equal 100%. Current total: ${total}%`,
+        severity: "error",
+      });
+      return false;
+    }
+  }
+
+  if (!jobDetails?.requirements?.length) {
+    showToast({
+      message: "At least one requirement is required",
+      severity: "error",
+    });
+    return false;
+  }
+
+  if (!jobDetails?.responsibilities?.length) {
+    showToast({
+      message: "At least one responsibility is required",
+      severity: "error",
+    });
+    return false;
+  }
+
+  return true;
+};
+
