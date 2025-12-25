@@ -102,21 +102,21 @@ const numberFields = [
 /* ------------------------------- STYLES ------------------------------- */
 
 const SectionTitle = styled(Typography)(() => ({
+  color: "rgba(84, 98, 116, 1)",
   fontWeight: 600,
-  color: "#0f172a",
-  fontSize: "1.1rem",
+  fontSize: "16px",
 }));
 
 const SubtleText = styled(Typography)(() => ({
   color: "#64748b",
-  fontSize: "0.85rem",
+  fontSize: "0.75rem",
   marginTop: 4,
 }));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
-    borderRadius: 10,
-    backgroundColor: "#fff",
+    height: "42px",
+    borderRadius: 4,
     "& fieldset": {
       borderColor: "#cbd5e1",
     },
@@ -133,6 +133,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     color: "#475569",
   },
   "& .MuiFormHelperText-root": {
+    marginLeft: "0!important",
     fontSize: "0.75rem",
     color: "#64748b",
   },
@@ -142,6 +143,7 @@ const MainLayout = styled(Box)(({ theme }) => ({
   display: "grid",
   gap: theme.spacing(4),
   gridTemplateColumns: "1fr",
+  marginTop: "25px",
 }));
 
 const FieldGrid = styled(Box)(({ theme }) => ({
@@ -286,99 +288,16 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
           </Button>
         </Box>
       </Box>
-      {/* ------------------ HEADER ------------------ */}
-      <Box
-        sx={{
-          borderRadius: 2,
-          mb: 4,
-        }}
-      >
-        {/* HEADER ROW */}
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          {/* ICON BLOCK */}
-          <Box
-            sx={{
-              width: 45,
-              height: 45,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(223, 246, 237, 1)",
-            }}
-          >
-            <SmartToyIcon sx={{ fontSize: 26, color: "#0ea5e9" }} />
-          </Box>
 
-          {/* TEXT BLOCK */}
-          <Box>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              <Typography
-                sx={{
-                  fontWeight: 600,
-                  fontSize: "20px",
-                  color: "#0f172a",
-                }}
-              >
-                Agent Control Center
-              </Typography>
-              {/* CHIPS ROW */}
-              <Box sx={{ display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-                <Chip
-                  label={
-                    agentConfig.isActive ? "Status: Active" : "Status: Paused"
-                  }
-                  size="small"
-                  sx={{
-                    backgroundColor: agentConfig.isActive
-                      ? "#ecfeff"
-                      : "#f1f5f9",
-                    color: agentConfig.isActive ? "#0e7490" : "#334155",
-                    borderRadius: 2,
-                  }}
-                />
-
-                <Chip
-                  label={
-                    agentConfig.autoSubmitTopMatch
-                      ? "Automation: Enabled"
-                      : "Automation: Manual"
-                  }
-                  size="small"
-                  sx={{
-                    backgroundColor: agentConfig.autoSubmitTopMatch
-                      ? "#eef2ff"
-                      : "#f1f5f9",
-                    color: agentConfig.autoSubmitTopMatch
-                      ? "#4f46e5"
-                      : "#334155",
-                    borderRadius: 2,
-                  }}
-                />
-              </Box>
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: "13px",
-                color: "#64748b",
-                mt: 0.3,
-              }}
-            >
-              Configure bidding behavior, automation rules, and spending limits.
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* ------------------ MAIN LAYOUT ------------------ */}
       <MainLayout>
         {/* Identity & Safeguards */}
         <Box>
           <Box display="flex" alignItems="center" gap={1}>
             <SectionTitle>Identity & Safeguards</SectionTitle>
             <Tooltip title="" arrow>
-              <InfoOutlinedIcon sx={{ color: "#94a3b8" }} />
+              <InfoOutlinedIcon
+                sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
+              />
             </Tooltip>
           </Box>
 
@@ -397,7 +316,9 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
         <Box>
           <Box display="flex" alignItems="center" gap={1}>
             <SectionTitle>Bidding Envelope</SectionTitle>
-            <AutoGraphIcon sx={{ color: "#94a3b8" }} />
+            <AutoGraphIcon
+              sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
+            />
           </Box>
 
           <SubtleText>
@@ -416,7 +337,9 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
         <Box>
           <Box display="flex" alignItems="center" gap={1}>
             <SectionTitle>Lifecycle Policies</SectionTitle>
-            <TrendingUpIcon sx={{ color: "#94a3b8" }} />
+            <TrendingUpIcon
+              sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
+            />
           </Box>
 
           <SubtleText>
