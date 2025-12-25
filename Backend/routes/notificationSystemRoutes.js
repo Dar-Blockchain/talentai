@@ -25,6 +25,9 @@ router.post('/AddNotification/error', controller.createErrorNotification);
 // POST /notification-system/AddNotification/custom — create custom notification
 router.post('/AddNotification/custom', controller.createCustomNotification);
 
+// POST /notification-system/broadcastSystemNotification — broadcast notification to all users
+router.post('/broadcastSystemNotification', controller.broadcastSystemNotification);
+
 // GET /notification-system/GetMyNotification — list system notifications for current user
 router.get('/GetMyNotification', controller.listForUser);
 

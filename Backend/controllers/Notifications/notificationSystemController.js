@@ -103,12 +103,25 @@ exports.deleteNotification = async (req, res) => {
 // Archive a notification
 exports.archiveNotification = async (req, res) => {
   try {
-    const userId = req.user && req.user._id;
-    const userRole = req.user && req.user.role;
-    const notification = await notificationSystemService.archiveNotification(req.params.id, userId, userRole);
+    const notification = await notificationSystemService.archiveNotification(req.params.id);
+    console.log('archiveNotification succeeded for id:', notification);
     res.json({ message: 'Notification archived.', notification });
   } catch (err) {
     const statusCode = err.message === 'Access denied.' ? 403 : 404;
     res.status(statusCode).json({ error: err.message });
+  }
+};
+
+// Broadcast system notification to all users
+exports.broadcastSystemNotification = async (req, res) => {
+  try {
+    const { content, recipientIds} = req.body;
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+    const result = await notificationSystemService.broadcastSystemNotification(content, recipientIds);
+    res.status(201).json({ message: 'Notification broadcasted to all users.', result });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };

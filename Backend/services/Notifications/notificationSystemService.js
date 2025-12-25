@@ -1,4 +1,5 @@
 const Notification = require('../../models/notificationModel');
+const User = require('../../models/UserModel');
 const socket = require('../../socket');
 
 /**
@@ -169,40 +170,84 @@ async function getUnreadCount(userId) {
   return count;
 }
 
-async function broadcastSystemNotification(recipientIds, content) {
-  if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
-    throw new Error('At least one recipient ID is required.');
-  }
+async function broadcastSystemNotification(content, recipientIds) {
+  /**
+   * Broadcast a system notification to all users or specific recipients
+   * @param {string} content - Notification content
+   * @param {Array<string>} recipientIds - Specific user IDs to send to (if null, broadcasts to all)
+   * @returns {Promise<Object>} Result with count and notifications
+   */
   if (!content) {
     throw new Error('Notification content is required.');
   }
+  const type = 'info';
+  let users;
+
+  if (recipientIds && Array.isArray(recipientIds) && recipientIds.length > 0) {
+    // Send to specific recipients
+    users = await User.find({ _id: { $in: recipientIds } });
+  } else {
+    // Broadcast to all users
+    users = await User.find({});
+  }
 
   const notifications = [];
-  for (const recipientId of recipientIds) {
+  for (const user of users) {
     try {
-      const notif = await createSystemNotification(recipientId, content);
+      const notif = new Notification({
+        recipient: user._id,
+        content,
+        type,
+        read: false,
+      });
+      await notif.save();
       notifications.push(notif);
+
+      // Emit to user via Socket.IO
+      try {
+        const io = socket.getIO();
+        const roomName = String(user._id);
+        const notificationData = notif.toObject ? notif.toObject() : notif;
+        io.to(roomName).emit('notification', notificationData);
+      } catch (error) {
+        console.error(`Socket emit failed for user ${user._id}:`, error.message || error);
+      }
     } catch (error) {
-      console.error(`Failed to create notification for user ${recipientId}:`, error.message);
+      console.error(`Failed to create notification for user ${user._id}:`, error.message);
     }
   }
 
-  return notifications;
+  return {
+    count: notifications.length,
+    notifications,
+    message: recipientIds ? `Notification sent to ${notifications.length} users.` : `Notification broadcasted to ${notifications.length} users.`
+  };
 }
 
-  async function archiveNotification(notificationId, userId, userRole = null) {
-    const notification = await getNotificationById(notificationId, userId, userRole);
-    notification.archived = true;
-    await notification.save();
+  async function archiveNotification(notificationId, userId) {
+    // Validate access (throws if not owner or admin)
+    await getNotificationById(notificationId, userId);
 
+    // Use an atomic update to mark archived=true and return the updated document
+    const updated = await Notification.findByIdAndUpdate(
+      notificationId,
+      { archived: true },
+      { new: true }
+    );
+
+    if (!updated) {
+      throw new Error('Notification not found.');
+    }
+
+    console.log('Notification archived:', notificationId);
     try {
       const io = socket.getIO();
-      io.to(String(notification.recipient)).emit('notificationArchived', { id: notification._id, notification });
+      io.to(String(updated.recipient)).emit('notificationArchived', { id: updated._id, notification: updated });
     } catch (err) {
       console.warn('Socket emit failed on archiveNotification:', err.message || err);
     }
 
-    return notification;
+    return updated;
   }
 
 async function deleteOldNotifications(daysOld = 30) {
