@@ -34,6 +34,9 @@ import {
   copyInterviewDataToClipboard,
   logInterviewDataToConsole
 } from '@/utils/exportInterviewData';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
 
 interface SkillScore {
   skill: string;
@@ -68,6 +71,7 @@ interface InterviewAnalysis {
 export default function InterviewResults() {
   const router = useRouter();
   const { data: session } = useSession();
+  const dispatch = useDispatch<AppDispatch>();
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,6 +250,40 @@ export default function InterviewResults() {
           // Reward failed, cannot retry
           console.log(`❌ [Save] Reward failed: ${result.reward.error}`);
         }
+      }
+
+      // NEW: Send skill test notification
+      try {
+        // Extract skill name from metadata
+        const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : 'Interview';
+
+        // Extract score from interview data
+        const score = parsedData?.finalReport?.coverage?.overall ||
+                     parsedData?.overallScore ||
+                     0;
+
+        console.log(`🎯 [Save] Sending notification for ${skillName} with score ${score}`);
+
+        if (score > 0) {
+          // Send test passed notification
+          notifySkillTestPassed(dispatch, skillName, Math.round(score));
+
+          // Send level up notification based on score
+          if (score >= 80) {
+            notifySkillLevelUp(dispatch, skillName, 'Expert');
+          } else if (score >= 60) {
+            notifySkillLevelUp(dispatch, skillName, 'Intermediate');
+          } else if (score >= 40) {
+            notifySkillLevelUp(dispatch, skillName, 'Beginner');
+          }
+        } else {
+          // Send encouragement notification for score = 0
+          console.log(`💡 [Save] Notifying test completion for ${skillName} with score 0`);
+          notifySkillTestCompleted(dispatch, skillName);
+        }
+      } catch (notifError) {
+        console.error('❌ [Save] Error sending notification:', notifError);
+        // Don't fail the save if notification fails
       }
 
       if (showStatus) {
