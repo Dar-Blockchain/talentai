@@ -577,6 +577,9 @@ const postSlice = createSlice({
     state.savePost.error= null;
     state.savePost.savedPost= null;
   },
+  updateAgentConfigInCurrentJob: (state, action: PayloadAction<any>) => {
+    state.currentJob.agentConfig = {...state.currentJob.agentConfig, ...action.payload};
+  },
     
     clearError: (state) => {
       state.error = null;
@@ -778,6 +781,7 @@ export const {
   setFlowEdges,
   resetFlow,
   resetPostPayment,
+  updateAgentConfigInCurrentJob
 } = postSlice.actions;
 
 // Export reducer
