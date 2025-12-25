@@ -50,6 +50,7 @@ interface PostState {
   jobMatches: any[];
   jobMatchesLoading: boolean;
   jobMatchesError: string | null;
+  jobMatchesPagination: PaginationState;
   deletePostLoading: boolean;
   deletePostError: string | null;
   currentJob: any | null;
@@ -83,6 +84,14 @@ const initialState: PostState = {
   jobMatches: [],
   jobMatchesLoading: false,
   jobMatchesError: null,
+  jobMatchesPagination: {
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  },
   deletePostLoading: false,
   deletePostError: null,
   currentJob: null,
@@ -350,15 +359,24 @@ export const fetchMyPosts = createAsyncThunk(
 // Async thunk to fetch matches for a selected job post
 export const fetchJobMatches = createAsyncThunk(
   "post/fetchJobMatches",
-  async (selectedJobId: string, { rejectWithValue, dispatch, getState }) => {
+  async (
+    { selectedJobId, page = 1, limit = 10 }: { selectedJobId: string; page?: number; limit?: number },
+    { rejectWithValue, dispatch, getState }
+  ) => {
     try {
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("api_token="))
         ?.split("=")[1];
 
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches?${queryParams}`,
         {
           method: "GET",
           headers: {
@@ -406,7 +424,18 @@ export const fetchJobMatches = createAsyncThunk(
         }
       }
 
-      return matches;
+      // Return matches with pagination data
+      return {
+        matches,
+        pagination: {
+          total: data.pagination?.totalMatches || matches.length,
+          page: data.pagination?.page || page,
+          limit: data.pagination?.limit || limit,
+          totalPages: data.pagination?.totalPages || Math.ceil((data.pagination?.totalMatches || matches.length) / limit),
+          hasNextPage: data.pagination?.hasNextPage || false,
+          hasPrevPage: data.pagination?.hasPrevPage || false,
+        }
+      };
     } catch (error: any) {
       return rejectWithValue(
         error.message || "An error occurred while fetching matches"
@@ -684,13 +713,11 @@ const postSlice = createSlice({
         state.jobMatchesError = null;
         state.jobMatches = [];
       })
-      .addCase(
-        fetchJobMatches.fulfilled,
-        (state, action: PayloadAction<any[]>) => {
-          state.jobMatchesLoading = false;
-          state.jobMatches = action.payload || [];
-        }
-      )
+      .addCase(fetchJobMatches.fulfilled, (state, action) => {
+        state.jobMatchesLoading = false;
+        state.jobMatches = action.payload.matches || [];
+        state.jobMatchesPagination = action.payload.pagination;
+      })
       .addCase(fetchJobMatches.rejected, (state, action) => {
         state.jobMatchesLoading = false;
         state.jobMatchesError = action.payload as string;
@@ -815,6 +842,7 @@ export const selectCurrentJobError = (state: { post: PostState }) =>
 export const selectMyPostsPagination = (state: { post: PostState }) => state.post.myPostsPagination;
 
 export const selectJobMatchesError = (state: { post: PostState }) => state.post.jobMatchesError;
+export const selectJobMatchesPagination = (state: { post: PostState }) => state.post.jobMatchesPagination;
 
 
 

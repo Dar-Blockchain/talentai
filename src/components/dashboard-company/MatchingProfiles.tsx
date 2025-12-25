@@ -104,7 +104,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
     if (onPageChange) {
       onPageChange(1);
     }
-  }, [itemsPerPage, onPageChange]);
+  }, [itemsPerPage]); // Removed onPageChange from dependencies to prevent infinite loop
 
   // Use provided pagination or fallback to local
   const page = onPageChange ? currentPage : localPage;
@@ -112,9 +112,11 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
     onPageChange || ((newPage: number) => setLocalPage(newPage));
 
   // Get items for current page
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedCandidates = matchingProfiles.slice(startIndex, endIndex);
+  // When onPageChange is provided, use server-side pagination (no slicing needed)
+  // When onPageChange is not provided, use client-side pagination (slice the data)
+  const paginatedCandidates = onPageChange
+    ? matchingProfiles
+    : matchingProfiles.slice((page - 1) * itemsPerPage, page * itemsPerPage);
   const effectiveTotalPages =
     totalPages > 1 ? totalPages : calculatedTotalPages;
 
