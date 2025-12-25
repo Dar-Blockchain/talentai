@@ -277,6 +277,30 @@ async function deleteOldNotifications(daysOld = 30) {
   return { deletedCount: result.deletedCount };
 }
 
+async function autoArchiveOldNotifications(userId, daysOld = 15) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+  const result = await Notification.updateMany(
+    { 
+      recipient: userId, 
+      archived: { $ne: true },
+      createdAt: { $lt: cutoffDate }
+    },
+    { archived: true }
+  );
+
+  if (result.modifiedCount > 0) {
+    console.log(`Auto-archived ${result.modifiedCount} notifications older than ${daysOld} days for user ${userId}`);
+  }
+
+  return { archivedCount: result.modifiedCount };
+}
+
 module.exports = {
   createSystemNotification,
   createNotification,
@@ -291,4 +315,5 @@ module.exports = {
   broadcastSystemNotification,
   archiveNotification,
   deleteOldNotifications,
+  autoArchiveOldNotifications,
 };

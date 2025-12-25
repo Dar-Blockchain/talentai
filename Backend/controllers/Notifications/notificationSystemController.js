@@ -39,6 +39,9 @@ exports.listForUser = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
+    // 🔄 Auto-archive notifications older than 15 days
+    await notificationSystemService.autoArchiveOldNotifications(userId, 15);
+
     const nonArchivedList = await notificationSystemService.getNonArchivedNotifications(userId);
     const archivedList = await notificationSystemService.getArchivedNotifications(userId);
     const unreadCount = await notificationSystemService.getUnreadCount(userId);
