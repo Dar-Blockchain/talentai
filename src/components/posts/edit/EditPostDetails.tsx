@@ -33,6 +33,8 @@ import {
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import SalaryRange from "../create/steps/post-details-step/SalaryRange";
 import SkillEditorModal from "../create/steps/post-details-step/SkillEditorModal";
+import { useToast } from "@/hooks/useToast";
+import { validateEditPost } from "@/validations/postValidation";
 
 const inputStyle = {
   height: 40,
@@ -49,6 +51,7 @@ interface EditPostDetailsProps {
 
 const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { showToast } = useToast();
   const job = useSelector(selectCurrentJob);
 
   const getInitialValues = (job: any) => ({
@@ -128,7 +131,13 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
         enableReinitialize
         initialValues={getInitialValues(job)}
         onSubmit={async (values, { resetForm }) => {
-          console.log("FINAL FORM VALUES:", values);
+          const isValid = validateEditPost(
+            values,
+            showToast,
+            job?.creationType
+          );
+
+          if (!isValid) return;
           await dispatch(
             updatePost({
               jobId: job?._id,
@@ -259,7 +268,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                 </Typography>
                 <TextField
                   fullWidth
-                  name="title"
+                  name="jobDetails.title"
                   variant="outlined"
                   value={values.jobDetails.title}
                   onChange={handleChange}
@@ -281,7 +290,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
 
                 <TextField
                   select
-                  name="location"
+                  name="jobDetails.location"
                   value={values.jobDetails.location}
                   onChange={handleChange}
                   fullWidth
@@ -340,7 +349,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
 
                   <TextField
                     select
-                    name="employmentType"
+                    name="jobDetails.employmentType"
                     value={values.jobDetails.employmentType}
                     onChange={handleChange}
                     fullWidth
@@ -398,7 +407,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
 
                   <TextField
                     select
-                    name="experienceLevel"
+                    name="jobDetails.experienceLevel"
                     value={values.jobDetails.experienceLevel}
                     onChange={handleChange}
                     fullWidth
@@ -441,222 +450,227 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
               <SalaryRange
                 salaryRange={values.jobDetails.salary}
                 onSalaryChange={(field, value) =>
-                  setFieldValue(`salary.${field}`, value)
+                  setFieldValue(`jobDetails.salary.${field}`, value)
                 }
               />
 
               <Box sx={{ mt: 2 }}>
-                {job.creationType === 'ai' && <><Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    mb: 1,
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: "rgba(84, 98, 116, 1)",
-                      fontSize: "20px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Required Skills
-                  </Typography>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: "rgba(77, 217, 163, 1)",
-                      fontSize: "12px",
-                    }}
-                  >
-                    Total: 100%
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 1,
-                    p: 1,
-                    borderRadius: "12px",
-                    background: "rgba(240, 249, 255, 1)",
-                    border: "1px solid rgba(122, 200, 240, 1)",
-                  }}
-                >
-                  <Image
-                    src="/icons/lightinfooutline.svg"
-                    alt="skills chart"
-                    width={18}
-                    height={18}
-                  />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="subtitle2"
+                {job.creationType === "ai" && (
+                  <>
+                    <Box
                       sx={{
-                        color: "rgba(84, 98, 116, 1)",
-                        fontSize: "13px",
-                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 1,
+                        justifyContent: "space-between",
                       }}
                     >
-                      About Skill Percentages
-                    </Typography>
-                    <Typography
-                      variant="subtitle2"
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          color: "rgba(84, 98, 116, 1)",
+                          fontSize: "20px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Required Skills
+                      </Typography>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          color: "rgba(77, 217, 163, 1)",
+                          fontSize: "12px",
+                        }}
+                      >
+                        Total: 100%
+                      </Typography>
+                    </Box>
+                    <Box
                       sx={{
-                        color: "rgba(84, 98, 116, 1)",
-                        fontSize: "12px",
-                        fontWeight: 400,
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 1,
+                        p: 1,
+                        borderRadius: "12px",
+                        background: "rgba(240, 249, 255, 1)",
+                        border: "1px solid rgba(122, 200, 240, 1)",
                       }}
                     >
-                      The percentages represent the <b>relative importance</b>{" "}
-                      of each skill for this role. These percentages will be
-                      used to <b>match candidates</b> to your job requirements.
-                      Skills with higher percentages will have more weight in
-                      the matching algorittim, helping you find candidates who
-                      best fit your most critical skill needs. The total must
-                      equal 100% to ensure accurate candidate matching.
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: "rgba(84, 98, 116, 1)",
-                      fontSize: "20px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Hard Skills
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    {values.skillAnalysis.requiredSkills.map(
-                      (skill: any, index: number) => (
-                        <SkillChip
-                          key={index}
-                          label={`${skill.name} (${getLevelFromNumber(
-                            skill.level
-                          )}) - ${skill.percentage}%`}
-                          onDelete={() =>
-                            handleDeleteSkill(
-                              index,
-                              "hard",
-                              values,
-                              setFieldValue
-                            )
-                          }
-                          onClick={() => handleEdit(index, "hard")}
-                        />
-                      )
-                    )}
-                    <Button
-                      variant="outlined"
-                      startIcon={
-                        <AddIcon
+                      <Image
+                        src="/icons/lightinfooutline.svg"
+                        alt="skills chart"
+                        width={18}
+                        height={18}
+                      />
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant="subtitle2"
                           sx={{
-                            color: "rgba(98, 111, 134, 1)",
-                            width: "16px",
-                            height: "16px",
+                            color: "rgba(84, 98, 116, 1)",
+                            fontSize: "13px",
+                            fontWeight: 600,
                           }}
-                        />
-                      }
-                      onClick={() => handleAdd("hard")}
-                      sx={{
-                        height: "29px",
-                        border: "0.5px solid rgba(98, 111, 134, 1)",
-                        borderStyle: "dashed",
-                        borderDashArray: "6 6",
-                        backgroundColor: "rgba(48, 185, 216, 0.06)",
-                        color: "rgba(95, 168, 211, 1)",
-                        fontWeight: 500,
-                        borderRadius: "15px",
-                        py: 1.5,
-                        textTransform: "none",
-                        fontSize: "13px",
-                        "&:hover": {
-                          backgroundColor: "rgba(77, 217, 163, 0.08)",
-                        },
-                        "&.Mui-disabled": {
-                          borderColor: "#e5e7eb",
-                          color: "#9ca3af",
-                        },
-                      }}
-                    >
-                      Add Skill
-                    </Button>
-                  </Box>
-                </Box>
-
-                <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: "rgba(84, 98, 116, 1)",
-                      fontSize: "20px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Soft Skills
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    {values.skillAnalysis.softSkills.map(
-                      (skill: any, index: number) => (
-                        <SkillChip
-                          key={index}
-                          label={`${skill.name} (${skill.level}/5) - ${skill.percentage}%`}
-                          onDelete={() =>
-                            handleDeleteSkill(
-                              index,
-                              "soft",
-                              values,
-                              setFieldValue
-                            )
-                          }
-                          onClick={() => handleEdit(index, "soft")}
-                        />
-                      )
-                    )}
-                    <Button
-                      variant="outlined"
-                      startIcon={
-                        <AddIcon
+                        >
+                          About Skill Percentages
+                        </Typography>
+                        <Typography
+                          variant="subtitle2"
                           sx={{
-                            color: "rgba(98, 111, 134, 1)",
-                            width: "16px",
-                            height: "16px",
+                            color: "rgba(84, 98, 116, 1)",
+                            fontSize: "12px",
+                            fontWeight: 400,
                           }}
-                        />
-                      }
-                      onClick={() => handleAdd("soft")}
-                      sx={{
-                        height: "29px",
-                        border: "0.5px solid rgba(98, 111, 134, 1)",
-                        borderStyle: "dashed",
-                        borderDashArray: "6 6",
-                        backgroundColor: "rgba(48, 185, 216, 0.06)",
-                        color: "rgba(95, 168, 211, 1)",
-                        fontWeight: 500,
-                        borderRadius: "15px",
-                        py: 1.5,
-                        textTransform: "none",
-                        fontSize: "13px",
-                        "&:hover": {
-                          backgroundColor: "rgba(77, 217, 163, 0.08)",
-                        },
-                        "&.Mui-disabled": {
-                          borderColor: "#e5e7eb",
-                          color: "#9ca3af",
-                        },
-                      }}
-                    >
-                      Add Skill
-                    </Button>
-                  </Box>
-                </Box>
-                </>}
+                        >
+                          The percentages represent the{" "}
+                          <b>relative importance</b> of each skill for this
+                          role. These percentages will be used to{" "}
+                          <b>match candidates</b> to your job requirements.
+                          Skills with higher percentages will have more weight
+                          in the matching algorittim, helping you find
+                          candidates who best fit your most critical skill
+                          needs. The total must equal 100% to ensure accurate
+                          candidate matching.
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          color: "rgba(84, 98, 116, 1)",
+                          fontSize: "20px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Hard Skills
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        {values.skillAnalysis.requiredSkills.map(
+                          (skill: any, index: number) => (
+                            <SkillChip
+                              key={index}
+                              label={`${skill.name} (${getLevelFromNumber(
+                                skill.level
+                              )}) - ${skill.percentage}%`}
+                              onDelete={() =>
+                                handleDeleteSkill(
+                                  index,
+                                  "hard",
+                                  values,
+                                  setFieldValue
+                                )
+                              }
+                              onClick={() => handleEdit(index, "hard")}
+                            />
+                          )
+                        )}
+                        <Button
+                          variant="outlined"
+                          startIcon={
+                            <AddIcon
+                              sx={{
+                                color: "rgba(98, 111, 134, 1)",
+                                width: "16px",
+                                height: "16px",
+                              }}
+                            />
+                          }
+                          onClick={() => handleAdd("hard")}
+                          sx={{
+                            height: "29px",
+                            border: "0.5px solid rgba(98, 111, 134, 1)",
+                            borderStyle: "dashed",
+                            borderDashArray: "6 6",
+                            backgroundColor: "rgba(48, 185, 216, 0.06)",
+                            color: "rgba(95, 168, 211, 1)",
+                            fontWeight: 500,
+                            borderRadius: "15px",
+                            py: 1.5,
+                            textTransform: "none",
+                            fontSize: "13px",
+                            "&:hover": {
+                              backgroundColor: "rgba(77, 217, 163, 0.08)",
+                            },
+                            "&.Mui-disabled": {
+                              borderColor: "#e5e7eb",
+                              color: "#9ca3af",
+                            },
+                          }}
+                        >
+                          Add Skill
+                        </Button>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          color: "rgba(84, 98, 116, 1)",
+                          fontSize: "20px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Soft Skills
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        {values.skillAnalysis.softSkills.map(
+                          (skill: any, index: number) => (
+                            <SkillChip
+                              key={index}
+                              label={`${skill.name} (${skill.level}/5) - ${skill.percentage}%`}
+                              onDelete={() =>
+                                handleDeleteSkill(
+                                  index,
+                                  "soft",
+                                  values,
+                                  setFieldValue
+                                )
+                              }
+                              onClick={() => handleEdit(index, "soft")}
+                            />
+                          )
+                        )}
+                        <Button
+                          variant="outlined"
+                          startIcon={
+                            <AddIcon
+                              sx={{
+                                color: "rgba(98, 111, 134, 1)",
+                                width: "16px",
+                                height: "16px",
+                              }}
+                            />
+                          }
+                          onClick={() => handleAdd("soft")}
+                          sx={{
+                            height: "29px",
+                            border: "0.5px solid rgba(98, 111, 134, 1)",
+                            borderStyle: "dashed",
+                            borderDashArray: "6 6",
+                            backgroundColor: "rgba(48, 185, 216, 0.06)",
+                            color: "rgba(95, 168, 211, 1)",
+                            fontWeight: 500,
+                            borderRadius: "15px",
+                            py: 1.5,
+                            textTransform: "none",
+                            fontSize: "13px",
+                            "&:hover": {
+                              backgroundColor: "rgba(77, 217, 163, 0.08)",
+                            },
+                            "&.Mui-disabled": {
+                              borderColor: "#e5e7eb",
+                              color: "#9ca3af",
+                            },
+                          }}
+                        >
+                          Add Skill
+                        </Button>
+                      </Box>
+                    </Box>
+                  </>
+                )}
 
                 <Box sx={{ mt: 2 }}>
                   <Typography
@@ -670,7 +684,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     Description
                   </Typography>
                   <TextField
-                    name="description"
+                    name="jobDetails.description"
                     value={values.jobDetails.description}
                     onChange={handleChange}
                     placeholder="Job Description"
@@ -701,7 +715,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                   <TextField
                     value={values.jobDetails.requirements.join("\n")}
                     onChange={(e) =>
-                      setFieldValue("requirements", e.target.value.split("\n"))
+                      setFieldValue("jobDetails.requirements", e.target.value.split("\n"))
                     }
                     placeholder="Job Requirements"
                     multiline
@@ -732,7 +746,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     value={values.jobDetails.responsibilities.join("\n")}
                     onChange={(e) =>
                       setFieldValue(
-                        "responsibilities",
+                        "jobDetails.responsibilities",
                         e.target.value.split("\n")
                       )
                     }
