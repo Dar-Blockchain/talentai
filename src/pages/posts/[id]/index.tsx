@@ -52,7 +52,7 @@ const PostDetails: React.FC = () => {
               }}
             />
           }
-          onClick={() => router.back()}
+          onClick={() => router.push('/dashboard/company')}
           sx={{
             mt: 2,
             textTransform: "none",

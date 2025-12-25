@@ -1,3 +1,5 @@
+import { softSkillLevels } from "@/constants/skills";
+
 export interface Skill {
   name: string;
   level?: number;
@@ -33,6 +35,11 @@ export const getLevelFromNumber = (level: number): string => {
     5: "Expert",
   };
   return levelMap[level] || "Entry Level";
+};
+
+export const getSoftSkillLevelLabel = (value?: number) => {
+  const level = softSkillLevels.find(l => l.value === value);
+  return level ? level.label : "";
 };
 
 export const validatePipelineNodes = (nodes: any[]) => {

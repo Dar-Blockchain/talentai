@@ -52,38 +52,74 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
   const job = useSelector(selectCurrentJob);
 
   const getInitialValues = (job: any) => ({
-    title: job?.jobDetails?.title || "",
-    location: job?.jobDetails?.location || "",
-    employmentType: job?.jobDetails?.employmentType || "",
-    experienceLevel: job?.jobDetails?.experienceLevel || "",
-    description: job?.jobDetails?.description || "",
-    requirements: job?.jobDetails?.requirements || [],
-    responsibilities: job?.jobDetails?.responsibilities || [],
-    salary: job?.jobDetails?.salary || {
-      min: 0,
-      max: 0,
-      currency: "USD",
+    jobDetails: {
+      title: job?.jobDetails?.title || "",
+      location: job?.jobDetails?.location || "",
+      employmentType: job?.jobDetails?.employmentType || "",
+      experienceLevel: job?.jobDetails?.experienceLevel || "",
+      description: job?.jobDetails?.description || "",
+      requirements: job?.jobDetails?.requirements || [],
+      responsibilities: job?.jobDetails?.responsibilities || [],
+      salary: job?.jobDetails?.salary || {
+        min: 0,
+        max: 0,
+        currency: "USD",
+      },
     },
+    skillAnalysis: job?.skillAnalysis || {},
   });
-  const hardSkills = getHardSkills(job) || [];
-  const softSkills = getSoftSkills(job) || [];
 
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
   const [selectedType, setSelectedType] = useState<"soft" | "hard">("hard");
 
-  const handleEdit = (skill: any, index: number, type: "hard" | "soft") => {
-    setSelectedSkill(skill);
+  const handleAdd = (type: "hard" | "soft") => {
+    setSelectedIndex(null);
+    setSelectedType(type);
+    setOpen(true);
+  };
+
+  const handleEdit = (index: number, type: "hard" | "soft") => {
     setSelectedIndex(index);
     setSelectedType(type);
     setOpen(true);
   };
-  const handleAdd = (type: "hard" | "soft") => {
-    setSelectedSkill(null);
-    setSelectedIndex(-1);
-    setSelectedType(type);
-    setOpen(true);
+  const handleDeleteSkill = (
+    index: number,
+    type: "hard" | "soft",
+    values: any,
+    setFieldValue: any
+  ) => {
+    const field =
+      type === "hard"
+        ? `skillAnalysis.requiredSkills`
+        : `skillAnalysis.softSkills`;
+    const updated =
+      type === "hard"
+        ? [...values.skillAnalysis.requiredSkills]
+        : [...values.skillAnalysis.softSkills];
+    updated.splice(index, 1);
+    setFieldValue(field, updated);
+  };
+
+  const handleSaveSkill = (skill: Skill, values: any, setFieldValue: any) => {
+    const field =
+      selectedType === "hard"
+        ? `skillAnalysis.requiredSkills`
+        : `skillAnalysis.softSkills`;
+    const updated =
+      selectedType === "hard"
+        ? [...values.skillAnalysis.requiredSkills]
+        : [...values.skillAnalysis.softSkills];
+
+    if (selectedIndex === null) {
+      updated.push(skill); // ADD
+    } else {
+      updated[selectedIndex] = skill; // EDIT
+    }
+
+    setFieldValue(field, updated);
+    setOpen(false);
   };
 
   return (
@@ -96,7 +132,11 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
           await dispatch(
             updatePost({
               jobId: job?._id,
-              jobData: { ...job, jobDetails: values },
+              jobData: {
+                ...job,
+                jobDetails: values.jobDetails,
+                skillAnalysis: values.skillAnalysis,
+              },
             })
           ).unwrap();
           resetForm();
@@ -221,7 +261,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                   fullWidth
                   name="title"
                   variant="outlined"
-                  value={values.title}
+                  value={values.jobDetails.title}
                   onChange={handleChange}
                   sx={inputStyle}
                 />
@@ -242,7 +282,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                 <TextField
                   select
                   name="location"
-                  value={values.location}
+                  value={values.jobDetails.location}
                   onChange={handleChange}
                   fullWidth
                   sx={inputStyle}
@@ -301,7 +341,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                   <TextField
                     select
                     name="employmentType"
-                    value={values.employmentType}
+                    value={values.jobDetails.employmentType}
                     onChange={handleChange}
                     fullWidth
                     sx={inputStyle}
@@ -359,7 +399,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                   <TextField
                     select
                     name="experienceLevel"
-                    value={values.experienceLevel}
+                    value={values.jobDetails.experienceLevel}
                     onChange={handleChange}
                     fullWidth
                     sx={inputStyle}
@@ -399,14 +439,14 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
               </Box>
 
               <SalaryRange
-                salaryRange={values.salary}
+                salaryRange={values.jobDetails.salary}
                 onSalaryChange={(field, value) =>
                   setFieldValue(`salary.${field}`, value)
                 }
               />
 
               <Box sx={{ mt: 2 }}>
-                <Box
+                {job.creationType === 'ai' && <><Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
@@ -493,29 +533,25 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     Hard Skills
                   </Typography>
                   <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    {hardSkills.map((skill: Skill, index: number) => {
-                      const label = `${skill.name} (${getLevelFromNumber(
-                        skill.level
-                      )}) - ${skill.importance}%`;
-                      return (
+                    {values.skillAnalysis.requiredSkills.map(
+                      (skill: any, index: number) => (
                         <SkillChip
                           key={index}
-                          label={label}
-                          onDelete={() => dispatch(deleteHardSkill(index))}
-                          onClick={() =>
-                            handleEdit(
-                              {
-                                name: skill.name,
-                                level: skill.level,
-                                percentage: skill.importance,
-                              },
+                          label={`${skill.name} (${getLevelFromNumber(
+                            skill.level
+                          )}) - ${skill.percentage}%`}
+                          onDelete={() =>
+                            handleDeleteSkill(
                               index,
-                              "hard"
+                              "hard",
+                              values,
+                              setFieldValue
                             )
                           }
+                          onClick={() => handleEdit(index, "hard")}
                         />
-                      );
-                    })}
+                      )
+                    )}
                     <Button
                       variant="outlined"
                       startIcon={
@@ -566,28 +602,23 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     Soft Skills
                   </Typography>
                   <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    {softSkills.map((skill: Skill, index: number) => {
-                      const label = `${skill.name} (${skill.level}/5) - ${skill.importance}%`;
-
-                      return (
+                    {values.skillAnalysis.softSkills.map(
+                      (skill: any, index: number) => (
                         <SkillChip
                           key={index}
-                          label={label}
-                          onDelete={() => dispatch(deleteSoftSkill(index))}
-                          onClick={() =>
-                            handleEdit(
-                              {
-                                name: skill.name,
-                                level: skill.level,
-                                percentage: skill.importance,
-                              },
+                          label={`${skill.name} (${skill.level}/5) - ${skill.percentage}%`}
+                          onDelete={() =>
+                            handleDeleteSkill(
                               index,
-                              "soft"
+                              "soft",
+                              values,
+                              setFieldValue
                             )
                           }
+                          onClick={() => handleEdit(index, "soft")}
                         />
-                      );
-                    })}
+                      )
+                    )}
                     <Button
                       variant="outlined"
                       startIcon={
@@ -625,6 +656,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     </Button>
                   </Box>
                 </Box>
+                </>}
 
                 <Box sx={{ mt: 2 }}>
                   <Typography
@@ -639,7 +671,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                   </Typography>
                   <TextField
                     name="description"
-                    value={values.description}
+                    value={values.jobDetails.description}
                     onChange={handleChange}
                     placeholder="Job Description"
                     multiline
@@ -667,7 +699,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     Requirements
                   </Typography>
                   <TextField
-                    value={values.requirements.join("\n")}
+                    value={values.jobDetails.requirements.join("\n")}
                     onChange={(e) =>
                       setFieldValue("requirements", e.target.value.split("\n"))
                     }
@@ -697,7 +729,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     Responsibilities
                   </Typography>
                   <TextField
-                    value={values.responsibilities.join("\n")}
+                    value={values.jobDetails.responsibilities.join("\n")}
                     onChange={(e) =>
                       setFieldValue(
                         "responsibilities",
@@ -722,14 +754,20 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
             {open && (
               <SkillEditorModal
                 open={open}
-                mode={selectedSkill ? "edit" : "add"}
-                skill={selectedSkill}
-                index={selectedIndex}
+                mode={selectedIndex === null ? "add" : "edit"}
                 skillType={selectedType}
-                onClose={() => {
-                  setOpen(false);
-                  setSelectedSkill(null);
-                }}
+                index={selectedIndex}
+                skill={
+                  selectedIndex !== null
+                    ? selectedType === "hard"
+                      ? values.skillAnalysis.requiredSkills[selectedIndex]
+                      : values.skillAnalysis.softSkills[selectedIndex]
+                    : null
+                }
+                onSave={(skill) =>
+                  handleSaveSkill(skill, values, setFieldValue)
+                }
+                onClose={() => setOpen(false)}
               />
             )}
           </>

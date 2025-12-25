@@ -31,6 +31,7 @@ interface SkillEditorModalProps {
   skill?: any;
   index?: number;
   onClose: () => void;
+  onSave?: (skill: any) => void; 
 }
 
 const inputStyle = {
@@ -49,6 +50,7 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   index,
   skillType,
   onClose,
+  onSave
 }) => {
   const dispatch = useDispatch();
 
@@ -70,6 +72,11 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   };
 
   const handleSave = () => {
+    if(onSave){
+      onSave(localSkill);
+      onClose();
+      return;
+    }
     if (skillType === "hard") {
       if (mode === "edit") {
         dispatch(

@@ -18,6 +18,7 @@ import {
   formatSalary,
   getLevelFromNumber,
   getPostSkills,
+  getSoftSkillLevelLabel,
   Skill,
 } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
@@ -109,7 +110,7 @@ const PostBasicDetails: React.FC = () => {
               )}{" "}
             </Box>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              <Button
+              {/* <Button
                 variant="outlined"
                 fullWidth
                 startIcon={
@@ -136,11 +137,11 @@ const PostBasicDetails: React.FC = () => {
                 }}
               >
                 Share Post
-              </Button>
-              <Divider
+              </Button> */}
+              {/* <Divider
                 orientation="vertical"
                 sx={{ height: "35px", color: "rgba(84, 98, 116, 0.26)" }}
-              />
+              /> */}
               <Box sx={{ display: "flex", gap: 1 }}>
                 <Button
                   variant="outlined"
@@ -301,7 +302,7 @@ const PostBasicDetails: React.FC = () => {
                 icon={
                   <CalendarMonth
                     sx={{
-                      color: "rgba(95, 168, 211, 1)",
+                      color: "rgba(95, 168, 211, 1)!important",
                       width: "16px",
                       height: "16px",
                     }}
@@ -324,9 +325,8 @@ const PostBasicDetails: React.FC = () => {
               </Typography>
               <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
                 {displaySkills.map((skill: Skill, index: number) => {
-                  const label = `${skill.name} (${getLevelFromNumber(
-                    skill.level
-                  )}) - ${skill.importance}%`;
+                  const level = skill.type === 'soft' ? getSoftSkillLevelLabel(Number(skill.level) || 1) : getLevelFromNumber(skill.level || 1);
+                  const label = `${skill.name} (${level}) - ${skill.importance}%`;
                   return <SkillChip key={index} label={label} />;
                 })}
               </Box>
