@@ -15,6 +15,9 @@ import { useRouter } from "next/router";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { GradientCircle } from "../ui/GradientCircle";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { broadcastSystemNotification } from "@/store/slices/notificationSlice";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -86,6 +89,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   onPageChange,
 }) => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Items per page selector - user can choose 5, 10, or 20
   const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
@@ -113,6 +117,22 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   const paginatedCandidates = matchingProfiles.slice(startIndex, endIndex);
   const effectiveTotalPages =
     totalPages > 1 ? totalPages : calculatedTotalPages;
+
+  // Handle view profile button click
+  const handleViewProfile = async (candidate: MatchingCandidate) => {
+    try {
+      // Send notification to candidate WITHOUT company name
+      await dispatch(broadcastSystemNotification({
+        content: "👀 A company has viewed your profile! They're interested in your qualifications.",
+        recipientIds: [candidate.candidateId]
+      })).unwrap();
+    } catch (error) {
+      console.error('❌ Failed to send profile view notification:', error);
+    }
+
+    // Redirect to profile page
+    router.push(`/profile/${candidate.candidateId}`);
+  };
 
   return (
     <StyledCard>
@@ -610,7 +630,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                     </Button>}
                     {candidate?.unlocked && <Button
             variant="outlined"
-            onClick={() => router.push(`/profile/${candidate.candidateId}`)}
+            onClick={() => handleViewProfile(candidate)}
             sx={{
               borderColor: "rgba(11, 82, 198, 1)",
               color: "rgba(11, 82, 198, 1)",
