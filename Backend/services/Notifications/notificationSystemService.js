@@ -102,7 +102,7 @@ async function markAllAsRead(userId) {
   }
 
   const result = await Notification.updateMany(
-    { recipient: userId, type: 'system', read: false },
+    { recipient: userId, read: false },
     { read: true }
   );
 
