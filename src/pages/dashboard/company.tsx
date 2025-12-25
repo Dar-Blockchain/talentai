@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectProfile,
@@ -17,6 +17,7 @@ import {
   selectJobMatches,
   selectJobMatchesError,
   selectJobMatchesLoading,
+  selectJobMatchesPagination,
 } from "@/store/slices/postSlice";
 import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
@@ -64,6 +65,7 @@ const DashboardCompany = () => {
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);
+  const matchesPagination = useSelector(selectJobMatchesPagination);
   const myJobs = useSelector(selectMyPosts);
   const pagination = useSelector(selectMyPostsPagination);
   const unlockedCandidatesData = useSelector((state: any) => state.candidate.unlockedData);
@@ -83,6 +85,10 @@ const DashboardCompany = () => {
   // Unlocked candidates state
   const [candidatesPage, setCandidatesPage] = useState(1);
   const [candidatesPerPage] = useState(10);
+
+  // Job matches pagination state
+  const [matchesPage, setMatchesPage] = useState(1);
+  const [matchesPerPage] = useState(10);
 
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
@@ -171,7 +177,8 @@ const DashboardCompany = () => {
               jobsError={jobsError}
               onViewMatches={(jobId) => {
                 setSelectedJob(jobId);
-                dispatch(fetchJobMatches(jobId));
+                setMatchesPage(1);
+                dispatch(fetchJobMatches({ selectedJobId: jobId, page: 1, limit: matchesPerPage }));
               }}
               onRefresh={fetchMyJobs}
               pagination={activeSection === "all" ? undefined : pagination}
@@ -196,6 +203,12 @@ const DashboardCompany = () => {
               onBackToJobs={() => setSelectedJob("")}
               onLoadMore={() => setDisplayCount((prev) => prev + 3)}
               onBidDialogOpen={handleBidDialogOpen}
+              currentPage={matchesPage}
+              totalPages={matchesPagination.totalPages}
+              onPageChange={(page) => {
+                setMatchesPage(page);
+                dispatch(fetchJobMatches({ selectedJobId: selectedJob, page, limit: matchesPerPage }));
+              }}
             />
           )}
 

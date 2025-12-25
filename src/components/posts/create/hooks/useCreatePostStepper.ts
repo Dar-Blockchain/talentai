@@ -176,7 +176,7 @@ export const useCreatePostStepper = (
 
         if (creationType === "ai") {
           setModalMode("matching");
-          await dispatch(fetchJobMatches(result.jobData._id)).unwrap();
+          await dispatch(fetchJobMatches({ selectedJobId: result.jobData._id, page: 1, limit: 10 })).unwrap();
           setModalMode("done");
           return;
         }
