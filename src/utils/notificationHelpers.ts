@@ -77,3 +77,18 @@ export const notifyCandidateUnlocked = async (dispatch: AppDispatch, candidateId
     candidateIds
   );
 };
+
+/**
+ * Notify candidates when they match a new job posting
+ * @param dispatch - Redux dispatch function
+ * @param candidateIds - Array of candidate user IDs
+ * @param jobTitle - Title of the matched job (optional)
+ */
+export const notifyJobMatch = async (dispatch: AppDispatch, candidateIds: string[], jobTitle?: string) => {
+  const job = jobTitle || 'a new job opportunity';
+  return broadcastSystemNotification(
+    dispatch,
+    `🎯 Great news! Your profile matches ${job}. A company is looking for candidates with your skills. Check it out now!`,
+    candidateIds
+  );
+};
