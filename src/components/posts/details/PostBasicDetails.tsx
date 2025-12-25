@@ -109,7 +109,7 @@ const PostBasicDetails: React.FC = () => {
               )}{" "}
             </Box>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              <Button
+              {/* <Button
                 variant="outlined"
                 fullWidth
                 startIcon={
@@ -136,11 +136,11 @@ const PostBasicDetails: React.FC = () => {
                 }}
               >
                 Share Post
-              </Button>
-              <Divider
+              </Button> */}
+              {/* <Divider
                 orientation="vertical"
                 sx={{ height: "35px", color: "rgba(84, 98, 116, 0.26)" }}
-              />
+              /> */}
               <Box sx={{ display: "flex", gap: 1 }}>
                 <Button
                   variant="outlined"
@@ -301,7 +301,7 @@ const PostBasicDetails: React.FC = () => {
                 icon={
                   <CalendarMonth
                     sx={{
-                      color: "rgba(95, 168, 211, 1)",
+                      color: "rgba(95, 168, 211, 1)!important",
                       width: "16px",
                       height: "16px",
                     }}

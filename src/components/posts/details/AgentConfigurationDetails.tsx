@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Stack, Chip, Divider, Button } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import Image from "next/image";
+import EditAgentConfiguration from "../edit/EditAgentConfiguration";
 
 type AgentConfig = {
   thresholdPercent: number;
@@ -44,8 +45,10 @@ const InfoChip = ({ label }: { label: string }) => (
 
 const AgentConfigurationDetails: React.FC = () => {
   const job = useSelector(selectCurrentJob);
-  const config = React.useMemo(() => job?.agentConfig, [job]);  
-  if(!config) return; 
+  const config = React.useMemo(() => job?.agentConfig, [job]);
+  const [editMode, setEditMode] = useState(false);
+
+  if (!config) return;
 
   return (
     <Box
@@ -57,69 +60,82 @@ const AgentConfigurationDetails: React.FC = () => {
         py: 1.5,
       }}
     >
-              <Box
+      {editMode && (
+        <EditAgentConfiguration onCancel={() => setEditMode(false)} />
+      )}
+
+      {!editMode && <><Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           mb: 2,
         }}
       >
-        <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-      {/* Title */}
-<Typography
-          variant="h5"
-          sx={{
-            position: "relative",
-            fontWeight: 600,
-            fontSize: "20px",
-            lineHeight: "45px",
-            color: "rgba(23, 43, 77, 1)",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              left: 0,
-              bottom: 0,
-              width: "38px",
-              height: "5px",
-              backgroundColor: "rgba(41, 210, 145, 0.83)",
-              borderRadius: "2px",
-            },
-          }}
-        >
-          Agent Configuration
-        </Typography>
-        {/* Status */}
-      <Stack direction="row" spacing={1} alignItems="center">
-        {config?.isActive ? (
-          <Chip
-            icon={<CheckCircleOutlineIcon color='rgba(77, 217, 163, 1)' sx={{color: 'rgba(77, 217, 163, 1)'}}/>}
-            label="Agent Active"
-            size="small"
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* Title */}
+          <Typography
+            variant="h5"
             sx={{
-              backgroundColor: "rgba(77, 217, 163, 0.15)",
-              color: "rgba(84, 98, 116, 1)",
-              fontWeight: 400,
-              fontSize: '13px'
+              position: "relative",
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: "45px",
+              color: "rgba(23, 43, 77, 1)",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                left: 0,
+                bottom: 0,
+                width: "38px",
+                height: "5px",
+                backgroundColor: "rgba(41, 210, 145, 0.83)",
+                borderRadius: "2px",
+              },
             }}
-          />
-        ) : (
-          <Chip
-            icon={<DoNotDisturbAltIcon color='rgba(224, 62, 92, 1)' sx={{color: 'rgba(224, 62, 92, 1)'}}/>}
-            label="Agent Inactive"
-            size="small"
-            sx={{
-              backgroundColor: "rgba(224, 62, 92, 0.12)",
-              color: "rgba(84, 98, 116, 1)",
-              fontWeight: 400,
-              fontSize: '13px'
-            }}
-          />
-        )}
-      </Stack>
-      </Box>
-      <Button
+          >
+            Agent Configuration
+          </Typography>
+          {/* Status */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            {config?.isActive ? (
+              <Chip
+                icon={
+                  <CheckCircleOutlineIcon
+                    sx={{ color: "rgba(77, 217, 163, 1)!important" }}
+                  />
+                }
+                label="Agent Active"
+                size="small"
+                sx={{
+                  backgroundColor: "rgba(77, 217, 163, 0.15)",
+                  color: "rgba(84, 98, 116, 1)",
+                  fontWeight: 400,
+                  fontSize: "13px",
+                }}
+              />
+            ) : (
+              <Chip
+                icon={
+                  <DoNotDisturbAltIcon
+                    sx={{ color: "rgba(224, 62, 92, 1)!important" }}
+                  />
+                }
+                label="Agent Inactive"
+                size="small"
+                sx={{
+                  backgroundColor: "rgba(224, 62, 92, 0.12)",
+                  color: "rgba(84, 98, 116, 1)",
+                  fontWeight: 400,
+                  fontSize: "13px",
+                }}
+              />
+            )}
+          </Stack>
+        </Box>
+        <Button
           variant="outlined"
           fullWidth
+          onClick={() => setEditMode(true)}
           startIcon={
             <Image src="/icons/edit.svg" alt="edit" width={20} height={20} />
           }
@@ -142,9 +158,7 @@ const AgentConfigurationDetails: React.FC = () => {
         >
           Edit Agent Configuration
         </Button>
-        </Box>
-
-      
+      </Box>
 
       {/* Matching Rules */}
       <Typography
@@ -185,7 +199,9 @@ const AgentConfigurationDetails: React.FC = () => {
       </Typography>
 
       <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-        <InfoChip label={`Bid range · $${config.bidBudgetMin} – $${config.bidBudgetMax}`} />
+        <InfoChip
+          label={`Bid range · $${config.bidBudgetMin} – $${config.bidBudgetMax}`}
+        />
         <InfoChip label={`Bid step · $${config.bidStep}`} />
         <InfoChip label={`Daily limit · $${config.maxDailySpending}`} />
       </Stack>
@@ -209,6 +225,7 @@ const AgentConfigurationDetails: React.FC = () => {
         <InfoChip label={`Agent lifetime · ${config.agentLifetimeDays} days`} />
         <InfoChip label={`Bid lifetime · ${config.bidLifetimeDays} days`} />
       </Stack>
+      </>}
     </Box>
   );
 };
