@@ -277,6 +277,29 @@ async function deleteOldNotifications(daysOld = 30) {
   return { deletedCount: result.deletedCount };
 }
 
+// Archive all non-archived notifications for a user
+async function archiveAllNotifications(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const result = await Notification.updateMany(
+    { recipient: userId, archived: { $ne: true } },
+    { archived: true }
+  );
+
+  try {
+    if (result.modifiedCount > 0) {
+      const io = socket.getIO();
+      io.to(String(userId)).emit('notificationsArchived', { archivedCount: result.modifiedCount });
+    }
+  } catch (err) {
+    console.warn('Socket emit failed on archiveAllNotifications:', err.message || err);
+  }
+
+  return { archivedCount: result.modifiedCount };
+}
+
 async function autoArchiveOldNotifications(userId, daysOld = 15) {
   if (!userId) {
     throw new Error('User ID is required.');
@@ -310,6 +333,7 @@ module.exports = {
   getArchivedNotifications,
   markNotificationAsRead,
   markAllAsRead,
+  archiveAllNotifications,
   deleteNotification,
   getUnreadCount,
   broadcastSystemNotification,

@@ -43,6 +43,9 @@ router.patch('/mark-all-read', controller.markAllAsRead);
 // PATCH /notification-system/archiveNotification/:id — archive a notification
 router.patch('/archiveNotification/:id', controller.archiveNotification);
 
+// PATCH /notification-system/archive-all — archive all notifications for current user
+router.patch('/archive-all', controller.archiveAllNotifications);
+
 // DELETE /notification-system/:id — delete
 router.delete('/deleteNotification/:id', controller.deleteNotification);
 

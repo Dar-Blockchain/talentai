@@ -123,6 +123,21 @@ exports.archiveNotification = async (req, res) => {
   }
 };
 
+// Archive all notifications for the authenticated user
+exports.archiveAllNotifications = async (req, res) => {
+  try {
+    const userId = req.user && req.user._id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const result = await notificationSystemService.archiveAllNotifications(userId);
+    res.json({ message: 'All notifications archived.', archivedCount: result.archivedCount });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 // Broadcast system notification to all users
 exports.broadcastSystemNotification = async (req, res) => {
   try {
