@@ -180,7 +180,7 @@ async function broadcastSystemNotification(content, recipientIds) {
   if (!content) {
     throw new Error('Notification content is required.');
   }
-  const type = 'system';
+  const type = 'info';
   let users;
 
   if (recipientIds && Array.isArray(recipientIds) && recipientIds.length > 0) {
@@ -224,19 +224,30 @@ async function broadcastSystemNotification(content, recipientIds) {
   };
 }
 
-  async function archiveNotification(notificationId) {
-    const notification = await getNotificationById(notificationId);
-    notification.archived = true;
-    await notification.save();
+  async function archiveNotification(notificationId, userId) {
+    // Validate access (throws if not owner or admin)
+    await getNotificationById(notificationId, userId);
+
+    // Use an atomic update to mark archived=true and return the updated document
+    const updated = await Notification.findByIdAndUpdate(
+      notificationId,
+      { archived: true },
+      { new: true }
+    );
+
+    if (!updated) {
+      throw new Error('Notification not found.');
+    }
+
     console.log('Notification archived:', notificationId);
     try {
       const io = socket.getIO();
-      io.to(String(notification.recipient)).emit('notificationArchived', { id: notification._id, notification });
+      io.to(String(updated.recipient)).emit('notificationArchived', { id: updated._id, notification: updated });
     } catch (err) {
       console.warn('Socket emit failed on archiveNotification:', err.message || err);
     }
 
-    return notification;
+    return updated;
   }
 
 async function deleteOldNotifications(daysOld = 30) {
