@@ -47,20 +47,6 @@ exports.listForUser = async (req, res) => {
   }
 };
 
-// List archived notifications for current user
-exports.getArchivedNotifications = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
-    }
-    const list = await notificationSystemService.getArchivedNotifications(userId);
-    res.json({ notifications: list });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
 // Retrieve a notification by ID
 exports.getById = async (req, res) => {
   try {

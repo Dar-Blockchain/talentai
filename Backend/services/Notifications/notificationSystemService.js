@@ -239,15 +239,6 @@ async function deleteOldNotifications(daysOld = 30) {
   return { deletedCount: result.deletedCount };
 }
 
-  async function getArchivedNotifications(userId) {
-    if (!userId) {
-      throw new Error('User ID is required.');
-    }
-
-    const query = Notification.find({ recipient: userId, archived: true }).sort({ createdAt: -1 });
-    return query.exec();
-  }
-
 module.exports = {
   createSystemNotification,
   createNotification,
@@ -259,5 +250,4 @@ module.exports = {
   broadcastSystemNotification,
   archiveNotification,
   deleteOldNotifications,
-    getArchivedNotifications,
 };

@@ -31,9 +31,6 @@ router.post('/broadcastSystemNotification', controller.broadcastSystemNotificati
 // GET /notification-system/GetMyNotification — list system notifications for current user
 router.get('/GetMyNotification', controller.listForUser);
 
-// GET /notification-system/GetArchivedNotifications — list archived notifications for current user
-router.get('/GetArchivedNotifications', controller.getArchivedNotifications);
-
 // GET /notification-system/:id — retrieve a notification
 // router.get('/GetNotificationByID/:id', controller.getById);
 
