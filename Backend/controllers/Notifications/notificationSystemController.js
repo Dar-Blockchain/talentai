@@ -39,9 +39,15 @@ exports.listForUser = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
-    const list = await notificationSystemService.getUserNotifications(userId);
+    const nonArchivedList = await notificationSystemService.getNonArchivedNotifications(userId);
+    const archivedList = await notificationSystemService.getArchivedNotifications(userId);
     const unreadCount = await notificationSystemService.getUnreadCount(userId);
-    res.json({ notifications: list, unreadCount });
+
+    res.json({
+      nonArchived: { count: nonArchivedList.length, notifications: nonArchivedList },
+      archived: { count: archivedList.length, notifications: archivedList },
+      unreadCount,
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

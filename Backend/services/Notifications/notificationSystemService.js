@@ -78,6 +78,27 @@ async function getUserNotifications(userId, ) {
   return query.exec();
 }
 
+async function getNotificationById(notificationId, userId, userRole = null) {
+  if (!notificationId) {
+    throw new Error('Notification ID is required.');
+  }
+
+  const notification = await Notification.findById(notificationId);
+  if (!notification) {
+    throw new Error('Notification not found.');
+  }
+
+  // Check access: owner or admin
+  const isOwner = notification.recipient.toString() === String(userId);
+  const isAdmin = userRole === 'admin';
+
+  if (!isOwner && !isAdmin) {
+    throw new Error('Access denied.');
+  }
+
+  return notification;
+}
+
 async function markNotificationAsRead(notificationId, userId) {
   const notification = await getNotificationById(notificationId, userId);
   notification.read = true;
@@ -142,11 +163,28 @@ async function getUnreadCount(userId) {
 
   const count = await Notification.countDocuments({
     recipient: userId,
-    type: 'system',
     read: false,
   });
 
   return count;
+}
+
+async function getArchivedNotifications(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const query = Notification.find({ recipient: userId, archived: true }).sort({ createdAt: -1 });
+  return query.exec();
+}
+
+async function getNonArchivedNotifications(userId) {
+  if (!userId) {
+    throw new Error('User ID is required.');
+  }
+
+  const query = Notification.find({ recipient: userId, archived: { $ne: true } }).sort({ createdAt: -1 });
+  return query.exec();
 }
 
 async function broadcastSystemNotification(content, recipientIds) {
@@ -203,7 +241,7 @@ async function broadcastSystemNotification(content, recipientIds) {
   };
 }
 
-  async function archiveNotification(notificationId) {
+  async function archiveNotification(notificationId, userId, userRole = null) {
 
     // Use an atomic update to mark archived=true and return the updated document
     const updated = await Notification.findByIdAndUpdate(
@@ -243,6 +281,9 @@ module.exports = {
   createSystemNotification,
   createNotification,
   getUserNotifications,
+  getNotificationById,
+  getNonArchivedNotifications,
+  getArchivedNotifications,
   markNotificationAsRead,
   markAllAsRead,
   deleteNotification,
