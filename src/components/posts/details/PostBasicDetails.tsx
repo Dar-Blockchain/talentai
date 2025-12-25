@@ -18,6 +18,7 @@ import {
   formatSalary,
   getLevelFromNumber,
   getPostSkills,
+  getSoftSkillLevelLabel,
   Skill,
 } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
@@ -324,9 +325,8 @@ const PostBasicDetails: React.FC = () => {
               </Typography>
               <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
                 {displaySkills.map((skill: Skill, index: number) => {
-                  const label = `${skill.name} (${getLevelFromNumber(
-                    skill.level
-                  )}) - ${skill.importance}%`;
+                  const level = skill.type === 'soft' ? getSoftSkillLevelLabel(Number(skill.level) || 1) : getLevelFromNumber(skill.level || 1);
+                  const label = `${skill.name} (${level}) - ${skill.importance}%`;
                   return <SkillChip key={index} label={label} />;
                 })}
               </Box>

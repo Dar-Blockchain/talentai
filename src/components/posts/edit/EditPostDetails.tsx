@@ -446,7 +446,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
               />
 
               <Box sx={{ mt: 2 }}>
-                <Box
+                {job.creationType === 'ai' && <><Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
@@ -656,6 +656,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
                     </Button>
                   </Box>
                 </Box>
+                </>}
 
                 <Box sx={{ mt: 2 }}>
                   <Typography
