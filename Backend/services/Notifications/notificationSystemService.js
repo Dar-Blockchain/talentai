@@ -78,27 +78,6 @@ async function getUserNotifications(userId, ) {
   return query.exec();
 }
 
-async function getNotificationById(notificationId, userId, userRole = null) {
-  if (!notificationId) {
-    throw new Error('Notification ID is required.');
-  }
-
-  const notification = await Notification.findById(notificationId);
-  if (!notification) {
-    throw new Error('Notification not found.');
-  }
-
-  // Check access: owner or admin
-  const isOwner = notification.recipient.toString() === String(userId);
-  const isAdmin = userRole === 'admin';
-
-  if (!isOwner && !isAdmin) {
-    throw new Error('Access denied.');
-  }
-
-  return notification;
-}
-
 async function markNotificationAsRead(notificationId, userId) {
   const notification = await getNotificationById(notificationId, userId);
   notification.read = true;
@@ -224,9 +203,7 @@ async function broadcastSystemNotification(content, recipientIds) {
   };
 }
 
-  async function archiveNotification(notificationId, userId) {
-    // Validate access (throws if not owner or admin)
-    await getNotificationById(notificationId, userId);
+  async function archiveNotification(notificationId) {
 
     // Use an atomic update to mark archived=true and return the updated document
     const updated = await Notification.findByIdAndUpdate(
@@ -266,7 +243,6 @@ module.exports = {
   createSystemNotification,
   createNotification,
   getUserNotifications,
-  getNotificationById,
   markNotificationAsRead,
   markAllAsRead,
   deleteNotification,
