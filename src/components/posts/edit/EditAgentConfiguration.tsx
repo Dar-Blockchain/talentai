@@ -1,103 +1,32 @@
-import React, { useCallback } from "react";
+import React, { ChangeEvent } from "react";
 import {
   Box,
   Typography,
   TextField,
   Tooltip,
   Alert,
-  Stack,
-  Chip,
   Button,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import SmartToyIcon from "@mui/icons-material/SmartToy";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AutoGraphIcon from "@mui/icons-material/AutoGraph";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { updateCreateConfigValue } from "@/store/slices/agentConfigSlice";
 import Image from "next/image";
-
-export interface AgentConfigurationFormValues {
-  agentId: string;
-  postId: string;
-  thresholdPercent?: number;
-  bidBudgetMin?: number;
-  bidBudgetMax?: number;
-  bidStep?: number;
-  maxCandidatesToBid?: number;
-  agentLifetimeDays?: number;
-  bidLifetimeDays?: number;
-  autoSubmitTopMatch: boolean;
-  maxDailySpending?: number;
-  isActive: boolean;
-}
-
-export interface EditAgentConfigurationProps {
-  onCancel: () => void;
-}
-
-const numberFields = [
-  {
-    key: "thresholdPercent",
-    label: "Match Threshold (%)",
-    helper: "Score required before automated actions can run",
-    min: 0,
-    max: 100,
-    step: 1,
-  },
-  {
-    key: "bidBudgetMin",
-    label: "Minimum Bid Budget ($)",
-    helper: "Lowest amount the agent can bid",
-    min: 0,
-    step: 1,
-  },
-  {
-    key: "bidBudgetMax",
-    label: "Maximum Bid Budget ($)",
-    helper: "Highest allowed bid",
-    min: 0,
-    step: 1,
-  },
-  {
-    key: "bidStep",
-    label: "Bid Increment ($)",
-    helper: "Increment used when increasing bids",
-    min: 1,
-    step: 1,
-  },
-  {
-    key: "maxCandidatesToBid",
-    label: "Max Candidates to Bid",
-    helper: "Concurrent candidates the agent can engage",
-    min: 1,
-    step: 1,
-  },
-  {
-    key: "maxDailySpending",
-    label: "Daily Spending Limit ($)",
-    helper: "Maximum daily agent spending",
-    min: 0,
-    step: 1,
-  },
-  {
-    key: "agentLifetimeDays",
-    label: "Agent Lifetime (days)",
-    helper: "Auto-deactivation period",
-    min: 1,
-    step: 1,
-  },
-  {
-    key: "bidLifetimeDays",
-    label: "Bid Lifetime (days)",
-    helper: "How long a bid remains valid",
-    min: 1,
-    step: 1,
-  },
-];
+import {
+  selectCurrentJob,
+  updateAgentConfigInCurrentJob,
+} from "@/store/slices/postSlice";
+import { Formik } from "formik";
+import {
+  AgentConfigUpdatePayload,
+  updateAgentConfig,
+} from "@/store/slices/agentConfigSlice";
+import { AGENT_CONFIG_NUMBER_FIELDS } from "@/constants/jobConstants";
+import { validateAgentConfig } from "@/validations/agentValidation";
+import { useToast } from "@/hooks/useToast";
 
 /* ------------------------------- STYLES ------------------------------- */
 
@@ -154,44 +83,54 @@ const FieldGrid = styled(Box)(({ theme }) => ({
 
 /* ------------------------------- COMPONENT ------------------------------- */
 
+export interface EditAgentConfigurationProps {
+  onCancel: () => void;
+}
+
 const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
   onCancel,
 }) => {
+  const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
-  const agentConfig = useSelector(
-    (state: any) => state.agentConfig.createConfig.value
-  );
-  const handleAgentConfigChange = useCallback(
-    (update: Partial<AgentConfigurationFormValues>) => {
-      dispatch(updateCreateConfigValue(update));
-    },
-    []
-  );
+  const job = useSelector(selectCurrentJob);
+
+  const initialValues = React.useMemo(() => {
+    return {
+      thresholdPercent: job?.agentConfig?.thresholdPercent,
+      bidBudgetMin: job?.agentConfig?.bidBudgetMin,
+      bidBudgetMax: job?.agentConfig?.bidBudgetMax,
+      bidStep: job?.agentConfig?.bidStep,
+      maxCandidatesToBid: job?.agentConfig?.maxCandidatesToBid,
+      agentLifetimeDays: job?.agentConfig?.agentLifetimeDays,
+      bidLifetimeDays: job?.agentConfig?.bidLifetimeDays,
+      maxDailySpending: job?.agentConfig?.maxDailySpending,
+      autoSubmitTopMatch: job?.agentConfig?.autoSubmitTopMatch,
+      isActive: job?.agentConfig?.isActive,
+    };
+  }, [job]);
+
   const { error: errorMessage, loading } = useSelector(
     (state: any) => state.agentConfig.createConfig
   );
-  const handleNumberChange =
-    (key: keyof AgentConfigurationFormValues) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = event.target.value;
-      const parsed = raw === "" ? undefined : Number(raw);
-      handleAgentConfigChange({
-        [key]: Number.isNaN(parsed as number) ? undefined : parsed,
-      });
-    };
 
-  const renderNumericField = (key: keyof AgentConfigurationFormValues) => {
-    const config = numberFields.find((field) => field.key === key);
+  const renderNumericField = (
+    key: keyof AgentConfigUpdatePayload,
+    value: number,
+    onChange: (e: ChangeEvent<any>) => void
+  ) => {
+    const config = AGENT_CONFIG_NUMBER_FIELDS.find(
+      (field) => field.key === key
+    );
     if (!config) return null;
-
     return (
       <StyledTextField
         key={config.key}
         type="number"
+        name={config.key}
         label={config.label}
         fullWidth
-        value={(agentConfig[key] ?? "") as number | string}
-        onChange={handleNumberChange(key)}
+        value={(value ?? "") as number | string}
+        onChange={onChange}
         inputProps={{
           min: config.min,
           max: config.max,
@@ -204,163 +143,223 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
   };
 
   return (
-    <Box sx={{ pb: 2, width: "100%" }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 2,
-        }}
-      >
-        {/* Title */}
-        <Box sx={{ display: "flex", gap: 2 }}>
+    <Formik
+      initialValues={initialValues}
+      onSubmit={async (values, { resetForm }) => {
+        if (!validateAgentConfig(values, showToast)) return;
+        await dispatch(
+          updateAgentConfig({
+            id: job.agentConfig._id,
+            data: values,
+          })
+        ).unwrap();
+
+        dispatch(updateAgentConfigInCurrentJob(values));
+        resetForm();
+        onCancel();
+        showToast({
+          message:
+            "Agent configuration updated. The new settings are now active.",
+          severity: "success",
+        });
+      }}
+    >
+      {({ values, isSubmitting, handleChange, handleSubmit, resetForm }) => (
+        <Box sx={{ pb: 2, width: "100%" }}>
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center",
               alignItems: "center",
-              background: "rgba(234, 255, 247, 1)",
-              width: 45,
-              height: 45,
-              borderRadius: "5px",
+              justifyContent: "space-between",
+              mb: 2,
             }}
           >
-            <Image src="/icons/edit.svg" alt="file" width={25} height={25} />
+            {/* Title */}
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  background: "rgba(234, 255, 247, 1)",
+                  width: 45,
+                  height: 45,
+                  borderRadius: "5px",
+                }}
+              >
+                <Image
+                  src="/icons/edit.svg"
+                  alt="file"
+                  width={25}
+                  height={25}
+                />
+              </Box>
+
+              <Box>
+                <Typography
+                  sx={{
+                    color: "rgba(41, 210, 145, 1)",
+                    fontWeight: 600,
+                    fontSize: "20px",
+                  }}
+                >
+                  Edit Agent Configuration
+                </Typography>
+
+                <Typography sx={{ fontSize: "12px", color: "#546274" }}>
+                  Update the settings for your recruitment agent below.
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Actions */}
+            <Box sx={{ display: "flex", gap: 1 }}>
+              {/* Cancel */}
+
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  resetForm();
+                  onCancel();
+                }}
+                sx={{
+                  border: "none",
+                  background: "none",
+                  color: "rgba(133, 169, 227, 1)",
+                  textDecoration: "none",
+                  "&:hover": {
+                    background: "none",
+                    textDecoration: "none",
+                    color: "rgba(133, 169, 227, 0.8)",
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+
+              {/* Save */}
+              <Button
+                variant="contained"
+                disabled={isSubmitting}
+                loading={isSubmitting}
+                onClick={() => handleSubmit()}
+                sx={{
+                  textTransform: "none",
+                  height: "42px",
+                  width: "120px",
+                  maxWidth: "230px",
+                  borderRadius: "38px",
+                  background: "rgba(0, 234, 144, 1)",
+                  color: "white",
+                }}
+              >
+                Save
+              </Button>
+            </Box>
           </Box>
 
-          <Box>
-            <Typography
-              sx={{
-                color: "rgba(41, 210, 145, 1)",
-                fontWeight: 600,
-                fontSize: "20px",
-              }}
-            >
-              Edit Agent Configuration
-            </Typography>
+          <MainLayout>
+            {/* Identity & Safeguards */}
+            <Box>
+              <Box display="flex" alignItems="center" gap={1}>
+                <SectionTitle>Identity & Safeguards</SectionTitle>
+                <Tooltip title="" arrow>
+                  <InfoOutlinedIcon
+                    sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
+                  />
+                </Tooltip>
+              </Box>
 
-            <Typography sx={{ fontSize: "12px", color: "#546274" }}>
-              Update the settings for your recruitment agent below.
-            </Typography>
-          </Box>
+              <SubtleText>
+                Connect this configuration to the originating post and define
+                qualification thresholds.
+              </SubtleText>
+
+              <FieldGrid sx={{ mt: 2 }}>
+                {renderNumericField(
+                  "thresholdPercent",
+                  values.thresholdPercent,
+                  handleChange
+                )}
+                {renderNumericField(
+                  "maxCandidatesToBid",
+                  values.maxCandidatesToBid,
+                  handleChange
+                )}
+              </FieldGrid>
+            </Box>
+
+            {/* Bidding Envelope */}
+            <Box>
+              <Box display="flex" alignItems="center" gap={1}>
+                <SectionTitle>Bidding Envelope</SectionTitle>
+                <AutoGraphIcon
+                  sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
+                />
+              </Box>
+
+              <SubtleText>
+                Control budget boundaries and pacing for candidate interactions.
+              </SubtleText>
+
+              <FieldGrid sx={{ mt: 2 }}>
+                {renderNumericField(
+                  "bidBudgetMin",
+                  values.bidBudgetMin,
+                  handleChange
+                )}
+                {renderNumericField(
+                  "bidBudgetMax",
+                  values.bidBudgetMax,
+                  handleChange
+                )}
+                {renderNumericField("bidStep", values.bidStep, handleChange)}
+                {renderNumericField(
+                  "maxDailySpending",
+                  values.maxDailySpending,
+                  handleChange
+                )}
+              </FieldGrid>
+            </Box>
+
+            {/* Lifecycle Policies */}
+            <Box>
+              <Box display="flex" alignItems="center" gap={1}>
+                <SectionTitle>Lifecycle Policies</SectionTitle>
+                <TrendingUpIcon
+                  sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
+                />
+              </Box>
+
+              <SubtleText>
+                Define how long the agent remains active and how long bids
+                remain valid.
+              </SubtleText>
+
+              <FieldGrid sx={{ mt: 2 }}>
+                {renderNumericField(
+                  "agentLifetimeDays",
+                  values.agentLifetimeDays,
+                  handleChange
+                )}
+                {renderNumericField(
+                  "bidLifetimeDays",
+                  values.bidLifetimeDays,
+                  handleChange
+                )}
+              </FieldGrid>
+            </Box>
+          </MainLayout>
+
+          {/* Errors */}
+          {errorMessage && (
+            <Alert severity="error" sx={{ mt: 4, borderRadius: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
         </Box>
-
-        {/* Actions */}
-        <Box sx={{ display: "flex", gap: 1 }}>
-          {/* Cancel */}
-
-          <Button
-            variant="outlined"
-            onClick={() => {
-              onCancel();
-            }}
-            sx={{
-              border: "none",
-              background: "none",
-              color: "rgba(133, 169, 227, 1)",
-              textDecoration: "none",
-              "&:hover": {
-                background: "none",
-                textDecoration: "none",
-                color: "rgba(133, 169, 227, 0.8)",
-              },
-            }}
-          >
-            Cancel
-          </Button>
-
-          {/* Save */}
-          <Button
-            variant="contained"
-            onClick={() => {}}
-            sx={{
-              textTransform: "none",
-              height: "42px",
-              width: "120px",
-              maxWidth: "230px",
-              borderRadius: "38px",
-              background: "rgba(0, 234, 144, 1)",
-              color: "white",
-            }}
-          >
-            Save
-          </Button>
-        </Box>
-      </Box>
-
-      <MainLayout>
-        {/* Identity & Safeguards */}
-        <Box>
-          <Box display="flex" alignItems="center" gap={1}>
-            <SectionTitle>Identity & Safeguards</SectionTitle>
-            <Tooltip title="" arrow>
-              <InfoOutlinedIcon
-                sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
-              />
-            </Tooltip>
-          </Box>
-
-          <SubtleText>
-            Connect this configuration to the originating post and define
-            qualification thresholds.
-          </SubtleText>
-
-          <FieldGrid sx={{ mt: 2 }}>
-            {renderNumericField("thresholdPercent")}
-            {renderNumericField("maxCandidatesToBid")}
-          </FieldGrid>
-        </Box>
-
-        {/* Bidding Envelope */}
-        <Box>
-          <Box display="flex" alignItems="center" gap={1}>
-            <SectionTitle>Bidding Envelope</SectionTitle>
-            <AutoGraphIcon
-              sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
-            />
-          </Box>
-
-          <SubtleText>
-            Control budget boundaries and pacing for candidate interactions.
-          </SubtleText>
-
-          <FieldGrid sx={{ mt: 2 }}>
-            {renderNumericField("bidBudgetMin")}
-            {renderNumericField("bidBudgetMax")}
-            {renderNumericField("bidStep")}
-            {renderNumericField("maxDailySpending")}
-          </FieldGrid>
-        </Box>
-
-        {/* Lifecycle Policies */}
-        <Box>
-          <Box display="flex" alignItems="center" gap={1}>
-            <SectionTitle>Lifecycle Policies</SectionTitle>
-            <TrendingUpIcon
-              sx={{ color: "#94a3b8", width: "16px", height: "16px" }}
-            />
-          </Box>
-
-          <SubtleText>
-            Define how long the agent remains active and how long bids remain
-            valid.
-          </SubtleText>
-
-          <FieldGrid sx={{ mt: 2 }}>
-            {renderNumericField("agentLifetimeDays")}
-            {renderNumericField("bidLifetimeDays")}
-          </FieldGrid>
-        </Box>
-      </MainLayout>
-
-      {/* Errors */}
-      {errorMessage && (
-        <Alert severity="error" sx={{ mt: 4, borderRadius: 2 }}>
-          {errorMessage}
-        </Alert>
       )}
-    </Box>
+    </Formik>
   );
 };
 

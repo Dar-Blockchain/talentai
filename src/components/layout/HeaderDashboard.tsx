@@ -278,7 +278,7 @@ const HeaderDashboard = () => {
           backgroundColor: "transparent",
           boxShadow: "none",
           height: "50px",
-          my: 2,
+          mb: 2,
         }}
       >
         <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%", height: "100%" }}>
