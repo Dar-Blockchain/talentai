@@ -133,24 +133,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                   Mark all read
                 </Button>
               )}
-              {/* Clear All Button */}
-              {notifications.length > 0 && (
-                <Button
-                  size="small"
-                  startIcon={<DeleteIcon />}
-                  onClick={clearNotifications}
-                  sx={{
-                    textTransform: 'none',
-                    color: '#dc2626',
-                    fontWeight: 600,
-                    '&:hover': {
-                      backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                    },
-                  }}
-                >
-                  Clear all
-                </Button>
-              )}
             </Box>
           </Box>
         </Box>

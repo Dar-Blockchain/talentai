@@ -389,13 +389,19 @@ const notificationSlice = createSlice({
       // Mark as read
       .addCase(markNotificationAsRead.fulfilled, (state, action) => {
         const notification = state.notifications.find(n => n.id === action.payload);
-        if (notification) {
+        if (notification && !notification.isRead) {
           notification.isRead = true;
+          // Decrement unread count
+          if (state.unreadCount > 0) {
+            state.unreadCount -= 1;
+          }
         }
       })
       // Mark all as read
       .addCase(markAllNotificationsAsRead.fulfilled, (state) => {
         state.notifications.forEach(n => n.isRead = true);
+        // Reset unread count to 0
+        state.unreadCount = 0;
       })
       // Broadcast notification
       .addCase(broadcastSystemNotification.pending, (state) => {
@@ -411,13 +417,23 @@ const notificationSlice = createSlice({
       })
       // Archive notification
       .addCase(archiveNotification.fulfilled, (state, action) => {
+        // Find the notification before removing it to check if it was unread
+        const notification = state.notifications.find(n => n.id === action.payload);
+        const wasUnread = notification && !notification.isRead;
+
         // Remove the archived notification from the list
         state.notifications = state.notifications.filter(n => n.id !== action.payload);
+
         // Update counts
         if (state.nonArchivedCount > 0) {
           state.nonArchivedCount -= 1;
         }
         state.archivedCount += 1;
+
+        // If archived notification was unread, decrement unread count
+        if (wasUnread && state.unreadCount > 0) {
+          state.unreadCount -= 1;
+        }
       })
       // Fetch archived notifications
       .addCase(fetchArchivedNotifications.pending, (state) => {
@@ -450,8 +466,14 @@ export default notificationSlice.reducer;
 
 // Selectors
 export const selectNotifications = (state: { notifications: NotificationState }) => state.notifications.notifications;
-export const selectUnreadCount = (state: { notifications: NotificationState }) =>
-  state.notifications.unreadCount || state.notifications.notifications.filter(n => !n.isRead).length;
+
+// Unread count should only include non-archived notifications
+// Always calculate from the current state to reflect real-time changes
+export const selectUnreadCount = (state: { notifications: NotificationState }) => {
+  // Always calculate from non-archived notifications array to reflect local changes
+  return state.notifications.notifications.filter(n => !n.isRead).length;
+};
+
 export const selectNonArchivedCount = (state: { notifications: NotificationState }) => state.notifications.nonArchivedCount;
 export const selectArchivedCount = (state: { notifications: NotificationState }) => state.notifications.archivedCount;
 export const selectIsConnected = (state: { notifications: NotificationState }) => state.notifications.isConnected;
