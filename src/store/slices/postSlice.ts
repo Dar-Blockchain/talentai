@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
-import { broadcastSystemNotification } from "./notificationSlice";
+// import { broadcastSystemNotification } from "./notificationSlice";
 
 interface RecruitmentFlowState {
   nodes: any[];
@@ -364,7 +364,7 @@ export const fetchJobMatches = createAsyncThunk(
   "post/fetchJobMatches",
   async (
     { selectedJobId, page = 1, limit = 10 }: { selectedJobId: string; page?: number; limit?: number },
-    { rejectWithValue, dispatch, getState }
+    { rejectWithValue }
   ) => {
     const fetchKey = `${selectedJobId}-${page}-${limit}`;
     console.log('🚀 [fetchJobMatches] Thunk executing for job:', selectedJobId, 'page:', page, 'key:', fetchKey);
@@ -411,34 +411,34 @@ export const fetchJobMatches = createAsyncThunk(
         const matches = data && Array.isArray(data.matches) ? data.matches : [];
 
         // Send notification to newly matched candidates
-        if (matches.length > 0) {
-          try {
-            // Get previous matches from state to detect new ones
-            const state = getState() as any;
-            const previousMatches = state.post?.jobMatches || [];
-            const previousIds = new Set(previousMatches.map((m: any) => m.candidateId || m._id));
+        // if (matches.length > 0) {
+        //   try {
+        //     // Get previous matches from state to detect new ones
+        //     const state = getState() as any;
+        //     const previousMatches = state.post?.jobMatches || [];
+        //     const previousIds = new Set(previousMatches.map((m: any) => m.candidateId || m._id));
 
-            // Find newly matched candidates
-            const newMatches = matches.filter((match: any) =>
-              !previousIds.has(match.candidateId || match._id)
-            );
+        //     // Find newly matched candidates
+        //     const newMatches = matches.filter((match: any) =>
+        //       !previousIds.has(match.candidateId || match._id)
+        //     );
 
-            if (newMatches.length > 0) {
-              const candidateIds = newMatches.map((match: any) => match.candidateId || match._id);
-              const jobTitle = data.jobTitle || 'a new job opportunity';
+        //     if (newMatches.length > 0) {
+        //       const candidateIds = newMatches.map((match: any) => match.candidateId || match._id);
+        //       const jobTitle = data.jobTitle || 'a new job opportunity';
 
-              console.log('📢 [JobMatches] Sending notification to newly matched candidates:', candidateIds);
+        //       console.log('📢 [JobMatches] Sending notification to newly matched candidates:', candidateIds);
 
-              await dispatch(broadcastSystemNotification({
-                content: `🎯 Great news! Your profile matches ${jobTitle}. A company is looking for candidates with your skills. Check it out now!`,
-                recipientIds: candidateIds
-              })).unwrap();
-            }
-          } catch (notifError) {
-            console.error('❌ [JobMatches] Failed to send notification:', notifError);
-            // Don't fail the fetch if notification fails
-          }
-        }
+        //       await dispatch(broadcastSystemNotification({
+        //         content: `🎯 Great news! Your profile matches ${jobTitle}. A company is looking for candidates with your skills. Check it out now!`,
+        //         recipientIds: candidateIds
+        //       })).unwrap();
+        //     }
+        //   } catch (notifError) {
+        //     console.error('❌ [JobMatches] Failed to send notification:', notifError);
+        //     // Don't fail the fetch if notification fails
+        //   }
+        // }
 
         // Clean up the ongoing fetch
         ongoingFetches.delete(fetchKey);
