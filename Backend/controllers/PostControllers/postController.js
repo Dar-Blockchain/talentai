@@ -3,6 +3,8 @@ const postService = require("../../services/PosteServices/postService");
 const { sendPostEmail } = require("../../utils/mailing");
 const matchingConfigService = require("../../services/MatchingService/matchingConfigService");
 const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/postValidationHelpers");
+const notificationService = require("../../services/Notifications/notificationSystemService");
+const User = require("../../models/UserModel");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -39,6 +41,21 @@ exports.createPost = async (req, res) => {
         console.error('Error creating matching config:', cfgErr.message);
       });
     }
+
+    // Notify all users with role 'Candidate' about the new post (best-effort)
+    (async () => {
+      try {
+        const candidates = await User.find({ role: 'Candidate' }).select('_id').lean();
+        const recipientIds = candidates.map(u => String(u._id));
+        if (recipientIds.length > 0) {
+          const title = (post.jobDetails && post.jobDetails.title) || post.title || 'Nouvelle offre';
+          const content = `Un nouveau poste a été publié: ${title}`;
+          await notificationService.broadcastSystemNotification(content, recipientIds);
+        }
+      } catch (notifErr) {
+        console.error('Failed to broadcast post notification to candidates:', notifErr?.message || notifErr);
+      }
+    })();
 
     res.status(201).json({
       success: true,
