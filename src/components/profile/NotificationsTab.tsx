@@ -41,6 +41,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
     markAllAsRead,
     clearNotifications,
     archive,
+    archiveAll,
     isConnected,
   } = useNotifications();
 
@@ -115,23 +116,50 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                 color={isConnected ? 'success' : 'error'}
                 sx={{ fontWeight: 600 }}
               />
-              {/* Mark All As Read Button */}
-              {unreadNotifications > 0 && (
-                <Button
-                  size="small"
-                  startIcon={<MarkEmailReadIcon />}
-                  onClick={markAllAsRead}
-                  sx={{
-                    textTransform: 'none',
-                    color: '#8310FF',
-                    fontWeight: 600,
-                    '&:hover': {
-                      backgroundColor: 'rgba(131, 16, 255, 0.1)',
-                    },
-                  }}
-                >
-                  Mark all read
-                </Button>
+              {/* Action Buttons - Only show for active tab */}
+              {activeTab === 0 && notifications.length > 0 && (
+                <>
+                  {/* Mark All As Read Button */}
+                  {unreadNotifications > 0 && (
+                    <Button
+                      size="small"
+                      startIcon={<MarkEmailReadIcon />}
+                      onClick={() => {
+                        markAllAsRead();
+                        // Archive all after marking all as read
+                        setTimeout(() => {
+                          archiveAll();
+                        }, 500);
+                      }}
+                      sx={{
+                        textTransform: 'none',
+                        color: '#8310FF',
+                        fontWeight: 600,
+                        '&:hover': {
+                          backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                        },
+                      }}
+                    >
+                      Mark all read & archive
+                    </Button>
+                  )}
+                  {/* Archive All Button */}
+                  <Button
+                    size="small"
+                    startIcon={<ArchiveIcon />}
+                    onClick={archiveAll}
+                    sx={{
+                      textTransform: 'none',
+                      color: '#6b7280',
+                      fontWeight: 600,
+                      '&:hover': {
+                        backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                      },
+                    }}
+                  >
+                    Archive all
+                  </Button>
+                </>
               )}
             </Box>
           </Box>

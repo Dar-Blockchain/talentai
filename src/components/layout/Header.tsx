@@ -130,6 +130,7 @@ const Header = ({ logo, type }: HeaderProps) => {
   let markAsRead = (id: string) => { };
   let markAllAsRead = () => { };
   let archive = (id: string) => { };
+  let archiveAll = () => { };
   try {
     const notifications = useNotifications();
     unreadCount = notifications.unreadCount;
@@ -137,6 +138,7 @@ const Header = ({ logo, type }: HeaderProps) => {
     markAsRead = notifications.markAsRead;
     markAllAsRead = notifications.markAllAsRead;
     archive = notifications.archive;
+    archiveAll = notifications.archiveAll;
   } catch (e) {
     // NotificationProvider not available
   }
@@ -546,6 +548,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                         onMarkAllAsRead={markAllAsRead}
                         onViewAll={handleViewAllNotifications}
                         onArchive={archive}
+                        onArchiveAll={archiveAll}
                       />
                     </>
                   )}

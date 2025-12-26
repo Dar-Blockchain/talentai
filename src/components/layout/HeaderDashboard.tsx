@@ -182,6 +182,7 @@ const HeaderDashboard = () => {
     markAsRead,
     markAllAsRead,
     archive,
+    archiveAll,
   } = useNotifications();
 
   // Memoized values
@@ -521,6 +522,7 @@ const HeaderDashboard = () => {
           onMarkAllAsRead={markAllAsRead}
           onViewAll={handleViewAllNotifications}
           onArchive={archive}
+          onArchiveAll={archiveAll}
         />
       )}
 

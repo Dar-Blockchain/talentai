@@ -37,6 +37,7 @@ interface NotificationDropdownProps {
   onMarkAllAsRead: () => void;
   onViewAll: () => void;
   onArchive: (id: string) => void;
+  onArchiveAll: () => void;
 }
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
@@ -48,6 +49,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onMarkAllAsRead,
   onViewAll,
   onArchive,
+  onArchiveAll,
 }) => {
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -133,13 +135,29 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            onClick={onMarkAllAsRead}
+            onClick={() => {
+              onMarkAllAsRead();
+              // Archive all after marking all as read
+              setTimeout(() => {
+                onArchiveAll();
+              }, 500);
+            }}
             sx={{
               '&:hover': { backgroundColor: '#f3f4f6' }
             }}
-            title="Mark all as read"
+            title="Mark all as read & archive"
           >
             <MarkEmailReadIcon sx={{ fontSize: 20, color: '#6b7280' }} />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={onArchiveAll}
+            sx={{
+              '&:hover': { backgroundColor: '#f3f4f6' }
+            }}
+            title="Archive all notifications"
+          >
+            <ArchiveIcon sx={{ fontSize: 20, color: '#6b7280' }} />
           </IconButton>
           <IconButton
             size="small"

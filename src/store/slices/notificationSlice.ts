@@ -264,6 +264,30 @@ export const archiveNotification = createAsyncThunk(
   }
 );
 
+// Archive all notifications
+export const archiveAllNotifications = createAsyncThunk(
+  'notifications/archiveAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/notification-system/archive-all`, {
+        method: 'PATCH',
+        headers: getApiHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive all notifications');
+      }
+
+      const result = await response.json();
+      console.log('✅ Archived all notifications:', result);
+      return result;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Fetch archived notifications
 export const fetchArchivedNotifications = createAsyncThunk(
   'notifications/fetchArchived',
@@ -434,6 +458,20 @@ const notificationSlice = createSlice({
         if (wasUnread && state.unreadCount > 0) {
           state.unreadCount -= 1;
         }
+      })
+      // Archive all notifications
+      .addCase(archiveAllNotifications.fulfilled, (state) => {
+        // Count unread notifications before clearing
+        const unreadNotificationsCount = state.notifications.filter(n => !n.isRead).length;
+        const totalNotifications = state.notifications.length;
+
+        // Archive all current notifications
+        state.archivedCount += totalNotifications;
+        state.nonArchivedCount = 0;
+        state.unreadCount = Math.max(0, state.unreadCount - unreadNotificationsCount);
+
+        // Clear notifications list
+        state.notifications = [];
       })
       // Fetch archived notifications
       .addCase(fetchArchivedNotifications.pending, (state) => {
