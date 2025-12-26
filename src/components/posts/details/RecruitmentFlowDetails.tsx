@@ -159,7 +159,7 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ onEdit }) => {
           Edit Recruitment Flow
         </Button>
       </Box>
-      <PipelineStepsAccordion steps={job.post_Steps} />
+      <PipelineStepsAccordion steps={job?.post_Steps} />
     </Box>
   );
 };

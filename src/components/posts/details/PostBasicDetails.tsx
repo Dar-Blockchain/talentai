@@ -93,7 +93,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
               >
                 {job?.jobDetails?.title}
               </Typography>
-              {job.status === "draft" && (
+              {job?.status === "draft" && (
                 <Chip
                   label="📝 Draft"
                   size="small"
@@ -228,7 +228,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
               sx={{ flexWrap: "wrap", gap: 0.5 }}
             >
               <Chip
-                label={job.jobDetails.location}
+                label={job?.jobDetails?.location}
                 size="small"
                 sx={{
                   backgroundColor: "rgba(95, 168, 211, 0.1)",
@@ -248,7 +248,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
                 }
               />
               <Chip
-                label={job.jobDetails.employmentType}
+                label={job?.jobDetails?.employmentType}
                 size="small"
                 sx={{
                   backgroundColor: "rgba(95, 168, 211, 0.1)",
@@ -268,7 +268,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
                 }
               />
               <Chip
-                label={formatSalary(job.jobDetails.salary)}
+                label={formatSalary(job?.jobDetails?.salary)}
                 size="small"
                 sx={{
                   backgroundColor: "rgba(95, 168, 211, 0.1)",
@@ -288,7 +288,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
                 }
               />
               <Chip
-                label={formatDate(job.createdAt)}
+                label={formatDate(job?.createdAt)}
                 size="small"
                 sx={{
                   backgroundColor: "rgba(95, 168, 211, 0.1)",
@@ -353,7 +353,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
                   maxWidth: "600px",
                 }}
               >
-                {job.jobDetails.description}
+                {job?.jobDetails?.description}
               </Typography>
             </Box>
 
@@ -381,7 +381,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
                   },
                 }}
               >
-                {job.jobDetails.requirements.map(
+                {job?.jobDetails?.requirements.map(
                   (req: string, index: number) => (
                     <ListItem
                       key={index}
@@ -429,7 +429,7 @@ const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
                   },
                 }}
               >
-                {job.jobDetails.responsibilities.map(
+                {job?.jobDetails?.responsibilities.map(
                   (req: string, index: number) => (
                     <ListItem
                       key={index}

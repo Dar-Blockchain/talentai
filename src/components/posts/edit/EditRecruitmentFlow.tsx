@@ -113,7 +113,7 @@ const EditRecruitmentFlow: React.FC<EditRecruitmentFlowProps> = ({
   const handleSave = async () => {
     await dispatch(
       postRecruitmentSteps({
-        postId: job._id,
+        postId: job?._id,
         steps: buildRecruitmentSteps(nodes, edges),
       })
     ).unwrap();

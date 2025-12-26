@@ -149,7 +149,7 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
         if (!validateAgentConfig(values, showToast)) return;
         await dispatch(
           updateAgentConfig({
-            id: job.agentConfig._id,
+            id: job?.agentConfig?._id,
             data: values,
           })
         ).unwrap();
