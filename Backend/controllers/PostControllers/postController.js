@@ -5,6 +5,7 @@ const matchingConfigService = require("../../services/MatchingService/matchingCo
 const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/postValidationHelpers");
 const notificationService = require("../../services/Notifications/notificationSystemService");
 const User = require("../../models/UserModel");
+const Profile = require("../../models/ProfileModel");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -42,18 +43,102 @@ exports.createPost = async (req, res) => {
       });
     }
 
-    // Notify all users with role 'Candidate' about the new post (best-effort)
+    // Notify candidates who have at least one matching hard skill with the post (best-effort)
     (async () => {
       try {
-        const candidates = await User.find({ role: 'Candidate' }).select('_id').lean();
-        const recipientIds = candidates.map(u => String(u._id));
-        if (recipientIds.length > 0) {
-          const title = (post.jobDetails && post.jobDetails.title) || post.title || 'Nouvelle offre';
-          const content = `Un nouveau poste a été publié: ${title}`;
-          await notificationService.broadcastSystemNotification(content, recipientIds);
+        console.log('🔔 Starting notification process...');
+        
+        // Extract skill names from the post (supports strings or objects)
+        const skillSources = [];
+        if (post.skillAnalysis && Array.isArray(post.skillAnalysis.requiredSkills)) {
+          skillSources.push(...post.skillAnalysis.requiredSkills);
         }
+        if (post.jobDetails && Array.isArray(post.jobDetails.requiredSkills)) {
+          skillSources.push(...post.jobDetails.requiredSkills);
+        }
+        if (Array.isArray(parsedData.requiredSkills)) {
+          skillSources.push(...parsedData.requiredSkills);
+        }
+
+        console.log('📋 skillSources extracted:', skillSources);
+
+        // Normalize to lowercase names
+        const skillNames = [...new Set(skillSources.map(s => (typeof s === 'string' ? s : (s && s.name) || '').toString().trim().toLowerCase()).filter(Boolean))];
+
+        console.log('🏷️ Normalized skillNames:', skillNames);
+
+        if (skillNames.length === 0) {
+          console.log('⚠️ No hard skills found on post — skipping targeted notifications');
+          return;
+        }
+
+        // Find profiles of type Candidate having at least one matching skill ($in = OR logic)
+        console.log('🔍 Searching for Candidate profiles with AT LEAST ONE skill matching:', skillNames);
+        
+        // First, let's check what skills exist in the DB for debugging
+        const allCandidateProfiles = await Profile.find({
+          type: 'Candidate',
+          'skills': { $exists: true, $ne: [] }
+        }).select('userId skills').lean();
+        
+        console.log('📊 Total Candidate profiles with skills:', allCandidateProfiles.length);
+        if (allCandidateProfiles.length > 0) {
+          const sampleProfile = allCandidateProfiles[0];
+          const sampleSkills = sampleProfile.skills ? sampleProfile.skills.map(s => s.name) : [];
+          console.log('📋 Sample candidate skills from DB:', sampleSkills);
+          console.log('🔤 Skill names to match (normalized):', skillNames);
+          
+          // Check for case sensitivity issues
+          const lowerSampleSkills = sampleSkills.map(s => String(s).toLowerCase());
+          console.log('📋 Sample skills (lowercase):', lowerSampleSkills);
+        }
+        
+        const matchingProfiles = await Profile.find({
+          type: 'Candidate',
+          'skills.name': { $in: skillNames }
+        }).select('userId skills').lean();
+        
+        console.log('✅ matchingProfiles found (exact match):', matchingProfiles.length);
+        
+        // If no exact match, try case-insensitive search
+        if (matchingProfiles.length === 0 && skillNames.length > 0) {
+          console.log('⚠️ No exact matches found, trying case-insensitive search...');
+          const caseInsensitiveProfiles = await Profile.find({
+            type: 'Candidate'
+          }).lean();
+          
+          const matchedProfiles = caseInsensitiveProfiles.filter(profile => {
+            if (!profile.skills || profile.skills.length === 0) return false;
+            const profileSkillNames = profile.skills.map(s => String(s.name).toLowerCase());
+            return skillNames.some(skillName => profileSkillNames.includes(skillName));
+          });
+          
+          console.log('✅ matchingProfiles found (case-insensitive):', matchedProfiles.length);
+          matchingProfiles.push(...matchedProfiles);
+        }
+        
+        console.log('📋 Full matchingProfiles:', matchingProfiles.map(p => ({ userId: p.userId, skills: p.skills?.map(s => s.name) })));
+        
+        const recipientIds = matchingProfiles.map(p => String(p.userId)).filter(Boolean);
+        console.log('👥 recipientIds extracted:', recipientIds);
+        console.log('📊 recipientIds count:', recipientIds.length);
+        
+        if (recipientIds.length === 0) {
+          console.log('⚠️ No matching candidate profiles found for skills:', skillNames);
+          return;
+        }
+
+        const title = (post.jobDetails && post.jobDetails.title) || post.title || 'Nouvelle offre';
+        const content = `Nouvelle offre: ${title} — correspond à vos compétences techniques.`;
+
+        console.log('📤 Calling broadcastSystemNotification with:', { content, recipientIdsCount: recipientIds.length, recipientIds });
+        
+        await notificationService.broadcastSystemNotification(content, recipientIds);
+        
+        console.log(`✅ Sent notifications to ${recipientIds.length} matching candidates for skills:`, skillNames);
       } catch (notifErr) {
-        console.error('Failed to broadcast post notification to candidates:', notifErr?.message || notifErr);
+        console.error('❌ Failed to send targeted post notifications to candidates:', notifErr?.message || notifErr);
+        console.error('Stack trace:', notifErr?.stack);
       }
     })();
 
