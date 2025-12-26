@@ -462,7 +462,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
                       color: "rgba(222, 147, 0, 1)",
                     }}
                   >
-                    {numberOfSteps * 100} TAI
+                    {totalPrice} TAI
                   </Typography>
                 </Box>
               </Box>

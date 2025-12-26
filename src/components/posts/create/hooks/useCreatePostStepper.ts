@@ -14,7 +14,7 @@ import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 
-import { getJobSkills, validatePipelineNodes } from "@/utils/postHelpers";
+import { buildRecruitmentSteps, getJobSkills, validatePipelineNodes } from "@/utils/postHelpers";
 import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
 
 import {
@@ -68,22 +68,6 @@ export const useCreatePostStepper = (
     return dispatch(savePost(jobData)).unwrap();
   };
 
-  const buildRecruitmentSteps = () =>
-    nodes.map((node: any, index: number) => ({
-      ...node,
-      order: index,
-      connections: edges
-        .filter(
-          (edge: any) => edge.source === node.id || edge.target === node.id
-        )
-        .map((edge: any) => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: edge.source === node.id ? "outgoing" : "incoming",
-        })),
-    }));
-
   const savePipeline = async () => {
     setPaymentModalOpen(true);
 
@@ -91,7 +75,7 @@ export const useCreatePostStepper = (
       await dispatch(
         postRecruitmentSteps({
           postId: savedPost.jobData._id,
-          steps: buildRecruitmentSteps(),
+          steps: buildRecruitmentSteps(nodes, edges),
         })
       ).unwrap();
 

@@ -18,6 +18,7 @@ import SidebarMenu from "./SidebarMenu";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setFlowEdges, setFlowNodes } from "@/store/slices/postSlice";
+import { generateDefaultPipelineNodes } from "@/utils/postHelpers";
 
 const ReactFlow = dynamic(
   () => import("reactflow").then((mod) => mod.default),
@@ -34,89 +35,6 @@ const Background = dynamic(
   () => import("reactflow").then((mod) => mod.Background),
   { ssr: false }
 );
-interface ChatMessage {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
-
-// Function to generate default pipeline nodes with unique IDs
-const generateDefaultPipelineNodes = (): { nodes: Node[]; edges: Edge[] } => {
-  const timestamp = Date.now();
-  const randomSuffix1 = Math.random().toString(36).substr(2, 9);
-  const randomSuffix2 = Math.random().toString(36).substr(2, 9);
-  const randomSuffix3 = Math.random().toString(36).substr(2, 9);
-
-  const technicalId = `technical_${timestamp}_${randomSuffix1}`;
-  const softId = `soft_${timestamp}_${randomSuffix2}`;
-  const interviewId = `interview_${timestamp}_${randomSuffix3}`;
-
-  const nodes: Node[] = [
-    {
-      id: technicalId,
-      type: "custom",
-      position: { x: 250, y: 50 },
-      data: {
-        label: "Technical Skills 1",
-        type: "technical",
-        subtitle: "Validate technical skills",
-        config: {
-          nodeNumber: 1,
-          title: "Technical Skills 1",
-          configured: false,
-        },
-      },
-    },
-    {
-      id: softId,
-      type: "custom",
-      position: { x: 250, y: 180 },
-      data: {
-        label: "Soft Skills 1",
-        type: "soft",
-        subtitle: "Assess soft skills",
-        config: {
-          nodeNumber: 2,
-          title: "Soft Skills 1",
-          configured: false,
-        },
-      },
-    },
-    {
-      id: interviewId,
-      type: "custom",
-      position: { x: 250, y: 310 },
-      data: {
-        label: "HR Interview 1",
-        type: "interview",
-        subtitle: "Conduct HR interview",
-        config: {
-          nodeNumber: 3,
-          title: "HR Interview 1",
-          configured: false,
-        },
-      },
-    },
-  ];
-
-  const edges: Edge[] = [
-    {
-      id: `edge-${technicalId}-${softId}`,
-      source: technicalId,
-      target: softId,
-      type: "default",
-    },
-    {
-      id: `edge-${softId}-${interviewId}`,
-      source: softId,
-      target: interviewId,
-      type: "default",
-    },
-  ];
-
-  return { nodes, edges };
-};
 
 const RecruitmentFlowStep = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -168,10 +86,12 @@ const RecruitmentFlowStep = () => {
   }, [selectedNodes, setNodes, setEdges]);
 
   useEffect(() => {
+    console.log("Nodes updated:", nodes);
     dispatch(setFlowNodes(nodes));
   }, [nodes]);
 
   useEffect(() => {
+    console.log("Edges updated:", edges);
     dispatch(setFlowEdges(edges));
   }, [edges]);
 

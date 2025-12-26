@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Image from "next/image";
+import EditRecruitmentFlow from "../edit/EditRecruitmentFlow";
 
 /* ============================
    Types
@@ -85,6 +86,7 @@ const ConfigSection = ({
 
 const RecruitmentFlowDetails: React.FC = () => {
   const job = useSelector(selectCurrentJob);
+  const [editMode, setEditMode] = useState(false);
 
   if (!job?.post_Steps?.length) return null;
 
@@ -98,7 +100,8 @@ const RecruitmentFlowDetails: React.FC = () => {
         py: 1.5,
       }}
     >
-      <Box
+      {editMode && <EditRecruitmentFlow onCancel={() => setEditMode(false)}/>}
+      {!editMode && <><Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -130,6 +133,7 @@ const RecruitmentFlowDetails: React.FC = () => {
         <Button
           variant="outlined"
           fullWidth
+          onClick={() => setEditMode(true)}
           startIcon={
             <Image src="/icons/edit.svg" alt="edit" width={20} height={20} />
           }
@@ -154,6 +158,7 @@ const RecruitmentFlowDetails: React.FC = () => {
         </Button>
       </Box>
       <PipelineStepsAccordion steps={job.post_Steps} />
+      </>}
     </Box>
   );
 };

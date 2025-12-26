@@ -6,6 +6,7 @@ const connectionSchema = new mongoose.Schema(
     source: String,
     target: String,
     type: String,
+    sourceHandle: String, // "yes" | "no" | undefined
   },
   { _id: false }
 );
