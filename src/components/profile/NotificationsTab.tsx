@@ -20,7 +20,9 @@ import {
   createNotification,
   fetchArchivedNotifications,
   selectArchivedNotifications,
-  selectArchivedLoading
+  selectArchivedLoading,
+  selectArchivedCount,
+  selectNonArchivedCount
 } from '@/store/slices/notificationSlice';
 
 interface NotificationsTabProps {
@@ -45,6 +47,8 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
   // Archived notifications from Redux
   const archivedNotifications = useSelector(selectArchivedNotifications);
   const archivedLoading = useSelector(selectArchivedLoading);
+  const archivedCount = useSelector(selectArchivedCount);
+  const nonArchivedCount = useSelector(selectNonArchivedCount);
 
   // Fetch archived notifications when switching to archived tab
   React.useEffect(() => {
@@ -111,22 +115,6 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                 color={isConnected ? 'success' : 'error'}
                 sx={{ fontWeight: 600 }}
               />
-              {/* Test Notification Button */}
-              <Button
-                size="small"
-                startIcon={<SendIcon />}
-                onClick={handleSendTestNotification}
-                sx={{
-                  textTransform: 'none',
-                  color: '#10b981',
-                  fontWeight: 600,
-                  '&:hover': {
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  },
-                }}
-              >
-                Send Test
-              </Button>
               {/* Mark All As Read Button */}
               {unreadNotifications > 0 && (
                 <Button
@@ -186,8 +174,8 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
               },
             }}
           >
-            <Tab label={`Active (${notifications.length})`} />
-            <Tab label={`Archived (${archivedNotifications.length})`} />
+            <Tab label={`Active (${nonArchivedCount || notifications.length})`} />
+            <Tab label={`Archived (${archivedCount || archivedNotifications.length})`} />
           </Tabs>
         </Box>
 
