@@ -81,11 +81,23 @@ export const fetchNotifications = createAsyncThunk(
       const data = await response.json();
       console.log('📦 Raw API response:', data);
 
-      // Backend returns { notifications: [...], unreadCount: number }
-      // Handle both formats for backwards compatibility
-      const notificationsArray = data.notifications || (Array.isArray(data) ? data : []);
+      // New API format: { nonArchived: { notifications: [...] }, archived: { notifications: [...] }, unreadCount: number }
+      // Handle both old and new formats for backwards compatibility
+      let notificationsArray = [];
 
-      console.log('📋 Notifications array length:', notificationsArray.length);
+      if (data.nonArchived && Array.isArray(data.nonArchived.notifications)) {
+        // New format with nonArchived/archived structure
+        notificationsArray = data.nonArchived.notifications;
+        console.log('📋 Using new API format - nonArchived notifications:', notificationsArray.length);
+      } else if (data.notifications) {
+        // Old format with notifications array
+        notificationsArray = data.notifications;
+        console.log('📋 Using old API format - notifications:', notificationsArray.length);
+      } else if (Array.isArray(data)) {
+        // Fallback: direct array
+        notificationsArray = data;
+        console.log('📋 Using array format:', notificationsArray.length);
+      }
 
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
@@ -242,9 +254,9 @@ export const fetchArchivedNotifications = createAsyncThunk(
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-      console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetArchivedNotifications`);
+      console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
 
-      const response = await fetch(`${apiUrl}/notification-system/GetArchivedNotifications`, {
+      const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
         headers: getApiHeaders(),
       });
 
@@ -259,7 +271,22 @@ export const fetchArchivedNotifications = createAsyncThunk(
       const data = await response.json();
       console.log('📦 Raw archived API response:', data);
 
-      const notificationsArray = data.notifications || (Array.isArray(data) ? data : []);
+      // New API format: { archived: { notifications: [...] } }
+      let notificationsArray = [];
+
+      if (data.archived && Array.isArray(data.archived.notifications)) {
+        // New format with archived structure
+        notificationsArray = data.archived.notifications;
+        console.log('📋 Using new API format - archived notifications:', notificationsArray.length);
+      } else if (data.notifications) {
+        // Old format fallback
+        notificationsArray = data.notifications;
+        console.log('📋 Using old API format - notifications:', notificationsArray.length);
+      } else if (Array.isArray(data)) {
+        // Fallback: direct array
+        notificationsArray = data;
+        console.log('📋 Using array format:', notificationsArray.length);
+      }
 
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
