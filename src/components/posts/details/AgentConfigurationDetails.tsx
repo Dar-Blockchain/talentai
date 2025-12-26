@@ -5,7 +5,6 @@ import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import Image from "next/image";
-import EditAgentConfiguration from "../edit/EditAgentConfiguration";
 
 type AgentConfig = {
   thresholdPercent: number;
@@ -43,10 +42,13 @@ const InfoChip = ({ label }: { label: string }) => (
    Component
 ============================ */
 
-const AgentConfigurationDetails: React.FC = () => {
+interface Props {
+  onEdit: () => void
+}
+
+const AgentConfigurationDetails: React.FC<Props> = ({onEdit}) => {
   const job = useSelector(selectCurrentJob);
   const config = React.useMemo(() => job?.agentConfig, [job]);
-  const [editMode, setEditMode] = useState(false);
 
   if (!config) return;
 
@@ -60,11 +62,7 @@ const AgentConfigurationDetails: React.FC = () => {
         py: 1.5,
       }}
     >
-      {editMode && (
-        <EditAgentConfiguration onCancel={() => setEditMode(false)} />
-      )}
-
-      {!editMode && <><Box
+<Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -135,7 +133,7 @@ const AgentConfigurationDetails: React.FC = () => {
         <Button
           variant="outlined"
           fullWidth
-          onClick={() => setEditMode(true)}
+          onClick={onEdit}
           startIcon={
             <Image src="/icons/edit.svg" alt="edit" width={20} height={20} />
           }
@@ -225,7 +223,7 @@ const AgentConfigurationDetails: React.FC = () => {
         <InfoChip label={`Agent lifetime · ${config.agentLifetimeDays} days`} />
         <InfoChip label={`Bid lifetime · ${config.bidLifetimeDays} days`} />
       </Stack>
-      </>}
+      
     </Box>
   );
 };

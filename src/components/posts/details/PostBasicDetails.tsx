@@ -26,12 +26,14 @@ import { SkillChip } from "../create/steps/post-details-step/PostPreview";
 import DeletePostModal from "../delete/DeletePostModal";
 import { useDeletePost } from "../delete/useDeletePost";
 import { useToast } from "@/hooks/useToast";
-import EditPostDetails from "../edit/EditPostDetails";
 
-const PostBasicDetails: React.FC = () => {
+interface Props {
+  onEdit: () => void
+}
+
+const PostBasicDetails: React.FC<Props> = ({onEdit}) => {
   const { showToast } = useToast();
   const job = useSelector(selectCurrentJob);
-  const [editMode, setEditMode] = useState(false);
 
   const displaySkills = React.useMemo(() => getPostSkills(job), [job]);
 
@@ -62,9 +64,6 @@ const PostBasicDetails: React.FC = () => {
         py: 1.5,
       }}
     >
-      {editMode && <EditPostDetails onCancel={() => setEditMode(false)} />}
-      {!editMode && (
-        <>
           <Box
             sx={{
               display: "flex",
@@ -146,7 +145,7 @@ const PostBasicDetails: React.FC = () => {
                 <Button
                   variant="outlined"
                   fullWidth
-                  onClick={() => setEditMode(true)}
+                  onClick={onEdit}
                   startIcon={
                     <Image
                       src="/icons/edit.svg"
@@ -455,8 +454,6 @@ const PostBasicDetails: React.FC = () => {
               </List>
             </Box>
           </Box>
-        </>
-      )}
       <DeletePostModal
         open={deletePost.open}
         onClose={deletePost.handleClose}
