@@ -38,7 +38,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
   const companyMenuItems: MenuItem[] = [
     { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
-    { id: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
     // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 

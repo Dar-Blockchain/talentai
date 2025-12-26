@@ -90,7 +90,7 @@ const ProfileSettingsPage: React.FC = () => {
               />
             )}
 
-            {activeTab === 'notifications' && (
+            {activeTab === 'notifications' && profile.profileType !== 'Company' && (
               <NotificationsTab />
             )}
 

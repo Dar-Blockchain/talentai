@@ -375,35 +375,37 @@ const HeaderDashboard = () => {
                 onPurchase={handleOpenModal}
               />
 
-              {/* Notification Bell */}
-              <IconButton
-                onClick={handleNotificationClick}
-                sx={{
-                  backgroundColor: "white",
-                  borderRadius: "50%",
-                  width: 40,
-                  height: 40,
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-                  "&:hover": {
-                    backgroundColor: "#f9fafb",
-                  },
-                }}
-              >
-                <Badge
-                  badgeContent={unreadCount}
-                  color="error"
+              {/* Notification Bell - Only for Candidates */}
+              {!isCompany && (
+                <IconButton
+                  onClick={handleNotificationClick}
                   sx={{
-                    "& .MuiBadge-badge": {
-                      backgroundColor: "#f5576c",
-                      color: "white",
-                      fontWeight: 700,
-                      fontSize: "0.75rem",
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                    width: 40,
+                    height: 40,
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                    "&:hover": {
+                      backgroundColor: "#f9fafb",
                     },
                   }}
                 >
-                  <NotificationsIcon sx={{ color: "#6b7280", fontSize: 20 }} />
-                </Badge>
-              </IconButton>
+                  <Badge
+                    badgeContent={unreadCount}
+                    color="error"
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        backgroundColor: "#f5576c",
+                        color: "white",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                      },
+                    }}
+                  >
+                    <NotificationsIcon sx={{ color: "#6b7280", fontSize: 20 }} />
+                  </Badge>
+                </IconButton>
+              )}
 
               {/* Avatar */}
               <Box
@@ -508,17 +510,19 @@ const HeaderDashboard = () => {
         <LogoutButton onClick={handleLogout} isLoading={isLoggingOut} fullWidth />
       </Drawer>
 
-      {/* Notification Dropdown */}
-      <NotificationDropdown
-        anchorEl={notificationAnchor}
-        open={Boolean(notificationAnchor)}
-        onClose={handleNotificationClose}
-        notifications={notifications}
-        onMarkAsRead={markAsRead}
-        onMarkAllAsRead={markAllAsRead}
-        onViewAll={handleViewAllNotifications}
-        onArchive={archive}
-      />
+      {/* Notification Dropdown - Only for Candidates */}
+      {!isCompany && (
+        <NotificationDropdown
+          anchorEl={notificationAnchor}
+          open={Boolean(notificationAnchor)}
+          onClose={handleNotificationClose}
+          notifications={notifications}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onViewAll={handleViewAllNotifications}
+          onArchive={archive}
+        />
+      )}
 
       <TokenPurchaseModal />
     </>
