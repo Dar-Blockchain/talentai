@@ -1,6 +1,6 @@
 "use client";
 import { Box, Button, Tooltip, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   useNodesState,
   useEdgesState,
@@ -17,8 +17,6 @@ import { AppDispatch } from "@/store/store";
 import {
   postRecruitmentSteps,
   selectCurrentJob,
-  setFlowEdges,
-  setFlowNodes,
 } from "@/store/slices/postSlice";
 import SidebarMenu from "../create/steps/recruitment-flow-step/SidebarMenu";
 import { nodeTypes } from "../create/steps/recruitment-flow-step/CustomNode";
@@ -111,10 +109,11 @@ const EditRecruitmentFlow: React.FC<EditRecruitmentFlowProps> = ({
   }, [selectedNodes, setNodes, setEdges]);
 
   const handleSave = async () => {
+    const steps = buildRecruitmentSteps(nodes, edges);
     await dispatch(
       postRecruitmentSteps({
         postId: job?._id,
-        steps: buildRecruitmentSteps(nodes, edges),
+        steps,
       })
     ).unwrap();
     onCancel();

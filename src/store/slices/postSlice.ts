@@ -119,7 +119,7 @@ const initialState: PostState = {
   updatePostStatus: {
     loading: false,
     error: null,
-  }
+  },
 };
 
 export const savePost = createAsyncThunk(
@@ -303,10 +303,18 @@ export const postRecruitmentSteps = createAsyncThunk(
 
 // Async thunk to fetch company posts (my posts)
 export const fetchMyPosts = createAsyncThunk(
-  'post/fetchMyPosts',
-  async (params: { page?: number; limit?: number; search?: string; sort?: string } = {}, { rejectWithValue }) => {
+  "post/fetchMyPosts",
+  async (
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      sort?: string;
+    } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const { page = 1, limit = 10, search = '', sort = 'newest' } = params;
+      const { page = 1, limit = 10, search = "", sort = "newest" } = params;
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("api_token="))
@@ -346,7 +354,7 @@ export const fetchMyPosts = createAsyncThunk(
           totalPages: data.totalPages || 1,
           hasNextPage: data.hasNextPage || false,
           hasPrevPage: data.hasPrevPage || false,
-        }
+        },
       };
     } catch (error: any) {
       return rejectWithValue(
@@ -363,15 +371,28 @@ const ongoingFetches = new Map<string, Promise<any>>();
 export const fetchJobMatches = createAsyncThunk(
   "post/fetchJobMatches",
   async (
-    { selectedJobId, page = 1, limit = 10 }: { selectedJobId: string; page?: number; limit?: number },
+    {
+      selectedJobId,
+      page = 1,
+      limit = 10,
+    }: { selectedJobId: string; page?: number; limit?: number },
     { rejectWithValue }
   ) => {
     const fetchKey = `${selectedJobId}-${page}-${limit}`;
-    console.log('🚀 [fetchJobMatches] Thunk executing for job:', selectedJobId, 'page:', page, 'key:', fetchKey);
+    console.log(
+      "🚀 [fetchJobMatches] Thunk executing for job:",
+      selectedJobId,
+      "page:",
+      page,
+      "key:",
+      fetchKey
+    );
 
     // If already fetching this exact request, wait for it
     if (ongoingFetches.has(fetchKey)) {
-      console.log('⚠️ [fetchJobMatches] Duplicate thunk call detected, waiting for existing fetch');
+      console.log(
+        "⚠️ [fetchJobMatches] Duplicate thunk call detected, waiting for existing fetch"
+      );
       return ongoingFetches.get(fetchKey)!;
     }
 
@@ -389,7 +410,10 @@ export const fetchJobMatches = createAsyncThunk(
           limit: limit.toString(),
         });
 
-        console.log('📡 [fetchJobMatches] Making API call to:', `matching/jobs/${selectedJobId}/matches?${queryParams}`);
+        console.log(
+          "📡 [fetchJobMatches] Making API call to:",
+          `matching/jobs/${selectedJobId}/matches?${queryParams}`
+        );
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches?${queryParams}`,
@@ -442,7 +466,7 @@ export const fetchJobMatches = createAsyncThunk(
 
         // Clean up the ongoing fetch
         ongoingFetches.delete(fetchKey);
-        console.log('🧹 [fetchJobMatches] Cleaned up fetch key:', fetchKey);
+        console.log("🧹 [fetchJobMatches] Cleaned up fetch key:", fetchKey);
 
         // Return matches with pagination data
         return {
@@ -451,15 +475,22 @@ export const fetchJobMatches = createAsyncThunk(
             total: data.pagination?.totalMatches || matches.length,
             page: data.pagination?.page || page,
             limit: data.pagination?.limit || limit,
-            totalPages: data.pagination?.totalPages || Math.ceil((data.pagination?.totalMatches || matches.length) / limit),
+            totalPages:
+              data.pagination?.totalPages ||
+              Math.ceil(
+                (data.pagination?.totalMatches || matches.length) / limit
+              ),
             hasNextPage: data.pagination?.hasNextPage || false,
             hasPrevPage: data.pagination?.hasPrevPage || false,
-          }
+          },
         };
       } catch (error: any) {
         // Clean up the ongoing fetch on error
         ongoingFetches.delete(fetchKey);
-        console.log('🧹 [fetchJobMatches] Cleaned up fetch key (error):', fetchKey);
+        console.log(
+          "🧹 [fetchJobMatches] Cleaned up fetch key (error):",
+          fetchKey
+        );
         return rejectWithValue(
           error.message || "An error occurred while fetching matches"
         );
@@ -468,7 +499,7 @@ export const fetchJobMatches = createAsyncThunk(
 
     // Store the promise and return it
     ongoingFetches.set(fetchKey, fetchPromise);
-    console.log('💾 [fetchJobMatches] Stored fetch promise for key:', fetchKey);
+    console.log("💾 [fetchJobMatches] Stored fetch promise for key:", fetchKey);
     return fetchPromise;
   }
 );
@@ -605,9 +636,7 @@ export const updatePostStatus = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Failed to update post status"
-        );
+        throw new Error(errorData.message || "Failed to update post status");
       }
 
       const data = await response.json();
@@ -617,13 +646,10 @@ export const updatePostStatus = createAsyncThunk(
         data,
       };
     } catch (error: any) {
-      return rejectWithValue(
-        error.message || "Error updating post status"
-      );
+      return rejectWithValue(error.message || "Error updating post status");
     }
   }
 );
-
 
 // Post slice
 const postSlice = createSlice({
@@ -631,14 +657,16 @@ const postSlice = createSlice({
   initialState,
   reducers: {
     resetSavePost: (state) => {
-      state.savePost.loading= false;
-    state.savePost.error= null;
-    state.savePost.savedPost= null;
-  },
-  updateAgentConfigInCurrentJob: (state, action: PayloadAction<any>) => {
-    state.currentJob.agentConfig = {...state.currentJob.agentConfig, ...action.payload};
-  },
-    
+      state.savePost.loading = false;
+      state.savePost.error = null;
+      state.savePost.savedPost = null;
+    },
+    updateAgentConfigInCurrentJob: (state, action: PayloadAction<any>) => {
+      state.currentJob.agentConfig = {
+        ...state.currentJob.agentConfig,
+        ...action.payload,
+      };
+    },
     clearError: (state) => {
       state.error = null;
       state.postStepsError = null;
@@ -703,7 +731,7 @@ const postSlice = createSlice({
         state.savePost.loading = false;
         state.savePost.error = null;
         state.savePost.savedPost = action.payload;
-        state.currentJob = action.payload; 
+        state.currentJob = action.payload;
       })
       .addCase(updatePost.rejected, (state, action) => {
         state.savePost.loading = false;
@@ -717,8 +745,9 @@ const postSlice = createSlice({
       .addCase(postRecruitmentSteps.fulfilled, (state, action) => {
         state.postStepsLoading = false;
         state.postStepsError = null;
-        if (action.payload.steps) {
-          state.steps = action.payload.steps;
+        if (action.payload.data) {
+          state.steps = action.payload.data;
+          state.currentJob.post_Steps = action.payload.data;
         }
       })
       .addCase(postRecruitmentSteps.rejected, (state, action) => {
@@ -810,18 +839,17 @@ const postSlice = createSlice({
         state.postPayment.error = action.payload as string;
       })
       // ---- UPDATE POST STATUS ----
-    .addCase(updatePostStatus.pending, (state) => {
-      state.updatePostStatus.loading = true;
-      state.updatePostStatus.error = null;
-    })
-    .addCase(updatePostStatus.fulfilled, (state, action) => {
-      state.updatePostStatus.loading = false;
-    })
-    .addCase(updatePostStatus.rejected, (state, action) => {
-      state.updatePostStatus.loading = false;
-      state.updatePostStatus.error = action.payload as string;
-    });
-
+      .addCase(updatePostStatus.pending, (state) => {
+        state.updatePostStatus.loading = true;
+        state.updatePostStatus.error = null;
+      })
+      .addCase(updatePostStatus.fulfilled, (state, action) => {
+        state.updatePostStatus.loading = false;
+      })
+      .addCase(updatePostStatus.rejected, (state, action) => {
+        state.updatePostStatus.loading = false;
+        state.updatePostStatus.error = action.payload as string;
+      });
   },
 });
 
@@ -837,7 +865,7 @@ export const {
   setFlowEdges,
   resetFlow,
   resetPostPayment,
-  updateAgentConfigInCurrentJob
+  updateAgentConfigInCurrentJob,
 } = postSlice.actions;
 
 // Export reducer
@@ -872,13 +900,13 @@ export const selectCurrentJobLoading = (state: { post: PostState }) =>
   state.post.currentJobLoading;
 export const selectCurrentJobError = (state: { post: PostState }) =>
   state.post.currentJobError;
-export const selectMyPostsPagination = (state: { post: PostState }) => state.post.myPostsPagination;
+export const selectMyPostsPagination = (state: { post: PostState }) =>
+  state.post.myPostsPagination;
 
-export const selectJobMatchesError = (state: { post: PostState }) => state.post.jobMatchesError;
-export const selectJobMatchesPagination = (state: { post: PostState }) => state.post.jobMatchesPagination;
-
-
-
+export const selectJobMatchesError = (state: { post: PostState }) =>
+  state.post.jobMatchesError;
+export const selectJobMatchesPagination = (state: { post: PostState }) =>
+  state.post.jobMatchesPagination;
 
 // Selector to get a job from myPosts by ID (if already loaded)
 export const selectJobById = (jobId: string) => (state: { post: PostState }) =>
@@ -888,7 +916,7 @@ export const selectRecommended = (state: { post: PostState }) => ({
   items: state.post.recommended.items,
   loading: state.post.recommended.loading,
   error: state.post.recommended.error,
-})
+});
 
 export const selectPostPayment = (state: { post: PostState }) => ({
   data: state.post.postPayment.data,
