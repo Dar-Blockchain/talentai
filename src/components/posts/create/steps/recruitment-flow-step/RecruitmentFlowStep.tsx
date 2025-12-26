@@ -86,12 +86,10 @@ const RecruitmentFlowStep = () => {
   }, [selectedNodes, setNodes, setEdges]);
 
   useEffect(() => {
-    console.log("Nodes updated:", nodes);
     dispatch(setFlowNodes(nodes));
   }, [nodes]);
 
   useEffect(() => {
-    console.log("Edges updated:", edges);
     dispatch(setFlowEdges(edges));
   }, [edges]);
 
