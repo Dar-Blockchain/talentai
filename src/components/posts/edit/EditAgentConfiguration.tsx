@@ -24,7 +24,7 @@ import {
   AgentConfigUpdatePayload,
   updateAgentConfig,
 } from "@/store/slices/agentConfigSlice";
-import { AGENT_CONFIG_NUMBER_FIELDS } from "@/constants/jobConstants";
+import { AGENT_CONFIG_NUMBER_FIELDS } from "@/constants/post";
 import { validateAgentConfig } from "@/validations/agentValidation";
 import { useToast } from "@/hooks/useToast";
 

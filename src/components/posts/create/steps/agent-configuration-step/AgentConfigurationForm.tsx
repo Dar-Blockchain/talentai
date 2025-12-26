@@ -98,21 +98,21 @@ const numberFields = [
 /* ------------------------------- STYLES ------------------------------- */
 
 const SectionTitle = styled(Typography)(() => ({
+  color: "rgba(84, 98, 116, 1)",
   fontWeight: 600,
-  color: "#0f172a",
-  fontSize: "1.1rem",
+  fontSize: "16px",
 }));
 
 const SubtleText = styled(Typography)(() => ({
   color: "#64748b",
-  fontSize: "0.85rem",
+  fontSize: "0.75rem",
   marginTop: 4,
 }));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
-    borderRadius: 10,
-    backgroundColor: "#fff",
+    height: "42px",
+    borderRadius: 4,
     "& fieldset": {
       borderColor: "#cbd5e1",
     },
@@ -129,6 +129,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     color: "#475569",
   },
   "& .MuiFormHelperText-root": {
+    marginLeft: "0!important",
     fontSize: "0.75rem",
     color: "#64748b",
   },
@@ -190,85 +191,6 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
 
   return (
     <Box sx={{ pb: 2, width: "100%" }}>
-      {/* ------------------ HEADER ------------------ */}
-      <Box
-        sx={{
-          p: 3,
-          borderRadius: 2,
-          backgroundColor: "#ffffff",
-          mb: 4,
-          border: "1px solid #eef0f2",
-        }}
-      >
-        {/* HEADER ROW */}
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          {/* ICON BLOCK */}
-          <Box
-            sx={{
-              width: 45,
-              height: 45,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(223, 246, 237, 1)",
-            }}
-          >
-            <SmartToyIcon sx={{ fontSize: 26, color: "#0ea5e9" }} />
-          </Box>
-
-          {/* TEXT BLOCK */}
-          <Box>
-            <Typography
-              sx={{
-                fontWeight: 600,
-                fontSize: "20px",
-                color: "#0f172a",
-              }}
-            >
-              Agent Control Center
-            </Typography>
-
-            <Typography
-              sx={{
-                fontSize: "13px",
-                color: "#64748b",
-                mt: 0.3,
-              }}
-            >
-              Configure bidding behavior, automation rules, and spending limits.
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* CHIPS ROW */}
-        <Box sx={{ mt: 2, display: "flex", gap: 1.2, flexWrap: "wrap" }}>
-          <Chip
-            label={value.isActive ? "Status: Active" : "Status: Paused"}
-            size="small"
-            sx={{
-              backgroundColor: value.isActive ? "#ecfeff" : "#f1f5f9",
-              color: value.isActive ? "#0e7490" : "#334155",
-              borderRadius: 2,
-            }}
-          />
-
-          <Chip
-            label={
-              value.autoSubmitTopMatch
-                ? "Automation: Enabled"
-                : "Automation: Manual"
-            }
-            size="small"
-            sx={{
-              backgroundColor: value.autoSubmitTopMatch ? "#eef2ff" : "#f1f5f9",
-              color: value.autoSubmitTopMatch ? "#4f46e5" : "#334155",
-              borderRadius: 2,
-            }}
-          />
-        </Box>
-      </Box>
-
       {/* ------------------ MAIN LAYOUT ------------------ */}
       <MainLayout>
         {/* Identity & Safeguards */}
@@ -279,7 +201,7 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
               title=""
               arrow
             >
-              <InfoOutlinedIcon sx={{ color: "#94a3b8" }} />
+              <InfoOutlinedIcon sx={{ color: "#94a3b8", width: "16px", height: "16px" }} />
             </Tooltip>
           </Box>
 
@@ -298,7 +220,7 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
         <Box>
           <Box display="flex" alignItems="center" gap={1}>
             <SectionTitle>Bidding Envelope</SectionTitle>
-            <AutoGraphIcon sx={{ color: "#94a3b8" }} />
+            <AutoGraphIcon sx={{ color: "#94a3b8", width: "16px", height: "16px" }} />
           </Box>
 
           <SubtleText>
@@ -317,7 +239,7 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
         <Box>
           <Box display="flex" alignItems="center" gap={1}>
             <SectionTitle>Lifecycle Policies</SectionTitle>
-            <TrendingUpIcon sx={{ color: "#94a3b8" }} />
+            <TrendingUpIcon sx={{ color: "#94a3b8", width: "16px", height: "16px" }} />
           </Box>
 
           <SubtleText>
