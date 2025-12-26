@@ -127,9 +127,9 @@ const Header = ({ logo, type }: HeaderProps) => {
   // Notification context - wrapped in try/catch for when provider not available
   let unreadCount = 0;
   let notificationsList: any[] = [];
-  let markAsRead = (id: string) => {};
-  let markAllAsRead = () => {};
-  let archive = (id: string) => {};
+  let markAsRead = (id: string) => { };
+  let markAllAsRead = () => { };
+  let archive = (id: string) => { };
   try {
     const notifications = useNotifications();
     unreadCount = notifications.unreadCount;
@@ -292,8 +292,8 @@ const Header = ({ logo, type }: HeaderProps) => {
             type === "jobseeker"
               ? "#4DD9A3"
               : type === "company"
-              ? "#BD85FF"
-              : "#180D00";
+                ? "#BD85FF"
+                : "#180D00";
           const active = isActive(item);
 
           return (
@@ -468,8 +468,8 @@ const Header = ({ logo, type }: HeaderProps) => {
                       type === "jobseeker"
                         ? "#4DD9A3"
                         : type === "company"
-                        ? "#BD85FF"
-                        : "#180D00";
+                          ? "#BD85FF"
+                          : "#180D00";
                     const active = isActive(item);
 
                     return (
@@ -483,15 +483,15 @@ const Header = ({ logo, type }: HeaderProps) => {
                           color: active
                             ? "#000"
                             : isLast
-                            ? lastItemColor
-                            : "#878786",
+                              ? lastItemColor
+                              : "#878786",
                           transition: "all 0.2s",
                           "&:hover": {
                             color: active
                               ? "#000"
                               : isLast
-                              ? lastItemColor
-                              : "#180D00",
+                                ? lastItemColor
+                                : "#180D00",
                             fontWeight: 600,
                           },
                         }}
@@ -602,170 +602,170 @@ const Header = ({ logo, type }: HeaderProps) => {
 
                   {/* Dropdown Menu */}
                   <Menu
-  anchorEl={anchorEl}
-  open={open}
-  onClose={handleClose}
-  PaperProps={{
-    elevation: 0,
-    sx: {
-      mt: 1.5,
-      minWidth: 270,
-      borderRadius: 3,
-      border: "1px solid rgba(0,0,0,0.05)",
-      backdropFilter: "blur(14px)",
-      background: "rgba(255, 255, 255, 0.9)",
-      boxShadow:
-        "0px 6px 18px rgba(0,0,0,0.08), 0px 12px 28px rgba(0,0,0,0.06)",
-      overflow: "hidden",
-      transition: "all 0.3s ease",
-      animation: "fadeIn 0.25s ease-in-out",
-      "@keyframes fadeIn": {
-        from: { opacity: 0, transform: "translateY(-6px)" },
-        to: { opacity: 1, transform: "translateY(0)" },
-      },
-      '& .MuiList-root': {
-        padding: 0, // ✅ Removes default menu padding
-      },
-      "& .MuiMenuItem-root": {
-        px: 2.5,
-        my: 1,
-        py: 1.4,
-        fontSize: "0.95rem",
-        fontWeight: 500,
-        color: "#1f2937",
-        borderRadius: 2,
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        transition: "all 0.25s ease",
-        "& svg": {
-          fontSize: "1.3rem",
-          color: "#6b7280",
-          transition: "color 0.2s ease, transform 0.2s ease",
-        },
-        "&:hover": {
-          background:
-            "linear-gradient(90deg, rgba(240,240,255,0.9) 0%, rgba(225,225,255,0.8) 100%)",
-          transform: "translateX(4px)",
-          "& svg": {
-            color: "#4F46E5",
-            transform: "scale(1.1)",
-          },
-        },
-      },
-    },
-  }}
-  transformOrigin={{ horizontal: "right", vertical: "top" }}
-  anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
->
-  {/* Header */}
-  <Box
-    sx={{
-      px: 2.2,
-      py: 1.8,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      borderBottom: "1px solid rgba(0,0,0,0.05)",
-      background: "linear-gradient(135deg, #f9fafb 0%, #eef2ff 100%)",
-    }}
-  >
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <Typography
-        variant="body2"
-        sx={{
-          fontWeight: 700,
-          fontSize: "0.95rem",
-          color: "#111827",
-          letterSpacing: "0.3px",
-        }}
-      >
-        {profile?.type === "Candidate"
-          ? "Candidate Account"
-          : "Company Account"}
-      </Typography>
-      <Typography
-        variant="caption"
-        sx={{
-          color: "#6b7280",
-          fontSize: "0.78rem",
-          mt: 0.3,
-        }}
-      >
-        Manage your profile and preferences
-      </Typography>
-    </Box>
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    PaperProps={{
+                      elevation: 0,
+                      sx: {
+                        mt: 1.5,
+                        minWidth: 270,
+                        borderRadius: 3,
+                        border: "1px solid rgba(0,0,0,0.05)",
+                        backdropFilter: "blur(14px)",
+                        background: "rgba(255, 255, 255, 0.9)",
+                        boxShadow:
+                          "0px 6px 18px rgba(0,0,0,0.08), 0px 12px 28px rgba(0,0,0,0.06)",
+                        overflow: "hidden",
+                        transition: "all 0.3s ease",
+                        animation: "fadeIn 0.25s ease-in-out",
+                        "@keyframes fadeIn": {
+                          from: { opacity: 0, transform: "translateY(-6px)" },
+                          to: { opacity: 1, transform: "translateY(0)" },
+                        },
+                        '& .MuiList-root': {
+                          padding: 0, // ✅ Removes default menu padding
+                        },
+                        "& .MuiMenuItem-root": {
+                          px: 2.5,
+                          my: 1,
+                          py: 1.4,
+                          fontSize: "0.95rem",
+                          fontWeight: 500,
+                          color: "#1f2937",
+                          borderRadius: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          transition: "all 0.25s ease",
+                          "& svg": {
+                            fontSize: "1.3rem",
+                            color: "#6b7280",
+                            transition: "color 0.2s ease, transform 0.2s ease",
+                          },
+                          "&:hover": {
+                            background:
+                              "linear-gradient(90deg, rgba(240,240,255,0.9) 0%, rgba(225,225,255,0.8) 100%)",
+                            transform: "translateX(4px)",
+                            "& svg": {
+                              color: "#4F46E5",
+                              transform: "scale(1.1)",
+                            },
+                          },
+                        },
+                      },
+                    }}
+                    transformOrigin={{ horizontal: "right", vertical: "top" }}
+                    anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                  >
+                    {/* Header */}
+                    <Box
+                      sx={{
+                        px: 2.2,
+                        py: 1.8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderBottom: "1px solid rgba(0,0,0,0.05)",
+                        background: "linear-gradient(135deg, #f9fafb 0%, #eef2ff 100%)",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "0.95rem",
+                            color: "#111827",
+                            letterSpacing: "0.3px",
+                          }}
+                        >
+                          {profile?.type === "Candidate"
+                            ? "Candidate Account"
+                            : "Company Account"}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "#6b7280",
+                            fontSize: "0.78rem",
+                            mt: 0.3,
+                          }}
+                        >
+                          Manage your profile and preferences
+                        </Typography>
+                      </Box>
 
-    {/* Profile Badge */}
-    <Box
-      sx={{
-        ml: 2,
-        px: 1.6,
-        py: 0.6,
-        borderRadius: "20px",
-        fontSize: "0.72rem",
-        fontWeight: 700,
-        letterSpacing: "0.4px",
-        textTransform: "uppercase",
-        backgroundColor:
-          profile?.type !== "Candidate"
-            ? "rgba(139, 92, 246, 0.12)"
-            : "rgba(16, 185, 129, 0.12)",
-        color: profile?.type !== "Candidate" ? "#7C3AED" : "#059669",
-        boxShadow:
-          profile?.type !== "Candidate"
-            ? "0 0 4px rgba(124,58,237,0.2)"
-            : "0 0 4px rgba(5,150,105,0.2)",
-      }}
-    >
-      {profile?.type}
-    </Box>
-  </Box>
+                      {/* Profile Badge */}
+                      <Box
+                        sx={{
+                          ml: 2,
+                          px: 1.6,
+                          py: 0.6,
+                          borderRadius: "20px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          letterSpacing: "0.4px",
+                          textTransform: "uppercase",
+                          backgroundColor:
+                            profile?.type !== "Candidate"
+                              ? "rgba(139, 92, 246, 0.12)"
+                              : "rgba(16, 185, 129, 0.12)",
+                          color: profile?.type !== "Candidate" ? "#7C3AED" : "#059669",
+                          boxShadow:
+                            profile?.type !== "Candidate"
+                              ? "0 0 4px rgba(124,58,237,0.2)"
+                              : "0 0 4px rgba(5,150,105,0.2)",
+                        }}
+                      >
+                        {profile?.type}
+                      </Box>
+                    </Box>
 
-  {/* Profile */}
-  <MenuItem
-    onClick={() =>
-      type === "company"
-        ? router.push("/dashboard/company")
-        : router.push("/dashboard/candidate")
-    }
-  >
-    <PersonIcon />
-    <ListItemText
-      primary="Profile"
-      primaryTypographyProps={{
-        fontWeight: 600,
-        fontSize: "0.93rem",
-      }}
-    />
-  </MenuItem>
+                    {/* Profile */}
+                    <MenuItem
+                      onClick={() =>
+                        type === "company"
+                          ? router.push("/dashboard/company")
+                          : router.push("/dashboard/candidate")
+                      }
+                    >
+                      <PersonIcon />
+                      <ListItemText
+                        primary="Profile"
+                        primaryTypographyProps={{
+                          fontWeight: 600,
+                          fontSize: "0.93rem",
+                        }}
+                      />
+                    </MenuItem>
 
-  {/* Divider */}
-  <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.05)" }} />
+                    {/* Divider */}
+                    <Divider sx={{ my: 0.5, borderColor: "rgba(0,0,0,0.05)" }} />
 
-  {/* Logout */}
-  <MenuItem
-    onClick={handleLogout}
-    sx={{
-      color: "#b91c1c",
-      "& svg": { color: "#b91c1c !important" },
-      "&:hover": {
-        background:
-          "linear-gradient(90deg, rgba(254,226,226,0.7) 0%, rgba(254,202,202,0.4) 100%)",
-        transform: "translateX(4px)",
-      },
-    }}
-  >
-    <LogoutIcon />
-    <ListItemText
-      primary="Logout"
-      primaryTypographyProps={{
-        fontWeight: 700,
-        fontSize: "0.92rem",
-      }}
-    />
-  </MenuItem>
-</Menu>
+                    {/* Logout */}
+                    <MenuItem
+                      onClick={handleLogout}
+                      sx={{
+                        color: "#b91c1c",
+                        "& svg": { color: "#b91c1c !important" },
+                        "&:hover": {
+                          background:
+                            "linear-gradient(90deg, rgba(254,226,226,0.7) 0%, rgba(254,202,202,0.4) 100%)",
+                          transform: "translateX(4px)",
+                        },
+                      }}
+                    >
+                      <LogoutIcon />
+                      <ListItemText
+                        primary="Logout"
+                        primaryTypographyProps={{
+                          fontWeight: 700,
+                          fontSize: "0.92rem",
+                        }}
+                      />
+                    </MenuItem>
+                  </Menu>
 
 
                 </Box>
@@ -795,7 +795,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() => type === "jobseeker" ? router.push('/signin') :window.open('https://www.youtube.com/watch?v=_wGI7HxQQHU', '_blank')}
+                    onClick={() => type === "jobseeker" ? router.push('/signin') : window.open('https://www.youtube.com/watch?v=_wGI7HxQQHU', '_blank')}
                     sx={{
                       backgroundColor: "#ffffff",
                       color: "#383A3D",

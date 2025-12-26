@@ -356,6 +356,9 @@ export const fetchMyPosts = createAsyncThunk(
   }
 );
 
+// Track ongoing fetches to prevent duplicates at thunk level
+const ongoingFetches = new Map<string, Promise<any>>();
+
 // Async thunk to fetch matches for a selected job post
 export const fetchJobMatches = createAsyncThunk(
   "post/fetchJobMatches",
@@ -363,84 +366,110 @@ export const fetchJobMatches = createAsyncThunk(
     { selectedJobId, page = 1, limit = 10 }: { selectedJobId: string; page?: number; limit?: number },
     { rejectWithValue, dispatch, getState }
   ) => {
-    try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("api_token="))
-        ?.split("=")[1];
+    const fetchKey = `${selectedJobId}-${page}-${limit}`;
+    console.log('🚀 [fetchJobMatches] Thunk executing for job:', selectedJobId, 'page:', page, 'key:', fetchKey);
 
-      // Build query parameters
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches?${queryParams}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch job matches");
-      }
-
-      const data = await response.json();
-      const matches = data && Array.isArray(data.matches) ? data.matches : [];
-
-      // Send notification to newly matched candidates
-      if (matches.length > 0) {
-        try {
-          // Get previous matches from state to detect new ones
-          const state = getState() as any;
-          const previousMatches = state.post?.jobMatches || [];
-          const previousIds = new Set(previousMatches.map((m: any) => m.candidateId || m._id));
-
-          // Find newly matched candidates
-          const newMatches = matches.filter((match: any) =>
-            !previousIds.has(match.candidateId || match._id)
-          );
-
-          if (newMatches.length > 0) {
-            const candidateIds = newMatches.map((match: any) => match.candidateId || match._id);
-            const jobTitle = data.jobTitle || 'a new job opportunity';
-
-            console.log('📢 [JobMatches] Sending notification to newly matched candidates:', candidateIds);
-
-            await dispatch(broadcastSystemNotification({
-              content: `🎯 Great news! Your profile matches ${jobTitle}. A company is looking for candidates with your skills. Check it out now!`,
-              recipientIds: candidateIds
-            })).unwrap();
-          }
-        } catch (notifError) {
-          console.error('❌ [JobMatches] Failed to send notification:', notifError);
-          // Don't fail the fetch if notification fails
-        }
-      }
-
-      // Return matches with pagination data
-      return {
-        matches,
-        pagination: {
-          total: data.pagination?.totalMatches || matches.length,
-          page: data.pagination?.page || page,
-          limit: data.pagination?.limit || limit,
-          totalPages: data.pagination?.totalPages || Math.ceil((data.pagination?.totalMatches || matches.length) / limit),
-          hasNextPage: data.pagination?.hasNextPage || false,
-          hasPrevPage: data.pagination?.hasPrevPage || false,
-        }
-      };
-    } catch (error: any) {
-      return rejectWithValue(
-        error.message || "An error occurred while fetching matches"
-      );
+    // If already fetching this exact request, wait for it
+    if (ongoingFetches.has(fetchKey)) {
+      console.log('⚠️ [fetchJobMatches] Duplicate thunk call detected, waiting for existing fetch');
+      return ongoingFetches.get(fetchKey)!;
     }
+
+    // Create the fetch promise and store it
+    const fetchPromise = (async () => {
+      try {
+        const token = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("api_token="))
+          ?.split("=")[1];
+
+        // Build query parameters
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+        });
+
+        console.log('📡 [fetchJobMatches] Making API call to:', `matching/jobs/${selectedJobId}/matches?${queryParams}`);
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches?${queryParams}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Failed to fetch job matches");
+        }
+
+        const data = await response.json();
+        const matches = data && Array.isArray(data.matches) ? data.matches : [];
+
+        // Send notification to newly matched candidates
+        if (matches.length > 0) {
+          try {
+            // Get previous matches from state to detect new ones
+            const state = getState() as any;
+            const previousMatches = state.post?.jobMatches || [];
+            const previousIds = new Set(previousMatches.map((m: any) => m.candidateId || m._id));
+
+            // Find newly matched candidates
+            const newMatches = matches.filter((match: any) =>
+              !previousIds.has(match.candidateId || match._id)
+            );
+
+            if (newMatches.length > 0) {
+              const candidateIds = newMatches.map((match: any) => match.candidateId || match._id);
+              const jobTitle = data.jobTitle || 'a new job opportunity';
+
+              console.log('📢 [JobMatches] Sending notification to newly matched candidates:', candidateIds);
+
+              await dispatch(broadcastSystemNotification({
+                content: `🎯 Great news! Your profile matches ${jobTitle}. A company is looking for candidates with your skills. Check it out now!`,
+                recipientIds: candidateIds
+              })).unwrap();
+            }
+          } catch (notifError) {
+            console.error('❌ [JobMatches] Failed to send notification:', notifError);
+            // Don't fail the fetch if notification fails
+          }
+        }
+
+        // Clean up the ongoing fetch
+        ongoingFetches.delete(fetchKey);
+        console.log('🧹 [fetchJobMatches] Cleaned up fetch key:', fetchKey);
+
+        // Return matches with pagination data
+        return {
+          matches,
+          pagination: {
+            total: data.pagination?.totalMatches || matches.length,
+            page: data.pagination?.page || page,
+            limit: data.pagination?.limit || limit,
+            totalPages: data.pagination?.totalPages || Math.ceil((data.pagination?.totalMatches || matches.length) / limit),
+            hasNextPage: data.pagination?.hasNextPage || false,
+            hasPrevPage: data.pagination?.hasPrevPage || false,
+          }
+        };
+      } catch (error: any) {
+        // Clean up the ongoing fetch on error
+        ongoingFetches.delete(fetchKey);
+        console.log('🧹 [fetchJobMatches] Cleaned up fetch key (error):', fetchKey);
+        return rejectWithValue(
+          error.message || "An error occurred while fetching matches"
+        );
+      }
+    })();
+
+    // Store the promise and return it
+    ongoingFetches.set(fetchKey, fetchPromise);
+    console.log('💾 [fetchJobMatches] Stored fetch promise for key:', fetchKey);
+    return fetchPromise;
   }
 );
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectProfile,
@@ -90,6 +90,10 @@ const DashboardCompany = () => {
   const [matchesPage, setMatchesPage] = useState(1);
   const [matchesPerPage] = useState(10);
 
+  // Track ongoing fetch to prevent duplicates with timestamp-based deduplication
+  const isFetchingMatchesRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
+
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
     if (profile?._id) {
@@ -144,7 +148,37 @@ const DashboardCompany = () => {
     setSelectedCandidate(null);
   };
 
+  // Memoized callback to prevent duplicate API calls
+  const handleViewMatches = useCallback((jobId: string) => {
+    const now = Date.now();
 
+    // Prevent duplicate calls within 1000ms or if already fetching
+    if (isFetchingMatchesRef.current) {
+      console.log('⚠️ Already fetching, skipping duplicate call');
+      return;
+    }
+
+    if (now - lastFetchTimeRef.current < 1000) {
+      console.log('⚠️ Called too soon (within 1s), skipping duplicate call');
+      return;
+    }
+
+    console.log('✅ Initiating fetchJobMatches for job:', jobId);
+    lastFetchTimeRef.current = now;
+    isFetchingMatchesRef.current = true;
+
+    setSelectedJob(jobId);
+    setMatchesPage(1);
+
+    dispatch(fetchJobMatches({ selectedJobId: jobId, page: 1, limit: matchesPerPage }))
+      .finally(() => {
+        // Reset the flag after completion
+        setTimeout(() => {
+          isFetchingMatchesRef.current = false;
+          console.log('🔓 Fetch lock released');
+        }, 500);
+      });
+  }, [dispatch, matchesPerPage]);
 
   return (
     <CompanyOnly>
@@ -175,11 +209,7 @@ const DashboardCompany = () => {
               myJobs={myJobs}
               isLoadingJobs={isLoadingJobs}
               jobsError={jobsError}
-              onViewMatches={(jobId) => {
-                setSelectedJob(jobId);
-                setMatchesPage(1);
-                dispatch(fetchJobMatches({ selectedJobId: jobId, page: 1, limit: matchesPerPage }));
-              }}
+              onViewMatches={handleViewMatches}
               onRefresh={fetchMyJobs}
               pagination={activeSection === "all" ? undefined : pagination}
               onPageChange={(page) => setCurrentPage(page)}

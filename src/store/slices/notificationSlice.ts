@@ -19,6 +19,9 @@ interface NotificationState {
   error: string | null;
   archivedLoading: boolean;
   archivedError: string | null;
+  nonArchivedCount: number;
+  archivedCount: number;
+  unreadCount: number;
 }
 
 const initialState: NotificationState = {
@@ -29,6 +32,9 @@ const initialState: NotificationState = {
   error: null,
   archivedLoading: false,
   archivedError: null,
+  nonArchivedCount: 0,
+  archivedCount: 0,
+  unreadCount: 0,
 };
 
 // Helper to format timestamps
@@ -81,11 +87,29 @@ export const fetchNotifications = createAsyncThunk(
       const data = await response.json();
       console.log('📦 Raw API response:', data);
 
-      // Backend returns { notifications: [...], unreadCount: number }
-      // Handle both formats for backwards compatibility
-      const notificationsArray = data.notifications || (Array.isArray(data) ? data : []);
+      // New API format: { nonArchived: { count, notifications: [...] }, archived: { count, notifications: [...] }, unreadCount: number }
+      // Handle both old and new formats for backwards compatibility
+      let notificationsArray = [];
+      let nonArchivedCount = 0;
+      let archivedCount = 0;
+      let unreadCount = 0;
 
-      console.log('📋 Notifications array length:', notificationsArray.length);
+      if (data.nonArchived && Array.isArray(data.nonArchived.notifications)) {
+        // New format with nonArchived/archived structure
+        notificationsArray = data.nonArchived.notifications;
+        nonArchivedCount = data.nonArchived.count || notificationsArray.length;
+        archivedCount = data.archived?.count || 0;
+        unreadCount = data.unreadCount || 0;
+        console.log('📋 Using new API format - nonArchived:', nonArchivedCount, 'archived:', archivedCount, 'unread:', unreadCount);
+      } else if (data.notifications) {
+        // Old format with notifications array
+        notificationsArray = data.notifications;
+        console.log('📋 Using old API format - notifications:', notificationsArray.length);
+      } else if (Array.isArray(data)) {
+        // Fallback: direct array
+        notificationsArray = data;
+        console.log('📋 Using array format:', notificationsArray.length);
+      }
 
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
@@ -98,7 +122,12 @@ export const fetchNotifications = createAsyncThunk(
       }));
 
       console.log('✅ Mapped notifications:', mapped);
-      return mapped;
+      return {
+        notifications: mapped,
+        nonArchivedCount,
+        archivedCount,
+        unreadCount,
+      };
     } catch (error: any) {
       console.error('❌ Error fetching notifications:', error);
       return rejectWithValue(error.message);
@@ -242,9 +271,9 @@ export const fetchArchivedNotifications = createAsyncThunk(
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-      console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetArchivedNotifications`);
+      console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
 
-      const response = await fetch(`${apiUrl}/notification-system/GetArchivedNotifications`, {
+      const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
         headers: getApiHeaders(),
       });
 
@@ -259,7 +288,26 @@ export const fetchArchivedNotifications = createAsyncThunk(
       const data = await response.json();
       console.log('📦 Raw archived API response:', data);
 
-      const notificationsArray = data.notifications || (Array.isArray(data) ? data : []);
+      // New API format: { archived: { count, notifications: [...] }, nonArchived: { count, notifications: [...] } }
+      let notificationsArray = [];
+      let archivedCount = 0;
+      let nonArchivedCount = 0;
+
+      if (data.archived && Array.isArray(data.archived.notifications)) {
+        // New format with archived structure
+        notificationsArray = data.archived.notifications;
+        archivedCount = data.archived.count || notificationsArray.length;
+        nonArchivedCount = data.nonArchived?.count || 0;
+        console.log('📋 Using new API format - archived:', archivedCount, 'nonArchived:', nonArchivedCount);
+      } else if (data.notifications) {
+        // Old format fallback
+        notificationsArray = data.notifications;
+        console.log('📋 Using old API format - notifications:', notificationsArray.length);
+      } else if (Array.isArray(data)) {
+        // Fallback: direct array
+        notificationsArray = data;
+        console.log('📋 Using array format:', notificationsArray.length);
+      }
 
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
@@ -273,7 +321,11 @@ export const fetchArchivedNotifications = createAsyncThunk(
       }));
 
       console.log('✅ Mapped archived notifications:', mapped);
-      return mapped;
+      return {
+        notifications: mapped,
+        archivedCount,
+        nonArchivedCount,
+      };
     } catch (error: any) {
       console.error('❌ Error fetching archived notifications:', error);
       return rejectWithValue(error.message);
@@ -325,7 +377,10 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.loading = false;
-        state.notifications = action.payload;
+        state.notifications = action.payload.notifications;
+        state.nonArchivedCount = action.payload.nonArchivedCount;
+        state.archivedCount = action.payload.archivedCount;
+        state.unreadCount = action.payload.unreadCount;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loading = false;
@@ -334,13 +389,19 @@ const notificationSlice = createSlice({
       // Mark as read
       .addCase(markNotificationAsRead.fulfilled, (state, action) => {
         const notification = state.notifications.find(n => n.id === action.payload);
-        if (notification) {
+        if (notification && !notification.isRead) {
           notification.isRead = true;
+          // Decrement unread count
+          if (state.unreadCount > 0) {
+            state.unreadCount -= 1;
+          }
         }
       })
       // Mark all as read
       .addCase(markAllNotificationsAsRead.fulfilled, (state) => {
         state.notifications.forEach(n => n.isRead = true);
+        // Reset unread count to 0
+        state.unreadCount = 0;
       })
       // Broadcast notification
       .addCase(broadcastSystemNotification.pending, (state) => {
@@ -356,8 +417,23 @@ const notificationSlice = createSlice({
       })
       // Archive notification
       .addCase(archiveNotification.fulfilled, (state, action) => {
+        // Find the notification before removing it to check if it was unread
+        const notification = state.notifications.find(n => n.id === action.payload);
+        const wasUnread = notification && !notification.isRead;
+
         // Remove the archived notification from the list
         state.notifications = state.notifications.filter(n => n.id !== action.payload);
+
+        // Update counts
+        if (state.nonArchivedCount > 0) {
+          state.nonArchivedCount -= 1;
+        }
+        state.archivedCount += 1;
+
+        // If archived notification was unread, decrement unread count
+        if (wasUnread && state.unreadCount > 0) {
+          state.unreadCount -= 1;
+        }
       })
       // Fetch archived notifications
       .addCase(fetchArchivedNotifications.pending, (state) => {
@@ -366,7 +442,9 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchArchivedNotifications.fulfilled, (state, action) => {
         state.archivedLoading = false;
-        state.archivedNotifications = action.payload;
+        state.archivedNotifications = action.payload.notifications;
+        state.archivedCount = action.payload.archivedCount;
+        state.nonArchivedCount = action.payload.nonArchivedCount;
       })
       .addCase(fetchArchivedNotifications.rejected, (state, action) => {
         state.archivedLoading = false;
@@ -388,8 +466,16 @@ export default notificationSlice.reducer;
 
 // Selectors
 export const selectNotifications = (state: { notifications: NotificationState }) => state.notifications.notifications;
-export const selectUnreadCount = (state: { notifications: NotificationState }) =>
-  state.notifications.notifications.filter(n => !n.isRead).length;
+
+// Unread count should only include non-archived notifications
+// Always calculate from the current state to reflect real-time changes
+export const selectUnreadCount = (state: { notifications: NotificationState }) => {
+  // Always calculate from non-archived notifications array to reflect local changes
+  return state.notifications.notifications.filter(n => !n.isRead).length;
+};
+
+export const selectNonArchivedCount = (state: { notifications: NotificationState }) => state.notifications.nonArchivedCount;
+export const selectArchivedCount = (state: { notifications: NotificationState }) => state.notifications.archivedCount;
 export const selectIsConnected = (state: { notifications: NotificationState }) => state.notifications.isConnected;
 export const selectNotificationsLoading = (state: { notifications: NotificationState }) => state.notifications.loading;
 export const selectArchivedNotifications = (state: { notifications: NotificationState }) => state.notifications.archivedNotifications;

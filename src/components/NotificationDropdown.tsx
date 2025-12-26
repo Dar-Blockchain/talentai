@@ -49,7 +49,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onViewAll,
   onArchive,
 }) => {
-  const displayNotifications = notifications;
+  // Count unread notifications
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
   const getNotificationIcon = (type: string) => {
     switch(type) {
       case 'success': return <CheckCircleIcon sx={{ fontSize: 20 }} />;
@@ -69,8 +71,8 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   };
 
   // Show only first 5 notifications
-  const displayedNotifications = displayNotifications.slice(0, 5);
-  const hasMore = displayNotifications.length > 5;
+  const displayedNotifications = notifications.slice(0, 5);
+  const hasMore = notifications.length > 5;
 
   return (
     <Popover
@@ -107,9 +109,27 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         alignItems: 'center',
         borderBottom: '1px solid #e5e7eb'
       }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>
-          Notifications
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>
+            Notifications
+          </Typography>
+          {unreadCount > 0 && (
+            <Box sx={{
+              backgroundColor: '#f5576c',
+              color: 'white',
+              borderRadius: '50%',
+              width: 20,
+              height: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+            }}>
+              {unreadCount}
+            </Box>
+          )}
+        </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
@@ -301,7 +321,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
               },
             }}
           >
-            {hasMore ? `View all ${displayNotifications.length} notifications` : 'View all notifications'}
+            {hasMore ? `View all ${notifications.length} notifications` : 'View all notifications'}
           </Button>
         </Box>
       )}
