@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import InterviewCard from './InterviewCard';
-import { getInterviewLevel } from '@/constants/interviewConstants';
+import { getInterviewLevel } from '@/constants/interview';
 
 interface InterviewGridViewProps {
   data: any[];

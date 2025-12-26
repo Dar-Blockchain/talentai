@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, TextField, Button, InputAdornment, Autocomplete, Paper } from '@mui/material';
 import Image from 'next/image';
-import { JOB_LOCATIONS } from '@/constants/jobConstants';
+import { JOB_LOCATIONS } from '@/constants/post';
 
 interface JobSearchBarProps {
   searchQuery: string;

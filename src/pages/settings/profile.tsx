@@ -18,9 +18,6 @@ import ContactInformationTab from '@/components/profile/ContactInformationTab';
 import SnackbarNotifications from '@/components/profile/SnackbarNotifications';
 import BackToDashboardButton from '@/components/profile/BackToDashboardButton';
 
-// Constants
-import { staticNotifications } from '@/constants/profileConstants';
-
 // Custom Hook
 import { useProfileManagement } from '@/hooks/useProfileManagement';
 

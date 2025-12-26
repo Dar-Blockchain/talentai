@@ -95,7 +95,7 @@ export const skillCategories = {
     "DeFi Marketing",
     "NFT Marketing",
     "Web3 Marketing",
-    "Community Management"
+    "Community Management",
   ],
   Marketing: [
     "SEO",
@@ -117,7 +117,7 @@ export const skillCategories = {
     "DeFi Marketing",
     "Blockchain Events",
     "Community Management",
-    "DAO Governance"
+    "DAO Governance",
   ],
   QA: [
     "Testing",
@@ -214,7 +214,6 @@ export const technicalSkillsList = [
   "Android",
   "Unity",
   "Unreal Engine",
-  // ...add more as needed
 ];
 
 export const softSkillNames = [
@@ -234,59 +233,59 @@ interface Skill {
     label: string;
   }>;
 }
-  export const softSkills: Skill[] = [
-    {
-      name: "Communication",
-      proficiencyLevel: 0,
-      requiresLanguage: true,
-      subcategories: [
-        { value: "verbal", label: "Verbal Communication" },
-        { value: "written", label: "Written Communication" },
-        { value: "presentation", label: "Presentation Skills" },
-        { value: "negotiation", label: "Negotiation Skills" },
-      ],
-    },
-    {
-      name: "Leadership",
-      proficiencyLevel: 0,
-      subcategories: [
-        { value: "team-management", label: "Team Management" },
-        { value: "decision-making", label: "Decision Making" },
-        { value: "delegation", label: "Task Delegation" },
-        { value: "motivation", label: "Team Motivation" },
-      ],
-    },
-    {
-      name: "Problem Solving",
-      proficiencyLevel: 0,
-      subcategories: [
-        { value: "analytical", label: "Analytical Thinking" },
-        { value: "critical", label: "Critical Thinking" },
-        { value: "creative", label: "Creative Problem Solving" },
-        { value: "strategic", label: "Strategic Planning" },
-      ],
-    },
-    {
-      name: "Teamwork",
-      proficiencyLevel: 0,
-      subcategories: [
-        { value: "collaboration", label: "Collaboration" },
-        { value: "conflict-resolution", label: "Conflict Resolution" },
-        { value: "adaptability", label: "Adaptability" },
-        { value: "cultural-awareness", label: "Cultural Awareness" },
-      ],
-    },
-    {
-      name: "Time Management",
-      proficiencyLevel: 0,
-      subcategories: [
-        { value: "prioritization", label: "Task Prioritization" },
-        { value: "scheduling", label: "Scheduling" },
-        { value: "deadline-management", label: "Deadline Management" },
-        { value: "work-life-balance", label: "Work-Life Balance" },
-      ],
-    },
-  ];
+export const softSkills: Skill[] = [
+  {
+    name: "Communication",
+    proficiencyLevel: 0,
+    requiresLanguage: true,
+    subcategories: [
+      { value: "verbal", label: "Verbal Communication" },
+      { value: "written", label: "Written Communication" },
+      { value: "presentation", label: "Presentation Skills" },
+      { value: "negotiation", label: "Negotiation Skills" },
+    ],
+  },
+  {
+    name: "Leadership",
+    proficiencyLevel: 0,
+    subcategories: [
+      { value: "team-management", label: "Team Management" },
+      { value: "decision-making", label: "Decision Making" },
+      { value: "delegation", label: "Task Delegation" },
+      { value: "motivation", label: "Team Motivation" },
+    ],
+  },
+  {
+    name: "Problem Solving",
+    proficiencyLevel: 0,
+    subcategories: [
+      { value: "analytical", label: "Analytical Thinking" },
+      { value: "critical", label: "Critical Thinking" },
+      { value: "creative", label: "Creative Problem Solving" },
+      { value: "strategic", label: "Strategic Planning" },
+    ],
+  },
+  {
+    name: "Teamwork",
+    proficiencyLevel: 0,
+    subcategories: [
+      { value: "collaboration", label: "Collaboration" },
+      { value: "conflict-resolution", label: "Conflict Resolution" },
+      { value: "adaptability", label: "Adaptability" },
+      { value: "cultural-awareness", label: "Cultural Awareness" },
+    ],
+  },
+  {
+    name: "Time Management",
+    proficiencyLevel: 0,
+    subcategories: [
+      { value: "prioritization", label: "Task Prioritization" },
+      { value: "scheduling", label: "Scheduling" },
+      { value: "deadline-management", label: "Deadline Management" },
+      { value: "work-life-balance", label: "Work-Life Balance" },
+    ],
+  },
+];
 
 export const hardSkillLevels = [
   { label: "Entry Level", value: 1 },

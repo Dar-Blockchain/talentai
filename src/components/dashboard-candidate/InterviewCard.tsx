@@ -17,7 +17,7 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PsychologyIcon from '@mui/icons-material/Psychology';
-import { extractInterviewData } from '@/constants/interviewConstants';
+import { extractInterviewData } from '@/utils/interview';
 
 interface InterviewCardProps {
   row: any;

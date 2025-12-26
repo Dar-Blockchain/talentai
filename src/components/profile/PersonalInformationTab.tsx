@@ -24,7 +24,7 @@ import {
   employmentTypes,
   companySizes,
   industries,
-} from '@/constants/profileConstants';
+} from '@/constants/profile';
 import ProfilePictureSection from './ProfilePictureSection';
 
 interface PersonalInformationTabProps {

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { JOB_LOCATIONS } from "@/constants/jobConstants";
+import { JOB_LOCATIONS } from "@/constants/post";
 
 type HeroSectionProps = {
   color?: string;

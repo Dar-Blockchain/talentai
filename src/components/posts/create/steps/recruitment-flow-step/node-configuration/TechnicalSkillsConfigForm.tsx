@@ -25,7 +25,7 @@ import {
   CATEGORIES,
   ALL_SKILLS,
 } from "@/components/preferences/data/skillsData";
-import { experienceLevels } from "@/constants/profileConstants";
+import { experienceLevels } from "@/constants/profile";
 
 // Map assessment levels to default star ratings
 const LEVEL_TO_STARS: Record<string, number> = {

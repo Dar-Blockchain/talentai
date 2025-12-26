@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { softSkills } from "@/constants/skills";
-import { experienceLevels } from "@/constants/profileConstants";
+import { experienceLevels } from "@/constants/profile";
 
 interface SoftSkillsConfig {
   softSkills: string[];
