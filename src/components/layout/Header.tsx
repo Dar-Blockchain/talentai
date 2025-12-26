@@ -508,43 +508,47 @@ const Header = ({ logo, type }: HeaderProps) => {
             {!isMobile ? (
               isAuthenticated && profile ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  {/* Notification Bell */}
-                  <IconButton
-                    onClick={handleNotificationClick}
-                    sx={{
-                      color: '#000',
-                      '&:hover': {
-                        backgroundColor: '#f5f5f5',
-                      },
-                    }}
-                  >
-                    <Badge
-                      badgeContent={unreadCount}
-                      color="error"
-                      sx={{
-                        '& .MuiBadge-badge': {
-                          backgroundColor: '#f5576c',
-                          color: 'white',
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
-                        },
-                      }}
-                    >
-                      <NotificationsIcon />
-                    </Badge>
-                  </IconButton>
+                  {/* Notification Bell - Only for Candidates */}
+                  {profile.type === "Candidate" && (
+                    <>
+                      <IconButton
+                        onClick={handleNotificationClick}
+                        sx={{
+                          color: '#000',
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5',
+                          },
+                        }}
+                      >
+                        <Badge
+                          badgeContent={unreadCount}
+                          color="error"
+                          sx={{
+                            '& .MuiBadge-badge': {
+                              backgroundColor: '#f5576c',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                            },
+                          }}
+                        >
+                          <NotificationsIcon />
+                        </Badge>
+                      </IconButton>
 
-                  {/* Notification Dropdown */}
-                  <NotificationDropdown
-                    anchorEl={notificationAnchorEl}
-                    open={notificationOpen}
-                    onClose={handleNotificationClose}
-                    notifications={notificationsList}
-                    onMarkAsRead={markAsRead}
-                    onMarkAllAsRead={markAllAsRead}
-                    onViewAll={handleViewAllNotifications}
-                    onArchive={archive}
-                  />
+                      {/* Notification Dropdown */}
+                      <NotificationDropdown
+                        anchorEl={notificationAnchorEl}
+                        open={notificationOpen}
+                        onClose={handleNotificationClose}
+                        notifications={notificationsList}
+                        onMarkAsRead={markAsRead}
+                        onMarkAllAsRead={markAllAsRead}
+                        onViewAll={handleViewAllNotifications}
+                        onArchive={archive}
+                      />
+                    </>
+                  )}
 
                   <Box
                     sx={{
