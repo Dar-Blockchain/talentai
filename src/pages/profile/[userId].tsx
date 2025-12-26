@@ -592,7 +592,7 @@ const ProfileByIdPage: React.FC = () => {
               title="Technical Badges"
               badges={technicalBadges}
               icon={EmojiEventsIcon}
-              gradientColors="linear-gradient(135deg, #f6d365 0%, #fda085 100%)"
+              gradientColors="#fda085"
               type="technical"
             />
           )}
@@ -614,7 +614,7 @@ const ProfileByIdPage: React.FC = () => {
               title="Technical Skills"
               skills={profile.skills || []}
               icon={CodeIcon}
-              gradientColors="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+              gradientColors="#764ba2"
               type="technical"
             />
           )}
@@ -625,7 +625,7 @@ const ProfileByIdPage: React.FC = () => {
               title="Soft Skills"
               skills={profile.softSkills || []}
               icon={PsychologyIcon}
-              gradientColors="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+              gradientColors="#f5576c"
               type="soft"
             />
           )}
