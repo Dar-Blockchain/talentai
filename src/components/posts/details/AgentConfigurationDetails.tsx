@@ -43,10 +43,10 @@ const InfoChip = ({ label }: { label: string }) => (
 ============================ */
 
 interface Props {
-  onEdit: () => void
+  onEdit: () => void;
 }
 
-const AgentConfigurationDetails: React.FC<Props> = ({onEdit}) => {
+const AgentConfigurationDetails: React.FC<Props> = ({ onEdit }) => {
   const job = useSelector(selectCurrentJob);
   const config = React.useMemo(() => job?.agentConfig, [job]);
 
@@ -62,7 +62,7 @@ const AgentConfigurationDetails: React.FC<Props> = ({onEdit}) => {
         py: 1.5,
       }}
     >
-<Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -223,7 +223,6 @@ const AgentConfigurationDetails: React.FC<Props> = ({onEdit}) => {
         <InfoChip label={`Agent lifetime · ${config.agentLifetimeDays} days`} />
         <InfoChip label={`Bid lifetime · ${config.bidLifetimeDays} days`} />
       </Stack>
-      
     </Box>
   );
 };
