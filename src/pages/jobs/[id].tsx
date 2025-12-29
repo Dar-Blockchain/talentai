@@ -79,7 +79,7 @@ const JobDetailPage: React.FC = () => {
       <Box sx={{ py: 4, flex: 1, px: 4, mx: 'auto' }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push("/jobs")}
+          onClick={() => router.push("/posts")}
           sx={{
             mb: 3,
             color: "#8310FF",
