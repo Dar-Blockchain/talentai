@@ -7,7 +7,7 @@ export interface User {
   _id: string;
   username: string;
   email: string;
-  role: 'admin' | 'company' | 'candidate';
+  role: 'Admin' | 'Company' | 'Candidate' | 'jury';
   isVerified: boolean;
   createdAt: string;
   lastLogin?: string;

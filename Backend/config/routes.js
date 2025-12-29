@@ -8,6 +8,7 @@ const swaggerDocument = require('../swagger.json');
 
 // Import all route modules
 const authRouter = require('../routes/authenticationRouter');
+const companyPermissionsRouter = require('../routes/companyPermissionsRouter');
 const dashboardRouter = require('../routes/dashboardRouter');
 const profileRouter = require('../routes/profileRouter');
 const evaluationRouter = require('../routes/evaluationRouter');
@@ -45,6 +46,7 @@ function registerRoutes(app) {
 
   // Authentication & Profile
   app.use('/auth', authRouter);
+  app.use('/admin', companyPermissionsRouter);
   app.use('/dashboard', dashboardRouter);
   app.use('/profiles', profileRouter);
 

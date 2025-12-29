@@ -49,6 +49,7 @@ import AdminSidebar from '@/components/dashboard-admin/AdminSidebar';
 import UserDetailsDialog from '@/components/dashboard-admin/UserDetailsDialog';
 import AssessmentDetailsDialog from '@/components/dashboard-admin/AssessmentDetailsDialog';
 import AssessmentResults from '@/components/dashboard-admin/AssessmentResults';
+import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashboard-admin/CompanyPermissionsModal';
 
 // Utilities
 import { getCountryName } from '@/utils/countryMappings';
@@ -127,7 +128,7 @@ interface User {
     _id: string;
     username: string;
     email: string;
-    role: 'admin' | 'company' | 'candidate';
+    role: 'Admin' | 'Company' | 'Candidate' | 'jury';
     isVerified: boolean;
     createdAt: string;
     lastLogin?: string;
@@ -307,8 +308,10 @@ const DashboardAdmin = () => {
     // Dialog states
     const [userDialogOpen, setUserDialogOpen] = useState(false);
     const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
+    const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+    const [selectedCompany, setSelectedCompany] = useState<User | null>(null);
 
     // Add filter state
     const [userSearch, setUserSearch] = useState('');
@@ -796,6 +799,37 @@ const DashboardAdmin = () => {
         </Box>
     );
 
+    // Handle permissions save
+    const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
+        try {
+            const token = localStorage.getItem('api_token');
+            if (!token) throw new Error('Authentication required');
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}admin/companies/${companyId}/permissions`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ permissions }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update permissions');
+            }
+
+            // Success - modal will handle UI feedback
+            console.log('Permissions updated successfully');
+        } catch (error) {
+            console.error('Error saving permissions:', error);
+            throw error; // Re-throw to let modal handle error display
+        }
+    };
+
     // User Management - Now using extracted component
     const renderUsers = () => (
         <UserManagement
@@ -810,6 +844,10 @@ const DashboardAdmin = () => {
             onUserDelete={(userId) => {
                 console.log('Delete user:', userId);
                 // Add delete logic here
+            }}
+            onManagePermissions={(user) => {
+                setSelectedCompany(user);
+                setPermissionsDialogOpen(true);
             }}
         />
     );
@@ -1102,6 +1140,17 @@ const DashboardAdmin = () => {
                 {/* Dialogs */}
                 {renderUserDialog()}
                 {renderAssessmentDialog()}
+
+                {/* Company Permissions Modal */}
+                <CompanyPermissionsModal
+                    open={permissionsDialogOpen}
+                    onClose={() => {
+                        setPermissionsDialogOpen(false);
+                        setSelectedCompany(null);
+                    }}
+                    company={selectedCompany}
+                    onSave={handleSavePermissions}
+                />
             </Box>
         </AdminOnly>
     );

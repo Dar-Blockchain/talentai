@@ -218,6 +218,12 @@ export default function SignIn() {
 
     const performRedirect = async () => {
       try {
+        // Admin users should always go to their dashboard, never to preferences
+        if (safeUser?.role === 'Admin') {
+          router.replace('/dashboard/admin');
+          return;
+        }
+
         if (returnUrl) {
           router.replace(
             hasProfile
@@ -303,7 +309,10 @@ export default function SignIn() {
       const returnUrl = router.query.returnUrl as string | undefined;
       const userHasProfile = hasValidProfile(safeProfile);
 
-      if (returnUrl) {
+      // Admin users should always go to their dashboard, never to preferences
+      if (safeUser.role === 'Admin') {
+        router.push('/dashboard/admin');
+      } else if (returnUrl) {
         router.push(
           userHasProfile
             ? decodeURIComponent(returnUrl)

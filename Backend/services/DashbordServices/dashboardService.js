@@ -271,7 +271,6 @@ module.exports.getCounts = async () => {
     const jobAssessmentCount = await JobAssessmentResult.countDocuments();
     const feedbackCount = await Feedback.countDocuments();
     const bidCount = await Bid.countDocuments();
-    const resumeCount = await Resume.countDocuments();
 
     // Agrégation pour compter toutes les compétences (hardSkills et softSkills)
     const totalSkillsResult = await Profile.aggregate([
@@ -362,7 +361,6 @@ module.exports.getCounts = async () => {
       jobAssessmentsWithScorePercentage: jobAssessmentWithScorePercentage, // <-- AJOUTÉ
       feedback: feedbackCount,
       bids: bidCount,
-      resumes: resumeCount,
       avgOverallScore: avgOverallScore,  // Moyenne des scores
       totalSkills: totalSkillsCount,     // Nombre total de compétences
       totalHardSkills: totalHardSkillsCount, // Nombre total de hard skills

@@ -30,6 +30,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Pending as PendingIcon,
   LocationOn as LocationIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 
 // Types
@@ -62,6 +63,7 @@ interface UserManagementProps {
   onUserSelect?: (user: User) => void;
   onUserEdit?: (user: User) => void;
   onUserDelete?: (userId: string) => void;
+  onManagePermissions?: (user: User) => void;
   initialFilters?: Partial<UserFilters>;
 }
 
@@ -74,6 +76,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
   onUserSelect,
   onUserEdit,
   onUserDelete,
+  onManagePermissions,
   initialFilters = {},
 }) => {
   // Auth
@@ -422,6 +425,22 @@ const UserManagement: React.FC<UserManagementProps> = ({
                           <EditIcon />
                         </IconButton>
                       </Tooltip>
+                      {user.role === 'Company' && onManagePermissions && (
+                        <Tooltip title="Manage Permissions">
+                          <IconButton
+                            size="small"
+                            onClick={() => onManagePermissions(user)}
+                            sx={{
+                              color: '#8310FF',
+                              '&:hover': {
+                                bgcolor: 'rgba(131, 16, 255, 0.1)',
+                              }
+                            }}
+                          >
+                            <SecurityIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       <Tooltip title="Delete User">
                         <IconButton size="small" color="error" onClick={() => onUserDelete?.(user._id)}>
                           <DeleteIcon />
