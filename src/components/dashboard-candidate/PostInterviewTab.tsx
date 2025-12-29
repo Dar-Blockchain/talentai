@@ -73,7 +73,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
 
   // Handlers
   const handleBrowseJobs = useCallback(() => {
-    router.push('/jobs');
+    router.push('/posts');
   }, [router]);
 
   const handleNavigate = useCallback(
