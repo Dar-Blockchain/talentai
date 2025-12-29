@@ -88,7 +88,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
     if (category) params.append('category', category);
 
     const queryString = params.toString();
-    router.push(`/jobs${queryString ? `?${queryString}` : ''}`);
+    router.push(`/posts${queryString ? `?${queryString}` : ''}`);
   };
 
   return (

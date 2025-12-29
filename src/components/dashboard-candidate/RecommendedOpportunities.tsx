@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -18,26 +18,18 @@ import {
   selectRecommended,
 } from "@/store/slices/postSlice";
 import { SearchOff } from "@mui/icons-material";
-import PostDetailsModal from "../posts/PostDetailsModal";
+import { useRouter } from "next/router";
 
 export default function RecommendedOpportunities() {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { items: recommendedPosts, loading } = useSelector(selectRecommended);
 
-  const [selectedJob, setSelectedJob] = useState<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     dispatch(fetchRecommendedPosts());
   }, [dispatch]);
-
-  const handleOpen = async (row: any) => {
-    setSelectedJob(row);
-  };
-
-  const handleClose = () => {
-    setSelectedJob(null);
-  };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -267,7 +259,7 @@ export default function RecommendedOpportunities() {
                     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
                   },
                 }}
-                onClick={() => handleOpen(item)}
+                onClick={() => router.push('/posts/' + item?._id)}
               >
                 <Box>
                   {/* Job Title */}
@@ -391,12 +383,6 @@ export default function RecommendedOpportunities() {
           })}
         </Box>
       )}
-
-      <PostDetailsModal
-        open={!!selectedJob}
-        selectedJob={selectedJob}
-        handleClose={handleClose}
-      />
     </Box>
   );
 }
