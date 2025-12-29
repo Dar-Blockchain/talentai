@@ -79,7 +79,7 @@ const JobCarousel = ({ jobs = [], loading, autoPlayInterval = 5000 }) => {
 
   // Memoized card click handler
   const handleCardClick = useCallback((jobId) => {
-    router.push(`/jobs/${jobId}`);
+    router.push(`/posts/${jobId}`);
   }, [router]);
 
   // Memoized arrow click handler to prevent propagation

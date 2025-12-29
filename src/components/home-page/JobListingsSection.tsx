@@ -181,7 +181,7 @@ const JobListingsSection = () => {
 
           <Button
             variant="contained"
-            onClick={() => router.push("/jobs")}
+            onClick={() => router.push("/posts")}
             sx={{
               backgroundColor: "rgba(163, 98, 239, 1)",
               color: "#ffffff",
