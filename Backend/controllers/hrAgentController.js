@@ -115,7 +115,7 @@ const hrAgentController = {
    */
   async initializeAgents(req, res) {
     try {
-      const { agentConfigs } = req.body;
+      const { agentConfigs, createAgentConfig, updateAgentConfig } = req.body;
 
       // Validate agentConfigs
       if (!agentConfigs || !Array.isArray(agentConfigs)) {
@@ -124,6 +124,10 @@ const hrAgentController = {
           message: "agentConfigs array is required",
         });
       }
+
+      // Store config operations for later use
+      const hasCreateConfig = createAgentConfig && typeof createAgentConfig === 'object';
+      const hasUpdateConfig = updateAgentConfig && typeof updateAgentConfig === 'object';
 
       // Check if user has admin role
       //   if (req.user.role !== 'admin') {
@@ -440,6 +444,42 @@ const hrAgentController = {
         delete agentResponse.hederaPrivateKey;
         delete agentResponse.privkey;
         createdAgents.push(agentResponse);
+
+        // Step 3: Handle AgentConfig creation or update if provided
+        if (hasCreateConfig || hasUpdateConfig) {
+          try {
+            const agentConfigService = require('../../services/Agent&AgendaServices/agentConfigService');
+            
+            const configData = {
+              agentId: savedAgent._id,
+              postId: config.postId,
+              ...createAgentConfig,
+              ...updateAgentConfig
+            };
+
+            let configResult;
+            
+            if (hasCreateConfig) {
+              console.log(`   📝 Step 3a: Creating AgentConfig...`);
+              configResult = await agentConfigService.createAgentConfig(configData);
+              console.log(`   ✅ AgentConfig created: ${configResult._id}`);
+            } else if (hasUpdateConfig) {
+              console.log(`   📝 Step 3b: Updating AgentConfig...`);
+              // Try to find existing config, if not found create it
+              const existingConfig = await agentConfigService.getAgentConfigByAgentId(savedAgent._id).catch(() => null);
+              if (existingConfig) {
+                configResult = await agentConfigService.updateAgentConfig(existingConfig._id, configData);
+                console.log(`   ✅ AgentConfig updated: ${configResult._id}`);
+              } else {
+                configResult = await agentConfigService.createAgentConfig(configData);
+                console.log(`   ✅ AgentConfig created: ${configResult._id}`);
+              }
+            }
+          } catch (configError) {
+            console.warn(`   ⚠️  Failed to handle AgentConfig: ${configError.message}`);
+            // Continue with agent creation even if config fails
+          }
+        }
 
         console.log(`   🎉 Agent ${config.name} fully initialized!\n`);
       }
