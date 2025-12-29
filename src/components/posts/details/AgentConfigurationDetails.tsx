@@ -1,27 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, Typography, Stack, Chip, Divider, Button } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import Image from "next/image";
-
-type AgentConfig = {
-  thresholdPercent: number;
-  bidBudgetMin: number;
-  bidBudgetMax: number;
-  bidStep: number;
-  maxCandidatesToBid: number;
-  agentLifetimeDays: number;
-  bidLifetimeDays: number;
-  autoSubmitTopMatch: boolean;
-  maxDailySpending: number;
-  isActive: boolean;
-};
-
-/* ============================
-   Small Reusable Chip
-============================ */
 
 const InfoChip = ({ label }: { label: string }) => (
   <Chip
@@ -37,10 +20,6 @@ const InfoChip = ({ label }: { label: string }) => (
     }}
   />
 );
-
-/* ============================
-   Component
-============================ */
 
 interface Props {
   onEdit: () => void;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import {
@@ -13,7 +13,6 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Image from "next/image";
-import EditRecruitmentFlow from "../edit/EditRecruitmentFlow";
 
 /* ============================
    Types
@@ -85,10 +84,11 @@ const ConfigSection = ({
 ============================ */
 
 interface Props {
-  onEdit: () => void
+  canEdit: boolean;
+  onEdit: () => void;
 }
 
-const RecruitmentFlowDetails: React.FC<Props> = ({ onEdit }) => {
+const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
   const job = useSelector(selectCurrentJob);
 
   if (!job?.post_Steps?.length) return null;
@@ -132,32 +132,34 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ onEdit }) => {
         >
           Recruitment Flow
         </Typography>
-        <Button
-          variant="outlined"
-          fullWidth
-          onClick={onEdit}
-          startIcon={
-            <Image src="/icons/edit.svg" alt="edit" width={20} height={20} />
-          }
-          sx={{
-            textTransform: "none",
-            fontWeight: 500,
-            fontSize: "13px",
-            py: 1.25,
-            borderRadius: "38px",
-            width: "230px",
-            height: "42px",
-            backgroundColor: "rgba(241, 252, 248, 1)",
-            borderColor: "rgba(77, 217, 163, 1)",
-            color: "rgba(77, 217, 163, 1)",
-            "&:hover": {
+        {canEdit && (
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={onEdit}
+            startIcon={
+              <Image src="/icons/edit.svg" alt="edit" width={20} height={20} />
+            }
+            sx={{
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "13px",
+              py: 1.25,
+              borderRadius: "38px",
+              width: "230px",
+              height: "42px",
+              backgroundColor: "rgba(241, 252, 248, 1)",
               borderColor: "rgba(77, 217, 163, 1)",
-              backgroundColor: "rgba(241, 252, 248, 0.8)",
-            },
-          }}
-        >
-          Edit Recruitment Flow
-        </Button>
+              color: "rgba(77, 217, 163, 1)",
+              "&:hover": {
+                borderColor: "rgba(77, 217, 163, 1)",
+                backgroundColor: "rgba(241, 252, 248, 0.8)",
+              },
+            }}
+          >
+            Edit Recruitment Flow
+          </Button>
+        )}
       </Box>
       <PipelineStepsAccordion steps={job?.post_Steps} />
     </Box>
