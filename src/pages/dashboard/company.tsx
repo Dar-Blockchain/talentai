@@ -118,8 +118,24 @@ const DashboardCompany = () => {
   };
 
   // Fetch job posts via Redux with pagination, search, and sort
-  const fetchMyJobs = (page = currentPage, limit = jobsPerPage, search = searchQuery, sort = sortBy) =>
-    dispatch(fetchMyPosts({ page, limit, search, sort: mapSortToBackend(sort) }));
+const fetchMyJobs = useCallback(
+  (
+    page = currentPage,
+    limit = jobsPerPage,
+    search = searchQuery,
+    sort = sortBy
+  ) => {
+    dispatch(
+      fetchMyPosts({
+        page,
+        limit,
+        search,
+        sort: mapSortToBackend(sort),
+      })
+    );
+  },
+  [dispatch, currentPage, jobsPerPage, searchQuery, sortBy]
+);
 
   useEffect(() => {
     fetchMyJobs();

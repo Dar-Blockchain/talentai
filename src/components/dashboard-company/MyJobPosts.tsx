@@ -16,7 +16,6 @@ import {
 import { styled } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { SearchOff, ArrowForward, ArrowBack } from "@mui/icons-material";
@@ -145,12 +144,6 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           severity: "success",
         }),
     });
-
-  // Handlers for job details modal
-  const handleViewJobDetails = (job: any) => {
-    setSelectedJobId(job._id);
-    setJobDetailsModalOpen(true);
-  };
 
   const handleCloseJobDetailsModal = () => {
     setJobDetailsModalOpen(false);
@@ -989,12 +982,6 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         </>
       )}
 
-      <JobDetailsDialog
-        open={jobDetailsModalOpen}
-        onClose={handleCloseJobDetailsModal}
-        job={selectedJobForDetails}
-        onRefresh={onRefresh}
-      />
       <DeletePostModal
         open={deletePost.open}
         onClose={handleCloseDeleteModal}

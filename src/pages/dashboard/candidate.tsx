@@ -367,9 +367,6 @@ export default function DashboardCandidate() {
                     profileSoftSkills={profile?.softSkills || []}
                   />
 
-                  {/* Token Balance Card */}
-                  {/* <TokenBalanceCard /> */}
-
                   <RecommendedOpportunities />
 
                   {/* User Information */}
