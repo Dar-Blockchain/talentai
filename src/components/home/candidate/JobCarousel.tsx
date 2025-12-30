@@ -62,7 +62,14 @@ const JobCarousel = ({ jobs = [], loading, autoPlayInterval = 5000 }) => {
     }, autoPlayInterval);
 
     return () => clearInterval(interval);
-  }, [loading, jobs.length, itemsPerSlide, isPaused, totalSlides, autoPlayInterval]);
+  }, [
+    loading,
+    jobs.length,
+    itemsPerSlide,
+    isPaused,
+    totalSlides,
+    autoPlayInterval,
+  ]);
 
   // Memoized navigation functions
   const prevSlide = useCallback(() => {
@@ -78,9 +85,12 @@ const JobCarousel = ({ jobs = [], loading, autoPlayInterval = 5000 }) => {
   }, []);
 
   // Memoized card click handler
-  const handleCardClick = useCallback((jobId) => {
-    router.push(`/posts/${jobId}`);
-  }, [router]);
+  const handleCardClick = useCallback(
+    (jobId) => {
+      router.push(`/posts/${jobId}`);
+    },
+    [router]
+  );
 
   // Memoized arrow click handler to prevent propagation
   const handleArrowClick = useCallback((e) => {
@@ -368,7 +378,7 @@ const JobCarousel = ({ jobs = [], loading, autoPlayInterval = 5000 }) => {
               aria-label={`Go to slide ${index + 1}`}
               tabIndex={0}
               onKeyPress={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   goToSlide(index);
                 }
               }}

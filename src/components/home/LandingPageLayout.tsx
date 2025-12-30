@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import Header from "@/components/layout/Header";
-import HeroSection from "@/components/home-page/HeroSection";
 import { ReactNode } from "react";
 import CompanyHeroSection from "./company/HeroSection";
 import CandidateHeroSection from "./candidate/HeroSection";

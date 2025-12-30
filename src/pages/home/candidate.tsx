@@ -1,10 +1,7 @@
-import LandingPageLayout from "@/components/home-page/LandingPageLayout";
-import HowItWorksSection from "@/components/home-page/HowItWorksSection";
-import CandidateRewardsSection from "@/components/home-page/CandidateRewardsSection";
-import JobListingsSection from "@/components/home-page/JobListingsSection";
-import ModernFooter from "@/components/home-page/ModernFooter";
-import TestimonialsSection from "@/components/home-page/TestimonialsSection";
-import FAQSection from "@/components/home-page/FAQSection";
+import LandingPageLayout from "@/components/home/LandingPageLayout";
+import HowItWorksSection from "@/components/home/candidate/HowItWorksSection";
+import CandidateRewardsSection from "@/components/home/candidate/CandidateRewardsSection";
+import JobListingsSection from "@/components/home/candidate/JobListingsSection";
 import Footer from "@/components/layout/Footer";
 
 const JobSeekerLanding: React.FC = () => {
@@ -20,11 +17,7 @@ const JobSeekerLanding: React.FC = () => {
       <HowItWorksSection />
       <CandidateRewardsSection />
       <JobListingsSection />
-      {/* <TestimonialsSection /> */}
-      {/* <FAQSection type="candidate"/> */}
-      {/* <ModernFooter /> */}
       <Footer />
-
     </LandingPageLayout>
   );
 };
