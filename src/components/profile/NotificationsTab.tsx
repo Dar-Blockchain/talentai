@@ -129,13 +129,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                     <Button
                       size="small"
                       startIcon={<MarkEmailReadIcon />}
-                      onClick={() => {
-                        markAllAsRead();
-                        // Archive all after marking all as read
-                        setTimeout(() => {
-                          archiveAll();
-                        }, 500);
-                      }}
+                      onClick={markAllAsRead}
                       sx={{
                         textTransform: 'none',
                         color: '#8310FF',
@@ -145,7 +139,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
                         },
                       }}
                     >
-                      Mark all read & archive
+                      Mark all as read
                     </Button>
                   )}
                   {/* Archive All Button */}
