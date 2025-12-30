@@ -1,6 +1,6 @@
 /**
  * Notification Sound Settings Component
- * Permet à l'utilisateur de configurer les sons de notification
+ * Allows users to configure notification sounds
  */
 
 import React from 'react';
@@ -47,13 +47,13 @@ const NotificationSoundSettings: React.FC = () => {
               mb: 1,
             }}
           >
-            Sons de Notification
+            Notification Sounds
           </Typography>
           <Typography
             variant="body2"
             sx={{ color: '#6b7280' }}
           >
-            Configurez les alertes sonores pour ne manquer aucune action importante
+            Configure sound alerts to never miss important notifications
           </Typography>
         </Box>
 
@@ -79,10 +79,10 @@ const NotificationSoundSettings: React.FC = () => {
             )}
             <Box>
               <Typography sx={{ fontWeight: 600, color: '#1f2937' }}>
-                Activer les sons
+                Enable sounds
               </Typography>
               <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                {enabled ? 'Sons activés pour toutes les notifications' : 'Sons désactivés'}
+                {enabled ? 'Sounds enabled for all notifications' : 'Sounds disabled'}
               </Typography>
             </Box>
           </Box>
@@ -146,7 +146,7 @@ const NotificationSoundSettings: React.FC = () => {
         >
           <Typography variant="body2" sx={{ color: '#1e40af', display: 'flex', alignItems: 'center', gap: 1 }}>
             <InfoIcon sx={{ fontSize: 18 }} />
-            Les sons se déclenchent automatiquement à chaque nouvelle notification, même lorsque l'onglet est en arrière-plan
+            Sounds play automatically with each new notification, even when the tab is in the background
           </Typography>
         </Box>
       </CardContent>
