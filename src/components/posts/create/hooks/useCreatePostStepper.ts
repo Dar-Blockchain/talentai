@@ -14,7 +14,11 @@ import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 
-import { buildRecruitmentSteps, getJobSkills, validatePipelineNodes } from "@/utils/postHelpers";
+import {
+  buildRecruitmentSteps,
+  getJobSkills,
+  validatePipelineNodes,
+} from "@/utils/postHelpers";
 import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
 
 import {
@@ -108,11 +112,14 @@ export const useCreatePostStepper = (
     try {
       await dispatch(
         createHRAgent({
-          jobId: savedPost?.jobData?._id,
-          companyName: profile?.companyDetails?.name || "Company",
-          postTitle: savedPost?.jobData?.jobDetails?.title,
-          companyId: profile?.userId,
-          jobSkills: getJobSkills(savedPost?.jobData),
+          agentData: {
+            jobId: savedPost?.jobData?._id,
+            companyName: profile?.companyDetails?.name || "Company",
+            postTitle: savedPost?.jobData?.jobDetails?.title,
+            companyId: profile?.userId,
+            jobSkills: getJobSkills(savedPost?.jobData),
+          },
+          configData: null,
         })
       ).unwrap();
 
@@ -160,7 +167,13 @@ export const useCreatePostStepper = (
 
         if (creationType === "ai") {
           setModalMode("matching");
-          await dispatch(fetchJobMatches({ selectedJobId: result.jobData._id, page: 1, limit: 10 })).unwrap();
+          await dispatch(
+            fetchJobMatches({
+              selectedJobId: result.jobData._id,
+              page: 1,
+              limit: 10,
+            })
+          ).unwrap();
           setModalMode("done");
           return;
         }

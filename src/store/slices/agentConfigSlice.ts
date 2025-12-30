@@ -16,7 +16,7 @@ export interface AgentConfigurationFormValues {
   isActive: boolean;
 }
 // Default config
-const DEFAULT_AGENT_CONFIG: AgentConfigurationFormValues = {
+export const DEFAULT_AGENT_CONFIG: AgentConfigurationFormValues = {
   agentId: "",
   postId: "",
   thresholdPercent: 80,

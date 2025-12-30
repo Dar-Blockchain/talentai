@@ -170,7 +170,17 @@ const PostDescription = () => {
         <TextField
           value={promptDescription}
           onChange={(e) => handleDescription(e.target.value)}
-          placeholder="Describe the role..."
+          placeholder={`Example: 
+We are seeking a Senior Full Stack Developer to join our dynamic team. The ideal candidate will have:
+Technical Requirements:
+- 5+ years of experience with React.js and Node.js
+- Strong proficiency in TypeScript and modern JavaScript
+Responsibilities:
+- Lead development of our core product features
+- Mentor junior developers and conduct code reviews
+Additional Skills:
+- Experience with CI/CD pipelines
+- Knowledge of Docker and Kubernetes`}
           multiline
           minRows={10}
           fullWidth
@@ -181,6 +191,9 @@ const PostDescription = () => {
             "& .MuiInputBase-input": {
               fontSize: "12px",
               fontWeight: 500,
+            },
+            "&::placeholder": {
+              whiteSpace: "pre-line",
             },
           }}
           FormHelperTextProps={{

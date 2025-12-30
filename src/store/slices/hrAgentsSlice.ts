@@ -54,63 +54,67 @@ const initialState: HRAgentsState = {
 // ----------------------------------------------------------------------
 export const createHRAgent = createAsyncThunk(
   "hrAgents/createHRAgent",
-  async (agentData: any, { rejectWithValue }) => {
+  async (
+    {
+      agentData,
+      configData,
+    }: {
+      agentData: any;
+      configData: any;
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
         return rejectWithValue("No authentication token found");
       }
       const agentName = `${agentData?.companyName}_${agentData?.companyId}${agentData?.postTitle}_${agentData?.jobId}`;
-       const avatarName = `${agentData?.companyName}_${agentData?.companyId}${agentData?.postTitle}_${agentData?.jobId}`;
-             const agentConfig = {
-         name: agentName,
-         postId: agentData?.jobId,
-         avatarName: avatarName,
-         role: "Technical Leadership Specialist",
-         description: `Agent of ${agentData?.companyName} for the ${agentData?.postTitle} Post ${agentData?.jobId}`,
-         Company: agentData?.companyId,
-         hcs11CustomProfile: {
-           agentPersonality: {
-             communicationStyle: "technical_analytical",
-             approachMethod: "systematic_deep_dive",
-             evaluationPhilosophy: "Focus on scalable architecture and clean code practices"
-           },
-           specializedCapabilities: [
-             "system_architecture_assessment",
-             "api_design_evaluation"
-           ],
-           evaluationFramework: {
-             primaryFocus: "backend_systems",
-             assessmentCriteria: [
-               "system_design_thinking",
-               "code_architecture"
-             ]
-           },
-           domainExpertise: {
-             primaryTechnologies: agentData?.jobSkills.length > 0 ? agentData?.jobSkills : [
-               "Node.js",
-               "Python",
-               "Java"
-             ],
-             specializations: [
-               "API_gateway_design",
-               "microservices"
-             ]
-           }
-         }
-       };
-const response = await axios.post(
-  `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/initialize`,
-  { 
-    agentConfigs: [agentConfig]
-  },
-  {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    }
-  }
-);
+      const avatarName = `${agentData?.companyName}_${agentData?.companyId}${agentData?.postTitle}_${agentData?.jobId}`;
+      const agentConfig = {
+        name: agentName,
+        postId: agentData?.jobId,
+        avatarName: avatarName,
+        role: "Technical Leadership Specialist",
+        description: `Agent of ${agentData?.companyName} for the ${agentData?.postTitle} Post ${agentData?.jobId}`,
+        Company: agentData?.companyId,
+        hcs11CustomProfile: {
+          agentPersonality: {
+            communicationStyle: "technical_analytical",
+            approachMethod: "systematic_deep_dive",
+            evaluationPhilosophy:
+              "Focus on scalable architecture and clean code practices",
+          },
+          specializedCapabilities: [
+            "system_architecture_assessment",
+            "api_design_evaluation",
+          ],
+          evaluationFramework: {
+            primaryFocus: "backend_systems",
+            assessmentCriteria: ["system_design_thinking", "code_architecture"],
+          },
+          domainExpertise: {
+            primaryTechnologies:
+              agentData?.jobSkills.length > 0
+                ? agentData?.jobSkills
+                : ["Node.js", "Python", "Java"],
+            specializations: ["API_gateway_design", "microservices"],
+          },
+        },
+      };
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/initialize`,
+        {
+          agentData: [agentConfig],
+          configData,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -270,7 +274,11 @@ const hrAgentsSlice = createSlice({
       })
       .addCase(fetchHRAgents.fulfilled, (state, action: PayloadAction<any>) => {
         state.agents.status = "succeeded";
-        state.agents.data = action.payload.results || action.payload.agents || action.payload.data || action.payload;
+        state.agents.data =
+          action.payload.results ||
+          action.payload.agents ||
+          action.payload.data ||
+          action.payload;
       })
       .addCase(fetchHRAgents.rejected, (state, action) => {
         state.agents.status = "failed";
