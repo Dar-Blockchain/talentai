@@ -101,7 +101,7 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
   const { profile } = useSelector((state: RootState) => state.auth);
 
   const initialValues = React.useMemo(() => {
-    if(!config) {
+    if (!config) {
       return DEFAULT_AGENT_CONFIG;
     }
     return {
@@ -181,15 +181,14 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
               data: values,
             })
           ).unwrap();
+          showToast({
+            message: "Agent saved successfully. The settings are now active.",
+            severity: "success",
+          });
         }
         dispatch(updateAgentConfigInCurrentJob(values));
         resetForm();
         onCancel();
-        showToast({
-          message:
-            "Agent configuration updated. The new settings are now active.",
-          severity: "success",
-        });
       }}
     >
       {({ values, isSubmitting, handleChange, handleSubmit, resetForm }) => (
