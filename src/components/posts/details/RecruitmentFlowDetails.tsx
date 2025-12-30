@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Image from "next/image";
+import { AssignmentLateOutlined } from "@mui/icons-material";
 
 /* ============================
    Types
@@ -91,7 +92,7 @@ interface Props {
 const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
   const job = useSelector(selectCurrentJob);
 
-  if (!job?.post_Steps?.length) return null;
+  // if (!job?.post_Steps?.length) return null;
 
   return (
     <Box
@@ -157,10 +158,73 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
               },
             }}
           >
-            Edit Recruitment Flow
+            {job?.post_Steps ? 'Edit Recruitment Flow' : 'Create Recruitment Flow'}
           </Button>
         )}
       </Box>
+      {!job?.post_Steps?.length && <Box
+  sx={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    py: 8,
+    px: 4,
+    backgroundColor: "rgba(62, 233, 167, 0.03)",
+    borderRadius: "8px",
+    border: "1px solid rgba(98, 111, 134, 0.18)",
+    textAlign: "center",
+  }}
+>
+  <Box
+    sx={{
+      mb: 3,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(76, 217, 163, 0.2)",
+      width: 100,
+      height: 100,
+      borderRadius: "50%",
+    }}
+  >
+    {/* Replace with a relevant recruitment flow icon */}
+    <AssignmentLateOutlined
+      sx={{ fontSize: 48, color: "rgba(19, 163, 108, 0.83)" }}
+    />
+  </Box>
+
+  <Typography
+    variant="h5"
+    sx={{
+      color: "rgba(19, 163, 108, 0.83)",
+      fontFamily: "Poppins",
+      fontWeight: 500,
+      fontSize: "20px",
+      lineHeight: "28px",
+      mb: 2,
+    }}
+  >
+    No Recruitment Flow Created
+  </Typography>
+
+  <Typography
+    variant="body1"
+    sx={{
+      color: "rgba(147, 147, 147, 1)",
+      maxWidth: "500px",
+      mb: 4,
+      fontFamily: "Poppins",
+      fontWeight: 400,
+      fontSize: "14px",
+      lineHeight: "25px",
+      textAlign: "center",
+    }}
+  >
+    You haven’t set up a recruitment flow yet. Create one to start managing your hiring process.
+  </Typography>
+</Box>
+}
       <PipelineStepsAccordion steps={job?.post_Steps} />
     </Box>
   );
