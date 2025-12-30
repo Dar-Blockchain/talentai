@@ -33,7 +33,6 @@ import {
   EmojiEvents as EmojiEventsIcon,
 } from '@mui/icons-material';
 import { getProfileById, selectProfileById, clearProfileById } from '@/store/slices/profileSlice';
-import HeaderDashboard from '@/components/layout/HeaderDashboard';
 import Footer from '@/components/layout/Footer';
 import ShareProfileModal from '@/components/profile/ShareProfileModal';
 import SkillsSection from '@/components/profile/SkillsSection';
@@ -50,14 +49,6 @@ const ProfileByIdPage: React.FC = () => {
   const { profile, loading, error } = useSelector(selectProfileById);
   const { profile: currentUserProfile } = useSelector((state: RootState) => state.profile);
   const [shareModalOpen, setShareModalOpen] = React.useState(false);
-
-  // Check if user is authenticated
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-
-  React.useEffect(() => {
-    const token = localStorage.getItem('api_token');
-    setIsAuthenticated(!!token);
-  }, []);
 
   // Determine if current user is viewing their own profile
   const isOwnProfile = currentUserProfile?._id && profile?._id && currentUserProfile._id === profile._id;
@@ -160,7 +151,6 @@ const ProfileByIdPage: React.FC = () => {
   if (error) {
     return (
       <>
-        {isAuthenticated && <HeaderDashboard />}
         <Container maxWidth="lg" sx={{ py: 4 }}>
           <Alert
             severity="error"
@@ -194,7 +184,6 @@ const ProfileByIdPage: React.FC = () => {
   if (loading || !profile || !profileData) {
     return (
       <>
-        {isAuthenticated && <HeaderDashboard />}
         {renderSkeleton()}
         <Footer />
       </>
@@ -255,8 +244,7 @@ const ProfileByIdPage: React.FC = () => {
         <meta name="keywords" content={`${fullName}, verified skills, blockchain credentials, ${topSkillsList}, professional profile, TalentAI`} />
         <meta name="author" content={fullName} />
       </Head>
-      {isAuthenticated && <HeaderDashboard />}
-      <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f7fa', pb: 4 }}>
+      <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f7fa', pb: 4, pt: 4 }}>
         <Container maxWidth="lg" sx={{ py: 4 }}>
           {/* Back Button */}
           <Box
