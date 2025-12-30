@@ -71,6 +71,13 @@ const userSchema = new mongoose.Schema(
     hederaPublicKey: { type: String, default: null },
     // Gas fee balance for transaction fees (in HBAR)
     gasFeeBalance: { type: Number, default: 0, min: 0 },
+    // Notifications relationship
+    notifications: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Notification",
+      },
+    ],
   },
   { timestamps: true }
 );

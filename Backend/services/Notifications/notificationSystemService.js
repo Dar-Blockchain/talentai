@@ -20,6 +20,17 @@ async function createSystemNotification(recipientId, content) {
 
   const notification = await Notification.createSystem(recipientId, content);
 
+  // Add notification reference to user
+  try {
+    await User.findByIdAndUpdate(
+      recipientId,
+      { $push: { notifications: notification._id } },
+      { new: true }
+    );
+  } catch (error) {
+    console.warn('Failed to add notification reference to user:', error.message || error);
+  }
+
   try {
     const io = socket.getIO();
     const roomName = String(recipientId);
@@ -53,6 +64,17 @@ async function createNotification(recipientId, content, type ) {
   });
 
   await notification.save();
+
+  // Add notification reference to user
+  try {
+    await User.findByIdAndUpdate(
+      recipientId,
+      { $push: { notifications: notification._id } },
+      { new: true }
+    );
+  } catch (error) {
+    console.warn('Failed to add notification reference to user:', error.message || error);
+  }
 
   try {
     const io = socket.getIO();
@@ -142,6 +164,18 @@ async function markAllAsRead(userId) {
 
 async function deleteNotification(notificationId, userId, userRole = null) {
   const notification = await getNotificationById(notificationId, userId, userRole);
+  
+  // Remove notification reference from user
+  try {
+    await User.findByIdAndUpdate(
+      notification.recipient,
+      { $pull: { notifications: notification._id } },
+      { new: true }
+    );
+  } catch (error) {
+    console.warn('Failed to remove notification reference from user:', error.message || error);
+  }
+  
   await notification.remove();
   // Emit deletion event
   try {
@@ -219,6 +253,17 @@ async function broadcastSystemNotification(content, recipientIds) {
       });
       await notif.save();
       notifications.push(notif);
+
+      // Add notification reference to user
+      try {
+        await User.findByIdAndUpdate(
+          user._id,
+          { $push: { notifications: notif._id } },
+          { new: true }
+        );
+      } catch (error) {
+        console.warn(`Failed to add notification reference for user ${user._id}:`, error.message || error);
+      }
 
       // Emit to user via Socket.IO
       try {

@@ -115,242 +115,22 @@ const hrAgentController = {
    */
   async initializeAgents(req, res) {
     try {
-      const { agentConfigs } = req.body;
+      const { agentData, configData } = req.body;
 
-      // Validate agentConfigs
-      if (!agentConfigs || !Array.isArray(agentConfigs)) {
+      // Validate agentData
+      if (!agentData || !Array.isArray(agentData)) {
         return res.status(400).json({
           success: false,
-          message: "agentConfigs array is required",
+          message: "agentData array is required",
         });
       }
 
-      // Check if user has admin role
-      //   if (req.user.role !== 'admin') {
-      //     return res.status(403).json({
-      //       success: false,
-      //       message: 'Access denied. Admin role required.'
-      //     });
-      //   }
+      // Check if configData is provided
+      const hasConfigData = configData && typeof configData === 'object';
 
-      // Check if agents already exist
-      // const existingAgents = await AgentModel.find();
-      // if (existingAgents.length > 0) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: 'HR agents already initialized'
-      //   });
-      // }
-
-      // Define the 6 HR validation agents with detailed HCS-11 custom profiles
-      // const agentConfigs = [
-      //   {
-      //     name: "Sinda-SoftSkill-Agent",
-      //     avatarName: "sinda",
-      //     role: "Soft Skills Specialist",
-      //     description: "Validates candidate soft skills and interpersonal abilities",
-      //     hcs11CustomProfile: {
-      //       agentPersonality: {
-      //         communicationStyle: "empathetic_analytical",
-      //         approachMethod: "behavioral_interview",
-      //         focusAreas: ["emotional_intelligence", "team_collaboration", "adaptability"],
-      //         evaluationPhilosophy: "Human connection drives professional success"
-      //       },
-      //       specializedCapabilities: {
-      //         psychometricAnalysis: true,
-      //         emotionalIntelligenceAssessment: true,
-      //         interpersonalDynamicsEvaluation: true,
-      //         softSkillsMapping: true,
-      //         culturalSensitivityAssessment: true
-      //       },
-      //       evaluationFramework: {
-      //         primaryMetrics: ["empathy_quotient", "communication_clarity", "team_integration"],
-      //         assessmentTools: ["behavioral_scenarios", "role_playing", "peer_feedback_simulation"],
-      //         scoringModel: "holistic_behavioral_assessment",
-      //         benchmarkStandards: ["industry_soft_skills", "team_dynamics", "leadership_readiness"]
-      //       },
-      //       domainExpertise: {
-      //         industries: ["technology", "healthcare", "finance", "education"],
-      //         teamSizes: ["startup", "mid_size", "enterprise"],
-      //         workEnvironments: ["remote", "hybrid", "on_site"],
-      //         culturalContexts: ["multicultural", "diverse", "inclusive"]
-      //       }
-      //     }
-      //   },
-      //   {
-      //     name: "Olga-Technical-Agent",
-      //     avatarName: "olga",
-      //     role: "Technical Skills Evaluator",
-      //     description: "Validates candidate technical skills and expertise",
-      //     hcs11CustomProfile: {
-      //       agentPersonality: {
-      //         communicationStyle: "analytical_precise",
-      //         approachMethod: "technical_deep_dive",
-      //         focusAreas: ["code_quality", "system_design", "problem_solving"],
-      //         evaluationPhilosophy: "Technical excellence through practical demonstration"
-      //       },
-      //       specializedCapabilities: {
-      //         codeReviewAnalysis: true,
-      //         algorithmicThinking: true,
-      //         systemArchitectureEvaluation: true,
-      //         technicalProblemSolving: true,
-      //         performanceOptimization: true,
-      //         securityAssessment: true
-      //       },
-      //       evaluationFramework: {
-      //         primaryMetrics: ["technical_depth", "code_efficiency", "architectural_thinking"],
-      //         assessmentTools: ["live_coding", "system_design", "code_review", "technical_scenarios"],
-      //         scoringModel: "technical_competency_matrix",
-      //         benchmarkStandards: ["senior_developer", "tech_lead", "architect_level"]
-      //       },
-      //       domainExpertise: {
-      //         technologies: ["javascript", "python", "java", "react", "node.js", "aws", "docker"],
-      //         frameworks: ["frontend", "backend", "fullstack", "mobile", "cloud"],
-      //         methodologies: ["agile", "devops", "tdd", "microservices"],
-      //         experienceLevels: ["junior", "mid", "senior", "lead", "principal"]
-      //       }
-      //     }
-      //   },
-      //   {
-      //     name: "Jaaf-Experience-Agent",
-      //     avatarName: "jaaf",
-      //     role: "Experience Validator",
-      //     description: "Validates candidate work experience and background",
-      //     hcs11CustomProfile: {
-      //       agentPersonality: {
-      //         communicationStyle: "investigative_thorough",
-      //         approachMethod: "chronological_analysis",
-      //         focusAreas: ["career_progression", "achievement_validation", "experience_depth"],
-      //         evaluationPhilosophy: "Past performance predicts future success"
-      //       },
-      //       specializedCapabilities: {
-      //         careerTrajectoryAnalysis: true,
-      //         achievementVerification: true,
-      //         skillProgressionMapping: true,
-      //         industryExperienceValidation: true,
-      //         responsibilityGrowthAssessment: true
-      //       },
-      //       evaluationFramework: {
-      //         primaryMetrics: ["experience_relevance", "career_growth", "impact_measurement"],
-      //         assessmentTools: ["experience_deep_dive", "achievement_verification", "reference_simulation"],
-      //         scoringModel: "progressive_experience_analysis",
-      //         benchmarkStandards: ["role_requirements", "industry_experience", "seniority_level"]
-      //       },
-      //       domainExpertise: {
-      //         careerStages: ["entry_level", "mid_career", "senior_professional", "executive"],
-      //         industryVerticals: ["fintech", "healthcare", "e_commerce", "saas", "consulting"],
-      //         roleTypes: ["individual_contributor", "team_lead", "manager", "director"],
-      //         transitionTypes: ["career_change", "industry_switch", "role_progression"]
-      //       }
-      //     }
-      //   },
-      //   {
-      //     name: "Sam-Culture-Agent",
-      //     avatarName: "sam",
-      //     role: "Cultural Fit Assessor",
-      //     description: "Evaluates candidate cultural fit and values alignment",
-      //     hcs11CustomProfile: {
-      //       agentPersonality: {
-      //         communicationStyle: "values_focused_intuitive",
-      //         approachMethod: "cultural_immersion",
-      //         focusAreas: ["values_alignment", "team_dynamics", "organizational_fit"],
-      //         evaluationPhilosophy: "Cultural harmony drives organizational success"
-      //       },
-      //       specializedCapabilities: {
-      //         valuesAssessment: true,
-      //         culturalIntelligence: true,
-      //         teamDynamicsEvaluation: true,
-      //         organizationalFitAnalysis: true,
-      //         diversityAndInclusionAssessment: true
-      //       },
-      //       evaluationFramework: {
-      //         primaryMetrics: ["cultural_alignment", "team_integration", "value_congruence"],
-      //         assessmentTools: ["values_mapping", "cultural_scenarios", "team_simulation"],
-      //         scoringModel: "cultural_compatibility_index",
-      //         benchmarkStandards: ["company_culture", "team_values", "organizational_mission"]
-      //       },
-      //       domainExpertise: {
-      //         companyTypes: ["startup", "scale_up", "enterprise", "non_profit"],
-      //         culturalFrameworks: ["innovation_driven", "process_oriented", "people_first", "results_focused"],
-      //         teamStructures: ["hierarchical", "flat", "matrix", "cross_functional"],
-      //         workStyles: ["collaborative", "autonomous", "mentorship_driven", "performance_oriented"]
-      //       }
-      //     }
-      //   },
-      //   {
-      //     name: "Julia-Leadership-Agent",
-      //     avatarName: "julia",
-      //     role: "Leadership Potential Evaluator",
-      //     description: "Assesses candidate leadership capabilities and potential",
-      //     hcs11CustomProfile: {
-      //       agentPersonality: {
-      //         communicationStyle: "inspirational_strategic",
-      //         approachMethod: "leadership_competency",
-      //         focusAreas: ["strategic_thinking", "team_development", "decision_making"],
-      //         evaluationPhilosophy: "Great leaders create more leaders"
-      //       },
-      //       specializedCapabilities: {
-      //         leadershipStyleAssessment: true,
-      //         strategicThinkingEvaluation: true,
-      //         teamBuildingCapabilities: true,
-      //         decisionMakingAnalysis: true,
-      //         visionaryCommunication: true,
-      //         changeManagementSkills: true
-      //       },
-      //       evaluationFramework: {
-      //         primaryMetrics: ["leadership_presence", "strategic_vision", "team_influence"],
-      //         assessmentTools: ["leadership_scenarios", "strategic_planning", "team_challenges"],
-      //         scoringModel: "leadership_competency_framework",
-      //         benchmarkStandards: ["emerging_leader", "experienced_manager", "senior_executive"]
-      //       },
-      //       domainExpertise: {
-      //         leadershipLevels: ["team_lead", "manager", "director", "vp", "c_suite"],
-      //         leadershipStyles: ["transformational", "servant", "authentic", "situational"],
-      //         organizationalContexts: ["turnaround", "growth", "stable", "startup"],
-      //         teamSizes: ["small_team", "department", "division", "organization"]
-      //       }
-      //     }
-      //   },
-      //   {
-      //     name: "Yuka-Communication-Agent",
-      //     avatarName: "yuka",
-      //     role: "Communication Skills Specialist",
-      //     description: "Validates candidate communication and presentation skills",
-      //     hcs11CustomProfile: {
-      //       agentPersonality: {
-      //         communicationStyle: "articulate_adaptive",
-      //         approachMethod: "multi_modal_communication",
-      //         focusAreas: ["verbal_excellence", "written_clarity", "presentation_mastery"],
-      //         evaluationPhilosophy: "Clear communication is the bridge to success"
-      //       },
-      //       specializedCapabilities: {
-      //         verbalCommunicationAnalysis: true,
-      //         writtenCommunicationEvaluation: true,
-      //         presentationSkillsAssessment: true,
-      //         activeListeningEvaluation: true,
-      //         cross_culturalCommunication: true,
-      //         persuasionAndInfluenceSkills: true
-      //       },
-      //       evaluationFramework: {
-      //         primaryMetrics: ["message_clarity", "audience_engagement", "communication_impact"],
-      //         assessmentTools: ["presentation_exercise", "written_assessment", "interview_analysis"],
-      //         scoringModel: "comprehensive_communication_matrix",
-      //         benchmarkStandards: ["professional_standard", "executive_level", "public_speaking"]
-      //       },
-      //       domainExpertise: {
-      //         communicationContexts: ["one_on_one", "team_meetings", "presentations", "public_speaking"],
-      //         audiences: ["technical", "executive", "cross_functional", "external_clients"],
-      //         mediums: ["verbal", "written", "digital", "visual"],
-      //         culturalAdaptation: ["global_teams", "diverse_audiences", "multilingual_environments"]
-      //       }
-      //     }
-      //   }
-      // ];
-
-      // Create agents in database with Hedera wallets and HCS-11 profiles
       const createdAgents = [];
 
-      for (const config of agentConfigs) {
+      for (const config of agentData) {
         console.log(`🔄 Processing agent: ${config.name}`);
 
         // Check if agent already exists for this post to prevent duplicates
@@ -440,6 +220,26 @@ const hrAgentController = {
         delete agentResponse.hederaPrivateKey;
         delete agentResponse.privkey;
         createdAgents.push(agentResponse);
+
+        // Step 3: Handle AgentConfig creation if provided
+        if (hasConfigData) {
+          try {
+            const agentConfigService = require('../../services/Agent&AgendaServices/agentConfigService');
+            
+            const agentConfigData = {
+              agentId: savedAgent._id,
+              postId: config.postId,
+              ...configData
+            };
+
+            console.log(`   📝 Step 3: Creating AgentConfig...`);
+            const configResult = await agentConfigService.createAgentConfig(agentConfigData);
+            console.log(`   ✅ AgentConfig created: ${configResult._id}`);
+          } catch (configError) {
+            console.warn(`   ⚠️  Failed to create AgentConfig: ${configError.message}`);
+            // Continue with agent creation even if config fails
+          }
+        }
 
         console.log(`   🎉 Agent ${config.name} fully initialized!\n`);
       }
