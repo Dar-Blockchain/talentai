@@ -1,16 +1,10 @@
-import LandingPageLayout from "@/components/home-page/LandingPageLayout";
-import AISpotlight from "@/components/home-page/AISpotlight";
-import GlobalCompanies from "@/components/home-page/GlobalCompanies";
-import BiasFreeEvaluation from "@/components/home-page/BiasFreeEvaluation";
-import Testimonials from "@/components/home-page/Testimonials";
-import FindSection from "@/components/home-page/FindSection";
-import ManageSection from "@/components/home-page/ManageSection";
-import AutomateSection from "@/components/home-page/AutomateSection";
-import AccoladesSection from "@/components/home-page/AccoladesSection";
-import FinalPricingCTA from "@/components/home-page/FinalPricingCTA";
+import LandingPageLayout from "@/components/home/LandingPageLayout";
+import AISpotlight from "@/components/home/company/AISpotlight";
+import GlobalCompanies from "@/components/home/company/GlobalCompanies";
+import BiasFreeEvaluation from "@/components/home/company/BiasFreeEvaluation";
+import AccoladesSection from "@/components/home/company/AccoladesSection";
 import Footer from "@/components/layout/Footer";
-import FAQSection from "@/components/home-page/FAQSection";
-import SolutionsSection from "@/components/home-page/company/HowItWorksSection";
+import SolutionsSection from "@/components/home/company/HowItWorksSection";
 
 const HomePage: React.FC = () => {
   return (
@@ -28,13 +22,6 @@ const HomePage: React.FC = () => {
       <GlobalCompanies />
       <BiasFreeEvaluation />
       <SolutionsSection/>
-      {/* <Testimonials /> */}
-      {/* <FAQSection type="company"/> */}
-      
-      {/* <FindSection /> */}
-      {/* <AutomateSection /> */}
-      {/* <ManageSection /> */}
-      {/* <FinalPricingCTA /> */}
       <Footer />
     </LandingPageLayout>
   );

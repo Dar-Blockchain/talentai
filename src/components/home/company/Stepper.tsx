@@ -9,7 +9,7 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
-  Box
+  Box,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import EditIcon from "@/components/icons/EditIcon";
@@ -19,21 +19,29 @@ import CheckIcon from "@/components/icons/CheckIcon";
 const steps = [
   {
     label: "Build Your Pipeline",
-    description: "Select assessment modules. Customize pass/fail thresholds. Launch in 30 minutes.",
+    description:
+      "Select assessment modules. Customize pass/fail thresholds. Launch in 30 minutes.",
   },
   {
     label: " AI Agents Interview Candidates",
-    description: "Conversational agents evaluate technical skills, soft skills, and cultural fit through natural dialogue.",
+    description:
+      "Conversational agents evaluate technical skills, soft skills, and cultural fit through natural dialogue.",
   },
   {
     label: "Review & Hire",
-    description: "AI automatically ranks candidates. Blockchain verifies credentials. You approve the best fit.",
+    description:
+      "AI automatically ranks candidates. Blockchain verifies credentials. You approve the best fit.",
   },
 ];
 
 // ---------- Custom Step Icon ----------
 const CustomStepIconRoot = styled("div")<{
-  ownerState: { active?: boolean; completed?: boolean; icon: any; horizontal: boolean };
+  ownerState: {
+    active?: boolean;
+    completed?: boolean;
+    icon: any;
+    horizontal: boolean;
+  };
 }>(({ ownerState }) => {
   const isCurrentStep = ownerState.icon === 2;
   return {
@@ -66,7 +74,10 @@ function CustomStepIcon(props: StepIconProps & { horizontal?: boolean }) {
   };
 
   return (
-    <CustomStepIconRoot ownerState={{ completed, icon, horizontal: isHorizontal }} className={className}>
+    <CustomStepIconRoot
+      ownerState={{ completed, icon, horizontal: isHorizontal }}
+      className={className}
+    >
       {icons[String(icon)]}
     </CustomStepIconRoot>
   );
@@ -113,12 +124,36 @@ export default function GradientStepper() {
     >
       {steps.map((step) => (
         <Step key={step.label}>
-          <StepLabel  StepIconComponent={(props) => <CustomStepIcon {...props} horizontal={isHorizontal} />}>
-            <Box sx={{display: 'flex', flexDirection: 'column',alignItems: 'center', justifyContent: 'center'}}><Typography fontWeight="bold" sx={{ color: "#000", maxWidth: 200, textAlign: 'center', mb:1.5 }}>
-              {step.label}
-            </Typography>
-            <Typography sx={{ color: "#000", maxWidth: 200, textAlign: 'center' }}>{step.description}</Typography>
-          </Box>
+          <StepLabel
+            StepIconComponent={(props) => (
+              <CustomStepIcon {...props} horizontal={isHorizontal} />
+            )}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography
+                fontWeight="bold"
+                sx={{
+                  color: "#000",
+                  maxWidth: 200,
+                  textAlign: "center",
+                  mb: 1.5,
+                }}
+              >
+                {step.label}
+              </Typography>
+              <Typography
+                sx={{ color: "#000", maxWidth: 200, textAlign: "center" }}
+              >
+                {step.description}
+              </Typography>
+            </Box>
           </StepLabel>
         </Step>
       ))}

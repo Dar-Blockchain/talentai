@@ -75,7 +75,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
     if (location) params.append("location", location);
 
     const queryString = params.toString();
-    router.push(`/jobs${queryString ? `?${queryString}` : ""}`);
+    router.push(`/posts${queryString ? `?${queryString}` : ""}`);
   };
 
   return (
@@ -123,7 +123,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
             >
               {title}
-              <span style={{ color: 'rgba(163, 98, 239, 1)' }}>.</span>
+              <span style={{ color: "rgba(163, 98, 239, 1)" }}>.</span>
             </Typography>
             <Typography
               sx={{
@@ -138,7 +138,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
             >
               {subtitle}
-              <span style={{ color: 'rgba(163, 98, 239, 1)' }}>.</span>
+              <span style={{ color: "rgba(163, 98, 239, 1)" }}>.</span>
             </Typography>
             <Typography
               variant="body1"

@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  IconButton,
-  Chip,
-  CircularProgress,
-} from "@mui/material";
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
+import { Box, Typography, Button, Card } from "@mui/material";
 import { useRouter } from "next/router";
-import JobCarousel from "./candidate/JobCarousel";
+import JobCarousel from "./JobCarousel";
 
 interface Job {
   id: string;
@@ -27,7 +15,6 @@ interface Job {
 
 const JobListingsSection = () => {
   const router = useRouter();
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,9 +25,6 @@ const JobListingsSection = () => {
         const baseUrl =
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
         const apiUrl = `${baseUrl}post/search?limit=9&sortBy=createdAt&sortOrder=desc`;
-
-        console.log("🔍 Fetching latest jobs for landing page");
-
         const response = await fetch(apiUrl);
 
         if (!response.ok) {
@@ -90,7 +74,6 @@ const JobListingsSection = () => {
           });
 
           setJobs(transformedJobs);
-          console.log("✅ Loaded", transformedJobs.length, "jobs");
         }
       } catch (error) {
         console.error("Error fetching latest jobs:", error);
@@ -102,26 +85,6 @@ const JobListingsSection = () => {
 
     fetchLatestJobs();
   }, []);
-
-  const jobsPerSlide = 3;
-  const totalSlides = Math.ceil(jobs.length / jobsPerSlide);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
-
-  const currentJobs = jobs.slice(
-    currentSlide * jobsPerSlide,
-    (currentSlide + 1) * jobsPerSlide
-  );
 
   return (
     <Box sx={{ py: 6 }}>
