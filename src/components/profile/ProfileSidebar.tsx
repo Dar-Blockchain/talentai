@@ -118,26 +118,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
           </Box>
         )}
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            p: 2.5,
-            cursor: 'pointer',
-            color: '#6b7280',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: 'rgba(131, 16, 255, 0.04)',
-              color: '#8310FF',
-            },
-          }}
-        >
-          <HelpIcon />
-          <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
-            Help & Support
-          </Typography>
-        </Box>
       </CardContent>
     </Card>
   );
