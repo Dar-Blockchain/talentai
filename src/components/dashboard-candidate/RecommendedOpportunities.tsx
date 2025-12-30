@@ -18,11 +18,7 @@ import {
   selectRecommended,
 } from "@/store/slices/postSlice";
 import { SearchOff } from "@mui/icons-material";
-<<<<<<< HEAD
-// import PostDetailsModal from "../posts/PostDetailsModal";
-=======
 import { useRouter } from "next/router";
->>>>>>> 700c04ab695a912086ab1cdc1af1f4fe160ea6a1
 
 export default function RecommendedOpportunities() {
   const router = useRouter();
@@ -387,15 +383,6 @@ export default function RecommendedOpportunities() {
           })}
         </Box>
       )}
-<<<<<<< HEAD
-
-      {/* <PostDetailsModal
-        open={!!selectedJob}
-        selectedJob={selectedJob}
-        handleClose={handleClose}
-      /> */}
-=======
->>>>>>> 700c04ab695a912086ab1cdc1af1f4fe160ea6a1
     </Box>
   );
 }
