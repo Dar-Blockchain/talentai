@@ -30,6 +30,7 @@ const ProfileSettingsPage: React.FC = () => {
     error,
     uploadingImage,
     saveSuccess,
+    userId,
     setActiveTab,
     setIsEditing,
     handleInputChange,
@@ -55,6 +56,7 @@ const ProfileSettingsPage: React.FC = () => {
             activeTab={activeTab}
             profileType={profile.profileType || 'Candidate'}
             onTabChange={(tab) => setActiveTab(tab)}
+            userId={userId}
           />
 
           <Box sx={{ flex: 1 }}>

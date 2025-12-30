@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Divider } from '@mui/material';
+import { Box, Card, CardContent, Typography, Divider, Button } from '@mui/material';
 import {
   Person as PersonIcon,
   ContactMail as ContactMailIcon,
@@ -8,6 +8,7 @@ import {
   Notifications as NotificationsIcon,
   Payment as PaymentIcon,
   HelpOutline as HelpIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
@@ -21,9 +22,10 @@ interface ProfileSidebarProps {
   activeTab: string;
   profileType: 'Candidate' | 'Company';
   onTabChange: (tab: string) => void;
+  userId?: string;
 }
 
-const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType, onTabChange }) => {
+const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType, onTabChange, userId }) => {
   const router = useRouter();
 
   const candidateMenuItems: MenuItem[] = [
@@ -89,6 +91,32 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
         ))}
 
         <Divider sx={{ my: 1 }} />
+
+        {/* View Public Profile Button */}
+        {userId && (
+          <Box sx={{ p: 2.5 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<VisibilityIcon />}
+              onClick={() => router.push(`/profile/${userId}`)}
+              sx={{
+                borderColor: '#8310FF',
+                color: '#8310FF',
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                py: 1.2,
+                '&:hover': {
+                  borderColor: '#8310FF',
+                  backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                },
+              }}
+            >
+              View Public Profile
+            </Button>
+          </Box>
+        )}
 
         <Box
           sx={{

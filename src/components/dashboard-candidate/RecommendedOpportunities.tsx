@@ -18,7 +18,7 @@ import {
   selectRecommended,
 } from "@/store/slices/postSlice";
 import { SearchOff } from "@mui/icons-material";
-import PostDetailsModal from "../posts/PostDetailsModal";
+// import PostDetailsModal from "../posts/PostDetailsModal";
 
 export default function RecommendedOpportunities() {
   const dispatch = useDispatch<AppDispatch>();
@@ -392,11 +392,11 @@ export default function RecommendedOpportunities() {
         </Box>
       )}
 
-      <PostDetailsModal
+      {/* <PostDetailsModal
         open={!!selectedJob}
         selectedJob={selectedJob}
         handleClose={handleClose}
-      />
+      /> */}
     </Box>
   );
 }

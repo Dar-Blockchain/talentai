@@ -270,6 +270,7 @@ export const useProfileManagement = () => {
     error,
     uploadingImage,
     saveSuccess,
+    userId: reduxProfile?.userId?._id,
 
     // Actions
     setActiveTab,

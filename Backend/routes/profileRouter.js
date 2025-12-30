@@ -16,6 +16,9 @@ const uploadfile = require('../middleware/uploadfile');
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
+// GET /profiles/getProfileById/:userId — Public route (no auth required)
+router.get('/getProfileById/:userId', profileController.getProfileById);
+
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser,authLogMiddleware("Profile"));
 
@@ -34,9 +37,6 @@ router.put('/Update_Profile_Picture',uploadfile.single("user_image"), profileCon
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/getMyProfile', profileController.getMyProfile);
-
-// GET /profile/getProfileById/:userId — profil par identifiant utilisateur
-router.get('/getProfileById/:userId', profileController.getProfileById);
 
 // GET /profile/getAllProfiles — liste de tous les profils
 router.get('/getAllProfiles', profileController.getAllProfiles);

@@ -232,14 +232,8 @@ export const getProfileById = createAsyncThunk<
       return cachedProfile.data;
     }
 
-    // Early check - if no token, reject immediately without API call
+    // Get token (optional for public profiles)
     const token = localStorage.getItem("api_token");
-    if (!token) {
-      console.error(
-        `❌ [ProfileSlice] No token found - skipping API call for userId: ${userId}`
-      );
-      return rejectWithValue("No authentication token found");
-    }
 
     // Get abort signal for this request
     const abortSignal = getAbortSignal();
@@ -248,14 +242,21 @@ export const getProfileById = createAsyncThunk<
       console.log(
         `📡 [ProfileSlice] Fetching profile from API for userId: ${userId}...`
       );
+
+      // Build headers conditionally - only add Authorization if token exists
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getProfileById/${userId}`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers,
           signal: abortSignal || undefined,
         }
       );
