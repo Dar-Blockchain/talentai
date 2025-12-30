@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import { playNotificationSound, NotificationType } from "@/utils/notificationSounds";
 
 type ToastOptions = {
   message: string;
   severity?: "success" | "error" | "warning" | "info";
+  playSound?: boolean; // Option pour désactiver le son sur une notification spécifique
 };
 
 type ToastContextType = {
@@ -24,6 +26,11 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const showToast = (options: ToastOptions) => {
     setToastOptions(options);
     setOpen(true);
+
+    // Jouer le son si activé (par défaut true)
+    if (options.playSound !== false && options.severity) {
+      playNotificationSound(options.severity as NotificationType);
+    }
   };
 
   const closeToast = () => {

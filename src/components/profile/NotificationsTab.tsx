@@ -24,6 +24,7 @@ import {
   selectArchivedCount,
   selectNonArchivedCount
 } from '@/store/slices/notificationSlice';
+import NotificationSoundSettings from './NotificationSoundSettings';
 
 interface NotificationsTabProps {
   notifications?: any[]; // Keep for backwards compatibility but won't use it
@@ -94,8 +95,12 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
   const isLoading = activeTab === 1 && archivedLoading;
 
   return (
-    <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
-      <CardContent sx={{ p: 4 }}>
+    <>
+      {/* Notification Sound Settings */}
+      <NotificationSoundSettings />
+
+      <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
+        <CardContent sx={{ p: 4 }}>
         {/* Header */}
         <Box sx={{ backgroundColor: 'rgba(131, 16, 255, 0.04)', p: 3, borderRadius: 2, mb: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -334,6 +339,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = () => {
         </Box>
       </CardContent>
     </Card>
+    </>
   );
 };
 

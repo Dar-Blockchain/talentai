@@ -7,6 +7,7 @@ import {
   markAllAsReadLocal,
   removeNotification,
 } from '../slices/notificationSlice';
+import { playNotificationSound, NotificationType } from '@/utils/notificationSounds';
 
 let socket: Socket | null = null;
 
@@ -76,6 +77,8 @@ export const socketMiddleware: Middleware = (store) => {
       socket.on('notification', (data: any) => {
         const notification = mapNotificationData(data);
         store.dispatch(addNotification(notification));
+        // Play notification sound
+        playNotificationSound(notification.type as NotificationType);
       });
 
       // Listen for broadcast system notifications
@@ -83,6 +86,8 @@ export const socketMiddleware: Middleware = (store) => {
         console.log('📢 [Socket] Received broadcast notification:', data);
         const notification = mapNotificationData(data);
         store.dispatch(addNotification(notification));
+        // Play notification sound
+        playNotificationSound(notification.type as NotificationType);
       });
 
       // Listen for notification read events
@@ -117,6 +122,8 @@ export const socketMiddleware: Middleware = (store) => {
           icon: 'success',
         };
         store.dispatch(addNotification(notification));
+        // Play notification sound
+        playNotificationSound('success');
       });
 
       // Listen for match notifications
@@ -131,6 +138,8 @@ export const socketMiddleware: Middleware = (store) => {
           icon: 'info',
         };
         store.dispatch(addNotification(notification));
+        // Play notification sound
+        playNotificationSound('info');
       });
 
       // Listen for purchase notifications
@@ -145,6 +154,8 @@ export const socketMiddleware: Middleware = (store) => {
           icon: 'success',
         };
         store.dispatch(addNotification(notification));
+        // Play notification sound
+        playNotificationSound('success');
       });
     }
 
