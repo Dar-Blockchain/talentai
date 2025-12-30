@@ -5,6 +5,7 @@ import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import Image from "next/image";
+import { PersonOff } from "@mui/icons-material";
 
 const InfoChip = ({ label }: { label: string }) => (
   <Chip
@@ -28,8 +29,6 @@ interface Props {
 const AgentConfigurationDetails: React.FC<Props> = ({ onEdit }) => {
   const job = useSelector(selectCurrentJob);
   const config = React.useMemo(() => job?.agentConfig, [job]);
-
-  if (!config) return;
 
   return (
     <Box
@@ -73,48 +72,55 @@ const AgentConfigurationDetails: React.FC<Props> = ({ onEdit }) => {
             Agent Configuration
           </Typography>
           {/* Status */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            {config?.isActive ? (
-              <Chip
-                icon={
-                  <CheckCircleOutlineIcon
-                    sx={{ color: "rgba(77, 217, 163, 1)!important" }}
-                  />
-                }
-                label="Agent Active"
-                size="small"
-                sx={{
-                  backgroundColor: "rgba(77, 217, 163, 0.15)",
-                  color: "rgba(84, 98, 116, 1)",
-                  fontWeight: 400,
-                  fontSize: "13px",
-                }}
-              />
-            ) : (
-              <Chip
-                icon={
-                  <DoNotDisturbAltIcon
-                    sx={{ color: "rgba(224, 62, 92, 1)!important" }}
-                  />
-                }
-                label="Agent Inactive"
-                size="small"
-                sx={{
-                  backgroundColor: "rgba(224, 62, 92, 0.12)",
-                  color: "rgba(84, 98, 116, 1)",
-                  fontWeight: 400,
-                  fontSize: "13px",
-                }}
-              />
-            )}
-          </Stack>
+          {config && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              {config?.isActive ? (
+                <Chip
+                  icon={
+                    <CheckCircleOutlineIcon
+                      sx={{ color: "rgba(77, 217, 163, 1)!important" }}
+                    />
+                  }
+                  label="Agent Active"
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgba(77, 217, 163, 0.15)",
+                    color: "rgba(84, 98, 116, 1)",
+                    fontWeight: 400,
+                    fontSize: "13px",
+                  }}
+                />
+              ) : (
+                <Chip
+                  icon={
+                    <DoNotDisturbAltIcon
+                      sx={{ color: "rgba(224, 62, 92, 1)!important" }}
+                    />
+                  }
+                  label="Agent Inactive"
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgba(224, 62, 92, 0.12)",
+                    color: "rgba(84, 98, 116, 1)",
+                    fontWeight: 400,
+                    fontSize: "13px",
+                  }}
+                />
+              )}
+            </Stack>
+          )}
         </Box>
         <Button
           variant="outlined"
           fullWidth
           onClick={onEdit}
           startIcon={
-            <Image src="/icons/edit.svg" alt="edit" width={20} height={20} />
+            <Image
+              src={config ? "/icons/edit.svg" : "/icons/plus.svg"}
+              alt="edit"
+              width={20}
+              height={20}
+            />
           }
           sx={{
             textTransform: "none",
@@ -133,75 +139,143 @@ const AgentConfigurationDetails: React.FC<Props> = ({ onEdit }) => {
             },
           }}
         >
-          Edit Agent Configuration
+          {config ? "Edit Agent Configuration" : "Create Agent"}
         </Button>
       </Box>
+      {!config && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            py: 8,
+            px: 4,
+            backgroundColor: "rgba(62, 233, 167, 0.03)",
+            borderRadius: "8px",
+            border: "1px solid rgba(98, 111, 134, 0.18)",
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(76, 217, 163, 0.2)",
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+            }}
+          >
+            <PersonOff
+              sx={{ fontSize: 48, color: "rgba(19, 163, 108, 0.83)" }}
+            />
+          </Box>
 
-      {/* Matching Rules */}
-      <Typography
-        variant="subtitle2"
-        sx={{
-          color: "rgba(98, 111, 134, 1)",
-          fontSize: "15px",
-          fontWeight: 500,
-          lineHeight: "42px",
-        }}
-      >
-        Matching Rules
-      </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "rgba(19, 163, 108, 0.83)",
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontSize: "20px",
+              lineHeight: "28px",
+              mb: 2,
+            }}
+          >
+            No Agent Created Yet
+          </Typography>
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-        <InfoChip label={`Threshold ≥ ${config.thresholdPercent}%`} />
-        <InfoChip label={`Max candidates · ${config.maxCandidatesToBid}`} />
-        <InfoChip
-          label={`Auto-submit · ${
-            config.autoSubmitTopMatch ? "Enabled" : "Disabled"
-          }`}
-        />
-      </Stack>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "rgba(147, 147, 147, 1)",
+              maxWidth: "500px",
+              mb: 4,
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "25px",
+              textAlign: "center",
+            }}
+          >
+            You haven’t created your agent yet. Create it to start bidding on candidates.
+          </Typography>
+        </Box>
+      )}
+      {config && (
+        <>
+          {/* Matching Rules */}
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: "rgba(98, 111, 134, 1)",
+              fontSize: "15px",
+              fontWeight: 500,
+              lineHeight: "42px",
+            }}
+          >
+            Matching Rules
+          </Typography>
 
-      <Divider sx={{ my: 1.5 }} />
+          <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+            <InfoChip label={`Threshold ≥ ${config.thresholdPercent}%`} />
+            <InfoChip label={`Max candidates · ${config.maxCandidatesToBid}`} />
+            <InfoChip
+              label={`Auto-submit · ${
+                config.autoSubmitTopMatch ? "Enabled" : "Disabled"
+              }`}
+            />
+          </Stack>
 
-      {/* Budget */}
-      <Typography
-        variant="subtitle2"
-        sx={{
-          color: "rgba(98, 111, 134, 1)",
-          fontSize: "15px",
-          fontWeight: 500,
-          lineHeight: "42px",
-        }}
-      >
-        Bidding & Budget
-      </Typography>
+          <Divider sx={{ my: 1.5 }} />
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-        <InfoChip
-          label={`Bid range · $${config.bidBudgetMin} – $${config.bidBudgetMax}`}
-        />
-        <InfoChip label={`Bid step · $${config.bidStep}`} />
-        <InfoChip label={`Daily limit · $${config.maxDailySpending}`} />
-      </Stack>
+          {/* Budget */}
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: "rgba(98, 111, 134, 1)",
+              fontSize: "15px",
+              fontWeight: 500,
+              lineHeight: "42px",
+            }}
+          >
+            Bidding & Budget
+          </Typography>
 
-      <Divider sx={{ my: 1.5 }} />
+          <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+            <InfoChip
+              label={`Bid range · $${config.bidBudgetMin} – $${config.bidBudgetMax}`}
+            />
+            <InfoChip label={`Bid step · $${config.bidStep}`} />
+            <InfoChip label={`Daily limit · $${config.maxDailySpending}`} />
+          </Stack>
 
-      {/* Lifetimes */}
-      <Typography
-        variant="subtitle2"
-        sx={{
-          color: "rgba(98, 111, 134, 1)",
-          fontSize: "15px",
-          fontWeight: 500,
-          lineHeight: "42px",
-        }}
-      >
-        Lifetimes
-      </Typography>
+          <Divider sx={{ my: 1.5 }} />
 
-      <Stack direction="row" spacing={1} flexWrap="wrap">
-        <InfoChip label={`Agent lifetime · ${config.agentLifetimeDays} days`} />
-        <InfoChip label={`Bid lifetime · ${config.bidLifetimeDays} days`} />
-      </Stack>
+          {/* Lifetimes */}
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: "rgba(98, 111, 134, 1)",
+              fontSize: "15px",
+              fontWeight: 500,
+              lineHeight: "42px",
+            }}
+          >
+            Lifetimes
+          </Typography>
+
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            <InfoChip
+              label={`Agent lifetime · ${config.agentLifetimeDays} days`}
+            />
+            <InfoChip label={`Bid lifetime · ${config.bidLifetimeDays} days`} />
+          </Stack>
+        </>
+      )}
     </Box>
   );
 };

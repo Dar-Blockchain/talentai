@@ -13,20 +13,24 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AutoGraphIcon from "@mui/icons-material/AutoGraph";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import Image from "next/image";
 import {
   selectCurrentJob,
   updateAgentConfigInCurrentJob,
+  updatePostStatus,
 } from "@/store/slices/postSlice";
 import { Formik } from "formik";
 import {
   AgentConfigUpdatePayload,
+  DEFAULT_AGENT_CONFIG,
   updateAgentConfig,
 } from "@/store/slices/agentConfigSlice";
 import { AGENT_CONFIG_NUMBER_FIELDS } from "@/constants/post";
 import { validateAgentConfig } from "@/validations/agentValidation";
 import { useToast } from "@/hooks/useToast";
+import { createHRAgent } from "@/store/slices/hrAgentsSlice";
+import { getJobSkills } from "@/utils/postHelpers";
 
 /* ------------------------------- STYLES ------------------------------- */
 
@@ -93,8 +97,13 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
   const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const job = useSelector(selectCurrentJob);
+  const config = React.useMemo(() => job?.agentConfig, [job]);
+  const { profile } = useSelector((state: RootState) => state.auth);
 
   const initialValues = React.useMemo(() => {
+    if(!config) {
+      return DEFAULT_AGENT_CONFIG;
+    }
     return {
       thresholdPercent: job?.agentConfig?.thresholdPercent,
       bidBudgetMin: job?.agentConfig?.bidBudgetMin,
@@ -147,13 +156,32 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
       initialValues={initialValues}
       onSubmit={async (values, { resetForm }) => {
         if (!validateAgentConfig(values, showToast)) return;
-        await dispatch(
-          updateAgentConfig({
-            id: job?.agentConfig?._id,
-            data: values,
-          })
-        ).unwrap();
-
+        if (!config) {
+          await dispatch(
+            createHRAgent({
+              agentData: {
+                jobId: job?._id,
+                companyName: profile?.companyDetails?.name || "Company",
+                postTitle: job?.jobDetails?.title,
+                companyId: profile?.userId,
+                jobSkills: getJobSkills(job),
+              },
+              configData: values,
+            })
+          ).unwrap();
+          if (job?.creationType === "ai") {
+            await dispatch(
+              updatePostStatus({ postId: job?._id, status: "open" })
+            ).unwrap();
+          }
+        } else {
+          await dispatch(
+            updateAgentConfig({
+              id: job?.agentConfig?._id,
+              data: values,
+            })
+          ).unwrap();
+        }
         dispatch(updateAgentConfigInCurrentJob(values));
         resetForm();
         onCancel();
