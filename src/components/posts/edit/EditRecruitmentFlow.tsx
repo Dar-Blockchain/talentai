@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from 'react'
 import { Box, Button, Tooltip, Typography } from "@mui/material";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -17,6 +18,7 @@ import { AppDispatch } from "@/store/store";
 import {
   postRecruitmentSteps,
   selectCurrentJob,
+  selectPostStepsLoading,
 } from "@/store/slices/postSlice";
 import SidebarMenu from "../create/steps/recruitment-flow-step/SidebarMenu";
 import { nodeTypes } from "../create/steps/recruitment-flow-step/CustomNode";
@@ -55,6 +57,8 @@ const EditRecruitmentFlow: React.FC<EditRecruitmentFlowProps> = ({
   const { showToast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const job = useSelector(selectCurrentJob);
+  const loading = useSelector(selectPostStepsLoading)
+  
   const { nodes: jobNodes, edges: jobEdges } = extractNodesAndEdges(
     job?.post_Steps || []
   );
@@ -62,10 +66,10 @@ const EditRecruitmentFlow: React.FC<EditRecruitmentFlowProps> = ({
   const defaultPipeline = useMemo(() => generateDefaultPipelineNodes(), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
-    jobNodes ?? defaultPipeline.nodes
+    jobNodes?.length ? jobNodes : defaultPipeline.nodes
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(
-    jobEdges ?? defaultPipeline.edges
+    jobEdges?.length ? jobEdges : defaultPipeline.edges
   );
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
@@ -195,6 +199,8 @@ const EditRecruitmentFlow: React.FC<EditRecruitmentFlowProps> = ({
           <Button
             variant="contained"
             onClick={handleSave}
+            loading={loading}
+            disabled={loading}
             sx={{
               textTransform: "none",
               height: "42px",
