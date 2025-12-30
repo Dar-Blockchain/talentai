@@ -224,19 +224,55 @@ const hrAgentController = {
         // Step 3: Handle AgentConfig creation if provided
         if (hasConfigData) {
           try {
-            const agentConfigService = require('../../services/Agent&AgendaServices/agentConfigService');
+            const agentConfigService = require('../services/Agent&AgendaServices/agentConfigService');
             
+            // Ensure postId is taken from the agent config when missing
+            // and set agentId after the agent is created (force string id).
             const agentConfigData = {
-              agentId: savedAgent._id,
-              postId: config.postId,
-              ...configData
+              ...configData,
+              postId: configData?.postId || config.postId,
+              agentId: savedAgent._id ? savedAgent._id.toString() : savedAgent._id,
             };
 
             console.log(`   📝 Step 3: Creating AgentConfig...`);
             const configResult = await agentConfigService.createAgentConfig(agentConfigData);
             console.log(`   ✅ AgentConfig created: ${configResult._id}`);
+
+            // Attach the config result to the corresponding agent object already in createdAgents
+            try {
+              const createdIndex = createdAgents.findIndex((a) => {
+                const aId = a._id ? a._id.toString() : a.id ? a.id.toString() : null;
+                return aId && savedAgent._id && aId === savedAgent._id.toString();
+              });
+
+              if (createdIndex !== -1) {
+                createdAgents[createdIndex].createAgentConfig = configResult;
+              } else {
+                // Fallback: attach to last pushed agentResponse
+                const last = createdAgents[createdAgents.length - 1];
+                if (last) last.createAgentConfig = configResult;
+              }
+            } catch (attachErr) {
+              console.warn(`   ⚠️ Failed to attach AgentConfig to createdAgents: ${attachErr.message}`);
+            }
           } catch (configError) {
             console.warn(`   ⚠️  Failed to create AgentConfig: ${configError.message}`);
+            // Attach error to agent entry so caller can inspect
+            try {
+              const createdIndex = createdAgents.findIndex((a) => {
+                const aId = a._1 ? a._id.toString() : a.id ? a.id.toString() : null;
+                return aId && savedAgent._id && aId === savedAgent._id.toString();
+              });
+
+              if (createdIndex !== -1) {
+                createdAgents[createdIndex].createAgentConfigError = configError.message;
+              } else {
+                const last = createdAgents[createdAgents.length - 1];
+                if (last) last.createAgentConfigError = configError.message;
+              }
+            } catch (attachErr) {
+              console.warn(`   ⚠️ Failed to attach AgentConfig error to createdAgents: ${attachErr.message}`);
+            }
             // Continue with agent creation even if config fails
           }
         }
@@ -248,6 +284,8 @@ const hrAgentController = {
         success: true,
         message: "HR validation agents initialized successfully",
         data: createdAgents,
+        // Provide the created AgentConfig results (or errors) for each agent
+        createAgentConfig: createdAgents.map((a) => a.createAgentConfig || null),
       });
     } catch (error) {
       console.error("Error initializing HR agents:", error);
