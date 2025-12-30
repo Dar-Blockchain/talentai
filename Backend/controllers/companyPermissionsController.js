@@ -1,6 +1,17 @@
 /**
  * Company Permissions Controller
  * Handles company permissions management operations (Admin only)
+ *
+ * Frontend uses 9 simplified permissions:
+ * - canManageJobPosts (maps to: canCreateJobPosts, canEditJobPosts, canDeleteJobPosts, canViewJobPosts)
+ * - canUnlockCandidates (maps to: canUnlockCandidates)
+ * - canAccessCandidates (maps to: canViewCandidateProfiles, canExportCandidateData)
+ * - canUseMatching (maps to: canAccessMatching, canViewMatchScores, canFilterCandidates)
+ * - canUseHRAgents (maps to: canUseHRAgents, canConfigureAgents, canViewAgentInsights)
+ * - canManageRecruitment (maps to: canRequestAssessments, canViewAssessmentResults, canViewDetailedScores)
+ * - canManageTokens (maps to: canViewBilling, canManageSubscription, canViewInvoices)
+ * - canViewAnalytics (maps to: canViewAnalytics, canExportReports, canViewMetrics)
+ * - canCommunicate (maps to: canContactCandidates)
  */
 
 const User = require("../models/UserModel");
@@ -54,55 +65,22 @@ module.exports.getCompanyPermissions = async (req, res) => {
       });
     }
 
+    // Return simplified permissions directly
+    const simplifiedPermissions = {
+      canManageJobPosts: permission.canCreateJobPosts,
+      canUnlockCandidates: permission.canUnlockCandidates,
+      canAccessCandidates: permission.canViewCandidateProfiles,
+      canUseMatching: permission.canAccessMatching,
+      canUseHRAgents: permission.canUseHRAgents,
+      canManageRecruitment: permission.canRequestAssessments,
+      canManageTokens: permission.canViewBilling,
+      canViewAnalytics: permission.canViewAnalytics,
+      canCommunicate: permission.canContactCandidates,
+    };
+
     res.status(200).json({
       success: true,
-      data: {
-        companyId: user._id,
-        companyName: user.profile.companyDetails?.name || user.username,
-        permissions: {
-          // Job Post Permissions
-          canCreateJobPosts: permission.canCreateJobPosts,
-          canEditJobPosts: permission.canEditJobPosts,
-          canDeleteJobPosts: permission.canDeleteJobPosts,
-          canViewJobPosts: permission.canViewJobPosts,
-
-          // Candidate Permissions
-          canUnlockCandidates: permission.canUnlockCandidates,
-          canViewCandidateProfiles: permission.canViewCandidateProfiles,
-          canContactCandidates: permission.canContactCandidates,
-          canExportCandidateData: permission.canExportCandidateData,
-
-          // Assessment Permissions
-          canViewAssessmentResults: permission.canViewAssessmentResults,
-          canRequestAssessments: permission.canRequestAssessments,
-          canViewDetailedScores: permission.canViewDetailedScores,
-
-          // Matching Permissions
-          canAccessMatching: permission.canAccessMatching,
-          canViewMatchScores: permission.canViewMatchScores,
-          canFilterCandidates: permission.canFilterCandidates,
-
-          // HR Agent Permissions
-          canUseHRAgents: permission.canUseHRAgents,
-          canConfigureAgents: permission.canConfigureAgents,
-          canViewAgentInsights: permission.canViewAgentInsights,
-
-          // Analytics Permissions
-          canViewAnalytics: permission.canViewAnalytics,
-          canExportReports: permission.canExportReports,
-          canViewMetrics: permission.canViewMetrics,
-
-          // Billing Permissions
-          canViewBilling: permission.canViewBilling,
-          canManageSubscription: permission.canManageSubscription,
-          canViewInvoices: permission.canViewInvoices,
-
-          // Team Permissions
-          canManageTeam: permission.canManageTeam,
-          canInviteMembers: permission.canInviteMembers,
-          canAssignRoles: permission.canAssignRoles,
-        }
-      }
+      permissions: simplifiedPermissions
     });
   } catch (error) {
     console.error("Error fetching company permissions:", error);
@@ -158,6 +136,17 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     // Get admin user ID (the one making the request)
     const adminUserId = req.user?._id;
 
+    // Map simplified permissions to granular permissions
+    const canManageJobPosts = permissions.canManageJobPosts ?? true;
+    const canUnlockCandidates = permissions.canUnlockCandidates ?? true;
+    const canAccessCandidates = permissions.canAccessCandidates ?? true;
+    const canUseMatching = permissions.canUseMatching ?? true;
+    const canUseHRAgents = permissions.canUseHRAgents ?? true;
+    const canManageRecruitment = permissions.canManageRecruitment ?? true;
+    const canManageTokens = permissions.canManageTokens ?? true;
+    const canViewAnalytics = permissions.canViewAnalytics ?? true;
+    const canCommunicate = permissions.canCommunicate ?? true;
+
     // Update or create permissions
     const updatedPermission = await Permission.findOneAndUpdate(
       {
@@ -166,47 +155,51 @@ module.exports.updateCompanyPermissions = async (req, res) => {
       },
       {
         $set: {
-          // Job Post Permissions
-          canCreateJobPosts: permissions.canCreateJobPosts ?? true,
-          canEditJobPosts: permissions.canEditJobPosts ?? true,
-          canDeleteJobPosts: permissions.canDeleteJobPosts ?? true,
-          canViewJobPosts: permissions.canViewJobPosts ?? true,
+          // Job Post Permissions (all controlled by canManageJobPosts)
+          canCreateJobPosts: canManageJobPosts,
+          canEditJobPosts: canManageJobPosts,
+          canDeleteJobPosts: canManageJobPosts,
+          canViewJobPosts: canManageJobPosts,
 
-          // Candidate Permissions
-          canUnlockCandidates: permissions.canUnlockCandidates ?? true,
-          canViewCandidateProfiles: permissions.canViewCandidateProfiles ?? true,
-          canContactCandidates: permissions.canContactCandidates ?? true,
-          canExportCandidateData: permissions.canExportCandidateData ?? true,
+          // Unlock Candidate Permission
+          canUnlockCandidates: canUnlockCandidates,
 
-          // Assessment Permissions
-          canViewAssessmentResults: permissions.canViewAssessmentResults ?? true,
-          canRequestAssessments: permissions.canRequestAssessments ?? true,
-          canViewDetailedScores: permissions.canViewDetailedScores ?? true,
+          // Candidate Permissions (controlled by canAccessCandidates)
+          canViewCandidateProfiles: canAccessCandidates,
+          canExportCandidateData: canAccessCandidates,
 
-          // Matching Permissions
-          canAccessMatching: permissions.canAccessMatching ?? true,
-          canViewMatchScores: permissions.canViewMatchScores ?? true,
-          canFilterCandidates: permissions.canFilterCandidates ?? true,
+          // Communication Permission
+          canContactCandidates: canCommunicate,
 
-          // HR Agent Permissions
-          canUseHRAgents: permissions.canUseHRAgents ?? true,
-          canConfigureAgents: permissions.canConfigureAgents ?? true,
-          canViewAgentInsights: permissions.canViewAgentInsights ?? true,
+          // Assessment/Recruitment Permissions (controlled by canManageRecruitment)
+          canViewAssessmentResults: canManageRecruitment,
+          canRequestAssessments: canManageRecruitment,
+          canViewDetailedScores: canManageRecruitment,
 
-          // Analytics Permissions
-          canViewAnalytics: permissions.canViewAnalytics ?? true,
-          canExportReports: permissions.canExportReports ?? true,
-          canViewMetrics: permissions.canViewMetrics ?? true,
+          // Matching Permissions (all controlled by canUseMatching)
+          canAccessMatching: canUseMatching,
+          canViewMatchScores: canUseMatching,
+          canFilterCandidates: canUseMatching,
 
-          // Billing Permissions
-          canViewBilling: permissions.canViewBilling ?? true,
-          canManageSubscription: permissions.canManageSubscription ?? true,
-          canViewInvoices: permissions.canViewInvoices ?? true,
+          // HR Agent Permissions (all controlled by canUseHRAgents)
+          canUseHRAgents: canUseHRAgents,
+          canConfigureAgents: canUseHRAgents,
+          canViewAgentInsights: canUseHRAgents,
 
-          // Team Permissions
-          canManageTeam: permissions.canManageTeam ?? true,
-          canInviteMembers: permissions.canInviteMembers ?? true,
-          canAssignRoles: permissions.canAssignRoles ?? true,
+          // Analytics Permissions (all controlled by canViewAnalytics)
+          canViewAnalytics: canViewAnalytics,
+          canExportReports: canViewAnalytics,
+          canViewMetrics: canViewAnalytics,
+
+          // Billing/Token Permissions (controlled by canManageTokens)
+          canViewBilling: canManageTokens,
+          canManageSubscription: canManageTokens,
+          canViewInvoices: canManageTokens,
+
+          // Team Permissions (keep as true by default - not exposed in simplified UI)
+          canManageTeam: true,
+          canInviteMembers: true,
+          canAssignRoles: true,
 
           // Metadata
           lastModifiedBy: adminUserId,
@@ -219,56 +212,23 @@ module.exports.updateCompanyPermissions = async (req, res) => {
       }
     );
 
+    // Return simplified permissions directly
+    const simplifiedPermissions = {
+      canManageJobPosts: updatedPermission.canCreateJobPosts,
+      canUnlockCandidates: updatedPermission.canUnlockCandidates,
+      canAccessCandidates: updatedPermission.canViewCandidateProfiles,
+      canUseMatching: updatedPermission.canAccessMatching,
+      canUseHRAgents: updatedPermission.canUseHRAgents,
+      canManageRecruitment: updatedPermission.canRequestAssessments,
+      canManageTokens: updatedPermission.canViewBilling,
+      canViewAnalytics: updatedPermission.canViewAnalytics,
+      canCommunicate: updatedPermission.canContactCandidates,
+    };
+
     res.status(200).json({
       success: true,
       message: "Company permissions updated successfully",
-      data: {
-        companyId: user._id,
-        companyName: user.profile.companyDetails?.name || user.username,
-        permissions: {
-          // Job Post Permissions
-          canCreateJobPosts: updatedPermission.canCreateJobPosts,
-          canEditJobPosts: updatedPermission.canEditJobPosts,
-          canDeleteJobPosts: updatedPermission.canDeleteJobPosts,
-          canViewJobPosts: updatedPermission.canViewJobPosts,
-
-          // Candidate Permissions
-          canUnlockCandidates: updatedPermission.canUnlockCandidates,
-          canViewCandidateProfiles: updatedPermission.canViewCandidateProfiles,
-          canContactCandidates: updatedPermission.canContactCandidates,
-          canExportCandidateData: updatedPermission.canExportCandidateData,
-
-          // Assessment Permissions
-          canViewAssessmentResults: updatedPermission.canViewAssessmentResults,
-          canRequestAssessments: updatedPermission.canRequestAssessments,
-          canViewDetailedScores: updatedPermission.canViewDetailedScores,
-
-          // Matching Permissions
-          canAccessMatching: updatedPermission.canAccessMatching,
-          canViewMatchScores: updatedPermission.canViewMatchScores,
-          canFilterCandidates: updatedPermission.canFilterCandidates,
-
-          // HR Agent Permissions
-          canUseHRAgents: updatedPermission.canUseHRAgents,
-          canConfigureAgents: updatedPermission.canConfigureAgents,
-          canViewAgentInsights: updatedPermission.canViewAgentInsights,
-
-          // Analytics Permissions
-          canViewAnalytics: updatedPermission.canViewAnalytics,
-          canExportReports: updatedPermission.canExportReports,
-          canViewMetrics: updatedPermission.canViewMetrics,
-
-          // Billing Permissions
-          canViewBilling: updatedPermission.canViewBilling,
-          canManageSubscription: updatedPermission.canManageSubscription,
-          canViewInvoices: updatedPermission.canViewInvoices,
-
-          // Team Permissions
-          canManageTeam: updatedPermission.canManageTeam,
-          canInviteMembers: updatedPermission.canInviteMembers,
-          canAssignRoles: updatedPermission.canAssignRoles,
-        }
-      }
+      permissions: simplifiedPermissions
     });
   } catch (error) {
     console.error("Error updating company permissions:", error);
