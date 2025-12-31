@@ -151,7 +151,7 @@ const profileSchema = new mongoose.Schema(
     accountId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
-      required: true,
+      required: false,
       index: true,
     },
   },
