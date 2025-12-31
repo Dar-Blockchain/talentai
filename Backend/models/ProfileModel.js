@@ -15,7 +15,6 @@ const skillSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
 const softSkillSchema = new mongoose.Schema(
   {
     name: String,
@@ -149,6 +148,12 @@ const profileSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    accountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: false,
+      index: true,
+    },
   },
   { timestamps: true }
 );

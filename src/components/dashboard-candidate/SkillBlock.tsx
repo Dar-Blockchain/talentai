@@ -14,12 +14,11 @@ export type SkillBlockProps = {
   type: "technical" | "soft";
   onStartTest: () => void;
   onDelete?: () => void;
-  greenMain: string;
   profile: any;
   allSkills?: any[]; // All skills for stack progression calculation
 };
 
-function SkillBlockComponent({ profile, skill, type, onStartTest, onDelete, greenMain, allSkills = [] }: SkillBlockProps) {
+function SkillBlockComponent({ profile, skill, type, onStartTest, onDelete, allSkills = [] }: SkillBlockProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const proficiencyMap: { [key: string]: number} = {

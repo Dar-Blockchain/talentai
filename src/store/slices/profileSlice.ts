@@ -81,6 +81,7 @@ export interface Profile {
   quota: number;
   quotaUpdatedAt: string;
   user_image?: string;
+  linkedInShared?: any;
   interviewDetails?: any[];  // Added for interview history tracking
   isPublicProfile?: boolean;  // Profile visibility (public/private)
 }

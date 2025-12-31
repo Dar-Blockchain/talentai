@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Card,
@@ -18,6 +18,10 @@ import {
   ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
+import { useSelector } from 'react-redux';
+import { selectProfile } from '@/store/slices/profileSlice';
+import AssessmentModal from './AssessmentModal';
+import { selectTokenBalance } from '@/store/slices/tokenSlice';
 
 interface Task {
   id: string;
@@ -29,18 +33,14 @@ interface Task {
   reward: string;
 }
 
-interface CandidateEngagementTasksProps {
-  profile: any;
-  onStartTest: () => void;
-  tokenBalance?: number;
-}
-
-export default function CandidateEngagementTasks({
-  profile,
-  onStartTest,
-  tokenBalance = 0,
-}: CandidateEngagementTasksProps) {
+export default function CandidateEngagementTasks() {
   const router = useRouter();
+  const { profile } = useSelector(selectProfile);
+  const tokenBalance = useSelector(selectTokenBalance) ?? 0;
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const onStartTest = () => {
+    setTestModalOpen(true);
+  };
 
   const tasks: Task[] = useMemo(
     () => [
@@ -256,6 +256,10 @@ export default function CandidateEngagementTasks({
           </Typography>
         </Alert>
       )}
+            <AssessmentModal
+              open={testModalOpen}
+              onClose={() => setTestModalOpen(false)}
+            />
     </Card>
   );
 }
