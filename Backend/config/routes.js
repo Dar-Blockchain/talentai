@@ -35,6 +35,7 @@ const matchingConfigRoutes = require('../routes/matchingConfigRoutes');
 const paymentRouter = require('../routes/paymentRouter');
 const unlockCandidateRouter = require('../routes/unlockCandidateRouter');
 const pipelineInterviewRoutes = require('../routes/pipelineInterviewRoutes');
+const SharedAccountRoutes = require('../routes/SharedAccountRouter');
 
 /**
  * Register all routes on the Express app
@@ -49,6 +50,7 @@ function registerRoutes(app) {
   app.use('/admin', companyPermissionsRouter);
   app.use('/dashboard', dashboardRouter);
   app.use('/profiles', profileRouter);
+  app.use('/SharedAccount', SharedAccountRoutes);
 
   // Evaluation & Interview
   app.use('/evaluation', evaluationRouter);

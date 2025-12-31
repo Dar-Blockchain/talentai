@@ -148,9 +148,9 @@ const profileSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    accountId: {
+    Organization: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Account",
+      ref: "Organization",
       required: false,
       index: true,
     },

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const companySharedAccountSchema = new mongoose.Schema(
+const organizationSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     type: { type: String, enum: ["Company"], required: true },
@@ -14,4 +14,4 @@ const companySharedAccountSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("CompanySharedAccount", companySharedAccountSchema);
+module.exports = mongoose.model("Organization", organizationSchema);
