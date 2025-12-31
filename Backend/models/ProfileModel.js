@@ -31,6 +31,7 @@ const softSkillSchema = new mongoose.Schema(
 
 const profileSchema = new mongoose.Schema(
   {
+    // ========== IDENTIFICATION & BASIC INFO ==========
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -42,6 +43,8 @@ const profileSchema = new mongoose.Schema(
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },
+
+    // ========== PERSONAL INFORMATION ==========
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
     age: { type: String, required: false },
@@ -55,22 +58,7 @@ const profileSchema = new mongoose.Schema(
     language: { type: String, required: false },
     timeZone: { type: String, required: false },
 
-    // Salary expectations
-    expectedSalary: {
-      min: { type: Number, required: false },
-      max: { type: Number, required: false },
-      currency: { type: String, required: false, default: "EUR" },
-    },
-
-    // Work preferences
-    preferredContractType: { type: String, required: false },
-    workModePreference: {
-      type: String,
-   //   enum: ["Remote", "Hybrid", "On-site"],
-      required: false,
-    },
-
-    // Contact Information
+    // ========== CONTACT INFORMATION ==========
     contactInformation: {
       email: { type: String, required: false },
       phone: { type: String, required: false },
@@ -80,34 +68,44 @@ const profileSchema = new mongoose.Schema(
       personalWebsite: { type: String, required: false },
       location: { type: String, required: false },
     },
-    // Quota for the user
+
+    // ========== WORK PREFERENCES ==========
+    preferredContractType: { type: String, required: false },
+    workModePreference: {
+      type: String,
+      required: false,
+    },
+
+    // ========== SALARY & COMPENSATION ==========
+    expectedSalary: {
+      min: { type: Number, required: false },
+      max: { type: Number, required: false },
+      currency: { type: String, required: false, default: "EUR" },
+    },
+
+    // ========== SKILLS & COMPETENCIES ==========
+    skills: [skillSchema],
+    softSkills: [softSkillSchema],
+
+    // ========== PROFILE MANAGEMENT ==========
     quota: { type: Number, default: 0 },
     quotaUpdatedAt: {
       type: Date,
       default: Date.now,
     },
-
-    // Ready for match
     readyForMatch: { type: Boolean, default: false },
-
-    // Visibility: public or private (private by default)
     isPublicProfile: { type: Boolean, default: false, index: true },
 
-   // overallScore: { type: Number, default: 0 },
-
-    // Hard Skills
-    skills: [skillSchema],
-
-    // Soft Skills
-    softSkills: [softSkillSchema],
-
+    // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
-    //interviewDetails for profile of type Candidate - references to InterviewAssessment
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "InterviewAssessment" },
     ],
+    assessmentResults: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
+    ],
 
-    // Company details (if type is Company)
+    // ========== COMPANY SPECIFIC FIELDS ==========
     companyDetails: {
       email: String,
       name: String,
@@ -122,25 +120,17 @@ const profileSchema = new mongoose.Schema(
         required: false,
       },
     },
-
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
       enum: ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"],
     },
-
     targetRole: {
       type: String,
       default: "",
     },
 
-    assessmentResults: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
-    ],
-
-    // projectAssessments removed (ProjectAssessment feature deprecated)
-
-    // Bid received by user (if type is Candidate)
+    // ========== BIDDING INFORMATION ==========
     companyBid: {
       finalBid: Number,
       dateBid: Date,
@@ -153,8 +143,6 @@ const profileSchema = new mongoose.Schema(
         ref: "Post",
       },
     },
-
-    // Users that this company has bid on (if type is Company)
     usersBidedByCompany: [
       {
         type: mongoose.Schema.Types.ObjectId,
