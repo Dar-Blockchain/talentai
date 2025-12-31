@@ -38,7 +38,7 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company", "jury"],
+      enum: ["Candidate", "Company"],
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },

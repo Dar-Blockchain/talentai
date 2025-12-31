@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     },
     ip: String,
     Localisation: String,
-    role: { type: String, enum: ["Company", "jury", "Candidate", "Admin"] },
+    role: { type: String, enum: ["Company", "Candidate", "Admin"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
