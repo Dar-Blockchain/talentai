@@ -82,6 +82,7 @@ export interface Profile {
   quotaUpdatedAt: string;
   user_image?: string;
   interviewDetails?: any[];  // Added for interview history tracking
+  isPublicProfile?: boolean;  // Profile visibility (public/private)
 }
 
 interface ProfileState {

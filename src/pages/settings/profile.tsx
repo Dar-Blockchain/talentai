@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -7,6 +7,9 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
+import axios from 'axios';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
@@ -16,6 +19,7 @@ import NotificationsTab from '@/components/profile/NotificationsTab';
 import PersonalInformationTab from '@/components/profile/PersonalInformationTab';
 import ContactInformationTab from '@/components/profile/ContactInformationTab';
 import TeamMembersTab from '@/components/profile/TeamMembersTab';
+import ProfileVisibilityTab from '@/components/profile/ProfileVisibilityTab';
 import SnackbarNotifications from '@/components/profile/SnackbarNotifications';
 import BackToDashboardButton from '@/components/profile/BackToDashboardButton';
 
@@ -41,6 +45,41 @@ const ProfileSettingsPage: React.FC = () => {
     handleDismissError,
     handleDismissSuccess,
   } = useProfileManagement();
+
+  const { profile: reduxProfile } = useSelector((state: RootState) => state.profile);
+  const [isPublicProfile, setIsPublicProfile] = useState(reduxProfile?.isPublicProfile || false);
+
+  // Update local state when redux profile changes
+  React.useEffect(() => {
+    if (reduxProfile?.isPublicProfile !== undefined) {
+      setIsPublicProfile(reduxProfile.isPublicProfile);
+    }
+  }, [reduxProfile?.isPublicProfile]);
+
+  // Handle visibility toggle
+  const handleToggleVisibility = useCallback(async (newVisibility: boolean) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfileVisibility`,
+        { isPublicProfile: newVisibility },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setIsPublicProfile(newVisibility);
+      } else {
+        throw new Error(response.data.message || 'Failed to update visibility');
+      }
+    } catch (err: any) {
+      console.error('Error updating visibility:', err);
+      throw new Error(err.response?.data?.message || 'Failed to update profile visibility');
+    }
+  }, []);
 
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
@@ -98,7 +137,15 @@ const ProfileSettingsPage: React.FC = () => {
               <TeamMembersTab />
             )}
 
-            {activeTab !== 'personal' && activeTab !== 'contact' && activeTab !== 'notifications' && activeTab !== 'team' && (
+            {activeTab === 'visibility' && (
+              <ProfileVisibilityTab
+                userId={userId}
+                isPublicProfile={isPublicProfile}
+                onToggleVisibility={handleToggleVisibility}
+              />
+            )}
+
+            {activeTab !== 'personal' && activeTab !== 'contact' && activeTab !== 'notifications' && activeTab !== 'team' && activeTab !== 'visibility' && (
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
                 <CardContent sx={{ p: 6, textAlign: 'center' }}>
                   <Typography variant="h6" sx={{ color: '#6b7280', mb: 2 }}>

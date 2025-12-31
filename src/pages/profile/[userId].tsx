@@ -31,6 +31,7 @@ import {
   Share as ShareIcon,
   Verified as VerifiedIcon,
   EmojiEvents as EmojiEventsIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { getProfileById, selectProfileById, clearProfileById } from '@/store/slices/profileSlice';
 import Footer from '@/components/layout/Footer';
@@ -174,6 +175,127 @@ const ProfileByIdPage: React.FC = () => {
           >
             {error}
           </Alert>
+        </Container>
+        <Footer />
+      </>
+    );
+  }
+
+  // Check if profile is private (and viewer is not the owner)
+  if (profile && !isOwnProfile && !profile.isPublicProfile) {
+    return (
+      <>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mb: 3,
+              cursor: 'pointer',
+              '&:hover': { opacity: 0.7 }
+            }}
+            onClick={() => router.back()}
+          >
+            <ArrowBackIcon sx={{ mr: 1, color: '#8310FF' }} />
+            <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 600 }}>
+              Back
+            </Typography>
+          </Box>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 6,
+              borderRadius: 3,
+              backgroundColor: '#fff',
+              border: '1px solid #E5E7EB',
+              textAlign: 'center'
+            }}
+          >
+            <Box
+              sx={{
+                width: 100,
+                height: 100,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px',
+              }}
+            >
+              <VisibilityOffIcon sx={{ fontSize: 48, color: 'white' }} />
+            </Box>
+
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 2 }}>
+              This Profile is Private
+            </Typography>
+
+            <Typography variant="body1" sx={{ color: '#64748b', mb: 3, maxWidth: 500, margin: '0 auto 24px' }}>
+              The owner of this profile has chosen to keep their information private.
+              Only they can view their full profile details.
+            </Typography>
+
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e5e7eb',
+                maxWidth: 600,
+                margin: '0 auto 32px',
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#334155', mb: 1 }}>
+                Why can't I see this profile?
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748b', lineHeight: 1.6 }}>
+                This user has disabled public viewing of their profile. If you need to contact them,
+                please try reaching out through other communication channels or ask them to enable
+                public profile visibility in their settings.
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                variant="outlined"
+                onClick={() => router.back()}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  borderColor: '#e5e7eb',
+                  color: '#64748b',
+                  '&:hover': {
+                    borderColor: '#8310FF',
+                    backgroundColor: 'rgba(131, 16, 255, 0.04)',
+                    color: '#8310FF',
+                  },
+                }}
+              >
+                Go Back
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/')}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+                  boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)',
+                    boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
+                  },
+                }}
+              >
+                Go to Homepage
+              </Button>
+            </Box>
+          </Paper>
         </Container>
         <Footer />
       </>
