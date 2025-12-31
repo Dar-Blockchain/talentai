@@ -564,3 +564,22 @@ module.exports.updateProfile = async (req, res) => {
     });
   }
 };
+
+// Mettre à jour la visibilité du profil (public / private)
+module.exports.updateProfileVisibility = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { isPublicProfile } = req.body;
+
+    if (typeof isPublicProfile !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'isPublicProfile must be a boolean' });
+    }
+
+    const updatedProfile = await profileService.updateProfileVisibility(userId, isPublicProfile);
+
+    return res.status(200).json({ success: true, message: 'Profile visibility updated', profile: updatedProfile });
+  } catch (error) {
+    console.error('Error updating profile visibility:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Error updating profile visibility' });
+  }
+};

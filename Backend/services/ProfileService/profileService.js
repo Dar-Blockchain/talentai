@@ -1132,3 +1132,27 @@ module.exports.updateUserFields = async (userId, userUpdateData) => {
     throw error;
   }
 };
+
+// Update profile visibility (public/private)
+module.exports.updateProfileVisibility = async (userId, isPublicProfile) => {
+  try {
+    if (typeof isPublicProfile !== 'boolean') {
+      throw new Error('isPublicProfile must be a boolean');
+    }
+
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { $set: { isPublicProfile } },
+      { new: true }
+    );
+
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+
+    return profile;
+  } catch (error) {
+    console.error('❌ Error updating profile visibility:', error);
+    throw error;
+  }
+};

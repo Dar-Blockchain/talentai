@@ -15,6 +15,7 @@ const skillSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
 const softSkillSchema = new mongoose.Schema(
   {
     name: String,
@@ -88,6 +89,9 @@ const profileSchema = new mongoose.Schema(
 
     // Ready for match
     readyForMatch: { type: Boolean, default: false },
+
+    // Visibility: public or private (private by default)
+    isPublicProfile: { type: Boolean, default: false, index: true },
 
    // overallScore: { type: Number, default: 0 },
 
@@ -174,5 +178,8 @@ profileSchema.post("save", async function (doc) {
     console.error("Error creating TodoList:", error);
   }
 });
+
+// Index to speed up queries filtering by visibility
+profileSchema.index({ isPublicProfile: 1 });
 
 module.exports = mongoose.model("Profile", profileSchema);
