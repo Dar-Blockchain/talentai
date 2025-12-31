@@ -5,7 +5,9 @@ const OrganizationMember = require("../../models/OrganizationMemberModel");
 // Créer un compte Company avec Owner
 module.exports.createCompany = async (ownerId, name) => {
   const account = await Organization.create({ name, type: "Company", owner: ownerId });
-  await OrganizationMember.create({ user: ownerId, Organization: account._id, role: "Owner" });
+  const ownerMember = await OrganizationMember.create({ user: ownerId, Organization: account._id, role: "Owner" });
+  // Ajouter le propriétaire dans le tableau members de l'organisation (évite les doublons)
+  await Organization.findByIdAndUpdate(account._id, { $addToSet: { members: ownerMember._id } }, { new: true });
   return account;
 };
 
@@ -14,7 +16,7 @@ module.exports.addEmployee = async (accountId, userEmail, role, invitedBy) => {
     let user = await User.findOne({ email: userEmail });
 
     if (!user) {
-      user = await User.create({ email: userEmail, username: userEmail.split("@")[0], role: "Company" });
+      user = await User.create({ email: userEmail, username: userEmail.split("@")[0], role: "Candidate" });
     }
 
     const existing = await OrganizationMember.findOne({ user: user._id, Organization: accountId });
@@ -22,9 +24,13 @@ module.exports.addEmployee = async (accountId, userEmail, role, invitedBy) => {
 
     const member = await OrganizationMember.create({ user: user._id, Organization: accountId, role, invitedBy });
     
-    // Ajouter le membre au tableau members de l'organisation
-    await Organization.findByIdAndUpdate(accountId, { $push: { members: member._id } });
-    
+    // Ajouter le membre au tableau members de l'organisation en évitant les doublons
+    await Organization.findByIdAndUpdate(
+      accountId,
+      { $addToSet: { members: member._id } },
+      { new: true }
+    );
+
     return member;
   };
 
