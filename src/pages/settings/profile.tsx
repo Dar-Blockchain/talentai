@@ -15,6 +15,7 @@ import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import NotificationsTab from '@/components/profile/NotificationsTab';
 import PersonalInformationTab from '@/components/profile/PersonalInformationTab';
 import ContactInformationTab from '@/components/profile/ContactInformationTab';
+import TeamMembersTab from '@/components/profile/TeamMembersTab';
 import SnackbarNotifications from '@/components/profile/SnackbarNotifications';
 import BackToDashboardButton from '@/components/profile/BackToDashboardButton';
 
@@ -93,7 +94,11 @@ const ProfileSettingsPage: React.FC = () => {
               <NotificationsTab />
             )}
 
-            {activeTab !== 'personal' && activeTab !== 'contact' && activeTab !== 'notifications' && (
+            {activeTab === 'team' && profile.profileType === 'Company' && (
+              <TeamMembersTab />
+            )}
+
+            {activeTab !== 'personal' && activeTab !== 'contact' && activeTab !== 'notifications' && activeTab !== 'team' && (
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
                 <CardContent sx={{ p: 6, textAlign: 'center' }}>
                   <Typography variant="h6" sx={{ color: '#6b7280', mb: 2 }}>

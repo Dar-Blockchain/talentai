@@ -9,6 +9,7 @@ import {
   Payment as PaymentIcon,
   HelpOutline as HelpIcon,
   Visibility as VisibilityIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
@@ -40,6 +41,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
   const companyMenuItems: MenuItem[] = [
     { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
+    { id: 'team', label: 'Team Members', icon: <GroupIcon /> },
     // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 

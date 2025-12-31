@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Avatar, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import AddMemberModal from "./AddMemberModal";
 
 // Styled Components
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -41,6 +43,19 @@ interface CompanyInfoHeaderProps {
 
 const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const router = useRouter();
+  const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
+
+  const handleAddMember = async (email: string, role: string) => {
+    // TODO: Implement API call to invite team member
+    console.log('Inviting member:', { email, role });
+
+    // Simulated API call
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
+  };
 
   return (
     <ProfileHeader>
@@ -115,18 +130,35 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
               </Typography>
             </Box>
           </Box>
-          <GradientButton
-            onClick={() => router.push("/posts/create")}
-            startIcon={<AddIcon />}
-          >
-            Post Job
-          </GradientButton>
-          {/* <GradientButton
-            onClick={() => router.push("/posts/create1")}
-            startIcon={<AddIcon />}
-          >
-            Post Job 1
-          </GradientButton> */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              onClick={() => setAddMemberModalOpen(true)}
+              startIcon={<PersonAddIcon />}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: "38px",
+                padding: "12px 24px",
+                height: 42,
+                background: "linear-gradient(135deg, #8310FF 0%, #a855f7 100%)",
+                color: "#ffffff",
+                letterSpacing: 0.3,
+                boxShadow: "0 2px 8px rgba(131, 16, 255, 0.3)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)",
+                  boxShadow: "0 4px 12px rgba(131, 16, 255, 0.4)",
+                },
+              }}
+            >
+              Add Member
+            </Button>
+            <GradientButton
+              onClick={() => router.push("/posts/create")}
+              startIcon={<AddIcon />}
+            >
+              Post Job
+            </GradientButton>
+          </Box>
         </Box>
 
         {/* Info Cards */}
@@ -348,6 +380,13 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
           </Box>
         </Box>
       </Box>
+
+      {/* Add Member Modal */}
+      <AddMemberModal
+        open={addMemberModalOpen}
+        onClose={() => setAddMemberModalOpen(false)}
+        onSave={handleAddMember}
+      />
     </ProfileHeader>
   );
 };
