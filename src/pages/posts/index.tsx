@@ -14,9 +14,9 @@ import { AppDispatch, RootState } from "@/store/store";
 import { fetchJobDetails } from "@/store/slices/jobDetailsSlice";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import JobSearchBar from "@/components/jobs/JobSearchBar";
-import JobCard from "@/components/jobs/JobCard";
-import JobDetailsPanel from "@/components/jobs/JobDetailsPanel";
+import JobSearchBar from "@/components/posts/list/JobSearchBar";
+import JobCard from "@/components/posts/list/JobCard";
+import JobDetailsPanel from "@/components/posts/list/JobDetailsPanel";
 import { Job, transformJobData } from "@/utils/jobHelpers";
 
 const JobSearchPage: React.FC = () => {
