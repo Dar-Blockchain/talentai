@@ -21,12 +21,33 @@ module.exports.addEmployee = async (accountId, userEmail, role, invitedBy) => {
     if (existing) throw new Error("User already has access to this account");
 
     const member = await OrganizationMember.create({ user: user._id, Organization: accountId, role, invitedBy });
+    
+    // Ajouter le membre au tableau members de l'organisation
+    await Organization.findByIdAndUpdate(accountId, { $push: { members: member._id } });
+    
     return member;
   };
 
 // Lister les employés d'un compte
 module.exports.listEmployees = async (accountId) => {
   return OrganizationMember.find({ Organization: accountId }).populate("user", "email username");
+};
+
+// Récupérer les employés pour les organisations dont l'utilisateur est propriétaire
+module.exports.listMyEmployees = async (ownerId) => {
+  const orgs = await Organization.find({ owner: ownerId }).select("_id");
+  const orgIds = orgs.map((o) => o._id);
+  if (orgIds.length === 0) return [];
+  return OrganizationMember.find({ Organization: { $in: orgIds } }).populate("user", "email username");
+};
+
+// Récupérer une organisation avec ses membres populés
+module.exports.getOrganizationWithMembers = async (organizationId) => {
+  return Organization.findById(organizationId)
+    .populate({
+      path: "members",
+      populate: { path: "user", select: "email username" },
+    });
 };
 
 // Modifier rôle d'un membre

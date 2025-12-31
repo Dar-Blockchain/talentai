@@ -9,6 +9,12 @@ const organizationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OrganizationMember",
+      },
+    ],
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

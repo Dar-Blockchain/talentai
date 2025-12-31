@@ -30,6 +30,12 @@ router.post("/", accountController.createCompany);
 router.post("/employees", accountController.addEmployee);
 
 /**
+ * GET /accounts/me/employees
+ * Retrieve the list of all employees for companies owned by current user
+ */
+router.get("/myEmployees", accountController.listMyEmployees);
+
+/**
  * GET /accounts/:accountId/employees
  * Retrieve the list of all employees for a given account
  */

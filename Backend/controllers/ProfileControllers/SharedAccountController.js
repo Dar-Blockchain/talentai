@@ -31,7 +31,16 @@ module.exports.listEmployees = async (req, res) => {
     }
   };
 
-  
+module.exports.listMyEmployees = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
+    const members = await AccountService.listMyEmployees(ownerId);
+    res.json({ success: true, members });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 module.exports.updateRole = async (req, res) => {
     try {
       const { accountId, userId, newRole } = req.body;
