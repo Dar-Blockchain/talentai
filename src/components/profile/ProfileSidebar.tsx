@@ -35,6 +35,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
     // { id: 'resume', label: 'Resume & Documents', icon: <DescriptionIcon /> },
     // { id: 'preferences', label: 'Job Preferences', icon: <WorkIcon /> },
     { id: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
+    { id: 'visibility', label: 'Public Profile', icon: <VisibilityIcon /> },
     // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 
@@ -42,6 +43,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
     { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
     { id: 'team', label: 'Team Members', icon: <GroupIcon /> },
+    { id: 'visibility', label: 'Public Profile', icon: <VisibilityIcon /> },
     // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 
@@ -91,35 +93,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
             </Typography>
           </Box>
         ))}
-
-        <Divider sx={{ my: 1 }} />
-
-        {/* View Public Profile Button */}
-        {userId && (
-          <Box sx={{ p: 2.5 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<VisibilityIcon />}
-              onClick={() => router.push(`/profile/${userId}`)}
-              sx={{
-                borderColor: '#8310FF',
-                color: '#8310FF',
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                py: 1.2,
-                '&:hover': {
-                  borderColor: '#8310FF',
-                  backgroundColor: 'rgba(131, 16, 255, 0.08)',
-                },
-              }}
-            >
-              View Public Profile
-            </Button>
-          </Box>
-        )}
-
       </CardContent>
     </Card>
   );

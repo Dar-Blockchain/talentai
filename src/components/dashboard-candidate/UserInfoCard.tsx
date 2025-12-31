@@ -1,23 +1,15 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { Box, Button, Typography, Paper, Pagination, Fade } from "@mui/material";
+import { Box, Button, Typography, Paper, Pagination, Fade, Card } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-
-export type UserInfoCardProps = {
-  profile: any;
-  SectionTitle: any;
-  StyledCard: any;
-  ScoreCircle: any;
-  GREEN_MAIN: string;
-  softSkillNames: string[];
-  visibleSkills: number;
-  setVisibleSkills: (updater: (prev: number) => number) => void;
-  setAddSoftSkillDialogOpen: (open: boolean) => void;
-  setAddSkillDialogOpen: (open: boolean) => void;
-  SkillBlock: any;
-  handleStartTest: (type?: "technical" | "soft", skill?: any) => void;
-  dispatch: any;
-  getMyProfile: any;
-};
+import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { styled } from "@mui/material/styles";
+import { softSkillNames } from "@/constants/skills";
+import SkillBlock from "./SkillBlock";
+import { useRouter } from "next/router";
+import AssessmentModal from "./AssessmentModal";
 
 // Skill section configuration
 const SKILL_SECTIONS = {
@@ -198,18 +190,28 @@ const EmptySkillsState: React.FC<{
   </Paper>
 );
 
-function UserInfoCardComponent(props: UserInfoCardProps) {
-  const {
-    profile,
-    StyledCard,
-    softSkillNames,
-    setAddSoftSkillDialogOpen,
-    setAddSkillDialogOpen,
-    SkillBlock,
-    handleStartTest,
-    dispatch,
-    getMyProfile,
-  } = props;
+const StyledCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(4),
+  marginBottom: theme.spacing(4),
+  background: "#ffffff",
+  borderRadius: "24px",
+  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 0, 0, 0.04)",
+  border: "1px solid rgba(0, 0, 0, 0.05)",
+  transition: "all 0.3s ease",
+  position: "relative",
+  overflow: "hidden",
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.12), 0 0 30px rgba(0, 0, 0, 0.08)",
+  },
+}));
+
+function UserInfoCardComponent() {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>()
+  const { profile } = useSelector(selectProfile);
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [selectedSkillType, setSelectedSkillType] = useState<'soft' | 'technical' | ''>('');
 
   const [technicalSkillsPage, setTechnicalSkillsPage] = useState(1);
   const [softSkillsPage, setSoftSkillsPage] = useState(1);
@@ -219,6 +221,40 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
   const technicalSkills = useMemo(
     () => profile?.skills?.filter((skill: any) => !softSkillNames.includes(skill.name)) || [],
     [profile?.skills, softSkillNames]
+  );
+
+    const handleStartTest = useCallback(
+    (type?: "technical" | "soft", skill?: any) => {
+      if (type && skill) {
+        if (type === "technical") {
+          // Use default proficiency level of 1 if not defined
+          const proficiencyLevel = skill.proficiencyLevel || 1;
+          // Navigate to new HR interview route
+          router.push(
+            `/interview/hr/?type=technical&skill=${encodeURIComponent(
+              skill.name
+            )}&proficiency=${proficiencyLevel}`
+          );
+        } else {
+          const proficiencyMap: { [key: string]: number } = {
+            "Entry Level": 1,
+            Junior: 2,
+            "Mid Level": 3,
+            Senior: 4,
+            Expert: 5,
+          };
+          // Navigate to new HR interview route
+          router.push(
+            `/interview/hr/?type=soft&skill=${encodeURIComponent(
+              skill.name
+            )}&category=${encodeURIComponent(skill.category)}&proficiency=${
+              proficiencyMap[skill.experienceLevel] || 1
+            }`
+          );
+        }
+      }
+    },
+    [router]
   );
 
   // Generic delete handler with optimistic update and fade animation
@@ -368,7 +404,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
             underlineColor={softConfig.underlineColor}
             buttonColor={softConfig.color}
             hoverColor={softConfig.hoverColor}
-            onAdd={() => setAddSoftSkillDialogOpen(true)}
+            onAdd={() => {setSelectedSkillType('soft'); setTestModalOpen(true);}}
             disabled={profile?.quota >= 5}
           />
 
@@ -412,7 +448,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
               subtext={softConfig.emptySubtext}
               buttonColor={softConfig.color}
               hoverColor={softConfig.hoverColor}
-              onAdd={() => setAddSoftSkillDialogOpen(true)}
+            onAdd={() => {setSelectedSkillType('soft'); setTestModalOpen(true);}}
               disabled={profile?.quota >= 5}
             />
           )}
@@ -425,7 +461,8 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
             underlineColor={techConfig.underlineColor}
             buttonColor={techConfig.color}
             hoverColor={techConfig.hoverColor}
-            onAdd={() => setAddSkillDialogOpen(true)}
+            
+            onAdd={() => {setSelectedSkillType('technical'); setTestModalOpen(true)}}
             disabled={profile?.quota >= 5}
           />
 
@@ -469,12 +506,17 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
               subtext={techConfig.emptySubtext}
               buttonColor={techConfig.color}
               hoverColor={techConfig.hoverColor}
-              onAdd={() => setAddSkillDialogOpen(true)}
+            onAdd={() => {setSelectedSkillType('technical'); setTestModalOpen(true);}}
               disabled={profile?.quota >= 5}
             />
           )}
         </Box>
       </Box>
+      <AssessmentModal
+        type={selectedSkillType}
+        open={testModalOpen}
+        onClose={() => setTestModalOpen(false)}
+      />
     </StyledCard>
   );
 }
