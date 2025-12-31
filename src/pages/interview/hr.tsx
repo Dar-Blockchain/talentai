@@ -675,7 +675,7 @@ const IntelligentInterviewTest = () => {
   const MAX_ACCUMULATED_TURNS = 10; // Maximum turns to accumulate before forcing send
 
   // Camera States
-  const [cameraStatus, setCameraStatus] = useState<'iduser.le' | 'requesting' | 'granted' | 'denied' | 'error'>('idle');
+  const [cameraStatus, setCameraStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'error'>('idle');
   const [cameraError, setCameraError] = useState<string>('');
 
   // Agent State Tracking

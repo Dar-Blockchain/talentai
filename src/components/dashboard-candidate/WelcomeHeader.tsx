@@ -1,27 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Stack, Typography, Avatar, Button, Card } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PersonIcon from "@mui/icons-material/Person";
-import DescriptionIcon from "@mui/icons-material/Description";
 import EmailIcon from "@mui/icons-material/Email";
 import WorkIcon from "@mui/icons-material/Work";
 import SchoolIcon from "@mui/icons-material/School";
 import Image from "next/image";
+import { useSelector } from "react-redux";
+import { selectProfile } from "@/store/slices/profileSlice";
+import { useRouter } from "next/router";
+import AssessmentModal from "./AssessmentModal";
 
-type WelcomeHeaderProps = {
-  profile: any;
-  quota: number;
-  onStartTest: () => void;
-  onHrInterview: () => void;
-};
+const WelcomeHeader = () => {
+  const router = useRouter();
+  const { profile } = useSelector(selectProfile);
+  const quota = profile?.quota || 0;
+  const [testModalOpen, setTestModalOpen] = useState(false);
 
-export default function WelcomeHeader({
-  profile,
-  quota,
-  onStartTest,
-  onHrInterview,
-}: WelcomeHeaderProps) {
+  const onStartTest = () => {
+    setTestModalOpen(true);
+  };
+  const onHrInterview = () => {
+    const experienceLevel = profile?.requiredExperienceLevel || "Mid-Level";
+    const role = profile?.targetRole || "Software Engineer";
+    router.push(
+      `/interview/hr?type=hr&role=${encodeURIComponent(
+        role
+      )}&proficiency=${encodeURIComponent(experienceLevel)}`
+    );
+  };
   return (
     <Box
       sx={{
@@ -121,7 +129,7 @@ export default function WelcomeHeader({
             </Typography>
           </Box>
 
-                    {profile?.userId?.createdAt && (
+          {profile?.userId?.createdAt && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <CalendarTodayIcon
                 sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.1rem" }}
@@ -181,8 +189,6 @@ export default function WelcomeHeader({
               </Typography>
             </Box>
           )}
-
-
         </Box>
 
         {/* Action Buttons - Horizontal Layout */}
@@ -223,7 +229,9 @@ export default function WelcomeHeader({
 
           <Button
             variant="outlined"
-            startIcon={<Image src='/icons/cv.svg' alt='cv' width={16} height={16} />}
+            startIcon={
+              <Image src="/icons/cv.svg" alt="cv" width={16} height={16} />
+            }
             onClick={onHrInterview}
             disabled={quota >= 5}
             sx={{
@@ -337,6 +345,12 @@ export default function WelcomeHeader({
           </Typography>
         </Box>
       </Box>
+      <AssessmentModal
+        open={testModalOpen}
+        onClose={() => setTestModalOpen(false)}
+      />
     </Box>
   );
-}
+};
+
+export default WelcomeHeader;
