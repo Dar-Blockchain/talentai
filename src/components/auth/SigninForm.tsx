@@ -1,21 +1,13 @@
 import React, { useState, useRef } from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Stack,
-  Collapse,
-  Alert,
-} from "@mui/material";
+import { Box, TextField, Button, Typography, Stack } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
-import LockIcon from "@mui/icons-material/Lock";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { registerUser } from "@/store/slices/authSlice";
+import { registerUser, verifyOTP } from "@/store/slices/authSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
+import { getUserLocation } from "@/utils/api";
 
 type FormValues = {
   email: string;
@@ -42,8 +34,6 @@ interface Props {
 
 const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -64,26 +54,12 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const handleSendCode = async (email: string) => {
     const emailToSend = email.toLowerCase().trim();
     setLoading(true);
-    setError("");
-    setSuccess("");
 
     try {
       await dispatch(registerUser(emailToSend)).unwrap();
       startTimer();
-
-      setSuccess(
-        `Please verify your email - we've sent a code to ${emailToSend}`
-      );
-      setStep(2); // 🔥 move to verification step
+      setStep(2);
     } catch (err) {
-      const errorMessage =
-        typeof err === "string"
-          ? err
-          : err instanceof Error
-          ? err.message
-          : "Registration failed. Please try again.";
-
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -92,7 +68,17 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const handleVerifyCode = async (values: FormValues) => {
     setLoading(true);
     try {
-      // await authService.verifyCode(values.email, values.code);
+      const userLocation = await getUserLocation();
+      const response = await dispatch(
+        verifyOTP({
+          email: values.email.toLowerCase().trim(),
+          otp: values.code,
+          location: userLocation,
+        })
+      ).unwrap();
+      if (!response.token) {
+        return;
+      }
     } finally {
       setLoading(false);
     }
@@ -167,19 +153,39 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                     inputRef={(el) => (codeInputsRef.current[index] = el)}
                     value={values.code[index] || ""}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
-                      if (!value) return;
+                      const raw = e.target.value.replace(/\D/g, ""); // only digits
+                      if (!raw) {
+                        // allow clearing
+                        const arr = values.code.split("");
+                        arr[index] = "";
+                        setFieldValue("code", arr.join(""));
+                        return;
+                      }
 
-                      const newCode =
-                        values.code.substring(0, index) +
-                        value +
-                        values.code.substring(index + 1);
-
-                      setFieldValue("code", newCode);
+                      const arr = values.code.split("");
+                      arr[index] = raw[0]; // first digit typed
+                      setFieldValue("code", arr.join(""));
 
                       if (index < CODE_LENGTH - 1) {
                         codeInputsRef.current[index + 1]?.focus();
                       }
+                    }}
+                    onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                      e.preventDefault();
+                      const paste = e.clipboardData
+                        .getData("text")
+                        .replace(/\D/g, ""); // keep only digits
+                      if (!paste) return;
+
+                      const arr = values.code.split("");
+                      for (let i = 0; i < CODE_LENGTH; i++) {
+                        arr[i] = paste[i] || arr[i] || "";
+                      }
+                      setFieldValue("code", arr.join(""));
+
+                      // focus last filled input
+                      const nextIndex = Math.min(paste.length, CODE_LENGTH - 1);
+                      codeInputsRef.current[nextIndex]?.focus();
                     }}
                     onKeyDown={(e) => {
                       if (
@@ -226,13 +232,16 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                   {errors.code}
                 </Typography>
               )}
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", textAlign: "center", mt: 1 }}
-              >
-                Enter the 6-digit code we sent to{" "}
-                <strong>{values.email}</strong>
-              </Typography>
+              {!touched.code ||
+                (!errors.code && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", textAlign: "center", mt: 1 }}
+                  >
+                    Enter the 6-digit code we sent to{" "}
+                    <strong>{values.email}</strong>
+                  </Typography>
+                ))}
             </>
           )}
           {(isExpired || isRunning) && (
@@ -323,8 +332,6 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 clearTimer();
                 setStep(1);
                 setFieldValue("code", "");
-                setSuccess("");
-                setError("");
               }}
             >
               Change email

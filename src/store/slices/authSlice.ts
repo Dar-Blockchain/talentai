@@ -323,6 +323,16 @@ const authSlice = createSlice({
           state.user = action.payload.user;
           state.isAuthenticated = true;
         }
+        if (action.payload.token) {
+          localStorage.removeItem("api_token");
+          Cookies.remove("api_token");
+          localStorage.setItem("api_token", action.payload.token);
+          Cookies.set("api_token", action.payload.token, {
+            expires: 30,
+            path: "/",
+            sameSite: "lax",
+          });
+        }
       })
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;
