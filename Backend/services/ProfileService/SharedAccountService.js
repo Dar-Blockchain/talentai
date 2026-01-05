@@ -1,6 +1,7 @@
 const User = require("../../models/UserModel");
 const Organization = require("../../models/OrganizationSchema");
 const OrganizationMember = require("../../models/OrganizationMemberModel");
+const { sendOrganizationInvite } = require("../../utils/mailing");
 
 // Créer un compte Company avec Owner
 module.exports.createCompany = async (ownerId, name) => {
@@ -13,20 +14,47 @@ module.exports.createCompany = async (ownerId, name) => {
 
 // Ajouter un employé à un compte
 module.exports.addEmployee = async (accountId, userEmail, role, invitedBy) => {
+    // Vérifier si l'organisation existe (par id ou par nom)
+    let org = null;
+    try {
+      org = await Organization.findById(accountId);
+    } catch (e) {
+      org = null;
+    }
+    if (!org) {
+      // tenter de retrouver par nom si l'identifiant passé est un nom
+      org = await Organization.findOne({ name: accountId });
+    }
+
+    const orgName = org ? org.name : accountId;
+
+    if (!org) {
+      // trouver l'email de l'invitant si possible
+      let inviterEmail = null;
+      try {
+        const inviterUser = await User.findById(invitedBy);
+        if (inviterUser) inviterEmail = inviterUser.email;
+      } catch (e) {}
+
+      // envoyer l'email d'invitation et sortir en indiquant qu'une invitation a été envoyée
+      await sendOrganizationInvite(userEmail, orgName, role, inviterEmail);
+      return { invited: true, message: `Invitation envoyée à ${userEmail} pour rejoindre ${orgName} en tant que ${role}` };
+    }
+
     let user = await User.findOne({ email: userEmail });
 
     if (!user) {
       user = await User.create({ email: userEmail, username: userEmail.split("@")[0], role: "Candidate" });
     }
 
-    const existing = await OrganizationMember.findOne({ user: user._id, Organization: accountId });
+    const existing = await OrganizationMember.findOne({ user: user._id, Organization: org._id });
     if (existing) throw new Error("User already has access to this account");
 
-    const member = await OrganizationMember.create({ user: user._id, Organization: accountId, role, invitedBy });
+    const member = await OrganizationMember.create({ user: user._id, Organization: org._id, role, invitedBy });
     
     // Ajouter le membre au tableau members de l'organisation en évitant les doublons
     await Organization.findByIdAndUpdate(
-      accountId,
+      org._id,
       { $addToSet: { members: member._id } },
       { new: true }
     );
