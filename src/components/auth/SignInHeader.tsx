@@ -1,13 +1,14 @@
+import { RootState } from "@/store/store";
 import { Box, Typography } from "@mui/material";
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
 
-interface SignInHeaderProps {
-  userType: string;
-  gradient: string;
-}
-
-export const SignInHeader: React.FC<SignInHeaderProps> = ({ userType, gradient }) => {
+type Props = {
+  themeColors: any;
+};
+export const SignInHeader: React.FC<Props> = ({themeColors}) => {
   const router = useRouter();
+  const userType = useSelector((state: RootState) => state.user.userType);
 
   return (
     <>
@@ -45,7 +46,7 @@ export const SignInHeader: React.FC<SignInHeaderProps> = ({ userType, gradient }
         variant="h5"
         fontWeight={600}
         sx={{
-          background: gradient,
+          background: themeColors.gradient,
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           mb: 1,
@@ -64,7 +65,7 @@ export const SignInHeader: React.FC<SignInHeaderProps> = ({ userType, gradient }
           lineHeight: 1.6,
         }}
       >
-        {"Sign in to access your recruitment dashboard"}
+        Sign in to access your recruitment dashboard
       </Typography>
     </>
   );

@@ -16,6 +16,7 @@ import {
   AlertMessages,
   LoadingScreen,
 } from "@/components/auth";
+import { isTokenExpired } from "@/utils/tokenUtils";
 
 type EmailFormData = { email: string };
 type CodeFormData = { code: string };
@@ -26,7 +27,6 @@ const RESEND_COUNTDOWN_SECONDS = 60;
 // Helper functions
 const isValidToken = (token: string | undefined): boolean => {
   if (!token) return false;
-  const { isTokenExpired } = require("@/utils/tokenUtils");
   return !isTokenExpired(token);
 };
 
@@ -367,7 +367,7 @@ export default function SignIn() {
             transform: "translateY(-2vh)",
           }}
         >
-          <SignInHeader userType={userType} gradient={themeColors.gradient} />
+          <SignInHeader themeColors={themeColors.gradient} />
 
           <AlertMessages error={error} success={success} />
 
