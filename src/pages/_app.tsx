@@ -18,6 +18,8 @@ import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { useAuthCheck } from "@/hooks/useAuthCheck";
+import { LoadingScreen } from "@/components/auth";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -47,6 +49,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const profile = useSelector((state: RootState) => state.profile.profile);
   const userId = profile?.userId?._id;
+  const { checkingAuth } = useAuthCheck();
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -66,7 +69,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       const cookieToken = Cookies.get("api_token");
       const localToken = localStorage.getItem("api_token");
 
-      if (cookieToken && !localToken) localStorage.setItem("api_token", cookieToken);
+      if (cookieToken && !localToken)
+        localStorage.setItem("api_token", cookieToken);
       if (cookieToken && localToken && cookieToken !== localToken)
         localStorage.setItem("api_token", cookieToken);
     }, 60000);
@@ -84,11 +88,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     const isApiCall = (url: string | Request | URL): boolean => {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "";
       const urlStr =
-        typeof url === "string"
-          ? url
-          : url instanceof URL
-          ? url.href
-          : url.url;
+        typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
       return (
         urlStr.includes(apiBase) ||
         urlStr.startsWith("/api/") ||
@@ -143,10 +143,12 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  if (checkingAuth) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <NotificationProvider userId={userId}>
-      {children}
-    </NotificationProvider>
+    <NotificationProvider userId={userId}>{children}</NotificationProvider>
   );
 }
 
@@ -158,16 +160,19 @@ export default function App({ Component, pageProps }: AppProps) {
           <CssBaseline />
           <Head>
             <title>TalentAI</title>
-            <meta name="viewport" content="initial-scale=1, width=device-width" />
+            <meta
+              name="viewport"
+              content="initial-scale=1, width=device-width"
+            />
             <link rel="icon" href="/favicon.ico" />
           </Head>
           <main className={poppins.variable}>
             <ToastProvider>
-              <MuiToastWrapper/>
-            <AuthWrapper>
-              <Component {...pageProps} />
-              <ScrollToTop />
-            </AuthWrapper>
+              <MuiToastWrapper />
+              <AuthWrapper>
+                <Component {...pageProps} />
+                <ScrollToTop />
+              </AuthWrapper>
             </ToastProvider>
           </main>
         </ThemeProvider>

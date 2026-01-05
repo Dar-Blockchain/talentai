@@ -1,13 +1,16 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Box, TextField, Button, Typography, Stack } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { registerUser, verifyOTP } from "@/store/slices/authSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
+import { useToast } from "@/hooks/useToast";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
 
 type FormValues = {
   email: string;
@@ -34,6 +37,9 @@ interface Props {
 
 const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const { showToast } = useToast();
+  const returnUrl = router.query.returnUrl as string | undefined;
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -68,6 +74,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const handleVerifyCode = async (values: FormValues) => {
     setLoading(true);
     try {
+      clearTimer();
       const userLocation = await getUserLocation();
       const response = await dispatch(
         verifyOTP({
@@ -77,12 +84,53 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
         })
       ).unwrap();
       if (!response.token) {
+        showToast({
+          message:
+            "Verification successful, but there was an issue signing you in. Please try again.",
+          severity: "error",
+        });
         return;
       }
+      handleRedirectTo(response.user, response.profile);
+    } catch (err: any) {
+      showToast({
+        message:
+          "The code you entered didn’t match. Please check and try again.",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleRedirectTo = (user: any, profile: any) => {
+    const userRole = user?.role;
+    const hasProfile = !!profile?._id;
+    if (userRole === "Admin") {
+      router.replace("/dashboard/admin");
+      return;
+    }
+    if (returnUrl) {
+      const redirectTo = hasProfile
+        ? decodeURIComponent(returnUrl)
+        : `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`;
+      router.replace(redirectTo);
+      return;
+    }
+    if (!hasProfile) {
+      router.replace("/preferences");
+      return;
+    }
+    const redirctTo =
+      userRole === "Company" ? "/dashboard/company" : "/dashboard/candidate";
+    router.replace(redirctTo);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimer();
+    };
+  }, []);
 
   return (
     <Formik<FormValues>
@@ -295,6 +343,10 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
             }
             onClick={() => {
               if (step === 2 && isExpired) {
+                setFieldValue("code", "", false);
+                codeInputsRef.current.forEach((input) => {
+                  if (input) input.value = "";
+                });
                 handleSendCode(values.email);
               }
             }}
