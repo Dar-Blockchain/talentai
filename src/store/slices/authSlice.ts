@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { isCurrentTokenExpired, handleTokenExpiration, isTokenExpired, getToken, validateAndSyncToken, isCookieExpired } from '@/utils/tokenUtils';
+import { signOut } from 'next-auth/react';
 
 interface AuthState {
   profile: any | null;
@@ -225,55 +226,45 @@ export const verifyOTP = createAsyncThunk(
 
 // Async thunk for logout - handles all cleanup centrally
 export const logout = createAsyncThunk(
-  'auth/logout',
+  "auth/logout",
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      console.log('🚪 Starting logout process...');
-
-      // Set logout flag to prevent axios interceptors from triggering
+      // Prevent interceptors from running
       setLoggingOut(true);
 
-      // Import at runtime to avoid circular dependency
-      const { resetRedirectState } = await import('@/utils/authRedirect');
-      const { clearProfile, clearProfileCache } = await import('./profileSlice');
-      const Cookies = await import('js-cookie').then(m => m.default);
+      // Clear redux slices FIRST
+      const { clearProfile, clearProfileCache } = await import("./profileSlice");
+      dispatch(clearProfile());
+      dispatch(clearProfileCache());
 
-      resetRedirectState();
-
-      // Clear Redux state - dispatch all slice clear actions
-      (dispatch as any)(clearProfile());
-      (dispatch as any)(clearProfileCache());
-
-      // Clear all storage
-      localStorage.removeItem('api_token');
-      Cookies.remove('api_token', { path: '/' });
+      // Clear storage
+      localStorage.removeItem("api_token");
+      localStorage.removeItem("token");
       localStorage.clear();
 
-      // Clear all cookies
+      // Clear cookies
       Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName, { path: '/' });
+        Cookies.remove(cookieName, { path: "/" });
       });
 
-      // Sign out from NextAuth if available
-      if (typeof window !== 'undefined') {
-        try {
-          const { signOut } = await import('next-auth/react');
-          await signOut({ redirect: false });
-        } catch (error) {
-          console.warn('NextAuth signOut failed:', error);
-        }
+      // Logout from NextAuth (optional)
+      try {
+        await signOut({ redirect: false });
+      } catch (err) {
+        console.warn("NextAuth signOut failed:", err);
       }
 
-      console.log('✅ Logout successful');
+      console.log("✅ Logout completed");
+      return true;
     } catch (error: any) {
-      console.error('❌ Logout error:', error);
-      return rejectWithValue(error.message || 'Logout failed');
+      console.error("❌ Logout error:", error);
+      return rejectWithValue(error.message || "Logout failed");
     } finally {
-      // Reset logout flag
       setLoggingOut(false);
     }
   }
 );
+
 
 const authSlice = createSlice({
   name: 'auth',

@@ -4,27 +4,27 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useRouter } from "next/router";
 
+const PUBLIC_ROUTES = ["/signin", "/home/candidate", "/home/company", "/posts"];
+
 export const useAuthCheck = () => {
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
+
+  const { isAuthenticated, user, profile } = useSelector(
+    (state: RootState) => state.auth
   );
-  const user = useSelector(
-    (state: RootState) => state.auth.user
-  );
-  const profile = useSelector(
-    (state: RootState) => state.auth.profile
-  );
+
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const handleRedirectTo = (user: any, profile: any, returnUrl: any) => {
+  const handleRedirectTo = (user: any, profile: any, returnUrl?: string) => {
     const userRole = user?.role;
     const hasProfile = !!profile?._id;
+
     if (userRole === "Admin") {
       router.replace("/dashboard/admin");
       return;
     }
+
     if (returnUrl) {
       const redirectTo = hasProfile
         ? decodeURIComponent(returnUrl)
@@ -32,31 +32,40 @@ export const useAuthCheck = () => {
       router.replace(redirectTo);
       return;
     }
+
     if (!hasProfile) {
       router.replace("/preferences");
       return;
     }
-    const redirctTo =
-      userRole === "Company" ? "/dashboard/company" : "/dashboard/candidate";
-    router.replace(redirctTo);
+
+    router.replace(
+      userRole === "Company"
+        ? "/dashboard/company"
+        : "/dashboard/candidate"
+    );
   };
 
-
   useEffect(() => {
-    // Simulate auth check or wait for persisted state
     const timer = setTimeout(() => {
       setCheckingAuth(false);
 
-      // Redirect logged-in users away from public pages
-      if (isAuthenticated && router.pathname === "/signin1") {
-        handleRedirectTo(user, profile, returnUrl)
+      // ✅ Authenticated user trying to access signin
+      if (isAuthenticated && router.pathname === "/signin") {
+        handleRedirectTo(user, profile, returnUrl);
+        return;
       }
-    }, 200); // small delay to let Redux restore persisted state
+
+      // ❌ Unauthenticated user accessing protected route
+      if (
+        !isAuthenticated &&
+        !PUBLIC_ROUTES.includes(router.pathname)
+      ) {
+        router.replace("/signin"); 
+      }
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router.pathname]);
 
   return { checkingAuth, isAuthenticated };
 };
-
-  
