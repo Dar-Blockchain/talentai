@@ -5,11 +5,16 @@ const { sendOrganizationInvite } = require("../../utils/mailing");
 
 // Créer un compte Company avec Owner
 module.exports.createCompany = async (ownerId, name) => {
-  const account = await Organization.create({ name, type: "Company", owner: ownerId });
-  const ownerMember = await OrganizationMember.create({ user: ownerId, Organization: account._id, role: "Owner" });
-  // Ajouter le propriétaire dans le tableau members de l'organisation (évite les doublons)
-  await Organization.findByIdAndUpdate(account._id, { $addToSet: { members: ownerMember._id } }, { new: true });
-  return account;
+  try {
+    const account = await Organization.create({ name, type: "Company", owner: ownerId });
+    const ownerMember = await OrganizationMember.create({ user: ownerId, Organization: account._id, role: "Owner" });
+    // Ajouter le propriétaire dans le tableau members de l'organisation (évite les doublons)
+    await Organization.findByIdAndUpdate(account._id, { $addToSet: { members: ownerMember._id } }, { new: true });
+    return account;
+  } catch (err) {
+    console.error("createCompany error:", err);
+    throw new Error("Failed to create company");
+  }
 };
 
 // Ajouter un employé à un compte
