@@ -148,12 +148,6 @@ const profileSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    Organization: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Organization",
-      required: false,
-      index: true,
-    },
   },
   { timestamps: true }
 );
