@@ -2,7 +2,8 @@ import "@/styles/globals.css";
 import "@/styles/walletconnect-override.css";
 import type { AppProps } from "next/app";
 import { Provider, useSelector } from "react-redux";
-import { store, RootState } from "../store/store";
+import { store, persistor, RootState } from "../store/store";
+import { PersistGate } from "redux-persist/integration/react";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
@@ -70,26 +71,28 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   if (!isClient) return null;
-  
+
   return (
     <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Head>
-          <title>TalentAI</title>
-          <meta name="viewport" content="initial-scale=1, width=device-width" />
-          <link rel="icon" href="/favicon.ico" />
-        </Head>
-        <main className={poppins.variable}>
-          <ToastProvider>
-            <MuiToastWrapper />
-            <AuthWrapper>
-              <Component {...pageProps} />
-              <ScrollToTop />
-            </AuthWrapper>
-          </ToastProvider>
-        </main>
-      </ThemeProvider>
+      <PersistGate loading={<LoadingScreen />} persistor={persistor}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Head>
+            <title>TalentAI</title>
+            <meta name="viewport" content="initial-scale=1, width=device-width" />
+            <link rel="icon" href="/favicon.ico" />
+          </Head>
+          <main className={poppins.variable}>
+            <ToastProvider>
+              <MuiToastWrapper />
+              <AuthWrapper>
+                <Component {...pageProps} />
+                <ScrollToTop />
+              </AuthWrapper>
+            </ToastProvider>
+          </main>
+        </ThemeProvider>
+      </PersistGate>
     </Provider>
   );
 }

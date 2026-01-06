@@ -36,6 +36,8 @@ interface Role {
 const ROLES: readonly Role[] = [
   { value: 'hr', label: 'HR', description: 'Manage candidates, recruitment, and team operations' },
   { value: 'technical_leader', label: 'Technical Leader', description: 'Manage technical assessments and evaluations' },
+  { value: 'supervisor', label: 'Supervisor', description: 'Oversee team operations and workflows' },
+  { value: 'manager', label: 'Manager', description: 'Manage department and strategic decisions' },
 ] as const;
 
 const DEFAULT_ROLE = 'hr';
@@ -68,28 +70,35 @@ const AddMemberModal: React.FC<AddMemberModalProps> = React.memo(({ open, onClos
   }, [isValidEmail, role]);
 
   const handleSave = useCallback(async () => {
+    console.log('🔵 [AddMemberModal] handleSave called with:', { email, role });
+
     // Validation
     if (!email.trim()) {
+      console.log('❌ [AddMemberModal] Validation failed: Email is required');
       setError('Email is required');
       return;
     }
 
     if (!EMAIL_REGEX.test(email)) {
+      console.log('❌ [AddMemberModal] Validation failed: Invalid email format');
       setError('Please enter a valid email address');
       return;
     }
 
     if (!role) {
+      console.log('❌ [AddMemberModal] Validation failed: Role is required');
       setError('Role is required');
       return;
     }
 
+    console.log('✅ [AddMemberModal] Validation passed, calling onSave...');
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
       await onSave(email, role);
+      console.log('✅ [AddMemberModal] onSave completed successfully');
       setSuccessMessage('Team member invited successfully!');
 
       // Close modal after 1.5 seconds
@@ -97,6 +106,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = React.memo(({ open, onClos
         onClose();
       }, 1500);
     } catch (err: any) {
+      console.error('❌ [AddMemberModal] Error in onSave:', err);
       setError(err.message || 'Failed to invite team member');
     } finally {
       setLoading(false);

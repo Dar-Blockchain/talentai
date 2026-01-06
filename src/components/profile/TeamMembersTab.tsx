@@ -21,6 +21,11 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from '@mui/material';
 import {
   PersonAdd as PersonAddIcon,
@@ -32,24 +37,41 @@ import {
   BarChart as BarChartIcon,
 } from '@mui/icons-material';
 import AddMemberModal from '@/components/dashboard-company/AddMemberModal';
-
-interface TeamMember {
-  _id: string;
-  email: string;
-  name?: string;
-  role: string;
-  status: 'active' | 'pending' | 'inactive';
-  joinedDate?: string;
-  avatar?: string;
-}
+import EditRoleModal from '@/components/dashboard-company/EditRoleModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import {
+  fetchMyEmployees,
+  addEmployee,
+  activateSharedAccount,
+  updateMemberRole,
+  deleteMember,
+  selectMembers,
+  clearAddMemberSuccess,
+  clearUpdateRoleSuccess,
+  clearDeleteMemberSuccess,
+  Member,
+  MemberRole
+} from '@/store/slices/memberSlice';
+import { useToast } from '@/hooks/useToast';
 
 // Constants moved outside component
 const ROLE_LABELS: Record<string, string> = {
+  RH: 'HR',
+  TechLead: 'Technical Leader',
+  Supervisor: 'Supervisor',
+  Manager: 'Manager',
+  Owner: 'Owner',
   hr: 'HR',
   technical_leader: 'Technical Leader',
 };
 
 const ROLE_COLORS: Record<string, 'primary' | 'success' | 'info' | 'default'> = {
+  RH: 'success',
+  TechLead: 'primary',
+  Supervisor: 'info',
+  Manager: 'primary',
+  Owner: 'default',
   hr: 'success',
   technical_leader: 'primary',
 };
@@ -61,88 +83,114 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'error'> = {
 };
 
 const ROLE_ICONS: Record<string, React.ReactElement> = {
+  RH: <PersonIcon sx={{ fontSize: 18 }} />,
+  TechLead: <BarChartIcon sx={{ fontSize: 18 }} />,
+  Supervisor: <BarChartIcon sx={{ fontSize: 18 }} />,
+  Manager: <BarChartIcon sx={{ fontSize: 18 }} />,
+  Owner: <PersonAddIcon sx={{ fontSize: 18 }} />,
   hr: <PersonIcon sx={{ fontSize: 18 }} />,
   technical_leader: <BarChartIcon sx={{ fontSize: 18 }} />,
 };
 
 const TeamMembersTab: React.FC = () => {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const { members, loading, error, sharedAccountId, addMemberSuccess, updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
+  const { showToast } = useToast();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
+  const [editRoleModalOpen, setEditRoleModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [activating, setActivating] = useState(false);
 
-  // Mock data - replace with actual API call
+  // Fetch members on mount - always try to fetch
   useEffect(() => {
-    const fetchMembers = async () => {
-      setLoading(true);
-      try {
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/company/team-members');
-        // const data = await response.json();
+    console.log('🔍 [TeamMembersTab] Component mounted, fetching employees...');
+    console.log('🔍 [TeamMembersTab] sharedAccountId:', sharedAccountId);
+    dispatch(fetchMyEmployees());
+  }, [dispatch]);
 
-        // Mock data for demonstration
-        setTimeout(() => {
-          setMembers([
-            {
-              _id: '1',
-              email: 'john.doe@company.com',
-              name: 'John Doe',
-              role: 'hr',
-              status: 'active',
-              joinedDate: '2024-01-15',
-            },
-            {
-              _id: '2',
-              email: 'jane.smith@company.com',
-              name: 'Jane Smith',
-              role: 'technical_leader',
-              status: 'active',
-              joinedDate: '2024-02-01',
-            },
-            {
-              _id: '3',
-              email: 'mike.johnson@company.com',
-              name: 'Mike Johnson',
-              role: 'hr',
-              status: 'pending',
-              joinedDate: '2024-03-10',
-            },
-          ]);
-          setLoading(false);
-        }, 1000);
-      } catch (err) {
-        setError('Failed to load team members');
-        setLoading(false);
-      }
-    };
+  // Close modal when member is added successfully
+  useEffect(() => {
+    if (addMemberSuccess) {
+      setAddMemberModalOpen(false);
+      dispatch(clearAddMemberSuccess());
+      // Refresh the member list
+      dispatch(fetchMyEmployees());
+    }
+  }, [addMemberSuccess, dispatch]);
 
-    fetchMembers();
-  }, []);
+  // Close modal and refresh when role is updated successfully
+  useEffect(() => {
+    if (updateRoleSuccess) {
+      setEditRoleModalOpen(false);
+      dispatch(clearUpdateRoleSuccess());
+      // Refresh the member list
+      dispatch(fetchMyEmployees());
+    }
+  }, [updateRoleSuccess, dispatch]);
+
+  // Close dialog and refresh when member is deleted successfully
+  useEffect(() => {
+    if (deleteMemberSuccess) {
+      setDeleteDialogOpen(false);
+      setSelectedMember(null);
+      dispatch(clearDeleteMemberSuccess());
+      // The member is already removed from state, but we can refresh to ensure sync
+      dispatch(fetchMyEmployees());
+    }
+  }, [deleteMemberSuccess, dispatch]);
+
+  // Map UI roles to API roles
+  const roleMapping: Record<string, MemberRole> = {
+    'hr': 'RH',
+    'technical_leader': 'TechLead',
+    'supervisor': 'Supervisor',
+    'manager': 'Manager'
+  };
+
+  // Extract sharedAccountId from members if available
+  const accountIdFromMembers = useMemo(() => {
+    if (members.length > 0 && members[0].Organization) {
+      return members[0].Organization;
+    }
+    return null;
+  }, [members]);
+
+  // Use sharedAccountId from Redux or extract from members
+  const effectiveAccountId = sharedAccountId || accountIdFromMembers;
 
   const handleAddMember = useCallback(async (email: string, role: string) => {
-    // TODO: Implement API call to invite team member
     console.log('Inviting member:', { email, role });
 
-    // Simulated API call
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        // Add new member to the list
-        const newMember: TeamMember = {
-          _id: Date.now().toString(),
-          email,
-          role,
-          status: 'pending',
-          joinedDate: new Date().toISOString().split('T')[0],
-        };
-        setMembers((prev) => [...prev, newMember]);
-        resolve();
-      }, 1000);
-    });
-  }, []);
+    // Map the role to API format
+    const apiRole = roleMapping[role] || 'RH';
 
-  const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>, member: TeamMember) => {
+    // Use the effective account ID (from Redux or extracted from members)
+    const accountId = effectiveAccountId || '';
+
+    console.log('🔍 [TeamMembersTab] handleAddMember - accountId:', accountId);
+    console.log('🔍 [TeamMembersTab] handleAddMember - sharedAccountId:', sharedAccountId);
+    console.log('🔍 [TeamMembersTab] handleAddMember - accountIdFromMembers:', accountIdFromMembers);
+
+    if (!accountId) {
+      throw new Error('Account ID not found. Please try again.');
+    }
+
+    // Dispatch the add employee action
+    const result = await dispatch(addEmployee({
+      accountId,
+      email,
+      role: apiRole
+    }));
+
+    // Check if the action was rejected
+    if (addEmployee.rejected.match(result)) {
+      throw new Error(result.payload as string || 'Failed to add member');
+    }
+  }, [dispatch, effectiveAccountId, sharedAccountId, accountIdFromMembers, roleMapping]);
+
+  const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>, member: Member) => {
     setAnchorEl(event.currentTarget);
     setSelectedMember(member);
   }, []);
@@ -153,18 +201,61 @@ const TeamMembersTab: React.FC = () => {
   }, []);
 
   const handleEditMember = useCallback(() => {
-    console.log('Edit member:', selectedMember);
+    console.log('🔵 [TeamMembersTab] Edit member:', selectedMember);
+    setEditRoleModalOpen(true);
     handleMenuClose();
-    // TODO: Implement edit functionality
   }, [selectedMember, handleMenuClose]);
 
-  const handleDeleteMember = useCallback(() => {
-    if (selectedMember) {
-      setMembers((prev) => prev.filter((m) => m._id !== selectedMember._id));
+  const handleUpdateRole = useCallback(async (role: string) => {
+    console.log('🔵 [TeamMembersTab] handleUpdateRole called with role:', role);
+
+    if (!selectedMember || !effectiveAccountId) {
+      console.error('❌ [TeamMembersTab] Missing selectedMember or effectiveAccountId');
+      throw new Error('Unable to update role. Please try again.');
     }
-    handleMenuClose();
-    // TODO: Implement API call to delete member
-  }, [selectedMember, handleMenuClose]);
+
+    console.log('🔵 [TeamMembersTab] Updating role for user:', selectedMember.user._id);
+    console.log('🔵 [TeamMembersTab] Organization:', effectiveAccountId);
+
+    await dispatch(updateMemberRole({
+      organizationId: effectiveAccountId,
+      userId: selectedMember.user._id,
+      role: role as MemberRole
+    })).unwrap();
+  }, [dispatch, selectedMember, effectiveAccountId]);
+
+  const handleDeleteMember = useCallback(() => {
+    console.log('🔵 [TeamMembersTab] Opening delete confirmation for member:', selectedMember);
+    setDeleteDialogOpen(true);
+    // Don't clear selectedMember yet - we need it for the delete operation
+    setAnchorEl(null);
+  }, [selectedMember]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    console.log('🔵 [TeamMembersTab] Confirming delete for member:', selectedMember);
+
+    if (!selectedMember || !effectiveAccountId) {
+      console.error('❌ [TeamMembersTab] Missing selectedMember or effectiveAccountId');
+      return;
+    }
+
+    console.log('🔵 [TeamMembersTab] Deleting member:', selectedMember.user._id);
+    console.log('🔵 [TeamMembersTab] Organization:', effectiveAccountId);
+
+    try {
+      await dispatch(deleteMember({
+        organizationId: effectiveAccountId,
+        userId: selectedMember.user._id
+      })).unwrap();
+    } catch (error) {
+      console.error('❌ [TeamMembersTab] Failed to delete member:', error);
+    }
+  }, [dispatch, selectedMember, effectiveAccountId]);
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteDialogOpen(false);
+    setSelectedMember(null);
+  }, []);
 
   // Memoized helper functions
   const getRoleLabel = useCallback((role: string) => ROLE_LABELS[role] || role, []);
@@ -183,8 +274,38 @@ const TeamMembersTab: React.FC = () => {
     setAddMemberModalOpen(false);
   }, []);
 
+  const handleActivateAccount = useCallback(async () => {
+    console.log('🔵 [TeamMembersTab] Activating shared account...');
+    setActivating(true);
+    try {
+      await dispatch(activateSharedAccount()).unwrap();
+      console.log('✅ [TeamMembersTab] Shared account activated successfully');
+      // Fetch employees after activation
+      dispatch(fetchMyEmployees());
+    } catch (err: any) {
+      console.error('❌ [TeamMembersTab] Failed to activate shared account:', err);
+    } finally {
+      setActivating(false);
+    }
+  }, [dispatch]);
+
   // Memoize empty state check
   const hasMembers = useMemo(() => members.length > 0, [members.length]);
+
+  // Check if user has owner role in members
+  const hasOwnerRole = useMemo(() => {
+    return members.some(member => member.role === 'Owner');
+  }, [members]);
+
+  // Show activation button only if no account ID AND no owner role
+  const showActivateButton = !effectiveAccountId && !hasOwnerRole;
+
+  // Debug render
+  console.log('🎨 [TeamMembersTab] RENDERING - sharedAccountId:', sharedAccountId);
+  console.log('🎨 [TeamMembersTab] accountIdFromMembers:', accountIdFromMembers);
+  console.log('🎨 [TeamMembersTab] effectiveAccountId:', effectiveAccountId);
+  console.log('🎨 [TeamMembersTab] hasOwnerRole:', hasOwnerRole);
+  console.log('🎨 [TeamMembersTab] showActivateButton:', showActivateButton);
 
   return (
     <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
@@ -199,29 +320,64 @@ const TeamMembersTab: React.FC = () => {
               Manage your team members and their permissions
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<PersonAddIcon />}
-            onClick={handleOpenAddModal}
-            sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              borderRadius: 2,
-              px: 3,
-              background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
-              boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)',
-                boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
-              },
-            }}
-          >
-            Add Member
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {showActivateButton ? (
+              <Button
+                variant="contained"
+                onClick={handleActivateAccount}
+                disabled={activating}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)',
+                  },
+                  '&.Mui-disabled': {
+                    background: '#e2e8f0',
+                    color: '#94a3b8',
+                  },
+                }}
+              >
+                {activating ? (
+                  <>
+                    <CircularProgress size={18} sx={{ mr: 1, color: 'white' }} />
+                    Activating...
+                  </>
+                ) : (
+                  'Activate Shared Account'
+                )}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={handleOpenAddModal}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+                  boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)',
+                    boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
+                  },
+                }}
+              >
+                Add Member
+              </Button>
+            )}
+          </Box>
         </Box>
 
         {/* Error Alert */}
-        {error && (
+        {error && typeof error === 'string' && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
@@ -294,23 +450,22 @@ const TeamMembersTab: React.FC = () => {
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar
-                          src={member.avatar}
                           sx={{
                             bgcolor: '#8310FF',
                             width: 40,
                             height: 40,
                           }}
                         >
-                          {member.name?.[0] || member.email[0].toUpperCase()}
+                          {member.user?.username?.[0]?.toUpperCase() || member.user?.email?.[0]?.toUpperCase() || 'U'}
                         </Avatar>
                         <Box>
                           <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                            {member.name || 'Pending'}
+                            {member.user?.username || 'Pending'}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <EmailIcon sx={{ fontSize: 14, color: '#94a3b8' }} />
                             <Typography variant="caption" sx={{ color: '#64748b' }}>
-                              {member.email}
+                              {member.user?.email || 'No email'}
                             </Typography>
                           </Box>
                         </Box>
@@ -347,8 +502,8 @@ const TeamMembersTab: React.FC = () => {
                     {/* Joined Date */}
                     <TableCell>
                       <Typography variant="body2" sx={{ color: '#64748b' }}>
-                        {member.joinedDate
-                          ? new Date(member.joinedDate).toLocaleDateString('en-US', {
+                        {member.createdAt
+                          ? new Date(member.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric',
@@ -415,6 +570,82 @@ const TeamMembersTab: React.FC = () => {
           onClose={handleCloseAddModal}
           onSave={handleAddMember}
         />
+
+        {/* Edit Role Modal */}
+        {selectedMember && (
+          <EditRoleModal
+            open={editRoleModalOpen}
+            onClose={() => setEditRoleModalOpen(false)}
+            onSave={handleUpdateRole}
+            currentRole={selectedMember.role}
+            memberName={selectedMember.user?.username || selectedMember.user?.email || 'Member'}
+          />
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleCancelDelete}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              pb: 1,
+            }}
+          >
+            Remove Team Member
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: '#64748b', fontSize: '0.95rem' }}>
+              Are you sure you want to remove{' '}
+              <strong>
+                {selectedMember?.user?.username || selectedMember?.user?.email || 'this member'}
+              </strong>{' '}
+              from your team? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button
+              onClick={handleCancelDelete}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                color: '#64748b',
+                '&:hover': {
+                  backgroundColor: '#f8fafc',
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              variant="contained"
+              color="error"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 3,
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(239, 68, 68, 0.4)',
+                },
+              }}
+            >
+              Remove
+            </Button>
+          </DialogActions>
+        </Dialog>
       </CardContent>
     </Card>
   );
