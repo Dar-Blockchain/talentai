@@ -44,6 +44,13 @@ module.exports.addEmployee = async (OrganizationId, userEmail, role, invitedBy,u
       { new: true }
     );
 
+    // Ajouter la relation Organization à l'utilisateur
+    await User.findByIdAndUpdate(
+      user._id,
+      { Organization: OrganizationId },
+      { new: true }
+    );
+
     return member;
   };
 
