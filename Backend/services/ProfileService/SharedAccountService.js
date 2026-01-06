@@ -10,6 +10,13 @@ module.exports.createCompany = async (ownerId, name) => {
     const ownerMember = await OrganizationMember.create({ user: ownerId, Organization: account._id, role: "Owner" });
     // Ajouter le propriétaire dans le tableau members de l'organisation (évite les doublons)
     await Organization.findByIdAndUpdate(account._id, { $addToSet: { members: ownerMember._id } }, { new: true });
+    
+    await User.findByIdAndUpdate(
+      ownerId,
+      { Organization: account._id },
+      { new: true }
+    );
+
     return account;
   } catch (err) {
     console.error("createCompany error:", err);
