@@ -15,6 +15,7 @@ const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
 
   const onBackHandle = () =>
     router.push(userType === "company" ? "/home/company" : "/home/candidate");
+  
   return (
     <Box sx={{ textAlign: "center" }}>
       <Button

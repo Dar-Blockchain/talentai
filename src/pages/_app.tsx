@@ -13,8 +13,8 @@ import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { useAuthCheck } from "@/hooks/useAuthCheck";
-import { LoadingScreen } from "@/components/auth";
 import { isTokenExpired } from "@/utils/tokenUtils";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 const poppins = Poppins({
   subsets: ["latin"],

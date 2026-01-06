@@ -4,7 +4,7 @@ interface LoadingScreenProps {
   title?: string;
 }
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ title }) => (
+const LoadingScreen: React.FC<LoadingScreenProps> = ({ title }) => (
   <Box
     sx={{
       minHeight: "100vh",
@@ -31,3 +31,5 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ title }) => (
     )}
   </Box>
 );
+
+export default LoadingScreen;

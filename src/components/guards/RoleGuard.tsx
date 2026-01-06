@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import { isLoggingOutCheck } from "@/store/slices/authSlice";
-import { LoadingScreen } from "../auth";
+import LoadingScreen from "../ui/LoadingScreen";
 
 interface RoleGuardProps {
   allowedRoles: string[];

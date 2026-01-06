@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 type Props = {
   themeColors: any;
 };
-export const SignInHeader: React.FC<Props> = ({themeColors}) => {
+const SignInHeader: React.FC<Props> = ({themeColors}) => {
   const router = useRouter();
   const userType = useSelector((state: RootState) => state.user.userType);
 
@@ -70,3 +70,5 @@ export const SignInHeader: React.FC<Props> = ({themeColors}) => {
     </>
   );
 };
+
+export default SignInHeader;

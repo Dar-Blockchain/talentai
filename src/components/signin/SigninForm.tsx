@@ -4,12 +4,11 @@ import EmailIcon from "@mui/icons-material/Email";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
+import { AppDispatch } from "@/store/store";
 import { registerUser, verifyOTP } from "@/store/slices/authSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
-import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 
 type FormValues = {
