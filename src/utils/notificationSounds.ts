@@ -82,6 +82,9 @@ class NotificationSoundManager {
    */
   private loadSettings(): void {
     try {
+      // Check if localStorage is available (client-side only)
+      if (typeof window === 'undefined') return;
+
       const settings = localStorage.getItem('notificationSoundSettings');
       if (settings) {
         const parsed = JSON.parse(settings);
@@ -98,6 +101,9 @@ class NotificationSoundManager {
    */
   private saveSettings(): void {
     try {
+      // Check if localStorage is available (client-side only)
+      if (typeof window === 'undefined') return;
+
       localStorage.setItem('notificationSoundSettings', JSON.stringify({
         enabled: this.enabled,
         volume: this.volume,
