@@ -26,9 +26,9 @@ const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
 
   useEffect(() => {
     if (!user || !profile || isLoggingOut) return;
-
-    if (!allowedRoles.includes(user.role)) {
-      router.replace(`/dashboard/${user.role.toLowerCase()}`);
+    const role = user.role || profile?.userId?.role;
+    if (!allowedRoles.includes(role)) {
+      router.replace(`/dashboard/${role.toLowerCase()}`);
     }
   }, [user, profile, allowedRoles, router, isLoggingOut]);
 
