@@ -12,9 +12,10 @@ module.exports.createCompany = async (req, res) => {
 
 module.exports.addEmployee = async (req, res) => {
     try {
-      const { accountId, email, role } = req.body;
+      const { OrganizationId, email, role } = req.body;
       const invitedBy = req.user._id;
-      const member = await AccountService.addEmployee(accountId, email, role, invitedBy);
+      const username = req.user.username;
+      const member = await AccountService.addEmployee(OrganizationId, email, role, invitedBy, username);
       res.json({ success: true, member });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });

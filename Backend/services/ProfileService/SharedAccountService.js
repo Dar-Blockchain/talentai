@@ -13,7 +13,7 @@ module.exports.createCompany = async (ownerId, name) => {
 };
 
 // Ajouter un employé à un compte
-module.exports.addEmployee = async (accountId, userEmail, role, invitedBy,username) => {
+module.exports.addEmployee = async (OrganizationId, userEmail, role, invitedBy,username) => {
 
       // trouver l'email de l'invitant si possible
       let inviterEmail = null;
@@ -32,14 +32,14 @@ module.exports.addEmployee = async (accountId, userEmail, role, invitedBy,userna
       user = await User.create({ email: userEmail, username: userEmail.split("@")[0], role: "Candidate" });
     }
 
-    const existing = await OrganizationMember.findOne({ user: user._id, Organization: accountId });
+    const existing = await OrganizationMember.findOne({ user: user._id, Organization: OrganizationId });
     if (existing) throw new Error("User already has access to this account");
 
-    const member = await OrganizationMember.create({ user: user._id, Organization: accountId, role, invitedBy });
+    const member = await OrganizationMember.create({ user: user._id, Organization: OrganizationId, role, invitedBy });
     
     // Ajouter le membre au tableau members de l'organisation en évitant les doublons
     await Organization.findByIdAndUpdate(
-      accountId,
+      OrganizationId,
       { $addToSet: { members: member._id } },
       { new: true }
     );
