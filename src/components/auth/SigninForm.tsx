@@ -337,6 +337,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 boxShadow: "0 4px 12px themeColors.primaryHover",
               },
             }}
+            loading={loading}
             disabled={
               loading ||
               (step === 2 && !isExpired && values.code.length < CODE_LENGTH)
