@@ -44,10 +44,21 @@ module.exports.listMyEmployees = async (req, res) => {
 
 module.exports.updateRole = async (req, res) => {
     try {
-      const { accountId, userId, newRole } = req.body;
-      const member = await AccountService.updateRole(accountId, userId, newRole);
+      const { role } = req.body;
+      const { OrganizationId, userId } = req.params;
+      const member = await AccountService.updateRole(OrganizationId, userId, role);
       res.json({ success: true, member });
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
-  };
+};
+
+module.exports.removeEmployee = async (req, res) => {
+  try {
+    const { OrganizationId, userId } = req.params;
+    const removed = await AccountService.removeEmployee(OrganizationId, userId);
+    res.json({ success: true, removed });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};

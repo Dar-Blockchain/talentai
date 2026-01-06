@@ -46,6 +46,11 @@ router.get("/:accountId/employees", accountController.listEmployees);
  * PUT /accounts/:accountId/employees/:userId/role
  * Update an employee's role within a Company account
  */
-router.put("/:accountId/employees/:userId/role", accountController.updateRole);
+router.put("/:OrganizationId/employees/:userId/role", accountController.updateRole);
+/**
+ * DELETE /accounts/:OrganizationId/employees/:userId
+ * Retirer un employé d'un compte
+ */
+router.delete('/:OrganizationId/employees/:userId', accountController.removeEmployee);
 
 module.exports = router;
