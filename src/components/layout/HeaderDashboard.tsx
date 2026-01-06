@@ -152,7 +152,7 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ onClick, isLoading, fullWid
     }}
     onClick={onClick}
   >
-    {isLoading ? "Logging out..." : "Logout"}
+    Logout
   </Button>
 );
 
@@ -211,10 +211,8 @@ const HeaderDashboard = () => {
   const handleLogout = useCallback(async () => {
     try {
       await dispatch(logout()).unwrap();
-      window.location.replace("/");
     } catch (error) {
       console.error("Logout failed:", error);
-      window.location.replace("/");
     }
   }, [dispatch]);
 
@@ -250,52 +248,6 @@ const HeaderDashboard = () => {
       dispatch(fetchTokenBalance());
     }
   }, [router.query.refreshBalance, token, dispatch]);
-
-  useEffect(() => { console.log(profile, 'profile') }, [profile])
-
-  // Show loading screen during logout
-  if (isLoggingOut) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          background: "white",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 3,
-        }}
-      >
-        {/* Logo */}
-        <Box
-          component="img"
-          src={logoSrc}
-          alt="Logo"
-          sx={{
-            height: 40,
-            mb: 2,
-          }}
-        />
-
-        {/* Loading Spinner */}
-        <CircularProgress size={60} sx={{ color: isCompany ? "#00FF9D" : "#8310FF" }} />
-
-        {/* Logging out text */}
-        <Typography
-          sx={{
-            fontFamily: "Poppins",
-            fontSize: "1.125rem",
-            fontWeight: 500,
-            color: "#6B7280",
-            mt: 1,
-          }}
-        >
-          Logging out...
-        </Typography>
-      </Box>
-    );
-  }
 
   return (
     <>

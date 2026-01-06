@@ -21,7 +21,6 @@ import {
 } from "@/store/slices/postSlice";
 import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
-import CompanyOnly from "@/components/guards/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
@@ -30,6 +29,7 @@ import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
 import HeaderDashboard from "@/components/layout/HeaderDashboard";
 import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
+import RoleGuard from "@/components/guards/RoleGuard";
 
 // Update the MatchingCandidate interface
 export interface MatchingCandidate {
@@ -197,7 +197,7 @@ const fetchMyJobs = useCallback(
   }, [dispatch, matchesPerPage]);
 
   return (
-    <CompanyOnly>
+    <RoleGuard allowedRoles={["Company"]}>
       <Box
         sx={{
           minHeight: "100vh",
@@ -287,7 +287,7 @@ const fetchMyJobs = useCallback(
           {activeSection === "all" && <CompanyProfilesAssessments profile={profile} />}
         </Container>
       </Box>
-    </CompanyOnly>
+    </RoleGuard>
   );
 };
 

@@ -34,7 +34,6 @@ import {
 } from '@mui/icons-material';
 import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
-import AdminOnly from '@/components/guards/AdminOnly';
 import { selectProfile, clearProfile } from '@/store/slices/profileSlice';
 import { logout, setLoggingOut } from '@/store/slices/authSlice';
 import { resetRedirectState } from '@/utils/authRedirect';
@@ -53,11 +52,10 @@ import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashbo
 
 // Utilities
 import { getCountryName } from '@/utils/countryMappings';
-import { getRoleColor, getStatusColor, getTypeColor } from '@/utils/colorMappings';
+import RoleGuard from '@/components/guards/RoleGuard';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
-const DRAWER_WIDTH = 280;
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -1073,7 +1071,7 @@ const DashboardAdmin = () => {
     }
 
     return (
-        <AdminOnly>
+        <RoleGuard allowedRoles={['Admin']}>
             <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
                 {/* Sidebar with accent background and divider */}
                 <Box sx={{
@@ -1152,7 +1150,7 @@ const DashboardAdmin = () => {
                     onSave={handleSavePermissions}
                 />
             </Box>
-        </AdminOnly>
+        </RoleGuard>
     );
 };
 
