@@ -78,6 +78,12 @@ const userSchema = new mongoose.Schema(
         ref: "Notification",
       },
     ],
+    Organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      required: false,
+      index: true,
+    },
   },
   { timestamps: true }
 );

@@ -330,5 +330,46 @@ const sendPostEmail = async (to, post) => {
   }
 };
 
+// Modèle d'email d'invitation à rejoindre une organisation
+const getOrganizationInviteTemplate = (orgName, role, inviter) => `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Invitation to join ${orgName}</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; margin:0; padding:20px; background-color:#F7FAFC;">
+    <div style="max-width:600px; margin:0 auto; background:#fff; padding:24px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+      <h2 style="color:#1A365D;">You're invited to join <strong>${orgName}</strong></h2>
+      <p>Hello,</p>
+      <p>You have been invited to join the company <strong>${orgName}</strong> as <strong>${role}</strong>.</p>
+      ${inviter ? `<p>Invited by: ${inviter}</p>` : ''}
+      <p>To accept this invitation, please sign in to your TalenIA account and confirm your participation.</p>
+      <p>If you did not request this invitation, you may ignore this message.</p>
+      <p style="margin-top:18px; color:#718096; font-size:13px;">This email was generated automatically by TalenIA.</p>
+    </div>
+  </body>
+</html>
+`;
+
+// Envoi d'un email d'invitation à rejoindre une organisation
+const sendOrganizationInvite = async (to, orgName, role, inviterEmail) => {
+  const mailOptions = {
+    from: '"TalenIA" <contact@talentai.bid>',
+    to,
+    subject: `Invitation: Join ${orgName} as ${role}`,
+    html: getOrganizationInviteTemplate(orgName, role, inviterEmail),
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Invitation sent to ${to} to join ${orgName} as ${role}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send invitation:', error.message);
+    return false;
+  }
+};
+
 // Exporter les fonctions
-module.exports = { sendActivationEmail , sendOTP, sendPostEmail };
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendOrganizationInvite };
