@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import {
@@ -36,7 +36,6 @@ import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import { selectProfile, clearProfile } from '@/store/slices/profileSlice';
 import { logout, setLoggingOut } from '@/store/slices/authSlice';
-import { resetRedirectState } from '@/utils/authRedirect';
 import AdminWorldMap from '@/components/dashboard-admin/AdminWorldMap';
 import AdminSkillsDistribution from '@/components/dashboard-admin/AdminSkillsDistribution';
 import AdminGrowthAnalytics from '@/components/dashboard-admin/AdminGrowthAnalytics';
@@ -640,36 +639,13 @@ const DashboardAdmin = () => {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            // Set logout flag to prevent axios interceptors from triggering redirects
-            setLoggingOut(true);
-            resetRedirectState();
-            
-            // Clear Redux state
-            dispatch(clearProfile());
-            dispatch(logout());
-            
-            // Clear tokens
-            localStorage.removeItem('api_token');
-            Cookies.remove('api_token', { path: '/' });
-            localStorage.clear();
-            
-            // Clear all cookies
-            Object.keys(Cookies.get()).forEach((cookieName) => {
-                Cookies.remove(cookieName, { path: '/' });
-            });
-            
-            // Sign out from NextAuth
-            await signOut({ callbackUrl: '/' });
-        } catch (error) {
-            console.error('Logout failed:', error);
-            // Even on error, try to sign out
-            setLoggingOut(true);
-            resetRedirectState();
-            await signOut({ callbackUrl: '/' });
-        }
-    };
+        const handleLogout = useCallback(async () => {
+          try {
+            await dispatch(logout()).unwrap();
+          } catch (error) {
+            console.error("Logout failed:", error);
+          }
+        }, [dispatch]);
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);

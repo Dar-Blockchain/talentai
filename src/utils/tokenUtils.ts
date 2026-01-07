@@ -169,34 +169,6 @@ export function clearTokens(): void {
 }
 
 /**
- * Handle token expiration - clear tokens and redirect to login
- * This handles both cookie expiration and JWT expiration
- * Uses the centralized redirectToLogin to prevent loops
- * @param currentPath - Optional current path to use as returnUrl
- */
-export function handleTokenExpiration(currentPath?: string): void {
-  if (typeof window === 'undefined') return;
-  
-  // Don't redirect if already on signin page (check pathname only, ignore query params)
-  const currentPathname = window.location.pathname;
-  if (currentPathname === '/signin' || currentPathname.startsWith('/signin/')) {
-    // Just clear tokens, don't redirect
-    clearTokens();
-    return;
-  }
-  
-  // Clear both cookie and localStorage
-  clearTokens();
-  
-  // Use centralized redirect function to prevent loops
-  const { redirectToLogin } = require('./authRedirect');
-  const path = currentPath || window.location.pathname + window.location.search;
-  
-  console.warn('🔒 Token expired (cookie or JWT) - Clearing tokens and redirecting to login');
-  redirectToLogin(null, path);
-}
-
-/**
  * Get token info (for debugging)
  */
 export function getTokenInfo(token?: string | null): {
