@@ -22,7 +22,7 @@ exports.createPost = async (req, res) => {
 
     const postData = {
       ...parsedData,
-      user: req.user._id,
+      user: req.user._id, //id => token ("membre" req.user.campagny)
     };
 
     // Get token from Authorization header

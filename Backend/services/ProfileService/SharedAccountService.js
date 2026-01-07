@@ -10,6 +10,13 @@ module.exports.createCompany = async (ownerId, name) => {
     const ownerMember = await OrganizationMember.create({ user: ownerId, Organization: account._id, role: "Owner" });
     // Ajouter le propriétaire dans le tableau members de l'organisation (évite les doublons)
     await Organization.findByIdAndUpdate(account._id, { $addToSet: { members: ownerMember._id } }, { new: true });
+    
+    await User.findByIdAndUpdate(
+      ownerId,
+      { Organization: account._id },
+      { new: true }
+    );
+
     return account;
   } catch (err) {
     console.error("createCompany error:", err);
@@ -82,12 +89,27 @@ module.exports.getOrganizationWithMembers = async (organizationId) => {
 };
 
 // Modifier rôle d'un membre
-module.exports.updateRole = async (accountId, userId, newRole) => {
+module.exports.updateRole = async (OrganizationId, userId, newRole) => {
   const member = await OrganizationMember.findOneAndUpdate(
-    { Organization: accountId, user: userId },
+    { Organization: OrganizationId, user: userId },
     { role: newRole },
     { new: true }
   );
   if (!member) throw new Error("Member not found");
+  return member;
+};
+
+// Retirer un employé d'un compte
+module.exports.removeEmployee = async (OrganizationId, userId) => {
+  // Trouver et supprimer l'OrganizationMember
+  const member = await OrganizationMember.findOneAndDelete({ Organization: OrganizationId, user: userId });
+  if (!member) throw new Error("Member not found");
+
+  // Retirer la référence du membre depuis l'organisation
+  await Organization.findByIdAndUpdate(OrganizationId, { $pull: { members: member._id } });
+
+  // Optionnel: dissocier l'utilisateur de l'organisation
+  await User.findByIdAndUpdate(userId, { Organization: null }, { new: true });
+
   return member;
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, Avatar, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -7,6 +7,14 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import AddMemberModal from "./AddMemberModal";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  addEmployee,
+  selectMembers,
+  clearAddMemberSuccess,
+  MemberRole
+} from "@/store/slices/memberSlice";
 
 // Styled Components
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -43,18 +51,61 @@ interface CompanyInfoHeaderProps {
 
 const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
+  const { sharedAccountId, addMemberSuccess } = useSelector(selectMembers);
+
+  // Close modal when member is added successfully
+  useEffect(() => {
+    if (addMemberSuccess) {
+      setAddMemberModalOpen(false);
+      dispatch(clearAddMemberSuccess());
+    }
+  }, [addMemberSuccess, dispatch]);
+
+  // Map UI roles to API roles
+  const roleMapping: Record<string, MemberRole> = {
+    'hr': 'RH',
+    'technical_leader': 'TechLead',
+    'supervisor': 'Supervisor',
+    'manager': 'Manager'
+  };
 
   const handleAddMember = async (email: string, role: string) => {
-    // TODO: Implement API call to invite team member
-    console.log('Inviting member:', { email, role });
+    console.log('🔵 [CompanyInfoHeader] handleAddMember called with:', { email, role });
+    console.log('🔵 [CompanyInfoHeader] sharedAccountId:', sharedAccountId);
 
-    // Simulated API call
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    });
+    // Map the role to API format
+    const apiRole = roleMapping[role] || 'RH';
+    console.log('🔵 [CompanyInfoHeader] Mapped role:', role, '→', apiRole);
+
+    // Use the shared account ID or fallback
+    const accountId = sharedAccountId || profile?._id || '';
+    console.log('🔵 [CompanyInfoHeader] Using accountId:', accountId);
+
+    if (!accountId) {
+      console.error('❌ [CompanyInfoHeader] No account ID found!');
+      throw new Error('Account ID not found. Please try again.');
+    }
+
+    console.log('🔵 [CompanyInfoHeader] Dispatching addEmployee with:', { accountId, email, role: apiRole });
+
+    // Dispatch the add employee action
+    const result = await dispatch(addEmployee({
+      accountId,
+      email,
+      role: apiRole
+    }));
+
+    console.log('🔵 [CompanyInfoHeader] addEmployee result:', result);
+
+    // Check if the action was rejected
+    if (addEmployee.rejected.match(result)) {
+      console.error('❌ [CompanyInfoHeader] addEmployee was rejected:', result.payload);
+      throw new Error(result.payload as string || 'Failed to add member');
+    }
+
+    console.log('✅ [CompanyInfoHeader] Member added successfully');
   };
 
   return (
