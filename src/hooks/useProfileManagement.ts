@@ -66,7 +66,6 @@ export const useProfileManagement = () => {
   // Load user profile data
   useEffect(() => {
     if (!user) {
-      router.push('/signin');
       return;
     }
     dispatch(getMyProfile());

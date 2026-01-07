@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   AppBar,
   Box,
@@ -156,33 +156,14 @@ const Header = ({ logo, type }: HeaderProps) => {
     router.push('/settings/profile?tab=notifications');
   };
 
-  const handleLogout = async () => {
-    try {
-      // Clear Redux state FIRST to prevent components from trying to fetch
-      dispatch(clearProfile());
-      dispatch(logout());
+    const handleLogout = useCallback(async () => {
+      try {
+        await dispatch(logout()).unwrap();
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
+    }, [dispatch]);
 
-      // Then clear the token and storage
-      localStorage.removeItem("api_token");
-      Cookies.remove("api_token", { path: "/" });
-      localStorage.clear();
-
-      // Clear all other cookies
-      Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName, { path: "/" });
-      });
-
-      // Sign out from NextAuth (don't await to make redirect faster)
-      signOut({ redirect: false }).catch(console.error);
-
-      // Redirect immediately (don't wait for async operations)
-      window.location.href = "/signin";
-    } catch (error) {
-      console.error("Logout failed:", error);
-      // Even on error, redirect to signin
-      window.location.href = "/signin";
-    }
-  };
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };

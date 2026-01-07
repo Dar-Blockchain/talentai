@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { isCurrentTokenExpired, handleTokenExpiration, isTokenExpired, getToken, validateAndSyncToken, isCookieExpired } from '@/utils/tokenUtils';
 import { signOut } from 'next-auth/react';
 
 interface AuthState {
@@ -54,80 +53,6 @@ export const getAbortSignal = (): AbortSignal | null => {
 export const isLoggingOutCheck = (): boolean => {
   return isLoggingOut;
 };
-
-// Setup axios interceptors for token expiration checking and 401 responses
-if (typeof window !== 'undefined') {
-  let isHandling401 = false;
-
-  // Request interceptor: Check token expiration before making requests
-  axios.interceptors.request.use(
-    (config) => {
-      // Skip all checks if we're logging out
-      if (isLoggingOut) {
-        return config;
-      }
-
-      // Check token expiration before making API calls
-      const pathname = window.location.pathname;
-      if (pathname !== '/signin' && !pathname.startsWith('/signin/')) {
-        const token = getToken();
-        
-        // Only check JWT expiration, not cookie expiration (cookie might be missing but token valid)
-        // If token exists but is expired (JWT), clear it and redirect
-        if (token && isTokenExpired(token)) {
-          if (!isHandling401) {
-            isHandling401 = true;
-            console.warn('🔒 Axios: Token expired (JWT) before API call', config.url);
-            handleTokenExpiration();
-          }
-          // Cancel the request
-          return Promise.reject(new Error('Token expired'));
-        }
-        
-        // Don't check cookie expiration in axios interceptor - let components handle it
-        // Just sync tokens if cookie exists
-        const cookieToken = Cookies.get('api_token');
-        const localToken = localStorage.getItem('api_token');
-        
-        // Sync localStorage with cookie if cookie exists
-        if (cookieToken && !localToken) {
-          localStorage.setItem('api_token', cookieToken);
-        }
-        
-        // If both exist but are different, prefer cookie
-        if (cookieToken && localToken && cookieToken !== localToken) {
-          localStorage.setItem('api_token', cookieToken);
-        }
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    }
-  );
-
-  // Response interceptor: Handle 401 responses
-  axios.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      // Skip 401 handling if we're logging out
-      if (isLoggingOut) {
-        return Promise.reject(error);
-      }
-
-      if (error.response?.status === 401 && !isHandling401) {
-        // Don't redirect if already on signin page
-        const pathname = window.location.pathname;
-        if (pathname !== '/signin' && !pathname.startsWith('/signin/')) {
-          isHandling401 = true;
-          console.warn('🔒 Axios: Received 401 Unauthorized - Token expired or invalid');
-          handleTokenExpiration();
-        }
-      }
-      return Promise.reject(error);
-    }
-  );
-}
 
 // Register user thunk
 export const registerUser = createAsyncThunk(

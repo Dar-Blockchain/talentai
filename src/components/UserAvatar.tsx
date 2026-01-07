@@ -89,13 +89,8 @@ export default function UserAvatar() {
     try {
       // Dispatch logout action - all cleanup happens in Redux
       await dispatch(logout() as any).unwrap();
-
-      // Redirect to signin page
-      window.location.href = '/signin';
     } catch (error) {
       console.error('Logout failed:', error);
-      // Even on error, redirect to signin
-      window.location.href = '/signin';
     }
   };
 
