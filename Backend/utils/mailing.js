@@ -353,7 +353,7 @@ const getOrganizationInviteTemplate = (orgName, role, inviter) => `
 `;
 
 // Envoi d'un email d'invitation à rejoindre une organisation
-const sendOrganizationInvite = async (to, orgName, role, inviterEmail) => {
+const sendCompanyInvitation = async (to, orgName, role, inviterEmail) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to,
@@ -372,4 +372,4 @@ const sendOrganizationInvite = async (to, orgName, role, inviterEmail) => {
 };
 
 // Exporter les fonctions
-module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendOrganizationInvite };
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation };

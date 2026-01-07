@@ -7,7 +7,7 @@
 
 const express = require("express");
 const router = express.Router();
-const accountController = require("../controllers/ProfileControllers/SharedAccountController");
+const CompanyInvitationController = require("../controllers/ProfileControllers/CompanyInvitationController");
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
@@ -18,39 +18,45 @@ router.use(requireAuthUser, authLogMiddleware("Account"));
 // ========== ACCOUNT MANAGEMENT ==========
 
 /**
- * POST /accounts/create
- * Create a new Company account using the current authenticated user as owner
- */
-router.post("/", accountController.createCompany);
-
-/**
- * POST /accounts/employees
+ * POST /sentInvitation
  * Add a new employee to a Company account
  */
-router.post("/employees", accountController.addEmployee);
+router.post("/sentInvitation", CompanyInvitationController.sentInvitation);
 
 /**
- * GET /accounts/me/employees
+ * POST /resendInvitation/:invitationId
+ * Resend an invitation (regenerate token and reset expiration)
+ */
+router.post("/resendInvitation/:invitationId", CompanyInvitationController.resendInvitation);
+
+/**
+ * DELETE /deleteInvitation/:invitationId
+ * Delete/revoke an invitation
+ */
+router.delete("/deleteInvitation/:invitationId", CompanyInvitationController.deleteInvitation);
+
+/**
+ * GET /myEmployees
  * Retrieve the list of all employees for companies owned by current user
  */
-router.get("/myEmployees", accountController.listMyEmployees);
+router.get("/myEmployees", CompanyInvitationController.listMyEmployees);
 
 /**
  * GET /accounts/:accountId/employees
  * Retrieve the list of all employees for a given account
  */
-router.get("/:accountId/employees", accountController.listEmployees);
+router.get("/:accountId/employees", CompanyInvitationController.listEmployees);
 
 
 /**
  * PUT /accounts/:accountId/employees/:userId/role
  * Update an employee's role within a Company account
  */
-router.put("/:OrganizationId/employees/:userId/role", accountController.updateRole);
+router.put("/:OrganizationId/employees/:userId/role", CompanyInvitationController.updateRole);
 /**
  * DELETE /accounts/:OrganizationId/employees/:userId
  * Retirer un employé d'un compte
  */
-router.delete('/:OrganizationId/employees/:userId', accountController.removeEmployee);
+router.delete('/:OrganizationId/employees/:userId', CompanyInvitationController.removeEmployee);
 
 module.exports = router;

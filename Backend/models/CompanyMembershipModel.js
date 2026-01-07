@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const organizationMemberSchema = new mongoose.Schema({
+const CompanyMembershipSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  Organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true, index: true },
+  Company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   role: {
     type: String,
     enum: ["Owner", "RH", "TechLead", "Supervisor", "Manager"],
@@ -13,6 +13,6 @@ const organizationMemberSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Un user ne peut avoir qu’un rôle unique par account
-organizationMemberSchema.index({ user: 1, Organization: 1 }, { unique: true });
+CompanyMembershipSchema.index({ user: 1, Company: 1 }, { unique: true });
 
-module.exports = mongoose.model("OrganizationMember", organizationMemberSchema);
+module.exports = mongoose.model("CompanyMembership", CompanyMembershipSchema);

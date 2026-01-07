@@ -78,9 +78,9 @@ const userSchema = new mongoose.Schema(
         ref: "Notification",
       },
     ],
-    Organization: {
+    CompanyMembership: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Organization",
+      ref: "CompanyMembership",
     },
   },
   { timestamps: true }
