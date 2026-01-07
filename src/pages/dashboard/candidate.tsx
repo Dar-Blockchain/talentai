@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PageContainer from "@/components/layout/PageContainer";
 import HeaderDashboard from "@/components/layout/HeaderDashboard";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsModern";
@@ -9,6 +9,7 @@ import CandidateEngagementTasks from "@/components/dashboard-candidate/Candidate
 import RoleGuard from "@/components/guards/RoleGuard";
 
 const DashboardCandidate: React.FC = () => {
+
   return (
     <RoleGuard allowedRoles={["Candidate"]}>
       <PageContainer>
