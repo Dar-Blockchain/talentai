@@ -9,7 +9,7 @@ function authLogMiddleware(logType) {
   return function (req, res, next) {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(" ")[1];
-    const startTime = new Date(); // Temps de début de la requête
+    const startTime = new Date(); // Request start time
 
     // Get IP address
     const ip = req.ip;
@@ -48,7 +48,7 @@ function authLogMiddleware(logType) {
 async function appendLog(req, res, startTime, logType) {
   const headers = JSON.stringify(req.headers);
   const endTime = new Date();
-  const executionTime = endTime - startTime; // Temps d'exécution en millisecondes
+  const executionTime = endTime - startTime; // Execution time in milliseconds
   const body = Object.keys(req.body).length > 0 ? JSON.stringify(req.body) : 'N/A';
   const referer = req.headers.referer || 'N/A';
   const userAgent = req.get('User-Agent');
