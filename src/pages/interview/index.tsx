@@ -21,7 +21,6 @@ import {
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicIcon from '@mui/icons-material/Mic';
-import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -204,7 +203,6 @@ export default function Test() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { data: session } = useSession();
   const userRole = useSelector((state: RootState) => state.user.userType);
   const GREEN_MAIN = userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
 

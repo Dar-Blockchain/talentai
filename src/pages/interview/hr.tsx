@@ -45,7 +45,6 @@ import ReadyIcon from '@mui/icons-material/CheckCircle';
 import TimerIcon from '@mui/icons-material/Timer';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import { RootState } from '@/store/store';
 import { useSelector } from 'react-redux';
@@ -577,7 +576,6 @@ const IntelligentInterviewTest = () => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { data: session } = useSession();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const authUser = useSelector((state: RootState) => state.auth.user);
   const profile = useSelector((state: RootState) => state.profile.profile);
@@ -1462,7 +1460,6 @@ const IntelligentInterviewTest = () => {
     }
 
     // WebSocket connection independent of auth status for testing
-    console.log('🔍 Auth status:', { isAuthenticated, sessionData: !!session });
 
     console.log('🔌 Initializing WebSocket connection...');
     connectionInitialized.current = true;
@@ -1745,7 +1742,7 @@ const IntelligentInterviewTest = () => {
                   Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                  candidateId: session.user.id,
+                  candidateId: candidateId,
                   jobId,
                   stepId,
                   interviewDetailsId: data.sessionId,
@@ -1772,7 +1769,7 @@ const IntelligentInterviewTest = () => {
                     Authorization: `Bearer ${token}`
                   },
                   body: JSON.stringify({
-                    candidateId: session.user.id,
+                    candidateId: candidateId,
                     jobId
                   })
                 }
@@ -2002,8 +1999,8 @@ const IntelligentInterviewTest = () => {
       console.log('🚀 Starting interview with config:', interviewConfig);
 
       // Get user info for candidate ID
-      const candidateId = session?.user?.email || 'anonymous';
-
+      const candidateId = authUser?.email || 'anonymous';
+      console.log('Testiiiiiiiiiiiiiiiiiiiiiiiiiing', candidateId);
       // Initialize audio for recording
       await initializeAudio();
 

@@ -26,7 +26,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicIcon from '@mui/icons-material/Mic';
 import { v4 as uuidv4 } from 'uuid';
-import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import { RootState } from '@/store/store';
 import { useSelector } from 'react-redux';
