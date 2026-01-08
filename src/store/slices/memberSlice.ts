@@ -47,18 +47,21 @@ export interface DeleteMemberPayload {
 
 export interface Invitation {
   _id: string;
-  user: {
+  email: string;
+  Company?: any;
+  user?: {
     _id: string;
     username: string;
     email: string;
   };
   role: string;
-  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled' | 'active' | 'revoked';
   invitedBy: {
     _id: string;
     username: string;
     email: string;
   };
+  token?: string;
   createdAt: string;
   expiresAt?: string;
   acceptedAt?: string;
@@ -570,7 +573,11 @@ export const respondToInvitation = createAsyncThunk<
   { rejectValue: string }
 >("member/respondToInvitation", async ({ invitationId, action }, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] respondToInvitation CALLED with id: ${invitationId}, action: ${action}`);
-
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    console.error(`❌ [MemberSlice] No token found - skipping API call`);
+    return rejectWithValue("No authentication token found");
+  }
   try {
     console.log(`📡 [MemberSlice] Responding to invitation via API...`);
     const response = await fetch(
@@ -578,6 +585,8 @@ export const respondToInvitation = createAsyncThunk<
       {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
+
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ action }),
@@ -618,7 +627,7 @@ export const fetchInvitationDetails = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
   try {
-    console.log(token,'aaaaaaaaaa')
+    console.log(token, 'aaaaaaaaaa')
     console.log(`📡 [MemberSlice] Fetching invitation details from API...`);
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/details/${invitationId}`,
@@ -646,7 +655,7 @@ export const fetchInvitationDetails = createAsyncThunk<
 
     const data = await response.json();
     console.log(`✅ [MemberSlice] Invitation details fetched successfully`, data);
-    return data;
+    return data.invitation || data;
   } catch (error: any) {
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue("An error occurred while fetching invitation details");

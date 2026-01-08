@@ -33,18 +33,21 @@ import {
 
 export interface Invitation {
   _id: string;
-  user: {
+  email: string;
+  Company?: any;
+  user?: {
     _id: string;
     username: string;
     email: string;
   };
   role: string;
-  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled' | 'active' | 'revoked';
   invitedBy: {
     _id: string;
     username: string;
     email: string;
   };
+  token?: string;
   createdAt: string;
   expiresAt?: string;
   acceptedAt?: string;
@@ -307,7 +310,7 @@ const PendingInvitationsList: React.FC<PendingInvitationsListProps> = ({
                       <EmailIcon sx={{ fontSize: 18, color: '#64748b' }} />
                     </Box>
                     <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b' }}>
-                      {invitation.user?.email || 'No email'}
+                      {invitation.email || 'No email'}
                     </Typography>
                   </Box>
                 </TableCell>
