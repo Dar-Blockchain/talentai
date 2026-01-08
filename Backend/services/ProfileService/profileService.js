@@ -216,21 +216,21 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
 exports.updateUserImage = async (userId, newFilename) => {
   if (!userId) {
-    throw new Error("ID utilisateur manquant.");
+    throw new Error("Missing user ID.");
   }
   if (!newFilename) {
-    throw new Error("Nom de fichier image manquant.");
+    throw new Error("Missing image filename.");
   }
 console.log("Updating profile image for userId:", userId.toString(), "with new filename:", newFilename);
-  // 1️⃣ Récupérer l'utilisateur existant pour connaître l'ancienne image
+  // 1️⃣ Retrieve the existing user to know the old image
 const existingUser = await Profile.findOne({ userId: userId.toString() });
   if (!existingUser) {
-    throw new Error("Profile non trouvé.");
+    throw new Error("Profile not found.");
   }
 
   const oldImage = existingUser.user_image;
   console.log("Old image filename:", oldImage);
-  // 2️⃣ Mettre à jour l'image dans la base
+  // 2️⃣ Update the image in the database
   const updatedUser = await Profile.findByIdAndUpdate(
     existingUser._id,
     { user_image: newFilename },
@@ -244,8 +244,8 @@ console.log("Old image path to delete:", oldImagePath);
     fs.access(oldImagePath, fs.constants.F_OK, (err) => {
       if (!err) {
         fs.unlink(oldImagePath, (unlinkErr) => {
-          if (unlinkErr) console.error("Erreur suppression ancienne image:", unlinkErr);
-          else console.log("Ancienne image supprimée :", oldImage);
+          if (unlinkErr) console.error("Error deleting old image:", unlinkErr);
+          else console.log("Old image deleted:", oldImage);
         });
       }
     });
@@ -255,21 +255,21 @@ console.log("Old image path to delete:", oldImagePath);
 };
 
 
-// Récupérer un profil par ID utilisateur
+// Get a profile by user ID
 // services/profileService.js
 module.exports.getProfileByUserId = async (userId) => {
   try {
     const profile = await Profile.findOne({ userId }).populate("userId");
 
     if (!profile) {
-      // Aucun profil trouvé
-      return { message: "Aucun profil trouvé pour cet utilisateur." };
+      // No profile found
+      return { message: "No profile found for this user." };
     }
 
     return profile;
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil :", error);
-    throw new Error("Impossible de récupérer le profil."); // message plus générique
+    console.error("Error retrieving profile:", error);
+    throw new Error("Unable to retrieve profile."); // more generic message
   }
 };
 
@@ -281,46 +281,46 @@ module.exports.getProfileByPostId = async (postId) => {
     });
 
     if (!post || !post.user || !post.user.profile) {
-      return { message: "Aucun profil trouvé pour cet utilisateur." };
+      return { message: "No profile found for this user." };
     }
 
     return post.user.profile;
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil :", error);
-    throw new Error("Impossible de récupérer le profil."); // Message plus générique
+    console.error("Error retrieving profile:", error);
+    throw new Error("Unable to retrieve profile."); // More generic message
   }
 };
 
-// Récupérer tous les profils
+// Get all profiles
 module.exports.getAllProfiles = async () => {
   try {
     const profiles = await Profile.find().populate("userId", "username email");
     return profiles;
   } catch (error) {
-    console.error("Erreur lors de la récupération des profils:", error);
+    console.error("Error retrieving profiles:", error);
     throw error;
   }
 };
 
-// Supprimer un profil
+// Delete a profile
 module.exports.deleteProfile = async (userId) => {
   try {
     const profile = await Profile.findOneAndDelete({ userId });
     if (!profile) {
-      throw new Error("Profil non trouvé");
+      throw new Error("Profile not found");
     }
 
-    // Mettre à jour l'utilisateur pour supprimer la référence au profil
+    // Update user to remove profile reference
     await User.findByIdAndUpdate(userId, { $unset: { profile: 1 } });
 
-    return { message: "Profil supprimé avec succès" };
+    return { message: "Profile deleted successfully" };
   } catch (error) {
-    console.error("Erreur lors de la suppression du profil:", error);
+    console.error("Error deleting profile:", error);
     throw error;
   }
 };
 
-// Rechercher des profils par compétences
+// Search profiles by skills
 module.exports.searchProfilesBySkills = async (skills) => {
   try {
     const profiles = await Profile.find({
@@ -328,7 +328,7 @@ module.exports.searchProfilesBySkills = async (skills) => {
     }).populate("userId", "username email");
     return profiles;
   } catch (error) {
-    console.error("Erreur lors de la recherche des profils:", error);
+    console.error("Error searching profiles:", error);
     throw error;
   }
 };
@@ -344,7 +344,7 @@ module.exports.addSoftSkills = async (userId, softSkills) => {
 
     if (!Array.isArray(softSkills)) {
       throw new Error(
-        "Les soft skills doivent être fournis sous forme de tableau"
+        "Soft skills must be provided as an array"
       );
     }
 
@@ -355,9 +355,9 @@ module.exports.addSoftSkills = async (userId, softSkills) => {
     const newSoftSkills = [];
     const duplicateSoftSkills = [];
 
-    // Filtrer les compétences existantes et nouvelles
+    // Filter existing and new skills
     softSkills.forEach((skill) => {
-      // Normaliser en minuscules pour éviter les doublons insensibles à la casse
+      // Normalize to lowercase to avoid case-insensitive duplicates
       const skillName = skill.name.toLowerCase();
 
       if (existingSoftSkills.includes(skillName)) {
@@ -367,25 +367,25 @@ module.exports.addSoftSkills = async (userId, softSkills) => {
       }
     });
 
-    // Si nous avons de nouvelles compétences, les ajouter
+    // If we have new skills, add them
     if (newSoftSkills.length > 0) {
-      // Ajouter les nouvelles soft skills en préservant l'unicité
+      // Add new soft skills while preserving uniqueness
       profile.softSkills = [...profile.softSkills, ...newSoftSkills];
-      await profile.save(); // Sauvegarder les modifications dans la base de données
+      await profile.save(); // Save changes to database
     }
 
-    // Retourner un message approprié
+    // Return appropriate message
     return {
       profile,
       message:
         newSoftSkills.length > 0
-          ? "Soft skills ajoutés avec succès."
-          : "Aucune nouvelle compétence à ajouter.",
-      duplicateSoftSkills, // Liste des doublons trouvés
+          ? "Soft skills added successfully."
+          : "No new skills to add.",
+      duplicateSoftSkills, // List of duplicates found
     };
   } catch (error) {
-    console.error("Erreur lors de l'ajout des soft skills:", error);
-    throw error; // Lancer l'erreur pour être gérée par le contrôleur
+    console.error("Error adding soft skills:", error);
+    throw error; // Throw error to be handled by controller
   }
 };
 
@@ -393,11 +393,11 @@ module.exports.getSoftSkills = async (userId) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      throw new Error("Profil non trouvé");
+      throw new Error("Profile not found");
     }
     return profile.softSkills || [];
   } catch (error) {
-    console.error("Erreur lors de la récupération des soft skills:", error);
+    console.error("Error retrieving soft skills:", error);
     throw error;
   }
 };
@@ -406,12 +406,12 @@ module.exports.updateSoftSkills = async (userId, softSkills) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      throw new Error("Profil non trouvé");
+      throw new Error("Profile not found");
     }
 
     if (!Array.isArray(softSkills)) {
       throw new Error(
-        "Les soft skills doivent être fournis sous forme de tableau"
+        "Soft skills must be provided as an array"
       );
     }
 
@@ -419,7 +419,7 @@ module.exports.updateSoftSkills = async (userId, softSkills) => {
     await profile.save();
     return profile;
   } catch (error) {
-    console.error("Erreur lors de la mise à jour des soft skills:", error);
+    console.error("Error updating soft skills:", error);
     throw error;
   }
 };
@@ -428,12 +428,12 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      throw new Error("Profil non trouvé");
+      throw new Error("Profile not found");
     }
 
     if (!Array.isArray(softSkillsToDelete)) {
       throw new Error(
-        "Les soft skills à supprimer doivent être fournis sous forme de tableau"
+        "Soft skills to delete must be provided as an array"
       );
     }
 
@@ -443,7 +443,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
     await profile.save();
     return profile;
   } catch (error) {
-    console.error("Erreur lors de la suppression des soft skills:", error);
+    console.error("Error deleting soft skills:", error);
     throw error;
   }
 };
@@ -476,7 +476,7 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
 
     const parsedNewBid = Number(newBid);
     if (!Number.isFinite(parsedNewBid) || parsedNewBid <= 0) {
-      throw new Error("Nouveau bid invalide. Le bid doit être un nombre positif.");
+      throw new Error("Invalid new bid. The bid must be a positive number.");
     }
 
     // --- Vérifier le plafond de dépense (bidBudgetMax) si configuré pour cet agent ---
@@ -503,27 +503,27 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       if (e.message && e.message.includes('Budget maximum')) {
         throw e; // remonter le message explicite au contrôleur
       }
-      console.warn('⚠️ Erreur lors de la vérification du bidBudgetMax :', e.message);
+      console.warn('⚠️ Error checking bidBudgetMax:', e.message);
     }
 
-    // Vérifier si le nouveau bid est strictement supérieur à l'ancien (si présent)
+    // Check if new bid is strictly greater than old (if present)
     if (currentFinalBid !== null && parsedNewBid <= currentFinalBid) {
       throw new Error(
-        `Le nouveau bid doit être strictement supérieur au bid actuel (${currentFinalBid}). Reçu: ${parsedNewBid}`
+        `The new bid must be strictly greater than current bid (${currentFinalBid}). Received: ${parsedNewBid}`
       );
     }
 
-    // ✅ Mettre à jour le bid
+    // ✅ Update the bid
     let finalBid = parsedNewBid;
 
-    // ✅ Mettre à jour le bid
+    // ✅ Update the bid
     profile.companyBid.finalBid = finalBid;
     profile.companyBid.company = companyId;
     profile.companyBid.post = postId;
     profile.companyBid.dateBid = new Date();
     await profile.save();
 
-    // 🔄 Supprimer l'user de l'ancienne compagnie s'il y en avait une
+    // 🔄 Remove user from old company if there was one
     if (lastCompanyId && lastCompanyId.toString() !== companyId.toString()) {
       const oldCompanyProfile = await Profile.findOne({
         userId: lastCompanyId,
@@ -557,36 +557,36 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
 // 🔹 Fonction pour supprimer un hard skill d’un profil utilisateur
 module.exports.deleteHardSkill = async (userId, skillToDelete) => {
   try {
-    console.log("🟢 Début de la suppression du skill:", skillToDelete, "pour l'utilisateur:", userId);
+    console.log("🟢 Starting skill deletion:", skillToDelete, "for user:", userId);
 
-    // ✅ 1) Récupérer le profil du user
+    // ✅ 1) Get the user's profile
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      console.error("❌ Aucun profil trouvé pour l'utilisateur:", userId);
+      console.error("❌ No profile found for user:", userId);
       throw new Error("Profile not found");
     }
-    console.log("✅ Profil trouvé:", profile._id);
+    console.log("✅ Profile found:", profile._id);
 
-    // ✅ 2) Vérifier la validité du skill à supprimer
+    // ✅ 2) Verify validity of skill to delete
     if (!skillToDelete || typeof skillToDelete !== "string") {
-      console.error("❌ Le skill à supprimer doit être une chaîne de caractères valide");
+      console.error("❌ The skill to delete must be a valid string");
       throw new Error("The skill to be deleted must be provided as a string");
     }
 
-    // ✅ 3) Chercher la position du skill dans le tableau des skills
+    // ✅ 3) Find the position of the skill in the skills array
     const skillIndex = profile.skills.findIndex(
       (skill) => skill.name === skillToDelete
     );
 
     if (skillIndex === -1) {
-      console.warn(`⚠️ Le skill "${skillToDelete}" n'existe pas dans le profil`);
-      throw new Error(`Le skill "${skillToDelete}" n'existe pas dans votre profil`);
+      console.warn(`⚠️ The skill "${skillToDelete}" does not exist in the profile`);
+      throw new Error(`The skill "${skillToDelete}" does not exist in your profile`);
     }
-    console.log(`🧩 Skill "${skillToDelete}" trouvé à l'index ${skillIndex}`);
+    console.log(`🧩 Skill "${skillToDelete}" found at index ${skillIndex}`);
 
-    // ✅ 4) Supprimer la compétence du tableau
+    // ✅ 4) Delete the skill from the array
     profile.skills.splice(skillIndex, 1);
-    console.log(`🗑️ Skill "${skillToDelete}" supprimé avec succès du profil`);
+    console.log(`🗑️ Skill "${skillToDelete}" successfully deleted from profile`);
 
     // ✅ 5) Recalculer le overallScore
     const numericScores = (profile.skills || [])
@@ -600,23 +600,23 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
       : 0;
 
     profile.overallScore = newOverall;
-    console.log("📊 Nouveau overallScore calculé:", newOverall);
+    console.log("📊 New overallScore calculated:", newOverall);
 
-    // ✅ 6) Sauvegarder le profil mis à jour
+    // ✅ 6) Save updated profile
     await profile.save();
-    console.log("💾 Profil sauvegardé avec succès dans la base de données");
+    console.log("💾 Profile successfully saved to database");
 
-    // ✅ 7) Supprimer les InterviewAssessment liés à ce skill et retirer les relations
+    // ✅ 7) Delete related InterviewAssessment and remove relationships
     let assessmentIds = [];
     try {
       console.log("🧹 Suppression des InterviewAssessment en cours...");
       const InterviewAssessment = require("../../models/InterviewAssessmentModel");
 
-      // Suppression insensible à la casse du skill visé
+      // Case-insensitive deletion of target skill
       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const skillRegex = new RegExp(`^${escapeRegExp(skillToDelete)}$`, "i");
 
-      // 7.a Trouver les InterviewAssessment à supprimer (qui contiennent ce skill)
+      // 7.a Find InterviewAssessment to delete (containing this skill)
       const assessmentsToDelete = await InterviewAssessment.find({
         candidateId: profile._id,
         "metadata.skill": { $regex: skillRegex },
@@ -625,9 +625,9 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
       assessmentIds = assessmentsToDelete.map((d) => d._id);
 
       if (assessmentIds.length > 0) {
-        // 7.b Supprimer les InterviewAssessment correspondants
+        // 7.b Delete corresponding InterviewAssessment
         const delRes = await InterviewAssessment.deleteMany({ _id: { $in: assessmentIds } });
-        console.log("✅ InterviewAssessment supprimés:", delRes.deletedCount);
+        console.log("✅ InterviewAssessment deleted:", delRes.deletedCount);
 
         // 7.c Retirer les références dans le profil
         profile.interviewDetails = (profile.interviewDetails || []).filter(
@@ -635,15 +635,15 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
         );
         await profile.save();
       } else {
-        console.log("ℹ️ Aucun InterviewAssessment à supprimer pour ce skill");
+        console.log("ℹ️ No InterviewAssessment to delete for this skill");
       }
     } catch (relErr) {
-      console.warn("⚠️ Erreur lors du nettoyage des InterviewAssessment:", relErr.message);
+      console.warn("⚠️ Error cleaning up InterviewAssessment:", relErr.message);
     }
 
-    // ✅ 8) Nettoyer les références dans JobAssessmentResult
+    // ✅ 8) Clean up references in JobAssessmentResult
     try {
-      console.log("🧹 Nettoyage des JobAssessmentResult en cours...");
+      console.log("🧹 Cleaning up JobAssessmentResult...");
       const JobAssessmentResult = require("../../models/JobAssessmentResultModel");
 
       const res2 = await JobAssessmentResult.updateMany(
@@ -656,85 +656,85 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
         }
       );
 
-      console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
+      console.log("✅ JobAssessmentResult cleanup completed:", res2.modifiedCount, "documents updated");
 
-      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewAssessment supprimés
+      // Also delete JobAssessmentResult pointing to deleted InterviewAssessment
       try {
         if (typeof assessmentIds !== "undefined" && assessmentIds.length > 0) {
           const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: assessmentIds } });
-          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewAssessment supprimés):", delAss.deletedCount);
+          console.log("🗑️ JobAssessmentResult deleted (linked to deleted InterviewAssessment):", delAss.deletedCount);
         }
       } catch (innerErr) {
-        console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);
+        console.warn("⚠️ Error deleting related JobAssessmentResult:", innerErr.message);
       }
     } catch (relErr) {
-      console.warn("⚠️ Erreur lors du nettoyage des JobAssessmentResult:", relErr.message);
+      console.warn("⚠️ Error cleaning up JobAssessmentResult:", relErr.message);
     }
 
-    // ✅ 9) Retourner le profil mis à jour
-    console.log("🎯 Suppression du skill terminée avec succès pour:", skillToDelete);
+    // ✅ 9) Return updated profile
+    console.log("🎯 Skill deletion completed successfully for:", skillToDelete);
     return profile;
 
   } catch (error) {
-    console.error("🚨 Erreur lors de la suppression du skill:", error.message);
+    console.error("🚨 Error deleting skill:", error.message);
     throw error;
   }
 };
 
 
 
-// Supprimer un softSkill spécifique
-// 🔹 Fonction pour supprimer un soft skill d'un profil utilisateur avec la même logique que deleteHardSkill
+// Delete a specific softSkill
+// 🔹 Function to delete a soft skill from a user profile with the same logic as deleteHardSkill
 module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
   try {
-    console.log("🟢 Début de la suppression du softSkill:", softSkillToDelete, "pour l'utilisateur:", userId);
+    console.log("🟢 Starting soft skill deletion:", softSkillToDelete, "for user:", userId);
 
-    // ✅ 1) Récupérer le profil du user
+    // ✅ 1) Retrieve user profile
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      console.error("❌ Aucun profil trouvé pour l'utilisateur:", userId);
+      console.error("❌ No profile found for user:", userId);
       throw new Error("Profile not found");
     }
-    console.log("✅ Profil trouvé:", profile._id);
+    console.log("✅ Profile found:", profile._id);
 
-    // ✅ 2) Vérifier la validité du softSkill à supprimer
+    // ✅ 2) Verify the validity of the softSkill to delete
     if (!softSkillToDelete || typeof softSkillToDelete !== "string") {
-      console.error("❌ Le softSkill à supprimer doit être une chaîne de caractères valide");
+      console.error("❌ The soft skill to delete must be a valid string");
       throw new Error("The skill to be deleted must be provided as a string");
     }
 
-    // ✅ 3) Chercher la position du softSkill dans le tableau des softSkills
+    // ✅ 3) Find the position of the softSkill in the softSkills array
     const softSkillIndex = profile.softSkills.findIndex(
       (skill) => skill.name === softSkillToDelete
     );
 
     if (softSkillIndex === -1) {
-      console.warn(`⚠️ Le softSkill "${softSkillToDelete}" n'existe pas dans le profil`);
+      console.warn(`⚠️ The soft skill "${softSkillToDelete}" does not exist in the profile`);
       throw new Error(
-        `Le softSkill "${softSkillToDelete}" n'existe pas dans votre profil`
+        `The soft skill "${softSkillToDelete}" does not exist in your profile`
       );
     }
-    console.log(`🧩 SoftSkill "${softSkillToDelete}" trouvé à l'index ${softSkillIndex}`);
+    console.log(`🧩 Soft skill "${softSkillToDelete}" found at index ${softSkillIndex}`);
 
-    // ✅ 4) Supprimer le softSkill du tableau
+    // ✅ 4) Delete the softSkill from the array
     profile.softSkills.splice(softSkillIndex, 1);
-    console.log(`🗑️ SoftSkill "${softSkillToDelete}" supprimé avec succès du profil`);
+    console.log(`🗑️ Soft skill "${softSkillToDelete}" successfully deleted from profile`);
 
-    // ✅ 5) Sauvegarder le profil mis à jour
+    // ✅ 5) Save the updated profile
     await profile.save();
-    console.log("💾 Profil sauvegardé avec succès dans la base de données");
+    console.log("💾 Profile successfully saved to database");
 
-    // ✅ 6) Supprimer les InterviewAssessment liés à ce softSkill et retirer les relations
+    // ✅ 6) Delete related InterviewAssessment and remove relationships
     let assessmentIds = [];
     try {
-      console.log("🧹 Suppression des InterviewAssessment en cours...");
+      console.log("🧹 Deleting InterviewAssessment...");
       const InterviewAssessment = require("../../models/InterviewAssessmentModel");
 
-      // Suppression insensible à la casse du softSkill visé
+      // Case-insensitive deletion of the target soft skill
       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const softSkillRegex = new RegExp(`^${escapeRegExp(softSkillToDelete)}$`, "i");
 
-      // 6.a Trouver les InterviewAssessment à supprimer (qui contiennent ce softSkill)
+      // 6.a Find InterviewAssessment to delete (containing this softSkill)
       const assessmentsToDelete = await InterviewAssessment.find({
         candidateId: profile._id,
         "metadata.skill": { $regex: softSkillRegex },
@@ -743,25 +743,25 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
       assessmentIds = assessmentsToDelete.map((d) => d._id);
 
       if (assessmentIds.length > 0) {
-        // 6.b Supprimer les InterviewAssessment correspondants
+        // 6.b Delete matching InterviewAssessment
         const delRes = await InterviewAssessment.deleteMany({ _id: { $in: assessmentIds } });
-        console.log("✅ InterviewAssessment supprimés:", delRes.deletedCount);
+        console.log("✅ InterviewAssessment deleted:", delRes.deletedCount);
 
-        // 6.c Retirer les références dans le profil
+        // 6.c Remove references from profile
         profile.interviewDetails = (profile.interviewDetails || []).filter(
           (id) => !assessmentIds.some((x) => x.toString() === id.toString())
         );
         await profile.save();
       } else {
-        console.log("ℹ️ Aucun InterviewAssessment à supprimer pour ce softSkill");
+        console.log("ℹ️ No InterviewAssessment to delete for this soft skill");
       }
     } catch (relErr) {
-      console.warn("⚠️ Erreur lors du nettoyage des InterviewAssessment:", relErr.message);
+      console.warn("⚠️ Error cleaning up InterviewAssessment:", relErr.message);
     }
 
-    // ✅ 7) Nettoyer les références dans JobAssessmentResult
+    // ✅ 7) Clean up references in JobAssessmentResult
     try {
-      console.log("🧹 Nettoyage des JobAssessmentResult en cours...");
+      console.log("🧹 Cleaning up JobAssessmentResult...");
       const JobAssessmentResult = require("../../models/JobAssessmentResultModel");
 
       const res2 = await JobAssessmentResult.updateMany(
@@ -774,36 +774,36 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
         }
       );
 
-      console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
+      console.log("✅ JobAssessmentResult cleanup completed:", res2.modifiedCount, "documents updated");
 
-      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewAssessment supprimés
+      // Also delete JobAssessmentResult pointing to deleted InterviewAssessment
       try {
         if (typeof assessmentIds !== "undefined" && assessmentIds.length > 0) {
           const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: assessmentIds } });
-          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewAssessment supprimés):", delAss.deletedCount);
+          console.log("🗑️ JobAssessmentResult deleted (linked to deleted InterviewAssessment):", delAss.deletedCount);
         }
       } catch (innerErr) {
-        console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);
+        console.warn("⚠️ Error deleting related JobAssessmentResult:", innerErr.message);
       }
     } catch (relErr) {
-      console.warn("⚠️ Erreur lors du nettoyage des JobAssessmentResult:", relErr.message);
+      console.warn("⚠️ Error cleaning up JobAssessmentResult:", relErr.message);
     }
 
-    // ✅ 8) Retourner le profil mis à jour
-    console.log("🎯 Suppression du softSkill terminée avec succès pour:", softSkillToDelete);
+    // ✅ 8) Return updated profile
+    console.log("🎯 Soft skill deletion completed successfully for:", softSkillToDelete);
     return profile;
 
   } catch (error) {
-    console.error("🚨 Erreur lors de la suppression du softSkill:", error.message);
+    console.error("🚨 Error deleting soft skill:", error.message);
     throw error;
   }
 };
 
-// Récupérer les informations du companyBid
+// Retrieve company bid information
 
 module.exports.getCompanyBids = async (companyId) => {
   try {
-    // Récupérer le profil de la compagnie
+    // Retrieve the company profile
     const companyProfile = await Profile.findOne({
       userId: companyId,
       type: "Company",
@@ -813,7 +813,7 @@ module.exports.getCompanyBids = async (companyId) => {
       throw new Error("Company profile not found");
     }
 
-    // Récupérer les candidats biddés
+    // Retrieve the candidates bidded by the company
     const candidates = await Profile.find({
       userId: { $in: companyProfile.usersBidedByCompany },
     })
@@ -826,7 +826,7 @@ module.exports.getCompanyBids = async (companyId) => {
         select: "jobDetails.title status createdAt",
       });
 
-    // Construction du résultat enrichi
+    // Build enriched result
     const enrichedCandidates = candidates.map((candidate) => ({
       _id: candidate._id,
       userInfo: candidate.userId,
@@ -843,7 +843,7 @@ module.exports.getCompanyBids = async (companyId) => {
       bidedCandidates: enrichedCandidates,
     };
   } catch (error) {
-    console.error("Error getting bided candidates:", error);
+    console.error("Error getting bidded candidates:", error);
     throw error;
   }
 };
@@ -958,7 +958,7 @@ module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
     };
   } catch (error) {
     console.error("Aggregation error:", error);
-    throw new Error("Erreur lors de l'agrégation: " + error.message);
+    throw new Error("Error during aggregation: " + error.message);
   }
 };
 

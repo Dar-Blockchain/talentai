@@ -5,7 +5,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
 
-    // Construire la requête de recherche avec plusieurs critères
+    // Build search query with multiple criteria
     let query = {};
     if (searchQuery.username || searchQuery.email || searchQuery.role) {
       query = {
@@ -17,7 +17,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
       };
     }
 
-    // Récupérer les utilisateurs avec pagination, recherche et population des champs 'profile' et 'post'
+    // Retrieve users with pagination, search, and populate 'profile' and 'post' fields
     const users = await User.find(query)
       .skip(skip)
       .limit(parseInt(limit))
@@ -25,7 +25,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
       .populate('post')
       .exec();
 
-    // Compter le nombre total d'utilisateurs en fonction du filtre de recherche
+    // Count total users based on search filter
     const totalUsers = await User.countDocuments(query);
 
     const totalPages = Math.ceil(totalUsers / limit);
@@ -39,7 +39,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
       },
     };
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des utilisateurs : " + error.message);
+    throw new Error("Error retrieving users: " + error.message);
   }
 };
 
@@ -52,23 +52,23 @@ module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
 
-    // S'assurer que limit est un nombre
+    // Ensure limit is a valid number
     limit = parseInt(limit);
 
     if (isNaN(limit) || limit <= 0) {
-      throw new Error("Le paramètre limit doit être un nombre valide supérieur à 0.");
+      throw new Error("The 'limit' parameter must be a valid number greater than 0.");
     }
 
-    // Utiliser `populate` avec `strictPopulate: false` si nécessaire
+    // Use `populate` with `strictPopulate: false` if needed
     const results = await JobAssessmentResult.find()
-      .skip(skip)  // Pagination: sauter les résultats précédents
-      .limit(limit)  // Limiter le nombre de résultats
-      .populate('candidateId', null, null, { strictPopulate: false })  // Peupler candidateId
-      .populate('companyId', null, null, { strictPopulate: false })  // Peupler companyId
-      .populate('jobId', null, null, { strictPopulate: false })  // Peupler jobId
+      .skip(skip)  // Pagination: skip previous results
+      .limit(limit)  // Limit number of results
+      .populate('candidateId', null, null, { strictPopulate: false })  // Populate candidateId
+      .populate('companyId', null, null, { strictPopulate: false })  // Populate companyId
+      .populate('jobId', null, null, { strictPopulate: false })  // Populate jobId
       .exec();
 
-    // Compter le nombre total de résultats pour la pagination
+    // Count total results for pagination
     const totalResults = await JobAssessmentResult.countDocuments();
 
     const totalPages = Math.ceil(totalResults / limit);
@@ -82,7 +82,7 @@ module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
       },
     };
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des résultats d'évaluation des jobs : " + error.message);
+    throw new Error("Error fetching job assessment results: " + error.message);
   }
 };
 
@@ -196,8 +196,8 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
           },
           numberOfAttempts: { $sum: 1 },
           totalScore: { $sum: "$analysis.overallScore" },
-          // Utilisation de $first pour récupérer la première valeur de numberOfQuestions
-          totalQuestions: { $first: "$numberOfQuestions" },  // Récupère la première valeur de numberOfQuestions
+          // Use $first to retrieve the first value of numberOfQuestions
+          totalQuestions: { $first: "$numberOfQuestions" },  // Get the first value of numberOfQuestions
         },
       },
       
@@ -265,14 +265,14 @@ const Profile = require('../../models/ProfileModel');
 
 module.exports.getCounts = async () => {
   try {
-    // Comptage des documents dans chaque collection
+    // Count documents in each collection
     const userCount = await User.countDocuments();
     const postCount = await Post.countDocuments();
     const jobAssessmentCount = await JobAssessmentResult.countDocuments();
     const feedbackCount = await Feedback.countDocuments();
     const bidCount = await Bid.countDocuments();
 
-    // Agrégation pour compter toutes les compétences (hardSkills et softSkills)
+    // Aggregation to count all skills (hardSkills and softSkills)
     const totalSkillsResult = await Profile.aggregate([
       {
         $project: {
@@ -294,15 +294,15 @@ module.exports.getCounts = async () => {
     const totalSoftSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSoftSkillsCount : 0;
     const totalSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSkillsCount : 0;
 
-    // Calcul des pourcentages
+    // Calculate percentages
     const hardSkillsPercentage = totalSkillsCount > 0 ? (totalHardSkillsCount / totalSkillsCount) * 100 : 0;
     const softSkillsPercentage = totalSkillsCount > 0 ? (totalSoftSkillsCount / totalSkillsCount) * 100 : 0;
 
-    // Calcul de la moyenne de analysis.overallScore dans JobAssessmentResult
+    // Calculate the average of analysis.overallScore in JobAssessmentResult
     const avgOverallScoreResult = await JobAssessmentResult.aggregate([
       {
         $match: {
-          "analysis.overallScore": { $ne: 0 } // Exclure les scores à 0
+          "analysis.overallScore": { $ne: 0 } // Exclude scores of 0
         }
       },
       {
@@ -320,14 +320,14 @@ module.exports.getCounts = async () => {
       "analysis.overallScore": { $gt: 0 }
     });
 
-    // Calcule le pourcentage
+    // Calculate the percentage
     const jobAssessmentWithScorePercentage = jobAssessmentCount > 0
       ? (jobAssessmentWithScoreCount / jobAssessmentCount) * 100
       : 0;
 
-    // Récupérer les top skills de la plateforme (hardSkills et softSkills)
+    // Retrieve top skills from the platform (hardSkills and softSkills)
     const topSkillsResult = await Profile.aggregate([
-      // Regrouper les compétences (hardSkills et softSkills)
+      // Group skills (hardSkills and softSkills)
       {
         $project: {
           skills: 1,
@@ -335,24 +335,24 @@ module.exports.getCounts = async () => {
         }
       },
       {
-        $unwind: "$skills" // "Déréférencer" les compétences des utilisateurs
+        $unwind: "$skills" // Unwind skills from users
       },
       {
         $group: {
-          _id: "$skills.name", // Compter les compétences par leur nom
-          count: { $sum: 1 }, // Nombre d'occurrences
-          avgLevel: { $avg: "$skills.proficiencyLevel" }, // Moyenne du niveau de compétence
+          _id: "$skills.name", // Count skills by name
+          count: { $sum: 1 }, // Number of occurrences
+          avgLevel: { $avg: "$skills.proficiencyLevel" }, // Average skill proficiency level
         }
       },
       {
-        $sort: { count: -1, avgLevel: -1 } // Trier par fréquence, puis par niveau de maîtrise
+        $sort: { count: -1, avgLevel: -1 } // Sort by frequency, then by proficiency level
       },
       {
-        $limit: 10 // Retourner les 10 top skills
+        $limit: 10 // Return top 10 skills
       }
     ]);
 
-    // Retourner les résultats
+    // Return the results
     return {
       users: userCount,
       posts: postCount,
@@ -378,72 +378,72 @@ module.exports.getCounts = async () => {
 
 module.exports.getCountsByDay = async () => {
   try {
-    // Comptage des utilisateurs créés chaque jour
+    // Count users created each day
     const usersCreatedByDay = await User.aggregate([
       {
         $project: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Formater la date pour qu'elle soit au format "YYYY-MM-DD"
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Format date to "YYYY-MM-DD"
         }
       },
       {
         $group: {
-          _id: "$day",  // Regrouper par date (jour)
-          userCount: { $sum: 1 }  // Compter le nombre d'utilisateurs créés ce jour-là
+          _id: "$day",  // Group by date (day)
+          userCount: { $sum: 1 }  // Count number of users created that day
         }
       },
       {
-        $sort: { _id: 1 }  // Trier par date croissante
+        $sort: { _id: 1 }  // Sort by date ascending
       }
     ]);
 
-    // Comptage des posts créés chaque jour
+    // Count posts created each day
     const postsCreatedByDay = await Post.aggregate([
       {
         $project: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Formater la date pour qu'elle soit au format "YYYY-MM-DD"
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Format date to "YYYY-MM-DD"
         }
       },
       {
         $group: {
-          _id: "$day",  // Regrouper par date (jour)
-          postCount: { $sum: 1 }  // Compter le nombre de posts créés ce jour-là
+          _id: "$day",  // Group by date (day)
+          postCount: { $sum: 1 }  // Count number of posts created that day
         }
       },
       {
-        $sort: { _id: 1 }  // Trier par date croissante
+        $sort: { _id: 1 }  // Sort by date ascending
       }
     ]);
 
-    // Comptage des job assessments créés chaque jour
+    // Count job assessments created each day
     const jobAssessmentsCreatedByDay = await JobAssessmentResult.aggregate([
       {
         $project: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }  // Formater la date pour qu'elle soit au format "YYYY-MM-DD"
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }  // Format date to "YYYY-MM-DD"
         }
       },
       {
         $group: {
-          _id: "$day",  // Regrouper par date (jour)
-          jobAssessmentCount: { $sum: 1 }  // Compter le nombre de job assessments créés ce jour-là
+          _id: "$day",  // Group by date (day)
+          jobAssessmentCount: { $sum: 1 }  // Count number of job assessments created that day
         }
       },
       {
-        $sort: { _id: 1 }  // Trier par date croissante
+        $sort: { _id: 1 }  // Sort by date ascending
       }
     ]);
 
-    // Calculer le nombre total d'utilisateurs, de posts et de job assessments
+    // Calculate total number of users, posts, and job assessments
     const totalUsers = await User.countDocuments();
     const totalPosts = await Post.countDocuments();
     const totalJobAssessments = await JobAssessmentResult.countDocuments();
 
-    // Calculer les pourcentages
+    // Calculate percentages
     const usersWithPercentage = usersCreatedByDay.map((dayData) => {
       const percentage = totalUsers > 0 ? (dayData.userCount / totalUsers) * 100 : 0;
       return {
         day: dayData._id,
         userCount: dayData.userCount,
-        percentage: percentage.toFixed(2)  // Formater le pourcentage avec 2 décimales
+        percentage: percentage.toFixed(2)  // Format percentage with 2 decimal places
       };
     });
 
@@ -476,16 +476,16 @@ module.exports.getCountsByDay = async () => {
 };
 module.exports.getUserCountsByLocation = async () => {
   try {
-    // Agrégation pour compter les utilisateurs par localisation
+    // Aggregation to count users by location
     const usersByLocation = await User.aggregate([
       {
         $group: {
-          _id: "$Localisation",  // Grouper par localisation
-          userCount: { $sum: 1 }  // Compter le nombre d'utilisateurs par localisation
+          _id: "$Localisation",  // Group by location
+          userCount: { $sum: 1 }  // Count number of users by location
         }
       },
       {
-        $sort: { userCount: -1 }  // Trier les résultats par nombre d'utilisateurs, du plus grand au plus petit
+        $sort: { userCount: -1 }  // Sort results by user count, highest to lowest
       }
     ]);
 
@@ -599,7 +599,7 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
 
     return assessments;
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des évaluations par compétence: " + error.message);
+    throw new Error("Error retrieving assessments by skill: " + error.message);
   }
 };
 
@@ -608,12 +608,12 @@ const xlsx = require("xlsx");
 
 module.exports.generateUserExcel = async () => {
   try {
-    // Récupérer tous les utilisateurs et peupler leurs profils
+    // Retrieve all users and populate their profiles
     const users = await User.find({})
-      .populate("profile")  // Peupler le champ profile avec les données associées
-      .select("username FirstName LastName email role lastLogin ip Localisation profile");  // Inclure le profil dans la sélection
+      .populate("profile")  // Populate the profile field with associated data
+      .select("username FirstName LastName email role lastLogin ip Localisation profile");  // Include profile in selection
     
-    // Convertir les utilisateurs et profils en format JSON pour Excel
+    // Convert users and profiles to JSON format for Excel
     const usersData = users.map(user => {
       const profile = user.profile ? {
         type: user.profile.type,
@@ -631,7 +631,7 @@ module.exports.generateUserExcel = async () => {
         assessmentResults: user.profile.assessmentResults,
         companyBid: user.profile.companyBid,
         usersBidedByCompany: user.profile.usersBidedByCompany
-      } : {}; // Si le profil est null, on renvoie un objet vide
+      } : {}; // If profile is null, return empty object
 
       return {
         Username: user.username,
@@ -641,39 +641,39 @@ module.exports.generateUserExcel = async () => {
         Role: user.role,
         ip: user.ip,
         Localisation: user.Localisation,
-        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
-        ...profile // Inclure les champs du profil
+        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Readable date format
+        ...profile // Include profile fields
       };
     });
 
-    // Créer un classeur Excel
+    // Create an Excel workbook
     const ws = xlsx.utils.json_to_sheet(usersData);
     const wb = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(wb, ws, "Users");
 
-    // Générer un fichier Excel en mémoire
+    // Generate Excel file in memory
     const fileBuffer = xlsx.write(wb, { bookType: "xlsx", type: "buffer" });
 
     return fileBuffer;
   } catch (error) {
-    throw new Error("Erreur lors de la génération du fichier Excel: " + error.message);
+    throw new Error("Error generating Excel file: " + error.message);
   }
 };
 
 module.exports.generateUserExcelWithAssessmentZero = async () => {
   try {
-    // Récupérer tous les résultats d'évaluation avec un overallScore de 0
+    // Retrieve all assessment results with overallScore of 0
     const assessments = await JobAssessmentResult.find({ "analysis.overallScore": 0 })
       .populate({
-        path: "condidateId", // Peupler le profil du candidat (user)
-        select: "userId", // Sélectionner uniquement le userId pour récupérer l'utilisateur
+        path: "condidateId", // Populate candidate profile (user)
+        select: "userId", // Select only userId to retrieve user
       })
       .populate({
-        path: "companyId", // Peupler le profil de l'entreprise (user)
-        select: "userId", // Sélectionner uniquement le userId pour récupérer l'entreprise
+        path: "companyId", // Populate company profile (user)
+        select: "userId", // Select only userId to retrieve company
       });
 
-    // Filtrer les utilisateurs à partir des résultats d'évaluation
+    // Filter users from assessment results
     const users = [];
     assessments.forEach((assessment) => {
       if (assessment.condidateId && assessment.condidateId.userId) {
@@ -681,14 +681,14 @@ module.exports.generateUserExcelWithAssessmentZero = async () => {
       }
     });
 
-    // Récupérer les utilisateurs associés aux résultats d'évaluation
+    // Retrieve users associated with assessment results
     const populatedUsers = await User.find({ _id: { $in: users } })
       .select("username FirstName LastName email role lastLogin ip Localisation");
 
-    // Convertir les utilisateurs en format JSON pour Excel
+    // Convert users to JSON format for Excel
     const usersData = populatedUsers.map(user => {
       return {
-        UserID: user._id.toString(), // Récupérer l'ID de l'utilisateur et le convertir en chaîne de caractères
+        UserID: user._id.toString(), // Retrieve user ID and convert to string
         Username: user.username,
         FirstName: user.FirstName,
         LastName: user.LastName,
@@ -696,39 +696,39 @@ module.exports.generateUserExcelWithAssessmentZero = async () => {
         Role: user.role,
         ip: user.ip,
         Localisation: user.Localisation,
-        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
+        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Readable date format
       };
     });
 
-    // Créer un classeur Excel
+    // Create an Excel workbook
     const ws = xlsx.utils.json_to_sheet(usersData);
     const wb = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(wb, ws, "Users with Assessment Score 0");
 
-    // Générer un fichier Excel en mémoire
+    // Generate Excel file in memory
     const fileBuffer = xlsx.write(wb, { bookType: "xlsx", type: "buffer" });
 
     return fileBuffer;
   } catch (error) {
-    throw new Error("Erreur lors de la génération du fichier Excel: " + error.message);
+    throw new Error("Error generating Excel file: " + error.message);
   }
 };
 
 
 module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
   try {
-    // Récupérer tous les résultats d'évaluation avec un overallScore >= 50
+    // Retrieve all assessment results with overallScore >= 50
     const assessments = await JobAssessmentResult.find({ "analysis.overallScore": { $gte: 50 } })
       .populate({
-        path: "condidateId", // Peupler le profil du candidat (user)
-        select: "userId", // Sélectionner uniquement le userId pour récupérer l'utilisateur
+        path: "condidateId", // Populate candidate profile (user)
+        select: "userId", // Select only userId to retrieve user
       })
       .populate({
-        path: "companyId", // Peupler le profil de l'entreprise (user)
-        select: "userId", // Sélectionner uniquement le userId pour récupérer l'entreprise
+        path: "companyId", // Populate company profile (user)
+        select: "userId", // Select only userId to retrieve company
       });
 
-    // Filtrer les utilisateurs à partir des résultats d'évaluation
+    // Filter users from assessment results
     const users = [];
     assessments.forEach((assessment) => {
       if (assessment.condidateId && assessment.condidateId.userId) {
@@ -736,14 +736,14 @@ module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
       }
     });
 
-    // Récupérer les utilisateurs associés aux résultats d'évaluation
+    // Retrieve users associated with assessment results
     const populatedUsers = await User.find({ _id: { $in: users } })
       .select("username FirstName LastName email role lastLogin ip Localisation");
 
-    // Convertir les utilisateurs en format JSON pour Excel
+    // Convert users to JSON format for Excel
     const usersData = populatedUsers.map(user => {
       return {
-        UserID: user._id.toString(), // Récupérer l'ID de l'utilisateur et le convertir en chaîne de caractères
+        UserID: user._id.toString(), // Retrieve user ID and convert to string
         Username: user.username,
         FirstName: user.FirstName,
         LastName: user.LastName,
@@ -751,20 +751,20 @@ module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
         Role: user.role,
         ip: user.ip,
         Localisation: user.Localisation,
-        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
+        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Readable date format
       };
     });
 
-    // Créer un classeur Excel
+    // Create an Excel workbook
     const ws = xlsx.utils.json_to_sheet(usersData);
     const wb = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(wb, ws, "Users >= 50"); // Nom de la feuille raccourci
+    xlsx.utils.book_append_sheet(wb, ws, "Users >= 50"); // Shortened sheet name
 
-    // Générer un fichier Excel en mémoire
+    // Generate Excel file in memory
     const fileBuffer = xlsx.write(wb, { bookType: "xlsx", type: "buffer" });
 
     return fileBuffer;
   } catch (error) {
-    throw new Error("Erreur lors de la génération du fichier Excel: " + error.message);
+    throw new Error("Error generating Excel file: " + error.message);
   }
 };

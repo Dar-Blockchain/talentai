@@ -12,7 +12,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer tous les progrès
+  // Get all progress
   async getAllProgress() {
     try {
       const progress = await CandidatePostStepProgress.find()
@@ -28,7 +28,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer un progrès par ID
+  // Get progress by ID
   async getProgressById(id) {
     try {
       const progress = await CandidatePostStepProgress.findById(id)
@@ -39,7 +39,7 @@ class CandidatePostStepProgressService {
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -47,7 +47,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer un progrès par idCandidate (premier enregistrement trouvé)
+  // Get progress by idCandidate (first found record)
   async findByIdCandidate(candidateId) {
     try {
       console.log(candidateId);

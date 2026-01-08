@@ -103,7 +103,7 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
   // Create the CompanyMembership entry
   const membership = await CompanyMembershipModel.create({
     user: userId,
-    Organization: invitation.Company,
+    Company: invitation.Company,
     role: invitation.role,
   });
 

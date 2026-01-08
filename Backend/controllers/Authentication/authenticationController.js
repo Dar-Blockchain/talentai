@@ -116,7 +116,7 @@ module.exports.GetGmailByToken = async (req, res) => {
     res.status(200).json({
       success: true,
       email,
-      message: "Email récupéré avec succès",
+      message: "Email retrieved successfully",
     });
   } catch (error) {
     handleError(res, error, 400);

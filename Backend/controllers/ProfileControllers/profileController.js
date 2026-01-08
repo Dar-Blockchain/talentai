@@ -115,16 +115,16 @@ exports.updateUserImage = async (req, res) => {
     const userId = req.user._id;
 
     if (!req.file) {
-      return res.status(400).json({ message: "Aucune image n’a été fournie." });
+      return res.status(400).json({ message: "No image was provided." });
     }
 
     const { filename } = req.file;
-    console.log("Nouvelle image :", filename);
+    console.log("New image:", filename);
 
     const updatedUser = await profileService.updateUserImage(userId, filename);
 
     res.status(200).json({
-      message: "Image mise à jour avec succès.",
+      message: "Image updated successfully.",
       user: updatedUser,
     });
   } catch (error) {
@@ -133,7 +133,7 @@ exports.updateUserImage = async (req, res) => {
   }
 };
 
-// Récupérer son propre profil
+// Get own profile
 // controllers/profileController.js
 module.exports.getMyProfile = async (req, res) => {
   try {
@@ -141,102 +141,102 @@ module.exports.getMyProfile = async (req, res) => {
 
     const result = await profileService.getProfileByUserId(userId);
 
-    // Si result contient la clé message, alors aucun profil
+    // If result contains the message key, then no profile
     if (result.message) {
       return res.status(200).json({ message: result.message });
     }
 
-    // Profil trouvé
+    // Profile found
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil :", error);
+    console.error("Error retrieving profile:", error);
     return res.status(500).json({
       message:
-        error.message || "Erreur interne lors de la récupération du profil.",
+        error.message || "Internal error retrieving profile.",
     });
   }
 };
 
-// Récupérer un profil par ID
+// Get a profile by ID
 module.exports.getProfileById = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Utiliser le service pour récupérer le profil
+    // Use the service to retrieve the profile
     const profile = await profileService.getProfileByUserId(userId);
 
     res.status(200).json(profile);
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil:", error);
+    console.error("Error retrieving profile:", error);
     res
       .status(500)
       .json({
-        message: error.message || "Erreur lors de la récupération du profil",
+        message: error.message || "Error retrieving profile",
       });
   }
 };
 
-// Récupérer tous les profils
+// Get all profiles
 module.exports.getAllProfiles = async (req, res) => {
   try {
-    // Utiliser le service pour récupérer tous les profils
+    // Use the service to retrieve all profiles
     const profiles = await profileService.getAllProfiles();
 
     res.status(200).json(profiles);
   } catch (error) {
-    console.error("Erreur lors de la récupération des profils:", error);
+    console.error("Error retrieving profiles:", error);
     res
       .status(500)
       .json({
-        message: error.message || "Erreur lors de la récupération des profils",
+        message: error.message || "Error retrieving profiles",
       });
   }
 };
 
-// Supprimer un profil
+// Delete a profile
 module.exports.deleteProfile = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Utiliser le service pour supprimer le profil
+    // Use the service to delete the profile
     const result = await profileService.deleteProfile(userId);
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur lors de la suppression du profil:", error);
+    console.error("Error deleting profile:", error);
     res
       .status(500)
       .json({
-        message: error.message || "Erreur lors de la suppression du profil",
+        message: error.message || "Error deleting profile",
       });
   }
 };
 
-// Rechercher des profils par compétences
+// Search profiles by skills
 module.exports.searchProfilesBySkills = async (req, res) => {
   try {
     const { skills } = req.query;
     if (!skills) {
-      return res.status(400).json({ message: "Les compétences sont requises" });
+      return res.status(400).json({ message: "Skills are required" });
     }
 
     const skillsArray = skills.split(",").map((skill) => skill.trim());
 
-    // Utiliser le service pour rechercher les profils
+    // Use the service to search profiles
     const profiles = await profileService.searchProfilesBySkills(skillsArray);
 
     res.status(200).json(profiles);
   } catch (error) {
-    console.error("Erreur lors de la recherche des profils:", error);
+    console.error("Error searching profiles:", error);
     res
       .status(500)
       .json({
-        message: error.message || "Erreur lors de la recherche des profils",
+        message: error.message || "Error searching profiles",
       });
   }
 };
 
-// Ajouter des soft skills
+// Add soft skills
 module.exports.addSoftSkills = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -246,7 +246,7 @@ module.exports.addSoftSkills = async (req, res) => {
       return res
         .status(400)
         .json({
-          message: "Les soft skills doivent être fournis sous forme de tableau",
+          message: "Soft skills must be provided as an array",
         });
     }
 
@@ -254,7 +254,7 @@ module.exports.addSoftSkills = async (req, res) => {
 
     if (result.duplicateSoftSkills.length > 0) {
       return res.status(200).json({
-        message: `Les soft skills suivants existent déjà : ${result.duplicateSoftSkills.join(
+        message: `The following soft skills already exist: ${result.duplicateSoftSkills.join(
           ", "
         )}`,
       });
@@ -265,33 +265,33 @@ module.exports.addSoftSkills = async (req, res) => {
       profile: result.profile,
     });
   } catch (error) {
-    console.error("Erreur lors de l'ajout des soft skills:", error);
+    console.error("Error adding soft skills:", error);
     res
       .status(500)
       .json({
-        message: error.message || "Erreur lors de l'ajout des soft skills",
+        message: error.message || "Error adding soft skills",
       });
   }
 };
 
-// Récupérer les soft skills
+// Get soft skills
 module.exports.getSoftSkills = async (req, res) => {
   try {
     const userId = req.user._id;
     const softSkills = await profileService.getSoftSkills(userId);
     res.status(200).json(softSkills);
   } catch (error) {
-    console.error("Erreur lors de la récupération des soft skills:", error);
+    console.error("Error retrieving soft skills:", error);
     res
       .status(500)
       .json({
         message:
-          error.message || "Erreur lors de la récupération des soft skills",
+          error.message || "Error retrieving soft skills",
       });
   }
 };
 
-// Mettre à jour les soft skills
+// Update soft skills
 module.exports.updateSoftSkills = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -301,27 +301,27 @@ module.exports.updateSoftSkills = async (req, res) => {
       return res
         .status(400)
         .json({
-          message: "Les soft skills doivent être fournis sous forme de tableau",
+          message: "Soft skills must be provided as an array",
         });
     }
 
     const profile = await profileService.updateSoftSkills(userId, softSkills);
     res.status(200).json({
-      message: "Soft skills mis à jour avec succès",
+      message: "Soft skills updated successfully",
       profile,
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour des soft skills:", error);
+    console.error("Error updating soft skills:", error);
     res
       .status(500)
       .json({
         message:
-          error.message || "Erreur lors de la mise à jour des soft skills",
+          error.message || "Error updating soft skills",
       });
   }
 };
 
-// Supprimer un skill spécifique
+// Delete a specific skill
 module.exports.deleteHardSkill = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -348,7 +348,7 @@ module.exports.deleteHardSkill = async (req, res) => {
   }
 };
 
-// Supprimer un softSkill spécifique
+// Delete a specific softSkill
 module.exports.deleteSoftSkill = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -378,7 +378,7 @@ module.exports.deleteSoftSkill = async (req, res) => {
   }
 };
 
-// Mettre à jour le finalBid
+// Update finalBid
 module.exports.updateFinalBid = async (req, res) => {
   try {
     const { newBid, userId, postId , companyId} = req.body;
@@ -408,7 +408,7 @@ module.exports.updateFinalBid = async (req, res) => {
   }
 };
 
-// Récupérer les candidats bidés par la compagnie connectée
+// Get bidded candidates by connected company
 module.exports.getCompanyBids = async (req, res) => {
   try {
     const companyId = req.user._id;
@@ -433,7 +433,7 @@ exports.getCompanyWithAssessments = async (req, res) => {
     const profile = await profileService.getCompanyProfileWithAssessments(id, jobId);
 
     if (!profile) {
-      return res.status(404).json({ message: "Profil introuvable ou non une entreprise." });
+      return res.status(404).json({ message: "Profile not found or not a company." });
     }
 
     return res.status(200).json(profile);
@@ -565,7 +565,7 @@ module.exports.updateProfile = async (req, res) => {
   }
 };
 
-// Mettre à jour la visibilité du profil (public / private)
+// Update profile visibility (public / private)
 module.exports.updateProfileVisibility = async (req, res) => {
   try {
     const userId = req.user._id;

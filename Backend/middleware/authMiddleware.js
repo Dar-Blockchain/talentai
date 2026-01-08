@@ -10,14 +10,14 @@ const requireAuthUser = async (req, res, next) => {
   if (token) {
     jwt.verify(token, process.env.Net_Secret, async (err, decodedToken) => {
       if (err) {
-        res.status(401).json({ message: "Token invalide ou expiré" });
+        res.status(401).json({ message: "Invalid or expired token" });
       } else {
         try {
           const user = await userModel
             .findById(decodedToken.id)
             .populate("profile");
           if (!user) {
-            return res.status(401).json({ message: "Utilisateur non trouvé" });
+            return res.status(401).json({ message: "User not found" });
           }
           req.user = user;
           next();
@@ -25,13 +25,13 @@ const requireAuthUser = async (req, res, next) => {
           res
             .status(500)
             .json({
-              message: "Erreur lors de la vérification de l'utilisateur",
+              message: "Error verifying user",
             });
         }
       }
     });
   } else {
-    res.status(401).json({ message: "Accès non autorisé - Token manquant" });
+    res.status(401).json({ message: "Unauthorized access - Token missing" });
   }
 };
 
