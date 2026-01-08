@@ -35,14 +35,12 @@ export interface AddMemberPayload {
 }
 
 export interface UpdateRolePayload {
-  organizationId: string;
-  userId: string;
+  membershipId: string; // CompanyMembership ID
   role: MemberRole;
 }
 
 export interface DeleteMemberPayload {
-  organizationId: string;
-  userId: string;
+  membershipId: string; // CompanyMembership ID
 }
 
 export interface Invitation {
@@ -222,12 +220,12 @@ export const updateMemberRole = createAsyncThunk<
     };
 
     console.log(`📡 [MemberSlice] Sending payload:`, apiPayload);
-    console.log(`📡 [MemberSlice] URL: SharedAccount/${payload.organizationId}/employees/${payload.userId}/role`);
+    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}/role`);
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}SharedAccount/${payload.organizationId}/employees/${payload.userId}/role`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/${payload.membershipId}/role`,
       {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -263,7 +261,7 @@ export const updateMemberRole = createAsyncThunk<
     }
 
     console.log(`✅ [MemberSlice] Role updated successfully`, data);
-    return data;
+    return data.updated || data;
   } catch (error: any) {
     if (error.name === "AbortError" || isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
@@ -276,7 +274,7 @@ export const updateMemberRole = createAsyncThunk<
 
 // Delete member
 export const deleteMember = createAsyncThunk<
-  { userId: string },
+  { membershipId: string },
   DeleteMemberPayload,
   { rejectValue: string }
 >("member/deleteMember", async (payload, { rejectWithValue }) => {
@@ -298,10 +296,10 @@ export const deleteMember = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Deleting member via API...`);
-    console.log(`📡 [MemberSlice] URL: SharedAccount/${payload.organizationId}/employees/${payload.userId}`);
+    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}SharedAccount/${payload.organizationId}/employees/${payload.userId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/${payload.membershipId}`,
       {
         method: "DELETE",
         headers: {
@@ -338,8 +336,8 @@ export const deleteMember = createAsyncThunk<
     }
 
     console.log(`✅ [MemberSlice] Member deleted successfully`, data);
-    // Return the userId so we can remove it from the state
-    return { userId: payload.userId };
+    // Return the membershipId so we can remove it from the state
+    return { membershipId: payload.membershipId };
   } catch (error: any) {
     if (error.name === "AbortError" || isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
@@ -347,6 +345,78 @@ export const deleteMember = createAsyncThunk<
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue("An error occurred while deleting member");
+  }
+});
+
+// Fetch active members
+export const fetchMembers = createAsyncThunk<
+  Member[],
+  void,
+  { rejectValue: string }
+>("member/fetchMembers", async (_, { rejectWithValue }) => {
+  console.log(`🔑 [MemberSlice] fetchMembers CALLED`);
+
+  if (isLoggingOutCheck()) {
+    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
+    return rejectWithValue("Logout in progress");
+  }
+
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    console.error(`❌ [MemberSlice] No token found - skipping API call`);
+    return rejectWithValue("No authentication token found");
+  }
+
+  const abortSignal = getAbortSignal();
+
+  try {
+    console.log(`📡 [MemberSlice] Fetching members from API...`);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/memberships`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        signal: abortSignal || undefined,
+      }
+    );
+
+    if (isLoggingOutCheck()) {
+      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
+      return rejectWithValue("Logout in progress");
+    }
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
+        return rejectWithValue("Token expired or invalid - Please login again");
+      }
+
+      const error = await response
+        .json()
+        .catch(() => ({ message: "Failed to fetch members" }));
+      console.error(`❌ [MemberSlice] API error:`, error);
+      return rejectWithValue(error.message || "Failed to fetch members");
+    }
+
+    const data = await response.json();
+
+    if (isLoggingOutCheck()) {
+      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
+      return rejectWithValue("Logout in progress");
+    }
+
+    console.log(`✅ [MemberSlice] Members fetched successfully`, data);
+    return data.memberships || data.members || [];
+  } catch (error: any) {
+    if (error.name === "AbortError" || isLoggingOutCheck()) {
+      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
+      return rejectWithValue("Logout in progress");
+    }
+    console.error(`❌ [MemberSlice] Exception:`, error);
+    return rejectWithValue("An error occurred while fetching members");
   }
 });
 
@@ -750,12 +820,12 @@ const memberSlice = createSlice({
       })
       .addCase(
         deleteMember.fulfilled,
-        (state: MemberState, action: PayloadAction<{ userId: string }>) => {
+        (state: MemberState, action: PayloadAction<{ membershipId: string }>) => {
           state.deletingMember = false;
           state.deleteMemberSuccess = true;
           console.log('✅ [MemberSlice] Member deleted successfully');
-          // Remove the member from the list
-          state.members = state.members.filter(m => m.user._id !== action.payload.userId);
+          // Remove the member from the list by membership ID
+          state.members = state.members.filter(m => m._id !== action.payload.membershipId);
         }
       )
       .addCase(
@@ -764,6 +834,26 @@ const memberSlice = createSlice({
           state.deletingMember = false;
           state.error = action.payload || "An error occurred";
           state.deleteMemberSuccess = false;
+        }
+      )
+      // Handle fetchMembers
+      .addCase(fetchMembers.pending, (state: MemberState) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchMembers.fulfilled,
+        (state: MemberState, action: PayloadAction<Member[]>) => {
+          state.loading = false;
+          state.members = action.payload;
+          console.log('✅ [MemberSlice] Members fetched successfully');
+        }
+      )
+      .addCase(
+        fetchMembers.rejected,
+        (state: MemberState, action: PayloadAction<string | undefined>) => {
+          state.loading = false;
+          state.error = action.payload || "An error occurred";
         }
       )
       // Handle fetchInvitations

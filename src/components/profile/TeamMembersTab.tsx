@@ -25,6 +25,7 @@ import {
   addEmployee,
   updateMemberRole,
   deleteMember,
+  fetchMembers,
   fetchInvitations,
   resendInvitation,
   cancelInvitation,
@@ -95,9 +96,10 @@ const TeamMembersTab: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  // Fetch invitations on mount
+  // Fetch members and invitations on mount
   useEffect(() => {
-    console.log('🔍 [TeamMembersTab] Component mounted, fetching invitations...');
+    console.log('🔍 [TeamMembersTab] Component mounted, fetching members and invitations...');
+    dispatch(fetchMembers());
     dispatch(fetchInvitations());
   }, [dispatch]);
 
@@ -107,8 +109,9 @@ const TeamMembersTab: React.FC = () => {
       setAddMemberModalOpen(false);
       dispatch(clearAddMemberSuccess());
       toast.success('Team member invited successfully!');
-      // Refresh the invitations list
+      // Refresh the invitations and members list
       dispatch(fetchInvitations());
+      dispatch(fetchMembers());
     }
   }, [addMemberSuccess, dispatch]);
 
@@ -116,8 +119,10 @@ const TeamMembersTab: React.FC = () => {
   useEffect(() => {
     if (updateRoleSuccess) {
       setEditRoleModalOpen(false);
+      setSelectedMember(null); // Clear selected member after successful update
       dispatch(clearUpdateRoleSuccess());
       toast.success('Member role updated successfully!');
+      dispatch(fetchMembers());
     }
   }, [updateRoleSuccess, dispatch]);
 
@@ -128,6 +133,7 @@ const TeamMembersTab: React.FC = () => {
       setSelectedMember(null);
       dispatch(clearDeleteMemberSuccess());
       toast.success('Team member removed successfully!');
+      dispatch(fetchMembers());
     }
   }, [deleteMemberSuccess, dispatch]);
 
@@ -177,32 +183,30 @@ const TeamMembersTab: React.FC = () => {
 
   const handleMenuClose = useCallback(() => {
     setAnchorEl(null);
-    setSelectedMember(null);
   }, []);
 
   const handleEditMember = useCallback(() => {
     console.log('🔵 [TeamMembersTab] Edit member:', selectedMember);
     setEditRoleModalOpen(true);
-    handleMenuClose();
-  }, [selectedMember, handleMenuClose]);
+    setAnchorEl(null); // Close menu but keep selectedMember for the modal
+  }, [selectedMember]);
 
   const handleUpdateRole = useCallback(async (role: string) => {
     console.log('🔵 [TeamMembersTab] handleUpdateRole called with role:', role);
 
-    if (!selectedMember || !effectiveAccountId) {
-      console.error('❌ [TeamMembersTab] Missing selectedMember or effectiveAccountId');
+    if (!selectedMember) {
+      console.error('❌ [TeamMembersTab] Missing selectedMember');
       throw new Error('Unable to update role. Please try again.');
     }
 
-    console.log('🔵 [TeamMembersTab] Updating role for user:', selectedMember.user._id);
-    console.log('🔵 [TeamMembersTab] Organization:', effectiveAccountId);
+    console.log('🔵 [TeamMembersTab] Updating role for membership:', selectedMember._id);
+    console.log('🔵 [TeamMembersTab] User:', selectedMember.user._id);
 
     await dispatch(updateMemberRole({
-      organizationId: effectiveAccountId,
-      userId: selectedMember.user._id,
+      membershipId: selectedMember._id,
       role: role as MemberRole
     })).unwrap();
-  }, [dispatch, selectedMember, effectiveAccountId]);
+  }, [dispatch, selectedMember]);
 
   const handleDeleteMember = useCallback(() => {
     console.log('🔵 [TeamMembersTab] Opening delete confirmation for member:', selectedMember);
@@ -214,23 +218,22 @@ const TeamMembersTab: React.FC = () => {
   const handleConfirmDelete = useCallback(async () => {
     console.log('🔵 [TeamMembersTab] Confirming delete for member:', selectedMember);
 
-    if (!selectedMember || !effectiveAccountId) {
-      console.error('❌ [TeamMembersTab] Missing selectedMember or effectiveAccountId');
+    if (!selectedMember) {
+      console.error('❌ [TeamMembersTab] Missing selectedMember');
       return;
     }
 
-    console.log('🔵 [TeamMembersTab] Deleting member:', selectedMember.user._id);
-    console.log('🔵 [TeamMembersTab] Organization:', effectiveAccountId);
+    console.log('🔵 [TeamMembersTab] Deleting membership:', selectedMember._id);
+    console.log('🔵 [TeamMembersTab] User:', selectedMember.user._id);
 
     try {
       await dispatch(deleteMember({
-        organizationId: effectiveAccountId,
-        userId: selectedMember.user._id
+        membershipId: selectedMember._id
       })).unwrap();
     } catch (error) {
       console.error('❌ [TeamMembersTab] Failed to delete member:', error);
     }
-  }, [dispatch, selectedMember, effectiveAccountId]);
+  }, [dispatch, selectedMember]);
 
   const handleCancelDelete = useCallback(() => {
     setDeleteDialogOpen(false);
@@ -366,7 +369,10 @@ const TeamMembersTab: React.FC = () => {
         {selectedMember && (
           <EditRoleModal
             open={editRoleModalOpen}
-            onClose={() => setEditRoleModalOpen(false)}
+            onClose={() => {
+              setEditRoleModalOpen(false);
+              setSelectedMember(null);
+            }}
             onSave={handleUpdateRole}
             currentRole={selectedMember.role}
             memberName={selectedMember.user?.username || selectedMember.user?.email || 'Member'}
