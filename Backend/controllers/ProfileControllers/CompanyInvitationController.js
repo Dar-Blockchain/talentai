@@ -35,7 +35,7 @@ module.exports.deleteInvitation = async (req, res) => {
 module.exports.respondInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
-    const { action } = req.body; // 'accept' ou 'reject'
+    const { action } = req.body; // 'accept' or 'reject'
     if (!action || !["accept","reject"].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
 
     if (action === "accept") {
