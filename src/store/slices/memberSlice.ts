@@ -480,7 +480,7 @@ export const resendInvitation = createAsyncThunk<
     }
 
     console.log(`✅ [MemberSlice] Invitation resent successfully`, data);
-    return data.invitation;
+    return data.updated;
   } catch (error: any) {
     if (error.name === "AbortError" || isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
@@ -612,14 +612,21 @@ export const fetchInvitationDetails = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchInvitationDetails", async (invitationId, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] fetchInvitationDetails CALLED with id:`, invitationId);
-
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    console.error(`❌ [MemberSlice] No token found - skipping API call`);
+    return rejectWithValue("No authentication token found");
+  }
   try {
+    console.log(token,'aaaaaaaaaa')
     console.log(`📡 [MemberSlice] Fetching invitation details from API...`);
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/details/${invitationId}`,
       {
         method: "GET",
         headers: {
+          Authorization: `Bearer ${token}`,
+
           "Content-Type": "application/json",
         },
       }
