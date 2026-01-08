@@ -171,7 +171,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     // Fetch profile and CompanyMembership in parallel if exist
     const [profile, companyMembership] = await Promise.all([
       user.profile ? Profile.findById(user.profile).lean().select('_id') : null,
-      user.CompanyMembership ? require('../../models/CompanyMembershipModel').findById(user.CompanyMembership).lean().select('_id role Company') : null
+      user.CompanyMembership ? require('../../models/CompanyMembershipModel').findById(user.CompanyMembership).lean().select('_id role company') : null
     ]);
 
     console.log('✅ OTP verified successfully for:', email);

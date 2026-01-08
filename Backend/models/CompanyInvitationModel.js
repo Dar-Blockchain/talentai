@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const CompanyInvitationSchema = new mongoose.Schema({
   email: { type: String, required: true, index: true },
-  Company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   role: {
     type: String,
     enum: ["Owner", "RH", "TechLead", "Supervisor", "Manager"],
@@ -15,7 +15,7 @@ const CompanyInvitationSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Un email ne peut avoir qu'une invitation pending par company
-CompanyInvitationSchema.index({ email: 1, Company: 1 }, { unique: true, sparse: true, partialFilterExpression: { status: "pending" } });
+CompanyInvitationSchema.index({ email: 1, company: 1 }, { unique: true, sparse: true, partialFilterExpression: { status: "pending" } });
 // TTL index: les invitations expirent automatiquement après 2 jours
 CompanyInvitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 module.exports = mongoose.model("CompanyInvitation", CompanyInvitationSchema);

@@ -6,9 +6,9 @@ const CompanyInvitationModel = require("../../models/CompanyInvitationModel");
 const { sendCompanyInvitation } = require("../../utils/mailing");
 
 // Send an invitation to a user to join a company account
-module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, username) => {
+module.exports.sentInvitation = async (company, userEmail, role, invitedBy, username) => {
 
-  const existing = await CompanyInvitationModel.findOne({ email: userEmail, Company, status: "pending" });
+  const existing = await CompanyInvitationModel.findOne({ email: userEmail, company, status: "pending" });
   if (existing) throw new Error("User already has a pending invitation for this account");
 
   // Generate a unique token and set expiration to 2 days
@@ -17,7 +17,7 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
 
   const member = await CompanyInvitationModel.create({ 
     email: userEmail, 
-    Company, 
+    company, 
     role, 
     invitedBy, 
     token, 
@@ -26,7 +26,7 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
 
   // Build the acceptance link (frontend)
   const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&Company=${Company}`;
+  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&company=${company}`;
 
   // Send the invitation email
   try {
@@ -53,7 +53,7 @@ module.exports.resendInvitation = async (invitationId) => {
 
   // Build the acceptance link with the new token
   const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&Company=${Company}`;
+  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&company=${updated.company}`;
 
   // Resend the invitation email with the new token
   try {
@@ -88,7 +88,7 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
   // Create the CompanyMembership entry
   const membership = await CompanyMembershipModel.create({
     user: userId,
-    Company: invitation.Company,
+    company: invitation.company,
     role: invitation.role,
   });
 
@@ -121,7 +121,7 @@ module.exports.rejectInvitation = async (invitationId) => {
 // Get all invitations for companies owned by the current user
 module.exports.getCompanyInvitations = async (ownerId) => { 
   // Fetch all invitations for these companies
-  return CompanyInvitationModel.find({ Company: { $in: ownerId } })
+  return CompanyInvitationModel.find({ company: { $in: ownerId } })
     .populate("invitedBy")
     .sort({ createdAt: -1 });
 };
@@ -129,7 +129,7 @@ module.exports.getCompanyInvitations = async (ownerId) => {
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
-    .populate("Company")
+    .populate("company")
     .populate("invitedBy");
   
   if (!invitation) throw new Error("Invitation not found");

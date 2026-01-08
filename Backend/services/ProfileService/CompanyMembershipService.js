@@ -3,7 +3,7 @@ const User = require("../../models/UserModel");
 
 // Get all memberships for a company owned by the current user
 module.exports.getMembershipsByCompany = async (companyId) => {
-  const memberships = await CompanyMembershipModel.find({ Company: companyId })
+  const memberships = await CompanyMembershipModel.find({ company: companyId })
     .populate("user", "username email")
     .populate("invitedBy", "username email")
     .sort({ createdAt: -1 });
@@ -16,7 +16,7 @@ module.exports.getMembershipsByCompany = async (companyId) => {
 module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
   // First, fetch the membership to verify it belongs to a company owned by the requester
   const membership = await CompanyMembershipModel.findById(membershipId)
-    .populate("Company");
+    .populate("company");
 
   if (!membership) throw new Error("Membership not found");
 
