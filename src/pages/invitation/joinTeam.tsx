@@ -211,7 +211,7 @@ const InvitationAcceptationPage: React.FC = () => {
                     Invitation Accepted!
                   </Typography>
                   <Typography variant="body1" sx={{ color: '#64748b', mb: 1 }}>
-                    Welcome to {currentInvitation.organization?.name || 'the team'}!
+                    Welcome to {(currentInvitation as any).Company?.username || currentInvitation.organization?.name || 'the team'}!
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#94a3b8' }}>
                     You can now close this window
@@ -343,7 +343,7 @@ const InvitationAcceptationPage: React.FC = () => {
                       Organization
                     </Typography>
                     <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
-                      {currentInvitation.organization?.name || 'Company'}
+                      {(currentInvitation as any).Company?.username || currentInvitation.organization?.name || 'Company'}
                     </Typography>
                   </Box>
                 </Box>
@@ -407,6 +407,53 @@ const InvitationAcceptationPage: React.FC = () => {
                 </Box>
               </Box>
 
+              {/* Email */}
+              {(currentInvitation as any).email && (
+                <Box
+                  sx={{
+                    mb: 3,
+                    p: 2.5,
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid #e5e7eb',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '10px',
+                        bgcolor: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #e5e7eb',
+                      }}
+                    >
+                      <EmailIcon sx={{ fontSize: 20, color: '#8310FF' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: '#94a3b8',
+                          fontSize: '0.75rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Email
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
+                        {(currentInvitation as any).email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+
               {/* Invited By */}
               <Box
                 sx={{
@@ -446,7 +493,7 @@ const InvitationAcceptationPage: React.FC = () => {
                       Invited by
                     </Typography>
                     <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
-                      {currentInvitation.invitedBy?.username || currentInvitation.invitedBy?.email || 'Team Admin'}
+                      {(currentInvitation as any).invitedBy?.username || (currentInvitation as any).invitedBy?.email || 'Team Admin'}
                     </Typography>
                   </Box>
                 </Box>
