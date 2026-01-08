@@ -169,7 +169,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     ]);
 
     // Fetch profile in parallel if exists
-    const profile = user.profile ? await Profile.findById(user.profile).lean().select('_id') : null;
+    const profile = user.profile ? await Profile.findById(user.profile).populate('CompanyMembership').lean().select('_id') : null;
 
     console.log('✅ OTP verified successfully for:', email);
 
