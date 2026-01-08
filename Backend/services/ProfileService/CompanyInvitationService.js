@@ -138,3 +138,13 @@ module.exports.getCompanyInvitations = async (ownerId) => {
     .populate("invitedBy")
     .sort({ createdAt: -1 });
 };
+
+// Récupérer les détails d'une invitation par son ID
+module.exports.getInvitationDetails = async (invitationId) => {
+  const invitation = await CompanyInvitationModel.findById(invitationId)
+    .populate("Company")
+    .populate("invitedBy");
+  
+  if (!invitation) throw new Error("Invitation not found");
+  return invitation;
+};

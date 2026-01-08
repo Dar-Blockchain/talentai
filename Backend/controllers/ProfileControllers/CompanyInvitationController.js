@@ -61,3 +61,13 @@ module.exports.getCompanyInvitations = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+module.exports.getInvitationDetails = async (req, res) => {
+  try {
+    const { invitationId } = req.params;
+    const invitation = await CompanyInvitationService.getInvitationDetails(invitationId);
+    res.json({ success: true, invitation });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};

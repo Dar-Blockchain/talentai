@@ -40,9 +40,15 @@ router.delete("/deleteInvitation/:invitationId", CompanyInvitationController.del
 router.post("/respondInvitation/:invitationId", CompanyInvitationController.respondInvitation);
 
 /**
- * GET /invitations
+ * GET /myInvitations
  * Get all invitations for companies owned by current user
  */
 router.get("/myInvitations", CompanyInvitationController.getCompanyInvitations);
+
+/**
+ * GET /details/:invitationId
+ * Get invitation details by ID
+ */
+router.get("/details/:invitationId", CompanyInvitationController.getInvitationDetails);
 
 module.exports = router;
