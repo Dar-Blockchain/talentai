@@ -32,22 +32,20 @@ module.exports.deleteInvitation = async (req, res) => {
   }
 };
 
-module.exports.acceptInvitation = async (req, res) => {
+module.exports.respondInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
-    const userId = req.user._id;
-    const accepted = await CompanyInvitationService.acceptInvitation(invitationId, userId);
-    res.json({ success: true, accepted });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+    const { action } = req.body; // 'accept' ou 'reject'
+    if (!action || !["accept","reject"].includes(action)) return res.status(400).json({ success: false, message: 'Invalid action' });
 
-module.exports.rejectInvitation = async (req, res) => {
-  try {
-    const { invitationId } = req.params;
+    if (action === "accept") {
+      const userId = req.user._id;
+      const accepted = await CompanyInvitationService.acceptInvitation(invitationId, userId);
+      return res.json({ success: true, accepted });
+    }
+
     const rejected = await CompanyInvitationService.rejectInvitation(invitationId);
-    res.json({ success: true, rejected });
+    return res.json({ success: true, rejected });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -62,4 +60,3 @@ module.exports.getCompanyInvitations = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-

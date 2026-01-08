@@ -13,9 +13,7 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // ========== MIDDLEWARE: Authentication + Logging ==========
 // All routes below require an authenticated user and are logged
-router.use(requireAuthUser, authLogMiddleware("Account"));
-
-// ========== ACCOUNT MANAGEMENT ==========
+router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
 
 /**
  * POST /sentInvitation
@@ -36,16 +34,10 @@ router.post("/resendInvitation/:invitationId", CompanyInvitationController.resen
 router.delete("/deleteInvitation/:invitationId", CompanyInvitationController.deleteInvitation);
 
 /**
- * POST /acceptInvitation/:invitationId
- * Accept an invitation and add user to company
+ * POST /respondInvitation/:invitationId
+ * Accept or reject an invitation (body: { action: 'accept'|'reject' })
  */
-router.post("/acceptInvitation/:invitationId", CompanyInvitationController.acceptInvitation);
-
-/**
- * POST /rejectInvitation/:invitationId
- * Reject an invitation
- */
-router.post("/rejectInvitation/:invitationId", CompanyInvitationController.rejectInvitation);
+router.post("/respondInvitation/:invitationId", CompanyInvitationController.respondInvitation);
 
 /**
  * GET /invitations

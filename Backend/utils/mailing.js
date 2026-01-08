@@ -331,20 +331,32 @@ const sendPostEmail = async (to, post) => {
 };
 
 // Modèle d'email d'invitation à rejoindre une organisation
-const getOrganizationInviteTemplate = (orgName, role, inviter) => `
+const getOrganizationInviteTemplate = (orgName, role, inviter, invitationLink = '#') => `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
     <title>Invitation to join ${orgName}</title>
   </head>
-  <body style="font-family: Arial, sans-serif; margin:0; padding:20px; background-color:#F7FAFC;">
+      <body style="font-family: Arial, sans-serif; margin:0; padding:20px; background-color:#F7FAFC;">
     <div style="max-width:600px; margin:0 auto; background:#fff; padding:24px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
       <h2 style="color:#1A365D;">You're invited to join <strong>${orgName}</strong></h2>
       <p>Hello,</p>
       <p>You have been invited to join the company <strong>${orgName}</strong> as <strong>${role}</strong>.</p>
       ${inviter ? `<p>Invited by: ${inviter}</p>` : ''}
-      <p>To accept this invitation, please sign in to your TalenIA account and confirm your participation.</p>
+      <p>Please confirm your participation by clicking the button below. The invitation expires in 48 hours.</p>
+
+      <table role="presentation" width="100%" style="margin:20px 0;">
+        <tr>
+          <td align="center">
+            <a href="${invitationLink}" style="background-color:#2B6CB0;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;">Accept Invitation</a>
+          </td>
+        </tr>
+      </table>
+
+      <p>If the button does not work, you can copy and paste the following link into your browser:</p>
+      <p style="font-size:13px;color:#718096;word-break:break-all;"><a href="${invitationLink}">${invitationLink}</a></p>
+
       <p>If you did not request this invitation, you may ignore this message.</p>
       <p style="margin-top:18px; color:#718096; font-size:13px;">This email was generated automatically by TalenIA.</p>
     </div>
@@ -353,12 +365,12 @@ const getOrganizationInviteTemplate = (orgName, role, inviter) => `
 `;
 
 // Envoi d'un email d'invitation à rejoindre une organisation
-const sendCompanyInvitation = async (to, orgName, role, inviterEmail) => {
+const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitationLink = '#') => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to,
     subject: `Invitation: Join ${orgName} as ${role}`,
-    html: getOrganizationInviteTemplate(orgName, role, inviterEmail),
+    html: getOrganizationInviteTemplate(orgName, role, inviterEmail, invitationLink),
   };
 
   try {

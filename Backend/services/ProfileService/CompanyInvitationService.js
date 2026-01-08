@@ -8,9 +8,6 @@ const { sendCompanyInvitation } = require("../../utils/mailing");
 // Ajouter un employé à un compte
 module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, username) => {
 
-  // envoyer l'email d'invitation
-  await sendCompanyInvitation(userEmail, username, role, invitedBy);
-
   let user = await User.findOne({ email: userEmail });
 
   if (!user) {
@@ -28,13 +25,22 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
     user: user._id, 
     Company, 
     role, 
-    invitedBy,
-    token,
-    expiresAt
+    invitedBy, 
+    token, 
+    expiresAt 
   });
 
-  // Set the user's Company field to this Company
-  //await User.findByIdAndUpdate(user._id, { Company }, { new: true });
+  // Construire les liens d'acceptation/refus (frontend)
+  const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const acceptLink = `${frontendBase}/invitation/accept/?token=${token}&invitationId=${member._id}&Company=${Company}&user=${user._id}`;
+  const rejectLink = `${frontendBase}/invitation/reject/?token=${token}&invitationId=${member._id}&Company=${Company}&user=${user._id}`;
+
+  // envoyer l'email d'invitation avec les liens
+  try {
+    await sendCompanyInvitation(userEmail, username, role, invitedBy, acceptLink, rejectLink);
+  } catch (e) {
+    console.error('Failed to send company invitation email:', e);
+  }
 
   return member;
 };
