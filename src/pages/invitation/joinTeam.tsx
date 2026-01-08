@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '@/store/store';
+import { AppDispatch, RootState } from '@/store/store';
 import {
   Box,
   Container,
@@ -26,6 +26,7 @@ import {
   respondToInvitation,
   selectMembers,
 } from '@/store/slices/memberSlice';
+import Cookies from 'js-cookie';
 
 const ROLE_LABELS: Record<string, string> = {
   RH: 'HR',
@@ -44,7 +45,7 @@ const ROLE_ICONS: Record<string, React.ReactElement> = {
 const InvitationAcceptationPage: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { invitationId } = router.query;
+  const { invitationId, token } = router.query;
 
   const {
     currentInvitation,
@@ -54,12 +55,38 @@ const InvitationAcceptationPage: React.FC = () => {
     error,
   } = useSelector(selectMembers);
 
-  // Fetch invitation details when component mounts
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  // Check authentication and redirect to signin if needed
   useEffect(() => {
-    if (invitationId && typeof invitationId === 'string') {
+    const checkAuth = () => {
+      if (typeof window === 'undefined') return;
+
+      const apiToken = Cookies.get('api_token') || localStorage.getItem('api_token');
+
+      if (!apiToken && !isAuthenticated) {
+        // Store the invitation link to return after signin
+        const currentUrl = window.location.href;
+        console.log('🔒 No authentication token found, redirecting to signin...');
+        router.push(`/signin?returnUrl=${encodeURIComponent(currentUrl)}`);
+      }
+    };
+
+    // Only check after router is ready and we have the invitation ID
+    if (router.isReady && invitationId) {
+      checkAuth();
+    }
+  }, [router.isReady, isAuthenticated, router, invitationId]);
+
+  // Fetch invitation details when component mounts (only if authenticated)
+  useEffect(() => {
+    const apiToken = Cookies.get('api_token') || localStorage.getItem('api_token');
+
+    if (invitationId && typeof invitationId === 'string' && (apiToken || isAuthenticated)) {
+      console.log('🔍 Fetching invitation details for ID:', invitationId);
       dispatch(fetchInvitationDetails(invitationId));
     }
-  }, [invitationId, dispatch]);
+  }, [invitationId, dispatch, isAuthenticated]);
 
   const handleAccept = async () => {
     if (!invitationId || typeof invitationId !== 'string') return;
