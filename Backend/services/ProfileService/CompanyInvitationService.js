@@ -107,12 +107,8 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
     role: invitation.role,
   });
 
-  // Update the invitation status
-  await CompanyInvitationModel.findByIdAndUpdate(
-    invitationId,
-    { status: "active" },
-    { new: true }
-  );
+  // Delete the invitation after acceptance
+  await CompanyInvitationModel.findByIdAndDelete(invitationId);
 
   // Update the Company field of the user
   await User.findByIdAndUpdate(userId, { Organization: invitation.Company }, { new: true });
