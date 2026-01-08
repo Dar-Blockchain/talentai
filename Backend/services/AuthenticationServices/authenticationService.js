@@ -168,10 +168,10 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
       logAuthAttempt('Success')
     ]);
 
-    // Fetch profile and CompanyMembership in parallel if exist
+    // Fetch profile and companyMembership in parallel if exist
     const [profile, companyMembership] = await Promise.all([
-      user.profile ? Profile.findById(user.profile).lean().select('_id') : null,
-      user.CompanyMembership ? require('../../models/CompanyMembershipModel').findById(user.CompanyMembership).lean().select('_id role company') : null
+      user.profile ? Profile.findById(user.profile) : null,
+      user.companyMembership ? require('../../models/CompanyMembershipModel').findById(user.companyMembership).lean().select('_id role company') : null
     ]);
 
     console.log('✅ OTP verified successfully for:', email);

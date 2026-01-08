@@ -26,10 +26,10 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
   // Delete the membership
   const deleted = await CompanyMembershipModel.findByIdAndDelete(membershipId);
   
-  // If this was the last membership for the user, optionally clear their CompanyMembership field
+  // If this was the last membership for the user, optionally clear their companyMembership field
   const remaining = await CompanyMembershipModel.findOne({ user: membership.user });
   if (!remaining) {
-    await User.findByIdAndUpdate(membership.user, { CompanyMembership: null }, { new: true });
+    await User.findByIdAndUpdate(membership.user, { companyMembership: null }, { new: true });
   }
 
   return deleted;

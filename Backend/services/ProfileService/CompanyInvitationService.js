@@ -95,11 +95,11 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
   // Delete the invitation after acceptance
   await CompanyInvitationModel.findByIdAndDelete(invitationId);
 
-  // Update the user with CompanyMembership relationship
+  // Update the user with companyMembership relationship
   await User.findByIdAndUpdate(
     userId,
     {
-      CompanyMembership: membership._id
+      companyMembership: membership._id
     },
     { new: true }
   );

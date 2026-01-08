@@ -78,7 +78,7 @@ const userSchema = new mongoose.Schema(
         ref: "Notification",
       },
     ],
-    CompanyMembership: {
+    companyMembership: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CompanyMembership",
     },
