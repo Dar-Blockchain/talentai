@@ -1,107 +1,56 @@
-const crypto = require("crypto");
-const mongoose = require("mongoose");
-const User = require("../../models/UserModel");
 const CompanyMembershipModel = require("../../models/CompanyMembershipModel");
-const CompanyInvitationModel = require("../../models/CompanyInvitationModel");
-const { sendCompanyInvitation } = require("../../utils/mailing");
+const User = require("../../models/UserModel");
 
-// Ajouter un employé à un compte
-module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, username) => {
+// Get all memberships for a company owned by the current user
+module.exports.getMembershipsByCompany = async (companyId) => {
+  const memberships = await CompanyMembershipModel.find({ Company: companyId })
+    .populate("user", "username email")
+    .populate("invitedBy", "username email")
+    .sort({ createdAt: -1 });
 
-  // envoyer l'email d'invitation
-  await sendCompanyInvitation(userEmail, username, role, invitedBy);
+  if (!memberships) throw new Error("No memberships found for this company");
+  return memberships;
+};
 
-  let user = await User.findOne({ email: userEmail });
+// Delete a membership (remove a member from a company)
+module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
+  // First, fetch the membership to verify it belongs to a company owned by the requester
+  const membership = await CompanyMembershipModel.findById(membershipId)
+    .populate("Company");
 
-  if (!user) {
-    user = await User.create({ email: userEmail, username: userEmail.split("@")[0], role: "Candidate" });
+  if (!membership) throw new Error("Membership not found");
+
+  // Verify that the company is owned by the requester (optional but recommended for security)
+  // You could add an ownership check here if needed
+  
+  // Delete the membership
+  const deleted = await CompanyMembershipModel.findByIdAndDelete(membershipId);
+  
+  // If this was the last membership for the user, optionally clear their Organization field
+  const remaining = await CompanyMembershipModel.findOne({ user: membership.user });
+  if (!remaining) {
+    await User.findByIdAndUpdate(membership.user, { Organization: null }, { new: true });
   }
 
-  const existing = await CompanyInvitationModel.findOne({ user: user._id, Company });
-  if (existing) throw new Error("User already has access to this account");
-
-  // Générer un token unique et définir l'expiration à 2 jours
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 jours
-
-  const member = await CompanyInvitationModel.create({ 
-    user: user._id, 
-    Company, 
-    role, 
-    invitedBy,
-    token,
-    expiresAt
-  });
-
-  // Set the user's Company field to this Company
-  //await User.findByIdAndUpdate(user._id, { Company }, { new: true });
-
-  return member;
+  return deleted;
 };
 
-// Lister les employés d'un compte
-module.exports.listEmployees = async (accountId) => {
-  return CompanyMembershipModel.find({ Organization: accountId }).populate("user", "email username");
-};
+// Update the role of a membership
+module.exports.updateMembershipRole = async (membershipId, newRole) => {
+  // Validate the role
+  const validRoles = ["Owner", "RH", "TechLead", "Supervisor", "Manager"];
+  if (!validRoles.includes(newRole)) {
+    throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
+  }
 
-// Récupérer les employés pour les organisations dont l'utilisateur est propriétaire
-module.exports.listMyEmployees = async (ownerId) => {
-  // Since we no longer have an Organization collection, find Organization ids where the user is Owner
-  const ownerEntries = await CompanyMembershipModel.find({ user: ownerId, role: "Owner" }).select("Organization");
-  const orgIds = ownerEntries.map((o) => o.Organization);
-  if (orgIds.length === 0) return [];
-  return CompanyMembershipModel.find({ Organization: { $in: orgIds } }).populate("user", "email username");
-};
-
-// Récupérer une organisation avec ses membres populés
-module.exports.getOrganizationWithMembers = async (organizationId) => {
-  return CompanyMembershipModel.find({ Organization: organizationId }).populate("user", "email username");
-};
-
-// Modifier rôle d'un membre
-module.exports.updateRole = async (OrganizationId, userId, newRole) => {
-  const member = await CompanyMembershipModel.findOneAndUpdate(
-    { Organization: OrganizationId, user: userId },
+  const updated = await CompanyMembershipModel.findByIdAndUpdate(
+    membershipId,
     { role: newRole },
     { new: true }
-  );
-  if (!member) throw new Error("Member not found");
-  return member;
-};
+  )
+    .populate("user", "username email")
+    .populate("invitedBy", "username email");
 
-// Retirer un employé d'un compte
-module.exports.removeEmployee = async (OrganizationId, userId) => {
-  // Trouver et supprimer l'CompanyMembershipModel
-  const member = await CompanyMembershipModel.findOneAndDelete({ Organization: OrganizationId, user: userId });
-  if (!member) throw new Error("Member not found");
-
-  // If the user has no other CompanyMembershipModel entries, clear their Organization field
-  const remaining = await CompanyMembershipModel.findOne({ user: userId });
-  if (!remaining) {
-    await User.findByIdAndUpdate(userId, { Organization: null }, { new: true });
-  }
-
-  return member;
-};
-
-// Renvoyer une invitation (regénérer token et réinitialiser expiration)
-module.exports.resendInvitation = async (invitationId) => {
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 jours
-
-  const updated = await CompanyInvitationModel.findByIdAndUpdate(
-    invitationId,
-    { token, expiresAt, status: "pending" },
-    { new: true }
-  );
-
-  if (!updated) throw new Error("Invitation not found");
+  if (!updated) throw new Error("Membership not found");
   return updated;
-};
-
-// Supprimer/révoquer une invitation
-module.exports.deleteInvitation = async (invitationId) => {
-  const deleted = await CompanyInvitationModel.findByIdAndDelete(invitationId);
-  if (!deleted) throw new Error("Invitation not found");
-  return deleted;
 };

@@ -3,7 +3,7 @@ const axios = require('axios'); // <-- AJOUT
 const MatchingConfig = require('../models/MatchingConfigModel');
 
 /**
- * Récupère les taux de change en direct depuis Internet
+ * Fetch live exchange rates from the internet
  */
 async function fetchLiveExchangeRates() {
   try {
@@ -26,7 +26,7 @@ async function fetchLiveExchangeRates() {
 }
 
 /**
- * Met à jour les exchangeRates pour tous MatchingConfig
+ * Update the `exchangeRates` field for all MatchingConfig records
  */
 async function updateExchangeRatesForAll(newRates = {}) {
   try {
@@ -45,13 +45,13 @@ async function updateExchangeRatesForAll(newRates = {}) {
 }
 
 /**
- * Cron chaque jour à 17h39
+ * Cron scheduled daily
  */
 cron.schedule('0 0 * * *', async () => {
   try {
     console.log('⏰ [Cron] Fetching live exchange rates...');
 
-    // Récupérer les taux LIVE depuis Internet
+    // Fetch live rates from the internet
     const liveRates = await fetchLiveExchangeRates();
 
     if (!liveRates) {

@@ -8,28 +8,28 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
-// Validation des données du post
+// Validate post data
 const validatePostData = (postData) => {
   const { jobDetails, skillAnalysis, linkedinPost } = postData;
 
-  // Validation des jobDetails
+  // Validate jobDetails
   if (!jobDetails?.title || !jobDetails?.description) {
     throw new Error("Job title and description are required");
   }
 
-  // Validation du salaire
+  // Validate salary
   if (jobDetails.salary) {
     if (jobDetails.salary.min > jobDetails.salary.max) {
       throw new Error("Minimum salary cannot be greater than maximum salary");
     }
   }
 
-  // Validation des compétences requises
+  // Validate required skills
   if (!skillAnalysis?.requiredSkills?.length) {
     throw new Error("At least one required skill must be specified");
   }
 
-  // Validation du post LinkedIn
+  // Validate LinkedIn post
   if (!linkedinPost?.formattedContent?.headline || !linkedinPost?.finalPost) {
     throw new Error("LinkedIn post content is required");
   }
@@ -37,10 +37,10 @@ const validatePostData = (postData) => {
   return true;
 };
 
-// Créer un nouveau post
+// Create a new post
 module.exports.createPost = async (postData, token) => {
   try {
-    // Valider les données
+    // Validate data
     validatePostData(postData);
 
     const post = new Post(postData);
@@ -75,32 +75,32 @@ module.exports.createPost = async (postData, token) => {
   }
 };
 
-// Récupérer tous les posts avec filtres avancés
+// Get all posts with advanced filters
 module.exports.getAllPosts = async (filters = {}) => {
   try {
     let query = {};
 
-    // Filtres pour le statut
+    // Filters for status
     if (filters.status) {
       query.status = filters.status;
     }
 
-    // Filtres pour le type d'emploi
+    // Filters for employment type
     if (filters.employmentType) {
       query["jobDetails.employmentType"] = filters.employmentType;
     }
 
-    // Filtres pour le niveau d'expérience
+    // Filters for experience level
     if (filters.experienceLevel) {
       query["jobDetails.experienceLevel"] = filters.experienceLevel;
     }
 
-    // Filtres pour les compétences
+    // Filters for skills
     if (filters.skills) {
       query["skillAnalysis.requiredSkills.name"] = { $in: filters.skills };
     }
 
-    // Filtres pour la fourchette de salaire
+    // Filters for salary range
     if (filters.salary) {
       if (filters.salary.min) {
         query["jobDetails.salary.min"] = { $gte: filters.salary.min };
@@ -118,7 +118,7 @@ module.exports.getAllPosts = async (filters = {}) => {
   }
 };
 
-// Récupérer tous les posts avec recherche, filtres et pagination
+// Get all posts with search, filters and pagination
 module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6) => {
   try {
     const {
@@ -255,7 +255,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
   }
 };
 
-// Récupérer un post par son ID
+// Get a post by its ID
 module.exports.getPostById = async (postId) => {
   try {
     const post = await Post.findById(postId).populate("user", "username email").populate("post_Steps").populate('agentConfig').populate('agentId');
@@ -350,7 +350,7 @@ module.exports.getPipelineJobDetails = async (postId) => {
   }
 };
 
-// Récupérer les required skills d'un post par son ID
+// Get required skills of a post by its ID
 module.exports.getRequiredSkillsByPostId = async (postId) => {
   try {
     if (!postId) {
@@ -376,7 +376,7 @@ module.exports.getRequiredSkillsByPostId = async (postId) => {
   }
 };
 
-// Récupérer les posts d'un utilisateur
+// Get posts for a user
 module.exports.getPostsByUserId = async (userId) => {
   try {
     return await Post.find({ user: userId })
@@ -390,7 +390,7 @@ module.exports.getPostsByUserId = async (userId) => {
   }
 };
 
-// Récupérer les posts d'un utilisateur avec pagination, recherche et tri
+// Get user's posts with pagination, search and sorting
 module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest') => {
   try {
     // Validate pagination parameters
@@ -456,10 +456,10 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
   }
 };
 
-// Mettre à jour un post
+// Update a post
 module.exports.updatePost = async (postId, userId, updateData) => {
   try {
-    // Valider les données si une mise à jour complète est fournie
+    // Validate data if a full update is provided
     if (
       updateData.jobDetails ||
       updateData.skillAnalysis ||
@@ -480,7 +480,7 @@ module.exports.updatePost = async (postId, userId, updateData) => {
   }
 };
 
-// Supprimer un post
+// Delete a post
 module.exports.deletePost = async (postId, userId) => {
   try {
     const post = await Post.findOneAndDelete({ _id: postId, user: userId });
@@ -488,13 +488,13 @@ module.exports.deletePost = async (postId, userId) => {
       throw new Error("Post not found or unauthorized");
     }
 
-    // Supprimer les évaluations de job associées au poste
+    // Delete associated job assessments
     await JobAssessmentResult.deleteMany({ jobId: postId });
 
-    // Mettre à jour l'utilisateur en supprimant la référence au post
+    // Update the user by removing the post reference
     await User.updateOne(
-      { _id: userId }, // Chercher l'utilisateur par son ID
-      { $pull: { post: postId } } // Retirer la référence du post de la liste 'post'
+      { _id: userId },
+      { $pull: { post: postId } }
     );
 
     return post;
@@ -503,7 +503,7 @@ module.exports.deletePost = async (postId, userId) => {
   }
 };
 
-// Changer le statut d'un post
+// Change post status
 module.exports.updatePostStatus = async (postId, userId, status) => {
   try {
     const post = await Post.findOne({ _id: postId, user: userId });
@@ -533,7 +533,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
     return {
       success: false,
-      message: "Aucun skill trouvé. Ajoutez au moins une compétence à votre profil pour obtenir des recommandations.",
+      message: "No skills found. Add at least one skill to your profile to get recommendations.",
     };
   }
 
@@ -545,7 +545,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   if (skillNames.length === 0) {
     return {
       success: false,
-      message: "Aucun skill valide trouvé dans le profil. Ajoutez au moins une compétence pour recevoir des recommandations.",
+      message: "No valid skills found in profile. Add at least one skill to receive recommendations.",
     };
   }
 
@@ -582,8 +582,8 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     });
   }
 
-  // Si l'utilisateur a des attentes salariales, filtrer les postes pour ne garder
-  // que ceux dont la plage salariale chevauche les attentes de l'utilisateur.
+  // If the user has salary expectations, filter posts to keep
+  // only those whose salary range overlaps with the user's expectations.
   try {
     const userExpected = user?.profile?.expectedSalary;
     if (userExpected && (userExpected.min || userExpected.max)) {
@@ -598,18 +598,18 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
       });
     }
   } catch (err) {
-    console.warn("Erreur lors du filtrage par expectedSalary:", err.message);
+    console.warn("Error while filtering by expectedSalary:", err.message);
   }
 
   if (!candidatePosts || candidatePosts.length === 0) {
     return {
       success: false,
       message:
-        "Pas de recommandations pour le moment. Nous n'avons trouvé aucun poste correspondant à vos compétences ou tous ont déjà été testés.",
+        "No recommendations at the moment. We did not find any posts matching your skills or all have already been tested.",
     };
   }
 
-  // Calcul du score de correspondance pour chaque poste
+  // Calculate match score for each post
   const scored = candidatePosts.map((post) => {
     const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
     const matchCount = required.reduce(
@@ -619,17 +619,17 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     return { post, matchCount };
   });
 
-  // Tri par correspondances décroissantes puis par date
+  // Sort by descending match count then by date
   scored.sort(
     (a, b) =>
       b.matchCount - a.matchCount ||
       new Date(b.post.createdAt) - new Date(a.post.createdAt)
   );
 
-  // Tous les postes triés par pertinence
+  // All posts sorted by relevance
   const allPosts = scored.map((s) => s.post);
 
-  // Fonction pour sélectionner aléatoirement 3 posts
+  // Function to randomly pick up to 3 posts
   const getRandomPosts = (posts, count = 3) => {
     if (posts.length <= count) {
       return posts;
@@ -644,7 +644,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     return {
       success: true,
       posts: randomPosts,
-      message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`
+      message: `${randomPosts.length} recommendation(s) found out of ${allPosts.length} available`
     }
 };
 

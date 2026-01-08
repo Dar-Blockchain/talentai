@@ -1,9 +1,9 @@
 const { normalizeSkillName } = require("../services/MatchingService/matchingService");
 
 /**
- * Prépare les skills en normalisant leurs noms
- * @param {Array} skills - Tableau des skills à préparer
- * @returns {Array} Skills préparés avec noms normalisés
+ * Prepare skills by normalizing their names
+ * @param {Array} skills - Array of skills to prepare
+ * @returns {Array} Prepared skills with normalized names
  */
 const prepareSkills = (skills) =>
   (skills || [])

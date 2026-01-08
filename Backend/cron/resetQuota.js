@@ -2,22 +2,22 @@
 const cron = require("node-cron");
 const Profile = require("../models/ProfileModel");
 
-// 🕛 Planification : chaque jour à 00h00
+// 🕛 Schedule: daily at 00:00
 cron.schedule("0 0 * * *", async () => {
   try {
-    console.log("🔁 Vérification et réinitialisation des quotas (si >30 jours)...");
+    console.log("🔁 Checking and resetting quotas (if >30 days)...");
 
     const now = new Date();
-    const thresholdDate = new Date(now.setDate(now.getDate() - 30)); // il y a 30 jours
+    const thresholdDate = new Date(now.setDate(now.getDate() - 30)); // 30 days ago
 
-    // On sélectionne uniquement les profils dont le quotaUpdatedAt est plus vieux que 30 jours
+    // Select only profiles whose quotaUpdatedAt is older than 30 days
     const result = await Profile.updateMany(
       { quotaUpdatedAt: { $lte: thresholdDate } },
       { $set: { quota: 0, quotaUpdatedAt: new Date() } }
     );
 
-    console.log(`✅ Quotas réinitialisés pour ${result.modifiedCount} profils (inactifs depuis ≥30 jours).`);
+    console.log(`✅ Quotas reset for ${result.modifiedCount} profiles (inactive ≥30 days).`);
   } catch (error) {
-    console.error("❌ Erreur lors de la réinitialisation des quotas :", error);
+    console.error("❌ Error resetting quotas:", error);
   }
 });

@@ -33,13 +33,13 @@ const buildUpdateData = (fields) => {
  */
 const validateUpdateFields = (data) => {
   if (data.firstName && !VALIDATION.nameRegex.test(data.firstName)) {
-    return "Le prénom ne doit pas contenir de caractères spéciaux";
+    return "First name must not contain special characters";
   }
   if (data.lastName && !VALIDATION.nameRegex.test(data.lastName)) {
-    return "Le nom ne doit pas contenir de caractères spéciaux";
+    return "Last name must not contain special characters";
   }
   if (data.gender && !VALIDATION.genders.includes(data.gender)) {
-    return "Valeur de gender invalide";
+    return "Invalid gender value";
   }
   return null;
 };
@@ -52,10 +52,10 @@ const validateUpdateFields = (data) => {
  */
 const validateProfileCreationFields = (data) => {
   if (data.FirstName && !VALIDATION.nameRegex.test(data.FirstName)) {
-    return "Le prénom ne doit pas contenir de caractères spéciaux";
+    return "First name must not contain special characters";
   }
   if (data.LastName && !VALIDATION.nameRegex.test(data.LastName)) {
-    return "Le nom ne doit pas contenir de caractères spéciaux";
+    return "Last name must not contain special characters";
   }
   return null;
 };

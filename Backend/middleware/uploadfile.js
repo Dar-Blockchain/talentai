@@ -12,7 +12,7 @@ var storage = multer.diskStorage({
     const fileExtension = path.extname(originalName);
     let fileName = originalName;
 
-    // Vérifier si le fichier existe déjà
+    // Check if the file already exists
     let fileIndex = 1;
     while (fs.existsSync(path.join(uploadPath, fileName))) {
       const baseName = path.basename(originalName, fileExtension);
