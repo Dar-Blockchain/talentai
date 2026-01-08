@@ -168,13 +168,16 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
       logAuthAttempt('Success')
     ]);
 
-    // Fetch profile in parallel if exists
-    const profile = user.profile ? await Profile.findById(user.profile).populate('CompanyMembership').lean().select('_id') : null;
+    // Fetch profile and CompanyMembership in parallel if exist
+    const [profile, companyMembership] = await Promise.all([
+      user.profile ? Profile.findById(user.profile).lean().select('_id') : null,
+      user.CompanyMembership ? require('../../models/CompanyMembershipModel').findById(user.CompanyMembership).lean().select('_id role Company') : null
+    ]);
 
     console.log('✅ OTP verified successfully for:', email);
 
     const token = generateToken(user._id);
-    return { user, token, profile };
+    return { user, token, profile, companyMembership };
   } catch (error) {
     error.status = error.status || 500;
     throw error;

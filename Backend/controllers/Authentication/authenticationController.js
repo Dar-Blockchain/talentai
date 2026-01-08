@@ -50,7 +50,8 @@ module.exports.verifyOTP = async (req, res) => {
       message: "Email vérifié avec succès",
       user: result.user,
       token: result.token,
-      profile: result.profile || null
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
     });
   } catch (error) {
     handleError(res, error, 400);
