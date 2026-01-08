@@ -68,7 +68,7 @@ module.exports.resendInvitation = async (invitationId) => {
 
   // Construire le lien d'acceptation avec le nouveau token
   const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&Company=${Company}`;
+  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&Company=${Company}`;
 
   // Renvoyer l'email d'invitation avec le nouveau token
   try {
