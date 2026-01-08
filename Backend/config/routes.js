@@ -36,6 +36,7 @@ const paymentRouter = require('../routes/paymentRouter');
 const unlockCandidateRouter = require('../routes/unlockCandidateRouter');
 const pipelineInterviewRoutes = require('../routes/pipelineInterviewRoutes');
 const CompanyInvitationRouters = require('../routes/CompanyInvitationRouter');
+const CompanyMembershipRoutes = require('../routes/CompanyMembershipRouter');
 
 /**
  * Register all routes on the Express app
@@ -51,6 +52,7 @@ function registerRoutes(app) {
   app.use('/dashboard', dashboardRouter);
   app.use('/profiles', profileRouter);
   app.use('/CompanyInvitation', CompanyInvitationRouters);
+  app.use('/CompanyMembership', CompanyMembershipRoutes);
 
   // Evaluation & Interview
   app.use('/evaluation', evaluationRouter);
