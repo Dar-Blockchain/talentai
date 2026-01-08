@@ -1,51 +1,33 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Avatar,
   CircularProgress,
   Alert,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  DialogContentText,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
-  PersonAdd as PersonAddIcon,
-  MoreVert as MoreVertIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Email as EmailIcon,
   Person as PersonIcon,
   BarChart as BarChartIcon,
+  PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
 import AddMemberModal from '@/components/dashboard-company/AddMemberModal';
 import EditRoleModal from '@/components/dashboard-company/EditRoleModal';
+import PendingInvitationsList from '@/components/dashboard-company/PendingInvitationsList';
+import TeamMembersHeader from './team-members/TeamMembersHeader';
+import TeamMembersTable from './team-members/TeamMembersTable';
+import TeamMembersEmptyState from './team-members/TeamMembersEmptyState';
+import TeamMemberMenu from './team-members/TeamMemberMenu';
+import DeleteMemberDialog from './team-members/DeleteMemberDialog';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import {
-  fetchMyEmployees,
   addEmployee,
-  activateSharedAccount,
   updateMemberRole,
   deleteMember,
+  fetchInvitations,
+  resendInvitation,
+  cancelInvitation,
   selectMembers,
   clearAddMemberSuccess,
   clearUpdateRoleSuccess,
@@ -54,6 +36,7 @@ import {
   MemberRole
 } from '@/store/slices/memberSlice';
 import { useToast } from '@/hooks/useToast';
+import { toast } from 'react-toastify';
 
 // Constants moved outside component
 const ROLE_LABELS: Record<string, string> = {
@@ -94,20 +77,28 @@ const ROLE_ICONS: Record<string, React.ReactElement> = {
 
 const TeamMembersTab: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { members, loading, error, sharedAccountId, addMemberSuccess, updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
+  const {
+    members,
+    loading,
+    error,
+    sharedAccountId,
+    addMemberSuccess,
+    updateRoleSuccess,
+    deleteMemberSuccess,
+    invitations,
+    fetchingInvitations,
+  } = useSelector(selectMembers);
   const { showToast } = useToast();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [editRoleModalOpen, setEditRoleModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [activating, setActivating] = useState(false);
 
-  // Fetch members on mount - always try to fetch
+  // Fetch invitations on mount
   useEffect(() => {
-    console.log('🔍 [TeamMembersTab] Component mounted, fetching employees...');
-    console.log('🔍 [TeamMembersTab] sharedAccountId:', sharedAccountId);
-    dispatch(fetchMyEmployees());
+    console.log('🔍 [TeamMembersTab] Component mounted, fetching invitations...');
+    dispatch(fetchInvitations());
   }, [dispatch]);
 
   // Close modal when member is added successfully
@@ -115,8 +106,9 @@ const TeamMembersTab: React.FC = () => {
     if (addMemberSuccess) {
       setAddMemberModalOpen(false);
       dispatch(clearAddMemberSuccess());
-      // Refresh the member list
-      dispatch(fetchMyEmployees());
+      toast.success('Team member invited successfully!');
+      // Refresh the invitations list
+      dispatch(fetchInvitations());
     }
   }, [addMemberSuccess, dispatch]);
 
@@ -125,8 +117,7 @@ const TeamMembersTab: React.FC = () => {
     if (updateRoleSuccess) {
       setEditRoleModalOpen(false);
       dispatch(clearUpdateRoleSuccess());
-      // Refresh the member list
-      dispatch(fetchMyEmployees());
+      toast.success('Member role updated successfully!');
     }
   }, [updateRoleSuccess, dispatch]);
 
@@ -136,8 +127,7 @@ const TeamMembersTab: React.FC = () => {
       setDeleteDialogOpen(false);
       setSelectedMember(null);
       dispatch(clearDeleteMemberSuccess());
-      // The member is already removed from state, but we can refresh to ensure sync
-      dispatch(fetchMyEmployees());
+      toast.success('Team member removed successfully!');
     }
   }, [deleteMemberSuccess, dispatch]);
 
@@ -149,7 +139,7 @@ const TeamMembersTab: React.FC = () => {
     'manager': 'Manager'
   };
 
-  // Extract sharedAccountId from members if available
+  // Extract sharedAccountId from members if available (needed for update/delete operations)
   const accountIdFromMembers = useMemo(() => {
     if (members.length > 0 && members[0].Organization) {
       return members[0].Organization;
@@ -166,29 +156,19 @@ const TeamMembersTab: React.FC = () => {
     // Map the role to API format
     const apiRole = roleMapping[role] || 'RH';
 
-    // Use the effective account ID (from Redux or extracted from members)
-    const accountId = effectiveAccountId || '';
+    console.log('🔍 [TeamMembersTab] handleAddMember - sending invitation');
 
-    console.log('🔍 [TeamMembersTab] handleAddMember - accountId:', accountId);
-    console.log('🔍 [TeamMembersTab] handleAddMember - sharedAccountId:', sharedAccountId);
-    console.log('🔍 [TeamMembersTab] handleAddMember - accountIdFromMembers:', accountIdFromMembers);
-
-    if (!accountId) {
-      throw new Error('Account ID not found. Please try again.');
-    }
-
-    // Dispatch the add employee action
+    // Dispatch the add employee action (now sends invitation)
     const result = await dispatch(addEmployee({
-      accountId,
       email,
       role: apiRole
     }));
 
     // Check if the action was rejected
     if (addEmployee.rejected.match(result)) {
-      throw new Error(result.payload as string || 'Failed to add member');
+      throw new Error(result.payload as string || 'Failed to send invitation');
     }
-  }, [dispatch, effectiveAccountId, sharedAccountId, accountIdFromMembers, roleMapping]);
+  }, [dispatch, roleMapping]);
 
   const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>, member: Member) => {
     setAnchorEl(event.currentTarget);
@@ -257,6 +237,29 @@ const TeamMembersTab: React.FC = () => {
     setSelectedMember(null);
   }, []);
 
+  // Invitation handlers (using local state - temporary)
+  const handleResendInvitation = useCallback(async (invitationId: string) => {
+    console.log('🔵 [TeamMembersTab] Resending invitation:', invitationId);
+    try {
+      await dispatch(resendInvitation(invitationId)).unwrap();
+      toast.success('Invitation resent successfully!');
+    } catch (error) {
+      console.error('Failed to resend invitation:', error);
+      toast.error('Failed to resend invitation');
+    }
+  }, [dispatch]);
+
+  const handleCancelInvitation = useCallback(async (invitationId: string) => {
+    console.log('🔵 [TeamMembersTab] Cancelling invitation:', invitationId);
+    try {
+      await dispatch(cancelInvitation(invitationId)).unwrap();
+      toast.success('Invitation cancelled successfully!');
+    } catch (error) {
+      console.error('Failed to cancel invitation:', error);
+      toast.error('Failed to cancel invitation');
+    }
+  }, [dispatch]);
+
   // Memoized helper functions
   const getRoleLabel = useCallback((role: string) => ROLE_LABELS[role] || role, []);
   const getRoleColor = useCallback((role: string): 'primary' | 'success' | 'info' | 'default' =>
@@ -274,21 +277,6 @@ const TeamMembersTab: React.FC = () => {
     setAddMemberModalOpen(false);
   }, []);
 
-  const handleActivateAccount = useCallback(async () => {
-    console.log('🔵 [TeamMembersTab] Activating shared account...');
-    setActivating(true);
-    try {
-      await dispatch(activateSharedAccount()).unwrap();
-      console.log('✅ [TeamMembersTab] Shared account activated successfully');
-      // Fetch employees after activation
-      dispatch(fetchMyEmployees());
-    } catch (err: any) {
-      console.error('❌ [TeamMembersTab] Failed to activate shared account:', err);
-    } finally {
-      setActivating(false);
-    }
-  }, [dispatch]);
-
   // Memoize empty state check
   const hasMembers = useMemo(() => members.length > 0, [members.length]);
 
@@ -297,272 +285,75 @@ const TeamMembersTab: React.FC = () => {
     return members.some(member => member.role === 'Owner');
   }, [members]);
 
-  // Show activation button only if no account ID AND no owner role
-  const showActivateButton = !effectiveAccountId && !hasOwnerRole;
-
   // Debug render
   console.log('🎨 [TeamMembersTab] RENDERING - sharedAccountId:', sharedAccountId);
   console.log('🎨 [TeamMembersTab] accountIdFromMembers:', accountIdFromMembers);
   console.log('🎨 [TeamMembersTab] effectiveAccountId:', effectiveAccountId);
   console.log('🎨 [TeamMembersTab] hasOwnerRole:', hasOwnerRole);
-  console.log('🎨 [TeamMembersTab] showActivateButton:', showActivateButton);
 
   return (
     <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
-      <CardContent sx={{ p: 4 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5 }}>
-              Team Members
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b' }}>
-              Manage your team members and their permissions
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {showActivateButton ? (
-              <Button
-                variant="contained"
-                onClick={handleActivateAccount}
-                disabled={activating}
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  px: 3,
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)',
-                  },
-                  '&.Mui-disabled': {
-                    background: '#e2e8f0',
-                    color: '#94a3b8',
-                  },
-                }}
-              >
-                {activating ? (
-                  <>
-                    <CircularProgress size={18} sx={{ mr: 1, color: 'white' }} />
-                    Activating...
-                  </>
-                ) : (
-                  'Activate Shared Account'
-                )}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<PersonAddIcon />}
-                onClick={handleOpenAddModal}
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  px: 3,
-                  background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
-                  boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)',
-                    boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
-                  },
-                }}
-              >
-                Add Member
-              </Button>
-            )}
-          </Box>
-        </Box>
-
-        {/* Error Alert */}
-        {error && typeof error === 'string' && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
+      <CardContent sx={{ p: 4 }}>      {/* Header */}
+        <TeamMembersHeader
+          showActivateButton={false}
+          activating={false}
+          onActivateAccount={() => {}}
+          onAddMember={handleOpenAddModal}
+        />
 
         {/* Loading State */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            py: 8,
+            borderRadius: 3,
+            border: '1px solid #e5e7eb',
+            bgcolor: 'white'
+          }}>
             <CircularProgress sx={{ color: '#8310FF' }} />
           </Box>
+        ) : error ? (
+          /* Error State */
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
         ) : !hasMembers ? (
           /* Empty State */
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 8,
-              px: 4,
-              backgroundColor: '#f8fafc',
-              borderRadius: 3,
-            }}
-          >
-            <PersonAddIcon sx={{ fontSize: 64, color: '#cbd5e1', mb: 2 }} />
-            <Typography variant="h6" sx={{ color: '#64748b', mb: 1 }}>
-              No team members yet
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3 }}>
-              Get started by inviting your first team member
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<PersonAddIcon />}
-              onClick={handleOpenAddModal}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 3,
-                background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
-              }}
-            >
-              Add Member
-            </Button>
-          </Box>
+          <TeamMembersEmptyState />
         ) : (
           /* Members Table */
-          <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #e5e7eb', borderRadius: 2 }}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Member</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Role</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b' }}>Joined Date</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#64748b' }} align="right">
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow
-                    key={member._id}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: '#f8fafc',
-                      },
-                    }}
-                  >
-                    {/* Member Info */}
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar
-                          sx={{
-                            bgcolor: '#8310FF',
-                            width: 40,
-                            height: 40,
-                          }}
-                        >
-                          {member.user?.username?.[0]?.toUpperCase() || member.user?.email?.[0]?.toUpperCase() || 'U'}
-                        </Avatar>
-                        <Box>
-                          <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                            {member.user?.username || 'Pending'}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <EmailIcon sx={{ fontSize: 14, color: '#94a3b8' }} />
-                            <Typography variant="caption" sx={{ color: '#64748b' }}>
-                              {member.user?.email || 'No email'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </TableCell>
+          <TeamMembersTable
+            members={members}
+            onMenuOpen={handleMenuOpen}
+            getRoleLabel={getRoleLabel}
+            getRoleColor={getRoleColor}
+            getStatusColor={getStatusColor}
+            getRoleIcon={getRoleIcon}
+          />
+        )}
 
-                    {/* Role */}
-                    <TableCell>
-                      <Chip
-                        icon={getRoleIcon(member.role)}
-                        label={getRoleLabel(member.role)}
-                        color={getRoleColor(member.role)}
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          fontSize: '0.8rem',
-                        }}
-                      />
-                    </TableCell>
-
-                    {/* Status */}
-                    <TableCell>
-                      <Chip
-                        label={member.status.charAt(0).toUpperCase() + member.status.slice(1)}
-                        color={getStatusColor(member.status)}
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                    </TableCell>
-
-                    {/* Joined Date */}
-                    <TableCell>
-                      <Typography variant="body2" sx={{ color: '#64748b' }}>
-                        {member.createdAt
-                          ? new Date(member.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'N/A'}
-                      </Typography>
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuOpen(e, member)}
-                        sx={{
-                          color: '#64748b',
-                          '&:hover': {
-                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
-                            color: '#8310FF',
-                          },
-                        }}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        {/* Pending Invitations */}
+        {invitations.length > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <PendingInvitationsList
+              invitations={invitations}
+              loading={fetchingInvitations}
+              error={null}
+              onResend={handleResendInvitation}
+              onCancel={handleCancelInvitation}
+            />
+          </Box>
         )}
 
         {/* Context Menu */}
-        <Menu
+        <TeamMemberMenu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
-          slotProps={{
-            paper: {
-              sx: {
-                borderRadius: 2,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                minWidth: 180,
-              },
-            },
-          }}
-        >
-          <MenuItem onClick={handleEditMember}>
-            <ListItemIcon>
-              <EditIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Edit Role</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={handleDeleteMember} sx={{ color: 'error.main' }}>
-            <ListItemIcon>
-              <DeleteIcon fontSize="small" color="error" />
-            </ListItemIcon>
-            <ListItemText>Remove</ListItemText>
-          </MenuItem>
-        </Menu>
+          onEditClick={handleEditMember}
+          onDeleteClick={handleDeleteMember}
+        />
 
         {/* Add Member Modal */}
         <AddMemberModal
@@ -583,71 +374,15 @@ const TeamMembersTab: React.FC = () => {
         )}
 
         {/* Delete Confirmation Dialog */}
-        <Dialog
+        <DeleteMemberDialog
           open={deleteDialogOpen}
-          onClose={handleCancelDelete}
-          maxWidth="xs"
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-            },
-          }}
-        >
-          <DialogTitle
-            sx={{
-              fontSize: '1.25rem',
-              fontWeight: 700,
-              color: '#1a1a1a',
-              pb: 1,
-            }}
-          >
-            Remove Team Member
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ color: '#64748b', fontSize: '0.95rem' }}>
-              Are you sure you want to remove{' '}
-              <strong>
-                {selectedMember?.user?.username || selectedMember?.user?.email || 'this member'}
-              </strong>{' '}
-              from your team? This action cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button
-              onClick={handleCancelDelete}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                color: '#64748b',
-                '&:hover': {
-                  backgroundColor: '#f8fafc',
-                },
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              variant="contained"
-              color="error"
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 3,
-                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
-                '&:hover': {
-                  boxShadow: '0 6px 16px rgba(239, 68, 68, 0.4)',
-                },
-              }}
-            >
-              Remove
-            </Button>
-          </DialogActions>
-        </Dialog>
+          memberName={selectedMember?.user?.username || selectedMember?.user?.email || 'this member'}
+          onCancel={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+        />
       </CardContent>
     </Card>
+
   );
 };
 
