@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Middleware pour supprimer le profil associé lors de la suppression d'un utilisateur
+// Middleware to delete the associated profile when a user is deleted
 userSchema.pre("remove", async function (next) {
   try {
     await this.model("Profile").findOneAndDelete({ userId: this._id });

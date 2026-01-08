@@ -38,21 +38,6 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
   return member;
 };
 
-// Remove an employee from a company account
-module.exports.removeEmployee = async (OrganizationId, userId) => {
-  // Find and delete the CompanyMembershipModel
-  const member = await CompanyMembershipModel.findOneAndDelete({ Organization: OrganizationId, user: userId });
-  if (!member) throw new Error("Member not found");
-
-  // If the user has no other CompanyMembershipModel entries, clear their Organization field
-  const remaining = await CompanyMembershipModel.findOne({ user: userId });
-  if (!remaining) {
-    await User.findByIdAndUpdate(userId, { Organization: null }, { new: true });
-  }
-
-  return member;
-};
-
 // Resend an invitation (regenerate token and reset expiration)
 module.exports.resendInvitation = async (invitationId) => {
   const token = crypto.randomBytes(32).toString("hex");
@@ -107,15 +92,17 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
     role: invitation.role,
   });
 
-  // Update the invitation status
-  await CompanyInvitationModel.findByIdAndUpdate(
-    invitationId,
-    { status: "active" },
+  // Delete the invitation after acceptance
+  await CompanyInvitationModel.findByIdAndDelete(invitationId);
+
+  // Update the user with CompanyMembership relationship
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      CompanyMembership: membership._id
+    },
     { new: true }
   );
-
-  // Update the Company field of the user
-  await User.findByIdAndUpdate(userId, { Organization: invitation.Company }, { new: true });
 
   return membership;
 };
