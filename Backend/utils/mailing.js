@@ -343,7 +343,7 @@ const getOrganizationInviteTemplate = (orgName, role, inviter, invitationLink = 
       <h2 style="color:#1A365D;">You're invited to join <strong>${orgName}</strong></h2>
       <p>Hello,</p>
       <p>You have been invited to join the company <strong>${orgName}</strong> as <strong>${role}</strong>.</p>
-      ${inviter ? `<p>Invited by: ${inviter}</p>` : ''}
+      ${inviter ? `<p>Invited by: ${orgName}</p>` : ''}
       <p>Please confirm your participation by clicking the button below. The invitation expires in 48 hours.</p>
 
       <table role="presentation" width="100%" style="margin:20px 0;">

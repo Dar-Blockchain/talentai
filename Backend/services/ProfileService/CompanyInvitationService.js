@@ -26,7 +26,7 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
 
   // Construire le lien d'acceptation (frontend)
   const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}`;
+  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&Company=${Company}`;
 
   // envoyer l'email d'invitation
   try {
@@ -62,9 +62,23 @@ module.exports.resendInvitation = async (invitationId) => {
     invitationId,
     { token, expiresAt, status: "pending" },
     { new: true }
-  );
+  ).populate("invitedBy");
 
   if (!updated) throw new Error("Invitation not found");
+
+  // Construire le lien d'acceptation avec le nouveau token
+  const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&Company=${Company}`;
+
+  // Renvoyer l'email d'invitation avec le nouveau token
+  try {
+    const invitedByName = updated.invitedBy?.username || "Admin";
+    await sendCompanyInvitation(updated.email, invitedByName, updated.role, invitedByName, invitationLink);
+    console.log(`✅ Invitation renvoyée à ${updated.email}`);
+  } catch (e) {
+    console.error('Failed to resend company invitation email:', e);
+  }
+
   return updated;
 };
 
