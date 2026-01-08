@@ -27,7 +27,6 @@ import {
   ContentCopy as CopyIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import {
   exportInterviewDataAsJSON,
@@ -70,7 +69,6 @@ interface InterviewAnalysis {
 
 export default function InterviewResults() {
   const router = useRouter();
-  const { data: session } = useSession();
   const dispatch = useDispatch<AppDispatch>();
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
