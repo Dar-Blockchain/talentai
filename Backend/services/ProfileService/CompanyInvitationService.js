@@ -36,7 +36,7 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
 
   // envoyer l'email d'invitation avec les liens
   try {
-    await sendCompanyInvitation(userEmail, username, role, userEmail, acceptLink, rejectLink);
+    await sendCompanyInvitation(userEmail, username, role, userEmail, acceptLink);
   } catch (e) {
     console.error('Failed to send company invitation email:', e);
   }
