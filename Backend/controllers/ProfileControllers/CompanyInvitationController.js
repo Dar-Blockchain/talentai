@@ -40,7 +40,8 @@ module.exports.respondInvitation = async (req, res) => {
 
     if (action === "accept") {
       const userId = req.user._id;
-      const accepted = await CompanyInvitationService.acceptInvitation(invitationId, userId);
+      const userEmail = req.user.email;
+      const accepted = await CompanyInvitationService.acceptInvitation(invitationId, userId, userEmail);
       return res.json({ success: true, accepted });
     }
 

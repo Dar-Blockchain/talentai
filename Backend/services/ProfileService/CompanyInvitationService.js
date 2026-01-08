@@ -8,21 +8,15 @@ const { sendCompanyInvitation } = require("../../utils/mailing");
 // Ajouter un employé à un compte
 module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, username) => {
 
-  let user = await User.findOne({ email: userEmail });
-
-  if (!user) {
-    user = await User.create({ email: userEmail, username: userEmail.split("@")[0], role: "Candidate" });
-  }
-
-  const existing = await CompanyInvitationModel.findOne({ user: user._id, Company });
-  if (existing) throw new Error("User already has access to this account");
+  const existing = await CompanyInvitationModel.findOne({ email: userEmail, Company, status: "pending" });
+  if (existing) throw new Error("User already has a pending invitation for this account");
 
   // Générer un token unique et définir l'expiration à 2 jours
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 jours
 
   const member = await CompanyInvitationModel.create({ 
-    user: user._id, 
+    email: userEmail, 
     Company, 
     role, 
     invitedBy, 
@@ -30,13 +24,13 @@ module.exports.sentInvitation = async (Company, userEmail, role, invitedBy, user
     expiresAt 
   });
 
-  // Construire les liens d'acceptation/refus (frontend)
+  // Construire le lien d'acceptation (frontend)
   const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const acceptLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&Company=${Company}&user=${user._id}`;
+  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}`;
 
-  // envoyer l'email d'invitation avec les liens
+  // envoyer l'email d'invitation
   try {
-    await sendCompanyInvitation(userEmail, username, role, userEmail, acceptLink);
+    await sendCompanyInvitation(userEmail, username, role, userEmail, invitationLink);
   } catch (e) {
     console.error('Failed to send company invitation email:', e);
   }
@@ -82,15 +76,15 @@ module.exports.deleteInvitation = async (invitationId) => {
 };
 
 // Accepter une invitation et ajouter l'utilisateur à la compagnie
-module.exports.acceptInvitation = async (invitationId, userId) => {
+module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
   const invitation = await CompanyInvitationModel.findById(invitationId);
   if (!invitation) throw new Error("Invitation not found");
   
   // Vérifier que l'invitation n'a pas expiré
   if (new Date() > invitation.expiresAt) throw new Error("Invitation has expired");
   
-  // Vérifier que l'utilisateur est correct
-  if (invitation.user.toString() !== userId.toString()) throw new Error("Invitation not for this user");
+  // Vérifier que l'email de l'invitation correspond à celui de l'utilisateur
+  if (invitation.email !== userEmail) throw new Error("Invitation not for this user");
 
   // Créer l'entrée CompanyMembership
   const membership = await CompanyMembershipModel.create({
@@ -127,7 +121,6 @@ module.exports.rejectInvitation = async (invitationId) => {
 module.exports.getCompanyInvitations = async (ownerId) => { 
   // Récupérer toutes les invitations pour ces compagnies
   return CompanyInvitationModel.find({ Company: { $in: ownerId } })
-    .populate("user")
     .populate("invitedBy")
     .sort({ createdAt: -1 });
 };
