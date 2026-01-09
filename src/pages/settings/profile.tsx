@@ -83,10 +83,7 @@ const ProfileSettingsPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', flexDirection: 'column' }}>
-      <Header
-        logo="/images/home/logocandidate.png"
-        type={profile.profileType === 'Company' ? 'company' : 'candidate'}
-      />
+      <Header />
 
       <Container maxWidth="xl" sx={{ py: 4, flex: 1 }}>
         <BackToDashboardButton profileType={profile.profileType || 'Candidate'} />

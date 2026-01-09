@@ -3,10 +3,11 @@ import Header from "@/components/layout/Header";
 import { ReactNode } from "react";
 import CompanyHeroSection from "./company/HeroSection";
 import CandidateHeroSection from "./candidate/HeroSection";
+import PageContainer from '@/components/layout/PageContainer'
 
 interface LandingPageLayoutProps {
   logo: string;
-  type: "jobseeker" | "company";
+  type: "candidate" | "company";
   color: string;
   headerLink: string;
   heroTitle: string;
@@ -26,12 +27,14 @@ const LandingPageLayout: React.FC<LandingPageLayoutProps> = ({
   children,
 }) => {
   return (
+    
     <Box style={backgroundColor ? { backgroundColor } : undefined}>
-      <Header logo={logo} type={type} color={color} link={headerLink} />
+      <Header />
       {type === "company" && <CompanyHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
-      {type === "jobseeker" &&  <CandidateHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
+      {type === "candidate" &&  <CandidateHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
       {children}
     </Box>
+    
   );
 };
 
