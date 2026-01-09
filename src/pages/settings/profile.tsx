@@ -12,6 +12,8 @@ import { RootState } from '@/store/store';
 import axios from 'axios';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Extracted Components
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
@@ -168,6 +170,18 @@ const ProfileSettingsPage: React.FC = () => {
         saveSuccess={saveSuccess}
         onDismissError={handleDismissError}
         onDismissSuccess={handleDismissSuccess}
+      />
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
       />
     </Box>
   );
