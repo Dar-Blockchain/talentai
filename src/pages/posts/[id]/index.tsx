@@ -9,7 +9,7 @@ import {
   selectCurrentJobLoading,
 } from "@/store/slices/postSlice";
 import { Box, Button, Container, Alert } from "@mui/material";
-import HeaderDashboard from "@/components/layout/HeaderDashboard";
+import Header from "@/components/layout/Header";
 import { ArrowBack } from "@mui/icons-material";
 import PostBasicDetails from "@/components/posts/details/PostBasicDetails";
 import RecruitmentFlowDetails from "@/components/posts/details/RecruitmentFlowDetails";
@@ -56,7 +56,7 @@ const PostDetails: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <HeaderDashboard />
+        <Header />
 
         <Button
           startIcon={

@@ -158,10 +158,6 @@ const JobSearchPage: React.FC = () => {
       }}
     >
       <Header
-        logo="/images/home/logocandidate.png"
-        type="jobseeker"
-        color="#8310FF"
-        link="Are you hiring?"
       />
 
       <Container
