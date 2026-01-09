@@ -27,19 +27,16 @@ import {
   Psychology as PsychologyIcon,
   CalendarToday as CalendarIcon,
   ArrowBack as ArrowBackIcon,
-  LinkedIn as LinkedInIcon,
-  Share as ShareIcon,
   Verified as VerifiedIcon,
   EmojiEvents as EmojiEventsIcon,
   VisibilityOff as VisibilityOffIcon,
+  Settings as SettingsIcon,
+  Notifications as NotificationsIcon,
 } from '@mui/icons-material';
 import { getProfileById, selectProfileById, clearProfileById } from '@/store/slices/profileSlice';
 import Footer from '@/components/layout/Footer';
-import ShareProfileModal from '@/components/profile/ShareProfileModal';
 import SkillsSection from '@/components/profile/SkillsSection';
 import BadgesSection from '@/components/profile/BadgesSection';
-import { useLinkedInShare } from '@/hooks/useLinkedInShare';
-import { useProfileShareData } from '@/hooks/useProfileShareData';
 import { generateBadgesFromProfile } from '@/utils/generateProfileBadges';
 
 const ProfileByIdPage: React.FC = () => {
@@ -49,37 +46,9 @@ const ProfileByIdPage: React.FC = () => {
 
   const { profile, loading, error } = useSelector(selectProfileById);
   const { profile: currentUserProfile } = useSelector((state: RootState) => state.profile);
-  const [shareModalOpen, setShareModalOpen] = React.useState(false);
 
   // Determine if current user is viewing their own profile
   const isOwnProfile = currentUserProfile?._id && profile?._id && currentUserProfile._id === profile._id;
-
-  // Use custom hooks for LinkedIn functionality and share data
-  const { linkedInConnected, isPostingToLinkedIn, handleLinkedInConnect, handleDirectLinkedInPost } = useLinkedInShare();
-  const shareData = useProfileShareData(profile);
-
-  // LinkedIn share handler - opens modal
-  const handleLinkedInShare = () => {
-    setShareModalOpen(true);
-  };
-
-  // Wrapper function for direct LinkedIn post
-  const handlePost = () => {
-    if (shareData) {
-      handleDirectLinkedInPost(shareData);
-    }
-  };
-
-  // Copy profile link
-  const handleCopyLink = () => {
-    if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
-
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      alert('✅ Profile link copied to clipboard!');
-    }).catch(() => {
-      alert('❌ Failed to copy link. Please try again.');
-    });
-  };
 
   // Fetch profile when userId changes
   useEffect(() => {
@@ -410,16 +379,38 @@ const ProfileByIdPage: React.FC = () => {
                 {isCompany ? <BusinessIcon sx={{ fontSize: 50 }} /> : <PersonIcon sx={{ fontSize: 50 }} />}
               </Avatar>
               <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#1F2937',
-                    mb: 1
-                  }}
-                >
-                  {fullName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: { xs: 'center', sm: 'flex-start' }, mb: 1 }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 600,
+                      color: '#1F2937',
+                    }}
+                  >
+                    {fullName}
+                  </Typography>
+                  {isOwnProfile && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<SettingsIcon />}
+                      onClick={() => router.push('/settings/profile?tab=personal')}
+                      sx={{
+                        borderColor: '#8310FF',
+                        color: '#8310FF',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        '&:hover': {
+                          borderColor: '#6a0dad',
+                          background: 'rgba(131, 16, 255, 0.05)',
+                        }
+                      }}
+                    >
+                      Settings
+                    </Button>
+                  )}
+                </Box>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-start' }, mb: 2 }}>
                   <Chip
                     label={isCompany ? 'Company' : 'Candidate'}
@@ -436,44 +427,6 @@ const ProfileByIdPage: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Share Buttons - Only show for profile owner */}
-                {!isCompany && isOwnProfile && (
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'center', sm: 'flex-start' }, mt: 2 }}>
-                    <Button
-                      variant="contained"
-                      startIcon={<LinkedInIcon />}
-                      onClick={handleLinkedInShare}
-                      sx={{
-                        background: '#0077B5',
-                        color: '#fff',
-                        borderRadius: 1,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        '&:hover': { background: '#006399' }
-                      }}
-                    >
-                      Share on LinkedIn
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<ShareIcon />}
-                      onClick={handleCopyLink}
-                      sx={{
-                        borderColor: '#00FF9D',
-                        color: '#00FF9D',
-                        borderRadius: 1,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        '&:hover': {
-                          borderColor: '#00FF9D',
-                          background: 'rgba(0, 255, 157, 0.1)'
-                        }
-                      }}
-                    >
-                      Copy Link
-                    </Button>
-                  </Box>
-                )}
               </Box>
             </Box>
 
@@ -750,21 +703,6 @@ const ProfileByIdPage: React.FC = () => {
         </Container>
       </Box>
       <Footer />
-
-      {/* Share Profile Modal */}
-      {shareData && (
-        <ShareProfileModal
-          open={shareModalOpen}
-          onClose={() => setShareModalOpen(false)}
-          shareMessage={shareData.shareMessage}
-          profileUrl={shareData.profileUrl}
-          profileName={shareData.profileName}
-          linkedInConnected={linkedInConnected}
-          onLinkedInConnect={handleLinkedInConnect}
-          onDirectPost={handlePost}
-          isPosting={isPostingToLinkedIn}
-        />
-      )}
     </>
   );
 };
