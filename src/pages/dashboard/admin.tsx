@@ -32,8 +32,6 @@ import {
     Add as AddIcon,
     Visibility as VisibilityIcon,
 } from '@mui/icons-material';
-import { signOut } from 'next-auth/react';
-import Cookies from 'js-cookie';
 import { selectProfile, clearProfile } from '@/store/slices/profileSlice';
 import { logout, setLoggingOut } from '@/store/slices/authSlice';
 import AdminWorldMap from '@/components/dashboard-admin/AdminWorldMap';

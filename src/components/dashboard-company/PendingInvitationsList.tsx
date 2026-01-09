@@ -110,24 +110,30 @@ const PendingInvitationsList: React.FC<PendingInvitationsListProps> = ({
   const handleResend = useCallback(async () => {
     if (!selectedInvitation) return;
 
-    setActionLoading(selectedInvitation._id);
+    const invitationId = selectedInvitation._id;
+    // Close menu immediately to prevent position jumping
+    handleMenuClose();
+
+    setActionLoading(invitationId);
     try {
-      await onResend(selectedInvitation._id);
+      await onResend(invitationId);
     } finally {
       setActionLoading(null);
-      handleMenuClose();
     }
   }, [selectedInvitation, onResend, handleMenuClose]);
 
   const handleCancel = useCallback(async () => {
     if (!selectedInvitation) return;
 
-    setActionLoading(selectedInvitation._id);
+    const invitationId = selectedInvitation._id;
+    // Close menu immediately to prevent position jumping
+    handleMenuClose();
+
+    setActionLoading(invitationId);
     try {
-      await onCancel(selectedInvitation._id);
+      await onCancel(invitationId);
     } finally {
       setActionLoading(null);
-      handleMenuClose();
     }
   }, [selectedInvitation, onCancel, handleMenuClose]);
 

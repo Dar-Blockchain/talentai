@@ -5,8 +5,19 @@ import BiasFreeEvaluation from "@/components/home/company/BiasFreeEvaluation";
 import AccoladesSection from "@/components/home/company/AccoladesSection";
 import Footer from "@/components/layout/Footer";
 import SolutionsSection from "@/components/home/company/HowItWorksSection";
+import { useEffect } from "react";
+import { setUserType } from "@/store/slices/userSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
 
 const HomePage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    localStorage.setItem("userType", "company");
+    dispatch(setUserType("company"));
+  }, [dispatch]);
+
   return (
     <LandingPageLayout
       logo="/images/home/logocompany.png"
@@ -21,7 +32,7 @@ const HomePage: React.FC = () => {
       <AISpotlight />
       <GlobalCompanies />
       <BiasFreeEvaluation />
-      <SolutionsSection/>
+      <SolutionsSection />
       <Footer />
     </LandingPageLayout>
   );

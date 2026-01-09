@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import PageContainer from "@/components/layout/PageContainer";
-import HeaderDashboard from "@/components/layout/HeaderDashboard";
+import Header from "@/components/layout/Header";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsModern";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
@@ -13,7 +13,7 @@ const DashboardCandidate: React.FC = () => {
   return (
     <RoleGuard allowedRoles={["Candidate"]}>
       <PageContainer>
-        <HeaderDashboard />
+        <Header />
         <WelcomeHeader />
         <CandidateEngagementTasks />
         <RecommendedOpportunities />

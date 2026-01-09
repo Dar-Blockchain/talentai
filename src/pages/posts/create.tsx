@@ -6,7 +6,7 @@ import { AppDispatch } from "@/store/store";
 import { resetCreateConfig } from "@/store/slices/agentConfigSlice";
 import { clearPost, selectCreationType } from "@/store/slices/postGenerationSlice";
 import JobPostCreationMethod from "@/components/posts/create/JobPostCreationMethod";
-import HeaderDashboard from "@/components/layout/HeaderDashboard";
+import Header from "@/components/layout/Header";
 import CreatePostStepper from "@/components/posts/create/CreatePostStepper";
 import { resetManualPost } from "@/store/slices/manualPostSlice";
 import { resetFlow, resetSavePost } from "@/store/slices/postSlice";
@@ -38,7 +38,7 @@ const CreateJobPage: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <HeaderDashboard />
+        <Header />
         {!creationType && <JobPostCreationMethod/>}
         {creationType && <CreatePostStepper />}
       </Container>

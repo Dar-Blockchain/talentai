@@ -1,7 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import { signOut } from 'next-auth/react';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 interface AuthState {
   profile: any | null;
@@ -18,7 +17,7 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   isAuthenticated: false,
-  token: null
+  token: null,
 };
 
 // Global flag to skip interceptor checks during logout
@@ -56,45 +55,55 @@ export const isLoggingOutCheck = (): boolean => {
 
 // Register user thunk
 export const registerUser = createAsyncThunk(
-  'auth/register',
+  "auth/register",
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`, { email });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`,
+        { email }
+      );
       return response.data;
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
 
       if (error.response) {
         // Server responded with error status
-        const message = error.response.data?.message || `Server error: ${error.response.status}`;
+        const message =
+          error.response.data?.message ||
+          `Server error: ${error.response.status}`;
         return rejectWithValue(message);
       } else if (error.request) {
         // Request was made but no response received
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
         // Something else happened
-        return rejectWithValue(error.message || 'Registration failed. Please try again.');
+        return rejectWithValue(
+          error.message || "Registration failed. Please try again."
+        );
       }
     }
   }
 );
 
 export const verifyOTP = createAsyncThunk(
-  'auth/verifyOTP',
-  async ({ email, otp, location }: { email: string; otp: string; location?: any }, { rejectWithValue, dispatch }) => {
+  "auth/verifyOTP",
+  async (
+    { email, otp, location }: { email: string; otp: string; location?: any },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`,
         {
           email,
           otp,
-          location
+          location,
         },
         {
           validateStatus: (status) => {
             // Accept all status codes to prevent axios from throwing
             return status >= 200 && status < 500;
-          }
+          },
         }
       );
 
@@ -102,48 +111,59 @@ export const verifyOTP = createAsyncThunk(
       if (response.status >= 200 && response.status < 300) {
         // Store token in localStorage
         if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
-          localStorage.setItem('api_token', response.data.token);
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("api_token", response.data.token);
         }
 
         // Send welcome notification after successful account creation
         // Wait a bit for the backend notification to be created and Socket.IO to connect
-        console.log('✅ Account created, scheduling welcome notification...');
+        console.log("✅ Account created, scheduling welcome notification...");
         setTimeout(() => {
-          console.log('⏰ Sending welcome notification now...');
-          import('../slices/notificationSlice').then(({ createNotification }) => {
-            dispatch(createNotification({
-              type: 'success',
-              content: 'Welcome to TalentAI! 🎉 We\'re excited to have you on board. Start exploring amazing opportunities and connect with top talent.'
-            }) as any)
-            .then(() => {
-              console.log('✅ Welcome notification sent successfully!');
-            })
-            .catch((err: any) => {
-              console.error('❌ Welcome notification failed:', err);
-            });
-          });
+          console.log("⏰ Sending welcome notification now...");
+          import("../slices/notificationSlice").then(
+            ({ createNotification }) => {
+              dispatch(
+                createNotification({
+                  type: "success",
+                  content:
+                    "Welcome to TalentAI! 🎉 We're excited to have you on board. Start exploring amazing opportunities and connect with top talent.",
+                }) as any
+              )
+                .then(() => {
+                  console.log("✅ Welcome notification sent successfully!");
+                })
+                .catch((err: any) => {
+                  console.error("❌ Welcome notification failed:", err);
+                });
+            }
+          );
         }, 2000);
 
         return response.data;
       } else {
         // Handle 4xx errors (like 400 Bad Request)
-        const message = response.data?.message || `Verification failed: ${response.statusText}`;
+        const message =
+          response.data?.message ||
+          `Verification failed: ${response.statusText}`;
         return rejectWithValue(message);
       }
     } catch (error: any) {
-      console.error('OTP verification error:', error);
+      console.error("OTP verification error:", error);
 
       if (error.response) {
         // Server responded with error status
-        const message = error.response.data?.message || `Server error: ${error.response.status}`;
+        const message =
+          error.response.data?.message ||
+          `Server error: ${error.response.status}`;
         return rejectWithValue(message);
       } else if (error.request) {
         // Request was made but no response received
-        return rejectWithValue('Network error: Unable to connect to server');
+        return rejectWithValue("Network error: Unable to connect to server");
       } else {
         // Something else happened
-        return rejectWithValue(error.message || 'Verification failed. Please try again.');
+        return rejectWithValue(
+          error.message || "Verification failed. Please try again."
+        );
       }
     }
   }
@@ -158,26 +178,27 @@ export const logout = createAsyncThunk(
       setLoggingOut(true);
 
       // Clear redux slices FIRST
-      const { clearProfile, clearProfileCache } = await import("./profileSlice");
+      const { clearProfile, clearProfileCache } = await import(
+        "./profileSlice"
+      );
       dispatch(clearProfile());
       dispatch(clearProfileCache());
 
       // Clear storage
       localStorage.removeItem("api_token");
       localStorage.removeItem("token");
+      const userType = localStorage.getItem("userType");
+
       localStorage.clear();
+
+      if (userType) {
+        localStorage.setItem("userType", userType);
+      }
 
       // Clear cookies
       Object.keys(Cookies.get()).forEach((cookieName) => {
         Cookies.remove(cookieName, { path: "/" });
       });
-
-      // Logout from NextAuth (optional)
-      try {
-        await signOut({ redirect: false });
-      } catch (err) {
-        console.warn("NextAuth signOut failed:", err);
-      }
 
       console.log("✅ Logout completed");
       return true;
@@ -190,9 +211,8 @@ export const logout = createAsyncThunk(
   }
 );
 
-
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -208,7 +228,7 @@ const authSlice = createSlice({
     },
     setUser: (state, action) => {
       state.user = action.payload;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -275,8 +295,8 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         state.token = null;
       });
-  }
+  },
 });
 
 export const { clearError, clearAuth, setUser } = authSlice.actions;
-export default authSlice.reducer; 
+export default authSlice.reducer;

@@ -26,7 +26,7 @@ import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader"
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
 import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
-import HeaderDashboard from "@/components/layout/HeaderDashboard";
+import Header from "@/components/layout/Header";
 import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
 import RoleGuard from "@/components/guards/RoleGuard";
@@ -218,7 +218,7 @@ const fetchMyJobs = useCallback(
           theme="dark"
         />
         <Container maxWidth="lg">
-          <HeaderDashboard />
+          <Header />
           <CompanyInfoHeader profile={profile} />
           {!selectedJob ? (
             <MyJobPosts
