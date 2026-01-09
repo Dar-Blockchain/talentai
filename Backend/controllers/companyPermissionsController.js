@@ -2,16 +2,16 @@
  * Company Permissions Controller
  * Handles company permissions management operations (Admin only)
  *
- * Frontend uses 9 simplified permissions:
- * - canManageJobPosts (maps to: canCreateJobPosts, canEditJobPosts, canDeleteJobPosts, canViewJobPosts)
- * - canUnlockCandidates (maps to: canUnlockCandidates)
- * - canAccessCandidates (maps to: canViewCandidateProfiles, canExportCandidateData)
- * - canUseMatching (maps to: canAccessMatching, canViewMatchScores, canFilterCandidates)
- * - canUseHRAgents (maps to: canUseHRAgents, canConfigureAgents, canViewAgentInsights)
- * - canManageRecruitment (maps to: canRequestAssessments, canViewAssessmentResults, canViewDetailedScores)
- * - canManageTokens (maps to: canViewBilling, canManageSubscription, canViewInvoices)
- * - canViewAnalytics (maps to: canViewAnalytics, canExportReports, canViewMetrics)
- * - canCommunicate (maps to: canContactCandidates)
+ * Uses the new PermissionModel with 9 granular permissions:
+ * - canCreateJobPosts
+ * - canUnlockCandidates
+ * - canViewCandidateProfiles
+ * - canContactCandidates
+ * - canAccessMatching
+ * - canUseHRAgents
+ * - canManageTeam
+ * - canInviteMembers
+ * - canAssignRoles
  */
 
 const User = require("../models/UserModel");
@@ -25,6 +25,8 @@ const Permission = require("../models/PermissionModel");
 module.exports.getCompanyPermissions = async (req, res) => {
   try {
     const { companyId } = req.params;
+
+    console.log('📥 [Permissions] Fetching permissions for company:', companyId);
 
     // Find the user and populate their profile
     const user = await User.findById(companyId).populate('profile');
@@ -57,33 +59,46 @@ module.exports.getCompanyPermissions = async (req, res) => {
       profileId: user.profile._id
     });
 
-    // If no permissions exist, create default ones
+    // If no permissions exist, return defaults
     if (!permission) {
-      permission = await Permission.create({
-        userId: user._id,
-        profileId: user.profile._id
+      console.log('⚠️ [Permissions] No permission document found, returning defaults');
+      return res.status(200).json({
+        success: true,
+        permissions: {
+          canCreateJobPosts: true,
+          canUnlockCandidates: true,
+          canViewCandidateProfiles: true,
+          canContactCandidates: true,
+          canAccessMatching: true,
+          canUseHRAgents: true,
+          canManageTeam: true,
+          canInviteMembers: true,
+          canAssignRoles: true,
+        }
       });
     }
 
-    // Return simplified permissions directly
-    const simplifiedPermissions = {
-      canManageJobPosts: permission.canCreateJobPosts,
+    console.log('✅ [Permissions] Found permission document:', permission._id);
+
+    // Return the 9 permissions from PermissionModel
+    const permissions = {
+      canCreateJobPosts: permission.canCreateJobPosts,
       canUnlockCandidates: permission.canUnlockCandidates,
-      canAccessCandidates: permission.canViewCandidateProfiles,
-      canUseMatching: permission.canAccessMatching,
+      canViewCandidateProfiles: permission.canViewCandidateProfiles,
+      canContactCandidates: permission.canContactCandidates,
+      canAccessMatching: permission.canAccessMatching,
       canUseHRAgents: permission.canUseHRAgents,
-      canManageRecruitment: permission.canRequestAssessments,
-      canManageTokens: permission.canViewBilling,
-      canViewAnalytics: permission.canViewAnalytics,
-      canCommunicate: permission.canContactCandidates,
+      canManageTeam: permission.canManageTeam,
+      canInviteMembers: permission.canInviteMembers,
+      canAssignRoles: permission.canAssignRoles,
     };
 
     res.status(200).json({
       success: true,
-      permissions: simplifiedPermissions
+      permissions: permissions
     });
   } catch (error) {
-    console.error("Error fetching company permissions:", error);
+    console.error("❌ [Permissions] Error fetching permissions:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching company permissions: " + error.message
@@ -101,11 +116,37 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     const { companyId } = req.params;
     const { permissions } = req.body;
 
+    console.log('📥 [Permissions] Updating permissions for company:', companyId);
+    console.log('📥 [Permissions] Received data:', permissions);
+
     if (!permissions || typeof permissions !== 'object') {
       return res.status(400).json({
         success: false,
         message: "Invalid permissions data"
       });
+    }
+
+    // Validate all required permission fields
+    const requiredFields = [
+      'canCreateJobPosts',
+      'canUnlockCandidates',
+      'canViewCandidateProfiles',
+      'canContactCandidates',
+      'canAccessMatching',
+      'canUseHRAgents',
+      'canManageTeam',
+      'canInviteMembers',
+      'canAssignRoles'
+    ];
+
+    for (const field of requiredFields) {
+      if (typeof permissions[field] !== 'boolean') {
+        console.error(`❌ [Permissions] Missing or invalid field: ${field}`);
+        return res.status(400).json({
+          success: false,
+          message: `Missing or invalid field: ${field}`
+        });
+      }
     }
 
     // Find the user and populate their profile
@@ -136,18 +177,7 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     // Get admin user ID (the one making the request)
     const adminUserId = req.user?._id;
 
-    // Map simplified permissions to granular permissions
-    const canManageJobPosts = permissions.canManageJobPosts ?? true;
-    const canUnlockCandidates = permissions.canUnlockCandidates ?? true;
-    const canAccessCandidates = permissions.canAccessCandidates ?? true;
-    const canUseMatching = permissions.canUseMatching ?? true;
-    const canUseHRAgents = permissions.canUseHRAgents ?? true;
-    const canManageRecruitment = permissions.canManageRecruitment ?? true;
-    const canManageTokens = permissions.canManageTokens ?? true;
-    const canViewAnalytics = permissions.canViewAnalytics ?? true;
-    const canCommunicate = permissions.canCommunicate ?? true;
-
-    // Update or create permissions
+    // Update or create permissions using the exact fields from the request
     const updatedPermission = await Permission.findOneAndUpdate(
       {
         userId: user._id,
@@ -155,53 +185,15 @@ module.exports.updateCompanyPermissions = async (req, res) => {
       },
       {
         $set: {
-          // Job Post Permissions (all controlled by canManageJobPosts)
-          canCreateJobPosts: canManageJobPosts,
-          canEditJobPosts: canManageJobPosts,
-          canDeleteJobPosts: canManageJobPosts,
-          canViewJobPosts: canManageJobPosts,
-
-          // Unlock Candidate Permission
-          canUnlockCandidates: canUnlockCandidates,
-
-          // Candidate Permissions (controlled by canAccessCandidates)
-          canViewCandidateProfiles: canAccessCandidates,
-          canExportCandidateData: canAccessCandidates,
-
-          // Communication Permission
-          canContactCandidates: canCommunicate,
-
-          // Assessment/Recruitment Permissions (controlled by canManageRecruitment)
-          canViewAssessmentResults: canManageRecruitment,
-          canRequestAssessments: canManageRecruitment,
-          canViewDetailedScores: canManageRecruitment,
-
-          // Matching Permissions (all controlled by canUseMatching)
-          canAccessMatching: canUseMatching,
-          canViewMatchScores: canUseMatching,
-          canFilterCandidates: canUseMatching,
-
-          // HR Agent Permissions (all controlled by canUseHRAgents)
-          canUseHRAgents: canUseHRAgents,
-          canConfigureAgents: canUseHRAgents,
-          canViewAgentInsights: canUseHRAgents,
-
-          // Analytics Permissions (all controlled by canViewAnalytics)
-          canViewAnalytics: canViewAnalytics,
-          canExportReports: canViewAnalytics,
-          canViewMetrics: canViewAnalytics,
-
-          // Billing/Token Permissions (controlled by canManageTokens)
-          canViewBilling: canManageTokens,
-          canManageSubscription: canManageTokens,
-          canViewInvoices: canManageTokens,
-
-          // Team Permissions (keep as true by default - not exposed in simplified UI)
-          canManageTeam: true,
-          canInviteMembers: true,
-          canAssignRoles: true,
-
-          // Metadata
+          canCreateJobPosts: permissions.canCreateJobPosts,
+          canUnlockCandidates: permissions.canUnlockCandidates,
+          canViewCandidateProfiles: permissions.canViewCandidateProfiles,
+          canContactCandidates: permissions.canContactCandidates,
+          canAccessMatching: permissions.canAccessMatching,
+          canUseHRAgents: permissions.canUseHRAgents,
+          canManageTeam: permissions.canManageTeam,
+          canInviteMembers: permissions.canInviteMembers,
+          canAssignRoles: permissions.canAssignRoles,
           lastModifiedBy: adminUserId,
         }
       },
@@ -212,29 +204,126 @@ module.exports.updateCompanyPermissions = async (req, res) => {
       }
     );
 
-    // Return simplified permissions directly
-    const simplifiedPermissions = {
-      canManageJobPosts: updatedPermission.canCreateJobPosts,
+    console.log('✅ [Permissions] Permission saved successfully:', updatedPermission._id);
+
+    // Return the updated permissions
+    const resultPermissions = {
+      canCreateJobPosts: updatedPermission.canCreateJobPosts,
       canUnlockCandidates: updatedPermission.canUnlockCandidates,
-      canAccessCandidates: updatedPermission.canViewCandidateProfiles,
-      canUseMatching: updatedPermission.canAccessMatching,
+      canViewCandidateProfiles: updatedPermission.canViewCandidateProfiles,
+      canContactCandidates: updatedPermission.canContactCandidates,
+      canAccessMatching: updatedPermission.canAccessMatching,
       canUseHRAgents: updatedPermission.canUseHRAgents,
-      canManageRecruitment: updatedPermission.canRequestAssessments,
-      canManageTokens: updatedPermission.canViewBilling,
-      canViewAnalytics: updatedPermission.canViewAnalytics,
-      canCommunicate: updatedPermission.canContactCandidates,
+      canManageTeam: updatedPermission.canManageTeam,
+      canInviteMembers: updatedPermission.canInviteMembers,
+      canAssignRoles: updatedPermission.canAssignRoles,
     };
 
     res.status(200).json({
       success: true,
       message: "Company permissions updated successfully",
-      permissions: simplifiedPermissions
+      permissions: resultPermissions
     });
   } catch (error) {
-    console.error("Error updating company permissions:", error);
+    console.error("❌ [Permissions] Error updating permissions:", error);
     res.status(500).json({
       success: false,
       message: "Error updating company permissions: " + error.message
+    });
+  }
+};
+
+/**
+ * Get current user's own permissions
+ * GET /permissions/me
+ */
+module.exports.getMyPermissions = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      });
+    }
+
+    console.log('📥 [Permissions] Fetching permissions for current user:', userId);
+
+    // Find the user and populate their profile
+    const user = await User.findById(userId).populate('profile');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Verify this is a company user
+    if (user.role !== 'Company') {
+      return res.status(400).json({
+        success: false,
+        message: "User is not a company"
+      });
+    }
+
+    if (!user.profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Company profile not found"
+      });
+    }
+
+    // Find permissions document
+    let permission = await Permission.findOne({
+      userId: user._id,
+      profileId: user.profile._id
+    });
+
+    // If no permissions exist, return defaults
+    if (!permission) {
+      console.log('⚠️ [Permissions] No permission document found, returning defaults');
+      return res.status(200).json({
+        success: true,
+        permissions: {
+          canCreateJobPosts: true,
+          canUnlockCandidates: true,
+          canViewCandidateProfiles: true,
+          canContactCandidates: true,
+          canAccessMatching: true,
+          canUseHRAgents: true,
+          canManageTeam: true,
+          canInviteMembers: true,
+          canAssignRoles: true,
+        }
+      });
+    }
+
+    console.log('✅ [Permissions] Found permission document:', permission._id);
+
+    // Return the 9 permissions from PermissionModel
+    const permissions = {
+      canCreateJobPosts: permission.canCreateJobPosts,
+      canUnlockCandidates: permission.canUnlockCandidates,
+      canViewCandidateProfiles: permission.canViewCandidateProfiles,
+      canContactCandidates: permission.canContactCandidates,
+      canAccessMatching: permission.canAccessMatching,
+      canUseHRAgents: permission.canUseHRAgents,
+      canManageTeam: permission.canManageTeam,
+      canInviteMembers: permission.canInviteMembers,
+      canAssignRoles: permission.canAssignRoles,
+    };
+
+    res.status(200).json({
+      success: true,
+      permissions: permissions
+    });
+  } catch (error) {
+    console.error("❌ [Permissions] Error fetching own permissions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching permissions: " + error.message
     });
   }
 };
