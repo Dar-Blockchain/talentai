@@ -19,9 +19,9 @@ import {
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
-import { selectProfile } from '@/store/slices/profileSlice';
 import AssessmentModal from './AssessmentModal';
 import { selectTokenBalance } from '@/store/slices/tokenSlice';
+import { RootState } from '@/store/store';
 
 interface Task {
   id: string;
@@ -35,7 +35,8 @@ interface Task {
 
 export default function CandidateEngagementTasks() {
   const router = useRouter();
-  const { profile } = useSelector(selectProfile);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const profile = useSelector((state: RootState) => state.auth.profile);
   const tokenBalance = useSelector(selectTokenBalance) ?? 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
   const onStartTest = () => {
@@ -76,7 +77,7 @@ export default function CandidateEngagementTasks() {
         title: 'Share Your Profile on LinkedIn',
         description: 'Show employers your verified skills',
         completed: profile?.linkedInShared || false,
-        action: () => router.push(`/profile/${profile?.userId?._id || profile?._id}`),
+        action: () => router.push(`/profile/${user?._id}`),
         icon: LinkedInIcon,
         reward: 'Get discovered by recruiters',
       },

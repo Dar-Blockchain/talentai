@@ -6,7 +6,7 @@ import Badge from "@mui/material/Badge";
 import { useRouter } from "next/router";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationDropdown from "./NotificationDropdown";
-
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 const HeaderNotification = () => {
   const router = useRouter();
   const [notificationAnchor, setNotificationAnchor] =
@@ -42,29 +42,45 @@ const HeaderNotification = () => {
         onClick={handleNotificationClick}
         sx={{
           backgroundColor: "white",
-          borderRadius: "50%",
-          width: 40,
+          borderRadius: "24px",
+          width: 65,
           height: 40,
-          boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+          boxShadow: '0px 0px 18.1px 0px rgba(0, 0, 0, 0.05)',
           "&:hover": {
-            backgroundColor: "#f9fafb",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
           },
         }}
       >
-        <Badge
-          badgeContent={unreadCount}
-          color="error"
-          sx={{
-            "& .MuiBadge-badge": {
-              backgroundColor: "#f5576c",
-              color: "white",
-              fontWeight: 700,
-              fontSize: "0.75rem",
-            },
-          }}
-        >
-          <NotificationsIcon sx={{ color: "#6b7280", fontSize: 20 }} />
-        </Badge>
+<Badge
+badgeContent={unreadCount}
+max={9}
+  color="error"
+  overlap="circular"
+  anchorOrigin={{
+    vertical: "top",
+    horizontal: "right",
+  }}
+  sx={{
+    "& .MuiBadge-badge": {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: "#f5576c",
+      fontSize: '9px',
+      width: 16,
+      height: 16
+    },
+  }}
+>
+  <NotificationsOutlinedIcon
+    sx={{
+      color: "rgba(98, 111, 134, 1)",
+      width: 24,
+      height: 24,
+    }}
+  />
+</Badge>
+
       </IconButton>
       <NotificationDropdown
         anchorEl={notificationAnchor}

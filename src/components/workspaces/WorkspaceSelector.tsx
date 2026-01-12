@@ -2,12 +2,27 @@ import React from "react";
 import { Box, Typography, IconButton, Avatar } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { useRouter } from "next/router";
+import { setCurrentSpace } from "@/store/slices/userSlice"
 
 const WorkspaceSelector: React.FC = () => {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const userRole = useSelector((state: RootState) => state.auth.user?.role);
   const { user, profile } = useSelector((state: RootState) => state.auth);
 
+  const goToPersonalWorkspace = () => {
+    const redirctTo =
+      userRole === "Company" ? "/dashboard/company" : "/dashboard/candidate";
+    router.replace(redirctTo);
+    dispatch(setCurrentSpace('personal'))
+  }
+  const goToCompanyWorkspace = () => {
+    router.replace('/dashboard/member');
+    dispatch(setCurrentSpace('membership'))
+  }
   return (
     <Box
       sx={{
@@ -15,7 +30,7 @@ const WorkspaceSelector: React.FC = () => {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        mt: 4,
+        mt: 7,
       }}
     >
       <Typography
@@ -36,6 +51,7 @@ const WorkspaceSelector: React.FC = () => {
         Choose the space you want to log into
       </Typography>
       <Box
+        onClick={goToPersonalWorkspace}
         sx={{
           backgroundColor: "rgba(255, 255, 255, 1)",
           borderRadius: "13px",
@@ -49,6 +65,7 @@ const WorkspaceSelector: React.FC = () => {
           width: "100%",
           mb: 2,
           transition: "transform 0.2s ease",
+          cursor: "pointer",
           "&:hover": {
             transform: "scale(1.02)",
           },
@@ -72,6 +89,7 @@ const WorkspaceSelector: React.FC = () => {
         </IconButton>
       </Box>
       <Box
+        onClick={goToCompanyWorkspace}
         sx={{
           backgroundColor: "rgba(255, 255, 255, 1)",
           borderRadius: "13px",
@@ -84,6 +102,7 @@ const WorkspaceSelector: React.FC = () => {
           maxWidth: "500px",
           width: "100%",
           transition: "transform 0.2s ease",
+          cursor: "pointer",
           "&:hover": {
             transform: "scale(1.02)",
           },

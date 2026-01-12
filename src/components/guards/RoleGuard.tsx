@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+import { getMyProfile } from "@/store/slices/profileSlice";
 import { isLoggingOutCheck } from "@/store/slices/authSlice";
 import LoadingScreen from "../ui/LoadingScreen";
 
@@ -14,8 +14,7 @@ interface RoleGuardProps {
 const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { profile } = useSelector(selectProfile); 
-  const {user} = useSelector((state: RootState) => state.auth);
+  const {user, profile} = useSelector((state: RootState) => state.auth);
   const isLoggingOut = useSelector(isLoggingOutCheck);
 
   useEffect(() => {
@@ -25,12 +24,12 @@ const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
   }, [profile, isLoggingOut, dispatch]);
 
   useEffect(() => {
-    if (!user || !profile || isLoggingOut) return;
-    const role = user.role || profile?.userId?.role;
+    if (!user || isLoggingOut) return;
+    const role = user.role;
     if (!allowedRoles.includes(role)) {
       router.replace(`/dashboard/${role.toLowerCase()}`);
     }
-  }, [user, profile, allowedRoles, router, isLoggingOut]);
+  }, [user, allowedRoles, router, isLoggingOut]);
 
   if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
 

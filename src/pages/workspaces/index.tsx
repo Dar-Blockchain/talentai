@@ -2,7 +2,7 @@ import React from "react";
 import PageContainer from "@/components/layout/PageContainer";
 import Header from "@/components/layout/Header";
 import RoleGuard from "@/components/guards/RoleGuard";
-import WorkspaceSelector from "@/components/WorkspaceSelector";
+import WorkspaceSelector from "@/components/workspaces/WorkspaceSelector";
 
 const Workspaces: React.FC = () => {
   return (

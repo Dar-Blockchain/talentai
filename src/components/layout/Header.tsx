@@ -4,7 +4,6 @@ import { AppBar, Box, Toolbar
    } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { selectProfile } from "@/store/slices/profileSlice";
 import HeaderLogo from "@/components/header/HeaderLogo";
 import TokenDisplay from "@/components/header/TokenDisplay";
 import HeaderNotification from "@/components/header/HeaderNotification";
@@ -26,9 +25,7 @@ const Header = () => {
     (state: RootState) => state.auth.isAuthenticated
   );
 
-  const authProfile = useSelector((state: RootState) => state.auth.profile);
-  const { profile: fullProfile } = useSelector(selectProfile);
-  const profile = fullProfile || authProfile;
+  const profile = useSelector((state: RootState) => state.auth.profile);
 
   const isCompany = useMemo(
     () => profile?.type?.toLowerCase() === "company",
@@ -39,6 +36,12 @@ const Header = () => {
     return (
       router.pathname === "/home/company" ||
       router.pathname === "/home/candidate"
+    );
+  }, [router.pathname]);
+
+    const isWorkspacePage = useMemo(() => {
+    return (
+      router.pathname === "/workspaces"
     );
   }, [router.pathname]);
 
@@ -55,8 +58,8 @@ const Header = () => {
           {/* DESKTOP: Desktop Menu (hidden below 750px) */}
           {isAuthenticated && (
             <Box sx={desktopMenuStyle}>
-              {!showHeaderNavMenu && <TokenDisplay />}
-              {!isCompany && !showHeaderNavMenu && <HeaderNotification />}
+              {!showHeaderNavMenu && !isWorkspacePage && <TokenDisplay />}
+              {!isCompany && !showHeaderNavMenu && !isWorkspacePage && <HeaderNotification />}
               <UserAvatar />
             </Box>
           )}

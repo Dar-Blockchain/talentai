@@ -18,7 +18,7 @@ import Loader from "@/components/ui/Loader";
 import EditPostDetails from "@/components/posts/edit/EditPostDetails";
 import EditRecruitmentFlow from "@/components/posts/edit/EditRecruitmentFlow";
 import EditAgentConfiguration from "@/components/posts/edit/EditAgentConfiguration";
-import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+
 const PostDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();

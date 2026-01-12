@@ -1,21 +1,27 @@
 "use client";
 import React, { useMemo, useCallback } from "react";
 import { Box } from "@mui/material";
-
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useRouter } from "next/router";
 
-import { selectProfile } from "@/store/slices/profileSlice";
-
 const HeaderLogo = () => {
   const router = useRouter();
 
-  const user = useSelector((state: RootState) => state.auth.user);
+  const storedUserType = useSelector(
+    (state: RootState) => state.user.userType
+  );
 
-  const userType = user?.role?.toLowerCase()  || localStorage.getItem("userType") || "candidate";
+  const user = useSelector(
+    (state: RootState) => state.auth.user
+  );
 
-  // Memoized values
+  const userType =
+    router.pathname === '/home/candidate' ||
+    router.pathname === '/home/company'
+      ? storedUserType
+      : user?.role?.toLowerCase() ?? storedUserType ?? 'candidate';
+
   const isCompany = useMemo(
     () => userType === "company",
     [userType]
