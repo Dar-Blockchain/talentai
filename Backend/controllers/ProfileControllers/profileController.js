@@ -149,7 +149,7 @@ console.log('getMyProfile called with userId:', req);
 
     res.status(200).json({
       success: true,
-      message: "Profil récupéré avec succès",
+      message: "Profile retrieved successfully",
       user: result.user,
       profile: result.profile || null,
       companyMembership: result.companyMembership || null
@@ -173,7 +173,7 @@ module.exports.getMyProfileOptimizer = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Profil récupéré avec succès",
+      message: "Profile retrieved successfully",
       user: result.user,
       profile: result.profile || null,
       companyMembership: result.companyMembership || null
@@ -198,7 +198,7 @@ module.exports.getProfileById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Profil récupéré avec succès",
+      message: "Profile retrieved successfully",
       user: result.user,
       profile: result.profile || null,
       companyMembership: result.companyMembership || null
