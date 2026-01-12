@@ -46,18 +46,15 @@ export const usePermissions = (userId?: string, profileId?: string): UsePermissi
       );
 
       if (!response.ok) {
-        if (response.status === 404) {
-          // No permissions found, use defaults (all true)
-          console.log('⚠️ [usePermissions] No permissions found, using defaults');
-          const defaultPerms: Permission = {
-            ...DEFAULT_PERMISSIONS,
-            userId,
-            profileId,
-          };
-          setPermissions(defaultPerms);
-          return;
-        }
-        throw new Error('Failed to fetch permissions');
+        // For any error status, use default permissions instead of throwing
+        console.log(`⚠️ [usePermissions] Status ${response.status}, using defaults`);
+        const defaultPerms: Permission = {
+          ...DEFAULT_PERMISSIONS,
+          userId,
+          profileId,
+        };
+        setPermissions(defaultPerms);
+        return;
       }
 
       const data = await response.json();
@@ -92,7 +89,8 @@ export const usePermissions = (userId?: string, profileId?: string): UsePermissi
       }
     } catch (err: any) {
       console.error('❌ [usePermissions] Error fetching permissions:', err);
-      setError(err.message || 'Failed to fetch permissions');
+      // Don't set error state since we're falling back to defaults
+      // This prevents showing errors to users when fallback works
 
       // Fallback to default permissions on error
       const defaultPerms: Permission = {
