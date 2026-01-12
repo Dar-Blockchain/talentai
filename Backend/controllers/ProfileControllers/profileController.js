@@ -144,7 +144,6 @@ exports.updateUserImage = async (req, res) => {
 module.exports.getMyProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-console.log('getMyProfile called with userId:', req);
     const result = await profileService.getProfileByUserId(userId);
 
     res.status(200).json({
