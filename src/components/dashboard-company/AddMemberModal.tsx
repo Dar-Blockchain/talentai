@@ -341,6 +341,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = React.memo(({ open, onClos
             fontWeight: 600,
             borderRadius: 2,
             px: 3,
+            color: '#ffffff',
             background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
             boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
             '&:hover': {
