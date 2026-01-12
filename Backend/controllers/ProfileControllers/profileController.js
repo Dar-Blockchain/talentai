@@ -620,3 +620,160 @@ module.exports.updateProfileVisibility = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message || 'Error updating profile visibility' });
   }
 };
+
+// Unified update profile API - handles all profile updates including image upload
+module.exports.updateProfileComplete = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const profileData = req.body;
+    const file = req.file;
+
+    let result;
+
+    // Update user image if provided
+    if (file) {
+      const { filename } = file;
+      console.log("Updating image:", filename);
+      await profileService.updateUserImage(userId, filename);
+    }
+
+    // Handle profile type updates
+    if (profileData.type) {
+      // Validate profile type
+      if (!profileData.type) {
+        return res.status(400).json({ success: false, message: "Profile type is required" });
+      }
+
+      // Check if company or candidate profile
+      if (profileData.type === "Company") {
+        // Validate company profile
+        if (!profileData.name) {
+          return res.status(400).json({ success: false, message: "Company name is required" });
+        }
+
+        if (profileData.employmentType && !["Remote", "Hybrid", "On-site"].includes(profileData.employmentType)) {
+          return res.status(400).json({ success: false, message: "Invalid employment type. Must be 'Remote', 'Hybrid', or 'On-site'" });
+        }
+
+        result = await profileService.createOrUpdateCompanyProfile(userId, profileData);
+      } else {
+        // Validate candidate profile
+        const firstName = profileData.firstName || profileData.FirstName;
+        const lastName = profileData.lastName || profileData.LastName;
+
+        if (!firstName || !lastName) {
+          return res.status(400).json({ success: false, message: "First name and last name are required" });
+        }
+
+        if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
+          return res.status(400).json({ success: false, message: "Age must be a valid number" });
+        }
+
+        if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
+          return res.status(400).json({ success: false, message: "Preferred contract type must be a valid string" });
+        }
+
+        if (profileData.location && typeof profileData.location !== "string") {
+          return res.status(400).json({ success: false, message: "Location must be a valid string" });
+        }
+
+        if (profileData.expectedSalary) {
+          const { min, max, currency } = profileData.expectedSalary;
+          
+          if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
+            return res.status(400).json({ success: false, message: "Expected salary min must be a positive number" });
+          }
+          
+          if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
+            return res.status(400).json({ success: false, message: "Expected salary max must be a positive number" });
+          }
+          
+          if (min !== null && max !== null && min > max) {
+            return res.status(400).json({ success: false, message: "Expected salary min cannot be greater than max" });
+          }
+          
+          if (currency && typeof currency !== "string") {
+            return res.status(400).json({ success: false, message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
+          }
+        }
+
+        result = await profileService.createOrUpdateProfile(userId, profileData);
+      }
+    } else if (Object.values(profileData).some(val => val)) {
+      // Handle field-level updates without type change
+      const allUpdates = {
+        username: profileData.username,
+        email: profileData.email,
+        requiredExperienceLevel: profileData.requiredExperienceLevel,
+        targetRole: profileData.targetRole,
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        gender: profileData.gender,
+        country: profileData.country,
+        language: profileData.language,
+        timeZone: profileData.timeZone,
+      };
+
+      // Validate fields
+      const validationError = validateUpdateFields(allUpdates);
+      if (validationError) {
+        return res.status(400).json({ success: false, message: validationError });
+      }
+
+      // Separate user and profile updates
+      const userUpdateData = buildUpdateData({ username: profileData.username, email: profileData.email });
+      const profileUpdateData = buildUpdateData({
+        requiredExperienceLevel: profileData.requiredExperienceLevel,
+        targetRole: profileData.targetRole,
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        gender: profileData.gender,
+        country: profileData.country,
+        language: profileData.language,
+        timeZone: profileData.timeZone,
+      });
+
+      if (profileData.contactInformation) {
+        profileUpdateData.contactInformation = profileData.contactInformation;
+      }
+
+      // Execute updates in parallel
+      const updatePromises = [];
+      if (Object.keys(userUpdateData).length > 0) {
+        updatePromises.push(profileService.updateUserFields(userId, userUpdateData));
+      }
+      if (Object.keys(profileUpdateData).length > 0) {
+        updatePromises.push(profileService.updateProfileFields(userId, profileUpdateData));
+      }
+
+      if (updatePromises.length > 0) {
+        await Promise.all(updatePromises);
+      }
+
+      result = await profileService.getProfileByUserId(userId);
+    } else if (file) {
+      // Only image was updated
+      result = await profileService.getProfileByUserId(userId);
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field must be provided for update",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: result.user,
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
+    });
+
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Failed to update profile"
+    });
+  }
+};

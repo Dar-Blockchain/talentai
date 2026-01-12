@@ -33,6 +33,9 @@ router.put('/updateProfile',  profileController.updateProfile);
 // PUT /profile/updateProfileVisibility — met à jour la visibilité du profil (public/private)
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);
 
+// PUT /profile/updateProfileComplete — unified API for all profile updates (fields + image + type)
+router.put('/updateProfileComplete', uploadfile.single("user_image"), profileController.updateProfileComplete);
+
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
