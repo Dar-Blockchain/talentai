@@ -9,10 +9,12 @@ const { matchCandidatesToJob } = require("../controllers/MatchingController/matc
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const { controledAcces } = require('../middleware/controledAcces'); 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 const router = express.Router();
 
-router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("MatchingConfig"));
+//router.use(requireAuthUser, controledAcces('Company'), resolveCompanyActor, authLogMiddleware("MatchingConfig"));
+router.use(requireAuthUser, resolveCompanyActor, authLogMiddleware("MatchingConfig"));
 
 // GET /matching/jobs/:jobPostId/matches — retourne les meilleurs candidats pour une offre
 router.get("/jobs/:jobPostId/matches", matchCandidatesToJob);
