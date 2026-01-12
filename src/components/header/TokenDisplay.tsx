@@ -82,19 +82,19 @@ const TokenDisplay: React.FC = ({}) => {
       sx={{
         display: "flex",
         alignItems: "center",
-        backgroundColor: isCompany ? "transparent" : "white",
-        borderRadius: isCompany ? 0 : "25px",
-        boxShadow: isCompany ? "none" : "0 4px 14px rgba(0,0,0,0.06)",
-        p: isCompany ? 0 : "0 12px",
-        height: isCompany ? "auto" : 40,
+        backgroundColor: "white",
+        borderRadius: "25px",
+        boxShadow: '0px 0px 18.1px 0px rgba(0, 0, 0, 0.05)',
+        p: "0 12px",
+        height: 40,
         gap: 1.5,
       }}
     >
       <Image
         src="/icons/token.svg"
         alt="token"
-        width={isCompany ? 22 : 20}
-        height={isCompany ? 22 : 20}
+        width={20}
+        height={20}
       />
       {loading ? (
         <LoadingDots />
@@ -115,9 +115,9 @@ const TokenDisplay: React.FC = ({}) => {
           <IconButton
             onClick={handleOpenModal}
             sx={{
-              ml: isCompany ? "auto" : 1,
-              width: isCompany ? 26 : 22,
-              height: isCompany ? 26 : 22,
+              ml: 1,
+              width: 22,
+              height:  22,
               backgroundColor: "white",
               border: "0.5px solid rgba(14, 194, 125, 0.27)",
               borderRadius: "16px",
@@ -127,8 +127,8 @@ const TokenDisplay: React.FC = ({}) => {
             <Image
               src="/icons/plus.svg"
               alt="plus"
-              width={isCompany ? 14 : 12}
-              height={isCompany ? 14 : 12}
+              width={12}
+              height={12}
             />
           </IconButton>
         </Tooltip>

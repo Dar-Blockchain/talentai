@@ -6,7 +6,6 @@ import UserDropdownMenu from "./UserDropdownMenu";
 import { useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { useSelector } from "react-redux";
-import { selectProfile } from "@/store/slices/profileSlice";
 import { logout } from "@/store/slices/authSlice";
 import UserIcon from "@/components/icons/UserIcon";
 import { useRouter } from "next/router";
@@ -103,7 +102,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         <IconButton
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
-            color: "rgba(131, 16, 255, 1)",
+            color: isCompany ? "rgba(12, 218, 139, 1)":"rgba(131, 16, 255, 1)",
             transition: "transform 0.2s ease",
             p: 0,
             "&:hover": {

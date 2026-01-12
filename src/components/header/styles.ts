@@ -1,9 +1,8 @@
 export const appBarStyle = {
   backgroundColor: "transparent",
   boxShadow: "none",
-  height: "50px",
-  pt: 2,
-  mb: 4,
+  // height: "50px",
+  py: 2,
   px: 1.5
 };
 
@@ -18,7 +17,7 @@ export const toolbarStyle = {
 export const desktopMenuStyle = {
   display: "flex",
   alignItems: "center",
-  gap: 1.5,
+  gap: 2,
   height: "50px",
   "@media (max-width:750px)": {
     display: "none",

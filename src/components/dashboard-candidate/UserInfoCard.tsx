@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { Box, Button, Typography, Paper, Pagination, Fade, Card } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+import { getMyProfile } from "@/store/slices/profileSlice";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { styled } from "@mui/material/styles";
 import { softSkillNames } from "@/constants/skills";
 import SkillBlock from "./SkillBlock";
@@ -209,7 +209,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 function UserInfoCardComponent() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>()
-  const { profile } = useSelector(selectProfile);
+  const profile = useSelector((state: RootState) => state.auth.profile);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [selectedSkillType, setSelectedSkillType] = useState<'soft' | 'technical' | ''>('');
 

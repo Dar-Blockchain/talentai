@@ -10,7 +10,7 @@ export const useAuthCheck = () => {
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
 
-  const { isAuthenticated, user, profile } = useSelector(
+  const { isAuthenticated, user, profile, companyMembership } = useSelector(
     (state: RootState) => state.auth
   );
 
@@ -19,6 +19,7 @@ export const useAuthCheck = () => {
   const handleRedirectTo = (user: any, profile: any, returnUrl?: string) => {
     const userRole = user?.role;
     const hasProfile = !!profile?._id;
+    const hasMembership = !!companyMembership?._id;
 
     if (userRole === "Admin") {
       router.replace("/dashboard/admin");
@@ -35,6 +36,11 @@ export const useAuthCheck = () => {
 
     if (!hasProfile) {
       router.replace("/preferences");
+      return;
+    }
+    
+    if(hasMembership){
+      router.replace("/workspaces");
       return;
     }
 

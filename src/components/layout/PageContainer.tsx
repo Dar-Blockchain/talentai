@@ -17,7 +17,7 @@ const PageContainer: React.FC<PageContainerProps> = ({
       sx={{
         minHeight: "100vh",
         backgroundColor: "rgba(251, 254, 255, 1)",
-        py: disablePadding ? 0 : 2,
+        pb: disablePadding ? 0 : 2,
       }}
     >
       <Container maxWidth={maxWidth}>{children}</Container>
