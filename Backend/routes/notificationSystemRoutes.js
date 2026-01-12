@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require('../controllers/Notifications/notificationSystemController');
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 // All routes require an authenticated user
 router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));
@@ -29,24 +30,24 @@ router.post('/AddNotification/custom', controller.createCustomNotification);
 router.post('/broadcastSystemNotification', controller.broadcastSystemNotification);
 
 // GET /notification-system/GetMyNotification — list system notifications for current user
-router.get('/GetMyNotification', controller.listForUser);
+router.get('/GetMyNotification', resolveCompanyActor,controller.listForUser);
 
 // GET /notification-system/:id — retrieve a notification
 // router.get('/GetNotificationByID/:id', controller.getById);
 
 // PATCH /notification-system/:id/read — mark as read
-router.patch('/markAsRead/:id/read', controller.markAsRead);
+router.patch('/markAsRead/:id/read', resolveCompanyActor,controller.markAsRead);
 
 // PATCH /notification-system/mark-all-read — mark all as read for user
-router.patch('/mark-all-read', controller.markAllAsRead);
+router.patch('/mark-all-read', resolveCompanyActor,controller.markAllAsRead);
 
 // PATCH /notification-system/archiveNotification/:id — archive a notification
-router.patch('/archiveNotification/:id', controller.archiveNotification);
+router.patch('/archiveNotification/:id', resolveCompanyActor,controller.archiveNotification);
 
 // PATCH /notification-system/archive-all — archive all notifications for current user
-router.patch('/archive-all', controller.archiveAllNotifications);
+router.patch('/archive-all',resolveCompanyActor, controller.archiveAllNotifications);
 
 // DELETE /notification-system/:id — delete
-router.delete('/deleteNotification/:id', controller.deleteNotification);
+router.delete('/deleteNotification/:id',resolveCompanyActor, controller.deleteNotification);
 
 module.exports = router;
