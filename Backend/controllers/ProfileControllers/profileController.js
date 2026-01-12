@@ -147,18 +147,18 @@ module.exports.getMyProfile = async (req, res) => {
 console.log('getMyProfile called with userId:', req);
     const result = await profileService.getProfileByUserId(userId);
 
-    // If result contains the message key, then no profile
-    if (result.message) {
-      return res.status(200).json({ message: result.message });
-    }
-
-    // Profile found
-    return res.status(200).json(result);
+    res.status(200).json({
+      success: true,
+      message: "Profil récupéré avec succès",
+      user: result.user,
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
+    });
   } catch (error) {
     console.error("Error retrieving profile:", error);
-    return res.status(500).json({
-      message:
-        error.message || "Internal error retrieving profile.",
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Internal error retrieving profile"
     });
   }
 };
@@ -194,16 +194,21 @@ module.exports.getProfileById = async (req, res) => {
     const { userId } = req.params;
 
     // Use the service to retrieve the profile
-    const profile = await profileService.getProfileByUserId(userId);
+    const result = await profileService.getProfileByUserId(userId);
 
-    res.status(200).json(profile);
+    res.status(200).json({
+      success: true,
+      message: "Profil récupéré avec succès",
+      user: result.user,
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
+    });
   } catch (error) {
     console.error("Error retrieving profile:", error);
-    res
-      .status(500)
-      .json({
-        message: error.message || "Error retrieving profile",
-      });
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Error retrieving profile"
+    });
   }
 };
 
@@ -584,14 +589,16 @@ module.exports.updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      profile: updatedProfile,
+      user: updatedProfile.user,
+      profile: updatedProfile.profile || null,
+      companyMembership: updatedProfile.companyMembership || null
     });
 
   } catch (error) {
     console.error('❌ Error updating profile:', error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Failed to update profile",
+      message: error.message || "Failed to update profile"
     });
   }
 };
