@@ -258,6 +258,8 @@ const fetchMyJobs = useCallback(
               initialDisplayCount={3}
               pagination={activeSection === "all" ? undefined : unlockedCandidatesData.pagination}
               onPageChange={(page) => setCandidatesPage(page)}
+              companyProfile={company?.profile}
+              companyUser={company}
             />
           )}
 
