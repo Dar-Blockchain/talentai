@@ -322,8 +322,7 @@ exports.getPipelineJobDetails = async (req, res) => {
 // Récupérer les posts d'un utilisateur
 exports.getUserPosts = async (req, res) => {
   try {
-    const actorId = req.company?._id || req.user._id;
-    if (!actorId) {
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ success: false, error: 'User not authenticated' });
     }
 
@@ -343,7 +342,7 @@ exports.getUserPosts = async (req, res) => {
     const sortOption = validSorts.includes(sort) ? sort : 'newest';
 
     const result = await postService.getPostsByUserIdWithPagination(
-      actorId,
+      req.user._id,
       pageNum,
       limitNum,
       search,
