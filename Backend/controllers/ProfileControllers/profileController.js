@@ -62,16 +62,20 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     }
 
     // Create or update the profile
-    const profile = await profileService.createOrUpdateProfile(userId, profileData);
+    const result = await profileService.createOrUpdateProfile(userId, profileData);
 
     res.status(200).json({
+      success: true,
       message: "Profile created/updated successfully",
-      profile,
+      user: result.user,
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
     });
   } catch (error) {
     console.error("Error creating/updating candidate profile:", error);
-    res.status(500).json({
-      message: error.message || "Error creating/updating candidate profile",
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Error creating/updating candidate profile"
     });
   }
 };
@@ -92,21 +96,23 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
     }
 
     // Create or update company profile with employment type support
-    const profile = await profileService.createOrUpdateCompanyProfile(
+    const result = await profileService.createOrUpdateCompanyProfile(
       userId,
       profileData
     );
     res.status(200).json({
+      success: true,
       message: "Company profile created/updated successfully",
-      profile,
+      user: result.user,
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
     });
   } catch (error) {
     console.error("Error creating/updating company profile:", error);
-    res
-      .status(500)
-      .json({
-        message: error.message || "Error creating/updating company profile",
-      });
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Error creating/updating company profile"
+    });
   }
 };
 
