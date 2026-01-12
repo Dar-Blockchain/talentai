@@ -67,7 +67,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
   // Get user permissions
   const userId = companyUser?._id;
   const profileId = companyProfile?._id;
-  const { hasPermission, loading: loadingPermissions } = usePermissions(userId, profileId);
+  const { permissions, hasPermission, loading: loadingPermissions } = usePermissions(userId, profileId);
 
   // Debug: Log permission state
   useEffect(() => {
@@ -75,9 +75,11 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
       userId,
       profileId,
       loadingPermissions,
+      fullPermissions: permissions,
       canCreateJobPosts: hasPermission('canCreateJobPosts'),
+      buttonWillBeDisabled: !hasPermission('canCreateJobPosts'),
     });
-  }, [userId, profileId, loadingPermissions, hasPermission]);
+  }, [userId, profileId, loadingPermissions, permissions, hasPermission]);
 
   // Close modal when member is added successfully
   useEffect(() => {
@@ -212,7 +214,14 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
             >
               Add Member
             </Button>
-            {!hasPermission('canCreateJobPosts') ? (
+            {loadingPermissions ? (
+              <GradientButton
+                startIcon={<AddIcon />}
+                disabled
+              >
+                Loading...
+              </GradientButton>
+            ) : !hasPermission('canCreateJobPosts') ? (
               <Tooltip
                 title="You don't have permission to create job posts"
                 arrow
@@ -224,15 +233,17 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
                     disabled
                     style={{ pointerEvents: 'none' }}
                   >
-                    Post Job
+                    Post Job (No Permission)
                   </GradientButton>
                 </span>
               </Tooltip>
             ) : (
               <GradientButton
-                onClick={() => router.push("/posts/create")}
+                onClick={() => {
+                  console.log('✅ Button clicked - has permission');
+                  router.push("/posts/create");
+                }}
                 startIcon={<AddIcon />}
-                disabled={loadingPermissions}
               >
                 Post Job
               </GradientButton>
