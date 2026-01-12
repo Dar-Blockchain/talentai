@@ -44,6 +44,13 @@ const GradientButton = styled(Button)(({ theme }) => ({
     background: "rgba(77, 217, 163, 0.8)",
     boxShadow: "0 4px 12px rgba(16,185,129,0.4)",
   },
+  "&.Mui-disabled": {
+    background: "rgba(189, 189, 189, 0.5)",
+    color: "rgba(255, 255, 255, 0.7)",
+    boxShadow: "none",
+    cursor: "not-allowed",
+    pointerEvents: "auto",
+  },
 }));
 
 interface CompanyInfoHeaderProps {
@@ -61,6 +68,16 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
   const userId = companyUser?._id;
   const profileId = companyProfile?._id;
   const { hasPermission, loading: loadingPermissions } = usePermissions(userId, profileId);
+
+  // Debug: Log permission state
+  useEffect(() => {
+    console.log('🔍 [CompanyInfoHeader] Permission Debug:', {
+      userId,
+      profileId,
+      loadingPermissions,
+      canCreateJobPosts: hasPermission('canCreateJobPosts'),
+    });
+  }, [userId, profileId, loadingPermissions, hasPermission]);
 
   // Close modal when member is added successfully
   useEffect(() => {
@@ -198,16 +215,17 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
             <Tooltip
               title={!hasPermission('canCreateJobPosts') ? "You don't have permission to create job posts" : ""}
               arrow
+              placement="top"
             >
-              <span>
+              <span style={{ display: 'inline-block' }}>
                 <GradientButton
-                  onClick={() => router.push("/posts/create")}
+                  onClick={() => {
+                    if (hasPermission('canCreateJobPosts')) {
+                      router.push("/posts/create");
+                    }
+                  }}
                   startIcon={<AddIcon />}
                   disabled={loadingPermissions || !hasPermission('canCreateJobPosts')}
-                  sx={{
-                    opacity: !hasPermission('canCreateJobPosts') ? 0.5 : 1,
-                    cursor: !hasPermission('canCreateJobPosts') ? 'not-allowed' : 'pointer',
-                  }}
                 >
                   Post Job
                 </GradientButton>
