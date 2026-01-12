@@ -69,6 +69,9 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
   const profileId = companyProfile?._id;
   const { permissions, hasPermission, loading: loadingPermissions } = usePermissions(userId, profileId);
 
+  // TEMPORARY: Force disable for testing - REMOVE THIS LATER
+  const canCreateJobPosts = false; // Set to false to test disabled state
+
   // Debug: Log permission state
   useEffect(() => {
     console.log('🔍 [CompanyInfoHeader] Permission Debug:', {
@@ -218,7 +221,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
               title={
                 loadingPermissions
                   ? "Loading permissions..."
-                  : !hasPermission('canCreateJobPosts')
+                  : !canCreateJobPosts
                   ? "You don't have permission to create job posts"
                   : ""
               }
@@ -229,11 +232,11 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
                 <GradientButton
                   onClick={(e) => {
                     console.log('🔍 Button click attempt:', {
-                      hasPermission: hasPermission('canCreateJobPosts'),
+                      canCreateJobPosts,
                       loadingPermissions,
                     });
 
-                    if (!hasPermission('canCreateJobPosts')) {
+                    if (!canCreateJobPosts) {
                       e.preventDefault();
                       e.stopPropagation();
                       console.log('❌ Click blocked - no permission');
@@ -251,9 +254,9 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
                     router.push("/posts/create");
                   }}
                   startIcon={<AddIcon />}
-                  disabled={loadingPermissions || !hasPermission('canCreateJobPosts')}
+                  disabled={loadingPermissions || !canCreateJobPosts}
                   sx={{
-                    pointerEvents: (loadingPermissions || !hasPermission('canCreateJobPosts')) ? 'none' : 'auto',
+                    pointerEvents: (loadingPermissions || !canCreateJobPosts) ? 'none' : 'auto',
                   }}
                 >
                   Post Job
