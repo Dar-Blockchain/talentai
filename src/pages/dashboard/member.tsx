@@ -22,11 +22,10 @@ import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyPr
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
-import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
 import Header from "@/components/layout/Header";
 import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
-import RoleGuard from "@/components/guards/RoleGuard";
+import MemberGuard from "@/components/guards/MemberGuard";
 import PageContainer from "@/components/layout/PageContainer";
 
 // Update the MatchingCandidate interface
@@ -59,8 +58,7 @@ export interface MatchingCandidate {
 
 const DashboardCompany = () => {
   const dispatch = useDispatch<AppDispatch>();
-    const {user, profile} = useSelector((state: RootState) => state.auth);
-
+  const company = useSelector((state: RootState) => state.auth?.companyMembership?.company);
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);
@@ -95,10 +93,10 @@ const DashboardCompany = () => {
 
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
-    if (profile?._id) {
-      dispatch(fetchHRAgents(profile._id));
+    if (company?._id) {
+      dispatch(fetchHRAgents(company._id));
     }
-  }, [dispatch, profile?._id]);
+  }, [dispatch, company?._id]);
 
   // Map frontend sort values to backend format
   const mapSortToBackend = (sort: "newest" | "oldest" | "title-asc" | "title-desc") => {
@@ -196,7 +194,7 @@ const fetchMyJobs = useCallback(
   }, [dispatch, matchesPerPage]);
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
+    <MemberGuard>
       <PageContainer>
         <ToastContainer
           position="top-right"
@@ -211,7 +209,7 @@ const fetchMyJobs = useCallback(
           theme="dark"
         />
           <Header />
-          <CompanyInfoHeader companyProfile={profile} companyUser={user}/>
+          <CompanyInfoHeader companyProfile={company?.profile} companyUser={company} />
           {!selectedJob ? (
             <MyJobPosts
               myJobs={myJobs}
@@ -272,13 +270,13 @@ const fetchMyJobs = useCallback(
             onClose={handleBidDialogClose}
             selectedCandidate={selectedCandidate}
             selectedJob={selectedJob}
-            companyId={user?._id || ""}
+            companyId={company?._id || ""}
           />
 
           {/* Company Profiles & Assessments Section - Only show when activeSection is "all" */}
           {activeSection === "all" && <CompanyProfilesAssessments />}
       </PageContainer>
-    </RoleGuard>
+    </MemberGuard>
   );
 };
 

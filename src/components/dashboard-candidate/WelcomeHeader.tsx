@@ -8,13 +8,14 @@ import WorkIcon from "@mui/icons-material/Work";
 import SchoolIcon from "@mui/icons-material/School";
 import Image from "next/image";
 import { useSelector } from "react-redux";
-import { selectProfile } from "@/store/slices/profileSlice";
 import { useRouter } from "next/router";
 import AssessmentModal from "./AssessmentModal";
+import { RootState } from "@/store/store";
 
 const WelcomeHeader = () => {
   const router = useRouter();
-  const { profile } = useSelector(selectProfile);
+  const profile = useSelector((state: RootState) => state.auth.profile);
+  const user = useSelector((state: RootState) => state.auth.user);
   const quota = profile?.quota || 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
 
@@ -69,7 +70,7 @@ const WelcomeHeader = () => {
           Welcome back,{" "}
           {profile?.firstName
             ? `${profile?.firstName}`
-            : profile?.userId?.username}
+            : user?.username}
         </Typography>
 
         <Typography
@@ -107,9 +108,7 @@ const WelcomeHeader = () => {
                 fontWeight: 400,
               }}
             >
-              {profile?.userId?.FirstName && profile?.userId?.LastName
-                ? `${profile.userId.FirstName} ${profile.userId.LastName}`
-                : profile?.userId?.username || "User"}
+              {user?.username}
             </Typography>
           </Box>
 
@@ -125,11 +124,11 @@ const WelcomeHeader = () => {
                 fontWeight: 400,
               }}
             >
-              {profile?.userId?.email || "ahmed@mail.com"}
+              {user?.email || "ahmed@mail.com"}
             </Typography>
           </Box>
 
-          {profile?.userId?.createdAt && (
+          {user?.createdAt && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <CalendarTodayIcon
                 sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.1rem" }}
@@ -142,7 +141,7 @@ const WelcomeHeader = () => {
                   fontWeight: 400,
                 }}
               >
-                {new Date(profile.userId.createdAt).toLocaleDateString(
+                {new Date(user?.createdAt).toLocaleDateString(
                   "en-US",
                   {
                     month: "long",

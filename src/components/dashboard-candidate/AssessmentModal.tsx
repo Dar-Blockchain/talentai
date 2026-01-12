@@ -29,9 +29,9 @@ import {
   technicalSkillsList,
 } from "@/constants/skills";
 import { useSelector } from "react-redux";
-import { selectProfile } from "@/store/slices/profileSlice";
 import { useRouter } from "next/router";
 import { toast } from "react-hot-toast";
+import { RootState } from "@/store/store";
 
 const languages = [{ value: "English", label: "English" }];
 
@@ -48,7 +48,7 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 }) => {
   const router = useRouter();
 
-  const { profile } = useSelector(selectProfile);
+  const profile = useSelector((state: RootState) => state.auth.profile);
   const [skillType, setSkillType] = useState<"soft" | "technical" | "">(
     type ?? ""
   );

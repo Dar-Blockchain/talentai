@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 interface AuthState {
   profile: any | null;
   user: any | null;
+  companyMembership: any | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -14,6 +15,7 @@ interface AuthState {
 const initialState: AuthState = {
   profile: null,
   user: null,
+  companyMembership: null,
   isLoading: false,
   error: null,
   isAuthenticated: false,
@@ -221,6 +223,7 @@ const authSlice = createSlice({
     clearAuth: (state) => {
       state.profile = null;
       state.user = null;
+      state.companyMembership = null;
       state.isLoading = false;
       state.isAuthenticated = false;
       state.error = null;
@@ -257,6 +260,7 @@ const authSlice = createSlice({
         if (action.payload.user) {
           state.profile = action.payload.profile;
           state.user = action.payload.user;
+          state.companyMembership = action.payload.companyMembership || null;
           state.isAuthenticated = true;
         }
         if (action.payload.token) {

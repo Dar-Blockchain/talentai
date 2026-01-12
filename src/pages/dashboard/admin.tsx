@@ -32,7 +32,6 @@ import {
     Add as AddIcon,
     Visibility as VisibilityIcon,
 } from '@mui/icons-material';
-import { selectProfile, clearProfile } from '@/store/slices/profileSlice';
 import { logout, setLoggingOut } from '@/store/slices/authSlice';
 import AdminWorldMap from '@/components/dashboard-admin/AdminWorldMap';
 import AdminSkillsDistribution from '@/components/dashboard-admin/AdminSkillsDistribution';
@@ -90,33 +89,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
     }
 }));
 
-const StatCard = styled(Box)(({ theme }) => ({
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-    padding: theme.spacing(3),
-    borderRadius: '16px',
-    border: '1px solid rgba(0,0,0,0.05)',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    transition: 'all 0.3s ease',
-    cursor: 'default',
-    '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
-    }
-}));
 
-const SidebarItem = styled(ListItemButton)(({ theme }) => ({
-    borderRadius: '12px',
-    margin: theme.spacing(0.5, 1),
-    '&:hover': {
-        backgroundColor: 'rgba(131, 16, 255, 0.1)',
-    },
-    '&.Mui-selected': {
-        backgroundColor: 'rgba(131, 16, 255, 0.15)',
-        '&:hover': {
-            backgroundColor: 'rgba(131, 16, 255, 0.2)',
-        }
-    }
-}));
 
 // Interfaces
 interface User {
@@ -255,7 +228,6 @@ const DashboardAdmin = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const dispatch = useDispatch<AppDispatch>();
-    const { profile, loading: profileLoading } = useSelector(selectProfile);
 
     // State management
     const [drawerOpen, setDrawerOpen] = useState(!isMobile);

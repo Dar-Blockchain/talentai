@@ -29,7 +29,6 @@ import {
 } from "./data/onboardingData";
 import {
   createOrUpdateProfile,
-  selectProfile,
 } from "@/store/slices/profileSlice";
 import { AppDispatch } from "@/store/store";
 
@@ -119,7 +118,7 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
 }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const profileState = useSelector(selectProfile);
+
   const [activeStep, setActiveStep] = React.useState(0);
   const [loading, setLoading] = React.useState(false); // ✅ Loading state
 

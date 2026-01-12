@@ -47,10 +47,11 @@ const GradientButton = styled(Button)(({ theme }) => ({
 }));
 
 interface CompanyInfoHeaderProps {
-  profile: any;
+  companyProfile: any;
+  companyUser: any;
 }
 
-const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
+const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, companyUser }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
@@ -78,23 +79,13 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   };
 
   const handleAddMember = async (email: string, role: string) => {
-    console.log('🔵 [CompanyInfoHeader] handleAddMember called with:', { email, role });
-    console.log('🔵 [CompanyInfoHeader] sharedAccountId:', sharedAccountId);
-
-    // Map the role to API format
     const apiRole = roleMapping[role] || 'RH';
-    console.log('🔵 [CompanyInfoHeader] Mapped role:', role, '→', apiRole);
-
-    // Use the shared account ID or fallback
-    const accountId = sharedAccountId || profile?._id || '';
-    console.log('🔵 [CompanyInfoHeader] Using accountId:', accountId);
+    const accountId = sharedAccountId || companyProfile?._id || '';
 
     if (!accountId) {
       console.error('❌ [CompanyInfoHeader] No account ID found!');
       throw new Error('Account ID not found. Please try again.');
     }
-
-    console.log('🔵 [CompanyInfoHeader] Dispatching addEmployee with:', { accountId, email, role: apiRole });
 
     // Dispatch the add employee action
     const result = await dispatch(addEmployee({
@@ -103,15 +94,12 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
       role: apiRole
     }));
 
-    console.log('🔵 [CompanyInfoHeader] addEmployee result:', result);
-
     // Check if the action was rejected
     if (addEmployee.rejected.match(result)) {
       console.error('❌ [CompanyInfoHeader] addEmployee was rejected:', result.payload);
       throw new Error(result.payload as string || 'Failed to add member');
     }
 
-    console.log('✅ [CompanyInfoHeader] Member added successfully');
   };
 
   return (
@@ -141,9 +129,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
               }}
             >
               {
-                (profile?.companyDetails?.name ||
-                  profile?.userId?.username ||
-                  "C")?.[0]
+                (companyProfile?.companyDetails?.name || "C")?.[0]
               }
             </Avatar>
             <Box>
@@ -159,9 +145,9 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                     color: "rgba(0, 0, 0, 1)",
                   }}
                 >
-                  {profile?.companyDetails?.name || "Company Name"}
+                  {companyProfile?.companyDetails?.name || "Company Name"}
                 </Typography>
-                {profile?.userId?.isVerified && (
+                {companyUser?.isVerified && (
                   <CheckCircleIcon
                     sx={{
                       color: "rgba(41, 210, 145, 0.83)",
@@ -183,7 +169,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                   mt: 0.5,
                 }}
               >
-                {profile?.userId?.email || "company@contact.com"}
+                {companyUser?.email || "company@contact.com"}
               </Typography>
             </Box>
           </Box>
@@ -301,7 +287,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                   letterSpacing: "0px",
                 }}
               >
-                {profile?.companyDetails?.industry || "Technology"}
+                {companyProfile?.companyDetails?.industry || "Technology"}
               </Typography>
             </Box>
           </Box>
@@ -371,7 +357,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                   letterSpacing: "0px",
                 }}
               >
-                {profile?.companyDetails?.size?.replace(" employees", "") ||
+                {companyProfile?.companyDetails?.size?.replace(" employees", "") ||
                   "11 - 50"}
               </Typography>
             </Box>
@@ -442,7 +428,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                   letterSpacing: "0px",
                 }}
               >
-                {profile?.companyDetails?.location || "On-site"}
+                {companyProfile?.companyDetails?.location || "On-site"}
               </Typography>
             </Box>
           </Box>

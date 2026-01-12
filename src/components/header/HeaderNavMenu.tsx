@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Stack } from "@mui/material";
-
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -33,14 +32,15 @@ const getNavItems = (type: string): NavItem[] => {
   ];
 };
 
-interface HeaderNavMenuProps {  
-    direction?: "row" | "column";   }
+interface HeaderNavMenuProps {
+  direction?: "row" | "column";
+}
 
-const HeaderNavMenu : React.FC<HeaderNavMenuProps> = ({direction = 'row'}) => {
+const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row" }) => {
   const router = useRouter();
-  const user = useSelector((state: RootState) => state.auth.user);
-
-  const userType = user?.role?.toLowerCase()  || localStorage.getItem("userType") || "candidate";
+  const userType =  useSelector(
+    (state: RootState) => state.user.userType
+  ) ?? 'candidate';
 
   const handleNavClick = (item: NavItem) => {
     if (item.id) {
@@ -69,17 +69,21 @@ const HeaderNavMenu : React.FC<HeaderNavMenuProps> = ({direction = 'row'}) => {
     <Stack
       direction={direction}
       spacing={4}
-      alignItems={direction=== "row" ? "center" : 'flex-start'}
-      sx={direction=== "row" ? {
-        px: 3,
-        py: 1.5,
-        borderRadius: 999,
-        backgroundColor: "#ffffff",
-        boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-          "@media (max-width:750px)": {
-    display: "none",
-  },
-      }: {width: '100%'}}
+      alignItems={direction === "row" ? "center" : "flex-start"}
+      sx={
+        direction === "row"
+          ? {
+              px: 3,
+              py: 1.5,
+              borderRadius: 999,
+              backgroundColor: "#ffffff",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+              "@media (max-width:750px)": {
+                display: "none",
+              },
+            }
+          : { width: "100%" }
+      }
     >
       {getNavItems(userType).map((item, index) => {
         const isLast = index === getNavItems(userType).length - 1;

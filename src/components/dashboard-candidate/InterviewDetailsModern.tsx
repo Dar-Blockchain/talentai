@@ -35,7 +35,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
 import { useSelector } from 'react-redux';
-import { selectProfile } from "@/store/slices/profileSlice";
+import { RootState } from "@/store/store";
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -100,8 +100,7 @@ const INTERVIEW_TYPES = [
 ];
 
 export default function InterviewDetailsModern() {
-  const { profile } = useSelector(selectProfile);
-
+  const profile = useSelector((state: RootState) => state.auth.profile);
   const [tab, setTab] = useState("post_interview");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

@@ -6,7 +6,6 @@ import TokenDisplay from "./TokenDisplay";
 import { logout } from "@/store/slices/authSlice";
 import { useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { selectProfile } from "@/store/slices/profileSlice";
 import { useDispatch } from "react-redux";
 import HeaderLogo from "./HeaderLogo";
 import UserAvatar from "./UserAvatar";

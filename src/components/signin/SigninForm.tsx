@@ -90,7 +90,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
         });
         return;
       }
-      handleRedirectTo(response.user, response.profile);
+      handleRedirectTo(response.user, response.profile, response.companyMembership);
     } catch (err: any) {
       showToast({
         message:
@@ -102,27 +102,34 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
     }
   };
 
-  const handleRedirectTo = (user: any, profile: any) => {
+  const handleRedirectTo = (user: any, profile: any, companyMembership: any) => {
     const userRole = user?.role;
     const hasProfile = !!profile?._id;
+    const hasMembership = !!companyMembership?._id;
     if (userRole === "Admin") {
       router.replace("/dashboard/admin");
       return;
-    }
+    }else
     if (returnUrl) {
       const redirectTo = hasProfile
         ? decodeURIComponent(returnUrl)
         : `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`;
       router.replace(redirectTo);
       return;
-    }
+    }else
     if (!hasProfile) {
       router.replace("/preferences");
       return;
-    }
+    }else
+    if(hasMembership){
+      router.replace("/workspaces");
+      return;
+    }else{
     const redirctTo =
       userRole === "Company" ? "/dashboard/company" : "/dashboard/candidate";
     router.replace(redirctTo);
+    }
+
   };
 
   useEffect(() => {

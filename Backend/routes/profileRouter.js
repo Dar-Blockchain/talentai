@@ -41,6 +41,9 @@ router.put('/Update_Profile_Picture',uploadfile.single("user_image"), profileCon
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/getMyProfile', profileController.getMyProfile);
 
+// GET /profile/getMyProfile — profil de l'utilisateur courant
+router.get('/getMyProfileOptimizer', profileController.getMyProfileOptimizer);
+
 // GET /profile/getAllProfiles — liste de tous les profils
 router.get('/getAllProfiles', profileController.getAllProfiles);
 

@@ -138,7 +138,7 @@ exports.updateUserImage = async (req, res) => {
 module.exports.getMyProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-
+console.log('getMyProfile called with userId:', req);
     const result = await profileService.getProfileByUserId(userId);
 
     // If result contains the message key, then no profile
@@ -156,6 +156,31 @@ module.exports.getMyProfile = async (req, res) => {
     });
   }
 };
+
+// Get own profile
+// controllers/profileController.js
+module.exports.getMyProfileOptimizer = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const result = await profileService.getProfileByUserIdOptimizer(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Profil récupéré avec succès",
+      user: result.user,
+      profile: result.profile || null,
+      companyMembership: result.companyMembership || null
+    });
+  } catch (error) {
+    console.error("Error retrieving profile:", error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Internal error retrieving profile"
+    });
+  }
+};
+
 
 // Get a profile by ID
 module.exports.getProfileById = async (req, res) => {

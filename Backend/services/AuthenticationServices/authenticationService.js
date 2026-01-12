@@ -171,12 +171,27 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     // Fetch profile and companyMembership in parallel if exist
     const [profile, companyMembership] = await Promise.all([
       user.profile ? Profile.findById(user.profile) : null,
-      user.companyMembership ? require('../../models/CompanyMembershipModel').findById(user.companyMembership).populate('company').select('_id role company') : null
+      user.companyMembership
+        ? require('../../models/CompanyMembershipModel')
+            .findById(user.companyMembership)
+            .populate({
+              path: 'company',
+              select: 'Localisation createdAt email isVerified lastLogin username updatedAt user_image profile',
+              populate: { path: 'profile' }
+            })
+            .select('_id role updatedAt company')
+        : null
     ]);
 
     console.log('✅ OTP verified successfully for:', email);
 
-    const token = generateToken(user._id);
+    // Generate token with company info if companyMembership exists
+    let token;
+    if (companyMembership) {
+      token = generateToken(user._id, companyMembership.company._id, companyMembership.role);
+    } else {
+      token = generateToken(user._id);
+    }
     return { user, token, profile, companyMembership };
   } catch (error) {
     error.status = error.status || 500;

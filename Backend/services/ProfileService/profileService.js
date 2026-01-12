@@ -273,6 +273,47 @@ module.exports.getProfileByUserId = async (userId) => {
   }
 };
 
+// Get a profile by user ID
+// services/profileService.js
+module.exports.getProfileByUserIdOptimizer = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      const err = new Error("User not found");
+      err.status = 404;
+      throw err;
+    }
+
+    const [profile, companyMembership] = await Promise.all([
+      user.profile
+        ? Profile.findById(user.profile)
+        : null,
+
+      user.companyMembership
+        ? require('../../models/CompanyMembershipModel')
+            .findById(user.companyMembership)
+            .populate({
+              path: 'company',
+              select: 'username email Localisation user_image createdAt updatedAt',
+              populate: { path: 'profile' }
+            })
+            .select('_id role updatedAt company')
+        : null
+    ]);
+
+    return {
+      user,
+      profile,
+      companyMembership
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+
 module.exports.getProfileByPostId = async (postId) => {
   try {
     const post = await Post.findOne({ _id: postId }).populate({

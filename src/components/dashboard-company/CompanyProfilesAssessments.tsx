@@ -38,13 +38,7 @@ const StyledCard = styled(Box)(({ theme }) => ({
   border: "1px solid rgba(84,98,116,0.1)",
 }));
 
-interface CompanyProfilesAssessmentsProps {
-  profile: any;
-}
-
-const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
-  profile,
-}) => {
+const CompanyProfilesAssessments: React.FC = () => {
   const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
@@ -116,14 +110,8 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
 
   // Add useEffect to fetch profiles when component mounts
   useEffect(() => {
-    // Only fetch company profiles if user is a company
-    if (
-      profile &&
-      (profile.userId.role === "Company" || profile.userId.role === "company")
-    ) {
-      fetchCompanyProfiles();
-    }
-  }, [profile]);
+    fetchCompanyProfiles();
+  }, []);
 
   const handleViewAssessmentDetails = (assessment: any) => {
     setSelectedAssessment(assessment);
