@@ -560,7 +560,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       mt: 2,
                     }}
                   >
-                    <Button
+                    {/* <Button
                       variant="outlined"
                       fullWidth
                       startIcon={
@@ -594,7 +594,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       disabled={!candidate?.unlocked}
                     >
                       Contact Candidate
-                    </Button>
+                    </Button> */}
                     {!candidate?.unlocked && <Button
                       variant="outlined"
                       fullWidth
