@@ -119,7 +119,16 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     // Update profile reference in User
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
-    return profile;
+    const updatedUser = await User.findById(userId);
+    const companyMembership = updatedUser.companyMembership 
+      ? await require('../../models/CompanyMembershipModel').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      : null;
+
+    return {
+      user: updatedUser,
+      profile,
+      companyMembership
+    };
   } catch (error) {
     console.error("Error creating/updating candidate profile:", error);
     throw error;
@@ -206,7 +215,16 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     // Update the user's profile reference
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
-    return profile;
+    const updatedUser = await User.findById(userId);
+    const companyMembership = updatedUser.companyMembership 
+      ? await require('../../models/CompanyMembershipModel').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      : null;
+
+    return {
+      user: updatedUser,
+      profile,
+      companyMembership
+    };
   } catch (error) {
     console.error("Error creating/updating company profile:", error.message);
     throw error;
@@ -259,17 +277,38 @@ console.log("Old image path to delete:", oldImagePath);
 // services/profileService.js
 module.exports.getProfileByUserId = async (userId) => {
   try {
-    const profile = await Profile.findOne({ userId }).populate("userId");
+    const user = await User.findById(userId);
 
-    if (!profile) {
-      // No profile found
-      return { message: "No profile found for this user." };
+    if (!user) {
+      throw new Error("User not found");
     }
 
-    return profile;
+    const [profile, companyMembership] = await Promise.all([
+      user.profile
+        ? Profile.findById(user.profile)
+        : null,
+
+      user.companyMembership
+        ? require('../../models/CompanyMembershipModel')
+            .findById(user.companyMembership)
+            .populate({
+              path: 'company',
+              select: 'username email Localisation user_image createdAt updatedAt',
+              populate: { path: 'profile' }
+            })
+            .select('_id role updatedAt company')
+        : null
+    ]);
+
+    return {
+      user,
+      profile,
+      companyMembership
+    };
   } catch (error) {
     console.error("Error retrieving profile:", error);
-    throw new Error("Unable to retrieve profile."); // more generic message
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
