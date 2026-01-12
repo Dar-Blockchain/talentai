@@ -69,8 +69,8 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
   const profileId = companyProfile?._id;
   const { permissions, hasPermission, loading: loadingPermissions } = usePermissions(userId, profileId);
 
-  // TEMPORARY: Force disable for testing - REMOVE THIS LATER
-  const canCreateJobPosts = false; // Set to false to test disabled state
+  // Get the actual permission value from the hook
+  const canCreateJobPosts = hasPermission('canCreateJobPosts');
 
   // Debug: Log permission state
   useEffect(() => {
