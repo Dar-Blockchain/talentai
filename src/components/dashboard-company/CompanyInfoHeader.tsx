@@ -49,7 +49,7 @@ const GradientButton = styled(Button)(({ theme }) => ({
     color: "rgba(255, 255, 255, 0.7)",
     boxShadow: "none",
     cursor: "not-allowed",
-    pointerEvents: "auto",
+    pointerEvents: "none",
   },
 }));
 
@@ -212,25 +212,31 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
             >
               Add Member
             </Button>
-            <Tooltip
-              title={!hasPermission('canCreateJobPosts') ? "You don't have permission to create job posts" : ""}
-              arrow
-              placement="top"
-            >
-              <span style={{ display: 'inline-block' }}>
-                <GradientButton
-                  onClick={() => {
-                    if (hasPermission('canCreateJobPosts')) {
-                      router.push("/posts/create");
-                    }
-                  }}
-                  startIcon={<AddIcon />}
-                  disabled={loadingPermissions || !hasPermission('canCreateJobPosts')}
-                >
-                  Post Job
-                </GradientButton>
-              </span>
-            </Tooltip>
+            {!hasPermission('canCreateJobPosts') ? (
+              <Tooltip
+                title="You don't have permission to create job posts"
+                arrow
+                placement="top"
+              >
+                <span style={{ display: 'inline-block', cursor: 'not-allowed' }}>
+                  <GradientButton
+                    startIcon={<AddIcon />}
+                    disabled
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    Post Job
+                  </GradientButton>
+                </span>
+              </Tooltip>
+            ) : (
+              <GradientButton
+                onClick={() => router.push("/posts/create")}
+                startIcon={<AddIcon />}
+                disabled={loadingPermissions}
+              >
+                Post Job
+              </GradientButton>
+            )}
           </Box>
         </Box>
 
