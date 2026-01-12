@@ -15,6 +15,7 @@ const postController = require("../controllers/PostControllers/postController");
 const postPaymentController = require("../controllers/postPaymentController");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 // Public routes - no authentication required
 
@@ -44,7 +45,7 @@ router.get("/get-all-posts", postController.getAllPosts);
 
 // GET /post/my-posts
 // Description: Posts de l'utilisateur courant
-router.get("/my-posts", postController.getUserPosts);
+router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
 // GET /post/user/:userId
 // Description: Posts d'un utilisateur spécifique
