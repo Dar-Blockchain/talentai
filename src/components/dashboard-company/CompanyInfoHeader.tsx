@@ -214,40 +214,52 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
             >
               Add Member
             </Button>
-            {loadingPermissions ? (
-              <GradientButton
-                startIcon={<AddIcon />}
-                disabled
-              >
-                Loading...
-              </GradientButton>
-            ) : !hasPermission('canCreateJobPosts') ? (
-              <Tooltip
-                title="You don't have permission to create job posts"
-                arrow
-                placement="top"
-              >
-                <span style={{ display: 'inline-block', cursor: 'not-allowed' }}>
-                  <GradientButton
-                    startIcon={<AddIcon />}
-                    disabled
-                    style={{ pointerEvents: 'none' }}
-                  >
-                    Post Job (No Permission)
-                  </GradientButton>
-                </span>
-              </Tooltip>
-            ) : (
-              <GradientButton
-                onClick={() => {
-                  console.log('✅ Button clicked - has permission');
-                  router.push("/posts/create");
-                }}
-                startIcon={<AddIcon />}
-              >
-                Post Job
-              </GradientButton>
-            )}
+            <Tooltip
+              title={
+                loadingPermissions
+                  ? "Loading permissions..."
+                  : !hasPermission('canCreateJobPosts')
+                  ? "You don't have permission to create job posts"
+                  : ""
+              }
+              arrow
+              placement="top"
+            >
+              <Box sx={{ display: 'inline-block' }}>
+                <GradientButton
+                  onClick={(e) => {
+                    console.log('🔍 Button click attempt:', {
+                      hasPermission: hasPermission('canCreateJobPosts'),
+                      loadingPermissions,
+                    });
+
+                    if (!hasPermission('canCreateJobPosts')) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('❌ Click blocked - no permission');
+                      return false;
+                    }
+
+                    if (loadingPermissions) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('⏳ Click blocked - still loading');
+                      return false;
+                    }
+
+                    console.log('✅ Click allowed - navigating to /posts/create');
+                    router.push("/posts/create");
+                  }}
+                  startIcon={<AddIcon />}
+                  disabled={loadingPermissions || !hasPermission('canCreateJobPosts')}
+                  sx={{
+                    pointerEvents: (loadingPermissions || !hasPermission('canCreateJobPosts')) ? 'none' : 'auto',
+                  }}
+                >
+                  Post Job
+                </GradientButton>
+              </Box>
+            </Tooltip>
           </Box>
         </Box>
 
