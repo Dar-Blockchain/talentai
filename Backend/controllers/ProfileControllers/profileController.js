@@ -658,16 +658,16 @@ module.exports.updateProfileComplete = async (req, res) => {
 
         result = await profileService.createOrUpdateCompanyProfile(userId, profileData);
       } else {
-        // Candidate validations
+        // Candidate validations - Allow single field updates (no requirement for both first+last)
         const firstName = profileData.firstName || profileData.FirstName;
         const lastName = profileData.lastName || profileData.LastName;
 
-        if ((firstName === undefined || lastName === undefined) && !Object.keys(profileData).some(k => ["username","email","requiredExperienceLevel","targetRole","gender","country","language","timeZone","contactInformation"].includes(k))) {
-          // allow partial updates but if names are provided they must be valid
+        // Validate types when provided (but not required to provide both)
+        if (firstName && typeof firstName !== "string") {
+          return res.status(400).json({ success: false, message: "firstName must be a string" });
         }
-
-        if ((firstName && !lastName) || (!firstName && lastName)) {
-          return res.status(400).json({ success: false, message: "Both firstName and lastName are required when updating names" });
+        if (lastName && typeof lastName !== "string") {
+          return res.status(400).json({ success: false, message: "lastName must be a string" });
         }
 
         if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
@@ -710,9 +710,17 @@ module.exports.updateProfileComplete = async (req, res) => {
       });
     }
 
+    // Build list of fields that were sent and thus considered updated
+    const sentFields = Object.keys(profileData || {}).filter(
+      (k) => profileData[k] !== undefined && profileData[k] !== null && profileData[k] !== ""
+    );
+    if (file) sentFields.push("file");
+    const updatedFields = [...new Set(sentFields)];
+
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
+      updatedFields,
       user: result.user,
       profile: result.profile || null,
       companyMembership: result.companyMembership || null,
