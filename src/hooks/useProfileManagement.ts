@@ -7,7 +7,6 @@ import { UserProfile } from '@/types/profile';
 import {
   getMyProfile,
   updateCompanyProfile,
-  uploadProfilePicture,
   setSaveSuccess,
   clearError
 } from '@/store/slices/profileSlice';
@@ -170,10 +169,30 @@ export const useProfileManagement = () => {
     }
 
     try {
-      await dispatch(uploadProfilePicture(file)).unwrap();
+      const token = localStorage.getItem('api_token');
+      const formData = new FormData();
+      formData.append('user_image', file);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfileComplete`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
       await dispatch(getMyProfile());
+      dispatch(setSaveSuccess(true));
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
+      alert('Failed to upload image');
     }
   };
 

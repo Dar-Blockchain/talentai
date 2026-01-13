@@ -71,7 +71,9 @@ export const useCompanyProfileManagement = () => {
     if (reduxProfile && user) {
       // Construct avatar URL
       let avatarUrl = '';
-      if (user.user_image) {
+      if (reduxProfile.user_image) {
+        avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${reduxProfile.user_image}`;
+      } else if (user?.user_image) {
         avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${user.user_image}`;
       }
 
@@ -158,12 +160,12 @@ export const useCompanyProfileManagement = () => {
     try {
       const token = localStorage.getItem('api_token');
       const formData = new FormData();
-      formData.append('profilePicture', file);
+      formData.append('user_image', file);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/uploadProfilePicture`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfileComplete`,
         {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
           },
