@@ -198,32 +198,27 @@ export const useCompanyProfileManagement = () => {
       const updatePayload: any = {};
 
       if (activeTab === 'personal') {
-        // Company details
+        // Company profile update - matches backend API structure
         const companyName = currentProfile.name?.trim() || currentProfile.companyName?.trim() || '';
 
-        updatePayload.companyDetails = {
-          name: companyName,
-          industry: currentProfile.industry || '',
-          size: currentProfile.size || currentProfile.companySize || '',
-          location: currentProfile.location?.trim() || '',
-          email: currentProfile.email?.trim() || '',
-          employmentType: currentProfile.employmentType || 'Remote',
-          requiredExperienceLevel: currentProfile.requiredExperienceLevel || 'Mid Level',
-        };
+        updatePayload.name = companyName;
+        updatePayload.email = currentProfile.email?.trim() || '';
+        updatePayload.industry = currentProfile.industry || '';
+        updatePayload.size = currentProfile.size || currentProfile.companySize || '';
+        updatePayload.location = currentProfile.location?.trim() || '';
+        updatePayload.employmentType = currentProfile.employmentType || 'Remote';
+        updatePayload.requiredSkills = currentProfile.requiredSkills || [];
+        updatePayload.requiredExperienceLevel = currentProfile.requiredExperienceLevel || 'Mid Level';
 
         console.log('🟢 [useCompanyProfileManagement] Company name being sent:', companyName);
         console.log('🟢 [useCompanyProfileManagement] currentProfile.name:', currentProfile.name);
         console.log('🟢 [useCompanyProfileManagement] currentProfile.companyName:', currentProfile.companyName);
       } else if (activeTab === 'contact') {
-        // Contact Information
-        updatePayload.contactInformation = {
-          email: currentProfile.email?.trim() || '',
-          phone: currentProfile.phone?.trim() || '',
-          address: currentProfile.address?.trim() || '',
-          linkedinUrl: currentProfile.linkedinUrl?.trim() || '',
-          personalWebsite: currentProfile.personalWebsite?.trim() || '',
-          location: currentProfile.location?.trim() || '',
-        };
+        // Contact Information - matches backend API structure
+        updatePayload.email = currentProfile.email?.trim() || '';
+        updatePayload.linkedin = currentProfile.linkedinUrl?.trim() || '';
+        updatePayload.website = currentProfile.personalWebsite?.trim() || '';
+        updatePayload.location = currentProfile.location?.trim() || '';
       }
 
       // Check if we have at least one field to update

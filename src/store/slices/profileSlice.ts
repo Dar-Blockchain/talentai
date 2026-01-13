@@ -60,6 +60,7 @@ export interface Profile {
   country?: string;
   language?: string;
   timezone?: string;
+  timeZone?: string;  // Backend uses camelCase
   skills: Skill[];
   softSkills: SoftSkill[];
   requiredSkills: string[];
@@ -195,8 +196,24 @@ export const getMyProfile = createAsyncThunk<
     }
 
     console.log(
-      `✅ [ProfileSlice][Call-${callId}] Profile fetched successfully`
+      `✅ [ProfileSlice][Call-${callId}] Profile fetched successfully:`,
+      {
+        firstName: data?.firstName,
+        lastName: data?.lastName,
+        type: data?.type,
+        hasProfile: !!data?.profile,
+        profileFirstName: data?.profile?.firstName,
+        profileLastName: data?.profile?.lastName
+      }
     );
+
+    // Backend returns { profile: { firstName, lastName, ... } }
+    // Extract the inner profile object if it exists
+    if (data?.profile) {
+      console.log(`✅ [ProfileSlice][Call-${callId}] Extracting nested profile object`);
+      return data.profile;
+    }
+
     return data;
   } catch (error: any) {
     // Handle abort errors gracefully
