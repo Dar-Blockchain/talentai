@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import Check from "@mui/icons-material/Check";
 import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import RoleSelection from "./RoleSelection";
 import CandidateDetails from "./candidate/CandidateDetails";
 import SelectSkills from "./candidate/SelectSkills";
@@ -29,7 +29,7 @@ import {
 } from "./data/onboardingData";
 import {
   createOrUpdateProfile,
-} from "@/store/slices/profileSlice";
+} from "@/store/slices/userSlice";
 import { AppDispatch } from "@/store/store";
 
 // ---------- Custom Connector ----------

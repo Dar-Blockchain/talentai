@@ -7,7 +7,7 @@ import { RootState } from "@/store/store";
 
 const HeaderPrimaryActions = () => {
   const router = useRouter();
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
   const userType = user?.role?.toLowerCase()  || localStorage.getItem("userType") || "candidate";
 

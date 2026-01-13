@@ -23,7 +23,7 @@ const PostDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { id } = router.query;
-  const connectedUser = useSelector((state: RootState) => state.auth.user);
+  const connectedUser = useSelector((state: RootState) => state.user.connectedUser.user);
 
   const job = useSelector(selectCurrentJob);
   const loading = useSelector(selectCurrentJobLoading);

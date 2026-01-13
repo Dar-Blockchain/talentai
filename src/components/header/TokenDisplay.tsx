@@ -58,7 +58,7 @@ const TokenDisplay: React.FC = ({}) => {
   const token = useSelector((state: RootState) => state.auth.token);
   const balance = useSelector(selectTokenBalance);
   const loading = useSelector(selectTokenLoading);
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
   const isCompany = useMemo(
     () => user?.role?.toLowerCase() === "company",

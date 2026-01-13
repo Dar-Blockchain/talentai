@@ -1,53 +1,29 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { createNotification } from "./notificationSlice";
+import { clearConnectedUser, setConnectedUser } from "./userSlice";
 
 interface AuthState {
-  profile: any | null;
-  user: any | null;
-  companyMembership: any | null;
-  isLoading: boolean;
-  error: string | null;
   isAuthenticated: boolean;
   token: string | null;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const initialState: AuthState = {
-  profile: null,
-  user: null,
-  companyMembership: null,
-  isLoading: false,
-  error: null,
   isAuthenticated: false,
   token: null,
+  isLoading: false,
+  error: null,
 };
 
 // Global flag to skip interceptor checks during logout
 let isLoggingOut = false;
-// AbortController to cancel all pending requests during logout
-let globalAbortController: AbortController | null = null;
 
 // Export function to set logout flag
 export const setLoggingOut = (value: boolean) => {
   isLoggingOut = value;
-  if (value) {
-    // Cancel all pending requests when logout starts
-    if (globalAbortController) {
-      globalAbortController.abort();
-    }
-    globalAbortController = new AbortController();
-  } else {
-    // Reset abort controller when logout is complete
-    globalAbortController = null;
-  }
-};
-
-// Export function to get abort signal for API calls
-export const getAbortSignal = (): AbortSignal | null => {
-  if (isLoggingOut && globalAbortController) {
-    return globalAbortController.signal;
-  }
-  return null;
 };
 
 // Export function to check if logging out
@@ -117,30 +93,17 @@ export const verifyOTP = createAsyncThunk(
           localStorage.setItem("api_token", response.data.token);
         }
 
-        // Send welcome notification after successful account creation
-        // Wait a bit for the backend notification to be created and Socket.IO to connect
-        console.log("✅ Account created, scheduling welcome notification...");
-        setTimeout(() => {
-          console.log("⏰ Sending welcome notification now...");
-          import("../slices/notificationSlice").then(
-            ({ createNotification }) => {
-              dispatch(
-                createNotification({
-                  type: "success",
-                  content:
-                    "Welcome to TalentAI! 🎉 We're excited to have you on board. Start exploring amazing opportunities and connect with top talent.",
-                }) as any
-              )
-                .then(() => {
-                  console.log("✅ Welcome notification sent successfully!");
-                })
-                .catch((err: any) => {
-                  console.error("❌ Welcome notification failed:", err);
-                });
-            }
-          );
-        }, 2000);
+        if (response?.data?.user) {
+          dispatch(setConnectedUser(response.data));
+        }
 
+        dispatch(
+          createNotification({
+            type: "success",
+            content:
+              "Welcome to TalentAI! 🎉 We're excited to have you on board. Start exploring amazing opportunities and connect with top talent.",
+          }) as any
+        );
         return response.data;
       } else {
         // Handle 4xx errors (like 400 Bad Request)
@@ -179,12 +142,7 @@ export const logout = createAsyncThunk(
       // Prevent interceptors from running
       setLoggingOut(true);
 
-      // Clear redux slices FIRST
-      const { clearProfile, clearProfileCache } = await import(
-        "./profileSlice"
-      );
-      dispatch(clearProfile());
-      dispatch(clearProfileCache());
+      dispatch(clearConnectedUser());
 
       // Clear storage
       localStorage.removeItem("api_token");
@@ -202,7 +160,6 @@ export const logout = createAsyncThunk(
         Cookies.remove(cookieName, { path: "/" });
       });
 
-      console.log("✅ Logout completed");
       return true;
     } catch (error: any) {
       console.error("❌ Logout error:", error);
@@ -221,16 +178,10 @@ const authSlice = createSlice({
       state.error = null;
     },
     clearAuth: (state) => {
-      state.profile = null;
-      state.user = null;
-      state.companyMembership = null;
       state.isLoading = false;
       state.isAuthenticated = false;
       state.error = null;
       state.token = null;
-    },
-    setUser: (state, action) => {
-      state.user = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -242,7 +193,6 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = false;
-        state.user = action.payload;
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -258,9 +208,6 @@ const authSlice = createSlice({
         state.error = null;
         state.token = action.payload.token;
         if (action.payload.user) {
-          state.profile = action.payload.profile;
-          state.user = action.payload.user;
-          state.companyMembership = action.payload.companyMembership || null;
           state.isAuthenticated = true;
         }
         if (action.payload.token) {
@@ -282,18 +229,12 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(logout.fulfilled, (state) => {
-        // Reset to initial state
-        state.profile = null;
-        state.user = null;
         state.isLoading = false;
         state.isAuthenticated = false;
         state.error = null;
         state.token = null;
       })
       .addCase(logout.rejected, (state, action) => {
-        // Even on error, clear auth state
-        state.profile = null;
-        state.user = null;
         state.isLoading = false;
         state.isAuthenticated = false;
         state.error = action.payload as string;
@@ -302,5 +243,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearAuth, setUser } = authSlice.actions;
+export const { clearError, clearAuth } = authSlice.actions;
 export default authSlice.reducer;

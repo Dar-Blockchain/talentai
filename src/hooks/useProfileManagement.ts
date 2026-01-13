@@ -44,7 +44,7 @@ const initialProfile: UserProfile = {
 export const useProfileManagement = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const { profile: reduxProfile, loading, error, uploadingImage, saveSuccess } = useSelector(
     (state: RootState) => state.profile
   );
@@ -62,14 +62,6 @@ export const useProfileManagement = () => {
       }
     }
   }, [router.isReady, router.query.tab]);
-
-  // Load user profile data
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-    dispatch(getMyProfile());
-  }, [user, router, dispatch]);
 
   // Update local profile state when Redux profile changes
   useEffect(() => {

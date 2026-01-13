@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { isLoggingOutCheck, getAbortSignal } from "./authSlice";
+import { isLoggingOutCheck } from "./authSlice";
 
 // Type definitions based on your API response
 export type MemberRole = "RH" | "TechLead" | "Supervisor" | "Manager" | "Owner";
@@ -127,8 +127,6 @@ export const addEmployee = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Sending invitation via API...`);
 
@@ -149,7 +147,6 @@ export const addEmployee = createAsyncThunk<
           "Content-Type": "application/json",
         },
         body: JSON.stringify(apiPayload),
-        signal: abortSignal || undefined,
       }
     );
 
@@ -210,8 +207,6 @@ export const updateMemberRole = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Updating member role via API...`);
 
@@ -231,7 +226,6 @@ export const updateMemberRole = createAsyncThunk<
           "Content-Type": "application/json",
         },
         body: JSON.stringify(apiPayload),
-        signal: abortSignal || undefined,
       }
     );
 
@@ -292,8 +286,6 @@ export const deleteMember = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Deleting member via API...`);
     console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
@@ -306,7 +298,6 @@ export const deleteMember = createAsyncThunk<
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        signal: abortSignal || undefined,
       }
     );
 
@@ -367,8 +358,6 @@ export const fetchMembers = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Fetching members from API...`);
     const response = await fetch(
@@ -379,7 +368,6 @@ export const fetchMembers = createAsyncThunk<
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        signal: abortSignal || undefined,
       }
     );
 
@@ -439,8 +427,6 @@ export const fetchInvitations = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Fetching invitations from API...`);
     const response = await fetch(
@@ -451,7 +437,6 @@ export const fetchInvitations = createAsyncThunk<
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        signal: abortSignal || undefined,
       }
     );
 
@@ -511,8 +496,6 @@ export const resendInvitation = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Resending invitation via API...`);
     const response = await fetch(
@@ -523,7 +506,6 @@ export const resendInvitation = createAsyncThunk<
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        signal: abortSignal || undefined,
       }
     );
 
@@ -583,8 +565,6 @@ export const cancelInvitation = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(`📡 [MemberSlice] Deleting invitation via API...`);
     const response = await fetch(
@@ -595,7 +575,6 @@ export const cancelInvitation = createAsyncThunk<
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        signal: abortSignal || undefined,
       }
     );
 

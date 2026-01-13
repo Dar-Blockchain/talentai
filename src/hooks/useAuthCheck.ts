@@ -10,9 +10,11 @@ export const useAuthCheck = () => {
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
 
-  const { isAuthenticated, user, profile, companyMembership } = useSelector(
+  const { isAuthenticated } = useSelector(
     (state: RootState) => state.auth
   );
+
+  const { user, companyMembership, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const [checkingAuth, setCheckingAuth] = useState(true);
 

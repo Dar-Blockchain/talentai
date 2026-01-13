@@ -209,7 +209,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 function UserInfoCardComponent() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>()
-  const profile = useSelector((state: RootState) => state.auth.profile);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [selectedSkillType, setSelectedSkillType] = useState<'soft' | 'technical' | ''>('');
 

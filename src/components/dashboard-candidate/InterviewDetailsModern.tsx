@@ -100,7 +100,7 @@ const INTERVIEW_TYPES = [
 ];
 
 export default function InterviewDetailsModern() {
-  const profile = useSelector((state: RootState) => state.auth.profile);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
   const [tab, setTab] = useState("post_interview");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

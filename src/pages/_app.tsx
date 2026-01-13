@@ -42,7 +42,8 @@ const theme = createTheme({
 });
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
+
   const userId = user?._id;
   const { checkingAuth } = useAuthCheck();
 

@@ -14,8 +14,7 @@ import { RootState } from "@/store/store";
 
 const WelcomeHeader = () => {
   const router = useRouter();
-  const profile = useSelector((state: RootState) => state.auth.profile);
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
   const quota = profile?.quota || 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
 

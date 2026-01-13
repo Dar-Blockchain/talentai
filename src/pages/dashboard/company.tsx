@@ -59,8 +59,7 @@ export interface MatchingCandidate {
 
 const DashboardCompany = () => {
   const dispatch = useDispatch<AppDispatch>();
-    const {user, profile} = useSelector((state: RootState) => state.auth);
-
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);

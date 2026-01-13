@@ -14,8 +14,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-// Extracted Components
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import NotificationsTab from '@/components/profile/NotificationsTab';
 import PersonalInformationTab from '@/components/profile/PersonalInformationTab';
@@ -24,8 +22,6 @@ import TeamMembersTab from '@/components/profile/TeamMembersTab';
 import ProfileVisibilityTab from '@/components/profile/ProfileVisibilityTab';
 import SnackbarNotifications from '@/components/profile/SnackbarNotifications';
 import BackToDashboardButton from '@/components/profile/BackToDashboardButton';
-
-// Custom Hook
 import { useProfileManagement } from '@/hooks/useProfileManagement';
 
 const ProfileSettingsPage: React.FC = () => {
@@ -48,7 +44,7 @@ const ProfileSettingsPage: React.FC = () => {
     handleDismissSuccess,
   } = useProfileManagement();
 
-  const { profile: reduxProfile } = useSelector((state: RootState) => state.profile);
+  const { profile: reduxProfile } = useSelector((state: RootState) => state.user.connectedUser);
   const [isPublicProfile, setIsPublicProfile] = useState(reduxProfile?.isPublicProfile || false);
 
   // Update local state when redux profile changes

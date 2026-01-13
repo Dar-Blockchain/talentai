@@ -24,8 +24,7 @@ const Header = () => {
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
-
-  const profile = useSelector((state: RootState) => state.auth.profile);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const isCompany = useMemo(
     () => profile?.type?.toLowerCase() === "company",

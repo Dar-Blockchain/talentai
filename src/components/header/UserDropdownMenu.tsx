@@ -26,16 +26,14 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const companyMembership = useSelector(
-    (state: RootState) => state.auth.companyMembership
-  );
+  const { user, companyMembership } = useSelector((state: RootState) => state.user.connectedUser);
+
   const currentSpace = useSelector(
     (state: RootState) => state.user.currentSpace
   );
 
   const onProfileClick = () => {
-    router.push("/profile/" + user?._id);
+    router.push("/profile/candidate/" + user?._id);
   };
 
   const hasMembership = !!companyMembership?._id;
@@ -74,7 +72,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
         },
       }}
     >
-      <MenuItem
+      {!isCompany && <MenuItem
         onClick={() => {
           onProfileClick?.();
           menuProps.onClose?.({}, "backdropClick");
@@ -89,7 +87,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
           <UserOutlineIcon />
         </ListItemIcon>
         View Profile
-      </MenuItem>
+      </MenuItem>}
 
       {hasMembership && (
         <MenuItem
@@ -107,7 +105,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
         </MenuItem>
       )}
 
-      <Divider sx={{ color: "rgba(98, 111, 134, 0.5)" }} />
+      {!isCompany && <Divider sx={{ color: "rgba(98, 111, 134, 0.5)" }} />}
 
       <MenuItem
         onClick={handleLogout}

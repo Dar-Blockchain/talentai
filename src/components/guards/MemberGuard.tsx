@@ -10,8 +10,10 @@ interface MemberGuardProps {
 const MemberGuard = ({ children }: MemberGuardProps) => {
   const router = useRouter();
 
-  const { user, companyMembership, isAuthenticated } = useSelector(
-    (state: RootState) => state.auth
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  const { user, companyMembership } = useSelector(
+    (state: RootState) => state.user.connectedUser
   );
 
   useEffect(() => {
@@ -21,9 +23,9 @@ const MemberGuard = ({ children }: MemberGuardProps) => {
 
     if (user?.role === "Company") {
       router.replace("/dashboard/company");
-    } else if((user?.role === "Candidate")){
+    } else if (user?.role === "Candidate") {
       router.replace("/dashboard/candidate");
-    }else if((user?.role === "Admin")){
+    } else if (user?.role === "Admin") {
       router.replace("/dashboard/admin");
     }
   }, [isAuthenticated, companyMembership?._id, user, router]);
