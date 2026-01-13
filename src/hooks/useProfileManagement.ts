@@ -108,12 +108,12 @@ export const useProfileManagement = () => {
         country: reduxProfile.country || 'Tunisia',
         language: reduxProfile.language || 'English',
         timezone: reduxProfile.timeZone || reduxProfile.timezone || 'UTC+01:00',
-        phone: reduxProfile.contactInformation?.phone || '',
-        address: reduxProfile.contactInformation?.address || '',
-        linkedinUrl: reduxProfile.contactInformation?.linkedinUrl || '',
-        githubUrl: reduxProfile.contactInformation?.githubUrl || '',
-        personalWebsite: reduxProfile.contactInformation?.personalWebsite || '',
-        location: reduxProfile.contactInformation?.location || '',
+        phone: reduxProfile.phone || reduxProfile.contactInformation?.phone || '',
+        address: reduxProfile.address || reduxProfile.contactInformation?.address || '',
+        linkedinUrl: reduxProfile.linkedinUrl || reduxProfile.contactInformation?.linkedinUrl || '',
+        githubUrl: reduxProfile.githubUrl || reduxProfile.contactInformation?.githubUrl || '',
+        personalWebsite: reduxProfile.personalWebsite || reduxProfile.contactInformation?.personalWebsite || '',
+        location: reduxProfile.location || reduxProfile.contactInformation?.location || '',
         avatar: avatarUrl,
         profileType: (isCompany ? 'Company' : 'Candidate') as 'Candidate' | 'Company',
         companyName: reduxProfile.companyDetails?.name || '',
@@ -210,9 +210,25 @@ export const useProfileManagement = () => {
             updatePayload.targetRole = profile.targetRole.trim();
           }
         } else if (activeTab === 'contact') {
-          // Contact Information - only fields that exist in backend
-          // Note: Backend doesn't have contactInformation nested structure for candidates
-          // These would need to be handled separately or added to the profile root
+          // Contact Information - send at root level for candidates
+          if (profile.phone?.trim()) {
+            updatePayload.phone = profile.phone.trim();
+          }
+          if (profile.location?.trim()) {
+            updatePayload.location = profile.location.trim();
+          }
+          if (profile.address?.trim()) {
+            updatePayload.address = profile.address.trim();
+          }
+          if (profile.linkedinUrl?.trim()) {
+            updatePayload.linkedinUrl = profile.linkedinUrl.trim();
+          }
+          if (profile.githubUrl?.trim()) {
+            updatePayload.githubUrl = profile.githubUrl.trim();
+          }
+          if (profile.personalWebsite?.trim()) {
+            updatePayload.personalWebsite = profile.personalWebsite.trim();
+          }
         }
       }
 

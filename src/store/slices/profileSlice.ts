@@ -61,6 +61,13 @@ export interface Profile {
   language?: string;
   timezone?: string;
   timeZone?: string;  // Backend uses camelCase
+  // Contact fields (for candidates at root level)
+  phone?: string;
+  address?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  personalWebsite?: string;
+  location?: string;
   skills: Skill[];
   softSkills: SoftSkill[];
   requiredSkills: string[];
