@@ -27,8 +27,6 @@ const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
     }
   }, [user, allowedRoles, router, isLoggingOut]);
 
-  if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
-
   if (!user || !profile) return <LoadingScreen />;
 
   return <>{children}</>;
