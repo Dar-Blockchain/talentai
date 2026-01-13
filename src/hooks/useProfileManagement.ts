@@ -53,11 +53,16 @@ export const useProfileManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
 
+  // Fetch profile on mount
+  useEffect(() => {
+    dispatch(getMyProfile());
+  }, [dispatch]);
+
   // Handle tab parameter from URL query
   useEffect(() => {
     if (router.isReady && router.query.tab) {
       const tabParam = router.query.tab as string;
-      if (['personal', 'contact', 'preferences', 'notifications'].includes(tabParam)) {
+      if (['personal', 'contact', 'preferences', 'notifications', 'visibility'].includes(tabParam)) {
         setActiveTab(tabParam);
       }
     }

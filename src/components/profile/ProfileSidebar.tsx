@@ -43,7 +43,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
     { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
     { id: 'team', label: 'Team Members', icon: <GroupIcon /> },
-    { id: 'visibility', label: 'Public Profile', icon: <VisibilityIcon /> },
+    // { id: 'visibility', label: 'Public Profile', icon: <VisibilityIcon /> },
     // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 
@@ -51,7 +51,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
 
   const handleTabClick = (itemId: string) => {
     onTabChange(itemId);
-    router.push(`/settings/profile?tab=${itemId}`, undefined, { shallow: true });
+    // Get the current route path
+    const currentPath = router.pathname;
+    router.push(`${currentPath}?tab=${itemId}`, undefined, { shallow: true });
   };
 
   return (

@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import BusinessIcon from "@mui/icons-material/Business";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
@@ -58,6 +59,15 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
     menuProps.onClose?.({}, "backdropClick");
   };
 
+  const handleSettingsClick = () => {
+    if (isCompany) {
+      router.push("/profile/company/settings");
+    } else {
+      router.push("/profile/candidate/settings");
+    }
+    menuProps.onClose?.({}, "backdropClick");
+  };
+
   return (
     <Menu
       {...menuProps}
@@ -89,6 +99,20 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
         View Profile
       </MenuItem>}
 
+      <MenuItem
+        onClick={handleSettingsClick}
+        sx={{
+          color: "rgba(98, 111, 134, 1)",
+          fontWeight: 500,
+          fontSize: "12px",
+        }}
+      >
+        <ListItemIcon>
+          <SettingsIcon fontSize="small" />
+        </ListItemIcon>
+        Settings
+      </MenuItem>
+
       {hasMembership && (
         <MenuItem
           onClick={handleSwitchSpace}
@@ -105,7 +129,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
         </MenuItem>
       )}
 
-      {!isCompany && <Divider sx={{ color: "rgba(98, 111, 134, 0.5)" }} />}
+      <Divider sx={{ color: "rgba(98, 111, 134, 0.5)" }} />
 
       <MenuItem
         onClick={handleLogout}
