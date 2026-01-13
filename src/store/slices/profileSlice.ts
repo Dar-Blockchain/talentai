@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { isLoggingOutCheck, getAbortSignal } from "./authSlice";
+import { isLoggingOutCheck } from "./authSlice";
 
 interface User {
   _id: string;
@@ -143,9 +143,6 @@ export const getMyProfile = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
-  // Get abort signal for this request
-  const abortSignal = getAbortSignal();
-
   try {
     console.log(
       `📡 [ProfileSlice][Call-${callId}] Fetching profile from API...`
@@ -158,7 +155,6 @@ export const getMyProfile = createAsyncThunk<
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        signal: abortSignal || undefined, // Add abort signal to cancel request
       }
     );
 
@@ -237,9 +233,6 @@ export const getProfileById = createAsyncThunk<
     // Get token (optional for public profiles)
     const token = localStorage.getItem("api_token");
 
-    // Get abort signal for this request
-    const abortSignal = getAbortSignal();
-
     try {
       console.log(
         `📡 [ProfileSlice] Fetching profile from API for userId: ${userId}...`
@@ -259,7 +252,6 @@ export const getProfileById = createAsyncThunk<
         {
           method: "GET",
           headers,
-          signal: abortSignal || undefined,
         }
       );
 

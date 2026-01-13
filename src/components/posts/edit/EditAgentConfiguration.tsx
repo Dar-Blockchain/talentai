@@ -98,7 +98,7 @@ const EditAgentConfiguration: React.FC<EditAgentConfigurationProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const job = useSelector(selectCurrentJob);
   const config = React.useMemo(() => job?.agentConfig, [job]);
-  const { profile } = useSelector((state: RootState) => state.auth);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const initialValues = React.useMemo(() => {
     if (!config) {

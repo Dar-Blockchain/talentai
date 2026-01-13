@@ -20,8 +20,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  const user = useSelector((state: RootState) => state.auth.user);
-  const profile = useSelector((state: RootState) => state.auth.profile);
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const isAdmin = useMemo(
     () => profile?.type?.toLowerCase() === "admin",

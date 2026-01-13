@@ -12,9 +12,7 @@ const HeaderLogo = () => {
     (state: RootState) => state.user.userType
   );
 
-  const user = useSelector(
-    (state: RootState) => state.auth.user
-  );
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
   const userType =
     router.pathname === '/home/candidate' ||

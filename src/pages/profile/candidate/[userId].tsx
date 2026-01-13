@@ -33,49 +33,42 @@ import {
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
 } from '@mui/icons-material';
-import { getProfileById, selectProfileById, clearProfileById } from '@/store/slices/profileSlice';
-import Footer from '@/components/layout/Footer';
+import { getProfileById, clearTargetUser } from '@/store/slices/userSlice';
+import Header from '@/components/layout/Header';
+import PageContainer from '@/components/layout/PageContainer';
 import SkillsSection from '@/components/profile/SkillsSection';
 import BadgesSection from '@/components/profile/BadgesSection';
 import { generateBadgesFromProfile } from '@/utils/generateProfileBadges';
 
-const ProfileByIdPage: React.FC = () => {
+const CandidateProfile: React.FC = () => {
   const router = useRouter();
   const { userId } = router.query;
   const dispatch = useDispatch<AppDispatch>();
 
-  const { profile, loading, error } = useSelector(selectProfileById);
-  const { profile: currentUserProfile } = useSelector((state: RootState) => state.profile);
+  const { profile, user, loading, error } = useSelector((state: RootState) => state.user.targetUser);
+  const currentUserProfile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  // Determine if current user is viewing their own profile
   const isOwnProfile = currentUserProfile?._id && profile?._id && currentUserProfile._id === profile._id;
 
-  // Fetch profile when userId changes
   useEffect(() => {
     if (userId && typeof userId === 'string') {
       dispatch(getProfileById(userId));
     }
 
-    // Cleanup on unmount
     return () => {
-      dispatch(clearProfileById());
+      dispatch(clearTargetUser());
     };
   }, [userId, dispatch]);
 
-  // Memoized computed values
   const profileData = useMemo(() => {
-    if (!profile || !profile.userId) return null;
+    if (!profile) return null;
 
-    const isCompany = profile.type === 'company';
-    const fullName = isCompany
-      ? profile.companyDetails?.name || 'Company Name'
-      : `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.userId?.username || 'Unknown User';
+    const fullName =  `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.userId?.username || 'Unknown User'
 
     return {
       fullName,
-      isCompany,
-      email: profile.userId?.email || 'N/A',
-      userImage: profile.user_image || profile.userId?.user_image,
+      email: user?.email || 'N/A',
+      userImage: profile.user_image,
       createdAt: profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -90,13 +83,8 @@ const ProfileByIdPage: React.FC = () => {
     return generateBadgesFromProfile(profile.skills || [], profile.softSkills || []);
   }, [profile]);
 
-  // Loading skeleton
   const renderSkeleton = () => (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
-        <Skeleton variant="text" width={150} height={40} />
-      </Box>
       <Paper elevation={3} sx={{ p: 4, mb: 3, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Skeleton variant="circular" width={120} height={120} sx={{ mr: 3 }} />
@@ -117,60 +105,10 @@ const ProfileByIdPage: React.FC = () => {
     </Container>
   );
 
-  // Error state
-  if (error) {
-    return (
-      <>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Alert
-            severity="error"
-            sx={{ mb: 3 }}
-            action={
-              <Box
-                component="span"
-                onClick={() => router.back()}
-                sx={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: 'error.main',
-                  '&:hover': { textDecoration: 'underline' }
-                }}
-              >
-                <ArrowBackIcon sx={{ mr: 0.5, fontSize: 20 }} />
-                Go Back
-              </Box>
-            }
-          >
-            {error}
-          </Alert>
-        </Container>
-        <Footer />
-      </>
-    );
-  }
-
   // Check if profile is private (and viewer is not the owner)
   if (profile && !isOwnProfile && !profile.isPublicProfile) {
     return (
       <>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mb: 3,
-              cursor: 'pointer',
-              '&:hover': { opacity: 0.7 }
-            }}
-            onClick={() => router.back()}
-          >
-            <ArrowBackIcon sx={{ mr: 1, color: '#8310FF' }} />
-            <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 600 }}>
-              Back
-            </Typography>
-          </Box>
-
           <Paper
             elevation={0}
             sx={{
@@ -265,8 +203,6 @@ const ProfileByIdPage: React.FC = () => {
               </Button>
             </Box>
           </Paper>
-        </Container>
-        <Footer />
       </>
     );
   }
@@ -275,13 +211,13 @@ const ProfileByIdPage: React.FC = () => {
   if (loading || !profile || !profileData) {
     return (
       <>
+        <Header/>
         {renderSkeleton()}
-        <Footer />
       </>
     );
   }
 
-  const { fullName, isCompany, email, userImage, createdAt } = profileData;
+  const { fullName, email, userImage, createdAt } = profileData;
 
   // Calculate statistics for meta tags
   const verifiedSkills = [
@@ -301,58 +237,12 @@ const ProfileByIdPage: React.FC = () => {
   const metaDescription = `${fullName} on TalentAI - ${verifiedCount} Blockchain-Verified Skills${totalInterviews > 0 ? `, ${totalInterviews} Completed AI Interviews` : ''}${overallScore > 0 ? `, Overall Score: ${overallScore}/100` : ''}. Top Skills: ${topSkillsList || 'Building portfolio'}. View verified professional profile.`;
 
   // Build canonical URL
-  const profileCanonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://talentai.com'}/profile/${userId}`;
+  const profileCanonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://talentai.com'}/profile/candidate/${userId}`;
 
   return (
-    <>
-      <Head>
-        <title>{`${fullName} - Verified Profile | TalentAI`}</title>
-        <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={profileCanonicalUrl} />
-
-        {/* Open Graph / Facebook / LinkedIn */}
-        <meta property="og:type" content="profile" />
-        <meta property="og:title" content={`${fullName} - Verified Professional Profile on TalentAI`} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content={userImage || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://talentai.com'}/images/default-profile.png`} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:url" content={profileCanonicalUrl} />
-        <meta property="og:site_name" content="TalentAI - Blockchain-Verified Skills Platform" />
-
-        {/* LinkedIn Profile Schema */}
-        <meta property="profile:first_name" content={profile?.firstName || ''} />
-        <meta property="profile:last_name" content={profile?.lastName || ''} />
-        <meta property="profile:username" content={profile?.userId?.username || ''} />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${fullName} - Verified Profile`} />
-        <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={userImage || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://talentai.com'}/images/default-profile.png`} />
-
-        {/* Additional SEO */}
-        <meta name="keywords" content={`${fullName}, verified skills, blockchain credentials, ${topSkillsList}, professional profile, TalentAI`} />
-        <meta name="author" content={fullName} />
-      </Head>
-      <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f7fa', pb: 4, pt: 4 }}>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          {/* Back Button */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mb: 3,
-              cursor: 'pointer',
-              '&:hover': { opacity: 0.7 }
-            }}
-            onClick={() => router.back()}
-          >
-            <ArrowBackIcon sx={{ mr: 1, color: '#00FF9D' }} />
-            <Typography variant="h6" sx={{ color: '#00FF9D', fontWeight: 600 }}>
-              Back
-            </Typography>
-          </Box>
+    <PageContainer>
+      <Header/>
+      <>
 
           {/* Profile Header */}
           <Paper
@@ -376,7 +266,7 @@ const ProfileByIdPage: React.FC = () => {
                   border: '2px solid #E5E7EB'
                 }}
               >
-                {isCompany ? <BusinessIcon sx={{ fontSize: 50 }} /> : <PersonIcon sx={{ fontSize: 50 }} />}
+                <PersonIcon sx={{ fontSize: 50 }} />
               </Avatar>
               <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: { xs: 'center', sm: 'flex-start' }, mb: 1 }}>
@@ -413,8 +303,8 @@ const ProfileByIdPage: React.FC = () => {
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-start' }, mb: 2 }}>
                   <Chip
-                    label={isCompany ? 'Company' : 'Candidate'}
-                    color={isCompany ? 'primary' : 'success'}
+                    label={'Candidate'}
+                    color={'success'}
                     sx={{ fontWeight: 600 }}
                   />
                   {profile.overallScore && (
@@ -433,7 +323,6 @@ const ProfileByIdPage: React.FC = () => {
             <Divider sx={{ my: 3 }} />
 
             {/* Stats Section - Professional Design */}
-            {!isCompany && (
               <Box sx={{
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
@@ -541,7 +430,7 @@ const ProfileByIdPage: React.FC = () => {
                   </Typography>
                 </Card>
               </Box>
-            )}
+            
 
             {/* Basic Info */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -573,7 +462,7 @@ const ProfileByIdPage: React.FC = () => {
                 </Card>
               </Box>
 
-              {!isCompany && profile.targetRole && (
+              {profile.targetRole && (
                 <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' } }}>
                   <Card variant="outlined" sx={{ p: 2, height: '100%', borderLeft: '4px solid #3b82f6' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -589,7 +478,7 @@ const ProfileByIdPage: React.FC = () => {
                 </Box>
               )}
 
-              {!isCompany && profile.requiredExperienceLevel && (
+              {profile.requiredExperienceLevel && (
                 <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' } }}>
                   <Card variant="outlined" sx={{ p: 2, height: '100%', borderLeft: '4px solid #8b5cf6' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -604,61 +493,11 @@ const ProfileByIdPage: React.FC = () => {
                   </Card>
                 </Box>
               )}
-
-              {isCompany && profile.companyDetails && (
-                <>
-                  {profile.companyDetails.industry && (
-                    <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' } }}>
-                      <Card variant="outlined" sx={{ p: 2, height: '100%', borderLeft: '4px solid #3b82f6' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <BusinessIcon sx={{ color: '#3b82f6', mr: 1 }} />
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Industry
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {profile.companyDetails.industry}
-                        </Typography>
-                      </Card>
-                    </Box>
-                  )}
-                  {profile.companyDetails.size && (
-                    <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' } }}>
-                      <Card variant="outlined" sx={{ p: 2, height: '100%', borderLeft: '4px solid #f59e0b' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <PersonIcon sx={{ color: '#f59e0b', mr: 1 }} />
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Company Size
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {profile.companyDetails.size}
-                        </Typography>
-                      </Card>
-                    </Box>
-                  )}
-                  {profile.companyDetails.location && (
-                    <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' } }}>
-                      <Card variant="outlined" sx={{ p: 2, height: '100%', borderLeft: '4px solid #ef4444' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <LocationIcon sx={{ color: '#ef4444', mr: 1 }} />
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Location
-                          </Typography>
-                        </Box>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {profile.companyDetails.location}
-                        </Typography>
-                      </Card>
-                    </Box>
-                  )}
-                </>
-              )}
             </Box>
           </Paper>
 
           {/* Technical Badges Section */}
-          {!isCompany && technicalBadges.length > 0 && (
+          { technicalBadges.length > 0 && (
             <BadgesSection
               title="Technical Badges"
               badges={technicalBadges}
@@ -669,7 +508,7 @@ const ProfileByIdPage: React.FC = () => {
           )}
 
           {/* Soft Skill Badges Section */}
-          {!isCompany && softBadges.length > 0 && (
+          {softBadges.length > 0 && (
             <BadgesSection
               title="Soft Skill Badges"
               badges={softBadges}
@@ -680,7 +519,6 @@ const ProfileByIdPage: React.FC = () => {
           )}
 
           {/* Technical Skills Section */}
-          {!isCompany && (
             <SkillsSection
               title="Technical Skills"
               skills={profile.skills || []}
@@ -688,10 +526,9 @@ const ProfileByIdPage: React.FC = () => {
               gradientColors="#764ba2"
               type="technical"
             />
-          )}
+        
 
           {/* Soft Skills Section */}
-          {!isCompany && (
             <SkillsSection
               title="Soft Skills"
               skills={profile.softSkills || []}
@@ -699,12 +536,10 @@ const ProfileByIdPage: React.FC = () => {
               gradientColors="#f5576c"
               type="soft"
             />
-          )}
-        </Container>
-      </Box>
-      <Footer />
-    </>
+        
+      </>
+    </PageContainer>
   );
 };
 
-export default ProfileByIdPage;
+export default CandidateProfile;

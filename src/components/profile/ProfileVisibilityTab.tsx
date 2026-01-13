@@ -44,7 +44,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
 
   // Generate public profile URL
   const publicProfileUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/profile/${userId}`
+    ? `${window.location.origin}/profile/candidate/${userId}`
     : '';
 
   const handleToggleVisibility = useCallback(async () => {

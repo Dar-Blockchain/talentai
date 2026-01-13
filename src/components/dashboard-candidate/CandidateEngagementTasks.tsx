@@ -35,8 +35,7 @@ interface Task {
 
 export default function CandidateEngagementTasks() {
   const router = useRouter();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const profile = useSelector((state: RootState) => state.auth.profile);
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
   const tokenBalance = useSelector(selectTokenBalance) ?? 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
   const onStartTest = () => {
@@ -77,7 +76,7 @@ export default function CandidateEngagementTasks() {
         title: 'Share Your Profile on LinkedIn',
         description: 'Show employers your verified skills',
         completed: profile?.linkedInShared || false,
-        action: () => router.push(`/profile/${user?._id}`),
+        action: () => router.push(`/profile/candidate/${user?._id}`),
         icon: LinkedInIcon,
         reward: 'Get discovered by recruiters',
       },

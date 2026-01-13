@@ -16,6 +16,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { useAuthCheck } from "@/hooks/useAuthCheck";
 import { isTokenExpired } from "@/utils/tokenUtils";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import { isLoggingOutCheck } from "@/store/slices/authSlice";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -42,17 +43,23 @@ const theme = createTheme({
 });
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
+
   const userId = user?._id;
   const { checkingAuth } = useAuthCheck();
+  const isLoggingOut = useSelector(isLoggingOutCheck);
 
   useEffect(() => {
     const token = localStorage.getItem("api_token");
     if (token && isTokenExpired(token)) {
       localStorage.removeItem("api_token");
+      localStorage.removeItem("token");
       Cookies.remove("api_token");
+      Cookies.remove("token");
     }
   }, []);
+
+  if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
 
   if (checkingAuth) {
     return <LoadingScreen />;

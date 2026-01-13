@@ -43,7 +43,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
     { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
     { id: 'team', label: 'Team Members', icon: <GroupIcon /> },
-    { id: 'visibility', label: 'Public Profile', icon: <VisibilityIcon /> },
+    // { id: 'visibility', label: 'Public Profile', icon: <VisibilityIcon /> },
     // { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
 
@@ -51,21 +51,23 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeTab, profileType,
 
   const handleTabClick = (itemId: string) => {
     onTabChange(itemId);
-    router.push(`/settings/profile?tab=${itemId}`, undefined, { shallow: true });
+    // Get the current route path
+    const currentPath = router.pathname;
+    router.push(`${currentPath}?tab=${itemId}`, undefined, { shallow: true });
   };
 
   return (
     <Card
       sx={{
         width: { xs: '100%', md: 280 },
-        height: 'fit-content',
+        height: '100%',
         borderRadius: 3,
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
         position: { xs: 'relative', md: 'sticky' },
         top: 20,
       }}
     >
-      <CardContent sx={{ p: 0 }}>
+      <CardContent sx={{ p: 0, height: '100%' }}>
         {menuItems.map((item) => (
           <Box
             key={item.id}

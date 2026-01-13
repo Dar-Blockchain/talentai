@@ -69,8 +69,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
-
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
   const userType =
     user?.role?.toLowerCase() ||

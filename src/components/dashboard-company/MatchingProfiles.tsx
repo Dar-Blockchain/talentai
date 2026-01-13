@@ -133,7 +133,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
     }
 
     // Redirect to profile page
-    router.push(`/profile/${candidate.candidateId}`);
+    router.push(`/profile/candidate/${candidate.candidateId}`);
   };
 
   return (

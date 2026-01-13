@@ -10,8 +10,9 @@ import { setCurrentSpace } from "@/store/slices/userSlice"
 const WorkspaceSelector: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const userRole = useSelector((state: RootState) => state.auth.user?.role);
-  const { user, profile } = useSelector((state: RootState) => state.auth);
+  const userRole = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+
+  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
   const goToPersonalWorkspace = () => {
     const redirctTo =

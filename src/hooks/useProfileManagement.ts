@@ -44,7 +44,7 @@ const initialProfile: UserProfile = {
 export const useProfileManagement = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const { profile: reduxProfile, loading, error, uploadingImage, saveSuccess } = useSelector(
     (state: RootState) => state.profile
   );
@@ -53,23 +53,20 @@ export const useProfileManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
 
+  // Fetch profile on mount
+  useEffect(() => {
+    dispatch(getMyProfile());
+  }, [dispatch]);
+
   // Handle tab parameter from URL query
   useEffect(() => {
     if (router.isReady && router.query.tab) {
       const tabParam = router.query.tab as string;
-      if (['personal', 'contact', 'preferences', 'notifications'].includes(tabParam)) {
+      if (['personal', 'contact', 'preferences', 'notifications', 'visibility'].includes(tabParam)) {
         setActiveTab(tabParam);
       }
     }
   }, [router.isReady, router.query.tab]);
-
-  // Load user profile data
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-    dispatch(getMyProfile());
-  }, [user, router, dispatch]);
 
   // Update local profile state when Redux profile changes
   useEffect(() => {

@@ -48,7 +48,7 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 }) => {
   const router = useRouter();
 
-  const profile = useSelector((state: RootState) => state.auth.profile);
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const [skillType, setSkillType] = useState<"soft" | "technical" | "">(
     type ?? ""
   );

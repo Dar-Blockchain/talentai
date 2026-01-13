@@ -11,7 +11,8 @@ import OnboardingStepper from "@/components/preferences/OnboardingStepper";
 
 function Preferences() {
   const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
+
   const [isClient, setIsClient] = useState(false);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
 

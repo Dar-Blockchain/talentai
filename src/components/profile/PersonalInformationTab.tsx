@@ -253,32 +253,8 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                 ) : (
                   // Company Fields
                   <>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
-                      <TextField
-                        label="Username"
-                        value={profile.username}
-                        onChange={(e) => onInputChange('username', e.target.value)}
-                        disabled={!isEditing}
-                        fullWidth
-                        sx={fieldSx}
-                      />
-                    </Box>
-
                     {/* Editable Company Fields */}
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3, mt: 4 }}>
-                      <TextField
-                        label="Company Email"
-                        value={profile.email}
-                        onChange={(e) => onInputChange('email', e.target.value)}
-                        disabled={!isEditing}
-                        fullWidth
-                        type="email"
-                        sx={{
-                          gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                          ...fieldSx,
-                        }}
-                      />
-
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                       <TextField
                         label="Company Name"
                         value={profile.name || profile.companyName}
@@ -288,6 +264,19 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                         }}
                         disabled={!isEditing}
                         fullWidth
+                        sx={{
+                          gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                          ...fieldSx,
+                        }}
+                      />
+
+                      <TextField
+                        label="Company Email"
+                        value={profile.email}
+                        onChange={(e) => onInputChange('email', e.target.value)}
+                        disabled={!isEditing}
+                        fullWidth
+                        type="email"
                         sx={{
                           gridColumn: { xs: '1 / -1', sm: 'span 2' },
                           ...fieldSx,

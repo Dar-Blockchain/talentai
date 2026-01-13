@@ -95,8 +95,7 @@ function CustomStepIcon(props: any) {
 
 const CreatePostStepper: React.FC = () => {
   const router = useRouter();
-
-  const { profile } = useSelector((state: RootState) => state.auth);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
   const manualPost = useSelector((state: any) => state.manualPost);
   const { status: createConfigStatus } = useSelector(

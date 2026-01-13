@@ -577,8 +577,8 @@ const IntelligentInterviewTest = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const authUser = useSelector((state: RootState) => state.auth.user);
-  const profile = useSelector((state: RootState) => state.profile.profile);
+  const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const userRole = useSelector((state: RootState) => state.user.userType);
 
   // WebSocket and Connection States
