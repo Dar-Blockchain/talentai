@@ -214,11 +214,32 @@ export const useCompanyProfileManagement = () => {
         console.log('🟢 [useCompanyProfileManagement] currentProfile.name:', currentProfile.name);
         console.log('🟢 [useCompanyProfileManagement] currentProfile.companyName:', currentProfile.companyName);
       } else if (activeTab === 'contact') {
-        // Contact Information - matches backend API structure
-        updatePayload.email = currentProfile.email?.trim() || '';
-        updatePayload.linkedin = currentProfile.linkedinUrl?.trim() || '';
-        updatePayload.website = currentProfile.personalWebsite?.trim() || '';
-        updatePayload.location = currentProfile.location?.trim() || '';
+        // Contact Information - nest under contactInformation object
+        const contactInfo: any = {};
+
+        if (currentProfile.email?.trim()) {
+          contactInfo.email = currentProfile.email.trim();
+        }
+        if (currentProfile.phone?.trim()) {
+          contactInfo.phone = currentProfile.phone.trim();
+        }
+        if (currentProfile.location?.trim()) {
+          contactInfo.location = currentProfile.location.trim();
+        }
+        if (currentProfile.address?.trim()) {
+          contactInfo.address = currentProfile.address.trim();
+        }
+        if (currentProfile.linkedinUrl?.trim()) {
+          contactInfo.linkedinUrl = currentProfile.linkedinUrl.trim();
+        }
+        if (currentProfile.personalWebsite?.trim()) {
+          contactInfo.personalWebsite = currentProfile.personalWebsite.trim();
+        }
+
+        // Only add contactInformation if at least one field is filled
+        if (Object.keys(contactInfo).length > 0) {
+          updatePayload.contactInformation = contactInfo;
+        }
       }
 
       // Check if we have at least one field to update

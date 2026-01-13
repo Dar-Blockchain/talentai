@@ -6,12 +6,12 @@ import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import {
   getMyProfile,
-  updateProfile as updateProfileAction,
   updateCompanyProfile,
   uploadProfilePicture,
   setSaveSuccess,
   clearError
 } from '@/store/slices/profileSlice';
+import { updateProfile as updateProfileAction } from '@/store/slices/userSlice';
 
 const initialProfile: UserProfile = {
   username: '',
@@ -210,24 +210,34 @@ export const useProfileManagement = () => {
             updatePayload.targetRole = profile.targetRole.trim();
           }
         } else if (activeTab === 'contact') {
-          // Contact Information - send at root level for candidates
+          // Contact Information - nest under contactInformation object
+          const contactInfo: any = {};
+
+          if (profile.email?.trim()) {
+            contactInfo.email = profile.email.trim();
+          }
           if (profile.phone?.trim()) {
-            updatePayload.phone = profile.phone.trim();
+            contactInfo.phone = profile.phone.trim();
           }
           if (profile.location?.trim()) {
-            updatePayload.location = profile.location.trim();
+            contactInfo.location = profile.location.trim();
           }
           if (profile.address?.trim()) {
-            updatePayload.address = profile.address.trim();
+            contactInfo.address = profile.address.trim();
           }
           if (profile.linkedinUrl?.trim()) {
-            updatePayload.linkedinUrl = profile.linkedinUrl.trim();
+            contactInfo.linkedinUrl = profile.linkedinUrl.trim();
           }
           if (profile.githubUrl?.trim()) {
-            updatePayload.githubUrl = profile.githubUrl.trim();
+            contactInfo.githubUrl = profile.githubUrl.trim();
           }
           if (profile.personalWebsite?.trim()) {
-            updatePayload.personalWebsite = profile.personalWebsite.trim();
+            contactInfo.personalWebsite = profile.personalWebsite.trim();
+          }
+
+          // Only add contactInformation if at least one field is filled
+          if (Object.keys(contactInfo).length > 0) {
+            updatePayload.contactInformation = contactInfo;
           }
         }
       }
