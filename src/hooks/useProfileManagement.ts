@@ -6,12 +6,12 @@ import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import {
   getMyProfile,
-  updateProfile as updateProfileAction,
   updateCompanyProfile,
   uploadProfilePicture,
   setSaveSuccess,
   clearError
 } from '@/store/slices/profileSlice';
+import { updateProfile as updateProfileAction } from '@/store/slices/userSlice';
 
 const initialProfile: UserProfile = {
   username: '',
@@ -81,32 +81,56 @@ export const useProfileManagement = () => {
         avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${userData.user_image}`;
       }
 
+      // For Candidates: Backend returns data at root level (firstName, lastName, country, language, timeZone)
+      // Contact info is in contactInformation for both
+      const isCompany = reduxProfile.type === 'Company';
+
+      console.log('🔵 [useProfileManagement] Redux profile data:', {
+        firstName: reduxProfile.firstName,
+        lastName: reduxProfile.lastName,
+        country: reduxProfile.country,
+        language: reduxProfile.language,
+        timeZone: reduxProfile.timeZone,
+        timezone: reduxProfile.timezone,
+        type: reduxProfile.type,
+        targetRole: reduxProfile.targetRole,
+        gender: reduxProfile.gender
+      });
+
       setProfile({
         username: userData?.username || user.username || '',
-        email: userData?.email || user.email || reduxProfile.companyDetails?.email || '',
-        requiredExperienceLevel: reduxProfile.requiredExperienceLevel || reduxProfile.companyDetails?.requiredExperienceLevel || 'Mid Level',
-        targetRole: reduxProfile.targetRole || '',
-        firstName: reduxProfile.firstName || user.username?.split(' ')[0] || '',
-        lastName: reduxProfile.lastName || user.username?.split(' ')[1] || '',
+        email: userData?.email || user.email || '',
+        requiredExperienceLevel: reduxProfile.requiredExperienceLevel || 'Mid Level',
+        targetRole: reduxProfile.targetRole ?? '',
+        firstName: reduxProfile.firstName ?? '',
+        lastName: reduxProfile.lastName ?? '',
         gender: reduxProfile.gender || 'Male',
-        country: reduxProfile.country || reduxProfile.companyDetails?.location || 'Tunisia',
+        country: reduxProfile.country || 'Tunisia',
         language: reduxProfile.language || 'English',
-        timezone: reduxProfile.timezone || 'UTC+01:00',
-        phone: reduxProfile.contactInformation?.phone || '',
-        address: reduxProfile.contactInformation?.address || '',
-        linkedinUrl: reduxProfile.contactInformation?.linkedinUrl || '',
-        githubUrl: reduxProfile.contactInformation?.githubUrl || '',
-        personalWebsite: reduxProfile.contactInformation?.personalWebsite || '',
-        location: reduxProfile.contactInformation?.location || reduxProfile.companyDetails?.location || '',
+        timezone: reduxProfile.timeZone || reduxProfile.timezone || 'UTC+01:00',
+        phone: reduxProfile.phone || reduxProfile.contactInformation?.phone || '',
+        address: reduxProfile.address || reduxProfile.contactInformation?.address || '',
+        linkedinUrl: reduxProfile.linkedinUrl || reduxProfile.contactInformation?.linkedinUrl || '',
+        githubUrl: reduxProfile.githubUrl || reduxProfile.contactInformation?.githubUrl || '',
+        personalWebsite: reduxProfile.personalWebsite || reduxProfile.contactInformation?.personalWebsite || '',
+        location: reduxProfile.location || reduxProfile.contactInformation?.location || '',
         avatar: avatarUrl,
-        profileType: (reduxProfile.type === 'Company' ? 'Company' : 'Candidate') as 'Candidate' | 'Company',
+        profileType: (isCompany ? 'Company' : 'Candidate') as 'Candidate' | 'Company',
         companyName: reduxProfile.companyDetails?.name || '',
         name: reduxProfile.companyDetails?.name || '',
         industry: reduxProfile.companyDetails?.industry || '',
         companySize: reduxProfile.companyDetails?.size || '',
         size: reduxProfile.companyDetails?.size || '',
         employmentType: reduxProfile.companyDetails?.employmentType || 'Remote',
-        requiredSkills: reduxProfile.companyDetails?.requiredSkills || reduxProfile.requiredSkills || [],
+        requiredSkills: reduxProfile.requiredSkills || [],
+      });
+
+      console.log('🟢 [useProfileManagement] Profile state set to:', {
+        firstName: reduxProfile.firstName,
+        lastName: reduxProfile.lastName,
+        country: reduxProfile.country,
+        language: reduxProfile.language,
+        timezone: reduxProfile.timeZone || reduxProfile.timezone || 'UTC+01:00'
       });
     }
   }, [reduxProfile, user]);
@@ -157,56 +181,68 @@ export const useProfileManagement = () => {
     try {
       const updatePayload: any = {};
 
-      // Fields for all users
-      if (profile.username?.trim()) {
-        updatePayload.username = profile.username.trim();
-      }
-
-      // Only include these fields for Candidates
+      // Only include these fields for Candidates - matches backend API structure
       if (profile.profileType === 'Candidate') {
-        if (profile.email?.trim()) {
-          updatePayload.email = profile.email.trim();
-        }
-        if (profile.requiredExperienceLevel) {
-          updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
-        }
-        if (profile.targetRole?.trim()) {
-          updatePayload.targetRole = profile.targetRole.trim();
-        }
-        if (profile.firstName?.trim()) {
-          updatePayload.firstName = profile.firstName.trim();
-        }
-        if (profile.lastName?.trim()) {
-          updatePayload.lastName = profile.lastName.trim();
-        }
-        if (profile.gender) {
-          updatePayload.gender = profile.gender;
-        }
-        if (profile.country) {
-          updatePayload.country = profile.country;
-        }
-        if (profile.language) {
-          updatePayload.language = profile.language;
-        }
-        if (profile.timezone) {
-          updatePayload.timezone = profile.timezone;
-        }
+        if (activeTab === 'personal') {
+          // Personal Information - matches backend structure
+          if (profile.firstName?.trim()) {
+            updatePayload.firstName = profile.firstName.trim();
+          }
+          if (profile.lastName?.trim()) {
+            updatePayload.lastName = profile.lastName.trim();
+          }
+          if (profile.gender) {
+            updatePayload.gender = profile.gender;
+          }
+          if (profile.country) {
+            updatePayload.country = profile.country;
+          }
+          if (profile.language) {
+            updatePayload.language = profile.language;
+          }
+          if (profile.timezone) {
+            updatePayload.timeZone = profile.timezone; // Note: backend uses 'timeZone' not 'timezone'
+          }
+          if (profile.requiredExperienceLevel) {
+            updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
+          }
+          if (profile.targetRole?.trim()) {
+            updatePayload.targetRole = profile.targetRole.trim();
+          }
+        } else if (activeTab === 'contact') {
+          // Contact Information - nest under contactInformation object
+          const contactInfo: any = {};
 
-        // Contact Information for Candidates
-        if (activeTab === 'contact' || profile.phone || profile.address || profile.linkedinUrl || profile.githubUrl || profile.personalWebsite || profile.location) {
-          updatePayload.contactInformation = {
-            email: profile.email?.trim() || '',
-            phone: profile.phone?.trim() || '',
-            address: profile.address?.trim() || '',
-            linkedinUrl: profile.linkedinUrl?.trim() || '',
-            githubUrl: profile.githubUrl?.trim() || '',
-            personalWebsite: profile.personalWebsite?.trim() || '',
-            location: profile.location?.trim() || '',
-          };
+          if (profile.email?.trim()) {
+            contactInfo.email = profile.email.trim();
+          }
+          if (profile.phone?.trim()) {
+            contactInfo.phone = profile.phone.trim();
+          }
+          if (profile.location?.trim()) {
+            contactInfo.location = profile.location.trim();
+          }
+          if (profile.address?.trim()) {
+            contactInfo.address = profile.address.trim();
+          }
+          if (profile.linkedinUrl?.trim()) {
+            contactInfo.linkedinUrl = profile.linkedinUrl.trim();
+          }
+          if (profile.githubUrl?.trim()) {
+            contactInfo.githubUrl = profile.githubUrl.trim();
+          }
+          if (profile.personalWebsite?.trim()) {
+            contactInfo.personalWebsite = profile.personalWebsite.trim();
+          }
+
+          // Only add contactInformation if at least one field is filled
+          if (Object.keys(contactInfo).length > 0) {
+            updatePayload.contactInformation = contactInfo;
+          }
         }
       }
 
-      // For Companies
+      // For Companies (this shouldn't be called from useProfileManagement but keeping for safety)
       if (profile.profileType === 'Company') {
         if (activeTab === 'personal') {
           const companyPayload = {
@@ -217,6 +253,7 @@ export const useProfileManagement = () => {
             email: profile.email?.trim() || '',
             employmentType: profile.employmentType || 'Remote',
             requiredExperienceLevel: profile.requiredExperienceLevel || 'Mid Level',
+            requiredSkills: profile.requiredSkills || [],
           };
 
           await dispatch(updateCompanyProfile(companyPayload)).unwrap();
@@ -224,14 +261,10 @@ export const useProfileManagement = () => {
           await dispatch(getMyProfile());
           return;
         } else if (activeTab === 'contact') {
-          updatePayload.contactInformation = {
-            email: profile.email?.trim() || '',
-            phone: profile.phone?.trim() || '',
-            address: profile.address?.trim() || '',
-            linkedinUrl: profile.linkedinUrl?.trim() || '',
-            personalWebsite: profile.personalWebsite?.trim() || '',
-            location: profile.location?.trim() || '',
-          };
+          updatePayload.email = profile.email?.trim() || '';
+          updatePayload.linkedin = profile.linkedinUrl?.trim() || '';
+          updatePayload.website = profile.personalWebsite?.trim() || '';
+          updatePayload.location = profile.location?.trim() || '';
         }
       }
 
@@ -241,11 +274,12 @@ export const useProfileManagement = () => {
         return;
       }
 
+      console.log('🔵 [useProfileManagement] Sending update payload:', JSON.stringify(updatePayload, null, 2));
       await dispatch(updateProfileAction(updatePayload)).unwrap();
       setIsEditing(false);
       await dispatch(getMyProfile());
     } catch (err: any) {
-      console.error('Error saving profile:', err);
+      console.error('❌ [useProfileManagement] Error saving profile:', err);
     }
   };
 

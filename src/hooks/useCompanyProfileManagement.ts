@@ -198,32 +198,48 @@ export const useCompanyProfileManagement = () => {
       const updatePayload: any = {};
 
       if (activeTab === 'personal') {
-        // Company details
+        // Company profile update - matches backend API structure
         const companyName = currentProfile.name?.trim() || currentProfile.companyName?.trim() || '';
 
-        updatePayload.companyDetails = {
-          name: companyName,
-          industry: currentProfile.industry || '',
-          size: currentProfile.size || currentProfile.companySize || '',
-          location: currentProfile.location?.trim() || '',
-          email: currentProfile.email?.trim() || '',
-          employmentType: currentProfile.employmentType || 'Remote',
-          requiredExperienceLevel: currentProfile.requiredExperienceLevel || 'Mid Level',
-        };
+        updatePayload.name = companyName;
+        updatePayload.email = currentProfile.email?.trim() || '';
+        updatePayload.industry = currentProfile.industry || '';
+        updatePayload.size = currentProfile.size || currentProfile.companySize || '';
+        updatePayload.location = currentProfile.location?.trim() || '';
+        updatePayload.employmentType = currentProfile.employmentType || 'Remote';
+        updatePayload.requiredSkills = currentProfile.requiredSkills || [];
+        updatePayload.requiredExperienceLevel = currentProfile.requiredExperienceLevel || 'Mid Level';
 
         console.log('🟢 [useCompanyProfileManagement] Company name being sent:', companyName);
         console.log('🟢 [useCompanyProfileManagement] currentProfile.name:', currentProfile.name);
         console.log('🟢 [useCompanyProfileManagement] currentProfile.companyName:', currentProfile.companyName);
       } else if (activeTab === 'contact') {
-        // Contact Information
-        updatePayload.contactInformation = {
-          email: currentProfile.email?.trim() || '',
-          phone: currentProfile.phone?.trim() || '',
-          address: currentProfile.address?.trim() || '',
-          linkedinUrl: currentProfile.linkedinUrl?.trim() || '',
-          personalWebsite: currentProfile.personalWebsite?.trim() || '',
-          location: currentProfile.location?.trim() || '',
-        };
+        // Contact Information - nest under contactInformation object
+        const contactInfo: any = {};
+
+        if (currentProfile.email?.trim()) {
+          contactInfo.email = currentProfile.email.trim();
+        }
+        if (currentProfile.phone?.trim()) {
+          contactInfo.phone = currentProfile.phone.trim();
+        }
+        if (currentProfile.location?.trim()) {
+          contactInfo.location = currentProfile.location.trim();
+        }
+        if (currentProfile.address?.trim()) {
+          contactInfo.address = currentProfile.address.trim();
+        }
+        if (currentProfile.linkedinUrl?.trim()) {
+          contactInfo.linkedinUrl = currentProfile.linkedinUrl.trim();
+        }
+        if (currentProfile.personalWebsite?.trim()) {
+          contactInfo.personalWebsite = currentProfile.personalWebsite.trim();
+        }
+
+        // Only add contactInformation if at least one field is filled
+        if (Object.keys(contactInfo).length > 0) {
+          updatePayload.contactInformation = contactInfo;
+        }
       }
 
       // Check if we have at least one field to update
