@@ -10,7 +10,6 @@ const skillSchema = new mongoose.Schema(
     NumberTestPassed: Number,
     ScoreTest: Number,
     Levelconfirmed: Number,
-    isPrimary: Boolean,
   },
   { timestamps: true }
 );
@@ -22,7 +21,6 @@ const softSkillSchema = new mongoose.Schema(
     proficiencyLevel: Number, // 0-5
     experienceLevel: String, // NoLevel , Entry Level..
     ScoreTest: Number,
-    isPrimary: Boolean,
     Levelconfirmed: Number,
   },
   { timestamps: true }
