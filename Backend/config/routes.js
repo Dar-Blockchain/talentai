@@ -11,7 +11,7 @@ const authRouter = require('../routes/authenticationRouter');
 const companyPermissionsRouter = require('../routes/companyPermissionsRouter');
 const dashboardRouter = require('../routes/dashboardRouter');
 const profileRouter = require('../routes/profileRouter');
-const evaluationRouter = require('../routes/evaluationRouter');
+// const evaluationRouter = require('../routes/evaluationRouter');
 const linkedinPostRouter = require('../routes/generateJobPostRouter');
 const postRouter = require('../routes/postRouter');
 const matchingRoutes = require('../routes/matchingRouter');
@@ -55,7 +55,7 @@ function registerRoutes(app) {
   app.use('/CompanyMembership', CompanyMembershipRoutes);
 
   // Evaluation & Interview
-  app.use('/evaluation', evaluationRouter);
+  // app.use('/evaluation', evaluationRouter);
   app.use('/interviewDetails', interviewDetailsRouter);
   app.use('/InterviewAssessment', InterviewAssessmentRoutes);
 
