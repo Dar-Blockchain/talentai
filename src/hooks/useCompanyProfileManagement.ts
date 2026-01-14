@@ -71,6 +71,15 @@ export const useCompanyProfileManagement = () => {
   // Update local profile state when Redux profile changes
   useEffect(() => {
     if (reduxProfile && user) {
+      console.log('🔍 [useCompanyProfileManagement] Redux profile structure:', {
+        hasCompanyDetails: !!reduxProfile.companyDetails,
+        companyDetailsKeys: reduxProfile.companyDetails ? Object.keys(reduxProfile.companyDetails) : [],
+        topLevelKeys: Object.keys(reduxProfile),
+        companyName: reduxProfile.companyDetails?.name,
+        directName: reduxProfile.name,
+        userId: reduxProfile.userId
+      });
+
       // Construct avatar URL
       let avatarUrl = '';
       if (reduxProfile.user_image) {
@@ -87,17 +96,28 @@ export const useCompanyProfileManagement = () => {
         return size.replace(/\s*employees?$/i, '').replace(/–/g, '-');
       };
 
-      const normalizedSize = normalizeCompanySize(reduxProfile.companyDetails?.size);
+      // Try multiple possible locations for company data
+      const companyData = reduxProfile.companyDetails || reduxProfile;
+      const normalizedSize = normalizeCompanySize(companyData?.size);
+
+      // Extract company name from multiple possible locations
+      const companyName = companyData?.name ||
+                         reduxProfile.name ||
+                         reduxProfile.userId?.username ||
+                         user?.username ||
+                         '';
+
+      console.log('🔍 [useCompanyProfileManagement] Extracted company name:', companyName);
 
       setProfile({
         username: user.username || '',
-        email: user.email || reduxProfile.companyDetails?.email || '',
-        requiredExperienceLevel: reduxProfile.companyDetails?.requiredExperienceLevel || 'Mid Level',
-        targetRole: '',
+        email: user.email || companyData?.email || '',
+        requiredExperienceLevel: reduxProfile?.requiredExperienceLevel || companyData?.requiredExperienceLevel || 'Mid Level',
+        targetRole: reduxProfile?.targetRole || '',
         firstName: '',
         lastName: '',
         gender: 'Male',
-        country: reduxProfile.companyDetails?.location || 'Tunisia',
+        country: companyData?.location || 'Tunisia',
         language: 'English',
         timezone: 'UTC+01:00',
         phone: reduxProfile.contactInformation?.phone || '',
@@ -105,16 +125,16 @@ export const useCompanyProfileManagement = () => {
         linkedinUrl: reduxProfile.contactInformation?.linkedinUrl || '',
         githubUrl: '',
         personalWebsite: reduxProfile.contactInformation?.personalWebsite || '',
-        location: reduxProfile.contactInformation?.location || reduxProfile.companyDetails?.location || '',
+        location: reduxProfile.contactInformation?.location || companyData?.location || '',
         avatar: avatarUrl,
         profileType: 'Company',
-        companyName: reduxProfile.companyDetails?.name || '',
-        name: reduxProfile.companyDetails?.name || '',
-        industry: reduxProfile.companyDetails?.industry || '',
+        companyName: companyName,
+        name: companyName,
+        industry: companyData?.industry || '',
         companySize: normalizedSize,
         size: normalizedSize,
-        employmentType: reduxProfile.companyDetails?.employmentType || 'Remote',
-        requiredSkills: reduxProfile.companyDetails?.requiredSkills || [],
+        employmentType: companyData?.employmentType || 'Remote',
+        requiredSkills: reduxProfile?.requiredSkills || companyData?.requiredSkills || [],
       });
     }
   }, [reduxProfile, user]);
@@ -275,7 +295,6 @@ export const useCompanyProfileManagement = () => {
         updatePayload.email = currentProfile.email?.trim() || '';
         updatePayload.industry = currentProfile.industry || '';
         updatePayload.size = currentProfile.size || currentProfile.companySize || '';
-        updatePayload.location = currentProfile.location?.trim() || '';
         updatePayload.employmentType = currentProfile.employmentType || 'Remote';
         updatePayload.requiredSkills = currentProfile.requiredSkills || [];
         updatePayload.requiredExperienceLevel = currentProfile.requiredExperienceLevel || 'Mid Level';
