@@ -73,10 +73,15 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
     },
   };
 
+  // For company profiles, wait until company name is loaded
+  const isCompanyProfile = profile.profileType === 'Company';
+  const isLoadingCompanyData = isCompanyProfile && loading && !profile.name && !profile.companyName;
+  const isCandidateLoadingData = !isCompanyProfile && loading && !profile.username;
+
   return (
     <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mb: 3 }}>
       <CardContent sx={{ p: 4 }}>
-        {loading && !profile.username ? (
+        {(isLoadingCompanyData || isCandidateLoadingData) ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
             <CircularProgress sx={{ color: '#8310FF' }} />
           </Box>
@@ -108,7 +113,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
             )}
 
             {/* Only show content when not in initial loading state */}
-            {(!loading || profile.firstName) && (
+            {(!loading || profile.firstName || profile.name || profile.companyName) && (
               <>
                 {/* Profile Picture Section */}
                 <ProfilePictureSection
@@ -251,11 +256,17 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                 ) : (
                   // Company Fields
                   <>
+                    {/* Debug logging */}
+                    {console.log('🎨 [PersonalInformationTab] Rendering company fields:', {
+                      name: profile.name,
+                      companyName: profile.companyName,
+                      displayValue: profile.name || profile.companyName,
+                    })}
                     {/* Editable Company Fields */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                       <TextField
                         label="Company Name"
-                        value={profile.name || profile.companyName}
+                        value={profile.name || profile.companyName || ''}
                         onChange={(e) => {
                           onInputChange('name', e.target.value);
                           onInputChange('companyName', e.target.value);
@@ -313,16 +324,6 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                         </Select>
                       </FormControl>
 
-                      <TextField
-                        label="Location"
-                        value={profile.location}
-                        onChange={(e) => onInputChange('location', e.target.value)}
-                        disabled={!isEditing}
-                        fullWidth
-                        placeholder="Paris, France"
-                        sx={fieldSx}
-                      />
-
                       <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
                         <InputLabel>Employment Type</InputLabel>
                         <Select
@@ -338,14 +339,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                         </Select>
                       </FormControl>
 
-                      <FormControl
-                        fullWidth
-                        disabled={!isEditing}
-                        sx={{
-                          gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                          ...fieldSx,
-                        }}
-                      >
+                      <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
                         <InputLabel>Required Experience Level</InputLabel>
                         <Select
                           value={profile.requiredExperienceLevel || 'Mid Level'}
