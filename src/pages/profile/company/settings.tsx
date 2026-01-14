@@ -1,8 +1,7 @@
 "use client";
 import React from "react";
-import { Box, Card, CardContent, Typography, Button } from "@mui/material";
-import { useRouter } from "next/router";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Card, CardContent, Typography, Breadcrumbs, Link } from "@mui/material";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,7 +14,6 @@ import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement
 import PageContainer from "@/components/layout/PageContainer";
 
 const CompanySettingsPage: React.FC = () => {
-  const router = useRouter();
   const {
     activeTab,
     isEditing,
@@ -25,6 +23,7 @@ const CompanySettingsPage: React.FC = () => {
     uploadingImage,
     saveSuccess,
     userId,
+    fieldErrors,
     setActiveTab,
     setIsEditing,
     handleInputChange,
@@ -39,21 +38,31 @@ const CompanySettingsPage: React.FC = () => {
     <PageContainer>
       <Header />
 
-      {/* Back to Dashboard Button */}
-      <Box sx={{ mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/dashboard/company')}
-          sx={{
-            color: '#6b7280',
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: '#f3f4f6',
-            },
-          }}
+      {/* Breadcrumbs Navigation */}
+      <Box sx={{ mb: 2 }}>
+        <Breadcrumbs
+          separator={<NavigateNextIcon sx={{ fontSize: 14 }} />}
+          aria-label="breadcrumb"
+          sx={{ fontSize: '0.875rem' }}
         >
-          Back to Dashboard
-        </Button>
+          <Link
+            underline="hover"
+            color="inherit"
+            href="/dashboard/company"
+            sx={{
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              '&:hover': {
+                color: '#8310FF',
+              },
+            }}
+          >
+            Dashboard
+          </Link>
+          <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>
+            Settings
+          </Typography>
+        </Breadcrumbs>
       </Box>
 
       <Box
@@ -61,6 +70,7 @@ const CompanySettingsPage: React.FC = () => {
           display: "flex",
           gap: 3,
           flexDirection: { xs: "column", md: "row" },
+          alignItems: "stretch",
         }}
       >
         <ProfileSidebar
@@ -93,6 +103,7 @@ const CompanySettingsPage: React.FC = () => {
               profile={profile}
               isEditing={isEditing}
               loading={loading}
+              fieldErrors={fieldErrors}
               onInputChange={handleInputChange}
               onSave={handleSaveProfile}
               onCancel={() => setIsEditing(false)}

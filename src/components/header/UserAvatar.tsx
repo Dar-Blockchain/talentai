@@ -39,6 +39,22 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
     return `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
   }, [isCompany, profile]);
 
+  const avatarUrl = useMemo(() => {
+    // Check for user_image in profile first
+    if (profile?.user_image) {
+      return `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`;
+    }
+    // Then check in user object
+    if (user?.user_image) {
+      return `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${user.user_image}`;
+    }
+    // Check userId nested object
+    if (profile?.userId?.user_image) {
+      return `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.userId.user_image}`;
+    }
+    return null;
+  }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
+
   const handleLogout = useCallback(async () => {
     try {
       await dispatch(logout()).unwrap();
@@ -70,15 +86,16 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
       >
         <Avatar
           onClick={goToDashboard}
+          src={avatarUrl || undefined}
           sx={{
             width: 30,
             height: 30,
-            bgcolor: "rgba(238, 245, 255, 1)",
+            bgcolor: avatarUrl ? "transparent" : "rgba(238, 245, 255, 1)",
             color: "rgba(112, 144, 154, 1)",
             cursor: "pointer",
           }}
         >
-          <UserIcon />
+          {!avatarUrl && <UserIcon />}
         </Avatar>
       </Box>
 

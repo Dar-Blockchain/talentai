@@ -16,6 +16,7 @@ interface ContactInformationTabProps {
   profile: UserProfile;
   isEditing: boolean;
   loading: boolean;
+  fieldErrors?: Record<string, string>;
   onInputChange: (field: keyof UserProfile, value: string) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -26,6 +27,7 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
   profile,
   isEditing,
   loading,
+  fieldErrors = {},
   onInputChange,
   onSave,
   onCancel,
@@ -111,6 +113,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="tel"
                   placeholder="+33612345678"
+                  error={!!fieldErrors.phone}
+                  helperText={fieldErrors.phone || ''}
                   sx={fieldSx}
                 />
 
@@ -147,6 +151,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="url"
                   placeholder="https://linkedin.com/in/yourprofile"
+                  error={!!fieldErrors.linkedinUrl}
+                  helperText={fieldErrors.linkedinUrl || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,
@@ -161,6 +167,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="url"
                   placeholder="https://github.com/yourprofile"
+                  error={!!fieldErrors.githubUrl}
+                  helperText={fieldErrors.githubUrl || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,
@@ -175,6 +183,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="url"
                   placeholder="https://yourwebsite.com"
+                  error={!!fieldErrors.personalWebsite}
+                  helperText={fieldErrors.personalWebsite || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,
@@ -205,6 +215,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="tel"
                   placeholder="+33123456789"
+                  error={!!fieldErrors.phone}
+                  helperText={fieldErrors.phone || ''}
                   sx={fieldSx}
                 />
 
@@ -241,6 +253,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="url"
                   placeholder="https://linkedin.com/company/yourcompany"
+                  error={!!fieldErrors.linkedinUrl}
+                  helperText={fieldErrors.linkedinUrl || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,
@@ -255,6 +269,8 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   fullWidth
                   type="url"
                   placeholder="https://yourcompany.com"
+                  error={!!fieldErrors.personalWebsite}
+                  helperText={fieldErrors.personalWebsite || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,

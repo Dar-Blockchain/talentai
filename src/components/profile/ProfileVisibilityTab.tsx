@@ -19,6 +19,7 @@ import {
   OpenInNew as OpenInNewIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
+import { toast } from 'react-toastify';
 
 interface ProfileVisibilityTabProps {
   userId: string;
@@ -56,14 +57,18 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
       const newVisibility = !isPublic;
       await onToggleVisibility(newVisibility);
       setIsPublic(newVisibility);
-      setSuccess(
-        newVisibility
-          ? 'Your profile is now public and can be viewed by anyone with the link'
-          : 'Your profile is now private and hidden from public view'
-      );
+
+      const successMessage = newVisibility
+        ? 'Your profile is now public and can be viewed by anyone with the link'
+        : 'Your profile is now private and hidden from public view';
+
+      setSuccess(successMessage);
+      toast.success(successMessage);
     } catch (err: any) {
-      setError(err.message || 'Failed to update profile visibility');
+      const errorMessage = err.message || 'Failed to update profile visibility';
+      setError(errorMessage);
       console.error('Error updating visibility:', err);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -72,6 +77,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(publicProfileUrl);
     setCopied(true);
+    toast.success('Profile link copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   }, [publicProfileUrl]);
 
@@ -252,11 +258,12 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
                 textTransform: 'none',
                 fontWeight: 600,
                 borderRadius: 2,
+                color: 'white',
                 px: 3,
-                background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+                background: '#8310FF',
                 boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)',
+                  background: '#8310FF',
                   boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
                 },
                 '&.Mui-disabled': {
