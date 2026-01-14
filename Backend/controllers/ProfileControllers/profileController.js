@@ -629,14 +629,20 @@ module.exports.updateProfileComplete = async (req, res) => {
     const file = req.file;
     let result;
 
+    console.log("🔄 [updateProfileComplete] Starting profile update for userId:", userId);
+    console.log("📋 [updateProfileComplete] Profile data received:", JSON.stringify(profileData, null, 2));
+    console.log("📁 [updateProfileComplete] File provided:", file ? `${file.filename} (${file.size} bytes)` : "None");
+
     // Update user image if provided
     if (file) {
       const { filename } = file;
-      console.log("Updating image:", filename);
+      console.log("🖼️  [updateProfileComplete] Updating image:", filename);
       await profileService.updateUserImage(userId, filename);
+      console.log("✅ [updateProfileComplete] Image updated successfully");
     }
 
     // Determine account type from DB (profile.type or user.role). Do NOT rely on profileData.type from client.
+    console.log("🔍 [updateProfileComplete] Fetching existing profile to determine account type...");
     const existing = await profileService.getProfileByUserId(userId).catch(() => null);
     let accountType = "Candidate";
     if (existing && existing.profile && existing.profile.type) {
@@ -644,66 +650,89 @@ module.exports.updateProfileComplete = async (req, res) => {
     } else if (existing && existing.user && existing.user.role) {
       accountType = existing.user.role === "Company" ? "Company" : "Candidate";
     }
+    console.log("👤 [updateProfileComplete] Account type determined:", accountType);
 
     // If there are profile fields to update, route to the correct service based on accountType
     if (Object.values(profileData).some((val) => val)) {
+      console.log("📝 [updateProfileComplete] Profile fields detected, processing updates...");
       if (accountType === "Company") {
+        console.log("🏢 [updateProfileComplete] Processing COMPANY profile update");
         // Validate company profile
         if (profileData.name && typeof profileData.name !== "string") {
+          console.log("❌ [updateProfileComplete] Company name validation failed");
           return res.status(400).json({ success: false, message: "Company name must be a string" });
         }
         if (profileData.employmentType && !["Remote", "Hybrid", "On-site"].includes(profileData.employmentType)) {
+          console.log("❌ [updateProfileComplete] Employment type validation failed");
           return res.status(400).json({ success: false, message: "Invalid employment type. Must be 'Remote', 'Hybrid', or 'On-site'" });
         }
 
+        console.log("✏️  [updateProfileComplete] Updating company profile with data:", JSON.stringify(profileData, null, 2));
         result = await profileService.createOrUpdateCompanyProfile(userId, profileData);
+        console.log("✅ [updateProfileComplete] Company profile updated successfully");
       } else {
+        console.log("👥 [updateProfileComplete] Processing CANDIDATE profile update");
         // Candidate validations - Allow single field updates (no requirement for both first+last)
         const firstName = profileData.firstName || profileData.FirstName;
         const lastName = profileData.lastName || profileData.LastName;
 
         // Validate types when provided (but not required to provide both)
         if (firstName && typeof firstName !== "string") {
+          console.log("❌ [updateProfileComplete] First name validation failed");
           return res.status(400).json({ success: false, message: "firstName must be a string" });
         }
         if (lastName && typeof lastName !== "string") {
+          console.log("❌ [updateProfileComplete] Last name validation failed");
           return res.status(400).json({ success: false, message: "lastName must be a string" });
         }
 
         if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
+          console.log("❌ [updateProfileComplete] Age validation failed");
           return res.status(400).json({ success: false, message: "Age must be a valid number" });
         }
 
         if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
+          console.log("❌ [updateProfileComplete] Preferred contract type validation failed");
           return res.status(400).json({ success: false, message: "Preferred contract type must be a valid string" });
         }
 
         if (profileData.location && typeof profileData.location !== "string") {
+          console.log("❌ [updateProfileComplete] Location validation failed");
           return res.status(400).json({ success: false, message: "Location must be a valid string" });
         }
 
         if (profileData.expectedSalary) {
+          console.log("💰 [updateProfileComplete] Validating expected salary:", JSON.stringify(profileData.expectedSalary));
           const { min, max, currency } = profileData.expectedSalary;
           if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
+            console.log("❌ [updateProfileComplete] Salary min validation failed");
             return res.status(400).json({ success: false, message: "Expected salary min must be a positive number" });
           }
           if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
+            console.log("❌ [updateProfileComplete] Salary max validation failed");
             return res.status(400).json({ success: false, message: "Expected salary max must be a positive number" });
           }
           if (min !== null && max !== null && min > max) {
+            console.log("❌ [updateProfileComplete] Salary min > max validation failed");
             return res.status(400).json({ success: false, message: "Expected salary min cannot be greater than max" });
           }
           if (currency && typeof currency !== "string") {
+            console.log("❌ [updateProfileComplete] Currency validation failed");
             return res.status(400).json({ success: false, message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
           }
         }
 
+        console.log("✏️  [updateProfileComplete] Updating candidate profile with data:", JSON.stringify(profileData, null, 2));
         result = await profileService.createOrUpdateProfile(userId, profileData);
+        console.log("✅ [updateProfileComplete] Candidate profile updated successfully");
       }
     } else if (file) {
       // Only image was updated
+      console.log("🖼️  [updateProfileComplete] Only image was updated, fetching profile...");
       result = await profileService.getProfileByUserId(userId);
+      console.log("✅ [updateProfileComplete] Profile fetched after image update");
     } else {
+      console.log("⚠️  [updateProfileComplete] No fields or file provided for update");
       return res.status(400).json({
         success: false,
         message: "At least one field must be provided for update",
@@ -717,6 +746,9 @@ module.exports.updateProfileComplete = async (req, res) => {
     if (file) sentFields.push("file");
     const updatedFields = [...new Set(sentFields)];
 
+    console.log("📊 [updateProfileComplete] Updated fields:", updatedFields);
+    console.log("✅ [updateProfileComplete] Profile update completed successfully");
+
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
@@ -727,7 +759,7 @@ module.exports.updateProfileComplete = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating profile:', error);
+    console.error('❌ [updateProfileComplete] Error updating profile:', error);
     res.status(error.status || 500).json({
       success: false,
       message: error.message || "Failed to update profile"

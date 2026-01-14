@@ -50,6 +50,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
         workModePreference: profileData.workModePreference,
         skills: profileData.skills || [],
         overallScore: profileData.overallScore || 0,
+        targetRole: profileData.targetRole || "",
       });
 
       if (
@@ -69,6 +70,8 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       profile.country = profileData.country || profile.country;
       profile.language = profileData.language || profile.language;
       profile.timeZone = profileData.timeZone || profile.timeZone;
+      profile.targetRole = profileData.targetRole || profile.targetRole;
+      profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
       
       // Update salary expectations
       if (profileData.expectedSalary) {
