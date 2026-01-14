@@ -59,11 +59,22 @@ export const validatePipelineNodes = (nodes: any[]) => {
   };
 };
 
-  export const formatSalary = (salary: any) => {
-    return `${salary.currency} ${salary.min.toLocaleString()} - ${
-      salary.currency
-    } ${salary.max.toLocaleString()}`;
+export const formatSalary = (salary: any) => {
+  if (!salary) return "";
+
+  // Map of currency codes to symbols
+  const currencyMap: { [key: string]: string } = {
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    // add more if needed
   };
+
+  const symbol = currencyMap[salary.currency] || salary.currency;
+
+  return `${symbol}${salary.min.toLocaleString()} - ${symbol}${salary.max.toLocaleString()}`;
+};
+
 
 export const getHardSkills = (job: any): Skill[] => {
   if (!job) return [];

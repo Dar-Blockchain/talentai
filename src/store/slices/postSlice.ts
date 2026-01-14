@@ -17,6 +17,7 @@ interface RecommendedState {
   items: any[];
   loading: boolean;
   error: string | null;
+  pagination: PaginationState;
 }
 
 interface PostPaymentState {
@@ -101,6 +102,14 @@ const initialState: PostState = {
     items: [],
     loading: false,
     error: null,
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 3,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
   },
   savePost: {
     loading: false,
@@ -207,15 +216,24 @@ export const updatePost = createAsyncThunk(
 // Async thunk: Recommended posts
 export const fetchRecommendedPosts = createAsyncThunk(
   "post/fetchRecommendedPosts",
-  async (_, { rejectWithValue }) => {
+  async (    params: {
+      page?: number;
+      limit?: number;
+    } = {},
+    { rejectWithValue }) => {
     try {
+      const { page = 1, limit = 10} = params;
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("api_token="))
         ?.split("=")[1];
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/adsPost`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/adsPost?${queryParams}`,
         {
           method: "GET",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -231,26 +249,7 @@ export const fetchRecommendedPosts = createAsyncThunk(
 
       const data = await response.json();
 
-      // DEBUG: Log the API response structure
-      const posts = Array.isArray(data) ? data : data.data || [];
-      console.log("🔍 DEBUG - postSlice fetchRecommendedPosts response:", {
-        dataType: Array.isArray(data) ? "array" : typeof data,
-        hasDataProperty: !!data.data,
-        postsCount: Array.isArray(posts) ? posts.length : 0,
-        firstPost: posts[0]
-          ? {
-              _id: posts[0]._id,
-              creationType: posts[0].creationType,
-              hasPostSteps: !!posts[0].post_Steps,
-              postStepsType: Array.isArray(posts[0].post_Steps)
-                ? "array"
-                : typeof posts[0].post_Steps,
-              postStepsCount: posts[0].post_Steps?.length || 0,
-            }
-          : null,
-      });
-
-      return posts;
+      return data;
     } catch (error: any) {
       return rejectWithValue(
         error.message || "An error occurred while fetching recommended posts"
@@ -819,7 +818,8 @@ const postSlice = createSlice({
       })
       .addCase(fetchRecommendedPosts.fulfilled, (state, action) => {
         state.recommended.loading = false;
-        state.recommended.items = action.payload.posts || [];
+        state.recommended.items = action.payload.data || [];
+        state.recommended.pagination = action.payload.pagination;
       })
       .addCase(fetchRecommendedPosts.rejected, (state, action) => {
         state.recommended.loading = false;
@@ -917,6 +917,7 @@ export const selectRecommended = (state: { post: PostState }) => ({
   items: state.post.recommended.items,
   loading: state.post.recommended.loading,
   error: state.post.recommended.error,
+  pagination: state.post.recommended.pagination,
 });
 
 export const selectPostPayment = (state: { post: PostState }) => ({

@@ -18,12 +18,6 @@ export interface Job {
   logo?: string;
 }
 
-export const formatSalary = (salary: Job["salary"]): string => {
-  return `${salary.currency} ${salary.min.toLocaleString()} - ${
-    salary.currency
-  } ${salary.max.toLocaleString()}`;
-};
-
 export const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "2-digit",
