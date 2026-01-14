@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, Box, Typography, Chip, Stack } from '@mui/material';
 import { Business as BusinessIcon } from '@mui/icons-material';
 import Image from 'next/image';
-import { Job, formatSalary, formatDate } from '@/utils/jobHelpers';
+import { Job, formatDate } from '@/utils/jobHelpers';
+import { formatSalary } from '@/utils/postHelpers';
 
 interface JobCardProps {
   job: Job;
