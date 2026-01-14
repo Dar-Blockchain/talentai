@@ -6,6 +6,7 @@ import {
   CircularProgress,
   Avatar,
   Pagination,
+  Tooltip,
 } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
 import { styled } from "@mui/material/styles";
@@ -17,6 +18,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { ArrowForward, ArrowBack } from "@mui/icons-material";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -40,6 +42,8 @@ interface SectionProps {
     hasPrevPage: boolean;
   };
   onPageChange?: (page: number) => void;
+  companyProfile?: any;
+  companyUser?: any;
 }
 
 const UnlockedCandidates: React.FC<SectionProps> = ({
@@ -50,11 +54,33 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
   initialDisplayCount = 3,
   pagination,
   onPageChange,
+  companyProfile,
+  companyUser,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, candidates } = useSelector(
     (state: RootState) => state.candidate.unlockedData
   );
+
+  // Get user permissions
+  const userId = companyUser?._id;
+  const profileId = companyProfile?._id;
+  const { hasPermission, loading: loadingPermissions, permissions } = usePermissions(userId, profileId);
+
+  // Get the actual permission value from the hook
+  const canContactCandidates = hasPermission('canContactCandidates');
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 [UnlockedCandidates] Permission Debug:', {
+      userId,
+      profileId,
+      loadingPermissions,
+      fullPermissions: permissions,
+      canContactCandidates,
+      buttonWillShow: canContactCandidates ? 'ENABLED' : 'DISABLED',
+    });
+  }, [userId, profileId, loadingPermissions, permissions, canContactCandidates]);
 
   useEffect(() => {
     // Fetch candidates with or without pagination based on showViewAll
@@ -385,28 +411,82 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
                 </Box>
               </Box>
 
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{
-                  height: "42px",
-                  maxWidth: "200px",
-                  backgroundColor: "rgba(224, 154, 16, 1)",
-                  borderColor: "rgba(224, 154, 16, 1)",
-                  color: "white",
-                  fontWeight: 500,
-                  borderRadius: "38px",
-                  py: 1.5,
-                  textTransform: "none",
-                  fontSize: "0.875rem",
-                  borderWidth: "1px",
-                  "&:hover": {
-                    backgroundColor: "rgba(224, 154, 16, 0.8)",
-                  },
-                }}
-              >
-                Contact Candidate
-              </Button>
+              {!loadingPermissions && canContactCandidates ? (
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  sx={{
+                    height: "42px",
+                    maxWidth: "200px",
+                    backgroundColor: "rgba(224, 154, 16, 1)",
+                    borderColor: "rgba(224, 154, 16, 1)",
+                    color: "white",
+                    fontWeight: 500,
+                    borderRadius: "38px",
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "0.875rem",
+                    borderWidth: "1px",
+                    "&:hover": {
+                      backgroundColor: "rgba(224, 154, 16, 0.8)",
+                    },
+                  }}
+                >
+                  Contact Candidate
+                </Button>
+              ) : !loadingPermissions && !canContactCandidates ? (
+                <Tooltip
+                  title="You don't have permission to contact candidates"
+                  arrow
+                  placement="top"
+                >
+                  <span>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      disabled
+                      sx={{
+                        height: "42px",
+                        maxWidth: "200px",
+                        backgroundColor: "rgba(189, 189, 189, 0.5)",
+                        borderColor: "rgba(189, 189, 189, 0.5)",
+                        color: "rgba(255, 255, 255, 0.7)",
+                        fontWeight: 500,
+                        borderRadius: "38px",
+                        py: 1.5,
+                        textTransform: "none",
+                        fontSize: "0.875rem",
+                        borderWidth: "1px",
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      Contact Candidate
+                    </Button>
+                  </span>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  disabled
+                  sx={{
+                    height: "42px",
+                    maxWidth: "200px",
+                    backgroundColor: "rgba(224, 154, 16, 1)",
+                    borderColor: "rgba(224, 154, 16, 1)",
+                    color: "white",
+                    fontWeight: 500,
+                    borderRadius: "38px",
+                    py: 1.5,
+                    textTransform: "none",
+                    fontSize: "0.875rem",
+                    borderWidth: "1px",
+                    opacity: 0.6,
+                  }}
+                >
+                  Contact Candidate
+                </Button>
+              )}
             </Box>
           ))}
           </Box>

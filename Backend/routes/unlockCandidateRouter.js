@@ -7,13 +7,14 @@ const router = express.Router();
 const unlockCandidateController = require("../controllers/unlockCandidateController");
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 // Apply logging middleware and authentication to all unlock candidate routes
 router.use(requireAuthUser, authLogMiddleware("UnlockCandidate"));
 
 // GET /unlock-candidate/unlocked
 // Get all unlocked candidates by company
-router.get("/", unlockCandidateController.getUnlockedCandidatesByCompany);
+router.get("/",resolveCompanyActor, unlockCandidateController.getUnlockedCandidatesByCompany);
 
 // GET /unlock-candidate/all
 // Get all unlock candidates by company (including pending)
@@ -21,11 +22,11 @@ router.get("/", unlockCandidateController.getUnlockedCandidatesByCompany);
 
 // GET /unlock-candidate/:unlockId
 // Get unlock record by ID
-router.get("/:unlockId", unlockCandidateController.getUnlockById);
+router.get("/:unlockId",resolveCompanyActor, unlockCandidateController.getUnlockById);
 
 // POST /unlock-candidate/create
 // Create unlock candidate record
-router.post("/", unlockCandidateController.unlockCandidate);
+router.post("/",resolveCompanyActor, unlockCandidateController.unlockCandidate);
 
 // NOTE: pack logic merged into `/create` endpoint. Removed separate pack route.
 

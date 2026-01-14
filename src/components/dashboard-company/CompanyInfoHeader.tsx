@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Avatar, Button } from "@mui/material";
+import { Box, Typography, Avatar, Button, Tooltip } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -15,6 +15,7 @@ import {
   clearAddMemberSuccess,
   MemberRole
 } from "@/store/slices/memberSlice";
+import { usePermissions } from "@/hooks/usePermissions";
 
 // Styled Components
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -43,6 +44,13 @@ const GradientButton = styled(Button)(({ theme }) => ({
     background: "rgba(77, 217, 163, 0.8)",
     boxShadow: "0 4px 12px rgba(16,185,129,0.4)",
   },
+  "&.Mui-disabled": {
+    background: "rgba(189, 189, 189, 0.5)",
+    color: "rgba(255, 255, 255, 0.7)",
+    boxShadow: "none",
+    cursor: "not-allowed",
+    pointerEvents: "none",
+  },
 }));
 
 interface CompanyInfoHeaderProps {
@@ -55,6 +63,26 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
   const dispatch = useDispatch<AppDispatch>();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const { sharedAccountId, addMemberSuccess } = useSelector(selectMembers);
+
+  // Get user permissions
+  const userId = companyUser?._id;
+  const profileId = companyProfile?._id;
+  const { permissions, hasPermission, loading: loadingPermissions } = usePermissions(userId, profileId);
+
+  // Get the actual permission value from the hook
+  const canCreateJobPosts = hasPermission('canCreateJobPosts');
+
+  // Debug: Log permission state
+  useEffect(() => {
+    console.log('🔍 [CompanyInfoHeader] Permission Debug:', {
+      userId,
+      profileId,
+      loadingPermissions,
+      fullPermissions: permissions,
+      canCreateJobPosts: hasPermission('canCreateJobPosts'),
+      buttonWillBeDisabled: !hasPermission('canCreateJobPosts'),
+    });
+  }, [userId, profileId, loadingPermissions, permissions, hasPermission]);
 
   // Close modal when member is added successfully
   useEffect(() => {
@@ -189,12 +217,52 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
             >
               Add Member
             </Button>
-            <GradientButton
-              onClick={() => router.push("/posts/create")}
-              startIcon={<AddIcon />}
+            <Tooltip
+              title={
+                loadingPermissions
+                  ? "Loading permissions..."
+                  : !canCreateJobPosts
+                  ? "You don't have permission to create job posts"
+                  : ""
+              }
+              arrow
+              placement="top"
             >
-              Post Job
-            </GradientButton>
+              <Box sx={{ display: 'inline-block' }}>
+                <GradientButton
+                  onClick={(e) => {
+                    console.log('🔍 Button click attempt:', {
+                      canCreateJobPosts,
+                      loadingPermissions,
+                    });
+
+                    if (!canCreateJobPosts) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('❌ Click blocked - no permission');
+                      return false;
+                    }
+
+                    if (loadingPermissions) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('⏳ Click blocked - still loading');
+                      return false;
+                    }
+
+                    console.log('✅ Click allowed - navigating to /posts/create');
+                    router.push("/posts/create");
+                  }}
+                  startIcon={<AddIcon />}
+                  disabled={loadingPermissions || !canCreateJobPosts}
+                  sx={{
+                    pointerEvents: (loadingPermissions || !canCreateJobPosts) ? 'none' : 'auto',
+                  }}
+                >
+                  Post Job
+                </GradientButton>
+              </Box>
+            </Tooltip>
           </Box>
         </Box>
 

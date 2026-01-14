@@ -10,6 +10,7 @@ const router = express.Router();
 const CompanyInvitationController = require("../controllers/ProfileControllers/CompanyInvitationController");
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 // ========== MIDDLEWARE: Authentication + Logging ==========
 // All routes below require an authenticated user and are logged
@@ -19,7 +20,7 @@ router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
  * POST /sentInvitation
  * Add a new employee to a Company account
  */
-router.post("/sentInvitation", CompanyInvitationController.sentInvitation);
+router.post("/sentInvitation", resolveCompanyActor,CompanyInvitationController.sentInvitation);
 
 /**
  * POST /resendInvitation/:invitationId
@@ -43,7 +44,7 @@ router.post("/respondInvitation/:invitationId", CompanyInvitationController.resp
  * GET /myInvitations
  * Get all invitations for companies owned by current user
  */
-router.get("/myInvitations", CompanyInvitationController.getCompanyInvitations);
+router.get("/myInvitations", resolveCompanyActor,CompanyInvitationController.getCompanyInvitations);
 
 /**
  * GET /details/:invitationId

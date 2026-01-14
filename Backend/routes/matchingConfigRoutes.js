@@ -6,10 +6,11 @@ const { getConfig, updateConfig, addConfig } = require('../controllers/MatchingC
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const { controledAcces } = require('../middleware/controledAcces'); 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 
 // Toutes les routes ci-dessous nécessitent un admin authentifié
-router.use(requireAuthUser, authLogMiddleware("MatchingConfig"));
+router.use(requireAuthUser,resolveCompanyActor, authLogMiddleware("MatchingConfig"));
 
 router.get('/', getConfig);
 router.post('/', addConfig);
