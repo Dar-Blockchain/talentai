@@ -519,7 +519,15 @@ module.exports.updatePostStatus = async (postId, userId, status) => {
 };
 
 // Recommend posts for a user based on ALL their skills (not only the first)
-module.exports.getPostsByUserTopSkill = async (userId) => {
+module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => {
+  // 🔄 [getPostsByUserTopSkill] Pagination initiation - page: ${page}, limit: ${limit}
+  console.log(`🔄 [getPostsByUserTopSkill] Pagination initiation - page: ${page}, limit: ${limit}`);
+
+  // Validate pagination parameters
+  const pageNum = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
+  const skip = (pageNum - 1) * limitNum;
+
   const user = await User.findById(userId).populate({
     path: "profile",
     // include expectedSalary so we can filter posts by user's salary expectations
@@ -629,23 +637,32 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   // All posts sorted by relevance
   const allPosts = scored.map((s) => s.post);
 
-  // Function to randomly pick up to 3 posts
-  const getRandomPosts = (posts, count = 3) => {
-    if (posts.length <= count) {
-      return posts;
-    }
-    
-    const shuffled = [...posts].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
+  // 📊 [getPostsByUserTopSkill] Total posts available: ${allPosts.length}
+  console.log(`📊 [getPostsByUserTopSkill] Total posts available: ${allPosts.length}`);
+
+  // Apply pagination to sorted posts
+  const paginatedPosts = allPosts.slice(skip, skip + limitNum);
+  const total = allPosts.length;
+  const totalPages = Math.ceil(total / limitNum);
+  const hasNextPage = pageNum < totalPages;
+  const hasPrevPage = pageNum > 1;
+
+  // 📄 [getPostsByUserTopSkill] Pagination result - returned: ${paginatedPosts.length}, page: ${pageNum}/${totalPages}
+  console.log(`📄 [getPostsByUserTopSkill] Pagination result - returned: ${paginatedPosts.length}, page: ${pageNum}/${totalPages}`);
+
+  return {
+    success: true,
+    data: paginatedPosts,
+    pagination: {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages,
+      hasNextPage,
+      hasPrevPage
+    },
+    message: `${paginatedPosts.length} recommendation(s) found on page ${pageNum} out of ${totalPages}`
   };
-
-  const randomPosts = getRandomPosts(allPosts, 3);
-
-    return {
-      success: true,
-      posts: randomPosts,
-      message: `${randomPosts.length} recommendation(s) found out of ${allPosts.length} available`
-    }
 };
 
 

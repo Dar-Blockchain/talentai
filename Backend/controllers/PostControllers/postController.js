@@ -421,26 +421,37 @@ exports.updatePostStatus = async (req, res) => {
 
 exports.getPostsByUserTopSkills = async (req, res) => {
   try {
-    const userId = req.user._id; // Adapté selon comment tu passes l'id (paramètre, JWT…)
-    const posts = await postService.getPostsByUserTopSkill(userId);
+    const userId = req.user._id;
+    
+    // 📥 [getPostsByUserTopSkills] Extract pagination params from query
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    
+    console.log(`📥 [getPostsByUserTopSkills] Extract pagination - page: ${page}, limit: ${limit}`);
+
+    const result = await postService.getPostsByUserTopSkill(userId, page, limit);
 
     // DEBUG: Log response structure before sending
-    console.log('🔍 DEBUG - Controller sending response:', {
-      success: posts.success,
-      postsCount: posts.posts?.length || 0,
-      firstPost: posts.posts?.[0] ? {
-        _id: posts.posts[0]._id,
-        creationType: posts.posts[0].creationType,
-        hasPostSteps: !!posts.posts[0].post_Steps,
-        postStepsLength: posts.posts[0].post_Steps?.length
+    console.log('🔍 [getPostsByUserTopSkills] Controller response:', {
+      success: result.success,
+      dataCount: result.data?.length || 0,
+      pagination: result.pagination,
+      firstPost: result.data?.[0] ? {
+        _id: result.data[0]._id,
+        creationType: result.data[0].creationType,
+        hasPostSteps: !!result.data[0].post_Steps,
+        postStepsLength: result.data[0].post_Steps?.length
       } : null
     });
 
     res.status(200).json({
       success: true,
-      data: posts,
+      data: result.data,
+      pagination: result.pagination,
+      message: result.message
     });
   } catch (error) {
+    console.error('❌ [getPostsByUserTopSkills] Error:', error.message);
     handleError(res, error, 400);
   }
 };

@@ -65,7 +65,7 @@ router.patch("/updatePostStatus/:id", resolveCompanyActor,postController.updateP
 router.delete("/deletePost/:id", resolveCompanyActor,postController.deletePost);
 
 // GET /post/adsPost
-// Description: 3 posts proposés à partir des 3 premières compétences du profil
+// Description: 3 posts proposés à partir des 3 premières compétences du profil + pagination
 router.get("/adsPost", postController.getPostsByUserTopSkills);
 
 // GET /post/DetailsPost/:id
