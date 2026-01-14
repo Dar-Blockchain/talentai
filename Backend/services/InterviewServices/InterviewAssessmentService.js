@@ -83,6 +83,9 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
       const proficiencyLevel = getLevelFromScore(overallScore);
 
       const experienceLevel = getExperienceLabel(proficiencyLevel);
+      
+      // Determine Levelconfirmed based on score: if score > 80%, use proficiencyLevel, else proficiencyLevel - 1
+      const levelconfirmedValue = overallScore > 80 ? proficiencyLevel : proficiencyLevel - 1;
 
       const skill = {
         name: skillNameFromMeta,
@@ -90,7 +93,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
         experienceLevel: experienceLevel,
         NumberTestPassed: 1,
         ScoreTest: overallScore,
-        Levelconfirmed: proficiencyLevel - 1,
+        Levelconfirmed: levelconfirmedValue,
       };
 
       // Update profile interviewDetails and quota.
@@ -136,7 +139,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           proficiencyLevel: proficiencyLevel,
           experienceLevel: experienceLevel,
           ScoreTest: overallScore,
-          Levelconfirmed: proficiencyLevel - 1,
+          Levelconfirmed: levelconfirmedValue,
         };
 
         // Check if soft skill exists
@@ -154,7 +157,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
                 'softSkills.$[elem].ScoreTest': overallScore,
                 'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
                 'softSkills.$[elem].experienceLevel': experienceLevel,
-                'softSkills.$[elem].Levelconfirmed': proficiencyLevel - 1,
+                'softSkills.$[elem].Levelconfirmed': levelconfirmedValue,
                 'softSkills.$[elem].updatedAt': new Date(),
               },
             },
@@ -193,7 +196,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
                   'skills.$[elem].ScoreTest': overallScore,
                   'skills.$[elem].proficiencyLevel': proficiencyLevel,
                   'skills.$[elem].experienceLevel': experienceLevel,
-                  'skills.$[elem].Levelconfirmed': proficiencyLevel - 1,
+                  'skills.$[elem].Levelconfirmed': levelconfirmedValue,
                   'skills.$[elem].updatedAt': new Date(),
                 },
               },
@@ -213,7 +216,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
                   'skills.$[elem].ScoreTest': overallScore,
                   'skills.$[elem].proficiencyLevel': proficiencyLevel,
                   'skills.$[elem].experienceLevel': experienceLevel,
-                  'skills.$[elem].Levelconfirmed': proficiencyLevel - 1,
+                  'skills.$[elem].Levelconfirmed': levelconfirmedValue,
                   'skills.$[elem].updatedAt': new Date(),
                 },
               },

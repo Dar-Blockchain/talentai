@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button } from "@mui/material";
+import { useRouter } from "next/router";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "@/components/layout/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,6 +15,7 @@ import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement
 import PageContainer from "@/components/layout/PageContainer";
 
 const CompanySettingsPage: React.FC = () => {
+  const router = useRouter();
   const {
     activeTab,
     isEditing,
@@ -35,6 +38,23 @@ const CompanySettingsPage: React.FC = () => {
   return (
     <PageContainer>
       <Header />
+
+      {/* Back to Dashboard Button */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => router.push('/dashboard/company')}
+          sx={{
+            color: '#6b7280',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: '#f3f4f6',
+            },
+          }}
+        >
+          Back to Dashboard
+        </Button>
+      </Box>
 
       <Box
         sx={{
