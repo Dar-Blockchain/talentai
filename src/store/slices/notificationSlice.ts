@@ -82,6 +82,17 @@ export const fetchNotifications = createAsyncThunk(
         const errorText = await response.text();
         console.error('❌ Fetch failed:', response.status, errorText);
 
+        // Handle 401 errors gracefully (user not authenticated)
+        if (response.status === 401) {
+          console.warn('⚠️ Unauthorized - user not logged in, returning empty array');
+          return {
+            notifications: [],
+            nonArchivedCount: 0,
+            archivedCount: 0,
+            unreadCount: 0,
+          };
+        }
+
         // Handle 400 errors gracefully (user might not have notifications set up)
         if (response.status === 400) {
           console.warn('⚠️ Bad request for notifications - returning empty array');
@@ -93,7 +104,14 @@ export const fetchNotifications = createAsyncThunk(
           };
         }
 
-        throw new Error(`Failed to fetch notifications: ${response.status}`);
+        // For other errors, return empty data instead of throwing
+        console.warn('⚠️ Failed to fetch notifications, returning empty array');
+        return {
+          notifications: [],
+          nonArchivedCount: 0,
+          archivedCount: 0,
+          unreadCount: 0,
+        };
       }
 
       const data = await response.json();
