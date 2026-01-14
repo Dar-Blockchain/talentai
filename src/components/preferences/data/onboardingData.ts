@@ -22,7 +22,7 @@ export const companySteps = [
 export const candidateStepsInfo: StepInfo[] = [
   { title: "Welcome to" },
   { title: "Personal Information" },
-  { title: "Let’s deep dive into your Skills" },
+  { title: "Let’s deep dive into your Skill" },
   { title: "Review Your Information" },
 ];
 

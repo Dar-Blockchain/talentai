@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Box, TextField, Button, Typography, Stack } from "@mui/material";
+import { Box, TextField, Button, Typography, Stack, CircularProgress } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -30,6 +30,17 @@ const codeSchema = Yup.object({
 
 const CODE_LENGTH = 6;
 
+// Helper function to format time
+const formatTimeLeft = (seconds: number): string => {
+  if (seconds <= 0) return '0s';
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  return `${remainingSeconds}s`;
+};
+
 interface Props {
   themeColors: any;
 }
@@ -42,7 +53,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
-  const CODE_TTL = 60;
+  const CODE_TTL = 300; // 5 minutes
   const CODE_EXPIRY_KEY = "email_code_expires_at";
 
   const {
@@ -88,16 +99,17 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
             "Verification successful, but there was an issue signing you in. Please try again.",
           severity: "error",
         });
+        setLoading(false);
         return;
       }
+      // Keep loading state active during redirect
       handleRedirectTo(response.user, response.profile, response.companyMembership);
     } catch (err: any) {
       showToast({
         message:
-          "The code you entered didn’t match. Please check and try again.",
+          "The code you entered didn't match. Please check and try again.",
         severity: "error",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -316,7 +328,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 }}
               >
                 {secondsLeft > 0
-                  ? `Code expires in ${secondsLeft}s`
+                  ? `Code expires in ${formatTimeLeft(secondsLeft)}`
                   : "The verification code has expired"}
               </Typography>
             </Stack>
@@ -342,8 +354,11 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 background: themeColors.primaryLight,
                 boxShadow: "0 4px 12px themeColors.primaryHover",
               },
+              "&.Mui-disabled": {
+                background: "rgba(0, 0, 0, 0.12)",
+                color: "rgba(0, 0, 0, 0.26)",
+              },
             }}
-            loading={loading}
             disabled={
               loading ||
               (step === 2 && !isExpired && values.code.length < CODE_LENGTH)
@@ -357,12 +372,16 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                 handleSendCode(values.email);
               }
             }}
+            startIcon={loading ? <CircularProgress size={20} sx={{ color: "#ffffff" }} /> : undefined}
           >
-            {step === 1
-              ? "Send Code"
-              : step === 2 && isExpired
-              ? "Resend Code"
-              : "Verify & Sign In"}
+            {loading
+              ? (step === 1 ? "Sending..." : step === 2 && isExpired ? "Resending..." : "Verifying...")
+              : (step === 1
+                ? "Send Code"
+                : step === 2 && isExpired
+                ? "Resend Code"
+                : "Verify & Sign In")
+            }
           </Button>
           {step === 2 && (
             <Button

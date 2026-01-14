@@ -160,9 +160,18 @@ export const logout = createAsyncThunk(
         Cookies.remove(cookieName, { path: "/" });
       });
 
+      // Redirect to signin page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin';
+      }
+
       return true;
     } catch (error: any) {
       console.error("❌ Logout error:", error);
+      // Still redirect to signin even on error
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin';
+      }
       return rejectWithValue(error.message || "Logout failed");
     } finally {
       setLoggingOut(false);
