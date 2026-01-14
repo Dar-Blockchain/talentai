@@ -134,13 +134,15 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     // Build query
     const query = {};
+    
+    // Always filter by status "open"
+    query.status = 'open';
 
     console.log('🔍 getAllPostsWithSearch called with filters:', filters);
 
-    // Filter by status
-    if (status) {
-      query.status = status;
-      console.log('  - Filtering by status:', status);
+    // Filter by status - DEPRECATED: status is now always "open"
+    if (status && status !== 'open') {
+      console.warn('⚠️ [getAllPostsWithSearch] Status filter ignored: only "open" posts are returned. Requested: ' + status);
     }
 
     // Search filter - search in title, description, requirements, and skills
