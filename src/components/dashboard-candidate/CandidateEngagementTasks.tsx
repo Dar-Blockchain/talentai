@@ -45,7 +45,7 @@ export default function CandidateEngagementTasks() {
       title: 'Complete Your Profile',
       description: 'Add your target role and experience',
       completed: !!(profile?.firstName && profile?.targetRole),
-      action: () => router.push('/settings/profile'),
+      action: () => router.push('/profile/candidate/settings'),
       icon: PersonIcon,
       reward: 'Increase match accuracy',
     },

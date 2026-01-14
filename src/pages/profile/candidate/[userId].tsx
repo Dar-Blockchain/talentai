@@ -284,7 +284,7 @@ const CandidateProfile: React.FC = () => {
                       variant="outlined"
                       size="small"
                       startIcon={<SettingsIcon />}
-                      onClick={() => router.push('/settings/profile?tab=personal')}
+                      onClick={() => router.push('/profile/candidate/settings')}
                       sx={{
                         borderColor: '#8310FF',
                         color: '#8310FF',
