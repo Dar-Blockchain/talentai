@@ -303,27 +303,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = React.memo(({ open, onClos
             </Typography>
           </Box>
 
-          {/* Role Details Card */}
-          {selectedRoleDetails && (
-            <Box
-              sx={{
-                p: 2.5,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%)',
-                border: '1px solid #e0e7ff',
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 600, color: '#4f46e5', mb: 1, fontSize: '0.9rem' }}
-              >
-                {selectedRoleDetails.label} Role
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.85rem' }}>
-                {selectedRoleDetails.description}
-              </Typography>
-            </Box>
-          )}
+    
         </Box>
       </DialogContent>
 
@@ -361,6 +341,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = React.memo(({ open, onClos
             fontWeight: 600,
             borderRadius: 2,
             px: 3,
+            color: '#ffffff',
             background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
             boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
             '&:hover': {

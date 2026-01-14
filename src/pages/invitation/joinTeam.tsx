@@ -20,6 +20,7 @@ import {
   Business as BusinessIcon,
   Person as PersonIcon,
   BarChart as BarChartIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import {
   fetchInvitationDetails,
@@ -55,7 +56,7 @@ const InvitationAcceptationPage: React.FC = () => {
     error,
   } = useSelector(selectMembers);
 
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   // Check authentication and redirect to signin if needed
   useEffect(() => {
@@ -130,8 +131,12 @@ const InvitationAcceptationPage: React.FC = () => {
     );
   }
 
-  // Error state
-  if (error || !currentInvitation) {
+  // Check if logged-in user email matches invitation email
+  const emailMismatch = currentInvitation && user && (currentInvitation as any).email &&
+    user.email.toLowerCase() !== (currentInvitation as any).email.toLowerCase();
+
+  // Error state or email mismatch
+  if (error || !currentInvitation || emailMismatch) {
     return (
       <Box
         sx={{
@@ -157,7 +162,7 @@ const InvitationAcceptationPage: React.FC = () => {
                   width: 80,
                   height: 80,
                   borderRadius: '50%',
-                  bgcolor: '#fee2e2',
+                  bgcolor: emailMismatch ? '#fef3c7' : '#fee2e2',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -165,17 +170,23 @@ const InvitationAcceptationPage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                <CancelIcon sx={{ fontSize: 48, color: '#ef4444' }} />
+                {emailMismatch ? (
+                  <WarningIcon sx={{ fontSize: 48, color: '#f59e0b' }} />
+                ) : (
+                  <CancelIcon sx={{ fontSize: 48, color: '#ef4444' }} />
+                )}
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 2 }}>
-                Invalid Invitation
+                {emailMismatch ? 'Email Mismatch' : 'Invalid Invitation'}
               </Typography>
               <Typography variant="body1" sx={{ color: '#64748b', mb: 4 }}>
-                {error || 'This invitation is no longer valid or has expired.'}
+                {emailMismatch
+                  ? `This invitation was sent to ${(currentInvitation as any).email}, but you are logged in as ${user?.email}. Please log in with the correct account to accept this invitation.`
+                  : error || 'This invitation is no longer valid or has expired.'}
               </Typography>
               <Button
                 variant="contained"
-                onClick={() => router.push('/')}
+                onClick={() => router.push(emailMismatch ? '/dashboard/member' : '/')}
                 sx={{
                   bgcolor: '#8310FF',
                   '&:hover': { bgcolor: '#6b0fd6' },
@@ -186,7 +197,7 @@ const InvitationAcceptationPage: React.FC = () => {
                   borderRadius: 2,
                 }}
               >
-                Go to Home
+                {emailMismatch ? 'Go to Dashboard' : 'Go to Home'}
               </Button>
             </CardContent>
           </Card>

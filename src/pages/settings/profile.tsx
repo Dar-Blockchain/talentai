@@ -1,11 +1,10 @@
 "use client";
 import React, { useState, useCallback } from "react";
-import { Box, Container, Card, CardContent, Typography } from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import axios from "axios";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
@@ -15,7 +14,6 @@ import ContactInformationTab from "@/components/profile/ContactInformationTab";
 import TeamMembersTab from "@/components/profile/TeamMembersTab";
 import ProfileVisibilityTab from "@/components/profile/ProfileVisibilityTab";
 import SnackbarNotifications from "@/components/profile/SnackbarNotifications";
-import BackToDashboardButton from "@/components/profile/BackToDashboardButton";
 import { useProfileManagement } from "@/hooks/useProfileManagement";
 import PageContainer from "@/components/layout/PageContainer";
 
@@ -83,9 +81,6 @@ const ProfileSettingsPage: React.FC = () => {
   return (
     <PageContainer>
       <Header />
-
-      {/* <BackToDashboardButton profileType={profile.profileType || 'Candidate'} /> */}
-
       <Box
         sx={{
           display: "flex",

@@ -21,19 +21,10 @@ import {
   Security as SecurityIcon,
   Business as BusinessIcon,
 } from '@mui/icons-material';
+import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
 
-// Main Permission Categories (simplified - only big permissions)
-export interface CompanyPermissions {
-  canManageJobPosts: boolean;           // Job Post Management
-  canUnlockCandidates: boolean;         // Unlock Candidates
-  canAccessCandidates: boolean;         // Candidate Access
-  canUseMatching: boolean;              // Matching & Search
-  canUseHRAgents: boolean;              // HR Agents (Premium)
-  canManageRecruitment: boolean;        // Recruitment Flow
-  canManageTokens: boolean;             // Token Management
-  canViewAnalytics: boolean;            // Analytics & Reports
-  canCommunicate: boolean;              // Communication
-}
+// Type for the permissions object (without metadata fields)
+export type CompanyPermissions = Omit<Permission, '_id' | 'userId' | 'profileId' | 'lastModifiedBy' | 'notes' | 'createdAt' | 'updatedAt'>;
 
 interface PermissionItem {
   key: keyof CompanyPermissions;
@@ -60,25 +51,18 @@ interface CompanyPermissionsModalProps {
   onSave: (companyId: string, permissions: CompanyPermissions) => Promise<void>;
 }
 
-const defaultPermissions: CompanyPermissions = {
-  canManageJobPosts: true,
-  canUnlockCandidates: true,
-  canAccessCandidates: true,
-  canUseMatching: true,
-  canUseHRAgents: false,
-  canManageRecruitment: true,
-  canManageTokens: true,
-  canViewAnalytics: true,
-  canCommunicate: true,
-};
+const defaultPermissions: CompanyPermissions = DEFAULT_PERMISSIONS;
 
 const permissionItems: PermissionItem[] = [
+  // Job Post Permissions
   {
-    key: 'canManageJobPosts',
-    label: 'Job Post Management',
-    description: 'Create, edit, delete, and view job postings',
+    key: 'canCreateJobPosts',
+    label: 'Create Job Posts',
+    description: 'Create, edit, delete, and manage job postings',
     icon: '📋',
   },
+
+  // Candidate Permissions
   {
     key: 'canUnlockCandidates',
     label: 'Unlock Candidates',
@@ -86,46 +70,52 @@ const permissionItems: PermissionItem[] = [
     icon: '🔓',
   },
   {
-    key: 'canAccessCandidates',
-    label: 'Candidate Access',
+    key: 'canViewCandidateProfiles',
+    label: 'View Candidate Profiles',
     description: 'View unlocked candidate profiles, assessments, and resumes',
     icon: '👤',
   },
   {
-    key: 'canUseMatching',
-    label: 'Matching & Search',
+    key: 'canContactCandidates',
+    label: 'Contact Candidates',
+    description: 'Send messages and communicate with candidates',
+    icon: '💬',
+  },
+
+  // Matching Permissions
+  {
+    key: 'canAccessMatching',
+    label: 'Access Matching',
     description: 'Access matching algorithm and view candidate matches',
     icon: '🔍',
   },
+
+  // HR Agent Permissions
   {
     key: 'canUseHRAgents',
-    label: 'HR Agents (Premium)',
+    label: 'Use HR Agents',
     description: 'Create and manage AI HR agents for recruitment automation',
     icon: '🤖',
   },
+
+  // Team Permissions
   {
-    key: 'canManageRecruitment',
-    label: 'Recruitment Flow',
-    description: 'Configure recruitment pipelines and interview stages',
-    icon: '📊',
+    key: 'canManageTeam',
+    label: 'Manage Team',
+    description: 'Manage team members, view team list, and control team settings',
+    icon: '👥',
   },
   {
-    key: 'canManageTokens',
-    label: 'Token Management',
-    description: 'Purchase, view balance, and manage platform tokens',
-    icon: '💎',
+    key: 'canInviteMembers',
+    label: 'Invite Members',
+    description: 'Send invitations to new team members to join the company',
+    icon: '✉️',
   },
   {
-    key: 'canViewAnalytics',
-    label: 'Analytics & Reports',
-    description: 'View analytics dashboard, metrics, and export reports',
-    icon: '📈',
-  },
-  {
-    key: 'canCommunicate',
-    label: 'Communication',
-    description: 'Send messages, schedule interviews, and send assessments',
-    icon: '💬',
+    key: 'canAssignRoles',
+    label: 'Assign Roles',
+    description: 'Assign and update roles for team members',
+    icon: '🎯',
   },
 ];
 
@@ -171,8 +161,23 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       }
 
       const data = await response.json();
+      console.log('📦 [PermissionsModal] Fetched permissions from backend:', data);
+
       if (data.success && data.permissions) {
-        setPermissions({ ...defaultPermissions, ...data.permissions });
+        // Only extract the new permission fields that match our PermissionModel
+        const validPermissions: CompanyPermissions = {
+          canCreateJobPosts: data.permissions.canCreateJobPosts ?? defaultPermissions.canCreateJobPosts,
+          canUnlockCandidates: data.permissions.canUnlockCandidates ?? defaultPermissions.canUnlockCandidates,
+          canViewCandidateProfiles: data.permissions.canViewCandidateProfiles ?? defaultPermissions.canViewCandidateProfiles,
+          canContactCandidates: data.permissions.canContactCandidates ?? defaultPermissions.canContactCandidates,
+          canAccessMatching: data.permissions.canAccessMatching ?? defaultPermissions.canAccessMatching,
+          canUseHRAgents: data.permissions.canUseHRAgents ?? defaultPermissions.canUseHRAgents,
+          canManageTeam: data.permissions.canManageTeam ?? defaultPermissions.canManageTeam,
+          canInviteMembers: data.permissions.canInviteMembers ?? defaultPermissions.canInviteMembers,
+          canAssignRoles: data.permissions.canAssignRoles ?? defaultPermissions.canAssignRoles,
+        };
+        console.log('✅ [PermissionsModal] Cleaned permissions (new fields only):', validPermissions);
+        setPermissions(validPermissions);
       } else {
         setPermissions(defaultPermissions);
       }
