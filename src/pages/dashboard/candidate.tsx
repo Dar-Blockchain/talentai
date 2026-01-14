@@ -7,6 +7,7 @@ import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
 import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
 import CandidateEngagementTasks from "@/components/dashboard-candidate/CandidateEngagementTasks";
 import RoleGuard from "@/components/guards/RoleGuard";
+import CandidateSkills from "@/components/dashboard-candidate/candidate-skills/CandidateSkills";
 
 const DashboardCandidate: React.FC = () => {
 
@@ -15,9 +16,9 @@ const DashboardCandidate: React.FC = () => {
       <PageContainer>
         <Header />
         <WelcomeHeader />
+        <CandidateSkills/>
         <CandidateEngagementTasks />
         <RecommendedOpportunities />
-        <UserInfoCard />
         <InterviewDetailsTabs />
       </PageContainer>
     </RoleGuard>

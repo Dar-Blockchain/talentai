@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   Box,
-  Card,
   Typography,
   LinearProgress,
   Chip,
@@ -38,99 +37,114 @@ export default function CandidateEngagementTasks() {
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
   const tokenBalance = useSelector(selectTokenBalance) ?? 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const onStartTest = () => {
-    setTestModalOpen(true);
-  };
+  const onStartTest = () => setTestModalOpen(true);
 
-  const tasks: Task[] = useMemo(
-    () => [
-      {
-        id: 'complete_profile',
-        title: 'Complete Your Profile',
-        description: 'Add your target role and experience level',
-        completed: !!(profile?.firstName && profile?.targetRole),
-        action: () => router.push('/settings/profile'),
-        icon: PersonIcon,
-        reward: 'Increase match accuracy',
-      },
-      {
-        id: 'first_skill_test',
-        title: 'Take Your First Skill Test',
-        description: 'Get verified and earn TAI tokens',
-        completed: (profile?.skills?.length || 0) > 0 || (profile?.softSkills?.length || 0) > 0,
-        action: onStartTest,
-        icon: PlayArrowIcon,
-        reward: 'Earn up to 33.33 TAI',
-      },
-      {
-        id: 'earn_tokens',
-        title: 'Earn Your First TAI Tokens',
-        description: 'Complete an interview to start earning',
-        completed: (profile?.interviewDetails?.length || 0) > 0,
-        action: onStartTest,
-        icon: AccountBalanceWalletIcon,
-        reward: 'Start building wealth',
-      },
-      {
-        id: 'share_profile',
-        title: 'Share Your Profile on LinkedIn',
-        description: 'Show employers your verified skills',
-        completed: profile?.linkedInShared || false,
-        action: () => router.push(`/profile/candidate/${user?._id}`),
-        icon: LinkedInIcon,
-        reward: 'Get discovered by recruiters',
-      },
-      {
-        id: 'milestone_100_tai',
-        title: 'Reach 100 TAI Tokens',
-        description: 'Complete 3 interviews to hit this milestone',
-        completed: tokenBalance >= 100,
-        action: onStartTest,
-        icon: EmojiEventsIcon,
-        reward: 'Unlock premium features',
-      },
-      {
-        id: 'get_3_verified',
-        title: 'Get Verified in 3 Skills',
-        description: 'Build your professional credibility',
-        completed: (profile?.skills?.filter((s: any) => s.ScoreTest > 0)?.length || 0) >= 3,
-        action: onStartTest,
-        icon: VerifiedIcon,
-        reward: 'Boost profile visibility',
-      },
-    ],
-    [profile, tokenBalance, onStartTest, router]
-  );
+  const tasks: Task[] = useMemo(() => [
+    {
+      id: 'complete_profile',
+      title: 'Complete Your Profile',
+      description: 'Add your target role and experience',
+      completed: !!(profile?.firstName && profile?.targetRole),
+      action: () => router.push('/settings/profile'),
+      icon: PersonIcon,
+      reward: 'Increase match accuracy',
+    },
+    {
+      id: 'first_skill_test',
+      title: 'Take First Skill Test',
+      description: 'Get verified & earn TAI',
+      completed: (profile?.skills?.length || 0) > 0 || (profile?.softSkills?.length || 0) > 0,
+      action: onStartTest,
+      icon: PlayArrowIcon,
+      reward: 'Earn up to 33.33 TAI',
+    },
+    {
+      id: 'earn_tokens',
+      title: 'Earn TAI Tokens',
+      description: 'Complete an interview to start earning',
+      completed: (profile?.interviewDetails?.length || 0) > 0,
+      action: onStartTest,
+      icon: AccountBalanceWalletIcon,
+      reward: 'Start building wealth',
+    },
+    {
+      id: 'share_profile',
+      title: 'Share Profile on LinkedIn',
+      description: 'Show employers your skills',
+      completed: profile?.linkedInShared || false,
+      action: () => router.push(`/profile/candidate/${user?._id}`),
+      icon: LinkedInIcon,
+      reward: 'Get discovered',
+    },
+    {
+      id: 'milestone_100_tai',
+      title: 'Reach 100 TAI',
+      description: 'Complete 3 interviews',
+      completed: tokenBalance >= 100,
+      action: onStartTest,
+      icon: EmojiEventsIcon,
+      reward: 'Unlock premium features',
+    },
+    {
+      id: 'get_3_verified',
+      title: 'Get Verified in 3 Skills',
+      description: 'Build credibility',
+      completed: (profile?.skills?.filter((s: any) => s.ScoreTest > 0)?.length || 0) >= 3,
+      action: onStartTest,
+      icon: VerifiedIcon,
+      reward: 'Boost visibility',
+    },
+  ], [profile, tokenBalance, onStartTest, router]);
 
   const completedTasks = tasks.filter((task) => task.completed).length;
   const totalTasks = tasks.length;
   const progressPercentage = Math.round((completedTasks / totalTasks) * 100);
 
   return (
-    <Card
+    <Box
       sx={{
-        p: 4,
-        mb: 4,
-        background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.05) 0%, rgba(0, 184, 212, 0.05) 100%)',
-        borderRadius: 3,
-        border: '2px solid rgba(131, 16, 255, 0.1)',
-        boxShadow: '0 4px 20px rgba(131, 16, 255, 0.1)',
+        px: 5,
+        py: 3,
+        mb: 2,
+        color: "#000",
+        borderRadius: "12px",
+        border: "1px solid rgba(84,98,116,0.1)",
+        backgroundColor: 'white',
       }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box>
-          <Typography variant="h5" fontWeight={700} color="#000" mb={0.5}>
+                    <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 600,
+              color: "#000000",
+              fontSize: "20px",
+              mb: 3,
+              position: "relative",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                bottom: "-4px",
+                left: 0,
+                width: "38px",
+                height: "5px",
+                background: "#8310FF",
+                borderRadius: "2px",
+              },
+            }}
+          >
             Your Progress Checklist
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="caption" color="text.secondary">
             {completedTasks}/{totalTasks} tasks completed
           </Typography>
         </Box>
         <Box
           sx={{
-            width: 60,
-            height: 60,
+            width: 48,
+            height: 48,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #8310FF 0%, #00B8D4 100%)',
             display: 'flex',
@@ -138,7 +152,7 @@ export default function CandidateEngagementTasks() {
             justifyContent: 'center',
             color: '#fff',
             fontWeight: 700,
-            fontSize: '1.25rem',
+            fontSize: '1rem',
           }}
         >
           {progressPercentage}%
@@ -150,10 +164,10 @@ export default function CandidateEngagementTasks() {
         variant="determinate"
         value={progressPercentage}
         sx={{
-          height: 8,
-          borderRadius: 4,
-          mb: 3,
-          bgcolor: 'rgba(131, 16, 255, 0.1)',
+          height: 6,
+          borderRadius: 3,
+          mb: 2,
+          bgcolor: 'rgba(131,16,255,0.1)',
           '& .MuiLinearProgress-bar': {
             background: 'linear-gradient(90deg, #8310FF 0%, #00B8D4 100%)',
           },
@@ -161,7 +175,7 @@ export default function CandidateEngagementTasks() {
       />
 
       {/* Task List */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {tasks.map((task) => {
           const IconComponent = task.icon;
           return (
@@ -171,20 +185,20 @@ export default function CandidateEngagementTasks() {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 2,
-                p: 2,
+                gap: 1.5,
+                p: 1.5,
                 borderRadius: 2,
                 border: '1px solid',
-                borderColor: task.completed ? 'rgba(76, 175, 80, 0.3)' : 'rgba(0, 0, 0, 0.1)',
-                bgcolor: task.completed ? 'rgba(76, 175, 80, 0.05)' : '#fff',
+                borderColor: task.completed ? 'rgba(76, 175, 80, 0.3)' : 'rgba(0,0,0,0.1)',
+                bgcolor: task.completed ? 'rgba(76,175,80,0.05)' : '#fff',
                 cursor: task.completed ? 'default' : 'pointer',
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   ...(task.completed
                     ? {}
                     : {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(131, 16, 255, 0.15)',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 2px 8px rgba(131,16,255,0.1)',
                         borderColor: '#8310FF',
                       }),
                 },
@@ -193,28 +207,28 @@ export default function CandidateEngagementTasks() {
               {/* Icon/Checkbox */}
               <Box
                 sx={{
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: task.completed ? 'rgba(76, 175, 80, 0.1)' : 'rgba(131, 16, 255, 0.1)',
+                  bgcolor: task.completed ? 'rgba(76,175,80,0.1)' : 'rgba(131,16,255,0.1)',
                   color: task.completed ? '#4CAF50' : '#8310FF',
                   flexShrink: 0,
                 }}
               >
                 {task.completed ? (
-                  <CheckCircleIcon sx={{ fontSize: 24 }} />
+                  <CheckCircleIcon sx={{ fontSize: 20 }} />
                 ) : (
-                  <IconComponent sx={{ fontSize: 24 }} />
+                  <IconComponent sx={{ fontSize: 20 }} />
                 )}
               </Box>
 
               {/* Task Info */}
               <Box sx={{ flex: 1 }}>
                 <Typography
-                  variant="subtitle1"
+                  variant="body2"
                   fontWeight={600}
                   color={task.completed ? 'text.secondary' : '#000'}
                   sx={{ textDecoration: task.completed ? 'line-through' : 'none' }}
@@ -231,15 +245,15 @@ export default function CandidateEngagementTasks() {
                 label={task.reward}
                 size="small"
                 sx={{
-                  bgcolor: task.completed ? 'rgba(76, 175, 80, 0.1)' : 'rgba(131, 16, 255, 0.1)',
+                  bgcolor: task.completed ? 'rgba(76,175,80,0.1)' : 'rgba(131,16,255,0.1)',
                   color: task.completed ? '#4CAF50' : '#8310FF',
                   fontWeight: 600,
-                  fontSize: '0.75rem',
+                  fontSize: '0.7rem',
                 }}
               />
 
               {/* Arrow for incomplete tasks */}
-              {!task.completed && <ArrowForwardIcon sx={{ color: '#8310FF', fontSize: 20 }} />}
+              {!task.completed && <ArrowForwardIcon sx={{ color: '#8310FF', fontSize: 18 }} />}
             </Box>
           );
         })}
@@ -247,19 +261,17 @@ export default function CandidateEngagementTasks() {
 
       {/* Completion Celebration */}
       {completedTasks === totalTasks && (
-        <Alert severity="success" sx={{ mt: 3 }} icon={<EmojiEventsIcon />}>
-          <Typography variant="subtitle2" fontWeight={700}>
-            🎉 All tasks completed! You're ready to get hired!
+        <Alert severity="success" sx={{ mt: 2 }} icon={<EmojiEventsIcon fontSize="small" />}>
+          <Typography variant="body2" fontWeight={700}>
+            🎉 All tasks completed!
           </Typography>
           <Typography variant="caption">
             Keep taking tests to earn more TAI tokens and increase your ranking.
           </Typography>
         </Alert>
       )}
-            <AssessmentModal
-              open={testModalOpen}
-              onClose={() => setTestModalOpen(false)}
-            />
-    </Card>
+
+      <AssessmentModal open={testModalOpen} onClose={() => setTestModalOpen(false)} />
+    </Box>
   );
 }

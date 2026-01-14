@@ -2,18 +2,17 @@ import React, { useMemo } from "react";
 import {
   Menu,
   MenuItem,
-  Divider,
   ListItemIcon,
   MenuProps,
 } from "@mui/material";
-import LogoutIcon from "@mui/icons-material/Logout";
-import BusinessIcon from "@mui/icons-material/Business";
-import SettingsIcon from "@mui/icons-material/Settings";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { setUserType } from "@/store/slices/userSlice";
 import UserOutlineIcon from "../icons/UserOutlineIcon";
+import LogoutIcon from "../icons/LogoutIcon";
+import SwitchUserIcon from "../icons/SwitchUserIcon";
+import SettingsIcon from "../icons/SettingsIcon";
 
 interface UserDropdownMenuProps extends Omit<MenuProps, "children"> {
   onCompany?: () => void;
@@ -27,7 +26,9 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { user, companyMembership } = useSelector((state: RootState) => state.user.connectedUser);
+  const { user, companyMembership } = useSelector(
+    (state: RootState) => state.user.connectedUser
+  );
 
   const currentSpace = useSelector(
     (state: RootState) => state.user.currentSpace
@@ -79,36 +80,40 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
           borderRadius: "9px",
           minWidth: 180,
           boxShadow: "0px 0px 18.1px 0px rgba(0, 0, 0, 0.05)",
+          paddingTop: 0,
+          paddingBottom: 0
         },
       }}
     >
-      {!isCompany && <MenuItem
-        onClick={() => {
-          onProfileClick?.();
-          menuProps.onClose?.({}, "backdropClick");
-        }}
-        sx={{
-          color: "rgba(98, 111, 134, 1)",
-          fontWeight: 500,
-          fontSize: "12px",
-        }}
-      >
-        <ListItemIcon>
-          <UserOutlineIcon />
-        </ListItemIcon>
-        View Profile
-      </MenuItem>}
+      {!isCompany && (
+        <MenuItem
+          onClick={() => {
+            onProfileClick?.();
+            menuProps.onClose?.({}, "backdropClick");
+          }}
+          sx={{
+            color: "rgba(98, 111, 134, 1)",
+            fontWeight: 500,
+            fontSize: "14px",
+          }}
+        >
+          <ListItemIcon>
+            <UserOutlineIcon size={16}/>
+          </ListItemIcon>
+          View Profile
+        </MenuItem>
+      )}
 
       <MenuItem
         onClick={handleSettingsClick}
         sx={{
           color: "rgba(98, 111, 134, 1)",
           fontWeight: 500,
-          fontSize: "12px",
+          fontSize: "14px",
         }}
       >
         <ListItemIcon>
-          <SettingsIcon fontSize="small" />
+          <SettingsIcon width={16} height={16} />
         </ListItemIcon>
         Settings
       </MenuItem>
@@ -119,28 +124,26 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
           sx={{
             color: "rgba(98, 111, 134, 1)",
             fontWeight: 500,
-            fontSize: "12px",
+            fontSize: "14px",
           }}
         >
           <ListItemIcon>
-            <BusinessIcon fontSize="small" />
+            <SwitchUserIcon width={16} height={16} />
           </ListItemIcon>
           Switch Space
         </MenuItem>
       )}
-
-      <Divider sx={{ color: "rgba(98, 111, 134, 0.5)" }} />
 
       <MenuItem
         onClick={handleLogout}
         sx={{
           color: "rgba(200, 65, 75, 1)",
           fontWeight: 500,
-          fontSize: "12px",
+          fontSize: "14px",
         }}
       >
         <ListItemIcon>
-          <LogoutIcon fontSize="small" />
+          <LogoutIcon width={16} height={16} />
         </ListItemIcon>
         Logout
       </MenuItem>

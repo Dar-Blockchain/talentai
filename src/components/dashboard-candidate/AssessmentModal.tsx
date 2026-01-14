@@ -271,8 +271,9 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
     >
       <DialogTitle
         sx={{
-          borderBottom: `1px solid gray`,
-          color: "gray",
+          borderBottom: `1px solid rgba(186, 200, 222, 1)`,
+          color: "rgba(186, 200, 222, 1)",
+          mb: 2
         }}
       >
         <Box
@@ -290,7 +291,7 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ height: "100%", overflow: "auto" }}>
+      <DialogContent sx={{ height: "100%", overflow: "auto", pt: 2 }}>
         {!type && (
           <FormControl component="fieldset" sx={{ width: "100%", mb: 3 }}>
             <FormLabel sx={{ color: "gray", mb: 1, mt: 2 }}>
