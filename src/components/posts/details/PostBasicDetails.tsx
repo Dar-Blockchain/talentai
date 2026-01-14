@@ -10,8 +10,9 @@ import {
   List,
   ListItem,
   ListItemText,
+  Tooltip,
 } from "@mui/material";
-import { CalendarMonth } from "@mui/icons-material";
+import { CalendarMonth, PlayArrow } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import Image from "next/image";
 import {
@@ -26,6 +27,7 @@ import { SkillChip } from "../create/steps/post-details-step/PostPreview";
 import DeletePostModal from "../delete/DeletePostModal";
 import { useDeletePost } from "../delete/useDeletePost";
 import { useToast } from "@/hooks/useToast";
+import { RootState } from "@/store/store";
 
 interface Props {
   canEdit: boolean;
@@ -35,6 +37,9 @@ interface Props {
 const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
   const { showToast } = useToast();
   const job = useSelector(selectCurrentJob);
+  const profile = useSelector(
+    (state: RootState) => state.user.connectedUser.profile
+  );
 
   const displaySkills = React.useMemo(() => getPostSkills(job), [job]);
 
@@ -52,6 +57,16 @@ const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
         severity: "success",
       }),
   });
+
+  const handlePassInterview = (jobId: string) => {
+    if (typeof window !== "undefined") {
+      window.open(
+        `${window.location.origin}/interview/hr?jobId=${jobId}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+  };
 
   if (!job) return;
 
@@ -138,6 +153,42 @@ const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
               >
                 Share Post
               </Button> */}
+          {!canEdit && (
+            <Tooltip
+              title={
+                profile.quota >= 5
+                  ? "You’ve reached your monthly interview limit. Please try again next month."
+                  : ""
+              }
+              disableHoverListener={profile.quota >= 5}
+            >
+              <Button
+                variant="outlined"
+                fullWidth
+                // startIcon={<PlayArrow />}
+                onClick={() => handlePassInterview(job?._id)}
+                sx={{
+                  borderColor: "rgba(16, 185, 129, 1)",
+                  color: "rgba(16, 185, 129, 1)",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  fontSize: "0.875rem",
+                  borderRadius: "38px",
+                  maxWidth: "250px",
+                  height: "42px",
+                  py: 1.25,
+                  px: 3,
+                  backgroundColor: "rgba(16, 185, 129, 0.08)",
+                  "&:hover": {
+                    borderColor: "rgba(5, 150, 105, 1)",
+                    backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  },
+                }}
+              >
+                Pass Interview
+              </Button>
+            </Tooltip>
+          )}
           {/* <Divider
                 orientation="vertical"
                 sx={{ height: "35px", color: "rgba(84, 98, 116, 0.26)" }}

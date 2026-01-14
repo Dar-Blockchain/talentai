@@ -18,6 +18,7 @@ import Loader from "@/components/ui/Loader";
 import EditPostDetails from "@/components/posts/edit/EditPostDetails";
 import EditRecruitmentFlow from "@/components/posts/edit/EditRecruitmentFlow";
 import EditAgentConfiguration from "@/components/posts/edit/EditAgentConfiguration";
+import PageContainer from '@/components/layout/PageContainer'; 
 
 const PostDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,14 +49,7 @@ const PostDetails: React.FC = () => {
   const handleCancelEdit = () => setActiveEdit(null);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "rgba(251, 254, 255, 1)",
-        py: 2,
-      }}
-    >
-      <Container maxWidth="lg">
+    <PageContainer>
         <Header />
 
         <Button
@@ -118,10 +112,10 @@ const PostDetails: React.FC = () => {
                   canEdit={isOwner}
                 />
 
-                <RecruitmentFlowDetails
+                {job?.creationType !== 'ai' && <RecruitmentFlowDetails
                   onEdit={() => setActiveEdit("recruitment")}
                   canEdit={isOwner}
-                />
+                />}
 
                 {isOwner && (
                   <AgentConfigurationDetails
@@ -132,8 +126,7 @@ const PostDetails: React.FC = () => {
             )}
           </Box>
         )}
-      </Container>
-    </Box>
+      </PageContainer>
   );
 };
 
