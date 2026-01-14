@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useCallback } from "react";
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import axios from "axios";
+import { useRouter } from "next/router";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "@/components/layout/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -17,6 +19,7 @@ import { useProfileManagement } from "@/hooks/useProfileManagement";
 import PageContainer from "@/components/layout/PageContainer";
 
 const CandidateSettingsPage: React.FC = () => {
+  const router = useRouter();
   const {
     activeTab,
     isEditing,
@@ -81,6 +84,23 @@ const CandidateSettingsPage: React.FC = () => {
   return (
     <PageContainer>
       <Header />
+
+      {/* Back to Dashboard Button */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => router.push('/dashboard/candidate')}
+          sx={{
+            color: '#6b7280',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: '#f3f4f6',
+            },
+          }}
+        >
+          Back to Dashboard
+        </Button>
+      </Box>
 
       <Box
         sx={{
