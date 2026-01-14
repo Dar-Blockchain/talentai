@@ -45,7 +45,6 @@ export const locations = [
   "China",
   "United Arab Emirates",
   "Saudi Arabia",
-  "Israel",
   "Brazil",
   "Mexico",
   "Argentina",
