@@ -62,6 +62,9 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       }
     } else {
       // Update existing profile
+      console.log("🔄 [createOrUpdateProfile] Updating existing profile for userId:", userId);
+      console.log("📝 [createOrUpdateProfile] Profile data to update:", JSON.stringify(profileData, null, 2));
+      
       profile.firstName = profileData.firstName || profileData.FirstName || profile.firstName;
       profile.lastName = profileData.lastName || profileData.LastName || profile.lastName;
       profile.age = profileData.age || profile.age;
@@ -75,6 +78,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       
       // Update salary expectations
       if (profileData.expectedSalary) {
+        console.log("💰 [createOrUpdateProfile] Updating expectedSalary:", profileData.expectedSalary);
         profile.expectedSalary = {
           min: profileData.expectedSalary.min,
           max: profileData.expectedSalary.max,
@@ -85,6 +89,21 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       profile.preferredContractType = profileData.preferredContractType || profile.preferredContractType;
       profile.workModePreference = profileData.workModePreference || profile.workModePreference;
       
+      // Update contact information
+      if (profileData.contactInformation) {
+        console.log("📧 [createOrUpdateProfile] Updating contactInformation:", JSON.stringify(profileData.contactInformation, null, 2));
+        profile.contactInformation = {
+          email: profileData.contactInformation.email !== undefined ? profileData.contactInformation.email : (profile.contactInformation?.email || ''),
+          phone: profileData.contactInformation.phone !== undefined ? profileData.contactInformation.phone : (profile.contactInformation?.phone || ''),
+          address: profileData.contactInformation.address !== undefined ? profileData.contactInformation.address : (profile.contactInformation?.address || ''),
+          linkedinUrl: profileData.contactInformation.linkedinUrl !== undefined ? profileData.contactInformation.linkedinUrl : (profile.contactInformation?.linkedinUrl || ''),
+          githubUrl: profileData.contactInformation.githubUrl !== undefined ? profileData.contactInformation.githubUrl : (profile.contactInformation?.githubUrl || ''),
+          personalWebsite: profileData.contactInformation.personalWebsite !== undefined ? profileData.contactInformation.personalWebsite : (profile.contactInformation?.personalWebsite || ''),
+          location: profileData.contactInformation.location !== undefined ? profileData.contactInformation.location : (profile.contactInformation?.location || ''),
+        };
+        console.log("✅ [createOrUpdateProfile] contactInformation updated successfully:", profile.contactInformation);
+      }
+      
       // Update overall score if provided
       if (typeof profileData.overallScore === "number") {
         profile.overallScore = profileData.overallScore;
@@ -92,6 +111,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
 
       // Merge skills
       if (Array.isArray(profileData.skills)) {
+        console.log("🎯 [createOrUpdateProfile] Updating skills:", profileData.skills);
         profileData.skills.forEach((newSkill) => {
           const existingSkill = profile.skills.find(
             (skill) => skill.name === newSkill.name
@@ -117,6 +137,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
 
       profile.type = profileData.type || profile.type;
       await profile.save();
+      console.log("💾 [createOrUpdateProfile] Profile saved successfully");
     }
 
     // Update profile reference in User
