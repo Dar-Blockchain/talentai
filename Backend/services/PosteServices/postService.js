@@ -562,14 +562,18 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     condidateId: user.profile._id,
   }).distinct("jobId");
 
-  // Tous les postes correspondants aux skills, en excluant ceux déjà testés
+  // Tous les postes correspondants aux skills, en excluant ceux déjà testés et avec status "open"
   let candidatePosts = await Post.find({
     "skillAnalysis.requiredSkills.name": { $in: skillNames },
     _id: { $nin: testedPosts },
+    status: 'open' // Only return posts with status "open"
   })
     .populate('post_Steps')
     .sort({ createdAt: -1 })
     .lean();
+  
+  // 🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}
+  console.log(`🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}`);
 
   // DEBUG: Log first post with post_Steps to verify population
   if (candidatePosts.length > 0) {
