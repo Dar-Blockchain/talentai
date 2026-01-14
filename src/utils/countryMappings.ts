@@ -76,7 +76,6 @@ export const COUNTRY_CODE_MAP: Record<string, string> = {
   'IQ': 'Iraq',
   'IR': 'Iran',
   'TR': 'Turkey',
-  'IL': 'Israel',
   'PS': 'Palestine',
   'YE': 'Yemen',
 

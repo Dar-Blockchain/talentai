@@ -20,8 +20,15 @@ const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
   
   useEffect(() => {
     if (!user || isLoggingOut) return;
+
     const role = user?.role;
-    dispatch(getMyProfile())
+
+    // Only fetch profile if we don't have it yet
+    if (!profile) {
+      dispatch(getMyProfile());
+      return; // Wait for profile to load before doing redirects
+    }
+
     if(!role && !profile) {
       router.replace(`/preferences`);
       return;
@@ -29,7 +36,7 @@ const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
     if (!allowedRoles.includes(role)) {
       router.replace(`/dashboard/${role?.toLowerCase()}`);
     }
-  }, [user, allowedRoles, router, isLoggingOut]);
+  }, [user, allowedRoles, router, isLoggingOut, profile, dispatch]);
 
   if (!user || !profile) return <LoadingScreen />;
 

@@ -138,7 +138,6 @@ export const JOB_LOCATIONS = [
   'Iran',
   'Iraq',
   'Ireland',
-  'Israel',
   'Italy',
   'Jamaica',
   'Japan',
