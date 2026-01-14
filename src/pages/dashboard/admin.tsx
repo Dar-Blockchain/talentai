@@ -746,8 +746,18 @@ const DashboardAdmin = () => {
     // Handle permissions save
     const handleSavePermissions = async (companyId: string, permissions: CompanyPermissions) => {
         try {
+            console.log('🔵 [Admin] Saving permissions for company:', companyId);
+            console.log('🔵 [Admin] Permissions object (new structure):', permissions);
+
             const token = localStorage.getItem('api_token');
             if (!token) throw new Error('Authentication required');
+
+            // Backend expects permissions wrapped in an object with "permissions" key
+            const requestBody = {
+                permissions: permissions
+            };
+
+            console.log('🔵 [Admin] Request body:', JSON.stringify(requestBody, null, 2));
 
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}admin/companies/${companyId}/permissions`,
@@ -757,19 +767,22 @@ const DashboardAdmin = () => {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ permissions }),
+                    body: JSON.stringify(requestBody),
                 }
             );
 
+            console.log('📡 [Admin] Response status:', response.status);
+
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('❌ [Admin] Error response:', errorData);
                 throw new Error(errorData.message || 'Failed to update permissions');
             }
 
-            // Success - modal will handle UI feedback
-            console.log('Permissions updated successfully');
+            const data = await response.json();
+            console.log('✅ [Admin] Permissions updated successfully:', data);
         } catch (error) {
-            console.error('Error saving permissions:', error);
+            console.error('❌ [Admin] Error saving permissions:', error);
             throw error; // Re-throw to let modal handle error display
         }
     };

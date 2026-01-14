@@ -14,7 +14,7 @@ import { resetFlow, resetSavePost } from "@/store/slices/postSlice";
 const CreateJobPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [mounted, setMounted] = useState(false);
-  const creationType = useSelector(selectCreationType)
+  const creationType = useSelector(selectCreationType);
 
   useEffect(() => setMounted(true), []);
 
@@ -27,6 +27,7 @@ const CreateJobPage: React.FC = () => {
       dispatch(resetSavePost())
     };
   }, []);
+
   if (!mounted) return null;
 
   return (

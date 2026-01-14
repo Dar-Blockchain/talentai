@@ -15,6 +15,7 @@ const generateJobPostController = require("../controllers/PostControllers/genera
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const { controledAcces } = require('../middleware/controledAcces'); 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 
 // Toutes les routes ci-dessous nécessitent un compte Company authentifié
@@ -25,6 +26,6 @@ router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("Linked
 // Body: { title, description, skills, ... }
 // Description: Génère un post LinkedIn attractif pour une offre d'emploi
 //router.post("/generate", generateJobPostController.generateJobPost);
-router.post("/generate-job-post", generateJobPostController.generateJobPost);
+router.post("/generate-job-post", resolveCompanyActor,generateJobPostController.generateJobPost);
 
 module.exports = router;

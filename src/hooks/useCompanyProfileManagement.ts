@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { SelectChangeEvent } from '@mui/material';
+import { toast } from 'react-toastify';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import {
@@ -50,6 +51,7 @@ export const useCompanyProfileManagement = () => {
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Fetch profile on mount
   useEffect(() => {
@@ -127,6 +129,41 @@ export const useCompanyProfileManagement = () => {
     }
   }, [saveSuccess]);
 
+  // Validation helper function
+  const validateField = (field: keyof UserProfile, value: string): string => {
+    // Clear error when field is empty or only whitespace
+    if (!value || !value.trim()) {
+      return '';
+    }
+
+    switch (field) {
+      case 'name':
+      case 'companyName':
+        if (value.trim().length < 2) {
+          return 'Must be at least 2 characters';
+        }
+        break;
+      case 'phone':
+        if (!/^[\d\s+()-]+$/.test(value.trim())) {
+          return 'Invalid phone number format';
+        }
+        break;
+      case 'linkedinUrl':
+        const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
+        if (!linkedinPattern.test(value.trim())) {
+          return 'Must be a valid LinkedIn URL (e.g., https://www.linkedin.com/company/yourcompany)';
+        }
+        break;
+      case 'personalWebsite':
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        if (!urlPattern.test(value.trim())) {
+          return 'Invalid website URL';
+        }
+        break;
+    }
+    return '';
+  };
+
   const handleInputChange = useCallback((field: keyof UserProfile, value: string) => {
     console.log('🟡 [handleInputChange] Field:', field, 'Value:', value);
     setProfile(prev => {
@@ -134,10 +171,26 @@ export const useCompanyProfileManagement = () => {
       console.log('🟡 [handleInputChange] Updated profile:', { name: updated.name, companyName: updated.companyName });
       return updated;
     });
+
+    // Validate field and update errors
+    const error = validateField(field, value);
+    setFieldErrors(prev => {
+      if (error) {
+        return { ...prev, [field]: error };
+      } else {
+        const { [field]: _, ...rest } = prev;
+        return rest;
+      }
+    });
   }, []);
 
   const handleSelectChange = useCallback((event: SelectChangeEvent<string>, field: keyof UserProfile) => {
     setProfile(prev => ({ ...prev, [field]: event.target.value }));
+    // Clear any existing error for this field
+    setFieldErrors(prev => {
+      const { [field]: _, ...rest } = prev;
+      return rest;
+    });
   }, []);
 
   const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,17 +199,18 @@ export const useCompanyProfileManagement = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+      toast.error('Please select a valid image file');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      toast.error('Image size should be less than 5MB');
       return;
     }
 
     setUploadingImage(true);
+
     try {
       const token = localStorage.getItem('api_token');
       const formData = new FormData();
@@ -179,15 +233,23 @@ export const useCompanyProfileManagement = () => {
 
       await dispatch(getMyProfile());
       setSaveSuccess(true);
+
+      toast.success('Profile picture updated successfully!');
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
-      alert('Failed to upload image');
+      toast.error('Failed to upload image');
     } finally {
       setUploadingImage(false);
     }
   }, [dispatch]);
 
   const handleSaveProfile = useCallback(async () => {
+    // Check if there are any field errors
+    if (Object.keys(fieldErrors).length > 0) {
+      toast.error('Please fix the errors in the form before saving');
+      return;
+    }
+
     // Use a functional update to get the latest profile state
     setProfile(currentProfile => {
       console.log('🟣 [handleSaveProfile] Current profile state:', {
@@ -200,9 +262,15 @@ export const useCompanyProfileManagement = () => {
       const updatePayload: any = {};
 
       if (activeTab === 'personal') {
-        // Company profile update - matches backend API structure
+        // Validation for company profile
         const companyName = currentProfile.name?.trim() || currentProfile.companyName?.trim() || '';
 
+        if (companyName && companyName.length < 2) {
+          toast.error('Company name must be at least 2 characters');
+          return currentProfile;
+        }
+
+        // Company profile update - matches backend API structure
         updatePayload.name = companyName;
         updatePayload.email = currentProfile.email?.trim() || '';
         updatePayload.industry = currentProfile.industry || '';
@@ -216,6 +284,26 @@ export const useCompanyProfileManagement = () => {
         console.log('🟢 [useCompanyProfileManagement] currentProfile.name:', currentProfile.name);
         console.log('🟢 [useCompanyProfileManagement] currentProfile.companyName:', currentProfile.companyName);
       } else if (activeTab === 'contact') {
+        // Validation for contact information
+        if (currentProfile.phone?.trim() && !/^[\d\s+()-]+$/.test(currentProfile.phone.trim())) {
+          toast.error('Please enter a valid phone number');
+          return currentProfile;
+        }
+        if (currentProfile.linkedinUrl?.trim()) {
+          const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
+          if (!linkedinPattern.test(currentProfile.linkedinUrl.trim())) {
+            toast.error('Please enter a valid LinkedIn URL (e.g., https://www.linkedin.com/company/yourcompany)');
+            return currentProfile;
+          }
+        }
+        if (currentProfile.personalWebsite?.trim()) {
+          const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+          if (!urlPattern.test(currentProfile.personalWebsite.trim())) {
+            toast.error('Please enter a valid website URL');
+            return currentProfile;
+          }
+        }
+
         // Contact Information - nest under contactInformation object
         const contactInfo: any = {};
 
@@ -246,7 +334,7 @@ export const useCompanyProfileManagement = () => {
 
       // Check if we have at least one field to update
       if (Object.keys(updatePayload).length === 0) {
-        alert('Please fill in at least one field to update');
+        toast.warning('Please fill in at least one field to update');
         return currentProfile;
       }
 
@@ -266,9 +354,11 @@ export const useCompanyProfileManagement = () => {
             username: freshProfile.user?.username,
             companyName: freshProfile.profile?.companyDetails?.name
           });
+
+          toast.success('Profile updated successfully!');
         } catch (err: any) {
           console.error('❌ [useCompanyProfileManagement] Error saving profile:', err);
-          alert('Failed to save profile');
+          toast.error(err?.message || 'Failed to update profile. Please try again.');
         }
       })();
 
@@ -293,7 +383,8 @@ export const useCompanyProfileManagement = () => {
     error,
     uploadingImage,
     saveSuccess,
-    userId: user?._id,
+    userId: user?._id || user?.id,
+    fieldErrors,
 
     // Actions
     setActiveTab,

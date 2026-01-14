@@ -81,6 +81,18 @@ export const fetchNotifications = createAsyncThunk(
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Fetch failed:', response.status, errorText);
+
+        // Handle 400 errors gracefully (user might not have notifications set up)
+        if (response.status === 400) {
+          console.warn('⚠️ Bad request for notifications - returning empty array');
+          return {
+            notifications: [],
+            nonArchivedCount: 0,
+            archivedCount: 0,
+            unreadCount: 0,
+          };
+        }
+
         throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
 

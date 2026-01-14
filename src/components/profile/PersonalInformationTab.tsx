@@ -123,13 +123,12 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
 
                 {/* Form Fields - Different for Candidate vs Company */}
                 {profile.profileType === 'Candidate' ? (
-                  // Candidate Fields - All Editable
+                  // Candidate Fields
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                     <TextField
                       label="Username"
                       value={profile.username}
-                      onChange={(e) => onInputChange('username', e.target.value)}
-                      disabled={!isEditing}
+                      disabled={true}
                       fullWidth
                       sx={fieldSx}
                     />
@@ -137,8 +136,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                     <TextField
                       label="Email"
                       value={profile.email}
-                      onChange={(e) => onInputChange('email', e.target.value)}
-                      disabled={!isEditing}
+                      disabled={true}
                       fullWidth
                       type="email"
                       sx={fieldSx}
@@ -273,8 +271,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                       <TextField
                         label="Company Email"
                         value={profile.email}
-                        onChange={(e) => onInputChange('email', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={true}
                         fullWidth
                         type="email"
                         sx={{

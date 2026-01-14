@@ -16,6 +16,7 @@ const hrAgentController = require("../controllers/hrAgentController");
 // Import middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
+const resolveCompanyActor = require("../middleware/resolveCompanyActor");
 
 // Auth requis + journalisation
 router.use( authLogMiddleware("HRAgent"));
@@ -53,7 +54,7 @@ router.get("/all",requireAuthUser, hrAgentController.getAllAgents);
  * @desc Récupère les agents par entreprise (Company)
  * @access Privé
  */
-router.get("/company",requireAuthUser, hrAgentController.getAgentsByCompany);
+router.get("/company",requireAuthUser,resolveCompanyActor, hrAgentController.getAgentsByCompany);
 
 /**
  * @route GET /hr-agents/avatar/:avatarName

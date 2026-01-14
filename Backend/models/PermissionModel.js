@@ -22,41 +22,21 @@ const permissionSchema = new mongoose.Schema(
 
     // Job Post Permissions
     canCreateJobPosts: { type: Boolean, default: true },
-    canEditJobPosts: { type: Boolean, default: true },
-    canDeleteJobPosts: { type: Boolean, default: true },
-    canViewJobPosts: { type: Boolean, default: true },
-
+    
     // Candidate Permissions
     canUnlockCandidates: { type: Boolean, default: true },
     canViewCandidateProfiles: { type: Boolean, default: true },
     canContactCandidates: { type: Boolean, default: true },
-    canExportCandidateData: { type: Boolean, default: true },
 
-    // Assessment Permissions
-    canViewAssessmentResults: { type: Boolean, default: true },
-    canRequestAssessments: { type: Boolean, default: true },
-    canViewDetailedScores: { type: Boolean, default: true },
+    
 
     // Matching Permissions
     canAccessMatching: { type: Boolean, default: true },
-    canViewMatchScores: { type: Boolean, default: true },
-    canFilterCandidates: { type: Boolean, default: true },
 
     // HR Agent Permissions
     canUseHRAgents: { type: Boolean, default: true },
-    canConfigureAgents: { type: Boolean, default: true },
-    canViewAgentInsights: { type: Boolean, default: true },
 
-    // Analytics Permissions
-    canViewAnalytics: { type: Boolean, default: true },
-    canExportReports: { type: Boolean, default: true },
-    canViewMetrics: { type: Boolean, default: true },
-
-    // Billing Permissions
-    canViewBilling: { type: Boolean, default: true },
-    canManageSubscription: { type: Boolean, default: true },
-    canViewInvoices: { type: Boolean, default: true },
-
+   
     // Team Permissions
     canManageTeam: { type: Boolean, default: true },
     canInviteMembers: { type: Boolean, default: true },

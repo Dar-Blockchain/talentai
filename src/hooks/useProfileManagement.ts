@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { SelectChangeEvent } from '@mui/material';
+import { toast } from 'react-toastify';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import {
@@ -51,6 +52,7 @@ export const useProfileManagement = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Fetch profile on mount
   useEffect(() => {
@@ -144,12 +146,69 @@ export const useProfileManagement = () => {
     }
   }, [saveSuccess, dispatch]);
 
+  // Validation helper function
+  const validateField = (field: keyof UserProfile, value: string): string => {
+    // Clear error when field is empty or only whitespace
+    if (!value || !value.trim()) {
+      return '';
+    }
+
+    switch (field) {
+      case 'firstName':
+      case 'lastName':
+        if (value.trim().length < 2) {
+          return 'Must be at least 2 characters';
+        }
+        break;
+      case 'phone':
+        if (!/^[\d\s+()-]+$/.test(value.trim())) {
+          return 'Invalid phone number format';
+        }
+        break;
+      case 'linkedinUrl':
+        const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
+        if (!linkedinPattern.test(value.trim())) {
+          return 'Must be a valid LinkedIn URL (e.g., https://www.linkedin.com/in/username)';
+        }
+        break;
+      case 'githubUrl':
+        const githubPattern = /^(https?:\/\/)?(www\.)?github\.com\/.+$/i;
+        if (!githubPattern.test(value.trim())) {
+          return 'Must be a valid GitHub URL (e.g., https://github.com/username)';
+        }
+        break;
+      case 'personalWebsite':
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        if (!urlPattern.test(value.trim())) {
+          return 'Invalid website URL';
+        }
+        break;
+    }
+    return '';
+  };
+
   const handleInputChange = (field: keyof UserProfile, value: string) => {
     setProfile(prev => ({ ...prev, [field]: value }));
+
+    // Validate field and update errors
+    const error = validateField(field, value);
+    setFieldErrors(prev => {
+      if (error) {
+        return { ...prev, [field]: error };
+      } else {
+        const { [field]: _, ...rest } = prev;
+        return rest;
+      }
+    });
   };
 
   const handleSelectChange = (event: SelectChangeEvent<string>, field: keyof UserProfile) => {
     setProfile(prev => ({ ...prev, [field]: event.target.value }));
+    // Clear any existing error for this field
+    setFieldErrors(prev => {
+      const { [field]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,13 +217,13 @@ export const useProfileManagement = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+      toast.error('Please select a valid image file');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      toast.error('Image size should be less than 5MB');
       return;
     }
 
@@ -190,14 +249,22 @@ export const useProfileManagement = () => {
 
       await dispatch(getMyProfile());
       dispatch(setSaveSuccess(true));
+
+      toast.success('Profile picture updated successfully!');
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
-      alert('Failed to upload image');
+      toast.error('Failed to upload image');
     }
   };
 
   const handleSaveProfile = async () => {
     try {
+      // Check if there are any field errors
+      if (Object.keys(fieldErrors).length > 0) {
+        toast.error('Please fix the errors in the form before saving');
+        return;
+      }
+
       const updatePayload: any = {};
 
       // Only include these fields for Candidates - matches backend API structure
@@ -230,7 +297,7 @@ export const useProfileManagement = () => {
           }
         } else if (activeTab === 'contact') {
           // Contact Information - nest under contactInformation object
-          const contactInfo: any = {};
+          const contactInfo: any = {}
 
           if (profile.email?.trim()) {
             contactInfo.email = profile.email.trim();
@@ -289,16 +356,20 @@ export const useProfileManagement = () => {
 
       // Check if we have at least one field to update
       if (Object.keys(updatePayload).length === 0) {
-        alert('Please fill in at least one field to update');
+        toast.warning('Please fill in at least one field to update');
         return;
       }
 
       console.log('🔵 [useProfileManagement] Sending update payload:', JSON.stringify(updatePayload, null, 2));
+
       await dispatch(updateProfileAction(updatePayload)).unwrap();
       setIsEditing(false);
       await dispatch(getMyProfile());
+
+      toast.success('Profile updated successfully!');
     } catch (err: any) {
       console.error('❌ [useProfileManagement] Error saving profile:', err);
+      toast.error(err?.message || 'Failed to update profile. Please try again.');
     }
   };
 
@@ -319,7 +390,8 @@ export const useProfileManagement = () => {
     error,
     uploadingImage,
     saveSuccess,
-    userId: reduxProfile?.userId?._id,
+    userId: user?._id || user?.id || reduxProfile?.userId?._id,
+    fieldErrors,
 
     // Actions
     setActiveTab,

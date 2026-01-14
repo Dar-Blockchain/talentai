@@ -3233,7 +3233,7 @@ const IntelligentInterviewTest = () => {
               {interviewConfig.interviewType === 'TECHNICAL_SKILL'
                 ? `Validate ${router.query.skill || 'technical'} expertise • ${interviewConfig.context.experienceLevel}`
                 : interviewConfig.interviewType === 'SOFT_SKILL'
-                ? `Assess ${router.query.skill || 'soft skill'} in ${router.query.category || 'general'} context • ${interviewConfig.context.experienceLevel} level`
+                ? `Assess ${router.query.skill || 'soft skill'} in ${router.query.category || 'general'} context • ${interviewConfig.context.experienceLevel}`
                 : 'Intelligent Real-time Interview with AI'}
             </Typography>
 

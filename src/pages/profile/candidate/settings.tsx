@@ -1,11 +1,10 @@
 "use client";
 import React, { useState, useCallback } from "react";
-import { Box, Card, CardContent, Typography, Button } from "@mui/material";
+import { Box, Card, CardContent, Typography, Breadcrumbs, Link } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import axios from "axios";
-import { useRouter } from "next/router";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,7 +18,6 @@ import { useProfileManagement } from "@/hooks/useProfileManagement";
 import PageContainer from "@/components/layout/PageContainer";
 
 const CandidateSettingsPage: React.FC = () => {
-  const router = useRouter();
   const {
     activeTab,
     isEditing,
@@ -29,6 +27,7 @@ const CandidateSettingsPage: React.FC = () => {
     uploadingImage,
     saveSuccess,
     userId,
+    fieldErrors,
     setActiveTab,
     setIsEditing,
     handleInputChange,
@@ -85,21 +84,31 @@ const CandidateSettingsPage: React.FC = () => {
     <PageContainer>
       <Header />
 
-      {/* Back to Dashboard Button */}
-      <Box sx={{ mb: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/dashboard/candidate')}
-          sx={{
-            color: '#6b7280',
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: '#f3f4f6',
-            },
-          }}
+      {/* Breadcrumbs Navigation */}
+      <Box sx={{ mb: 2 }}>
+        <Breadcrumbs
+          separator={<NavigateNextIcon sx={{ fontSize: 14 }} />}
+          aria-label="breadcrumb"
+          sx={{ fontSize: '0.875rem' }}
         >
-          Back to Dashboard
-        </Button>
+          <Link
+            underline="hover"
+            color="inherit"
+            href="/dashboard/candidate"
+            sx={{
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              '&:hover': {
+                color: '#8310FF',
+              },
+            }}
+          >
+            Dashboard
+          </Link>
+          <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>
+            Settings
+          </Typography>
+        </Breadcrumbs>
       </Box>
 
       <Box
@@ -107,6 +116,7 @@ const CandidateSettingsPage: React.FC = () => {
           display: "flex",
           gap: 3,
           flexDirection: { xs: "column", md: "row" },
+          alignItems: "stretch",
         }}
       >
         <ProfileSidebar
@@ -139,6 +149,7 @@ const CandidateSettingsPage: React.FC = () => {
               profile={profile}
               isEditing={isEditing}
               loading={loading}
+              fieldErrors={fieldErrors}
               onInputChange={handleInputChange}
               onSave={handleSaveProfile}
               onCancel={() => setIsEditing(false)}
