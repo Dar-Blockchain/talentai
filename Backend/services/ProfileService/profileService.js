@@ -162,6 +162,9 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
 // Create or update a Company profile
 exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
   try {
+    console.log("🏢 [createOrUpdateCompanyProfile] Starting company profile update for userId:", userId);
+    console.log("📋 [createOrUpdateCompanyProfile] Company data received:", JSON.stringify(profileData, null, 2));
+
     const user = await User.findById(userId);
     if (!user) {
       throw new Error("User not found.");
@@ -209,31 +212,70 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       userId,
       type: "Company",
       companyDetails: {
-        email:profileData.email,
+        email: profileData.email,
         name: profileData.name,
         industry: profileData.industry,
         size: profileData.size,
         location: profileData.location,
         website: profileData.website,
         linkedin: profileData.linkedin,
-        employmentType: profileData.employmentType, // Add employment type support
+        employmentType: profileData.employmentType,
       },
       requiredSkills: profileData.requiredSkills || [],
-      requiredExperienceLevel:
-        profileData.requiredExperienceLevel || "Entry Level",
+      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",
+      contactInformation: profileData.contactInformation ? {
+        email: profileData.contactInformation.email || '',
+        phone: profileData.contactInformation.phone || '',
+        address: profileData.contactInformation.address || '',
+        linkedinUrl: profileData.contactInformation.linkedinUrl || '',
+        githubUrl: profileData.contactInformation.githubUrl || '',
+        personalWebsite: profileData.contactInformation.personalWebsite || '',
+        location: profileData.contactInformation.location || '',
+      } : undefined,
     };
+
+    console.log("📊 [createOrUpdateCompanyProfile] Profile data to save:", JSON.stringify(profileDataToSave, null, 2));
+    console.log("🎯 [createOrUpdateCompanyProfile] requiredExperienceLevel value:", profileDataToSave.requiredExperienceLevel);
+    console.log("📧 [createOrUpdateCompanyProfile] contactInformation value:", profileDataToSave.contactInformation);
 
     if (profile) {
       // Update existing profile
+      console.log("🔄 [createOrUpdateCompanyProfile] Updating existing company profile");
+      console.log("📝 [createOrUpdateCompanyProfile] Before update - requiredExperienceLevel:", profile.requiredExperienceLevel);
+      console.log("📝 [createOrUpdateCompanyProfile] Before update - contactInformation:", profile.contactInformation);
+
       profile.type = "Company";
       profile.companyDetails = profileDataToSave.companyDetails;
       profile.requiredSkills = profileDataToSave.requiredSkills;
-      profile.requiredExperienceLevel =
-        profileDataToSave.requiredExperienceLevel;
+      profile.requiredExperienceLevel = profileDataToSave.requiredExperienceLevel;
+
+      // Update contact information if provided
+      if (profileData.contactInformation) {
+        console.log("📧 [createOrUpdateCompanyProfile] Updating contactInformation:", JSON.stringify(profileData.contactInformation, null, 2));
+        profile.contactInformation = {
+          email: profileData.contactInformation.email !== undefined ? profileData.contactInformation.email : (profile.contactInformation?.email || ''),
+          phone: profileData.contactInformation.phone !== undefined ? profileData.contactInformation.phone : (profile.contactInformation?.phone || ''),
+          address: profileData.contactInformation.address !== undefined ? profileData.contactInformation.address : (profile.contactInformation?.address || ''),
+          linkedinUrl: profileData.contactInformation.linkedinUrl !== undefined ? profileData.contactInformation.linkedinUrl : (profile.contactInformation?.linkedinUrl || ''),
+          githubUrl: profileData.contactInformation.githubUrl !== undefined ? profileData.contactInformation.githubUrl : (profile.contactInformation?.githubUrl || ''),
+          personalWebsite: profileData.contactInformation.personalWebsite !== undefined ? profileData.contactInformation.personalWebsite : (profile.contactInformation?.personalWebsite || ''),
+          location: profileData.contactInformation.location !== undefined ? profileData.contactInformation.location : (profile.contactInformation?.location || ''),
+        };
+        console.log("✅ [createOrUpdateCompanyProfile] contactInformation updated successfully:", profile.contactInformation);
+      }
+
+      console.log("📝 [createOrUpdateCompanyProfile] After update - requiredExperienceLevel:", profile.requiredExperienceLevel);
+      console.log("🏢 [createOrUpdateCompanyProfile] Company details updated:", JSON.stringify(profile.companyDetails, null, 2));
+
       await profile.save();
+      console.log("💾 [createOrUpdateCompanyProfile] Profile saved successfully");
     } else {
       // Create new profile
+      console.log("✨ [createOrUpdateCompanyProfile] Creating new company profile");
       profile = await Profile.create(profileDataToSave);
+      console.log("✅ [createOrUpdateCompanyProfile] New profile created with ID:", profile._id);
+      console.log("🎯 [createOrUpdateCompanyProfile] Created profile requiredExperienceLevel:", profile.requiredExperienceLevel);
+      console.log("📧 [createOrUpdateCompanyProfile] Created profile contactInformation:", profile.contactInformation);
     }
 
     // Update the user's profile reference
@@ -244,13 +286,23 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       ? await require('../../models/CompanyMembershipModel').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
+    console.log("✅ [createOrUpdateCompanyProfile] Company profile update completed successfully");
+    console.log("📊 [createOrUpdateCompanyProfile] Final profile state:", {
+      _id: profile._id,
+      type: profile.type,
+      companyName: profile.companyDetails.name,
+      requiredExperienceLevel: profile.requiredExperienceLevel,
+      requiredSkills: profile.requiredSkills,
+      employmentType: profile.companyDetails.employmentType
+    });
+
     return {
       user: updatedUser,
       profile,
       companyMembership
     };
   } catch (error) {
-    console.error("Error creating/updating company profile:", error.message);
+    console.error("❌ [createOrUpdateCompanyProfile] Error creating/updating company profile:", error.message);
     throw error;
   }
 };
