@@ -207,20 +207,6 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                     ...fieldSx,
                   }}
                 />
-
-                <TextField
-                  label="Main Phone Number"
-                  value={profile.phone}
-                  onChange={(e) => onInputChange('phone', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  type="tel"
-                  placeholder="+33123456789"
-                  error={!!fieldErrors.phone}
-                  helperText={fieldErrors.phone || ''}
-                  sx={fieldSx}
-                />
-
                 <TextField
                   label="Location"
                   value={profile.location}
@@ -237,41 +223,24 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   onChange={(e) => onInputChange('employmentType', e.target.value)}
                   disabled={!isEditing}
                   fullWidth
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
+                  sx={fieldSx}
                 >
                   <MenuItem value="Remote">Remote</MenuItem>
                   <MenuItem value="On-site">On-site</MenuItem>
                   <MenuItem value="Hybrid">Hybrid</MenuItem>
                 </TextField>
 
-                <TextField
-                  label="Company Address"
-                  value={profile.address}
-                  onChange={(e) => onInputChange('address', e.target.value)}
-                  disabled={!isEditing}
-                  fullWidth
-                  multiline
-                  rows={2}
-                  placeholder="123 Business Avenue, Suite 100"
-                  sx={{
-                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                    ...fieldSx,
-                  }}
-                />
 
                 <TextField
-                  label="LinkedIn Company Page"
-                  value={profile.linkedinUrl}
-                  onChange={(e) => onInputChange('linkedinUrl', e.target.value)}
+                  value={profile.linkedin}
+                  onChange={(e) => onInputChange('linkedin', e.target.value)}
                   disabled={!isEditing}
                   fullWidth
                   type="url"
                   placeholder="https://linkedin.com/company/yourcompany"
-                  error={!!fieldErrors.linkedinUrl}
-                  helperText={fieldErrors.linkedinUrl || ''}
+
+                  error={!!fieldErrors.linkedin}
+                  helperText={fieldErrors.linkedin || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,
@@ -279,14 +248,13 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                 />
 
                 <TextField
-                  label="Company Website"
-                  value={profile.personalWebsite}
-                  onChange={(e) => onInputChange('personalWebsite', e.target.value)}
+                  value={profile.website}
+                  onChange={(e) => onInputChange('website', e.target.value)}
                   disabled={!isEditing}
                   fullWidth
                   type="url"
                   placeholder="https://yourcompany.com"
-                  error={!!fieldErrors.personalWebsite}
+                  error={!!fieldErrors.website}
                   helperText={fieldErrors.personalWebsite || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
