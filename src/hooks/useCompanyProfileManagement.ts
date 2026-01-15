@@ -120,12 +120,12 @@ export const useCompanyProfileManagement = () => {
         country: companyData?.location || 'Tunisia',
         language: 'English',
         timezone: 'UTC+01:00',
-        phone: reduxProfile.contactInformation?.phone || '',
-        address: reduxProfile.contactInformation?.address || '',
-        linkedinUrl: reduxProfile.contactInformation?.linkedinUrl || '',
+        phone: reduxProfile.companyDetails?.phone || '',
+        address: reduxProfile.companyDetails?.address || '',
+        linkedinUrl: reduxProfile.companyDetails?.linkedinUrl || '',
         githubUrl: '',
-        personalWebsite: reduxProfile.contactInformation?.personalWebsite || '',
-        location: reduxProfile.contactInformation?.location || companyData?.location || '',
+        personalWebsite: reduxProfile.companyDetails?.personalWebsite || '',
+        location: reduxProfile.companyDetails?.location || companyData?.location || '',
         avatar: avatarUrl,
         profileType: 'Company',
         companyName: companyName,
@@ -347,7 +347,7 @@ export const useCompanyProfileManagement = () => {
 
         // Only add contactInformation if at least one field is filled
         if (Object.keys(contactInfo).length > 0) {
-          updatePayload.contactInformation = contactInfo;
+          updatePayload.companyDetails = contactInfo;
         }
       }
 
