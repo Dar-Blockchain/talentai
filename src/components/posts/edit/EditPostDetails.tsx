@@ -48,7 +48,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
   const getInitialValues = (job: any) => ({
     jobDetails: {
       title: job?.jobDetails?.title || "",
-      location: job?.jobDetails?.location || "",
+      workMode: job?.jobDetails?.workMode || "",
       employmentType: job?.jobDetails?.employmentType || "",
       experienceLevel: job?.jobDetails?.experienceLevel || "",
       description: job?.jobDetails?.description || "",
@@ -279,8 +279,8 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
 
                 <TextField
                   select
-                  name="jobDetails.location"
-                  value={values.jobDetails.location}
+                  name="jobDetails.workMode"
+                  value={values.jobDetails.workMode}
                   onChange={handleChange}
                   fullWidth
                   sx={inputStyle}

@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchJobDetails } from "@/store/slices/jobDetailsSlice";
+import PageContainer from "@/components/layout/PageContainer";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import JobSearchBar from "@/components/posts/list/JobSearchBar";
@@ -151,24 +152,8 @@ const JobSearchPage: React.FC = () => {
 
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "#FDFEFE",
-      }}
-    >
-      <Header
-      />
-
-      <Container
-        sx={{
-          py: 4,
-          px: { xs: 2, sm: 3, md: 4 },
-          maxWidth: { xs: "95%", lg: "1400px" }, // 100% on small, 80% on large screens
-          mx: "auto", // center horizontally
-        }}
-      >
-        {" "}
+    <PageContainer>
+      <Header/>
         {/* Hero Section - matches the image exactly */}
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
@@ -189,7 +174,7 @@ const JobSearchPage: React.FC = () => {
             variant="h6"
             sx={{
               color: "#666",
-              mb: 4,
+              mb: 2,
               maxWidth: "800px",
               mx: "auto",
               fontWeight: 400,
@@ -333,10 +318,7 @@ const JobSearchPage: React.FC = () => {
             </Typography>
           </Box>
         )}
-      </Container>
-
-      <Footer />
-    </Box>
+      </PageContainer>
   );
 };
 

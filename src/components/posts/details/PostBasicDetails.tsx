@@ -281,8 +281,8 @@ const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
           spacing={0.5}
           sx={{ flexWrap: "wrap", gap: 0.5 }}
         >
-          <Chip
-            label={job?.jobDetails?.location}
+          {job?.jobDetails?.workMode && <Chip
+            label={job?.jobDetails?.workMode}
             size="small"
             sx={{
               backgroundColor: "rgba(95, 168, 211, 0.1)",
@@ -300,7 +300,7 @@ const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
                 height={13}
               />
             }
-          />
+          />}
           <Chip
             label={job?.jobDetails?.employmentType}
             size="small"
