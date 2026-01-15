@@ -34,6 +34,7 @@ interface PersonalInformationTabProps {
   saveSuccess: boolean;
   error: string | null;
   uploadingImage: boolean;
+  fieldErrors?: Record<string, string>;
   onInputChange: (field: keyof UserProfile, value: string) => void;
   onSelectChange: (event: SelectChangeEvent<string>, field: keyof UserProfile) => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -49,6 +50,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
   saveSuccess,
   error,
   uploadingImage,
+  fieldErrors = {},
   onInputChange,
   onSelectChange,
   onImageUpload,
@@ -273,6 +275,10 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                         }}
                         disabled={!isEditing}
                         fullWidth
+                        required
+                        error={!!fieldErrors.name || !!fieldErrors.companyName}
+                        helperText={fieldErrors.name || fieldErrors.companyName || ''}
+                        slotProps={{ htmlInput: { minLength: 2, maxLength: 100 } }}
                         sx={{
                           gridColumn: { xs: '1 / -1', sm: 'span 2' },
                           ...fieldSx,
@@ -290,7 +296,7 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                           ...fieldSx,
                         }}
                       />
-
+{/* 
                       <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
                         <InputLabel>Industry</InputLabel>
                         <Select
@@ -322,9 +328,9 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                             </MenuItem>
                           ))}
                         </Select>
-                      </FormControl>
+                      </FormControl> */}
 
-                      <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                      {/* <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
                         <InputLabel>Employment Type</InputLabel>
                         <Select
                           value={profile.employmentType || 'Remote'}
@@ -337,9 +343,9 @@ const PersonalInformationTab: React.FC<PersonalInformationTabProps> = ({
                             </MenuItem>
                           ))}
                         </Select>
-                      </FormControl>
+                      </FormControl> */}
 
-                      <FormControl fullWidth disabled={!isEditing} sx={fieldSx}>
+                      <FormControl fullWidth disabled={!isEditing} sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2' }, ...fieldSx }}>
                         <InputLabel>Required Experience Level</InputLabel>
                         <Select
                           value={profile.requiredExperienceLevel || 'Mid Level'}

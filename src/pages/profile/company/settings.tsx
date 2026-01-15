@@ -89,6 +89,7 @@ const CompanySettingsPage: React.FC = () => {
               saveSuccess={saveSuccess}
               error={error || null}
               uploadingImage={uploadingImage}
+              fieldErrors={fieldErrors}
               onInputChange={handleInputChange}
               onSelectChange={handleSelectChange}
               onImageUpload={handleImageUpload}

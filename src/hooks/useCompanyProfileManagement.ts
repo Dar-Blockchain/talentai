@@ -172,6 +172,19 @@ export const useCompanyProfileManagement = () => {
     }
 
     switch (field) {
+      case 'name':
+      case 'companyName':
+        if (trimmedValue.length < 2) {
+          return 'Company name must be at least 2 characters';
+        }
+        if (trimmedValue.length > 100) {
+          return 'Company name must be less than 100 characters';
+        }
+        if (!/^[a-zA-Z0-9\s&.,'-]+$/.test(trimmedValue)) {
+          return 'Company name contains invalid characters';
+        }
+        break;
+
       case 'industry':
         if (trimmedValue.length < 2) {
           return 'Industry must be at least 2 characters';
