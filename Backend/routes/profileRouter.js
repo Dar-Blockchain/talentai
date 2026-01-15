@@ -17,7 +17,7 @@ const uploadfile = require('../middleware/uploadfile');
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
 // GET /profiles/getProfileById/:userId — Public route (no auth required)
-router.get('/getProfileById/:userId', profileController.getProfileById);
+router.get('/:userId', profileController.getProfileById);
 
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser,authLogMiddleware("Profile"));
