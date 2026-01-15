@@ -95,10 +95,10 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                 <TextField
                   label="Email"
                   value={profile.email}
-                  onChange={(e) => onInputChange('email', e.target.value)}
-                  disabled={!isEditing}
+                  disabled
                   fullWidth
                   type="email"
+                  helperText="Email cannot be changed"
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,
@@ -197,10 +197,10 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                 <TextField
                   label="Company Email"
                   value={profile.email}
-                  onChange={(e) => onInputChange('email', e.target.value)}
-                  disabled={!isEditing}
+                  disabled
                   fullWidth
                   type="email"
+                  helperText="Email cannot be changed"
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,

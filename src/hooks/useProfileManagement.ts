@@ -5,13 +5,7 @@ import { SelectChangeEvent } from '@mui/material';
 import { toast } from 'react-toastify';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
-import {
-  getMyProfile,
-  updateCompanyProfile,
-  setSaveSuccess,
-  clearError
-} from '@/store/slices/profileSlice';
-import { updateProfile as updateProfileAction } from '@/store/slices/userSlice';
+import { updateProfile as updateProfileAction, getMyProfile } from '@/store/slices/userSlice';
 
 const initialProfile: UserProfile = {
   username: '',
@@ -44,15 +38,15 @@ const initialProfile: UserProfile = {
 export const useProfileManagement = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => state.user.connectedUser);
-  const { profile: reduxProfile, loading, error, uploadingImage, saveSuccess } = useSelector(
-    (state: RootState) => state.profile
-  );
+  const { user, profile: reduxProfile, loading } = useSelector((state: RootState) => state.user.connectedUser);
 
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Fetch profile on mount
   useEffect(() => {
@@ -140,11 +134,11 @@ export const useProfileManagement = () => {
   useEffect(() => {
     if (saveSuccess) {
       const timer = setTimeout(() => {
-        dispatch(setSaveSuccess(false));
+        setSaveSuccess(false);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [saveSuccess, dispatch]);
+  }, [saveSuccess]);
 
   // Validation helper function
   const validateField = (field: keyof UserProfile, value: string): string => {
@@ -228,6 +222,7 @@ export const useProfileManagement = () => {
     }
 
     try {
+      setUploadingImage(true);
       const token = localStorage.getItem('api_token');
       const formData = new FormData();
       formData.append('user_image', file);
@@ -248,12 +243,14 @@ export const useProfileManagement = () => {
       }
 
       await dispatch(getMyProfile());
-      dispatch(setSaveSuccess(true));
+      setSaveSuccess(true);
 
       toast.success('Profile picture updated successfully!');
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
       toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -328,24 +325,15 @@ export const useProfileManagement = () => {
         }
       }
 
-      // For Companies (this shouldn't be called from useProfileManagement but keeping for safety)
+      // For Companies - use updateProfileAction with company-specific payload
       if (profile.profileType === 'Company') {
         if (activeTab === 'personal') {
-          const companyPayload = {
-            name: profile.name?.trim() || profile.companyName?.trim() || '',
-            industry: profile.industry || '',
-            size: profile.size || profile.companySize || '',
-            location: profile.location?.trim() || '',
-            email: profile.email?.trim() || '',
-            employmentType: profile.employmentType || 'Remote',
-            requiredExperienceLevel: profile.requiredExperienceLevel || 'Mid Level',
-            requiredSkills: profile.requiredSkills || [],
-          };
-
-          await dispatch(updateCompanyProfile(companyPayload)).unwrap();
-          setIsEditing(false);
-          await dispatch(getMyProfile());
-          return;
+          updatePayload.name = profile.name?.trim() || profile.companyName?.trim() || '';
+          updatePayload.industry = profile.industry || '';
+          updatePayload.size = profile.size || profile.companySize || '';
+          updatePayload.employmentType = profile.employmentType || 'Remote';
+          updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel || 'Mid Level';
+          updatePayload.requiredSkills = profile.requiredSkills || [];
         } else if (activeTab === 'contact') {
           updatePayload.email = profile.email?.trim() || '';
           updatePayload.linkedin = profile.linkedinUrl?.trim() || '';
@@ -374,11 +362,11 @@ export const useProfileManagement = () => {
   };
 
   const handleDismissError = () => {
-    dispatch(clearError());
+    setError(null);
   };
 
   const handleDismissSuccess = () => {
-    dispatch(setSaveSuccess(false));
+    setSaveSuccess(false);
   };
 
   return {

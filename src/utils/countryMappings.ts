@@ -1,223 +1,57 @@
 /**
+ * Country utilities using i18n-iso-countries library
  * ISO 3166-1 Alpha-2 Country Code to Country Name Mappings
- * Extracted from admin dashboard to improve maintainability
  */
+import countries from 'i18n-iso-countries';
+import enLocale from 'i18n-iso-countries/langs/en.json';
 
-export const COUNTRY_CODE_MAP: Record<string, string> = {
-  // North America
-  'US': 'United States',
-  'CA': 'Canada',
-  'MX': 'Mexico',
+// Register English locale
+countries.registerLocale(enLocale);
 
-  // South America
-  'BR': 'Brazil',
-  'AR': 'Argentina',
-  'CL': 'Chile',
-  'CO': 'Colombia',
-  'PE': 'Peru',
-  'VE': 'Venezuela',
-  'EC': 'Ecuador',
-  'BO': 'Bolivia',
-  'PY': 'Paraguay',
-  'UY': 'Uruguay',
-  'GY': 'Guyana',
-  'SR': 'Suriname',
-  'GF': 'French Guiana',
+// Excluded countries (e.g., for business/legal reasons)
+const EXCLUDED_COUNTRIES = ['IL']; // Israel
 
-  // Europe
-  'GB': 'United Kingdom',
-  'FR': 'France',
-  'DE': 'Germany',
-  'IT': 'Italy',
-  'ES': 'Spain',
-  'PT': 'Portugal',
-  'NL': 'Netherlands',
-  'BE': 'Belgium',
-  'CH': 'Switzerland',
-  'AT': 'Austria',
-  'SE': 'Sweden',
-  'NO': 'Norway',
-  'DK': 'Denmark',
-  'FI': 'Finland',
-  'IS': 'Iceland',
-  'IE': 'Ireland',
-  'PL': 'Poland',
-  'CZ': 'Czech Republic',
-  'SK': 'Slovakia',
-  'HU': 'Hungary',
-  'RO': 'Romania',
-  'BG': 'Bulgaria',
-  'GR': 'Greece',
-  'HR': 'Croatia',
-  'SI': 'Slovenia',
-  'RS': 'Serbia',
-  'BA': 'Bosnia and Herzegovina',
-  'ME': 'Montenegro',
-  'MK': 'North Macedonia',
-  'AL': 'Albania',
-  'XK': 'Kosovo',
-  'EE': 'Estonia',
-  'LV': 'Latvia',
-  'LT': 'Lithuania',
-  'BY': 'Belarus',
-  'UA': 'Ukraine',
-  'MD': 'Moldova',
-
-  // Middle East
-  'SA': 'Saudi Arabia',
-  'AE': 'United Arab Emirates',
-  'QA': 'Qatar',
-  'KW': 'Kuwait',
-  'BH': 'Bahrain',
-  'OM': 'Oman',
-  'JO': 'Jordan',
-  'LB': 'Lebanon',
-  'SY': 'Syria',
-  'IQ': 'Iraq',
-  'IR': 'Iran',
-  'TR': 'Turkey',
-  'PS': 'Palestine',
-  'YE': 'Yemen',
-
-  // Asia
-  'CN': 'China',
-  'JP': 'Japan',
-  'IN': 'India',
-  'PK': 'Pakistan',
-  'AF': 'Afghanistan',
-  'BD': 'Bangladesh',
-  'LK': 'Sri Lanka',
-  'NP': 'Nepal',
-  'BT': 'Bhutan',
-  'MV': 'Maldives',
-  'MM': 'Myanmar',
-  'TH': 'Thailand',
-  'VN': 'Vietnam',
-  'LA': 'Laos',
-  'KH': 'Cambodia',
-  'MY': 'Malaysia',
-  'SG': 'Singapore',
-  'ID': 'Indonesia',
-  'PH': 'Philippines',
-  'TW': 'Taiwan',
-  'KR': 'South Korea',
-  'KP': 'North Korea',
-  'MN': 'Mongolia',
-  'KZ': 'Kazakhstan',
-  'UZ': 'Uzbekistan',
-  'KG': 'Kyrgyzstan',
-  'TJ': 'Tajikistan',
-  'TM': 'Turkmenistan',
-  'AZ': 'Azerbaijan',
-  'GE': 'Georgia',
-  'AM': 'Armenia',
-
-  // Africa
-  'EG': 'Egypt',
-  'DZ': 'Algeria',
-  'MA': 'Morocco',
-  'TN': 'Tunisia',
-  'LY': 'Libya',
-  'SD': 'Sudan',
-  'SS': 'South Sudan',
-  'ET': 'Ethiopia',
-  'KE': 'Kenya',
-  'TZ': 'Tanzania',
-  'UG': 'Uganda',
-  'RW': 'Rwanda',
-  'BI': 'Burundi',
-  'SO': 'Somalia',
-  'DJ': 'Djibouti',
-  'ER': 'Eritrea',
-  'NG': 'Nigeria',
-  'GH': 'Ghana',
-  'CI': 'Ivory Coast',
-  'SN': 'Senegal',
-  'ML': 'Mali',
-  'NE': 'Niger',
-  'BF': 'Burkina Faso',
-  'BJ': 'Benin',
-  'TG': 'Togo',
-  'CM': 'Cameroon',
-  'CF': 'Central African Republic',
-  'TD': 'Chad',
-  'GA': 'Gabon',
-  'CG': 'Congo',
-  'CD': 'Democratic Republic of Congo',
-  'AO': 'Angola',
-  'ZM': 'Zambia',
-  'ZW': 'Zimbabwe',
-  'BW': 'Botswana',
-  'NA': 'Namibia',
-  'ZA': 'South Africa',
-  'LS': 'Lesotho',
-  'SZ': 'Eswatini',
-  'MZ': 'Mozambique',
-  'MW': 'Malawi',
-  'MG': 'Madagascar',
-  'MU': 'Mauritius',
-  'SC': 'Seychelles',
-  'KM': 'Comoros',
-  'MR': 'Mauritania',
-  'GM': 'Gambia',
-  'GW': 'Guinea-Bissau',
-  'GN': 'Guinea',
-  'SL': 'Sierra Leone',
-  'LR': 'Liberia',
-
-  // Oceania
-  'AU': 'Australia',
-  'NZ': 'New Zealand',
-  'PG': 'Papua New Guinea',
-  'FJ': 'Fiji',
-  'SB': 'Solomon Islands',
-  'VU': 'Vanuatu',
-  'NC': 'New Caledonia',
-  'PF': 'French Polynesia',
-  'WS': 'Samoa',
-  'TO': 'Tonga',
-  'KI': 'Kiribati',
-  'FM': 'Micronesia',
-  'MH': 'Marshall Islands',
-  'PW': 'Palau',
-  'NR': 'Nauru',
-  'TV': 'Tuvalu',
-
-  // Central America & Caribbean
-  'GT': 'Guatemala',
-  'BZ': 'Belize',
-  'SV': 'El Salvador',
-  'HN': 'Honduras',
-  'NI': 'Nicaragua',
-  'CR': 'Costa Rica',
-  'PA': 'Panama',
-  'CU': 'Cuba',
-  'JM': 'Jamaica',
-  'HT': 'Haiti',
-  'DO': 'Dominican Republic',
-  'PR': 'Puerto Rico',
-  'TT': 'Trinidad and Tobago',
-  'BB': 'Barbados',
-  'GD': 'Grenada',
-  'VC': 'Saint Vincent and the Grenadines',
-  'LC': 'Saint Lucia',
-  'DM': 'Dominica',
-  'AG': 'Antigua and Barbuda',
-  'KN': 'Saint Kitts and Nevis',
-  'BS': 'Bahamas',
-
-  // Others
-  'RU': 'Russia',
-  'GL': 'Greenland',
-  'CY': 'Cyprus',
-  'MT': 'Malta',
-  'LU': 'Luxembourg',
-  'LI': 'Liechtenstein',
-  'MC': 'Monaco',
-  'AD': 'Andorra',
-  'SM': 'San Marino',
-  'VA': 'Vatican City',
+/**
+ * Get all country names as an array (excluding specified countries)
+ * @returns Array of country names sorted alphabetically
+ */
+export const getAllCountryNames = (): string[] => {
+  const countryObj = countries.getNames('en', { select: 'official' });
+  return Object.entries(countryObj)
+    .filter(([code]) => !EXCLUDED_COUNTRIES.includes(code))
+    .map(([_, name]) => name)
+    .sort((a, b) => a.localeCompare(b));
 };
+
+/**
+ * Get all country codes (excluding specified countries)
+ * @returns Array of ISO 3166-1 Alpha-2 country codes
+ */
+export const getAllCountryCodes = (): string[] => {
+  return Object.keys(countries.getAlpha2Codes())
+    .filter(code => !EXCLUDED_COUNTRIES.includes(code))
+    .sort();
+};
+
+/**
+ * Get country code to name mapping (excluding specified countries)
+ * @returns Record of country codes to names
+ */
+export const getCountryCodeMap = (): Record<string, string> => {
+  const countryObj = countries.getNames('en', { select: 'official' });
+  const result: Record<string, string> = {};
+
+  Object.entries(countryObj).forEach(([code, name]) => {
+    if (!EXCLUDED_COUNTRIES.includes(code)) {
+      result[code] = name;
+    }
+  });
+
+  return result;
+};
+
+// Legacy export for backward compatibility
+export const COUNTRY_CODE_MAP = getCountryCodeMap();
 
 /**
  * Convert ISO country code to full country name
@@ -227,32 +61,40 @@ export const COUNTRY_CODE_MAP: Record<string, string> = {
 export const getCountryName = (code: string): string => {
   if (!code) return '';
   const upperCode = code.toUpperCase();
-  return COUNTRY_CODE_MAP[upperCode] || code;
+
+  // Return empty if excluded
+  if (EXCLUDED_COUNTRIES.includes(upperCode)) return '';
+
+  return countries.getName(upperCode, 'en') || code;
+};
+
+/**
+ * Convert country name to ISO country code
+ * @param name - Full country name
+ * @returns ISO 3166-1 Alpha-2 country code or empty string if not found
+ */
+export const getCountryCode = (name: string): string => {
+  if (!name) return '';
+  const code = countries.getAlpha2Code(name, 'en');
+
+  // Return empty if excluded
+  if (code && EXCLUDED_COUNTRIES.includes(code)) return '';
+
+  return code || '';
 };
 
 /**
  * Check if a country code is valid
  * @param code - ISO 3166-1 Alpha-2 country code
- * @returns true if valid, false otherwise
+ * @returns true if valid and not excluded, false otherwise
  */
 export const isValidCountryCode = (code: string): boolean => {
-  return code?.toUpperCase() in COUNTRY_CODE_MAP;
-};
+  if (!code) return false;
+  const upperCode = code.toUpperCase();
 
-/**
- * Get all country codes
- * @returns Array of all supported country codes
- */
-export const getAllCountryCodes = (): string[] => {
-  return Object.keys(COUNTRY_CODE_MAP);
-};
+  if (EXCLUDED_COUNTRIES.includes(upperCode)) return false;
 
-/**
- * Get all country names
- * @returns Array of all country names
- */
-export const getAllCountryNames = (): string[] => {
-  return Object.values(COUNTRY_CODE_MAP);
+  return countries.isValid(upperCode);
 };
 
 /**
@@ -261,8 +103,29 @@ export const getAllCountryNames = (): string[] => {
  * @returns Array of matching country codes and names
  */
 export const searchCountries = (searchTerm: string): Array<{ code: string; name: string }> => {
+  if (!searchTerm) return [];
+
   const lowerSearch = searchTerm.toLowerCase();
-  return Object.entries(COUNTRY_CODE_MAP)
-    .filter(([_, name]) => name.toLowerCase().includes(lowerSearch))
-    .map(([code, name]) => ({ code, name }));
+  const countryObj = countries.getNames('en', { select: 'official' });
+
+  return Object.entries(countryObj)
+    .filter(([code, name]) =>
+      !EXCLUDED_COUNTRIES.includes(code) &&
+      name.toLowerCase().includes(lowerSearch)
+    )
+    .map(([code, name]) => ({ code, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+};
+
+/**
+ * Get countries for dropdown/select (returns array of objects with value and label)
+ * @returns Array of { value: string, label: string } for use in select components
+ */
+export const getCountriesForSelect = (): Array<{ value: string; label: string }> => {
+  const countryObj = countries.getNames('en', { select: 'official' });
+
+  return Object.entries(countryObj)
+    .filter(([code]) => !EXCLUDED_COUNTRIES.includes(code))
+    .map(([_, name]) => ({ value: name, label: name }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 };

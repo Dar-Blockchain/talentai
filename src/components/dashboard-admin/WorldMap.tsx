@@ -78,7 +78,6 @@ const countryCoordinates: Record<string, [number, number]> = {
   'Saudi Arabia': [23.8859, 45.0792],
   'United Arab Emirates': [23.4241, 53.8478],
   'Turkey': [38.9637, 35.2433],
-  'Israel': [31.0461, 34.8516],
   'Australia': [-25.2744, 133.7751],
   'New Zealand': [-40.9006, 174.8860],
 
@@ -115,7 +114,6 @@ const normalizeCountryName = (countryName: string): string => {
     'SA': 'Saudi Arabia',
     'AE': 'United Arab Emirates',
     'TR': 'Turkey',
-    'IL': 'Israel',
     'PK': 'Pakistan',
     'TH': 'Thailand',
     'VN': 'Vietnam',
