@@ -36,6 +36,7 @@ const getQuickPrompt = (description, companyLocation) =>
         "requirements": ["List of specific requirements"],
         "responsibilities": ["List of key responsibilities"],
         "location": "Job location",
+        "workMode": "Remote/On-site/Hybrid",
         "employmentType": "Full-time/Part-time/Contract",
         "experienceLevel": "Required experience level",
         "salary": {
@@ -206,6 +207,7 @@ const getDetailedPrompt = (description, companyLocation) =>
         "requirements": ["List of specific requirements"],
         "responsibilities": ["List of key responsibilities"],
         "location": "Job location",
+        "workMode": "Remote/On-site/Hybrid",
         "employmentType": "Full-time/Part-time/Contract",
         "experienceLevel": "Required experience level",
         "salary": {

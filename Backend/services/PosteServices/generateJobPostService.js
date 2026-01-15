@@ -8,10 +8,11 @@ const {
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
-async function generateJobPost(description, type = "detailed", user) {
+async function generateJobPost(description, type = "detailed", user, overrides = {}) {
   // Configurable retry parameters via env
   const MAX_RETRIES = parseInt(process.env.GENERATE_JOBPOST_MAX_RETRIES || "3", 10);
   const BASE_DELAY_MS = parseInt(process.env.GENERATE_JOBPOST_BASE_DELAY_MS || "1000", 10);
+  const { workMode, contractType } = overrides;
 
   // Helper sleep with jitter
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -96,6 +97,16 @@ async function generateJobPost(description, type = "detailed", user) {
           });
 
         result = JSON.parse(jsonStr);
+      }
+
+      // Override workMode and contractType if provided
+      if (workMode && result?.jobDetails) {
+        result.jobDetails.workMode = workMode;
+        console.log("✅ workMode overridden to:", workMode);
+      }
+      if (contractType && result?.jobDetails) {
+        result.jobDetails.employmentType = contractType;
+        console.log("✅ contractType (employmentType) overridden to:", contractType);
       }
 
       // Build finalPost if needed
