@@ -37,9 +37,6 @@ router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCom
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/me', profileController.getMyProfile);
 
-// GET /profile/getAllProfiles — liste de tous les profils
-router.get('/getAllProfiles', profileController.getAllProfiles);
-
 // DELETE /profile/deleteProfile — supprime le profil courant
 router.delete('/deleteProfile', profileController.deleteProfile);
 
@@ -62,15 +59,5 @@ router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
 
 router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
-
-router.get("/company/stats/total", profileController.getTotalCompanies);
-
-router.get("/company/stats/active-posts", profileController.getCompaniesWithActivePosts);
-
-router.get("/company/stats/top-hiring", profileController.getTopHiringCompanies);
-
-router.get("/company/stats/recent-active", profileController.getRecentActiveCompanies);
-
-router.get("/company/stats/top-industries", profileController.getTopIndustries);
 
 module.exports = router; 

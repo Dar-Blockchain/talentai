@@ -398,17 +398,6 @@ module.exports.getProfileByPostId = async (postId) => {
   }
 };
 
-// Get all profiles
-module.exports.getAllProfiles = async () => {
-  try {
-    const profiles = await Profile.find().populate("userId", "username email");
-    return profiles;
-  } catch (error) {
-    console.error("Error retrieving profiles:", error);
-    throw error;
-  }
-};
-
 // Delete a profile
 module.exports.deleteProfile = async (userId) => {
   try {
@@ -1069,118 +1058,6 @@ module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   }
 };
 
-
-exports.getTotalCompanies = async () => {
-  return await Profile.countDocuments({ type: "Company" });
-};
-
-exports.getCompaniesWithActivePosts = async () => {
-  return await Post.aggregate([
-    { $match: { status: POST_STATUS.OPEN } },
-    {
-      $group: {
-        _id: "$user",
-        lastPostDate: { $max: "$createdAt" },
-        postCount: { $sum: 1 },
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "user",
-      },
-    },
-    { $unwind: "$user" },
-    {
-      $lookup: {
-        from: "profiles",
-        localField: "_id",
-        foreignField: "userId",
-        as: "profile",
-      },
-    },
-    { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
-    { $match: { "profile.type": "Company" } },
-    {
-      $project: {
-        _id: 0,
-        userId: "$_id",
-        companyName: "$profile.companyDetails.name",
-        industry: "$profile.companyDetails.industry",
-        email: "$user.email",
-        lastPostDate: 1,
-        postCount: 1,
-      },
-    },
-    { $sort: { lastPostDate: -1 } },
-  ]);
-};
-
-exports.getTopHiringCompanies = async () => {
-  return await Post.aggregate([
-    { $match: { status: POST_STATUS.CLOSED } },
-    { $group: { _id: "$user", closedPostCount: { $sum: 1 } } },
-    { $sort: { closedPostCount: -1 } },
-    { $limit: 5 },
-    {
-      $lookup: {
-        from: "profiles",
-        localField: "_id",
-        foreignField: "userId",
-        as: "companyProfile",
-      },
-    },
-    { $unwind: "$companyProfile" },
-    {
-      $project: {
-        _id: 1,
-        companyName: "$companyProfile.companyDetails.name",
-        closedPostCount: 1,
-      },
-    },
-  ]);
-};
-
-exports.getRecentActiveCompanies = async () => {
-  return await Post.aggregate([
-    { $sort: { createdAt: -1 } },
-    { $limit: 10 },
-    {
-      $lookup: {
-        from: "profiles",
-        localField: "user",
-        foreignField: "userId",
-        as: "profile",
-      },
-    },
-    { $unwind: "$profile" },
-    { $match: { "profile.type": "Company" } },
-    {
-      $group: {
-        _id: "$user",
-        lastPostDate: { $first: "$createdAt" },
-        companyName: { $first: "$profile.companyDetails.name" },
-      },
-    },
-    { $sort: { lastPostDate: -1 } },
-  ]);
-};
-
-exports.getTopIndustries = async () => {
-  return await Profile.aggregate([
-    { $match: { type: "Company", "companyDetails.industry": { $ne: null } } },
-    {
-      $group: {
-        _id: "$companyDetails.industry",
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { count: -1 } },
-    { $limit: 5 },
-  ]);
-};
 
 // Update specific profile fields
 module.exports.updateProfileFields = async (userId, updateData) => {
