@@ -1,5 +1,5 @@
 // usersService.js
-const User = require("../../models/UserModel");
+const User = require("../models/UserModel");
 
 module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
   try {
@@ -46,7 +46,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 //Simple Get All
 
 // jobAssessmentService.js
-const JobAssessmentResult = require("../../models/JobAssessmentResultModel");
+const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
@@ -258,10 +258,10 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
   }
 };
 
-const Post = require('../../models/PostModel');
-const Feedback = require('../../models/feedbackModel');
-const Bid = require('../../models/BidModel');
-const Profile = require('../../models/ProfileModel');
+const Post = require('../models/PostModel');
+const Feedback = require('../models/feedbackModel');
+const Bid = require('../models/BidModel');
+const Profile = require('../models/ProfileModel');
 
 module.exports.getCounts = async () => {
   try {

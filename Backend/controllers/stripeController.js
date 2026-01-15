@@ -1,5 +1,5 @@
 require('dotenv').config();
-const stripeService = require('../../services/PaymetServices/stripeService');
+const stripeService = require('../services/stripeService');
 
 // Create Stripe Checkout session
 exports.createCheckoutSession = async (req, res) => { 

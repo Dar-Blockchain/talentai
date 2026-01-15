@@ -1,6 +1,6 @@
-const Notification = require('../../models/notificationModel');
-const User = require('../../models/UserModel');
-const socket = require('../../socket');
+const Notification = require('../models/notificationModel');
+const User = require('../models/UserModel');
+const socket = require('../socket');
 
 /**
  * Notification System Service (functional API)

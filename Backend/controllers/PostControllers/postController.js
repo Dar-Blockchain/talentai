@@ -3,7 +3,7 @@ const postService = require("../../services/PosteServices/postService");
 const { sendPostEmail } = require("../../utils/mailing");
 const matchingConfigService = require("../../services/MatchingService/matchingConfigService");
 const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/postValidationHelpers");
-const notificationService = require("../../services/Notifications/notificationSystemService");
+const notificationService = require("../../services/notificationSystemService");
 const User = require("../../models/UserModel");
 const Profile = require("../../models/ProfileModel");
 

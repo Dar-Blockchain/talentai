@@ -1,6 +1,6 @@
-const authService = require("../../services/AuthenticationServices/authenticationService");
-const Profile = require("../../models/ProfileModel");
-const { validateEmail, validateOTPInput, validateIdToken } = require("../../helpers/authValidationHelpers");
+const authService = require("../services/authenticationService");
+const Profile = require("../models/ProfileModel");
+const { validateEmail, validateOTPInput, validateIdToken } = require("../helpers/authValidationHelpers");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {

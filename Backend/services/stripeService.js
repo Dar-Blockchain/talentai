@@ -1,6 +1,6 @@
 const Stripe = require('stripe');
 require('dotenv').config();
-const { getPlanById } = require('../../controllers/paymentController');
+const { getPlanById } = require('../controllers/paymentController');
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 

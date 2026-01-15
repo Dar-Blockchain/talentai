@@ -3,7 +3,7 @@
  * Centralized handlers for notification-related Socket.IO events
  */
 
-const notificationService = require('../services/Notifications/notificationSystemService');
+const notificationService = require('../services/notificationSystemService');
 
 /**
  * Register notification event handlers

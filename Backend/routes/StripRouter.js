@@ -5,7 +5,7 @@ const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ✅ Route pour créer une session de paiement Stripe
-const stripeController = require('../controllers/PaymentContollers/stripeController');
+const stripeController = require('../controllers/stripeController');
 
 router.post('/create-checkout-session', stripeController.createCheckoutSession);
 

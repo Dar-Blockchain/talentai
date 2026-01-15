@@ -1,5 +1,5 @@
 // usersController.js
-const dashboardService = require("../../services/DashbordServices/dashboardService");
+const dashboardService = require("../services/dashboardService");
 
 module.exports.getAllUsers = async (req, res) => {
   try {

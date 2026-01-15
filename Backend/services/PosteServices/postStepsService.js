@@ -1,6 +1,6 @@
 const Post_Steps = require("../../models/post_StepsModel");
 const Post = require("../../models/PostModel");
-const candidatePostStepProgressService = require("../RecruitmentServices/candidatePostStepProgressService");
+const candidatePostStepProgressService = require("../candidatePostStepProgressService");
 const CandidatePostStepProgress = require("../../models/candidate_Post_Step_Progress");
 
 // Create a new post step (single or multiple)
