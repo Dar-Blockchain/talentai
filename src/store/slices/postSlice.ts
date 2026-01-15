@@ -840,8 +840,11 @@ const postSlice = createSlice({
         state.updatePostStatus.error = null;
       })
       .addCase(updatePostStatus.fulfilled, (state, action) => {
+        console.log("updatePostStatus", action.payload)
         state.updatePostStatus.loading = false;
-        state.currentJob.status = action.payload.data?.status;
+        if(state.currentJob){
+          state.currentJob.status = action.payload.data?.status;
+        }
       })
       .addCase(updatePostStatus.rejected, (state, action) => {
         state.updatePostStatus.loading = false;
