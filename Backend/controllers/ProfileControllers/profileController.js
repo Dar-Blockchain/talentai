@@ -63,6 +63,14 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     // Create or update the profile
     const result = await profileService.createOrUpdateProfile(userId, profileData);
 
+    // Remove Hedera sensitive fields from user object
+    if (result.user) {
+      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      delete result.user.hederaAccountId;
+      delete result.user.hederaPrivateKey;
+      delete result.user.hederaPublicKey;
+    }
+
     res.status(200).json({
       success: true,
       message: "Profile created/updated successfully",
@@ -124,29 +132,6 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
   }
 };
 
-exports.updateUserImage = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    if (!req.file) {
-      return res.status(400).json({ message: "No image was provided." });
-    }
-
-    const { filename } = req.file;
-    console.log("New image:", filename);
-
-    const updatedUser = await profileService.updateUserImage(userId, filename);
-
-    res.status(200).json({
-      message: "Image updated successfully.",
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
 // Get own profile
 // controllers/profileController.js
 module.exports.getMyProfile = async (req, res) => {
@@ -170,30 +155,6 @@ module.exports.getMyProfile = async (req, res) => {
   }
 };
 
-// Get own profile
-// controllers/profileController.js
-module.exports.getMyProfileOptimizer = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const result = await profileService.getProfileByUserIdOptimizer(userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Profile retrieved successfully",
-      user: result.user,
-      profile: result.profile || null,
-      companyMembership: result.companyMembership || null
-    });
-  } catch (error) {
-    console.error("Error retrieving profile:", error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Internal error retrieving profile"
-    });
-  }
-};
-
 
 // Get a profile by ID
 module.exports.getProfileById = async (req, res) => {
@@ -202,6 +163,14 @@ module.exports.getProfileById = async (req, res) => {
 
     // Use the service to retrieve the profile
     const result = await profileService.getProfileByUserId(userId);
+
+    // Remove Hedera sensitive fields from user object
+    if (result.user) {
+      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      delete result.user.hederaAccountId;
+      delete result.user.hederaPrivateKey;
+      delete result.user.hederaPublicKey;
+    }
 
     res.status(200).json({
       success: true,
@@ -535,80 +504,6 @@ exports.getTopIndustries = async (req, res) => {
   }
 };
 
-// Optimized update profile API
-module.exports.updateProfile = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const {
-      username, email, requiredExperienceLevel, targetRole,
-      firstName, lastName, gender, country, language, timeZone,
-      contactInformation,
-    } = req.body;
-
-    // Prepare potential updates
-    const allUpdates = {
-      username, email, requiredExperienceLevel, targetRole,
-      firstName, lastName, gender, country, language, timeZone,
-    };
-
-    // Check if at least one field is provided
-    if (!Object.values(allUpdates).some(val => val) && !contactInformation) {
-      return res.status(400).json({
-        success: false,
-        message: "At least one field must be provided for update",
-      });
-    }
-
-    // Validate fields
-    const validationError = validateUpdateFields(allUpdates);
-    if (validationError) {
-      return res.status(400).json({ success: false, message: validationError });
-    }
-
-    // Separate user and profile updates
-    const userUpdateData = buildUpdateData({ username, email });
-    const profileUpdateData = buildUpdateData({
-      requiredExperienceLevel, targetRole, firstName, lastName,
-      gender, country, language, timeZone,
-    });
-
-    // Add contactInformation if provided
-    if (contactInformation) {
-      profileUpdateData.contactInformation = contactInformation;
-    }
-
-    // Execute updates in parallel
-    const updatePromises = [];
-    if (Object.keys(userUpdateData).length > 0) {
-      updatePromises.push(profileService.updateUserFields(userId, userUpdateData));
-    }
-    if (Object.keys(profileUpdateData).length > 0) {
-      updatePromises.push(profileService.updateProfileFields(userId, profileUpdateData));
-    }
-
-    if (updatePromises.length > 0) {
-      await Promise.all(updatePromises);
-    }
-
-    // Fetch and return updated profile
-    const updatedProfile = await profileService.getProfileByUserId(userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      user: updatedProfile.user,
-      profile: updatedProfile.profile || null,
-      companyMembership: updatedProfile.companyMembership || null
-    });
-
-  } catch (error) {
-    console.error('❌ Error updating profile:', error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Failed to update profile"
-    });
-  }
-};
 
 // Update profile visibility (public / private)
 module.exports.updateProfileVisibility = async (req, res) => {
