@@ -63,6 +63,14 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     // Create or update the profile
     const result = await profileService.createOrUpdateProfile(userId, profileData);
 
+    // Remove Hedera sensitive fields from user object
+    if (result.user) {
+      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      delete result.user.hederaAccountId;
+      delete result.user.hederaPrivateKey;
+      delete result.user.hederaPublicKey;
+    }
+
     res.status(200).json({
       success: true,
       message: "Profile created/updated successfully",
