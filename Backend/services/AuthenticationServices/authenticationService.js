@@ -168,12 +168,15 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
       logAuthAttempt('Success')
     ]);
 
+    // Fetch updated user without Hedera sensitive fields
+    const updatedUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+
     // Fetch profile and companyMembership in parallel if exist
     const [profile, companyMembership] = await Promise.all([
-      user.profile ? Profile.findById(user.profile) : null,
-      user.companyMembership
+      updatedUser.profile ? Profile.findById(updatedUser.profile) : null,
+      updatedUser.companyMembership
         ? require('../../models/CompanyMembershipModel')
-            .findById(user.companyMembership)
+            .findById(updatedUser.companyMembership)
             .populate({
               path: 'company',
               select: 'Localisation createdAt email isVerified lastLogin username updatedAt user_image profile',
@@ -188,11 +191,11 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     // Generate token with company info if companyMembership exists
     let token;
     if (companyMembership) {
-      token = generateToken(user._id, companyMembership.company._id, companyMembership.role);
+      token = generateToken(updatedUser._id, companyMembership.company._id, companyMembership.role);
     } else {
-      token = generateToken(user._id);
+      token = generateToken(updatedUser._id);
     }
-    return { user, token, profile, companyMembership };
+    return { user: updatedUser, token, profile, companyMembership };
   } catch (error) {
     error.status = error.status || 500;
     throw error;
