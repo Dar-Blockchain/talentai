@@ -20,6 +20,15 @@ exports.createPost = async (req, res) => {
     // Parse JSON fields safely from form-data
     const parsedData = parseJsonFields(req.body);
 
+    // Map workMode from companyDetails.employmentType if not already set
+    if (parsedData.jobDetails && !parsedData.jobDetails.workMode) {
+      if (parsedData.companyDetails?.employmentType) {
+        parsedData.jobDetails.workMode = parsedData.companyDetails.employmentType;
+      } else if (parsedData.employmentType) {
+        parsedData.jobDetails.workMode = parsedData.employmentType;
+      }
+    }
+
     const postData = {
       ...parsedData,
       user: req.user._id, //id => token ("membre" req.user.campagny)

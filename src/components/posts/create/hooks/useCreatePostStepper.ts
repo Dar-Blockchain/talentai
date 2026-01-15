@@ -143,13 +143,11 @@ export const useCreatePostStepper = (
       }
 
       setActiveStep(2);
-    } catch {
-      setAgentLoadingOpen(false);
-      showToast({
-        message: "Failed to configure hiring agent.",
-        severity: "error",
-      });
-    }
+    }  catch (error: any) {
+  console.error("Error configuring hiring agent:", error);
+  setAgentLoadingOpen(false);
+  showToast({ message: "Failed to configure hiring agent.", severity: "error" });
+}
   };
 
   /* -------------------- Actions -------------------- */

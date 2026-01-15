@@ -12,6 +12,7 @@ import {
   Typography,
   InputAdornment,
   IconButton,
+  Autocomplete,
 } from "@mui/material";
 import { useDispatch } from "react-redux";
 import {
@@ -23,6 +24,7 @@ import {
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
 import { hardSkillLevels, softSkillLevels } from "@/constants/skills";
+import { ALL_SKILLS, SOFT_SKILLS } from "@/components/preferences/data/skillsData";
 
 interface SkillEditorModalProps {
   open: boolean;
@@ -157,12 +159,22 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
             Skill Name
           </Typography>
 
-          <TextField
-            fullWidth
-            variant="outlined"
-            value={localSkill.name}
-            onChange={(e) => handleChange("name", e.target.value)}
-            sx={inputStyle}
+          <Autocomplete
+            freeSolo
+            options={skillType === "hard" ? ALL_SKILLS : SOFT_SKILLS}
+            value={localSkill.name || ""}
+            onInputChange={(_, newValue) =>
+              handleChange("name", newValue)
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                fullWidth
+                variant="outlined"
+                sx={inputStyle}
+                placeholder="Select or type a skill"
+              />
+            )}
           />
         </Box>
 
