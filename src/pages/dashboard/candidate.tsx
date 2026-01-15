@@ -4,7 +4,6 @@ import Header from "@/components/layout/Header";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsModern";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
-import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
 import CandidateEngagementTasks from "@/components/dashboard-candidate/CandidateEngagementTasks";
 import RoleGuard from "@/components/guards/RoleGuard";
 import CandidateSkills from "@/components/dashboard-candidate/candidate-skills/CandidateSkills";

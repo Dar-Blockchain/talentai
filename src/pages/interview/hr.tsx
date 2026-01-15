@@ -1965,27 +1965,15 @@ const IntelligentInterviewTest = () => {
     };
   }, [questionReadingTime, readingTimeBuffer]);
 
-  // Timer for interview duration
+  // Auto-end interview when duration is reached
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-
     if (interviewStatus === 'active' && duration > 0) {
-      timer = setInterval(() => {
-        setElapsedTime(prev => {
-          const newElapsed = prev + 1000;
-          if (newElapsed >= duration) {
-            endInterview();
-            return duration;
-          }
-          return newElapsed;
-        });
-      }, 1000);
+      const durationInSeconds = Math.floor(duration / 1000);
+      if (elapsedTime >= durationInSeconds) {
+        endInterview();
+      }
     }
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [interviewStatus, duration]);
+  }, [elapsedTime, interviewStatus, duration]);
 
   // Start interview function
   const startInterview = async () => {
@@ -2309,7 +2297,8 @@ const IntelligentInterviewTest = () => {
   // Calculate progress percentage
   const getProgressPercentage = () => {
     if (duration === 0) return 0;
-    return (elapsedTime / duration) * 100;
+    const durationInSeconds = duration / 1000; // Convert ms to seconds
+    return (elapsedTime / durationInSeconds) * 100;
   };
 
   // Security violation handler

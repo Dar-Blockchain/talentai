@@ -82,6 +82,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
         border: "1px solid rgba(19, 151, 107, 0.22)",
         borderRadius: "8px",
         width: "23%",
+        minWidth: "200px",
         height: "120px",
         boxShadow: "0px 2px 18px 0px rgba(24, 25, 28, 0.03)",
         display: "flex",

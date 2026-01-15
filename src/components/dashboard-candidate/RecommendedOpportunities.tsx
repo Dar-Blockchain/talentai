@@ -23,12 +23,19 @@ import Image from "next/image";
 export default function RecommendedOpportunities() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { items: recommendedPosts, loading, pagination } = useSelector(selectRecommended);
+  const {
+    items: recommendedPosts,
+    loading,
+    pagination,
+  } = useSelector(selectRecommended);
 
   useEffect(() => {
-    dispatch(fetchRecommendedPosts({
+    dispatch(
+      fetchRecommendedPosts({
         page: 1,
-        limit: 3}));
+        limit: 3,
+      })
+    );
   }, [dispatch]);
 
   return (
@@ -156,53 +163,52 @@ export default function RecommendedOpportunities() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            py: 6,
-            px: 3,
+            py: 3,
+            px: 2,
             backgroundColor: "rgba(131, 16, 255, 0.02)",
-            borderRadius: "8px",
+            borderRadius: "6px",
             border: "1px solid rgba(98, 111, 134, 0.18)",
             textAlign: "center",
           }}
         >
           <Box
             sx={{
-              mb: 3,
+              mb: 2,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: "rgba(131, 16, 255, 0.1)",
-              width: 100,
-              height: 100,
+              width: 64,
+              height: 64,
               borderRadius: "50%",
             }}
           >
-            <SearchOff sx={{ fontSize: 48, color: "rgba(131, 16, 255, 1)" }} />
+            <SearchOff sx={{ fontSize: 32, color: "rgba(131, 16, 255, 1)" }} />
           </Box>
+
           <Typography
-            variant="h6"
             sx={{
               color: "rgba(131, 16, 255, 1)",
               fontFamily: "Poppins",
               fontWeight: 500,
-              fontSize: "20px",
-              lineHeight: "28px",
-              mb: 1,
+              fontSize: "16px",
+              lineHeight: "22px",
+              mb: 0.5,
             }}
           >
-            No recommended opportunities found
+            No recommended opportunities
           </Typography>
+
           <Typography
-            variant="body2"
             sx={{
               color: "rgba(147, 147, 147, 1)",
-              maxWidth: "500px",
-              fontSize: "14px",
-              lineHeight: "25px",
-              textAlign: "center",
+              maxWidth: 360,
+              fontSize: "13px",
+              lineHeight: "20px",
             }}
           >
-            You need to pass a test with a score of <b>'Good'</b> or <b>20%</b>{" "}
-            to see recommended opportunities
+            Pass a test with a <b>Good</b> score or <b>20%</b> to see
+            recommendations
           </Typography>
         </Box>
       )}

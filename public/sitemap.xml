@@ -40,14 +40,6 @@
     <priority>0.6</priority>
   </url>
 
-  <!-- Report Page -->
-  <url>
-    <loc>https://app.talentai.bid/interview/report</loc>
-    <lastmod>2024-12-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
   <!-- Interview Test Page -->
   <url>
     <loc>https://app.talentai.bid/interview/hr</loc>

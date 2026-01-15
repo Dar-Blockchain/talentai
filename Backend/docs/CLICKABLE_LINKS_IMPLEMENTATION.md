@@ -5,8 +5,6 @@ Enhanced the interview report page to automatically detect and convert URLs in t
 
 ## Implementation Details
 
-### Files Modified
-- `src/pages/interview/report/[id].tsx`
 
 ### New Components Created
 

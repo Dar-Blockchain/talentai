@@ -1,16 +1,24 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { IconButton } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import Badge from "@mui/material/Badge";
 import { useRouter } from "next/router";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationDropdown from "./NotificationDropdown";
-import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
+import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import { RootState } from "@/store/store";
+import { useSelector } from "react-redux";
 const HeaderNotification = () => {
   const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
+
+  const isCompany = useMemo(
+    () => user?.role?.toLowerCase() === "company",
+    [user?.role]
+  );
   const {
     notifications,
     unreadCount,
@@ -33,7 +41,11 @@ const HeaderNotification = () => {
 
   const handleViewAllNotifications = useCallback(() => {
     setNotificationAnchor(null);
-    router.push("/settings/profile/?tab=notifications");
+    router.push(
+      isCompany
+        ? "/profile/company/settings/?tab=notifications"
+        : "/profile/candidate/settings/?tab=notifications"
+    );
   }, [router]);
 
   return (
@@ -45,42 +57,41 @@ const HeaderNotification = () => {
           borderRadius: "24px",
           width: 65,
           height: 40,
-          boxShadow: '0px 0px 18.1px 0px rgba(0, 0, 0, 0.05)',
+          boxShadow: "0px 0px 18.1px 0px rgba(0, 0, 0, 0.05)",
           "&:hover": {
             backgroundColor: "rgba(255, 255, 255, 0.8)",
           },
         }}
       >
-<Badge
-badgeContent={unreadCount}
-max={9}
-  color="error"
-  overlap="circular"
-  anchorOrigin={{
-    vertical: "top",
-    horizontal: "right",
-  }}
-  sx={{
-    "& .MuiBadge-badge": {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: "#f5576c",
-      fontSize: '9px',
-      width: 16,
-      height: 16
-    },
-  }}
->
-  <NotificationsOutlinedIcon
-    sx={{
-      color: "rgba(98, 111, 134, 1)",
-      width: 24,
-      height: 24,
-    }}
-  />
-</Badge>
-
+        <Badge
+          badgeContent={unreadCount}
+          max={9}
+          color="error"
+          overlap="circular"
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          sx={{
+            "& .MuiBadge-badge": {
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#f5576c",
+              fontSize: "9px",
+              width: 16,
+              height: 16,
+            },
+          }}
+        >
+          <NotificationsOutlinedIcon
+            sx={{
+              color: "rgba(98, 111, 134, 1)",
+              width: 24,
+              height: 24,
+            }}
+          />
+        </Badge>
       </IconButton>
       <NotificationDropdown
         anchorEl={notificationAnchor}
