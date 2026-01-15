@@ -3,7 +3,6 @@ const {
   VALIDATION,
   buildUpdateData,
   validateUpdateFields,
-  validateProfileCreationFields,
 } = require("../../helpers/validationHelpers");
 
 // Create or update a candidate profile (with onboarding fields support)
