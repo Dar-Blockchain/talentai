@@ -99,6 +99,15 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       userId,
       profileData
     );
+
+    // Remove Hedera sensitive fields from user object
+    if (result.user) {
+      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      delete result.user.hederaAccountId;
+      delete result.user.hederaPrivateKey;
+      delete result.user.hederaPublicKey;
+    }
+
     res.status(200).json({
       success: true,
       message: "Company profile created/updated successfully",
