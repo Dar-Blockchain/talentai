@@ -61,6 +61,7 @@ const jobDetailsSchema = new mongoose.Schema({
   responsibilities: [String],
   location: String,
   employmentType: String,
+  workMode: String,
   experienceLevel: String,
   salary: salarySchema,
 });
