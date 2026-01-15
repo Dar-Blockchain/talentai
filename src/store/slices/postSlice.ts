@@ -639,11 +639,7 @@ export const updatePostStatus = createAsyncThunk(
       }
 
       const data = await response.json();
-      return {
-        postId,
-        status,
-        data,
-      };
+      return data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error updating post status");
     }
@@ -845,7 +841,7 @@ const postSlice = createSlice({
       })
       .addCase(updatePostStatus.fulfilled, (state, action) => {
         state.updatePostStatus.loading = false;
-        state.currentJob.status = action.payload.data.status;
+        state.currentJob.status = action.payload.data?.status;
       })
       .addCase(updatePostStatus.rejected, (state, action) => {
         state.updatePostStatus.loading = false;
