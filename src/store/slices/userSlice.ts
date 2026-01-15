@@ -92,7 +92,7 @@ export const updateProfile = createAsyncThunk<
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfileComplete`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/`,
       {
         method: "PUT",
         headers: {
@@ -127,7 +127,7 @@ export const getMyProfile = createAsyncThunk<
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/me`,
       {
         method: "GET",
         headers: {
@@ -158,7 +158,7 @@ export const getProfileById = createAsyncThunk<
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getProfileById/${userId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/${userId}`,
       {
         method: "GET",
         headers: {
