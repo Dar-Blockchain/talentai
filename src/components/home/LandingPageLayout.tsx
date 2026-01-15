@@ -28,8 +28,8 @@ const LandingPageLayout: React.FC<LandingPageLayoutProps> = ({
 }) => {
   return (
     
-    <Box style={backgroundColor ? { backgroundColor } : undefined}>
-      <Header />
+    <Box sx={backgroundColor ? { backgroundColor } : undefined}>
+      <Box sx={{px: 1.5}}><Header /></Box>
       {type === "company" && <CompanyHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
       {type === "candidate" &&  <CandidateHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
       {children}
