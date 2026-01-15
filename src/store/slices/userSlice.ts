@@ -208,6 +208,11 @@ const userSlice = createSlice({
     setCurrentSpace(state, action: PayloadAction<"personal" | "membership">) {
       state.currentSpace = action.payload;
     },
+    updateProfileQuota(state, action: PayloadAction<number>) {
+      if(state?.connectedUser?.profile?.quota){
+        state.connectedUser.profile.quota = action.payload;
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -301,6 +306,7 @@ export const {
   clearTargetUser,
   setUserType,
   setCurrentSpace,
+  updateProfileQuota,
 } = userSlice.actions;
 
 export default userSlice.reducer;
