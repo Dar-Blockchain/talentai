@@ -54,7 +54,7 @@ const PostPreview = () => {
     description = "",
     experienceLevel = "",
     employmentType = "",
-    location = "",
+    workMode = "",
     salary = { min: "", max: "", currency: "USD" },
     requirements = [],
     responsibilities = [],
@@ -221,11 +221,11 @@ const PostPreview = () => {
 
             <TextField
               select
-              value={location}
+              value={workMode}
               onChange={(e: any) =>
                 dispatch(
                   updateJobField({
-                    field: "location",
+                    field: "workMode",
                     value: e.target.value,
                   })
                 )

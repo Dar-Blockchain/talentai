@@ -160,11 +160,6 @@ export const logout = createAsyncThunk(
         Cookies.remove(cookieName, { path: "/" });
       });
 
-      // Redirect to signin page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/signin';
-      }
-
       return true;
     } catch (error: any) {
       console.error("❌ Logout error:", error);

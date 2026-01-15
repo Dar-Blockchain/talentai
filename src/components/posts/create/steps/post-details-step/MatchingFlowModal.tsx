@@ -157,8 +157,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         We've already found {matchingProfiles?.length} matching candidates for
         you.
         <br />
-        You can start reviewing and contacting them immediately by unlocking
-        their profiles for{" "}
+        You can start reviewing and contacting them immediately <br/>by unlocking
+        maximum 5 profiles for{" "}
         <b style={{ color: "rgba(222, 147, 0, 1)" }}>
           {PROFILE_UNLOCK_PACK_PRICE} tokens
         </b>{" "}

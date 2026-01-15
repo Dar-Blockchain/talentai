@@ -30,7 +30,7 @@ export interface JobDetails {
   description: string;
   requirements: string[];
   responsibilities: string[];
-  location: string;
+  workMode: string;
   employmentType: string;
   experienceLevel: string;
   salary: Salary;

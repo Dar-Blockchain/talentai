@@ -23,7 +23,7 @@ const initialProfile: UserProfile = {
   timezone: 'UTC+01:00',
   phone: '',
   address: '',
-  linkedinUrl: '',
+  linkedin: '',
   githubUrl: '',
   personalWebsite: '',
   location: '',
@@ -31,6 +31,7 @@ const initialProfile: UserProfile = {
   profileType: 'Company',
   companyName: '',
   name: '',
+  website: '',
   industry: '',
   companySize: '',
   size: '',
@@ -122,7 +123,7 @@ export const useCompanyProfileManagement = () => {
         timezone: 'UTC+01:00',
         phone: reduxProfile.companyDetails?.phone || '',
         address: reduxProfile.companyDetails?.address || '',
-        linkedinUrl: reduxProfile.companyDetails?.linkedinUrl || '',
+        linkedin: reduxProfile.companyDetails?.linkedin || '',
         githubUrl: '',
         personalWebsite: reduxProfile.companyDetails?.personalWebsite || '',
         location: reduxProfile.companyDetails?.location || companyData?.location || '',
@@ -168,7 +169,7 @@ export const useCompanyProfileManagement = () => {
           return 'Invalid phone number format';
         }
         break;
-      case 'linkedinUrl':
+      case 'linkedin':
         const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
         if (!linkedinPattern.test(value.trim())) {
           return 'Must be a valid LinkedIn URL (e.g., https://www.linkedin.com/company/yourcompany)';
@@ -308,9 +309,9 @@ export const useCompanyProfileManagement = () => {
           toast.error('Please enter a valid phone number');
           return currentProfile;
         }
-        if (currentProfile.linkedinUrl?.trim()) {
+        if (currentProfile.linkedin?.trim()) {
           const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
-          if (!linkedinPattern.test(currentProfile.linkedinUrl.trim())) {
+          if (!linkedinPattern.test(currentProfile.linkedin.trim())) {
             toast.error('Please enter a valid LinkedIn URL (e.g., https://www.linkedin.com/company/yourcompany)');
             return currentProfile;
           }
@@ -335,14 +336,11 @@ export const useCompanyProfileManagement = () => {
         if (currentProfile.location?.trim()) {
           contactInfo.location = currentProfile.location.trim();
         }
-        if (currentProfile.address?.trim()) {
-          contactInfo.address = currentProfile.address.trim();
+        if (currentProfile.linkedin?.trim()) {
+          contactInfo.linkedin = currentProfile.linkedin.trim();
         }
-        if (currentProfile.linkedinUrl?.trim()) {
-          contactInfo.linkedinUrl = currentProfile.linkedinUrl.trim();
-        }
-        if (currentProfile.personalWebsite?.trim()) {
-          contactInfo.personalWebsite = currentProfile.personalWebsite.trim();
+        if (currentProfile.website?.trim()) {
+          contactInfo.website = currentProfile.website.trim();
         }
         if(currentProfile.employmentType) {
           contactInfo.employmentType = currentProfile.employmentType;

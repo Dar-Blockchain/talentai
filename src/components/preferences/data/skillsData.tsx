@@ -146,3 +146,42 @@ CATEGORIES.forEach((cat) => {
     (s) => s.label
   );
 });
+
+// --- Soft Skills ---
+export const SOFT_SKILLS = [
+  // Communication
+  { label: "Communication", category: "soft-skills" },
+  { label: "Verbal Communication", category: "soft-skills" },
+  { label: "Written Communication", category: "soft-skills" },
+  { label: "Presentation Skills", category: "soft-skills" },
+  { label: "Negotiation Skills", category: "soft-skills" },
+
+  // Leadership
+  { label: "Leadership", category: "soft-skills" },
+  { label: "Team Management", category: "soft-skills" },
+  { label: "Decision Making", category: "soft-skills" },
+  { label: "Task Delegation", category: "soft-skills" },
+  { label: "Team Motivation", category: "soft-skills" },
+
+  // Problem Solving
+  { label: "Problem Solving", category: "soft-skills" },
+  { label: "Analytical Thinking", category: "soft-skills" },
+  { label: "Critical Thinking", category: "soft-skills" },
+  { label: "Creative Problem Solving", category: "soft-skills" },
+  { label: "Strategic Planning", category: "soft-skills" },
+
+  // Teamwork
+  { label: "Teamwork", category: "soft-skills" },
+  { label: "Collaboration", category: "soft-skills" },
+  { label: "Conflict Resolution", category: "soft-skills" },
+  { label: "Adaptability", category: "soft-skills" },
+  { label: "Cultural Awareness", category: "soft-skills" },
+
+  // Time Management
+  { label: "Time Management", category: "soft-skills" },
+  { label: "Task Prioritization", category: "soft-skills" },
+  { label: "Scheduling", category: "soft-skills" },
+  { label: "Deadline Management", category: "soft-skills" },
+  { label: "Work-Life Balance", category: "soft-skills" },
+];
+
