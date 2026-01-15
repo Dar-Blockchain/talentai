@@ -344,7 +344,7 @@ console.log("Old image path to delete:", oldImagePath);
 // services/profileService.js
 module.exports.getProfileByUserId = async (userId) => {
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
 
     if (!user) {
       throw new Error("User not found");
@@ -383,7 +383,7 @@ module.exports.getProfileByUserId = async (userId) => {
 // services/profileService.js
 module.exports.getProfileByUserIdOptimizer = async (userId) => {
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
 
     if (!user) {
       const err = new Error("User not found");
