@@ -35,7 +35,7 @@ router.put('/', uploadfile.single("user_image"), profileController.updateProfile
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
-router.get('/getMyProfile', profileController.getMyProfile);
+router.get('/me', profileController.getMyProfile);
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/getMyProfileOptimizer', profileController.getMyProfileOptimizer);
