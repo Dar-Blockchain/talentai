@@ -72,7 +72,7 @@ export interface CombinedUserInfo {
  */
 export const fetchUserProfile = async (token: string): Promise<ProfileData | null> => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

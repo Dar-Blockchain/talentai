@@ -49,7 +49,7 @@ function Preferences() {
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/me`,
           {
             method: "GET",
             headers: {
