@@ -7,6 +7,7 @@ import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
 import CandidateEngagementTasks from "@/components/dashboard-candidate/CandidateEngagementTasks";
 import RoleGuard from "@/components/guards/RoleGuard";
 import CandidateSkills from "@/components/dashboard-candidate/candidate-skills/CandidateSkills";
+import dynamic from 'next/dynamic';
 
 const DashboardCandidate: React.FC = () => {
 
@@ -24,4 +25,7 @@ const DashboardCandidate: React.FC = () => {
   );
 };
 
-export default DashboardCandidate;
+// Export with dynamic import to prevent SSR issues
+export default dynamic(() => Promise.resolve(DashboardCandidate), {
+  ssr: false
+});

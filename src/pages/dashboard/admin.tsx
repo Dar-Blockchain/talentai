@@ -49,6 +49,7 @@ import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashbo
 // Utilities
 import { getCountryName } from '@/utils/countryMappings';
 import RoleGuard from '@/components/guards/RoleGuard';
+import dynamic from 'next/dynamic';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
@@ -1113,4 +1114,7 @@ const DashboardAdmin = () => {
     );
 };
 
-export default DashboardAdmin; 
+// Export with dynamic import to prevent SSR issues
+export default dynamic(() => Promise.resolve(DashboardAdmin), {
+  ssr: false
+});

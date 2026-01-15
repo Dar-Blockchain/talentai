@@ -27,6 +27,7 @@ import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
 import MemberGuard from "@/components/guards/MemberGuard";
 import PageContainer from "@/components/layout/PageContainer";
+import dynamic from 'next/dynamic';
 
 // Update the MatchingCandidate interface
 export interface MatchingCandidate {
@@ -56,7 +57,7 @@ export interface MatchingCandidate {
   }>;
 }
 
-const DashboardCompany = () => {
+const DashboardMember = () => {
   const dispatch = useDispatch<AppDispatch>();
   const company = useSelector((state: RootState) => state.user?.connectedUser?.companyMembership?.company);
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
@@ -282,4 +283,7 @@ const fetchMyJobs = useCallback(
   );
 };
 
-export default DashboardCompany;
+// Export with dynamic import to prevent SSR issues
+export default dynamic(() => Promise.resolve(DashboardMember), {
+  ssr: false
+});

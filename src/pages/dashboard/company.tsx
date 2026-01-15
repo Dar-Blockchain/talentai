@@ -28,6 +28,7 @@ import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 import UnlockedCandidates from "@/components/dashboard-company/UnlockedCandidates";
 import RoleGuard from "@/components/guards/RoleGuard";
 import PageContainer from "@/components/layout/PageContainer";
+import dynamic from 'next/dynamic';
 
 // Update the MatchingCandidate interface
 export interface MatchingCandidate {
@@ -283,4 +284,7 @@ const fetchMyJobs = useCallback(
   );
 };
 
-export default DashboardCompany;
+// Export with dynamic import to prevent SSR issues
+export default dynamic(() => Promise.resolve(DashboardCompany), {
+  ssr: false
+});

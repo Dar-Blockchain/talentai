@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
+import dynamic from 'next/dynamic';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -37,4 +38,8 @@ const HomePage: React.FC = () => {
     </LandingPageLayout>
   );
 };
-export default HomePage;
+
+// Export with dynamic import to prevent SSR issues
+export default dynamic(() => Promise.resolve(HomePage), {
+  ssr: false
+});
