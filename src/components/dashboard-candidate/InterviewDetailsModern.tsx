@@ -34,43 +34,10 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 
-// Styled Components
-const StyledCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(4),
-  marginBottom: theme.spacing(4),
-  background: "#ffffff",
-  borderRadius: "24px",
-  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 0, 0, 0.04)",
-  border: "1px solid rgba(0, 0, 0, 0.05)",
-  transition: "all 0.3s ease",
-  position: "relative",
-  overflow: "hidden",
-  "&:hover": {
-    transform: "translateY(-4px)",
-    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.12), 0 0 30px rgba(0, 0, 0, 0.08)",
-  },
-}));
 
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: "2rem",
-  fontWeight: 800,
-  color: "#191919",
-  marginBottom: theme.spacing(4),
-  position: "relative",
-  "&:after": {
-    content: '""',
-    position: "absolute",
-    bottom: "-12px",
-    left: "0",
-    width: "80px",
-    height: "6px",
-    background: "#191919",
-    borderRadius: "3px",
-  },
-}));
 const INTERVIEW_TYPES = [
   {
     label: "Post Interview",
@@ -100,7 +67,9 @@ const INTERVIEW_TYPES = [
 ];
 
 export default function InterviewDetailsModern() {
-  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const { profile } = useSelector(
+    (state: RootState) => state.user.connectedUser
+  );
   const [tab, setTab] = useState("post_interview");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -223,9 +192,40 @@ export default function InterviewDetailsModern() {
   };
 
   return (
-    <StyledCard>
-      <SectionTitle>Interview Details</SectionTitle>
-      <Box sx={{ width: "100%", px: { xs: 2, md: 2 }, py: 2 }}>
+    <Box
+      sx={{
+        px: 5,
+        py: 3,
+        mb: 2,
+        color: "#000",
+        borderRadius: "12px",
+        border: "1px solid rgba(84,98,116,0.1)",
+        backgroundColor: "white",
+      }}
+    >
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 600,
+          color: "#000000",
+          fontSize: "20px",
+          mb: 3,
+          position: "relative",
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            bottom: "-4px",
+            left: 0,
+            width: "38px",
+            height: "5px",
+            background: "#8310FF",
+            borderRadius: "2px",
+          },
+        }}
+      >
+        Interviews & Skills assessments
+      </Typography>
+      <Box>
         <Box
           sx={{
             mb: 4,
@@ -635,6 +635,6 @@ export default function InterviewDetailsModern() {
           </>
         )}
       </Box>
-    </StyledCard>
+    </Box>
   );
 }
