@@ -188,6 +188,14 @@ module.exports.getProfileById = async (req, res) => {
     // Use the service to retrieve the profile
     const result = await profileService.getProfileByUserId(userId);
 
+    // Remove Hedera sensitive fields from user object
+    if (result.user) {
+      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      delete result.user.hederaAccountId;
+      delete result.user.hederaPrivateKey;
+      delete result.user.hederaPublicKey;
+    }
+
     res.status(200).json({
       success: true,
       message: "Profile retrieved successfully",
