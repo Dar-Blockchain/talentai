@@ -22,7 +22,6 @@ router.get('/getProfileById/:userId', profileController.getProfileById);
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser,authLogMiddleware("Profile"));
 
-
 // POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
 router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
 
