@@ -155,30 +155,6 @@ module.exports.getMyProfile = async (req, res) => {
   }
 };
 
-// Get own profile
-// controllers/profileController.js
-module.exports.getMyProfileOptimizer = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const result = await profileService.getProfileByUserIdOptimizer(userId);
-
-    res.status(200).json({
-      success: true,
-      message: "Profile retrieved successfully",
-      user: result.user,
-      profile: result.profile || null,
-      companyMembership: result.companyMembership || null
-    });
-  } catch (error) {
-    console.error("Error retrieving profile:", error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || "Internal error retrieving profile"
-    });
-  }
-};
-
 
 // Get a profile by ID
 module.exports.getProfileById = async (req, res) => {
