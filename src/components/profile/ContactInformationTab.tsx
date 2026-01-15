@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Card,
@@ -9,9 +9,11 @@ import {
   Divider,
   Typography,
   MenuItem,
+  Autocomplete,
 } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
 import { UserProfile } from '@/types/profile';
+import { getAllCountryNames } from '@/utils/countryMappings';
 
 interface ContactInformationTabProps {
   profile: UserProfile;
@@ -34,6 +36,9 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
   onCancel,
   onEditToggle,
 }) => {
+  // Get countries list from i18n-iso-countries (excludes Israel)
+  const countries = useMemo(() => getAllCountryNames(), []);
+
   const fieldSx = {
     '& .MuiOutlinedInput-root': {
       '&.Mui-focused fieldset': {
@@ -207,14 +212,25 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                     ...fieldSx,
                   }}
                 />
-                <TextField
-                  label="Location"
-                  value={profile.location}
-                  onChange={(e) => onInputChange('location', e.target.value)}
+                <Autocomplete
+                  options={countries}
+                  value={profile.location || null}
+                  onChange={(_, value) => onInputChange('location', value || '')}
                   disabled={!isEditing}
                   fullWidth
-                  placeholder="Paris, France"
-                  sx={fieldSx}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Location"
+                      placeholder="Select country"
+                      sx={fieldSx}
+                    />
+                  )}
+                  sx={{
+                    '& .MuiAutocomplete-popupIndicator': {
+                      color: '#6b7280',
+                    },
+                  }}
                 />
                 <TextField
                   select
