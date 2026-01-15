@@ -28,7 +28,7 @@ router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
 
 
 // PUT /profile/updateProfile — met à jour les champs du profil
-router.put('/updateProfile',  profileController.updateProfile);
+// router.put('/updateProfile',  profileController.updateProfile);
 
 // PUT /profile/updateProfileVisibility — met à jour la visibilité du profil (public/private)
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);
@@ -39,7 +39,7 @@ router.put('/updateProfileComplete', uploadfile.single("user_image"), profileCon
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
-router.put('/Update_Profile_Picture',uploadfile.single("user_image"), profileController.updateUserImage);
+// router.put('/Update_Profile_Picture',uploadfile.single("user_image"), profileController.updateUserImage);
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/getMyProfile', profileController.getMyProfile);
