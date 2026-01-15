@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Card,
@@ -9,9 +9,11 @@ import {
   Divider,
   Typography,
   MenuItem,
+  Autocomplete,
 } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
 import { UserProfile } from '@/types/profile';
+import { getAllCountryNames } from '@/utils/countryMappings';
 
 interface ContactInformationTabProps {
   profile: UserProfile;
@@ -34,6 +36,9 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
   onCancel,
   onEditToggle,
 }) => {
+  // Get countries list from i18n-iso-countries (excludes Israel)
+  const countries = useMemo(() => getAllCountryNames(), []);
+
   const fieldSx = {
     '& .MuiOutlinedInput-root': {
       '&.Mui-focused fieldset': {
@@ -207,14 +212,25 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                     ...fieldSx,
                   }}
                 />
-                <TextField
-                  label="Location"
-                  value={profile.location}
-                  onChange={(e) => onInputChange('location', e.target.value)}
+                <Autocomplete
+                  options={countries}
+                  value={profile.location || null}
+                  onChange={(_, value) => onInputChange('location', value || '')}
                   disabled={!isEditing}
                   fullWidth
-                  placeholder="Paris, France"
-                  sx={fieldSx}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Location"
+                      placeholder="Select country"
+                      sx={fieldSx}
+                    />
+                  )}
+                  sx={{
+                    '& .MuiAutocomplete-popupIndicator': {
+                      color: '#6b7280',
+                    },
+                  }}
                 />
                 <TextField
                   select
@@ -229,7 +245,34 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   <MenuItem value="On-site">On-site</MenuItem>
                   <MenuItem value="Hybrid">Hybrid</MenuItem>
                 </TextField>
-
+                <TextField
+                  label="Industry"
+                  value={profile.industry}
+                  onChange={(e) => onInputChange('industry', e.target.value)}
+                  disabled={!isEditing}
+                  fullWidth
+                  error={!!fieldErrors.industry}
+                  helperText={fieldErrors.industry || ''}
+                  placeholder="Finance, Technology, Healthcare..."
+                  sx={fieldSx}
+                />
+                <TextField
+                  select
+                  label="Company Size"
+                  value={profile.size}
+                  onChange={(e) => onInputChange('size', e.target.value)}
+                  disabled={!isEditing}
+                  fullWidth
+                  error={!!fieldErrors.size}
+                  helperText={fieldErrors.size || ''}
+                  sx={fieldSx}
+                >
+                  <MenuItem value="1-10">1–10</MenuItem>
+                  <MenuItem value="11-50">11–50</MenuItem>
+                  <MenuItem value="51-200">51–200</MenuItem>
+                  <MenuItem value="201-500">201–500</MenuItem>
+                  <MenuItem value="500+">500+</MenuItem>
+                </TextField>
 
                 <TextField
                   value={profile.linkedin}
@@ -255,7 +298,7 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   type="url"
                   placeholder="https://yourcompany.com"
                   error={!!fieldErrors.website}
-                  helperText={fieldErrors.personalWebsite || ''}
+                  helperText={fieldErrors.website || ''}
                   sx={{
                     gridColumn: { xs: '1 / -1', sm: 'span 2' },
                     ...fieldSx,

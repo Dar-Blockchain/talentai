@@ -679,8 +679,8 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                   spacing={0.5}
                   sx={{ flexWrap: "wrap", gap: 0.5 }}
                 >
-                  <Chip
-                    label={job.jobDetails.location}
+                  {job?.jobDetails?.workMode && <Chip
+                    label={job.jobDetails.workMode}
                     size="small"
                     sx={{
                       backgroundColor: "rgba(95, 168, 211, 0.1)",
@@ -698,7 +698,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                         height={13}
                       />
                     }
-                  />
+                  />}
                   <Chip
                     label={job.jobDetails.employmentType}
                     size="small"

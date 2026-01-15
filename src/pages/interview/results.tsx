@@ -36,6 +36,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
+import { updateProfileQuota } from '@/store/slices/userSlice';
 
 interface SkillScore {
   skill: string;
@@ -156,8 +157,8 @@ export default function InterviewResults() {
         if (totalWeight > 0) {
           parsedData.finalReport.coverage.overall = Math.round(weightedSum / totalWeight);
           console.log('📊 [Save] Calculated coverage.overall:', parsedData.finalReport.coverage.overall,
-                      hasWeights ? '(weighted average)' : '(simple mean)',
-                      'weightedSum:', weightedSum, 'totalWeight:', totalWeight);
+            hasWeights ? '(weighted average)' : '(simple mean)',
+            'weightedSum:', weightedSum, 'totalWeight:', totalWeight);
         }
       }
 
@@ -202,7 +203,7 @@ export default function InterviewResults() {
           body: JSON.stringify(payload)
         }
       );
-
+      console.log('📥 [Save] Received response from backend:', response);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ [Save] Failed to save interview:', response.status, errorData);
@@ -211,8 +212,8 @@ export default function InterviewResults() {
       }
 
       const result = await response.json();
-      console.log('✅ [Save] Interview saved successfully:', result);
-
+      console.log('✅ [Save] Interview saved successfully:', result.data.candidateId.quota);
+      dispatch(updateProfileQuota(result.data.candidateId.quota));
       // Store the saved interview ID
       if (result.data?._id) {
         localStorage.setItem('last_interview_id', result.data._id);
@@ -257,8 +258,8 @@ export default function InterviewResults() {
 
         // Extract score from interview data
         const score = parsedData?.finalReport?.coverage?.overall ||
-                     parsedData?.overallScore ||
-                     0;
+          parsedData?.overallScore ||
+          0;
 
         console.log(`🎯 [Save] Sending notification for ${skillName} with score ${score}`);
 
@@ -632,9 +633,9 @@ export default function InterviewResults() {
       score: overallScore,
       level: determineLevel(overallScore),
       strengths: finalReport.recommendations?.strengths ||
-                 coverage.aiAnalysis?.strongestAreas?.map((a: string) => `Strong in ${a.replace('_', ' ')}`) || [],
+        coverage.aiAnalysis?.strongestAreas?.map((a: string) => `Strong in ${a.replace('_', ' ')}`) || [],
       improvements: finalReport.recommendations?.improvements ||
-                   coverage.aiAnalysis?.weakestAreas?.map((a: string) => `Improve ${a.replace('_', ' ')}`) || []
+        coverage.aiAnalysis?.weakestAreas?.map((a: string) => `Improve ${a.replace('_', ' ')}`) || []
     }];
 
     console.log('✅ [Results] Final skill scores:', skillScores);
@@ -1338,37 +1339,37 @@ export default function InterviewResults() {
 
         {/* Conversation Quality */}
         {analysis.conversationQuality &&
-         (analysis.conversationQuality.clarity > 0 ||
-          analysis.conversationQuality.relevance > 0 ||
-          analysis.conversationQuality.depth > 0 ||
-          analysis.conversationQuality.engagement > 0) && (
-          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
-            <Box display="flex" alignItems="center" gap={1} mb={3}>
-              <StarsIcon color="primary" />
-              <Typography variant="h5" fontWeight={600}>
-                Conversation Quality
-              </Typography>
-            </Box>
+          (analysis.conversationQuality.clarity > 0 ||
+            analysis.conversationQuality.relevance > 0 ||
+            analysis.conversationQuality.depth > 0 ||
+            analysis.conversationQuality.engagement > 0) && (
+            <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={3}>
+                <StarsIcon color="primary" />
+                <Typography variant="h5" fontWeight={600}>
+                  Conversation Quality
+                </Typography>
+              </Box>
 
-            <Box display="flex" flexWrap="wrap" gap={3}>
-              {Object.entries(analysis.conversationQuality)
-                .filter(([_, value]) => typeof value === 'number')
-                .map(([key, value]) => (
-                <Box key={key} flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
-                  <Box textAlign="center">
-                    <Typography variant="body2" color="text.secondary" textTransform="capitalize" mb={1}>
-                      {key}
-                    </Typography>
-                    <Rating value={value / 20} precision={0.5} readOnly size="large" />
-                    <Typography variant="h6" fontWeight={600} mt={1}>
-                      {Math.round(value)}%
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
-        )}
+              <Box display="flex" flexWrap="wrap" gap={3}>
+                {Object.entries(analysis.conversationQuality)
+                  .filter(([_, value]) => typeof value === 'number')
+                  .map(([key, value]) => (
+                    <Box key={key} flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+                      <Box textAlign="center">
+                        <Typography variant="body2" color="text.secondary" textTransform="capitalize" mb={1}>
+                          {key}
+                        </Typography>
+                        <Rating value={value / 20} precision={0.5} readOnly size="large" />
+                        <Typography variant="h6" fontWeight={600} mt={1}>
+                          {Math.round(value)}%
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+              </Box>
+            </Paper>
+          )}
 
         {/* Key Strengths */}
         <Paper
@@ -1558,7 +1559,7 @@ export default function InterviewResults() {
                 </Typography>
               </Paper>
             </Box>
-{/* 
+            {/* 
             {/* Duration */}
             <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
               <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
@@ -1583,7 +1584,7 @@ export default function InterviewResults() {
                   })()}
                 </Typography>
               </Paper>
-            </Box> 
+            </Box>
 
             {/* Completed Date */}
             <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>

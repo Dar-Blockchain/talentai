@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
+import dynamic from 'next/dynamic';
 
 const JobSeekerLanding: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,4 +33,8 @@ const JobSeekerLanding: React.FC = () => {
     </LandingPageLayout>
   );
 };
-export default JobSeekerLanding;
+
+// Export with dynamic import to prevent SSR issues
+export default dynamic(() => Promise.resolve(JobSeekerLanding), {
+  ssr: false
+});

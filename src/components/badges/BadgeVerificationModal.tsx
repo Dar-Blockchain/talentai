@@ -166,8 +166,7 @@ const BadgeVerificationModal: React.FC<BadgeVerificationModalProps> = ({ open, o
               {/* Main Stack Badge */}
               <Box sx={{ mb: 3 }}>
                 <ShieldBadge
-                  proficiencyLevel={badge.proficiencyLevel}
-                  skillName={badge.stackName}
+                  proficiency={badge.proficiencyLevel}
                   size="large"
                 />
               </Box>
@@ -196,8 +195,7 @@ const BadgeVerificationModal: React.FC<BadgeVerificationModalProps> = ({ open, o
                 {badge.coreSkills.map((skill) => (
                   <ShieldBadge
                     key={skill}
-                    proficiencyLevel={badge.proficiencyLevel}
-                    skillName={skill}
+                    proficiency={badge.proficiencyLevel}
                     size="small"
                   />
                 ))}
@@ -206,8 +204,7 @@ const BadgeVerificationModal: React.FC<BadgeVerificationModalProps> = ({ open, o
           ) : (
             /* Single Skill Badge */
             <ShieldBadge
-              proficiencyLevel={badge.proficiencyLevel}
-              skillName={badge.skillName}
+              proficiency={badge.proficiencyLevel}
               size="large"
             />
           )}

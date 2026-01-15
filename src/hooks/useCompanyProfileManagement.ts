@@ -103,10 +103,10 @@ export const useCompanyProfileManagement = () => {
 
       // Extract company name from multiple possible locations
       const companyName = companyData?.name ||
-                         reduxProfile.name ||
-                         reduxProfile.userId?.username ||
-                         user?.username ||
-                         '';
+        reduxProfile.name ||
+        reduxProfile.userId?.username ||
+        user?.username ||
+        '';
 
       console.log('🔍 [useCompanyProfileManagement] Extracted company name:', companyName);
 
@@ -134,6 +134,7 @@ export const useCompanyProfileManagement = () => {
         industry: companyData?.industry || '',
         companySize: normalizedSize,
         size: normalizedSize,
+        website: reduxProfile.companyDetails?.website || companyData?.website || '',
         employmentType: companyData?.employmentType || 'Remote',
         requiredSkills: reduxProfile?.requiredSkills || companyData?.requiredSkills || [],
       });
@@ -150,40 +151,81 @@ export const useCompanyProfileManagement = () => {
     }
   }, [saveSuccess]);
 
-  // Validation helper function
+
+  const REQUIRED_FIELDS: (keyof UserProfile)[] = [
+    'industry',
+    'employmentType',
+    'size',
+  ];
+
   const validateField = (field: keyof UserProfile, value: string): string => {
-    // Clear error when field is empty or only whitespace
-    if (!value || !value.trim()) {
+    const trimmedValue = value?.trim() || '';
+
+    // 🔴 Required fields → must not be empty
+    if (REQUIRED_FIELDS.includes(field) && !trimmedValue) {
+      return 'This field is required';
+    }
+
+    // 🟡 Optional fields → skip validation if empty
+    if (!trimmedValue) {
       return '';
     }
 
     switch (field) {
       case 'name':
       case 'companyName':
-        if (value.trim().length < 2) {
-          return 'Must be at least 2 characters';
+        if (trimmedValue.length < 2) {
+          return 'Company name must be at least 2 characters';
+        }
+        if (trimmedValue.length > 100) {
+          return 'Company name must be less than 100 characters';
+        }
+        if (!/^[a-zA-Z0-9\s&.,'-]+$/.test(trimmedValue)) {
+          return 'Company name contains invalid characters';
         }
         break;
+
+      case 'industry':
+        if (trimmedValue.length < 2) {
+          return 'Industry must be at least 2 characters';
+        }
+        break;
+
       case 'phone':
-        if (!/^[\d\s+()-]+$/.test(value.trim())) {
+        if (!/^[\d\s+()-]+$/.test(trimmedValue)) {
           return 'Invalid phone number format';
         }
         break;
+
       case 'linkedin':
-        const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
-        if (!linkedinPattern.test(value.trim())) {
+        if (!/^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i.test(trimmedValue)) {
           return 'Must be a valid LinkedIn URL (e.g., https://www.linkedin.com/company/yourcompany)';
         }
         break;
-      case 'personalWebsite':
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-        if (!urlPattern.test(value.trim())) {
+
+      case 'website':
+        if (!/^(https?:\/\/).+/.test(trimmedValue)) {
           return 'Invalid website URL';
         }
         break;
+
+      case 'employmentType':
+        if (!['Remote', 'On-site', 'Hybrid'].includes(trimmedValue)) {
+          return 'Invalid employment type';
+        }
+        break;
+
+      case 'size':
+        if (!['1-10', '11-50', '51-200', '201-500', '500+'].includes(trimmedValue)) {
+          return 'Invalid company size';
+        }
+        break;
     }
+
     return '';
   };
+
+
 
   const handleInputChange = useCallback((field: keyof UserProfile, value: string) => {
     console.log('🟡 [handleInputChange] Field:', field, 'Value:', value);
@@ -263,127 +305,85 @@ export const useCompanyProfileManagement = () => {
       setUploadingImage(false);
     }
   }, [dispatch]);
+  const validateForm = (profile: UserProfile): Record<string, string> => {
+    const errors: Record<string, string> = {};
 
-  const handleSaveProfile = useCallback(async () => {
-    // Check if there are any field errors
-    if (Object.keys(fieldErrors).length > 0) {
-      toast.error('Please fix the errors in the form before saving');
+    (Object.keys(profile) as (keyof UserProfile)[]).forEach((field) => {
+      const value = profile[field];
+
+      if (typeof value === 'string') {
+        const error = validateField(field, value);
+        if (error) {
+          errors[field] = error;
+        }
+      }
+    });
+
+    return errors;
+  };
+const handleSaveProfile = useCallback(async () => {
+  // 1️⃣ FULL validation
+  const validationErrors = validateForm(profile);
+
+  if (Object.keys(validationErrors).length > 0) {
+    setFieldErrors(validationErrors);
+    toast.error('Please fix the errors in the form');
+    return; // ⛔ HARD STOP
+  }
+
+  setFieldErrors({});
+
+  // 2️⃣ Build payload
+  const updatePayload: any = {};
+
+  if (activeTab === 'personal') {
+    const companyName = profile.name?.trim() || profile.companyName?.trim() || '';
+
+    if (!companyName || companyName.length < 2) {
+      toast.error('Company name must be at least 2 characters');
       return;
     }
 
-    // Use a functional update to get the latest profile state
-    setProfile(currentProfile => {
-      console.log('🟣 [handleSaveProfile] Current profile state:', {
-        name: currentProfile.name,
-        companyName: currentProfile.companyName,
-        industry: currentProfile.industry,
-        location: currentProfile.location
-      });
+    updatePayload.name = companyName;
+    updatePayload.email = profile.email?.trim() || '';
+    updatePayload.industry = profile.industry;
+    updatePayload.size = profile.size;
+    updatePayload.employmentType = profile.employmentType;
+    updatePayload.requiredSkills = profile.requiredSkills || [];
+    updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
+  }
 
-      const updatePayload: any = {};
+  if (activeTab === 'contact') {
+    const contactInfo: any = {};
 
-      if (activeTab === 'personal') {
-        // Validation for company profile
-        const companyName = currentProfile.name?.trim() || currentProfile.companyName?.trim() || '';
+    if (profile.phone) contactInfo.phone = profile.phone;
+    if (profile.location) contactInfo.location = profile.location;
+    if (profile.linkedin) contactInfo.linkedin = profile.linkedin;
+    if (profile.website) contactInfo.website = profile.website;
+    if (profile.employmentType) contactInfo.employmentType = profile.employmentType;
+    if (profile.size) contactInfo.size = profile.size;
+    if (profile.industry) contactInfo.industry = profile.industry;
 
-        if (companyName && companyName.length < 2) {
-          toast.error('Company name must be at least 2 characters');
-          return currentProfile;
-        }
+    if (Object.keys(contactInfo).length === 0) {
+      toast.warning('Please fill in at least one field to update');
+      return;
+    }
 
-        // Company profile update - matches backend API structure
-        updatePayload.name = companyName;
-        updatePayload.email = currentProfile.email?.trim() || '';
-        updatePayload.industry = currentProfile.industry || '';
-        updatePayload.size = currentProfile.size || currentProfile.companySize || '';
-        updatePayload.employmentType = currentProfile.employmentType || 'Remote';
-        updatePayload.requiredSkills = currentProfile.requiredSkills || [];
-        updatePayload.requiredExperienceLevel = currentProfile.requiredExperienceLevel || 'Mid Level';
+    updatePayload.companyDetails = contactInfo;
+  }
 
-        console.log('🟢 [useCompanyProfileManagement] Company name being sent:', companyName);
-        console.log('🟢 [useCompanyProfileManagement] currentProfile.name:', currentProfile.name);
-        console.log('🟢 [useCompanyProfileManagement] currentProfile.companyName:', currentProfile.companyName);
-      } else if (activeTab === 'contact') {
-        // Validation for contact information
-        if (currentProfile.phone?.trim() && !/^[\d\s+()-]+$/.test(currentProfile.phone.trim())) {
-          toast.error('Please enter a valid phone number');
-          return currentProfile;
-        }
-        if (currentProfile.linkedin?.trim()) {
-          const linkedinPattern = /^(https?:\/\/)?(www\.)?linkedin\.com\/.+$/i;
-          if (!linkedinPattern.test(currentProfile.linkedin.trim())) {
-            toast.error('Please enter a valid LinkedIn URL (e.g., https://www.linkedin.com/company/yourcompany)');
-            return currentProfile;
-          }
-        }
-        if (currentProfile.personalWebsite?.trim()) {
-          const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-          if (!urlPattern.test(currentProfile.personalWebsite.trim())) {
-            toast.error('Please enter a valid website URL');
-            return currentProfile;
-          }
-        }
+  // 3️⃣ API CALL (ONLY HERE)
+  try {
+    await dispatch(updateProfile(updatePayload)).unwrap();
+    await dispatch(getMyProfile()).unwrap();
+    setIsEditing(false);
+    setSaveSuccess(true);
+    toast.success('Profile updated successfully!');
+  } catch (err: any) {
+    toast.error(err?.message || 'Failed to update profile');
+  }
+}, [profile, activeTab, dispatch]);
 
-        // Contact Information - nest under contactInformation object
-        const contactInfo: any = {};
-
-        if (currentProfile.email?.trim()) {
-          contactInfo.email = currentProfile.email.trim();
-        }
-        if (currentProfile.phone?.trim()) {
-          contactInfo.phone = currentProfile.phone.trim();
-        }
-        if (currentProfile.location?.trim()) {
-          contactInfo.location = currentProfile.location.trim();
-        }
-        if (currentProfile.linkedin?.trim()) {
-          contactInfo.linkedin = currentProfile.linkedin.trim();
-        }
-        if (currentProfile.website?.trim()) {
-          contactInfo.website = currentProfile.website.trim();
-        }
-        if(currentProfile.employmentType) {
-          contactInfo.employmentType = currentProfile.employmentType;
-        }
-        // Only add contactInformation if at least one field is filled
-        if (Object.keys(contactInfo).length > 0) {
-          updatePayload.companyDetails = contactInfo;
-        }
-      }
-
-      // Check if we have at least one field to update
-      if (Object.keys(updatePayload).length === 0) {
-        toast.warning('Please fill in at least one field to update');
-        return currentProfile;
-      }
-
-      console.log('🔵 [useCompanyProfileManagement] Sending update payload:', JSON.stringify(updatePayload, null, 2));
-      console.log('🔵 [useCompanyProfileManagement] Active tab:', activeTab);
-      console.log('🔵 [useCompanyProfileManagement] API endpoint: profiles/updateProfileComplete');
-
-      // Perform the async operation
-      (async () => {
-        try {
-          const updateResponse = await dispatch(updateProfile(updatePayload)).unwrap();
-          console.log('✅ [useCompanyProfileManagement] Update response:', updateResponse);
-          setIsEditing(false);
-          setSaveSuccess(true);
-          const freshProfile = await dispatch(getMyProfile()).unwrap();
-          console.log('✅ [useCompanyProfileManagement] Fresh profile after update:', {
-            username: freshProfile.user?.username,
-            companyName: freshProfile.profile?.companyDetails?.name
-          });
-
-          toast.success('Profile updated successfully!');
-        } catch (err: any) {
-          console.error('❌ [useCompanyProfileManagement] Error saving profile:', err);
-          toast.error(err?.message || 'Failed to update profile. Please try again.');
-        }
-      })();
-
-      return currentProfile;
-    });
-  }, [activeTab, dispatch, setIsEditing, setSaveSuccess]);
 
   const handleDismissError = useCallback(() => {
     // Error is handled in Redux, no need to clear manually
