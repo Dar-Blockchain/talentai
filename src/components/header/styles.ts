@@ -2,8 +2,7 @@ export const appBarStyle = {
   backgroundColor: "transparent",
   boxShadow: "none",
   // height: "50px",
-  py: 2,
-  px: 1.5
+  py: 1.7,
 };
 
 export const toolbarStyle = {

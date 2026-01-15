@@ -56,7 +56,8 @@ const InvitationAcceptationPage: React.FC = () => {
     error,
   } = useSelector(selectMembers);
 
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
 
   // Check authentication and redirect to signin if needed
   useEffect(() => {
