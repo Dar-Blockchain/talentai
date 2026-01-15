@@ -18,6 +18,8 @@ export interface UserProfile {
   phone?: string;
   address?: string;
   linkedinUrl?: string;
+  linkedin?: string;
+  website?: string;
   githubUrl?: string;
   personalWebsite?: string;
   location?: string;

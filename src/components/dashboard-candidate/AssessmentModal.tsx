@@ -265,14 +265,14 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
         sx: {
           background: "#ffffff",
           borderRadius: "24px",
-          border: `1px solid gray`,
+          border: `1px solid #e5e7eb`,
         },
       }}
     >
       <DialogTitle
         sx={{
-          borderBottom: `1px solid rgba(186, 200, 222, 1)`,
-          color: "rgba(186, 200, 222, 1)",
+          borderBottom: `1px solid #e5e7eb`,
+          color: "#111827",
           mb: 2
         }}
       >
@@ -286,7 +286,7 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
           <Typography variant="h6" sx={{ color: "black" }}>
             Start New Test
           </Typography>
-          <IconButton onClick={onCloseHandler} sx={{ color: "black" }}>
+          <IconButton onClick={onCloseHandler} sx={{ color: "#6b7280", "&:hover": { color: "#111827" } }}>
             <CloseIcon />
           </IconButton>
         </Box>
@@ -294,8 +294,8 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
       <DialogContent sx={{ height: "100%", overflow: "auto", pt: 2 }}>
         {!type && (
           <FormControl component="fieldset" sx={{ width: "100%", mb: 3 }}>
-            <FormLabel sx={{ color: "gray", mb: 1, mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "gray" }}>
+            <FormLabel sx={{ color: "#374151", mb: 1, mt: 2 }}>
+              <Typography variant="h6" sx={{ color: "#374151", fontWeight: 600 }}>
                 Select Skill Type
               </Typography>
             </FormLabel>
@@ -305,38 +305,30 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                 control={
                   <Radio
                     sx={{
-                      color: "rgba(0,0,0,0.6)",
+                      color: "#9ca3af",
                       "&.Mui-checked": {
-                        color: "gray",
+                        color: "#8310FF",
                       },
                     }}
                   />
                 }
                 label="Technical Skill"
-                sx={{
-                  "&.Mui-checked": {
-                    color: "gray",
-                  },
-                }}
+                sx={{ color: "#374151" }}
               />
               <FormControlLabel
                 value="soft"
                 control={
                   <Radio
                     sx={{
-                      color: "rgba(0,0,0,0.6)",
+                      color: "#9ca3af",
                       "&.Mui-checked": {
-                        color: "gray",
+                        color: "#8310FF",
                       },
                     }}
                   />
                 }
                 label="Soft Skill"
-                sx={{
-                  "&.Mui-checked": {
-                    color: "gray",
-                  },
-                }}
+                sx={{ color: "#374151" }}
               />
             </RadioGroup>
           </FormControl>
@@ -424,7 +416,7 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 
         {skillType === "technical" && (
           <Box>
-            <Typography sx={{ color: "gray", mb: 1 }}>
+            <Typography sx={{ color: "#374151", mb: 1, fontWeight: 500 }}>
               Select Category
             </Typography>
 
@@ -441,29 +433,19 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  InputLabelProps={{ sx: { color: "gray" } }}
+                  InputLabelProps={{ sx: { color: "#6b7280" } }}
                   InputProps={{
                     ...params.InputProps,
                     sx: {
-                      color: "#000000",
+                      color: "#111827",
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(0,0,0,0.2)",
+                        borderColor: "#d1d5db",
                       },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "gray",
+                        borderColor: "#8310FF",
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "gray",
-                      },
-                      "&.Mui-focused": {
-                        "& .MuiInputLabel-root": {
-                          color: "gray",
-                        },
-                      },
-                      "& .MuiInputLabel-root": {
-                        "&.Mui-focused": {
-                          color: "gray",
-                        },
+                        borderColor: "#8310FF",
                       },
                     },
                   }}
@@ -474,11 +456,11 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                   {...paperProps}
                   sx={{
                     backgroundColor: "white",
-                    color: "black",
+                    color: "#111827",
                     "& .MuiAutocomplete-option": {
-                      color: "black",
+                      color: "#111827",
                       '&[aria-selected="true"]': {
-                        backgroundColor: "rgba(131, 16, 255, 0.05)",
+                        backgroundColor: "rgba(131, 16, 255, 0.08)",
                       },
                       "&:hover": {
                         backgroundColor: "rgba(131, 16, 255, 0.05)",
@@ -491,14 +473,14 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 
             {selectedCategory && (
               <>
-                <Typography sx={{ color: "gray", mb: 1 }}>
+                <Typography sx={{ color: "#374151", mb: 1, fontWeight: 500 }}>
                   Select Technical Skill
                 </Typography>
 
                 {availableTechnicalSkills.length === 0 ? (
                   <Typography
                     sx={{
-                      color: "#666",
+                      color: "#6b7280",
                       p: 2,
                       textAlign: "center",
                       fontStyle: "italic",
@@ -516,29 +498,19 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        InputLabelProps={{ sx: { color: "gray" } }}
+                        InputLabelProps={{ sx: { color: "#6b7280" } }}
                         InputProps={{
                           ...params.InputProps,
                           sx: {
-                            color: "#000000",
+                            color: "#111827",
                             "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "rgba(0,0,0,0.2)",
+                              borderColor: "#d1d5db",
                             },
                             "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
+                              borderColor: "#8310FF",
                             },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
-                            },
-                            "&.Mui-focused": {
-                              "& .MuiInputLabel-root": {
-                                color: "gray",
-                              },
-                            },
-                            "& .MuiInputLabel-root": {
-                              "&.Mui-focused": {
-                                color: "gray",
-                              },
+                              borderColor: "#8310FF",
                             },
                           },
                         }}
@@ -549,11 +521,11 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                         {...paperProps}
                         sx={{
                           backgroundColor: "white",
-                          color: "black",
+                          color: "#111827",
                           "& .MuiAutocomplete-option": {
-                            color: "black",
+                            color: "#111827",
                             '&[aria-selected="true"]': {
-                              backgroundColor: "rgba(131, 16, 255, 0.05)",
+                              backgroundColor: "rgba(131, 16, 255, 0.08)",
                             },
                             "&:hover": {
                               backgroundColor: "rgba(131, 16, 255, 0.05)",
@@ -571,12 +543,12 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 
         {skillType === "soft" && (
           <Box>
-            <Typography sx={{ color: "gray" }}>Select Soft Skill</Typography>
+            <Typography sx={{ color: "#374151", mb: 1, fontWeight: 500 }}>Select Soft Skill</Typography>
 
             {availableSoftSkills.length === 0 ? (
               <Typography
                 sx={{
-                  color: "#666",
+                  color: "#6b7280",
                   p: 2,
                   textAlign: "center",
                   fontStyle: "italic",
@@ -599,29 +571,19 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
+                      InputLabelProps={{ sx: { color: "#6b7280" } }}
                       InputProps={{
                         ...params.InputProps,
                         sx: {
-                          color: "#000000",
+                          color: "#111827",
                           "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
+                            borderColor: "#d1d5db",
                           },
                           "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "gray",
+                            borderColor: "#8310FF",
                           },
                           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "gray",
-                          },
-                          "&.Mui-focused": {
-                            "& .MuiInputLabel-root": {
-                              color: "gray",
-                            },
-                          },
-                          "& .MuiInputLabel-root": {
-                            "&.Mui-focused": {
-                              color: "gray",
-                            },
+                            borderColor: "#8310FF",
                           },
                         },
                       }}
@@ -632,14 +594,14 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                       {...paperProps}
                       sx={{
                         backgroundColor: "white",
-                        color: "black",
+                        color: "#111827",
                         "& .MuiAutocomplete-option": {
-                          color: "black",
+                          color: "#111827",
                           '&[aria-selected="true"]': {
-                            backgroundColor: "rgba(0, 255, 157, 0.1)",
+                            backgroundColor: "rgba(131, 16, 255, 0.08)",
                           },
                           "&:hover": {
-                            backgroundColor: "rgba(0, 255, 157, 0.05)",
+                            backgroundColor: "rgba(131, 16, 255, 0.05)",
                           },
                         },
                       }}
@@ -664,30 +626,20 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                       <TextField
                         {...params}
                         InputLabelProps={{
-                          sx: { color: "gray" },
+                          sx: { color: "#6b7280" },
                         }}
                         InputProps={{
                           ...params.InputProps,
                           sx: {
-                            color: "#000000",
+                            color: "#111827",
                             "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
+                              borderColor: "#d1d5db",
                             },
                             "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
+                              borderColor: "#8310FF",
                             },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
-                            },
-                            "&.Mui-focused": {
-                              "& .MuiInputLabel-root": {
-                                color: "gray",
-                              },
-                            },
-                            "& .MuiInputLabel-root": {
-                              "&.Mui-focused": {
-                                color: "gray",
-                              },
+                              borderColor: "#8310FF",
                             },
                           },
                         }}
@@ -698,14 +650,14 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                         {...paperProps}
                         sx={{
                           backgroundColor: "white",
-                          color: "black",
+                          color: "#111827",
                           "& .MuiAutocomplete-option": {
-                            color: "black",
+                            color: "#111827",
                             '&[aria-selected="true"]': {
-                              backgroundColor: "gray",
+                              backgroundColor: "rgba(131, 16, 255, 0.08)",
                             },
                             "&:hover": {
-                              backgroundColor: "gray",
+                              backgroundColor: "rgba(131, 16, 255, 0.05)",
                             },
                           },
                         }}
@@ -737,30 +689,20 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                       <TextField
                         {...params}
                         InputLabelProps={{
-                          sx: { color: "rgba(0,0,0,0.7)" },
+                          sx: { color: "#6b7280" },
                         }}
                         InputProps={{
                           ...params.InputProps,
                           sx: {
-                            color: "#000000",
+                            color: "#111827",
                             "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "rgba(4, 3, 3, 0.2)",
+                              borderColor: "#d1d5db",
                             },
                             "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
+                              borderColor: "#8310FF",
                             },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "gray",
-                            },
-                            "&.Mui-focused": {
-                              "& .MuiInputLabel-root": {
-                                color: "gray",
-                              },
-                            },
-                            "& .MuiInputLabel-root": {
-                              "&.Mui-focused": {
-                                color: "gray",
-                              },
+                              borderColor: "#8310FF",
                             },
                           },
                         }}
@@ -771,14 +713,14 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
                         {...paperProps}
                         sx={{
                           backgroundColor: "white",
-                          color: "black",
+                          color: "#111827",
                           "& .MuiAutocomplete-option": {
-                            color: "black",
+                            color: "#111827",
                             '&[aria-selected="true"]': {
-                              backgroundColor: "gray",
+                              backgroundColor: "rgba(131, 16, 255, 0.08)",
                             },
                             "&:hover": {
-                              backgroundColor: "gray",
+                              backgroundColor: "rgba(131, 16, 255, 0.05)",
                             },
                           },
                         }}
@@ -792,11 +734,15 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
         )}
       </DialogContent>
       <DialogActions
-        sx={{ p: 3, borderTop: `1px solid rgba(0, 255, 157, 0.2)` }}
+        sx={{ p: 3, borderTop: `1px solid #e5e7eb` }}
       >
         <Button
           onClick={onCloseHandler}
-          sx={{ color: "rgba(0,0,0,0.7)", "&:hover": { color: "#000000" } }}
+          sx={{
+            color: "#6b7280",
+            textTransform: "none",
+            "&:hover": { color: "#111827", backgroundColor: "rgba(0,0,0,0.04)" }
+          }}
         >
           Cancel
         </Button>
@@ -805,12 +751,13 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
           onClick={handleTestSubmit}
           disabled={isSubmitDisabled}
           sx={{
-            background: "gray",
-            color: "#000000",
-            "&:hover": { background: "gray" },
+            background: "#8310FF",
+            color: "#ffffff",
+            textTransform: "none",
+            "&:hover": { background: "#6a0dd4" },
             "&.Mui-disabled": {
-              background: "rgba(0,0,0,0.1)",
-              color: "rgba(0,0,0,0.3)",
+              background: "#e5e7eb",
+              color: "#9ca3af",
             },
           }}
         >

@@ -208,30 +208,24 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     let profile = await Profile.findOne({ userId });
 
+    // Extract companyDetails from profileData (can be nested or flat)
+    const companyDetailsInput = profileData.companyDetails || {};
+    
     const profileDataToSave = {
       userId,
       type: "Company",
       companyDetails: {
-        email: profileData.email,
-        name: profileData.name,
-        industry: profileData.industry,
-        size: profileData.size,
-        location: profileData.location,
-        website: profileData.website,
-        linkedin: profileData.linkedin,
-        employmentType: profileData.employmentType,
+        email: companyDetailsInput.email || profileData.email || '',
+        name: companyDetailsInput.name || profileData.name || '',
+        industry: companyDetailsInput.industry || profileData.industry || '',
+        size: companyDetailsInput.size || profileData.size || '',
+        location: companyDetailsInput.location || profileData.location || '',
+        website: companyDetailsInput.website || profileData.website || '',
+        linkedin: companyDetailsInput.linkedin || profileData.linkedin || '',
+        employmentType: companyDetailsInput.employmentType || profileData.employmentType || '',
       },
       requiredSkills: profileData.requiredSkills || [],
-      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",
-      contactInformation: profileData.contactInformation ? {
-        email: profileData.contactInformation.email || '',
-        phone: profileData.contactInformation.phone || '',
-        address: profileData.contactInformation.address || '',
-        linkedinUrl: profileData.contactInformation.linkedinUrl || '',
-        githubUrl: profileData.contactInformation.githubUrl || '',
-        personalWebsite: profileData.contactInformation.personalWebsite || '',
-        location: profileData.contactInformation.location || '',
-      } : undefined,
+      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",    
     };
 
     console.log("📊 [createOrUpdateCompanyProfile] Profile data to save:", JSON.stringify(profileDataToSave, null, 2));
@@ -245,24 +239,21 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       console.log("📝 [createOrUpdateCompanyProfile] Before update - contactInformation:", profile.contactInformation);
 
       profile.type = "Company";
-      profile.companyDetails = profileDataToSave.companyDetails;
-      profile.requiredSkills = profileDataToSave.requiredSkills;
-      profile.requiredExperienceLevel = profileDataToSave.requiredExperienceLevel;
-
-      // Update contact information if provided
-      if (profileData.contactInformation) {
-        console.log("📧 [createOrUpdateCompanyProfile] Updating contactInformation:", JSON.stringify(profileData.contactInformation, null, 2));
-        profile.contactInformation = {
-          email: profileData.contactInformation.email !== undefined ? profileData.contactInformation.email : (profile.contactInformation?.email || ''),
-          phone: profileData.contactInformation.phone !== undefined ? profileData.contactInformation.phone : (profile.contactInformation?.phone || ''),
-          address: profileData.contactInformation.address !== undefined ? profileData.contactInformation.address : (profile.contactInformation?.address || ''),
-          linkedinUrl: profileData.contactInformation.linkedinUrl !== undefined ? profileData.contactInformation.linkedinUrl : (profile.contactInformation?.linkedinUrl || ''),
-          githubUrl: profileData.contactInformation.githubUrl !== undefined ? profileData.contactInformation.githubUrl : (profile.contactInformation?.githubUrl || ''),
-          personalWebsite: profileData.contactInformation.personalWebsite !== undefined ? profileData.contactInformation.personalWebsite : (profile.contactInformation?.personalWebsite || ''),
-          location: profileData.contactInformation.location !== undefined ? profileData.contactInformation.location : (profile.contactInformation?.location || ''),
-        };
-        console.log("✅ [createOrUpdateCompanyProfile] contactInformation updated successfully:", profile.contactInformation);
-      }
+      
+      // Merge companyDetails (preserve existing values if not provided)
+      profile.companyDetails = {
+        email: companyDetailsInput.email || profileData.email || profile.companyDetails?.email || '',
+        name: companyDetailsInput.name || profileData.name || profile.companyDetails?.name || '',
+        industry: companyDetailsInput.industry || profileData.industry || profile.companyDetails?.industry || '',
+        size: companyDetailsInput.size || profileData.size || profile.companyDetails?.size || '',
+        location: companyDetailsInput.location || profileData.location || profile.companyDetails?.location || '',
+        website: companyDetailsInput.website || profileData.website || profile.companyDetails?.website || '',
+        linkedin: companyDetailsInput.linkedin || profileData.linkedin || profile.companyDetails?.linkedin || '',
+        employmentType: companyDetailsInput.employmentType || profileData.employmentType || profile.companyDetails?.employmentType || '',
+      };
+      
+      profile.requiredSkills = profileData.requiredSkills || profile.requiredSkills;
+      profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
 
       console.log("📝 [createOrUpdateCompanyProfile] After update - requiredExperienceLevel:", profile.requiredExperienceLevel);
       console.log("🏢 [createOrUpdateCompanyProfile] Company details updated:", JSON.stringify(profile.companyDetails, null, 2));
