@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Divider,
   Typography,
+  MenuItem,
 } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
 import { UserProfile } from '@/types/profile';
@@ -229,6 +230,22 @@ const ContactInformationTab: React.FC<ContactInformationTabProps> = ({
                   placeholder="Paris, France"
                   sx={fieldSx}
                 />
+                <TextField
+                  select
+                  label="Employment Type"
+                  value={profile.employmentType}
+                  onChange={(e) => onInputChange('employmentType', e.target.value)}
+                  disabled={!isEditing}
+                  fullWidth
+                  sx={{
+                    gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                    ...fieldSx,
+                  }}
+                >
+                  <MenuItem value="Remote">Remote</MenuItem>
+                  <MenuItem value="On-site">On-site</MenuItem>
+                  <MenuItem value="Hybrid">Hybrid</MenuItem>
+                </TextField>
 
                 <TextField
                   label="Company Address"

@@ -344,7 +344,9 @@ export const useCompanyProfileManagement = () => {
         if (currentProfile.personalWebsite?.trim()) {
           contactInfo.personalWebsite = currentProfile.personalWebsite.trim();
         }
-
+        if(currentProfile.employmentType) {
+          contactInfo.employmentType = currentProfile.employmentType;
+        }
         // Only add contactInformation if at least one field is filled
         if (Object.keys(contactInfo).length > 0) {
           updatePayload.companyDetails = contactInfo;
