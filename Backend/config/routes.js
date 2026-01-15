@@ -12,7 +12,6 @@ const companyPermissionsRouter = require('../routes/companyPermissionsRouter');
 const permissionsRouter = require('../routes/permissionsRouter');
 const dashboardRouter = require('../routes/dashboardRouter');
 const profileRouter = require('../routes/profileRouter');
-// const evaluationRouter = require('../routes/evaluationRouter');
 const linkedinPostRouter = require('../routes/generateJobPostRouter');
 const postRouter = require('../routes/postRouter');
 const matchingRoutes = require('../routes/matchingRouter');
@@ -27,7 +26,6 @@ const candidatePostStepProgressRouter = require('../routes/candidatePostStepProg
 const hederaToolsRouter = require('../routes/hederaToolsRouter');
 const hcs11Router = require('../routes/hcs11Router');
 const hrAgentRouter = require('../routes/hrAgentRouter');
-const recruitementStepRouter = require('../routes/recruitementStepRouter');
 const taskRouter = require('../routes/taskRouter');
 const agentConfigRouter = require('../routes/agentConfigRouter');
 const tokenRouter = require('../routes/tokenRouter');
@@ -68,7 +66,6 @@ function registerRoutes(app) {
   // Matching & Recruitment
   app.use('/matching', matchingRoutes);
   app.use('/matchingConfig', matchingConfigRoutes);
-  app.use('/recruitementStep', recruitementStepRouter);
 
   // Notifications
   app.use('/notification-system', notificationSystemRouter);

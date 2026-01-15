@@ -267,29 +267,6 @@ module.exports.connectWithGmail = async (id_token) => {
   }
 };
 
-module.exports.GetGmailByToken = async (id_token) => {
-  try {
-    if (!id_token || typeof id_token !== 'string') {
-      const err = new Error('ID token is required');
-      err.status = 400;
-      throw err;
-    }
-
-    const email = getGmailByToken(id_token);
-
-    if (!email) {
-      const err = new Error('Could not extract email from token');
-      err.status = 400;
-      throw err;
-    }
-
-    return email;
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
-  }
-};
-
 module.exports.warnUser = async (email) => {
   try {
     if (!email || typeof email !== 'string') {

@@ -36,12 +36,6 @@ router.post("/verify-otp", authController.verifyOTP);
 // Description: Connecte l'utilisateur via Google et retourne un jeton applicatif
 router.post("/connect-gmail", authController.connectWithGmail);
 
-// GET /auth/GetGmailByToken
-// Accès: Public
-// Query/Headers: jeton Google
-// Description: Récupère les informations Gmail à partir d'un token
-router.get("/GetGmailByToken", authController.GetGmailByToken);
-
 // GET /auth/warnUser
 // Accès: Protégé (Utilisateur authentifié)
 // Description: Notifie/avertit l'utilisateur connecté (usage interne)

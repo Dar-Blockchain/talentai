@@ -9,13 +9,4 @@ const stripeController = require('../controllers/PaymentContollers/stripeControl
 
 router.post('/create-checkout-session', stripeController.createCheckoutSession);
 
-
-// // ✅ Webhook Stripe
-// router.post(
-//   '/webhook',
-//   bodyParser.raw({ type: 'application/json' }),
-//   // Delegate webhook handling to controller (expects raw body)
-//   paymentController.handleStripeWebhook
-// );
-
 module.exports = router;

@@ -105,25 +105,6 @@ module.exports.logout = (req, res) => {
   }
 };
 
-module.exports.GetGmailByToken = async (req, res) => {
-  try {
-    const { id_token } = req.body;
-
-    // Validate token
-    const validToken = validateIdToken(id_token);
-
-    const email = await authService.GetGmailByToken(validToken);
-
-    res.status(200).json({
-      success: true,
-      email,
-      message: "Email retrieved successfully",
-    });
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
 module.exports.warnUser = async (req, res) => {
   try {
     if (!req.user || !req.user.email) {

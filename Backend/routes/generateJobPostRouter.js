@@ -25,7 +25,6 @@ router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("Linked
 // POST /linkedin/generate-job-post
 // Body: { title, description, skills, ... }
 // Description: Génère un post LinkedIn attractif pour une offre d'emploi
-//router.post("/generate", generateJobPostController.generateJobPost);
 router.post("/generate-job-post", resolveCompanyActor,generateJobPostController.generateJobPost);
 
 module.exports = router;
