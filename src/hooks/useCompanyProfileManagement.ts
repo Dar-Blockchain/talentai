@@ -280,7 +280,7 @@ export const useCompanyProfileManagement = () => {
       formData.append('user_image', file);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfileComplete`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/`,
         {
           method: 'PUT',
           headers: {
