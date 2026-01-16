@@ -9,8 +9,8 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     console.log('📝 Creating post interview assessment:', assessmentData);
 
     // Validation
-    if (!assessmentData.post || !assessmentData.candidate || !assessmentData.user) {
-      throw new Error('Missing required fields: post, candidate, user');
+    if (!assessmentData.post || !assessmentData.candidate) {
+      throw new Error('Missing required fields: post, candidate');
     }
 
     // Verify Post exists
@@ -19,16 +19,18 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       throw new Error('Post not found');
     }
 
-    // Verify Candidate profile exists
-    const candidateProfile = await Profile.findById(assessmentData.candidate);
-    if (!candidateProfile) {
-      throw new Error('Candidate profile not found');
+    // Verify Candidate User exists
+    const candidateUser = await User.findById(assessmentData.candidate);
+    if (!candidateUser) {
+      throw new Error('Candidate user not found');
     }
 
-    // Verify User exists
-    const user = await User.findById(assessmentData.user);
-    if (!user) {
-      throw new Error('User not found');
+    // Verify Company User exists (if provided)
+    if (assessmentData.company) {
+      const companyUser = await User.findById(assessmentData.company);
+      if (!companyUser) {
+        throw new Error('Company user not found');
+      }
     }
 
     // Create new assessment
@@ -48,9 +50,8 @@ module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
   try {
     const assessment = await PostInterviewAssessment.findById(assessmentId)
       .populate('post', 'jobDetails title status')
-      .populate('candidate', 'firstName lastName skills softSkills')
-      .populate('user', 'username email role')
-      .populate('company', 'companyDetails');
+      .populate('candidate', 'username email role')
+      .populate('company', 'username email role');
 
     if (!assessment) {
       throw new Error('Post interview assessment not found');
@@ -80,8 +81,8 @@ module.exports.getAssessmentsByPost = async (postId, filters = {}) => {
     }
 
     const assessments = await PostInterviewAssessment.find(query)
-      .populate('candidate', 'firstName lastName skills softSkills')
-      .populate('user', 'username email role')
+      .populate('candidate', 'username email role')
+      .populate('company', 'username email role')
       .sort({ createdAt: -1 });
 
     return assessments;
@@ -105,36 +106,12 @@ module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => 
 
     const assessments = await PostInterviewAssessment.find(query)
       .populate('post', 'jobDetails title status')
-      .populate('user', 'username email role')
+      .populate('company', 'username email role')
       .sort({ createdAt: -1 });
 
     return assessments;
   } catch (error) {
     console.error('❌ Error getting assessments by candidate:', error.message);
-    throw error;
-  }
-};
-
-// ========== READ - Get all for a user ==========
-module.exports.getAssessmentsByUser = async (userId, filters = {}) => {
-  try {
-    const query = { user: userId };
-
-    if (filters.status) {
-      query.status = filters.status;
-    }
-    if (filters.stage) {
-      query.stage = filters.stage;
-    }
-
-    const assessments = await PostInterviewAssessment.find(query)
-      .populate('post', 'jobDetails title status')
-      .populate('candidate', 'firstName lastName skills')
-      .sort({ createdAt: -1 });
-
-    return assessments;
-  } catch (error) {
-    console.error('❌ Error getting assessments by user:', error.message);
     throw error;
   }
 };

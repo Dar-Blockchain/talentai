@@ -6,10 +6,10 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     const assessmentData = req.body;
 
     // Validation
-    if (!assessmentData.post || !assessmentData.candidate || !assessmentData.user) {
+    if (!assessmentData.post || !assessmentData.candidate) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: post, candidate, user'
+        message: 'Missing required fields: post, candidate'
       });
     }
 
@@ -110,29 +110,6 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting assessments by candidate:', error);
-    res.status(error.status || 500).json({
-      success: false,
-      message: error.message || 'Error retrieving assessments'
-    });
-  }
-};
-
-// ========== READ - Get all for a user ==========
-module.exports.getAssessmentsByUser = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const filters = req.query;
-
-    const assessments = await postInterviewAssessmentService.getAssessmentsByUser(userId, filters);
-
-    res.status(200).json({
-      success: true,
-      message: 'Assessments retrieved successfully',
-      count: assessments.length,
-      data: assessments
-    });
-  } catch (error) {
-    console.error('Error getting assessments by user:', error);
     res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Error retrieving assessments'

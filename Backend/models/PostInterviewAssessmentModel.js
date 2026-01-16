@@ -71,20 +71,15 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
   },
   candidate: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Profile',
-    required: true,
-    index: true
-  },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
     index: true
   },
   company: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Profile',
-    required: false
+    ref: 'User',
+    required: false,
+    index: true
   },
 
   // ========== ASSESSMENT METADATA ==========
@@ -194,9 +189,9 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
 
 // ========== INDEXES ==========
 postInterviewAssessmentSchema.index({ post: 1, candidate: 1 });
-postInterviewAssessmentSchema.index({ post: 1, user: 1 });
+postInterviewAssessmentSchema.index({ post: 1, company: 1 });
 postInterviewAssessmentSchema.index({ candidate: 1 });
-postInterviewAssessmentSchema.index({ user: 1 });
+postInterviewAssessmentSchema.index({ company: 1 });
 postInterviewAssessmentSchema.index({ status: 1 });
 postInterviewAssessmentSchema.index({ stage: 1 });
 postInterviewAssessmentSchema.index({ 'metadata.skill': 1 });
@@ -236,7 +231,7 @@ postInterviewAssessmentSchema.methods.getSummary = function() {
     _id: this._id,
     post: this.post,
     candidate: this.candidate,
-    user: this.user,
+    company: this.company,
     skill: this.metadata.skill,
     proficiency: this.metadata.proficiency,
     overallScore: this.interviewData.finalReport.scores.overall,

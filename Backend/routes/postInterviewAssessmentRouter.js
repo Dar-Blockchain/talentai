@@ -34,9 +34,6 @@ router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
 // POST /postInterviewAssessments — Create new assessment
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
 
-// GET /postInterviewAssessments/my/assessments — Get all assessments for current user
-router.get('/my/assessments', postInterviewAssessmentController.getAssessmentsByUser);
-
 // GET /postInterviewAssessments/search — Search assessments
 router.get('/search', postInterviewAssessmentController.searchAssessments);
 
