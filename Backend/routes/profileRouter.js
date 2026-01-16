@@ -16,14 +16,10 @@ const uploadfile = require('../middleware/uploadfile');
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
-// GET /profiles/getProfileById/:userId — Public route (no auth required)
-// NOTE: This route must be AFTER all specific routes like /me to avoid matching before them
-router.get('/:userId', profileController.getProfileById);
-
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser,authLogMiddleware("Profile"));
 
-// GET /profile/getMyProfile — profil de l'utilisateur courant (MUST be before catch-all :userId route)
+// GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/me', profileController.getMyProfile);
 
 // POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
@@ -60,5 +56,8 @@ router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
 
 router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
+
+// GET /profiles/:userId — Public route (no auth required) — MUST be LAST to avoid catching other routes
+router.get('/:userId', profileController.getProfileById);
 
 module.exports = router; 
