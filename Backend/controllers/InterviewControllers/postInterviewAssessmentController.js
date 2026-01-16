@@ -9,7 +9,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     if (!assessmentData.post || !assessmentData.candidate) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: post, candidate'
+        message: 'Missing required fields: post, candidate (company will be extracted from post)'
       });
     }
 
