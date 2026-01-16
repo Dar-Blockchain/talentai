@@ -48,7 +48,9 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 }) => {
   const router = useRouter();
 
-  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const profile = useSelector(
+    (state: RootState) => state.user.connectedUser.profile
+  );
   const [skillType, setSkillType] = useState<"soft" | "technical" | "">(
     type ?? ""
   );
@@ -273,7 +275,7 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
         sx={{
           borderBottom: `1px solid #e5e7eb`,
           color: "#111827",
-          mb: 2
+          mb: 2,
         }}
       >
         <Box
@@ -286,7 +288,10 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
           <Typography variant="h6" sx={{ color: "black" }}>
             Start New Test
           </Typography>
-          <IconButton onClick={onCloseHandler} sx={{ color: "#6b7280", "&:hover": { color: "#111827" } }}>
+          <IconButton
+            onClick={onCloseHandler}
+            sx={{ color: "#6b7280", "&:hover": { color: "#111827" } }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
@@ -295,7 +300,10 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
         {!type && (
           <FormControl component="fieldset" sx={{ width: "100%", mb: 3 }}>
             <FormLabel sx={{ color: "#374151", mb: 1, mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "#374151", fontWeight: 600 }}>
+              <Typography
+                variant="h6"
+                sx={{ color: "#374151", fontWeight: 600 }}
+              >
                 Select Skill Type
               </Typography>
             </FormLabel>
@@ -336,82 +344,98 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 
         {/* Reward Preview Card */}
         {skillType && (selectedSkill || softSkillType) && (
-          <Card
+          <Box
             sx={{
               p: 3,
               mb: 3,
-              background:
-                "linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)",
-              color: "#fff",
-              borderRadius: 3,
-              border: "2px solid rgba(255, 255, 255, 0.2)",
-              animation: "fadeIn 0.3s ease-in",
-              "@keyframes fadeIn": {
-                "0%": { opacity: 0, transform: "translateY(-10px)" },
-                "100%": { opacity: 1, transform: "translateY(0)" },
-              },
+              background: "rgba(255, 251, 244, 1)",
+              borderRadius: "12px",
+              border: "1px solid rgba(222, 147, 0, 1)",
             }}
           >
+            {/* Header */}
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <EmojiEventsIcon sx={{ fontSize: 28, mr: 1 }} />
-              <Typography variant="h6" fontWeight={700}>
+              <EmojiEventsIcon
+                sx={{
+                  fontSize: 28,
+                  mr: 1,
+                  color: "rgba(222, 147, 0, 0.5)",
+                }}
+              />
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color="rgba(24, 25, 28, 1)"
+              >
                 Your Rewards for This Test
               </Typography>
             </Box>
-            <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
+
+            <Typography
+              variant="body2"
+              sx={{ mb: 2, color: "rgba(24, 25, 28, 1)", opacity: 0.9 }}
+            >
               Complete this interview to unlock:
             </Typography>
+
+            {/* Rewards */}
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
               <Chip
-                icon={
-                  <AccountBalanceWalletIcon
-                    sx={{ color: "white !important" }}
-                  />
-                }
+                icon={<AccountBalanceWalletIcon />}
                 label="Up to 33.33 TAI tokens"
                 sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  color: "#fff",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  "& .MuiChip-icon": { color: "white" },
+                  bgcolor: "rgba(222, 147, 0, 0.05)",
+                  color: "rgba(24, 25, 28, 1)",
+                  fontWeight: 400,
+                  border: "1.5px solid rgba(222, 147, 0, 0.5)",
+                  "& .MuiChip-icon": {
+                    color: "rgba(222, 147, 0, 0.5)",
+                  },
                 }}
               />
+
               <Chip
-                icon={<VerifiedIcon sx={{ color: "white !important" }} />}
+                icon={<VerifiedIcon />}
                 label={`Verified ${selectedSkill || softSkillType} Badge`}
                 sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  color: "#fff",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  "& .MuiChip-icon": { color: "white" },
+                  bgcolor: "rgba(222, 147, 0, 0.05)",
+                  color: "rgba(24, 25, 28, 1)",
+                  fontWeight: 400,
+                  border: "1.5px solid rgba(222, 147, 0, 0.5)",
+                  "& .MuiChip-icon": {
+                    color: "rgba(222, 147, 0, 0.5)",
+                  },
                 }}
               />
+
               <Chip
-                icon={<EmojiEventsIcon sx={{ color: "white !important" }} />}
+                icon={<EmojiEventsIcon />}
                 label="Ranking points"
                 sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  color: "#fff",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  "& .MuiChip-icon": { color: "white" },
+                  bgcolor: "rgba(222, 147, 0, 0.05)",
+                  color: "rgba(24, 25, 28, 1)",
+                  fontWeight: 400,
+                  border: "1.5px solid rgba(222, 147, 0, 0.5)",
+                  "& .MuiChip-icon": {
+                    color: "rgba(222, 147, 0, 0.5)",
+                  },
                 }}
               />
             </Box>
+
+            {/* Footer */}
             <Typography
               variant="caption"
               sx={{
                 display: "block",
                 mt: 2,
+                color: "rgba(24, 25, 28, 1)",
                 opacity: 0.8,
-                fontStyle: "italic",
               }}
             >
-              💡 Rewards based on your score (higher score = more TAI tokens)
+              💡 Rewards depend on your score — higher score means more rewards
             </Typography>
-          </Card>
+          </Box>
         )}
 
         {skillType === "technical" && (
@@ -543,7 +567,9 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
 
         {skillType === "soft" && (
           <Box>
-            <Typography sx={{ color: "#374151", mb: 1, fontWeight: 500 }}>Select Soft Skill</Typography>
+            <Typography sx={{ color: "#374151", mb: 1, fontWeight: 500 }}>
+              Select Soft Skill
+            </Typography>
 
             {availableSoftSkills.length === 0 ? (
               <Typography
@@ -733,15 +759,16 @@ const AssessmentModal: React.FC<AssessmentModalProps> = ({
           </Box>
         )}
       </DialogContent>
-      <DialogActions
-        sx={{ p: 3, borderTop: `1px solid #e5e7eb` }}
-      >
+      <DialogActions sx={{ p: 3, borderTop: `1px solid #e5e7eb` }}>
         <Button
           onClick={onCloseHandler}
           sx={{
             color: "#6b7280",
             textTransform: "none",
-            "&:hover": { color: "#111827", backgroundColor: "rgba(0,0,0,0.04)" }
+            "&:hover": {
+              color: "#111827",
+              backgroundColor: "rgba(0,0,0,0.04)",
+            },
           }}
         >
           Cancel
