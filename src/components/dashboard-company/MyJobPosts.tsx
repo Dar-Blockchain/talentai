@@ -19,7 +19,6 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { SearchOff, ArrowForward, ArrowBack } from "@mui/icons-material";
-import { toast } from "react-toastify";
 import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "../posts/delete/DeletePostModal";
 import { useDeletePost } from "../posts/delete/useDeletePost";
@@ -209,14 +208,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
 
     navigator.clipboard.writeText(interviewLink)
       .then(() => {
-        toast.success('Interview link copied to clipboard!', {
-          position: 'bottom-right',
-          autoClose: 2000
-        });
+        showToast({ message: 'Interview link copied to clipboard!', severity: 'success' });
       })
       .catch((error) => {
         console.error('Error copying link:', error);
-        toast.error('Failed to copy link');
+        showToast({ message: 'Failed to copy link', severity: 'error' });
       });
   };
 

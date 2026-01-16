@@ -19,7 +19,7 @@ import {
   OpenInNew as OpenInNewIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { toast } from 'react-toastify';
+import { useToast } from '@/hooks/useToast';
 
 interface ProfileVisibilityTabProps {
   userId: string;
@@ -32,6 +32,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   isPublicProfile,
   onToggleVisibility,
 }) => {
+  const { showToast } = useToast();
   const [isPublic, setIsPublic] = useState(isPublicProfile);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,23 +64,23 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
         : 'Your profile is now private and hidden from public view';
 
       setSuccess(successMessage);
-      toast.success(successMessage);
+      showToast({ message: successMessage, severity: 'success' });
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to update profile visibility';
       setError(errorMessage);
       console.error('Error updating visibility:', err);
-      toast.error(errorMessage);
+      showToast({ message: errorMessage, severity: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [isPublic, onToggleVisibility]);
+  }, [isPublic, onToggleVisibility, showToast]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(publicProfileUrl);
     setCopied(true);
-    toast.success('Profile link copied to clipboard!');
+    showToast({ message: 'Profile link copied to clipboard!', severity: 'success' });
     setTimeout(() => setCopied(false), 2000);
-  }, [publicProfileUrl]);
+  }, [publicProfileUrl, showToast]);
 
   const handleViewProfile = useCallback(() => {
     window.open(publicProfileUrl, '_blank');
