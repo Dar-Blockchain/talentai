@@ -5,7 +5,7 @@ import { SelectChangeEvent } from '@mui/material';
 import { toast } from 'react-toastify';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
-import { updateProfile as updateProfileAction, getMyProfile } from '@/store/slices/userSlice';
+import { updateProfile as updateProfileAction, getMyProfile, uploadProfileImage } from '@/store/slices/userSlice';
 
 const initialProfile: UserProfile = {
   username: '',
@@ -221,34 +221,16 @@ export const useProfileManagement = () => {
       return;
     }
 
+    setUploadingImage(true);
+
     try {
-      setUploadingImage(true);
-      const token = localStorage.getItem('api_token');
-      const formData = new FormData();
-      formData.append('user_image', file);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
-      }
-
+      await dispatch(uploadProfileImage(file)).unwrap();
       await dispatch(getMyProfile());
       setSaveSuccess(true);
-
       toast.success('Profile picture updated successfully!');
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
-      toast.error('Failed to upload image');
+      toast.error(err?.message || 'Failed to upload image');
     } finally {
       setUploadingImage(false);
     }
