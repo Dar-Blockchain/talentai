@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo, useCallback } from "react";
-import { Avatar, Box, IconButton, Typography } from "@mui/material";
+import { Avatar, Box, IconButton, Tooltip, Typography } from "@mui/material";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import UserDropdownMenu from "./UserDropdownMenu";
 import { useDispatch } from "react-redux";
@@ -20,7 +20,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const { user, profile } = useSelector(
+    (state: RootState) => state.user.connectedUser
+  );
 
   const isAdmin = useMemo(
     () => profile?.type?.toLowerCase() === "admin",
@@ -84,41 +86,47 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
           boxShadow: "0px 0px 18.1px 0px rgba(0, 0, 0, 0.05)",
         }}
       >
-        <Avatar
-          onClick={goToDashboard}
-          src={avatarUrl || undefined}
-          sx={{
-            width: 30,
-            height: 30,
-            bgcolor: avatarUrl ? "transparent" : "rgba(238, 245, 255, 1)",
-            color: "rgba(112, 144, 154, 1)",
-            cursor: "pointer",
-          }}
-        >
-          {!avatarUrl && <UserIcon />}
-        </Avatar>
+        <Tooltip title="My dashboard">
+          <Avatar
+            onClick={goToDashboard}
+            src={avatarUrl || undefined}
+            sx={{
+              width: 30,
+              height: 30,
+              bgcolor: avatarUrl ? "transparent" : "rgba(238, 245, 255, 1)",
+              color: "rgba(112, 144, 154, 1)",
+              cursor: "pointer",
+            }}
+          >
+            {!avatarUrl && <UserIcon />}
+          </Avatar>
+        </Tooltip>
       </Box>
 
       {/* Display Name */}
-      <Typography
-        onClick={goToDashboard}
-        sx={{
-          fontFamily: "Poppins",
-          fontWeight: 400,
-          fontSize: "14px",
-          color: "rgba(0, 0, 0, 1)",
-          cursor: "pointer",
-        }}
-      >
-        {displayName}
-      </Typography>
+      <Tooltip title="My dashboard">
+        <Typography
+          onClick={goToDashboard}
+          sx={{
+            fontFamily: "Poppins",
+            fontWeight: 400,
+            fontSize: "14px",
+            color: "rgba(0, 0, 0, 1)",
+            cursor: "pointer",
+          }}
+        >
+          {displayName}
+        </Typography>
+      </Tooltip>
 
       {/* Dropdown Icon */}
       {showDropdown && (
         <IconButton
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
-            color: isCompany ? "rgba(12, 218, 139, 1)":"rgba(131, 16, 255, 1)",
+            color: isCompany
+              ? "rgba(12, 218, 139, 1)"
+              : "rgba(131, 16, 255, 1)",
             transition: "transform 0.2s ease",
             p: 0,
             "&:hover": {

@@ -17,7 +17,6 @@ interface SkillsSectionProps {
   title: string;
   skills: Skill[];
   icon: SvgIconComponent;
-  gradientColors: string;
   type: 'technical' | 'soft';
 }
 
@@ -27,7 +26,6 @@ const SkillsSection: React.FC<SkillsSectionProps> = React.memo(({
   title,
   skills,
   icon: Icon,
-  gradientColors,
   type,
 }) => {
   const [showAll, setShowAll] = useState(false);
@@ -57,7 +55,7 @@ const SkillsSection: React.FC<SkillsSectionProps> = React.memo(({
               width: 48,
               height: 48,
               borderRadius: '12px',
-              background: gradientColors,
+              background: 'rgba(107, 114, 128, 0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
