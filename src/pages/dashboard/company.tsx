@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { Box, Container } from "@mui/material";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import {
   fetchMyPosts,
   selectMyPosts,
@@ -198,18 +196,6 @@ const fetchMyJobs = useCallback(
   return (
     <RoleGuard allowedRoles={["Company"]}>
       <PageContainer>
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
           <Header />
           <CompanyInfoHeader companyProfile={profile} companyUser={user}/>
           {!selectedJob ? (

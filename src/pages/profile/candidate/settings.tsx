@@ -6,8 +6,6 @@ import { RootState } from "@/store/store";
 import axios from "axios";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import NotificationsTab from "@/components/profile/NotificationsTab";
 import PersonalInformationTab from "@/components/profile/PersonalInformationTab";
@@ -197,18 +195,6 @@ const CandidateSettingsPage: React.FC = () => {
         saveSuccess={saveSuccess}
         onDismissError={handleDismissError}
         onDismissSuccess={handleDismissSuccess}
-      />
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
       />
     </PageContainer>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { SelectChangeEvent } from '@mui/material';
-import { toast } from 'react-toastify';
+import { useToast } from '@/hooks/useToast';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import {
@@ -43,6 +43,7 @@ const initialProfile: UserProfile = {
 export const useCompanyProfileManagement = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { showToast } = useToast();
 
   const { user, profile: reduxProfile, loading, error } = useSelector(
     (state: RootState) => state.user.connectedUser
@@ -263,13 +264,13 @@ export const useCompanyProfileManagement = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+      showToast({ message: 'Please select a valid image file', severity: 'error' });
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      showToast({ message: 'Image size should be less than 5MB', severity: 'error' });
       return;
     }
 
@@ -279,14 +280,14 @@ export const useCompanyProfileManagement = () => {
       await dispatch(uploadProfileImage(file)).unwrap();
       await dispatch(getMyProfile());
       setSaveSuccess(true);
-      toast.success('Profile picture updated successfully!');
+      showToast({ message: 'Profile picture updated successfully!', severity: 'success' });
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
-      toast.error(err?.message || 'Failed to upload image');
+      showToast({ message: err?.message || 'Failed to upload image', severity: 'error' });
     } finally {
       setUploadingImage(false);
     }
-  }, [dispatch]);
+  }, [dispatch, showToast]);
   const validateForm = (profile: UserProfile): Record<string, string> => {
     const errors: Record<string, string> = {};
 
@@ -309,7 +310,7 @@ const handleSaveProfile = useCallback(async () => {
 
   if (Object.keys(validationErrors).length > 0) {
     setFieldErrors(validationErrors);
-    toast.error('Please fix the errors in the form');
+    showToast({ message: 'Please fix the errors in the form', severity: 'error' });
     return; // ⛔ HARD STOP
   }
 
@@ -322,7 +323,7 @@ const handleSaveProfile = useCallback(async () => {
     const companyName = profile.name?.trim() || profile.companyName?.trim() || '';
 
     if (!companyName || companyName.length < 2) {
-      toast.error('Company name must be at least 2 characters');
+      showToast({ message: 'Company name must be at least 2 characters', severity: 'error' });
       return;
     }
 
@@ -347,7 +348,7 @@ const handleSaveProfile = useCallback(async () => {
     if (profile.industry) contactInfo.industry = profile.industry;
 
     if (Object.keys(contactInfo).length === 0) {
-      toast.warning('Please fill in at least one field to update');
+      showToast({ message: 'Please fill in at least one field to update', severity: 'warning' });
       return;
     }
 
@@ -360,11 +361,11 @@ const handleSaveProfile = useCallback(async () => {
     await dispatch(getMyProfile()).unwrap();
     setIsEditing(false);
     setSaveSuccess(true);
-    toast.success('Profile updated successfully!');
+    showToast({ message: 'Profile updated successfully!', severity: 'success' });
   } catch (err: any) {
-    toast.error(err?.message || 'Failed to update profile');
+    showToast({ message: err?.message || 'Failed to update profile', severity: 'error' });
   }
-}, [profile, activeTab, dispatch]);
+}, [profile, activeTab, dispatch, showToast]);
 
 
   const handleDismissError = useCallback(() => {

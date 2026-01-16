@@ -3,8 +3,6 @@ import React from "react";
 import { Box, Card, CardContent, Typography, Breadcrumbs, Link } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
 import PersonalInformationTab from "@/components/profile/PersonalInformationTab";
 import ContactInformationTab from "@/components/profile/ContactInformationTab";
@@ -143,18 +141,6 @@ const CompanySettingsPage: React.FC = () => {
         saveSuccess={saveSuccess}
         onDismissError={handleDismissError}
         onDismissSuccess={handleDismissSuccess}
-      />
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
       />
     </PageContainer>
   );

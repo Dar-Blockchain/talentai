@@ -37,7 +37,6 @@ import {
   MemberRole
 } from '@/store/slices/memberSlice';
 import { useToast } from '@/hooks/useToast';
-import { toast } from 'react-toastify';
 
 // Constants moved outside component
 const ROLE_LABELS: Record<string, string> = {
@@ -108,7 +107,7 @@ const TeamMembersTab: React.FC = () => {
     if (addMemberSuccess) {
       setAddMemberModalOpen(false);
       dispatch(clearAddMemberSuccess());
-      toast.success('Team member invited successfully!');
+      showToast({ message: 'Team member invited successfully!', severity: 'success' });
       // Refresh the invitations and members list
       dispatch(fetchInvitations());
       dispatch(fetchMembers());
@@ -121,10 +120,10 @@ const TeamMembersTab: React.FC = () => {
       setEditRoleModalOpen(false);
       setSelectedMember(null); // Clear selected member after successful update
       dispatch(clearUpdateRoleSuccess());
-      toast.success('Member role updated successfully!');
+      showToast({ message: 'Member role updated successfully!', severity: 'success' });
       dispatch(fetchMembers());
     }
-  }, [updateRoleSuccess, dispatch]);
+  }, [updateRoleSuccess, dispatch, showToast]);
 
   // Close dialog and refresh when member is deleted successfully
   useEffect(() => {
@@ -132,10 +131,10 @@ const TeamMembersTab: React.FC = () => {
       setDeleteDialogOpen(false);
       setSelectedMember(null);
       dispatch(clearDeleteMemberSuccess());
-      toast.success('Team member removed successfully!');
+      showToast({ message: 'Team member removed successfully!', severity: 'success' });
       dispatch(fetchMembers());
     }
-  }, [deleteMemberSuccess, dispatch]);
+  }, [deleteMemberSuccess, dispatch, showToast]);
 
   // Map UI roles to API roles
   const roleMapping: Record<string, MemberRole> = {
@@ -245,23 +244,23 @@ const TeamMembersTab: React.FC = () => {
     console.log('🔵 [TeamMembersTab] Resending invitation:', invitationId);
     try {
       await dispatch(resendInvitation(invitationId)).unwrap();
-      toast.success('Invitation resent successfully!');
+      showToast({ message: 'Invitation resent successfully!', severity: 'success' });
     } catch (error) {
       console.error('Failed to resend invitation:', error);
-      toast.error('Failed to resend invitation');
+      showToast({ message: 'Failed to resend invitation', severity: 'error' });
     }
-  }, [dispatch]);
+  }, [dispatch, showToast]);
 
   const handleCancelInvitation = useCallback(async (invitationId: string) => {
     console.log('🔵 [TeamMembersTab] Cancelling invitation:', invitationId);
     try {
       await dispatch(cancelInvitation(invitationId)).unwrap();
-      toast.success('Invitation cancelled successfully!');
+      showToast({ message: 'Invitation cancelled successfully!', severity: 'success' });
     } catch (error) {
       console.error('Failed to cancel invitation:', error);
-      toast.error('Failed to cancel invitation');
+      showToast({ message: 'Failed to cancel invitation', severity: 'error' });
     }
-  }, [dispatch]);
+  }, [dispatch, showToast]);
 
   // Memoized helper functions
   const getRoleLabel = useCallback((role: string) => ROLE_LABELS[role] || role, []);

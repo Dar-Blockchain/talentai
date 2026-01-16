@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import { SelectChangeEvent } from '@mui/material';
-import { toast } from 'react-toastify';
+import { useToast } from '@/hooks/useToast';
 import { RootState, AppDispatch } from '@/store/store';
 import { UserProfile } from '@/types/profile';
 import { updateProfile as updateProfileAction, getMyProfile, uploadProfileImage } from '@/store/slices/userSlice';
@@ -38,6 +38,7 @@ const initialProfile: UserProfile = {
 export const useProfileManagement = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { showToast } = useToast();
   const { user, profile: reduxProfile, loading } = useSelector((state: RootState) => state.user.connectedUser);
 
   const [activeTab, setActiveTab] = useState('personal');
@@ -211,13 +212,13 @@ export const useProfileManagement = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+      showToast({ message: 'Please select a valid image file', severity: 'error' });
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      showToast({ message: 'Image size should be less than 5MB', severity: 'error' });
       return;
     }
 
@@ -227,10 +228,10 @@ export const useProfileManagement = () => {
       await dispatch(uploadProfileImage(file)).unwrap();
       await dispatch(getMyProfile());
       setSaveSuccess(true);
-      toast.success('Profile picture updated successfully!');
+      showToast({ message: 'Profile picture updated successfully!', severity: 'success' });
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
-      toast.error(err?.message || 'Failed to upload image');
+      showToast({ message: err?.message || 'Failed to upload image', severity: 'error' });
     } finally {
       setUploadingImage(false);
     }
@@ -240,7 +241,7 @@ export const useProfileManagement = () => {
     try {
       // Check if there are any field errors
       if (Object.keys(fieldErrors).length > 0) {
-        toast.error('Please fix the errors in the form before saving');
+        showToast({ message: 'Please fix the errors in the form before saving', severity: 'error' });
         return;
       }
 
@@ -326,7 +327,7 @@ export const useProfileManagement = () => {
 
       // Check if we have at least one field to update
       if (Object.keys(updatePayload).length === 0) {
-        toast.warning('Please fill in at least one field to update');
+        showToast({ message: 'Please fill in at least one field to update', severity: 'warning' });
         return;
       }
 
@@ -336,10 +337,10 @@ export const useProfileManagement = () => {
       setIsEditing(false);
       await dispatch(getMyProfile());
 
-      toast.success('Profile updated successfully!');
+      showToast({ message: 'Profile updated successfully!', severity: 'success' });
     } catch (err: any) {
       console.error('❌ [useProfileManagement] Error saving profile:', err);
-      toast.error(err?.message || 'Failed to update profile. Please try again.');
+      showToast({ message: err?.message || 'Failed to update profile. Please try again.', severity: 'error' });
     }
   };
 

@@ -14,7 +14,7 @@ import { fetchTokenBalance } from "@/store/slices/tokenSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { completePayment } from "@/store/slices/tokenSlice";
-import { toast } from "react-toastify";
+import { useToast } from "@/hooks/useToast";
 import {
   closeModal,
   previousStep,
@@ -28,6 +28,7 @@ import { calculateTaiTokens } from "@/utils/functions";
 
 const ConfirmTransaction = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { showToast } = useToast();
   const { selectedPlan, walletInfo, isProcessing } = useSelector(
     (state: RootState) => state.tokenPurchase
   );
@@ -75,16 +76,7 @@ const ConfirmTransaction = () => {
       dispatch(fetchTokenBalance());
       dispatch(setProcessing(false));
       onClose();
-      toast.success("Tokens purchased successfully!", {
-        theme: "light",
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      showToast({ message: "Tokens purchased successfully!", severity: "success" });
     }
   };
 
