@@ -1,10 +1,10 @@
 require("dotenv").config();
 
 // const ToDo = require("../models/TodoModel");
-const TodoList = require("../../models/todoListModel");
-const Profile = require("../../models/ProfileModel");
+const TodoList = require("../models/todoListModel");
+const Profile = require("../models/ProfileModel");
 
-const { generateNewTodosForProfile } = require("../../services/Task&Todo&FeedbackServices/todoService");
+const { generateNewTodosForProfile } = require("../services/todoService");
 
 exports.generateTodoListForProfile = async (req, res) => {
   try {

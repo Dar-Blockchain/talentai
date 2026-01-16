@@ -18,8 +18,9 @@ const matchingRoutes = require('../routes/matchingRouter');
 const todoRouter = require('../routes/todoRouter');
 const feedbackRouter = require('../routes/feedbackRoutes');
 const logRoutes = require('../routes/logRoutes');
-const interviewDetailsRouter = require('../routes/interviewDetailsRouter');
+// const interviewDetailsRouter = require('../routes/interviewDetailsRouter');
 const InterviewAssessmentRoutes = require('../routes/InterviewAssessmentRoutes');
+const postInterviewAssessmentRouter = require('../routes/postInterviewAssessmentRouter');
 const notificationSystemRouter = require('../routes/notificationSystemRoutes');
 const postStepsRouter = require('../routes/postStepsRouter');
 const candidatePostStepProgressRouter = require('../routes/candidatePostStepProgressRouter');
@@ -55,8 +56,9 @@ function registerRoutes(app) {
   app.use('/CompanyMembership', CompanyMembershipRoutes);
 
   // Evaluation & Interview
-  //app.use('/interviewDetails', interviewDetailsRouter);
+  // app.use('/interviewDetails', interviewDetailsRouter);
   app.use('/InterviewAssessment', InterviewAssessmentRoutes);
+  app.use('/post-interview-assessment', postInterviewAssessmentRouter);
 
   // Posts & Jobs
   app.use('/linkedinPost', linkedinPostRouter);

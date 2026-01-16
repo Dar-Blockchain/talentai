@@ -1,4 +1,4 @@
-const taskService = require('../../services/Task&Todo&FeedbackServices/taskService');
+const taskService = require('../services/taskService');
 
 // POST /task/send-task
 exports.sendTask = async (req, res) => {

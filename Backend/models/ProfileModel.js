@@ -98,9 +98,6 @@ const profileSchema = new mongoose.Schema(
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "InterviewAssessment" },
     ],
-    assessmentResults: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
-    ],
 
     // ========== COMPANY SPECIFIC FIELDS ==========
     companyDetails: {

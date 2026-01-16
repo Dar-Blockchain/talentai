@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const postService = require('../PosteServices/postService');
+const postService = require('./PosteServices/postService');
 
 async function sendTask({ postId, token, candidateEmail, candidateName, stepId, candidateId, jobTitle, stepLabel }) {
   // Pour l'instant, on délègue à postService.createAndSendTechnicalTest
