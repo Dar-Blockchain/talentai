@@ -1,4 +1,4 @@
-const Feedback = require('../../models/feedbackModel');
+const Feedback = require('../models/feedbackModel');
 
 module.exports.createFeedback = async (data) => {
   return await Feedback.create(data);
