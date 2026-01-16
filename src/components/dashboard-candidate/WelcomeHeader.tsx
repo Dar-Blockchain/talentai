@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Box, Stack, Typography, Avatar, Button, Card } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Typography,
+  Avatar,
+  Button,
+  Card,
+  Tooltip,
+} from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PersonIcon from "@mui/icons-material/Person";
@@ -14,7 +22,9 @@ import { RootState } from "@/store/store";
 
 const WelcomeHeader = () => {
   const router = useRouter();
-  const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const { user, profile } = useSelector(
+    (state: RootState) => state.user.connectedUser
+  );
   const quota = profile?.quota || 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
 
@@ -67,9 +77,7 @@ const WelcomeHeader = () => {
           }}
         >
           Welcome back,{" "}
-          {profile?.firstName
-            ? `${profile?.firstName}`
-            : user?.username}
+          {profile?.firstName ? `${profile?.firstName}` : user?.username}
         </Typography>
 
         <Typography
@@ -95,22 +103,6 @@ const WelcomeHeader = () => {
             flexWrap: "wrap",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <PersonIcon
-              sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
-            />
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#000000",
-                fontSize: "0.875rem",
-                fontWeight: 400,
-              }}
-            >
-              {user?.username}
-            </Typography>
-          </Box>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <EmailIcon
               sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
@@ -140,14 +132,11 @@ const WelcomeHeader = () => {
                   fontWeight: 400,
                 }}
               >
-                {new Date(user?.createdAt).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  }
-                )}
+                {new Date(user?.createdAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </Typography>
             </Box>
           )}
@@ -166,24 +155,6 @@ const WelcomeHeader = () => {
                 }}
               >
                 {profile.targetRole}
-              </Typography>
-            </Box>
-          )}
-
-          {profile?.requiredExperienceLevel && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <SchoolIcon
-                sx={{ color: "rgba(189, 133, 255, 1)", fontSize: "1.2rem" }}
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#000000",
-                  fontSize: "0.875rem",
-                  fontWeight: 400,
-                }}
-              >
-                {profile.requiredExperienceLevel}
               </Typography>
             </Box>
           )}
@@ -280,18 +251,20 @@ const WelcomeHeader = () => {
             border: "1px solid rgba(157, 61, 255, 0.18)",
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 600,
-              color: "rgba(56, 68, 85, 1)",
-              fontSize: "24px",
-              mb: 2,
-              lineHeight: "18px",
-            }}
-          >
-            {`${quota || 0}/5`}
-          </Typography>
+          <Tooltip title={`You can pass a maximum of 5 tests per month`}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 600,
+                color: "rgba(56, 68, 85, 1)",
+                fontSize: "24px",
+                mb: 2,
+                lineHeight: "18px",
+              }}
+            >
+              {`${quota || 0}/5`}
+            </Typography>
+          </Tooltip>
           <Typography
             variant="body2"
             sx={{
@@ -301,7 +274,7 @@ const WelcomeHeader = () => {
               fontWeight: 400,
             }}
           >
-            Tasks completed
+            Tests Passed
           </Typography>
         </Box>
 
