@@ -25,16 +25,17 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       throw new Error('Candidate user not found');
     }
 
-    // Verify Company User exists (if provided)
-    if (assessmentData.company) {
-      const companyUser = await User.findById(assessmentData.company);
-      if (!companyUser) {
-        throw new Error('Company user not found');
-      }
-    }
+    // Extract company from Post.user (the user who created the post)
+    const company = post.user;
+    console.log('🏢 Company extracted from post:', company);
 
-    // Create new assessment
-    const newAssessment = new PostInterviewAssessment(assessmentData);
+    // Create new assessment with company extracted from post
+    const newAssessmentData = {
+      ...assessmentData,
+      company
+    };
+
+    const newAssessment = new PostInterviewAssessment(newAssessmentData);
     await newAssessment.save();
 
     console.log('✅ Post interview assessment created:', newAssessment._id);
@@ -127,8 +128,8 @@ module.exports.updatePostInterviewAssessment = async (assessmentId, updateData) 
       { new: true, runValidators: true }
     )
       .populate('post', 'jobDetails title status')
-      .populate('candidate', 'firstName lastName skills')
-      .populate('user', 'username email role');
+      .populate('candidate', 'username email role')
+      .populate('company', 'username email role');
 
     if (!assessment) {
       throw new Error('Post interview assessment not found');
@@ -299,8 +300,8 @@ module.exports.searchAssessments = async (searchCriteria) => {
     if (searchCriteria.candidateId) {
       query.candidate = searchCriteria.candidateId;
     }
-    if (searchCriteria.userId) {
-      query.user = searchCriteria.userId;
+    if (searchCriteria.companyId) {
+      query.company = searchCriteria.companyId;
     }
     if (searchCriteria.status) {
       query.status = searchCriteria.status;
@@ -314,8 +315,8 @@ module.exports.searchAssessments = async (searchCriteria) => {
 
     const assessments = await PostInterviewAssessment.find(query)
       .populate('post', 'jobDetails title')
-      .populate('candidate', 'firstName lastName')
-      .populate('user', 'username email')
+      .populate('candidate', 'username email')
+      .populate('company', 'username email')
       .sort({ createdAt: -1 });
 
     return assessments;
