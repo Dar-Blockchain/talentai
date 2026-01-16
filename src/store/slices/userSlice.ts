@@ -149,6 +149,42 @@ export const getMyProfile = createAsyncThunk<
   }
 });
 
+export const uploadProfileImage = createAsyncThunk<
+  any,
+  File,
+  { rejectValue: string }
+>("user/uploadProfileImage", async (file, { rejectWithValue }) => {
+  const token = localStorage.getItem("api_token");
+  if (!token) {
+    return rejectWithValue("No authentication token found");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('user_image', file);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      return rejectWithValue("Failed to upload profile image");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    return rejectWithValue("An error occurred while uploading profile image");
+  }
+});
+
 export const getProfileById = createAsyncThunk<
   any,
   string,
@@ -252,6 +288,25 @@ const userSlice = createSlice({
       )
       .addCase(
         updateProfile.rejected,
+        (state: UserState) => {
+          state.connectedUser.loading = false;
+        }
+      )
+      //UPLOAD PROFILE IMAGE
+      .addCase(uploadProfileImage.pending, (state: UserState) => {
+        state.connectedUser.loading = true;
+        state.connectedUser.error = null;
+      })
+      .addCase(
+        uploadProfileImage.fulfilled,
+        (state: UserState, action: PayloadAction<any>) => {
+          state.connectedUser.loading = false;
+          state.connectedUser.profile = action.payload.profile;
+          state.connectedUser.user = action.payload.user;
+        }
+      )
+      .addCase(
+        uploadProfileImage.rejected,
         (state: UserState) => {
           state.connectedUser.loading = false;
         }
