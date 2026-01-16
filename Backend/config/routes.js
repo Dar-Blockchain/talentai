@@ -55,7 +55,7 @@ function registerRoutes(app) {
   app.use('/CompanyMembership', CompanyMembershipRoutes);
 
   // Evaluation & Interview
-  //app.use('/interviewDetails', interviewDetailsRouter);
+  app.use('/interviewDetails', interviewDetailsRouter);
   app.use('/InterviewAssessment', InterviewAssessmentRoutes);
 
   // Posts & Jobs
