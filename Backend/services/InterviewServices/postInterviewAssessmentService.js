@@ -55,6 +55,53 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
   }
 };
 
+// ========== READ - Get all assessments ==========
+module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, limit = 10) => {
+  try {
+    const query = {};
+
+    // Apply optional filters
+    if (filters.post) {
+      query.post = filters.post;
+    }
+    if (filters.candidate) {
+      query.candidate = filters.candidate;
+    }
+    if (filters.company) {
+      query.company = filters.company;
+    }
+
+    // Calculate skip and limit for pagination
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination info
+    const totalCount = await PostInterviewAssessment.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Fetch paginated data
+    const assessments = await PostInterviewAssessment.find(query)
+      .populate('post', 'jobDetails title status')
+      .populate('candidate', 'username email role')
+      .populate('company', 'username email role')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      data: assessments,
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    };
+  } catch (error) {
+    console.error('❌ Error getting all assessments:', error.message);
+    throw error;
+  }
+};
+
 // ========== READ - Get by ID ==========
 module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
   try {

@@ -39,6 +39,44 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
   }
 };
 
+// ========== READ - Get all assessments ==========
+module.exports.getAllPostInterviewAssessments = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, post, candidate, company } = req.query;
+
+    const filters = {};
+    if (post) filters.post = post;
+    if (candidate) filters.candidate = candidate;
+    if (company) filters.company = company;
+
+    const result = await postInterviewAssessmentService.getAllPostInterviewAssessments(
+      filters,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'All assessments retrieved successfully',
+      data: result.data,
+      pagination: {
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        totalCount: result.totalCount,
+        limit: result.limit,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage
+      }
+    });
+  } catch (error) {
+    console.error('Error getting all assessments:', error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || 'Error retrieving assessments'
+    });
+  }
+};
+
 // ========== READ - Get by ID ==========
 module.exports.getPostInterviewAssessmentById = async (req, res) => {
   try {

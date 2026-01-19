@@ -31,6 +31,9 @@ router.get('/post/:postId/statistics', postInterviewAssessmentController.getAsse
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
 
+// GET /postInterviewAssessments — Get all assessments
+router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
+
 // POST /postInterviewAssessments — Create new assessment
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
 
