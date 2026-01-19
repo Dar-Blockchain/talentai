@@ -19,6 +19,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -149,6 +154,9 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
 
+  // Company filter state
+  const [companies, setCompanies] = useState<{ _id: string; username: string }[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
 
   // Dialog state for viewing details
   const [selectedAssessment, setSelectedAssessment] = useState<PostInterviewAssessmentData | null>(null);
@@ -175,6 +183,9 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
         const params = new URLSearchParams();
         params.append('page', String(page + 1));
         params.append('limit', String(rowsPerPage));
+        if (selectedCompany) {
+          params.append('company', selectedCompany);
+        }
 
         const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}post-interview-assessment?${params.toString()}`;
 
@@ -201,6 +212,20 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           // Get total count from pagination object or fallback to other fields
           const total = data.pagination?.totalCount || data.total || data.count || data.totalCount || assessments.length;
           setTotalCount(total);
+
+          // Extract unique companies for the dropdown (only on first load without company filter)
+          if (!selectedCompany && assessments.length > 0) {
+            const uniqueCompanies = new Map<string, { _id: string; username: string }>();
+            assessments.forEach((assessment: PostInterviewAssessmentData) => {
+              if (assessment.company?._id && assessment.company?.username) {
+                uniqueCompanies.set(assessment.company._id, {
+                  _id: assessment.company._id,
+                  username: assessment.company.username,
+                });
+              }
+            });
+            setCompanies(Array.from(uniqueCompanies.values()));
+          }
         } else {
           console.error('Failed to fetch post interview assessments:', data.message);
           setResults([]);
@@ -214,8 +239,16 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
         setLoading(false);
       }
     },
-    [token, isAuthenticated, page, rowsPerPage]
+    [token, isAuthenticated, page, rowsPerPage, selectedCompany]
   );
+
+  /**
+   * Handle company filter change
+   */
+  const handleCompanyChange = useCallback((event: SelectChangeEvent<string>) => {
+    setSelectedCompany(event.target.value);
+    setPage(0); // Reset to first page when filter changes
+  }, []);
 
   /**
    * Handle page change
@@ -293,11 +326,40 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
 
       {/* Results Table */}
       <StyledCard>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             Assessment Results ({totalCount} total)
           </Typography>
-          {loading && <CircularProgress size={24} sx={{ color: GREEN_MAIN }} />}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel id="company-filter-label">Filter by Company</InputLabel>
+              <Select
+                labelId="company-filter-label"
+                id="company-filter"
+                value={selectedCompany}
+                label="Filter by Company"
+                onChange={handleCompanyChange}
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: GREEN_MAIN,
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: GREEN_MAIN,
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>All Companies</em>
+                </MenuItem>
+                {companies.map((company) => (
+                  <MenuItem key={company._id} value={company._id}>
+                    {company.username}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {loading && <CircularProgress size={24} sx={{ color: GREEN_MAIN }} />}
+          </Box>
         </Box>
 
         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
