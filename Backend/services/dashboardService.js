@@ -47,6 +47,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 
 // jobAssessmentService.js
 const JobAssessmentResult = require("../models/PostInterviewAssessmentModel");
+const PostInterviewAssessment = require("../models/PostInterviewAssessmentModel");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
@@ -195,7 +196,7 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
             }
           },
           numberOfAttempts: { $sum: 1 },
-          totalScore: { $sum: "$analysis.overallScore" },
+          totalScore: { $sum: "$interviewData.finalReport.scores.overall" },
           // Use $first to retrieve the first value of numberOfQuestions
           totalQuestions: { $first: "$numberOfQuestions" },  // Get the first value of numberOfQuestions
         },
@@ -298,26 +299,26 @@ module.exports.getCounts = async () => {
     const hardSkillsPercentage = totalSkillsCount > 0 ? (totalHardSkillsCount / totalSkillsCount) * 100 : 0;
     const softSkillsPercentage = totalSkillsCount > 0 ? (totalSoftSkillsCount / totalSkillsCount) * 100 : 0;
 
-    // Calculate the average of analysis.overallScore in JobAssessmentResult
-    const avgOverallScoreResult = await JobAssessmentResult.aggregate([
+    // Calculate the average of interviewData.finalReport.scores.overall in PostInterviewAssessment
+    const avgOverallScoreResult = await PostInterviewAssessment.aggregate([
       {
         $match: {
-          "analysis.overallScore": { $ne: 0 } // Exclude scores of 0
+          "interviewData.finalReport.scores.overall": { $ne: null, $gt: 0 } // Exclude null and scores of 0
         }
       },
       {
         $group: {
           _id: null,
-          avgOverallScore: { $avg: "$analysis.overallScore" }
+          avgOverallScore: { $avg: "$interviewData.finalReport.scores.overall" }
         }
       }
     ]);
 
     const avgOverallScore = avgOverallScoreResult.length > 0 ? avgOverallScoreResult[0].avgOverallScore : 0;
 
-    // Compte le nombre de JobAssessmentResult avec overallScore > 0
-    const jobAssessmentWithScoreCount = await JobAssessmentResult.countDocuments({
-      "analysis.overallScore": { $gt: 0 }
+    // Compte le nombre de PostInterviewAssessment avec overallScore > 0
+    const jobAssessmentWithScoreCount = await PostInterviewAssessment.countDocuments({
+      "interviewData.finalReport.scores.overall": { $gt: 0 }
     });
 
     // Calculate the percentage
@@ -663,21 +664,16 @@ module.exports.generateUserExcel = async () => {
 module.exports.generateUserExcelWithAssessmentZero = async () => {
   try {
     // Retrieve all assessment results with overallScore of 0
-    const assessments = await JobAssessmentResult.find({ "analysis.overallScore": 0 })
-      .populate({
-        path: "condidateId", // Populate candidate profile (user)
-        select: "userId", // Select only userId to retrieve user
-      })
-      .populate({
-        path: "companyId", // Populate company profile (user)
-        select: "userId", // Select only userId to retrieve company
-      });
+    const assessments = await PostInterviewAssessment.find({ "interviewData.finalReport.scores.overall": { $exists: false } || { "interviewData.finalReport.scores.overall": 0 } })
+      .populate('post')
+      .populate('candidate')
+      .populate('company');
 
     // Filter users from assessment results
     const users = [];
     assessments.forEach((assessment) => {
-      if (assessment.condidateId && assessment.condidateId.userId) {
-        users.push(assessment.condidateId.userId);
+      if (assessment.candidate && assessment.candidate._id) {
+        users.push(assessment.candidate._id);
       }
     });
 
@@ -718,21 +714,16 @@ module.exports.generateUserExcelWithAssessmentZero = async () => {
 module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
   try {
     // Retrieve all assessment results with overallScore >= 50
-    const assessments = await JobAssessmentResult.find({ "analysis.overallScore": { $gte: 50 } })
-      .populate({
-        path: "condidateId", // Populate candidate profile (user)
-        select: "userId", // Select only userId to retrieve user
-      })
-      .populate({
-        path: "companyId", // Populate company profile (user)
-        select: "userId", // Select only userId to retrieve company
-      });
+    const assessments = await PostInterviewAssessment.find({ "interviewData.finalReport.scores.overall": { $gte: 50 } })
+      .populate('post')
+      .populate('candidate')
+      .populate('company');
 
     // Filter users from assessment results
     const users = [];
     assessments.forEach((assessment) => {
-      if (assessment.condidateId && assessment.condidateId.userId) {
-        users.push(assessment.condidateId.userId);
+      if (assessment.candidate && assessment.candidate._id) {
+        users.push(assessment.candidate._id);
       }
     });
 
