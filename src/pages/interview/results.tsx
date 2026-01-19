@@ -2,84 +2,40 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import {
-  Box,
-  Typography,
-  Button,
-  LinearProgress,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Alert,
-  Stack,
-  Avatar,
-} from '@mui/material';
-import {
-  CheckCircle as CheckCircleIcon,
-  Home as HomeIcon,
-  EmojiEvents as TrophyIcon,
-  Warning as WarningIcon,
-  Save as SaveIcon,
-  TrendingUp as TrendingUpIcon,
-  AccessTime as AccessTimeIcon,
-  CalendarToday as CalendarTodayIcon,
-} from '@mui/icons-material';
+import { Box, Button } from '@mui/material';
+import { Home as HomeIcon } from '@mui/icons-material';
+import { useToast } from '@/hooks/useToast';
 import Cookies from 'js-cookie';
 import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
 import { updateProfileQuota } from '@/store/slices/userSlice';
+import { savePostInterviewAssessment } from '@/store/slices/postSlice';
+import { saveInterviewAssessment } from '@/store/slices/interviewSlice';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
-
-interface SkillScore {
-  skill: string;
-  score: number;
-  level: string;
-  strengths: string[];
-  improvements: string[];
-}
-
-interface InterviewAnalysis {
-  overallScore: number;
-  overallLevel: string;
-  interviewType: string;
-  duration: number;
-  completedAt: string;
-  skillScores: SkillScore[];
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  feedback: string;
-  conversationQuality: {
-    clarity: number;
-    relevance: number;
-    depth: number;
-    engagement: number;
-  };
-  coverage: {
-    [key: string]: number;
-  };
-}
+import {
+  ResultsHeader,
+  RewardNotification,
+  KeyStrengths,
+  AreasForImprovement,
+  CoverageDetails,
+  LoadingState,
+  ErrorState,
+  InterviewAnalysis,
+  RewardInfo,
+  determineLevel,
+} from '@/components/post-interview-results';
 
 export default function InterviewResults() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { showToast } = useToast();
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [rewardInfo, setRewardInfo] = useState<{
-    success: boolean;
-    amount?: number;
-    transactionId?: string;
-    canRetry?: boolean;
-    error?: string;
-    interviewId?: string;
-  } | null>(null);
+  const [rewardInfo, setRewardInfo] = useState<RewardInfo | null>(null);
   const [claimingReward, setClaimingReward] = useState(false);
 
   useEffect(() => {
@@ -98,12 +54,10 @@ export default function InterviewResults() {
   // Save interview data to backend
   const saveInterviewToBackend = async (showStatus = true) => {
     try {
-      if (showStatus) setSaveStatus('saving');
-
       const storedAnalysis = localStorage.getItem('last_interview_analysis');
       if (!storedAnalysis) {
         console.log('⚠️ [Save] No interview data to save');
-        if (showStatus) setSaveStatus('error');
+        if (showStatus) showToast({ message: 'No interview data to save', severity: 'error' });
         return;
       }
 
@@ -111,7 +65,7 @@ export default function InterviewResults() {
 
       // Get metadata from URL params first, then localStorage as fallback
       const urlParams = new URLSearchParams(window.location.search);
-      const jobId = localStorage.getItem('interview_jobId');
+      const jobId = urlParams.get('jobId') || localStorage.getItem('interview_jobId');
       // If jobId exists, type is "post", otherwise use localStorage value or default to "hr"
       const type = jobId ? 'post' : (urlParams.get('type') || localStorage.getItem('interview_type') || 'hr');
       const role = urlParams.get('role') || localStorage.getItem('interview_role');
@@ -134,16 +88,10 @@ export default function InterviewResults() {
 
         let weightedSum = 0;
         let totalWeight = 0;
-        let hasWeights = false;
 
         Object.values(areas).forEach((area: any) => {
           const weight = area.weight || 1;
           const percentage = area.percentage || 0;
-
-          if (area.weight && area.weight !== 1) {
-            hasWeights = true;
-          }
-
           weightedSum += percentage * weight;
           totalWeight += weight;
         });
@@ -156,46 +104,75 @@ export default function InterviewResults() {
       const effectiveSkill = role || skill || 'N/A';
       const effectiveRole = role || skill || 'N/A';
 
-      const payload = {
-        metadata: {
+      let result;
+
+      // Use different API based on whether jobId exists
+      if (jobId) {
+        // Use postSlice thunk for job-based interviews
+        const actionResult = await dispatch(savePostInterviewAssessment({
+          postId: jobId,
+          interviewData: parsedData
+        }));
+
+        if (savePostInterviewAssessment.rejected.match(actionResult)) {
+          const errorMsg = actionResult.payload as string;
+          console.error('❌ [Save] Failed to save post interview:', errorMsg);
+
+          // Check for duplicate session error
+          if (errorMsg?.includes('already exists') || errorMsg?.includes('DUPLICATE')) {
+            if (showStatus) {
+              showToast({ message: 'This interview has already been saved.', severity: 'info' });
+            }
+            return; // Don't throw, just return - the results are still valid
+          }
+
+          if (showStatus) {
+            showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          }
+          throw new Error(errorMsg);
+        }
+
+        result = actionResult.payload;
+      } else {
+        // Use interviewSlice thunk for HR interviews
+        const metadata = {
           exportedAt: new Date().toISOString(),
           type: type || 'hr',
           skill: effectiveSkill,
           role: effectiveRole,
           category: category || 'N/A',
           proficiency: proficiency || 'N/A'
-        },
-        interviewData: parsedData
-      };
+        };
 
-      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
-      if (!token) {
-        console.error('❌ [Save] No authentication token found');
-        if (showStatus) setSaveStatus('error');
-        return;
-      }
+        const actionResult = await dispatch(saveInterviewAssessment({
+          metadata,
+          interviewData: parsedData
+        }));
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
+        if (saveInterviewAssessment.rejected.match(actionResult)) {
+          const errorMsg = actionResult.payload as string;
+          console.error('❌ [Save] Failed to save interview:', errorMsg);
+
+          // Check for duplicate session error
+          if (errorMsg?.includes('already exists') || errorMsg?.includes('DUPLICATE')) {
+            if (showStatus) {
+              showToast({ message: 'This interview has already been saved.', severity: 'info' });
+            }
+            return; // Don't throw, just return - the results are still valid
+          }
+
+          if (showStatus) {
+            showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          }
+          throw new Error(errorMsg);
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ [Save] Failed to save interview:', response.status, errorData);
-        if (showStatus) setSaveStatus('error');
-        throw new Error(`Failed to save: ${response.status}`);
+        result = actionResult.payload;
       }
 
-      const result = await response.json();
-      dispatch(updateProfileQuota(result.data.candidateId.quota));
+      if (result.data?.candidateId?.quota) {
+        dispatch(updateProfileQuota(result.data.candidateId.quota));
+      }
 
       if (result.data?._id) {
         localStorage.setItem('last_interview_id', result.data._id);
@@ -240,16 +217,14 @@ export default function InterviewResults() {
       }
 
       if (showStatus) {
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 3000);
+        showToast({ message: 'Interview saved successfully', severity: 'success' });
       }
 
       return result;
     } catch (error) {
       console.error('❌ [Save] Error saving interview:', error);
       if (showStatus) {
-        setSaveStatus('error');
-        setTimeout(() => setSaveStatus('idle'), 3000);
+        showToast({ message: 'Error saving interview', severity: 'error' });
       }
     }
   };
@@ -260,6 +235,7 @@ export default function InterviewResults() {
       saveInterviewToBackend(false);
     }
   }, [analysis]);
+
   const handleClaimReward = async () => {
     if (!rewardInfo?.interviewId) return;
 
@@ -408,7 +384,6 @@ export default function InterviewResults() {
     const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
     const role = urlParams.get('role') || localStorage.getItem('interview_role');
     const category = urlParams.get('category') || localStorage.getItem('interview_category');
-    const proficiency = urlParams.get('proficiency') || localStorage.getItem('interview_proficiency');
 
     let overallScore = 0;
     if (coverage.areas && Object.keys(coverage.areas).length > 0) {
@@ -508,15 +483,6 @@ export default function InterviewResults() {
     };
   };
 
-  const determineLevel = (score: number): string => {
-    if (score === 0) return 'Not Assessed';
-    if (score >= 90) return 'Expert';
-    if (score >= 80) return 'Advanced';
-    if (score >= 70) return 'Intermediate';
-    if (score >= 60) return 'Developing';
-    return 'Beginner';
-  };
-
   const extractStrengths = (coverage: any): string[] => {
     const strengths: string[] = [];
     if (coverage.areas) {
@@ -588,543 +554,61 @@ export default function InterviewResults() {
     return recommendations.length > 0 ? recommendations.slice(0, 10) : ['No recommendations available'];
   };
 
-  const getScoreColor = (score: number): string => {
-    if (score >= 80) return '#667eea';
-    if (score >= 60) return '#43e97b';
-    return '#fa709a';
-  };
-
-  const getScoreBg = (score: number): string => {
-    if (score >= 80) return '#f3e7ff';
-    if (score >= 60) return '#e8f5e9';
-    return '#fff3e0';
-  };
-
-  const getPerformanceMessage = (score: number): string => {
-    if (score >= 90) return 'Outstanding performance! You demonstrate expert-level knowledge.';
-    if (score >= 80) return 'Excellent work! You show advanced proficiency.';
-    if (score >= 70) return 'Good performance! You have solid intermediate skills.';
-    if (score >= 60) return 'Developing well! Continue practicing to improve.';
-    if (score >= 50) return 'Basic understanding shown. Focus on strengthening fundamentals.';
-    return 'Needs improvement. Consider additional study and practice.';
-  };
-
   if (loading) {
-    return (
-      <PageContainer>
-        <Header />
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 12,
-          }}
-        >
-          <CircularProgress
-            size={60}
-            thickness={4}
-            sx={{ color: '#667eea', mb: 3 }}
-          />
-          <Typography variant="h6" sx={{ color: '#6b7280' }}>
-            Loading your results...
-          </Typography>
-        </Box>
-      </PageContainer>
-    );
+    return <LoadingState />;
   }
 
   if (error || !analysis) {
-    return (
-      <PageContainer>
-        <Header />
-        <Box
-          sx={{
-            background: 'rgba(255, 255, 255, 1)',
-            px: 5,
-            py: 4,
-            borderRadius: '12px',
-            border: '1px solid rgba(84,98,116,0.1)',
-            textAlign: 'center',
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 80,
-              height: 80,
-              backgroundColor: '#fff3e0',
-              margin: '0 auto 16px',
-            }}
-          >
-            <WarningIcon sx={{ fontSize: 40, color: '#fa709a' }} />
-          </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 2, color: '#000000' }}>
-            No Analysis Data Available
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#6b7280', mb: 3, maxWidth: 400, mx: 'auto' }}>
-            {error || 'No interview data found. This could be because the interview was not completed or the session has expired.'}
-          </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-            <Button
-              variant="contained"
-              startIcon={<HomeIcon />}
-              onClick={() => {
-                window.location.href = '/dashboard/candidate';
-              }}
-              sx={{
-                background: 'rgba(163, 98, 239, 1)',
-                color: '#ffffff',
-                fontWeight: 600,
-                borderRadius: '38px',
-                px: 4,
-                py: 1.5,
-                textTransform: 'none',
-                '&:hover': {
-                  background: 'rgba(163, 98, 239, 0.8)',
-                },
-              }}
-            >
-              Return to Dashboard
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => router.push('/interview')}
-              sx={{
-                border: '1px solid rgba(25, 25, 25, 1)',
-                color: '#000000',
-                fontWeight: 600,
-                borderRadius: '38px',
-                px: 4,
-                py: 1.5,
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: 'rgba(25, 25, 25, 1)',
-                  background: 'rgba(0, 0, 0, 0.04)',
-                },
-              }}
-            >
-              Take New Interview
-            </Button>
-          </Stack>
-        </Box>
-      </PageContainer>
-    );
+    return <ErrorState error={error} />;
   }
 
   return (
     <PageContainer>
       <Header />
+      <ResultsHeader analysis={analysis} />
 
-      {/* Welcome/Results Header */}
-      <Box
-        sx={{
-          background: 'rgba(255, 255, 255, 1)',
-          px: 5,
-          py: 3,
-          mb: 2,
-          borderRadius: '12px',
-          border: '1px solid rgba(84,98,116,0.1)',
-          display: 'flex',
-          flexDirection: { xs: 'column', lg: 'row' },
-          gap: 4,
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Left Section */}
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <TrophyIcon sx={{ fontSize: 32, color: '#ffd700' }} />
-            <Typography
-              variant="h4"
-              sx={{
-                color: '#000000',
-                fontSize: { xs: '1.5rem', md: '2rem' },
-                fontFamily: 'Poppins',
-                fontWeight: 600,
-              }}
-            >
-              Interview Complete!
-            </Typography>
-          </Box>
-
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#6b7280',
-              fontSize: '14px',
-              mb: 3,
-              fontWeight: 400,
-            }}
-          >
-            {analysis.skillScores.length > 0 && analysis.skillScores[0].skill !== 'General Interview'
-              ? `${analysis.skillScores[0].skill} Assessment Results`
-              : `${analysis.interviewType.replace('_', ' ')} Assessment Results`}
-          </Typography>
-
-          {/* Info Row */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 1, sm: 3 },
-              mb: 3,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CalendarTodayIcon sx={{ color: 'rgba(189, 133, 255, 1)', fontSize: '1.1rem' }} />
-              <Typography variant="body2" sx={{ color: '#000000', fontSize: '0.875rem' }}>
-                {new Date(analysis.completedAt).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AccessTimeIcon sx={{ color: 'rgba(189, 133, 255, 1)', fontSize: '1.1rem' }} />
-              <Typography variant="body2" sx={{ color: '#000000', fontSize: '0.875rem' }}>
-                {(() => {
-                  const totalSeconds = Math.floor(analysis.duration / 1000);
-                  const minutes = Math.floor(totalSeconds / 60);
-                  const seconds = totalSeconds % 60;
-                  return minutes > 0 ? `${minutes} min ${seconds}s` : `${seconds}s`;
-                })()}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TrendingUpIcon sx={{ color: 'rgba(189, 133, 255, 1)', fontSize: '1.1rem' }} />
-              <Typography variant="body2" sx={{ color: '#000000', fontSize: '0.875rem' }}>
-                Level: {analysis.overallLevel}
-              </Typography>
-            </Box>
-          </Box>
-
-
-        </Box>
-
-        {/* Right Section - Score Card */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Box
-          >
-            <Box sx={{ position: 'relative', display: 'inline-flex', mb: 2 }}>
-              <CircularProgress
-                variant="determinate"
-                value={100}
-                size={100}
-                thickness={5}
-                sx={{ color: '#f0f0f0' }}
-              />
-              <CircularProgress
-                variant="determinate"
-                value={analysis.overallScore}
-                size={100}
-                thickness={5}
-                sx={{
-                  position: 'absolute',
-                  left: 0,
-                  color: '#667eea',
-                }}
-              />
-              <Box
-                sx={{
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  right: 0,
-                  position: 'absolute',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                }}
-              >
-                <Typography variant="h4" sx={{ fontWeight: 800, color: '#667eea' }}>
-                  {Math.round(analysis.overallScore)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#9e9e9e', fontWeight: 600 }}>
-                  SCORE
-                </Typography>
-              </Box>
-            </Box>
-
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Reward Notification */}
       {rewardInfo && (
-        <Box
-          sx={{
-            background: 'rgba(255, 255, 255, 1)',
-            px: 5,
-            py: 3,
-            mb: 2,
-            borderRadius: '12px',
-            border: '1px solid rgba(84,98,116,0.1)',
-            textAlign: 'center',
-          }}
-        >
-          {rewardInfo.success ? (
-            <>
-              <TrophyIcon sx={{ fontSize: 60, color: '#ffd700', mb: 2 }} />
-              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, color: '#667eea' }}>
-                Congratulations!
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#000', mb: 2 }}>
-                You earned {rewardInfo.amount?.toFixed(2)} TAI tokens!
-              </Typography>
-              <Alert severity="success" sx={{ maxWidth: 400, mx: 'auto', borderRadius: 2 }}>
-                <Typography variant="body2" fontWeight={600}>
-                  Reward distributed successfully!
-                </Typography>
-                <Typography variant="caption" color="text.secondary" fontFamily="monospace">
-                  TX: {rewardInfo.transactionId}
-                </Typography>
-              </Alert>
-            </>
-          ) : (
-            <>
-              <WarningIcon sx={{ fontSize: 60, color: '#fa709a', mb: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                Reward Claim Issue
-              </Typography>
-              <Alert severity="warning" sx={{ maxWidth: 400, mx: 'auto', mb: 2 }}>
-                {rewardInfo.error || 'Failed to distribute reward automatically'}
-              </Alert>
-              {rewardInfo.canRetry && (
-                <Button
-                  variant="contained"
-                  startIcon={claimingReward ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <TrophyIcon />}
-                  onClick={handleClaimReward}
-                  disabled={claimingReward}
-                  sx={{
-                    background: 'rgba(163, 98, 239, 1)',
-                    borderRadius: '38px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                  }}
-                >
-                  {claimingReward ? 'Claiming...' : 'Claim Reward'}
-                </Button>
-              )}
-            </>
-          )}
-        </Box>
+        <RewardNotification
+          rewardInfo={rewardInfo}
+          claimingReward={claimingReward}
+          onClaimReward={handleClaimReward}
+        />
       )}
+      <KeyStrengths strengths={analysis.strengths} />
+      <AreasForImprovement weaknesses={analysis.weaknesses} />
+      <CoverageDetails coverage={analysis.coverage} />
 
-
-
-      {/* Key Strengths */}
+      {/* Back to Dashboard Button */}
       <Box
         sx={{
-          background: 'rgba(255, 255, 255, 1)',
-          px: 5,
-          py: 3,
+          display: 'flex',
+          justifyContent: 'center',
+          mt: 3,
           mb: 2,
-          borderRadius: '12px',
-          border: '1px solid rgba(84,98,116,0.1)',
         }}
       >
-        <Typography
-          variant="h5"
+        <Button
+          variant="contained"
+          startIcon={<HomeIcon />}
+          onClick={() => {
+            window.location.href = '/dashboard/candidate';
+          }}
           sx={{
+            background: 'rgba(163, 98, 239, 1)',
+            color: '#ffffff',
             fontWeight: 600,
-            color: '#000000',
-            fontSize: '20px',
-            mb: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: '-4px',
-              left: 0,
-              width: '38px',
-              height: '5px',
-              background: '#43e97b',
-              borderRadius: '2px',
+            borderRadius: '38px',
+            px: 4,
+            py: 1.5,
+            textTransform: 'none',
+            '&:hover': {
+              background: 'rgba(163, 98, 239, 0.8)',
             },
           }}
         >
-          Key Strengths
-        </Typography>
-
-        <Stack spacing={2}>
-          {analysis.strengths.slice(0, 5).map((strength, index) => (
-            <Box
-              key={index}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: '#f8f9fa',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 2,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'translateX(4px)',
-                  boxShadow: '0 4px 12px rgba(67, 233, 123, 0.15)',
-                },
-              }}
-            >
-              <CheckCircleIcon sx={{ color: '#43e97b', fontSize: 20, mt: 0.5 }} />
-              <Typography variant="body2" sx={{ color: '#424242', lineHeight: 1.6 }}>
-                {strength}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
+          Back to Dashboard
+        </Button>
       </Box>
-
-      {/* Areas for Improvement */}
-      <Box
-        sx={{
-          background: 'rgba(255, 255, 255, 1)',
-          px: 5,
-          py: 3,
-          mb: 2,
-          borderRadius: '12px',
-          border: '1px solid rgba(84,98,116,0.1)',
-        }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 600,
-            color: '#000000',
-            fontSize: '20px',
-            mb: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: '-4px',
-              left: 0,
-              width: '38px',
-              height: '5px',
-              background: '#fa709a',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          Areas for Improvement
-        </Typography>
-
-        <Stack spacing={2}>
-          {analysis.weaknesses.slice(0, 5).map((weakness, index) => (
-            <Box
-              key={index}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: '#f8f9fa',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 2,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'translateX(4px)',
-                  boxShadow: '0 4px 12px rgba(250, 112, 154, 0.15)',
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  minWidth: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: 'rgba(250, 112, 154, 0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.75rem',
-                  color: '#fa709a',
-                  mt: 0.5,
-                }}
-              >
-                {index + 1}
-              </Box>
-              <Typography variant="body2" sx={{ color: '#424242', lineHeight: 1.6 }}>
-                {weakness}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
-      </Box>
-
-      {/* Coverage Details */}
-      {analysis.coverage && Object.keys(analysis.coverage).length > 0 && (
-        <Box
-          sx={{
-            background: 'rgba(255, 255, 255, 1)',
-            px: 5,
-            py: 3,
-            mb: 2,
-            borderRadius: '12px',
-            border: '1px solid rgba(84,98,116,0.1)',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 600,
-              color: '#000000',
-              fontSize: '20px',
-              mb: 3,
-              position: 'relative',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                bottom: '-4px',
-                left: 0,
-                width: '38px',
-                height: '5px',
-                background: '#667eea',
-                borderRadius: '2px',
-              },
-            }}
-          >
-            Detailed Coverage Analysis
-          </Typography>
-
-          <Stack spacing={3}>
-            {Object.entries(analysis.coverage).map(([areaName, areaData]: [string, any]) => (
-              <Box key={areaName}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                  <Typography variant="subtitle1" fontWeight={600} textTransform="capitalize">
-                    {areaName.replace(/_/g, ' ')}
-                  </Typography>
-                  <Chip
-                    label={`${Math.round(areaData.percentage || 0)}%`}
-                    size="small"
-                    sx={{
-                      background: getScoreBg(areaData.percentage || 0),
-                      color: '#1a1a1a',
-                      fontWeight: 700,
-                    }}
-                  />
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={areaData.percentage || 0}
-                  sx={{
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: '#f0f0f0',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: getScoreColor(areaData.percentage || 0),
-                      borderRadius: 4,
-                    },
-                  }}
-                />
-              </Box>
-            ))}
-          </Stack>
-        </Box>
-      )}
     </PageContainer>
   );
 }

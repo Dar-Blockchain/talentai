@@ -37,6 +37,44 @@ const initialState: InterviewState = {
 };
 
 /**
+ * Save interview assessment (HR interviews)
+ */
+export const saveInterviewAssessment = createAsyncThunk<
+  any,
+  { metadata: any; interviewData: any },
+  { rejectValue: string }
+>(
+  'interview/saveAssessment',
+  async ({ metadata, interviewData }, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ metadata, interviewData }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return rejectWithValue(errorData.message || `Failed to save interview: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error saving interview assessment');
+    }
+  }
+);
+
+/**
  * Fetch interview assessments by type
  */
 export const fetchInterviewAssessments = createAsyncThunk<

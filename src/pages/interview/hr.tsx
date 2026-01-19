@@ -3486,7 +3486,14 @@ const IntelligentInterviewTest = () => {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => router.push('/interview/results')}
+                onClick={() => {
+                  const jobId = localStorage.getItem('interview_jobId');
+                  if (jobId) {
+                    router.push(`/interview/results?jobId=${jobId}`);
+                  } else {
+                    router.push('/interview/results');
+                  }
+                }}
                 startIcon={<AssessmentIcon />}
                 sx={{
                   px: 5,

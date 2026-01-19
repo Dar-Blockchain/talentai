@@ -646,6 +646,44 @@ export const updatePostStatus = createAsyncThunk(
   }
 );
 
+// Async thunk to save post interview assessment
+export const savePostInterviewAssessment = createAsyncThunk(
+  "post/savePostInterviewAssessment",
+  async (
+    { postId, interviewData }: { postId: string; interviewData: any },
+    { rejectWithValue }
+  ) => {
+    try {
+      const token = Cookies.get("api_token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            post: postId,
+            interviewData,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to save post interview assessment");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Error saving post interview assessment");
+    }
+  }
+);
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
