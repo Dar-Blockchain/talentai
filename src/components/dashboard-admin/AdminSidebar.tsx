@@ -20,6 +20,7 @@ import {
   ListAlt as ListAltIcon,
   Logout as LogoutIcon,
   Close as CloseIcon,
+  QuestionAnswer as InterviewIcon,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 280;
@@ -74,7 +75,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 0, label: 'Dashboard', icon: <DashboardIcon /> },
     { id: 1, label: 'Users', icon: <PeopleIcon /> },
     { id: 2, label: 'Assessments', icon: <AssessmentIcon /> },
-    { id: 3, label: 'Assessment Results', icon: <AssessmentIcon /> },
+    { id: 3, label: 'Post Interview', icon: <InterviewIcon /> },
   ];
 
   return (

@@ -43,7 +43,7 @@ import UserManagement from '@/components/dashboard-admin/UserManagement';
 import AdminSidebar from '@/components/dashboard-admin/AdminSidebar';
 import UserDetailsDialog from '@/components/dashboard-admin/UserDetailsDialog';
 import AssessmentDetailsDialog from '@/components/dashboard-admin/AssessmentDetailsDialog';
-import AssessmentResults from '@/components/dashboard-admin/AssessmentResults';
+import PostInterviewAssessments from '@/components/dashboard-admin/PostInterviewAssessments';
 import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashboard-admin/CompanyPermissionsModal';
 
 // Utilities
@@ -989,8 +989,8 @@ const DashboardAdmin = () => {
         />
     );
 
-    // Assessment Results - Now using extracted component
-    const renderAssessmentResults = () => <AssessmentResults />;
+    // Post Interview Assessments
+    const renderPostInterviewAssessments = () => <PostInterviewAssessments />;
 
     // Add this function inside DashboardAdmin component
     const handleDownloadExcel = async (endpoint: string, filename: string) => {
@@ -1090,7 +1090,7 @@ const DashboardAdmin = () => {
                             {activeTab === 0 && renderDashboard()}
                             {activeTab === 1 && renderUsers()}
                             {activeTab === 2 && renderAssessments()}
-                            {activeTab === 3 && renderAssessmentResults()}
+                            {activeTab === 3 && renderPostInterviewAssessments()}
                         </Box>
                     </Box>
                 </Box>
