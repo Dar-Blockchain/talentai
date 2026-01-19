@@ -27,7 +27,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'An assessment with this session ID already exists. Please use a unique session ID.',
+        message: 'An assessment with this session ID already exists.',
         code: 'DUPLICATE_SESSION_ID'
       });
     }
