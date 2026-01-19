@@ -46,7 +46,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 //Simple Get All
 
 // jobAssessmentService.js
-const JobAssessmentResult = require("../models/JobAssessmentResultModel");
+const JobAssessmentResult = require("../models/PostInterviewAssessmentModel");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
