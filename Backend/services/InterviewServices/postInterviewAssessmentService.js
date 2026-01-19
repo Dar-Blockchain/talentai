@@ -70,17 +70,6 @@ module.exports.getAssessmentsByPost = async (postId, filters = {}) => {
   try {
     const query = { post: postId };
 
-    // Apply optional filters
-    if (filters.status) {
-      query.status = filters.status;
-    }
-    if (filters.stage) {
-      query.stage = filters.stage;
-    }
-    if (filters.candidate) {
-      query.candidate = filters.candidate;
-    }
-
     const assessments = await PostInterviewAssessment.find(query)
       .populate('candidate', 'username email role')
       .populate('company', 'username email role')
@@ -97,13 +86,6 @@ module.exports.getAssessmentsByPost = async (postId, filters = {}) => {
 module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => {
   try {
     const query = { candidate: candidateId };
-
-    if (filters.status) {
-      query.status = filters.status;
-    }
-    if (filters.post) {
-      query.post = filters.post;
-    }
 
     const assessments = await PostInterviewAssessment.find(query)
       .populate('post', 'jobDetails title status')
@@ -171,63 +153,6 @@ module.exports.updateInterviewData = async (assessmentId, interviewData) => {
   }
 };
 
-// ========== UPDATE - Update status ==========
-module.exports.updateAssessmentStatus = async (assessmentId, status) => {
-  try {
-    const validStatuses = ['draft', 'in-progress', 'completed', 'archived'];
-    if (!validStatuses.includes(status)) {
-      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
-    }
-
-    const updateData = { status };
-    if (status === 'completed') {
-      updateData.completedAt = new Date();
-    }
-
-    const assessment = await PostInterviewAssessment.findByIdAndUpdate(
-      assessmentId,
-      { $set: updateData },
-      { new: true }
-    );
-
-    if (!assessment) {
-      throw new Error('Post interview assessment not found');
-    }
-
-    console.log(`✅ Assessment status updated to ${status}`);
-    return assessment;
-  } catch (error) {
-    console.error('❌ Error updating assessment status:', error.message);
-    throw error;
-  }
-};
-
-// ========== UPDATE - Update stage ==========
-module.exports.updateAssessmentStage = async (assessmentId, stage) => {
-  try {
-    const validStages = ['pending', 'scheduled', 'completed', 'rejected'];
-    if (!validStages.includes(stage)) {
-      throw new Error(`Invalid stage. Must be one of: ${validStages.join(', ')}`);
-    }
-
-    const assessment = await PostInterviewAssessment.findByIdAndUpdate(
-      assessmentId,
-      { $set: { stage } },
-      { new: true }
-    );
-
-    if (!assessment) {
-      throw new Error('Post interview assessment not found');
-    }
-
-    console.log(`✅ Assessment stage updated to ${stage}`);
-    return assessment;
-  } catch (error) {
-    console.error('❌ Error updating assessment stage:', error.message);
-    throw error;
-  }
-};
-
 // ========== DELETE - Delete assessment ==========
 module.exports.deletePostInterviewAssessment = async (assessmentId) => {
   try {
@@ -271,18 +196,12 @@ module.exports.getAssessmentStatistics = async (postId) => {
         $group: {
           _id: '$post',
           totalAssessments: { $sum: 1 },
-          completedAssessments: {
-            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
-          },
-          draftAssessments: {
-            $sum: { $cond: [{ $eq: ['$status', 'draft'] }, 1, 0] }
-          },
           averageScore: { $avg: '$interviewData.finalReport.scores.overall' }
         }
       }
     ]);
 
-    return stats[0] || { totalAssessments: 0, completedAssessments: 0, draftAssessments: 0, averageScore: 0 };
+    return stats[0] || { totalAssessments: 0, averageScore: 0 };
   } catch (error) {
     console.error('❌ Error getting assessment statistics:', error.message);
     throw error;
@@ -302,15 +221,6 @@ module.exports.searchAssessments = async (searchCriteria) => {
     }
     if (searchCriteria.companyId) {
       query.company = searchCriteria.companyId;
-    }
-    if (searchCriteria.status) {
-      query.status = searchCriteria.status;
-    }
-    if (searchCriteria.stage) {
-      query.stage = searchCriteria.stage;
-    }
-    if (searchCriteria.skill) {
-      query['metadata.skill'] = { $regex: searchCriteria.skill, $options: 'i' };
     }
 
     const assessments = await PostInterviewAssessment.find(query)

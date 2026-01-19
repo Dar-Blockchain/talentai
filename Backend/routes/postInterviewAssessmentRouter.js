@@ -40,12 +40,6 @@ router.get('/search', postInterviewAssessmentController.searchAssessments);
 // PUT /postInterviewAssessments/:assessmentId — Update assessment
 router.put('/:assessmentId', postInterviewAssessmentController.updatePostInterviewAssessment);
 
-// PATCH /postInterviewAssessments/:assessmentId/status — Update assessment status
-router.patch('/:assessmentId/status', postInterviewAssessmentController.updateAssessmentStatus);
-
-// PATCH /postInterviewAssessments/:assessmentId/stage — Update assessment stage
-router.patch('/:assessmentId/stage', postInterviewAssessmentController.updateAssessmentStage);
-
 // PATCH /postInterviewAssessments/:assessmentId/interview-data — Update interview data
 router.patch('/:assessmentId/interview-data', postInterviewAssessmentController.updateInterviewData);
 

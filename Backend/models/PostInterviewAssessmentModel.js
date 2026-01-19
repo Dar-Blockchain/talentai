@@ -82,23 +82,6 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
     index: true
   },
 
-  // ========== ASSESSMENT METADATA ==========
-  metadata: {
-    exportedAt: {
-      type: Date,
-      default: Date.now
-    },
-    type: {
-      type: String,
-    },
-    skill: String,
-    role: String,
-    category: String,
-    proficiency: {
-      type: String,
-    }
-  },
-
   // ========== INTERVIEW DATA ==========
   interviewData: {
     finalReport: {
@@ -156,18 +139,6 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
     timestamp: Date
   },
 
-  // ========== STATUS & TRACKING ==========
-  status: {
-    type: String,
-    enum: ['draft', 'in-progress', 'completed', 'archived'],
-    default: 'draft'
-  },
-  stage: {
-    type: String,
-    enum: ['pending', 'scheduled', 'completed', 'rejected'],
-    default: 'pending'
-  },
-
   // ========== TIMESTAMPS ==========
   createdAt: {
     type: Date,
@@ -177,10 +148,6 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  },
-  completedAt: {
-    type: Date,
-    default: null
   }
 }, {
   timestamps: true,
@@ -192,10 +159,6 @@ postInterviewAssessmentSchema.index({ post: 1, candidate: 1 });
 postInterviewAssessmentSchema.index({ post: 1, company: 1 });
 postInterviewAssessmentSchema.index({ candidate: 1 });
 postInterviewAssessmentSchema.index({ company: 1 });
-postInterviewAssessmentSchema.index({ status: 1 });
-postInterviewAssessmentSchema.index({ stage: 1 });
-postInterviewAssessmentSchema.index({ 'metadata.skill': 1 });
-postInterviewAssessmentSchema.index({ 'metadata.proficiency': 1 });
 postInterviewAssessmentSchema.index({ createdAt: -1 });
 
 // ========== MIDDLEWARE ==========
@@ -232,34 +195,10 @@ postInterviewAssessmentSchema.methods.getSummary = function() {
     post: this.post,
     candidate: this.candidate,
     company: this.company,
-    skill: this.metadata.skill,
-    proficiency: this.metadata.proficiency,
     overallScore: this.interviewData.finalReport.scores.overall,
-    status: this.status,
-    stage: this.stage,
-    completedAt: this.completedAt,
     strongestAreas: this.interviewData.finalReport.aiAnalysis.strongestAreas,
     weakestAreas: this.interviewData.finalReport.aiAnalysis.weakestAreas
   };
-};
-
-postInterviewAssessmentSchema.methods.updateStatus = function(newStatus) {
-  if (['draft', 'in-progress', 'completed', 'archived'].includes(newStatus)) {
-    this.status = newStatus;
-    if (newStatus === 'completed') {
-      this.completedAt = new Date();
-    }
-    return this.save();
-  }
-  throw new Error('Invalid status');
-};
-
-postInterviewAssessmentSchema.methods.updateStage = function(newStage) {
-  if (['pending', 'scheduled', 'completed', 'rejected'].includes(newStage)) {
-    this.stage = newStage;
-    return this.save();
-  }
-  throw new Error('Invalid stage');
 };
 
 module.exports = mongoose.model('PostInterviewAssessment', postInterviewAssessmentSchema);
