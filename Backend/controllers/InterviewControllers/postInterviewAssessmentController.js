@@ -22,6 +22,16 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating post interview assessment:', error);
+    
+    // Handle duplicate key error (E11000)
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'An assessment with this session ID already exists. Please use a unique session ID.',
+        code: 'DUPLICATE_SESSION_ID'
+      });
+    }
+    
     res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Error creating post interview assessment'

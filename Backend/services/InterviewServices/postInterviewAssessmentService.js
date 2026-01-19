@@ -42,6 +42,15 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     return newAssessment;
   } catch (error) {
     console.error('❌ Error creating post interview assessment:', error.message);
+    
+    // Handle duplicate key error (E11000)
+    if (error.code === 11000) {
+      const err = new Error('An assessment with this session ID already exists. Please use a unique session ID.');
+      err.code = 11000;
+      err.status = 409;
+      throw err;
+    }
+    
     throw error;
   }
 };
