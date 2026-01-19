@@ -31,6 +31,7 @@ const taskRouter = require('../routes/taskRouter');
 const agentConfigRouter = require('../routes/agentConfigRouter');
 const tokenRouter = require('../routes/tokenRouter');
 const stripRouter = require('../routes/StripRouter');
+const SkillInterviewAssessmentRoutes = require('../routes/SkillInterviewAssessmentRoutes');
 const matchingConfigRoutes = require('../routes/matchingConfigRoutes');
 const paymentRouter = require('../routes/paymentRouter');
 const unlockCandidateRouter = require('../routes/unlockCandidateRouter');
@@ -58,6 +59,7 @@ function registerRoutes(app) {
   // Evaluation & Interview
   // app.use('/interviewDetails', interviewDetailsRouter);
   app.use('/InterviewAssessment', InterviewAssessmentRoutes);
+  app.use('/SkillInterviewAssessment', SkillInterviewAssessmentRoutes);
   app.use('/post-interview-assessment', postInterviewAssessmentRouter);
 
   // Posts & Jobs
