@@ -12,17 +12,17 @@ import { styled } from '@mui/material/styles';
 const GREEN_MAIN = '#8310FF';
 
 const StatCard = styled(Box)(({ theme }) => ({
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-    padding: theme.spacing(3),
-    borderRadius: '16px',
-    border: '1px solid rgba(0,0,0,0.05)',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    transition: 'all 0.3s ease',
-    cursor: 'default',
-    '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
-    }
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  padding: theme.spacing(3),
+  borderRadius: '16px',
+  border: '1px solid rgba(0,0,0,0.05)',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  transition: 'all 0.3s ease',
+  cursor: 'default',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
+  }
 }));
 
 const AdminStatsCards = ({ stats }: { stats: any }) => (
@@ -32,7 +32,7 @@ const AdminStatsCards = ({ stats }: { stats: any }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-              {stats.totalUsers?.toLocaleString?.() ?? 0}
+              {stats.users?.toLocaleString?.() ?? 0}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
               Total Users
@@ -47,10 +47,10 @@ const AdminStatsCards = ({ stats }: { stats: any }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-              {stats.totalAssessments ?? 0}
+              {stats.jobAssessments ?? 0}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Total Assessments
+              Job Assessments
             </Typography>
           </Box>
           <AssessmentIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
@@ -62,34 +62,19 @@ const AdminStatsCards = ({ stats }: { stats: any }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-              {stats.totalAttempts?.toLocaleString?.() ?? 0}
+              {stats.posts?.toLocaleString?.() ?? 0}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Total Resumes
-            </Typography>
-          </Box>
-          <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-        </Box>
-      </StatCard>
-    </Box>
-    <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-      <StatCard>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-              {stats.averageScore?.toFixed?.(2) ?? '0.00'}%
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Average Score
+              Total Posts
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <StarIcon sx={{ color: 'warning.main', fontSize: 16, mr: 0.5 }} />
-              <Typography variant="caption" sx={{ color: 'warning.main' }}>
-                Good performance
+              <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
+              <Typography variant="caption" sx={{ color: 'success.main' }}>
+                Active content
               </Typography>
             </Box>
           </Box>
-          <ShowChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+          <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
         </Box>
       </StatCard>
     </Box>
@@ -119,22 +104,24 @@ const AdminStatsCards = ({ stats }: { stats: any }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-              {stats.posts?.toLocaleString?.() ?? 0}
+              {stats.avgOverallScore?.toFixed?.(2) ?? '0.00'}%
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Total Posts
+              Average Score
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-              <Typography variant="caption" sx={{ color: 'success.main' }}>
-                Active content
+              <StarIcon sx={{ color: 'warning.main', fontSize: 16, mr: 0.5 }} />
+              <Typography variant="caption" sx={{ color: 'warning.main' }}>
+                Good performance
               </Typography>
             </Box>
           </Box>
-          <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+          <ShowChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
         </Box>
       </StatCard>
     </Box>
+
+
     <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
       <StatCard>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
