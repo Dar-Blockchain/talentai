@@ -186,17 +186,27 @@ interface Assessment {
     }>;
 }
 
+interface TopSkill {
+    _id: string;
+    count: number;
+    avgLevel: number;
+}
+
 interface DashboardStats {
-    totalUsers: number;
-    totalAssessments: number;
-    activeAssessments: number;
-    totalAttempts: number;
-    averageScore: number;
-    userGrowth: number;
-    assessmentGrowth: number;
-    totalSkills: number;
+    users: number;
     posts: number;
+    jobAssessments: number;
+    jobAssessmentsWithScore: number;
     jobAssessmentsWithScorePercentage: number;
+    feedback: number;
+    bids: number;
+    avgOverallScore: number;
+    totalSkills: number;
+    totalHardSkills: number;
+    totalSoftSkills: number;
+    hardSkillsPercentage: number;
+    softSkillsPercentage: number;
+    topSkills: TopSkill[];
 }
 
 interface Log {
@@ -249,16 +259,20 @@ const DashboardAdmin = () => {
 
     // Data state
     const [stats, setStats] = useState<DashboardStats>({
-        totalUsers: 0,
-        totalAssessments: 0,
-        activeAssessments: 0,
-        totalAttempts: 0,
-        averageScore: 0,
-        userGrowth: 0,
-        assessmentGrowth: 0,
-        totalSkills: 0,
+        users: 0,
         posts: 0,
-        jobAssessmentsWithScorePercentage: 0
+        jobAssessments: 0,
+        jobAssessmentsWithScore: 0,
+        jobAssessmentsWithScorePercentage: 0,
+        feedback: 0,
+        bids: 0,
+        avgOverallScore: 0,
+        totalSkills: 0,
+        totalHardSkills: 0,
+        totalSoftSkills: 0,
+        hardSkillsPercentage: 0,
+        softSkillsPercentage: 0,
+        topSkills: [],
     });
     const [users, setUsers] = useState<User[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -351,16 +365,20 @@ const DashboardAdmin = () => {
             const data = await res.json();
             if (data.success && data.data) {
                 setStats({
-                    totalUsers: data.data.users || 0,
-                    totalAssessments: data.data.jobAssessments || 0,
-                    activeAssessments: data.data.jobAssessments || 0, // Using jobAssessments as active assessments
-                    totalAttempts: data.data.resumes || 0, // Using resumes instead of attempts
-                    averageScore: data.data.avgOverallScore || 0,
-                    userGrowth: 12.5, // Mock growth percentage
-                    assessmentGrowth: 8.3, // Mock growth percentage
+                    users: data.data.users || 0,
+                    posts: data.data.posts || 0,
+                    jobAssessments: data.data.jobAssessments || 0,
+                    jobAssessmentsWithScore: data.data.jobAssessmentsWithScore || 0,
+                    jobAssessmentsWithScorePercentage: data.data.jobAssessmentsWithScorePercentage || 0,
+                    feedback: data.data.feedback || 0,
+                    bids: data.data.bids || 0,
+                    avgOverallScore: data.data.avgOverallScore || 0,
                     totalSkills: data.data.totalSkills || 0,
-                    posts: data.data.posts || data.data.totalPosts || data.data.postsCreatedByDay?.reduce((total: number, item: any) => total + item.postCount, 0) || 0,
-                    jobAssessmentsWithScorePercentage: data.data.jobAssessmentsWithScorePercentage || 0
+                    totalHardSkills: data.data.totalHardSkills || 0,
+                    totalSoftSkills: data.data.totalSoftSkills || 0,
+                    hardSkillsPercentage: data.data.hardSkillsPercentage || 0,
+                    softSkillsPercentage: data.data.softSkillsPercentage || 0,
+                    topSkills: data.data.topSkills || [],
                 });
 
                 // Update skill distribution
@@ -373,16 +391,20 @@ const DashboardAdmin = () => {
             console.error('Error fetching stats:', err);
             // Set default values if there's an error
             setStats({
-                totalUsers: 0,
-                totalAssessments: 0,
-                activeAssessments: 0,
-                totalAttempts: 0,
-                averageScore: 0,
-                userGrowth: 0,
-                assessmentGrowth: 0,
-                totalSkills: 0,
+                users: 0,
                 posts: 0,
-                jobAssessmentsWithScorePercentage: 0
+                jobAssessments: 0,
+                jobAssessmentsWithScore: 0,
+                jobAssessmentsWithScorePercentage: 0,
+                feedback: 0,
+                bids: 0,
+                avgOverallScore: 0,
+                totalSkills: 0,
+                totalHardSkills: 0,
+                totalSoftSkills: 0,
+                hardSkillsPercentage: 0,
+                softSkillsPercentage: 0,
+                topSkills: [],
             });
         }
     };
@@ -739,7 +761,7 @@ const DashboardAdmin = () => {
             </Box>
             <AdminWorldMap
                 userLocations={processUserLocations()}
-                totalUsers={stats.totalUsers}
+                totalUsers={stats.users}
             />
         </Box>
     );
