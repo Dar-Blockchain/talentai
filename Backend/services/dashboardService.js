@@ -303,13 +303,13 @@ module.exports.getCounts = async () => {
     const avgOverallScoreResult = await PostInterviewAssessment.aggregate([
       {
         $match: {
-          "interviewData.finalReport.scores.overall": { $ne: null, $gt: 0 } // Exclude null and scores of 0
+          "interviewData.finalReport.coverage.overall": { $ne: null, $gt: 0 } // Exclude null and scores of 0
         }
       },
       {
         $group: {
           _id: null,
-          avgOverallScore: { $avg: "$interviewData.finalReport.scores.overall" }
+          avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" }
         }
       }
     ]);
@@ -318,7 +318,7 @@ module.exports.getCounts = async () => {
 
     // Compte le nombre de PostInterviewAssessment avec overallScore > 0
     const jobAssessmentWithScoreCount = await PostInterviewAssessment.countDocuments({
-      "interviewData.finalReport.scores.overall": { $gt: 0 }
+      "interviewData.finalReport.coverage.overall": { $gt: 0 }
     });
 
     // Calculate the percentage
