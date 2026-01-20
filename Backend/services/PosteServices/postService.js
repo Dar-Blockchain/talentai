@@ -485,21 +485,57 @@ module.exports.updatePost = async (postId, userId, updateData) => {
 // Delete a post
 module.exports.deletePost = async (postId, userId) => {
   try {
-    const post = await Post.findOneAndDelete({ _id: postId, user: userId });
+    const post = await Post.findOne({ _id: postId, user: userId });
     if (!post) {
       throw new Error("Post not found or unauthorized");
     }
 
-    // Delete associated job assessments
-    await JobAssessmentResult.deleteMany({ jobId: postId });
+    // ========== DELETE ASSOCIATED RECORDS IN CASCADE ==========
+    
+    // 1. Delete post_Steps
+    if (post.post_Steps && post.post_Steps.length > 0) {
+      const Post_Steps = require('../../models/Post_StepsModel');
+      await Post_Steps.deleteMany({ _id: { $in: post.post_Steps } });
+      console.log(`🗑️ Deleted ${post.post_Steps.length} post step(s)`);
+    }
 
-    // Update the user by removing the post reference
+    // 2. Delete agentConfig if exists
+    if (post.agentConfig) {
+      const AgentConfig = require('../../models/AgentConfigModel');
+      await AgentConfig.findByIdAndDelete(post.agentConfig);
+      console.log(`🗑️ Deleted agentConfig: ${post.agentConfig}`);
+    }
+
+    // 3. Delete agent if exists
+    if (post.agentId) {
+      const Agent = require('../../models/AgentModel');
+      await Agent.findByIdAndDelete(post.agentId);
+      console.log(`🗑️ Deleted agent: ${post.agentId}`);
+    }
+
+    // 4. Delete MatchingConfig if exists
+    if (post.MatchingConfig) {
+      const MatchingConfig = require('../../models/MatchingConfigModel');
+      await MatchingConfig.findByIdAndDelete(post.MatchingConfig);
+      console.log(`🗑️ Deleted MatchingConfig: ${post.MatchingConfig}`);
+    }
+
+    // 5. Delete associated job assessments
+    const JobAssessmentResult = require('../../models/JobAssessmentResultModel');
+    await JobAssessmentResult.deleteMany({ jobId: postId });
+    console.log(`🗑️ Deleted job assessment results for post`);
+
+    // 6. Delete the post itself
+    const deletedPost = await Post.findByIdAndDelete(postId);
+
+    // 7. Update the user by removing the post reference
     await User.updateOne(
       { _id: userId },
       { $pull: { post: postId } }
     );
 
-    return post;
+    console.log(`✅ Post ${postId} and all associated records deleted successfully`);
+    return deletedPost;
   } catch (error) {
     throw new Error(`Error deleting post: ${error.message}`);
   }
