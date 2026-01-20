@@ -66,11 +66,8 @@ export default function InterviewResults() {
       // Get metadata from URL params first, then localStorage as fallback
       const urlParams = new URLSearchParams(window.location.search);
       const jobId = urlParams.get('jobId') || localStorage.getItem('interview_jobId');
-      // If jobId exists, type is "post", otherwise use localStorage value or default to "hr"
-      const type = jobId ? 'post' : (urlParams.get('type') || localStorage.getItem('interview_type') || 'hr');
       const role = urlParams.get('role') || localStorage.getItem('interview_role');
       const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
-      const category = urlParams.get('category') || localStorage.getItem('interview_category');
       const proficiency = urlParams.get('proficiency') || localStorage.getItem('interview_proficiency');
 
       // Fix confidence scores in coverage areas before sending
@@ -102,7 +99,6 @@ export default function InterviewResults() {
       }
 
       const effectiveSkill = role || skill || 'N/A';
-      const effectiveRole = role || skill || 'N/A';
 
       let result;
 
@@ -134,18 +130,10 @@ export default function InterviewResults() {
 
         result = actionResult.payload;
       } else {
-        // Use interviewSlice thunk for HR interviews
-        const metadata = {
-          exportedAt: new Date().toISOString(),
-          type: type || 'hr',
-          skill: effectiveSkill,
-          role: effectiveRole,
-          category: category || 'N/A',
-          proficiency: proficiency || 'N/A'
-        };
-
+        // Use interviewSlice thunk for skill interviews (SkillInterviewAssessment)
         const actionResult = await dispatch(saveInterviewAssessment({
-          metadata,
+          skill: effectiveSkill || 'General',
+          proficiency: proficiency || 'Mid Level',
           interviewData: parsedData
         }));
 
