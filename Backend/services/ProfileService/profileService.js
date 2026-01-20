@@ -242,14 +242,14 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       
       // Merge companyDetails (preserve existing values if not provided)
       profile.companyDetails = {
-        email: companyDetailsInput.email || profileData.email || profile.companyDetails?.email || '',
-        name: companyDetailsInput.name || profileData.name || profile.companyDetails?.name || '',
-        industry: companyDetailsInput.industry || profileData.industry || profile.companyDetails?.industry || '',
-        size: companyDetailsInput.size || profileData.size || profile.companyDetails?.size || '',
-        location: companyDetailsInput.location || profileData.location || profile.companyDetails?.location || '',
-        website: companyDetailsInput.website || profileData.website || profile.companyDetails?.website || '',
-        linkedin: companyDetailsInput.linkedin || profileData.linkedin || profile.companyDetails?.linkedin || '',
-        employmentType: companyDetailsInput.employmentType || profileData.employmentType || profile.companyDetails?.employmentType || '',
+        email: companyDetailsInput.email || profileData.email || profile.companyDetails?.email,
+        name: companyDetailsInput.name || profileData.name || profile.companyDetails?.name,
+        industry: companyDetailsInput.industry || profileData.industry || profile.companyDetails?.industry,
+        size: companyDetailsInput.size || profileData.size || profile.companyDetails?.size,
+        location: companyDetailsInput.location || profileData.location || profile.companyDetails?.location,
+        website: companyDetailsInput.website || profileData.website || profile.companyDetails?.website,
+        linkedin: companyDetailsInput.linkedin || profileData.linkedin || profile.companyDetails?.linkedin,
+        employmentType: companyDetailsInput.employmentType || profileData.employmentType || profile.companyDetails?.employmentType,
       };
       
       profile.requiredSkills = profileData.requiredSkills || profile.requiredSkills;
