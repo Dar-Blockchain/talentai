@@ -80,11 +80,12 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  type: {
-    type: String
+  skillType : {
+    type: String,
+    enum: ['technical','soft'],
+    default: 'technical'
   },
   skill: String,
-  role: String,
   category: String,
   proficiency: {
     type: String
