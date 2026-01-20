@@ -199,38 +199,6 @@ const UserManagement: React.FC<UserManagementProps> = ({
     fetchUsers({ page: 1 });
   }, [fetchUsers]);
 
-  /**
-   * Download Excel handlers
-   */
-  const handleDownloadExcel = useCallback(
-    async (endpoint: string, filename: string) => {
-      if (!token) return;
-
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/${endpoint}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) throw new Error('Download failed');
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error('Download error:', err);
-        setError('Failed to download Excel file');
-      }
-    },
-    [token]
-  );
 
   // Fetch users on mount and when filters change
   useEffect(() => {
@@ -242,29 +210,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
       {/* Header with action buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <SectionTitle>User Management</SectionTitle>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => handleDownloadExcel('downloadUserExcel', 'users.xlsx')}
-            disabled={!isAuthenticated}
-          >
-            Download All Users Excel
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => handleDownloadExcel('download-users-with-assessment-zero', 'users_with_score_0.xlsx')}
-            disabled={!isAuthenticated}
-          >
-            Download Users with Assessment 0
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => handleDownloadExcel('download-users-with-assessment-Above50', 'users_with_score_above_50.xlsx')}
-            disabled={!isAuthenticated}
-          >
-            Download Users with Assessment ≥ 50
-          </Button>
-        </Box>
+       
       </Box>
 
       {/* Filter Card */}

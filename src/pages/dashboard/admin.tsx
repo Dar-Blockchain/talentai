@@ -4,33 +4,14 @@ import { AppDispatch } from '@/store/store';
 import {
     Box,
     Typography,
-    Card,
-    Button,
     IconButton,
     Alert,
     CircularProgress,
-    TextField,
-    Paper,
-    Stack,
-    Tooltip,
-    TableContainer,
-    Table,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
-    TablePagination,
-    Chip,
-    ListItemButton,
     useTheme,
     useMediaQuery,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import {
-    Assessment as AssessmentIcon,
     Menu as MenuIcon,
-    Add as AddIcon,
-    Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { logout, setLoggingOut } from '@/store/slices/authSlice';
 import AdminWorldMap from '@/components/dashboard-admin/AdminWorldMap';
@@ -44,6 +25,7 @@ import AdminSidebar from '@/components/dashboard-admin/AdminSidebar';
 import UserDetailsDialog from '@/components/dashboard-admin/UserDetailsDialog';
 import AssessmentDetailsDialog from '@/components/dashboard-admin/AssessmentDetailsDialog';
 import PostInterviewAssessments from '@/components/dashboard-admin/PostInterviewAssessments';
+import SkillInterviewAssessments from '@/components/dashboard-admin/SkillInterviewAssessments';
 import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashboard-admin/CompanyPermissionsModal';
 
 // Utilities
@@ -53,44 +35,6 @@ import dynamic from 'next/dynamic';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
-
-// Styled Components
-const StyledCard = styled(Card)(({ theme }) => ({
-    padding: theme.spacing(4),
-    marginBottom: theme.spacing(4),
-    background: 'white',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '24px',
-    boxShadow: '0 8px 32px rgba(131,16,255,0.10)',
-    border: '1.5px solid #ece6fa',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    '&:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 12px 40px rgba(131,16,255,0.13)'
-    }
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-    fontSize: '2.2rem',
-    fontWeight: 900,
-    color: '#8310FF',
-    marginBottom: theme.spacing(4),
-    letterSpacing: '-1px',
-    position: 'relative',
-    lineHeight: 1.1,
-    '&:after': {
-        content: '""',
-        position: 'absolute',
-        bottom: '-10px',
-        left: '0',
-        width: '60px',
-        height: '4px',
-        background: 'linear-gradient(90deg, #8310FF 0%, #00FFC3 100%)',
-        borderRadius: '2px'
-    }
-}));
-
-
 
 // Interfaces
 interface User {
@@ -243,19 +187,8 @@ const DashboardAdmin = () => {
     // State management
     const [drawerOpen, setDrawerOpen] = useState(!isMobile);
     const [activeTab, setActiveTab] = useState(0);
-    const [usersTab, setUsersTab] = useState(0);
-    const [assessmentsTab, setAssessmentsTab] = useState(0);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [usersPage, setUsersPage] = useState(0);
     const [usersRowsPerPage, setUsersRowsPerPage] = useState(10);
-    const [assessmentsPage, setAssessmentsPage] = useState(0);
-    const [assessmentsRowsPerPage, setAssessmentsRowsPerPage] = useState(10);
-    const [assessmentResultsTab, setAssessmentResultsTab] = useState(0);
-
-    // Assessment Results state - Now handled by AssessmentResults component
-    // Removed: assessmentResults, assessmentResultsLoading, assessmentResultsPage,
-    // assessmentResultsRowsPerPage, assessmentResultsFilter, availableSkills
 
     // Data state
     const [stats, setStats] = useState<DashboardStats>({
@@ -618,12 +551,6 @@ const DashboardAdmin = () => {
 
             const data = await response.json();
             setAssessments(data.results || []);
-
-            // Update pagination
-            if (data.pagination) {
-                setAssessmentsPage(data.pagination.currentPage - 1);
-                setAssessmentsRowsPerPage(data.pagination.totalResults > 0 ? data.pagination.totalResults : 10);
-            }
         } catch (error) {
             console.error('Error fetching assessments:', error);
             setAssessments([]);
@@ -639,52 +566,6 @@ const DashboardAdmin = () => {
             console.error("Logout failed:", error);
           }
         }, [dispatch]);
-
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setActiveTab(newValue);
-    };
-
-    const handleUsersTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setUsersTab(newValue);
-    };
-
-    const handleAssessmentsTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setAssessmentsTab(newValue);
-    };
-
-    const handleAssessmentResultsTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setAssessmentResultsTab(newValue);
-    };
-
-    const handlePageChange = (event: unknown, newPage: number) => {
-        setPage(newPage);
-    };
-
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
-
-    const handleUsersPageChange = (event: unknown, newPage: number) => {
-        setUsersPage(newPage);
-    };
-
-    const handleUsersRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setUsersRowsPerPage(parseInt(event.target.value, 10));
-        setUsersPage(0);
-    };
-
-    const handleAssessmentsPageChange = (event: unknown, newPage: number) => {
-        setAssessmentsPage(newPage);
-    };
-
-    const handleAssessmentsRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setAssessmentsRowsPerPage(parseInt(event.target.value, 10));
-        setAssessmentsPage(0);
-    };
-
-    // Assessment Results pagination handlers - Now handled by AssessmentResults component
-    // Removed: handleAssessmentResultsPageChange, handleAssessmentResultsRowsPerPageChange
 
     // Color mapping functions - Now imported from utils/colorMappings.ts
     // Removed: getRoleColor, getStatusColor, getTypeColor
@@ -832,148 +713,6 @@ const DashboardAdmin = () => {
         />
     );
 
-    const renderAssessments = () => (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <SectionTitle>Job Assessment Results</SectionTitle>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    sx={{
-                        backgroundColor: GREEN_MAIN,
-                        '&:hover': { backgroundColor: '#6a0dad' }
-                    }}
-                >
-                    Create Assessment
-                </Button>
-            </Box>
-
-            {/* Filter Card */}
-            <StyledCard sx={{ mb: 3, p: { xs: 2, md: 3 }, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                <TextField
-                    label="Search by job name"
-                    variant="outlined"
-                    size="small"
-                    value={assessmentSearch}
-                    onChange={e => setAssessmentSearch(e.target.value)}
-                    sx={{ minWidth: 200 }}
-                />
-
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() => { setAssessmentSearch(''); setAssessmentTypeFilter(''); setAssessmentStatusFilter(''); }}
-                    sx={{ ml: 'auto' }}
-                >
-                    Reset Filters
-                </Button>
-            </StyledCard>
-
-            <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-                <Table>
-                    <TableHead>
-                        <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                            <TableCell sx={{ fontWeight: 600 }}>Job</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Attempts</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Total Questions</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Avg Score</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {assessments
-                            .filter(assessment =>
-                            (!assessmentSearch ||
-                                (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
-                                (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
-                            )
-                            .slice(assessmentsPage * assessmentsRowsPerPage, assessmentsPage * assessmentsRowsPerPage + assessmentsRowsPerPage)
-                            .map((assessment) => (
-                                <TableRow key={assessment._id} hover>
-                                    <TableCell>
-                                        <Box>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                {assessment.jobId?.title || assessment.jobName || 'Unnamed Job'}
-                                            </Typography>
-                                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                                Job ID: {assessment._id}
-                                            </Typography>
-                                            {assessment.jobId?.location && (
-                                                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                                                    📍 {assessment.jobId.location}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                            {assessment.jobId?.description || assessment.jobDescription || 'No description available'}
-                                        </Typography>
-                                        {assessment.jobId?.employmentType && (
-                                            <Chip
-                                                label={assessment.jobId.employmentType}
-                                                size="small"
-                                                sx={{ mt: 1, textTransform: 'capitalize' }}
-                                            />
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {assessment.numberOfAttempts}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {assessment.totalQuestions}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                            {assessment.averageScore.toFixed(2)}%
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Stack direction="row" spacing={1}>
-                                            <Tooltip title="View Details">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => {
-                                                        setSelectedAssessment(assessment);
-                                                        setAssessmentDialogOpen(true);
-                                                    }}
-                                                >
-                                                    <VisibilityIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="View Assessments">
-                                                <IconButton size="small">
-                                                    <AssessmentIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Stack>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                    </TableBody>
-                </Table>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={assessments.filter(assessment =>
-                    (!assessmentSearch ||
-                        (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
-                        (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
-                    ).length}
-                    rowsPerPage={assessmentsRowsPerPage}
-                    page={assessmentsPage}
-                    onPageChange={handleAssessmentsPageChange}
-                    onRowsPerPageChange={handleAssessmentsRowsPerPageChange}
-                />
-            </TableContainer>
-        </Box>
-    );
-
     // Sidebar - Now using extracted component
     const renderSidebar = () => (
         <AdminSidebar
@@ -1013,6 +752,9 @@ const DashboardAdmin = () => {
 
     // Post Interview Assessments
     const renderPostInterviewAssessments = () => <PostInterviewAssessments />;
+
+    // Skill Interview Assessments
+    const renderSkillInterviewAssessments = () => <SkillInterviewAssessments />;
 
     // Add this function inside DashboardAdmin component
     const handleDownloadExcel = async (endpoint: string, filename: string) => {
@@ -1111,8 +853,8 @@ const DashboardAdmin = () => {
                         <Box sx={{ width: '100%' }}>
                             {activeTab === 0 && renderDashboard()}
                             {activeTab === 1 && renderUsers()}
-                            {activeTab === 2 && renderAssessments()}
-                            {activeTab === 3 && renderPostInterviewAssessments()}
+                            {activeTab === 2 && renderPostInterviewAssessments()}
+                            {activeTab === 3 && renderSkillInterviewAssessments()}
                         </Box>
                     </Box>
                 </Box>
