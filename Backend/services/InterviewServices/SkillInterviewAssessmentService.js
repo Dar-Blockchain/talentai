@@ -1,6 +1,26 @@
 const SkillInterviewAssessment = require('../../models/SkillInterviewAssessmentModel');
 const Profile = require('../../models/ProfileModel');
 
+// ========== HELPER - Functions for score calculation ==========
+const getLevelFromScore = (score) => {
+  if (score < 20) return 1;
+  if (score < 40) return 2;
+  if (score < 60) return 3;
+  if (score < 80) return 4;
+  return 5;
+};
+
+const getExperienceLabel = (level) => {
+  const map = {
+    1: 'Entry Level',
+    2: 'Junior',
+    3: 'Mid Level',
+    4: 'Senior',
+    5: 'Expert',
+  };
+  return map[level] || 'Unknown Level';
+};
+
 // ========== CREATE ==========
 const createAssessment = async (data, rawInterviewData, userId) => {
   try {
@@ -23,22 +43,161 @@ const createAssessment = async (data, rawInterviewData, userId) => {
     console.log('Candidate ID from data:', candidateId);
     console.log('✅ Skill interview assessment created:', savedAssessment._id);
     
-    // If candidate exists, update profile
+    // If candidate exists, handle profile updates and remove previous assessments
     if (candidateId) {
-      const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
+      // Determine skill name from data (fallback to Unknown Skill)
+      const skillName = data.skill || 'Unknown Skill';
 
-      // Update profile with interview reference
-      const updatedProfile = await Profile.findByIdAndUpdate(
+      // Find any existing assessments for same candidate and same skill (exclude the newly saved one)
+      const previousAssessments = await SkillInterviewAssessment.find({
         candidateId,
-        { 
-          $inc: { quota: 1 }, 
-          $push: { interviewDetails: savedAssessment._id } 
-        },
-        { new: true }
-      );
+        skill: skillName,
+        _id: { $ne: savedAssessment._id }
+      }).select('_id');
 
-      if (updatedProfile) {
-        console.log(`Profile updated: Quota incremented to ${updatedProfile.quota}`);
+      const previousIds = previousAssessments.map(a => a._id);
+      const previousDeletedCount = previousIds.length;
+
+      if (previousDeletedCount > 0) {
+        // Delete previous assessments
+        await SkillInterviewAssessment.deleteMany({ _id: { $in: previousIds } });
+        console.log(`Deleted ${previousDeletedCount} previous assessment(s) for skill "${skillName}" and candidate ${candidateId}`);
+      }
+
+      // Calculate scores and levels
+      const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
+      const proficiencyLevel = getLevelFromScore(overallScore);
+      const experienceLevel = getExperienceLabel(proficiencyLevel);
+      
+      // Determine Levelconfirmed based on score: if score > 80%, use proficiencyLevel, else proficiencyLevel - 1
+      const levelconfirmedValue = overallScore > 80 ? proficiencyLevel : proficiencyLevel - 1;
+
+      // Update profile interviewDetails and quota.
+      // Note: MongoDB/Mongoose can raise a conflict when $push and $pull modify the same array in one update.
+      // To avoid that, perform $pull first (if needed), then $push/$inc in a separate update.
+      let updatedProfile = null;
+
+      if (previousDeletedCount > 0) {
+        // Remove references to deleted assessments first
+        await Profile.findByIdAndUpdate(candidateId, { $pull: { interviewDetails: { $in: previousIds } } });
+
+        // Then push the new assessment id. Do not increment quota for a replacement.
+        updatedProfile = await Profile.findByIdAndUpdate(
+          candidateId,
+          { $push: { interviewDetails: savedAssessment._id } },
+          { new: true }
+        );
+      } else {
+        // No previous assessments deleted: increment quota and push the interview reference
+        updatedProfile = await Profile.findByIdAndUpdate(
+          candidateId,
+          { $inc: { quota: 1 }, $push: { interviewDetails: savedAssessment._id } },
+          { new: true }
+        );
+      }
+
+      if (!updatedProfile) {
+        console.warn(`Profile with ID ${candidateId} not found`);
+        throw new Error(`Profile not found for candidate: ${candidateId}`);
+      }
+
+      console.log(`Profile updated: Quota incremented (if applicable), Interview added`);
+      console.log(`Updated profile quota: ${updatedProfile.quota}`);
+
+      // Handle skill type - manage technical vs soft skills
+      const skillType = data.skillType || 'technical';
+      
+      if (skillType === 'soft') {
+        const softSkill = {
+          name: skillName,
+          category: data.category || '',
+          proficiencyLevel: proficiencyLevel,
+          experienceLevel: experienceLevel,
+          ScoreTest: overallScore,
+          Levelconfirmed: levelconfirmedValue,
+        };
+
+        // Check if soft skill exists
+        const existingSoft = await Profile.findOne(
+          { _id: candidateId, 'softSkills.name': skillName },
+          { 'softSkills.$': 1 }
+        );
+
+        if (existingSoft && existingSoft.softSkills.length > 0) {
+          // Update existing soft skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            {
+              $set: {
+                'softSkills.$[elem].ScoreTest': overallScore,
+                'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+                'softSkills.$[elem].experienceLevel': experienceLevel,
+                'softSkills.$[elem].Levelconfirmed': levelconfirmedValue,
+                'softSkills.$[elem].updatedAt': new Date(),
+              },
+            },
+            {
+              arrayFilters: [{ 'elem.name': skillName }],
+              new: true,
+            }
+          );
+          console.log(`Soft skill "${skillName}" updated`);
+        } else {
+          // Add new soft skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            { $addToSet: { softSkills: { ...softSkill, createdAt: new Date(), updatedAt: new Date() } } },
+            { new: true }
+          );
+          console.log(`Soft skill "${skillName}" added`);
+        }
+      } else {
+        // Technical skill logic (default)
+        const technicalSkill = {
+          name: skillName,
+          category: data.category || '',
+          proficiencyLevel: proficiencyLevel,
+          experienceLevel: experienceLevel,
+          NumberTestPassed: 1,
+          ScoreTest: overallScore,
+          Levelconfirmed: levelconfirmedValue,
+        };
+
+        // Check if technical skill exists
+        const existingTech = await Profile.findOne(
+          { _id: candidateId, 'skills.name': skillName },
+          { 'skills.$': 1 }
+        );
+
+        if (existingTech && existingTech.skills.length > 0) {
+          // Update existing technical skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            {
+              $set: {
+                'skills.$[elem].ScoreTest': overallScore,
+                'skills.$[elem].proficiencyLevel': proficiencyLevel,
+                'skills.$[elem].experienceLevel': experienceLevel,
+                'skills.$[elem].NumberTestPassed': (existingTech.skills[0].NumberTestPassed || 0) + 1,
+                'skills.$[elem].Levelconfirmed': levelconfirmedValue,
+                'skills.$[elem].updatedAt': new Date(),
+              },
+            },
+            {
+              arrayFilters: [{ 'elem.name': skillName }],
+              new: true,
+            }
+          );
+          console.log(`Technical skill "${skillName}" updated`);
+        } else {
+          // Add new technical skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            { $addToSet: { skills: { ...technicalSkill, createdAt: new Date(), updatedAt: new Date() } } },
+            { new: true }
+          );
+          console.log(`Technical skill "${skillName}" added`);
+        }
       }
     }
 
