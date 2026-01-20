@@ -248,111 +248,121 @@ const userSlice = createSlice({
       if (state?.connectedUser?.profile?.quota !== undefined) {
         state.connectedUser.profile.quota = action.payload;
       }
-    }
+    },
+    updateProfileSkills(state, action: PayloadAction<string[]>) {
+      if (state?.connectedUser?.profile.skills !== null) {
+        state.connectedUser.profile.skills = action.payload;
+      }
+    },
+    updateProfileSoftSkill(state, action: PayloadAction<string[]>) {
+      if (state?.connectedUser?.profile.softSkills !== null) {
+        state.connectedUser.profile.softSkills = action.payload;
+      }
+    },
   },
-  extraReducers: (builder) => {
-    builder
-      //CREATE OR UPDATE PROFILE
-      .addCase(createOrUpdateProfile.pending, (state: UserState) => {
-        state.connectedUser.loading = true;
-        state.connectedUser.error = null;
-      })
-      .addCase(
-        createOrUpdateProfile.fulfilled,
-        (state: UserState, action: PayloadAction<any>) => {
-          state.connectedUser.loading = false;
-          state.connectedUser.profile = action.payload.profile;
-          state.connectedUser.companyMembership = action.payload.companyMembership;
-          state.connectedUser.user = action.payload.user;
-        }
-      )
-      .addCase(
-        createOrUpdateProfile.rejected,
-        (state: UserState) => {
-          state.connectedUser.loading = false;
-        }
-      )
-      //UPDATE PROFILE
-      .addCase(updateProfile.pending, (state: UserState) => {
-        state.connectedUser.loading = true;
-        state.connectedUser.error = null;
-      })
-      .addCase(
-        updateProfile.fulfilled,
-        (state: UserState, action: PayloadAction<any>) => {
-          state.connectedUser.loading = false;
-          state.connectedUser.profile = action.payload.profile;
-          state.connectedUser.companyMembership = action.payload.companyMembership;
-          state.connectedUser.user = action.payload.user;
-        }
-      )
-      .addCase(
-        updateProfile.rejected,
-        (state: UserState) => {
-          state.connectedUser.loading = false;
-        }
-      )
-      //UPLOAD PROFILE IMAGE
-      .addCase(uploadProfileImage.pending, (state: UserState) => {
-        state.connectedUser.loading = true;
-        state.connectedUser.error = null;
-      })
-      .addCase(
-        uploadProfileImage.fulfilled,
-        (state: UserState, action: PayloadAction<any>) => {
-          state.connectedUser.loading = false;
-          state.connectedUser.profile = action.payload.profile;
-          state.connectedUser.user = action.payload.user;
-        }
-      )
-      .addCase(
-        uploadProfileImage.rejected,
-        (state: UserState) => {
-          state.connectedUser.loading = false;
-        }
-      )
-      //GET MY PROFILE
-      .addCase(getMyProfile.pending, (state: UserState) => {
-        state.connectedUser.loading = true;
-        state.connectedUser.error = null;
-      })
-      .addCase(
-        getMyProfile.fulfilled,
-        (state: UserState, action: PayloadAction<any>) => {
-          state.connectedUser.loading = false;
-          state.connectedUser.profile = action.payload.profile;
-          state.connectedUser.companyMembership = action.payload.companyMembership;
-          state.connectedUser.user = action.payload.user;
-        }
-      )
-      .addCase(
-        getMyProfile.rejected,
-        (state: UserState) => {
-          state.connectedUser.loading = false;
-        }
-      )
-      //GET PROFILE BY ID
-      .addCase(getProfileById.pending, (state: UserState) => {
-        state.targetUser.loading = true;
-        state.targetUser.error = null;
-      })
-      .addCase(
-        getProfileById.fulfilled,
-        (state: UserState, action: PayloadAction<any>) => {
-          state.targetUser.loading = false;
-          state.targetUser.profile = action.payload.profile;
-          state.targetUser.user = action.payload.user;
-        }
-      )
-      .addCase(
-        getProfileById.rejected,
-        (state: UserState, action: PayloadAction<any>) => {
-          state.targetUser.loading = false;
-          state.targetUser.error = action.payload;
-        }
-      );
-  },
-});
+    extraReducers: (builder) => {
+      builder
+        //CREATE OR UPDATE PROFILE
+        .addCase(createOrUpdateProfile.pending, (state: UserState) => {
+          state.connectedUser.loading = true;
+          state.connectedUser.error = null;
+        })
+        .addCase(
+          createOrUpdateProfile.fulfilled,
+          (state: UserState, action: PayloadAction<any>) => {
+            state.connectedUser.loading = false;
+            state.connectedUser.profile = action.payload.profile;
+            state.connectedUser.companyMembership = action.payload.companyMembership;
+            state.connectedUser.user = action.payload.user;
+          }
+        )
+        .addCase(
+          createOrUpdateProfile.rejected,
+          (state: UserState) => {
+            state.connectedUser.loading = false;
+          }
+        )
+        //UPDATE PROFILE
+        .addCase(updateProfile.pending, (state: UserState) => {
+          state.connectedUser.loading = true;
+          state.connectedUser.error = null;
+        })
+        .addCase(
+          updateProfile.fulfilled,
+          (state: UserState, action: PayloadAction<any>) => {
+            state.connectedUser.loading = false;
+            state.connectedUser.profile = action.payload.profile;
+            state.connectedUser.companyMembership = action.payload.companyMembership;
+            state.connectedUser.user = action.payload.user;
+          }
+        )
+        .addCase(
+          updateProfile.rejected,
+          (state: UserState) => {
+            state.connectedUser.loading = false;
+          }
+        )
+        //UPLOAD PROFILE IMAGE
+        .addCase(uploadProfileImage.pending, (state: UserState) => {
+          state.connectedUser.loading = true;
+          state.connectedUser.error = null;
+        })
+        .addCase(
+          uploadProfileImage.fulfilled,
+          (state: UserState, action: PayloadAction<any>) => {
+            state.connectedUser.loading = false;
+            state.connectedUser.profile = action.payload.profile;
+            state.connectedUser.user = action.payload.user;
+          }
+        )
+        .addCase(
+          uploadProfileImage.rejected,
+          (state: UserState) => {
+            state.connectedUser.loading = false;
+          }
+        )
+        //GET MY PROFILE
+        .addCase(getMyProfile.pending, (state: UserState) => {
+          state.connectedUser.loading = true;
+          state.connectedUser.error = null;
+        })
+        .addCase(
+          getMyProfile.fulfilled,
+          (state: UserState, action: PayloadAction<any>) => {
+            state.connectedUser.loading = false;
+            state.connectedUser.profile = action.payload.profile;
+            state.connectedUser.companyMembership = action.payload.companyMembership;
+            state.connectedUser.user = action.payload.user;
+          }
+        )
+        .addCase(
+          getMyProfile.rejected,
+          (state: UserState) => {
+            state.connectedUser.loading = false;
+          }
+        )
+        //GET PROFILE BY ID
+        .addCase(getProfileById.pending, (state: UserState) => {
+          state.targetUser.loading = true;
+          state.targetUser.error = null;
+        })
+        .addCase(
+          getProfileById.fulfilled,
+          (state: UserState, action: PayloadAction<any>) => {
+            state.targetUser.loading = false;
+            state.targetUser.profile = action.payload.profile;
+            state.targetUser.user = action.payload.user;
+          }
+        )
+        .addCase(
+          getProfileById.rejected,
+          (state: UserState, action: PayloadAction<any>) => {
+            state.targetUser.loading = false;
+            state.targetUser.error = action.payload;
+          }
+        );
+    },
+  });
 
 export const {
   setConnectedUser,
@@ -362,6 +372,8 @@ export const {
   setUserType,
   setCurrentSpace,
   updateProfileQuota,
+  updateProfileSoftSkill,
+  updateProfileSkills,
 } = userSlice.actions;
 
 export default userSlice.reducer;

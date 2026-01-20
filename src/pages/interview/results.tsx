@@ -10,7 +10,7 @@ import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
-import { updateProfileQuota } from '@/store/slices/userSlice';
+import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
 import { saveInterviewAssessment } from '@/store/slices/interviewSlice';
 import PageContainer from '@/components/layout/PageContainer';
@@ -69,7 +69,7 @@ export default function InterviewResults() {
       const role = urlParams.get('role') || localStorage.getItem('interview_role');
       const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
       const proficiency = urlParams.get('proficiency') || localStorage.getItem('interview_proficiency');
-
+      const skillType = localStorage.getItem('interview_type');
       // Fix confidence scores in coverage areas before sending
       if (parsedData?.finalReport?.coverage?.areas) {
         const areas = parsedData.finalReport.coverage.areas;
@@ -134,6 +134,7 @@ export default function InterviewResults() {
         const actionResult = await dispatch(saveInterviewAssessment({
           skill: effectiveSkill || 'General',
           proficiency: proficiency || 'Mid Level',
+          skillType: skillType,
           interviewData: parsedData
         }));
 
@@ -162,7 +163,14 @@ export default function InterviewResults() {
         console.log('🔄 [Save] Updating profile quota:', result.data.candidateId.quota);
         dispatch(updateProfileQuota(result.data.candidateId.quota));
       }
-
+      if(result.data?.candidateId?.softSkills) {
+        console.log('🔄 [Save] Updating profile soft skills:', result.data.candidateId.softSkills);
+        dispatch(updateProfileSoftSkill(result.data.candidateId.softSkills));
+      }
+      if (result.data?.candidateId?.skills) {
+        console.log('🔄 [Save] Updating profile skills:', result.data.candidateId.skills);
+        dispatch(updateProfileSkills(result.data.candidateId.skills));
+      }
       if (result.data?._id) {
         localStorage.setItem('last_interview_id', result.data._id);
       }
