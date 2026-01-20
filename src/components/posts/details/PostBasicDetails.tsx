@@ -382,7 +382,7 @@ const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
                 skill.type === "soft"
                   ? getSoftSkillLevelLabel(Number(skill.level) || 1)
                   : getLevelFromNumber(skill.level || 1);
-              const label = `${skill.name} (${level}) - ${skill.importance}%`;
+              const label = `${skill.name} (${skill.level})`;
               return <SkillChip key={index} label={label} />;
             })}
           </Box>
