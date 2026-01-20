@@ -40,29 +40,22 @@ import { RootState } from "@/store/store";
 
 const INTERVIEW_TYPES = [
   {
-    label: "Post Interview",
-    value: "post_interview",
+    label: "Applications",
+    value: "application",
     icon: <AssignmentTurnedInIcon />,
     color: "#667eea",
   },
   {
-    label: "Onboarding",
-    value: "onboarding",
+    label: "Technical Skills",
+    value: "technical",
     icon: <CalendarTodayIcon />,
     color: "#f093fb",
-  },
-  { label: "HR", value: "hr", icon: <PersonOutlineIcon />, color: "#4facfe" },
-  {
-    label: "Technical",
-    value: "skill",
-    icon: <TrendingUpIcon />,
-    color: "#43e97b",
   },
   {
     label: "Soft Skills",
     value: "soft",
-    icon: <PsychologyIcon />,
-    color: "#fa709a",
+    icon: <TrendingUpIcon />,
+    color: "#43e97b",
   },
 ];
 
@@ -162,11 +155,9 @@ export default function InterviewDetailsModern() {
   };
 
   const normalizedTab = useMemo(() => {
-    if (tab === "skill") return "skill";
+    if (tab === "technical") return "technical";
     if (tab === "soft") return "soft";
-    if (tab === "hr") return "hr";
-    if (tab === "onboarding") return "onboarding";
-    return "post_interview";
+    return "application";
   }, [tab]);
 
   const getScoreColor = (score: number) => {
@@ -229,10 +220,12 @@ export default function InterviewDetailsModern() {
         <Box
           sx={{
             mb: 4,
-            backgroundColor: "#f8f9fa",
-            borderRadius: 3,
-            p: 2,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            backgroundColor: "rgba(250, 246, 255, 1)",
+            borderRadius: "12px",
+            px: 1,
+            height: "60px",
+            display: "flex",
+            alignItems: "center"
           }}
         >
           <Tabs
@@ -241,23 +234,25 @@ export default function InterviewDetailsModern() {
             variant="scrollable"
             scrollButtons="auto"
             sx={{
+              width: "100%",
               "& .MuiTab-root": {
+                flex: 1,
+                mr: 1,
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "1rem",
-                borderRadius: 3,
-                minHeight: 48,
-                mr: 1,
-                color: "#6b7280",
+                fontSize: "16px",
+                borderRadius: "12px",
+                height: 45,
+                color: "rgba(189, 133, 255, 1)",
                 transition: "all 0.3s ease",
+                backgroundColor: "rgba(244, 235, 255, 1)",
                 "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.8)",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  backgroundColor: "rgba(189, 133, 255, 1)",
+                  color: "white"
                 },
                 "&.Mui-selected": {
                   color: "white",
-                  backgroundColor: "#667eea",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+                  backgroundColor: "rgba(189, 133, 255, 1)",
                 },
               },
               "& .MuiTabs-indicator": {
@@ -271,8 +266,7 @@ export default function InterviewDetailsModern() {
                 value={t.value}
                 label={
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    {t.icon}
-                    <span>{t.label}</span>
+                    {t.label}
                   </Stack>
                 }
               />
@@ -303,19 +297,9 @@ export default function InterviewDetailsModern() {
               Loading your interview data...
             </Typography>
           </Box>
-        ) : error ? (
-          <Alert
-            severity="error"
-            sx={{
-              borderRadius: 3,
-              boxShadow: "0 4px 12px rgba(244, 67, 54, 0.15)",
-            }}
-          >
-            {error}
-          </Alert>
-        ) : (
+        ) :  (
           <>
-            {normalizedTab === "post_interview" ? (
+            {normalizedTab === "application" ? (
               <PostInterviewTab data={data} loading={loading} error={error} />
             ) : (
               <Fade in timeout={500}>

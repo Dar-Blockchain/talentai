@@ -21,6 +21,7 @@ import {
   Logout as LogoutIcon,
   Close as CloseIcon,
   QuestionAnswer as InterviewIcon,
+  Psychology as SkillIcon,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 280;
@@ -74,8 +75,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const menuItems = [
     { id: 0, label: 'Dashboard', icon: <DashboardIcon /> },
     { id: 1, label: 'Users', icon: <PeopleIcon /> },
-    { id: 2, label: 'Assessments', icon: <AssessmentIcon /> },
-    { id: 3, label: 'Post Interview', icon: <InterviewIcon /> },
+    { id: 2, label: 'Post Interview', icon: <InterviewIcon /> },
+    { id: 3, label: 'Skill Interview', icon: <SkillIcon /> },
   ];
 
   return (

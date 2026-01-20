@@ -8,6 +8,7 @@ import CandidateEngagementTasks from "@/components/dashboard-candidate/Candidate
 import RoleGuard from "@/components/guards/RoleGuard";
 import CandidateSkills from "@/components/dashboard-candidate/candidate-skills/CandidateSkills";
 import dynamic from 'next/dynamic';
+import CandidateInterviews from "@/components/dashboard-candidate/candidate-interviews/CandidateInterviews";
 
 const DashboardCandidate: React.FC = () => {
 
@@ -19,7 +20,7 @@ const DashboardCandidate: React.FC = () => {
         <CandidateSkills/>
         <CandidateEngagementTasks />
         <RecommendedOpportunities />
-        <InterviewDetailsTabs />
+        <CandidateInterviews />
       </PageContainer>
     </RoleGuard>
   );
