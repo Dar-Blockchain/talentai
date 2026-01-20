@@ -1,23 +1,70 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 
-export interface InterviewAssessment {
+export interface SkillInterviewAssessment {
   _id: string;
   id?: string;
-  type: string;
-  metadata?: any;
-  interviewData?: any;
-  skillDetails?: any[];
-  post?: any;
+  skill: string;
+  proficiency: string;
   candidateId?: any;
+  interviewerId?: any;
+  interviewData?: {
+    finalReport?: {
+      summary?: string;
+      coverage?: {
+        overall: number;
+        areas?: {
+          technical_depth?: AreaData;
+          problem_approach?: AreaData;
+          learning_ability?: AreaData;
+          practical_experience?: AreaData;
+        };
+        completedAreas?: string[];
+        nextRecommendedArea?: string | null;
+        lastUpdated?: string;
+      };
+      recommendations?: string[];
+      scores?: Record<string, number>;
+      timestamp?: string;
+    };
+    analytics?: {
+      duration?: number;
+      messageCount?: number;
+      silenceEvents?: number;
+      coveragePercentage?: number;
+      completedAreas?: number;
+      totalAreas?: number;
+      averageResponseLength?: number;
+      interactionStyle?: string;
+    };
+    sessionId?: string;
+    interviewType?: string;
+    timestamp?: string;
+  };
+  exportedAt?: string;
+  type?: string;
+  role?: string;
+  category?: string;
   createdAt?: string;
   updatedAt?: string;
-  overallScore?: number;
   [key: string]: any;
 }
 
+interface AreaData {
+  percentage: number;
+  indicators: Array<{
+    name: string;
+    covered: boolean;
+    evidence: string[];
+    quality: number;
+  }>;
+  weight: number;
+  depth?: string;
+  completed: boolean;
+}
+
 interface InterviewState {
-  data: InterviewAssessment[];
+  data: SkillInterviewAssessment[];
   loading: boolean;
   error: string | null;
   total: number;
@@ -37,27 +84,27 @@ const initialState: InterviewState = {
 };
 
 /**
- * Save interview assessment (HR interviews)
+ * Save skill interview assessment
  */
 export const saveInterviewAssessment = createAsyncThunk<
   any,
-  { metadata: any; interviewData: any },
+  { skill: string; proficiency: string; interviewData: any; skillType?: string },
   { rejectValue: string }
 >(
   'interview/saveAssessment',
-  async ({ metadata, interviewData }, { rejectWithValue }) => {
+  async ({ skill, proficiency, interviewData, skillType }, { rejectWithValue }) => {
     const token = localStorage.getItem('api_token');
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}SkillInterviewAssessment/`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ metadata, interviewData }),
+          body: JSON.stringify({ skill, proficiency, interviewData, skillType }),
         }
       );
 
@@ -75,10 +122,10 @@ export const saveInterviewAssessment = createAsyncThunk<
 );
 
 /**
- * Fetch interview assessments by type
+ * Fetch skill interview assessments
  */
 export const fetchInterviewAssessments = createAsyncThunk<
-  { results: InterviewAssessment[]; total: number },
+  { results: SkillInterviewAssessment[]; total: number },
   { type: string; page: number; limit: number; candidateId: string },
   { rejectValue: string }
 >(
@@ -89,7 +136,7 @@ export const fetchInterviewAssessments = createAsyncThunk<
     const token = localStorage.getItem('api_token');
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=${page + 1}&limit=${limit}&type=${type}&candidateId=${candidateId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}SkillInterviewAssessment?page=${page + 1}&limit=${limit}&candidateId=${candidateId}`;
 
       console.log('📡 [InterviewSlice] Making HTTP request to:', url);
 

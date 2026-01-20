@@ -89,7 +89,7 @@ export default function InterviewDetailsModern() {
       try {
         const token = localStorage.getItem("api_token");
         const realProfileId = profileIdRef.current;
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=${currentPage}&limit=${limit}&type=${type}&candidateId=${realProfileId}`;
+        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}SkillInterviewAssessment?page=${currentPage}&limit=${limit}&candidateId=${realProfileId}`;
 
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},

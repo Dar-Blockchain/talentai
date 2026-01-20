@@ -35,11 +35,9 @@ import {
 
 // Types
 import { User, UserFilters, FetchUsersParams, FetchUsersResponse } from '../../types/admin';
-
 // Hooks
 import { usePagination } from '../../hooks/usePagination';
 import { useAuthToken } from '../../hooks/useAuthToken';
-
 // Utils
 import { getRoleColor } from '../../utils/colorMappings';
 
