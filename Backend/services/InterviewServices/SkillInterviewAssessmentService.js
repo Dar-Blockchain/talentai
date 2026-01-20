@@ -84,7 +84,7 @@ const createAssessment = async (data, rawInterviewData, userId) => {
         // Then push the new assessment id. Do not increment quota for a replacement.
         updatedProfile = await Profile.findByIdAndUpdate(
           candidateId,
-          { $push: { interviewDetails: savedAssessment._id } },
+          { $inc: { quota: 1 },$push: { interviewDetails: savedAssessment._id } },
           { new: true }
         );
       } else {
