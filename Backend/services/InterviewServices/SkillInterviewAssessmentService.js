@@ -279,10 +279,20 @@ const getGlobalStatistics = async () => {
       }
     ]);
 
+    const assessmentsBySkillType = await SkillInterviewAssessment.aggregate([
+      {
+        $group: {
+          _id: '$skillType',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
     return {
       totalAssessments,
       averageScore: averageScore[0]?.avgScore || 0,
-      byInterviewType: assessmentsByInterviewType
+      byInterviewType: assessmentsByInterviewType,
+      bySkillType: assessmentsBySkillType
     };
   } catch (error) {
     console.error('❌ Error retrieving statistics:', error.message);
@@ -296,6 +306,10 @@ const buildQuery = (filters) => {
 
   if (filters.interviewType) {
     query['interviewData.interviewType'] = filters.interviewType;
+  }
+
+  if (filters.skillType) {
+    query.skillType = filters.skillType;
   }
 
   if (filters.candidateId) {
