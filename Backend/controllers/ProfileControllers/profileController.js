@@ -97,11 +97,6 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       return res.status(400).json({ message: "Company name is required" });
     }
 
-    // Validate employmentType if provided
-    if (profileData.employmentType && !["Remote", "Hybrid", "On-site"].includes(profileData.employmentType)) {
-      return res.status(400).json({ message: "Invalid employment type. Must be 'Remote', 'Hybrid', or 'On-site'" });
-    }
-
     // Create or update company profile with employment type support
     const result = await profileService.createOrUpdateCompanyProfile(
       userId,
