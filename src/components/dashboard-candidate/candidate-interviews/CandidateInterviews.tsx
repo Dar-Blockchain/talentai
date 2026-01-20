@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Tabs, Tab, Typography, Stack } from "@mui/material";
 import dynamic from "next/dynamic";
 import PostInterviews from "./PostInterviews";
+import SkillInterviews from "./SkillInterviews";
 
 const INTERVIEW_TYPES = [
   {
@@ -117,8 +118,8 @@ const CandidateInterviews = () => {
           </Tabs>
         </Box>
         {tab === "application" && <PostInterviews/>}
-        {tab === "technical" && <PostInterviews/>}
-        {tab === "soft" && <PostInterviews/>}
+        {tab === "technical" && <SkillInterviews skillType="technical" />}
+        {tab === "soft" && <SkillInterviews skillType="soft" />}
       </Box>
     </Box>
   );
