@@ -29,36 +29,36 @@ router.post('/', create);
 // ⚠️ IMPORTANT: Specific routes must come BEFORE /:id to avoid conflicts
 
 // GET /api/skill-interview-assessments/stats/global
-router.get('/stats/global', getStatistics);
+//router.get('/stats/global', getStatistics);
 
 // GET /api/skill-interview-assessments/session/:sessionId
-router.get('/session/:sessionId', getBySessionId);
+//router.get('/session/:sessionId', getBySessionId);
 
 // GET /api/skill-interview-assessments/candidate/:candidateId
-router.get('/candidate/:candidateId', getByCandidate);
+//router.get('/candidate/:candidateId', getByCandidate);
 
 // GET /api/skill-interview-assessments/interviewer/:interviewerId
-router.get('/interviewer/:interviewerId', getByInterviewer);
+//router.get('/interviewer/:interviewerId', getByInterviewer);
 
 // GET /api/skill-interview-assessments/:id/summary
-router.get('/:id/summary', getSummary);
+//router.get('/:id/summary', getSummary);
 
 // GET /api/skill-interview-assessments/:id
-router.get('/:id', getById);
+//router.get('/:id', getById);
 
 // GET /api/skill-interview-assessments (must be last among GET routes)
 // Query params: page, limit, interviewType, candidateId, interviewerId
-router.get('/', getAll);
+//router.get('/', getAll);
 
 // ========== UPDATE ==========
 // PUT /api/skill-interview-assessments/:id
-router.put('/:id', update);
+//router.put('/:id', update);
 
 // PATCH /api/skill-interview-assessments/:id/archive
-router.patch('/:id/archive', archive);
+//router.patch('/:id/archive', archive);
 
 // ========== DELETE ==========
 // DELETE /api/skill-interview-assessments/:id
-router.delete('/:id', deleteAssessment);
+//router.delete('/:id', deleteAssessment);
 
 module.exports = router;
