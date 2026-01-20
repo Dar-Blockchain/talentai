@@ -245,14 +245,14 @@ const userSlice = createSlice({
       state.currentSpace = action.payload;
     },
     updateProfileQuota(state, action: PayloadAction<number>) {
-      if(state?.connectedUser?.profile?.quota){
+      if (state?.connectedUser?.profile?.quota !== undefined) {
         state.connectedUser.profile.quota = action.payload;
       }
     }
   },
   extraReducers: (builder) => {
     builder
-    //CREATE OR UPDATE PROFILE
+      //CREATE OR UPDATE PROFILE
       .addCase(createOrUpdateProfile.pending, (state: UserState) => {
         state.connectedUser.loading = true;
         state.connectedUser.error = null;
@@ -263,7 +263,7 @@ const userSlice = createSlice({
           state.connectedUser.loading = false;
           state.connectedUser.profile = action.payload.profile;
           state.connectedUser.companyMembership = action.payload.companyMembership;
-          state.connectedUser.user = action.payload.user; 
+          state.connectedUser.user = action.payload.user;
         }
       )
       .addCase(
@@ -283,7 +283,7 @@ const userSlice = createSlice({
           state.connectedUser.loading = false;
           state.connectedUser.profile = action.payload.profile;
           state.connectedUser.companyMembership = action.payload.companyMembership;
-          state.connectedUser.user = action.payload.user; 
+          state.connectedUser.user = action.payload.user;
         }
       )
       .addCase(
@@ -322,7 +322,7 @@ const userSlice = createSlice({
           state.connectedUser.loading = false;
           state.connectedUser.profile = action.payload.profile;
           state.connectedUser.companyMembership = action.payload.companyMembership;
-          state.connectedUser.user = action.payload.user; 
+          state.connectedUser.user = action.payload.user;
         }
       )
       .addCase(
