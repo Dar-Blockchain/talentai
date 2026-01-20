@@ -7,6 +7,8 @@ import HourglassIcon from "@/components/icons/HourglassIcon";
 import { ArrowForward } from "@mui/icons-material";
 import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import CaseOutlineIcon from "@/components/icons/CaseOutlineIcon";
+import checkTestIcon from "@/components/icons/checkTestIcon";
+import CheckTestIcon from "@/components/icons/checkTestIcon";
 const PostInterviews = () => {
   return (
     <Box>
@@ -187,6 +189,104 @@ const PostInterviews = () => {
           </Button>
         </Box>
       </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+          border: "1px solid rgba(211, 224, 245, 1)",
+          boxShadow: "0px 2px 18px 0px rgba(24, 25, 28, 0.03)",
+          borderRadius: "8px",
+          mt: 2,
+        }}
+      >
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontSize: "17px",
+                lineHeight: "28px",
+                color: "rgba(62, 70, 82, 1)",
+              }}
+            >
+              Technical Support Specialist
+            </Typography>
+
+            {/* Completed status */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <CheckTestIcon sx={{ color: "#3EB489", fontSize: "13.5px" }}
+              />
+              <Typography
+                sx={{
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "18px",
+                  color: "rgba(62, 180, 137, 1)",
+                }}
+              >
+                Completed
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <CaseOutlineIcon
+                sx={{ fontSize: "12px", color: "rgba(84, 98, 116, 1)" }}
+              />
+              <Typography
+                sx={{
+                  fontWeight: 400,
+                  fontSize: "11px",
+                  lineHeight: "28px",
+                  color: "rgba(84, 98, 116, 1)",
+                }}
+              >
+                Dar Blockchain
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <TimeOutlineIcon />
+              <Typography
+                sx={{
+                  fontWeight: 400,
+                  fontSize: "11px",
+                  lineHeight: "28px",
+                  color: "rgba(84, 98, 116, 1)",
+                }}
+              >
+                1 week ago
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* View Details button */}
+        <Button
+          variant="outlined"
+          sx={{
+            width: "190px",
+            borderColor: "rgba(211, 224, 245, 1)",
+            color: "rgba(62, 70, 82, 1)",
+            background: "#54627414",
+            fontWeight: 500,
+            borderRadius: "38px",
+            px: 3,
+            height: "42px",
+            textTransform: "none",
+            fontSize: "0.875rem",
+            "&:hover": {
+              backgroundColor: "rgba(211, 224, 245, 0.3)",
+            },
+          }}
+        >
+          View Details
+        </Button>
+      </Box>
+
     </Box>
   );
 };

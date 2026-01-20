@@ -157,8 +157,9 @@ export default function InterviewResults() {
 
         result = actionResult.payload;
       }
-
+      console.log('✅ [Save] Interview saved successfully:', result.data?.candidateId?.quota);
       if (result.data?.candidateId?.quota) {
+        console.log('🔄 [Save] Updating profile quota:', result.data.candidateId.quota);
         dispatch(updateProfileQuota(result.data.candidateId.quota));
       }
 

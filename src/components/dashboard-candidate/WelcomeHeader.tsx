@@ -25,6 +25,7 @@ const WelcomeHeader = () => {
   const { user, profile } = useSelector(
     (state: RootState) => state.user.connectedUser
   );
+  console.log("👤 [WelcomeHeader] User Profile:", profile);
   const quota = profile?.quota || 0;
   const [testModalOpen, setTestModalOpen] = useState(false);
 
@@ -262,6 +263,7 @@ const WelcomeHeader = () => {
                 lineHeight: "18px",
               }}
             >
+              
               {`${quota || 0}/5`}
             </Typography>
           </Tooltip>
