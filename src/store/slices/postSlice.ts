@@ -780,7 +780,9 @@ const postSlice = createSlice({
         state.postStepsError = null;
         if (action.payload.data) {
           state.steps = action.payload.data;
-          state.currentJob.post_Steps = action.payload.data;
+          if (state.currentJob) {
+            state.currentJob.post_Steps = action.payload.data;
+          }
         }
       })
       .addCase(postRecruitmentSteps.rejected, (state, action) => {
