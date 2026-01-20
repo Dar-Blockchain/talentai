@@ -96,7 +96,7 @@ const profileSchema = new mongoose.Schema(
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
     interviewDetails: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "InterviewAssessment" },
+      { type: mongoose.Schema.Types.ObjectId, ref: "SkillInterviewAssessment" },
     ],
 
     // ========== COMPANY SPECIFIC FIELDS ==========
