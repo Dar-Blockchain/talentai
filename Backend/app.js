@@ -22,6 +22,7 @@ const socket = require('./socket');
 const { initializeAgenda } = require('./services/Agent&AgendaServices/agendaService');
 const intelligentInterviewService = require('./services/intelligentInterviewService');
 const intelligentInterviewController = require('./controllers/intelligentInterviewController');
+const chatSocketHandler = require('./controllers/ChatControllers/chatSocketHandler');
 
 // Auto-load CRON jobs
 require('./cron/resetQuota');
@@ -93,8 +94,14 @@ const initializeApp = async () => {
       logger.info(`API Documentation: http://localhost:${port}/api/docs`);
       logger.info(`WebSocket endpoint: ws://172.23.207.114:${port}/socket.io/`);
 
-      // Step 8: Initialize WebSocket interview namespace
-      logger.section('Initializing interview WebSocket namespace...');
+      // Step 8: Initialize WebSocket namespaces
+      logger.section('Initializing WebSocket namespaces...');
+
+      // Initialize chat namespace
+      chatSocketHandler.initializeChatNamespace(io);
+      logger.success('Chat namespace /chat initialized and ready');
+
+      // Initialize interview namespace
       intelligentInterviewController.initializeHandlers(io);
       logger.success('Interview namespace /interview initialized and ready');
       logger.info('💡 Hedera clients will initialize on first use (lazy loading)');

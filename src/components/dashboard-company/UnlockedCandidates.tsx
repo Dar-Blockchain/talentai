@@ -9,6 +9,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
+import ChatIcon from "@mui/icons-material/Chat";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import {
@@ -19,6 +20,9 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { ArrowForward, ArrowBack } from "@mui/icons-material";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useRouter } from "next/router";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -58,9 +62,13 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
   companyUser,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
   const { loading, error, candidates } = useSelector(
     (state: RootState) => state.candidate.unlockedData
   );
+
+  // State for tracking which candidate is being contacted
+  const [contactingCandidateId, setContactingCandidateId] = useState<string | null>(null);
 
   // Get user permissions
   const userId = companyUser?._id;
@@ -69,6 +77,51 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
 
   // Get the actual permission value from the hook
   const canContactCandidates = hasPermission('canContactCandidates');
+
+  // Handler to open/create conversation with candidate
+  const handleContactCandidate = async (candidateId: string) => {
+    if (!companyUser?._id || !candidateId) {
+      toast.error("Unable to start conversation. Please try again.");
+      return;
+    }
+
+    setContactingCandidateId(candidateId);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in to contact candidates.");
+        return;
+      }
+
+      // Call API to find or create conversation
+      // Note: companyId should be the user ID (companyUser._id), not the profile ID
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations`,
+        {
+          candidateId: candidateId,
+          companyId: companyUser._id,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success && response.data.data?._id) {
+        // Navigate to the conversation
+        router.push(`/chat/${response.data.data._id}`);
+      } else {
+        toast.error("Failed to create conversation. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("Error creating conversation:", err);
+      toast.error(
+        err.response?.data?.message || "Failed to start conversation. Please try again."
+      );
+    } finally {
+      setContactingCandidateId(null);
+    }
+  };
 
   // Debug logging
   useEffect(() => {
@@ -415,6 +468,15 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
                 <Button
                   variant="outlined"
                   fullWidth
+                  onClick={() => handleContactCandidate(candidate?.idCandidate)}
+                  disabled={contactingCandidateId === candidate?.idCandidate}
+                  startIcon={
+                    contactingCandidateId === candidate?.idCandidate ? (
+                      <CircularProgress size={16} sx={{ color: "white" }} />
+                    ) : (
+                      <ChatIcon sx={{ fontSize: 18 }} />
+                    )
+                  }
                   sx={{
                     height: "42px",
                     maxWidth: "200px",
@@ -430,9 +492,15 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
                     "&:hover": {
                       backgroundColor: "rgba(224, 154, 16, 0.8)",
                     },
+                    "&:disabled": {
+                      backgroundColor: "rgba(224, 154, 16, 0.6)",
+                      color: "white",
+                    },
                   }}
                 >
-                  Contact Candidate
+                  {contactingCandidateId === candidate?.idCandidate
+                    ? "Opening..."
+                    : "Contact Candidate"}
                 </Button>
               ) : !loadingPermissions && !canContactCandidates ? (
                 <Tooltip
