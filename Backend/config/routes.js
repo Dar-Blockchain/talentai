@@ -61,7 +61,7 @@ function registerRoutes(app) {
   // app.use('/interviewDetails', interviewDetailsRouter);
   //app.use('/InterviewAssessment', InterviewAssessmentRoutes);
   app.use('/SkillInterviewAssessment', SkillInterviewAssessmentRoutes);
-  app.use('/post-interview-assessment', postInterviewAssessmentRouter);
+  app.use('/postInterviewAssessment', postInterviewAssessmentRouter);
 
   // Posts & Jobs
   app.use('/linkedinPost', linkedinPostRouter);
