@@ -8,7 +8,6 @@ import {
   Button,
   Box,
   Typography,
-  Paper,
   Avatar,
   IconButton,
   CircularProgress,
@@ -32,6 +31,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import { toast } from 'react-toastify';
+import Header from '@/components/layout/Header';
 
 interface Message {
   _id: string;
@@ -280,14 +280,14 @@ const ConversationPage = () => {
     const phonePattern = /(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}|\d{10,}/;
 
     if (emailPattern.test(newMessage)) {
-      toast.error('🔒 For your security, sharing email addresses is not allowed. Please keep all communications within the platform to protect both parties.', {
+      toast.error('For your security, sharing email addresses is not allowed. Please keep all communications within the platform.', {
         autoClose: 5000,
       });
       return;
     }
 
     if (phonePattern.test(newMessage)) {
-      toast.error('🔒 For your security, sharing phone numbers is not allowed. Please keep all communications within the platform to protect both parties.', {
+      toast.error('For your security, sharing phone numbers is not allowed. Please keep all communications within the platform.', {
         autoClose: 5000,
       });
       return;
@@ -341,7 +341,7 @@ const ConversationPage = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -422,488 +422,613 @@ const ConversationPage = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          backgroundColor: 'rgba(251, 254, 255, 1)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <CircularProgress sx={{ color: '#8310FF' }} />
+      </Box>
     );
   }
 
   if (!conversation) {
     return (
-      <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-        <Typography variant="h6" sx={{ color: '#64748b' }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          backgroundColor: 'rgba(251, 254, 255, 1)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            backgroundColor: 'rgba(131, 16, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 2,
+          }}
+        >
+          <ChatIcon sx={{ fontSize: 40, color: '#8310FF' }} />
+        </Box>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: '#000' }}>
           Conversation not found
         </Typography>
-        <Button onClick={() => router.push('/chat')} sx={{ color: '#8310FF' }}>
+        <Button
+          onClick={() => router.push('/chat')}
+          sx={{
+            color: '#8310FF',
+            fontWeight: 600,
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: 'rgba(131, 16, 255, 0.08)',
+            },
+          }}
+        >
           Back to Messages
         </Button>
-      </Container>
+      </Box>
     );
   }
 
   const otherUser = getOtherParticipant(conversation);
 
   return (
-    <Container
-      maxWidth="xl"
+    <Box
       sx={{
-        py: 4,
-        height: 'calc(100vh - 80px)',
-        display: 'flex',
-        gap: 3,
+        minHeight: '100vh',
+        backgroundColor: 'rgba(251, 254, 255, 1)',
       }}
     >
-      {/* Left Sidebar - Conversations List */}
-      <Paper
-        elevation={2}
-        sx={{
-          width: '380px',
-          borderRadius: 4,
-          overflow: 'hidden',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%)',
-        }}
-      >
-        {/* Sidebar Header */}
+      <Header />
+
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* Page Header */}
         <Box
           sx={{
-            p: 3.5,
-            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-            background: 'linear-gradient(135deg, #8310FF 0%, #9333EA 100%)',
-            color: 'white',
-          }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, letterSpacing: '-0.5px' }}>
-            Messages
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.9, fontWeight: 500 }}>
-            {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
-          </Typography>
-        </Box>
-
-        {/* Conversations List */}
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          {conversations.length === 0 ? (
-            <Box
-              sx={{
-                p: 8,
-                textAlign: 'center',
-              }}
-            >
-              <ChatIcon sx={{ fontSize: 64, color: '#cbd5e1', mb: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                No conversations yet
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#64748b' }}>
-                Start chatting with candidates
-              </Typography>
-            </Box>
-          ) : (
-            <List sx={{ p: 0 }}>
-              {conversations.map((conv, index) => {
-                const otherUser = getOtherParticipant(conv);
-                const isActive = conv._id === conversationId;
-
-                return (
-                  <React.Fragment key={conv._id}>
-                    <ListItem disablePadding>
-                      <ListItemButton
-                        onClick={() => router.push(`/chat/${conv._id}`)}
-                        sx={{
-                          py: 2.5,
-                          px: 3,
-                          backgroundColor: isActive ? 'rgba(131, 16, 255, 0.08)' : 'transparent',
-                          borderLeft: isActive ? '4px solid #8310FF' : '4px solid transparent',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: isActive ? 'rgba(131, 16, 255, 0.08)' : 'rgba(0, 0, 0, 0.02)',
-                            transform: 'translateX(2px)',
-                          },
-                        }}
-                      >
-                        <ListItemAvatar>
-                          <Badge
-                            badgeContent={conv.unreadCount}
-                            sx={{
-                              '& .MuiBadge-badge': {
-                                backgroundColor: '#E0A410',
-                                color: 'white',
-                                fontWeight: 700,
-                                fontSize: '0.7rem',
-                                minWidth: '20px',
-                                height: '20px',
-                              }
-                            }}
-                            invisible={conv.unreadCount === 0 || isActive}
-                          >
-                            <Avatar
-                              sx={{
-                                width: 50,
-                                height: 50,
-                                background: isActive
-                                  ? 'linear-gradient(135deg, #8310FF 0%, #9333EA 100%)'
-                                  : 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
-                                fontSize: '1.4rem',
-                                fontWeight: 700,
-                                boxShadow: isActive ? '0 4px 12px rgba(131, 16, 255, 0.3)' : 'none',
-                                transition: 'all 0.3s ease',
-                              }}
-                            >
-                              {otherUser?.firstName?.charAt(0)?.toUpperCase()}
-                            </Avatar>
-                          </Badge>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Typography
-                              variant="subtitle1"
-                              sx={{
-                                fontWeight: conv.unreadCount > 0 ? 700 : 600,
-                                color: isActive ? '#8310FF' : '#1e293b',
-                                fontSize: '1rem',
-                                letterSpacing: '-0.2px',
-                              }}
-                            >
-                              {otherUser?.firstName} {otherUser?.lastName}
-                            </Typography>
-                          }
-                          secondary={
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: '#64748b',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                fontWeight: conv.unreadCount > 0 ? 500 : 400,
-                              }}
-                            >
-                              {conv.lastMessage?.text || 'No messages yet'}
-                            </Typography>
-                          }
-                        />
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: '#94a3b8',
-                            ml: 2,
-                          }}
-                        >
-                          {conv.lastMessage?.timestamp
-                            ? formatListTime(conv.lastMessage.timestamp)
-                            : formatListTime(conv.updatedAt)}
-                        </Typography>
-                      </ListItemButton>
-                    </ListItem>
-                    {index < conversations.length - 1 && <Divider component="li" />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          )}
-        </Box>
-      </Paper>
-
-      {/* Right Side - Current Conversation */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* Header */}
-        <Paper
-          elevation={2}
-          sx={{
-            p: 3,
-            mb: 3,
-            borderRadius: 4,
-            border: '1px solid rgba(0, 0, 0, 0.08)',
             display: 'flex',
             alignItems: 'center',
-            gap: 2.5,
-            background: 'white',
+            gap: 2,
+            mb: 3,
           }}
         >
           <IconButton
             onClick={() => router.push(getDashboardRoute())}
             sx={{
               color: '#8310FF',
+              backgroundColor: 'rgba(131, 16, 255, 0.08)',
               '&:hover': {
-                backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                backgroundColor: 'rgba(131, 16, 255, 0.15)',
               },
             }}
           >
             <ArrowBackIcon />
           </IconButton>
-          <Avatar
-            sx={{
-              width: 52,
-              height: 52,
-              background: 'linear-gradient(135deg, #8310FF 0%, #9333EA 100%)',
-              fontSize: '1.3rem',
-              fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(131, 16, 255, 0.25)',
-            }}
-          >
-            {otherUser?.firstName?.charAt(0)?.toUpperCase()}
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.25rem', color: '#1e293b', letterSpacing: '-0.3px', mb: 0.3 }}>
-              {otherUser?.firstName} {otherUser?.lastName}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-              {otherUser?.email}
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                color: '#000',
+                fontSize: '20px',
+                position: 'relative',
+                display: 'inline-block',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: '-4px',
+                  left: 0,
+                  width: '38px',
+                  height: '5px',
+                  background: '#8310FF',
+                  borderRadius: '2px',
+                },
+              }}
+            >
+              Messages
             </Typography>
           </Box>
-          <IconButton
-            onClick={handleDeleteConversation}
-            sx={{
-              color: '#dc2626',
-              backgroundColor: 'rgba(220, 38, 38, 0.1)',
-              '&:hover': {
-                backgroundColor: 'rgba(220, 38, 38, 0.2)',
-              },
-            }}
-          >
-            <DeleteIcon />
-          </IconButton>
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              backgroundColor: '#10b981',
-              boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.2)',
-            }}
-          />
-        </Paper>
+        </Box>
 
-        {/* Messages Container */}
-        <Paper
-          elevation={1}
+        {/* Main Content */}
+        <Box
           sx={{
-            flex: 1,
-            overflow: 'auto',
-            p: 4,
-            mb: 3,
-            background: 'linear-gradient(to bottom, #faf9fb 0%, #f5f3f7 100%)',
-            borderRadius: 4,
-            border: '1px solid rgba(0, 0, 0, 0.06)',
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'transparent',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '4px',
-              '&:hover': {
-                background: 'rgba(0, 0, 0, 0.3)',
-              },
-            },
+            display: 'flex',
+            gap: 3,
+            height: 'calc(100vh - 180px)',
           }}
         >
-          {messages.length === 0 ? (
+          {/* Left Sidebar - Conversations List */}
+          <Box
+            sx={{
+              width: '320px',
+              flexShrink: 0,
+              borderRadius: '12px',
+              border: '1px solid rgba(84,98,116,0.1)',
+              backgroundColor: 'white',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Sidebar Header */}
             <Box
               sx={{
+                px: 3,
+                py: 2.5,
+                borderBottom: '1px solid rgba(84,98,116,0.1)',
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  color: '#000',
+                  fontSize: '14px',
+                }}
+              >
+                All Conversations ({conversations.length})
+              </Typography>
+            </Box>
+
+            {/* Conversations List */}
+            <Box sx={{ flex: 1, overflow: 'auto' }}>
+              {conversations.length === 0 ? (
+                <Box
+                  sx={{
+                    p: 4,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                    }}
+                  >
+                    <ChatIcon sx={{ fontSize: 32, color: '#8310FF' }} />
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#000', mb: 0.5 }}>
+                    No conversations yet
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'rgba(84,98,116,0.8)' }}>
+                    Start chatting with candidates
+                  </Typography>
+                </Box>
+              ) : (
+                <List sx={{ p: 0 }}>
+                  {conversations.map((conv, index) => {
+                    const otherUser = getOtherParticipant(conv);
+                    const isActive = conv._id === conversationId;
+
+                    return (
+                      <React.Fragment key={conv._id}>
+                        <ListItem disablePadding>
+                          <ListItemButton
+                            onClick={() => router.push(`/chat/${conv._id}`)}
+                            sx={{
+                              py: 2,
+                              px: 2.5,
+                              backgroundColor: isActive ? 'rgba(131, 16, 255, 0.06)' : 'transparent',
+                              borderLeft: isActive ? '3px solid #8310FF' : '3px solid transparent',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: isActive ? 'rgba(131, 16, 255, 0.06)' : 'rgba(243, 245, 247, 1)',
+                              },
+                            }}
+                          >
+                            <ListItemAvatar>
+                              <Badge
+                                badgeContent={conv.unreadCount}
+                                sx={{
+                                  '& .MuiBadge-badge': {
+                                    backgroundColor: 'rgba(224, 164, 16, 1)',
+                                    color: 'white',
+                                    fontWeight: 600,
+                                    fontSize: '10px',
+                                    minWidth: '18px',
+                                    height: '18px',
+                                  }
+                                }}
+                                invisible={conv.unreadCount === 0 || isActive}
+                              >
+                                <Avatar
+                                  sx={{
+                                    width: 44,
+                                    height: 44,
+                                    backgroundColor: isActive ? '#8310FF' : 'rgba(131, 16, 255, 0.15)',
+                                    color: isActive ? 'white' : '#8310FF',
+                                    fontSize: '1rem',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {otherUser?.firstName?.charAt(0)?.toUpperCase()}
+                                </Avatar>
+                              </Badge>
+                            </ListItemAvatar>
+                            <ListItemText
+                              primary={
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontWeight: conv.unreadCount > 0 ? 600 : 500,
+                                    color: isActive ? '#8310FF' : '#000',
+                                    fontSize: '13px',
+                                  }}
+                                >
+                                  {otherUser?.firstName} {otherUser?.lastName}
+                                </Typography>
+                              }
+                              secondary={
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: 'rgba(84,98,116,0.8)',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    display: 'block',
+                                    fontSize: '11px',
+                                  }}
+                                >
+                                  {conv.lastMessage?.text || 'No messages yet'}
+                                </Typography>
+                              }
+                            />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(84,98,116,0.6)',
+                                fontSize: '10px',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {conv.lastMessage?.timestamp
+                                ? formatListTime(conv.lastMessage.timestamp)
+                                : formatListTime(conv.updatedAt)}
+                            </Typography>
+                          </ListItemButton>
+                        </ListItem>
+                        {index < conversations.length - 1 && (
+                          <Divider sx={{ mx: 2.5, borderColor: 'rgba(84,98,116,0.08)' }} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </List>
+              )}
+            </Box>
+          </Box>
+
+          {/* Right Side - Current Conversation */}
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '12px',
+              border: '1px solid rgba(84,98,116,0.1)',
+              backgroundColor: 'white',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Conversation Header */}
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderBottom: '1px solid rgba(84,98,116,0.1)',
                 display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
                 alignItems: 'center',
-                height: '100%',
                 gap: 2,
               }}
             >
-              <ChatIcon sx={{ fontSize: 64, color: 'rgba(131, 16, 255, 0.2)' }} />
-              <Typography variant="h6" sx={{ color: '#94a3b8', fontWeight: 600 }}>
-                No messages yet
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#cbd5e1' }}>
-                Start the conversation by sending a message below
-              </Typography>
-            </Box>
-          ) : (
-            messages.map((message) => {
-              const isOwn = message.sender._id === currentUserId;
-
-              return (
-                <Box
-                  key={message._id}
+              <Avatar
+                sx={{
+                  width: 48,
+                  height: 48,
+                  backgroundColor: '#8310FF',
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                }}
+              >
+                {otherUser?.firstName?.charAt(0)?.toUpperCase()}
+              </Avatar>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="subtitle1"
                   sx={{
-                    mb: 3,
+                    fontWeight: 600,
+                    color: '#000',
+                    fontSize: '15px',
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {otherUser?.firstName} {otherUser?.lastName}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'rgba(84,98,116,0.8)',
+                    fontSize: '12px',
+                  }}
+                >
+                  {otherUser?.email}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                }}
+              >
+                <Box
+                  sx={{
                     display: 'flex',
-                    justifyContent: isOwn ? 'flex-end' : 'flex-start',
-                    animation: 'fadeIn 0.3s ease-in',
-                    '@keyframes fadeIn': {
-                      from: { opacity: 0, transform: 'translateY(10px)' },
-                      to: { opacity: 1, transform: 'translateY(0)' },
-                    },
-                    gap: 1,
-                    alignItems: 'flex-end',
-                    position: 'relative',
-                    '&:hover .delete-icon': {
-                      opacity: 1,
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: '20px',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(16, 185, 129, 1)',
+                    }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'rgba(16, 185, 129, 1)', fontWeight: 500, fontSize: '11px' }}>
+                    Active
+                  </Typography>
+                </Box>
+                <IconButton
+                  onClick={handleDeleteConversation}
+                  size="small"
+                  sx={{
+                    color: 'rgba(220, 38, 38, 0.8)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(220, 38, 38, 0.08)',
                     },
                   }}
                 >
-                  {isOwn && (
-                    <IconButton
-                      className="delete-icon"
-                      onClick={() => handleDeleteMessage(message._id)}
-                      size="small"
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+
+            {/* Messages Container */}
+            <Box
+              sx={{
+                flex: 1,
+                overflow: 'auto',
+                p: 3,
+                backgroundColor: 'rgba(250, 246, 255, 0.5)',
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(131, 16, 255, 0.2)',
+                  borderRadius: '3px',
+                  '&:hover': {
+                    background: 'rgba(131, 16, 255, 0.3)',
+                  },
+                },
+              }}
+            >
+              {messages.length === 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    gap: 1.5,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <ChatIcon sx={{ fontSize: 32, color: '#8310FF' }} />
+                  </Box>
+                  <Typography variant="body2" sx={{ color: '#000', fontWeight: 500 }}>
+                    No messages yet
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'rgba(84,98,116,0.7)' }}>
+                    Start the conversation by sending a message below
+                  </Typography>
+                </Box>
+              ) : (
+                messages.map((message) => {
+                  const isOwn = message.sender._id === currentUserId;
+
+                  return (
+                    <Box
+                      key={message._id}
                       sx={{
-                        opacity: 0,
-                        transition: 'opacity 0.2s ease',
-                        color: '#dc2626',
-                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(220, 38, 38, 0.2)',
+                        mb: 2,
+                        display: 'flex',
+                        justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                        gap: 1,
+                        alignItems: 'flex-end',
+                        '&:hover .delete-icon': {
+                          opacity: 1,
                         },
                       }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                  <Paper
-                    elevation={isOwn ? 3 : 1}
-                    sx={{
-                      p: 2.5,
-                      maxWidth: '65%',
-                      background: isOwn
-                        ? 'linear-gradient(135deg, #8310FF 0%, #9333EA 100%)'
-                        : 'white',
-                      color: isOwn ? 'white' : '#1e293b',
-                      borderRadius: isOwn ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                      boxShadow: isOwn
-                        ? '0 4px 16px rgba(131, 16, 255, 0.3)'
-                        : '0 2px 8px rgba(0, 0, 0, 0.08)',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: isOwn
-                          ? '0 6px 20px rgba(131, 16, 255, 0.4)'
-                          : '0 4px 12px rgba(0, 0, 0, 0.12)',
-                      },
-                    }}
-                  >
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        mb: 1,
-                        fontSize: '0.95rem',
-                        lineHeight: 1.6,
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {message.text}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        opacity: isOwn ? 0.85 : 0.6,
-                        fontSize: '0.7rem',
-                        fontWeight: 500,
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                      }}
-                    >
-                      {formatTime(message.createdAt)}
-                    </Typography>
-                  </Paper>
-                </Box>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </Paper>
+                      {isOwn && (
+                        <IconButton
+                          className="delete-icon"
+                          onClick={() => handleDeleteMessage(message._id)}
+                          size="small"
+                          sx={{
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                            color: 'rgba(220, 38, 38, 0.7)',
+                            padding: '4px',
+                            '&:hover': {
+                              backgroundColor: 'rgba(220, 38, 38, 0.08)',
+                            },
+                          }}
+                        >
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      )}
+                      <Box
+                        sx={{
+                          maxWidth: '70%',
+                          px: 2,
+                          py: 1.5,
+                          backgroundColor: isOwn ? '#8310FF' : 'white',
+                          color: isOwn ? 'white' : '#000',
+                          borderRadius: isOwn ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          boxShadow: isOwn
+                            ? '0 2px 8px rgba(131, 16, 255, 0.25)'
+                            : '0 1px 4px rgba(0, 0, 0, 0.06)',
+                          border: isOwn ? 'none' : '1px solid rgba(84,98,116,0.1)',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: '13px',
+                            lineHeight: 1.5,
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {message.text}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            textAlign: 'right',
+                            mt: 0.5,
+                            opacity: isOwn ? 0.8 : 0.5,
+                            fontSize: '10px',
+                          }}
+                        >
+                          {formatTime(message.createdAt)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </Box>
 
-        {/* Input */}
-        <Paper
-          elevation={3}
-          sx={{
-            p: 2.5,
-            borderRadius: 4,
-            border: '1px solid rgba(0, 0, 0, 0.08)',
-            display: 'flex',
-            gap: 2,
-            backgroundColor: 'white',
-            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)',
-          }}
-        >
-          <TextField
-            fullWidth
-            multiline
-            maxRows={4}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message here..."
-            disabled={sending}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-                backgroundColor: '#f8fafc',
-                fontSize: '0.95rem',
-                transition: 'all 0.2s ease',
-                '& fieldset': {
-                  borderColor: 'rgba(0, 0, 0, 0.1)',
-                },
-                '&:hover': {
-                  backgroundColor: '#f1f5f9',
-                  '& fieldset': {
-                    borderColor: 'rgba(131, 16, 255, 0.3)',
-                  },
-                },
-                '&.Mui-focused': {
-                  backgroundColor: 'white',
-                  '& fieldset': {
-                    borderColor: '#8310FF',
-                    borderWidth: '2px',
-                  },
-                },
-              },
-            }}
-          />
-          <Button
-            variant="contained"
-            endIcon={sending ? <CircularProgress size={18} sx={{ color: 'white' }} /> : <SendIcon />}
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending}
-            sx={{
-              background: 'linear-gradient(135deg, #8310FF 0%, #9333EA 100%)',
-              borderRadius: 3,
-              px: 4,
-              py: 1.5,
-              minWidth: '120px',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #6b0fd9 0%, #7c3aed 100%)',
-                boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
-                transform: 'translateY(-1px)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-              },
-              '&:disabled': {
-                background: 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)',
-                color: '#9ca3af',
-                boxShadow: 'none',
-              },
-            }}
-          >
-            {sending ? 'Sending...' : 'Send'}
-          </Button>
-        </Paper>
-      </Box>
+            {/* Input Area */}
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderTop: '1px solid rgba(84,98,116,0.1)',
+                backgroundColor: 'white',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  alignItems: 'flex-end',
+                }}
+              >
+                <TextField
+                  fullWidth
+                  multiline
+                  maxRows={4}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type your message here..."
+                  disabled={sending}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(243, 245, 247, 1)',
+                      fontSize: '13px',
+                      '& fieldset': {
+                        borderColor: 'transparent',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(131, 16, 255, 0.2)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#8310FF',
+                        borderWidth: '1px',
+                      },
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || sending}
+                  sx={{
+                    backgroundColor: 'rgba(163, 98, 239, 1)',
+                    borderRadius: '38px',
+                    px: 3,
+                    py: 1,
+                    minWidth: '100px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      backgroundColor: 'rgba(131, 16, 255, 1)',
+                      boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
+                    },
+                    '&:disabled': {
+                      backgroundColor: 'rgba(200, 200, 200, 1)',
+                      color: 'white',
+                    },
+                  }}
+                  endIcon={sending ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <SendIcon sx={{ fontSize: 18 }} />}
+                >
+                  {sending ? 'Sending' : 'Send'}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Container>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -911,16 +1036,16 @@ const ConversationPage = () => {
         onClose={() => !isDeleting && setDeleteDialogOpen(false)}
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            minWidth: 400,
+            borderRadius: '12px',
+            minWidth: 380,
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b' }}>
+        <DialogTitle sx={{ fontWeight: 600, color: '#000', fontSize: '16px' }}>
           Delete Conversation
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: '#64748b' }}>
+          <DialogContentText sx={{ color: 'rgba(84,98,116,0.8)', fontSize: '13px' }}>
             Are you sure you want to delete this entire conversation? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
@@ -929,9 +1054,12 @@ const ConversationPage = () => {
             onClick={() => setDeleteDialogOpen(false)}
             disabled={isDeleting}
             sx={{
-              color: '#64748b',
+              color: 'rgba(84,98,116,0.8)',
+              fontWeight: 500,
+              textTransform: 'none',
+              borderRadius: '38px',
               '&:hover': {
-                backgroundColor: '#f8fafc',
+                backgroundColor: 'rgba(243, 245, 247, 1)',
               },
             }}
           >
@@ -942,12 +1070,16 @@ const ConversationPage = () => {
             disabled={isDeleting}
             variant="contained"
             sx={{
-              backgroundColor: '#dc2626',
+              backgroundColor: 'rgba(220, 38, 38, 1)',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '38px',
+              boxShadow: 'none',
               '&:hover': {
-                backgroundColor: '#b91c1c',
+                backgroundColor: 'rgba(185, 28, 28, 1)',
               },
               '&:disabled': {
-                backgroundColor: '#fca5a5',
+                backgroundColor: 'rgba(252, 165, 165, 1)',
               },
             }}
           >
@@ -955,7 +1087,7 @@ const ConversationPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
