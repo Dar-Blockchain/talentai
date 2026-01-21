@@ -8,7 +8,7 @@ const salarySchema = new mongoose.Schema({
 });
 
 const skillSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, },
   level: { type: String },
   importance: { type: String },
   category: { type: String },
@@ -29,7 +29,7 @@ const skillSchema = new mongoose.Schema({
 });
 
 const suggestedSkillSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String },
   reason: String,
   category: String,
   priority: String,
@@ -38,7 +38,7 @@ const suggestedSkillSchema = new mongoose.Schema({
 });
 
 const softSkillSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String },
   level: { type: String },
   percentage: {
     type: Number,
