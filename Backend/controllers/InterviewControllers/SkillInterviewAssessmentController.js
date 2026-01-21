@@ -287,9 +287,38 @@ const getStatistics = async (req, res) => {
   }
 };
 
+const getMy = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, interviewType, candidateId, } = req.query;
+
+    const filters = {};
+    if (interviewType) filters.interviewType = interviewType;
+    filters.candidateId = req.user._id;
+
+    const result = await SkillInterviewAssessmentService.getAllAssessments(
+      parseInt(page),
+      parseInt(limit),
+      filters
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Assessments retrieved successfully',
+      ...result
+    });
+  } catch (error) {
+    console.error('Error in getAll:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   create,
   getAll,
+  getMy,
   getById,
   getBySessionId,
   getByCandidate,

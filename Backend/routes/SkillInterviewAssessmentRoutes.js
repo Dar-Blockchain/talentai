@@ -11,7 +11,8 @@ const {
   deleteAssessment,
   archive,
   getSummary,
-  getStatistics
+  getStatistics,
+  getMy
 } = require('../controllers/InterviewControllers/SkillInterviewAssessmentController');
 
 // Import middlewares
@@ -48,7 +49,9 @@ router.post('/', create);
 
 // GET /api/skill-interview-assessments (must be last among GET routes)
 // Query params: page, limit, interviewType, candidateId, interviewerId
-router.get('/', getAll);
+//router.get('/', getAll);
+
+router.get('/my', getMy);
 
 // ========== UPDATE ==========
 // PUT /api/skill-interview-assessments/:id
