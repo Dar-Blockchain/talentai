@@ -293,7 +293,7 @@ const getMy = async (req, res) => {
 
     const filters = {};
     if (interviewType) filters.interviewType = interviewType;
-    filters.candidateId = req.user._id;
+    filters.candidateId = req.user.profile;
 
     const result = await SkillInterviewAssessmentService.getAllAssessments(
       parseInt(page),
