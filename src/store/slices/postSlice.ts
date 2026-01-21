@@ -183,6 +183,9 @@ export const updatePost = createAsyncThunk(
 
       const token = Cookies.get("api_token");
 
+      console.log("📤 updatePost - jobId:", jobId);
+      console.log("📤 updatePost - jobData:", JSON.stringify(jobData, null, 2));
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePost/${jobId}`,
         {
@@ -195,19 +198,21 @@ export const updatePost = createAsyncThunk(
         }
       );
 
+      const responseData = await res.json();
+      console.log("📥 updatePost - response:", responseData);
+
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to update job");
+        throw new Error(responseData.message || "Failed to update job");
       }
 
-      const updated = await res.json();
-      const job = updated.data || updated;
+      const job = responseData.data || responseData;
 
       return {
         success: true,
         jobData: job,
       };
     } catch (err: any) {
+      console.error("❌ updatePost - error:", err);
       return rejectWithValue(err.message || "Error updating job");
     }
   }

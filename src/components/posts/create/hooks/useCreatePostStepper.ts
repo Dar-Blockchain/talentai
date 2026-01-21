@@ -83,13 +83,36 @@ export const useCreatePostStepper = (
         })
       ).unwrap();
 
-      const pipelineSkills = extractSkillsFromPipeline(nodes);
+      const { technicalSkills, softSkills } = extractSkillsFromPipeline(nodes);
 
-      const updatePayload: any = { creationType: "pipeline" };
+      console.log("📦 Pipeline skills extracted:", { technicalSkills, softSkills });
 
-      if (pipelineSkills.length > 0) {
-        updatePayload["skillAnalysis.requiredSkills"] = pipelineSkills;
+      // Build update payload with required fields from backend validation
+      const jobDetails = { ...savedPost.jobData.jobDetails };
+      // Ensure workMode has a valid value
+      if (!jobDetails.workMode) {
+        jobDetails.workMode = jobDetails.location === "Remote" ? "remote" : "onsite";
       }
+
+      const updatePayload: any = {
+        creationType: "pipeline",
+        jobDetails,
+        linkedinPost: savedPost.jobData.linkedinPost,
+      };
+
+      if (technicalSkills.length > 0 || softSkills.length > 0) {
+        updatePayload.skillAnalysis = {};
+
+        if (technicalSkills.length > 0) {
+          updatePayload.skillAnalysis.requiredSkills = technicalSkills;
+        }
+
+        if (softSkills.length > 0) {
+          updatePayload.skillAnalysis.softSkills = softSkills;
+        }
+      }
+
+      console.log("📤 Update payload:", JSON.stringify(updatePayload, null, 2));
 
       await dispatch(
         updatePost({

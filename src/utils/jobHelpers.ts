@@ -76,7 +76,8 @@ export const transformJobData = (job: any): Job => {
 };
 
   export const extractSkillsFromPipeline = (pipelineNodes: Node[]) => {
-    const allSkills: any[] = [];
+    const technicalSkills: any[] = [];
+    const softSkills: any[] = [];
 
     pipelineNodes.forEach(node => {
       const nodeType = node.data.type;
@@ -87,7 +88,7 @@ export const transformJobData = (job: any): Job => {
       // Technical skills nodes
       if (nodeType === 'technical' && config.skills) {
         config.skills.forEach((skill: any) => {
-          allSkills.push({
+          technicalSkills.push({
             name: skill.name,
             level: config.assessmentLevel || 'Mid Level',
             importance: 'high',
@@ -99,7 +100,7 @@ export const transformJobData = (job: any): Job => {
       // Soft skills nodes
       if (nodeType === 'soft' && config.softSkills) {
         config.softSkills.forEach((skillName: string) => {
-          allSkills.push({
+          softSkills.push({
             name: skillName,
             level: config.assessmentLevel || 'Mid Level',
             importance: 'medium',
@@ -110,9 +111,16 @@ export const transformJobData = (job: any): Job => {
     });
 
     // Remove duplicates by skill name
-    const uniqueSkills = allSkills.filter((skill, index, self) =>
+    const uniqueTechnicalSkills = technicalSkills.filter((skill, index, self) =>
       index === self.findIndex(s => s.name === skill.name)
     );
 
-    return uniqueSkills;
+    const uniqueSoftSkills = softSkills.filter((skill, index, self) =>
+      index === self.findIndex(s => s.name === skill.name)
+    );
+
+    return {
+      technicalSkills: uniqueTechnicalSkills,
+      softSkills: uniqueSoftSkills,
+    };
   };
