@@ -165,6 +165,35 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
   }
 };
 
+// ========== READ - Get all for authenticated company ==========
+module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company ID is required'
+      });
+    }
+
+    const assessments = await postInterviewAssessmentService.getAssessmentsByCompany(companyId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Assessments retrieved successfully',
+      count: assessments.length,
+      data: assessments
+    });
+  } catch (error) {
+    console.error('Error getting assessments by company:', error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || 'Error retrieving assessments'
+    });
+  }
+};
+
 // ========== UPDATE - Update assessment ==========
 module.exports.updatePostInterviewAssessment = async (req, res) => {
   try {

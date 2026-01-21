@@ -155,6 +155,23 @@ module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => 
   }
 };
 
+// ========== READ - Get all for a company ==========
+module.exports.getAssessmentsByCompany = async (companyId, filters = {}) => {
+  try {
+    const query = { company: companyId };
+
+    const assessments = await PostInterviewAssessment.find(query)
+      .populate('candidate', 'username email role')
+      .populate('post', 'jobDetails title status')
+      .sort({ createdAt: -1 });
+
+    return assessments;
+  } catch (error) {
+    console.error('❌ Error getting assessments by company:', error.message);
+    throw error;
+  }
+};
+
 // ========== UPDATE - Update assessment ==========
 module.exports.updatePostInterviewAssessment = async (assessmentId, updateData) => {
   try {

@@ -34,6 +34,9 @@ router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
 // GET /postInterviewAssessments — Get all assessments
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
 
+// GET /postInterviewAssessments/company/mine — Get all assessments for authenticated company
+router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
+
 // POST /postInterviewAssessments — Create new assessment
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
 
@@ -47,9 +50,9 @@ router.put('/:assessmentId', postInterviewAssessmentController.updatePostIntervi
 router.patch('/:assessmentId/interview-data', postInterviewAssessmentController.updateInterviewData);
 
 // DELETE /postInterviewAssessments/:assessmentId — Delete assessment
-router.delete('/:assessmentId', postInterviewAssessmentController.deletePostInterviewAssessment);
+//router.delete('/:assessmentId', postInterviewAssessmentController.deletePostInterviewAssessment);
 
 // DELETE /postInterviewAssessments/post/:postId — Delete all assessments for a post
-router.delete('/post/:postId', postInterviewAssessmentController.deleteAssessmentsByPost);
+//router.delete('/post/:postId', postInterviewAssessmentController.deleteAssessmentsByPost);
 
 module.exports = router;
