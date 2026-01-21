@@ -40,7 +40,11 @@ interface Conversation {
 
 const ChatPage = () => {
   const router = useRouter();
-  const currentUser = useSelector((state: RootState) => state.user.connectedUser.profile);
+  // Get the user object (contains the actual user ID for participant matching)
+  const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
+  const profile = useSelector((state: RootState) => state.user?.connectedUser?.profile);
+  // Use user ID (not profile ID) for conversation operations
+  const currentUserId = connectedUser?._id;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,13 +64,15 @@ const ChatPage = () => {
       }
     };
 
-    if (currentUser?._id) {
+    if (currentUserId) {
       fetchConversations();
+    } else {
+      setLoading(false);
     }
-  }, [currentUser]);
+  }, [currentUserId]);
 
   const getOtherParticipant = (conv: Conversation) => {
-    return conv.participants.find(p => p._id !== currentUser?._id);
+    return conv.participants.find(p => p._id !== currentUserId);
   };
 
   const formatTime = (timestamp: string) => {
@@ -93,7 +99,7 @@ const ChatPage = () => {
   }
 
   const getDashboardRoute = () => {
-    const role = currentUser?.role?.toLowerCase();
+    const role = profile?.type?.toLowerCase();
     return role === 'company' ? '/dashboard/company' : '/dashboard/candidate';
   };
 

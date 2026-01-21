@@ -1,7 +1,14 @@
 "use client";
-import React, { useMemo } from "react";
-import { AppBar, Box, Toolbar
-   } from "@mui/material";
+import React, { useMemo, useEffect, useState, useRef } from "react";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Badge,
+  Tooltip,
+} from "@mui/material";
+import ChatIcon from "@mui/icons-material/Chat";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import HeaderLogo from "@/components/header/HeaderLogo";
@@ -15,16 +22,29 @@ import {
   desktopMenuStyle,
   toolbarStyle,
 } from "@/components/header/styles";
-import HeaderNavMenu from "../header/HeaderNavMenu";
+import HeaderNavMenu from "@/components/header/HeaderNavMenu";
+import HeaderPrimaryActions from "@/components/header/HeaderPrimaryActions";
 import { useRouter } from "next/router";
-import HeaderPrimaryActions from "../header/HeaderPrimaryActions";
+import { io, Socket } from "socket.io-client";
 
 const Header = () => {
   const router = useRouter();
+  const socketRef = useRef<Socket | null>(null);
+
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
-  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  // Get the user object (contains the actual user ID for WebSocket)
+  const connectedUser = useSelector(
+    (state: RootState) => state.user?.connectedUser?.user
+  );
+  const profile = useSelector(
+    (state: RootState) => state.user?.connectedUser?.profile
+  );
+  // User ID for WebSocket should be the user._id, not profile._id
+  const userId = connectedUser?._id;
+
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const isCompany = useMemo(
     () => profile?.type?.toLowerCase() === "company",
@@ -38,37 +58,140 @@ const Header = () => {
     );
   }, [router.pathname]);
 
-    const isWorkspacePage = useMemo(() => {
-    return (
-      router.pathname === "/workspaces"
-    );
+  const isWorkspacePage = useMemo(() => {
+    return router.pathname === "/workspaces";
   }, [router.pathname]);
+
+  /* ===============================
+     FETCH UNREAD MESSAGE COUNT
+  ================================ */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/unread-count`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadMessageCount(data.data?.totalUnread || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch unread messages", err);
+      }
+    };
+
+    fetchUnread();
+  }, [isAuthenticated]);
+
+  /* ===============================
+     SOCKET.IO – HEADER LEVEL ONLY
+  ================================ */
+  useEffect(() => {
+    if (!userId || !isAuthenticated) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    console.log("🔌 Header: Connecting to chat WebSocket with userId:", userId);
+
+    const socket = io(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")}/chat`,
+      {
+        auth: { userId, token },
+        transports: ["websocket", "polling"],
+      }
+    );
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("✅ Header: WebSocket connected, socket id:", socket.id);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ Header: WebSocket connection error:", error);
+    });
+
+    socket.on("message_notification", (data) => {
+      console.log("📩 Header: Received message notification:", data);
+      setUnreadMessageCount((prev) => prev + 1);
+    });
+
+    return () => {
+      console.log("🔌 Header: Disconnecting WebSocket");
+      socket.disconnect();
+    };
+  }, [userId, isAuthenticated]);
 
   return (
     <AppBar position="static" elevation={0} sx={appBarStyle}>
       <Box sx={containerStyle}>
         <Toolbar sx={toolbarStyle}>
+          {/* LEFT */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            {/* Logo */}
             <HeaderLogo />
             {showHeaderNavMenu && <HeaderNavMenu />}
           </Box>
 
-          {/* DESKTOP: Desktop Menu (hidden below 750px) */}
+          {/* RIGHT – AUTHENTICATED */}
           {isAuthenticated && (
             <Box sx={desktopMenuStyle}>
               {!showHeaderNavMenu && !isWorkspacePage && <TokenDisplay />}
-              {!isCompany && !showHeaderNavMenu && !isWorkspacePage && <HeaderNotification />}
+
+              {/* CHAT ICON */}
+              <Tooltip title="Messages">
+                <IconButton
+                  onClick={() => router.push("/chat")}
+                  sx={{
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                    width: 40,
+                    height: 40,
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                    "&:hover": { backgroundColor: "#f9fafb" },
+                  }}
+                >
+                  <Badge
+                    badgeContent={unreadMessageCount}
+                    color="error"
+                    invisible={unreadMessageCount === 0}
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        backgroundColor: "#8310FF",
+                        color: "white",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                      },
+                    }}
+                  >
+                    <ChatIcon sx={{ color: "#6b7280", fontSize: 20 }} />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+
+              {!isCompany && !showHeaderNavMenu && !isWorkspacePage && (
+                <HeaderNotification />
+              )}
+
               <UserAvatar />
             </Box>
           )}
+
+          {/* RIGHT – NOT AUTHENTICATED */}
           {!isAuthenticated && (
             <Box sx={desktopMenuStyle}>
               <HeaderPrimaryActions />
             </Box>
           )}
 
-          {/* MOBILE: Hamburger Button for Mobile */}
+          {/* MOBILE */}
           <HamburgerButton />
         </Toolbar>
       </Box>

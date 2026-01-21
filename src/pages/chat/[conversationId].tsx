@@ -71,7 +71,11 @@ interface Conversation {
 const ConversationPage = () => {
   const router = useRouter();
   const { conversationId } = router.query;
-  const currentUser = useSelector((state: RootState) => state.user.connectedUser.profile);
+  // Get the user object (contains the actual user ID for WebSocket and participant matching)
+  const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
+  const profile = useSelector((state: RootState) => state.user?.connectedUser?.profile);
+  // Use user ID (not profile ID) for all socket and conversation operations
+  const currentUserId = connectedUser?._id;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -94,7 +98,7 @@ const ConversationPage = () => {
 
   // Socket.IO connection
   useEffect(() => {
-    if (!currentUser?._id) return;
+    if (!currentUserId) return;
 
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -102,7 +106,7 @@ const ConversationPage = () => {
     // Connect to Socket.IO chat namespace
     const socket = io(`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '')}/chat`, {
       auth: {
-        userId: currentUser._id,
+        userId: currentUserId,
         token
       },
       transports: ['websocket', 'polling'],
@@ -199,7 +203,7 @@ const ConversationPage = () => {
       }
       socket.disconnect();
     };
-  }, [currentUser, conversationId]);
+  }, [currentUserId, conversationId]);
 
   // Fetch all conversations for sidebar
   useEffect(() => {
@@ -216,14 +220,14 @@ const ConversationPage = () => {
       }
     };
 
-    if (currentUser?._id) {
+    if (currentUserId) {
       fetchConversations();
     }
-  }, [currentUser]);
+  }, [currentUserId]);
 
   // Fetch current conversation and messages
   useEffect(() => {
-    if (!conversationId || !currentUser?._id) return;
+    if (!conversationId || !currentUserId) return;
 
     const fetchData = async () => {
       try {
@@ -257,16 +261,16 @@ const ConversationPage = () => {
     };
 
     fetchData();
-  }, [conversationId, currentUser]);
+  }, [conversationId, currentUserId]);
 
   const handleSendMessage = async () => {
     console.log('handleSendMessage called', {
       hasMessage: !!newMessage.trim(),
       hasConversation: !!conversation,
-      hasCurrentUser: !!currentUser?._id,
+      hasCurrentUser: !!currentUserId,
     });
 
-    if (!newMessage.trim() || !conversation || !currentUser?._id) {
+    if (!newMessage.trim() || !conversation || !currentUserId) {
       console.log('Validation failed - returning early');
       return;
     }
@@ -290,7 +294,7 @@ const ConversationPage = () => {
     }
 
     const otherParticipant = conversation.participants.find(
-      (p) => p._id !== currentUser._id
+      (p) => p._id !== currentUserId
     );
 
     if (!otherParticipant) {
@@ -386,11 +390,11 @@ const ConversationPage = () => {
   };
 
   const getOtherParticipant = (conv: Conversation) => {
-    return conv.participants.find((p) => p._id !== currentUser?._id);
+    return conv.participants.find((p) => p._id !== currentUserId);
   };
 
   const getDashboardRoute = () => {
-    const role = currentUser?.role?.toLowerCase();
+    const role = profile?.type?.toLowerCase();
     return role === 'company' ? '/dashboard/company' : '/dashboard/candidate';
   };
 
@@ -424,7 +428,20 @@ const ConversationPage = () => {
     );
   }
 
-  const otherUser = getOtherParticipant(conversation!);
+  if (!conversation) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 8, display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        <Typography variant="h6" sx={{ color: '#64748b' }}>
+          Conversation not found
+        </Typography>
+        <Button onClick={() => router.push('/chat')} sx={{ color: '#8310FF' }}>
+          Back to Messages
+        </Button>
+      </Container>
+    );
+  }
+
+  const otherUser = getOtherParticipant(conversation);
 
   return (
     <Container
@@ -712,7 +729,7 @@ const ConversationPage = () => {
             </Box>
           ) : (
             messages.map((message) => {
-              const isOwn = message.sender._id === currentUser?._id;
+              const isOwn = message.sender._id === currentUserId;
 
               return (
                 <Box
