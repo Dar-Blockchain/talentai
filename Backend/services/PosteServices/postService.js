@@ -494,7 +494,7 @@ module.exports.deletePost = async (postId, userId) => {
     
     // 1. Delete post_Steps
     if (post.post_Steps && post.post_Steps.length > 0) {
-      const Post_Steps = require('../../models/Post_StepsModel');
+      const Post_Steps = require('../../models/postStepsModel');
       await Post_Steps.deleteMany({ _id: { $in: post.post_Steps } });
       console.log(`🗑️ Deleted ${post.post_Steps.length} post step(s)`);
     }

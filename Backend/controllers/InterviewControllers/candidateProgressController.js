@@ -4,7 +4,7 @@
  */
 
 const candidate_Post_Step_Progress = require('../../models/candidate_Post_Step_Progress');
-const Post_Steps = require('../../models/post_StepsModel');
+const Post_Steps = require('../../models/postStepsModel');
 const InterviewDetails = require('../../models/InterviewDetailsModel');
 
 /**

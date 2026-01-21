@@ -150,7 +150,7 @@ const postSchema = new mongoose.Schema({
   post_Steps: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Post_Steps",
+      ref: "PostSteps",
     },
   ],
 

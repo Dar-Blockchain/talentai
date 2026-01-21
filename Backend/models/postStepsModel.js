@@ -104,4 +104,4 @@ const postStepSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.models.Post_Steps || mongoose.model("Post_Steps", postStepSchema);
+module.exports = mongoose.models.PostSteps || mongoose.model("PostSteps", postStepSchema);

@@ -1,4 +1,4 @@
-const Post_Steps = require("../../models/post_StepsModel");
+const Post_Steps = require("../../models/postStepsModel");
 const Post = require("../../models/PostModel");
 const candidatePostStepProgressService = require("../candidatePostStepProgressService");
 const CandidatePostStepProgress = require("../../models/candidate_Post_Step_Progress");
