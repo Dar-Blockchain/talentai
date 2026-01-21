@@ -23,10 +23,10 @@ router.get('/:assessmentId', postInterviewAssessmentController.getPostInterviewA
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
 
 // GET /postInterviewAssessments/candidate/:candidateId — Get all assessments for a candidate
-router.get('/candidate/:candidateId', postInterviewAssessmentController.getAssessmentsByCandidate);
+//router.get('/candidate/:candidateId', postInterviewAssessmentController.getAssessmentsByCandidate);
 
 // GET /postInterviewAssessments/post/:postId/statistics — Get statistics for a post
-router.get('/post/:postId/statistics', postInterviewAssessmentController.getAssessmentStatistics);
+//router.get('/post/:postId/statistics', postInterviewAssessmentController.getAssessmentStatistics);
 
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
@@ -41,13 +41,13 @@ router.get('/company/mine', postInterviewAssessmentController.getAllPostIntervie
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
 
 // GET /postInterviewAssessments/search — Search assessments
-router.get('/search', postInterviewAssessmentController.searchAssessments);
+//router.get('/search', postInterviewAssessmentController.searchAssessments);
 
 // PUT /postInterviewAssessments/:assessmentId — Update assessment
-router.put('/:assessmentId', postInterviewAssessmentController.updatePostInterviewAssessment);
+//router.put('/:assessmentId', postInterviewAssessmentController.updatePostInterviewAssessment);
 
 // PATCH /postInterviewAssessments/:assessmentId/interview-data — Update interview data
-router.patch('/:assessmentId/interview-data', postInterviewAssessmentController.updateInterviewData);
+//router.patch('/:assessmentId/interview-data', postInterviewAssessmentController.updateInterviewData);
 
 // DELETE /postInterviewAssessments/:assessmentId — Delete assessment
 //router.delete('/:assessmentId', postInterviewAssessmentController.deletePostInterviewAssessment);
