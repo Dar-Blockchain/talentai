@@ -110,7 +110,7 @@ const AgentConfigurationDetails: React.FC<Props> = ({ onEdit }) => {
             </Stack>
           )}
         </Box>
-        <Button
+        {/* <Button
           variant="outlined"
           fullWidth
           onClick={onEdit}
@@ -140,7 +140,7 @@ const AgentConfigurationDetails: React.FC<Props> = ({ onEdit }) => {
           }}
         >
           {config ? "Edit Agent Configuration" : "Create Agent"}
-        </Button>
+        </Button> */}
       </Box>
       {!config && (
         <Box
