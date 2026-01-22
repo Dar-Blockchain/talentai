@@ -521,8 +521,8 @@ module.exports.deletePost = async (postId, userId) => {
     }
 
     // 5. Delete associated job assessments
-    const JobAssessmentResult = require('../../models/JobAssessmentResultModel');
-    await JobAssessmentResult.deleteMany({ jobId: postId });
+    const PostInterviewAssessment = require('../../models/PostInterviewAssessmentModel');
+    await PostInterviewAssessment.deleteMany({ post: postId });
     console.log(`🗑️ Deleted job assessment results for post`);
 
     // 6. Delete the post itself

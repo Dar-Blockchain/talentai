@@ -289,7 +289,7 @@ const getStatistics = async (req, res) => {
 
 const getMy = async (req, res) => {
   try {
-    const { page = 1, limit = 10, interviewType, candidateId, } = req.query;
+    const { page = 1, limit = 10, interviewType} = req.query;
 
     const filters = {};
     if (interviewType) filters.interviewType = interviewType;

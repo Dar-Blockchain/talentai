@@ -16,43 +16,43 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // ========== PUBLIC ROUTES (no auth required) ==========
 
-// GET /postInterviewAssessments/:assessmentId — Get single assessment
+// GET /post-interview-assessments/:assessmentId — Get single assessment
 router.get('/:assessmentId', postInterviewAssessmentController.getPostInterviewAssessmentById);
 
-// GET /postInterviewAssessments/post/:postId — Get all assessments for a post
+// GET /post-interview-assessments/post/:postId — Get all assessments for a post
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
 
-// GET /postInterviewAssessments/candidate/:candidateId — Get all assessments for a candidate
-//router.get('/candidate/:candidateId', postInterviewAssessmentController.getAssessmentsByCandidate);
-
-// GET /postInterviewAssessments/post/:postId/statistics — Get statistics for a post
+// GET /post-interview-assessments/post/:postId/statistics — Get statistics for a post
 //router.get('/post/:postId/statistics', postInterviewAssessmentController.getAssessmentStatistics);
 
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
 
-// GET /postInterviewAssessments — Get all assessments
+// GET /post-interview-assessments — Get all assessments
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
 
-// GET /postInterviewAssessments/company/mine — Get all assessments for authenticated company
+// GET /post-interview-assessments/company/mine — Get all assessments for authenticated company
 router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
 
-// POST /postInterviewAssessments — Create new assessment
+// GET /post-interview-assessments/candidate/:candidateId — Get all assessments for a candidate
+router.get('/candidate', postInterviewAssessmentController.getAssessmentsByCandidate);
+
+// POST /post-interview-assessments — Create new assessment
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
 
-// GET /postInterviewAssessments/search — Search assessments
+// GET /post-interview-assessments/search — Search assessments
 //router.get('/search', postInterviewAssessmentController.searchAssessments);
 
-// PUT /postInterviewAssessments/:assessmentId — Update assessment
+// PUT /post-interview-assessments/:assessmentId — Update assessment
 //router.put('/:assessmentId', postInterviewAssessmentController.updatePostInterviewAssessment);
 
-// PATCH /postInterviewAssessments/:assessmentId/interview-data — Update interview data
+// PATCH /post-interview-assessments/:assessmentId/interview-data — Update interview data
 //router.patch('/:assessmentId/interview-data', postInterviewAssessmentController.updateInterviewData);
 
-// DELETE /postInterviewAssessments/:assessmentId — Delete assessment
+// DELETE /post-interview-assessments/:assessmentId — Delete assessment
 //router.delete('/:assessmentId', postInterviewAssessmentController.deletePostInterviewAssessment);
 
-// DELETE /postInterviewAssessments/post/:postId — Delete all assessments for a post
+// DELETE /post-interview-assessments/post/:postId — Delete all assessments for a post
 //router.delete('/post/:postId', postInterviewAssessmentController.deleteAssessmentsByPost);
 
 module.exports = router;
