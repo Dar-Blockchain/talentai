@@ -32,7 +32,7 @@ router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments
 router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
 
 // GET /post-interview-assessments/candidate — Get all assessments for a candidate
-router.get('/candidate', postInterviewAssessmentController.getAssessmentsByCandidate);
+router.get('/candidate/my', postInterviewAssessmentController.getAssessmentsByCandidate);
 
 // POST /post-interview-assessments — Create new assessment
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
