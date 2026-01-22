@@ -38,6 +38,13 @@ interface PaginationState {
   hasPrevPage: boolean;
 }
 
+interface CandidateAssessmentsState {
+  items: any[];
+  loading: boolean;
+  error: string | null;
+  pagination: PaginationState;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -62,6 +69,7 @@ interface PostState {
   recruitmentFlow: RecruitmentFlowState;
   postPayment: PostPaymentState;
   updatePostStatus: UpdatePostStatusState;
+  candidateAssessments: CandidateAssessmentsState;
 }
 
 // Initial state
@@ -128,6 +136,19 @@ const initialState: PostState = {
   updatePostStatus: {
     loading: false,
     error: null,
+  },
+  candidateAssessments: {
+    items: [],
+    loading: false,
+    error: null,
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
   },
 };
 
@@ -689,6 +710,69 @@ export const savePostInterviewAssessment = createAsyncThunk(
   }
 );
 
+// Async thunk to fetch candidate's post interview assessments
+export const fetchCandidateAssessments = createAsyncThunk(
+  "post/fetchCandidateAssessments",
+  async (
+    params: { page?: number; limit?: number } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      const { page = 1, limit = 10 } = params;
+      const token = localStorage.getItem("token");
+
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/candidate/my?${queryParams}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch candidate assessments");
+      }
+
+      const data = await response.json();
+
+      // Handle various response shapes
+      let results: any[] = [];
+      if (Array.isArray(data)) {
+        results = data;
+      } else if (Array.isArray(data?.data)) {
+        results = data.data;
+      } else if (Array.isArray(data?.results)) {
+        results = data.results;
+      } else if (Array.isArray(data?.assessments)) {
+        results = data.assessments;
+      }
+
+      return {
+        items: results,
+        pagination: {
+          total: data.pagination?.totalCount || data.total || data.count || results.length,
+          page: data.pagination?.page || page,
+          limit: data.pagination?.limit || limit,
+          totalPages: data.pagination?.totalPages || Math.ceil((data.total || results.length) / limit),
+          hasNextPage: data.pagination?.hasNextPage || false,
+          hasPrevPage: data.pagination?.hasPrevPage || false,
+        },
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Error fetching candidate assessments");
+    }
+  }
+);
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
@@ -894,6 +978,20 @@ const postSlice = createSlice({
       .addCase(updatePostStatus.rejected, (state, action) => {
         state.updatePostStatus.loading = false;
         state.updatePostStatus.error = action.payload as string;
+      })
+      // ---- CANDIDATE ASSESSMENTS ----
+      .addCase(fetchCandidateAssessments.pending, (state) => {
+        state.candidateAssessments.loading = true;
+        state.candidateAssessments.error = null;
+      })
+      .addCase(fetchCandidateAssessments.fulfilled, (state, action) => {
+        state.candidateAssessments.loading = false;
+        state.candidateAssessments.items = action.payload.items;
+        state.candidateAssessments.pagination = action.payload.pagination;
+      })
+      .addCase(fetchCandidateAssessments.rejected, (state, action) => {
+        state.candidateAssessments.loading = false;
+        state.candidateAssessments.error = action.payload as string;
       });
   },
 });
@@ -969,3 +1067,13 @@ export const selectPostPayment = (state: { post: PostState }) => ({
   loading: state.post.postPayment.loading,
   error: state.post.postPayment.error,
 });
+
+// Candidate Assessments Selectors
+export const selectCandidateAssessments = (state: { post: PostState }) =>
+  state.post.candidateAssessments.items;
+export const selectCandidateAssessmentsLoading = (state: { post: PostState }) =>
+  state.post.candidateAssessments.loading;
+export const selectCandidateAssessmentsError = (state: { post: PostState }) =>
+  state.post.candidateAssessments.error;
+export const selectCandidateAssessmentsPagination = (state: { post: PostState }) =>
+  state.post.candidateAssessments.pagination;
