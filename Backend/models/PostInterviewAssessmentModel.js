@@ -81,7 +81,12 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
     required: false,
     index: true
   },
-
+  step: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PostSteps',
+    required: false,
+    index: true
+  },
   // ========== INTERVIEW DATA ==========
   interviewData: {
     finalReport: {
