@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import {
   Box,
   Typography,
@@ -26,7 +27,6 @@ import BusinessIcon from "@mui/icons-material/Business";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
 import TuneIcon from "@mui/icons-material/Tune";
-import AssessmentDetailsModal from "./AssessmentDetailsModal";
 import { SearchOff } from "@mui/icons-material";
 
 // Styled Components
@@ -39,6 +39,7 @@ const StyledCard = styled(Box)(({ theme }) => ({
 }));
 
 const CompanyProfilesAssessments: React.FC = () => {
+  const router = useRouter();
   const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
@@ -46,18 +47,16 @@ const CompanyProfilesAssessments: React.FC = () => {
   const [assessmentSearch, setAssessmentSearch] = useState("");
   const [assessmentStatusFilter, setAssessmentStatusFilter] = useState("all");
   const [assessmentSort, setAssessmentSort] = useState("date_desc");
-  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
-  const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
 
   // Add function to fetch company profiles
   const fetchCompanyProfiles = async () => {
     try {
       setIsLoadingProfiles(true);
       setProfilesError(null);
-      const token = localStorage.getItem("api_token");
+      const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyWithAssessments`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine`,
         {
           method: "GET",
           headers: {
@@ -68,41 +67,64 @@ const CompanyProfilesAssessments: React.FC = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch company profiles");
+        throw new Error("Failed to fetch company assessments");
       }
 
       const data = await response.json();
       let normalized: any[] = [];
+
+      // Handle the new API response shape: { success, message, count, data: [...] }
       if (Array.isArray(data)) {
         normalized = data;
-      } else if (Array.isArray((data as any)?.results)) {
-        normalized = (data as any).results;
-      } else if (Array.isArray((data as any)?.data)) {
-        normalized = (data as any).data;
-      } else if (Array.isArray((data as any)?.assessments)) {
-        // New API shape: { companyId, totalCandidates, assessments: [...] }
-        normalized = (data as any).assessments.map((a: any) => ({
-          _id: `${a.candidateId || "cand"}-${a.jobId || "job"}`,
-          candidateName: a.candidateInfo?.name || "",
-          candidateEmail: a.candidateInfo?.email || "",
-          jobTitle: a.jobInfo?.title || "",
-          timestamp: a.assessmentSummary?.latestAssessment || a.timestamp,
-          overallScore:
-            Number(
-              a.assessmentSummary?.jobMatch?.percentage ??
-                a.assessmentSummary?.averageOverallScore ??
-                0
-            ) || 0,
-          jobMatchStatus: a.assessmentSummary?.jobMatch?.status || undefined,
-          raw: a,
-        }));
+      } else if (Array.isArray(data?.data)) {
+        normalized = data.data;
+      } else if (Array.isArray(data?.results)) {
+        normalized = data.results;
+      } else if (Array.isArray(data?.assessments)) {
+        normalized = data.assessments;
       } else {
         normalized = [];
       }
-      setCompanyProfiles(normalized);
+
+      // Map the response to a consistent format based on new API structure
+      const mappedAssessments = normalized.map((a: any) => ({
+        _id: a._id,
+        // New API has candidate object directly
+        candidate: a.candidate,
+        candidateName: a.candidate?.username || "",
+        candidateEmail: a.candidate?.email || "",
+        // New API has post object with jobDetails
+        post: a.post,
+        jobTitle: a.post?.jobDetails?.title || "",
+        jobStatus: a.post?.status || "",
+        // Interview data contains the assessment details
+        interviewData: a.interviewData,
+        interviewType: a.interviewData?.interviewType || "HR_INTERVIEW",
+        // Get coverage score from finalReport
+        coverageScore: a.interviewData?.finalReport?.coverage?.overall || 0,
+        // Get analytics data
+        analytics: a.interviewData?.analytics,
+        duration: a.interviewData?.analytics?.duration || 0,
+        messageCount: a.interviewData?.analytics?.messageCount || 0,
+        // Timestamps
+        timestamp: a.createdAt || a.timestamp,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+        // Final report summary
+        summary: a.interviewData?.finalReport?.summary || "",
+        recommendations: a.interviewData?.finalReport?.recommendations || [],
+        // Coverage areas for detailed view
+        coverageAreas: a.interviewData?.finalReport?.coverage?.areas || {},
+        // AI Analysis
+        aiAnalysis: a.interviewData?.finalReport?.aiAnalysis || {},
+        // Raw data for modal
+        raw: a,
+      }));
+
+      setCompanyProfiles(mappedAssessments);
     } catch (error) {
-      setProfilesError("Failed to fetch company profiles");
-      console.error("Error fetching company profiles:", error);
+      setProfilesError("Failed to fetch company assessments");
+      console.error("Error fetching company assessments:", error);
     } finally {
       setIsLoadingProfiles(false);
     }
@@ -113,9 +135,8 @@ const CompanyProfilesAssessments: React.FC = () => {
     fetchCompanyProfiles();
   }, []);
 
-  const handleViewAssessmentDetails = (assessment: any) => {
-    setSelectedAssessment(assessment);
-    setAssessmentModalOpen(true);
+  const handleViewAssessmentDetails = (assessmentId: string) => {
+    router.push(`/assessment/${assessmentId}`);
   };
 
   const renderCompanyProfilesTable = () => {
@@ -204,52 +225,44 @@ const CompanyProfilesAssessments: React.FC = () => {
       );
     }
 
-    // Helpers to support multiple API shapes
+    // Helpers to support the new API shape
     const getCandidateName = (a: any) =>
-      (
-        a?.condidateId?.userId?.username ||
-        a?.candidateName ||
-        a?.candidateInfo?.name ||
-        ""
-      ).toLowerCase();
+      (a?.candidateName || a?.candidate?.username || "").toLowerCase();
     const getCandidateEmail = (a: any) =>
-      a?.condidateId?.userId?.email ||
-      a?.candidateEmail ||
-      a?.candidateInfo?.email ||
-      "";
+      a?.candidateEmail || a?.candidate?.email || "";
     const getJobTitle = (a: any) =>
-      (
-        a?.jobId?.jobDetails?.title ||
-        a?.jobTitle ||
-        a?.jobInfo?.title ||
-        ""
-      ).toLowerCase();
+      (a?.jobTitle || a?.post?.jobDetails?.title || "").toLowerCase();
     const getScore = (a: any) => {
-      const s1 = Number(a?.analysis?.overallScore);
-      if (!Number.isNaN(s1) && s1 > 0) return s1;
-      const s2 = Number(a?.overallScore);
-      if (!Number.isNaN(s2)) return s2;
-      const s3 = Number(a?.assessmentSummary?.jobMatch?.percentage);
-      if (!Number.isNaN(s3)) return s3;
-      const s4 = Number(a?.assessmentSummary?.averageOverallScore);
-      if (!Number.isNaN(s4)) return s4;
+      // Coverage score from finalReport (0-100 scale)
+      const coverage = Number(a?.coverageScore);
+      if (!Number.isNaN(coverage) && coverage > 0) return coverage;
+      // Fallback to analytics coverage percentage
+      const analyticsCoverage = Number(a?.analytics?.coveragePercentage);
+      if (!Number.isNaN(analyticsCoverage)) return analyticsCoverage;
       return 0;
     };
     const getDate = (a: any) =>
-      new Date(
-        a?.timestamp || a?.assessmentSummary?.latestAssessment || 0
-      ).getTime();
+      new Date(a?.createdAt || a?.timestamp || 0).getTime();
+    const getInterviewType = (a: any) =>
+      a?.interviewType || a?.interviewData?.interviewType || "HR_INTERVIEW";
     const getStatus = (a: any) => {
-      const explicit = (
-        a?.jobMatchStatus ||
-        a?.assessmentSummary?.jobMatch?.status ||
-        ""
-      )
-        .toString()
-        .toLowerCase();
-      if (explicit.includes("good")) return "good";
-      if (explicit.includes("poor")) return "poor";
-      return getScore(a) >= 70 ? "good" : "poor";
+      const score = getScore(a);
+      // Consider completed areas vs total areas for status
+      const completedAreas = a?.analytics?.completedAreas || 0;
+      const totalAreas = a?.analytics?.totalAreas || 4;
+      const completionRate = totalAreas > 0 ? (completedAreas / totalAreas) * 100 : 0;
+      // Use score if available, otherwise use completion rate
+      const effectiveScore = score > 0 ? score : completionRate;
+      return effectiveScore >= 50 ? "good" : "poor";
+    };
+    const formatDuration = (ms: number) => {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes > 0) {
+        return `${minutes}m ${remainingSeconds}s`;
+      }
+      return `${remainingSeconds}s`;
     };
 
     // Apply search, filter, and sort
@@ -345,7 +358,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                     borderBottom: "1px solid #e5e7eb",
                   }}
                 >
-                  Assessment Date
+                  Interview Type
                 </TableCell>
                 <TableCell
                   sx={{
@@ -355,7 +368,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                     borderBottom: "1px solid #e5e7eb",
                   }}
                 >
-                  Overall Score
+                  Duration
                 </TableCell>
                 <TableCell
                   sx={{
@@ -365,7 +378,27 @@ const CompanyProfilesAssessments: React.FC = () => {
                     borderBottom: "1px solid #e5e7eb",
                   }}
                 >
-                  Job Match
+                  Date
+                </TableCell>
+                <TableCell
+                  sx={{
+                    color: "#6b7280",
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    borderBottom: "1px solid #e5e7eb",
+                  }}
+                >
+                  Coverage
+                </TableCell>
+                <TableCell
+                  sx={{
+                    color: "#6b7280",
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    borderBottom: "1px solid #e5e7eb",
+                  }}
+                >
+                  Status
                 </TableCell>
                 <TableCell
                   sx={{
@@ -383,6 +416,8 @@ const CompanyProfilesAssessments: React.FC = () => {
               {visibleAssessments.map((assessment, index) => {
                 const score = getScore(assessment);
                 const isGoodMatch = getStatus(assessment) === "good";
+                const interviewType = getInterviewType(assessment);
+                const duration = formatDuration(assessment.duration || 0);
 
                 return (
                   <TableRow
@@ -412,10 +447,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                             border: "2px solid #e5e7eb",
                           }}
                         >
-                          {
-                            (assessment?.condidateId?.userId?.username ||
-                              "U")?.[0]
-                          }
+                          {(assessment?.candidateName || assessment?.candidate?.username || "U")?.[0]?.toUpperCase()}
                         </Avatar>
                         <Box>
                           <Typography
@@ -425,13 +457,9 @@ const CompanyProfilesAssessments: React.FC = () => {
                               color: "#111827",
                             }}
                           >
-                            {assessment?.condidateId?.userId?.username ||
-                              assessment?.candidateName ||
-                              assessment?.candidateInfo?.name ||
-                              "Unknown User"}
+                            {assessment?.candidateName || assessment?.candidate?.username || "Unknown User"}
                           </Typography>
-                          {(assessment?.condidateId?.userId?.email ||
-                            getCandidateEmail(assessment)) && (
+                          {getCandidateEmail(assessment) && (
                             <Typography
                               variant="caption"
                               sx={{
@@ -441,8 +469,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                                 userSelect: "none",
                               }}
                             >
-                              {assessment?.condidateId?.userId?.email ||
-                                getCandidateEmail(assessment)}
+                              {getCandidateEmail(assessment)}
                             </Typography>
                           )}
                         </Box>
@@ -455,10 +482,35 @@ const CompanyProfilesAssessments: React.FC = () => {
                         borderBottom: "1px solid #e5e7eb",
                       }}
                     >
-                      {assessment?.jobId?.jobDetails?.title ||
-                        assessment?.jobTitle ||
-                        assessment?.jobInfo?.title ||
-                        "Unknown Job"}
+                      {assessment?.jobTitle || assessment?.post?.jobDetails?.title || "Unknown Job"}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderBottom: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <Chip
+                        label={interviewType.replace(/_/g, " ")}
+                        size="small"
+                        sx={{
+                          backgroundColor: "#ede9fe",
+                          color: "#7c3aed",
+                          fontWeight: 500,
+                          fontSize: "0.7rem",
+                          border: "none",
+                          borderRadius: "6px",
+                          textTransform: "capitalize",
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        color: "#6b7280",
+                        fontSize: "0.875rem",
+                        borderBottom: "1px solid #e5e7eb",
+                      }}
+                    >
+                      {duration}
                     </TableCell>
                     <TableCell
                       sx={{
@@ -484,11 +536,11 @@ const CompanyProfilesAssessments: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid #e5e7eb" }}>
                       <Chip
-                        label={isGoodMatch ? "Good Match" : "Poor Match"}
+                        label={isGoodMatch ? "Completed" : "In Progress"}
                         size="small"
                         sx={{
-                          backgroundColor: isGoodMatch ? "#d1fae5" : "#fee2e2",
-                          color: isGoodMatch ? "#065f46" : "#991b1b",
+                          backgroundColor: isGoodMatch ? "#d1fae5" : "#fef3c7",
+                          color: isGoodMatch ? "#065f46" : "#92400e",
                           fontWeight: 600,
                           fontSize: "0.75rem",
                           border: "none",
@@ -498,7 +550,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid #e5e7eb" }}>
                       <IconButton
-                        onClick={() => handleViewAssessmentDetails(assessment)}
+                        onClick={() => handleViewAssessmentDetails(assessment._id)}
                         sx={{
                           color: "#10b981",
                           "&:hover": {
@@ -658,13 +710,6 @@ const CompanyProfilesAssessments: React.FC = () => {
       </Box>
 
       {renderCompanyProfilesTable()}
-
-      {/* Assessment Details Modal */}
-      <AssessmentDetailsModal
-        open={assessmentModalOpen}
-        onClose={() => setAssessmentModalOpen(false)}
-        assessment={selectedAssessment}
-      />
     </StyledCard>
   );
 };

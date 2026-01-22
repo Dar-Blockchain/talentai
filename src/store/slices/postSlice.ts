@@ -662,7 +662,7 @@ export const savePostInterviewAssessment = createAsyncThunk(
       const token = Cookies.get("api_token");
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessment`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments`,
         {
           method: "POST",
           headers: {

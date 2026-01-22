@@ -236,7 +236,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
           params.append('skill', selectedSkill);
         }
 
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}SkillInterviewAssessment?${params.toString()}`;
+        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}skill-interview-assessments?${params.toString()}`;
 
         console.log('[SkillInterviewAssessments] Fetching from:', url);
         console.log('[SkillInterviewAssessments] Selected skill filter:', selectedSkill || 'none');
