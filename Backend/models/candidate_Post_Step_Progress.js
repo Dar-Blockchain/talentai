@@ -13,14 +13,14 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
   },
   currentStep: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Post_Steps",
+    ref: "PostSteps",
     required: true,
   },
   steps: [
     {
       stepId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Post_Steps",
+        ref: "PostSteps",
         required: true,
       },
       interviewDetails: {
