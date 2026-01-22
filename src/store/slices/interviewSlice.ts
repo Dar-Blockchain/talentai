@@ -97,7 +97,7 @@ export const saveInterviewAssessment = createAsyncThunk<
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}SkillInterviewAssessment/`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/`,
         {
           method: 'POST',
           headers: {
@@ -136,7 +136,7 @@ export const fetchInterviewAssessments = createAsyncThunk<
     const token = localStorage.getItem('api_token');
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}SkillInterviewAssessment?page=${page + 1}&limit=${limit}&candidateId=${candidateId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/my?page=${page + 1}&limit=${limit}&candidateId=${candidateId}`;
 
       console.log('📡 [InterviewSlice] Making HTTP request to:', url);
 

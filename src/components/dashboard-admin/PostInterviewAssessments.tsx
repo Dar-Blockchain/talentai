@@ -187,7 +187,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           params.append('company', selectedCompany);
         }
 
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}post-interview-assessment?${params.toString()}`;
+        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}post-interview-assessments?${params.toString()}`;
 
         console.log('📡 [PostInterviewAssessments] Fetching from:', url);
 

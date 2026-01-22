@@ -15,8 +15,8 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
+  LinearProgress,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import StarIcon from '@mui/icons-material/Star';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WorkIcon from '@mui/icons-material/Work';
@@ -25,6 +25,9 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import EmailIcon from '@mui/icons-material/Email';
 import InfoIcon from '@mui/icons-material/Info';
 import CloseIcon from '@mui/icons-material/Close';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ChatIcon from '@mui/icons-material/Chat';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -45,7 +48,7 @@ interface AssessmentDetailsModalProps {
 
 /**
  * AssessmentDetailsModal Component
- * 
+ *
  * Displays detailed assessment information in a modal dialog
  */
 const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
@@ -55,26 +58,42 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
 }) => {
   if (!assessment) return null;
 
-  // Helpers to support both data shapes
-  const getCandidateName = () => assessment?.condidateId?.userId?.username || assessment?.candidateName || assessment?.candidateInfo?.name || 'Unknown User';
-  const getCandidateEmail = () => assessment?.condidateId?.userId?.email || assessment?.candidateEmail || assessment?.candidateInfo?.email || '';
-  const getJobTitle = () => assessment?.jobId?.jobDetails?.title || assessment?.jobTitle || assessment?.jobInfo?.title || 'Unknown Job';
-  const getOverall = () => Number(assessment?.analysis?.overallScore ?? assessment?.overallScore ?? assessment?.assessmentSummary?.jobMatch?.percentage ?? assessment?.assessmentSummary?.averageOverallScore ?? 0) || 0;
-  const getTimestamp = () => assessment?.timestamp || assessment?.assessmentSummary?.latestAssessment || new Date().toISOString();
-  const candidateSkills = assessment?.condidateId?.skills || assessment?.candidateInfo?.skills || [];
-  const steps = assessment?.raw?.assessmentSummary?.steps || assessment?.assessmentSummary?.steps || [];
-  const topSkillAnalysis = Array.isArray(assessment?.analysis?.skillAnalysis)
-    ? assessment.analysis.skillAnalysis
-    : (Array.isArray(steps) && steps.length > 0 && Array.isArray(steps[steps.length - 1]?.analysis?.skillAnalysis))
-      ? steps[steps.length - 1].analysis.skillAnalysis
-      : [];
-  const recommendations = Array.isArray(assessment?.analysis?.recommendations)
-    ? assessment.analysis.recommendations
-    : Array.isArray(assessment?.assessmentSummary?.recommendations)
-      ? assessment.assessmentSummary.recommendations
-      : (Array.isArray(steps) && steps.length > 0 && Array.isArray(steps[steps.length - 1]?.analysis?.recommendations))
-        ? steps[steps.length - 1].analysis.recommendations
-        : [];
+  // Get data from the new API structure
+  const raw = assessment.raw || assessment;
+  const candidate = raw.candidate || {};
+  const post = raw.post || {};
+  const interviewData = raw.interviewData || {};
+  const finalReport = interviewData.finalReport || {};
+  const analytics = interviewData.analytics || {};
+  const coverageAreas = finalReport.coverage?.areas || {};
+  const aiAnalysis = finalReport.aiAnalysis || {};
+
+  // Helpers to get data
+  const getCandidateName = () => candidate.username || assessment.candidateName || 'Unknown User';
+  const getCandidateEmail = () => candidate.email || assessment.candidateEmail || '';
+  const getJobTitle = () => post.jobDetails?.title || assessment.jobTitle || 'Unknown Job';
+  const getJobDescription = () => post.jobDetails?.description || '';
+  const getInterviewType = () => interviewData.interviewType || 'HR_INTERVIEW';
+  const getCoverageScore = () => finalReport.coverage?.overall || 0;
+  const getSummary = () => finalReport.summary || '';
+  const getRecommendations = () => finalReport.recommendations || [];
+  const getTimestamp = () => raw.createdAt || assessment.timestamp || new Date().toISOString();
+
+  // Format duration
+  const formatDuration = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    return `${remainingSeconds}s`;
+  };
+
+  // Format area name for display
+  const formatAreaName = (name: string) => {
+    return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   return (
     <Dialog
@@ -88,7 +107,6 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
           boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
           border: '1px solid #e5e7eb',
           maxHeight: '95vh',
-
           overflow: 'hidden'
         }
       }}
@@ -118,10 +136,10 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               fontWeight: 700,
               fontSize: '1.25rem'
             }}>
-              Assessment Details
+              Interview Assessment Details
             </Typography>
             <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 400 }}>
-              Comprehensive candidate evaluation and skill analysis
+              {getInterviewType().replace(/_/g, ' ')} - Comprehensive evaluation
             </Typography>
           </Box>
         </Box>
@@ -133,7 +151,6 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
       <DialogContent sx={{
         p: 3,
         mt: "10px",
-
         overflowY: 'auto',
         maxHeight: 'calc(95vh - 200px)'
       }}>
@@ -166,7 +183,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                   fontWeight: 700,
                   color: 'white'
                 }}>
-                  {(getCandidateName() || 'U')?.[0]}
+                  {(getCandidateName() || 'U')?.[0]?.toUpperCase()}
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
                   <Typography variant="h5" sx={{
@@ -201,19 +218,43 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                   }} noWrap>
                     {getJobTitle()}
                   </Typography>
-                  <Typography variant="body2" sx={{
-                    color: '#6b7280',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}>
-                    <InfoIcon sx={{ fontSize: 14, color: '#10b981' }} />
-                    Assessment Date: {new Date(getTimestamp()).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="body2" sx={{
+                      color: '#6b7280',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5
+                    }}>
+                      <InfoIcon sx={{ fontSize: 14, color: '#10b981' }} />
+                      {new Date(getTimestamp()).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </Typography>
+                    <Chip
+                      label={getInterviewType().replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#ede9fe',
+                        color: '#7c3aed',
+                        fontWeight: 500,
+                        fontSize: '0.7rem',
+                      }}
+                    />
+                    {post.status && (
+                      <Chip
+                        label={post.status}
+                        size="small"
+                        sx={{
+                          backgroundColor: post.status === 'open' ? '#d1fae5' : '#fee2e2',
+                          color: post.status === 'open' ? '#065f46' : '#991b1b',
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
+                        }}
+                      />
+                    )}
+                  </Box>
                 </Box>
               </Box>
 
@@ -221,11 +262,11 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                 <Box sx={{ position: 'relative', display: 'inline-flex' }}>
                   <CircularProgress
                     variant="determinate"
-                    value={getOverall()}
+                    value={getCoverageScore()}
                     size={80}
                     thickness={4}
                     sx={{
-                      color: '#10b981'
+                      color: getCoverageScore() >= 50 ? '#10b981' : '#f59e0b'
                     }}
                   />
                   <Box sx={{
@@ -239,82 +280,25 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                       fontWeight: 700,
                       color: '#111827'
                     }}>
-                      {Math.round(getOverall())}%
+                      {Math.round(getCoverageScore())}%
                     </Typography>
                   </Box>
                 </Box>
 
                 <Box sx={{ textAlign: 'center' }}>
-                  <Chip
-                    label={(assessment?.analysis?.jobMatch?.status || assessment?.assessmentSummary?.jobMatch?.status || '').toString()}
-                    size="medium"
-                    sx={{
-                      backgroundColor: (assessment?.analysis?.jobMatch?.status || assessment?.assessmentSummary?.jobMatch?.status || '').toString().toLowerCase().includes('good')
-                        ? '#10b981'
-                        : '#ef4444',
-                      color: 'white',
-                      fontWeight: 600,
-                      height: 32,
-                      fontSize: '0.875rem',
-                      borderRadius: '8px'
-                    }}
-                  />
                   <Typography variant="caption" sx={{
                     color: '#64748b',
                     display: 'block',
-                    mt: 1,
                     fontWeight: 600
                   }}>
-                    Job Match Status
+                    Coverage Score
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Box>
 
-          {/* Candidate Skills */}
-          <Box sx={{ mb: 4 }}>
-
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(250px, 1fr))' },
-              gap: 2
-            }}>
-              {candidateSkills.map((skill: any, index: number) => (
-                <Box
-                  key={skill._id}
-                  sx={{
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    border: '1px solid #e2e8f0'
-                  }}
-                >
-                  <Typography variant="subtitle1" sx={{
-                    color: '#111827',
-                    fontWeight: 600,
-                    mb: 1
-                  }}>
-                    {skill.name}
-                  </Typography>
-                  <Chip
-                    label={skill.experienceLevel}
-                    size="small"
-                    sx={{
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      fontWeight: 600,
-                      height: 24,
-                      borderRadius: '6px',
-                      fontSize: '0.75rem'
-                    }}
-                  />
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Assessment Results (summary) */}
+          {/* Analytics Summary */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="h6" sx={{
               color: '#111827',
@@ -335,65 +319,109 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               }}>
                 <TrendingUpIcon sx={{ fontSize: 18, color: 'white' }} />
               </Box>
-              Assessment Results
+              Interview Analytics
             </Typography>
             <Box sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fit, minmax(200px, 1fr))' },
-              gap: 3
+              gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+              gap: 2
             }}>
               <Box sx={{
                 backgroundColor: '#f0f9ff',
                 borderRadius: '12px',
-                padding: '20px',
+                padding: '16px',
                 border: '1px solid #bae6fd',
                 textAlign: 'center'
               }}>
-                <Typography variant="h4" sx={{
-                  color: '#10b981',
+                <AccessTimeIcon sx={{ color: '#0284c7', fontSize: 28, mb: 1 }} />
+                <Typography variant="h6" sx={{
+                  color: '#0284c7',
                   fontWeight: 700,
-                  mb: 1
                 }}>
-                  {Math.round(getOverall())}%
+                  {formatDuration(analytics.duration || 0)}
                 </Typography>
-                <Typography variant="subtitle1" sx={{
+                <Typography variant="caption" sx={{
                   color: '#6b7280',
-                  fontWeight: 600
+                  fontWeight: 500
                 }}>
-                  Overall Score
+                  Duration
+                </Typography>
+              </Box>
+
+              <Box sx={{
+                backgroundColor: '#f0fdf4',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #bbf7d0',
+                textAlign: 'center'
+              }}>
+                <ChatIcon sx={{ color: '#16a34a', fontSize: 28, mb: 1 }} />
+                <Typography variant="h6" sx={{
+                  color: '#16a34a',
+                  fontWeight: 700,
+                }}>
+                  {analytics.messageCount || 0}
+                </Typography>
+                <Typography variant="caption" sx={{
+                  color: '#6b7280',
+                  fontWeight: 500
+                }}>
+                  Messages
                 </Typography>
               </Box>
 
               <Box sx={{
                 backgroundColor: '#fef3c7',
                 borderRadius: '12px',
-                padding: '20px',
+                padding: '16px',
                 border: '1px solid #fcd34d',
                 textAlign: 'center'
               }}>
-                <Typography variant="h4" sx={{
-                  color: '#f59e0b',
+                <AssessmentIcon sx={{ color: '#d97706', fontSize: 28, mb: 1 }} />
+                <Typography variant="h6" sx={{
+                  color: '#d97706',
                   fontWeight: 700,
-                  mb: 1
                 }}>
-                  {(assessment?.analysis?.jobMatch?.status || assessment?.assessmentSummary?.jobMatch?.status || '').toString().toLowerCase().includes('good') ? '✓' : '✗'}
+                  {analytics.completedAreas || 0}/{analytics.totalAreas || 4}
                 </Typography>
-                <Typography variant="subtitle1" sx={{
+                <Typography variant="caption" sx={{
                   color: '#6b7280',
-                  fontWeight: 600
+                  fontWeight: 500
                 }}>
-                  Job Match
+                  Areas Covered
+                </Typography>
+              </Box>
+
+              <Box sx={{
+                backgroundColor: '#fdf4ff',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #f5d0fe',
+                textAlign: 'center'
+              }}>
+                <TrendingUpIcon sx={{ color: '#a855f7', fontSize: 28, mb: 1 }} />
+                <Typography variant="h6" sx={{
+                  color: '#a855f7',
+                  fontWeight: 700,
+                }}>
+                  {Math.round(analytics.coveragePercentage || 0)}%
+                </Typography>
+                <Typography variant="caption" sx={{
+                  color: '#6b7280',
+                  fontWeight: 500
+                }}>
+                  Coverage
                 </Typography>
               </Box>
             </Box>
           </Box>
 
-          {/* All Tests / Steps */}
-          {Array.isArray(steps) && steps.length > 0 && (
+          {/* Coverage Areas */}
+          {Object.keys(coverageAreas).length > 0 && (
             <Box sx={{ mb: 4 }}>
               <Typography variant="h6" sx={{
                 color: '#111827',
-                mb: 2,
+                mb: 3,
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
@@ -403,282 +431,328 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                   width: 28,
                   height: 28,
                   borderRadius: '8px',
-                  backgroundColor: '#02E2FF',
+                  backgroundColor: '#10b981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
                   <WorkIcon sx={{ fontSize: 18, color: 'white' }} />
                 </Box>
-                Tests History ({steps.length})
+                Coverage Areas
               </Typography>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {steps.map((step: any, idx: number) => {
-                  const stepScore = Number(step?.analysis?.jobMatch?.percentage ?? step?.analysis?.overallScore ?? 0) || 0;
-                  const status = (step?.analysis?.jobMatch?.status || '').toString();
-                  const date = new Date(step?.timestamp).toLocaleString();
-                  return (
-                    <Box key={step?.interviewId || idx} sx={{
-                      p: 2,
-                      borderRadius: '10px',
+                {Object.entries(coverageAreas).map(([areaKey, areaData]: [string, any]) => (
+                  <Box
+                    key={areaKey}
+                    sx={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      padding: '20px',
                       border: '1px solid #e5e7eb',
-                      backgroundColor: '#ffffff'
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography sx={{ fontWeight: 700, color: '#111827' }}>Interview #{idx + 1}</Typography>
-                        <Typography variant="caption" sx={{ color: '#6b7280' }}>{date}</Typography>
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{
+                          fontWeight: 700,
+                          color: '#111827',
+                          textTransform: 'capitalize',
+                        }}>
+                          {formatAreaName(areaKey)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                          {areaData.depth}
+                        </Typography>
                       </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                        <Chip label={`Score: ${Math.round(stepScore)}%`} size="small" color={stepScore >= 70 ? 'success' : 'default'} />
-                        {status && (
-                          <Chip label={status} size="small" sx={{ bgcolor: status.toLowerCase().includes('good') ? '#10b981' : '#ef4444', color: 'white' }} />
-                        )}
-                        <Chip label={`${step?.numberOfQuestions || 0} questions`} size="small" variant="outlined" />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Chip
+                          label={areaData.completed ? 'Completed' : 'In Progress'}
+                          size="small"
+                          sx={{
+                            backgroundColor: areaData.completed ? '#d1fae5' : '#fef3c7',
+                            color: areaData.completed ? '#065f46' : '#92400e',
+                            fontWeight: 600,
+                          }}
+                        />
+                        <Typography variant="h6" sx={{
+                          fontWeight: 700,
+                          color: areaData.percentage >= 50 ? '#10b981' : '#f59e0b',
+                        }}>
+                          {Math.round(areaData.percentage || 0)}%
+                        </Typography>
                       </Box>
-                      {Array.isArray(step?.analysis?.skillAnalysis) && step.analysis.skillAnalysis.length > 0 && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="subtitle2" sx={{ color: '#374151', fontWeight: 700, mb: 1 }}>Skills Analysis</Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.5 }}>
-                            {step.analysis.skillAnalysis.map((s: any, i: number) => (
-                              <Box key={`${s?.skillName || 'skill'}-${i}`} sx={{ p: 1.5, border: '1px solid #f1f5f9', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
-                                <Typography sx={{ fontWeight: 700, color: '#111827', mb: 0.5 }}>{s?.skillName}</Typography>
-                                {Array.isArray(s?.strengths) && s.strengths.length > 0 && (
-                                  <Typography variant="caption" sx={{ display: 'block', color: '#059669' }}>Strengths: {s.strengths.join(', ')}</Typography>
-                                )}
-                                {Array.isArray(s?.weaknesses) && s.weaknesses.length > 0 && (
-                                  <Typography variant="caption" sx={{ display: 'block', color: '#b91c1c' }}>Weaknesses: {s.weaknesses.join(', ')}</Typography>
-                                )}
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-                      )}
                     </Box>
-                  );
-                })}
+
+                    <LinearProgress
+                      variant="determinate"
+                      value={areaData.percentage || 0}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#e5e7eb',
+                        mb: 2,
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: areaData.percentage >= 50 ? '#10b981' : '#f59e0b',
+                          borderRadius: 4,
+                        }
+                      }}
+                    />
+
+                    {/* Indicators */}
+                    {areaData.indicators && areaData.indicators.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151', mb: 1 }}>
+                          Indicators:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {areaData.indicators.map((indicator: any, idx: number) => (
+                            <Chip
+                              key={idx}
+                              label={indicator.name}
+                              size="small"
+                              sx={{
+                                backgroundColor: indicator.covered ? '#d1fae5' : '#f3f4f6',
+                                color: indicator.covered ? '#065f46' : '#6b7280',
+                                fontWeight: 500,
+                                fontSize: '0.7rem',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+
+                    <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                        Weight: {Math.round((areaData.weight || 0) * 100)}%
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                        Questions: {areaData.questionsAsked || 0}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
               </Box>
             </Box>
           )}
 
-          {/* Skill Analysis */}
-          <Box sx={{
-            mb: 4,
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <Typography variant="h6" sx={{
-              color: '#111827',
-              mb: 3,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5
-            }}>
-              <Box sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '8px',
-                backgroundColor: '#10b981',
+          {/* AI Analysis */}
+          {(aiAnalysis.strongestAreas?.length > 0 || aiAnalysis.weakestAreas?.length > 0 || aiAnalysis.recommendedFocus?.length > 0) && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{
+                color: '#111827',
+                mb: 3,
+                fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                gap: 1.5
               }}>
-                <WorkIcon sx={{ fontSize: 18, color: 'white' }} />
-              </Box>
-              Skill Analysis ({topSkillAnalysis.length} skills)
-            </Typography>
+                <Box sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '8px',
+                  backgroundColor: '#8b5cf6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <AutoAwesomeIcon sx={{ fontSize: 18, color: 'white' }} />
+                </Box>
+                AI Analysis
+              </Typography>
 
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fit, minmax(300px, 1fr))' },
-              gap: 3
-            }}>
-              {topSkillAnalysis.map((skill: any, index: number) => {
-                // Check if this is a soft skill (no requiredLevel field or requiredLevel is null/undefined)
-                const isSoftSkill = !skill.requiredLevel || skill.requiredLevel === null || skill.requiredLevel === undefined;
-
-                return (
-                  <Box key={index} sx={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '8px',
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+                {aiAnalysis.strongestAreas?.length > 0 && (
+                  <Box sx={{
+                    backgroundColor: '#f0fdf4',
+                    borderRadius: '12px',
                     padding: '16px',
-                    border: '1px solid #e5e7eb'
+                    border: '1px solid #bbf7d0',
                   }}>
-                    <Typography variant="subtitle1" sx={{
-                      color: '#111827',
-                      mb: 2,
-                      fontWeight: 600,
-                      textAlign: 'center'
-                    }}>
-                      {skill.skillName}
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#065f46', mb: 1 }}>
+                      Strongest Areas
                     </Typography>
-
-                    {isSoftSkill ? (
-                      // Soft skill display - only skillName and confidenceScore
-                      <Box sx={{
-                        backgroundColor: '#f0f9ff',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        textAlign: 'center',
-                        border: '1px solid #bae6fd'
-                      }}>
-                        <Typography variant="body2" sx={{
-                          color: '#6b7280',
-                          mb: 1,
-                          fontWeight: 500
-                        }}>
-                          Confidence Score
-                        </Typography>
-                        <Typography sx={{
-                          color: '#111827',
-                          fontWeight: 700,
-                          fontSize: '1.25rem'
-                        }}>
-                          {skill.confidenceScore || 'N/A'}%
-                        </Typography>
-                      </Box>
-                    ) : (
-                      // Technical skill display - full details
-                      <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 2
-                      }}>
-                        <Box sx={{
-                          backgroundColor: '#f8fafc',
-                          borderRadius: '8px',
-                          padding: '12px',
-                          textAlign: 'center',
-                          border: '1px solid #e2e8f0'
-                        }}>
-                          <Typography variant="body2" sx={{
-                            color: '#6b7280',
-                            mb: 1,
-                            fontWeight: 500
-                          }}>
-                            Required Level
-                          </Typography>
-                          <Typography sx={{
-                            color: '#111827',
-                            fontWeight: 600,
-                            fontSize: '1rem'
-                          }}>
-                            {skill.requiredLevel}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{
-                          backgroundColor: skill.match === 'match'
-                            ? '#f0fdf4'
-                            : '#fef2f2',
-                          borderRadius: '8px',
-                          padding: '12px',
-                          textAlign: 'center',
-                          border: `1px solid ${skill.match === 'match'
-                            ? '#bbf7d0'
-                            : '#fecaca'}`
-                        }}>
-                          <Typography variant="body2" sx={{
-                            color: '#6b7280',
-                            mb: 1,
-                            fontWeight: 500
-                          }}>
-                            Match Status
-                          </Typography>
-                          <Chip
-                            label={skill.match}
-                            size="small"
-                            sx={{
-                              backgroundColor: skill.match === 'match'
-                                ? '#10b981'
-                                : '#ef4444',
-                              color: 'white',
-                              fontWeight: 600,
-                              height: 24,
-                              borderRadius: '6px',
-                              fontSize: '0.75rem'
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                    )}
+                    {aiAnalysis.strongestAreas.map((area: string, idx: number) => (
+                      <Typography key={idx} variant="body2" sx={{ color: '#047857' }}>
+                        • {area}
+                      </Typography>
+                    ))}
                   </Box>
-                );
-              })}
+                )}
+
+                {aiAnalysis.weakestAreas?.length > 0 && (
+                  <Box sx={{
+                    backgroundColor: '#fef2f2',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    border: '1px solid #fecaca',
+                  }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#991b1b', mb: 1 }}>
+                      Areas for Improvement
+                    </Typography>
+                    {aiAnalysis.weakestAreas.map((area: string, idx: number) => (
+                      <Typography key={idx} variant="body2" sx={{ color: '#b91c1c' }}>
+                        • {area}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+
+                {aiAnalysis.recommendedFocus?.length > 0 && (
+                  <Box sx={{
+                    backgroundColor: '#fffbeb',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    border: '1px solid #fcd34d',
+                  }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#92400e', mb: 1 }}>
+                      Recommended Focus
+                    </Typography>
+                    {aiAnalysis.recommendedFocus.map((focus: string, idx: number) => (
+                      <Typography key={idx} variant="body2" sx={{ color: '#a16207' }}>
+                        • {focus}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+              </Box>
             </Box>
-          </Box>
+          )}
+
+          {/* Summary */}
+          {getSummary() && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{
+                color: '#111827',
+                mb: 2,
+                fontWeight: 700,
+              }}>
+                Summary
+              </Typography>
+              <Box sx={{
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px',
+                padding: '20px',
+                border: '1px solid #e2e8f0',
+              }}>
+                <Typography variant="body1" sx={{ color: '#374151', lineHeight: 1.6 }}>
+                  {getSummary()}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* Job Details */}
+          {getJobDescription() && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{
+                color: '#111827',
+                mb: 2,
+                fontWeight: 700,
+              }}>
+                Job Description
+              </Typography>
+              <Box sx={{
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px',
+                padding: '20px',
+                border: '1px solid #e2e8f0',
+              }}>
+                <Typography variant="body2" sx={{ color: '#374151', lineHeight: 1.6 }}>
+                  {getJobDescription()}
+                </Typography>
+                {post.jobDetails?.requirements?.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#111827', mb: 1 }}>
+                      Requirements:
+                    </Typography>
+                    <List dense sx={{ p: 0 }}>
+                      {post.jobDetails.requirements.map((req: string, idx: number) => (
+                        <ListItem key={idx} sx={{ py: 0.5, px: 0 }}>
+                          <ListItemIcon sx={{ minWidth: 24 }}>
+                            <ArrowForwardIcon sx={{ fontSize: 14, color: '#10b981' }} />
+                          </ListItemIcon>
+                          <ListItemText primary={req} sx={{ '& .MuiListItemText-primary': { fontSize: '0.875rem', color: '#4b5563' } }} />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          )}
 
           {/* Recommendations */}
-          <Box>
-            <Typography variant="h6" sx={{
-              color: '#111827',
-              mb: 3,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5
-            }}>
-              <Box sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '8px',
-                backgroundColor: '#f59e0b',
+          {getRecommendations().length > 0 && (
+            <Box>
+              <Typography variant="h6" sx={{
+                color: '#111827',
+                mb: 3,
+                fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                gap: 1.5
               }}>
-                <AutoAwesomeIcon sx={{ fontSize: 18, color: 'white' }} />
-              </Box>
-              Recommendations ({recommendations.length})
-            </Typography>
+                <Box sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '8px',
+                  backgroundColor: '#f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <AutoAwesomeIcon sx={{ fontSize: 18, color: 'white' }} />
+                </Box>
+                Recommendations ({getRecommendations().length})
+              </Typography>
 
-            <Box sx={{
-              backgroundColor: '#fffbeb',
-              borderRadius: '12px',
-              padding: '20px',
-              border: '1px solid #fed7aa'
-            }}>
-              <List sx={{ p: 0 }}>
-                {recommendations.map((rec: string, index: number) => (
-                  <ListItem key={index} sx={{
-                    py: 1.5,
-                    px: 0,
-                    '&:not(:last-child)': {
-                      borderBottom: '1px solid #fed7aa'
-                    }
-                  }}>
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <Box sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        backgroundColor: '#f59e0b',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <ArrowForwardIcon sx={{ fontSize: 14, color: 'white' }} />
-                      </Box>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={rec}
-                      sx={{
-                        color: '#111827',
-                        '& .MuiListItemText-primary': {
-                          fontWeight: 500,
-                          lineHeight: 1.5,
-                          fontSize: '0.95rem'
-                        }
-                      }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              <Box sx={{
+                backgroundColor: '#fffbeb',
+                borderRadius: '12px',
+                padding: '20px',
+                border: '1px solid #fed7aa'
+              }}>
+                <List sx={{ p: 0 }}>
+                  {getRecommendations().map((rec: string, index: number) => (
+                    <ListItem key={index} sx={{
+                      py: 1.5,
+                      px: 0,
+                      '&:not(:last-child)': {
+                        borderBottom: '1px solid #fed7aa'
+                      }
+                    }}>
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Box sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          backgroundColor: '#f59e0b',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <ArrowForwardIcon sx={{ fontSize: 14, color: 'white' }} />
+                        </Box>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={rec}
+                        sx={{
+                          color: '#111827',
+                          '& .MuiListItemText-primary': {
+                            fontWeight: 500,
+                            lineHeight: 1.5,
+                            fontSize: '0.95rem'
+                          }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
       </DialogContent>
 

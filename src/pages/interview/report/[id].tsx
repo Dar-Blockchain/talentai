@@ -266,7 +266,7 @@ function CandidateInterviewDetailPage() {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('api_token');
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}SkillInterviewAssessment/${id}`;
+                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/${id}`;
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });

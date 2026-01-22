@@ -57,7 +57,7 @@ const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType }) => {
       params.append('skillType', skillType);
       params.append('limit', '20');
 
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}SkillInterviewAssessment?${params.toString()}`;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}skill-interview-assessments/my?${params.toString()}`;
 
       const response = await fetch(url, {
         method: 'GET',
