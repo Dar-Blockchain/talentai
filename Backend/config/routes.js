@@ -60,7 +60,7 @@ function registerRoutes(app) {
   // Evaluation & Interview
   // app.use('/interviewDetails', interviewDetailsRouter);
   //app.use('/InterviewAssessment', InterviewAssessmentRoutes);
-  app.use('/SkillInterviewAssessment', SkillInterviewAssessmentRoutes);
+  app.use('/skill-interview-assessments', SkillInterviewAssessmentRoutes);
   app.use('/post-interview-assessments', postInterviewAssessmentRouter);
 
   // Posts & Jobs
