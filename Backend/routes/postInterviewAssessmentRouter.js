@@ -16,9 +16,6 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // ========== PUBLIC ROUTES (no auth required) ==========
 
-// GET /post-interview-assessments/:assessmentId — Get single assessment
-router.get('/:assessmentId', postInterviewAssessmentController.getPostInterviewAssessmentById);
-
 // GET /post-interview-assessments/post/:postId — Get all assessments for a post
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
 
@@ -34,11 +31,14 @@ router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments
 // GET /post-interview-assessments/company/mine — Get all assessments for authenticated company
 router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
 
-// GET /post-interview-assessments/candidate/:candidateId — Get all assessments for a candidate
+// GET /post-interview-assessments/candidate — Get all assessments for a candidate
 router.get('/candidate', postInterviewAssessmentController.getAssessmentsByCandidate);
 
 // POST /post-interview-assessments — Create new assessment
 router.post('/', postInterviewAssessmentController.createPostInterviewAssessment);
+
+// GET /post-interview-assessments/:assessmentId — Get single assessment
+router.get('/:assessmentId', postInterviewAssessmentController.getPostInterviewAssessmentById);
 
 // GET /post-interview-assessments/search — Search assessments
 //router.get('/search', postInterviewAssessmentController.searchAssessments);

@@ -138,7 +138,8 @@ module.exports.getAssessmentsByPost = async (req, res) => {
 // ========== READ - Get all for a candidate ==========
 module.exports.getAssessmentsByCandidate = async (req, res) => {
   try {
-    const { candidateId } = req.user._id;
+    const candidateId = req.user._id;
+
     const filters = req.query;
 
     if (!candidateId) {
