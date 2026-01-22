@@ -49,59 +49,63 @@ function registerRoutes(app) {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
   // Authentication & Profile
-  app.use('/auth', authRouter);
-  app.use('/admin', companyPermissionsRouter);
-  app.use('/permissions', permissionsRouter);
-  app.use('/dashboard', dashboardRouter);
-  app.use('/profiles', profileRouter);
-  app.use('/CompanyInvitation', CompanyInvitationRouters);
-  app.use('/CompanyMembership', CompanyMembershipRoutes);
+  app.use('/auth', authRouter); //✅ authentication 
+  app.use('/admin', companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
+  app.use('/permissions', permissionsRouter); //✅ (general permissions management) -> permissions (to be checked)
+  app.use('/dashboard', dashboardRouter); //✅ dashboard
+  app.use('/profiles', profileRouter); //✅ profile management
+  
+  // Company Management
+  app.use('/CompanyInvitation', CompanyInvitationRouters); // Company Invitation Management -> company-invitations
+  app.use('/CompanyMembership', CompanyMembershipRoutes); // Company Membership Management -> company-memberships
 
   // Evaluation & Interview
   // app.use('/interviewDetails', interviewDetailsRouter);
   //app.use('/InterviewAssessment', InterviewAssessmentRoutes);
-  app.use('/skill-interview-assessments', SkillInterviewAssessmentRoutes);
-  app.use('/post-interview-assessments', postInterviewAssessmentRouter);
+  app.use('/skill-interview-assessments', SkillInterviewAssessmentRoutes); //✅ Skill Interview Assessments -> skill-interview-assessments
+  app.use('/post-interview-assessments', postInterviewAssessmentRouter); //✅   Post Interview Assessments -> post-interview-assessments
 
   // Posts & Jobs
-  app.use('/linkedinPost', linkedinPostRouter);
-  app.use('/post', postRouter);
-  app.use('/post-steps', postStepsRouter);
+  app.use('/linkedinPost', linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
+  app.use('/post', postRouter); // Post Management -> posts
+  app.use('/post-steps', postStepsRouter); //✅ Post Steps Management -> post-steps
+
   // Chat & Messaging
-  app.use('/chat', chatRouter);
+  app.use('/chat', chatRouter); // Chat functionalities chat -> chats (to be checked)
 
   // Matching & Recruitment
-  app.use('/matching', matchingRoutes);
-  app.use('/matchingConfig', matchingConfigRoutes);
+  app.use('/matching', matchingRoutes); // Matching Engine matching -> matchings
+  app.use('/matchingConfig', matchingConfigRoutes); // Matching Configuration -> matching-configs
 
   // Notifications
-  app.use('/notification-system', notificationSystemRouter);
+  app.use('/notification-system', notificationSystemRouter); // Notification System -> notifications
 
   // Candidate Management
-  app.use('/candidate-progress', candidatePostStepProgressRouter);
-  app.use('/unlock-candidate', unlockCandidateRouter);
+  app.use('/candidate-progress', candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
+  app.use('/unlock-candidate', unlockCandidateRouter); //✅ Unlock Candidate -> unlock-candidates
 
   // Blockchain & Web3
-  app.use('/hedera-tools', hederaToolsRouter);
-  app.use('/api/hcs11', hcs11Router);
+  app.use('/hedera-tools', hederaToolsRouter); //✅ Hedera Tools -> hedera-tools
+  app.use('/api/hcs11', hcs11Router); //✅ HCS11 Integration -> api/hcs11
 
   // AI & Agents
-  app.use('/hr-agents', hrAgentRouter);
-  app.use('/agent-config', agentConfigRouter);
+  app.use('/hr-agents', hrAgentRouter); //✅ HR Agents Management -> hr-agents
+  app.use('/agent-config', agentConfigRouter); //✅ Agent Configuration -> agent-configs
 
   // Utility & Management
-  app.use('/todo', todoRouter);
-  app.use('/feedback', feedbackRouter);
-  app.use('/logs', logRoutes);
-  app.use('/task', taskRouter);
-  app.use('/tokens', tokenRouter);
+  app.use('/todo', todoRouter); //✅ To-Do Management -> todos
+  app.use('/feedback', feedbackRouter); // Feedback Management -> feedbacks
+  app.use('/logs', logRoutes); //✅ System Logs Management -> logs
+  app.use('/task', taskRouter); // Task Management -> tasks
+  app.use('/tokens', tokenRouter); //✅ Token Management -> tokens
 
   // Payment & Billing
-  app.use('/payment', paymentRouter);
-  app.use('/api/stripe', stripRouter);
+  app.use('/payment', paymentRouter); //✅ Payment Processing -> payments
+  app.use('/api/stripe', stripRouter); //✅ Stripe Integration -> api/stripe
 
   // Pipeline Interview
-  app.use('/api/pipeline-interview', pipelineInterviewRoutes);
+  app.use('/api/pipeline-interview', pipelineInterviewRoutes); // Pipeline Interview Routes -> /interview-pipelines
+
 
   // Health check routes
   app.get('/', (req, res) => {
