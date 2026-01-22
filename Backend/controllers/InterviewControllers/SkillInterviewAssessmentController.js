@@ -289,10 +289,10 @@ const getStatistics = async (req, res) => {
 
 const getMy = async (req, res) => {
   try {
-    const { page = 1, limit = 10, interviewType} = req.query;
+    const { page = 1, limit = 10, skillType} = req.query;
 
     const filters = {};
-    if (interviewType) filters.interviewType = interviewType;
+    if (skillType) filters.skillType = skillType;
     filters.candidateId = req.user.profile;
 
     const result = await SkillInterviewAssessmentService.getAllAssessments(
