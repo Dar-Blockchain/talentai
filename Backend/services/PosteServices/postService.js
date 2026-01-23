@@ -1,6 +1,6 @@
 const Post = require("../../models/PostModel");
 const User = require("../../models/UserModel");
-const JobAssessmentResult = require("../../models/JobAssessmentResultModel");
+const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessmentModel");
 const AgentService = require("../AgentService");
 const aiService = require("../aiService");
 const nodemailer = require('nodemailer');
@@ -596,8 +596,8 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
   }
 
   // IDs de postes déjà testés
-  const testedPosts = await JobAssessmentResult.find({
-    condidateId: user.profile._id,
+  const testedPosts = await PostInterviewAssessmentModel.find({
+    candidate: user._id,
   }).distinct("jobId");
 
   // Tous les postes correspondants aux skills, en excluant ceux déjà testés et avec status "open"
