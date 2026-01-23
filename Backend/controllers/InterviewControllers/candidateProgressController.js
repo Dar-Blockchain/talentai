@@ -5,7 +5,6 @@
 
 const CandidatePostStepProgress = require('../../models/CandidatePostStepProgress');
 const Post_Steps = require('../../models/postStepsModel');
-const InterviewDetails = require('../../models/InterviewDetailsModel');
 
 /**
  * Initialize or get candidate progress for a job
