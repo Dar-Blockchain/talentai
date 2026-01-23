@@ -25,7 +25,7 @@ const CandidatePostStepProgressSchema = new mongoose.Schema({
       },
       interviewDetails: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "InterviewDetails",
+        ref: "PostInterviewAssessment",
         default: null,
         required: false,
       },
