@@ -1,4 +1,5 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessmentService");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
@@ -151,11 +152,26 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 
     const assessments = await postInterviewAssessmentService.getAssessmentsByCandidate(candidateId, filters);
 
+    // Enrich assessments with CandidatePostStepProgress
+    const enrichedAssessments = await Promise.all(
+      assessments.map(async (assessment) => {
+        const progress = await CandidatePostStepProgress.findOne({
+          idCandidate: req.user.profile,
+          idPost: assessment.post
+        }).populate('currentStep').populate('steps.interviewDetails');
+
+        return {
+          assessment: assessment,
+          candidatePostStepProgress: progress
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
       message: 'Assessments retrieved successfully',
-      count: assessments.length,
-      data: assessments
+      count: enrichedAssessments.length,
+      data: enrichedAssessments
     });
   } catch (error) {
     console.error('Error getting assessments by candidate:', error);

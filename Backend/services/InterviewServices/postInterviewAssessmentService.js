@@ -106,9 +106,9 @@ module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, l
 module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
   try {
     const assessment = await PostInterviewAssessment.findById(assessmentId)
-      .populate('post', 'jobDetails title status')
-      .populate('candidate', 'username email role')
-      .populate('company', 'username email role');
+      .populate('post')
+      .populate('candidate')
+      .populate('company');
 
     if (!assessment) {
       throw new Error('Post interview assessment not found');
