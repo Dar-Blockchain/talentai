@@ -29,10 +29,31 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     const company = post.user;
     console.log('🏢 Company extracted from post:', company);
 
-    // Create new assessment with company extracted from post
+    // Extract skill based on skillType
+    let extractedSkill = null;
+    const skillType = assessmentData.skillType || 'technical';
+
+    if (skillType === 'technical' && post.skillAnalysis?.requiredSkills?.length > 0) {
+      // For technical skills, get all technical skill names
+      extractedSkill = post.skillAnalysis.requiredSkills
+        .map(skill => skill.name)
+        .filter(name => name)
+        .join(', ');
+      console.log('🔧 Technical skills extracted:', extractedSkill);
+    } else if (skillType === 'soft' && post.skillAnalysis?.softSkills?.length > 0) {
+      // For soft skills, get all soft skill names
+      extractedSkill = post.skillAnalysis.softSkills
+        .map(skill => skill.name)
+        .filter(name => name)
+        .join(', ');
+      console.log('💼 Soft skills extracted:', extractedSkill);
+    }
+
+    // Create new assessment with company extracted from post and skills
     const newAssessmentData = {
       ...assessmentData,
-      company
+      company,
+      skill: extractedSkill
     };
 
     const newAssessment = new PostInterviewAssessment(newAssessmentData);

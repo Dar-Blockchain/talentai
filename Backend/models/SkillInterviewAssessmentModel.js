@@ -69,11 +69,6 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  interviewerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    index: true
-  },
 
   // ========== METADATA FIELDS ==========
   exportedAt: {
