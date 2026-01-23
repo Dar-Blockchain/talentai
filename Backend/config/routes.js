@@ -39,6 +39,7 @@ const pipelineInterviewRoutes = require('../routes/pipelineInterviewRoutes');
 const CompanyInvitationRouters = require('../routes/CompanyInvitationRouter');
 const CompanyMembershipRoutes = require('../routes/CompanyMembershipRouter');
 const chatRouter = require('../routes/chatRouter');
+// const backupRouter = require('../routes/backupRouter');
 
 /**
  * Register all routes on the Express app
@@ -100,6 +101,7 @@ function registerRoutes(app) {
   app.use('/logs', logRoutes); //✅ System Logs Management -> logs
   app.use('/task', taskRouter); // Task Management -> tasks
   app.use('/tokens', tokenRouter); //✅ Token Management -> tokens
+  // app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
   // Payment & Billing
   app.use('/payment', paymentRouter); //✅ Payment Processing -> payments

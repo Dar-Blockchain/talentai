@@ -23,6 +23,8 @@ const { initializeAgenda } = require('./services/Agent&AgendaServices/agendaServ
 const intelligentInterviewService = require('./services/intelligentInterviewService');
 const intelligentInterviewController = require('./controllers/intelligentInterviewController');
 const chatSocketHandler = require('./controllers/ChatControllers/chatSocketHandler');
+//const backupService = require('./services/backupService');
+//const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
 // Auto-load CRON jobs
 require('./cron/resetQuota');
@@ -61,6 +63,15 @@ const initializeApp = async () => {
     // Step 2: Initialize scheduler
     await initializeAgenda();
 
+    // Step 2.5: Initialize daily backup scheduler
+    // const agenda = require('agenda');
+    // const mongoConnectionString = process.env.MONGODB_URI || 'mongodb://localhost:27017/talentai';
+    // const agendaInstance = new agenda.Agenda({ mongo: { url: mongoConnectionString } });
+    
+    // await agendaInstance.start();
+    // await scheduleDailyBackup(agendaInstance);
+    // logger.success('Daily backup scheduler initialized');
+
     // Step 3: Register middleware
     registerMiddlewares(app);
 
@@ -80,6 +91,11 @@ const initializeApp = async () => {
     } else {
       logger.warn('Interview service initialization completed with warnings - Interview features may be limited');
     }
+
+    // Step 6.5: Initialize backup service
+    // logger.section('Initializing database backup service...');
+    // await backupService.initializeDailyBackup();
+    // logger.success('Database backup service initialized');
 
     // Step 7: Start HTTP server
     logger.section('Starting HTTP server...');
