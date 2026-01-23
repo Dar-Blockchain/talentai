@@ -3,7 +3,7 @@
  * Manages candidate progression through pipeline steps
  */
 
-const candidate_Post_Step_Progress = require('../../models/candidate_Post_Step_Progress');
+const CandidatePostStepProgress = require('../../models/CandidatePostStepProgress');
 const Post_Steps = require('../../models/postStepsModel');
 const InterviewDetails = require('../../models/InterviewDetailsModel');
 
@@ -19,7 +19,7 @@ exports.initializeProgress = async (req, res) => {
     console.log(`📋 Initializing progress for candidate ${candidateId}, job ${jobId}`);
 
     // Check if progress already exists
-    let progress = await candidate_Post_Step_Progress.findOne({
+    let progress = await CandidatePostStepProgress.findOne({
       idCandidate: candidateId,
       idPost: jobId
     });
@@ -55,7 +55,7 @@ exports.initializeProgress = async (req, res) => {
     }
 
     // Create progress record
-    progress = new candidate_Post_Step_Progress({
+    progress = new CandidatePostStepProgress({
       idCandidate: candidateId,
       idPost: jobId,
       currentStep: firstInterviewStep._id,
@@ -98,7 +98,7 @@ exports.updateStepStatus = async (req, res) => {
 
     console.log(`📋 Updating step ${stepId} for candidate ${candidateId}`);
 
-    const progress = await candidate_Post_Step_Progress.findOne({
+    const progress = await CandidatePostStepProgress.findOne({
       idCandidate: candidateId,
       idPost: jobId
     });
@@ -165,7 +165,7 @@ exports.moveToNextStep = async (req, res) => {
 
     console.log(`📋 Moving to next step for candidate ${candidateId}, job ${jobId}`);
 
-    const progress = await candidate_Post_Step_Progress.findOne({
+    const progress = await CandidatePostStepProgress.findOne({
       idCandidate: candidateId,
       idPost: jobId
     }).populate('currentStep');
@@ -253,7 +253,7 @@ exports.getProgress = async (req, res) => {
   try {
     const { candidateId, jobId } = req.params;
 
-    const progress = await candidate_Post_Step_Progress.findOne({
+    const progress = await CandidatePostStepProgress.findOne({
       idCandidate: candidateId,
       idPost: jobId
     }).populate('currentStep').populate('steps.interviewDetails');

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
+const CandidatePostStepProgressSchema = new mongoose.Schema({
   idCandidate: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -58,7 +58,7 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.models.candidate_Post_Step_Progress || mongoose.model(
-  "candidate_Post_Step_Progress",
-  candidate_Post_Step_ProgressSchema
+module.exports = mongoose.models.CandidatePostStepProgress || mongoose.model(
+  "CandidatePostStepProgress",
+  CandidatePostStepProgressSchema
 );
