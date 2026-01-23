@@ -777,9 +777,30 @@ const IntelligentInterviewTest = () => {
           throw new Error('Pipeline jobs require authentication. Please log in to start the interview.');
         }
 
-        console.log('🔍 Checking candidate progress for candidateId:', candidateId);
+        console.log('🔍 Initializing/checking candidate progress for candidateId:', candidateId);
 
-        // Try to get existing progress
+        // Always call initialize first - it will return existing progress or create new
+        console.log('📝 Calling initialize endpoint...');
+        const initResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/initialize`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ candidateId, jobId })
+          }
+        );
+
+        if (!initResponse.ok) {
+          throw new Error('Failed to initialize progress');
+        }
+
+        const initData = await initResponse.json();
+        console.log('✅ Initialize response:', initData);
+
+        // Now fetch the full progress data
         const progressResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
           {
@@ -793,30 +814,12 @@ const IntelligentInterviewTest = () => {
         let progressData;
 
         if (progressResponse.ok) {
-          // Progress exists - get current step config from database
           progressData = await progressResponse.json();
-          console.log('✅ Progress found - resuming from step:', progressData.currentStep.stepNumber);
+          console.log('✅ Progress fetched - current step:', progressData.currentStep?.stepNumber);
         } else {
-          // No progress - initialize at step 1
-          console.log('📝 No progress found - initializing...');
-          const initResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/initialize`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({ candidateId, jobId })
-            }
-          );
-
-          if (!initResponse.ok) {
-            throw new Error('Failed to initialize progress');
-          }
-
-          progressData = await initResponse.json();
-          console.log('✅ Progress initialized at step:', progressData.currentStepNumber);
+          // Use init data as fallback
+          progressData = initData;
+          console.log('⚠️ Using init data as progress fallback');
         }
 
         // Extract current step from database
