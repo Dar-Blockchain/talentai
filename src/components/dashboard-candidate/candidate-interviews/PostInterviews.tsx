@@ -21,10 +21,16 @@ import {
 
 interface PostAssessment {
   _id: string;
-  candidate?: {
+  candidate?: string | {
     _id: string;
     username?: string;
     email?: string;
+  };
+  company?: {
+    _id: string;
+    username?: string;
+    email?: string;
+    role?: string;
   };
   post?: {
     _id: string;
@@ -60,6 +66,7 @@ interface PostAssessment {
       coveragePercentage?: number;
     };
   };
+  candidatePostStepProgress?: any;
   createdAt: string;
   updatedAt?: string;
 }
@@ -98,13 +105,54 @@ const PostInterviews = () => {
       0;
   };
 
+  // Check if assessment has pending/inProgress steps in pipeline
+  const hasPendingSteps = (assessment: PostAssessment): boolean => {
+    const stepProgress = assessment.candidatePostStepProgress;
+    if (!stepProgress?.steps) return false;
+
+    // Check if any step is pending or inProgress
+    return stepProgress.steps.some(
+      (step: any) => step.status === 'pending' || step.status === 'inProgress'
+    );
+  };
+
+  // Check if all steps are completed (done status)
+  const allStepsCompleted = (assessment: PostAssessment): boolean => {
+    const stepProgress = assessment.candidatePostStepProgress;
+    if (!stepProgress?.steps || stepProgress.steps.length === 0) {
+      // No pipeline steps - use score-based completion
+      const score = getScore(assessment);
+      return score >= 50;
+    }
+
+    // All steps must be 'done' or 'passed'
+    return stepProgress.steps.every(
+      (step: any) => step.status === 'done' || step.status === 'passed'
+    );
+  };
+
   const isCompleted = (assessment: PostAssessment): boolean => {
+    // First check pipeline steps if available
+    if (assessment.candidatePostStepProgress?.steps?.length > 0) {
+      return allStepsCompleted(assessment);
+    }
+    // Fallback to score-based completion
     const score = getScore(assessment);
     return score >= 50;
   };
 
   const handleViewDetails = (assessmentId: string) => {
     router.push(`/assessment/${assessmentId}`);
+  };
+
+  const handleContinueTest = (assessment: PostAssessment) => {
+    const postId = assessment.post?._id;
+    const currentStep = assessment.candidatePostStepProgress?.currentStep;
+
+    if (postId && currentStep) {
+      // Navigate to the interview page with the current step
+      router.push(`/interview/hr?jobId=${postId}&stepId=${currentStep._id}&pipeline=true`);
+    }
   };
 
   // Theme color for applications
@@ -227,7 +275,7 @@ const PostInterviews = () => {
                 ? formatDistanceToNowStrict(new Date(assessment.updatedAt || assessment.createdAt), { addSuffix: true })
                 : "";
               const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
-              const companyName = assessment.post?.user?.companyName || "Company";
+              const companyName = assessment.company?.username || assessment.post?.user?.companyName || "Company";
               const interviewType = assessment.interviewData?.interviewType?.replace(/_/g, " ") || "HR Interview";
 
               return (
@@ -347,28 +395,53 @@ const PostInterviews = () => {
                       />
                     </Box>
                   </Box>
-                  <Button
-                    onClick={() => handleViewDetails(assessment._id)}
-                    variant="outlined"
-                    sx={{
-                      width: "170px",
-                      borderColor: completed ? "rgba(211, 224, 245, 1)" : "rgba(189, 133, 255, 1)",
-                      color: completed ? "rgba(62, 70, 82, 1)" : "rgba(189, 133, 255, 1)",
-                      background: completed ? "#54627414" : "rgba(189, 133, 255, 0.08)",
-                      fontWeight: completed ? 500 : 600,
-                      borderRadius: "38px",
-                      px: 3,
-                      height: "42px",
-                      textTransform: "none",
-                      fontSize: "0.875rem",
-                      "&:hover": {
-                        backgroundColor: completed ? "rgba(211, 224, 245, 0.3)" : "rgba(189, 133, 255, 0.04)",
+                  {hasPendingSteps(assessment) ? (
+                    <Button
+                      onClick={() => handleContinueTest(assessment)}
+                      variant="outlined"
+                      sx={{
+                        width: "170px",
+                        borderColor: "rgba(189, 133, 255, 1)",
+                        color: "white",
+                        background: "rgba(189, 133, 255, 1)",
+                        fontWeight: 600,
+                        borderRadius: "38px",
+                        px: 3,
+                        height: "42px",
+                        textTransform: "none",
+                        fontSize: "0.875rem",
+                        "&:hover": {
+                          backgroundColor: "rgba(160, 100, 230, 1)",
+                          borderColor: "rgba(160, 100, 230, 1)",
+                        },
+                      }}
+                    >
+                      Complete Test
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleViewDetails(assessment._id)}
+                      variant="outlined"
+                      sx={{
+                        width: "170px",
                         borderColor: completed ? "rgba(211, 224, 245, 1)" : "rgba(189, 133, 255, 1)",
-                      },
-                    }}
-                  >
-                    View Details
-                  </Button>
+                        color: completed ? "rgba(62, 70, 82, 1)" : "rgba(189, 133, 255, 1)",
+                        background: completed ? "#54627414" : "rgba(189, 133, 255, 0.08)",
+                        fontWeight: completed ? 500 : 600,
+                        borderRadius: "38px",
+                        px: 3,
+                        height: "42px",
+                        textTransform: "none",
+                        fontSize: "0.875rem",
+                        "&:hover": {
+                          backgroundColor: completed ? "rgba(211, 224, 245, 0.3)" : "rgba(189, 133, 255, 0.04)",
+                          borderColor: completed ? "rgba(211, 224, 245, 1)" : "rgba(189, 133, 255, 1)",
+                        },
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  )}
                 </Box>
               );
             })}

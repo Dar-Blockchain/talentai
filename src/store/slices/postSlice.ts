@@ -744,17 +744,32 @@ export const fetchCandidateAssessments = createAsyncThunk(
 
       const data = await response.json();
 
-      // Handle various response shapes
-      let results: any[] = [];
-      if (Array.isArray(data)) {
-        results = data;
-      } else if (Array.isArray(data?.data)) {
-        results = data.data;
-      } else if (Array.isArray(data?.results)) {
-        results = data.results;
-      } else if (Array.isArray(data?.assessments)) {
-        results = data.assessments;
+      // Handle API response: { success, message, count, data: [{ assessment, candidatePostStepProgress }] }
+      let rawResults: any[] = [];
+      if (Array.isArray(data?.data)) {
+        rawResults = data.data;
+      } else if (Array.isArray(data)) {
+        rawResults = data;
       }
+
+      // Map the nested structure to flat assessment objects
+      const results = rawResults.map((item: any) => {
+        // If item has nested 'assessment' object, extract it
+        const assessment = item.assessment || item;
+        const stepProgress = item.candidatePostStepProgress || null;
+
+        return {
+          _id: assessment._id,
+          post: assessment.post,
+          candidate: assessment.candidate,
+          company: assessment.company,
+          interviewData: assessment.interviewData,
+          createdAt: assessment.createdAt,
+          updatedAt: assessment.updatedAt,
+          // Include step progress for pipeline jobs
+          candidatePostStepProgress: stepProgress,
+        };
+      });
 
       return {
         items: results,
@@ -762,7 +777,7 @@ export const fetchCandidateAssessments = createAsyncThunk(
           total: data.pagination?.totalCount || data.total || data.count || results.length,
           page: data.pagination?.page || page,
           limit: data.pagination?.limit || limit,
-          totalPages: data.pagination?.totalPages || Math.ceil((data.total || results.length) / limit),
+          totalPages: data.pagination?.totalPages || Math.ceil((data.count || results.length) / limit),
           hasNextPage: data.pagination?.hasNextPage || false,
           hasPrevPage: data.pagination?.hasPrevPage || false,
         },
