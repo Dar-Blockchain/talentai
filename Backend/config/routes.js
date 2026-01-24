@@ -18,8 +18,6 @@ const matchingRoutes = require('../routes/matchingRouter');
 const todoRouter = require('../routes/todoRouter');
 const feedbackRouter = require('../routes/feedbackRoutes');
 const logRoutes = require('../routes/logRoutes');
-// const interviewDetailsRouter = require('../routes/interviewDetailsRouter');
-const InterviewAssessmentRoutes = require('../routes/InterviewAssessmentRoutes');
 const postInterviewAssessmentRouter = require('../routes/postInterviewAssessmentRouter');
 const notificationSystemRouter = require('../routes/notificationSystemRoutes');
 const postStepsRouter = require('../routes/postStepsRouter');
@@ -63,8 +61,6 @@ function registerRoutes(app) {
   //app.use('/company-memberships', CompanyMembershipRoutes); // Company Membership Management
 
   // Evaluation & Interview
-  // app.use('/interviewDetails', interviewDetailsRouter);
-  //app.use('/InterviewAssessment', InterviewAssessmentRoutes);
   app.use('/skill-interview-assessments', SkillInterviewAssessmentRoutes); //✅ Skill Interview Assessments -> skill-interview-assessments
   app.use('/post-interview-assessments', postInterviewAssessmentRouter); //✅   Post Interview Assessments -> post-interview-assessments
 
