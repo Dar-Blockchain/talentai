@@ -1,14 +1,6 @@
 "use client";
 import React, { useMemo, useEffect, useState, useRef } from "react";
-import {
-  AppBar,
-  Box,
-  Toolbar,
-  IconButton,
-  Badge,
-  Tooltip,
-} from "@mui/material";
-import ChatIcon from "@mui/icons-material/Chat";
+import { AppBar, Box, Toolbar } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import HeaderLogo from "@/components/header/HeaderLogo";
@@ -24,6 +16,7 @@ import {
 } from "@/components/header/styles";
 import HeaderNavMenu from "@/components/header/HeaderNavMenu";
 import HeaderPrimaryActions from "@/components/header/HeaderPrimaryActions";
+import HeaderMessagesDropdown from "@/components/header/HeaderMessagesDropdown";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 
@@ -145,36 +138,11 @@ const Header = () => {
             <Box sx={desktopMenuStyle}>
               {!showHeaderNavMenu && !isWorkspacePage && <TokenDisplay />}
 
-              {/* CHAT ICON */}
-              <Tooltip title="Messages">
-                <IconButton
-                  onClick={() => router.push("/chat")}
-                  sx={{
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    width: 40,
-                    height: 40,
-                    boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-                    "&:hover": { backgroundColor: "#f9fafb" },
-                  }}
-                >
-                  <Badge
-                    badgeContent={unreadMessageCount}
-                    color="error"
-                    invisible={unreadMessageCount === 0}
-                    sx={{
-                      "& .MuiBadge-badge": {
-                        backgroundColor: "#8310FF",
-                        color: "white",
-                        fontWeight: 700,
-                        fontSize: "0.75rem",
-                      },
-                    }}
-                  >
-                    <ChatIcon sx={{ color: "#6b7280", fontSize: 20 }} />
-                  </Badge>
-                </IconButton>
-              </Tooltip>
+              {/* Messages Dropdown */}
+              <HeaderMessagesDropdown
+                userId={userId}
+                unreadMessageCount={unreadMessageCount}
+              />
 
               {!isCompany && !showHeaderNavMenu && !isWorkspacePage && (
                 <HeaderNotification />
