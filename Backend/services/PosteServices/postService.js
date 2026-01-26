@@ -427,7 +427,7 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate("user", "username email")
-        .populate("post_Steps")
+        .populate("postSteps")
         .populate('agentConfig')
         .populate('agentId')
         .sort(sortObj)
