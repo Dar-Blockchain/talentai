@@ -53,7 +53,9 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     const newAssessmentData = {
       ...assessmentData,
       company,
-      skill: extractedSkill
+      skill: extractedSkill,
+      // Set completed to true if PostSteps is null or empty
+      completed: !post.PostSteps || post.PostSteps.length === 0
     };
 
     const newAssessment = new PostInterviewAssessment(newAssessmentData);

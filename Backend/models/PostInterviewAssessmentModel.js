@@ -87,6 +87,11 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
     required: false,
     index: true
   },
+  completed: {
+    type: Boolean,
+    default: false
+  },
+  // ========== SKILL INFO ==========
   skillType : {
     type: String,
     enum: ['technical','soft'],

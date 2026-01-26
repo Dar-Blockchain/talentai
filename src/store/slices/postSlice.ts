@@ -885,7 +885,7 @@ const postSlice = createSlice({
         if (action.payload.data) {
           state.steps = action.payload.data;
           if (state.currentJob) {
-            state.currentJob.post_Steps = action.payload.data;
+            state.currentJob.PostSteps = action.payload.data;
           }
         }
       })

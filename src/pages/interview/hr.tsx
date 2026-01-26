@@ -761,8 +761,8 @@ const IntelligentInterviewTest = () => {
         postId: post._id,
         creationType: post.creationType,
         isPipeline: isPipeline,
-        hasPostSteps: !!post.post_Steps,
-        postStepsCount: post.post_Steps?.length || 0
+        hasPostSteps: !!post.PostSteps,
+        postStepsCount: post.PostSteps?.length || 0
       });
       console.log('📋 Job type:', isPipeline ? 'Pipeline ⚡' : 'Regular');
       setIsPipelineJob(isPipeline);

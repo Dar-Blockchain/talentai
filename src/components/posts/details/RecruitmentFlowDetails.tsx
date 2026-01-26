@@ -92,7 +92,7 @@ interface Props {
 const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
   const job = useSelector(selectCurrentJob);
 
-  if(!canEdit && !job?.post_Steps?.length) return null
+  if(!canEdit && !job?.PostSteps?.length) return null
 
   return (
     <Box

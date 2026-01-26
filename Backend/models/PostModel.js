@@ -147,7 +147,7 @@ const postSchema = new mongoose.Schema({
     sparse: true,
     description: "Référence optionnelle vers AgentConfig (one-to-one)",
   },
-  post_Steps: [
+  PostSteps: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PostSteps",
