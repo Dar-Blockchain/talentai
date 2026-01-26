@@ -241,6 +241,7 @@ exports.getPostDetailsPublic = async (req, res) => {
     console.log('📄 Public job details requested for ID:', req.params.id);
 
     // For pipeline jobs, extract skills from PostSteps instead of skillAnalysis
+    // For pipeline jobs, extract skills from Post_Steps instead of skillAnalysis
     if (post.creationType === 'pipeline' && post.PostSteps && post.PostSteps.length > 0) {
       console.log('🔄 Pipeline job detected - extracting skills from steps');
 

@@ -1,17 +1,31 @@
-import React, { useEffect, useMemo } from "react";
-import { Box, Button, Typography, CircularProgress, Chip, LinearProgress } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  Button,
+  Typography,
+  CircularProgress,
+  Chip,
+  LinearProgress,
+  TextField,
+  InputAdornment,
+  Menu,
+  MenuItem,
+  Pagination,
+} from "@mui/material";
 import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import StatsSummaryCard from "./StatsSummaryCard";
 import ChecklistIcon from "@/components/icons/CheckListIcon";
 import HourglassIcon from "@/components/icons/HourglassIcon";
-import { ArrowForward } from "@mui/icons-material";
+import { ArrowForward, ArrowBack } from "@mui/icons-material";
+import SearchIcon from "@mui/icons-material/Search";
 import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import CaseOutlineIcon from "@/components/icons/CaseOutlineIcon";
 import CheckTestIcon from "@/components/icons/checkTestIcon";
 import { useRouter } from "next/router";
 import { formatDistanceToNowStrict } from "date-fns";
+import Image from "next/image";
 import {
   fetchCandidateAssessments,
   selectCandidateAssessments,
@@ -71,7 +85,21 @@ interface PostAssessment {
   updatedAt?: string;
 }
 
-const PostInterviews = () => {
+interface PostInterviewsProps {
+  onViewAll?: () => void;
+  onBackToAll?: () => void;
+  hidden?: boolean;
+  showViewAll?: boolean;
+  initialDisplayCount?: number;
+}
+
+const PostInterviews: React.FC<PostInterviewsProps> = ({
+  onViewAll,
+  onBackToAll,
+  hidden = false,
+  showViewAll = false,
+  initialDisplayCount = 5,
+}) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -79,6 +107,17 @@ const PostInterviews = () => {
   const assessments = useSelector(selectCandidateAssessments) as PostAssessment[];
   const loading = useSelector(selectCandidateAssessmentsLoading);
   const pagination = useSelector(selectCandidateAssessmentsPagination);
+
+  // Local state for search, sort, and pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Early return if hidden
+  if (hidden) {
+    return null;
+  }
 
   // Fetch assessments on mount
   useEffect(() => {
@@ -158,6 +197,70 @@ const PostInterviews = () => {
   // Theme color for applications
   const themeColor = "rgba(189, 133, 255, 1)";
 
+  // Sort menu handlers
+  const handleSortMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setSortMenuAnchor(event.currentTarget);
+  };
+
+  const handleSortMenuClose = () => {
+    setSortMenuAnchor(null);
+  };
+
+  const handleSortChange = (sortOption: "newest" | "oldest" | "title-asc" | "title-desc") => {
+    setSortBy(sortOption);
+    setCurrentPage(1);
+    handleSortMenuClose();
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+  };
+
+  // Filter and sort assessments locally
+  const filteredAndSortedAssessments = useMemo(() => {
+    let filtered = [...assessments];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((a) => {
+        const jobTitle = a.post?.jobDetails?.title?.toLowerCase() || "";
+        const companyName = a.company?.username?.toLowerCase() || a.post?.user?.companyName?.toLowerCase() || "";
+        return jobTitle.includes(query) || companyName.includes(query);
+      });
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "oldest":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "title-asc":
+          return (a.post?.jobDetails?.title || "").localeCompare(b.post?.jobDetails?.title || "");
+        case "title-desc":
+          return (b.post?.jobDetails?.title || "").localeCompare(a.post?.jobDetails?.title || "");
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [assessments, searchQuery, sortBy]);
+
+  // Pagination logic
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredAndSortedAssessments.length / itemsPerPage);
+  const displayAssessments = showViewAll
+    ? filteredAndSortedAssessments.slice(0, initialDisplayCount)
+    : filteredAndSortedAssessments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -231,29 +334,164 @@ const PostInterviews = () => {
           >
             History
           </Typography>
-          <Button
-            variant="outlined"
-            endIcon={<ArrowForward />}
-            sx={{
-              border: "none",
-              background: "none",
-              color: "rgba(189, 133, 255, 1)",
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "15px",
-              px: 2,
-              "&:hover": {
-                background: "rgba(189, 133, 255, 0.04)",
-                border: "none",
-              },
-            }}
-          >
-            View All
-          </Button>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            {/* Search and Sort Controls - Only show in full view */}
+            {!showViewAll && (
+              <>
+                <TextField
+                  size="small"
+                  placeholder="Search assessments"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon
+                          sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+                        />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    width: 250,
+                    height: "40px",
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "white",
+                      borderRadius: "42px",
+                      border: "1px solid rgba(165, 172, 181, 1)",
+                      "& fieldset": {
+                        border: "none",
+                      },
+                      "&:hover": {
+                        borderColor: "rgba(165, 172, 181, 0.8)",
+                      },
+                    },
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={
+                    <Image
+                      src="/icons/sort.svg"
+                      alt="sort"
+                      width={24}
+                      height={24}
+                    />
+                  }
+                  onClick={handleSortMenuOpen}
+                  sx={{
+                    height: "40px",
+                    borderColor: "rgba(165, 172, 181, 1)",
+                    color: "rgba(84, 98, 116, 1)",
+                    textTransform: "uppercase",
+                    fontWeight: 400,
+                    fontSize: "0.875rem",
+                    borderRadius: "42px",
+                    px: 2.5,
+                    "&:hover": {
+                      borderColor: "rgba(165, 172, 181, 0.8)",
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  SORT
+                </Button>
+                <Menu
+                  anchorEl={sortMenuAnchor}
+                  open={Boolean(sortMenuAnchor)}
+                  onClose={handleSortMenuClose}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                >
+                  <MenuItem
+                    onClick={() => handleSortChange("newest")}
+                    selected={sortBy === "newest"}
+                    sx={{ fontSize: "0.875rem" }}
+                  >
+                    Newest First
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => handleSortChange("oldest")}
+                    selected={sortBy === "oldest"}
+                    sx={{ fontSize: "0.875rem" }}
+                  >
+                    Oldest First
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => handleSortChange("title-asc")}
+                    selected={sortBy === "title-asc"}
+                    sx={{ fontSize: "0.875rem" }}
+                  >
+                    Title (A-Z)
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => handleSortChange("title-desc")}
+                    selected={sortBy === "title-desc"}
+                    sx={{ fontSize: "0.875rem" }}
+                  >
+                    Title (Z-A)
+                  </MenuItem>
+                </Menu>
+                {/* Back Button */}
+                {onBackToAll && (
+                  <Button
+                    variant="outlined"
+                    onClick={onBackToAll}
+                    startIcon={<ArrowBack />}
+                    sx={{
+                      border: "none",
+                      background: "none",
+                      color: "rgba(189, 133, 255, 1)",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                      px: 2,
+                      "&:hover": {
+                        background: "rgba(189, 133, 255, 0.04)",
+                        border: "none",
+                      },
+                    }}
+                  >
+                    Back
+                  </Button>
+                )}
+              </>
+            )}
+
+            {/* View All Button - Only show in overview mode */}
+            {showViewAll && onViewAll && (
+              <Button
+                variant="outlined"
+                onClick={onViewAll}
+                endIcon={<ArrowForward />}
+                sx={{
+                  border: "none",
+                  background: "none",
+                  color: "rgba(189, 133, 255, 1)",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  fontSize: "15px",
+                  px: 2,
+                  "&:hover": {
+                    background: "rgba(189, 133, 255, 0.04)",
+                    border: "none",
+                  },
+                }}
+              >
+                View All
+              </Button>
+            )}
+          </Box>
         </Box>
 
         {/* Assessment Cards */}
-        {assessments.length === 0 ? (
+        {displayAssessments.length === 0 ? (
           <Box
             sx={{
               p: 4,
@@ -263,12 +501,14 @@ const PostInterviews = () => {
             }}
           >
             <Typography sx={{ color: "rgba(100, 113, 131, 1)" }}>
-              No interview assessments found. Apply for jobs to start your interviews!
+              {searchQuery.trim()
+                ? "No assessments match your search criteria."
+                : "No interview assessments found. Apply for jobs to start your interviews!"}
             </Typography>
           </Box>
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {assessments.slice(0, 5).map((assessment) => {
+            {displayAssessments.map((assessment) => {
               const score = getScore(assessment);
               const completed = isCompleted(assessment);
               const timeAgo = assessment.updatedAt || assessment.createdAt
@@ -445,6 +685,33 @@ const PostInterviews = () => {
                 </Box>
               );
             })}
+          </Box>
+        )}
+
+        {/* Pagination - Only show in full view when there are multiple pages */}
+        {!showViewAll && totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              shape="rounded"
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  color: "#6b7280",
+                  fontWeight: 500,
+                  "&.Mui-selected": {
+                    backgroundColor: "rgba(189, 133, 255, 0.2)",
+                    color: "rgba(189, 133, 255, 1)",
+                    fontWeight: 600,
+                  },
+                  "&:hover": {
+                    backgroundColor: "#f3f4f6",
+                  },
+                },
+              }}
+            />
           </Box>
         )}
       </Box>

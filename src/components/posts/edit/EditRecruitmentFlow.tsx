@@ -60,7 +60,7 @@ const EditRecruitmentFlow: React.FC<EditRecruitmentFlowProps> = ({
   const loading = useSelector(selectPostStepsLoading)
   
   const { nodes: jobNodes, edges: jobEdges } = extractNodesAndEdges(
-    job?.post_Steps || []
+    job?.PostSteps || []
   );
   const flowWrapper = useRef<HTMLDivElement | null>(null);
   const defaultPipeline = useMemo(() => generateDefaultPipelineNodes(), []);

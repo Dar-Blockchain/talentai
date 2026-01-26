@@ -80,8 +80,8 @@ export const getHardSkills = (job: any): Skill[] => {
   if (!job) return [];
 
   // Pipeline jobs
-  if (job.creationType === 'pipeline' && Array.isArray(job.post_Steps)) {
-    return job.post_Steps
+  if (job.creationType === 'pipeline' && Array.isArray(job.PostSteps)) {
+    return job.PostSteps
       .filter((step: any) => step.data?.type === 'technical')
       .flatMap((step: any) =>
         (step.data?.config?.skills || []).map((skill: any) => ({
@@ -106,8 +106,8 @@ export const getSoftSkills = (job: any): Skill[] => {
   if (!job) return [];
 
   // Pipeline jobs
-  if (job.creationType === 'pipeline' && Array.isArray(job.post_Steps)) {
-    return job.post_Steps
+  if (job.creationType === 'pipeline' && Array.isArray(job.PostSteps)) {
+    return job.PostSteps
       .filter((step: any) => step.data?.type === 'soft')
       .flatMap((step: any) =>
         (step.data?.config?.softSkills || []).map((name: string) => ({

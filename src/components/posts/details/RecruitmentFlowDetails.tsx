@@ -158,11 +158,11 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
               },
             }}
           >
-            {job?.post_Steps ? 'Edit Recruitment Flow' : 'Create Recruitment Flow'}
+            {job?.PostSteps ? 'Edit Recruitment Flow' : 'Create Recruitment Flow'}
           </Button>
         )}
       </Box>
-      {!job?.post_Steps?.length && <Box
+      {!job?.PostSteps?.length && <Box
   sx={{
     display: "flex",
     flexDirection: "column",
@@ -225,7 +225,7 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
   </Typography>
 </Box>
 }
-      <PipelineStepsAccordion steps={job?.post_Steps} />
+      <PipelineStepsAccordion steps={job?.PostSteps} />
     </Box>
   );
 };
@@ -236,11 +236,13 @@ export default RecruitmentFlowDetails;
    Pipeline Steps Accordion
 ============================ */
 
-function PipelineStepsAccordion({ steps }: { steps: Step[] }) {
+function PipelineStepsAccordion({ steps }: { steps?: Step[] }) {
   const sortedSteps = React.useMemo(
-    () => [...steps].sort((a, b) => a.order - b.order),
+    () => (Array.isArray(steps) ? [...steps].sort((a, b) => a.order - b.order) : []),
     [steps]
   );
+
+  if (!sortedSteps.length) return null;
 
   return (
     <Stack spacing={1.5}>
