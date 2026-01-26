@@ -519,7 +519,7 @@ exports.getJobInterviewConfig = async (req, res) => {
     // Fetch job post with user (company) info and post_Steps
     const post = await Post.findById(jobId)
       .populate('user')
-      .populate('post_Steps');
+      .populate('PostSteps');
 
     if (!post) {
       return res.status(404).json({

@@ -231,7 +231,7 @@ module.exports.processAgentCreationPayment = async (postId, userId) => {
 
     // Fetch Post and User in parallel with minimal fields
     const [post, user] = await Promise.all([
-      Post.findById(postId).populate('post_Steps').select('user paymentStatus paymentTransactionId post_Steps'),
+      Post.findById(postId).populate('PostSteps').select('user paymentStatus paymentTransactionId PostSteps'),
       User.findById(userId).select('hederaAccountId hederaPrivateKey')
     ]);
 

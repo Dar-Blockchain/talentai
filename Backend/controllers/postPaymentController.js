@@ -11,7 +11,7 @@ exports.calculatePostPrice = async (req, res) => {
     const { postId } = req.params;
 
     // Get post with steps
-    const post = await Post.findById(postId).populate('post_Steps');
+    const post = await Post.findById(postId).populate('PostSteps');
 
     if (!post) {
       return res.status(404).json({
@@ -29,7 +29,7 @@ exports.calculatePostPrice = async (req, res) => {
     }
 
     // Calculate price based on number of steps
-    const numberOfSteps = post.post_Steps?.length || 0;
+    const numberOfSteps = post.PostSteps?.length || 0;
     const price = postPaymentService.calculatePrice(numberOfSteps);
 
     res.status(200).json({
@@ -73,7 +73,7 @@ exports.processPostPayment = async (req, res) => {
     }
 
     // Get post with steps
-    const post = await Post.findById(postId).populate('post_Steps');
+    const post = await Post.findById(postId).populate('PostSteps');
 
     if (!post) {
       return res.status(404).json({

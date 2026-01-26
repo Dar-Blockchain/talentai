@@ -260,7 +260,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 // Get a post by its ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).populate("user", "username email").populate("post_Steps").populate('agentConfig').populate('agentId');
+    const post = await Post.findById(postId).populate("user", "username email").populate("PostSteps").populate('agentConfig').populate('agentId');
     if (!post) {
       throw new Error("Post not found");
     }
@@ -275,7 +275,7 @@ module.exports.getPipelineJobDetails = async (postId) => {
   try {
     const post = await Post.findById(postId)
       .populate("user", "username email")
-      .populate("post_Steps")
+      .populate("PostSteps")
       .populate('agentConfig')
       .populate('agentId');
 
@@ -293,7 +293,7 @@ module.exports.getPipelineJobDetails = async (postId) => {
     }
 
     // For pipeline jobs, extract and organize step configurations
-    const steps = post.post_Steps.map(step => ({
+    const steps = post.PostSteps.map(step => ({
       stepId: step._id,
       nodeId: step.id,
       type: step.data.type,
@@ -383,7 +383,7 @@ module.exports.getPostsByUserId = async (userId) => {
   try {
     return await Post.find({ user: userId })
       .populate("user", "username email")
-      .populate("post_Steps") // Populate the post_Steps reference
+      .populate("PostSteps") // Populate the PostSteps reference
       .populate('agentConfig')
       .populate('agentId')
       .sort({ createdAt: -1 });
@@ -427,7 +427,7 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate("user", "username email")
-        .populate("postSteps")
+        .populate("PostSteps")
         .populate('agentConfig')
         .populate('agentId')
         .sort(sortObj)
@@ -492,11 +492,11 @@ module.exports.deletePost = async (postId, userId) => {
 
     // ========== DELETE ASSOCIATED RECORDS IN CASCADE ==========
     
-    // 1. Delete post_Steps
-    if (post.post_Steps && post.post_Steps.length > 0) {
-      const Post_Steps = require('../../models/postStepsModel');
-      await Post_Steps.deleteMany({ _id: { $in: post.post_Steps } });
-      console.log(`🗑️ Deleted ${post.post_Steps.length} post step(s)`);
+    // 1. Delete PostSteps
+    if (post.PostSteps && post.PostSteps.length > 0) {
+      const PostSteps = require('../../models/postStepsModel');
+      await PostSteps.deleteMany({ _id: { $in: post.PostSteps } });
+      console.log(`🗑️ Deleted ${post.PostSteps.length} post step(s)`);
     }
 
     // 2. Delete agentConfig if exists
@@ -606,28 +606,28 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     _id: { $nin: testedPosts },
     status: 'open' // Only return posts with status "open"
   })
-    .populate('post_Steps')
+    .populate('PostSteps')
     .sort({ createdAt: -1 })
     .lean();
   
   // 🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}
   console.log(`🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}`);
 
-  // DEBUG: Log first post with post_Steps to verify population
+  // DEBUG: Log first post with PostSteps to verify population
   if (candidatePosts.length > 0) {
     console.log('🔍 DEBUG - First post structure:', {
       _id: candidatePosts[0]._id,
       creationType: candidatePosts[0].creationType,
-      hasPostSteps: !!candidatePosts[0].post_Steps,
-      postStepsCount: candidatePosts[0].post_Steps?.length || 0,
-      postStepsType: Array.isArray(candidatePosts[0].post_Steps) ? 'array' : typeof candidatePosts[0].post_Steps,
-      firstStepSample: candidatePosts[0].post_Steps?.[0] ? {
-        id: candidatePosts[0].post_Steps[0]._id || candidatePosts[0].post_Steps[0],
-        type: candidatePosts[0].post_Steps[0].type,
-        hasData: !!candidatePosts[0].post_Steps[0].data,
-        dataType: candidatePosts[0].post_Steps[0].data?.type,
-        hasConfig: !!candidatePosts[0].post_Steps[0].data?.config,
-        configKeys: candidatePosts[0].post_Steps[0].data?.config ? Object.keys(candidatePosts[0].post_Steps[0].data.config) : []
+      hasPostSteps: !!candidatePosts[0].PostSteps,
+      postStepsCount: candidatePosts[0].PostSteps?.length || 0,
+      postStepsType: Array.isArray(candidatePosts[0].PostSteps) ? 'array' : typeof candidatePosts[0].PostSteps,
+      firstStepSample: candidatePosts[0].PostSteps?.[0] ? {
+        id: candidatePosts[0].PostSteps[0]._id || candidatePosts[0].PostSteps[0],
+        type: candidatePosts[0].PostSteps[0].type,
+        hasData: !!candidatePosts[0].PostSteps[0].data,
+        dataType: candidatePosts[0].PostSteps[0].data?.type,
+        hasConfig: !!candidatePosts[0].PostSteps[0].data?.config,
+        configKeys: candidatePosts[0].PostSteps[0].data?.config ? Object.keys(candidatePosts[0].PostSteps[0].data.config) : []
       } : 'no steps'
     });
   }
