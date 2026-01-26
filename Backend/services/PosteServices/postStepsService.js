@@ -1,4 +1,4 @@
-const Post_Steps = require("../../models/postStepsModel");
+const PostSteps = require("../../models/postStepsModel");
 const Post = require("../../models/PostModel");
 const candidatePostStepProgressService = require("../candidatePostStepProgressService");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
@@ -44,7 +44,7 @@ module.exports.createPostStep = async (postStepData) => {
           }
 
           console.log(`  💾 Creating MongoDB document for step: ${stepData.id}`);
-          const postStep = new Post_Steps(stepData);
+          const postStep = new PostSteps(stepData);
 
           console.log(`  💾 Saving to MongoDB...`);
           const savedPostStep = await postStep.save();
@@ -144,7 +144,7 @@ module.exports.createPostStep = async (postStepData) => {
       }
 
       console.log(`💾 Creating MongoDB document...`);
-      const postStep = new Post_Steps(postStepData);
+      const postStep = new PostSteps(postStepData);
 
       console.log(`💾 Saving to MongoDB...`);
       const savedPostStep = await postStep.save();
@@ -188,7 +188,7 @@ module.exports.createPostStep = async (postStepData) => {
   }
 };
 
-// Update the post with the post_steps references
+// Update the post with the PostSteps references
 module.exports.updatePostWithSteps = async (postId, stepIds) => {
   try {
     const post = await Post.findById(postId);
@@ -196,12 +196,12 @@ module.exports.updatePostWithSteps = async (postId, stepIds) => {
       throw new Error("Post not found");
     }
 
-    const existingSteps = post.post_Steps || [];
+    const existingSteps = post.PostSteps || [];
     const newSteps = [...new Set([...existingSteps, ...stepIds])];
 
     await Post.findByIdAndUpdate(
       postId,
-      { post_Steps: newSteps },
+      { PostSteps: newSteps },
       { new: true, runValidators: false }
     );
 
@@ -212,7 +212,7 @@ module.exports.updatePostWithSteps = async (postId, stepIds) => {
   }
 };
 
-// Remove post references when deleting a post_step
+// Remove post references when deleting a PostStep
 module.exports.removeStepFromPost = async (postId, stepId) => {
   try {
     const post = await Post.findById(postId);
@@ -220,13 +220,13 @@ module.exports.removeStepFromPost = async (postId, stepId) => {
       throw new Error("Post not found");
     }
 
-    const updatedSteps = post.post_Steps.filter(
+    const updatedSteps = post.PostSteps.filter(
       (id) => id.toString() !== stepId.toString()
     );
 
     await Post.findByIdAndUpdate(
       postId,
-      { post_Steps: updatedSteps },
+      { PostSteps: updatedSteps },
       { new: true, runValidators: false }
     );
 
@@ -240,7 +240,7 @@ module.exports.removeStepFromPost = async (postId, stepId) => {
 // Retrieve all post steps
 module.exports.getAllPostSteps = async () => {
   try {
-    const postSteps = await Post_Steps.find()
+    const postSteps = await PostSteps.find()
       .populate("postId", "title")
       .sort({ "data.config.nodeNumber": 1 });
     return { success: true, data: postSteps };
@@ -252,7 +252,7 @@ module.exports.getAllPostSteps = async () => {
 // Retrieve a post step by ID
 module.exports.getPostStepById = async (id) => {
   try {
-    const postStep = await Post_Steps.findById(id).populate("postId", "title");
+    const postStep = await PostSteps.findById(id).populate("postId", "title");
     if (!postStep) {
       return { success: false, error: "Post step not found" };
     }
@@ -272,7 +272,7 @@ module.exports.getPostStepByNodeId = async (nodeId, postId = null) => {
       query.postId = postId;
     }
 
-    const postStep = await Post_Steps.findOne(query).populate(
+    const postStep = await PostSteps.findOne(query).populate(
       "postId",
       "title"
     );
@@ -288,7 +288,7 @@ module.exports.getPostStepByNodeId = async (nodeId, postId = null) => {
 // Retrieve steps for a specific post
 module.exports.getPostStepsByPostId = async (postId) => {
   try {
-    const postSteps = await Post_Steps.find({ postId })
+    const postSteps = await PostSteps.find({ postId })
       .populate("postId", "title")
       .sort({ "data.config.nodeNumber": 1 });
     return { success: true, data: postSteps };
@@ -300,7 +300,7 @@ module.exports.getPostStepsByPostId = async (postId) => {
 // Update a post step
 module.exports.updatePostStep = async (id, updateData) => {
   try {
-    const updatedPostStep = await Post_Steps.findByIdAndUpdate(
+    const updatedPostStep = await PostSteps.findByIdAndUpdate(
       id,
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true }
@@ -318,7 +318,7 @@ module.exports.updatePostStep = async (id, updateData) => {
 // Update a step by its unique ID (nodeId)
 module.exports.updatePostStepByNodeId = async (nodeId, updateData) => {
   try {
-    const updatedPostStep = await Post_Steps.findOneAndUpdate(
+    const updatedPostStep = await PostSteps.findOneAndUpdate(
       { id: nodeId },
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true }
@@ -336,7 +336,7 @@ module.exports.updatePostStepByNodeId = async (nodeId, updateData) => {
 // Delete a post step
 module.exports.deletePostStep = async (id) => {
   try {
-    const deletedPostStep = await Post_Steps.findByIdAndDelete(id);
+    const deletedPostStep = await PostSteps.findByIdAndDelete(id);
     if (!deletedPostStep) {
       return { success: false, error: "Post step not found" };
     }
@@ -355,7 +355,7 @@ module.exports.deletePostStep = async (id) => {
 // Delete a step by its unique ID (nodeId)
 module.exports.deletePostStepByNodeId = async (nodeId) => {
   try {
-    const deletedPostStep = await Post_Steps.findOneAndDelete({ id: nodeId });
+    const deletedPostStep = await PostSteps.findOneAndDelete({ id: nodeId });
     if (!deletedPostStep) {
       return { success: false, error: "Post step not found" };
     }
@@ -374,7 +374,7 @@ module.exports.deletePostStepByNodeId = async (nodeId) => {
 // Retrieve steps by type
 module.exports.getPostStepsByType = async (type) => {
   try {
-    const postSteps = await Post_Steps.find({ "data.type": type })
+    const postSteps = await PostSteps.find({ "data.type": type })
       .populate("postId", "title")
       .sort({ "data.config.nodeNumber": 1 });
     return { success: true, data: postSteps };
@@ -386,7 +386,7 @@ module.exports.getPostStepsByType = async (type) => {
 // Retrieve steps by node type (technical, interview, etc.)
 module.exports.getPostStepsByNodeType = async (nodeType) => {
   try {
-    const postSteps = await Post_Steps.find({ "data.type": nodeType })
+    const postSteps = await PostSteps.find({ "data.type": nodeType })
       .populate("postId", "title")
       .sort({ "data.config.nodeNumber": 1 });
     return { success: true, data: postSteps };
@@ -398,7 +398,7 @@ module.exports.getPostStepsByNodeType = async (nodeType) => {
 // Update a node configuration
 module.exports.updateNodeConfig = async (nodeId, configData) => {
   try {
-    const updatedPostStep = await Post_Steps.findOneAndUpdate(
+    const updatedPostStep = await PostSteps.findOneAndUpdate(
       { id: nodeId },
       {
         "data.config": configData,
@@ -419,7 +419,7 @@ module.exports.updateNodeConfig = async (nodeId, configData) => {
 // Update a node position
 module.exports.updateNodePosition = async (nodeId, positionData) => {
   try {
-    const updatedPostStep = await Post_Steps.findOneAndUpdate(
+    const updatedPostStep = await PostSteps.findOneAndUpdate(
       { id: nodeId },
       {
         position: positionData.position,
@@ -446,7 +446,7 @@ module.exports.submitTaskByNodeId = async (nodeId, githubLink) => {
     }
 
     // First try to update by custom node id (field `id`)
-    let updatedPostStep = await Post_Steps.findOneAndUpdate(
+    let updatedPostStep = await PostSteps.findOneAndUpdate(
       { id: nodeId },
       {
         status: "done",
@@ -458,7 +458,7 @@ module.exports.submitTaskByNodeId = async (nodeId, githubLink) => {
 
     // Fallback: try by MongoDB _id if not found via custom id
     if (!updatedPostStep) {
-      updatedPostStep = await Post_Steps.findByIdAndUpdate(
+      updatedPostStep = await PostSteps.findByIdAndUpdate(
         nodeId,
         {
           status: "done",
@@ -520,7 +520,7 @@ module.exports.submitTaskByNodeId = async (nodeId, githubLink) => {
 // Get next node number for a post
 module.exports.getNextNodeNumber = async (postId) => {
   try {
-    const lastNode = await Post_Steps.findOne({ postId }).sort({
+    const lastNode = await PostSteps.findOne({ postId }).sort({
       "data.config.nodeNumber": -1,
     });
     return {
@@ -558,7 +558,7 @@ module.exports.createNode = async (postId, nodeData) => {
       postId: postId,
     };
 
-    const postStep = new Post_Steps(newNodeData);
+    const postStep = new PostSteps(newNodeData);
     const savedPostStep = await postStep.save();
 
     await module.exports.updatePostWithSteps(postId, [savedPostStep._id]);
@@ -590,7 +590,7 @@ module.exports.saveMultipleNodes = async (postId, nodesData) => {
       };
     });
 
-    const savedNodes = await Post_Steps.insertMany(nodesToSave);
+    const savedNodes = await PostSteps.insertMany(nodesToSave);
 
     await module.exports.updatePostWithSteps(
       postId,
@@ -606,7 +606,7 @@ module.exports.saveMultipleNodes = async (postId, nodesData) => {
 // Retrieve nodes by specific type (technical, interview, condition, email)
 module.exports.getNodesBySpecificType = async (postId, nodeType) => {
   try {
-    const nodes = await Post_Steps.find({
+    const nodes = await PostSteps.find({
       postId,
       "data.type": nodeType,
     })

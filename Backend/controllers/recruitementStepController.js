@@ -5,7 +5,7 @@ const Post = require("../models/PostModel");
 
 const recruitementService = require("../../services/RecruitmentServices/recruitementStepService");
 const { HttpError } = require("../utils/httpUtils");
-const Post_Steps = require("../models/post_StepsModel");
+const PostSteps = require("../models/PostStepsModel");
 const Profile = require("../models/ProfileModel");
 
 exports.generateQuestions = async (req, res) => {
@@ -20,7 +20,7 @@ exports.generateQuestions = async (req, res) => {
       throw new HttpError(500, `User  has not profile.`);
     }
 
-    const postStep = await Post_Steps.findById(stepId);
+    const postStep = await PostSteps.findById(stepId);
     if (!postStep.postId) {
       throw new HttpError(400, `postId in postStep not found`);
     }
@@ -82,7 +82,7 @@ exports.analyseQuestions = async (req, res) => {
       });
     }
 
-    const postStep = await Post_Steps.findById(stepId);
+    const postStep = await PostSteps.findById(stepId);
     if (!postStep.postId) {
       throw new HttpError(400, `postId in postStep not found`);
     }

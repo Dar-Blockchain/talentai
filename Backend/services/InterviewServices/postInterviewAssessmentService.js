@@ -2,6 +2,7 @@ const PostInterviewAssessment = require("../../models/PostInterviewAssessmentMod
 const Post = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
 const User = require("../../models/UserModel");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
@@ -62,6 +63,59 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     await newAssessment.save();
 
     console.log('✅ Post interview assessment created:', newAssessment._id);
+
+    // ========== UPDATE CANDIDATE PROGRESS ==========
+    // If post has PostSteps, update CandidatePostStepProgress
+    if (post.PostSteps && post.PostSteps.length > 0) {
+      try {
+        console.log('📍 Post has PostSteps, updating CandidatePostStepProgress');
+        
+        // Find or create CandidatePostStepProgress for this candidate and post
+        let candidateProgress = await CandidatePostStepProgress.findOne({
+          idCandidate: assessmentData.candidate,
+          idPost: assessmentData.post
+        });
+
+        if (candidateProgress) {
+          console.log('📝 Found existing CandidatePostStepProgress:', candidateProgress._id);
+
+          // Find current step in the steps array
+          const currentStepIndex = candidateProgress.steps.findIndex(
+            step => step.stepId.toString() === candidateProgress.currentStep.toString()
+          );
+
+          console.log('🔍 Current step index:', currentStepIndex);
+
+          if (currentStepIndex !== -1) {
+            // Update current step with assessment ID
+            candidateProgress.steps[currentStepIndex].interviewDetails = newAssessment._id;
+            candidateProgress.steps[currentStepIndex].status = 'done';
+            candidateProgress.steps[currentStepIndex].completedAt = new Date();
+            console.log('✅ Current step updated with assessment ID:', newAssessment._id);
+
+            // Move to next step if available
+            if (currentStepIndex + 1 < candidateProgress.steps.length) {
+              const nextStepId = candidateProgress.steps[currentStepIndex + 1].stepId;
+              candidateProgress.currentStep = nextStepId;
+              candidateProgress.steps[currentStepIndex + 1].status = 'inProgress';
+              console.log('➡️ Moved to next step:', nextStepId);
+            } else {
+              console.log('✅ All steps completed for this candidate');
+            }
+          }
+
+          // Save updated progress
+          await candidateProgress.save();
+          console.log('✅ CandidatePostStepProgress updated:', candidateProgress._id);
+        } else {
+          console.log('⚠️ No CandidatePostStepProgress found for this candidate and post');
+        }
+      } catch (progressError) {
+        console.error('❌ Error updating CandidatePostStepProgress:', progressError.message);
+        // Don't fail the assessment creation if progress update fails
+      }
+    }
+
     return newAssessment;
   } catch (error) {
     console.error('❌ Error creating post interview assessment:', error.message);

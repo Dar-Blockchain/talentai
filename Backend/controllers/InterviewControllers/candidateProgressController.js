@@ -4,7 +4,7 @@
  */
 
 const CandidatePostStepProgress = require('../../models/CandidatePostStepProgress');
-const Post_Steps = require('../../models/postStepsModel');
+const PostSteps = require('../../models/postStepsModel');
 
 /**
  * Initialize or get candidate progress for a job
@@ -33,7 +33,7 @@ exports.initializeProgress = async (req, res) => {
     }
 
     // Get all steps for this job
-    const steps = await Post_Steps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
+    const steps = await PostSteps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
     if (!steps || steps.length === 0) {
       return res.status(404).json({
         success: false,
@@ -193,7 +193,7 @@ exports.moveToNextStep = async (req, res) => {
     }
 
     // Get all steps for this job
-    const allSteps = await Post_Steps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
+    const allSteps = await PostSteps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
 
     // Find current step index
     const currentStepNumber = progress.currentStep.data.config.nodeNumber;

@@ -6,7 +6,7 @@
 class PipelineInterviewConfigBuilder {
   /**
    * Convert technical node config to interview URL params
-   * @param {Object} nodeConfig - Configuration from Post_Steps.data.config
+   * @param {Object} nodeConfig - Configuration from PostSteps.data.config
    * @param {Object} jobDetails - Job/Post details
    * @returns {Object} URL parameters for interview page
    */
@@ -37,7 +37,7 @@ class PipelineInterviewConfigBuilder {
 
   /**
    * Convert soft skills node config to interview URL params
-   * @param {Object} nodeConfig - Configuration from Post_Steps.data.config
+   * @param {Object} nodeConfig - Configuration from PostSteps.data.config
    * @param {Object} jobDetails - Job/Post details
    * @returns {Object} URL parameters for interview page
    */
@@ -69,7 +69,7 @@ class PipelineInterviewConfigBuilder {
 
   /**
    * Convert HR interview node config to URL params
-   * @param {Object} nodeConfig - Configuration from Post_Steps.data.config
+   * @param {Object} nodeConfig - Configuration from PostSteps.data.config
    * @param {Object} jobDetails - Job/Post details
    * @returns {Object} URL parameters for interview page
    */
@@ -89,7 +89,7 @@ class PipelineInterviewConfigBuilder {
 
   /**
    * Main method to build params based on node type
-   * @param {Object} postStep - Post_Steps document
+   * @param {Object} postStep - PostSteps document
    * @param {Object} jobDetails - Job/Post details with companyName and title
    * @returns {Object} URL parameters for interview page
    */

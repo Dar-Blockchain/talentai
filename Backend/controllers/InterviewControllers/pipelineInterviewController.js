@@ -4,7 +4,7 @@
  */
 
 const Post = require('../../models/postModel');
-const Post_Steps = require('../../models/postStepsModel');
+const PostSteps = require('../../models/postStepsModel');
 const pipelineConfigBuilder = require('../../services/InterviewServices/pipelineInterviewConfigBuilder');
 
 /**
@@ -27,7 +27,7 @@ exports.getInterviewParamsForStep = async (req, res) => {
     }
 
     // 2. Get all pipeline steps for this job
-    const steps = await Post_Steps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
+    const steps = await PostSteps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
     if (!steps || steps.length === 0) {
       return res.status(404).json({
         success: false,
@@ -115,7 +115,7 @@ exports.getInterviewSteps = async (req, res) => {
       });
     }
 
-    const steps = await Post_Steps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
+    const steps = await PostSteps.find({ postId: jobId }).sort({ 'data.config.nodeNumber': 1 });
 
     // Filter only interview-type nodes
     const interviewSteps = steps

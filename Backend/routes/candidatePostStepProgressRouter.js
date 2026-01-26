@@ -27,9 +27,6 @@ router.get('/candidate/:candidateId', candidatePostStepProgressController.getPro
 
 // Routes spécialisées par post
 router.get('/post/:postId', candidatePostStepProgressController.getProgressByPost);
-router.get('/post/:postId/stats', candidatePostStepProgressController.getProgressStatsByPost);
-router.get('/post/:postId/completed', candidatePostStepProgressController.getCompletedCandidatesByPost);
-router.get('/post/:postId/in-progress', candidatePostStepProgressController.getInProgressCandidatesByPost);
 
 // Routes spécialisées par statut
 router.get('/status/:status', candidatePostStepProgressController.getProgressByStatus);
