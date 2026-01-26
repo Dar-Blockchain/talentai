@@ -241,14 +241,14 @@ exports.getPostDetailsPublic = async (req, res) => {
     console.log('📄 Public job details requested for ID:', req.params.id);
 
     // For pipeline jobs, extract skills from Post_Steps instead of skillAnalysis
-    if (post.creationType === 'pipeline' && post.post_Steps && post.post_Steps.length > 0) {
+    if (post.creationType === 'pipeline' && post.PostSteps && post.PostSteps.length > 0) {
       console.log('🔄 Pipeline job detected - extracting skills from steps');
 
       const pipelineSkills = [];
       const pipelineSoftSkills = [];
 
       // Extract skills from each technical/soft step
-      post.post_Steps.forEach(step => {
+      post.PostSteps.forEach(step => {
         console.log(`📋 Checking step: type=${step.data?.type}, configured=${step.data?.config?.configured}`);
 
         if (step.data?.type === 'technical' && step.data?.config?.skills) {
@@ -448,8 +448,8 @@ exports.getPostsByUserTopSkills = async (req, res) => {
       firstPost: result.data?.[0] ? {
         _id: result.data[0]._id,
         creationType: result.data[0].creationType,
-        hasPostSteps: !!result.data[0].post_Steps,
-        postStepsLength: result.data[0].post_Steps?.length
+        hasPostSteps: !!result.data[0].PostSteps,
+        postStepsLength: result.data[0].PostSteps?.length
       } : null
     });
 
@@ -541,7 +541,7 @@ exports.getJobInterviewConfig = async (req, res) => {
         hint: 'This job has a recruitment pipeline with configured steps. Use the pipeline progress API to get step-specific interview configuration.',
         isPipeline: true,
         jobId: jobId,
-        stepsCount: post.post_Steps?.length || 0
+        stepsCount: post.PostSteps?.length || 0
       });
     }
 

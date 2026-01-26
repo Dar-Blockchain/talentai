@@ -19,8 +19,25 @@ const INTERVIEW_TYPES = [
   },
 ];
 
-const CandidateInterviews = () => {
+interface CandidateInterviewsProps {
+  onViewAll?: () => void;
+  onBackToAll?: () => void;
+  hidden?: boolean;
+  showViewAll?: boolean;
+}
+
+const CandidateInterviews: React.FC<CandidateInterviewsProps> = ({
+  onViewAll,
+  onBackToAll,
+  hidden = false,
+  showViewAll = false,
+}) => {
   const [tab, setTab] = useState("application");
+
+  // Early return if hidden
+  if (hidden) {
+    return null;
+  }
 
   const handleTabChange = (newTab: string) => {
     setTab(newTab);
@@ -117,7 +134,14 @@ const CandidateInterviews = () => {
             ))}
           </Tabs>
         </Box>
-        {tab === "application" && <PostInterviews/>}
+        {tab === "application" && (
+          <PostInterviews
+            onViewAll={onViewAll}
+            onBackToAll={onBackToAll}
+            showViewAll={showViewAll}
+            initialDisplayCount={5}
+          />
+        )}
         {tab === "technical" && <SkillInterviews skillType="technical" />}
         {tab === "soft" && <SkillInterviews skillType="soft" />}
       </Box>

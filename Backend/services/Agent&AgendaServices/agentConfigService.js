@@ -271,7 +271,7 @@ module.exports.processAgentCreationPayment = async (postId, userId) => {
     }
 
     // Calculate price based on number of steps
-    const numberOfSteps = post.post_Steps?.length || 0;
+    const numberOfSteps = post.PostSteps?.length || 0;
     const price = postPaymentService.calculatePrice(numberOfSteps);
 
     console.log(`📊 Payment calculation: Steps=${numberOfSteps}, Price=${price} TAI`);

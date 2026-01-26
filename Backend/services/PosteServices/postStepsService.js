@@ -196,12 +196,12 @@ module.exports.updatePostWithSteps = async (postId, stepIds) => {
       throw new Error("Post not found");
     }
 
-    const existingSteps = post.post_Steps || [];
+    const existingSteps = post.PostSteps || [];
     const newSteps = [...new Set([...existingSteps, ...stepIds])];
 
     await Post.findByIdAndUpdate(
       postId,
-      { post_Steps: newSteps },
+      { PostSteps: newSteps },
       { new: true, runValidators: false }
     );
 
@@ -220,13 +220,13 @@ module.exports.removeStepFromPost = async (postId, stepId) => {
       throw new Error("Post not found");
     }
 
-    const updatedSteps = post.post_Steps.filter(
+    const updatedSteps = post.PostSteps.filter(
       (id) => id.toString() !== stepId.toString()
     );
 
     await Post.findByIdAndUpdate(
       postId,
-      { post_Steps: updatedSteps },
+      { PostSteps: updatedSteps },
       { new: true, runValidators: false }
     );
 

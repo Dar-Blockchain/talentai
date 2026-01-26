@@ -109,7 +109,7 @@ exports.processPostPayment = async (req, res) => {
     }
 
     // Calculate price
-    const numberOfSteps = post.post_Steps?.length || 0;
+    const numberOfSteps = post.PostSteps?.length || 0;
     const price = postPaymentService.calculatePrice(numberOfSteps);
 
     console.log(`🚀 Initiating payment for Post ${postId}`);
@@ -236,7 +236,7 @@ exports.getPostPaymentDetails = async (req, res) => {
       });
     }
 
-    const numberOfSteps = post.post_Steps?.length || 0;
+    const numberOfSteps = post.PostSteps?.length || 0;
 
     res.status(200).json({
       success: true,
