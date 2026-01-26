@@ -100,6 +100,9 @@ const AssessmentDetailsPage = () => {
   const getAnalytics = () => assessment?.interviewData?.analytics || {};
   const getCoverageAreas = () => assessment?.interviewData?.finalReport?.coverage?.areas || {};
   const getAiAnalysis = () => assessment?.interviewData?.finalReport?.aiAnalysis || {};
+  const getRequiredSkills = () => assessment?.post?.skillAnalysis?.requiredSkills || [];
+  const getSoftSkills = () => assessment?.post?.skillAnalysis?.softSkills || [];
+  const getSuggestedSkills = () => assessment?.post?.skillAnalysis?.suggestedSkills || {};
 
   const formatDuration = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
@@ -1037,6 +1040,243 @@ const AssessmentDetailsPage = () => {
                   </Box>
                 )}
               </Box>
+            </Box>
+          )}
+
+          {/* Required Skills */}
+          {getRequiredSkills().length > 0 && (
+            <Box
+              sx={{
+                border: '1px solid rgba(98, 111, 134, 0.18)',
+                backgroundColor: 'rgba(253, 253, 253, 1)',
+                borderRadius: '12px',
+                px: 2,
+                py: 1.5,
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  position: 'relative',
+                  fontWeight: 600,
+                  fontSize: '20px',
+                  lineHeight: '35px',
+                  color: 'rgba(23, 43, 77, 1)',
+                  mb: 2,
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    bottom: 0,
+                    width: '38px',
+                    height: '5px',
+                    backgroundColor: 'rgba(99, 102, 241, 0.83)',
+                    borderRadius: '2px',
+                  },
+                }}
+              >
+                Required Skills
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {getRequiredSkills().map((skill: any, index: number) => (
+                  <Box
+                    key={skill._id || index}
+                    sx={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '10px',
+                      padding: '14px',
+                      border: '1px solid rgba(238, 240, 242, 1)',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 1,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '8px',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: '#6366f1',
+                            }}
+                          >
+                            {skill.name?.charAt(0)?.toUpperCase() || 'S'}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 600,
+                              color: '#111827',
+                              fontSize: '14px',
+                            }}
+                          >
+                            {skill.name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px' }}>
+                            {skill.category} • Level {skill.level}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Chip
+                          label={skill.category}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            color: '#6366f1',
+                            fontWeight: 500,
+                            fontSize: '0.65rem',
+                            height: 20,
+                            border: '1px solid rgba(99, 102, 241, 0.3)',
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: '#6366f1',
+                            fontSize: '16px',
+                          }}
+                        >
+                          {skill.percentage}%
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <LinearProgress
+                      variant="determinate"
+                      value={skill.percentage || 0}
+                      sx={{
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: '#e5e7eb',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#6366f1',
+                          borderRadius: 3,
+                        },
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+
+              {/* Soft Skills */}
+              {getSoftSkills().length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: 'rgba(98, 111, 134, 1)',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      mb: 1.5,
+                    }}
+                  >
+                    Soft Skills
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {getSoftSkills().map((skill: any, index: number) => (
+                      <Chip
+                        key={skill._id || index}
+                        label={`${skill.name} (${skill.percentage}%)`}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10b981',
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                          height: 26,
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Suggested Skills */}
+              {(getSuggestedSkills().technical?.length > 0 ||
+                getSuggestedSkills().frameworks?.length > 0 ||
+                getSuggestedSkills().tools?.length > 0) && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: 'rgba(98, 111, 134, 1)',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      mb: 1.5,
+                    }}
+                  >
+                    Suggested Skills
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {getSuggestedSkills().technical?.map((skill: any, index: number) => (
+                      <Chip
+                        key={`tech-${index}`}
+                        label={skill.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                          color: '#8b5cf6',
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
+                          height: 24,
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                        }}
+                      />
+                    ))}
+                    {getSuggestedSkills().frameworks?.map((skill: any, index: number) => (
+                      <Chip
+                        key={`fw-${index}`}
+                        label={skill.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                          color: '#f59e0b',
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
+                          height: 24,
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                        }}
+                      />
+                    ))}
+                    {getSuggestedSkills().tools?.map((skill: any, index: number) => (
+                      <Chip
+                        key={`tool-${index}`}
+                        label={skill.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                          color: '#14b8a6',
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
+                          height: 24,
+                          border: '1px solid rgba(20, 184, 166, 0.3)',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </Box>
           )}
 
