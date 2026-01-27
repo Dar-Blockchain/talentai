@@ -19,7 +19,7 @@ router.get('/steps/:jobId', pipelineInterviewController.getInterviewSteps);
 // ===== Candidate Progress Management =====
 
 // Initialize or get candidate progress
-router.post('/progress/initialize', candidateProgressController.initializeProgress);
+router.post('/progress/initialize', candidateProgressController.initializeProgress); //Averifier
 
 // Get candidate progress
 router.get('/progress/:candidateId/:jobId', candidateProgressController.getProgress);
