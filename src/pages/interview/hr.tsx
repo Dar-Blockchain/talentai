@@ -51,14 +51,7 @@ import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { io } from 'socket.io-client';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
-import {
-  initializeCandidateProgress,
-  getCandidateProgress,
-  fetchPipelineInterviewParams,
-  updateStepStatus,
-  moveToNextStep,
-  type CandidateProgress
-} from '@/utils/pipelineInterviewApi';
+
 
 // Interview Configuration Types
 interface InterviewConfig {
@@ -770,38 +763,18 @@ const IntelligentInterviewTest = () => {
 
       if (isPipeline) {
         // Pipeline job - MUST have user session
-        // Get candidate ID from Redux profile or auth state (not NextAuth session)
-        const candidateId = profile?._id || authUser?._id;
+        // Get candidate ID (User ID, not Profile ID) from Redux profile or auth state
+        // Note: profile.userId references the User model, which is what CandidatePostStepProgress.idCandidate stores
+        const candidateId = profile?.userId?._id || profile?.userId || authUser?._id;
 
         if (!candidateId) {
           throw new Error('Pipeline jobs require authentication. Please log in to start the interview.');
         }
 
-        console.log('🔍 Initializing/checking candidate progress for candidateId:', candidateId);
+        console.log('🔍 Fetching candidate progress for candidateId (User ID):', candidateId);
 
-        // Always call initialize first - it will return existing progress or create new
-        console.log('📝 Calling initialize endpoint...');
-        const initResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/initialize`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ candidateId, jobId })
-          }
-        );
-
-        if (!initResponse.ok) {
-          throw new Error('Failed to initialize progress');
-        }
-
-        const initData = await initResponse.json();
-        console.log('✅ Initialize response:', initData);
-
-        // Now fetch the full progress data
-        const progressResponse = await fetch(
+        // First, try to fetch existing progress data
+        let progressResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
           {
             headers: {
@@ -813,14 +786,51 @@ const IntelligentInterviewTest = () => {
 
         let progressData;
 
-        if (progressResponse.ok) {
-          progressData = await progressResponse.json();
-          console.log('✅ Progress fetched - current step:', progressData.currentStep?.stepNumber);
-        } else {
-          // Use init data as fallback
-          progressData = initData;
-          console.log('⚠️ Using init data as progress fallback');
+        if (!progressResponse.ok) {
+          // No existing progress found - initialize it
+          console.log('📋 No existing progress found, initializing...');
+
+          const initResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/initialize`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                candidateId,
+                jobId
+              })
+            }
+          );
+
+          if (!initResponse.ok) {
+            const errorData = await initResponse.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to initialize interview progress.');
+          }
+
+          const initData = await initResponse.json();
+          console.log('✅ Progress initialized:', initData.isNew ? 'new record' : 'existing record');
+
+          // Now fetch the full progress data with populated fields
+          progressResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+
+          if (!progressResponse.ok) {
+            throw new Error('Failed to fetch progress after initialization.');
+          }
         }
+
+        progressData = await progressResponse.json();
+        console.log('✅ Progress fetched - current step:', progressData.currentStep?.stepNumber);
 
         // Extract current step from database
         const currentStep = progressData.currentStep;
@@ -848,7 +858,7 @@ const IntelligentInterviewTest = () => {
         setInterviewConfig(dynamicConfig);
         setCandidateProgress(progressData.progress);
         setCurrentPipelineStep(currentStep.stepNumber);
-
+        console.log('step4444', currentStep.stepNumber);
         // Store for interview_ended handler
         localStorage.setItem('interview_jobId', jobId);
         localStorage.setItem('interview_stepId', currentStep.stepId);
@@ -1712,8 +1722,12 @@ const IntelligentInterviewTest = () => {
         console.warn('⚠️ No analysis data received from socket event');
       }
 
-      // 🔥 NEW: Update pipeline progress with pass/fail logic
-      const candidateId = profile?._id || authUser?._id;
+      // 🔥 Pipeline progress: Update pass/fail and score
+      // NOTE: The backend service (postInterviewAssessmentService) already handles:
+      // - Marking current step as 'done'
+      // - Moving currentStep to next interview step
+      // We only need to update the pass/fail status and score here
+      const candidateId = profile?.userId?._id || profile?.userId || authUser?._id;
       if (isPipelineJob && candidateId) {
         try {
           const token = Cookies.get('api_token');
@@ -1727,15 +1741,16 @@ const IntelligentInterviewTest = () => {
                             data.analytics?.totalScore ||
                             0;
 
-          // 🔥 Calculate pass/fail
+          // Calculate pass/fail
           const passed = finalScore >= passThreshold;
 
           console.log(`📊 Interview Result: ${finalScore}% (threshold: ${passThreshold}%) - ${passed ? 'PASSED ✅' : 'FAILED ❌'}`);
 
-          if (jobId && stepId && data.sessionId) {
-            console.log('📊 Updating pipeline step progress...');
+          if (jobId && stepId) {
+            console.log('📊 Updating pipeline step pass/fail status...');
 
-            // Update step status with pass/fail and score
+            // Only update pass/fail and score - do NOT move to next step here
+            // The service already moved to next step when creating the assessment
             const updateResponse = await fetch(
               `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/update-step`,
               {
@@ -1748,8 +1763,8 @@ const IntelligentInterviewTest = () => {
                   candidateId: candidateId,
                   jobId,
                   stepId,
-                  interviewDetailsId: data.sessionId,
-                  status: 'done',
+                  // Don't pass interviewDetailsId - service already set it
+                  // Don't pass status - service already set it to 'done'
                   passed: passed,
                   finalScore: finalScore
                 })
@@ -1757,45 +1772,42 @@ const IntelligentInterviewTest = () => {
             );
 
             const updateResult = await updateResponse.json();
-            console.log('✅ Pipeline step status updated:', updateResult);
+            console.log('✅ Pipeline step pass/fail updated:', updateResult);
 
-            if (passed) {
-              // Try to move to next step
-              console.log('✅ Step passed - checking for next step...');
-
-              const nextStepResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/next-step`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                    candidateId: candidateId,
-                    jobId
-                  })
+            // Fetch current progress to determine next step info
+            const progressResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`
                 }
-              );
-
-              const nextStepData = await nextStepResponse.json();
-
-              if (nextStepData.hasNextStep) {
-                console.log(`✅ Next step available: ${nextStepData.nextStepNumber}`);
-                localStorage.setItem('pipeline_has_next_step', 'true');
-                localStorage.setItem('pipeline_next_step', nextStepData.nextStepNumber.toString());
-              } else {
-                console.log('🎉 Pipeline complete!');
-                localStorage.setItem('pipeline_has_next_step', 'false');
-                localStorage.setItem('pipeline_complete', 'true');
               }
-            } else {
-              // Failed - cannot continue
-              console.log('❌ Step failed - pipeline cannot continue');
-              localStorage.setItem('pipeline_has_next_step', 'false');
-              localStorage.setItem('pipeline_failed', 'true');
-              localStorage.setItem('pipeline_failed_score', finalScore.toString());
-              localStorage.setItem('pipeline_required_score', passThreshold.toString());
+            );
+
+            if (progressResponse.ok) {
+              const progressData = await progressResponse.json();
+              const completedSteps = progressData.stats?.completedSteps || 0;
+              const totalSteps = progressData.stats?.totalSteps || 0;
+
+              if (passed) {
+                if (completedSteps < totalSteps) {
+                  console.log(`✅ Next step available (${completedSteps}/${totalSteps} completed)`);
+                  localStorage.setItem('pipeline_has_next_step', 'true');
+                  localStorage.setItem('pipeline_next_step', progressData.currentStep?.stepNumber?.toString() || '');
+                } else {
+                  console.log('🎉 Pipeline complete!');
+                  localStorage.setItem('pipeline_has_next_step', 'false');
+                  localStorage.setItem('pipeline_complete', 'true');
+                }
+              } else {
+                // Failed - cannot continue
+                console.log('❌ Step failed - pipeline cannot continue');
+                localStorage.setItem('pipeline_has_next_step', 'false');
+                localStorage.setItem('pipeline_failed', 'true');
+                localStorage.setItem('pipeline_failed_score', finalScore.toString());
+                localStorage.setItem('pipeline_required_score', passThreshold.toString());
+              }
             }
           }
         } catch (error) {
