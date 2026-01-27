@@ -281,7 +281,7 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
     const enrichedAssessments = await Promise.all(
       assessments.map(async (assessment) => {
         const progress = await CandidatePostStepProgress.findOne({
-          idCandidate: req.user.profile,
+          idCandidate: req.user._id,
           idPost: assessment.post
         }).populate('currentStep').populate('steps.interviewDetails');
 

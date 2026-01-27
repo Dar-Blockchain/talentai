@@ -221,8 +221,8 @@ module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => 
     const query = { candidate: candidateId };
 
     const assessments = await PostInterviewAssessment.find(query)
-      .populate('post', 'jobDetails title status')
-      .populate('company', 'username email role')
+      .populate('post')
+      .populate('company')
       .sort({ createdAt: -1 });
 
     return assessments;
