@@ -36,9 +36,11 @@ const CandidateSettingsPage: React.FC = () => {
     handleDismissSuccess,
   } = useProfileManagement();
 
-  const { profile: reduxProfile } = useSelector(
+  const { profile: reduxProfile, companyMembership } = useSelector(
     (state: RootState) => state.user.connectedUser
   );
+
+  const hasMembership = !!companyMembership?._id;
 
   const [isPublicProfile, setIsPublicProfile] = useState(
     reduxProfile?.isPublicProfile || false
@@ -162,6 +164,7 @@ const CandidateSettingsPage: React.FC = () => {
               userId={userId}
               isPublicProfile={isPublicProfile}
               onToggleVisibility={handleToggleVisibility}
+              hasMembership={hasMembership}
             />
           )}
 

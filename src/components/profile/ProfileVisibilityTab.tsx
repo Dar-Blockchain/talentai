@@ -25,12 +25,14 @@ interface ProfileVisibilityTabProps {
   userId: string;
   isPublicProfile: boolean;
   onToggleVisibility: (isPublic: boolean) => Promise<void>;
+  hasMembership?: boolean;
 }
 
 const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   userId,
   isPublicProfile,
   onToggleVisibility,
+  hasMembership = false,
 }) => {
   const { showToast } = useToast();
   const [isPublic, setIsPublic] = useState(isPublicProfile);
@@ -40,9 +42,14 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
   const [copied, setCopied] = useState(false);
 
   // Update local state when prop changes
+  // If user has membership, profile must always be private
   useEffect(() => {
-    setIsPublic(isPublicProfile);
-  }, [isPublicProfile]);
+    if (hasMembership) {
+      setIsPublic(false);
+    } else {
+      setIsPublic(isPublicProfile);
+    }
+  }, [isPublicProfile, hasMembership]);
 
   // Generate public profile URL
   const publicProfileUrl = typeof window !== 'undefined'
@@ -98,6 +105,29 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
             Control who can view your profile information
           </Typography>
         </Box>
+
+        {/* Membership Notice */}
+        {hasMembership && (
+          <Alert
+            severity="info"
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              backgroundColor: 'rgba(131, 16, 255, 0.08)',
+              border: '1px solid rgba(131, 16, 255, 0.2)',
+              '& .MuiAlert-icon': {
+                color: '#8310FF',
+              },
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 500, color: '#1a1a1a' }}>
+              Your profile visibility is managed by your company membership.
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
+              As a member of a company, your profile is automatically set to private and cannot be changed.
+            </Typography>
+          </Alert>
+        )}
 
         {/* Error Alert */}
         {error && (
@@ -161,7 +191,7 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
               <Switch
                 checked={isPublic}
                 onChange={handleToggleVisibility}
-                disabled={loading}
+                disabled={loading || hasMembership}
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {
                     color: '#10b981',
