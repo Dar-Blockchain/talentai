@@ -178,9 +178,12 @@ const CandidateProfile: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { userId } = router.query;
 
-  const { profile, user, loading } = useSelector(
+  const { profile, user, loading, companyMembership } = useSelector(
     (state: RootState) => state.user.targetUser
   );
+
+  // Check if target user has a company membership (profile should be hidden)
+  const targetHasMembership = !!companyMembership?._id;
   const connectedProfile = useSelector(
     (state: RootState) => state.user.connectedUser.profile
   );
@@ -192,7 +195,9 @@ const CandidateProfile: React.FC = () => {
 
   useEffect(() => {
     if (typeof userId === "string") dispatch(getProfileById(userId));
-    return () => dispatch(clearTargetUser());
+    return () => {
+      dispatch(clearTargetUser());
+    };
   }, [userId, dispatch]);
 
   const profileData = useMemo(() => {
@@ -224,16 +229,20 @@ const CandidateProfile: React.FC = () => {
 
   /* ---------------------------- Private Profile ---------------------------- */
 
-  if (profile && !profile.isPublicProfile && !isOwnProfile) {
+  // Block access if profile is private OR if target user has a company membership
+  if (profile && (!profile.isPublicProfile || targetHasMembership) && !isOwnProfile) {
     return (
       <PageContainer>
-        <Paper sx={{ p: 6, textAlign: "center", borderRadius: 4 }}>
+        <Header />
+        <Paper sx={{ p: 6, textAlign: "center", borderRadius: 4, mt: 3 }}>
           <VisibilityOff sx={{ fontSize: 64, color: CANDIDATE }} />
           <Typography variant="h4" fontWeight={700} mt={2}>
             Private Profile
           </Typography>
           <Typography color={TEXT_MUTED} mt={1} mb={3}>
-            This candidate has disabled public visibility.
+            {targetHasMembership
+              ? "This profile is private due to company membership."
+              : "This candidate has disabled public visibility."}
           </Typography>
           <Button
             onClick={() => router.back()}

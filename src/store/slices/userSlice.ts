@@ -12,6 +12,7 @@ interface UserState {
   targetUser: {
     user: any | null;
     profile: any | null;
+    companyMembership: any | null;
     loading: boolean;
     error: string | null;
   };
@@ -30,6 +31,7 @@ const initialState: UserState = {
   targetUser: {
     user: null,
     profile: null,
+    companyMembership: null,
     loading: false,
     error: null,
   },
@@ -352,6 +354,7 @@ const userSlice = createSlice({
             state.targetUser.loading = false;
             state.targetUser.profile = action.payload.profile;
             state.targetUser.user = action.payload.user;
+            state.targetUser.companyMembership = action.payload.companyMembership || null;
           }
         )
         .addCase(
