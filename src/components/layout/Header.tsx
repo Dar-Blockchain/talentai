@@ -139,11 +139,12 @@ const Header = () => {
               {!showHeaderNavMenu && !isWorkspacePage && <TokenDisplay />}
 
               {/* Messages Dropdown */}
-              <HeaderMessagesDropdown
-                userId={userId}
-                unreadMessageCount={unreadMessageCount}
-              />
-
+              {!showHeaderNavMenu && !isWorkspacePage && (
+                <HeaderMessagesDropdown
+                  userId={userId}
+                  unreadMessageCount={unreadMessageCount}
+                />
+              )}
               {!isCompany && !showHeaderNavMenu && !isWorkspacePage && (
                 <HeaderNotification />
               )}
