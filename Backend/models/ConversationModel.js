@@ -114,7 +114,14 @@ conversationSchema.statics.findOrCreateConversation = async function (
     let conversation = await this.findOne({
       candidateId,
       companyId,
-    }).populate('participants', 'firstName lastName email profile');
+    }).populate({
+      path: 'participants',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    });
 
     if (!conversation) {
       console.log('Creating new conversation with:', { candidateId, companyId });
@@ -134,10 +141,14 @@ conversationSchema.statics.findOrCreateConversation = async function (
       console.log('Conversation created, now populating participants...');
 
       // Populate after creation
-      conversation = await this.findById(conversation._id).populate(
-        'participants',
-        'firstName lastName email profile'
-      );
+      conversation = await this.findById(conversation._id).populate({
+        path: 'participants',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      });
 
       console.log('After population:', {
         conversationId: conversation._id,
@@ -191,8 +202,22 @@ conversationSchema.statics.getUserConversations = async function (
   }
 
   const conversations = await this.find(query)
-    .populate('participants', 'firstName lastName email profile')
-    .populate('lastMessage.sender', 'firstName lastName')
+    .populate({
+      path: 'participants',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    })
+    .populate({
+      path: 'lastMessage.sender',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    })
     .sort({ updatedAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)

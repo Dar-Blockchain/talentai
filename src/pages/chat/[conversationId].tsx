@@ -38,11 +38,29 @@ interface Message {
   text: string;
   sender: {
     _id: string;
-    firstName: string;
-    lastName: string;
+    email?: string;
+    profile?: {
+      _id?: string;
+      firstName?: string;
+      lastName?: string;
+      type?: 'Candidate' | 'Company';
+      companyDetails?: {
+        name?: string;
+      };
+    };
   };
   receiver: {
     _id: string;
+    email?: string;
+    profile?: {
+      _id?: string;
+      firstName?: string;
+      lastName?: string;
+      type?: 'Candidate' | 'Company';
+      companyDetails?: {
+        name?: string;
+      };
+    };
   };
   isRead: boolean;
   createdAt: string;
@@ -52,10 +70,47 @@ interface Message {
 
 interface Participant {
   _id: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
+  profile?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    type?: 'Candidate' | 'Company';
+    companyDetails?: {
+      name?: string;
+    };
+  };
 }
+
+// Helper function to get display name from a participant
+const getParticipantDisplayName = (participant: Participant | undefined): string => {
+  if (!participant) return 'Unknown';
+
+  // Check if profile exists with company details
+  if (participant.profile?.type === 'Company' && participant.profile?.companyDetails?.name) {
+    return participant.profile.companyDetails.name;
+  }
+
+  // Check profile firstName/lastName
+  if (participant.profile?.firstName || participant.profile?.lastName) {
+    return `${participant.profile.firstName || ''} ${participant.profile.lastName || ''}`.trim();
+  }
+
+  // Fallback to direct firstName/lastName on participant
+  if (participant.firstName || participant.lastName) {
+    return `${participant.firstName || ''} ${participant.lastName || ''}`.trim();
+  }
+
+  return 'Unknown';
+};
+
+// Helper to get first initial for avatar
+const getParticipantInitial = (participant: Participant | undefined): string => {
+  const name = getParticipantDisplayName(participant);
+  return name.charAt(0).toUpperCase() || '?';
+};
 
 interface Conversation {
   _id: string;
@@ -76,6 +131,8 @@ const ConversationPage = () => {
   const profile = useSelector((state: RootState) => state.user?.connectedUser?.profile);
   // Use user ID (not profile ID) for all socket and conversation operations
   const currentUserId = connectedUser?._id;
+  // Check if current user is a Company
+  const isCompany = profile?.type === 'Company';
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -661,7 +718,7 @@ const ConversationPage = () => {
                                     fontWeight: 600,
                                   }}
                                 >
-                                  {otherUser?.firstName?.charAt(0)?.toUpperCase()}
+                                  {getParticipantInitial(otherUser)}
                                 </Avatar>
                               </Badge>
                             </ListItemAvatar>
@@ -675,7 +732,7 @@ const ConversationPage = () => {
                                     fontSize: '13px',
                                   }}
                                 >
-                                  {otherUser?.firstName} {otherUser?.lastName}
+                                  {getParticipantDisplayName(otherUser)}
                                 </Typography>
                               }
                               secondary={
@@ -751,7 +808,7 @@ const ConversationPage = () => {
                   fontWeight: 600,
                 }}
               >
-                {otherUser?.firstName?.charAt(0)?.toUpperCase()}
+                {getParticipantInitial(otherUser)}
               </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Typography
@@ -763,13 +820,15 @@ const ConversationPage = () => {
                     lineHeight: 1.3,
                   }}
                 >
-                  {otherUser?.firstName} {otherUser?.lastName}
+                  {getParticipantDisplayName(otherUser)}
                 </Typography>
                 <Typography
                   variant="caption"
                   sx={{
                     color: 'rgba(84,98,116,0.8)',
                     fontSize: '12px',
+                    filter: 'blur(4px)',
+                    userSelect: 'none',
                   }}
                 >
                   {otherUser?.email}
@@ -805,18 +864,20 @@ const ConversationPage = () => {
                     Active
                   </Typography>
                 </Box>
-                <IconButton
-                  onClick={handleDeleteConversation}
-                  size="small"
-                  sx={{
-                    color: 'rgba(220, 38, 38, 0.8)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(220, 38, 38, 0.08)',
-                    },
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                {isCompany && (
+                  <IconButton
+                    onClick={handleDeleteConversation}
+                    size="small"
+                    sx={{
+                      color: 'rgba(220, 38, 38, 0.8)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(220, 38, 38, 0.08)',
+                      },
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Box>
             </Box>
 
@@ -891,7 +952,7 @@ const ConversationPage = () => {
                         },
                       }}
                     >
-                      {isOwn && (
+                      {isCompany && isOwn && (
                         <IconButton
                           className="delete-icon"
                           onClick={() => handleDeleteMessage(message._id)}

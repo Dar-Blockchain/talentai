@@ -163,14 +163,32 @@ messageSchema.statics.getConversationMessages = async function (
   }
 
   const messages = await this.find(query)
-    .populate('sender', 'firstName lastName profile email')
-    .populate('receiver', 'firstName lastName profile email')
+    .populate({
+      path: 'sender',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    })
+    .populate({
+      path: 'receiver',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    })
     .populate({
       path: 'replyTo',
       select: 'text sender createdAt',
       populate: {
         path: 'sender',
-        select: 'firstName lastName',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
       },
     })
     .sort({ createdAt: -1 })
@@ -205,7 +223,14 @@ messageSchema.statics.getUnreadMessages = async function (
     isRead: false,
     isDeleted: false,
   })
-    .populate('sender', 'firstName lastName profile')
+    .populate({
+      path: 'sender',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    })
     .sort({ createdAt: 1 })
     .lean();
 };
@@ -263,7 +288,14 @@ messageSchema.statics.searchMessages = async function (
     isDeleted: false,
     deletedBy: { $ne: userId },
   })
-    .populate('sender', 'firstName lastName')
+    .populate({
+      path: 'sender',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    })
     .sort({ createdAt: -1 })
     .limit(50)
     .lean();

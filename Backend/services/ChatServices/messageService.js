@@ -53,9 +53,23 @@ module.exports.sendMessage = async (conversationId, senderId, receiverId, text, 
       status: 'sent',
     });
 
-    // Populate sender and receiver
-    await message.populate('sender', 'firstName lastName profile email');
-    await message.populate('receiver', 'firstName lastName profile email');
+    // Populate sender and receiver with profile for firstName/lastName
+    await message.populate({
+      path: 'sender',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    });
+    await message.populate({
+      path: 'receiver',
+      select: 'email profile',
+      populate: {
+        path: 'profile',
+        select: 'firstName lastName type companyDetails.name',
+      },
+    });
 
     if (replyTo) {
       await message.populate({
@@ -63,7 +77,11 @@ module.exports.sendMessage = async (conversationId, senderId, receiverId, text, 
         select: 'text sender createdAt',
         populate: {
           path: 'sender',
-          select: 'firstName lastName',
+          select: 'email profile',
+          populate: {
+            path: 'profile',
+            select: 'firstName lastName type companyDetails.name',
+          },
         },
       });
     }
@@ -309,14 +327,32 @@ module.exports.markMessageAsDelivered = async (messageId) => {
 module.exports.getMessageById = async (messageId, userId) => {
   try {
     const message = await Message.findById(messageId)
-      .populate('sender', 'firstName lastName profile email')
-      .populate('receiver', 'firstName lastName profile email')
+      .populate({
+        path: 'sender',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      })
+      .populate({
+        path: 'receiver',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      })
       .populate({
         path: 'replyTo',
         select: 'text sender createdAt',
         populate: {
           path: 'sender',
-          select: 'firstName lastName',
+          select: 'email profile',
+          populate: {
+            path: 'profile',
+            select: 'firstName lastName type companyDetails.name',
+          },
         },
       })
       .lean();

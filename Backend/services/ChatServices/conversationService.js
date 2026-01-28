@@ -50,8 +50,22 @@ module.exports.getUserConversations = async (userId, options = {}) => {
 module.exports.getConversationById = async (conversationId, userId) => {
   try {
     const conversation = await Conversation.findById(conversationId)
-      .populate('participants', 'firstName lastName email profile')
-      .populate('lastMessage.sender', 'firstName lastName')
+      .populate({
+        path: 'participants',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      })
+      .populate({
+        path: 'lastMessage.sender',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      })
       .lean();
 
     if (!conversation) {
@@ -321,8 +335,22 @@ module.exports.searchConversations = async (userId, searchTerm) => {
       participants: userId,
       status: 'active',
     })
-      .populate('participants', 'firstName lastName email profile')
-      .populate('lastMessage.sender', 'firstName lastName')
+      .populate({
+        path: 'participants',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      })
+      .populate({
+        path: 'lastMessage.sender',
+        select: 'email profile',
+        populate: {
+          path: 'profile',
+          select: 'firstName lastName type companyDetails.name',
+        },
+      })
       .lean();
 
     // Filter conversations by participant name
@@ -333,7 +361,14 @@ module.exports.searchConversations = async (userId, searchTerm) => {
 
       if (!otherParticipant) return false;
 
-      const fullName = `${otherParticipant.firstName} ${otherParticipant.lastName}`.toLowerCase();
+      // Get name from profile (handle both Candidate and Company)
+      let fullName = '';
+      if (otherParticipant.profile?.type === 'Company' && otherParticipant.profile?.companyDetails?.name) {
+        fullName = otherParticipant.profile.companyDetails.name.toLowerCase();
+      } else if (otherParticipant.profile?.firstName || otherParticipant.profile?.lastName) {
+        fullName = `${otherParticipant.profile.firstName || ''} ${otherParticipant.profile.lastName || ''}`.toLowerCase();
+      }
+
       return fullName.includes(searchTerm.toLowerCase());
     });
 
