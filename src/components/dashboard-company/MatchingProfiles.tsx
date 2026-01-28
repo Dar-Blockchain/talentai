@@ -8,6 +8,8 @@ import {
   Avatar,
   Pagination,
   Card,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -73,6 +75,8 @@ interface MatchingProfilesProps {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  passedInterviewOnly?: boolean;
+  onPassedInterviewFilterChange?: (checked: boolean) => void;
 }
 
 const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
@@ -87,6 +91,8 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
+  passedInterviewOnly = false,
+  onPassedInterviewFilterChange,
 }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -183,6 +189,39 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             flexWrap: "wrap",
           }}
         >
+          {onPassedInterviewFilterChange && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={passedInterviewOnly}
+                  onChange={(e) => onPassedInterviewFilterChange(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: 'rgba(41, 210, 145, 1)',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: 'rgba(41, 210, 145, 0.5)',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography
+                  sx={{
+                    fontFamily: "Poppins",
+                    fontWeight: 500,
+                    fontSize: "0.875rem",
+                    color: passedInterviewOnly ? "rgba(41, 210, 145, 1)" : "rgba(84, 98, 116, 0.8)",
+                  }}
+                >
+                  Passed Interview Only
+                </Typography>
+              }
+              sx={{
+                mr: 1,
+              }}
+            />
+          )}
           <Button
             variant="contained"
             startIcon={<ArrowBackIcon />}

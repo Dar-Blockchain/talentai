@@ -400,10 +400,11 @@ export const fetchJobMatches = createAsyncThunk(
       selectedJobId,
       page = 1,
       limit = 10,
-    }: { selectedJobId: string; page?: number; limit?: number },
+      passedInterview = false,
+    }: { selectedJobId: string; page?: number; limit?: number; passedInterview?: boolean },
     { rejectWithValue }
   ) => {
-    const fetchKey = `${selectedJobId}-${page}-${limit}`;
+    const fetchKey = `${selectedJobId}-${page}-${limit}-${passedInterview}`;
     console.log(
       "🚀 [fetchJobMatches] Thunk executing for job:",
       selectedJobId,
@@ -433,6 +434,7 @@ export const fetchJobMatches = createAsyncThunk(
         const queryParams = new URLSearchParams({
           page: page.toString(),
           limit: limit.toString(),
+          ...(passedInterview && { passedInterview: 'true' }),
         });
 
         console.log(

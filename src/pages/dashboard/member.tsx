@@ -86,6 +86,9 @@ const DashboardMember = () => {
   const [matchesPage, setMatchesPage] = useState(1);
   const [matchesPerPage] = useState(10);
 
+  // Passed interview filter state
+  const [passedInterviewOnly, setPassedInterviewOnly] = useState(false);
+
   // Track ongoing fetch to prevent duplicates with timestamp-based deduplication
   const isFetchingMatchesRef = useRef(false);
   const lastFetchTimeRef = useRef(0);
@@ -181,8 +184,9 @@ const fetchMyJobs = useCallback(
 
     setSelectedJob(jobId);
     setMatchesPage(1);
+    setPassedInterviewOnly(false); // Reset filter when selecting a new job
 
-    dispatch(fetchJobMatches({ selectedJobId: jobId, page: 1, limit: matchesPerPage }))
+    dispatch(fetchJobMatches({ selectedJobId: jobId, page: 1, limit: matchesPerPage, passedInterview: false }))
       .finally(() => {
         // Reset the flag after completion
         setTimeout(() => {
@@ -191,6 +195,13 @@ const fetchMyJobs = useCallback(
         }, 500);
       });
   }, [dispatch, matchesPerPage]);
+
+  // Handler for passed interview filter change
+  const handlePassedInterviewFilterChange = useCallback((checked: boolean) => {
+    setPassedInterviewOnly(checked);
+    setMatchesPage(1);
+    dispatch(fetchJobMatches({ selectedJobId: selectedJob, page: 1, limit: matchesPerPage, passedInterview: checked }));
+  }, [dispatch, selectedJob, matchesPerPage]);
 
   return (
     <MemberGuard>
@@ -230,8 +241,10 @@ const fetchMyJobs = useCallback(
               totalPages={matchesPagination.totalPages}
               onPageChange={(page) => {
                 setMatchesPage(page);
-                dispatch(fetchJobMatches({ selectedJobId: selectedJob, page, limit: matchesPerPage }));
+                dispatch(fetchJobMatches({ selectedJobId: selectedJob, page, limit: matchesPerPage, passedInterview: passedInterviewOnly }));
               }}
+              passedInterviewOnly={passedInterviewOnly}
+              onPassedInterviewFilterChange={handlePassedInterviewFilterChange}
             />
           )}
 
