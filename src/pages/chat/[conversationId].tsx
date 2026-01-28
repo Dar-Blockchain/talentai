@@ -30,7 +30,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
-import { toast } from 'react-toastify';
+import { useToast } from '@/hooks/useToast';
 import Header from '@/components/layout/Header';
 
 interface Message {
@@ -126,6 +126,7 @@ interface Conversation {
 const ConversationPage = () => {
   const router = useRouter();
   const { conversationId } = router.query;
+  const { showToast } = useToast();
   // Get the user object (contains the actual user ID for WebSocket and participant matching)
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
   const profile = useSelector((state: RootState) => state.user?.connectedUser?.profile);
@@ -230,7 +231,7 @@ const ConversationPage = () => {
       console.log('Received message_deleted event:', { messageId, convId });
       if (convId === conversationId) {
         setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
-        toast.info('A message was deleted');
+        showToast({ message: 'A message was deleted', severity: 'info' });
       }
     });
 
@@ -241,7 +242,7 @@ const ConversationPage = () => {
 
       // If currently viewing the deleted conversation, redirect to chat home
       if (convId === conversationId) {
-        toast.info('This conversation was deleted');
+        showToast({ message: 'This conversation was deleted', severity: 'info' });
         router.push('/chat');
       }
     });
@@ -337,16 +338,12 @@ const ConversationPage = () => {
     const phonePattern = /(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}|\d{10,}/;
 
     if (emailPattern.test(newMessage)) {
-      toast.error('For your security, sharing email addresses is not allowed. Please keep all communications within the platform.', {
-        autoClose: 5000,
-      });
+      showToast({ message: 'For your security, sharing email addresses is not allowed. Please keep all communications within the platform.', severity: 'error' });
       return;
     }
 
     if (phonePattern.test(newMessage)) {
-      toast.error('For your security, sharing phone numbers is not allowed. Please keep all communications within the platform.', {
-        autoClose: 5000,
-      });
+      showToast({ message: 'For your security, sharing phone numbers is not allowed. Please keep all communications within the platform.', severity: 'error' });
       return;
     }
 
@@ -355,7 +352,7 @@ const ConversationPage = () => {
     );
 
     if (!otherParticipant) {
-      toast.error('Could not find recipient. Please refresh the page.');
+      showToast({ message: 'Could not find recipient. Please refresh the page.', severity: 'error' });
       return;
     }
 
@@ -392,7 +389,7 @@ const ConversationPage = () => {
         status: error.response?.status,
         message: error.message,
       });
-      toast.error(`Failed to send message: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      showToast({ message: `Failed to send message: ${error.response?.data?.message || error.message || 'Unknown error'}`, severity: 'error' });
     } finally {
       setSending(false);
     }
@@ -414,10 +411,10 @@ const ConversationPage = () => {
       );
 
       // Message will be removed via WebSocket 'message_deleted' event
-      toast.success('Message deleted successfully');
+      showToast({ message: 'Message deleted successfully', severity: 'success' });
     } catch (error: any) {
       console.error('Failed to delete message:', error);
-      toast.error(`Failed to delete message: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      showToast({ message: `Failed to delete message: ${error.response?.data?.message || error.message || 'Unknown error'}`, severity: 'error' });
     }
   };
 
@@ -435,12 +432,12 @@ const ConversationPage = () => {
       );
 
       // Conversation will be removed via WebSocket 'conversation_deleted' event
-      toast.success('Conversation deleted successfully');
+      showToast({ message: 'Conversation deleted successfully', severity: 'success' });
       setDeleteDialogOpen(false);
       router.push('/chat');
     } catch (error: any) {
       console.error('Failed to delete conversation:', error);
-      toast.error(`Failed to delete conversation: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      showToast({ message: `Failed to delete conversation: ${error.response?.data?.message || error.message || 'Unknown error'}`, severity: 'error' });
     } finally {
       setIsDeleting(false);
     }
