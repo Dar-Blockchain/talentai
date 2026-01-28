@@ -212,8 +212,7 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 const getAssessmentById = async (id) => {
   try {
     const assessment = await SkillInterviewAssessment.findById(id)
-      .populate('candidateId')
-      .populate('interviewerId');
+      .populate('candidateId');
     if (!assessment) {
       throw new Error('Assessment not found');
     }
@@ -228,8 +227,7 @@ const getAssessmentById = async (id) => {
 const getAssessmentBySessionId = async (sessionId) => {
   try {
     const assessment = await SkillInterviewAssessment.findOne({ 'interviewData.sessionId': sessionId })
-      .populate('candidateId')
-      .populate('interviewerId');
+      .populate('candidateId');
     if (!assessment) {
       throw new Error('Assessment not found for this session');
     }
@@ -248,7 +246,6 @@ const getAllAssessments = async (page = 1, limit = 10, filters = {}) => {
 
     const assessments = await SkillInterviewAssessment.find(query)
       .populate('candidateId')
-      .populate('interviewerId')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -279,7 +276,6 @@ const getAssessmentsByCandidate = async (candidateId, page = 1, limit = 10) => {
 
     const assessments = await SkillInterviewAssessment.find({ candidateId })
       .populate('candidateId')
-      .populate('interviewerId')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -310,7 +306,6 @@ const getAssessmentsByInterviewer = async (interviewerId, page = 1, limit = 10) 
 
     const assessments = await SkillInterviewAssessment.find({ interviewerId })
       .populate('candidateId')
-      .populate('interviewerId')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -344,8 +339,7 @@ const updateAssessment = async (id, updateData) => {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('candidateId')
-      .populate('interviewerId');
+      .populate('candidateId');
 
     if (!assessment) {
       throw new Error('Assessment not found');
