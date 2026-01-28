@@ -15,12 +15,22 @@ import {
   fetchRecommendedPosts,
   selectRecommended,
 } from "@/store/slices/postSlice";
-import { ArrowForward, SearchOff } from "@mui/icons-material";
+import { ArrowForward, ArrowBack, SearchOff } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import { formatSalary } from "@/utils/postHelpers";
 import Image from "next/image";
 
-export default function RecommendedOpportunities() {
+interface RecommendedOpportunitiesProps {
+  onViewAll?: () => void;
+  onBackToAll?: () => void;
+  showViewAll?: boolean;
+}
+
+export default function RecommendedOpportunities({
+  onViewAll,
+  onBackToAll,
+  showViewAll = false,
+}: RecommendedOpportunitiesProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -29,14 +39,17 @@ export default function RecommendedOpportunities() {
     pagination,
   } = useSelector(selectRecommended);
 
+  // Fetch more items when in full view mode
+  const displayLimit = showViewAll ? 3 : 12;
+
   useEffect(() => {
     dispatch(
       fetchRecommendedPosts({
         page: 1,
-        limit: 3,
+        limit: displayLimit,
       })
     );
-  }, [dispatch]);
+  }, [dispatch, displayLimit]);
 
   return (
     <Box
@@ -81,10 +94,11 @@ export default function RecommendedOpportunities() {
         >
           Recommended Opportunities
         </Typography>
-        {pagination?.total > 3 && (
+        {/* View All Button - Only show in overview mode */}
+        {showViewAll && onViewAll && pagination?.total > 3 && (
           <Button
             variant="outlined"
-            onClick={() => null}
+            onClick={onViewAll}
             endIcon={<ArrowForward />}
             sx={{
               border: "none",
@@ -102,6 +116,29 @@ export default function RecommendedOpportunities() {
             }}
           >
             View All
+          </Button>
+        )}
+        {/* Back Button - Only show in full view mode */}
+        {!showViewAll && onBackToAll && (
+          <Button
+            variant="outlined"
+            onClick={onBackToAll}
+            startIcon={<ArrowBack />}
+            sx={{
+              border: "none",
+              background: "none",
+              color: "rgba(131, 16, 255, 1)",
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "14px",
+              px: 2,
+              "&:hover": {
+                background: "rgba(131, 16, 255, 0.04)",
+                border: "none",
+              },
+            }}
+          >
+            Back
           </Button>
         )}
       </Box>

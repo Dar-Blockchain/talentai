@@ -10,27 +10,37 @@ import dynamic from 'next/dynamic';
 import CandidateInterviews from "@/components/dashboard-candidate/candidate-interviews/CandidateInterviews";
 
 const DashboardCandidate: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<"interviews" | "all">("all");
+  const [activeSection, setActiveSection] = useState<"interviews" | "opportunities" | "all">("all");
 
   return (
     <RoleGuard allowedRoles={["Candidate"]}>
       <PageContainer>
         <Header />
+        {/* WelcomeHeader is always visible */}
+        <WelcomeHeader />
         {/* Only show these sections when viewing all */}
         {activeSection === "all" && (
           <>
-            <WelcomeHeader />
             <CandidateSkills />
             <CandidateEngagementTasks />
-            <RecommendedOpportunities />
           </>
         )}
-        {/* Show CandidateInterviews in both views */}
-        <CandidateInterviews
-          onViewAll={() => setActiveSection("interviews")}
-          onBackToAll={() => setActiveSection("all")}
-          showViewAll={activeSection === "all"}
-        />
+        {/* Show RecommendedOpportunities in "all" and "opportunities" views */}
+        {(activeSection === "all" || activeSection === "opportunities") && (
+          <RecommendedOpportunities
+            onViewAll={() => setActiveSection("opportunities")}
+            onBackToAll={() => setActiveSection("all")}
+            showViewAll={activeSection === "all"}
+          />
+        )}
+        {/* Show CandidateInterviews in "all" and "interviews" views */}
+        {(activeSection === "all" || activeSection === "interviews") && (
+          <CandidateInterviews
+            onViewAll={() => setActiveSection("interviews")}
+            onBackToAll={() => setActiveSection("all")}
+            showViewAll={activeSection === "all"}
+          />
+        )}
       </PageContainer>
     </RoleGuard>
   );
