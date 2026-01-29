@@ -8,201 +8,201 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
   try {
     const assessmentData = req.body;
     assessmentData.candidate = req.user._id;
-    // Validation
+
+    // =======================
+    // VALIDATION
+    // =======================
     if (!assessmentData.post) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: post, candidate (company will be extracted from post)'
+        message: 'Missing required field: post'
       });
     }
 
-    const assessment = await postInterviewAssessmentService.createPostInterviewAssessment(assessmentData);
+    // =======================
+    // CREATE ASSESSMENT
+    // =======================
+    const assessment =
+      await postInterviewAssessmentService.createPostInterviewAssessment(
+        assessmentData
+      );
 
-    // Incrémenter le quota du profil candidat après création de l'évaluation
+    // =======================
+    // INCREMENT CANDIDATE QUOTA
+    // =======================
     try {
       await Profile.findOneAndUpdate(
         { userId: req.user._id },
-        { $inc: { quota: 1 }, $set: { quotaUpdatedAt: new Date() } },
-        { new: true }
+        { $inc: { quota: 1 }, $set: { quotaUpdatedAt: new Date() } }
       );
     } catch (quotaErr) {
-      console.error('Erreur lors de l\'incrémentation du quota :', quotaErr);
-      // Ne pas échouer la création si l'incrémentation du quota échoue
+      console.error('⚠️ Quota update failed:', quotaErr.message);
     }
 
-    // 🔥 NEW: Auto-move to next step if post contains PostSteps
+    // =======================
+    // PIPELINE PROGRESSION
+    // =======================
     let progressUpdate = null;
+
     try {
       let postSteps = await PostSteps.find({ postId: assessmentData.post });
 
-      // Ensure deterministic ordering by nodeNumber to avoid picking the wrong "first" step
-      postSteps = postSteps.sort((a, b) => {
+      // Sort by nodeNumber
+      postSteps.sort((a, b) => {
         const na = a?.data?.config?.nodeNumber ?? 0;
         const nb = b?.data?.config?.nodeNumber ?? 0;
         return na - nb;
       });
 
-      if (postSteps && postSteps.length > 0) {
-        console.log(`📋 Post ${assessmentData.post} contains ${postSteps.length} steps. Auto-moving to next step...`);
-        
-        // Identify interview steps first (needed for both init and update)
-        const interviewSteps = postSteps.filter(step => ['technical', 'soft', 'interview'].includes(step.data.type));
-        const firstInterviewStep = interviewSteps.length > 0 ? interviewSteps[0] : null;
-        const nextInterviewStep = firstInterviewStep ? interviewSteps.find(step => step.data.config.nodeNumber > firstInterviewStep.data.config.nodeNumber) : null;
+      if (!postSteps.length) {
+        throw new Error('No post steps found');
+      }
 
-        // Try to get existing progress
-        let progress = await CandidatePostStepProgress.findOne({
+      const interviewSteps = postSteps.filter(step =>
+        ['technical', 'soft', 'interview'].includes(step.data.type)
+      );
+
+      if (!interviewSteps.length) {
+        throw new Error('No interview steps found');
+      }
+
+      // =======================
+      // LOAD PROGRESS
+      // =======================
+      let progress = await CandidatePostStepProgress
+        .findOne({
           idCandidate: req.user._id,
           idPost: assessmentData.post
-        }).populate('currentStep');
+        })
+        .populate('currentStep');
 
-        if (!progress) {
-          // CREATE: Initialize new progress with first step done
-          if (firstInterviewStep) {
-            const currentStepId = nextInterviewStep ? nextInterviewStep._id : firstInterviewStep._id;
-            progress = await CandidatePostStepProgress.create({
-              idCandidate: req.user._id,
-              idPost: assessmentData.post,
-              currentStep: currentStepId,
-              steps: postSteps.map(step => {
-                if (step._id.equals(firstInterviewStep._id)) {
-                  return {
-                    stepId: step._id,
-                    status: 'done',
-                    interviewDetails: assessment._id,
-                    passed: null,
-                    finalScore: null,
-                    attempts: 1,
-                    completedAt: new Date()
-                  };
-                } else if (nextInterviewStep && step._id.equals(nextInterviewStep._id)) {
-                  return {
-                    stepId: step._id,
-                    status: 'inProgress',
-                    interviewDetails: null,
-                    passed: null,
-                    finalScore: null,
-                    attempts: 0,
-                    completedAt: null
-                  };
-                } else {
-                  return {
-                    stepId: step._id,
-                    status: 'pending',
-                    interviewDetails: null,
-                    passed: null,
-                    finalScore: null,
-                    attempts: 0,
-                    completedAt: null
-                  };
-                }
-              })
-            });
-            await progress.populate('currentStep');
-            if (nextInterviewStep) {
-              console.log(`✅ First step completed, moving to next step: ${nextInterviewStep.data.config.nodeNumber}`);
-            } else {
-              console.log(`✅ Only one interview step, pipeline complete after this step`);
+      // =======================
+      // CASE 1: NO PROGRESS YET
+      // =======================
+      if (!progress) {
+        const firstStep = interviewSteps[0];
+        const nextStep = interviewSteps[1] || null;
+
+        progress = await CandidatePostStepProgress.create({
+          idCandidate: req.user._id,
+          idPost: assessmentData.post,
+          currentStep: nextStep ? nextStep._id : firstStep._id,
+          steps: postSteps.map(step => {
+            if (step._id.equals(firstStep._id)) {
+              return {
+                stepId: step._id,
+                status: 'done',
+                interviewDetails: assessment._id,
+                attempts: 1,
+                completedAt: new Date()
+              };
             }
-          }
-        } else {
-          // Update current step status and move to next using an atomic DB update to avoid races
-          const currentStepId = progress.currentStep._id;
-          const currentStepNumber = progress.currentStep.data.config.nodeNumber;
-          const nextInterviewStep = postSteps.find(step =>
-            step.data.config.nodeNumber > currentStepNumber &&
-            ['technical', 'soft', 'interview'].includes(step.data.type)
-          );
 
-          const filter = { _id: progress._id, currentStep: currentStepId };
-          const update = {
+            if (nextStep && step._id.equals(nextStep._id)) {
+              return {
+                stepId: step._id,
+                status: 'inProgress'
+              };
+            }
+
+            return {
+              stepId: step._id,
+              status: 'pending'
+            };
+          })
+        });
+
+        progress = await progress.populate('currentStep');
+        progressUpdate = progress;
+      }
+
+      // =======================
+      // CASE 2: PROGRESS EXISTS
+      // =======================
+      else {
+        const currentStepId = progress.currentStep._id;
+        const currentStepNumber =
+          progress.currentStep.data.config.nodeNumber;
+
+        const nextInterviewStep = interviewSteps.find(step =>
+          step.data.config.nodeNumber > currentStepNumber
+        );
+
+        // 1️⃣ Mark current step as DONE
+        await CandidatePostStepProgress.updateOne(
+          {
+            _id: progress._id,
+            'steps.stepId': currentStepId
+          },
+          {
             $set: {
-              'steps.$[cur].status': 'done',
-              'steps.$[cur].interviewDetails': assessment._id,
-              'steps.$[cur].completedAt': new Date(),
-              currentStep: nextInterviewStep ? nextInterviewStep._id : currentStepId
+              'steps.$.status': 'done',
+              'steps.$.interviewDetails': assessment._id,
+              'steps.$.completedAt': new Date()
             },
-            $inc: { 'steps.$[cur].attempts': 1 }
-          };
-
-          const arrayFilters = [{ 'cur.stepId': currentStepId }];
-          if (nextInterviewStep) {
-            update.$set['steps.$[next].status'] = 'inProgress';
-            arrayFilters.push({ 'next.stepId': nextInterviewStep._id });
-          }
-
-          const updated = await CandidatePostStepProgress.findOneAndUpdate(filter, update, {
-            new: true,
-            arrayFilters,
-            runValidators: true
-          }).populate('currentStep');
-
-          if (updated) {
-            progress = updated;
-            if (nextInterviewStep) {
-              console.log(`✅ Moving to next step: ${nextInterviewStep.data.config.nodeNumber}`);
-            } else {
-              console.log(`✅ No more interview steps, pipeline complete`);
+            $inc: {
+              'steps.$.attempts': 1
             }
-          } else {
-            // Fallback: if update didn't match (race or mismatch), refresh progress and try in-memory update
-            await progress.populate('currentStep');
-            const currentStepProgress = progress.steps.find(s => s.stepId.equals(progress.currentStep._id));
-            if (currentStepProgress && !currentStepProgress.interviewDetails) {
-              currentStepProgress.status = 'done';
-              currentStepProgress.interviewDetails = assessment._id;
-              currentStepProgress.attempts = (currentStepProgress.attempts || 0) + 1;
-              currentStepProgress.completedAt = new Date();
+          }
+        );
 
-              const nextStep = postSteps.find(step =>
-                step.data.config.nodeNumber > progress.currentStep.data.config.nodeNumber &&
-                ['technical', 'soft', 'interview'].includes(step.data.type)
-              );
-              if (nextStep) {
-                progress.currentStep = nextStep._id;
-                const nextStepIndex = progress.steps.findIndex(s => s.stepId.equals(nextStep._id));
-                if (nextStepIndex !== -1) progress.steps[nextStepIndex].status = 'inProgress';
+        // 2️⃣ Activate next step
+        if (nextInterviewStep) {
+          await CandidatePostStepProgress.updateOne(
+            {
+              _id: progress._id,
+              'steps.stepId': nextInterviewStep._id
+            },
+            {
+              $set: {
+                currentStep: nextInterviewStep._id,
+                'steps.$.status': 'inProgress'
               }
-
-              await progress.save();
-              await progress.populate('currentStep');
-            } else {
-              console.log('⚠️ Current step already completed or not found — skipping advancement');
             }
-          }
+          );
         }
+
+        progress = await CandidatePostStepProgress
+          .findById(progress._id)
+          .populate('currentStep');
 
         progressUpdate = progress;
       }
     } catch (progressError) {
-      console.error('⚠️ Warning: Could not auto-move to next step:', progressError.message);
-      // Don't fail the request, just log the warning
+      console.error(
+        '⚠️ Pipeline progression failed:',
+        progressError.message
+      );
     }
 
-    res.status(201).json({
+    // =======================
+    // RESPONSE
+    // =======================
+    return res.status(201).json({
       success: true,
       message: 'Post interview assessment created successfully',
       data: assessment,
-      progressUpdate: progressUpdate || null
+      progressUpdate
     });
+
   } catch (error) {
-    console.error('Error creating post interview assessment:', error);
-    
-    // Handle duplicate key error (E11000)
+    console.error('❌ Error creating post interview assessment:', error);
+
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'An assessment with this session ID already exists.',
+        message: 'An assessment with this session ID already exists',
         code: 'DUPLICATE_SESSION_ID'
       });
     }
-    
-    res.status(error.status || 500).json({
+
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Error creating post interview assessment'
     });
   }
 };
+
 
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
