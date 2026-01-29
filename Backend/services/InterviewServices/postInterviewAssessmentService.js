@@ -7,139 +7,83 @@ const CandidatePostStepProgress = require("../../models/CandidatePostStepProgres
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
-    console.log('📝 Creating post interview assessment:', assessmentData);
-
     if (!assessmentData.post || !assessmentData.candidate) {
       throw new Error('Missing required fields: post, candidate');
     }
 
-    // =======================
-    // VERIFY POST & USER
-    // =======================
     const post = await Post.findById(assessmentData.post);
     if (!post) throw new Error('Post not found');
-
-    const candidateUser = await User.findById(assessmentData.candidate);
-    if (!candidateUser) throw new Error('Candidate user not found');
 
     const company = post.user;
 
     // =======================
-    // SKILL EXTRACTION
-    // =======================
-    let extractedSkill = null;
-    const skillType = assessmentData.skillType || 'technical';
-
-    if (skillType === 'technical' && post.skillAnalysis?.requiredSkills?.length) {
-      extractedSkill = post.skillAnalysis.requiredSkills
-        .map(s => s.name)
-        .filter(Boolean)
-        .join(', ');
-    }
-
-    if (skillType === 'soft' && post.skillAnalysis?.softSkills?.length) {
-      extractedSkill = post.skillAnalysis.softSkills
-        .map(s => s.name)
-        .filter(Boolean)
-        .join(', ');
-    }
-
-    // =======================
     // CREATE ASSESSMENT
     // =======================
-    const newAssessment = await PostInterviewAssessment.create({
+    const assessment = await PostInterviewAssessment.create({
       ...assessmentData,
       company,
-      skill: extractedSkill,
       completed: false
     });
 
-    console.log('✅ Assessment created:', newAssessment._id);
-
     // =======================
-    // UPDATE PIPELINE PROGRESS
+    // UPDATE PIPELINE
     // =======================
-    let progress = await CandidatePostStepProgress.findOne({
+    const progress = await CandidatePostStepProgress.findOne({
       idCandidate: assessmentData.candidate,
       idPost: assessmentData.post
     }).populate('currentStep');
 
-    if (!progress) {
-      console.log('⚠️ No CandidatePostStepProgress found');
-      return newAssessment;
-    }
+    if (!progress) return assessment;
 
-    // =======================
-    // SORT STEPS BY nodeNumber
-    // =======================
+    // sort steps by nodeNumber
     const sortedSteps = [...progress.steps].sort((a, b) => {
-      const stepA = post.PostSteps.find(ps => ps._id.equals(a.stepId));
-      const stepB = post.PostSteps.find(ps => ps._id.equals(b.stepId));
-
-      const na = stepA?.data?.config?.nodeNumber ?? 0;
-      const nb = stepB?.data?.config?.nodeNumber ?? 0;
-      return na - nb;
+      const sa = post.PostSteps.find(ps => ps._id.equals(a.stepId));
+      const sb = post.PostSteps.find(ps => ps._id.equals(b.stepId));
+      return (sa?.data?.config?.nodeNumber ?? 0) -
+             (sb?.data?.config?.nodeNumber ?? 0);
     });
 
-    const currentStepId = progress.currentStep._id;
-
     const currentIndex = sortedSteps.findIndex(s =>
-      s.stepId.equals(currentStepId)
+      s.stepId.equals(progress.currentStep._id)
     );
 
-    if (currentIndex === -1) {
-      console.log('⚠️ Current step not found in steps array');
-      return newAssessment;
-    }
+    if (currentIndex === -1) return assessment;
 
-    // =======================
-    // MARK CURRENT STEP DONE
-    // =======================
+    // current → done
     const currentStep = progress.steps.find(s =>
-      s.stepId.equals(currentStepId)
+      s.stepId.equals(progress.currentStep._id)
     );
 
     currentStep.status = 'done';
-    currentStep.interviewDetails = newAssessment._id;
+    currentStep.interviewDetails = assessment._id;
     currentStep.completedAt = new Date();
     currentStep.attempts = (currentStep.attempts || 0) + 1;
 
-    // =======================
-    // MOVE TO NEXT STEP
-    // =======================
-    const nextSortedStep = sortedSteps[currentIndex + 1];
-
-    if (nextSortedStep) {
+    // next → inProgress
+    const next = sortedSteps[currentIndex + 1];
+    if (next) {
       const nextStep = progress.steps.find(s =>
-        s.stepId.equals(nextSortedStep.stepId)
+        s.stepId.equals(next.stepId)
       );
-
       nextStep.status = 'inProgress';
-      progress.currentStep = nextStep.stepId;
-
-      console.log('➡️ Moved to next step:', nextStep.stepId);
-    } else {
-      console.log('✅ Pipeline completed for candidate');
+      progress.currentStep = next.stepId;
     }
 
     await progress.save();
-    console.log('✅ CandidatePostStepProgress updated');
 
-    return newAssessment;
+    return assessment;
 
   } catch (error) {
-    console.error('❌ Error creating post interview assessment:', error.message);
-
     if (error.code === 11000) {
-      const err = new Error('An assessment with this session ID already exists.');
+      const err = new Error('Duplicate session ID');
       err.code = 11000;
       err.status = 409;
       throw err;
     }
-
     throw error;
   }
 };
+
 
 
 // ========== READ - Get all assessments ==========

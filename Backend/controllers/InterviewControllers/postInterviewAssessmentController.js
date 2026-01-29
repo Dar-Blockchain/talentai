@@ -5,151 +5,33 @@ const PostSteps = require("../../models/postStepsModel");
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
   try {
-    const assessmentData = req.body;
-    assessmentData.candidate = req.user._id;
-    // Validation
+    const assessmentData = {
+      ...req.body,
+      candidate: req.user._id
+    };
+
     if (!assessmentData.post) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: post, candidate (company will be extracted from post)'
+        message: 'Missing required field: post'
       });
     }
 
-    const assessment = await postInterviewAssessmentService.createPostInterviewAssessment(assessmentData);
+    // ✅ Le service fait TOUT (assessment + progression)
+    const assessment =
+      await postInterviewAssessmentService.createPostInterviewAssessment(
+        assessmentData
+      );
 
-    // 🔥 NEW: Auto-move to next step if post contains PostSteps
-    let progressUpdate = null;
-    try {
-      const postSteps = await PostSteps.find({ postId: assessmentData.post });
-      
-      if (postSteps && postSteps.length > 0) {
-        console.log(`📋 Post ${assessmentData.post} contains ${postSteps.length} steps. Auto-moving to next step...`);
-        
-        // Get or initialize candidate progress
-        let progress = await CandidatePostStepProgress.findOne({
-          idCandidate: req.user._id,
-          idPost: assessmentData.post
-        }).populate('currentStep');
-
-        if (!progress) {
-          // Initialize progress if it doesn't exist
-          const firstInterviewStep = postSteps.find(step =>
-            ['technical', 'soft', 'interview'].includes(step.data.type)
-          );
-
-          if (firstInterviewStep) {
-            // Find next interview step after the first one
-            const firstStepNumber = firstInterviewStep.data.config.nodeNumber;
-            const nextInterviewStep = postSteps.find(step =>
-              step.data.config.nodeNumber > firstStepNumber &&
-              ['technical', 'soft', 'interview'].includes(step.data.type)
-            );
-
-            // Determine which step should be current (next one if exists, otherwise first)
-            const currentStepId = nextInterviewStep ? nextInterviewStep._id : firstInterviewStep._id;
-
-            progress = await CandidatePostStepProgress.findOneAndUpdate(
-              {
-                idCandidate: req.user._id,
-                idPost: assessmentData.post
-              },
-              {
-                idCandidate: req.user._id,
-                idPost: assessmentData.post,
-                currentStep: currentStepId,
-                steps: postSteps.map(step => {
-                  if (step._id.equals(firstInterviewStep._id)) {
-                    // Mark first step as done with interview details
-                    return {
-                      stepId: step._id,
-                      status: 'done',
-                      interviewDetails: assessment._id,
-                      completedAt: new Date()
-                    };
-                  } else if (nextInterviewStep && step._id.equals(nextInterviewStep._id)) {
-                    // Mark next step as inProgress
-                    return {
-                      stepId: step._id,
-                      status: 'inProgress',
-                      interviewDetails: null,
-                      completedAt: null
-                    };
-                  } else {
-                    // Mark other steps as pending
-                    return {
-                      stepId: step._id,
-                      status: 'pending',
-                      interviewDetails: null,
-                      completedAt: null
-                    };
-                  }
-                })
-              },
-              {
-                upsert: true,
-                new: true,
-                runValidators: true
-              }
-            );
-
-            await progress.populate('currentStep');
-            if (nextInterviewStep) {
-              console.log(`✅ First step completed, moving to next step: ${nextInterviewStep.data.config.nodeNumber}`);
-            } else {
-              console.log(`✅ Only one interview step, pipeline complete after this step`);
-            }
-          }
-        } else {
-          // Update current step status and move to next
-          const currentStepProgress = progress.steps.find(s =>
-            s.stepId.equals(progress.currentStep._id)
-          );
-
-          if (currentStepProgress) {
-            currentStepProgress.status = 'done';
-            currentStepProgress.interviewDetails = assessment._id;
-            currentStepProgress.completedAt = new Date();
-          }
-
-          // Find next interview step
-          const currentStepNumber = progress.currentStep.data.config.nodeNumber;
-          const nextInterviewStep = postSteps.find(step =>
-            step.data.config.nodeNumber > currentStepNumber &&
-            ['technical', 'soft', 'interview'].includes(step.data.type)
-          );
-
-          if (nextInterviewStep) {
-            progress.currentStep = nextInterviewStep._id;
-            const nextStepIndex = progress.steps.findIndex(s => s.stepId.equals(nextInterviewStep._id));
-            if (nextStepIndex !== -1) {
-              progress.steps[nextStepIndex].status = 'inProgress';
-            }
-            console.log(`✅ Moving to next step: ${nextInterviewStep.data.config.nodeNumber}`);
-          } else {
-            console.log(`✅ No more interview steps, pipeline complete`);
-          }
-
-          await progress.save();
-          await progress.populate('currentStep');
-        }
-
-        progressUpdate = progress;
-      }
-    } catch (progressError) {
-      console.error('⚠️ Warning: Could not auto-move to next step:', progressError.message);
-      // Don't fail the request, just log the warning
-    }
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Post interview assessment created successfully',
-      data: assessment,
-      progressUpdate: progressUpdate || null
+      data: assessment
     });
+
   } catch (error) {
-    console.error('Error creating post interview assessment:', error);
-    
-    // Handle duplicate key error (E11000)
+    console.error('❌ Controller error:', error);
+
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
@@ -157,13 +39,14 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         code: 'DUPLICATE_SESSION_ID'
       });
     }
-    
-    res.status(error.status || 500).json({
+
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Error creating post interview assessment'
     });
   }
 };
+
 
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
