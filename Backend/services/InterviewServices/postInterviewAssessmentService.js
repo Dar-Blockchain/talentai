@@ -9,128 +9,138 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
     console.log('📝 Creating post interview assessment:', assessmentData);
 
-    // Validation
     if (!assessmentData.post || !assessmentData.candidate) {
       throw new Error('Missing required fields: post, candidate');
     }
 
-    // Verify Post exists
+    // =======================
+    // VERIFY POST & USER
+    // =======================
     const post = await Post.findById(assessmentData.post);
-    if (!post) {
-      throw new Error('Post not found');
-    }
+    if (!post) throw new Error('Post not found');
 
-    // Verify Candidate User exists
     const candidateUser = await User.findById(assessmentData.candidate);
-    if (!candidateUser) {
-      throw new Error('Candidate user not found');
-    }
+    if (!candidateUser) throw new Error('Candidate user not found');
 
-    // Extract company from Post.user (the user who created the post)
     const company = post.user;
-    console.log('🏢 Company extracted from post:', company);
 
-    // Extract skill based on skillType
+    // =======================
+    // SKILL EXTRACTION
+    // =======================
     let extractedSkill = null;
     const skillType = assessmentData.skillType || 'technical';
 
-    if (skillType === 'technical' && post.skillAnalysis?.requiredSkills?.length > 0) {
-      // For technical skills, get all technical skill names
+    if (skillType === 'technical' && post.skillAnalysis?.requiredSkills?.length) {
       extractedSkill = post.skillAnalysis.requiredSkills
-        .map(skill => skill.name)
-        .filter(name => name)
+        .map(s => s.name)
+        .filter(Boolean)
         .join(', ');
-      console.log('🔧 Technical skills extracted:', extractedSkill);
-    } else if (skillType === 'soft' && post.skillAnalysis?.softSkills?.length > 0) {
-      // For soft skills, get all soft skill names
-      extractedSkill = post.skillAnalysis.softSkills
-        .map(skill => skill.name)
-        .filter(name => name)
-        .join(', ');
-      console.log('💼 Soft skills extracted:', extractedSkill);
     }
 
-    // Create new assessment with company extracted from post and skills
-    const newAssessmentData = {
+    if (skillType === 'soft' && post.skillAnalysis?.softSkills?.length) {
+      extractedSkill = post.skillAnalysis.softSkills
+        .map(s => s.name)
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    // =======================
+    // CREATE ASSESSMENT
+    // =======================
+    const newAssessment = await PostInterviewAssessment.create({
       ...assessmentData,
       company,
       skill: extractedSkill,
-      // Set completed to true if PostSteps is null or empty
-      completed: !post.PostSteps || post.PostSteps.length === 0
-    };
+      completed: false
+    });
 
-    const newAssessment = new PostInterviewAssessment(newAssessmentData);
-    await newAssessment.save();
+    console.log('✅ Assessment created:', newAssessment._id);
 
-    console.log('✅ Post interview assessment created:', newAssessment._id);
+    // =======================
+    // UPDATE PIPELINE PROGRESS
+    // =======================
+    let progress = await CandidatePostStepProgress.findOne({
+      idCandidate: assessmentData.candidate,
+      idPost: assessmentData.post
+    }).populate('currentStep');
 
-    // ========== UPDATE CANDIDATE PROGRESS ==========
-    // If post has PostSteps, update CandidatePostStepProgress
-    if (post.PostSteps && post.PostSteps.length > 0) {
-      try {
-        console.log('📍 Post has PostSteps, updating CandidatePostStepProgress');
-        
-        // Find or create CandidatePostStepProgress for this candidate and post
-        let candidateProgress = await CandidatePostStepProgress.findOne({
-          idCandidate: assessmentData.candidate,
-          idPost: assessmentData.post
-        });
-
-        if (candidateProgress) {
-          console.log('📝 Found existing CandidatePostStepProgress:', candidateProgress._id);
-
-          // Find current step in the steps array
-          const currentStepIndex = candidateProgress.steps.findIndex(
-            step => step.stepId.toString() === candidateProgress.currentStep.toString()
-          );
-
-          console.log('🔍 Current step index:', currentStepIndex);
-
-          if (currentStepIndex !== -1) {
-            // Update current step with assessment ID
-            candidateProgress.steps[currentStepIndex].interviewDetails = newAssessment._id;
-            candidateProgress.steps[currentStepIndex].status = 'done';
-            candidateProgress.steps[currentStepIndex].completedAt = new Date();
-            console.log('✅ Current step updated with assessment ID:', newAssessment._id);
-
-            // Move to next step if available
-            if (currentStepIndex + 1 < candidateProgress.steps.length) {
-              const nextStepId = candidateProgress.steps[currentStepIndex + 1].stepId;
-              candidateProgress.currentStep = nextStepId;
-              candidateProgress.steps[currentStepIndex + 1].status = 'inProgress';
-              console.log('➡️ Moved to next step:', nextStepId);
-            } else {
-              console.log('✅ All steps completed for this candidate');
-            }
-          }
-
-          // Save updated progress
-          await candidateProgress.save();
-          console.log('✅ CandidatePostStepProgress updated:', candidateProgress._id);
-        } else {
-          console.log('⚠️ No CandidatePostStepProgress found for this candidate and post');
-        }
-      } catch (progressError) {
-        console.error('❌ Error updating CandidatePostStepProgress:', progressError.message);
-        // Don't fail the assessment creation if progress update fails
-      }
+    if (!progress) {
+      console.log('⚠️ No CandidatePostStepProgress found');
+      return newAssessment;
     }
 
+    // =======================
+    // SORT STEPS BY nodeNumber
+    // =======================
+    const sortedSteps = [...progress.steps].sort((a, b) => {
+      const stepA = post.PostSteps.find(ps => ps._id.equals(a.stepId));
+      const stepB = post.PostSteps.find(ps => ps._id.equals(b.stepId));
+
+      const na = stepA?.data?.config?.nodeNumber ?? 0;
+      const nb = stepB?.data?.config?.nodeNumber ?? 0;
+      return na - nb;
+    });
+
+    const currentStepId = progress.currentStep._id;
+
+    const currentIndex = sortedSteps.findIndex(s =>
+      s.stepId.equals(currentStepId)
+    );
+
+    if (currentIndex === -1) {
+      console.log('⚠️ Current step not found in steps array');
+      return newAssessment;
+    }
+
+    // =======================
+    // MARK CURRENT STEP DONE
+    // =======================
+    const currentStep = progress.steps.find(s =>
+      s.stepId.equals(currentStepId)
+    );
+
+    currentStep.status = 'done';
+    currentStep.interviewDetails = newAssessment._id;
+    currentStep.completedAt = new Date();
+    currentStep.attempts = (currentStep.attempts || 0) + 1;
+
+    // =======================
+    // MOVE TO NEXT STEP
+    // =======================
+    const nextSortedStep = sortedSteps[currentIndex + 1];
+
+    if (nextSortedStep) {
+      const nextStep = progress.steps.find(s =>
+        s.stepId.equals(nextSortedStep.stepId)
+      );
+
+      nextStep.status = 'inProgress';
+      progress.currentStep = nextStep.stepId;
+
+      console.log('➡️ Moved to next step:', nextStep.stepId);
+    } else {
+      console.log('✅ Pipeline completed for candidate');
+    }
+
+    await progress.save();
+    console.log('✅ CandidatePostStepProgress updated');
+
     return newAssessment;
+
   } catch (error) {
     console.error('❌ Error creating post interview assessment:', error.message);
-    
-    // Handle duplicate key error (E11000)
+
     if (error.code === 11000) {
       const err = new Error('An assessment with this session ID already exists.');
       err.code = 11000;
       err.status = 409;
       throw err;
     }
-    
+
     throw error;
   }
 };
+
 
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, limit = 10) => {
