@@ -42,7 +42,19 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       idPost: assessmentData.post
     }).populate('currentStep');
 
-    if (!progress) return assessment;
+    if (!progress) {
+      // No pipeline progress - populate and return
+      return await PostInterviewAssessment.findById(assessment._id)
+        .populate({
+          path: 'candidate',
+          populate: {
+            path: 'profile',
+            model: 'Profile'
+          }
+        })
+        .populate('company')
+        .populate('post');
+    }
 
     // sort steps by nodeNumber
     const sortedSteps = [...progress.steps].sort((a, b) => {
@@ -56,7 +68,19 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       s.stepId.equals(progress.currentStep._id)
     );
 
-    if (currentIndex === -1) return assessment;
+    if (currentIndex === -1) {
+      // No matching step - populate and return
+      return await PostInterviewAssessment.findById(assessment._id)
+        .populate({
+          path: 'candidate',
+          populate: {
+            path: 'profile',
+            model: 'Profile'
+          }
+        })
+        .populate('company')
+        .populate('post');
+    }
 
     // current → done
     const currentStep = progress.steps.find(s =>
@@ -80,7 +104,19 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
 
     await progress.save();
 
-    return assessment;
+    // Populate and return assessment with candidate profile
+    const populatedAssessment = await PostInterviewAssessment.findById(assessment._id)
+      .populate({
+        path: 'candidate',
+        populate: {
+          path: 'profile',
+          model: 'Profile'
+        }
+      })
+      .populate('company')
+      .populate('post');
+
+    return populatedAssessment;
 
   } catch (error) {
     if (error.code === 11000) {
@@ -121,7 +157,13 @@ module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, l
     // Fetch paginated data
     const assessments = await PostInterviewAssessment.find(query)
       .populate('post')
-      .populate('candidate')
+      .populate({
+        path: 'candidate',
+        populate: {
+          path: 'profile',
+          model: 'Profile'
+        }
+      })
       .populate('company')
       .sort({ createdAt: -1 })
       .skip(skip)

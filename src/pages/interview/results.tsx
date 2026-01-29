@@ -162,18 +162,20 @@ export default function InterviewResults() {
 
       // Handle both candidateId (skill interviews) and candidate (job interviews) structures
       const candidateData = result.data?.candidateId || result.data?.candidate;
-      console.log('🔄 [Save] Updating candidate profile with data:', candidateData);
-      if (candidateData?.quota !== undefined) {
-        console.log('🔄 [Save] Updating profile quota:', candidateData.quota);
-        dispatch(updateProfileQuota(candidateData.quota));
+      // Profile data may be nested under candidate.profile (job interviews) or directly on candidateId (skill interviews)
+      const profileData = candidateData?.profile || candidateData;
+      console.log('🔄 [Save] Updating candidate profile with data:', profileData);
+      if (profileData?.quota !== undefined) {
+        console.log('🔄 [Save] Updating profile quota:', profileData.quota);
+        dispatch(updateProfileQuota(profileData.quota));
       }
-      if (candidateData?.softSkills) {
-        console.log('🔄 [Save] Updating profile soft skills:', candidateData.softSkills);
-        dispatch(updateProfileSoftSkill(candidateData.softSkills));
+      if (profileData?.softSkills) {
+        console.log('🔄 [Save] Updating profile soft skills:', profileData.softSkills);
+        dispatch(updateProfileSoftSkill(profileData.softSkills));
       }
-      if (candidateData?.skills) {
-        console.log('🔄 [Save] Updating profile skills:', candidateData.skills);
-        dispatch(updateProfileSkills(candidateData.skills));
+      if (profileData?.skills) {
+        console.log('🔄 [Save] Updating profile skills:', profileData.skills);
+        dispatch(updateProfileSkills(profileData.skills));
       }
       if (result.data?._id) {
         localStorage.setItem('last_interview_id', result.data._id);
