@@ -217,11 +217,47 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
 
     const assessments = await postInterviewAssessmentService.getAssessmentsByCompany(companyId);
 
+    // Group assessments by post
+    const groups = {};
+    assessments.forEach(a => {
+      const post = a.post || {};
+      const postId = String(post._id || post);
+      if (!groups[postId]) {
+        groups[postId] = { post, assessments: [] };
+      }
+      groups[postId].assessments.push(a);
+    });
+
+    // For each group, attach CandidatePostStepProgress for each assessment's candidate
+    const grouped = await Promise.all(
+      Object.keys(groups).map(async (postId) => {
+        const grp = groups[postId];
+        const assessmentsWithProgress = await Promise.all(
+          grp.assessments.map(async (ass) => {
+            const progress = await CandidatePostStepProgress.findOne({
+              idCandidate: ass.candidate,
+              idPost: postId
+            }).populate('currentStep').populate('steps.interviewDetails');
+
+            return {
+              assessment: ass,
+              candidatePostStepProgress: progress
+            };
+          })
+        );
+
+        return {
+          post: grp.post,
+          assessments: assessmentsWithProgress
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      message: 'Assessments retrieved successfully',
-      count: assessments.length,
-      data: assessments
+      message: 'Assessments retrieved and grouped by post successfully',
+      count: grouped.length,
+      data: grouped
     });
   } catch (error) {
     console.error('Error getting assessments by company:', error);
