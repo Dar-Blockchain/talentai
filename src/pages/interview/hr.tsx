@@ -2494,11 +2494,11 @@ const IntelligentInterviewTest = () => {
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="body2" color="text.secondary">
-                {candidateProgress.steps.filter((s: any) => s.status === 'done').length} / {candidateProgress.steps.length} completed
+                {candidateProgress.steps.filter((s: any) => s.status === 'done').length + 1} / {candidateProgress.steps.length} completed
               </Typography>
               <LinearProgress
                 variant="determinate"
-                value={(candidateProgress.steps.filter((s: any) => s.status === 'done').length / candidateProgress.steps.length) * 100}
+                value={(candidateProgress.steps.filter((s: any) => s.status === 'done').length + 1 / candidateProgress.steps.length) * 100}
                 sx={{ width: 100, ml: 1 }}
               />
             </Box>
