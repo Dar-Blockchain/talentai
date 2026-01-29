@@ -160,16 +160,29 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 
     const assessments = await postInterviewAssessmentService.getAssessmentsByCandidate(candidateId, filters);
 
-    // Enrich assessments with CandidatePostStepProgress
-    const enrichedAssessments = await Promise.all(
-      assessments.map(async (assessment) => {
+    // Group assessments by post
+    const groups = {};
+    assessments.forEach(a => {
+      const post = a.post || {};
+      const postId = String(post._id || post);
+      if (!groups[postId]) {
+        groups[postId] = { post, assessments: [] };
+      }
+      groups[postId].assessments.push(a);
+    });
+
+    // For each group, fetch the CandidatePostStepProgress once and build the result
+    const grouped = await Promise.all(
+      Object.keys(groups).map(async (postId) => {
+        const grp = groups[postId];
         const progress = await CandidatePostStepProgress.findOne({
           idCandidate: req.user._id,
-          idPost: assessment.post
+          idPost: postId
         }).populate('currentStep').populate('steps.interviewDetails');
 
         return {
-          assessment: assessment,
+          post: grp.post,
+          assessments: grp.assessments,
           candidatePostStepProgress: progress
         };
       })
@@ -177,9 +190,9 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Assessments retrieved successfully',
-      count: enrichedAssessments.length,
-      data: enrichedAssessments
+      message: 'Assessments retrieved and grouped by post successfully',
+      count: grouped.length,
+      data: grouped
     });
   } catch (error) {
     console.error('Error getting assessments by candidate:', error);
