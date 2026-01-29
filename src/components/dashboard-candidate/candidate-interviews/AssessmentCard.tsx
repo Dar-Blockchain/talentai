@@ -30,6 +30,7 @@ export interface PostAssessment {
     };
     status?: string;
   };
+  skillType?: string;
   interviewData?: {
     interviewType?: string;
     finalReport?: {
@@ -112,7 +113,8 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
   const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
   const companyName = assessment.company?.username || assessment.post?.user?.companyName || "Company";
   const interviewType = assessment.interviewData?.interviewType?.replace(/_/g, " ") || "HR Interview";
-
+  console.log("assessment.skillType", assessment);
+  const skillType = assessment.skillType || "general";
   return (
     <Box
       sx={{
@@ -169,7 +171,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
             </Box>
           )}
           <Chip
-            label={interviewType}
+            label={skillType.charAt(0).toUpperCase() + skillType.slice(1) + " Test"}
             size="small"
             sx={{
               backgroundColor: "rgba(131, 16, 255, 0.1)",

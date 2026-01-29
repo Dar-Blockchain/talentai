@@ -768,6 +768,10 @@ export const fetchCandidateAssessments = createAsyncThunk(
           interviewData: assessment.interviewData,
           createdAt: assessment.createdAt,
           updatedAt: assessment.updatedAt,
+          // Include skillType and skill fields
+          skillType: assessment.skillType,
+          skill: assessment.skill,
+          completed: assessment.completed,
           // Include step progress for pipeline jobs
           candidatePostStepProgress: stepProgress,
         };
