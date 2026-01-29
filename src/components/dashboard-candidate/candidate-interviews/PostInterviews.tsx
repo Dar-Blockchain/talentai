@@ -27,6 +27,13 @@ import {
   selectCandidateAssessmentsPagination,
 } from "@/store/slices/postSlice";
 
+// Grouped assessment structure from API
+interface GroupedAssessment {
+  post: any;
+  assessments: any[];
+  candidatePostStepProgress: any;
+}
+
 interface PostInterviewsProps {
   onViewAll?: () => void;
   onBackToAll?: () => void;
@@ -45,8 +52,8 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
-  // Redux selectors
-  const assessments = useSelector(selectCandidateAssessments) as PostAssessment[];
+  // Redux selectors - data is now grouped by post: { post, assessments: [...], candidatePostStepProgress }
+  const groupedData = useSelector(selectCandidateAssessments) as GroupedAssessment[];
   const loading = useSelector(selectCandidateAssessmentsLoading);
   const pagination = useSelector(selectCandidateAssessmentsPagination);
 
@@ -66,19 +73,65 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
     dispatch(fetchCandidateAssessments({ page: 1, limit: 10 }));
   }, [dispatch]);
 
-  // Calculate stats from assessments
+  // Convert grouped data to PostAssessment format (one per post, using latest assessment)
+  const assessments = useMemo(() => {
+    return groupedData.map((group) => {
+      // Get the latest assessment from the group
+      const sortedAssessments = [...(group.assessments || [])].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      const latestAssessment = sortedAssessments[0] || {};
+
+      return {
+        ...latestAssessment,
+        _id: latestAssessment._id || group.post?._id,
+        post: latestAssessment.post || group.post,
+        company: latestAssessment.company,
+        candidatePostStepProgress: group.candidatePostStepProgress,
+        // Store all assessments count for display if needed
+        assessmentsCount: group.assessments?.length || 0,
+      } as PostAssessment;
+    });
+  }, [groupedData]);
+
+  // Calculate stats from grouped data (per post/application)
   const stats = useMemo(() => {
-    const completed = assessments.filter((a: PostAssessment) => {
-      const score = a.interviewData?.finalReport?.coverage?.overall || 0;
-      return score >= 50;
-    }).length;
+    let completed = 0;
+    let ongoing = 0;
+
+    groupedData.forEach((group) => {
+      const stepProgress = group.candidatePostStepProgress;
+
+      // Check if all steps are completed
+      if (stepProgress?.steps && stepProgress.steps.length > 0) {
+        const allStepsDone = stepProgress.steps.every(
+          (step: any) => step.status === 'done' || step.status === 'passed'
+        );
+        if (allStepsDone) {
+          completed++;
+        } else {
+          ongoing++;
+        }
+      } else {
+        // No step progress - check if any assessment has good score
+        const hasCompletedAssessment = (group.assessments || []).some((a: any) => {
+          const score = a.interviewData?.finalReport?.coverage?.overall || 0;
+          return score >= 50;
+        });
+        if (hasCompletedAssessment) {
+          completed++;
+        } else {
+          ongoing++;
+        }
+      }
+    });
 
     return {
-      total: pagination.total || assessments.length,
+      total: pagination.total || groupedData.length,
       completed,
-      ongoing: assessments.length - completed,
+      ongoing,
     };
-  }, [assessments, pagination.total]);
+  }, [groupedData, pagination.total]);
 
   const handleViewDetails = (assessmentId: string) => {
     router.push(`/assessment/${assessmentId}`);

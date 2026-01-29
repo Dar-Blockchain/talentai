@@ -746,36 +746,14 @@ export const fetchCandidateAssessments = createAsyncThunk(
 
       const data = await response.json();
 
-      // Handle API response: { success, message, count, data: [{ assessment, candidatePostStepProgress }] }
-      let rawResults: any[] = [];
+      // Handle API response: { success, message, count, data: [{ post, assessments: [...], candidatePostStepProgress }] }
+      // Keep the grouped structure as-is
+      let results: any[] = [];
       if (Array.isArray(data?.data)) {
-        rawResults = data.data;
+        results = data.data;
       } else if (Array.isArray(data)) {
-        rawResults = data;
+        results = data;
       }
-
-      // Map the nested structure to flat assessment objects
-      const results = rawResults.map((item: any) => {
-        // If item has nested 'assessment' object, extract it
-        const assessment = item.assessment || item;
-        const stepProgress = item.candidatePostStepProgress || null;
-
-        return {
-          _id: assessment._id,
-          post: assessment.post,
-          candidate: assessment.candidate,
-          company: assessment.company,
-          interviewData: assessment.interviewData,
-          createdAt: assessment.createdAt,
-          updatedAt: assessment.updatedAt,
-          // Include skillType and skill fields
-          skillType: assessment.skillType,
-          skill: assessment.skill,
-          completed: assessment.completed,
-          // Include step progress for pipeline jobs
-          candidatePostStepProgress: stepProgress,
-        };
-      });
 
       return {
         items: results,

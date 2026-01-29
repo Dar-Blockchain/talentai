@@ -57,6 +57,8 @@ export interface PostAssessment {
   candidatePostStepProgress?: any;
   createdAt: string;
   updatedAt?: string;
+  // Number of assessments in this group (for grouped display)
+  assessmentsCount?: number;
 }
 
 interface AssessmentCardProps {
