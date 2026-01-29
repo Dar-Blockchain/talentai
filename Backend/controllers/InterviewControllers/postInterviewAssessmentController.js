@@ -178,7 +178,7 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
         const progress = await CandidatePostStepProgress.findOne({
           idCandidate: req.user._id,
           idPost: postId
-        }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate', 'username email role');
+        }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate');
 
         return {
           post: grp.post,
@@ -237,7 +237,7 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
             const progress = await CandidatePostStepProgress.findOne({
               idCandidate: ass.candidate,
               idPost: postId
-            }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate', 'username email role');
+            }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate');
 
             return {
               assessment: ass,
