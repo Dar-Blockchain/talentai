@@ -120,9 +120,9 @@ module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, l
 
     // Fetch paginated data
     const assessments = await PostInterviewAssessment.find(query)
-      .populate('post', 'jobDetails title status')
-      .populate('candidate', 'username email role')
-      .populate('company', 'username email role')
+      .populate('post')
+      .populate('candidate')
+      .populate('company')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
