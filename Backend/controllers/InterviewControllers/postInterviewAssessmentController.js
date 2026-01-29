@@ -1,6 +1,7 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessmentService");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
 const PostSteps = require("../../models/postStepsModel");
+const Profile = require("../../models/ProfileModel");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
@@ -16,6 +17,18 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     }
 
     const assessment = await postInterviewAssessmentService.createPostInterviewAssessment(assessmentData);
+
+    // Incrémenter le quota du profil candidat après création de l'évaluation
+    try {
+      await Profile.findOneAndUpdate(
+        { userId: req.user._id },
+        { $inc: { quota: 1 }, $set: { quotaUpdatedAt: new Date() } },
+        { new: true }
+      );
+    } catch (quotaErr) {
+      console.error('Erreur lors de l\'incrémentation du quota :', quotaErr);
+      // Ne pas échouer la création si l'incrémentation du quota échoue
+    }
 
     // 🔥 NEW: Auto-move to next step if post contains PostSteps
     let progressUpdate = null;
