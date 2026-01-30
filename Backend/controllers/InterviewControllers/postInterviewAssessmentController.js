@@ -98,12 +98,67 @@ module.exports.getPostInterviewAssessmentById = async (req, res) => {
       });
     }
 
-    const assessment = await postInterviewAssessmentService.getPostInterviewAssessmentById(assessmentId);
+    const result = await postInterviewAssessmentService.getPostInterviewAssessmentById(assessmentId);
+    const { assessment, stepsData, hasSteps } = result;
+
+    // =======================
+    // FORMAT RESPONSE
+    // =======================
+    const formattedResponse = {
+      candidate: {
+        _id: assessment.candidate?._id,
+        username: assessment.candidate?.username,
+        firstName: assessment.candidate?.firstName,
+        lastName: assessment.candidate?.lastName,
+        email: assessment.candidate?.email,
+      },
+      company: {
+        _id: assessment.company?._id,
+        username: assessment.company?.username,
+        name: assessment.company?.name,
+        email: assessment.company?.email,
+      },
+      post: {
+        _id: assessment.post?._id,
+        title: assessment.post?.jobDetails?.title,
+        description: assessment.post?.jobDetails?.description,
+        creationType: assessment.post?.creationType,
+      }
+    };
+
+    // =======================
+    // CHECK POST CREATION TYPE
+    // =======================
+    if (assessment.post?.creationType === 'pipeline' && hasSteps && stepsData) {
+      // PIPELINE MODE - Return array of assessments with steps info
+      formattedResponse.assessments = stepsData.steps.map(step => ({
+        _id: step.interviewDetails?._id,
+        attempts: step.attempts || 0,
+        completedAt: step.completedAt,
+        finalScore: step.finalScore,
+        passed: step.passed,
+        status: step.status,
+        stepId: step.stepId?._id,
+        stepType: step.stepId?.stepType,
+        stepSkills: step.stepId?.skills || [],
+        interviewDetails: step.interviewDetails || {}
+      }));
+    } else {
+      // NON-PIPELINE MODE - Return single assessment
+      formattedResponse.assessment = {
+        _id: assessment._id,
+        attempts: stepsData?.steps?.[0]?.attempts || 1,
+        completedAt: stepsData?.steps?.[0]?.completedAt || assessment.updatedAt,
+        finalScore: assessment.interviewData?.finalReport?.scores?.overall || null,
+        passed: stepsData?.steps?.[0]?.passed || null,
+        interviewDetails: assessment.interviewData || {}
+      };
+    }
 
     res.status(200).json({
       success: true,
       message: 'Post interview assessment retrieved successfully',
-      data: assessment
+      data: formattedResponse
     });
   } catch (error) {
     console.error('Error getting post interview assessment:', error);
