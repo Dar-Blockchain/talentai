@@ -293,8 +293,8 @@ module.exports.getAssessmentsByCompany = async (companyId, filters = {}) => {
     const query = { company: companyId };
 
     const assessments = await PostInterviewAssessment.find(query)
-      .populate('candidate', 'username email role')
-      .populate('post', 'jobDetails title status')
+      .populate('candidate', '-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey')
+      .populate('post', '-linkedinPost')
       .sort({ createdAt: -1 });
 
     return assessments;
