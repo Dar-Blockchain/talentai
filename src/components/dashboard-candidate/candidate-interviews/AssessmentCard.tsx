@@ -172,18 +172,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
               </Typography>
             </Box>
           )}
-          <Chip
-            label={skillType.charAt(0).toUpperCase() + skillType.slice(1) + " Test"}
-            size="small"
-            sx={{
-              backgroundColor: "rgba(131, 16, 255, 0.1)",
-              color: "#8310FF",
-              fontWeight: 500,
-              fontSize: "0.65rem",
-              height: 20,
-              textTransform: "capitalize",
-            }}
-          />
+
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
