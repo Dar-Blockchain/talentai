@@ -9,6 +9,7 @@ import {
   Chip,
   IconButton,
   LinearProgress,
+  Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -22,6 +23,7 @@ interface StepInfoModalProps {
   onClose: () => void;
   onStart: () => void;
   assessment: PostAssessment | null;
+  quota?: number;
 }
 
 const getStepIcon = (status: string) => {
@@ -65,6 +67,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
   onClose,
   onStart,
   assessment,
+  quota = 0,
 }) => {
   if (!assessment) return null;
 
@@ -508,28 +511,41 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
         >
           Cancel
         </Button>
-        <Button
-          onClick={onStart}
-          variant="contained"
-          startIcon={<PlayArrowIcon />}
-          sx={{
-            textTransform: "none",
-            backgroundColor: "rgba(189, 133, 255, 1)",
-            color: "white",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            borderRadius: "38px",
-            px: 3,
-            height: "42px",
-            boxShadow: "none",
-            "&:hover": {
-              backgroundColor: "rgba(160, 100, 230, 1)",
-              boxShadow: "none",
-            },
-          }}
+        <Tooltip
+          title={quota >= 5 ? "You have reached your monthly limit of 5 tests. Please try again next month." : ""}
+          arrow
+          disableHoverListener={quota < 5}
         >
-          Start {stepLabel}
-        </Button>
+          <span>
+            <Button
+              onClick={onStart}
+              variant="contained"
+              disabled={quota >= 5}
+              startIcon={<PlayArrowIcon />}
+              sx={{
+                textTransform: "none",
+                backgroundColor: "rgba(189, 133, 255, 1)",
+                color: "white",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                borderRadius: "38px",
+                px: 3,
+                height: "42px",
+                boxShadow: "none",
+                "&:hover": {
+                  backgroundColor: "rgba(160, 100, 230, 1)",
+                  boxShadow: "none",
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "rgba(189, 133, 255, 0.3)",
+                  color: "rgba(255, 255, 255, 0.6)",
+                },
+              }}
+            >
+              Start {stepLabel}
+            </Button>
+          </span>
+        </Tooltip>
       </DialogActions>
     </Dialog>
   );

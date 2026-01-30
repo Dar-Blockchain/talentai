@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Typography,
@@ -16,15 +17,18 @@ import {
   Chip,
   Button,
   IconButton,
-  TextField,
-  InputAdornment,
-  Select,
-  MenuItem,
+  LinearProgress,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SearchIcon from "@mui/icons-material/Search";
 import { SearchOff } from "@mui/icons-material";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchCompanyAssessments,
+  selectCompanyAssessments,
+  selectCompanyAssessmentsLoading,
+  selectCompanyAssessmentsError,
+} from "@/store/slices/postSlice";
 
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
@@ -37,114 +41,128 @@ const StyledCard = styled(Box)(({ theme }) => ({
 
 const CompanyProfilesAssessments: React.FC = () => {
   const router = useRouter();
-  const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
-  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
-  const [profilesError, setProfilesError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Redux selectors
+  const companyProfiles = useSelector(selectCompanyAssessments);
+  const isLoadingProfiles = useSelector(selectCompanyAssessmentsLoading);
+  const profilesError = useSelector(selectCompanyAssessmentsError);
+
+  // Local state for UI controls
   const [displayedAssessments, setDisplayedAssessments] = useState(10);
   const [assessmentSearch, setAssessmentSearch] = useState("");
   const [assessmentStatusFilter, setAssessmentStatusFilter] = useState("all");
   const [assessmentSort, setAssessmentSort] = useState("date_desc");
 
-  const fetchCompanyProfiles = async () => {
-    try {
-      setIsLoadingProfiles(true);
-      setProfilesError(null);
-      const token = localStorage.getItem("api_token");
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch company assessments");
-      }
-
-      const data = await response.json();
-      let normalized: any[] = [];
-
-      // Handle the new grouped-by-post API response:
-      // { success, message, count, data: [{ post, assessments: [{ assessment, candidatePostStepProgress }] }] }
-      const rawData = data?.data || data;
-
-      if (Array.isArray(rawData)) {
-        // Check if it's the new grouped format (array of { post, assessments })
-        if (rawData.length > 0 && rawData[0]?.assessments && rawData[0]?.post) {
-          // New grouped format: flatten assessments from all posts
-          rawData.forEach((group: any) => {
-            const post = group.post;
-            if (Array.isArray(group.assessments)) {
-              group.assessments.forEach((item: any) => {
-                const a = item.assessment || item;
-                normalized.push({
-                  ...a,
-                  // Ensure post is available at top level
-                  post: a.post || post,
-                  // Attach step progress if available
-                  candidatePostStepProgress: item.candidatePostStepProgress || null,
-                });
-              });
-            }
-          });
-        } else {
-          // Legacy flat array format
-          normalized = rawData;
-        }
-      } else if (Array.isArray(rawData?.results)) {
-        normalized = rawData.results;
-      } else if (Array.isArray(rawData?.assessments)) {
-        normalized = rawData.assessments;
-      }
-
-      // Map the response to a consistent format
-      const mappedAssessments = normalized.map((a: any) => ({
-        _id: a._id,
-        candidate: a.candidate,
-        candidateName: a.candidate?.username || "",
-        candidateEmail: a.candidate?.email || "",
-        post: a.post,
-        jobTitle: a.post?.jobDetails?.title || "",
-        jobStatus: a.post?.status || "",
-        interviewData: a.interviewData,
-        interviewType: a.interviewData?.interviewType || "HR_INTERVIEW",
-        coverageScore: a.interviewData?.finalReport?.coverage?.overall || 0,
-        analytics: a.interviewData?.analytics,
-        duration: a.interviewData?.analytics?.duration || 0,
-        messageCount: a.interviewData?.analytics?.messageCount || 0,
-        timestamp: a.createdAt || a.timestamp,
-        createdAt: a.createdAt,
-        updatedAt: a.updatedAt,
-        summary: a.interviewData?.finalReport?.summary || "",
-        recommendations: a.interviewData?.finalReport?.recommendations || [],
-        coverageAreas: a.interviewData?.finalReport?.coverage?.areas || {},
-        aiAnalysis: a.interviewData?.finalReport?.aiAnalysis || {},
-        completed: a.completed,
-        candidatePostStepProgress: a.candidatePostStepProgress,
-        raw: a,
-      }));
-
-      setCompanyProfiles(mappedAssessments);
-    } catch (error) {
-      setProfilesError("Failed to fetch company assessments");
-      console.error("Error fetching company assessments:", error);
-    } finally {
-      setIsLoadingProfiles(false);
-    }
-  };
-
+  // Fetch on mount
   useEffect(() => {
-    fetchCompanyProfiles();
-  }, []);
+    dispatch(fetchCompanyAssessments({}));
+  }, [dispatch]);
 
   const handleViewAssessmentDetails = (assessmentId: string) => {
     router.push(`/assessment/${assessmentId}`);
   };
+
+  // Helpers
+  const getCandidateName = (a: any) =>
+    (a?.candidateName || a?.candidate?.username || "").toLowerCase();
+  const getCandidateEmail = (a: any) =>
+    a?.candidateEmail || a?.candidate?.email || "";
+  const getJobTitle = (a: any) =>
+    (a?.jobTitle || a?.post?.jobDetails?.title || "").toLowerCase();
+  const getScore = (a: any) => {
+    const coverage = Number(a?.coverageScore);
+    if (!Number.isNaN(coverage) && coverage > 0) return coverage;
+    const analyticsCoverage = Number(a?.analytics?.coveragePercentage);
+    if (!Number.isNaN(analyticsCoverage)) return analyticsCoverage;
+    return 0;
+  };
+  const getDate = (a: any) =>
+    new Date(a?.createdAt || a?.timestamp || 0).getTime();
+  const getStatus = (a: any) => {
+    const stepProgress = a?.candidatePostStepProgress;
+    if (stepProgress?.steps && stepProgress.steps.length > 0) {
+      const allDone = stepProgress.steps.every(
+        (step: any) => step.status === "done" || step.status === "passed"
+      );
+      return allDone ? "good" : "poor";
+    }
+    const score = getScore(a);
+    const completedAreas = a?.analytics?.completedAreas || 0;
+    const totalAreas = a?.analytics?.totalAreas || 4;
+    const completionRate =
+      totalAreas > 0 ? (completedAreas / totalAreas) * 100 : 0;
+    const effectiveScore = score > 0 ? score : completionRate;
+    return effectiveScore >= 50 ? "good" : "poor";
+  };
+  const getStepProgress = (a: any) => {
+    const stepProgress = a?.candidatePostStepProgress;
+    if (!stepProgress?.steps || stepProgress.steps.length === 0) return null;
+    const total = stepProgress.steps.length;
+    const completed = stepProgress.steps.filter(
+      (s: any) => s.status === "done" || s.status === "passed"
+    ).length;
+    const currentStep = stepProgress.currentStep;
+    return { total, completed, currentStep };
+  };
+  // Filter, sort, paginate
+  const { visibleAssessments, sortedCount, hasMore } = useMemo(() => {
+    const normalizedSearch = assessmentSearch.toLowerCase().trim();
+    const filtered = companyProfiles.filter((assessment: any) => {
+      const candidateName = getCandidateName(assessment);
+      const jobTitle = getJobTitle(assessment);
+      const matchesSearch =
+        !normalizedSearch ||
+        candidateName.includes(normalizedSearch) ||
+        jobTitle.includes(normalizedSearch);
+      const status = getStatus(assessment);
+      const matchesStatus =
+        assessmentStatusFilter === "all" || assessmentStatusFilter === status;
+      return matchesSearch && matchesStatus;
+    });
+
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      const scoreA = getScore(a);
+      const scoreB = getScore(b);
+      const nameA = getCandidateName(a);
+      const nameB = getCandidateName(b);
+      const jobA = getJobTitle(a);
+      const jobB = getJobTitle(b);
+      const dateA = getDate(a);
+      const dateB = getDate(b);
+      switch (assessmentSort) {
+        case "date_asc":
+          return dateA - dateB;
+        case "score_desc":
+          return scoreB - scoreA;
+        case "score_asc":
+          return scoreA - scoreB;
+        case "candidate_asc":
+          return nameA.localeCompare(nameB);
+        case "candidate_desc":
+          return nameB.localeCompare(nameA);
+        case "job_asc":
+          return jobA.localeCompare(jobB);
+        case "job_desc":
+          return jobB.localeCompare(jobA);
+        case "date_desc":
+        default:
+          return dateB - dateA;
+      }
+    });
+
+    return {
+      visibleAssessments: sorted.slice(0, displayedAssessments),
+      sortedCount: sorted.length,
+      hasMore: sorted.length > displayedAssessments,
+    };
+  }, [
+    companyProfiles,
+    assessmentSearch,
+    assessmentStatusFilter,
+    assessmentSort,
+    displayedAssessments,
+  ]);
 
   const renderCompanyProfilesTable = () => {
     if (isLoadingProfiles) {
@@ -227,92 +245,6 @@ const CompanyProfilesAssessments: React.FC = () => {
       );
     }
 
-    // Helpers
-    const getCandidateName = (a: any) =>
-      (a?.candidateName || a?.candidate?.username || "").toLowerCase();
-    const getCandidateEmail = (a: any) =>
-      a?.candidateEmail || a?.candidate?.email || "";
-    const getJobTitle = (a: any) =>
-      (a?.jobTitle || a?.post?.jobDetails?.title || "").toLowerCase();
-    const getScore = (a: any) => {
-      const coverage = Number(a?.coverageScore);
-      if (!Number.isNaN(coverage) && coverage > 0) return coverage;
-      const analyticsCoverage = Number(a?.analytics?.coveragePercentage);
-      if (!Number.isNaN(analyticsCoverage)) return analyticsCoverage;
-      return 0;
-    };
-    const getDate = (a: any) =>
-      new Date(a?.createdAt || a?.timestamp || 0).getTime();
-    const getInterviewType = (a: any) =>
-      a?.interviewType || a?.interviewData?.interviewType || "HR_INTERVIEW";
-    const getStatus = (a: any) => {
-      const score = getScore(a);
-      const completedAreas = a?.analytics?.completedAreas || 0;
-      const totalAreas = a?.analytics?.totalAreas || 4;
-      const completionRate = totalAreas > 0 ? (completedAreas / totalAreas) * 100 : 0;
-      const effectiveScore = score > 0 ? score : completionRate;
-      return effectiveScore >= 50 ? "good" : "poor";
-    };
-    const formatDuration = (ms: number) => {
-      const seconds = Math.floor(ms / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      if (minutes > 0) {
-        return `${minutes}m ${remainingSeconds}s`;
-      }
-      return `${remainingSeconds}s`;
-    };
-
-    // Apply search, filter, and sort
-    const normalizedSearch = assessmentSearch.toLowerCase().trim();
-    const filteredAssessments = companyProfiles.filter((assessment: any) => {
-      const candidateName = getCandidateName(assessment);
-      const jobTitle = getJobTitle(assessment);
-      const matchesSearch =
-        !normalizedSearch ||
-        candidateName.includes(normalizedSearch) ||
-        jobTitle.includes(normalizedSearch);
-      const status = getStatus(assessment);
-      const matchesStatus =
-        assessmentStatusFilter === "all" || assessmentStatusFilter === status;
-      return matchesSearch && matchesStatus;
-    });
-
-    const sortedAssessments = [...filteredAssessments].sort(
-      (a: any, b: any) => {
-        const scoreA = getScore(a);
-        const scoreB = getScore(b);
-        const nameA = getCandidateName(a);
-        const nameB = getCandidateName(b);
-        const jobA = getJobTitle(a);
-        const jobB = getJobTitle(b);
-        const dateA = getDate(a);
-        const dateB = getDate(b);
-        switch (assessmentSort) {
-          case "date_asc":
-            return dateA - dateB;
-          case "score_desc":
-            return scoreB - scoreA;
-          case "score_asc":
-            return scoreA - scoreB;
-          case "candidate_asc":
-            return nameA.localeCompare(nameB);
-          case "candidate_desc":
-            return nameB.localeCompare(nameA);
-          case "job_asc":
-            return jobA.localeCompare(jobB);
-          case "job_desc":
-            return jobB.localeCompare(jobA);
-          case "date_desc":
-          default:
-            return dateB - dateA;
-        }
-      }
-    );
-
-    const visibleAssessments = sortedAssessments.slice(0, displayedAssessments);
-    const hasMore = sortedAssessments.length > displayedAssessments;
-
     return (
       <>
         <TableContainer
@@ -356,26 +288,6 @@ const CompanyProfilesAssessments: React.FC = () => {
                     borderBottom: "1px solid #e5e7eb",
                   }}
                 >
-                  Interview Type
-                </TableCell>
-                <TableCell
-                  sx={{
-                    color: "#6b7280",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    borderBottom: "1px solid #e5e7eb",
-                  }}
-                >
-                  Duration
-                </TableCell>
-                <TableCell
-                  sx={{
-                    color: "#6b7280",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    borderBottom: "1px solid #e5e7eb",
-                  }}
-                >
                   Date
                 </TableCell>
                 <TableCell
@@ -386,7 +298,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                     borderBottom: "1px solid #e5e7eb",
                   }}
                 >
-                  Coverage
+                  Progress
                 </TableCell>
                 <TableCell
                   sx={{
@@ -411,11 +323,8 @@ const CompanyProfilesAssessments: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {visibleAssessments.map((assessment) => {
-                const score = getScore(assessment);
+              {visibleAssessments.map((assessment: any) => {
                 const isGoodMatch = getStatus(assessment) === "good";
-                const interviewType = getInterviewType(assessment);
-                const duration = formatDuration(assessment.duration || 0);
 
                 return (
                   <TableRow
@@ -432,7 +341,11 @@ const CompanyProfilesAssessments: React.FC = () => {
                       }}
                     >
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                        }}
                       >
                         <Avatar
                           sx={{
@@ -445,7 +358,11 @@ const CompanyProfilesAssessments: React.FC = () => {
                             border: "2px solid #e5e7eb",
                           }}
                         >
-                          {(assessment?.candidateName || assessment?.candidate?.username || "U")?.[0]?.toUpperCase()}
+                          {(
+                            assessment?.candidateName ||
+                            assessment?.candidate?.username ||
+                            "U"
+                          )?.[0]?.toUpperCase()}
                         </Avatar>
                         <Box>
                           <Typography
@@ -455,7 +372,9 @@ const CompanyProfilesAssessments: React.FC = () => {
                               color: "#111827",
                             }}
                           >
-                            {assessment?.candidateName || assessment?.candidate?.username || "Unknown User"}
+                            {assessment?.candidateName ||
+                              assessment?.candidate?.username ||
+                              "Unknown User"}
                           </Typography>
                           {getCandidateEmail(assessment) && (
                             <Typography
@@ -475,40 +394,29 @@ const CompanyProfilesAssessments: React.FC = () => {
                     </TableCell>
                     <TableCell
                       sx={{
-                        color: "#111827",
-                        fontSize: "0.875rem",
                         borderBottom: "1px solid #e5e7eb",
                       }}
                     >
-                      {assessment?.jobTitle || assessment?.post?.jobDetails?.title || "Unknown Job"}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        borderBottom: "1px solid #e5e7eb",
-                      }}
-                    >
-                      <Chip
-                        label={interviewType.replace(/_/g, " ")}
-                        size="small"
-                        sx={{
-                          backgroundColor: "#ede9fe",
-                          color: "#7c3aed",
-                          fontWeight: 500,
-                          fontSize: "0.7rem",
-                          border: "none",
-                          borderRadius: "6px",
-                          textTransform: "capitalize",
+                      <Typography
+                        onClick={() => {
+                          const postId = assessment?.post?._id;
+                          if (postId) router.push(`/posts/${postId}`);
                         }}
-                      />
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        color: "#6b7280",
-                        fontSize: "0.875rem",
-                        borderBottom: "1px solid #e5e7eb",
-                      }}
-                    >
-                      {duration}
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: "0.875rem",
+                          color: "#111827",
+                          cursor: "pointer",
+                          "&:hover": {
+                            color: "#10b981",
+                            textDecoration: "underline",
+                          },
+                        }}
+                      >
+                        {assessment?.jobTitle ||
+                          assessment?.post?.jobDetails?.title ||
+                          "Unknown Job"}
+                      </Typography>
                     </TableCell>
                     <TableCell
                       sx={{
@@ -522,15 +430,72 @@ const CompanyProfilesAssessments: React.FC = () => {
                         { month: "2-digit", day: "2-digit", year: "numeric" }
                       )}
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        color: "#111827",
-                        fontSize: "0.875rem",
-                        fontWeight: 600,
-                        borderBottom: "1px solid #e5e7eb",
-                      }}
-                    >
-                      {Math.round(score)}%
+                    <TableCell sx={{ borderBottom: "1px solid #e5e7eb" }}>
+                      {(() => {
+                        const progress = getStepProgress(assessment);
+                        if (!progress) {
+                          return (
+                            <Typography
+                              sx={{
+                                color: "#9ca3af",
+                                fontSize: "0.75rem",
+                              }}
+                            >
+                              —
+                            </Typography>
+                          );
+                        }
+                        const pct =
+                          progress.total > 0
+                            ? Math.round(
+                                (progress.completed / progress.total) * 100
+                              )
+                            : 0;
+                        return (
+                          <Box sx={{ minWidth: 100 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontSize: "0.7rem",
+                                  color: "#6b7280",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {progress.completed}/{progress.total} steps
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: "0.7rem",
+                                  color: "#6b7280",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {pct}%
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={pct}
+                              sx={{
+                                height: 5,
+                                borderRadius: 3,
+                                backgroundColor: "#f3f4f6",
+                                "& .MuiLinearProgress-bar": {
+                                  borderRadius: 3,
+                                  backgroundColor:
+                                    pct === 100 ? "#10b981" : "#f59e0b",
+                                },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid #e5e7eb" }}>
                       <Chip
@@ -548,7 +513,9 @@ const CompanyProfilesAssessments: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid #e5e7eb" }}>
                       <IconButton
-                        onClick={() => handleViewAssessmentDetails(assessment._id)}
+                        onClick={() =>
+                          handleViewAssessmentDetails(assessment._id)
+                        }
                         sx={{
                           color: "#10b981",
                           "&:hover": {
@@ -583,7 +550,7 @@ const CompanyProfilesAssessments: React.FC = () => {
                 "&:hover": { backgroundColor: "rgba(16, 185, 129, 0.08)" },
               }}
             >
-              Load More ({sortedAssessments.length - displayedAssessments} remaining)
+              Load More ({sortedCount - displayedAssessments} remaining)
             </Button>
           </Box>
         )}
@@ -625,75 +592,6 @@ const CompanyProfilesAssessments: React.FC = () => {
         >
           Company Profiles & Assessments
         </Typography>
-
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <TextField
-            size="small"
-            placeholder="Search Candidates"
-            value={assessmentSearch}
-            onChange={(e) => setAssessmentSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon
-                    sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
-                  />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              width: 280,
-              height: "40px",
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "white",
-                borderRadius: "42px",
-                border: "1px solid rgba(165, 172, 181, 1)",
-                "& fieldset": {
-                  border: "none",
-                },
-                "&:hover": {
-                  borderColor: "rgba(165, 172, 181, 0.8)",
-                },
-              },
-            }}
-          />
-          <Select
-            size="small"
-            value={assessmentSort}
-            onChange={(e) => setAssessmentSort(e.target.value as string)}
-            displayEmpty
-            sx={{
-              height: "40px",
-              minWidth: 200,
-              borderRadius: "42px",
-              px: 2.5,
-              textTransform: "uppercase",
-              fontWeight: 400,
-              fontSize: "0.875rem",
-              backgroundColor: "white",
-              color: "rgba(84, 98, 116, 1)",
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(165, 172, 181, 1)",
-                borderWidth: "1px",
-              },
-              "&:hover .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(165, 172, 181, 0.8)",
-              },
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: "rgba(165, 172, 181, 1)",
-              },
-            }}
-          >
-            <MenuItem value="date_desc">Newest first</MenuItem>
-            <MenuItem value="date_asc">Oldest first</MenuItem>
-            <MenuItem value="score_desc">Highest score</MenuItem>
-            <MenuItem value="score_asc">Lowest score</MenuItem>
-            <MenuItem value="candidate_asc">Candidate A→Z</MenuItem>
-            <MenuItem value="candidate_desc">Candidate Z→A</MenuItem>
-            <MenuItem value="job_asc">Job A→Z</MenuItem>
-            <MenuItem value="job_desc">Job Z→A</MenuItem>
-          </Select>
-        </Box>
       </Box>
 
       {renderCompanyProfilesTable()}
