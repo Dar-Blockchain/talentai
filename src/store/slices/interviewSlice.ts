@@ -63,6 +63,13 @@ interface AreaData {
   completed: boolean;
 }
 
+interface SkillTypeAssessments {
+  data: SkillInterviewAssessment[];
+  loading: boolean;
+  error: string | null;
+  total: number;
+}
+
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -71,6 +78,8 @@ interface InterviewState {
   page: number;
   rowsPerPage: number;
   currentTab: string;
+  technicalAssessments: SkillTypeAssessments;
+  softAssessments: SkillTypeAssessments;
 }
 
 const initialState: InterviewState = {
@@ -81,6 +90,8 @@ const initialState: InterviewState = {
   page: 0,
   rowsPerPage: 3,
   currentTab: 'post_interview',
+  technicalAssessments: { data: [], loading: false, error: null, total: 0 },
+  softAssessments: { data: [], loading: false, error: null, total: 0 },
 };
 
 /**
@@ -178,6 +189,49 @@ export const fetchInterviewAssessments = createAsyncThunk<
   }
 );
 
+/**
+ * Fetch skill interview assessments by skill type (technical or soft)
+ */
+export const fetchSkillAssessmentsByType = createAsyncThunk<
+  { results: SkillInterviewAssessment[]; total: number; skillType: string },
+  { skillType: 'technical' | 'soft'; limit?: number },
+  { rejectValue: string }
+>(
+  'interview/fetchSkillAssessmentsByType',
+  async ({ skillType, limit = 20 }, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const params = new URLSearchParams();
+      params.append('skillType', skillType);
+      params.append('limit', limit.toString());
+
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/my?${params.toString()}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return rejectWithValue(errorData.message || `Failed to fetch skill assessments: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const results = data.data || data.results || [];
+      const total = data.pagination?.totalCount || data.total || results.length;
+
+      return { results, total, skillType };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching skill assessments');
+    }
+  }
+);
+
 const interviewSlice = createSlice({
   name: 'interview',
   initialState,
@@ -216,6 +270,25 @@ const interviewSlice = createSlice({
       .addCase(fetchInterviewAssessments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'An error occurred';
+      })
+      // fetchSkillAssessmentsByType
+      .addCase(fetchSkillAssessmentsByType.pending, (state, action) => {
+        const skillType = action.meta.arg.skillType;
+        const target = skillType === 'technical' ? 'technicalAssessments' : 'softAssessments';
+        state[target].loading = true;
+        state[target].error = null;
+      })
+      .addCase(fetchSkillAssessmentsByType.fulfilled, (state, action) => {
+        const target = action.payload.skillType === 'technical' ? 'technicalAssessments' : 'softAssessments';
+        state[target].loading = false;
+        state[target].data = action.payload.results;
+        state[target].total = action.payload.total;
+      })
+      .addCase(fetchSkillAssessmentsByType.rejected, (state, action) => {
+        const skillType = action.meta.arg.skillType;
+        const target = skillType === 'technical' ? 'technicalAssessments' : 'softAssessments';
+        state[target].loading = false;
+        state[target].error = action.payload || 'An error occurred';
       });
   },
 });
@@ -229,5 +302,7 @@ export const {
 } = interviewSlice.actions;
 
 export const selectInterview = (state: RootState) => state.interview;
+export const selectTechnicalAssessments = (state: RootState) => state.interview.technicalAssessments;
+export const selectSoftAssessments = (state: RootState) => state.interview.softAssessments;
 
 export default interviewSlice.reducer;

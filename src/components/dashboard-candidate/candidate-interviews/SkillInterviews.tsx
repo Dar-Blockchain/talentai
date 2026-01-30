@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Box, Button, Typography, CircularProgress, LinearProgress } from "@mui/material";
 import dynamic from "next/dynamic";
 import StatsSummaryCard from "./StatsSummaryCard";
@@ -8,97 +8,44 @@ import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useRouter } from "next/router";
 import { formatDistanceToNowStrict } from "date-fns";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchSkillAssessmentsByType,
+  selectTechnicalAssessments,
+  selectSoftAssessments,
+  SkillInterviewAssessment,
+} from "@/store/slices/interviewSlice";
 
 interface SkillInterviewsProps {
   skillType: 'technical' | 'soft';
 }
 
-interface SkillAssessment {
-  _id: string;
-  skill?: string;
-  proficiency?: string;
-  skillType?: string;
-  createdAt: string;
-  updatedAt?: string;
-  interviewData?: {
-    finalReport?: {
-      coverage?: {
-        overall?: number;
-      };
-      scores?: {
-        overall?: number;
-      };
-    };
-  };
-}
-
-interface StatsData {
-  total: number;
-  completed: number;
-  ongoing: number;
-}
-
 const SkillInterviews: React.FC<SkillInterviewsProps> = ({ skillType }) => {
   const router = useRouter();
-  const [assessments, setAssessments] = useState<SkillAssessment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<StatsData>({ total: 0, completed: 0, ongoing: 0 });
-
-  const fetchSkillAssessments = useCallback(async () => {
-    const token = localStorage.getItem('api_token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.append('skillType', skillType);
-      params.append('limit', '20');
-
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}skill-interview-assessments/my?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const results = data.data || data.results || [];
-      setAssessments(results);
-
-      // Calculate stats
-      const completed = results.filter((a: SkillAssessment) =>
-        a.interviewData?.finalReport?.scores?.overall !== undefined ||
-        a.interviewData?.finalReport?.coverage?.overall !== undefined
-      ).length;
-
-      setStats({
-        total: data.pagination?.totalCount || data.total || results.length,
-        completed,
-        ongoing: results.length - completed,
-      });
-    } catch (error) {
-      console.error('Error fetching skill assessments:', error);
-      setAssessments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [skillType]);
+  const dispatch = useDispatch<AppDispatch>();
+  const { data: assessments, loading, total } = useSelector(
+    skillType === 'technical' ? selectTechnicalAssessments : selectSoftAssessments
+  );
 
   useEffect(() => {
-    fetchSkillAssessments();
-  }, [fetchSkillAssessments]);
+    dispatch(fetchSkillAssessmentsByType({ skillType }));
+  }, [dispatch, skillType]);
 
-  const getScore = (assessment: SkillAssessment): number => {
+  const stats = useMemo(() => {
+    const completed = assessments.filter((a) =>
+      a.interviewData?.finalReport?.scores?.overall !== undefined ||
+      a.interviewData?.finalReport?.coverage?.overall !== undefined
+    ).length;
+
+    return {
+      total: total || assessments.length,
+      completed,
+      ongoing: assessments.length - completed,
+    };
+  }, [assessments, total]);
+
+  const getScore = (assessment: SkillInterviewAssessment): number => {
     return assessment.interviewData?.finalReport?.scores?.overall ??
            assessment.interviewData?.finalReport?.coverage?.overall ??
            0;
