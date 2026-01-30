@@ -45,6 +45,13 @@ interface CandidateAssessmentsState {
   pagination: PaginationState;
 }
 
+interface CompanyAssessmentsState {
+  items: any[];
+  loading: boolean;
+  error: string | null;
+  pagination: PaginationState;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -70,6 +77,7 @@ interface PostState {
   postPayment: PostPaymentState;
   updatePostStatus: UpdatePostStatusState;
   candidateAssessments: CandidateAssessmentsState;
+  companyAssessments: CompanyAssessmentsState;
 }
 
 // Initial state
@@ -138,6 +146,19 @@ const initialState: PostState = {
     error: null,
   },
   candidateAssessments: {
+    items: [],
+    loading: false,
+    error: null,
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
+  },
+  companyAssessments: {
     items: [],
     loading: false,
     error: null,
@@ -772,6 +793,114 @@ export const fetchCandidateAssessments = createAsyncThunk(
   }
 );
 
+// Async thunk to fetch company's post interview assessments (grouped by post)
+export const fetchCompanyAssessments = createAsyncThunk(
+  "post/fetchCompanyAssessments",
+  async (
+    params: { page?: number; limit?: number } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      const { page = 1, limit = 50 } = params;
+      const token = localStorage.getItem("api_token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch company assessments");
+      }
+
+      const data = await response.json();
+      const rawData = data?.data || data;
+      let normalized: any[] = [];
+
+      if (Array.isArray(rawData)) {
+        if (rawData.length > 0 && rawData[0]?.assessments && rawData[0]?.post) {
+          // Grouped format: one row per post, using the latest assessment
+          rawData.forEach((group: any) => {
+            const post = group.post;
+            const assessments = group.assessments || [];
+            if (assessments.length === 0) return;
+
+            const sorted = [...assessments].sort((a: any, b: any) => {
+              const aDate = new Date(a.createdAt || a.assessment?.createdAt || 0).getTime();
+              const bDate = new Date(b.createdAt || b.assessment?.createdAt || 0).getTime();
+              return bDate - aDate;
+            });
+
+            const latest = sorted[0];
+            const a = latest.assessment || latest;
+
+            normalized.push({
+              ...a,
+              post: a.post || post,
+              candidatePostStepProgress: latest.candidatePostStepProgress || null,
+              assessmentsCount: assessments.length,
+            });
+          });
+        } else {
+          normalized = rawData;
+        }
+      } else if (Array.isArray(rawData?.results)) {
+        normalized = rawData.results;
+      } else if (Array.isArray(rawData?.assessments)) {
+        normalized = rawData.assessments;
+      }
+
+      // Map to consistent format
+      const mappedAssessments = normalized.map((a: any) => ({
+        _id: a._id,
+        candidate: a.candidate,
+        candidateName: a.candidate?.username || "",
+        candidateEmail: a.candidate?.email || "",
+        post: a.post,
+        jobTitle: a.post?.jobDetails?.title || "",
+        jobStatus: a.post?.status || "",
+        interviewData: a.interviewData,
+        interviewType: a.interviewData?.interviewType || "HR_INTERVIEW",
+        coverageScore: a.interviewData?.finalReport?.coverage?.overall || 0,
+        analytics: a.interviewData?.analytics,
+        duration: a.interviewData?.analytics?.duration || 0,
+        messageCount: a.interviewData?.analytics?.messageCount || 0,
+        timestamp: a.createdAt || a.timestamp,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+        summary: a.interviewData?.finalReport?.summary || "",
+        recommendations: a.interviewData?.finalReport?.recommendations || [],
+        coverageAreas: a.interviewData?.finalReport?.coverage?.areas || {},
+        aiAnalysis: a.interviewData?.finalReport?.aiAnalysis || {},
+        completed: a.completed,
+        candidatePostStepProgress: a.candidatePostStepProgress,
+        assessmentsCount: a.assessmentsCount,
+      }));
+
+      return {
+        items: mappedAssessments,
+        pagination: {
+          total: data.count || mappedAssessments.length,
+          page,
+          limit,
+          totalPages: Math.ceil((data.count || mappedAssessments.length) / limit),
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Error fetching company assessments");
+    }
+  }
+);
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
@@ -991,6 +1120,20 @@ const postSlice = createSlice({
       .addCase(fetchCandidateAssessments.rejected, (state, action) => {
         state.candidateAssessments.loading = false;
         state.candidateAssessments.error = action.payload as string;
+      })
+      // ---- COMPANY ASSESSMENTS ----
+      .addCase(fetchCompanyAssessments.pending, (state) => {
+        state.companyAssessments.loading = true;
+        state.companyAssessments.error = null;
+      })
+      .addCase(fetchCompanyAssessments.fulfilled, (state, action) => {
+        state.companyAssessments.loading = false;
+        state.companyAssessments.items = action.payload.items;
+        state.companyAssessments.pagination = action.payload.pagination;
+      })
+      .addCase(fetchCompanyAssessments.rejected, (state, action) => {
+        state.companyAssessments.loading = false;
+        state.companyAssessments.error = action.payload as string;
       });
   },
 });
@@ -1076,3 +1219,13 @@ export const selectCandidateAssessmentsError = (state: { post: PostState }) =>
   state.post.candidateAssessments.error;
 export const selectCandidateAssessmentsPagination = (state: { post: PostState }) =>
   state.post.candidateAssessments.pagination;
+
+// Company Assessments Selectors
+export const selectCompanyAssessments = (state: { post: PostState }) =>
+  state.post.companyAssessments.items;
+export const selectCompanyAssessmentsLoading = (state: { post: PostState }) =>
+  state.post.companyAssessments.loading;
+export const selectCompanyAssessmentsError = (state: { post: PostState }) =>
+  state.post.companyAssessments.error;
+export const selectCompanyAssessmentsPagination = (state: { post: PostState }) =>
+  state.post.companyAssessments.pagination;

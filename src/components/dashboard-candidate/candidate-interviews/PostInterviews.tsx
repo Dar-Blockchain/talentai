@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import StatsSummaryCard from "./StatsSummaryCard";
 import AssessmentCard, { PostAssessment } from "./AssessmentCard";
 import StepInfoModal from "./StepInfoModal";
@@ -57,6 +57,7 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   const groupedData = useSelector(selectCandidateAssessments) as GroupedAssessment[];
   const loading = useSelector(selectCandidateAssessmentsLoading);
   const pagination = useSelector(selectCandidateAssessmentsPagination);
+  const quota = useSelector((state: RootState) => state.user.connectedUser.profile?.quota || 0);
 
   // Local state for search, sort, and pagination
   const [searchQuery, setSearchQuery] = useState("");
@@ -478,6 +479,7 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
                 assessment={assessment}
                 onViewDetails={handleViewDetails}
                 onContinueTest={handleContinueTest}
+                quota={quota}
               />
             ))}
           </Box>
@@ -517,6 +519,7 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
         onClose={() => setStepModalOpen(false)}
         onStart={handleStartStep}
         assessment={selectedAssessment}
+        quota={quota}
       />
     </Box>
   );

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Button, Typography, Chip, LinearProgress } from "@mui/material";
+import { Box, Button, Typography, Chip, LinearProgress, Tooltip } from "@mui/material";
 import HourglassIcon from "@/components/icons/HourglassIcon";
 import TimeOutlineIcon from "@/components/icons/TimeOutlineIcon";
 import CaseOutlineIcon from "@/components/icons/CaseOutlineIcon";
@@ -74,6 +74,7 @@ interface AssessmentCardProps {
   assessment: PostAssessment;
   onViewDetails: (assessmentId: string) => void;
   onContinueTest: (assessment: PostAssessment) => void;
+  quota?: number;
 }
 
 export const getScore = (assessment: PostAssessment): number => {
@@ -115,6 +116,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
   assessment,
   onViewDetails,
   onContinueTest,
+  quota = 0,
 }) => {
   const score = getScore(assessment);
   const completed = isCompleted(assessment);
@@ -124,7 +126,6 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
   const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
   const companyName = assessment.company?.username || assessment.post?.user?.companyName || "Company";
   const interviewType = assessment.interviewData?.interviewType?.replace(/_/g, " ") || "HR Interview";
-  console.log("assessment.skillType", assessment);
   const skillType = assessment.skillType || "general";
   return (
     <Box
@@ -231,28 +232,42 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
         </Box>
       </Box>
       {hasPendingSteps(assessment) ? (
-        <Button
-          onClick={() => onContinueTest(assessment)}
-          variant="outlined"
-          sx={{
-            width: "170px",
-            borderColor: "rgba(189, 133, 255, 1)",
-            color: "white",
-            background: "rgba(189, 133, 255, 1)",
-            fontWeight: 600,
-            borderRadius: "38px",
-            px: 3,
-            height: "42px",
-            textTransform: "none",
-            fontSize: "0.875rem",
-            "&:hover": {
-              backgroundColor: "rgba(160, 100, 230, 1)",
-              borderColor: "rgba(160, 100, 230, 1)",
-            },
-          }}
+        <Tooltip
+          title={quota >= 5 ? "You have reached your monthly limit of 5 tests. Please try again next month." : ""}
+          arrow
+          disableHoverListener={quota < 5}
         >
-          Complete Test
-        </Button>
+          <span>
+            <Button
+              onClick={() => onContinueTest(assessment)}
+              variant="outlined"
+              disabled={quota >= 5}
+              sx={{
+                width: "170px",
+                borderColor: "rgba(189, 133, 255, 1)",
+                color: "white",
+                background: "rgba(189, 133, 255, 1)",
+                fontWeight: 600,
+                borderRadius: "38px",
+                px: 3,
+                height: "42px",
+                textTransform: "none",
+                fontSize: "0.875rem",
+                "&:hover": {
+                  backgroundColor: "rgba(160, 100, 230, 1)",
+                  borderColor: "rgba(160, 100, 230, 1)",
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "rgba(189, 133, 255, 0.3)",
+                  color: "rgba(255, 255, 255, 0.6)",
+                  borderColor: "rgba(189, 133, 255, 0.3)",
+                },
+              }}
+            >
+              Complete Test
+            </Button>
+          </span>
+        </Tooltip>
       ) : (
         <Button
           onClick={() => onViewDetails(assessment._id)}
