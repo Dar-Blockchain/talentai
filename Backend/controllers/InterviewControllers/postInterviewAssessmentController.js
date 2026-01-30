@@ -237,7 +237,7 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
             const progress = await CandidatePostStepProgress.findOne({
               idCandidate: ass.candidate,
               idPost: postId
-            }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate');
+            }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate',"-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
 
             return {
               assessment: ass,
