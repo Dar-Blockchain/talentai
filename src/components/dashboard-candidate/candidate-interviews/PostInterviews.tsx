@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import StatsSummaryCard from "./StatsSummaryCard";
 import AssessmentCard, { PostAssessment } from "./AssessmentCard";
+import StepInfoModal from "./StepInfoModal";
 import ChecklistIcon from "@/components/icons/CheckListIcon";
 import { ArrowForward, ArrowBack } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -62,6 +63,10 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
   const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Step info modal state
+  const [stepModalOpen, setStepModalOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<PostAssessment | null>(null);
 
   // Early return if hidden
   if (hidden) {
@@ -138,10 +143,17 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
   };
 
   const handleContinueTest = (assessment: PostAssessment) => {
-    const postId = assessment.post?._id;
-    const currentStep = assessment.candidatePostStepProgress?.currentStep;
+    setSelectedAssessment(assessment);
+    setStepModalOpen(true);
+  };
+
+  const handleStartStep = () => {
+    if (!selectedAssessment) return;
+    const postId = selectedAssessment.post?._id;
+    const currentStep = selectedAssessment.candidatePostStepProgress?.currentStep;
 
     if (postId && currentStep) {
+      setStepModalOpen(false);
       router.push(`/interview/hr?jobId=${postId}&stepId=${currentStep._id}&pipeline=true`);
     }
   };
@@ -498,6 +510,14 @@ const PostInterviews: React.FC<PostInterviewsProps> = ({
           </Box>
         )}
       </Box>
+
+      {/* Step Info Modal */}
+      <StepInfoModal
+        open={stepModalOpen}
+        onClose={() => setStepModalOpen(false)}
+        onStart={handleStartStep}
+        assessment={selectedAssessment}
+      />
     </Box>
   );
 };

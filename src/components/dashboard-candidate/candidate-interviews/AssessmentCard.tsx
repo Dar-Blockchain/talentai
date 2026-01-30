@@ -25,6 +25,15 @@ export interface PostAssessment {
       title?: string;
       description?: string;
     };
+    skillAnalysis?: {
+      requiredSkills?: { name: string; category?: string; level?: string; importance?: string }[];
+      softSkills?: { name: string; level?: string }[];
+      suggestedSkills?: {
+        technical?: { name: string }[];
+        frameworks?: { name: string }[];
+        tools?: { name: string }[];
+      };
+    };
     user?: {
       companyName?: string;
     };
