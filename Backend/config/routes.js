@@ -57,8 +57,8 @@ function registerRoutes(app) {
   // Company Management
   app.use('/CompanyInvitation', CompanyInvitationRouters); // Company Invitation Management -> company-invitations
   app.use('/CompanyMembership', CompanyMembershipRoutes); // Company Membership Management -> company-memberships
-  //app.use('/company-invitations', CompanyInvitationRouters); // Company Invitation Management
-  //app.use('/company-memberships', CompanyMembershipRoutes); // Company Membership Management
+  //app.use('/company-invitations', CompanyInvitationRouters); //✅ Company Invitation Management
+  //app.use('/company-memberships', CompanyMembershipRoutes); //✅ Company Membership Management
 
   // Evaluation & Interview
   app.use('/skill-interview-assessments', SkillInterviewAssessmentRoutes); //✅ Skill Interview Assessments -> skill-interview-assessments
