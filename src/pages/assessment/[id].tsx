@@ -14,6 +14,8 @@ import {
   ListItemIcon,
   ListItemText,
   Stack,
+  Collapse,
+  IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -23,6 +25,10 @@ import ChatIcon from '@mui/icons-material/Chat';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PersonIcon from '@mui/icons-material/Person';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import BusinessIcon from '@mui/icons-material/Business';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
 import dynamic from 'next/dynamic';
@@ -47,8 +53,10 @@ const AssessmentDetailsPage = () => {
   const router = useRouter();
   const { id } = router.query;
   const [assessment, setAssessment] = useState<any>(null);
+  const [stepsData, setStepsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!id) return;
@@ -57,7 +65,7 @@ const AssessmentDetailsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('api_token');
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/${id}`,
@@ -75,8 +83,13 @@ const AssessmentDetailsPage = () => {
         }
 
         const data = await response.json();
-        const assessmentData = data.data || data;
+        // Handle new response structure: { data: { assessment, stepsData } }
+        const responseData = data.data || data;
+        const assessmentData = responseData.assessment || responseData;
+        const steps = responseData.stepsData || null;
+
         setAssessment(assessmentData);
+        setStepsData(steps);
       } catch (err: any) {
         setError(err.message || 'Failed to load assessment');
         console.error('Error fetching assessment:', err);
@@ -88,8 +101,13 @@ const AssessmentDetailsPage = () => {
     fetchAssessment();
   }, [id]);
 
+  const toggleStepExpand = (stepId: string) => {
+    setExpandedSteps(prev => ({ ...prev, [stepId]: !prev[stepId] }));
+  };
+
   // Helper functions
   const getCandidateName = () => assessment?.candidate?.username || 'Unknown User';
+  const getCompanyName = () => assessment?.company?.username || '';
   const getJobTitle = () => assessment?.post?.jobDetails?.title || 'Unknown Job';
   const getJobDescription = () => assessment?.post?.jobDetails?.description || '';
   const getInterviewType = () => assessment?.interviewData?.interviewType || 'HR_INTERVIEW';
@@ -118,6 +136,40 @@ const AssessmentDetailsPage = () => {
     return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
 
+  const getStepStatusColor = (status: string) => {
+    switch (status) {
+      case 'done':
+      case 'passed':
+        return { bg: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '#10b981' };
+      case 'inProgress':
+        return { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '#f59e0b' };
+      default:
+        return { bg: 'rgba(107, 114, 128, 0.1)', color: '#6b7280', border: '#6b7280' };
+    }
+  };
+
+  const getStepStatusLabel = (status: string) => {
+    switch (status) {
+      case 'done':
+      case 'passed':
+        return 'Completed';
+      case 'inProgress':
+        return 'In Progress';
+      default:
+        return 'Pending';
+    }
+  };
+
+  // Sort steps by order
+  const getSortedSteps = () => {
+    if (!stepsData?.steps) return [];
+    return [...stepsData.steps].sort((a: any, b: any) => {
+      const orderA = a.stepId?.order ?? 999;
+      const orderB = b.stepId?.order ?? 999;
+      return orderA - orderB;
+    });
+  };
+
   // Prepare chart data for coverage areas
   const getCoverageChartData = () => {
     const areas = getCoverageAreas();
@@ -141,6 +193,34 @@ const AssessmentDetailsPage = () => {
   // Custom colors for charts
   const chartColors = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
 
+  // Section style
+  const sectionStyle = {
+    border: '1px solid rgba(98, 111, 134, 0.18)',
+    backgroundColor: 'rgba(253, 253, 253, 1)',
+    borderRadius: '12px',
+    px: 2,
+    py: 1.5,
+  };
+
+  const sectionTitleStyle = (accentColor: string = 'rgba(41, 210, 145, 0.83)') => ({
+    position: 'relative' as const,
+    fontWeight: 600,
+    fontSize: '20px',
+    lineHeight: '35px',
+    color: 'rgba(23, 43, 77, 1)',
+    mb: 2,
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      bottom: 0,
+      width: '38px',
+      height: '5px',
+      backgroundColor: accentColor,
+      borderRadius: '2px',
+    },
+  });
+
   if (loading) {
     return (
       <PageContainer>
@@ -153,7 +233,7 @@ const AssessmentDetailsPage = () => {
             minHeight: '60vh',
           }}
         >
-          <CircularProgress sx={{ color: '#10b981' }} />
+          <CircularProgress sx={{ color: '#8310FF' }} />
         </Box>
       </PageContainer>
     );
@@ -172,11 +252,11 @@ const AssessmentDetailsPage = () => {
             startIcon={<ArrowBackIcon />}
             onClick={() => router.back()}
             sx={{
-              borderColor: '#10b981',
-              color: '#10b981',
+              borderColor: '#8310FF',
+              color: '#8310FF',
               '&:hover': {
-                borderColor: '#059669',
-                backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                borderColor: '#6b0ecc',
+                backgroundColor: 'rgba(131, 16, 255, 0.08)',
               },
             }}
           >
@@ -211,6 +291,7 @@ const AssessmentDetailsPage = () => {
   const aiAnalysis = getAiAnalysis();
   const coverageChartData = getCoverageChartData();
   const radarChartData = getRadarChartData();
+  const sortedSteps = getSortedSteps();
 
   return (
     <PageContainer>
@@ -220,7 +301,7 @@ const AssessmentDetailsPage = () => {
         <Button
           startIcon={
             <ArrowBackIcon
-              sx={{ color: '#10b981', transition: 'transform 0.2s easeIn' }}
+              sx={{ color: '#8310FF', transition: 'transform 0.2s ease' }}
             />
           }
           onClick={() => router.back()}
@@ -249,15 +330,7 @@ const AssessmentDetailsPage = () => {
           }}
         >
           {/* Header Section */}
-          <Box
-            sx={{
-              border: '1px solid rgba(98, 111, 134, 0.18)',
-              backgroundColor: 'rgba(253, 253, 253, 1)',
-              borderRadius: '12px',
-              px: 2,
-              py: 1.5,
-            }}
-          >
+          <Box sx={sectionStyle}>
             <Box
               sx={{
                 display: 'flex',
@@ -267,26 +340,7 @@ const AssessmentDetailsPage = () => {
               }}
             >
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    position: 'relative',
-                    fontWeight: 600,
-                    fontSize: '20px',
-                    lineHeight: '35px',
-                    color: 'rgba(23, 43, 77, 1)',
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      left: 0,
-                      bottom: 0,
-                      width: '38px',
-                      height: '5px',
-                      backgroundColor: 'rgba(41, 210, 145, 0.83)',
-                      borderRadius: '2px',
-                    },
-                  }}
-                >
+                <Typography variant="h5" sx={sectionTitleStyle()}>
                   Interview Assessment
                 </Typography>
                 <Chip
@@ -355,7 +409,6 @@ const AssessmentDetailsPage = () => {
               <Typography
                 variant="h5"
                 sx={{
-                  position: 'relative',
                   fontWeight: 500,
                   fontSize: '15px',
                   lineHeight: '42px',
@@ -391,6 +444,29 @@ const AssessmentDetailsPage = () => {
                     />
                   }
                 />
+                {getCompanyName() && (
+                  <Chip
+                    label={getCompanyName()}
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                      color: '#8310FF',
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      height: 24,
+                      border: '0.25px solid rgba(131, 16, 255, 0.4)',
+                    }}
+                    icon={
+                      <BusinessIcon
+                        sx={{
+                          color: '#8310FF!important',
+                          width: '16px',
+                          height: '16px',
+                        }}
+                      />
+                    }
+                  />
+                )}
                 <Chip
                   label={getJobTitle()}
                   size="small"
@@ -506,24 +582,10 @@ const AssessmentDetailsPage = () => {
                   }}
                 >
                   <AccessTimeIcon sx={{ color: '#6366f1', fontSize: 24, mb: 0.5 }} />
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: '#6366f1',
-                      fontWeight: 700,
-                      fontSize: '16px',
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ color: '#6366f1', fontWeight: 700, fontSize: '16px' }}>
                     {formatDuration(analytics.duration || 0)}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#6b7280',
-                      fontWeight: 500,
-                      fontSize: '11px',
-                    }}
-                  >
+                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '11px' }}>
                     Duration
                   </Typography>
                 </Box>
@@ -538,24 +600,10 @@ const AssessmentDetailsPage = () => {
                   }}
                 >
                   <ChatIcon sx={{ color: '#10b981', fontSize: 24, mb: 0.5 }} />
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: '#10b981',
-                      fontWeight: 700,
-                      fontSize: '16px',
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ color: '#10b981', fontWeight: 700, fontSize: '16px' }}>
                     {analytics.messageCount || 0}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#6b7280',
-                      fontWeight: 500,
-                      fontSize: '11px',
-                    }}
-                  >
+                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '11px' }}>
                     Messages
                   </Typography>
                 </Box>
@@ -570,24 +618,10 @@ const AssessmentDetailsPage = () => {
                   }}
                 >
                   <AssessmentIcon sx={{ color: '#f59e0b', fontSize: 24, mb: 0.5 }} />
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: '#f59e0b',
-                      fontWeight: 700,
-                      fontSize: '16px',
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ color: '#f59e0b', fontWeight: 700, fontSize: '16px' }}>
                     {analytics.completedAreas || 0}/{analytics.totalAreas || 4}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#6b7280',
-                      fontWeight: 500,
-                      fontSize: '11px',
-                    }}
-                  >
+                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '11px' }}>
                     Areas Covered
                   </Typography>
                 </Box>
@@ -602,24 +636,10 @@ const AssessmentDetailsPage = () => {
                   }}
                 >
                   <TrendingUpIcon sx={{ color: '#8b5cf6', fontSize: 24, mb: 0.5 }} />
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: '#8b5cf6',
-                      fontWeight: 700,
-                      fontSize: '16px',
-                    }}
-                  >
+                  <Typography variant="h6" sx={{ color: '#8b5cf6', fontWeight: 700, fontSize: '16px' }}>
                     {Math.round(analytics.coveragePercentage || 0)}%
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#6b7280',
-                      fontWeight: 500,
-                      fontSize: '11px',
-                    }}
-                  >
+                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '11px' }}>
                     Coverage
                   </Typography>
                 </Box>
@@ -627,38 +647,280 @@ const AssessmentDetailsPage = () => {
             </Box>
           </Box>
 
+          {/* Pipeline Steps Section */}
+          {sortedSteps.length > 0 && (
+            <Box sx={sectionStyle}>
+              <Typography variant="h5" sx={sectionTitleStyle('#8310FF')}>
+                Pipeline Steps
+              </Typography>
+
+              {/* Steps Progress Summary */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 500 }}>
+                  {sortedSteps.filter((s: any) => s.status === 'done' || s.status === 'passed').length} / {sortedSteps.length} Steps Completed
+                </Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={(sortedSteps.filter((s: any) => s.status === 'done' || s.status === 'passed').length / sortedSteps.length) * 100}
+                  sx={{
+                    flex: 1,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#f3f4f6',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: '#8310FF',
+                      borderRadius: 4,
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Step Cards */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {sortedSteps.map((step: any, index: number) => {
+                  const statusColors = getStepStatusColor(step.status);
+                  const stepLabel = step.stepId?.data?.label || step.stepId?.data?.config?.title || `Step ${index + 1}`;
+                  const stepType = step.stepId?.data?.type || 'interview';
+                  const stepKey = step._id || `step-${index}`;
+                  const isExpanded = expandedSteps[stepKey] || false;
+                  const interviewDetails = step.interviewDetails;
+                  const hasDetails = interviewDetails?.interviewData;
+
+                  return (
+                    <Box key={stepKey}>
+                      {/* Step Header Card */}
+                      <Box
+                        onClick={() => hasDetails && toggleStepExpand(stepKey)}
+                        sx={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '10px',
+                          padding: '16px',
+                          border: `1px solid ${isExpanded ? statusColors.border : 'rgba(238, 240, 242, 1)'}`,
+                          cursor: hasDetails ? 'pointer' : 'default',
+                          transition: 'all 0.2s ease',
+                          '&:hover': hasDetails ? {
+                            borderColor: statusColors.border,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                          } : {},
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {/* Step Number */}
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '10px',
+                                backgroundColor: step.status === 'done' || step.status === 'passed'
+                                  ? 'rgba(16, 185, 129, 0.1)'
+                                  : step.status === 'inProgress'
+                                  ? 'rgba(245, 158, 11, 0.1)'
+                                  : 'rgba(107, 114, 128, 0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {step.status === 'done' || step.status === 'passed' ? (
+                                <CheckCircleOutlineIcon sx={{ fontSize: 22, color: '#10b981' }} />
+                              ) : (
+                                <Typography sx={{ fontWeight: 700, fontSize: '14px', color: statusColors.color }}>
+                                  {index + 1}
+                                </Typography>
+                              )}
+                            </Box>
+
+                            {/* Step Info */}
+                            <Box>
+                              <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '14px' }}>
+                                {stepLabel}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px', textTransform: 'capitalize' }}>
+                                {stepType}
+                                {step.completedAt && ` - ${new Date(step.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            {/* Score */}
+                            {step.score !== undefined && step.score !== null && (
+                              <Typography sx={{ fontWeight: 700, fontSize: '14px', color: statusColors.color }}>
+                                {Math.round(step.score)}%
+                              </Typography>
+                            )}
+
+                            {/* Status Chip */}
+                            <Chip
+                              label={getStepStatusLabel(step.status)}
+                              size="small"
+                              sx={{
+                                backgroundColor: statusColors.bg,
+                                color: statusColors.color,
+                                fontWeight: 600,
+                                fontSize: '0.7rem',
+                                height: 22,
+                                border: `1px solid ${statusColors.border}`,
+                              }}
+                            />
+
+                            {/* Expand Icon */}
+                            {hasDetails && (
+                              <IconButton size="small" sx={{ color: '#6b7280' }}>
+                                {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                              </IconButton>
+                            )}
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      {/* Expanded Interview Details */}
+                      <Collapse in={isExpanded}>
+                        {hasDetails && (
+                          <Box
+                            sx={{
+                              ml: 3,
+                              mt: 1,
+                              p: 2,
+                              backgroundColor: 'rgba(248, 249, 252, 1)',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(238, 240, 242, 1)',
+                            }}
+                          >
+                            {/* Interview Analytics Mini */}
+                            <Typography
+                              variant="subtitle2"
+                              sx={{ fontWeight: 600, color: 'rgba(23, 43, 77, 1)', fontSize: '13px', mb: 1.5 }}
+                            >
+                              Interview Details
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: 1.5,
+                                mb: 2,
+                              }}
+                            >
+                              <Box sx={{ textAlign: 'center', p: 1, backgroundColor: '#fff', borderRadius: '8px', border: '1px solid rgba(238,240,242,1)' }}>
+                                <Typography sx={{ fontWeight: 700, fontSize: '16px', color: '#8310FF' }}>
+                                  {Math.round(interviewDetails.interviewData?.finalReport?.coverage?.overall || 0)}%
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '10px' }}>
+                                  Coverage
+                                </Typography>
+                              </Box>
+                              <Box sx={{ textAlign: 'center', p: 1, backgroundColor: '#fff', borderRadius: '8px', border: '1px solid rgba(238,240,242,1)' }}>
+                                <Typography sx={{ fontWeight: 700, fontSize: '16px', color: '#6366f1' }}>
+                                  {formatDuration(interviewDetails.interviewData?.analytics?.duration || 0)}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '10px' }}>
+                                  Duration
+                                </Typography>
+                              </Box>
+                              <Box sx={{ textAlign: 'center', p: 1, backgroundColor: '#fff', borderRadius: '8px', border: '1px solid rgba(238,240,242,1)' }}>
+                                <Typography sx={{ fontWeight: 700, fontSize: '16px', color: '#10b981' }}>
+                                  {interviewDetails.interviewData?.analytics?.messageCount || 0}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '10px' }}>
+                                  Messages
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            {/* Coverage Areas */}
+                            {interviewDetails.interviewData?.finalReport?.coverage?.areas &&
+                             Object.keys(interviewDetails.interviewData.finalReport.coverage.areas).length > 0 && (
+                              <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151', fontSize: '12px', mb: 1 }}>
+                                  Coverage Areas
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                  {Object.entries(interviewDetails.interviewData.finalReport.coverage.areas).map(
+                                    ([areaKey, areaData]: [string, any], idx: number) => (
+                                      <Box key={areaKey} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                        <Typography sx={{ fontSize: '12px', color: '#374151', fontWeight: 500, minWidth: 120, textTransform: 'capitalize' }}>
+                                          {formatAreaName(areaKey)}
+                                        </Typography>
+                                        <LinearProgress
+                                          variant="determinate"
+                                          value={areaData.percentage || 0}
+                                          sx={{
+                                            flex: 1,
+                                            height: 6,
+                                            borderRadius: 3,
+                                            backgroundColor: '#e5e7eb',
+                                            '& .MuiLinearProgress-bar': {
+                                              backgroundColor: chartColors[idx % chartColors.length],
+                                              borderRadius: 3,
+                                            },
+                                          }}
+                                        />
+                                        <Typography sx={{ fontSize: '12px', fontWeight: 600, color: chartColors[idx % chartColors.length], minWidth: 35 }}>
+                                          {Math.round(areaData.percentage || 0)}%
+                                        </Typography>
+                                      </Box>
+                                    )
+                                  )}
+                                </Box>
+                              </Box>
+                            )}
+
+                            {/* AI Analysis for this step */}
+                            {interviewDetails.interviewData?.finalReport?.aiAnalysis && (
+                              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                                {interviewDetails.interviewData.finalReport.aiAnalysis.strongestAreas?.length > 0 && (
+                                  <Box sx={{ flex: 1, minWidth: 150, p: 1, backgroundColor: 'rgba(16, 185, 129, 0.06)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                                    <Typography sx={{ fontWeight: 600, color: '#065f46', fontSize: '11px', mb: 0.5 }}>
+                                      Strengths
+                                    </Typography>
+                                    {interviewDetails.interviewData.finalReport.aiAnalysis.strongestAreas.map((area: string, idx: number) => (
+                                      <Typography key={idx} sx={{ color: '#047857', fontSize: '11px' }}>
+                                        {formatAreaName(area)}
+                                      </Typography>
+                                    ))}
+                                  </Box>
+                                )}
+                                {interviewDetails.interviewData.finalReport.aiAnalysis.weakestAreas?.length > 0 && (
+                                  <Box sx={{ flex: 1, minWidth: 150, p: 1, backgroundColor: 'rgba(239, 68, 68, 0.06)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                                    <Typography sx={{ fontWeight: 600, color: '#991b1b', fontSize: '11px', mb: 0.5 }}>
+                                      Needs Improvement
+                                    </Typography>
+                                    {interviewDetails.interviewData.finalReport.aiAnalysis.weakestAreas.map((area: string, idx: number) => (
+                                      <Typography key={idx} sx={{ color: '#b91c1c', fontSize: '11px' }}>
+                                        {formatAreaName(area)}
+                                      </Typography>
+                                    ))}
+                                  </Box>
+                                )}
+                              </Box>
+                            )}
+
+                            {/* Summary */}
+                            {interviewDetails.interviewData?.finalReport?.summary && (
+                              <Box sx={{ mt: 1.5 }}>
+                                <Typography variant="body2" sx={{ color: '#374151', fontSize: '12px', lineHeight: 1.5 }}>
+                                  {interviewDetails.interviewData.finalReport.summary}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        )}
+                      </Collapse>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+
           {/* Charts Section */}
           {coverageChartData.length > 0 && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  position: 'relative',
-                  fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '35px',
-                  color: 'rgba(23, 43, 77, 1)',
-                  mb: 3,
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    bottom: 0,
-                    width: '38px',
-                    height: '5px',
-                    backgroundColor: 'rgba(41, 210, 145, 0.83)',
-                    borderRadius: '2px',
-                  },
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="h5" sx={{ ...sectionTitleStyle(), mb: 3 }}>
                 Coverage Analysis
               </Typography>
 
@@ -673,12 +935,7 @@ const AssessmentDetailsPage = () => {
                 <Box>
                   <Typography
                     variant="subtitle2"
-                    sx={{
-                      color: 'rgba(98, 111, 134, 1)',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      mb: 2,
-                    }}
+                    sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '14px', fontWeight: 500, mb: 2 }}
                   >
                     Coverage by Area
                   </Typography>
@@ -726,43 +983,17 @@ const AssessmentDetailsPage = () => {
                 <Box>
                   <Typography
                     variant="subtitle2"
-                    sx={{
-                      color: 'rgba(98, 111, 134, 1)',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      mb: 2,
-                    }}
+                    sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '14px', fontWeight: 500, mb: 2 }}
                   >
                     Skills Radar
                   </Typography>
                   <ResponsiveContainer width="100%" height={280}>
-                    <RadarChart
-                      cx="50%"
-                      cy="50%"
-                      outerRadius="70%"
-                      data={radarChartData}
-                    >
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarChartData}>
                       <PolarGrid stroke="#e5e7eb" />
-                      <PolarAngleAxis
-                        dataKey="subject"
-                        tick={{ fontSize: 10, fill: '#6b7280' }}
-                      />
-                      <PolarRadiusAxis
-                        angle={30}
-                        domain={[0, 100]}
-                        tick={{ fontSize: 10, fill: '#9ca3af' }}
-                      />
-                      <Radar
-                        name="Coverage"
-                        dataKey="score"
-                        stroke="#8310FF"
-                        fill="#8310FF"
-                        fillOpacity={0.3}
-                        strokeWidth={2}
-                      />
-                      <Legend
-                        wrapperStyle={{ fontSize: '12px' }}
-                      />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#6b7280' }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                      <Radar name="Coverage" dataKey="score" stroke="#8310FF" fill="#8310FF" fillOpacity={0.3} strokeWidth={2} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </Box>
@@ -772,36 +1003,8 @@ const AssessmentDetailsPage = () => {
 
           {/* Coverage Areas Details */}
           {Object.keys(coverageAreas).length > 0 && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  position: 'relative',
-                  fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '35px',
-                  color: 'rgba(23, 43, 77, 1)',
-                  mb: 2,
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    bottom: 0,
-                    width: '38px',
-                    height: '5px',
-                    backgroundColor: 'rgba(41, 210, 145, 0.83)',
-                    borderRadius: '2px',
-                  },
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="h5" sx={sectionTitleStyle()}>
                 Coverage Areas
               </Typography>
 
@@ -816,14 +1019,7 @@ const AssessmentDetailsPage = () => {
                       border: '1px solid rgba(238, 240, 242, 1)',
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 1.5,
-                      }}
-                    >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Box
                           sx={{
@@ -836,23 +1032,10 @@ const AssessmentDetailsPage = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          <WorkIcon
-                            sx={{
-                              fontSize: 18,
-                              color: chartColors[index % chartColors.length],
-                            }}
-                          />
+                          <WorkIcon sx={{ fontSize: 18, color: chartColors[index % chartColors.length] }} />
                         </Box>
                         <Box>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{
-                              fontWeight: 600,
-                              color: '#111827',
-                              fontSize: '14px',
-                              textTransform: 'capitalize',
-                            }}
-                          >
+                          <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '14px', textTransform: 'capitalize' }}>
                             {formatAreaName(areaKey)}
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px' }}>
@@ -873,14 +1056,7 @@ const AssessmentDetailsPage = () => {
                             border: `1px solid ${areaData.completed ? '#10b981' : '#f59e0b'}`,
                           }}
                         />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 700,
-                            color: chartColors[index % chartColors.length],
-                            fontSize: '16px',
-                          }}
-                        >
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: chartColors[index % chartColors.length], fontSize: '16px' }}>
                           {Math.round(areaData.percentage || 0)}%
                         </Typography>
                       </Box>
@@ -931,36 +1107,8 @@ const AssessmentDetailsPage = () => {
           {(aiAnalysis.strongestAreas?.length > 0 ||
             aiAnalysis.weakestAreas?.length > 0 ||
             aiAnalysis.recommendedFocus?.length > 0) && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  position: 'relative',
-                  fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '35px',
-                  color: 'rgba(23, 43, 77, 1)',
-                  mb: 2,
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    bottom: 0,
-                    width: '38px',
-                    height: '5px',
-                    backgroundColor: 'rgba(131, 16, 255, 0.83)',
-                    borderRadius: '2px',
-                  },
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="h5" sx={sectionTitleStyle('rgba(131, 16, 255, 0.83)')}>
                 AI Analysis
               </Typography>
 
@@ -980,15 +1128,12 @@ const AssessmentDetailsPage = () => {
                       border: '1px solid rgba(16, 185, 129, 0.15)',
                     }}
                   >
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: '#065f46', mb: 1, fontSize: '13px' }}
-                    >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#065f46', mb: 1, fontSize: '13px' }}>
                       Strongest Areas
                     </Typography>
                     {aiAnalysis.strongestAreas.map((area: string, idx: number) => (
                       <Typography key={idx} variant="body2" sx={{ color: '#047857', fontSize: '12px', mb: 0.5 }}>
-                        • {area}
+                        {formatAreaName(area)}
                       </Typography>
                     ))}
                   </Box>
@@ -1003,15 +1148,12 @@ const AssessmentDetailsPage = () => {
                       border: '1px solid rgba(239, 68, 68, 0.15)',
                     }}
                   >
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: '#991b1b', mb: 1, fontSize: '13px' }}
-                    >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#991b1b', mb: 1, fontSize: '13px' }}>
                       Areas for Improvement
                     </Typography>
                     {aiAnalysis.weakestAreas.map((area: string, idx: number) => (
                       <Typography key={idx} variant="body2" sx={{ color: '#b91c1c', fontSize: '12px', mb: 0.5 }}>
-                        • {area}
+                        {formatAreaName(area)}
                       </Typography>
                     ))}
                   </Box>
@@ -1026,15 +1168,12 @@ const AssessmentDetailsPage = () => {
                       border: '1px solid rgba(245, 158, 11, 0.15)',
                     }}
                   >
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: '#92400e', mb: 1, fontSize: '13px' }}
-                    >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#92400e', mb: 1, fontSize: '13px' }}>
                       Recommended Focus
                     </Typography>
                     {aiAnalysis.recommendedFocus.map((focus: string, idx: number) => (
                       <Typography key={idx} variant="body2" sx={{ color: '#a16207', fontSize: '12px', mb: 0.5 }}>
-                        • {focus}
+                        {formatAreaName(focus)}
                       </Typography>
                     ))}
                   </Box>
@@ -1045,36 +1184,8 @@ const AssessmentDetailsPage = () => {
 
           {/* Required Skills */}
           {getRequiredSkills().length > 0 && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  position: 'relative',
-                  fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '35px',
-                  color: 'rgba(23, 43, 77, 1)',
-                  mb: 2,
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    bottom: 0,
-                    width: '38px',
-                    height: '5px',
-                    backgroundColor: 'rgba(99, 102, 241, 0.83)',
-                    borderRadius: '2px',
-                  },
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="h5" sx={sectionTitleStyle('rgba(99, 102, 241, 0.83)')}>
                 Required Skills
               </Typography>
 
@@ -1089,14 +1200,7 @@ const AssessmentDetailsPage = () => {
                       border: '1px solid rgba(238, 240, 242, 1)',
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 1,
-                      }}
-                    >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Box
                           sx={{
@@ -1109,35 +1213,22 @@ const AssessmentDetailsPage = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          <Typography
-                            sx={{
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color: '#6366f1',
-                            }}
-                          >
+                          <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#6366f1' }}>
                             {skill.name?.charAt(0)?.toUpperCase() || 'S'}
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{
-                              fontWeight: 600,
-                              color: '#111827',
-                              fontSize: '14px',
-                            }}
-                          >
+                          <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '14px' }}>
                             {skill.name}
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '11px' }}>
-                            {skill.category} • Level {skill.level}
+                            {skill.category} - {skill.level}
                           </Typography>
                         </Box>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Chip
-                          label={skill.category}
+                          label={skill.importance || skill.category}
                           size="small"
                           sx={{
                             backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -1146,34 +1237,11 @@ const AssessmentDetailsPage = () => {
                             fontSize: '0.65rem',
                             height: 20,
                             border: '1px solid rgba(99, 102, 241, 0.3)',
+                            textTransform: 'capitalize',
                           }}
                         />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 700,
-                            color: '#6366f1',
-                            fontSize: '16px',
-                          }}
-                        >
-                          {skill.percentage}%
-                        </Typography>
                       </Box>
                     </Box>
-
-                    <LinearProgress
-                      variant="determinate"
-                      value={skill.percentage || 0}
-                      sx={{
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: '#e5e7eb',
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: '#6366f1',
-                          borderRadius: 3,
-                        },
-                      }}
-                    />
                   </Box>
                 ))}
               </Box>
@@ -1181,22 +1249,14 @@ const AssessmentDetailsPage = () => {
               {/* Soft Skills */}
               {getSoftSkills().length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: 'rgba(98, 111, 134, 1)',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      mb: 1.5,
-                    }}
-                  >
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '14px', fontWeight: 500, mb: 1.5 }}>
                     Soft Skills
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {getSoftSkills().map((skill: any, index: number) => (
                       <Chip
                         key={skill._id || index}
-                        label={`${skill.name} (${skill.percentage}%)`}
+                        label={`${skill.name} - ${skill.level}`}
                         size="small"
                         sx={{
                           backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -1217,15 +1277,7 @@ const AssessmentDetailsPage = () => {
                 getSuggestedSkills().frameworks?.length > 0 ||
                 getSuggestedSkills().tools?.length > 0) && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: 'rgba(98, 111, 134, 1)',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      mb: 1.5,
-                    }}
-                  >
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '14px', fontWeight: 500, mb: 1.5 }}>
                     Suggested Skills
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -1282,24 +1334,8 @@ const AssessmentDetailsPage = () => {
 
           {/* Summary */}
           {getSummary() && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: 'rgba(98, 111, 134, 1)',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  mb: 1,
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '15px', fontWeight: 500, mb: 1 }}>
                 Summary
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 1)', fontSize: '12px', fontWeight: 400, lineHeight: 1.6 }}>
@@ -1310,49 +1346,17 @@ const AssessmentDetailsPage = () => {
 
           {/* Job Details */}
           {getJobDescription() && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: 'rgba(98, 111, 134, 1)',
-                  fontSize: '15px',
-                  fontWeight: 500,
-                  mb: 1,
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '15px', fontWeight: 500, mb: 1 }}>
                 Job Description
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'rgba(0, 0, 0, 1)',
-                  fontSize: '12px',
-                  fontWeight: 400,
-                  maxWidth: '600px',
-                  lineHeight: 1.6,
-                }}
-              >
+              <Typography variant="body2" sx={{ color: 'rgba(0, 0, 0, 1)', fontSize: '12px', fontWeight: 400, maxWidth: '600px', lineHeight: 1.6 }}>
                 {getJobDescription()}
               </Typography>
 
               {assessment?.post?.jobDetails?.requirements?.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: 'rgba(98, 111, 134, 1)',
-                      fontSize: '15px',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '15px', fontWeight: 500 }}>
                     Requirements
                   </Typography>
                   <List
@@ -1361,29 +1365,15 @@ const AssessmentDetailsPage = () => {
                       maxWidth: '600px',
                       pl: 2,
                       listStyleType: 'disc',
-                      '& .MuiListItem-root': {
-                        paddingTop: 0,
-                        paddingBottom: 0,
-                      },
+                      '& .MuiListItem-root': { paddingTop: 0, paddingBottom: 0 },
                     }}
                   >
                     {assessment.post.jobDetails.requirements.map((req: string, index: number) => (
-                      <ListItem
-                        key={index}
-                        sx={{
-                          display: 'list-item',
-                          pl: 0,
-                        }}
-                      >
+                      <ListItem key={index} sx={{ display: 'list-item', pl: 0 }}>
                         <ListItemText
                           primary={req}
                           sx={{ m: 0 }}
-                          primaryTypographyProps={{
-                            fontSize: '12px',
-                            fontWeight: 400,
-                            lineHeight: '18px',
-                            color: 'rgba(0, 0, 0, 1)',
-                          }}
+                          primaryTypographyProps={{ fontSize: '12px', fontWeight: 400, lineHeight: '18px', color: 'rgba(0, 0, 0, 1)' }}
                         />
                       </ListItem>
                     ))}
@@ -1393,14 +1383,7 @@ const AssessmentDetailsPage = () => {
 
               {assessment?.post?.jobDetails?.responsibilities?.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: 'rgba(98, 111, 134, 1)',
-                      fontSize: '15px',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(98, 111, 134, 1)', fontSize: '15px', fontWeight: 500 }}>
                     Responsibilities
                   </Typography>
                   <List
@@ -1409,29 +1392,15 @@ const AssessmentDetailsPage = () => {
                       maxWidth: '600px',
                       pl: 2,
                       listStyleType: 'disc',
-                      '& .MuiListItem-root': {
-                        paddingTop: 0,
-                        paddingBottom: 0,
-                      },
+                      '& .MuiListItem-root': { paddingTop: 0, paddingBottom: 0 },
                     }}
                   >
                     {assessment.post.jobDetails.responsibilities.map((resp: string, index: number) => (
-                      <ListItem
-                        key={index}
-                        sx={{
-                          display: 'list-item',
-                          pl: 0,
-                        }}
-                      >
+                      <ListItem key={index} sx={{ display: 'list-item', pl: 0 }}>
                         <ListItemText
                           primary={resp}
                           sx={{ m: 0 }}
-                          primaryTypographyProps={{
-                            fontSize: '12px',
-                            fontWeight: 400,
-                            lineHeight: '18px',
-                            color: 'rgba(0, 0, 0, 1)',
-                          }}
+                          primaryTypographyProps={{ fontSize: '12px', fontWeight: 400, lineHeight: '18px', color: 'rgba(0, 0, 0, 1)' }}
                         />
                       </ListItem>
                     ))}
@@ -1443,36 +1412,8 @@ const AssessmentDetailsPage = () => {
 
           {/* Recommendations */}
           {getRecommendations().length > 0 && (
-            <Box
-              sx={{
-                border: '1px solid rgba(98, 111, 134, 0.18)',
-                backgroundColor: 'rgba(253, 253, 253, 1)',
-                borderRadius: '12px',
-                px: 2,
-                py: 1.5,
-              }}
-            >
-              <Typography
-                variant="h5"
-                sx={{
-                  position: 'relative',
-                  fontWeight: 600,
-                  fontSize: '20px',
-                  lineHeight: '35px',
-                  color: 'rgba(23, 43, 77, 1)',
-                  mb: 2,
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    left: 0,
-                    bottom: 0,
-                    width: '38px',
-                    height: '5px',
-                    backgroundColor: 'rgba(245, 158, 11, 0.83)',
-                    borderRadius: '2px',
-                  },
-                }}
-              >
+            <Box sx={sectionStyle}>
+              <Typography variant="h5" sx={sectionTitleStyle('rgba(245, 158, 11, 0.83)')}>
                 Recommendations ({getRecommendations().length})
               </Typography>
 
@@ -1483,9 +1424,7 @@ const AssessmentDetailsPage = () => {
                     sx={{
                       py: 1,
                       px: 0,
-                      '&:not(:last-child)': {
-                        borderBottom: '1px solid rgba(238, 240, 242, 1)',
-                      },
+                      '&:not(:last-child)': { borderBottom: '1px solid rgba(238, 240, 242, 1)' },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 32 }}>
@@ -1508,12 +1447,7 @@ const AssessmentDetailsPage = () => {
                     <ListItemText
                       primary={rec}
                       sx={{
-                        '& .MuiListItemText-primary': {
-                          fontWeight: 400,
-                          lineHeight: 1.5,
-                          fontSize: '13px',
-                          color: '#111827',
-                        },
+                        '& .MuiListItemText-primary': { fontWeight: 400, lineHeight: 1.5, fontSize: '13px', color: '#111827' },
                       }}
                     />
                   </ListItem>
