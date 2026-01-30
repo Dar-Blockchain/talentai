@@ -20,13 +20,10 @@ import {
   InputAdornment,
   Select,
   MenuItem,
-  Card,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import BusinessIcon from "@mui/icons-material/Business";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
-import TuneIcon from "@mui/icons-material/Tune";
 import { SearchOff } from "@mui/icons-material";
 
 // Styled Components
@@ -48,12 +45,11 @@ const CompanyProfilesAssessments: React.FC = () => {
   const [assessmentStatusFilter, setAssessmentStatusFilter] = useState("all");
   const [assessmentSort, setAssessmentSort] = useState("date_desc");
 
-  // Add function to fetch company profiles
   const fetchCompanyProfiles = async () => {
     try {
       setIsLoadingProfiles(true);
       setProfilesError(null);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("api_token");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine`,
@@ -73,51 +69,63 @@ const CompanyProfilesAssessments: React.FC = () => {
       const data = await response.json();
       let normalized: any[] = [];
 
-      // Handle the new API response shape: { success, message, count, data: [...] }
-      if (Array.isArray(data)) {
-        normalized = data;
-      } else if (Array.isArray(data?.data)) {
-        normalized = data.data;
-      } else if (Array.isArray(data?.results)) {
-        normalized = data.results;
-      } else if (Array.isArray(data?.assessments)) {
-        normalized = data.assessments;
-      } else {
-        normalized = [];
+      // Handle the new grouped-by-post API response:
+      // { success, message, count, data: [{ post, assessments: [{ assessment, candidatePostStepProgress }] }] }
+      const rawData = data?.data || data;
+
+      if (Array.isArray(rawData)) {
+        // Check if it's the new grouped format (array of { post, assessments })
+        if (rawData.length > 0 && rawData[0]?.assessments && rawData[0]?.post) {
+          // New grouped format: flatten assessments from all posts
+          rawData.forEach((group: any) => {
+            const post = group.post;
+            if (Array.isArray(group.assessments)) {
+              group.assessments.forEach((item: any) => {
+                const a = item.assessment || item;
+                normalized.push({
+                  ...a,
+                  // Ensure post is available at top level
+                  post: a.post || post,
+                  // Attach step progress if available
+                  candidatePostStepProgress: item.candidatePostStepProgress || null,
+                });
+              });
+            }
+          });
+        } else {
+          // Legacy flat array format
+          normalized = rawData;
+        }
+      } else if (Array.isArray(rawData?.results)) {
+        normalized = rawData.results;
+      } else if (Array.isArray(rawData?.assessments)) {
+        normalized = rawData.assessments;
       }
 
-      // Map the response to a consistent format based on new API structure
+      // Map the response to a consistent format
       const mappedAssessments = normalized.map((a: any) => ({
         _id: a._id,
-        // New API has candidate object directly
         candidate: a.candidate,
         candidateName: a.candidate?.username || "",
         candidateEmail: a.candidate?.email || "",
-        // New API has post object with jobDetails
         post: a.post,
         jobTitle: a.post?.jobDetails?.title || "",
         jobStatus: a.post?.status || "",
-        // Interview data contains the assessment details
         interviewData: a.interviewData,
         interviewType: a.interviewData?.interviewType || "HR_INTERVIEW",
-        // Get coverage score from finalReport
         coverageScore: a.interviewData?.finalReport?.coverage?.overall || 0,
-        // Get analytics data
         analytics: a.interviewData?.analytics,
         duration: a.interviewData?.analytics?.duration || 0,
         messageCount: a.interviewData?.analytics?.messageCount || 0,
-        // Timestamps
         timestamp: a.createdAt || a.timestamp,
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
-        // Final report summary
         summary: a.interviewData?.finalReport?.summary || "",
         recommendations: a.interviewData?.finalReport?.recommendations || [],
-        // Coverage areas for detailed view
         coverageAreas: a.interviewData?.finalReport?.coverage?.areas || {},
-        // AI Analysis
         aiAnalysis: a.interviewData?.finalReport?.aiAnalysis || {},
-        // Raw data for modal
+        completed: a.completed,
+        candidatePostStepProgress: a.candidatePostStepProgress,
         raw: a,
       }));
 
@@ -130,7 +138,6 @@ const CompanyProfilesAssessments: React.FC = () => {
     }
   };
 
-  // Add useEffect to fetch profiles when component mounts
   useEffect(() => {
     fetchCompanyProfiles();
   }, []);
@@ -194,10 +201,8 @@ const CompanyProfilesAssessments: React.FC = () => {
               color: "rgba(19, 163, 108, 0.83)",
               fontFamily: "Poppins",
               fontWeight: 500,
-              fontStyle: "medium",
               fontSize: "20px",
               lineHeight: "28px",
-              letterSpacing: "0",
               mb: 1,
             }}
           >
@@ -211,12 +216,9 @@ const CompanyProfilesAssessments: React.FC = () => {
               mb: 4,
               fontFamily: "Poppins",
               fontWeight: 400,
-              fontStyle: "normal",
               fontSize: "14px",
               lineHeight: "25px",
-              letterSpacing: "0px",
               textAlign: "center",
-              verticalAlign: "middle",
             }}
           >
             There are no assessments available at the moment.
@@ -225,7 +227,7 @@ const CompanyProfilesAssessments: React.FC = () => {
       );
     }
 
-    // Helpers to support the new API shape
+    // Helpers
     const getCandidateName = (a: any) =>
       (a?.candidateName || a?.candidate?.username || "").toLowerCase();
     const getCandidateEmail = (a: any) =>
@@ -233,10 +235,8 @@ const CompanyProfilesAssessments: React.FC = () => {
     const getJobTitle = (a: any) =>
       (a?.jobTitle || a?.post?.jobDetails?.title || "").toLowerCase();
     const getScore = (a: any) => {
-      // Coverage score from finalReport (0-100 scale)
       const coverage = Number(a?.coverageScore);
       if (!Number.isNaN(coverage) && coverage > 0) return coverage;
-      // Fallback to analytics coverage percentage
       const analyticsCoverage = Number(a?.analytics?.coveragePercentage);
       if (!Number.isNaN(analyticsCoverage)) return analyticsCoverage;
       return 0;
@@ -247,11 +247,9 @@ const CompanyProfilesAssessments: React.FC = () => {
       a?.interviewType || a?.interviewData?.interviewType || "HR_INTERVIEW";
     const getStatus = (a: any) => {
       const score = getScore(a);
-      // Consider completed areas vs total areas for status
       const completedAreas = a?.analytics?.completedAreas || 0;
       const totalAreas = a?.analytics?.totalAreas || 4;
       const completionRate = totalAreas > 0 ? (completedAreas / totalAreas) * 100 : 0;
-      // Use score if available, otherwise use completion rate
       const effectiveScore = score > 0 ? score : completionRate;
       return effectiveScore >= 50 ? "good" : "poor";
     };
@@ -313,7 +311,7 @@ const CompanyProfilesAssessments: React.FC = () => {
     );
 
     const visibleAssessments = sortedAssessments.slice(0, displayedAssessments);
-    const hasMore = companyProfiles.length > displayedAssessments;
+    const hasMore = sortedAssessments.length > displayedAssessments;
 
     return (
       <>
@@ -413,7 +411,7 @@ const CompanyProfilesAssessments: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {visibleAssessments.map((assessment, index) => {
+              {visibleAssessments.map((assessment) => {
                 const score = getScore(assessment);
                 const isGoodMatch = getStatus(assessment) === "good";
                 const interviewType = getInterviewType(assessment);
@@ -574,6 +572,21 @@ const CompanyProfilesAssessments: React.FC = () => {
             </Typography>
           </Box>
         )}
+        {hasMore && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <Button
+              onClick={() => setDisplayedAssessments((prev) => prev + 10)}
+              sx={{
+                textTransform: "none",
+                color: "#10b981",
+                fontWeight: 500,
+                "&:hover": { backgroundColor: "rgba(16, 185, 129, 0.08)" },
+              }}
+            >
+              Load More ({sortedAssessments.length - displayedAssessments} remaining)
+            </Button>
+          </Box>
+        )}
       </>
     );
   };
@@ -595,10 +608,8 @@ const CompanyProfilesAssessments: React.FC = () => {
             color: "rgba(0, 0, 0, 1)",
             fontFamily: "Poppins",
             fontWeight: 600,
-            fontStyle: "normal",
             fontSize: "20px",
             lineHeight: "100%",
-            letterSpacing: "0",
             position: "relative",
             "&:after": {
               content: '""',
@@ -646,26 +657,6 @@ const CompanyProfilesAssessments: React.FC = () => {
               },
             }}
           />
-          {/* <Select
-            size="small"
-            value={assessmentStatusFilter}
-            onChange={(e) =>
-              setAssessmentStatusFilter(e.target.value as string)
-            }
-            displayEmpty
-            sx={{
-              minWidth: 160,
-              backgroundColor: "white",
-              borderRadius: "12px",
-              "& .MuiOutlinedInput-notchedOutline": {
-                border: "1px solid #e5e7eb",
-              },
-            }}
-          >
-            <MenuItem value="all">All matches</MenuItem>
-            <MenuItem value="good">Good match (&gt;= 70)</MenuItem>
-            <MenuItem value="poor">Poor match (&lt; 70)</MenuItem>
-          </Select> */}
           <Select
             size="small"
             value={assessmentSort}
@@ -680,18 +671,14 @@ const CompanyProfilesAssessments: React.FC = () => {
               fontWeight: 400,
               fontSize: "0.875rem",
               backgroundColor: "white",
-
               color: "rgba(84, 98, 116, 1)",
-
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(165, 172, 181, 1)",
                 borderWidth: "1px",
               },
-
               "&:hover .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(165, 172, 181, 0.8)",
               },
-
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                 borderColor: "rgba(165, 172, 181, 1)",
               },
