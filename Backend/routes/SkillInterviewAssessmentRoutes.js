@@ -45,7 +45,7 @@ router.post('/', create);
 //router.get('/:id/summary', getSummary);
 
 // GET /api/skill-interview-assessments/:id
-//router.get('/:id', getById);
+router.get('/:id', getById);
 
 // GET /api/skill-interview-assessments (must be last among GET routes)
 // Query params: page, limit, interviewType, candidateId, interviewerId
