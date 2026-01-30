@@ -196,7 +196,57 @@ module.exports.getPostInterviewAssessmentById = async (assessmentId) => {
       throw new Error('Post interview assessment not found');
     }
 
-    return assessment;
+    // =======================
+    // FETCH STEPS DATA
+    // =======================
+    let stepsData = null;
+    try {
+      const candidatePostStepProgress = await CandidatePostStepProgress.findOne({
+        idCandidate: assessment.candidate._id,
+        idPost: assessment.post._id
+      })
+        .populate({
+          path: 'steps.stepId',
+          model: 'PostSteps'
+        })
+        .populate({
+          path: 'steps.interviewDetails',
+          model: 'PostInterviewAssessment'
+        })
+        .populate('currentStep');
+
+      if (candidatePostStepProgress) {
+        stepsData = {
+          _id: candidatePostStepProgress._id,
+          idCandidate: candidatePostStepProgress.idCandidate,
+          idPost: candidatePostStepProgress.idPost,
+          currentStep: candidatePostStepProgress.currentStep,
+          steps: candidatePostStepProgress.steps.map(step => ({
+            stepId: step.stepId,
+            interviewDetails: step.interviewDetails,
+            status: step.status,
+            passed: step.passed,
+            finalScore: step.finalScore,
+            attempts: step.attempts,
+            completedAt: step.completedAt
+          })),
+          createdAt: candidatePostStepProgress.createdAt,
+          updatedAt: candidatePostStepProgress.updatedAt
+        };
+      }
+    } catch (stepsError) {
+      console.warn('⚠️ Warning fetching steps data:', stepsError.message);
+      // Don't throw - steps data is optional
+    }
+
+    // =======================
+    // RETURN WITH STEPS DATA
+    // =======================
+    return {
+      assessment,
+      stepsData,
+      hasSteps: stepsData !== null
+    };
   } catch (error) {
     console.error('❌ Error getting post interview assessment:', error.message);
     throw error;
