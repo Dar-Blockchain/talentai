@@ -2,7 +2,7 @@ const AgentModel = require("../models/AgentModel");
 const { createHederaWallet } = require("../services/hedera.service");
 const {
   LangChainTogetherAIAgent,
-} = require("../helpers/langchainTogetherAIAgent");
+} = require("../helpers/langchain-togetherai-agent.helpers");
 const {
   HederaLangchainToolkit,
   AgentMode,

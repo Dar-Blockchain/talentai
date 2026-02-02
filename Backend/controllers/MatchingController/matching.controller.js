@@ -6,7 +6,7 @@ const { calculateMatchScore } = require("../../services/MatchingService/matching
 const { getMatchingConfig } = require("../../services/MatchingService/matchingConfig.service");
 const UnlockCandidate = require("../../models/UnlockCandidateModel");
 const PostInterviewAssessment = require("../../models/PostInterviewAssessmentModel");
-const { prepareSkills } = require("../../helpers/matchingHelpers");
+const { prepareSkills } = require("../../helpers/matching.helpers");
 
 exports.matchCandidatesToJob = async (req, res) => {
   try {

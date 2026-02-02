@@ -1,4 +1,4 @@
-const { LangChainTogetherAIAgent } = require('../helpers/langchainTogetherAIAgent');
+const { LangChainTogetherAIAgent } = require('../helpers/langchain-togetherai-agent.helpers');
 require('dotenv').config();
 
 /**

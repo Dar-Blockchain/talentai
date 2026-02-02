@@ -3,7 +3,7 @@ const Agent = require('../../models/AgentModel');
 const Post = require('../../models/PostModel');
 const User = require('../../models/UserModel');
 const postPaymentService = require('../postPayment.service');
-const { validateCreateData, verifyAgentAndPostExist, getConfigWithPopulates } = require('../../helpers/agentConfigHelpers');
+const { validateCreateData, verifyAgentAndPostExist, getConfigWithPopulates } = require('../../helpers/agent-config.helpers');
 
 module.exports.createAgentConfig = async (data) => {
   try {

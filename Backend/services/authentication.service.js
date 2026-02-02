@@ -4,7 +4,7 @@ const { sendOTP } = require("../utils/mailing");
 const { generateOTP } = require("../utils/Onetimepassword");
 const { generateToken } = require("../utils/generateToken");
 const { getGmailByToken } = require("../utils/getGmailByToken");
-const { extractUsernameFromEmail, formatLocation } = require("../helpers/authValidationHelpers");
+const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
