@@ -1,6 +1,6 @@
 const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
-const { sendPostEmail } = require("../../utils/mailing");
+const { sendPostEmail } = require("../../utils/email-service");
 const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
 const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/post.validation.helpers");
 const notificationService = require("../../services/notificationSystem.service");

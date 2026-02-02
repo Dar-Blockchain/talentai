@@ -4,8 +4,8 @@
  */
 
 const { Together } = require("together-ai");
-const configManager = require("../utils/configManager");
-const redisSessionManager = require("../utils/redisSessionManager");
+const configManager = require("../utils/config-manager");
+const redisSessionManager = require("../utils/redis-session-manager");
 require('dotenv').config();
 
 /**
@@ -2909,9 +2909,9 @@ Update the real-time report with new AI-powered insights.`;
    */
   async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
     try {
-      const ResponseQualityAnalyzer = require('../utils/responseQualityAnalyzer');
-      const CandidateBehaviorTracker = require('../utils/candidateBehaviorTracker');
-      const ContextualInterventions = require('../utils/contextualInterventions');
+      const ResponseQualityAnalyzer = require('../utils/response-quality-analyzer');
+      const CandidateBehaviorTracker = require('../utils/candidate-behavior-tracker');
+      const ContextualInterventions = require('../utils/contextual-interventions');
 
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) {

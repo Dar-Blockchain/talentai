@@ -4,7 +4,7 @@ require("dotenv").config();
 const Post = require("../models/Post.model");
 
 const recruitementService = require("../../services/RecruitmentServices/recruitementStepService");
-const { HttpError } = require("../utils/httpUtils");
+const { HttpError } = require("../utils/http-utils");
 const PostSteps = require("../models/postSteps.model");
 const Profile = require("../models/ProfileModel");
 
