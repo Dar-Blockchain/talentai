@@ -12,10 +12,10 @@ const generateJobPostController = require("../controllers/PostControllers/genera
 
 
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const { controledAcces } = require('../middleware/controledAcces'); 
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const resolveCompanyActor = require("../middleware/resolveCompanyActor");
+const { requireAuthUser } = require("../middleware/auth.middleware");
+const { controledAcces } = require('../middleware/authorize.middleware.js'); 
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 
 // Toutes les routes ci-dessous nécessitent un compte Company authentifié

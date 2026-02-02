@@ -11,9 +11,9 @@ const router = express.Router();
 const todoController = require("../controllers/todo.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/authMiddleware');
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const { controledAcces } = require('../middleware/controledAcces'); 
+const { requireAuthUser } = require('../middleware/auth.middleware');
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
+const { controledAcces } = require('../middleware/authorize.middleware.js'); 
 
 
 // Auth candidat obligatoire + logs

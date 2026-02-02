@@ -11,8 +11,8 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authentication.controller");
 
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { requireAuthUser } = require("../middleware/auth.middleware");
+const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
 
 // Journalisation de toutes les requêtes de ce routeur

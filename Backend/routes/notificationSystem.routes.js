@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/notificationSystem.controller');
-const { requireAuthUser } = require('../middleware/authMiddleware');
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
-const resolveCompanyActor = require("../middleware/resolveCompanyActor");
+const { requireAuthUser } = require('../middleware/auth.middleware');
+const authLogMiddleware = require("../middleware/security/request-log.middleware");
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // All routes require an authenticated user
 router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));

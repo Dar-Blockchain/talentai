@@ -11,9 +11,9 @@ const router = express.Router();
 const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+const { requireAuthUser } = require("../middleware/auth.middleware");
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
+const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 
 
 // Toutes les routes ci-dessous nécessitent un admin authentifié

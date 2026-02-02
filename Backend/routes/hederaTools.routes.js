@@ -10,8 +10,8 @@ const router = express.Router();
 const hederaToolsController = require("../controllers/hederaTools.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/authMiddleware');
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
+const { requireAuthUser } = require('../middleware/auth.middleware');
+const authLogMiddleware = require("../middleware/security/request-log.middleware");
 
 // Auth requis + journalisation
 router.use(requireAuthUser, authLogMiddleware("HederaTools"));

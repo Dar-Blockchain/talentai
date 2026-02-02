@@ -9,7 +9,7 @@ const server = http.createServer(app);
 
 // Import utilities & logger
 const logger = require('./utils/logger');
-const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { errorHandler, notFoundHandler } = require('./middleware/global-error.middleware');
 
 // Import configurations
 const { registerMiddlewares } = require('./config/middleware');

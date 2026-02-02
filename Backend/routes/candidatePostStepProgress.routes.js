@@ -7,8 +7,8 @@
 const express = require('express');
 const router = express.Router();
 const candidatePostStepProgressController = require('../controllers/candidatePostStepProgress.controller');
-const {requireAuthUser} = require('../middleware/authMiddleware');
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const {requireAuthUser} = require('../middleware/auth.middleware');
+const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
 // Auth obligatoire pour toutes les routes
 router.use(requireAuthUser,authLogMiddleware("CandidatePostStepProgress"));

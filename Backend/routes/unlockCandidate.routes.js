@@ -5,9 +5,9 @@
 const express = require("express");
 const router = express.Router();
 const unlockCandidateController = require("../controllers/unlockCandidate.controller");
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
-const resolveCompanyActor = require("../middleware/resolveCompanyActor");
+const { requireAuthUser } = require("../middleware/auth.middleware");
+const authLogMiddleware = require("../middleware/security/request-log.middleware");
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // Apply logging middleware and authentication to all unlock candidate routes
 router.use(requireAuthUser, authLogMiddleware("UnlockCandidate"));
