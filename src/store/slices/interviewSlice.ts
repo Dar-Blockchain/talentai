@@ -70,6 +70,12 @@ interface SkillTypeAssessments {
   total: number;
 }
 
+interface InterviewReportState {
+  data: any | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -80,6 +86,7 @@ interface InterviewState {
   currentTab: string;
   technicalAssessments: SkillTypeAssessments;
   softAssessments: SkillTypeAssessments;
+  report: InterviewReportState;
 }
 
 const initialState: InterviewState = {
@@ -92,6 +99,7 @@ const initialState: InterviewState = {
   currentTab: 'post_interview',
   technicalAssessments: { data: [], loading: false, error: null, total: 0 },
   softAssessments: { data: [], loading: false, error: null, total: 0 },
+  report: { data: null, loading: false, error: null },
 };
 
 /**
@@ -232,6 +240,36 @@ export const fetchSkillAssessmentsByType = createAsyncThunk<
   }
 );
 
+/**
+ * Fetch a single interview report by ID
+ */
+export const fetchInterviewReport = createAsyncThunk<
+  any,
+  string,
+  { rejectValue: string }
+>(
+  'interview/fetchReport',
+  async (id, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/${id}`;
+      const response = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        return rejectWithValue('Failed to fetch interview details');
+      }
+
+      const json = await response.json();
+      return json.data;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching data');
+    }
+  }
+);
+
 const interviewSlice = createSlice({
   name: 'interview',
   initialState,
@@ -254,6 +292,9 @@ const interviewSlice = createSlice({
       state.data = [];
       state.total = 0;
       state.error = null;
+    },
+    clearReport: (state) => {
+      state.report = { data: null, loading: false, error: null };
     },
   },
   extraReducers: (builder) => {
@@ -289,6 +330,19 @@ const interviewSlice = createSlice({
         const target = skillType === 'technical' ? 'technicalAssessments' : 'softAssessments';
         state[target].loading = false;
         state[target].error = action.payload || 'An error occurred';
+      })
+      // ---- INTERVIEW REPORT ----
+      .addCase(fetchInterviewReport.pending, (state) => {
+        state.report.loading = true;
+        state.report.error = null;
+      })
+      .addCase(fetchInterviewReport.fulfilled, (state, action) => {
+        state.report.loading = false;
+        state.report.data = action.payload;
+      })
+      .addCase(fetchInterviewReport.rejected, (state, action) => {
+        state.report.loading = false;
+        state.report.error = action.payload || 'An error occurred';
       });
   },
 });
@@ -299,10 +353,14 @@ export const {
   setCurrentTab,
   clearError,
   clearInterviewData,
+  clearReport,
 } = interviewSlice.actions;
 
 export const selectInterview = (state: RootState) => state.interview;
 export const selectTechnicalAssessments = (state: RootState) => state.interview.technicalAssessments;
 export const selectSoftAssessments = (state: RootState) => state.interview.softAssessments;
+export const selectInterviewReport = (state: RootState) => state.interview.report.data;
+export const selectInterviewReportLoading = (state: RootState) => state.interview.report.loading;
+export const selectInterviewReportError = (state: RootState) => state.interview.report.error;
 
 export default interviewSlice.reducer;

@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -21,6 +21,15 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
 import dynamic from 'next/dynamic';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import {
+    fetchInterviewReport,
+    selectInterviewReport,
+    selectInterviewReportLoading,
+    selectInterviewReportError,
+    clearReport,
+} from '@/store/slices/interviewSlice';
 
 const PRIMARY_COLOR = 'rgba(163, 98, 239, 1)';
 const SECONDARY_COLOR = 'rgba(11, 82, 198, 1)';
@@ -254,34 +263,21 @@ const StatsCard = ({
 
 function CandidateInterviewDetailPage() {
     const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
     const { id } = router.query;
-    const [data, setData] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    const data = useSelector(selectInterviewReport);
+    const loading = useSelector(selectInterviewReportLoading);
+    const error = useSelector(selectInterviewReportError);
 
     useEffect(() => {
         if (!id) return;
-        setLoading(true);
-        setError(null);
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem('api_token');
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/${id}`;
-                const res = await fetch(url, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                });
-                if (!res.ok) throw new Error('Failed to fetch interview details');
-                const json = await res.json();
-                console.log('📊 Interview Details API Response:', json);
-                setData(json.data);
-            } catch (e: any) {
-                setError(e.message || 'Error fetching data');
-            } finally {
-                setLoading(false);
-            }
+        dispatch(fetchInterviewReport(id as string));
+
+        return () => {
+            dispatch(clearReport());
         };
-        fetchData();
-    }, [id]);
+    }, [id, dispatch]);
 
     const getScoreColor = (score: number) => {
         if (score >= 80) return SUCCESS_COLOR;
