@@ -1,4 +1,4 @@
-const agentConfigService = require('../services/Agent&AgendaServices/agentConfigService');
+const agentConfigService = require('../services/Agent&AgendaServices/agentConfig.service');
 
 const isValidMongoId = (id) => /^[0-9a-f]{24}$/i.test(String(id));
 

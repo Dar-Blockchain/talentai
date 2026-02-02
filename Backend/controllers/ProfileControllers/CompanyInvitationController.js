@@ -1,4 +1,4 @@
-const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitationService");
+const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
 
 module.exports.sentInvitation = async (req, res) => {
     try {

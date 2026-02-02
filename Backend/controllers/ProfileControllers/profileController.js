@@ -1,4 +1,4 @@
-const profileService = require("../../services/ProfileService/profileService");
+const profileService = require("../../services/ProfileService/profile.service");
 const {
   VALIDATION,
   buildUpdateData,

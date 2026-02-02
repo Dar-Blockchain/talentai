@@ -1,4 +1,4 @@
-const { normalizeSkillName } = require("../services/MatchingService/matchingService");
+const { normalizeSkillName } = require("../services/MatchingService/matching.service");
 
 /**
  * Prepare skills by normalizing their names

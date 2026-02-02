@@ -1,4 +1,4 @@
-const matchingConfigService = require('../../services/MatchingService/matchingConfigService');
+const matchingConfigService = require('../../services/MatchingService/matchingConfig.service');
 
 // POST /api/matching-config/add - Add new configuration (delegates to service)
 async function addConfig(req, res) {

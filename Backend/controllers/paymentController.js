@@ -1,7 +1,7 @@
-const tokenService = require("../services/tokenService");
-const hbarPricingService = require("../services/hbarPricingService");
-const taiTokenDistributionService = require("../services/taiTokenDistributionService");
-const hederaService = require("../services/hederaService");
+const tokenService = require("../services/token.service");
+const hbarPricingService = require("../services/hbarPricing.service");
+const taiTokenDistributionService = require("../services/taiTokenDistribution.service");
+const hederaService = require("../services/hedera.service");
 const User = require("../models/UserModel");
 const TokenTransaction = require("../models/TokenTransactionModel");
 const {

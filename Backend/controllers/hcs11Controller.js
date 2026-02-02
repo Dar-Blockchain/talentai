@@ -1,4 +1,4 @@
-const hcs11Service = require('../services/hcs11Service');
+const hcs11Service = require('../services/hcs11.service');
 
 /**
  * @swagger
@@ -438,7 +438,7 @@ const createCompanyAgent = async (req, res) => {
 
     // Step 1: Create Hedera wallet for this company agent
     console.log('💰 Creating Hedera Account...');
-    const { createHederaWallet } = require('../services/hederaService');
+    const { createHederaWallet } = require('../services/hedera.service');
     const hederaWallet = await createHederaWallet();
     
     console.log('✅ Hedera Account Created:');

@@ -3,7 +3,7 @@
  * Handles real-time interview sessions with AI decision engine
  */
 
-const intelligentInterviewService = require('../services/intelligentInterviewService');
+const intelligentInterviewService = require('../services/intelligentInterview.service');
 const { v4: uuidv4 } = require('uuid');
 
 class IntelligentInterviewController {

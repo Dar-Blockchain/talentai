@@ -1,7 +1,7 @@
 const UnlockCandidate = require("../models/UnlockCandidateModel");
-const tokenService = require("../services/tokenService");
+const tokenService = require("./token.service");
 const User = require("../models/UserModel");
-const postPaymentService = require('../services/postPaymentService');
+const postPaymentService = require('./postPayment.service');
 
 /**
  * Get all unlocked candidates by company

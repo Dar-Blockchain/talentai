@@ -1,4 +1,4 @@
-const CompanyMembershipService = require("../../services/ProfileService/CompanyMembershipService");
+const CompanyMembershipService = require("../../services/ProfileService/CompanyMembership.service");
 
 // Get all memberships for a company
 module.exports.getMembershipsByCompany = async (req, res) => {

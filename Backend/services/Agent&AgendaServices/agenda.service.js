@@ -5,9 +5,9 @@ const Profile = require("../../models/ProfileModel");
 const AgentConfig = require("../../models/AgentConfigModel");
 const {
   calculateMatchScore,
-} = require("../MatchingService/matchingForBidService");
+} = require("../MatchingService/matchingForBid.service");
 const axios = require("axios");
-const profileService = require("../../services/ProfileService/profileService");
+const profileService = require("../ProfileService/profile.service");
 const {
   submitEvaluationMessage,
 } = require("../../controllers/hrAgentController");

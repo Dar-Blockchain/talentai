@@ -1,4 +1,4 @@
-const logService = require('../services/logService');  // Importer le service des logs
+const logService = require('../services/log.service');  // Importer le service des logs
 
 // Fonction pour récupérer tous les logs
 module.exports.getAllLogs = async (req, res) => {

@@ -1,4 +1,4 @@
-const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessmentService");
+const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
 const PostSteps = require("../../models/postStepsModel");
 

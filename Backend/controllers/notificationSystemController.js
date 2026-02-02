@@ -1,4 +1,4 @@
-const notificationSystemService = require('../services/notificationSystemService');
+const notificationSystemService = require('../services/notificationSystem.service');
 
 // Create a system notification
 exports.createSystemNotification = async (req, res) => {

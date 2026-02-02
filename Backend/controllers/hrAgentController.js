@@ -1,5 +1,5 @@
 const AgentModel = require("../models/AgentModel");
-const { createHederaWallet } = require("../services/hederaService");
+const { createHederaWallet } = require("../services/hedera.service");
 const {
   LangChainTogetherAIAgent,
 } = require("../helpers/langchainTogetherAIAgent");
@@ -27,7 +27,7 @@ const Profile = require("../models/ProfileModel");
 
 // services/MatchingService/computeMatches.js
 
-const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matchingService");
+const { calculateMatchScore, normalizeSkillName } = require("../services/MatchingService/matching.service");
 
 async function computeMatches(jobPostId, companyId) {
   // Charger les candidats
@@ -224,7 +224,7 @@ const hrAgentController = {
         // Step 3: Handle AgentConfig creation if provided
         if (hasConfigData) {
           try {
-            const agentConfigService = require('../services/Agent&AgendaServices/agentConfigService');
+            const agentConfigService = require('../services/Agent&AgendaServices/agentConfig.service');
             
             // Ensure postId is taken from the agent config when missing
             // and set agentId after the agent is created (force string id).

@@ -1,4 +1,4 @@
-const generateJobPostService = require("../../services/PosteServices/generateJobPostService");
+const generateJobPostService = require("../../services/PosteServices/generateJobPost.service");
 
 module.exports.generateJobPost = async (req, res) => {
   try {

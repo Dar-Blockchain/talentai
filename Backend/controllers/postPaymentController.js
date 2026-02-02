@@ -1,4 +1,4 @@
-const postPaymentService = require('../services/postPaymentService');
+const postPaymentService = require('../services/postPayment.service');
 const Post = require('../models/PostModel');
 const User = require('../models/UserModel');
 

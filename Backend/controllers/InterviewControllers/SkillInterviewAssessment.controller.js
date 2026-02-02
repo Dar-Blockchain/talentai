@@ -1,4 +1,4 @@
-const SkillInterviewAssessmentService = require('../../services/InterviewServices/SkillInterviewAssessmentService');
+const SkillInterviewAssessmentService = require('../../services/InterviewServices/SkillInterviewAssessment.service');
 const SkillInterviewAssessment = require('../../models/SkillInterviewAssessmentModel');
 const Profile = require('../../models/ProfileModel');
 

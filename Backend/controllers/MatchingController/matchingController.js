@@ -2,8 +2,8 @@
 
 const JobPost = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
-const { calculateMatchScore } = require("../../services/MatchingService/matchingService");
-const { getMatchingConfig } = require("../../services/MatchingService/matchingConfigService");
+const { calculateMatchScore } = require("../../services/MatchingService/matching.service");
+const { getMatchingConfig } = require("../../services/MatchingService/matchingConfig.service");
 const UnlockCandidate = require("../../models/UnlockCandidateModel");
 const PostInterviewAssessment = require("../../models/PostInterviewAssessmentModel");
 const { prepareSkills } = require("../../helpers/matchingHelpers");

@@ -1,6 +1,6 @@
 const TokenBalance = require("../models/TokenBalanceModel");
 const TokenTransaction = require("../models/TokenTransactionModel");
-const hbarPricingService = require('./hbarPricingService');
+const hbarPricingService = require('./hbarPricing.service');
 const { v4: uuidv4 } = require('uuid');
 
 // TAI Token Configuration

@@ -1,4 +1,4 @@
-const postStepsService = require("../../services/PosteServices/postStepsService");
+const postStepsService = require("../../services/PosteServices/postSteps.service");
 
 // Create a new post step (single or multiple)
 module.exports.createPostStep = async (req, res) => {

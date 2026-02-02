@@ -1,4 +1,4 @@
-const { getMatchingConfig } = require("./matchingConfigService");
+const { getMatchingConfig } = require("./matchingConfig.service");
 const UnlockCandidate = require("../../models/UnlockCandidateModel");
 
 /* ------------------ CONSTANTS & HELPERS ------------------ */
