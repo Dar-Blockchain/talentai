@@ -26,6 +26,7 @@ import jobDetailsReducer from './slices/jobDetailsSlice';
 import manualPostReducer from './slices/manualPostSlice';
 import notificationReducer from './slices/notificationSlice';
 import memberReducer from './slices/memberSlice';
+import chatReducer from './slices/chatSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
@@ -44,7 +45,8 @@ const rootReducer = combineReducers({
   jobDetails: jobDetailsReducer,
   manualPost: manualPostReducer,
   notifications: notificationReducer,
-  member: memberReducer
+  member: memberReducer,
+  chat: chatReducer
 });
 
 const persistConfig = {
