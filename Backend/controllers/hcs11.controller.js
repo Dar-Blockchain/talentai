@@ -546,7 +546,7 @@ const createCompanyAgent = async (req, res) => {
     };
 
     // Use the existing HR agent profile creation function
-    const hrAgentController = require('./hrAgentController');
+    const hrAgentController = require('./hrAgent.controller');
     const profileResult = await hrAgentController.createAgentHCS11Profile(companyAgent);
 
     if (profileResult.success) {

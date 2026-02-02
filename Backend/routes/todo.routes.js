@@ -8,7 +8,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const todoController = require("../controllers/todoController");
+const todoController = require("../controllers/todo.controller");
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');

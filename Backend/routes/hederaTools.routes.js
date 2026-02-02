@@ -7,7 +7,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const hederaToolsController = require("../controllers/hederaToolsController");
+const hederaToolsController = require("../controllers/hederaTools.controller");
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');

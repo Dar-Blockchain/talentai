@@ -7,7 +7,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const companyPermissionsController = require("../controllers/companyPermissionsController");
+const companyPermissionsController = require("../controllers/companyPermissions.controller");
 
 // Import middlewares
 const { requireAuthUser } = require("../middleware/authMiddleware");

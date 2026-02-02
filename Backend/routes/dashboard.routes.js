@@ -8,7 +8,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const dashboardController = require("../controllers/dashboardController");
+const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
 const { requireAuthUser } = require("../middleware/authMiddleware");

@@ -5,7 +5,7 @@
  * ajouter `requireAuthUser` et une journalisation.
  */
 const express = require("express");
-const { matchCandidatesToJob } = require("../controllers/MatchingController/matchingController");
+const { matchCandidatesToJob } = require("../controllers/MatchingController/matching.controller");
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const { controledAcces } = require('../middleware/controledAcces'); 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")

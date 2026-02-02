@@ -1,4 +1,4 @@
-const unlockCandidateService = require("../services/unlockCandidateService");
+const unlockCandidateService = require("../services/unlockCandidate.service");
 
 /**
  * Get all unlocked candidates by company with pagination

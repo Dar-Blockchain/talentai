@@ -10,7 +10,7 @@ const axios = require("axios");
 const profileService = require("../ProfileService/profile.service");
 const {
   submitEvaluationMessage,
-} = require("../../controllers/hrAgentController");
+} = require("../../controllers/hrAgent.controller");
 
 let agendaInstance;
 let isInitialized = false;

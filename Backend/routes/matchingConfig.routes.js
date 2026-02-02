@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getConfig, updateConfig, addConfig } = require('../controllers/MatchingController/MatchingConfigController');
+const { getConfig, updateConfig, addConfig } = require('../controllers/MatchingController/MatchingConfig.controller');
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');

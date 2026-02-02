@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const hcs11Controller = require('../controllers/hcs11Controller');
+const hcs11Controller = require('../controllers/hcs11.controller');
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 

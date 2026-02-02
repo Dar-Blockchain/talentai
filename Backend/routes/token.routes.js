@@ -4,7 +4,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const tokenController = require("../controllers/tokenController");
+const tokenController = require("../controllers/token.controller");
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 

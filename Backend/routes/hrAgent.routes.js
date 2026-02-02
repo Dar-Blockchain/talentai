@@ -11,7 +11,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const hrAgentController = require("../controllers/hrAgentController");
+const hrAgentController = require("../controllers/hrAgent.controller");
 
 // Import middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
