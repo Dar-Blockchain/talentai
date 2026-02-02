@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import axios from 'axios';
 import {
   List,
   ListItem,
@@ -15,37 +14,26 @@ import {
   Divider,
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/store/store';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
-
-interface Conversation {
-  _id: string;
-  participants: Array<{
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    profile?: {
-      type?: string;
-    };
-  }>;
-  lastMessage?: {
-    text: string;
-    timestamp: string;
-  };
-  unreadCount: number;
-  updatedAt: string;
-}
+import {
+  fetchConversations,
+  selectConversations,
+  selectConversationsLoading,
+} from '@/store/slices/chatSlice';
 
 const ChatPage = () => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
   const profile = useSelector((state: RootState) => state.user?.connectedUser?.profile);
   const currentUserId = connectedUser?._id;
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Redux selectors
+  const conversations = useSelector(selectConversations);
+  const loading = useSelector(selectConversationsLoading);
 
   // Theme color based on user type
   const isCompany = profile?.type?.toLowerCase() === 'company';
@@ -53,30 +41,13 @@ const ChatPage = () => {
   const themeColorLight = isCompany ? 'rgba(41, 210, 145, 0.1)' : 'rgba(131, 16, 255, 0.1)';
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setConversations(response.data.data);
-      } catch (error) {
-        console.error('Failed to fetch conversations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (currentUserId) {
-      fetchConversations();
-    } else {
-      setLoading(false);
+      dispatch(fetchConversations());
     }
-  }, [currentUserId]);
+  }, [currentUserId, dispatch]);
 
-  const getOtherParticipant = (conv: Conversation) => {
-    return conv.participants.find(p => p._id !== currentUserId);
+  const getOtherParticipant = (conv: any) => {
+    return conv.participants.find((p: any) => p._id !== currentUserId);
   };
 
   const getDisplayName = (participant: any) => {
@@ -117,7 +88,7 @@ const ChatPage = () => {
 
   // Calculate stats
   const totalConversations = conversations.length;
-  const unreadConversations = conversations.filter(c => c.unreadCount > 0).length;
+  const unreadConversations = conversations.filter((c: any) => c.unreadCount > 0).length;
 
   return (
     <PageContainer>
@@ -291,7 +262,7 @@ No conversations yet
             }}
           >
             <List sx={{ p: 0 }}>
-              {conversations.map((conv, index) => {
+              {conversations.map((conv: any, index: number) => {
                 const otherUser = getOtherParticipant(conv);
                 const displayName = getDisplayName(otherUser);
                 const initial = getInitial(otherUser);
