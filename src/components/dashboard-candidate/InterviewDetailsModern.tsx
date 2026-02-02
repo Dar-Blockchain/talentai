@@ -1,7 +1,5 @@
 import React, {
-  useCallback,
   useEffect,
-  useRef,
   useState,
   useMemo,
 } from "react";
@@ -10,12 +8,10 @@ import {
   Box,
   Tabs,
   Tab,
-  Alert,
   CircularProgress,
   Button,
   Typography,
   Chip,
-  LinearProgress,
   Paper,
   Stack,
   Card,
@@ -25,17 +21,17 @@ import {
   Avatar,
   Pagination,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import PsychologyIcon from "@mui/icons-material/Psychology";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import {
+  fetchInterviewAssessments,
+  selectInterview,
+} from "@/store/slices/interviewSlice";
 
 
 const INTERVIEW_TYPES = [
@@ -63,84 +59,25 @@ export default function InterviewDetailsModern() {
   const { profile } = useSelector(
     (state: RootState) => state.user.connectedUser
   );
+  const dispatch = useDispatch<AppDispatch>();
   const [tab, setTab] = useState("post_interview");
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(4);
+  const limit = 4;
   const router = useRouter();
 
-  const profileIdRef = useRef(profile?._id);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const requestIdRef = useRef(0);
+  const { data, loading, error, total } = useSelector(selectInterview);
 
   useEffect(() => {
-    profileIdRef.current = profile?._id;
-  }, [profile]);
-
-  const fetchData = useCallback(
-    async (type: string, currentPage: number, signal?: AbortSignal) => {
-      const requestId = ++requestIdRef.current;
-      setLoading(true);
-      setError(null);
-
-      try {
-        const token = localStorage.getItem("api_token");
-        const realProfileId = profileIdRef.current;
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments?page=${currentPage}&limit=${limit}&candidateId=${realProfileId}`;
-
-        const res = await fetch(url, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          signal: signal,
-        });
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch interview details: ${res.status}`);
-        }
-
-        const json = await res.json();
-        const results = Array.isArray(json.results)
-          ? json.results
-          : Array.isArray(json.data)
-          ? json.data
-          : [];
-        const inferredTotal =
-          json.total !== undefined ? json.total : results.length;
-
-        if (requestIdRef.current === requestId) {
-          setData(results);
-          setTotal(inferredTotal);
-        }
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
-          setError(err.message || "An error occurred");
-          setData([]);
-          setTotal(0);
-        }
-      } finally {
-        if (requestIdRef.current === requestId) {
-          setLoading(false);
-        }
-      }
-    },
-    [limit]
-  );
-
-  useEffect(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    fetchData(tab, page, controller.signal);
-
-    return () => {
-      controller.abort();
-    };
-  }, [tab, page, fetchData]);
+    if (!profile?._id) return;
+    dispatch(
+      fetchInterviewAssessments({
+        type: tab,
+        page: page - 1,
+        limit,
+        candidateId: profile._id,
+      })
+    );
+  }, [tab, page, profile?._id, dispatch]);
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
@@ -151,7 +88,7 @@ export default function InterviewDetailsModern() {
 
   const handleTabChange = (newTab: string) => {
     setTab(newTab);
-    setPage(1); // Reset to page 1 when changing tabs
+    setPage(1);
   };
 
   const normalizedTab = useMemo(() => {
@@ -300,7 +237,7 @@ export default function InterviewDetailsModern() {
         ) :  (
           <>
             {normalizedTab === "application" ? (
-              <PostInterviewTab data={data} loading={loading} error={error} />
+              <PostInterviewTab data={data as any[]} loading={loading} error={error} />
             ) : (
               <Fade in timeout={500}>
                 <Box>

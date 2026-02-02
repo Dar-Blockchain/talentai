@@ -59,6 +59,13 @@ interface AdminAssessmentsState {
   total: number;
 }
 
+interface AssessmentDetailsState {
+  assessment: any | null;
+  stepsData: any | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -86,6 +93,7 @@ interface PostState {
   candidateAssessments: CandidateAssessmentsState;
   companyAssessments: CompanyAssessmentsState;
   adminAssessments: AdminAssessmentsState;
+  assessmentDetails: AssessmentDetailsState;
 }
 
 // Initial state
@@ -184,6 +192,12 @@ const initialState: PostState = {
     loading: false,
     error: null,
     total: 0,
+  },
+  assessmentDetails: {
+    assessment: null,
+    stepsData: null,
+    loading: false,
+    error: null,
   },
 };
 
@@ -971,6 +985,44 @@ export const fetchAdminAssessments = createAsyncThunk(
   }
 );
 
+// Async thunk to fetch a single post-interview assessment by ID
+export const fetchAssessmentDetails = createAsyncThunk<
+  { assessment: any; stepsData: any },
+  string,
+  { rejectValue: string }
+>(
+  "post/fetchAssessmentDetails",
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("api_token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch assessment details");
+      }
+
+      const data = await response.json();
+      const responseData = data.data || data;
+      const assessment = responseData.assessment || responseData;
+      const stepsData = responseData.stepsData || null;
+
+      return { assessment, stepsData };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to load assessment");
+    }
+  }
+);
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
@@ -1026,6 +1078,9 @@ const postSlice = createSlice({
       state.postPayment.loading = false;
       state.postPayment.error = null;
       state.postPayment.data = null;
+    },
+    clearAssessmentDetails(state) {
+      state.assessmentDetails = { assessment: null, stepsData: null, loading: false, error: null };
     },
   },
   extraReducers: (builder) => {
@@ -1218,6 +1273,20 @@ const postSlice = createSlice({
       .addCase(fetchAdminAssessments.rejected, (state, action) => {
         state.adminAssessments.loading = false;
         state.adminAssessments.error = action.payload as string;
+      })
+      // ---- ASSESSMENT DETAILS ----
+      .addCase(fetchAssessmentDetails.pending, (state) => {
+        state.assessmentDetails.loading = true;
+        state.assessmentDetails.error = null;
+      })
+      .addCase(fetchAssessmentDetails.fulfilled, (state, action) => {
+        state.assessmentDetails.loading = false;
+        state.assessmentDetails.assessment = action.payload.assessment;
+        state.assessmentDetails.stepsData = action.payload.stepsData;
+      })
+      .addCase(fetchAssessmentDetails.rejected, (state, action) => {
+        state.assessmentDetails.loading = false;
+        state.assessmentDetails.error = action.payload as string;
       });
   },
 });
@@ -1235,6 +1304,7 @@ export const {
   resetFlow,
   resetPostPayment,
   updateAgentConfigInCurrentJob,
+  clearAssessmentDetails,
 } = postSlice.actions;
 
 // Export reducer
@@ -1323,3 +1393,13 @@ export const selectAdminAssessmentsError = (state: { post: PostState }) =>
   state.post.adminAssessments.error;
 export const selectAdminAssessmentsTotal = (state: { post: PostState }) =>
   state.post.adminAssessments.total;
+
+// Assessment Details Selectors
+export const selectAssessmentDetails = (state: { post: PostState }) =>
+  state.post.assessmentDetails.assessment;
+export const selectAssessmentStepsData = (state: { post: PostState }) =>
+  state.post.assessmentDetails.stepsData;
+export const selectAssessmentDetailsLoading = (state: { post: PostState }) =>
+  state.post.assessmentDetails.loading;
+export const selectAssessmentDetailsError = (state: { post: PostState }) =>
+  state.post.assessmentDetails.error;
