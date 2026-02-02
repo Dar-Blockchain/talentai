@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
-  Container,
   Typography,
   CircularProgress,
   Alert,
@@ -11,14 +10,21 @@ import {
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchJobDetails } from "@/store/slices/jobDetailsSlice";
+import {
+  fetchJobDetails,
+  searchJobs,
+  selectJobSearchJobs,
+  selectJobSearchLoading,
+  selectJobSearchError,
+  selectJobSearchTotalPages,
+  selectJobSearchTotalJobs,
+} from "@/store/slices/jobDetailsSlice";
 import PageContainer from "@/components/layout/PageContainer";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import JobSearchBar from "@/components/posts/list/JobSearchBar";
 import JobCard from "@/components/posts/list/JobCard";
 import JobDetailsPanel from "@/components/posts/list/JobDetailsPanel";
-import { Job, transformJobData } from "@/utils/jobHelpers";
+import { Job } from "@/utils/jobHelpers";
 
 const JobSearchPage: React.FC = () => {
   const router = useRouter();
@@ -29,9 +35,12 @@ const JobSearchPage: React.FC = () => {
     (state: RootState) => state.jobDetails
   );
 
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Redux state for job search
+  const jobs = useSelector(selectJobSearchJobs);
+  const loading = useSelector(selectJobSearchLoading);
+  const error = useSelector(selectJobSearchError);
+  const totalPages = useSelector(selectJobSearchTotalPages);
+  const totalJobs = useSelector(selectJobSearchTotalJobs);
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,76 +48,17 @@ const JobSearchPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-  // Pagination metadata from API
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalJobs, setTotalJobs] = useState(0);
-
   // Track if URL params have been initialized
   const [urlParamsLoaded, setUrlParamsLoaded] = useState(false);
 
   // Job details state
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-  // Fetch jobs from backend API
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: jobsPerPage.toString(),
-        // Temporarily removed status filter to see all posts
-        // status: 'active',
-      });
-
-      // Add optional filters - use current state values
-      if (searchQuery) params.append("search", searchQuery);
-      // Don't send category to backend - we'll filter on frontend
-      if (selectedLocation && selectedLocation !== "All Locations") {
-        params.append("location", selectedLocation);
-      }
-
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-      const apiUrl = `${baseUrl}post/search?${params}`; // ⚠️ SLASH IS REQUIRED!
-
-      const response = await fetch(apiUrl);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ API Error:", errorText);
-        throw new Error(
-          `Failed to fetch jobs: ${response.status} - ${errorText}`
-        );
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Transform backend data to match frontend Job interface
-        const transformedJobs = (data.results || []).map(transformJobData);
-
-        setJobs(transformedJobs);
-        setTotalPages(data.totalPages || 1);
-        setTotalJobs(data.total || 0);
-      } else {
-        setError(data.message || "Failed to fetch jobs");
-      }
-    } catch (err) {
-      setError("Error loading jobs. Please try again later.");
-      console.error("Error fetching jobs:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery, selectedLocation]);
-
   // Initialize search params from URL on page load ONCE
   useEffect(() => {
     if (router.isReady && !urlParamsLoaded) {
       const { search, location } = router.query;
 
-      // Set state from URL parameters only on initial load
       if (search && typeof search === "string") {
         setSearchQuery(search);
       }
@@ -116,10 +66,8 @@ const JobSearchPage: React.FC = () => {
         setSelectedLocation(location);
       }
 
-      // Mark URL params as loaded
       setUrlParamsLoaded(true);
     } else if (router.isReady && urlParamsLoaded === false) {
-      // No URL params, mark as loaded anyway
       setUrlParamsLoaded(true);
     }
   }, [router.isReady, urlParamsLoaded]);
@@ -127,34 +75,44 @@ const JobSearchPage: React.FC = () => {
   // Fetch jobs whenever search parameters or page changes, but ONLY after URL params are loaded
   useEffect(() => {
     if (router.isReady && urlParamsLoaded) {
-      fetchJobs();
+      dispatch(
+        searchJobs({
+          page: currentPage,
+          limit: jobsPerPage,
+          search: searchQuery || undefined,
+          location: selectedLocation || undefined,
+        })
+      );
     }
-  }, [router.isReady, urlParamsLoaded, fetchJobs]);
+  }, [router.isReady, urlParamsLoaded, currentPage, searchQuery, selectedLocation, dispatch]);
 
   const handleSearch = () => {
-    // If already on page 1, force a fetch. Otherwise, set to page 1 which will trigger fetch
     if (currentPage === 1) {
-      fetchJobs();
+      dispatch(
+        searchJobs({
+          page: 1,
+          limit: jobsPerPage,
+          search: searchQuery || undefined,
+          location: selectedLocation || undefined,
+        })
+      );
     } else {
       setCurrentPage(1);
     }
   };
 
   const handleJobClick = (jobId: string) => {
-    // Find the selected job
     const job = jobs.find((j) => j.id === jobId);
     if (job) {
       setSelectedJob(job);
-      // Dispatch Redux action to fetch job details
       dispatch(fetchJobDetails(jobId));
     }
   };
 
-
   return (
     <PageContainer>
       <Header/>
-        {/* Hero Section - matches the image exactly */}
+        {/* Hero Section */}
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
             variant="h2"
@@ -200,15 +158,15 @@ const JobSearchPage: React.FC = () => {
           onLocationChange={setSelectedLocation}
           onSearch={handleSearch}
         />
-        {/* Results Header - matches the image */}
+        {/* Results Header */}
         <Typography
           variant="h6"
           sx={{
             color: "rgba(0, 0, 0, 1)",
-            fontWeight: 500, // Medium weight
-            fontStyle: "normal", // "Medium" is a weight, not a style
+            fontWeight: 500,
+            fontStyle: "normal",
             fontSize: "14px",
-            lineHeight: "160%", // equivalent to 1.6
+            lineHeight: "160%",
             letterSpacing: 0,
             fontFamily: "var(--font-poppins)",
             mb: 2,
@@ -232,7 +190,6 @@ const JobSearchPage: React.FC = () => {
         <Grid container spacing={3}>
           {/* Left Column - Job Listings */}
           <Grid size={{ xs: 12, md: 6 }}>
-            {/* Job Listings */}
             {!loading && !error && (
               <>
                 <Grid container spacing={2} sx={{ mb: 4 }}>
