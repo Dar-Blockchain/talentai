@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Button,
@@ -29,10 +30,13 @@ import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-
-// Hooks
-import { usePagination } from '../../hooks/usePagination';
-import { useAuthToken } from '../../hooks/useAuthToken';
+import { AppDispatch } from '@/store/store';
+import {
+  fetchAdminAssessments,
+  selectAdminAssessments,
+  selectAdminAssessmentsLoading,
+  selectAdminAssessmentsTotal,
+} from '@/store/slices/postSlice';
 
 const GREEN_MAIN = '#8310FF';
 
@@ -146,13 +150,12 @@ interface PostInterviewAssessmentsProps {
  * Displays post interview assessments with filtering by post, candidate, and company
  */
 const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ autoFetch = true }) => {
-  // Auth
-  const { token, isAuthenticated } = useAuthToken();
+  const dispatch = useDispatch<AppDispatch>();
 
-  // State
-  const [results, setResults] = useState<PostInterviewAssessmentData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  // Redux selectors
+  const results = useSelector(selectAdminAssessments) as PostInterviewAssessmentData[];
+  const loading = useSelector(selectAdminAssessmentsLoading);
+  const totalCount = useSelector(selectAdminAssessmentsTotal);
 
   // Company filter state
   const [companies, setCompanies] = useState<{ _id: string; username: string }[]>([]);
@@ -166,88 +169,41 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  /**
-   * Fetch post interview assessments from API
-   */
-  const fetchPostInterviewAssessments = useCallback(
-    async () => {
-      if (!isAuthenticated || !token) {
-        console.error('Authentication required');
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        // Build query params
-        const params = new URLSearchParams();
-        params.append('page', String(page + 1));
-        params.append('limit', String(rowsPerPage));
-        if (selectedCompany) {
-          params.append('company', selectedCompany);
+  // Extract unique companies from results
+  useEffect(() => {
+    if (!selectedCompany && results.length > 0) {
+      const uniqueCompanies = new Map<string, { _id: string; username: string }>();
+      results.forEach((assessment: PostInterviewAssessmentData) => {
+        if (assessment.company?._id && assessment.company?.username) {
+          uniqueCompanies.set(assessment.company._id, {
+            _id: assessment.company._id,
+            username: assessment.company.username,
+          });
         }
+      });
+      setCompanies(Array.from(uniqueCompanies.values()));
+    }
+  }, [results, selectedCompany]);
 
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}post-interview-assessments?${params.toString()}`;
-
-        console.log('📡 [PostInterviewAssessments] Fetching from:', url);
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('📦 [PostInterviewAssessments] Response:', data);
-
-        if (data.success || data.data || data.results) {
-          const assessments = data.data || data.results || [];
-          setResults(assessments);
-          // Get total count from pagination object or fallback to other fields
-          const total = data.pagination?.totalCount || data.total || data.count || data.totalCount || assessments.length;
-          setTotalCount(total);
-
-          // Extract unique companies for the dropdown (only on first load without company filter)
-          if (!selectedCompany && assessments.length > 0) {
-            const uniqueCompanies = new Map<string, { _id: string; username: string }>();
-            assessments.forEach((assessment: PostInterviewAssessmentData) => {
-              if (assessment.company?._id && assessment.company?.username) {
-                uniqueCompanies.set(assessment.company._id, {
-                  _id: assessment.company._id,
-                  username: assessment.company.username,
-                });
-              }
-            });
-            setCompanies(Array.from(uniqueCompanies.values()));
-          }
-        } else {
-          console.error('Failed to fetch post interview assessments:', data.message);
-          setResults([]);
-          setTotalCount(0);
-        }
-      } catch (error) {
-        console.error('Error fetching post interview assessments:', error);
-        setResults([]);
-        setTotalCount(0);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [token, isAuthenticated, page, rowsPerPage, selectedCompany]
-  );
+  // Fetch on mount and when pagination/filter changes
+  useEffect(() => {
+    if (autoFetch) {
+      dispatch(
+        fetchAdminAssessments({
+          page: page + 1,
+          limit: rowsPerPage,
+          company: selectedCompany || undefined,
+        })
+      );
+    }
+  }, [dispatch, autoFetch, page, rowsPerPage, selectedCompany]);
 
   /**
    * Handle company filter change
    */
   const handleCompanyChange = useCallback((event: SelectChangeEvent<string>) => {
     setSelectedCompany(event.target.value);
-    setPage(0); // Reset to first page when filter changes
+    setPage(0);
   }, []);
 
   /**
@@ -312,13 +268,6 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
       return 'Invalid date';
     }
   };
-
-  // Auto-fetch on mount and when pagination changes
-  useEffect(() => {
-    if (autoFetch) {
-      fetchPostInterviewAssessments();
-    }
-  }, [fetchPostInterviewAssessments, autoFetch, page, rowsPerPage]);
 
   return (
     <Box sx={{ width: '100%' }}>
