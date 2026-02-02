@@ -15,6 +15,13 @@ import {
 import ChatIcon from "@mui/icons-material/Chat";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchConversations,
+  selectConversations,
+  selectConversationsLoading,
+} from "@/store/slices/chatSlice";
 
 interface HeaderMessagesDropdownProps {
   userId: string | undefined;
@@ -26,41 +33,20 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
   unreadMessageCount,
 }) => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const conversations = useSelector(selectConversations);
+  const loadingConversations = useSelector(selectConversationsLoading);
   const [messagesAnchorEl, setMessagesAnchorEl] = useState<HTMLElement | null>(null);
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [loadingConversations, setLoadingConversations] = useState(false);
 
   const messagesOpen = Boolean(messagesAnchorEl);
 
   const handleMessagesClick = (event: React.MouseEvent<HTMLElement>) => {
     setMessagesAnchorEl(event.currentTarget);
-    fetchConversations();
+    dispatch(fetchConversations({ limit: 5 }));
   };
 
   const handleMessagesClose = () => {
     setMessagesAnchorEl(null);
-  };
-
-  const fetchConversations = async () => {
-    try {
-      setLoadingConversations(true);
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations?limit=5`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch conversations", err);
-    } finally {
-      setLoadingConversations(false);
-    }
   };
 
   const getOtherParticipant = (conversation: any) => {

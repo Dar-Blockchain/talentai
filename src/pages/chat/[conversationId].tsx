@@ -122,7 +122,7 @@ const ConversationPage = () => {
   // Fetch all conversations for sidebar
   useEffect(() => {
     if (currentUserId) {
-      dispatch(fetchConversations());
+      dispatch(fetchConversations(undefined));
     }
   }, [currentUserId, dispatch]);
 

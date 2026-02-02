@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -29,9 +29,14 @@ import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-
-// Hooks
-import { useAuthToken } from '../../hooks/useAuthToken';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import {
+  fetchAdminSkillAssessments,
+  selectAdminSkillAssessments,
+  selectAdminSkillAssessmentsLoading,
+  selectAdminSkillAssessmentsTotal,
+} from '@/store/slices/interviewSlice';
 
 const GREEN_MAIN = '#8310FF';
 
@@ -199,17 +204,17 @@ interface SkillInterviewAssessmentsProps {
 }
 
 const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ autoFetch = true }) => {
-  const { token, isAuthenticated } = useAuthToken();
+  const dispatch = useDispatch<AppDispatch>();
 
-  // State
-  const [results, setResults] = useState<SkillInterviewAssessmentData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  // Redux state
+  const results = useSelector(selectAdminSkillAssessments) as SkillInterviewAssessmentData[];
+  const loading = useSelector(selectAdminSkillAssessmentsLoading);
+  const totalCount = useSelector(selectAdminSkillAssessmentsTotal);
 
   // Filter state
-  const [skills, setSkills] = useState<string[]>([]);
   const [selectedSkill, setSelectedSkill] = useState<string>('');
   const [skillsLoaded, setSkillsLoaded] = useState(false);
+  const [skills, setSkills] = useState<string[]>([]);
 
   // Dialog state
   const [selectedAssessment, setSelectedAssessment] = useState<SkillInterviewAssessmentData | null>(null);
@@ -219,94 +224,50 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const fetchSkillInterviewAssessments = useCallback(
-    async () => {
-      if (!isAuthenticated || !token) {
-        console.error('Authentication required');
-        return;
-      }
+  useEffect(() => {
+    if (autoFetch) {
+      dispatch(
+        fetchAdminSkillAssessments({
+          page,
+          limit: rowsPerPage,
+          skill: selectedSkill || undefined,
+        })
+      );
+    }
+  }, [autoFetch, page, rowsPerPage, selectedSkill, dispatch]);
 
-      try {
-        setLoading(true);
-
-        const params = new URLSearchParams();
-        params.append('page', String(page + 1));
-        params.append('limit', String(rowsPerPage));
-        if (selectedSkill) {
-          params.append('skill', selectedSkill);
+  // Extract unique skills for the dropdown on first successful load
+  useEffect(() => {
+    if (!skillsLoaded && results.length > 0) {
+      const uniqueSkills = new Set<string>();
+      results.forEach((assessment) => {
+        if (assessment.skill) {
+          uniqueSkills.add(assessment.skill);
         }
+      });
+      setSkills(Array.from(uniqueSkills).sort());
+      setSkillsLoaded(true);
+    }
+  }, [results, skillsLoaded]);
 
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}skill-interview-assessments?${params.toString()}`;
-
-        console.log('[SkillInterviewAssessments] Fetching from:', url);
-        console.log('[SkillInterviewAssessments] Selected skill filter:', selectedSkill || 'none');
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('[SkillInterviewAssessments] Response:', data);
-
-        if (data.success || data.data || data.results) {
-          const assessments = data.data || data.results || [];
-          setResults(assessments);
-          const total = data.pagination?.totalCount || data.total || data.count || data.totalCount || assessments.length;
-          setTotalCount(total);
-
-          // Extract unique skills for the dropdown (only on first load)
-          if (!skillsLoaded && assessments.length > 0) {
-            const uniqueSkills = new Set<string>();
-            assessments.forEach((assessment: SkillInterviewAssessmentData) => {
-              if (assessment.skill) {
-                uniqueSkills.add(assessment.skill);
-              }
-            });
-            setSkills(Array.from(uniqueSkills).sort());
-            setSkillsLoaded(true);
-          }
-        } else {
-          console.error('Failed to fetch skill interview assessments:', data.message);
-          setResults([]);
-          setTotalCount(0);
-        }
-      } catch (error) {
-        console.error('Error fetching skill interview assessments:', error);
-        setResults([]);
-        setTotalCount(0);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [token, isAuthenticated, page, rowsPerPage, selectedSkill, skillsLoaded]
-  );
-
-  const handleSkillChange = useCallback((event: SelectChangeEvent<string>) => {
+  const handleSkillChange = (event: SelectChangeEvent<string>) => {
     setSelectedSkill(event.target.value);
     setPage(0);
-  }, []);
+  };
 
-  const handleChangePage = useCallback((event: unknown, newPage: number) => {
+  const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
-  }, []);
+  };
 
-  const handleChangeRowsPerPage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  }, []);
+  };
 
-  const handleViewDetails = useCallback((assessment: SkillInterviewAssessmentData) => {
+  const handleViewDetails = (assessment: SkillInterviewAssessmentData) => {
     setSelectedAssessment(assessment);
     setDetailsDialogOpen(true);
-  }, []);
+  };
 
   const getOverallScore = (assessment: SkillInterviewAssessmentData): number => {
     if (assessment.interviewData?.finalReport?.scores?.overall !== undefined) {
@@ -354,12 +315,6 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
            assessment.candidateId?.country ||
            'Unknown';
   };
-
-  useEffect(() => {
-    if (autoFetch) {
-      fetchSkillInterviewAssessments();
-    }
-  }, [fetchSkillInterviewAssessments, autoFetch]);
 
   return (
     <Box sx={{ width: '100%' }}>

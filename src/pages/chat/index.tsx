@@ -42,7 +42,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (currentUserId) {
-      dispatch(fetchConversations());
+      dispatch(fetchConversations(undefined));
     }
   }, [currentUserId, dispatch]);
 

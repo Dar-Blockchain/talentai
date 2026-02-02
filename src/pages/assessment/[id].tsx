@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -11,6 +11,16 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
 import dynamic from 'next/dynamic';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import {
+  fetchAssessmentDetails,
+  clearAssessmentDetails,
+  selectAssessmentDetails,
+  selectAssessmentStepsData,
+  selectAssessmentDetailsLoading,
+  selectAssessmentDetailsError,
+} from '@/store/slices/postSlice';
 import {
   AssessmentHeader,
   PipelineSteps,
@@ -26,52 +36,21 @@ import {
 const AssessmentDetailsPage = () => {
   const router = useRouter();
   const { id } = router.query;
-  const [assessment, setAssessment] = useState<any>(null);
-  const [stepsData, setStepsData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const assessment = useSelector(selectAssessmentDetails);
+  const stepsData = useSelector(selectAssessmentStepsData);
+  const loading = useSelector(selectAssessmentDetailsLoading);
+  const error = useSelector(selectAssessmentDetailsError);
 
   useEffect(() => {
     if (!id) return;
+    dispatch(fetchAssessmentDetails(id as string));
 
-    const fetchAssessment = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const token = localStorage.getItem('api_token');
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/${id}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch assessment details');
-        }
-
-        const data = await response.json();
-        const responseData = data.data || data;
-        const assessmentData = responseData.assessment || responseData;
-        const steps = responseData.stepsData || null;
-
-        setAssessment(assessmentData);
-        setStepsData(steps);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load assessment');
-        console.error('Error fetching assessment:', err);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      dispatch(clearAssessmentDetails());
     };
-
-    fetchAssessment();
-  }, [id]);
+  }, [id, dispatch]);
 
   const coverageAreas = useMemo(
     () => assessment?.interviewData?.finalReport?.coverage?.areas || {},

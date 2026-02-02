@@ -15,13 +15,12 @@ import Image from "next/image";
 import {
   fetchUnlockedCandidates,
 } from "@/store/slices/candidateSlice";
+import { createOrFindConversation } from "@/store/slices/chatSlice";
 import { AppDispatch, RootState } from "@/store/store";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { ArrowForward, ArrowBack } from "@mui/icons-material";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRouter } from "next/router";
-import axios from "axios";
 import { toast } from "react-toastify";
 
 const StyledCard = styled(Box)(({ theme }) => ({
@@ -88,36 +87,21 @@ const UnlockedCandidates: React.FC<SectionProps> = ({
     setContactingCandidateId(candidateId);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Please log in to contact candidates.");
-        return;
-      }
-
-      // Call API to find or create conversation
-      // Note: companyId should be the user ID (companyUser._id), not the profile ID
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations`,
-        {
-          candidateId: candidateId,
+      const actionResult = await dispatch(
+        createOrFindConversation({
+          candidateId,
           companyId: companyUser._id,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        })
       );
 
-      if (response.data.success && response.data.data?._id) {
-        // Navigate to the conversation
-        router.push(`/chat/${response.data.data._id}`);
+      if (createOrFindConversation.fulfilled.match(actionResult)) {
+        router.push(`/chat/${actionResult.payload._id}`);
       } else {
-        toast.error("Failed to create conversation. Please try again.");
+        toast.error((actionResult.payload as string) || "Failed to create conversation. Please try again.");
       }
     } catch (err: any) {
       console.error("Error creating conversation:", err);
-      toast.error(
-        err.response?.data?.message || "Failed to start conversation. Please try again."
-      );
+      toast.error("Failed to start conversation. Please try again.");
     } finally {
       setContactingCandidateId(null);
     }

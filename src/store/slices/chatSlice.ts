@@ -87,11 +87,12 @@ const getToken = () => localStorage.getItem("token");
 // Fetch all conversations
 export const fetchConversations = createAsyncThunk(
   "chat/fetchConversations",
-  async (_, { rejectWithValue }) => {
+  async (params: { limit?: number } | undefined, { rejectWithValue }) => {
     try {
       const token = getToken();
+      const query = params && params.limit ? `?limit=${params.limit}` : "";
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations${query}`,
         {
           method: "GET",
           headers: {
@@ -291,6 +292,44 @@ export const deleteConversation = createAsyncThunk(
       return conversationId;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error deleting conversation");
+    }
+  }
+);
+
+// Create or find a conversation between two users
+export const createOrFindConversation = createAsyncThunk<
+  any,
+  { candidateId: string; companyId: string },
+  { rejectValue: string }
+>(
+  "chat/createOrFindConversation",
+  async ({ candidateId, companyId }, { rejectWithValue }) => {
+    try {
+      const token = getToken();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ candidateId, companyId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create conversation");
+      }
+
+      const data = await response.json();
+      if (data.success && data.data?._id) {
+        return data.data;
+      }
+      throw new Error("Failed to create conversation");
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Error creating conversation");
     }
   }
 );
