@@ -12,12 +12,12 @@ const logger = require('./utils/logger');
 const { errorHandler, notFoundHandler } = require('./middleware/global-error.middleware');
 
 // Import configurations
-const { registerMiddlewares } = require('./config/middleware');
-const { registerRoutes } = require('./config/routes');
+const { registerMiddlewares } = require('./config/register-middlewares');
+const { registerRoutes } = require('./config/register-routes');
 const { initializeSocketServer } = require('./socket-handlers/socketServer');
 
 // Import services
-const connectDB = require('./config/database');
+const connectDB = require('./config/mongo.connection');
 const socket = require('./socket');
 const { initializeAgenda } = require('./services/Agent&AgendaServices/agenda.service');
 const intelligentInterviewService = require('./services/intelligentInterview.service');
