@@ -14,7 +14,7 @@ const { errorHandler, notFoundHandler } = require('./middleware/global-error.mid
 // Import configurations
 const { registerMiddlewares } = require('./config/register-middlewares');
 const { registerRoutes } = require('./config/register-routes');
-const { initializeSocketServer } = require('./socket-handlers/socketServer');
+const { initializeSocketServer } = require('./socket-handlers/socket-server');
 
 // Import services
 const connectDB = require('./config/mongo.connection');

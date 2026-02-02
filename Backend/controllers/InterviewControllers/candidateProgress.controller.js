@@ -278,7 +278,7 @@ exports.getProgress = async (req, res) => {
     }
 
     // Build interview parameters from current step
-    const pipelineConfigBuilder = require('../../services/InterviewServices/pipelineInterviewConfigBuilder');
+    const pipelineConfigBuilder = require('../../services/InterviewServices/pipeline-interview-config');
     const interviewParams = pipelineConfigBuilder.buildParamsFromNode(currentStep, {
       companyName: post.companyName,
       title: post.title
