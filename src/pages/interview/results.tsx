@@ -12,7 +12,7 @@ import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
 import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
-import { saveInterviewAssessment } from '@/store/slices/interviewSlice';
+import { saveInterviewAssessment, fetchInterviewDetailsById, claimInterviewReward } from '@/store/slices/interviewSlice';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
 import {
@@ -244,23 +244,11 @@ export default function InterviewResults() {
 
     try {
       setClaimingReward(true);
-      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
-      if (!token) return;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/${rewardInfo.interviewId}/claim-reward`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const actionResult = await dispatch(claimInterviewReward(rewardInfo.interviewId));
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (claimInterviewReward.fulfilled.match(actionResult)) {
+        const result = actionResult.payload;
         setRewardInfo({
           success: true,
           amount: result.reward.amount,
@@ -268,11 +256,12 @@ export default function InterviewResults() {
           interviewId: rewardInfo.interviewId
         });
       } else {
+        const errorMsg = actionResult.payload as string;
         setRewardInfo({
           ...rewardInfo,
           success: false,
-          error: result.error,
-          canRetry: result.canRetry !== false
+          error: errorMsg,
+          canRetry: true
         });
       }
     } catch (error: any) {
@@ -329,26 +318,15 @@ export default function InterviewResults() {
       }
 
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}interview-details/getInterviewDetailsById/${interviewId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const actionResult = await dispatch(fetchInterviewDetailsById(interviewId as string));
 
-        if (response.ok) {
-          const data = await response.json();
+        if (fetchInterviewDetailsById.fulfilled.match(actionResult)) {
+          const transformedAnalysis = transformAPIAnalysis(actionResult.payload);
 
-          if (data.success && data.data) {
-            const transformedAnalysis = transformAPIAnalysis(data.data);
-
-            if (transformedAnalysis) {
-              setAnalysis(transformedAnalysis);
-              setLoading(false);
-              return;
-            }
+          if (transformedAnalysis) {
+            setAnalysis(transformedAnalysis);
+            setLoading(false);
+            return;
           }
         }
       } catch (apiError) {
