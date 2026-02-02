@@ -1,9 +1,9 @@
 const User = require("../models/User.model");
 const Profile = require("../models/Profile.model");
-const { sendOTP } = require("../utils/mailing");
-const { generateOTP } = require("../utils/Onetimepassword");
-const { generateToken } = require("../utils/generateToken");
-const { getGmailByToken } = require("../utils/getGmailByToken");
+const { sendOTP } = require("../utils/email-service");
+const { generateOTP } = require("../utils/one-time-password");
+const { generateToken } = require("../utils/generate-token");
+const { getGmailByToken } = require("../utils/google-auth.service");
 const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes

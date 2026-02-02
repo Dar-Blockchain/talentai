@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const dbMonitor = require('../utils/dbMonitor');
+const dbMonitor = require('../utils/database-monitor.service');
 
 const connectDB = async () => {
   // Validate environment configuration first
