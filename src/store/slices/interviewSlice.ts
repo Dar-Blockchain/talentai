@@ -270,6 +270,76 @@ export const fetchInterviewReport = createAsyncThunk<
   }
 );
 
+/**
+ * Fetch interview details by ID (interview-details endpoint)
+ */
+export const fetchInterviewDetailsById = createAsyncThunk<
+  any,
+  string,
+  { rejectValue: string }
+>(
+  'interview/fetchDetailsById',
+  async (interviewId, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interview-details/getInterviewDetailsById/${interviewId}`;
+      const response = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        return rejectWithValue('Failed to fetch interview details');
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        return data.data;
+      }
+      return rejectWithValue('No interview data found');
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching interview details');
+    }
+  }
+);
+
+/**
+ * Claim interview reward
+ */
+export const claimInterviewReward = createAsyncThunk<
+  any,
+  string,
+  { rejectValue: string }
+>(
+  'interview/claimReward',
+  async (interviewId, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/${interviewId}/claim-reward`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        return result;
+      } else {
+        return rejectWithValue(result.error || 'Failed to claim reward');
+      }
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to claim reward');
+    }
+  }
+);
+
 const interviewSlice = createSlice({
   name: 'interview',
   initialState,
