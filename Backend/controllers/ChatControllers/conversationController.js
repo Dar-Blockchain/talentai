@@ -1,4 +1,4 @@
-const conversationService = require('../../services/ChatServices/conversationService');
+const conversationService = require('../../services/ChatServices/conversation.service');
 const socket = require('../../socket');
 
 /**

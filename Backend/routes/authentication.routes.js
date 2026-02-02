@@ -9,7 +9,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const authController = require("../controllers/authenticationController");
+const authController = require("../controllers/authentication.controller");
 
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")

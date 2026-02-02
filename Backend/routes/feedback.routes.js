@@ -11,7 +11,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const feedbackController = require('../controllers/feedbackController');
+const feedbackController = require('../controllers/feedback.controller');
 
 // Auth obligatoire + logs
 const {requireAuthUser} = require('../middleware/authMiddleware');

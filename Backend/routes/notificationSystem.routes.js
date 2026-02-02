@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/notificationSystemController');
+const controller = require('../controllers/notificationSystem.controller');
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 const resolveCompanyActor = require("../middleware/resolveCompanyActor");

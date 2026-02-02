@@ -11,8 +11,8 @@ const router = express.Router();
 const { requireAuthUser } = require("../middleware/authMiddleware");
 
 // Import des middlewares
-const postController = require("../controllers/PostControllers/postController");
-const postPaymentController = require("../controllers/postPaymentController");
+const postController = require("../controllers/PostControllers/post.controller");
+const postPaymentController = require("../controllers/postPayment.controller");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 const resolveCompanyActor = require("../middleware/resolveCompanyActor");

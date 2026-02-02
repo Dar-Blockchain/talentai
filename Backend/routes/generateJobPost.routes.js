@@ -8,7 +8,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const generateJobPostController = require("../controllers/PostControllers/generateJobPostController");
+const generateJobPostController = require("../controllers/PostControllers/generateJobPost.controller");
 
 
 // Import des middlewares

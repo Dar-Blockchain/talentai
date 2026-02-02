@@ -4,7 +4,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const unlockCandidateController = require("../controllers/unlockCandidateController");
+const unlockCandidateController = require("../controllers/unlockCandidate.controller");
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 const resolveCompanyActor = require("../middleware/resolveCompanyActor");

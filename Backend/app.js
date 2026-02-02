@@ -19,9 +19,9 @@ const { initializeSocketServer } = require('./socket-handlers/socketServer');
 // Import services
 const connectDB = require('./config/database');
 const socket = require('./socket');
-const { initializeAgenda } = require('./services/Agent&AgendaServices/agendaService');
-const intelligentInterviewService = require('./services/intelligentInterviewService');
-const intelligentInterviewController = require('./controllers/intelligentInterviewController');
+const { initializeAgenda } = require('./services/Agent&AgendaServices/agenda.service');
+const intelligentInterviewService = require('./services/intelligentInterview.service');
+const intelligentInterviewController = require('./controllers/intelligentInterview.controller');
 const chatSocketHandler = require('./controllers/ChatControllers/chatSocketHandler');
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
