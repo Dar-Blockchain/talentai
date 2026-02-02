@@ -1,5 +1,5 @@
 const { getMatchingConfig } = require("./matchingConfig.service");
-const UnlockCandidate = require("../../models/UnlockCandidateModel");
+const UnlockCandidate = require("../../models/UnlockCandidate.model");
 
 /* ------------------ CONSTANTS & HELPERS ------------------ */
 // Toggle verbose logs for debugging (false in production)

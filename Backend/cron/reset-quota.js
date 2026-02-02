@@ -1,6 +1,6 @@
 // cron/reset-quota.js
 const cron = require('node-cron');
-const Profile = require('../models/ProfileModel');
+const Profile = require('../models/Profile.model');
 
 function initialize() {
   // 🕛 Schedule: daily at 00:00

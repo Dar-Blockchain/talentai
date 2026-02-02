@@ -1,5 +1,5 @@
-const CompanyMembershipModel = require("../../models/CompanyMembershipModel");
-const User = require("../../models/UserModel");
+const CompanyMembershipModel = require("../../models/CompanyMembership.model");
+const User = require("../../models/User.model");
 
 // Get all memberships for a company owned by the current user
 module.exports.getMembershipsByCompany = async (companyId) => {

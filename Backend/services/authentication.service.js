@@ -1,5 +1,5 @@
-const User = require("../models/UserModel");
-const Profile = require("../models/ProfileModel");
+const User = require("../models/User.model");
+const Profile = require("../models/Profile.model");
 const { sendOTP } = require("../utils/mailing");
 const { generateOTP } = require("../utils/Onetimepassword");
 const { generateToken } = require("../utils/generateToken");
@@ -175,7 +175,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     const [profile, companyMembership] = await Promise.all([
       updatedUser.profile ? Profile.findById(updatedUser.profile) : null,
       updatedUser.companyMembership
-        ? require('../models/CompanyMembershipModel')
+        ? require('../models/CompanyMembership.model')
             .findById(updatedUser.companyMembership)
             .populate({
               path: 'company',

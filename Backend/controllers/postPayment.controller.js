@@ -1,6 +1,6 @@
 const postPaymentService = require('../services/postPayment.service');
-const Post = require('../models/PostModel');
-const User = require('../models/UserModel');
+const Post = require('../models/Post.model');
+const User = require('../models/User.model');
 
 /**
  * Calculate price for post creation based on number of steps

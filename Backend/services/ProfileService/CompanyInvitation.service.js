@@ -1,8 +1,8 @@
 const crypto = require("crypto");
 const mongoose = require("mongoose");
-const User = require("../../models/UserModel");
-const CompanyMembershipModel = require("../../models/CompanyMembershipModel");
-const CompanyInvitationModel = require("../../models/CompanyInvitationModel");
+const User = require("../../models/User.model");
+const CompanyMembershipModel = require("../../models/CompanyMembership.model");
+const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
 const { sendCompanyInvitation } = require("../../utils/mailing");
 
 // Send an invitation to a user to join a company account

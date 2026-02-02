@@ -1,11 +1,11 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 
-const Post = require("../models/PostModel");
+const Post = require("../models/Post.model");
 
 const recruitementService = require("../../services/RecruitmentServices/recruitementStepService");
 const { HttpError } = require("../utils/httpUtils");
-const PostSteps = require("../models/PostStepsModel");
+const PostSteps = require("../models/postSteps.model");
 const Profile = require("../models/ProfileModel");
 
 exports.generateQuestions = async (req, res) => {

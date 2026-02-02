@@ -1,6 +1,6 @@
 const SkillInterviewAssessmentService = require('../../services/InterviewServices/SkillInterviewAssessment.service');
-const SkillInterviewAssessment = require('../../models/SkillInterviewAssessmentModel');
-const Profile = require('../../models/ProfileModel');
+const SkillInterviewAssessment = require('../../models/SkillInterviewAssessment.model');
+const Profile = require('../../models/Profile.model');
 
 // ========== POST - Create a new assessment ==========
 const create = async (req, res) => {

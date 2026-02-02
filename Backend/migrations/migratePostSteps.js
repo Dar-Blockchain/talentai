@@ -15,7 +15,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 // Import the Post model
-const Post = require('../models/PostModel');
+const Post = require('../models/Post.model');
 
 async function migratePostSteps() {
   try {

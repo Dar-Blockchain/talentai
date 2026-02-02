@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
-const userModel = require("../../models/UserModel");
+const userModel = require("../../models/User.model");
 const path = require("path");
-const Log = require("../../models/logSchema"); // Import the Log model
+const Log = require("../../models/log.model"); // Import the Log model
 const ipinfo = require("ipinfo"); // Import the ipinfo package
 
 function authLogMiddleware(logType) {

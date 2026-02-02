@@ -1,7 +1,7 @@
-const AgentConfig = require('../../models/AgentConfigModel');
-const Agent = require('../../models/AgentModel');
-const Post = require('../../models/PostModel');
-const User = require('../../models/UserModel');
+const AgentConfig = require('../../models/AgentConfig.model');
+const Agent = require('../../models/Agent.model');
+const Post = require('../../models/Post.model');
+const User = require('../../models/User.model');
 const postPaymentService = require('../postPayment.service');
 const { validateCreateData, verifyAgentAndPostExist, getConfigWithPopulates } = require('../../helpers/agent-config.helpers');
 

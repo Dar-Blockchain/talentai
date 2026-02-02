@@ -153,7 +153,7 @@ module.exports.deleteMessage = async (req, res) => {
     const userId = req.user._id;
 
     // Get message details before deletion for socket notification
-    const Message = require('../../models/MessageModel');
+    const Message = require('../../models/Message.model');
     const message = await Message.findById(messageId);
 
     if (!message) {

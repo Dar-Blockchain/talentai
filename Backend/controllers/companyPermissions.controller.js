@@ -14,9 +14,9 @@
  * - canAssignRoles
  */
 
-const User = require("../models/UserModel");
-const Profile = require("../models/ProfileModel");
-const Permission = require("../models/PermissionModel");
+const User = require("../models/User.model");
+const Profile = require("../models/Profile.model");
+const Permission = require("../models/Permission.model");
 
 /**
  * Get company permissions

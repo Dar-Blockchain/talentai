@@ -1,7 +1,7 @@
 // cron/daily-exchange-rate-update.js
 const cron = require('node-cron');
 const axios = require('axios');
-const MatchingConfig = require('../models/MatchingConfigModel');
+const MatchingConfig = require('../models/MatchingConfig.model');
 
 async function fetchLiveExchangeRates() {
   try {

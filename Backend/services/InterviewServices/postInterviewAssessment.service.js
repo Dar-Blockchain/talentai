@@ -1,8 +1,8 @@
-const PostInterviewAssessment = require("../../models/PostInterviewAssessmentModel");
-const Post = require("../../models/PostModel");
-const Profile = require("../../models/ProfileModel");
-const User = require("../../models/UserModel");
-const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
+const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
+const Post = require("../../models/Post.model");
+const Profile = require("../../models/Profile.model");
+const User = require("../../models/User.model");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {

@@ -3,8 +3,8 @@
  * Manages candidate progression through pipeline steps
  */
 
-const CandidatePostStepProgress = require('../../models/CandidatePostStepProgress');
-const PostSteps = require('../../models/postStepsModel');
+const CandidatePostStepProgress = require('../../models/CandidatePostStepProgress.model');
+const PostSteps = require('../../models/postSteps.model');
 
 /**
  * Initialize or get candidate progress for a job
@@ -267,7 +267,7 @@ exports.getProgress = async (req, res) => {
 
     // 🔥 NEW: Get current step details and build interview params
     const currentStep = progress.currentStep;
-    const Post = require('../../models/postModel');
+    const Post = require('../../models/Post.model');
     const post = await Post.findById(jobId).select('title companyName');
 
     if (!post) {

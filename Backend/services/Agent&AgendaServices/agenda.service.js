@@ -1,8 +1,8 @@
 const Agenda = require("agenda");
-const Agent = require("../../models/AgentModel");
-const JobPost = require("../../models/PostModel");
-const Profile = require("../../models/ProfileModel");
-const AgentConfig = require("../../models/AgentConfigModel");
+const Agent = require("../../models/Agent.model");
+const JobPost = require("../../models/Post.model");
+const Profile = require("../../models/Profile.model");
+const AgentConfig = require("../../models/AgentConfig.model");
 const {
   calculateMatchScore,
 } = require("../MatchingService/matchingForBid.service");

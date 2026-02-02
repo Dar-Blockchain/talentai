@@ -1,6 +1,6 @@
-const UnlockCandidate = require("../models/UnlockCandidateModel");
+const UnlockCandidate = require("../models/UnlockCandidate.model");
 const tokenService = require("./token.service");
-const User = require("../models/UserModel");
+const User = require("../models/User.model");
 const postPaymentService = require('./postPayment.service');
 
 /**
@@ -149,7 +149,7 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
     }
 
     // Validate Job exists
-    const job = await require("../models/PostModel").findById(idJob);
+    const job = await require("../models/Post.model").findById(idJob);
     if (!job) {
       throw new Error("Job not found");
     }

@@ -7,7 +7,7 @@ const {
   TokenId,
   Status
 } = require('@hashgraph/sdk');
-const TokenTransaction = require('../models/TokenTransactionModel');
+const TokenTransaction = require('../models/TokenTransaction.model');
 const { TOKEN_TRANSACTION_TYPES, TOKEN_TRANSACTION_STATUS } = require('../constants/token-transaction.constants');
 
 /**

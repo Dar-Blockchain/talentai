@@ -1,6 +1,6 @@
-const Post = require("../../models/PostModel");
-const User = require("../../models/UserModel");
-const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessmentModel");
+const Post = require("../../models/Post.model");
+const User = require("../../models/User.model");
+const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
 const AgentService = require("../Agent.service");
 const aiService = require("../ai.Service");
 const nodemailer = require('nodemailer');
@@ -494,34 +494,34 @@ module.exports.deletePost = async (postId, userId) => {
     
     // 1. Delete PostSteps
     if (post.PostSteps && post.PostSteps.length > 0) {
-      const PostSteps = require('../../models/postStepsModel');
+      const PostSteps = require('../../models/postSteps.model');
       await PostSteps.deleteMany({ _id: { $in: post.PostSteps } });
       console.log(`🗑️ Deleted ${post.PostSteps.length} post step(s)`);
     }
 
     // 2. Delete agentConfig if exists
     if (post.agentConfig) {
-      const AgentConfig = require('../../models/AgentConfigModel');
+      const AgentConfig = require('../../models/AgentConfig.model');
       await AgentConfig.findByIdAndDelete(post.agentConfig);
       console.log(`🗑️ Deleted agentConfig: ${post.agentConfig}`);
     }
 
     // 3. Delete agent if exists
     if (post.agentId) {
-      const Agent = require('../../models/AgentModel');
+      const Agent = require('../../models/Agent.model');
       await Agent.findByIdAndDelete(post.agentId);
       console.log(`🗑️ Deleted agent: ${post.agentId}`);
     }
 
     // 4. Delete MatchingConfig if exists
     if (post.MatchingConfig) {
-      const MatchingConfig = require('../../models/MatchingConfigModel');
+      const MatchingConfig = require('../../models/MatchingConfig.model');
       await MatchingConfig.findByIdAndDelete(post.MatchingConfig);
       console.log(`🗑️ Deleted MatchingConfig: ${post.MatchingConfig}`);
     }
 
     // 5. Delete associated job assessments
-    const PostInterviewAssessment = require('../../models/PostInterviewAssessmentModel');
+    const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
     await PostInterviewAssessment.deleteMany({ post: postId });
     console.log(`🗑️ Deleted job assessment results for post`);
 

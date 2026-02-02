@@ -1,8 +1,8 @@
 require("dotenv").config();
 
 // const ToDo = require("../models/TodoModel");
-const TodoList = require("../models/todoListModel");
-const Profile = require("../models/ProfileModel");
+const TodoList = require("../models/todoList.model");
+const Profile = require("../models/Profile.model");
 
 const { generateNewTodosForProfile } = require("../services/todo.service");
 
