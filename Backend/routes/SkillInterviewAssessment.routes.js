@@ -13,7 +13,7 @@ const {
   getSummary,
   getStatistics,
   getMy
-} = require('../controllers/InterviewControllers/SkillInterviewAssessmentController');
+} = require('../controllers/InterviewControllers/SkillInterviewAssessment.controller');
 
 // Import middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');

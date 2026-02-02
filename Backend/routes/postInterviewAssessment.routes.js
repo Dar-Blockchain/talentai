@@ -8,7 +8,7 @@
 
 const express = require('express');
 const router = express.Router();
-const postInterviewAssessmentController = require('../controllers/InterviewControllers/postInterviewAssessmentController');
+const postInterviewAssessmentController = require('../controllers/InterviewControllers/postInterviewAssessment.controller');
 
 // Import middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');

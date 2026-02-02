@@ -5,8 +5,8 @@
 
 const express = require('express');
 const router = express.Router();
-const pipelineInterviewController = require('../controllers/InterviewControllers/pipelineInterviewController');
-const candidateProgressController = require('../controllers/InterviewControllers/candidateProgressController');
+const pipelineInterviewController = require('../controllers/InterviewControllers/pipelineInterview.controller');
+const candidateProgressController = require('../controllers/InterviewControllers/candidateProgress.controller');
 
 // ===== Pipeline Interview Configuration =====
 
