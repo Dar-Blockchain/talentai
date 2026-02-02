@@ -1,4 +1,4 @@
-const { POST_STATUS } = require("../../constants/postConstants");
+const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
 const { sendPostEmail } = require("../../utils/mailing");
 const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");

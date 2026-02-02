@@ -27,8 +27,9 @@ const chatSocketHandler = require('./controllers/ChatControllers/chatSocketHandl
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
 // Auto-load CRON jobs
-require('./cron/resetQuota');
-require('./cron/DailyExchangeRateUpdate');
+const { initializeCronJobs } = require('./cron');
+initializeCronJobs();
+
 
 /**
  * Suppress deprecation warnings for punycode module

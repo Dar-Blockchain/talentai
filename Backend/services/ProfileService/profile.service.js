@@ -3,7 +3,7 @@ const User = require("../../models/UserModel");
 const Post = require("../../models/PostModel");
 const hederaService = require("../hedera.service");
 const AgentConfig = require("../../models/AgentConfigModel");
-const { POST_STATUS } = require("../../constants/postConstants");
+const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
 

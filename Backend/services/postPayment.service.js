@@ -8,7 +8,7 @@ const {
   Status
 } = require('@hashgraph/sdk');
 const TokenTransaction = require('../models/TokenTransactionModel');
-const { TOKEN_TRANSACTION_TYPES, TOKEN_TRANSACTION_STATUS } = require('../constants/tokenTransactionConstants');
+const { TOKEN_TRANSACTION_TYPES, TOKEN_TRANSACTION_STATUS } = require('../constants/token-transaction.constants');
 
 /**
  * Post Payment Service
