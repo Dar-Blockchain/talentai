@@ -11,8 +11,8 @@ const router = express.Router();
 const companyPermissionsController = require("../controllers/companyPermissions.controller");
 
 // Import middlewares
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const { controledAcces } = require('../middleware/controledAcces');
+const { requireAuthUser } = require("../middleware/auth.middleware");
+const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // All routes require admin authentication
 router.use(requireAuthUser, controledAcces('Admin'));

@@ -8,14 +8,14 @@
  */
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/authMiddleware");
+const { requireAuthUser } = require("../middleware/auth.middleware");
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
 const postPaymentController = require("../controllers/postPayment.controller");
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
-const resolveCompanyActor = require("../middleware/resolveCompanyActor");
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
+const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // Public routes - no authentication required
 

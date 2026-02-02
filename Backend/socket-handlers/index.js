@@ -3,7 +3,7 @@
  * Central entry point for all Socket.IO event handlers
  */
 
-const { registerNotificationHandlers } = require('./notificationHandlers');
+const { registerNotificationHandlers } = require('./notification-handlers');
 
 /**
  * Register all Socket.IO event handlers for a socket

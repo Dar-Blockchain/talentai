@@ -10,9 +10,9 @@ const router = express.Router();
 const profileController = require('../controllers/ProfileControllers/profile.controller');
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/authMiddleware');
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const uploadfile = require('../middleware/uploadfile');
+const { requireAuthUser } = require('../middleware/auth.middleware');
+const authLogMiddleware = require("../middleware/security/request-log.middleware")
+const uploadfile = require('../middleware/file-upload.middleware');
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 

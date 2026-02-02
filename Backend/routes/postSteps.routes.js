@@ -7,8 +7,8 @@
 const express = require('express');
 const router = express.Router();
 const postStepsController = require('../controllers/PostControllers/postSteps.controller');
-const {requireAuthUser} = require('../middleware/authMiddleware');
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const {requireAuthUser} = require('../middleware/auth.middleware');
+const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
 // Routes publiques (si nécessaire)
 // router.get('/public', postStepsController.getAllPostSteps);

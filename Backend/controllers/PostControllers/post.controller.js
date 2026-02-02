@@ -1,11 +1,11 @@
-const { POST_STATUS } = require("../../constants/postConstants");
+const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
 const { sendPostEmail } = require("../../utils/mailing");
 const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
-const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/postValidationHelpers");
+const { parseJsonFields, validateTechnicalTestInput } = require("../../helpers/post.validation.helpers");
 const notificationService = require("../../services/notificationSystem.service");
-const User = require("../../models/UserModel");
-const Profile = require("../../models/ProfileModel");
+const User = require("../../models/User.model");
+const Profile = require("../../models/Profile.model");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -491,8 +491,8 @@ exports.sendTechnicalTest = async (req, res) => {
 // Get public statistics (users, posts, companies)
 exports.getPublicStats = async (req, res) => {
   try {
-    const User = require("../../models/UserModel");
-    const Post = require("../../models/PostModel");
+    const User = require("../../models/User.model");
+    const Post = require("../../models/Post.model");
 
     // Count in parallel with .lean() for read-only
     const [userCount, postCount, companyCount] = await Promise.all([
@@ -515,7 +515,7 @@ exports.getJobInterviewConfig = async (req, res) => {
   try {
     const { jobId } = req.params;
     const candidateId = req.user?._id || req.query.candidateId;
-    const Post = require("../../models/PostModel");
+    const Post = require("../../models/Post.model");
 
     // Fetch job post with user (company) info and PostSteps
     const post = await Post.findById(jobId)

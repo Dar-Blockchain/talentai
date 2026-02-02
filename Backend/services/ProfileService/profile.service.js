@@ -1,9 +1,9 @@
-const Profile = require("../../models/ProfileModel");
-const User = require("../../models/UserModel");
-const Post = require("../../models/PostModel");
+const Profile = require("../../models/Profile.model");
+const User = require("../../models/User.model");
+const Post = require("../../models/Post.model");
 const hederaService = require("../hedera.service");
-const AgentConfig = require("../../models/AgentConfigModel");
-const { POST_STATUS } = require("../../constants/postConstants");
+const AgentConfig = require("../../models/AgentConfig.model");
+const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
 
@@ -145,7 +145,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
 
     const updatedUser = await User.findById(userId);
     const companyMembership = updatedUser.companyMembership 
-      ? await require('../../models/CompanyMembershipModel').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
     return {
@@ -274,7 +274,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     const updatedUser = await User.findById(userId);
     const companyMembership = updatedUser.companyMembership 
-      ? await require('../../models/CompanyMembershipModel').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
+      ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
     console.log("✅ [createOrUpdateCompanyProfile] Company profile update completed successfully");
@@ -356,7 +356,7 @@ module.exports.getProfileByUserId = async (userId) => {
         : null,
 
       user.companyMembership
-        ? require('../../models/CompanyMembershipModel')
+        ? require('../../models/CompanyMembership.model')
             .findById(user.companyMembership)
             .populate({
               path: 'company',

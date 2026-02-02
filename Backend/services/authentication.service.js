@@ -1,10 +1,10 @@
-const User = require("../models/UserModel");
-const Profile = require("../models/ProfileModel");
+const User = require("../models/User.model");
+const Profile = require("../models/Profile.model");
 const { sendOTP } = require("../utils/mailing");
 const { generateOTP } = require("../utils/Onetimepassword");
 const { generateToken } = require("../utils/generateToken");
 const { getGmailByToken } = require("../utils/getGmailByToken");
-const { extractUsernameFromEmail, formatLocation } = require("../helpers/authValidationHelpers");
+const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-validation.helpers");
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -175,7 +175,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     const [profile, companyMembership] = await Promise.all([
       updatedUser.profile ? Profile.findById(updatedUser.profile) : null,
       updatedUser.companyMembership
-        ? require('../models/CompanyMembershipModel')
+        ? require('../models/CompanyMembership.model')
             .findById(updatedUser.companyMembership)
             .populate({
               path: 'company',

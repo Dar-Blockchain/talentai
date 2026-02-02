@@ -5,7 +5,7 @@ const {
   AccountCreateTransaction,
   Hbar,
 } = require("@hashgraph/sdk");
-const Agent = require("../models/AgentModel");
+const Agent = require("../models/Agent.model");
 
 // Lazy client initialization for AgentService
 let agentServiceClient = null;

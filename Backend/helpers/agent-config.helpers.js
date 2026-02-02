@@ -1,5 +1,5 @@
-const Agent = require('../models/AgentModel');
-const Post = require('../models/PostModel');
+const Agent = require('../models/Agent.model');
+const Post = require('../models/Post.model');
 
 /**
  * Validate input data for create/update operations

@@ -10,7 +10,7 @@ const router = express.Router();
 const companyPermissionsController = require("../controllers/companyPermissions.controller");
 
 // Import middlewares
-const { requireAuthUser } = require("../middleware/authMiddleware");
+const { requireAuthUser } = require("../middleware/auth.middleware");
 
 // GET /permissions/me
 // Description: Get current user's own permissions

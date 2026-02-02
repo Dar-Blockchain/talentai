@@ -1,12 +1,12 @@
 // controllers/matchingController.js
 
-const JobPost = require("../../models/PostModel");
-const Profile = require("../../models/ProfileModel");
+const JobPost = require("../../models/Post.model");
+const Profile = require("../../models/Profile.model");
 const { calculateMatchScore } = require("../../services/MatchingService/matching.service");
 const { getMatchingConfig } = require("../../services/MatchingService/matchingConfig.service");
-const UnlockCandidate = require("../../models/UnlockCandidateModel");
-const PostInterviewAssessment = require("../../models/PostInterviewAssessmentModel");
-const { prepareSkills } = require("../../helpers/matchingHelpers");
+const UnlockCandidate = require("../../models/UnlockCandidate.model");
+const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
+const { prepareSkills } = require("../../helpers/matching.helpers");
 
 exports.matchCandidatesToJob = async (req, res) => {
   try {

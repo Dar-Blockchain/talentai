@@ -1,6 +1,6 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
-const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress");
-const PostSteps = require("../../models/postStepsModel");
+const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
+const PostSteps = require("../../models/postSteps.model");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {

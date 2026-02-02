@@ -1,4 +1,4 @@
-const MatchingConfig = require('../../models/MatchingConfigModel');
+const MatchingConfig = require('../../models/MatchingConfig.model');
 
 async function getMatchingConfig(updatedBy, jobId) {
   try {
@@ -33,7 +33,7 @@ module.exports = { getMatchingConfig };
  * @param {Object} payload
  */
 async function addConfig(userId, payload = {}) {
-  const Post = require('../../models/PostModel');
+  const Post = require('../../models/Post.model');
   
   const toCreate = {
     name: payload.name || 'default',

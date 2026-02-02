@@ -23,7 +23,7 @@ async function migratePostSteps() {
     console.log('🔗 Using existing MongoDB connection');
 
     // Import the Post model after connection
-    const Post = require('../models/PostModel');
+    const Post = require('../models/Post.model');
 
     // Find all documents that have post_Steps field using raw MongoDB
     console.log('🔍 Searching for posts with old post_Steps field...');

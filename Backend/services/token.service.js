@@ -1,5 +1,5 @@
-const TokenBalance = require("../models/TokenBalanceModel");
-const TokenTransaction = require("../models/TokenTransactionModel");
+const TokenBalance = require("../models/TokenBalance.model");
+const TokenTransaction = require("../models/TokenTransaction.model");
 const hbarPricingService = require('./hbarPricing.service');
 const { v4: uuidv4 } = require('uuid');
 

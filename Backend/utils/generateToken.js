@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { EXPIRATION_HOURS } = require("../constants/jwtConstants");
+const { EXPIRATION_HOURS } = require("../constants/auth-jwt.constants");
 
 
 // Générer un token JWT

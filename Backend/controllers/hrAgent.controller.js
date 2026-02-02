@@ -1,8 +1,8 @@
-const AgentModel = require("../models/AgentModel");
+const AgentModel = require("../models/Agent.model");
 const { createHederaWallet } = require("../services/hedera.service");
 const {
   LangChainTogetherAIAgent,
-} = require("../helpers/langchainTogetherAIAgent");
+} = require("../helpers/langchain-togetherai-agent.helpers");
 const {
   HederaLangchainToolkit,
   AgentMode,
@@ -11,7 +11,7 @@ const {
   coreQueriesPlugin,
 } = require("hedera-agent-kit");
 const { Client, PrivateKey, PublicKey } = require("@hashgraph/sdk");
-const EvaluationTopicModel = require("../models/EvaluationTopicModel");
+const EvaluationTopicModel = require("../models/EvaluationTopic.model");
 const {
   HCS10Client,
   HCS11Client,
@@ -22,8 +22,8 @@ const {
   Logger,
   ConnectionsManager,
 } = require("@hashgraphonline/standards-sdk");
-const JobPost = require("../models/PostModel");
-const Profile = require("../models/ProfileModel");
+const JobPost = require("../models/Post.model");
+const Profile = require("../models/Profile.model");
 
 // services/MatchingService/computeMatches.js
 

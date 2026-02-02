@@ -1,4 +1,4 @@
-const CandidatePostStepProgress = require("../models/CandidatePostStepProgress");
+const CandidatePostStepProgress = require("../models/CandidatePostStepProgress.model");
 
 class CandidatePostStepProgressService {
   // Créer un nouveau progrès de candidat

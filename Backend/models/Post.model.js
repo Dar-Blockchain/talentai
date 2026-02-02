@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { POST_STATUS } = require("../constants/postConstants");
+const { POST_STATUS } = require("../constants/posts.constants");
 
 const salarySchema = new mongoose.Schema({
   min: { type: Number, required: true },

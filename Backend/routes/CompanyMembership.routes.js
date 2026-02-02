@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const CompanyMembershipController = require("../controllers/ProfileControllers/CompanyMembership.controller");
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
-const resolveCompanyActor = require("../middleware/resolveCompanyActor");
+const { requireAuthUser } = require("../middleware/auth.middleware");
+const authLogMiddleware = require("../middleware/security/request-log.middleware");
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // ========== MIDDLEWARE: Authentication + Logging ==========
 // All routes below require an authenticated user and are logged
