@@ -43,30 +43,6 @@ module.exports.getUnlockedCandidatesByCompany = async (req, res) => {
 };
 
 /**
- * Get all unlock candidates by company (including pending)
- */
-module.exports.getUnlockCandidatesByCompany = async (req, res) => {
-  try {
-    const idCompany = req.user._id;
-
-    const unlockRecords = await unlockCandidateService.getUnlockCandidatesByCompany(idCompany);
-
-    res.status(200).json({
-      success: true,
-      message: "Unlock candidates retrieved successfully",
-      data: unlockRecords
-    });
-  } catch (error) {
-    console.error("Error getting unlock candidates:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to get unlock candidates",
-      error: error.message
-    });
-  }
-};
-
-/**
  * Create unlock candidate record (single or pack)
  * Body:
  *   Single (1 candidate): { candidateIds: ["id"], idJob: "jobId" } → 5 tokens
@@ -123,37 +99,6 @@ module.exports.unlockCandidate = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to create unlock candidate",
-      error: error.message
-    });
-  }
-};
-
-/**
- * Complete unlock after payment
- */
-module.exports.completeUnlock = async (req, res) => {
-  try {
-    const { unlockId, transactionId } = req.body;
-
-    if (!unlockId || !transactionId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields: unlockId, transactionId"
-      });
-    }
-
-    const unlockRecord = await unlockCandidateService.completeUnlock(unlockId, transactionId);
-
-    res.status(200).json({
-      success: true,
-      message: "Unlock completed successfully",
-      data: unlockRecord
-    });
-  } catch (error) {
-    console.error("Error completing unlock:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to complete unlock",
       error: error.message
     });
   }

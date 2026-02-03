@@ -116,24 +116,6 @@ const getUnlockedCandidatesByCompanyWithPagination = async (idCompany, page = 1,
 };
 
 /**
- * Get all unlock candidates by company (including pending)
- */
-const getUnlockCandidatesByCompany = async (idCompany) => {
-  try {
-    const unlockRecords = await UnlockCandidate.find({ idCompany })
-      .populate('idCandidate', 'firstName lastName email profileImage')
-      .populate('idJob', 'title description')
-      .populate('transactionId', 'transactionId amount status')
-      .sort({ createdAt: -1 });
-
-    return unlockRecords;
-  } catch (error) {
-    console.error("Error getting unlock candidates:", error);
-    throw error;
-  }
-};
-
-/**
  * Create unlock candidate record (single or pack)
  * @param {ObjectId} idCompany - Company ID
  * @param {Array} candidateIds - Array of candidate IDs (1 = single, 2-5 = pack)
@@ -218,28 +200,6 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
 };
 
 /**
- * Complete unlock after payment
- */
-const completeUnlock = async (unlockId, transactionId) => {
-  try {
-    const unlockRecord = await UnlockCandidate.findById(unlockId);
-    if (!unlockRecord) {
-      throw new Error("Unlock record not found");
-    }
-
-    unlockRecord.transactionId = transactionId;
-    unlockRecord.updatedAt = new Date();
-
-    await unlockRecord.save();
-
-    return unlockRecord;
-  } catch (error) {
-    console.error("Error completing unlock:", error);
-    throw error;
-  }
-};
-
-/**
  * Get unlock record by ID
  */
 const getUnlockById = async (unlockId) => {
@@ -260,8 +220,6 @@ const getUnlockById = async (unlockId) => {
 module.exports = {
   getUnlockedCandidatesByCompany,
   getUnlockedCandidatesByCompanyWithPagination,
-  getUnlockCandidatesByCompany,
   unlockCandidate,
-  completeUnlock,
   getUnlockById
 };
