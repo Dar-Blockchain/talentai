@@ -57,6 +57,15 @@ interface Assessment {
   assessments: any[];
 }
 
+interface FetchUsersParams {
+  page?: number;
+  limit?: number;
+  username?: string;
+  email?: string;
+  role?: string;
+  status?: string;
+}
+
 interface AdminState {
   stats: DashboardStats;
   statsLoading: boolean;
@@ -72,6 +81,10 @@ interface AdminState {
   assessmentsError: string | null;
   permissionsSaving: boolean;
   permissionsError: string | null;
+  users: AdminUser[];
+  usersLoading: boolean;
+  usersError: string | null;
+  totalUsers: number;
 }
 
 // ─── Initial State ───────────────────────────────────────
@@ -108,6 +121,10 @@ const initialState: AdminState = {
   assessmentsError: null,
   permissionsSaving: false,
   permissionsError: null,
+  users: [],
+  usersLoading: false,
+  usersError: null,
+  totalUsers: 0,
 };
 
 // ─── Helper ──────────────────────────────────────────────
@@ -286,6 +303,37 @@ export const fetchAdminAssessments = createAsyncThunk<
   }
 });
 
+export const fetchAdminUsers = createAsyncThunk<
+  { users: AdminUser[]; total: number },
+  FetchUsersParams,
+  { rejectValue: string }
+>("admin/fetchUsers", async (params, { rejectWithValue }) => {
+  try {
+    const token = getToken();
+    if (!token) throw new Error("Authentication token not found");
+    const queryParams = new URLSearchParams({
+      page: String(params.page ?? 1),
+      limit: String(params.limit ?? 10),
+    });
+    if (params.username) queryParams.append("username", params.username);
+    if (params.email) queryParams.append("email", params.email);
+    if (params.role) queryParams.append("role", params.role);
+    if (params.status) queryParams.append("status", params.status);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?${queryParams.toString()}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
+    const data = await res.json();
+    return {
+      users: data.users || [],
+      total: data.pagination?.totalUsers ?? data.total ?? 0,
+    };
+  } catch (error: any) {
+    return rejectWithValue(error.message || "Error fetching users");
+  }
+});
+
 export const saveCompanyPermissions = createAsyncThunk<
   any,
   { companyId: string; permissions: any },
@@ -389,6 +437,22 @@ const adminSlice = createSlice({
         state.assessments = [];
       });
 
+    // Users
+    builder
+      .addCase(fetchAdminUsers.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(fetchAdminUsers.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        state.users = action.payload.users;
+        state.totalUsers = action.payload.total;
+      })
+      .addCase(fetchAdminUsers.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload || "Error fetching users";
+      });
+
     // Save permissions
     builder
       .addCase(saveCompanyPermissions.pending, (state) => {
@@ -436,5 +500,12 @@ export const selectSkillDistribution = (state: RootState) => [
 ];
 export const selectPermissionsSaving = (state: RootState) =>
   state.admin.permissionsSaving;
+export const selectAdminUsers = (state: RootState) => state.admin.users;
+export const selectAdminUsersLoading = (state: RootState) =>
+  state.admin.usersLoading;
+export const selectAdminUsersError = (state: RootState) =>
+  state.admin.usersError;
+export const selectAdminTotalUsers = (state: RootState) =>
+  state.admin.totalUsers;
 
 export default adminSlice.reducer;

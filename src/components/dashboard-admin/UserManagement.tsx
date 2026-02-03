@@ -32,12 +32,20 @@ import {
   LocationOn as LocationIcon,
   Security as SecurityIcon,
 } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import {
+  fetchAdminUsers,
+  selectAdminUsers,
+  selectAdminUsersLoading,
+  selectAdminUsersError,
+  selectAdminTotalUsers,
+} from '@/store/slices/adminSlice';
 
 // Types
-import { User, UserFilters, FetchUsersParams, FetchUsersResponse } from '../../types/admin';
+import { User, UserFilters } from '../../types/admin';
 // Hooks
 import { usePagination } from '../../hooks/usePagination';
-import { useAuthToken } from '../../hooks/useAuthToken';
 // Utils
 import { getRoleColor } from '../../utils/colorMappings';
 
@@ -77,14 +85,13 @@ const UserManagement: React.FC<UserManagementProps> = ({
   onManagePermissions,
   initialFilters = {},
 }) => {
-  // Auth
-  const { token, isAuthenticated } = useAuthToken();
+  const dispatch = useDispatch<AppDispatch>();
 
-  // State
-  const [users, setUsers] = useState<User[]>([]);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Redux state
+  const users = useSelector(selectAdminUsers) as User[];
+  const totalUsers = useSelector(selectAdminTotalUsers);
+  const loading = useSelector(selectAdminUsersLoading);
+  const error = useSelector(selectAdminUsersError);
 
   // Filters
   const [usernameFilter, setUsernameFilter] = useState(initialFilters.username || '');
@@ -100,89 +107,39 @@ const UserManagement: React.FC<UserManagementProps> = ({
     handleChangeRowsPerPage: onRowsPerPageChange,
   } = usePagination({ initialRowsPerPage: 10 });
 
-  /**
-   * Fetch users from API with filters and pagination
-   */
-  const fetchUsers = useCallback(
-    async (params?: Partial<FetchUsersParams>) => {
-      if (!isAuthenticated || !token) {
-        setError('Authentication required');
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const queryParams = new URLSearchParams({
-          page: String(params?.page ?? page + 1), // API uses 1-based pagination
-          limit: String(params?.limit ?? rowsPerPage),
-        });
-
-        // Add filters if present
-        const username = params?.username ?? usernameFilter;
-        const email = params?.email ?? emailFilter;
-        const role = params?.role ?? roleFilter;
-        const status = params?.status ?? statusFilter;
-
-        if (username) queryParams.append('username', username);
-        if (email) queryParams.append('email', email);
-        if (role) queryParams.append('role', role);
-        if (status) queryParams.append('status', status);
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?${queryParams.toString()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch users: ${response.status}`);
-        }
-
-        const data: FetchUsersResponse = await response.json();
-        setUsers(data.users || []);
-        setTotalUsers(data.total || 0);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
-        setError(errorMessage);
-        console.error('Fetch users error:', err);
-      } finally {
-        setLoading(false);
-      }
+  const dispatchFetchUsers = useCallback(
+    (overrides?: { page?: number; limit?: number }) => {
+      dispatch(
+        fetchAdminUsers({
+          page: overrides?.page ?? page + 1,
+          limit: overrides?.limit ?? rowsPerPage,
+          username: usernameFilter || undefined,
+          email: emailFilter || undefined,
+          role: roleFilter || undefined,
+          status: statusFilter || undefined,
+        })
+      );
     },
-    [token, isAuthenticated, page, rowsPerPage, usernameFilter, emailFilter, roleFilter, statusFilter]
+    [dispatch, page, rowsPerPage, usernameFilter, emailFilter, roleFilter, statusFilter]
   );
 
-  /**
-   * Handle page change
-   */
   const handleChangePage = useCallback(
     (event: unknown, newPage: number) => {
       onPageChange(event, newPage);
-      fetchUsers({ page: newPage + 1 });
+      dispatchFetchUsers({ page: newPage + 1 });
     },
-    [onPageChange, fetchUsers]
+    [onPageChange, dispatchFetchUsers]
   );
 
-  /**
-   * Handle rows per page change
-   */
   const handleChangeRowsPerPage = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const newRowsPerPage = parseInt(event.target.value, 10);
       onRowsPerPageChange(event);
-      fetchUsers({ page: 1, limit: newRowsPerPage });
+      dispatchFetchUsers({ page: 1, limit: newRowsPerPage });
     },
-    [onRowsPerPageChange, fetchUsers]
+    [onRowsPerPageChange, dispatchFetchUsers]
   );
 
-  /**
-   * Reset all filters
-   */
   const handleResetFilters = useCallback(() => {
     setUsernameFilter('');
     setEmailFilter('');
@@ -190,18 +147,14 @@ const UserManagement: React.FC<UserManagementProps> = ({
     setStatusFilter('');
   }, []);
 
-  /**
-   * Apply filters and fetch
-   */
   const handleApplyFilters = useCallback(() => {
-    fetchUsers({ page: 1 });
-  }, [fetchUsers]);
-
+    dispatchFetchUsers({ page: 1 });
+  }, [dispatchFetchUsers]);
 
   // Fetch users on mount and when filters change
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    dispatchFetchUsers();
+  }, [dispatchFetchUsers]);
 
   return (
     <Box>
