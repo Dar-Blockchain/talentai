@@ -36,7 +36,7 @@ import {
   selectAdminSkillAssessments,
   selectAdminSkillAssessmentsLoading,
   selectAdminSkillAssessmentsTotal,
-} from '@/store/slices/interviewSlice';
+} from '@/store/slices/adminSlice';
 
 const GREEN_MAIN = '#8310FF';
 

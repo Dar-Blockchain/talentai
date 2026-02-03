@@ -46,17 +46,6 @@ interface AdminUser {
   };
 }
 
-interface Assessment {
-  _id: string;
-  jobId?: any;
-  jobName?: string;
-  jobDescription?: string;
-  numberOfAttempts: number;
-  averageScore: number;
-  totalQuestions: number;
-  assessments: any[];
-}
-
 interface FetchUsersParams {
   page?: number;
   limit?: number;
@@ -76,15 +65,24 @@ interface AdminState {
   userGrowthLoading: boolean;
   skillsData: Array<{ skill: string; count: number }>;
   skillsLoading: boolean;
-  assessments: Assessment[];
-  assessmentsLoading: boolean;
-  assessmentsError: string | null;
   permissionsSaving: boolean;
   permissionsError: string | null;
   users: AdminUser[];
   usersLoading: boolean;
   usersError: string | null;
   totalUsers: number;
+  postInterviewAssessments: {
+    items: any[];
+    total: number;
+    loading: boolean;
+    error: string | null;
+  };
+  skillInterviewAssessments: {
+    data: any[];
+    total: number;
+    loading: boolean;
+    error: string | null;
+  };
 }
 
 // ─── Initial State ───────────────────────────────────────
@@ -116,15 +114,24 @@ const initialState: AdminState = {
   userGrowthLoading: false,
   skillsData: [],
   skillsLoading: false,
-  assessments: [],
-  assessmentsLoading: false,
-  assessmentsError: null,
   permissionsSaving: false,
   permissionsError: null,
   users: [],
   usersLoading: false,
   usersError: null,
   totalUsers: 0,
+  postInterviewAssessments: {
+    items: [],
+    total: 0,
+    loading: false,
+    error: null,
+  },
+  skillInterviewAssessments: {
+    data: [],
+    total: 0,
+    loading: false,
+    error: null,
+  },
 };
 
 // ─── Helper ──────────────────────────────────────────────
@@ -277,16 +284,22 @@ export const fetchUserGrowthData = createAsyncThunk<
   }
 });
 
-export const fetchAdminAssessments = createAsyncThunk<
-  Assessment[],
-  undefined,
+export const fetchAdminPostAssessments = createAsyncThunk<
+  { items: any[]; total: number },
+  { page?: number; limit?: number; company?: string },
   { rejectValue: string }
->("admin/fetchAssessments", async (_, { rejectWithValue }) => {
+>("admin/fetchPostAssessments", async (params, { rejectWithValue }) => {
   try {
+    const { page = 1, limit = 10, company } = params;
     const token = getToken();
     if (!token) throw new Error("Authentication token not found");
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/job-assessment-results-grouped`,
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (company) queryParams.append("company", company);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments?${queryParams.toString()}`,
       {
         method: "GET",
         headers: {
@@ -295,11 +308,63 @@ export const fetchAdminAssessments = createAsyncThunk<
         },
       }
     );
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
-    return data.results || [];
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to fetch admin assessments");
+    }
+    const data = await response.json();
+    const assessments = data.data || data.results || [];
+    const total =
+      data.pagination?.totalCount ||
+      data.total ||
+      data.count ||
+      data.totalCount ||
+      assessments.length;
+    return { items: assessments, total };
   } catch (error: any) {
-    return rejectWithValue(error.message || "Error fetching assessments");
+    return rejectWithValue(error.message || "Error fetching admin assessments");
+  }
+});
+
+export const fetchAdminSkillAssessments = createAsyncThunk<
+  { results: any[]; total: number },
+  { page: number; limit: number; skill?: string },
+  { rejectValue: string }
+>("admin/fetchSkillAssessments", async ({ page, limit, skill }, { rejectWithValue }) => {
+  try {
+    const token = getToken();
+    if (!token) throw new Error("Authentication token not found");
+    const params = new URLSearchParams();
+    params.append("page", String(page + 1));
+    params.append("limit", String(limit));
+    if (skill) params.append("skill", skill);
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments?${params.toString()}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (!response.ok) {
+      return rejectWithValue(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.success || data.data || data.results) {
+      const results = data.data || data.results || [];
+      const total =
+        data.pagination?.totalCount ||
+        data.total ||
+        data.count ||
+        data.totalCount ||
+        results.length;
+      return { results, total };
+    }
+    return rejectWithValue("Failed to fetch skill interview assessments");
+  } catch (error: any) {
+    return rejectWithValue(
+      error.message || "Error fetching skill interview assessments"
+    );
   }
 });
 
@@ -421,20 +486,40 @@ const adminSlice = createSlice({
         state.userGrowthData = [];
       });
 
-    // Assessments
+    // Post Interview Assessments
     builder
-      .addCase(fetchAdminAssessments.pending, (state) => {
-        state.assessmentsLoading = true;
-        state.assessmentsError = null;
+      .addCase(fetchAdminPostAssessments.pending, (state) => {
+        state.postInterviewAssessments.loading = true;
+        state.postInterviewAssessments.error = null;
       })
-      .addCase(fetchAdminAssessments.fulfilled, (state, action) => {
-        state.assessmentsLoading = false;
-        state.assessments = action.payload;
+      .addCase(fetchAdminPostAssessments.fulfilled, (state, action) => {
+        state.postInterviewAssessments.loading = false;
+        state.postInterviewAssessments.items = action.payload.items;
+        state.postInterviewAssessments.total = action.payload.total;
       })
-      .addCase(fetchAdminAssessments.rejected, (state, action) => {
-        state.assessmentsLoading = false;
-        state.assessmentsError = action.payload || "Error fetching assessments";
-        state.assessments = [];
+      .addCase(fetchAdminPostAssessments.rejected, (state, action) => {
+        state.postInterviewAssessments.loading = false;
+        state.postInterviewAssessments.error =
+          action.payload || "Error fetching assessments";
+      });
+
+    // Skill Interview Assessments
+    builder
+      .addCase(fetchAdminSkillAssessments.pending, (state) => {
+        state.skillInterviewAssessments.loading = true;
+        state.skillInterviewAssessments.error = null;
+      })
+      .addCase(fetchAdminSkillAssessments.fulfilled, (state, action) => {
+        state.skillInterviewAssessments.loading = false;
+        state.skillInterviewAssessments.data = action.payload.results;
+        state.skillInterviewAssessments.total = action.payload.total;
+      })
+      .addCase(fetchAdminSkillAssessments.rejected, (state, action) => {
+        state.skillInterviewAssessments.loading = false;
+        state.skillInterviewAssessments.error =
+          action.payload || "Error fetching skill assessments";
+        state.skillInterviewAssessments.data = [];
+        state.skillInterviewAssessments.total = 0;
       });
 
     // Users
@@ -483,9 +568,21 @@ export const selectUserGrowthData = (state: RootState) =>
   state.admin.userGrowthData;
 export const selectSkillsData = (state: RootState) => state.admin.skillsData;
 export const selectAdminAssessments = (state: RootState) =>
-  state.admin.assessments;
+  state.admin.postInterviewAssessments.items;
 export const selectAdminAssessmentsLoading = (state: RootState) =>
-  state.admin.assessmentsLoading;
+  state.admin.postInterviewAssessments.loading;
+export const selectAdminAssessmentsError = (state: RootState) =>
+  state.admin.postInterviewAssessments.error;
+export const selectAdminAssessmentsTotal = (state: RootState) =>
+  state.admin.postInterviewAssessments.total;
+export const selectAdminSkillAssessments = (state: RootState) =>
+  state.admin.skillInterviewAssessments.data;
+export const selectAdminSkillAssessmentsLoading = (state: RootState) =>
+  state.admin.skillInterviewAssessments.loading;
+export const selectAdminSkillAssessmentsError = (state: RootState) =>
+  state.admin.skillInterviewAssessments.error;
+export const selectAdminSkillAssessmentsTotal = (state: RootState) =>
+  state.admin.skillInterviewAssessments.total;
 export const selectSkillDistribution = (state: RootState) => [
   {
     name: "Hard Skills",

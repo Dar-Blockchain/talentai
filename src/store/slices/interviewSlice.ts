@@ -76,13 +76,6 @@ interface InterviewReportState {
   error: string | null;
 }
 
-interface AdminSkillAssessmentsState {
-  data: any[];
-  loading: boolean;
-  error: string | null;
-  total: number;
-}
-
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -94,7 +87,6 @@ interface InterviewState {
   technicalAssessments: SkillTypeAssessments;
   softAssessments: SkillTypeAssessments;
   report: InterviewReportState;
-  adminSkillAssessments: AdminSkillAssessmentsState;
 }
 
 const initialState: InterviewState = {
@@ -108,7 +100,6 @@ const initialState: InterviewState = {
   technicalAssessments: { data: [], loading: false, error: null, total: 0 },
   softAssessments: { data: [], loading: false, error: null, total: 0 },
   report: { data: null, loading: false, error: null },
-  adminSkillAssessments: { data: [], loading: false, error: null, total: 0 },
 };
 
 /**
@@ -349,55 +340,6 @@ export const claimInterviewReward = createAsyncThunk<
   }
 );
 
-/**
- * Fetch all skill interview assessments (admin)
- */
-export const fetchAdminSkillAssessments = createAsyncThunk<
-  { results: any[]; total: number },
-  { page: number; limit: number; skill?: string },
-  { rejectValue: string }
->(
-  'interview/fetchAdminSkillAssessments',
-  async ({ page, limit, skill }, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
-    try {
-      const params = new URLSearchParams();
-      params.append('page', String(page + 1));
-      params.append('limit', String(limit));
-      if (skill) {
-        params.append('skill', skill);
-      }
-
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        return rejectWithValue(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success || data.data || data.results) {
-        const results = data.data || data.results || [];
-        const total = data.pagination?.totalCount || data.total || data.count || data.totalCount || results.length;
-        return { results, total };
-      }
-
-      return rejectWithValue('Failed to fetch skill interview assessments');
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Error fetching skill interview assessments');
-    }
-  }
-);
-
 const interviewSlice = createSlice({
   name: 'interview',
   initialState,
@@ -471,22 +413,6 @@ const interviewSlice = createSlice({
       .addCase(fetchInterviewReport.rejected, (state, action) => {
         state.report.loading = false;
         state.report.error = action.payload || 'An error occurred';
-      })
-      // ---- ADMIN SKILL ASSESSMENTS ----
-      .addCase(fetchAdminSkillAssessments.pending, (state) => {
-        state.adminSkillAssessments.loading = true;
-        state.adminSkillAssessments.error = null;
-      })
-      .addCase(fetchAdminSkillAssessments.fulfilled, (state, action) => {
-        state.adminSkillAssessments.loading = false;
-        state.adminSkillAssessments.data = action.payload.results;
-        state.adminSkillAssessments.total = action.payload.total;
-      })
-      .addCase(fetchAdminSkillAssessments.rejected, (state, action) => {
-        state.adminSkillAssessments.loading = false;
-        state.adminSkillAssessments.error = action.payload || 'An error occurred';
-        state.adminSkillAssessments.data = [];
-        state.adminSkillAssessments.total = 0;
       });
   },
 });
@@ -506,10 +432,5 @@ export const selectSoftAssessments = (state: RootState) => state.interview.softA
 export const selectInterviewReport = (state: RootState) => state.interview.report.data;
 export const selectInterviewReportLoading = (state: RootState) => state.interview.report.loading;
 export const selectInterviewReportError = (state: RootState) => state.interview.report.error;
-
-export const selectAdminSkillAssessments = (state: RootState) => state.interview.adminSkillAssessments.data;
-export const selectAdminSkillAssessmentsLoading = (state: RootState) => state.interview.adminSkillAssessments.loading;
-export const selectAdminSkillAssessmentsError = (state: RootState) => state.interview.adminSkillAssessments.error;
-export const selectAdminSkillAssessmentsTotal = (state: RootState) => state.interview.adminSkillAssessments.total;
 
 export default interviewSlice.reducer;
