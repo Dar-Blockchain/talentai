@@ -52,13 +52,6 @@ interface CompanyAssessmentsState {
   pagination: PaginationState;
 }
 
-interface AdminAssessmentsState {
-  items: any[];
-  loading: boolean;
-  error: string | null;
-  total: number;
-}
-
 interface AssessmentDetailsState {
   assessment: any | null;
   stepsData: any | null;
@@ -92,7 +85,6 @@ interface PostState {
   updatePostStatus: UpdatePostStatusState;
   candidateAssessments: CandidateAssessmentsState;
   companyAssessments: CompanyAssessmentsState;
-  adminAssessments: AdminAssessmentsState;
   assessmentDetails: AssessmentDetailsState;
 }
 
@@ -186,12 +178,6 @@ const initialState: PostState = {
       hasNextPage: false,
       hasPrevPage: false,
     },
-  },
-  adminAssessments: {
-    items: [],
-    loading: false,
-    error: null,
-    total: 0,
   },
   assessmentDetails: {
     assessment: null,
@@ -929,62 +915,6 @@ export const fetchCompanyAssessments = createAsyncThunk(
   }
 );
 
-// Async thunk to fetch all post interview assessments (admin)
-export const fetchAdminAssessments = createAsyncThunk(
-  "post/fetchAdminAssessments",
-  async (
-    params: { page?: number; limit?: number; company?: string } = {},
-    { rejectWithValue }
-  ) => {
-    try {
-      const { page = 1, limit = 10, company } = params;
-      const token = localStorage.getItem("api_token");
-
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
-      if (company) {
-        queryParams.append("company", company);
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments?${queryParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch admin assessments");
-      }
-
-      const data = await response.json();
-      const assessments = data.data || data.results || [];
-      const total =
-        data.pagination?.totalCount ||
-        data.total ||
-        data.count ||
-        data.totalCount ||
-        assessments.length;
-
-      return {
-        items: assessments,
-        total,
-      };
-    } catch (error: any) {
-      return rejectWithValue(
-        error.message || "Error fetching admin assessments"
-      );
-    }
-  }
-);
-
 // Async thunk to fetch a single post-interview assessment by ID
 export const fetchAssessmentDetails = createAsyncThunk<
   { assessment: any; stepsData: any },
@@ -1260,20 +1190,6 @@ const postSlice = createSlice({
         state.companyAssessments.loading = false;
         state.companyAssessments.error = action.payload as string;
       })
-      // ---- ADMIN ASSESSMENTS ----
-      .addCase(fetchAdminAssessments.pending, (state) => {
-        state.adminAssessments.loading = true;
-        state.adminAssessments.error = null;
-      })
-      .addCase(fetchAdminAssessments.fulfilled, (state, action) => {
-        state.adminAssessments.loading = false;
-        state.adminAssessments.items = action.payload.items;
-        state.adminAssessments.total = action.payload.total;
-      })
-      .addCase(fetchAdminAssessments.rejected, (state, action) => {
-        state.adminAssessments.loading = false;
-        state.adminAssessments.error = action.payload as string;
-      })
       // ---- ASSESSMENT DETAILS ----
       .addCase(fetchAssessmentDetails.pending, (state) => {
         state.assessmentDetails.loading = true;
@@ -1383,16 +1299,6 @@ export const selectCompanyAssessmentsError = (state: { post: PostState }) =>
   state.post.companyAssessments.error;
 export const selectCompanyAssessmentsPagination = (state: { post: PostState }) =>
   state.post.companyAssessments.pagination;
-
-// Admin Assessments Selectors
-export const selectAdminAssessments = (state: { post: PostState }) =>
-  state.post.adminAssessments.items;
-export const selectAdminAssessmentsLoading = (state: { post: PostState }) =>
-  state.post.adminAssessments.loading;
-export const selectAdminAssessmentsError = (state: { post: PostState }) =>
-  state.post.adminAssessments.error;
-export const selectAdminAssessmentsTotal = (state: { post: PostState }) =>
-  state.post.adminAssessments.total;
 
 // Assessment Details Selectors
 export const selectAssessmentDetails = (state: { post: PostState }) =>

@@ -32,11 +32,11 @@ import {
 } from '@mui/icons-material';
 import { AppDispatch } from '@/store/store';
 import {
-  fetchAdminAssessments,
+  fetchAdminPostAssessments,
   selectAdminAssessments,
   selectAdminAssessmentsLoading,
   selectAdminAssessmentsTotal,
-} from '@/store/slices/postSlice';
+} from '@/store/slices/adminSlice';
 
 const GREEN_MAIN = '#8310FF';
 
@@ -189,7 +189,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   useEffect(() => {
     if (autoFetch) {
       dispatch(
-        fetchAdminAssessments({
+        fetchAdminPostAssessments({
           page: page + 1,
           limit: rowsPerPage,
           company: selectedCompany || undefined,
