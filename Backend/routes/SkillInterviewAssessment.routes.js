@@ -52,7 +52,7 @@ router.get('/:id', getById);
 
 // GET /api/skill-interview-assessments (must be last among GET routes)
 // Query params: page, limit, interviewType, candidateId, interviewerId
-//router.get('/', getAll);
+router.get('/', getAll);
 
 // ========== UPDATE ==========
 // PUT /api/skill-interview-assessments/:id
