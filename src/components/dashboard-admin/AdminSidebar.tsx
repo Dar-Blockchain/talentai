@@ -99,23 +99,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, px: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '10px',
-                background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.85rem' }}>T</Typography>
-            </Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
-              TalentAI
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src="/logo-purple.svg"
+              alt="TalentAI"
+              style={{ height: 32, width: 'auto' }}
+            />
           </Box>
           {isMobile && (
             <IconButton onClick={onDrawerClose} size="small">
