@@ -34,9 +34,6 @@ router.put('/', uploadfile.single("user_image"), profileController.updateProfile
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
-// DELETE /profile/deleteProfile — supprime le profil courant
-router.delete('/deleteProfile', profileController.deleteProfile);
-
 // GET /profile/search/skills — recherche par compétences
 router.get('/search/skills', profileController.searchProfilesBySkills);
 

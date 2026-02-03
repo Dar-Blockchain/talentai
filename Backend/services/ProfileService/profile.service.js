@@ -3,7 +3,7 @@ const User = require("../../models/User.model");
 const Post = require("../../models/Post.model");
 const hederaService = require("../hedera.service");
 const AgentConfig = require("../../models/AgentConfig.model");
-const { POST_STATUS } = require("../../constants/posts.constants");
+// const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
 
@@ -395,24 +395,6 @@ module.exports.getProfileByPostId = async (postId) => {
   } catch (error) {
     console.error("Error retrieving profile:", error);
     throw new Error("Unable to retrieve profile."); // More generic message
-  }
-};
-
-// Delete a profile
-module.exports.deleteProfile = async (userId) => {
-  try {
-    const profile = await Profile.findOneAndDelete({ userId });
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
-
-    // Update user to remove profile reference
-    await User.findByIdAndUpdate(userId, { $unset: { profile: 1 } });
-
-    return { message: "Profile deleted successfully" };
-  } catch (error) {
-    console.error("Error deleting profile:", error);
-    throw error;
   }
 };
 

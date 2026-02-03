@@ -183,26 +183,6 @@ module.exports.getProfileById = async (req, res) => {
   }
 };
 
-
-// Delete a profile
-module.exports.deleteProfile = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    // Use the service to delete the profile
-    const result = await profileService.deleteProfile(userId);
-
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Error deleting profile:", error);
-    res
-      .status(500)
-      .json({
-        message: error.message || "Error deleting profile",
-      });
-  }
-};
-
 // Search profiles by skills
 module.exports.searchProfilesBySkills = async (req, res) => {
   try {
