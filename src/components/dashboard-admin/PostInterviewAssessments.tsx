@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -15,7 +15,6 @@ import {
   Typography,
   CircularProgress,
   IconButton,
-  styled,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -25,10 +24,21 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  Tooltip,
+  TextField,
+  InputAdornment,
+  Tab,
+  Tabs,
+  styled,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
+  Search as SearchIcon,
+  EmojiEvents as ExcellentIcon,
+  TrendingUp as SatisfactoryIcon,
+  TrendingDown as NeedsImprovementIcon,
+  Assessment as AllIcon,
 } from '@mui/icons-material';
 import { AppDispatch } from '@/store/store';
 import {
@@ -38,37 +48,28 @@ import {
   selectAdminAssessmentsTotal,
 } from '@/store/slices/adminSlice';
 
-const GREEN_MAIN = '#8310FF';
+const PRIMARY = '#8310FF';
 
-const StyledCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(4),
-  background: '#ffffff',
-  borderRadius: '20px',
-  boxShadow: '0 4px 24px rgba(131,16,255,0.06)',
-  border: '1px solid #ece6fa',
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '2rem',
-  fontWeight: 800,
-  color: '#1a1a2e',
-  marginBottom: theme.spacing(4),
-  letterSpacing: '-0.5px',
-  position: 'relative',
-  lineHeight: 1.1,
-  paddingBottom: theme.spacing(2),
-  '&:after': {
-    content: '""',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: '60px',
-    height: '4px',
-    background: 'linear-gradient(90deg, #8310FF 0%, #00FFC3 100%)',
-    borderRadius: '2px',
+const StyledTabs = styled(Tabs)({
+  minHeight: 40,
+  '& .MuiTabs-indicator': {
+    backgroundColor: PRIMARY,
+    height: 3,
+    borderRadius: '3px 3px 0 0',
   },
-}));
+});
+
+const StyledTab = styled(Tab)({
+  minHeight: 40,
+  textTransform: 'none',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  color: '#6c6c80',
+  padding: '8px 16px',
+  '&.Mui-selected': {
+    color: PRIMARY,
+  },
+});
 
 // Types
 interface PostInterviewAssessmentData {
@@ -152,9 +153,11 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   const loading = useSelector(selectAdminAssessmentsLoading);
   const totalCount = useSelector(selectAdminAssessmentsTotal);
 
-  // Company filter state
+  // Filter state
   const [companies, setCompanies] = useState<{ _id: string; username: string }[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [scoreTab, setScoreTab] = useState(0);
 
   // Dialog state for viewing details
   const [selectedAssessment, setSelectedAssessment] = useState<PostInterviewAssessmentData | null>(null);
@@ -224,6 +227,10 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
     setDetailsDialogOpen(true);
   }, []);
 
+  const handleScoreTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
+    setScoreTab(newValue);
+  }, []);
+
   /**
    * Get overall score from assessment data
    */
@@ -264,145 +271,180 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
     }
   };
 
+  // Client-side filtering
+  const filteredResults = results.filter((assessment) => {
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchesCandidate = assessment.candidate?.username?.toLowerCase().includes(q) || assessment.candidate?.email?.toLowerCase().includes(q);
+      const matchesJob = assessment.post?.jobDetails?.title?.toLowerCase().includes(q);
+      const matchesCompanyName = assessment.company?.username?.toLowerCase().includes(q);
+      if (!matchesCandidate && !matchesJob && !matchesCompanyName) return false;
+    }
+    // Score tab filter
+    if (scoreTab > 0) {
+      const score = getOverallScore(assessment);
+      if (scoreTab === 1 && score < 70) return false;
+      if (scoreTab === 2 && (score < 50 || score >= 70)) return false;
+      if (scoreTab === 3 && score >= 50) return false;
+    }
+    return true;
+  });
+
   return (
-    <Box sx={{ width: '100%' }}>
-      <SectionTitle>Post Interview Assessments</SectionTitle>
+    <Box>
+      {/* Header */}
+      <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 3 }}>
+        Post Interview Assessments
+      </Typography>
 
-      {/* Results Table */}
-      <StyledCard>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Assessment Results ({totalCount} total)
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel id="company-filter-label">Filter by Company</InputLabel>
-              <Select
-                labelId="company-filter-label"
-                id="company-filter"
-                value={selectedCompany}
-                label="Filter by Company"
-                onChange={handleCompanyChange}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: GREEN_MAIN,
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: GREEN_MAIN,
-                  },
-                }}
-              >
-                <MenuItem value="">
-                  <em>All Companies</em>
+      {/* Filters */}
+      <Paper sx={{ mb: 3, borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none', overflow: 'hidden' }}>
+        {/* Search & Company filter */}
+        <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+          <TextField
+            placeholder="Search candidate, job, company..."
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#6c6c80', fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flex: '1 1 220px' }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel id="company-filter-label">Company</InputLabel>
+            <Select
+              labelId="company-filter-label"
+              id="company-filter"
+              value={selectedCompany}
+              label="Company"
+              onChange={handleCompanyChange}
+            >
+              <MenuItem value="">
+                <em>All Companies</em>
+              </MenuItem>
+              {companies.map((company) => (
+                <MenuItem key={company._id} value={company._id}>
+                  {company.username}
                 </MenuItem>
-                {companies.map((company) => (
-                  <MenuItem key={company._id} value={company._id}>
-                    {company.username}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {loading && <CircularProgress size={24} sx={{ color: GREEN_MAIN }} />}
-          </Box>
+              ))}
+            </Select>
+          </FormControl>
+          {loading && <CircularProgress size={20} sx={{ color: PRIMARY }} />}
+          <Box sx={{ flex: 1 }} />
+          <Typography variant="body2" sx={{ color: '#6c6c80' }}>
+            {filteredResults.length} of {totalCount}
+          </Typography>
         </Box>
+        {/* Score Tabs */}
+        <Box sx={{ borderTop: '1px solid #ece6fa', px: 2 }}>
+          <StyledTabs value={scoreTab} onChange={handleScoreTabChange}>
+            <StyledTab icon={<AllIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
+            <StyledTab icon={<ExcellentIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Excellent (70%+)" />
+            <StyledTab icon={<SatisfactoryIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Satisfactory" />
+            <StyledTab icon={<NeedsImprovementIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Needs Work" />
+          </StyledTabs>
+        </Box>
+      </Paper>
 
-        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: 'none', border: '1px solid #ece6fa' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
-                <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Post/Job</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Company</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Score</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+      {/* Table */}
+      <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none' }}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
+              <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Post/Job</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Company</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Score</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">Loading...</Typography>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {results.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                      {loading
-                        ? 'Loading...'
-                        : 'No post interview assessments found. Try adjusting your filters.'}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                results.map((assessment) => {
-                  const score = getOverallScore(assessment);
-                  return (
-                    <TableRow key={assessment._id} hover sx={{ '&:hover': { backgroundColor: '#faf8ff' } }}>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {assessment.candidate?.username || 'Unknown'}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {assessment.candidate?.email || assessment.candidate?._id || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {assessment.post?.jobDetails?.title || 'Untitled Post'}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
-                            {assessment.post?._id || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {assessment.company?.username || 'Unknown Company'}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {assessment.company?.email || ''}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={`${score.toFixed(1)}%`}
-                          color={getScoreColor(score)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          {formatDate(assessment.createdAt)}
+            ) : filteredResults.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No assessments found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredResults.map((assessment) => {
+                const score = getOverallScore(assessment);
+                return (
+                  <TableRow key={assessment._id} hover>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {assessment.candidate?.username || 'Unknown'}
                         </Typography>
-                      </TableCell>
-                      <TableCell>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {assessment.candidate?.email || assessment.candidate?._id || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {assessment.post?.jobDetails?.title || 'Untitled Post'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {assessment.company?.username || 'Unknown Company'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={`${score.toFixed(1)}%`}
+                        color={getScoreColor(score)}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {formatDate(assessment.createdAt)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title="View Details">
                         <IconButton
                           size="small"
                           onClick={() => handleViewDetails(assessment)}
-                          sx={{ color: GREEN_MAIN }}
+                          sx={{ color: PRIMARY }}
                         >
-                          <VisibilityIcon />
+                          <VisibilityIcon fontSize="small" />
                         </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
         <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
           component="div"
           count={totalCount}
+          rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 20, 50]}
         />
-      </StyledCard>
+      </TableContainer>
 
       {/* Details Dialog */}
       <Dialog
@@ -415,7 +457,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #6a0dad 100%)`,
+          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
           color: 'white'
         }}>
           <Box>
@@ -435,7 +477,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
             <Box>
               {/* Score Header */}
               <Box sx={{
-                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                background: '#f5f3ff',
                 p: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -493,7 +535,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                 <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' }, borderRight: { md: '1px solid #e0e0e0' } }}>
                   {/* Candidate Info */}
                   <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                       👤 Candidate
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -511,7 +553,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
 
                   {/* Company Info */}
                   <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                       🏢 Company
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -527,7 +569,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                   {/* Skill & Proficiency */}
                   {selectedAssessment.metadata && (selectedAssessment.metadata.skill || selectedAssessment.metadata.proficiency) && (
                     <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         🎯 Skills Assessed
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -557,7 +599,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                 <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
                   {/* Job Details */}
                   <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                       💼 Job Position
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -605,12 +647,12 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                   {/* Interview Analytics */}
                   {selectedAssessment.interviewData?.analytics && (
                     <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         📊 Interview Statistics
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1, textAlign: 'center', p: 1, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
                             {Math.floor((selectedAssessment.interviewData.analytics.duration || 0) / 60000)}m
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -618,7 +660,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                           </Typography>
                         </Box>
                         <Box sx={{ flex: 1, textAlign: 'center', p: 1, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
                             {selectedAssessment.interviewData.analytics.messageCount || 0}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -626,7 +668,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                           </Typography>
                         </Box>
                         <Box sx={{ flex: 1, textAlign: 'center', p: 1, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
                             {selectedAssessment.interviewData.analytics.coveragePercentage || 0}%
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -640,13 +682,13 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                   {/* Requirements if available */}
                   {selectedAssessment.post?.jobDetails?.requirements && selectedAssessment.post.jobDetails.requirements.length > 0 && (
                     <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                         ✅ Job Requirements
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         {selectedAssessment.post.jobDetails.requirements.slice(0, 4).map((req: string, idx: number) => (
                           <Typography key={idx} variant="body2" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                            <span style={{ color: GREEN_MAIN }}>•</span> {req}
+                            <span style={{ color: PRIMARY }}>•</span> {req}
                           </Typography>
                         ))}
                         {selectedAssessment.post.jobDetails.requirements.length > 4 && (
@@ -663,7 +705,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
               {/* Full Width - Coverage Areas */}
               {selectedAssessment.interviewData?.finalReport?.coverage?.areas && (
                 <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                     📈 Coverage Areas
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -711,7 +753,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
             onClick={() => setDetailsDialogOpen(false)}
             variant="contained"
             sx={{
-              backgroundColor: GREEN_MAIN,
+              backgroundColor: PRIMARY,
               '&:hover': { backgroundColor: '#6a0dad' }
             }}
           >

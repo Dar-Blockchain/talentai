@@ -3,10 +3,6 @@ import {
   Box,
   Button,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -21,6 +17,9 @@ import {
   Typography,
   Tooltip,
   Stack,
+  InputAdornment,
+  Tab,
+  Tabs,
   styled,
 } from '@mui/material';
 import {
@@ -31,6 +30,11 @@ import {
   Pending as PendingIcon,
   LocationOn as LocationIcon,
   Security as SecurityIcon,
+  Search as SearchIcon,
+  People as PeopleIcon,
+  Person as PersonIcon,
+  Business as BusinessIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
@@ -49,36 +53,28 @@ import { usePagination } from '../../hooks/usePagination';
 // Utils
 import { getRoleColor } from '../../utils/colorMappings';
 
-const GREEN_MAIN = '#8310FF';
+const PRIMARY = '#8310FF';
 
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '2rem',
-  fontWeight: 800,
-  color: '#1a1a2e',
-  marginBottom: theme.spacing(4),
-  letterSpacing: '-0.5px',
-  position: 'relative' as const,
-  lineHeight: 1.1,
-  paddingBottom: theme.spacing(2),
-  '&:after': {
-    content: '""',
-    position: 'absolute' as const,
-    bottom: 0,
-    left: 0,
-    width: '60px',
-    height: '4px',
-    background: 'linear-gradient(90deg, #8310FF 0%, #00FFC3 100%)',
-    borderRadius: '2px',
+const StyledTabs = styled(Tabs)({
+  minHeight: 40,
+  '& .MuiTabs-indicator': {
+    backgroundColor: PRIMARY,
+    height: 3,
+    borderRadius: '3px 3px 0 0',
   },
-}));
+});
 
-const StyledCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: '20px',
-  boxShadow: '0 4px 24px rgba(131,16,255,0.06)',
-  border: '1px solid #ece6fa',
-  backgroundColor: '#ffffff',
-}));
+const StyledTab = styled(Tab)({
+  minHeight: 40,
+  textTransform: 'none',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  color: '#6c6c80',
+  padding: '8px 16px',
+  '&.Mui-selected': {
+    color: PRIMARY,
+  },
+});
 
 interface UserManagementProps {
   onUserSelect?: (user: User) => void;
@@ -88,11 +84,6 @@ interface UserManagementProps {
   initialFilters?: Partial<UserFilters>;
 }
 
-/**
- * UserManagement Component
- * Handles user listing, filtering, and management operations
- * Extracted from admin.tsx for better modularity
- */
 const UserManagement: React.FC<UserManagementProps> = ({
   onUserSelect,
   onUserEdit,
@@ -102,19 +93,19 @@ const UserManagement: React.FC<UserManagementProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Redux state
   const users = useSelector(selectAdminUsers) as User[];
   const totalUsers = useSelector(selectAdminTotalUsers);
   const loading = useSelector(selectAdminUsersLoading);
   const error = useSelector(selectAdminUsersError);
 
-  // Filters
   const [usernameFilter, setUsernameFilter] = useState(initialFilters.username || '');
   const [emailFilter, setEmailFilter] = useState(initialFilters.email || '');
   const [roleFilter, setRoleFilter] = useState(initialFilters.role || '');
   const [statusFilter, setStatusFilter] = useState(initialFilters.status || '');
 
-  // Pagination - using custom hook
+  const roleTabMap = ['', 'Candidate', 'Company', 'Admin'];
+  const roleTabIndex = roleTabMap.indexOf(roleFilter);
+
   const {
     page,
     rowsPerPage,
@@ -166,66 +157,93 @@ const UserManagement: React.FC<UserManagementProps> = ({
     dispatchFetchUsers({ page: 1 });
   }, [dispatchFetchUsers]);
 
-  // Fetch users on mount and when filters change
+  const handleRoleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
+    setRoleFilter(roleTabMap[newValue]);
+  }, []);
+
   useEffect(() => {
     dispatchFetchUsers();
   }, [dispatchFetchUsers]);
 
   return (
     <Box>
-      {/* Header with action buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <SectionTitle>User Management</SectionTitle>
-       
-      </Box>
+      {/* Header */}
+      <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 3 }}>
+        User Management
+      </Typography>
 
-      {/* Filter Card */}
-      <StyledCard sx={{ mb: 3, p: { xs: 2, md: 3 }, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-        <TextField
-          label="Username"
-          variant="outlined"
-          size="small"
-          value={usernameFilter}
-          onChange={(e) => setUsernameFilter(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
-          sx={{ minWidth: 160 }}
-        />
-        <TextField
-          label="Email"
-          variant="outlined"
-          size="small"
-          value={emailFilter}
-          onChange={(e) => setEmailFilter(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
-          sx={{ minWidth: 200 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Role</InputLabel>
-          <Select value={roleFilter} label="Role" onChange={(e) => setRoleFilter(e.target.value)}>
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Candidate">Candidate</MenuItem>
-            <MenuItem value="Company">Company</MenuItem>
-            <MenuItem value="Admin">Admin</MenuItem>
-          </Select>
-        </FormControl>
+      {/* Filters & Tabs */}
+      <Paper sx={{ mb: 3, borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none', overflow: 'hidden' }}>
+        {/* Search */}
+        <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+          <TextField
+            placeholder="Search by username..."
+            variant="outlined"
+            size="small"
+            value={usernameFilter}
+            onChange={(e) => setUsernameFilter(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#6c6c80', fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flex: '1 1 180px' }}
+          />
+          <TextField
+            placeholder="Search by email..."
+            variant="outlined"
+            size="small"
+            value={emailFilter}
+            onChange={(e) => setEmailFilter(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#6c6c80', fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flex: '1 1 180px' }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleApplyFilters}
+            disableElevation
+            sx={{ backgroundColor: PRIMARY, textTransform: 'none', '&:hover': { backgroundColor: '#6a0dad' } }}
+          >
+            Search
+          </Button>
+          <Button
+            variant="text"
+            onClick={handleResetFilters}
+            sx={{ color: '#6c6c80', textTransform: 'none' }}
+          >
+            Reset
+          </Button>
+        </Box>
+        {/* Role Tabs */}
+        <Box sx={{ borderTop: '1px solid #ece6fa', px: 2 }}>
+          <StyledTabs value={roleTabIndex >= 0 ? roleTabIndex : 0} onChange={handleRoleTabChange}>
+            <StyledTab icon={<PeopleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="All" />
+            <StyledTab icon={<PersonIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Candidates" />
+            <StyledTab icon={<BusinessIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Companies" />
+            <StyledTab icon={<AdminIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Admins" />
+          </StyledTabs>
+        </Box>
+      </Paper>
 
-        <Button variant="contained" onClick={handleApplyFilters} sx={{ backgroundColor: GREEN_MAIN }}>
-          Apply Filters
-        </Button>
-        <Button variant="outlined" color="secondary" onClick={handleResetFilters} sx={{ ml: 'auto' }}>
-          Reset Filters
-        </Button>
-      </StyledCard>
-
-      {/* Error Display */}
+      {/* Error */}
       {error && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-          <Typography color="error">{error}</Typography>
+        <Box sx={{ mb: 2, p: 1.5, bgcolor: '#fef2f2', borderRadius: '8px' }}>
+          <Typography color="error" variant="body2">{error}</Typography>
         </Box>
       )}
 
-      {/* Users Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(131,16,255,0.04)', border: '1px solid #ece6fa' }}>
+      {/* Table */}
+      <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #ece6fa', boxShadow: 'none' }}>
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
@@ -241,52 +259,47 @@ const UserManagement: React.FC<UserManagementProps> = ({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography>Loading users...</Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">Loading...</Typography>
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography color="textSecondary">No users found</Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">No users found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user._id} hover sx={{ '&:hover': { backgroundColor: '#faf8ff' } }}>
+                <TableRow key={user._id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ mr: 2, bgcolor: GREEN_MAIN }}>
+                      <Avatar sx={{ mr: 2, bgcolor: PRIMARY, width: 36, height: 36, fontSize: '0.9rem' }}>
                         {user.username.charAt(0).toUpperCase()}
                       </Avatar>
                       <Box>
                         {user.profile?.firstName && user.profile?.lastName ? (
                           <>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
                               {user.profile.firstName} {user.profile.lastName}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            <Typography variant="caption" color="text.secondary">
                               @{user.username}
                             </Typography>
                           </>
                         ) : (
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {user.username}
                           </Typography>
                         )}
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                           {user.email}
                         </Typography>
                       </Box>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={user.role}
-                      color={getRoleColor(user.role) as any}
-                      size="small"
-                      sx={{ textTransform: 'capitalize' }}
-                    />
+                    <Chip label={user.role} color={getRoleColor(user.role) as any} size="small" />
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -297,25 +310,23 @@ const UserManagement: React.FC<UserManagementProps> = ({
                     />
                   </TableCell>
                   <TableCell>
-                    <Box>
-                      {user.Localisation ? (
-                        <>
-                          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            {user.Localisation}
-                          </Typography>
-                          {user.ip && (
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-                              IP: {user.ip}
-                            </Typography>
-                          )}
-                        </>
-                      ) : (
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                          No location data
+                    {user.Localisation ? (
+                      <Box>
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          {user.Localisation}
                         </Typography>
-                      )}
-                    </Box>
+                        {user.ip && (
+                          <Typography variant="caption" color="text.secondary">
+                            IP: {user.ip}
+                          </Typography>
+                        )}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                        No location
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{new Date(user.createdAt).toLocaleDateString()}</Typography>
@@ -326,36 +337,27 @@ const UserManagement: React.FC<UserManagementProps> = ({
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Tooltip title="View Details">
-                        <IconButton size="small" onClick={() => onUserSelect?.(user)}>
-                          <VisibilityIcon />
+                    <Stack direction="row" spacing={0.5}>
+                      <Tooltip title="View">
+                        <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: PRIMARY }}>
+                          <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Edit User">
-                        <IconButton size="small" onClick={() => onUserEdit?.(user)}>
-                          <EditIcon />
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => onUserEdit?.(user)} sx={{ color: '#6c6c80' }}>
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       {user.role === 'Company' && onManagePermissions && (
-                        <Tooltip title="Manage Permissions">
-                          <IconButton
-                            size="small"
-                            onClick={() => onManagePermissions(user)}
-                            sx={{
-                              color: '#8310FF',
-                              '&:hover': {
-                                bgcolor: 'rgba(131, 16, 255, 0.1)',
-                              }
-                            }}
-                          >
-                            <SecurityIcon />
+                        <Tooltip title="Permissions">
+                          <IconButton size="small" onClick={() => onManagePermissions(user)} sx={{ color: PRIMARY }}>
+                            <SecurityIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       )}
-                      <Tooltip title="Delete User">
-                        <IconButton size="small" color="error" onClick={() => onUserDelete?.(user._id)}>
-                          <DeleteIcon />
+                      <Tooltip title="Delete">
+                        <IconButton size="small" onClick={() => onUserDelete?.(user._id)} sx={{ color: '#ccc', '&:hover': { color: '#ef4444' } }}>
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     </Stack>
