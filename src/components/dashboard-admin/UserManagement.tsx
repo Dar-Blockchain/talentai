@@ -49,19 +49,34 @@ import { usePagination } from '../../hooks/usePagination';
 // Utils
 import { getRoleColor } from '../../utils/colorMappings';
 
-const GREEN_MAIN = '#7851a9';
+const GREEN_MAIN = '#8310FF';
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.5rem',
-  fontWeight: 600,
-  color: '#333',
-  marginBottom: theme.spacing(2),
+  fontSize: '2rem',
+  fontWeight: 800,
+  color: '#1a1a2e',
+  marginBottom: theme.spacing(4),
+  letterSpacing: '-0.5px',
+  position: 'relative' as const,
+  lineHeight: 1.1,
+  paddingBottom: theme.spacing(2),
+  '&:after': {
+    content: '""',
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    width: '60px',
+    height: '4px',
+    background: 'linear-gradient(90deg, #8310FF 0%, #00FFC3 100%)',
+    borderRadius: '2px',
+  },
 }));
 
 const StyledCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  borderRadius: theme.spacing(2),
-  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+  borderRadius: '20px',
+  boxShadow: '0 4px 24px rgba(131,16,255,0.06)',
+  border: '1px solid #ece6fa',
   backgroundColor: '#ffffff',
 }));
 
@@ -210,10 +225,10 @@ const UserManagement: React.FC<UserManagementProps> = ({
       )}
 
       {/* Users Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+      <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 2px 12px rgba(131,16,255,0.04)', border: '1px solid #ece6fa' }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: 'grey.50' }}>
+            <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
               <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -238,7 +253,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user._id} hover>
+                <TableRow key={user._id} hover sx={{ '&:hover': { backgroundColor: '#faf8ff' } }}>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Avatar sx={{ mr: 2, bgcolor: GREEN_MAIN }}>

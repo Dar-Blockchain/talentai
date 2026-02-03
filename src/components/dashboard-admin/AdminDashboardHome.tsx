@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { AppDispatch } from '@/store/store';
 import {
   fetchAdminStats,
@@ -19,6 +19,21 @@ import AdminSkillsBarChart from './AdminSkillsBarChart';
 import AdminGrowthAnalytics from './AdminGrowthAnalytics';
 import AdminSkillsDistribution from './AdminSkillsDistribution';
 import AdminWorldMap from './AdminWorldMap';
+
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <Typography
+    variant="overline"
+    sx={{
+      color: '#6c6c80',
+      fontWeight: 600,
+      letterSpacing: '1px',
+      mb: 2,
+      display: 'block',
+    }}
+  >
+    {children}
+  </Typography>
+);
 
 const AdminDashboardHome: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -73,21 +88,36 @@ const AdminDashboardHome: React.FC = () => {
     <Box>
       <AdminHeader />
       <AdminStatsCards stats={stats} />
-      <AdminSkillsBarChart skillsData={skillsData} />
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-        <Box sx={{ flex: '1 1 600px', minWidth: 0 }}>
-          <AdminGrowthAnalytics
-            userGrowthData={userGrowthData}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-            getFilteredUserGrowthData={getFilteredUserGrowthData}
-          />
-        </Box>
-        <Box sx={{ flex: '1 1 400px', minWidth: 0 }}>
-          <AdminSkillsDistribution skillDistribution={skillDistribution} />
+
+      {/* Skills section */}
+      <Box sx={{ mt: 2 }}>
+        <SectionLabel>Skills Overview</SectionLabel>
+        <AdminSkillsBarChart skillsData={skillsData} />
+      </Box>
+
+      {/* Analytics section */}
+      <Box sx={{ mt: 1 }}>
+        <SectionLabel>Analytics</SectionLabel>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: '1 1 580px', minWidth: 0 }}>
+            <AdminGrowthAnalytics
+              userGrowthData={userGrowthData}
+              selectedMonth={selectedMonth}
+              setSelectedMonth={setSelectedMonth}
+              getFilteredUserGrowthData={getFilteredUserGrowthData}
+            />
+          </Box>
+          <Box sx={{ flex: '1 1 360px', minWidth: 0 }}>
+            <AdminSkillsDistribution skillDistribution={skillDistribution} />
+          </Box>
         </Box>
       </Box>
-      <AdminWorldMap userLocations={processUserLocations} totalUsers={stats.users} />
+
+      {/* World Map section */}
+      <Box sx={{ mt: 1 }}>
+        <SectionLabel>Geographic Distribution</SectionLabel>
+        <AdminWorldMap userLocations={processUserLocations} totalUsers={stats.users} />
+      </Box>
     </Box>
   );
 };

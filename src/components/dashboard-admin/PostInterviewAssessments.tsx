@@ -41,33 +41,28 @@ import {
 const GREEN_MAIN = '#8310FF';
 
 const StyledCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
+  padding: theme.spacing(3),
   marginBottom: theme.spacing(4),
-  background: 'white',
-  backdropFilter: 'blur(10px)',
-  borderRadius: '24px',
-  boxShadow: '0 8px 32px rgba(131,16,255,0.10)',
-  border: '1.5px solid #ece6fa',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 12px 40px rgba(131,16,255,0.13)',
-  },
+  background: '#ffffff',
+  borderRadius: '20px',
+  boxShadow: '0 4px 24px rgba(131,16,255,0.06)',
+  border: '1px solid #ece6fa',
 }));
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '2.2rem',
-  fontWeight: 900,
-  color: '#8310FF',
+  fontSize: '2rem',
+  fontWeight: 800,
+  color: '#1a1a2e',
   marginBottom: theme.spacing(4),
-  letterSpacing: '-1px',
+  letterSpacing: '-0.5px',
   position: 'relative',
   lineHeight: 1.1,
+  paddingBottom: theme.spacing(2),
   '&:after': {
     content: '""',
     position: 'absolute',
-    bottom: '-10px',
-    left: '0',
+    bottom: 0,
+    left: 0,
     width: '60px',
     height: '4px',
     background: 'linear-gradient(90deg, #8310FF 0%, #00FFC3 100%)',
@@ -311,10 +306,10 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
           </Box>
         </Box>
 
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: 'none', border: '1px solid #ece6fa' }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+              <TableRow sx={{ backgroundColor: '#f5f3ff' }}>
                 <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Post/Job</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Company</TableCell>
@@ -338,7 +333,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                 results.map((assessment) => {
                   const score = getOverallScore(assessment);
                   return (
-                    <TableRow key={assessment._id} hover>
+                    <TableRow key={assessment._id} hover sx={{ '&:hover': { backgroundColor: '#faf8ff' } }}>
                       <TableCell>
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>

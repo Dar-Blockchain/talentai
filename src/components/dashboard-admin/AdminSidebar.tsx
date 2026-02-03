@@ -16,36 +16,42 @@ import { styled } from '@mui/material/styles';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
-  Assessment as AssessmentIcon,
-  ListAlt as ListAltIcon,
   Logout as LogoutIcon,
   Close as CloseIcon,
   QuestionAnswer as InterviewIcon,
   Psychology as SkillIcon,
 } from '@mui/icons-material';
 
-const DRAWER_WIDTH = 280;
-const GREEN_MAIN = '#8310FF';
+const DRAWER_WIDTH = 260;
+const PRIMARY = '#8310FF';
 
 const SidebarItem = styled(ListItemButton)(({ theme }) => ({
   borderRadius: '12px',
-  margin: '4px 0',
-  padding: '12px 16px',
+  margin: '2px 0',
+  padding: '10px 16px',
   transition: 'all 0.2s ease',
+  color: '#6c6c80',
+  '& .MuiListItemIcon-root': {
+    color: '#6c6c80',
+    minWidth: 40,
+  },
   '&.Mui-selected': {
-    background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #6a0dad 100%)`,
-    color: 'white',
+    backgroundColor: '#f5f3ff',
+    color: PRIMARY,
+    borderLeft: `3px solid ${PRIMARY}`,
     '& .MuiListItemIcon-root': {
-      color: 'white',
+      color: PRIMARY,
     },
     '&:hover': {
-      background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #6a0dad 100%)`,
-      transform: 'translateX(4px)',
+      backgroundColor: '#ece6fa',
     },
   },
   '&:hover': {
-    backgroundColor: 'rgba(131, 16, 255, 0.08)',
-    transform: 'translateX(2px)',
+    backgroundColor: '#f5f3ff',
+    color: '#1a1a2e',
+    '& .MuiListItemIcon-root': {
+      color: PRIMARY,
+    },
   },
 }));
 
@@ -57,11 +63,6 @@ interface AdminSidebarProps {
   onDrawerClose: () => void;
 }
 
-/**
- * AdminSidebar Component
- * Navigation sidebar for admin dashboard
- * Extracted from admin.tsx for better modularity
- */
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
   activeTab,
   onTabChange,
@@ -90,28 +91,46 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         '& .MuiDrawer-paper': {
           width: DRAWER_WIDTH,
           boxSizing: 'border-box',
-          backgroundColor: 'white',
-          borderRight: '1px solid rgba(0,0,0,0.1)',
+          backgroundColor: '#ffffff',
+          borderRight: '1px solid #ece6fa',
         },
       }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-            TalentAI Admin
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, px: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '10px',
+                background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.85rem' }}>T</Typography>
+            </Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
+              TalentAI
+            </Typography>
+          </Box>
           {isMobile && (
-            <IconButton onClick={onDrawerClose}>
+            <IconButton onClick={onDrawerClose} size="small">
               <CloseIcon />
             </IconButton>
           )}
         </Box>
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mb: 2, borderColor: '#ece6fa' }} />
 
         {/* Navigation Menu */}
-        <List>
+        <Typography variant="caption" sx={{ px: 2, mb: 1, color: '#6c6c80', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Menu
+        </Typography>
+        <List sx={{ px: 0.5 }}>
           {menuItems.map((item) => (
             <SidebarItem
               key={item.id}
@@ -122,20 +141,30 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               }}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: activeTab === item.id ? 600 : 500 }}
+              />
             </SidebarItem>
           ))}
         </List>
 
-        <Divider sx={{ my: 2 }} />
+        {/* Spacer */}
+        <Box sx={{ flexGrow: 1 }} />
 
         {/* Logout */}
-        <SidebarItem onClick={onLogout}>
-          <ListItemIcon>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Logout" />
-        </SidebarItem>
+        <Divider sx={{ mb: 1, borderColor: '#ece6fa' }} />
+        <Box sx={{ px: 0.5 }}>
+          <SidebarItem onClick={onLogout}>
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Logout"
+              primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }}
+            />
+          </SidebarItem>
+        </Box>
       </Box>
     </Drawer>
   );

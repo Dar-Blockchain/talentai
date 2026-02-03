@@ -85,9 +85,9 @@ const DashboardAdmin = () => {
 
   return (
     <RoleGuard allowedRoles={['Admin']}>
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f3ff' }}>
         {/* Sidebar */}
-        <Box sx={{ position: 'relative', bgcolor: '#fff' }}>
+        <Box sx={{ position: 'relative' }}>
           <AdminSidebar
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -103,7 +103,7 @@ const DashboardAdmin = () => {
           sx={{
             flexGrow: 1,
             minHeight: '100vh',
-            bgcolor: '#fff',
+            bgcolor: '#f5f3ff',
             p: { xs: 1, sm: 2, md: 4 },
             display: 'flex',
             flexDirection: 'column',
@@ -134,7 +134,7 @@ const DashboardAdmin = () => {
               justifyContent: 'center',
               minHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
               p: { xs: 0.5, sm: 2, md: 4 },
-              bgcolor: '#fff',
+              bgcolor: 'transparent',
             }}
           >
             <Box sx={{ width: '100%' }}>
