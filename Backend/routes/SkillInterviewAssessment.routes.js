@@ -32,20 +32,9 @@ router.post('/', create);
 // GET /api/skill-interview-assessments/my
 router.get('/my', getMy);
 
-// GET /api/skill-interview-assessments/stats/global
-//router.get('/stats/global', getStatistics);
-
 // GET /api/skill-interview-assessments/session/:sessionId
 //router.get('/session/:sessionId', getBySessionId);
 
-// GET /api/skill-interview-assessments/candidate/:candidateId
-//router.get('/candidate/:candidateId', getByCandidate);
-
-// GET /api/skill-interview-assessments/interviewer/:interviewerId
-//router.get('/interviewer/:interviewerId', getByInterviewer);
-
-// GET /api/skill-interview-assessments/:id/summary
-//router.get('/:id/summary', getSummary);
 
 // GET /api/skill-interview-assessments/:id
 router.get('/:id', getById);
@@ -54,15 +43,5 @@ router.get('/:id', getById);
 // Query params: page, limit, interviewType, candidateId, interviewerId
 router.get('/', getAll);
 
-// ========== UPDATE ==========
-// PUT /api/skill-interview-assessments/:id
-//router.put('/:id', update);
-
-// PATCH /api/skill-interview-assessments/:id/archive
-//router.patch('/:id/archive', archive);
-
-// ========== DELETE ==========
-// DELETE /api/skill-interview-assessments/:id
-//router.delete('/:id', deleteAssessment);
 
 module.exports = router;
