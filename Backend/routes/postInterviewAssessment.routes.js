@@ -19,9 +19,6 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 // GET /post-interview-assessments/post/:postId — Get all assessments for a post
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
 
-// GET /post-interview-assessments/post/:postId/statistics — Get statistics for a post
-//router.get('/post/:postId/statistics', postInterviewAssessmentController.getAssessmentStatistics);
-
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
 
@@ -39,20 +36,5 @@ router.post('/', postInterviewAssessmentController.createPostInterviewAssessment
 
 // GET /post-interview-assessments/:assessmentId — Get single assessment
 router.get('/:assessmentId', postInterviewAssessmentController.getPostInterviewAssessmentById);
-
-// GET /post-interview-assessments/search — Search assessments
-//router.get('/search', postInterviewAssessmentController.searchAssessments);
-
-// PUT /post-interview-assessments/:assessmentId — Update assessment
-//router.put('/:assessmentId', postInterviewAssessmentController.updatePostInterviewAssessment);
-
-// PATCH /post-interview-assessments/:assessmentId/interview-data — Update interview data
-//router.patch('/:assessmentId/interview-data', postInterviewAssessmentController.updateInterviewData);
-
-// DELETE /post-interview-assessments/:assessmentId — Delete assessment
-//router.delete('/:assessmentId', postInterviewAssessmentController.deletePostInterviewAssessment);
-
-// DELETE /post-interview-assessments/post/:postId — Delete all assessments for a post
-//router.delete('/post/:postId', postInterviewAssessmentController.deleteAssessmentsByPost);
 
 module.exports = router;

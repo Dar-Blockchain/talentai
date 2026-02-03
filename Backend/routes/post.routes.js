@@ -34,7 +34,6 @@ router.get("/public-stats", postController.getPublicStats);
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser, authLogMiddleware("Post"));
 
-
 // POST /post/save-post
 // Description: Crée un post
 router.post("/save-post",resolveCompanyActor, postController.createPost);
@@ -46,7 +45,6 @@ router.get("/get-all-posts", postController.getAllPosts);
 // GET /post/my-posts
 // Description: Posts de l'utilisateur courant
 router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
-
 
 // GET /post/getPostById/:id
 // Description: Détails d'un post
