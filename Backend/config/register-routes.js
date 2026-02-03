@@ -66,18 +66,19 @@ function registerRoutes(app) {
 
   // Posts & Jobs
   app.use('/linkedinPost', linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
-  app.use('/post', postRouter); // Post Management -> posts
+  app.use('/post', postRouter); //✅ Post Management -> posts
   app.use('/post-steps', postStepsRouter); //✅ Post Steps Management -> post-steps
 
   // Chat & Messaging
-  app.use('/chat', chatRouter); // Chat functionalities chat -> chats (to be checked)
+  app.use('/chat', chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
 
-  // Matching & Recruitment
-  app.use('/matching', matchingRoutes); // Matching Engine matching -> matchings
+  // Matching & Recruitment Engine
+  app.use('/matching', matchingRoutes); //✅ Matching Engine matching -> matchings
   app.use('/matchingConfig', matchingConfigRoutes); // Matching Configuration -> matching-configs
 
   // Notifications
   app.use('/notification-system', notificationSystemRouter); // Notification System -> notifications
+  //app.use('/notifications', notificationSystemRouter); //✅ Notification System -> notifications
 
   // Candidate Management
   app.use('/candidate-progress', candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
@@ -93,9 +94,9 @@ function registerRoutes(app) {
 
   // Utility & Management
   app.use('/todo', todoRouter); //✅ To-Do Management -> todos
-  app.use('/feedback', feedbackRouter); // Feedback Management -> feedbacks
+  app.use('/feedback', feedbackRouter); //✅ Feedback Management -> feedbacks
   app.use('/logs', logRoutes); //✅ System Logs Management -> logs
-  app.use('/task', taskRouter); // Task Management -> tasks
+  app.use('/task', taskRouter); //✅ Task Management -> tasks
   app.use('/tokens', tokenRouter); //✅ Token Management -> tokens
   // app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
