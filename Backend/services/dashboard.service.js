@@ -418,7 +418,8 @@ module.exports.getCountsByDay = async () => {
     const jobAssessmentsCreatedByDay = await JobAssessmentResult.aggregate([
       {
         $project: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }  // Format date to "YYYY-MM-DD"
+          // Use `timestamp` when available, otherwise fall back to `createdAt`
+          day: { $dateToString: { format: "%Y-%m-%d", date: { $ifNull: ["$timestamp", "$createdAt"] } } }  // Format date to "YYYY-MM-DD"
         }
       },
       {
