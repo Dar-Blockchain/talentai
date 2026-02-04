@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -16,9 +15,7 @@ import {
   CircularProgress,
   IconButton,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
@@ -452,314 +449,148 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
         onClose={() => setDetailsDialogOpen(false)}
         maxWidth="md"
         fullWidth
+        PaperProps={{ sx: { borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)' } }}
       >
-        <DialogTitle sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
-          color: 'white'
-        }}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Interview Assessment Details
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              {selectedAssessment?.post?.jobDetails?.title || 'Assessment Review'}
-            </Typography>
-          </Box>
-          <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ color: 'white' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-          {selectedAssessment && (
-            <Box>
-              {/* Score Header */}
-              <Box sx={{
-                background: '#f5f3ff',
-                p: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 2
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Chip
-                    label={`${getOverallScore(selectedAssessment).toFixed(0)}%`}
-                    color={getScoreColor(getOverallScore(selectedAssessment))}
-                    sx={{
-                      fontSize: '1.5rem',
-                      fontWeight: 700,
-                      height: 56,
-                      width: 80,
-                      '& .MuiChip-label': { px: 0 }
-                    }}
-                  />
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
-                      Overall Score
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      {getOverallScore(selectedAssessment) >= 70 ? 'Excellent Performance' :
-                       getOverallScore(selectedAssessment) >= 50 ? 'Satisfactory Performance' :
-                       'Needs Improvement'}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {selectedAssessment && (() => {
+          const score = getOverallScore(selectedAssessment);
+          const scoreColor = score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+          const scoreLabel = score >= 70 ? 'Excellent' : score >= 50 ? 'Satisfactory' : 'Needs Work';
+          return (
+            <>
+              {/* Header */}
+              <Box sx={{ background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`, px: 3, pt: 3, pb: 4, position: 'relative' }}>
+                <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+                <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.7)', letterSpacing: 1.5 }}>
+                  Post Interview Assessment
+                </Typography>
+                <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mt: 0.5, pr: 4 }}>
+                  {selectedAssessment.post?.jobDetails?.title || 'Assessment Review'}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
                   {selectedAssessment.status && (
-                    <Chip
-                      label={selectedAssessment.status.charAt(0).toUpperCase() + selectedAssessment.status.slice(1)}
-                      size="small"
-                      sx={{
-                        backgroundColor: selectedAssessment.status === 'completed' ? '#e8f5e9' : '#fff3e0',
-                        color: selectedAssessment.status === 'completed' ? '#2e7d32' : '#f57c00'
-                      }}
-                    />
+                    <Chip label={selectedAssessment.status} size="small" sx={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600, fontSize: '0.7rem', height: 22, textTransform: 'capitalize' }} />
                   )}
                   {selectedAssessment.stage && (
-                    <Chip
-                      label={selectedAssessment.stage.charAt(0).toUpperCase() + selectedAssessment.stage.slice(1)}
-                      size="small"
-                      variant="outlined"
-                    />
+                    <Chip label={selectedAssessment.stage} size="small" sx={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)', fontSize: '0.7rem', height: 22, textTransform: 'capitalize' }} />
                   )}
                 </Box>
               </Box>
 
-              {/* Two Column Layout */}
-              <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-                {/* Left Column */}
-                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' }, borderRight: { md: '1px solid #e0e0e0' } }}>
-                  {/* Candidate Info */}
-                  <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      👤 Candidate
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {selectedAssessment.candidate?.username || 'Unknown Candidate'}
+              <DialogContent sx={{ p: 0 }}>
+                {/* Score Card */}
+                <Box sx={{ px: 3, mt: -2.5 }}>
+                  <Box sx={{ background: 'white', borderRadius: '12px', p: 2.5, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', border: '1px solid #ece6fa', display: 'flex', alignItems: 'center', gap: 2.5 }}>
+                    <Box sx={{ width: 56, height: 56, borderRadius: '12px', background: `${scoreColor}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: scoreColor }}>{score.toFixed(0)}%</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>Overall Score</Typography>
+                        <Chip label={scoreLabel} size="small" sx={{ backgroundColor: `${scoreColor}14`, color: scoreColor, fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Stats Row */}
+                {selectedAssessment.interviewData?.analytics && (
+                  <Box sx={{ display: 'flex', gap: 1.5, px: 3, mt: 2 }}>
+                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', backgroundColor: '#f5f3ff', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.1rem' }}>
+                        {Math.floor((selectedAssessment.interviewData.analytics.duration || 0) / 60000)}m
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {selectedAssessment.candidate?.email || 'No email provided'}
+                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem' }}>Duration</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', backgroundColor: '#f5f3ff', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.1rem' }}>
+                        {selectedAssessment.interviewData.analytics.messageCount || 0}
                       </Typography>
-                      {selectedAssessment.candidate?.role && (
-                        <Chip label={selectedAssessment.candidate.role} size="small" sx={{ width: 'fit-content' }} />
+                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem' }}>Responses</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', backgroundColor: '#f5f3ff', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.1rem' }}>
+                        {selectedAssessment.interviewData.analytics.coveragePercentage || 0}%
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.7rem' }}>Coverage</Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* People */}
+                <Box sx={{ px: 3, mt: 2 }}>
+                  <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>People</Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', border: '1px solid #ece6fa' }}>
+                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.65rem', textTransform: 'uppercase' }}>Candidate</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>{selectedAssessment.candidate?.username || 'Unknown'}</Typography>
+                      <Typography variant="caption" sx={{ color: '#6c6c80' }}>{selectedAssessment.candidate?.email || ''}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, p: 1.5, borderRadius: '10px', border: '1px solid #ece6fa' }}>
+                      <Typography variant="caption" sx={{ color: '#6c6c80', fontSize: '0.65rem', textTransform: 'uppercase' }}>Company</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>{selectedAssessment.company?.username || 'Unknown'}</Typography>
+                      <Typography variant="caption" sx={{ color: '#6c6c80' }}>{selectedAssessment.company?.email || ''}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Skills */}
+                {selectedAssessment.metadata && (selectedAssessment.metadata.skill || selectedAssessment.metadata.proficiency) && (
+                  <Box sx={{ px: 3, mt: 2 }}>
+                    <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>Skills</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                      {selectedAssessment.metadata.skill && (
+                        <Chip label={selectedAssessment.metadata.skill} size="small" sx={{ backgroundColor: '#ece6fa', color: PRIMARY, fontWeight: 600 }} />
+                      )}
+                      {selectedAssessment.metadata.proficiency && (
+                        <Chip label={selectedAssessment.metadata.proficiency} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80' }} />
                       )}
                     </Box>
                   </Box>
+                )}
 
-                  {/* Company Info */}
-                  <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      🏢 Company
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {selectedAssessment.company?.username || 'Unknown Company'}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        {selectedAssessment.company?.email || 'No email provided'}
-                      </Typography>
+                {/* Coverage Areas */}
+                {selectedAssessment.interviewData?.finalReport?.coverage?.areas && (
+                  <Box sx={{ px: 3, mt: 2 }}>
+                    <Typography variant="overline" sx={{ color: '#6c6c80', letterSpacing: 1.2, fontSize: '0.65rem' }}>Coverage Areas</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
+                      {Object.entries(selectedAssessment.interviewData.finalReport.coverage.areas).map(([areaName, areaData]: [string, any]) => {
+                        const pct = areaData.percentage || 0;
+                        const c = pct >= 70 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+                        return (
+                          <Box key={areaName} sx={{ flex: '1 1 45%', p: 1.5, borderRadius: '10px', backgroundColor: `${c}0a`, border: `1px solid ${c}20`, textAlign: 'center' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: c }}>{pct}%</Typography>
+                            <Typography variant="caption" sx={{ color: '#6c6c80', textTransform: 'capitalize', fontSize: '0.7rem' }}>{areaName.replace(/_/g, ' ')}</Typography>
+                          </Box>
+                        );
+                      })}
                     </Box>
                   </Box>
+                )}
 
-                  {/* Skill & Proficiency */}
-                  {selectedAssessment.metadata && (selectedAssessment.metadata.skill || selectedAssessment.metadata.proficiency) && (
-                    <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        🎯 Skills Assessed
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {selectedAssessment.metadata.skill && (
-                          <Chip
-                            label={selectedAssessment.metadata.skill}
-                            sx={{
-                              backgroundColor: '#e3f2fd',
-                              color: '#1565c0',
-                              fontWeight: 600
-                            }}
-                          />
-                        )}
-                        {selectedAssessment.metadata.proficiency && (
-                          <Chip
-                            label={selectedAssessment.metadata.proficiency}
-                            variant="outlined"
-                            sx={{ fontWeight: 500 }}
-                          />
-                        )}
-                      </Box>
-                    </Box>
+                {/* Job chips */}
+                <Box sx={{ px: 3, mt: 2, pb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {selectedAssessment.post?.jobDetails?.location && (
+                    <Chip label={selectedAssessment.post.jobDetails.location} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80', fontSize: '0.75rem' }} />
                   )}
-                </Box>
-
-                {/* Right Column */}
-                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
-                  {/* Job Details */}
-                  <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      💼 Job Position
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                        {selectedAssessment.post?.jobDetails?.title || 'Untitled Position'}
-                      </Typography>
-                      {selectedAssessment.post?.jobDetails?.description && (
-                        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                          {selectedAssessment.post.jobDetails.description.length > 150
-                            ? selectedAssessment.post.jobDetails.description.substring(0, 150) + '...'
-                            : selectedAssessment.post.jobDetails.description}
-                        </Typography>
-                      )}
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                        {selectedAssessment.post?.jobDetails?.location && (
-                          <Chip
-                            label={`📍 ${selectedAssessment.post.jobDetails.location}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )}
-                        {selectedAssessment.post?.jobDetails?.employmentType && (
-                          <Chip
-                            label={selectedAssessment.post.jobDetails.employmentType}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )}
-                        {selectedAssessment.post?.jobDetails?.experienceLevel && (
-                          <Chip
-                            label={selectedAssessment.post.jobDetails.experienceLevel}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )}
-                      </Box>
-                      {selectedAssessment.post?.jobDetails?.salary && (
-                        <Typography variant="body2" sx={{ color: '#2e7d32', fontWeight: 500, mt: 1 }}>
-                          💰 {selectedAssessment.post.jobDetails.salary.currency || 'USD'} {selectedAssessment.post.jobDetails.salary.min?.toLocaleString()} - {selectedAssessment.post.jobDetails.salary.max?.toLocaleString()}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Interview Analytics */}
-                  {selectedAssessment.interviewData?.analytics && (
-                    <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        📊 Interview Statistics
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Box sx={{ flex: 1, textAlign: 'center', p: 1, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
-                            {Math.floor((selectedAssessment.interviewData.analytics.duration || 0) / 60000)}m
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            Duration
-                          </Typography>
-                        </Box>
-                        <Box sx={{ flex: 1, textAlign: 'center', p: 1, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
-                            {selectedAssessment.interviewData.analytics.messageCount || 0}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            Responses
-                          </Typography>
-                        </Box>
-                        <Box sx={{ flex: 1, textAlign: 'center', p: 1, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
-                            {selectedAssessment.interviewData.analytics.coveragePercentage || 0}%
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            Coverage
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
+                  {selectedAssessment.post?.jobDetails?.employmentType && (
+                    <Chip label={selectedAssessment.post.jobDetails.employmentType} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80', fontSize: '0.75rem', textTransform: 'capitalize' }} />
                   )}
-
-                  {/* Requirements if available */}
-                  {selectedAssessment.post?.jobDetails?.requirements && selectedAssessment.post.jobDetails.requirements.length > 0 && (
-                    <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        ✅ Job Requirements
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        {selectedAssessment.post.jobDetails.requirements.slice(0, 4).map((req: string, idx: number) => (
-                          <Typography key={idx} variant="body2" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                            <span style={{ color: PRIMARY }}>•</span> {req}
-                          </Typography>
-                        ))}
-                        {selectedAssessment.post.jobDetails.requirements.length > 4 && (
-                          <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                            +{selectedAssessment.post.jobDetails.requirements.length - 4} more requirements
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-
-              {/* Full Width - Coverage Areas */}
-              {selectedAssessment.interviewData?.finalReport?.coverage?.areas && (
-                <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    📈 Coverage Areas
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {Object.entries(selectedAssessment.interviewData.finalReport.coverage.areas).map(([areaName, areaData]: [string, any]) => (
-                      <Box key={areaName} sx={{
-                        flex: { xs: '1 1 45%', md: '1 1 22%' },
-                        p: 2,
-                        borderRadius: 2,
-                        backgroundColor: areaData.percentage >= 70 ? '#e8f5e9' : areaData.percentage >= 50 ? '#fff3e0' : '#ffebee',
-                        textAlign: 'center'
-                      }}>
-                        <Typography variant="h6" sx={{
-                          fontWeight: 700,
-                          color: areaData.percentage >= 70 ? '#2e7d32' : areaData.percentage >= 50 ? '#f57c00' : '#c62828'
-                        }}>
-                          {areaData.percentage || 0}%
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>
-                          {areaName.replace(/_/g, ' ')}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-
-              {/* Timestamps */}
-              <Box sx={{ p: 3, backgroundColor: '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    📅 Submitted: <strong>{formatDate(selectedAssessment.createdAt)}</strong>
-                  </Typography>
                   {selectedAssessment.interviewData?.interviewType && (
-                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                      📋 Type: <strong>{selectedAssessment.interviewData.interviewType.replace(/_/g, ' ')}</strong>
-                    </Typography>
+                    <Chip label={selectedAssessment.interviewData.interviewType.replace(/_/g, ' ')} size="small" variant="outlined" sx={{ borderColor: '#ece6fa', color: '#6c6c80', fontSize: '0.75rem', textTransform: 'capitalize' }} />
                   )}
                 </Box>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, backgroundColor: '#fafafa' }}>
-          <Button
-            onClick={() => setDetailsDialogOpen(false)}
-            variant="contained"
-            sx={{
-              backgroundColor: PRIMARY,
-              '&:hover': { backgroundColor: '#6a0dad' }
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
+
+                {/* Footer */}
+                <Box sx={{ px: 3, py: 1.5, backgroundColor: '#fafafa', borderTop: '1px solid #ece6fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ color: '#aaa', fontFamily: 'monospace', fontSize: '0.65rem' }}>ID: {selectedAssessment._id}</Typography>
+                  <Typography variant="caption" sx={{ color: '#aaa', fontSize: '0.7rem' }}>{formatDate(selectedAssessment.createdAt)}</Typography>
+                </Box>
+              </DialogContent>
+            </>
+          );
+        })()}
       </Dialog>
     </Box>
   );

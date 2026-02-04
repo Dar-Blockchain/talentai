@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  FormGroup,
   FormControlLabel,
   Checkbox,
   Typography,
@@ -19,9 +17,10 @@ import {
 import {
   Close as CloseIcon,
   Security as SecurityIcon,
-  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { Permission, DEFAULT_PERMISSIONS } from '@/types/permissions';
+
+const PRIMARY = '#8310FF';
 
 // Type for the permissions object (without metadata fields)
 export type CompanyPermissions = Omit<Permission, '_id' | 'userId' | 'profileId' | 'lastModifiedBy' | 'notes' | 'createdAt' | 'updatedAt'>;
@@ -54,69 +53,15 @@ interface CompanyPermissionsModalProps {
 const defaultPermissions: CompanyPermissions = DEFAULT_PERMISSIONS;
 
 const permissionItems: PermissionItem[] = [
-  // Job Post Permissions
-  {
-    key: 'canCreateJobPosts',
-    label: 'Create Job Posts',
-    description: 'Create, edit, delete, and manage job postings',
-    icon: '📋',
-  },
-
-  // Candidate Permissions
-  {
-    key: 'canUnlockCandidates',
-    label: 'Unlock Candidates',
-    description: 'Purchase and unlock candidate profiles using tokens',
-    icon: '🔓',
-  },
-  {
-    key: 'canViewCandidateProfiles',
-    label: 'View Candidate Profiles',
-    description: 'View unlocked candidate profiles, assessments, and resumes',
-    icon: '👤',
-  },
-  {
-    key: 'canContactCandidates',
-    label: 'Contact Candidates',
-    description: 'Send messages and communicate with candidates',
-    icon: '💬',
-  },
-
-  // Matching Permissions
-  {
-    key: 'canAccessMatching',
-    label: 'Access Matching',
-    description: 'Access matching algorithm and view candidate matches',
-    icon: '🔍',
-  },
-
-  // HR Agent Permissions
-  {
-    key: 'canUseHRAgents',
-    label: 'Use HR Agents',
-    description: 'Create and manage AI HR agents for recruitment automation',
-    icon: '🤖',
-  },
-
-  // Team Permissions
-  {
-    key: 'canManageTeam',
-    label: 'Manage Team',
-    description: 'Manage team members, view team list, and control team settings',
-    icon: '👥',
-  },
-  {
-    key: 'canInviteMembers',
-    label: 'Invite Members',
-    description: 'Send invitations to new team members to join the company',
-    icon: '✉️',
-  },
-  {
-    key: 'canAssignRoles',
-    label: 'Assign Roles',
-    description: 'Assign and update roles for team members',
-    icon: '🎯',
-  },
+  { key: 'canCreateJobPosts', label: 'Create Job Posts', description: 'Create, edit, delete, and manage job postings', icon: '📋' },
+  { key: 'canUnlockCandidates', label: 'Unlock Candidates', description: 'Purchase and unlock candidate profiles using tokens', icon: '🔓' },
+  { key: 'canViewCandidateProfiles', label: 'View Candidate Profiles', description: 'View unlocked candidate profiles, assessments, and resumes', icon: '👤' },
+  { key: 'canContactCandidates', label: 'Contact Candidates', description: 'Send messages and communicate with candidates', icon: '💬' },
+  { key: 'canAccessMatching', label: 'Access Matching', description: 'Access matching algorithm and view candidate matches', icon: '🔍' },
+  { key: 'canUseHRAgents', label: 'Use HR Agents', description: 'Create and manage AI HR agents for recruitment automation', icon: '🤖' },
+  { key: 'canManageTeam', label: 'Manage Team', description: 'Manage team members, view team list, and control team settings', icon: '👥' },
+  { key: 'canInviteMembers', label: 'Invite Members', description: 'Send invitations to new team members to join the company', icon: '✉️' },
+  { key: 'canAssignRoles', label: 'Assign Roles', description: 'Assign and update roles for team members', icon: '🎯' },
 ];
 
 const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
@@ -131,7 +76,6 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Fetch current permissions when modal opens
   useEffect(() => {
     if (open && company) {
       fetchCompanyPermissions();
@@ -140,10 +84,8 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
 
   const fetchCompanyPermissions = async () => {
     if (!company) return;
-
     setLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem('api_token');
       const response = await fetch(
@@ -155,16 +97,9 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
           },
         }
       );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch permissions');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch permissions');
       const data = await response.json();
-      console.log('📦 [PermissionsModal] Fetched permissions from backend:', data);
-
       if (data.success && data.permissions) {
-        // Only extract the new permission fields that match our PermissionModel
         const validPermissions: CompanyPermissions = {
           canCreateJobPosts: data.permissions.canCreateJobPosts ?? defaultPermissions.canCreateJobPosts,
           canUnlockCandidates: data.permissions.canUnlockCandidates ?? defaultPermissions.canUnlockCandidates,
@@ -176,14 +111,12 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
           canInviteMembers: data.permissions.canInviteMembers ?? defaultPermissions.canInviteMembers,
           canAssignRoles: data.permissions.canAssignRoles ?? defaultPermissions.canAssignRoles,
         };
-        console.log('✅ [PermissionsModal] Cleaned permissions (new fields only):', validPermissions);
         setPermissions(validPermissions);
       } else {
         setPermissions(defaultPermissions);
       }
     } catch (err) {
       console.error('Error fetching permissions:', err);
-      // Use default permissions if fetch fails
       setPermissions(defaultPermissions);
     } finally {
       setLoading(false);
@@ -191,10 +124,7 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
   };
 
   const handlePermissionChange = (permissionKey: keyof CompanyPermissions) => {
-    setPermissions((prev) => ({
-      ...prev,
-      [permissionKey]: !prev[permissionKey],
-    }));
+    setPermissions((prev) => ({ ...prev, [permissionKey]: !prev[permissionKey] }));
   };
 
   const handleSelectAll = () => {
@@ -208,17 +138,13 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
 
   const handleSave = async () => {
     if (!company) return;
-
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
-
     try {
       await onSave(company._id, permissions);
       setSuccessMessage('Permissions updated successfully!');
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      setTimeout(() => onClose(), 1500);
     } catch (err: any) {
       setError(err.message || 'Failed to update permissions');
     } finally {
@@ -228,21 +154,11 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
 
   const getCompanyName = () => {
     if (!company) return '';
-    return (
-      company.profile?.companyDetails?.name ||
-      company.profile?.firstName ||
-      company.username ||
-      'Company'
-    );
+    return company.profile?.companyDetails?.name || company.profile?.firstName || company.username || 'Company';
   };
 
-  const getEnabledPermissionsCount = () => {
-    return Object.values(permissions).filter(Boolean).length;
-  };
-
-  const getTotalPermissionsCount = () => {
-    return Object.keys(permissions).length;
-  };
+  const enabledCount = Object.values(permissions).filter(Boolean).length;
+  const totalCount = Object.keys(permissions).length;
 
   return (
     <Dialog
@@ -252,175 +168,157 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
           maxHeight: '90vh',
         },
       }}
     >
-      <DialogTitle
+      {/* Header */}
+      <Box
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          pb: 2,
-          borderBottom: '1px solid #E5E7EB',
+          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
+          px: 3,
+          pt: 3,
+          pb: 3,
+          position: 'relative',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <BusinessIcon sx={{ fontSize: 32, color: '#8310FF' }} />
+        <IconButton
+          onClick={onClose}
+          sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <SecurityIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)' }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#1F2937' }}>
+            <Typography variant="h6" sx={{ color: 'white', fontWeight: 700 }}>
               Company Permissions
             </Typography>
-            <Typography variant="body2" sx={{ color: '#6B7280', mt: 0.5 }}>
-              {getCompanyName()} • {company?.email}
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              {getCompanyName()} &middot; {company?.email}
             </Typography>
           </Box>
         </Box>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+      </Box>
 
-      <DialogContent sx={{ p: 3 }}>
+      <DialogContent sx={{ p: 0 }}>
+        {/* Summary Bar */}
+        <Box sx={{ px: 3, py: 2, backgroundColor: '#f5f3ff', borderBottom: '1px solid #ece6fa' }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+                {enabledCount} of {totalCount} enabled
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#6c6c80' }}>
+                {Math.round((enabledCount / totalCount) * 100)}% access level
+              </Typography>
+            </Box>
+            <Chip
+              label={Object.values(permissions).every(Boolean) ? 'Deselect All' : 'Select All'}
+              size="small"
+              onClick={handleSelectAll}
+              sx={{
+                backgroundColor: 'white',
+                color: PRIMARY,
+                fontWeight: 600,
+                border: '1px solid #ece6fa',
+                cursor: 'pointer',
+                '&:hover': { backgroundColor: '#ece6fa' },
+              }}
+            />
+          </Stack>
+        </Box>
+
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress sx={{ color: PRIMARY }} />
           </Box>
         ) : (
-          <>
-            {/* Summary */}
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                bgcolor: '#F9FAFB',
-                borderRadius: 2,
-                border: '1px solid #E5E7EB',
-              }}
-            >
-              <Stack direction="row" spacing={2} alignItems="center">
-                <SecurityIcon sx={{ color: '#8310FF' }} />
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151' }}>
-                    Permission Summary
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                    {getEnabledPermissionsCount()} of {getTotalPermissionsCount()} permissions
-                    enabled
-                  </Typography>
-                </Box>
-                <Chip
-                  label={`${Math.round((getEnabledPermissionsCount() / getTotalPermissionsCount()) * 100)}% Access`}
-                  color="primary"
-                  sx={{ fontWeight: 600 }}
-                />
-              </Stack>
-            </Box>
-
-            {/* Select/Deselect All Button */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button
-                size="small"
-                onClick={handleSelectAll}
-                sx={{
-                  textTransform: 'none',
-                  color: '#8310FF',
-                  fontWeight: 600,
-                }}
-              >
-                {Object.values(permissions).every(Boolean)
-                  ? 'Deselect All'
-                  : 'Select All'}
-              </Button>
-            </Box>
-
-            {/* Error/Success Messages */}
+          <Box sx={{ px: 2, py: 1.5 }}>
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              <Alert severity="error" sx={{ mx: 1, mb: 1.5, borderRadius: '10px' }} onClose={() => setError(null)}>
                 {error}
               </Alert>
             )}
             {successMessage && (
-              <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage(null)}>
+              <Alert severity="success" sx={{ mx: 1, mb: 1.5, borderRadius: '10px' }} onClose={() => setSuccessMessage(null)}>
                 {successMessage}
               </Alert>
             )}
 
-            {/* Permission List */}
-            <FormGroup>
-              {permissionItems.map((perm) => (
-                <React.Fragment key={perm.key}>
-                  <Box
-                    sx={{
-                      p: 2.5,
-                      mb: 2,
-                      borderRadius: 2,
-                      border: '2px solid',
-                      borderColor: permissions[perm.key] ? '#8310FF' : '#E5E7EB',
-                      bgcolor: permissions[perm.key] ? 'rgba(131, 16, 255, 0.05)' : '#fff',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        bgcolor: 'rgba(131, 16, 255, 0.03)',
-                        borderColor: '#8310FF',
-                      },
-                    }}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={permissions[perm.key]}
-                          onChange={() => handlePermissionChange(perm.key)}
-                          sx={{
-                            color: '#8310FF',
-                            '&.Mui-checked': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
-                      }
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Typography sx={{ fontSize: 24 }}>{perm.icon}</Typography>
-                          <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1F2937' }}>
-                              {perm.label}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                              {perm.description}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      }
-                    />
+            {permissionItems.map((perm) => {
+              const isEnabled = permissions[perm.key];
+              return (
+                <Box
+                  key={perm.key}
+                  onClick={() => handlePermissionChange(perm.key)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    px: 2,
+                    py: 1.5,
+                    mx: 1,
+                    mb: 1,
+                    borderRadius: '12px',
+                    border: '1.5px solid',
+                    borderColor: isEnabled ? PRIMARY : '#ece6fa',
+                    backgroundColor: isEnabled ? '#f5f3ff' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      borderColor: PRIMARY,
+                      backgroundColor: '#f5f3ff',
+                    },
+                  }}
+                >
+                  <Typography sx={{ fontSize: 22, lineHeight: 1 }}>{perm.icon}</Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+                      {perm.label}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#6c6c80', lineHeight: 1.3 }}>
+                      {perm.description}
+                    </Typography>
                   </Box>
-                </React.Fragment>
-              ))}
-            </FormGroup>
-          </>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isEnabled}
+                        size="small"
+                        sx={{
+                          color: '#ece6fa',
+                          '&.Mui-checked': { color: PRIMARY },
+                          p: 0,
+                        }}
+                      />
+                    }
+                    label=""
+                    sx={{ m: 0, mr: -0.5 }}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => handlePermissionChange(perm.key)}
+                  />
+                </Box>
+              );
+            })}
+          </Box>
         )}
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          px: 3,
-          py: 2,
-          borderTop: '1px solid #E5E7EB',
-          gap: 2,
-        }}
-      >
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #ece6fa', backgroundColor: '#fafafa', gap: 1.5 }}>
         <Button
           onClick={onClose}
-          variant="outlined"
           disabled={saving}
+          variant="outlined"
           sx={{
             textTransform: 'none',
-            borderColor: '#E5E7EB',
-            color: '#374151',
-            '&:hover': {
-              borderColor: '#9CA3AF',
-              bgcolor: 'rgba(0,0,0,0.02)',
-            },
+            borderColor: '#ece6fa',
+            color: '#6c6c80',
+            borderRadius: '10px',
+            '&:hover': { borderColor: '#ccc', backgroundColor: 'white' },
           }}
         >
           Cancel
@@ -429,13 +327,13 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
           onClick={handleSave}
           variant="contained"
           disabled={saving || loading}
-          startIcon={saving ? <CircularProgress size={16} /> : <SecurityIcon />}
+          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SecurityIcon />}
           sx={{
             textTransform: 'none',
-            bgcolor: '#8310FF',
-            '&:hover': {
-              bgcolor: '#6a0dad',
-            },
+            backgroundColor: PRIMARY,
+            borderRadius: '10px',
+            fontWeight: 600,
+            '&:hover': { backgroundColor: '#6a0dad' },
           }}
         >
           {saving ? 'Saving...' : 'Save Permissions'}
