@@ -50,8 +50,8 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 //Simple Get All
 
 // jobAssessmentService.js
-const JobAssessmentResult = require("../models/PostInterviewAssessment.model");
 const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+const JobAssessmentResult = PostInterviewAssessment; // alias pour compatibilité
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
@@ -265,109 +265,69 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
 
 module.exports.getCounts = async () => {
   try {
-    // Count documents in each collection
-    const userCount = await User.countDocuments();
-    const postCount = await Post.countDocuments();
-    const jobAssessmentCount = await JobAssessmentResult.countDocuments();
-    const feedbackCount = await Feedback.countDocuments();
-    const bidCount = await Bid.countDocuments();
+    // Run independent counts in parallel
+    const [userCount, postCount, jobAssessmentCount, feedbackCount, bidCount] = await Promise.all([
+      User.countDocuments(),
+      Post.countDocuments(),
+      JobAssessmentResult.countDocuments(),
+      Feedback.countDocuments(),
+      Bid.countDocuments()
+    ]);
 
-    // Aggregation to count all skills (hardSkills and softSkills)
-    const totalSkillsResult = await Profile.aggregate([
-      {
-        $project: {
-          totalHardSkills: { $size: "$skills" },
-          totalSoftSkills: { $size: "$softSkills" },
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalHardSkillsCount: { $sum: "$totalHardSkills" },
-          totalSoftSkillsCount: { $sum: "$totalSoftSkills" },
-          totalSkillsCount: { $sum: { $add: ["$totalHardSkills", "$totalSoftSkills"] } }
-        }
-      }
+    // Prepare aggregate promises
+    const totalSkillsPromise = Profile.aggregate([
+      { $project: { totalHardSkills: { $size: { $ifNull: ["$skills", []] } }, totalSoftSkills: { $size: { $ifNull: ["$softSkills", []] } } } },
+      { $group: { _id: null, totalHardSkillsCount: { $sum: "$totalHardSkills" }, totalSoftSkillsCount: { $sum: "$totalSoftSkills" }, totalSkillsCount: { $sum: { $add: ["$totalHardSkills", "$totalSoftSkills"] } } } }
+    ]);
+
+    const avgOverallScorePromise = PostInterviewAssessment.aggregate([
+      { $match: { "interviewData.finalReport.coverage.overall": { $ne: null, $gt: 0 } } },
+      { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
+    ]);
+
+    const topSkillsPromise = Profile.aggregate([
+      { $project: { skills: 1 } },
+      { $unwind: { path: "$skills", preserveNullAndEmptyArrays: false } },
+      { $group: { _id: "$skills.name", count: { $sum: 1 }, avgLevel: { $avg: "$skills.proficiencyLevel" } } },
+      { $sort: { count: -1, avgLevel: -1 } },
+      { $limit: 10 }
+    ]);
+
+    const jobAssessmentWithScoreCountPromise = PostInterviewAssessment.countDocuments({ "interviewData.finalReport.coverage.overall": { $gt: 0 } });
+
+    const [totalSkillsResult, avgOverallScoreResult, topSkillsResult, jobAssessmentWithScoreCount] = await Promise.all([
+      totalSkillsPromise,
+      avgOverallScorePromise,
+      topSkillsPromise,
+      jobAssessmentWithScoreCountPromise
     ]);
 
     const totalHardSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalHardSkillsCount : 0;
     const totalSoftSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSoftSkillsCount : 0;
     const totalSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSkillsCount : 0;
 
-    // Calculate percentages
     const hardSkillsPercentage = totalSkillsCount > 0 ? (totalHardSkillsCount / totalSkillsCount) * 100 : 0;
     const softSkillsPercentage = totalSkillsCount > 0 ? (totalSoftSkillsCount / totalSkillsCount) * 100 : 0;
 
-    // Calculate the average of interviewData.finalReport.scores.overall in PostInterviewAssessment
-    const avgOverallScoreResult = await PostInterviewAssessment.aggregate([
-      {
-        $match: {
-          "interviewData.finalReport.coverage.overall": { $ne: null, $gt: 0 } // Exclude null and scores of 0
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" }
-        }
-      }
-    ]);
-
     const avgOverallScore = avgOverallScoreResult.length > 0 ? avgOverallScoreResult[0].avgOverallScore : 0;
 
-    // Compte le nombre de PostInterviewAssessment avec overallScore > 0
-    const jobAssessmentWithScoreCount = await PostInterviewAssessment.countDocuments({
-      "interviewData.finalReport.coverage.overall": { $gt: 0 }
-    });
+    const jobAssessmentWithScorePercentage = jobAssessmentCount > 0 ? (jobAssessmentWithScoreCount / jobAssessmentCount) * 100 : 0;
 
-    // Calculate the percentage
-    const jobAssessmentWithScorePercentage = jobAssessmentCount > 0
-      ? (jobAssessmentWithScoreCount / jobAssessmentCount) * 100
-      : 0;
-
-    // Retrieve top skills from the platform (hardSkills and softSkills)
-    const topSkillsResult = await Profile.aggregate([
-      // Group skills (hardSkills and softSkills)
-      {
-        $project: {
-          skills: 1,
-          softSkills: 1,
-        }
-      },
-      {
-        $unwind: "$skills" // Unwind skills from users
-      },
-      {
-        $group: {
-          _id: "$skills.name", // Count skills by name
-          count: { $sum: 1 }, // Number of occurrences
-          avgLevel: { $avg: "$skills.proficiencyLevel" }, // Average skill proficiency level
-        }
-      },
-      {
-        $sort: { count: -1, avgLevel: -1 } // Sort by frequency, then by proficiency level
-      },
-      {
-        $limit: 10 // Return top 10 skills
-      }
-    ]);
-
-    // Return the results
     return {
       users: userCount,
       posts: postCount,
       jobAssessments: jobAssessmentCount,
-      jobAssessmentsWithScore: jobAssessmentWithScoreCount, // (optionnel, pour debug)
-      jobAssessmentsWithScorePercentage: jobAssessmentWithScorePercentage, // <-- AJOUTÉ
+      jobAssessmentsWithScore: jobAssessmentWithScoreCount,
+      jobAssessmentsWithScorePercentage: jobAssessmentWithScorePercentage,
       feedback: feedbackCount,
       bids: bidCount,
-      avgOverallScore: avgOverallScore,  // Moyenne des scores
-      totalSkills: totalSkillsCount,     // Nombre total de compétences
-      totalHardSkills: totalHardSkillsCount, // Nombre total de hard skills
-      totalSoftSkills: totalSoftSkillsCount, // Nombre total de soft skills
-      hardSkillsPercentage: hardSkillsPercentage, // Pourcentage de hard skills
-      softSkillsPercentage: softSkillsPercentage, // Pourcentage de soft skills
-      topSkills: topSkillsResult, // Top 10 des compétences
+      avgOverallScore: avgOverallScore,
+      totalSkills: totalSkillsCount,
+      totalHardSkills: totalHardSkillsCount,
+      totalSoftSkills: totalSoftSkillsCount,
+      hardSkillsPercentage: hardSkillsPercentage,
+      softSkillsPercentage: softSkillsPercentage,
+      topSkills: topSkillsResult
     };
   } catch (error) {
     throw new Error('Error fetching counts: ' + error.message);
@@ -378,93 +338,46 @@ module.exports.getCounts = async () => {
 
 module.exports.getCountsByDay = async () => {
   try {
-    // Count users created each day
-    const usersCreatedByDay = await User.aggregate([
-      {
-        $project: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Format date to "YYYY-MM-DD"
-        }
-      },
-      {
-        $group: {
-          _id: "$day",  // Group by date (day)
-          userCount: { $sum: 1 }  // Count number of users created that day
-        }
-      },
-      {
-        $sort: { _id: 1 }  // Sort by date ascending
-      }
+    // Run daily aggregates and totals in parallel for performance
+    const usersByDayAgg = User.aggregate([
+      { $project: { day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } } },
+      { $group: { _id: "$day", userCount: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
     ]);
 
-    // Count posts created each day
-    const postsCreatedByDay = await Post.aggregate([
-      {
-        $project: {
-          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Format date to "YYYY-MM-DD"
-        }
-      },
-      {
-        $group: {
-          _id: "$day",  // Group by date (day)
-          postCount: { $sum: 1 }  // Count number of posts created that day
-        }
-      },
-      {
-        $sort: { _id: 1 }  // Sort by date ascending
-      }
+    const postsByDayAgg = Post.aggregate([
+      { $project: { day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } } },
+      { $group: { _id: "$day", postCount: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
     ]);
 
-    // Count job assessments created each day
-    const jobAssessmentsCreatedByDay = await JobAssessmentResult.aggregate([
-      {
-        $project: {
-          // Use `timestamp` when available, otherwise fall back to `createdAt`
-          day: { $dateToString: { format: "%Y-%m-%d", date: { $ifNull: ["$timestamp", "$createdAt"] } } }  // Format date to "YYYY-MM-DD"
-        }
-      },
-      {
-        $group: {
-          _id: "$day",  // Group by date (day)
-          jobAssessmentCount: { $sum: 1 }  // Count number of job assessments created that day
-        }
-      },
-      {
-        $sort: { _id: 1 }  // Sort by date ascending
-      }
+    const jobAssessmentsByDayAgg = JobAssessmentResult.aggregate([
+      { $project: { day: { $dateToString: { format: "%Y-%m-%d", date: { $ifNull: ["$timestamp", "$createdAt"] } } } } },
+      { $group: { _id: "$day", jobAssessmentCount: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
     ]);
 
-    // Calculate total number of users, posts, and job assessments
-    const totalUsers = await User.countDocuments();
-    const totalPosts = await Post.countDocuments();
-    const totalJobAssessments = await JobAssessmentResult.countDocuments();
+    const [usersCreatedByDay, postsCreatedByDay, jobAssessmentsCreatedByDay, totalUsers, totalPosts, totalJobAssessments] = await Promise.all([
+      usersByDayAgg,
+      postsByDayAgg,
+      jobAssessmentsByDayAgg,
+      User.countDocuments(),
+      Post.countDocuments(),
+      JobAssessmentResult.countDocuments()
+    ]);
 
-    // Calculate percentages
-    const usersWithPercentage = usersCreatedByDay.map((dayData) => {
-      const percentage = totalUsers > 0 ? (dayData.userCount / totalUsers) * 100 : 0;
-      return {
-        day: dayData._id,
-        userCount: dayData.userCount,
-        percentage: percentage.toFixed(2)  // Format percentage with 2 decimal places
-      };
-    });
+    // Filter out any null/invalid day buckets and compute percentages
+    const usersWithPercentage = usersCreatedByDay
+      .filter(d => d._id)
+      .map(d => ({ day: d._id, userCount: d.userCount, percentage: (totalUsers > 0 ? ((d.userCount / totalUsers) * 100) : 0).toFixed(2) }));
 
-    const postsWithPercentage = postsCreatedByDay.map((dayData) => {
-      const percentage = totalPosts > 0 ? (dayData.postCount / totalPosts) * 100 : 0;
-      return {
-        day: dayData._id,
-        postCount: dayData.postCount,
-        percentage: percentage.toFixed(2)
-      };
-    });
+    const postsWithPercentage = postsCreatedByDay
+      .filter(d => d._id)
+      .map(d => ({ day: d._id, postCount: d.postCount, percentage: (totalPosts > 0 ? ((d.postCount / totalPosts) * 100) : 0).toFixed(2) }));
 
-    const jobAssessmentsWithPercentage = jobAssessmentsCreatedByDay.map((dayData) => {
-      const percentage = totalJobAssessments > 0 ? (dayData.jobAssessmentCount / totalJobAssessments) * 100 : 0;
-      return {
-        day: dayData._id,
-        jobAssessmentCount: dayData.jobAssessmentCount,
-        percentage: percentage.toFixed(2)
-      };
-    });
+    const jobAssessmentsWithPercentage = jobAssessmentsCreatedByDay
+      .filter(d => d._id)
+      .map(d => ({ day: d._id, jobAssessmentCount: d.jobAssessmentCount, percentage: (totalJobAssessments > 0 ? ((d.jobAssessmentCount / totalJobAssessments) * 100) : 0).toFixed(2) }));
 
     return {
       usersCreatedByDay: usersWithPercentage,
