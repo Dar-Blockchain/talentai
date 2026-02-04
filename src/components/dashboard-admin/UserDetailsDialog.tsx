@@ -9,11 +9,13 @@ import {
   Box,
   Typography,
   Stack,
+  Chip,
+  Avatar,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { User } from '../../types/admin';
 
-const GREEN_MAIN = '#8310FF';
+const PRIMARY = '#8310FF';
 
 interface UserDetailsDialogProps {
   open: boolean;
@@ -22,108 +24,178 @@ interface UserDetailsDialogProps {
   onEdit?: (user: User) => void;
 }
 
-/**
- * UserDetailsDialog Component
- * Displays detailed information about a selected user
- * Extracted from admin.tsx for better modularity
- */
 const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClose, onEdit }) => {
   if (!user) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        User Details
-        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: `linear-gradient(135deg, ${PRIMARY} 0%, #6a0dad 100%)`,
+          color: 'white',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', width: 40, height: 40 }}>
+            {user.username?.charAt(0).toUpperCase() || 'U'}
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {user.profile?.firstName && user.profile?.lastName
+                ? `${user.profile.firstName} ${user.profile.lastName}`
+                : user.username}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              @{user.username} &middot; {user.email}
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={onClose} sx={{ color: 'white' }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+      <DialogContent sx={{ p: 0 }}>
+        {/* Status Bar */}
+        <Box
+          sx={{
+            background: '#f5f3ff',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            flexWrap: 'wrap',
+            borderBottom: '1px solid #ece6fa',
+          }}
+        >
+          <Chip
+            label={user.role}
+            size="small"
+            sx={{ backgroundColor: '#ece6fa', color: PRIMARY, fontWeight: 600 }}
+          />
+          <Chip
+            label={user.isVerified ? 'Verified' : 'Pending'}
+            size="small"
+            color={user.isVerified ? 'success' : 'warning'}
+          />
+          {user.Localisation && (
+            <Chip label={user.Localisation} size="small" variant="outlined" />
+          )}
+        </Box>
+
+        {/* Two Column Layout */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
           {/* Basic Information */}
-          <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Basic Information
-            </Typography>
-            <Stack spacing={2}>
-              {Object.entries(user).map(
-                ([key, value]) =>
-                  key !== 'profile' &&
-                  !key.toLowerCase().includes('id') && (
-                    <Box key={key}>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                      </Typography>
-                      <Typography variant="body1" sx={{ wordBreak: 'break-all', fontWeight: 500 }}>
-                        {value !== null && value !== undefined ? String(value) : 'N/A'}
-                      </Typography>
-                    </Box>
-                  )
-              )}
-            </Stack>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' }, borderRight: { md: '1px solid #ece6fa' } }}>
+            <Box sx={{ p: 3, borderBottom: '1px solid #ece6fa' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2 }}>
+                Account Information
+              </Typography>
+              <Stack spacing={1.5}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#6c6c80' }}>Username</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>@{user.username}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#6c6c80' }}>Email</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.email}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#6c6c80' }}>Role</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.role}</Typography>
+                </Box>
+                {user.ip && (
+                  <Box>
+                    <Typography variant="body2" sx={{ color: '#6c6c80' }}>IP Address</Typography>
+                    <Typography variant="body1" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{user.ip}</Typography>
+                  </Box>
+                )}
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#6c6c80' }}>Joined</Typography>
+                  <Typography variant="body1">{new Date(user.createdAt).toLocaleDateString()}</Typography>
+                </Box>
+                {user.lastLogin && (
+                  <Box>
+                    <Typography variant="body2" sx={{ color: '#6c6c80' }}>Last Login</Typography>
+                    <Typography variant="body1">{new Date(user.lastLogin).toLocaleDateString()}</Typography>
+                  </Box>
+                )}
+              </Stack>
+            </Box>
           </Box>
 
           {/* Profile Information */}
-          <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Profile
-            </Typography>
-            {user.profile ? (
-              <Stack spacing={2}>
-                {Object.entries(user.profile).map(
-                  ([key, value]) =>
-                    !key.toLowerCase().includes('id') && (
-                      <Box key={key}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </Typography>
-                        {Array.isArray(value) ? (
-                          <Box sx={{ pl: 2 }}>
-                            {value.length === 0 ? (
-                              <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                                Empty
-                              </Typography>
-                            ) : (
-                              value.map((item, idx) => (
-                                <Box key={idx} sx={{ mb: 1 }}>
-                                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                    - {typeof item === 'object' ? JSON.stringify(item, null, 2) : String(item)}
-                                  </Typography>
-                                </Box>
-                              ))
-                            )}
-                          </Box>
-                        ) : typeof value === 'object' && value !== null ? (
-                          <Box sx={{ pl: 2 }}>
-                            <Typography
-                              variant="body2"
-                              component="pre"
-                              sx={{ color: 'text.secondary', fontFamily: 'monospace', fontSize: '0.875rem' }}
-                            >
-                              {JSON.stringify(value, null, 2)}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Typography variant="body1" sx={{ wordBreak: 'break-all', fontWeight: 500 }}>
-                            {value !== null && value !== undefined ? String(value) : 'N/A'}
-                          </Typography>
-                        )}
-                      </Box>
-                    )
-                )}
-              </Stack>
-            ) : (
-              <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                No profile data
+          <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+            <Box sx={{ p: 3, borderBottom: '1px solid #ece6fa' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: PRIMARY, mb: 2 }}>
+                Profile
               </Typography>
-            )}
+              {user.profile ? (
+                <Stack spacing={1.5}>
+                  {user.profile.firstName && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#6c6c80' }}>First Name</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.profile.firstName}</Typography>
+                    </Box>
+                  )}
+                  {user.profile.lastName && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#6c6c80' }}>Last Name</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.profile.lastName}</Typography>
+                    </Box>
+                  )}
+                  {user.profile.phone && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#6c6c80' }}>Phone</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.profile.phone}</Typography>
+                    </Box>
+                  )}
+                  {user.profile.location && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#6c6c80' }}>Location</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.profile.location}</Typography>
+                    </Box>
+                  )}
+                  {user.profile.company && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#6c6c80' }}>Company</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.profile.company}</Typography>
+                    </Box>
+                  )}
+                  {user.profile.position && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#6c6c80' }}>Position</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{user.profile.position}</Typography>
+                    </Box>
+                  )}
+                  {!user.profile.firstName && !user.profile.lastName && !user.profile.phone && !user.profile.location && !user.profile.company && !user.profile.position && (
+                    <Typography variant="body2" sx={{ color: '#ccc', fontStyle: 'italic' }}>
+                      No profile details
+                    </Typography>
+                  )}
+                </Stack>
+              ) : (
+                <Typography variant="body2" sx={{ color: '#ccc', fontStyle: 'italic' }}>
+                  No profile data
+                </Typography>
+              )}
+            </Box>
           </Box>
+        </Box>
+
+        {/* ID Footer */}
+        <Box sx={{ p: 2, backgroundColor: '#fafafa', borderTop: '1px solid #ece6fa' }}>
+          <Typography variant="caption" sx={{ color: '#6c6c80', fontFamily: 'monospace' }}>
+            ID: {user._id}
+          </Typography>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button onClick={onClose} variant="outlined">
+      <DialogActions sx={{ p: 2, backgroundColor: '#fafafa' }}>
+        <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none', borderColor: '#ece6fa', color: '#6c6c80' }}>
           Close
         </Button>
         {onEdit && (
@@ -131,7 +203,8 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
             variant="contained"
             onClick={() => onEdit(user)}
             sx={{
-              backgroundColor: GREEN_MAIN,
+              textTransform: 'none',
+              backgroundColor: PRIMARY,
               '&:hover': { backgroundColor: '#6a0dad' },
             }}
           >
