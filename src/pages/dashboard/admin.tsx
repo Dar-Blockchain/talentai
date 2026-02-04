@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/router';
 import { AppDispatch } from '@/store/store';
 import {
   Box,
@@ -22,7 +23,10 @@ import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashbo
 import RoleGuard from '@/components/guards/RoleGuard';
 import dynamic from 'next/dynamic';
 
-const GREEN_MAIN = '#8310FF';
+const PRIMARY = '#8310FF';
+
+const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview'] as const;
+type TabName = typeof VALID_TABS[number];
 
 interface User {
   _id: string;
@@ -59,9 +63,15 @@ const DashboardAdmin = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
-  const [activeTab, setActiveTab] = useState(0);
+
+  const activeTab = (VALID_TABS.includes(router.query.tab as TabName) ? router.query.tab : 'dashboard') as TabName;
+
+  const handleTabChange = useCallback((tab: TabName) => {
+    router.push({ pathname: router.pathname, query: { tab } }, undefined, { shallow: true });
+  }, [router]);
 
   // Dialog states
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -90,7 +100,7 @@ const DashboardAdmin = () => {
         <Box sx={{ position: 'relative' }}>
           <AdminSidebar
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             onLogout={handleLogout}
             drawerOpen={drawerOpen}
             onDrawerClose={() => setDrawerOpen(false)}
@@ -115,7 +125,7 @@ const DashboardAdmin = () => {
               <IconButton onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: PRIMARY }}>
                 TalentAI Admin
               </Typography>
             </Box>
@@ -138,8 +148,8 @@ const DashboardAdmin = () => {
             }}
           >
             <Box sx={{ width: '100%' }}>
-              {activeTab === 0 && <AdminDashboardHome />}
-              {activeTab === 1 && (
+              {activeTab === 'dashboard' && <AdminDashboardHome />}
+              {activeTab === 'users' && (
                 <UserManagement
                   onUserSelect={(user) => {
                     setSelectedUser(user);
@@ -158,8 +168,8 @@ const DashboardAdmin = () => {
                   }}
                 />
               )}
-              {activeTab === 2 && <PostInterviewAssessments />}
-              {activeTab === 3 && <SkillInterviewAssessments />}
+              {activeTab === 'post-interview' && <PostInterviewAssessments />}
+              {activeTab === 'skill-interview' && <SkillInterviewAssessments />}
             </Box>
           </Box>
         </Box>

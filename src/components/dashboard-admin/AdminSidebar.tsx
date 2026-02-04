@@ -55,9 +55,11 @@ const SidebarItem = styled(ListItemButton)(({ theme }) => ({
   },
 }));
 
+type TabName = 'dashboard' | 'users' | 'post-interview' | 'skill-interview';
+
 interface AdminSidebarProps {
-  activeTab: number;
-  onTabChange: (tab: number) => void;
+  activeTab: TabName;
+  onTabChange: (tab: TabName) => void;
   onLogout: () => void;
   drawerOpen: boolean;
   onDrawerClose: () => void;
@@ -73,11 +75,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const menuItems = [
-    { id: 0, label: 'Dashboard', icon: <DashboardIcon /> },
-    { id: 1, label: 'Users', icon: <PeopleIcon /> },
-    { id: 2, label: 'Post Interview', icon: <InterviewIcon /> },
-    { id: 3, label: 'Skill Interview', icon: <SkillIcon /> },
+  const menuItems: { id: TabName; label: string; icon: React.ReactNode }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
+    { id: 'users', label: 'Users', icon: <PeopleIcon /> },
+    { id: 'post-interview', label: 'Post Interview', icon: <InterviewIcon /> },
+    { id: 'skill-interview', label: 'Skill Interview', icon: <SkillIcon /> },
   ];
 
   return (
