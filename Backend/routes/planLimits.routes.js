@@ -27,40 +27,6 @@ router.put("/:id", requireAuthUser, planLimitsController.updatePlan);
 router.delete("/:id", requireAuthUser, planLimitsController.deletePlan);
 
 // Company Plan Assignment and Usage Routes
-
-// POST /planLimits/assign/:companyProfileId/:planId - Assign plan to company
-router.post(
-  "/assign/:companyProfileId/:planId",
-  requireAuthUser,
-  planLimitsController.assignPlanToCompany
-);
-
-// GET /planLimits/usage/:companyProfileId - Get company plan usage
-router.get(
-  "/usage/:companyProfileId",
-  requireAuthUser,
-  planLimitsController.getCompanyPlanUsage
-);
-
-// PUT /planLimits/usage/:companyProfileId - Update company usage
-router.put(
-  "/usage/:companyProfileId",
-  requireAuthUser,
-  planLimitsController.updateCompanyUsage
-);
-
-// PUT /planLimits/increment/:companyProfileId/:counterType - Increment usage counter
-router.put(
-  "/increment/:companyProfileId/:counterType",
-  requireAuthUser,
-  planLimitsController.incrementUsageCounter
-);
-
-// PUT /planLimits/reset-monthly/:companyProfileId - Reset monthly counter
-router.put(
-  "/reset-monthly/:companyProfileId",
-  requireAuthUser,
-  planLimitsController.resetMonthlyInterviewCounterIfNeeded
-);
+// (Usage and assignment routes removed — handled elsewhere)
 
 module.exports = router;
