@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const TodoList = require("./todoList.model");
+const PlanLimits = require("./PlanLimits.model");
 
 // Sub-schemas for skills and softSkills to enable per-item timestamps
 const skillSchema = new mongoose.Schema(
@@ -95,6 +96,7 @@ const profileSchema = new mongoose.Schema(
 
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
+    planLimits: { type: mongoose.Schema.Types.ObjectId, ref: "PlanLimits" },
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "SkillInterviewAssessment" },
     ],
@@ -112,6 +114,28 @@ const profileSchema = new mongoose.Schema(
         type: String,
         enum: ["Remote", "Hybrid", "On-site"],
         required: false,
+      },
+    },
+    planUsage: {
+      postsUsed: {
+        type: Number,
+        default: 0,
+        description: "Current number of posts created",
+      },
+      candidateUnlocksUsed: {
+        type: Number,
+        default: 0,
+        description: "Current number of candidates unlocked",
+      },
+      monthlyInterviewsUsed: {
+        type: Number,
+        default: 0,
+        description: "Current number of interviews used this month",
+      },
+      lastMonthlyResetDate: {
+        type: Date,
+        default: Date.now,
+        description: "Last date when monthly interview count was reset",
       },
     },
     requiredSkills: [String],
