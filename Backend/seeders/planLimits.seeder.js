@@ -22,23 +22,7 @@ const defaultPlans = [
     monthlyInterviewLimit: 15,
     description: "Trial plan for new users",
     isActive: true,
-  },
-  {
-    name: "Professional",
-    postsLimit: 20,
-    candidateUnlockLimit: 50,
-    monthlyInterviewLimit: 50,
-    description: "Professional plan for growing companies",
-    isActive: false,
-  },
-  {
-    name: "Enterprise",
-    postsLimit: 100,
-    candidateUnlockLimit: 500,
-    monthlyInterviewLimit: 200,
-    description: "Enterprise plan for large companies",
-    isActive: false,
-  },
+  }, 
 ];
 
 // Connect to MongoDB (only if needed)
