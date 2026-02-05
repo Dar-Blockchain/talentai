@@ -37,6 +37,7 @@ const pipelineInterviewRoutes = require('../routes/pipelineInterview.routes');
 const CompanyInvitationRouters = require('../routes/CompanyInvitation.routes');
 const CompanyMembershipRoutes = require('../routes/CompanyMembership.routes');
 const chatRouter = require('../routes/chat.routes');
+const planLimitsRouter = require('../routes/planLimits.routes');
 // const backupRouter = require('../routes/backupRouter');
 
 /**
@@ -57,6 +58,7 @@ function registerRoutes(app) {
   // Company Management
   app.use('/CompanyInvitation', CompanyInvitationRouters); // Company Invitation Management -> company-invitations
   app.use('/CompanyMembership', CompanyMembershipRoutes); // Company Membership Management -> company-memberships
+  app.use('/plan-limits', planLimitsRouter); //✅ Plan Limits Management -> plan-limits
   //app.use('/company-invitations', CompanyInvitationRouters); //✅ Company Invitation Management
   //app.use('/company-memberships', CompanyMembershipRoutes); //✅ Company Membership Management
 
