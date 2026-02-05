@@ -13,19 +13,19 @@ const planLimitsSchema = new mongoose.Schema(
     postsLimit: {
       type: Number,
       required: true,
-      default: 0,
+      default: 5,
       description: "Maximum number of posts a company can create",
     },
     candidateUnlockLimit: {
       type: Number,
       required: true,
-      default: 0,
+      default: 5,
       description: "Maximum number of candidates a company can unlock",
     },
     monthlyInterviewLimit: {
       type: Number,
       required: true,
-      default: 0,
+      default: 15,
       description: "Maximum number of interviews allowed per month",
     },
 
