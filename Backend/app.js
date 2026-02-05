@@ -23,6 +23,7 @@ const { initializeAgenda } = require('./services/Agent&AgendaServices/agenda.ser
 const intelligentInterviewService = require('./services/intelligentInterview.service');
 const intelligentInterviewController = require('./controllers/intelligentInterview.controller');
 const chatSocketHandler = require('./socket-handlers/chatSocketHandler');
+const { seedDefaultPlans } = require('./seeders/planLimits.seeder');
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
@@ -60,6 +61,15 @@ const initializeApp = async () => {
     // Step 1: Connect to database
     logger.section('Connecting to database...');
     await connectDB();
+
+    // Step 1.5: Seed PlanLimits if table is empty
+    logger.section('Initializing default plans...');
+    try {
+      await seedDefaultPlans();
+      logger.success('PlanLimits initialization completed');
+    } catch (error) {
+      logger.warn('PlanLimits seeding encountered an issue, but application will continue');
+    }
 
     // Step 2: Initialize scheduler
     await initializeAgenda();
