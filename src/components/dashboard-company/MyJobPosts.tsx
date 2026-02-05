@@ -204,7 +204,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
 
   // Handler for copying interview link
   const handleCopyInterviewLink = (jobId: string) => {
-    const interviewLink = `${window.location.origin}/interview/hr?jobId=${jobId}`;
+    const interviewLink = `${window.location.origin}/interview/hr?jobId=${jobId}&ref=link`;
 
     navigator.clipboard.writeText(interviewLink)
       .then(() => {

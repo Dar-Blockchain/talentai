@@ -20,6 +20,7 @@ import {
   Close as CloseIcon,
   QuestionAnswer as InterviewIcon,
   Psychology as SkillIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 260;
@@ -55,7 +56,7 @@ const SidebarItem = styled(ListItemButton)(({ theme }) => ({
   },
 }));
 
-type TabName = 'dashboard' | 'users' | 'post-interview' | 'skill-interview';
+type TabName = 'dashboard' | 'users' | 'post-interview' | 'skill-interview' | 'company-config';
 
 interface AdminSidebarProps {
   activeTab: TabName;
@@ -80,6 +81,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'users', label: 'Users', icon: <PeopleIcon /> },
     { id: 'post-interview', label: 'Post Interview', icon: <InterviewIcon /> },
     { id: 'skill-interview', label: 'Skill Interview', icon: <SkillIcon /> },
+    { id: 'company-config', label: 'Company Config', icon: <SettingsIcon /> },
   ];
 
   return (
