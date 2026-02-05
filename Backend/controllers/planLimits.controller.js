@@ -1,4 +1,4 @@
-const planLimitsService = require("../../services/planLimits.service");
+const planLimitsService = require("../services/planLimits.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
