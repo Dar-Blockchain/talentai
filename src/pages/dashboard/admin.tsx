@@ -19,13 +19,14 @@ import UserDetailsDialog from '@/components/dashboard-admin/UserDetailsDialog';
 import AssessmentDetailsDialog from '@/components/dashboard-admin/AssessmentDetailsDialog';
 import PostInterviewAssessments from '@/components/dashboard-admin/PostInterviewAssessments';
 import SkillInterviewAssessments from '@/components/dashboard-admin/SkillInterviewAssessments';
+import CompanyConfig from '@/components/dashboard-admin/CompanyConfig';
 import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashboard-admin/CompanyPermissionsModal';
 import RoleGuard from '@/components/guards/RoleGuard';
 import dynamic from 'next/dynamic';
 
 const PRIMARY = '#8310FF';
 
-const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview'] as const;
+const VALID_TABS = ['dashboard', 'users', 'post-interview', 'skill-interview', 'company-config'] as const;
 type TabName = typeof VALID_TABS[number];
 
 interface User {
@@ -170,6 +171,7 @@ const DashboardAdmin = () => {
               )}
               {activeTab === 'post-interview' && <PostInterviewAssessments />}
               {activeTab === 'skill-interview' && <SkillInterviewAssessments />}
+              {activeTab === 'company-config' && <CompanyConfig />}
             </Box>
           </Box>
         </Box>
