@@ -180,8 +180,22 @@ profileSchema.post("save", async function (doc) {
         todoList: todoList._id,
       });
     }
+
+    if (doc.type === "Company" && !doc.planLimits) {
+      // Get the Trial plan
+      const trialPlan = await PlanLimits.findOne({ name: "Trial" });
+
+      if (trialPlan) {
+        await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
+          planLimits: trialPlan._id,
+        });
+        console.log(`✅ Trial plan assigned to company profile: ${doc._id}`);
+      } else {
+        console.warn(`⚠️  Trial plan not found. Company profile ${doc._id} was not assigned a plan.`);
+      }
+    }
   } catch (error) {
-    console.error("Error creating TodoList:", error);
+    console.error("Error in Profile post-save hook:", error);
   }
 });
 
