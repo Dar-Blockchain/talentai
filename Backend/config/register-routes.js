@@ -68,6 +68,7 @@ function registerRoutes(app) {
 
   // Posts & Jobs
   app.use('/linkedinPost', linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
+  //app.use('/linkedin-post', linkedinPostRouter); // LinkedIn Post Generation -> linkedin-post
   app.use('/post', postRouter); //✅ Post Management -> posts
   app.use('/post-steps', postStepsRouter); //✅ Post Steps Management -> post-steps
 
@@ -77,6 +78,7 @@ function registerRoutes(app) {
   // Matching & Recruitment Engine
   app.use('/matching', matchingRoutes); //✅ Matching Engine matching -> matchings
   app.use('/matchingConfig', matchingConfigRoutes); // Matching Configuration -> matching-configs
+  //app.use('/matching-configs', matchingConfigRoutes); // Matching Configuration -> matching-configs
 
   // Notifications
   app.use('/notification-system', notificationSystemRouter); // Notification System -> notifications
