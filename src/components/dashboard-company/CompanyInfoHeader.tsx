@@ -56,9 +56,11 @@ const GradientButton = styled(Button)(({ theme }) => ({
 interface CompanyInfoHeaderProps {
   companyProfile: any;
   companyUser: any;
+  planLimits?: any;
+  planUsage?: any;
 }
 
-const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, companyUser }) => {
+const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, companyUser, planLimits, planUsage }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
@@ -71,6 +73,22 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
 
   // Get the actual permission value from the hook
   const canCreateJobPosts = hasPermission('canCreateJobPosts');
+
+  // Check if post limit is reached
+  console.log('🔍 [CompanyInfoHeader] Plan Debug:', {
+    planLimits,
+    planUsage,
+    postsLimit: planLimits?.postsLimit,
+    postsUsed: planUsage?.postsUsed,
+    hasReachedPostLimit: planLimits?.postsLimit !== undefined &&
+      planUsage?.postsUsed !== undefined &&
+      planUsage?.postsUsed >= planLimits?.postsLimit,
+  });
+
+  const hasReachedPostLimit =
+    planLimits?.postsLimit !== undefined &&
+    planUsage?.postsUsed !== undefined &&
+    Number(planUsage.postsUsed) >= Number(planLimits.postsLimit);
 
   // Debug: Log permission state
   useEffect(() => {
@@ -221,6 +239,8 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
               title={
                 loadingPermissions
                   ? "Loading permissions..."
+                  : hasReachedPostLimit
+                  ? `Post limit reached (${planUsage?.postsUsed}/${planLimits?.postsLimit})`
                   : !canCreateJobPosts
                   ? "You don't have permission to create job posts"
                   : ""
@@ -234,6 +254,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
                     console.log('🔍 Button click attempt:', {
                       canCreateJobPosts,
                       loadingPermissions,
+                      hasReachedPostLimit,
                     });
 
                     if (!canCreateJobPosts) {
@@ -250,13 +271,20 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ companyProfile, c
                       return false;
                     }
 
+                    if (hasReachedPostLimit) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('❌ Click blocked - post limit reached');
+                      return false;
+                    }
+
                     console.log('✅ Click allowed - navigating to /posts/create');
                     router.push("/posts/create");
                   }}
                   startIcon={<AddIcon />}
-                  disabled={loadingPermissions || !canCreateJobPosts}
+                  disabled={loadingPermissions || !canCreateJobPosts || hasReachedPostLimit}
                   sx={{
-                    pointerEvents: (loadingPermissions || !canCreateJobPosts) ? 'none' : 'auto',
+                    pointerEvents: (loadingPermissions || !canCreateJobPosts || hasReachedPostLimit) ? 'none' : 'auto',
                   }}
                 >
                   Post Job

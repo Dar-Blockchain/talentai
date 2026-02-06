@@ -16,6 +16,7 @@ import {
 } from "@/store/slices/postSlice";
 import { fetchUnlockedCandidates } from "@/store/slices/candidateSlice";
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
+import { fetchPlanLimitById, selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
@@ -59,6 +60,7 @@ export interface MatchingCandidate {
 const DashboardCompany = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const currentPlanLimit = useSelector(selectCurrentPlanLimit);
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);
@@ -93,6 +95,13 @@ const DashboardCompany = () => {
   // Track ongoing fetch to prevent duplicates with timestamp-based deduplication
   const isFetchingMatchesRef = useRef(false);
   const lastFetchTimeRef = useRef(0);
+
+  // Fetch plan limit by ID when profile is loaded
+  useEffect(() => {
+    if (profile?.planLimits && typeof profile.planLimits === 'string') {
+      dispatch(fetchPlanLimitById(profile.planLimits));
+    }
+  }, [dispatch, profile?.planLimits]);
 
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
@@ -208,7 +217,7 @@ const fetchMyJobs = useCallback(
     <RoleGuard allowedRoles={["Company"]}>
       <PageContainer>
           <Header />
-          <CompanyInfoHeader companyProfile={profile} companyUser={user}/>
+          <CompanyInfoHeader companyProfile={profile} companyUser={user} planLimits={currentPlanLimit} planUsage={profile?.planUsage}/>
           {!selectedJob ? (
             <MyJobPosts
               myJobs={myJobs}
