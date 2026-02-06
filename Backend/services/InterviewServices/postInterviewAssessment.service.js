@@ -4,6 +4,68 @@ const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
 
+// ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
+const checkMonthlyInterviewLimit = async (companyId) => {
+  try {
+    const profile = await Profile.findOne({ userId: companyId }).populate('planLimits');
+    if (!profile) {
+      const err = new Error('Company profile not found');
+      err.status = 404;
+      throw err;
+    }
+
+    if (profile.type !== 'Company') {
+      const err = new Error('Only company accounts can create interview assessments');
+      err.status = 403;
+      throw err;
+    }
+
+    if (!profile.planLimits) {
+      const err = new Error('No plan assigned to your company');
+      err.status = 403;
+      throw err;
+    }
+
+    const used = profile.planUsage?.monthlyInterviewsUsed || 0;
+    const limit = profile.planLimits.monthlyInterviewLimit || 0;
+
+    if (used + 1 > limit) {
+      const remaining = Math.max(0, limit - used);
+      const err = new Error(`You have reached the monthly interviews limit (${limit}) for your plan: ${profile.planLimits.name}. You can create ${remaining} more interview(s) this month.`);
+      err.status = 403;
+      err.limitData = { planName: profile.planLimits.name, limit, used, remaining };
+      throw err;
+    }
+
+    return { canCreate: true, used, limit };
+  } catch (error) {
+    console.error('Error checking monthly interview limit:', error.message || error);
+    throw error;
+  }
+};
+
+const incrementMonthlyInterviewsUsage = async (companyId) => {
+  try {
+    const profile = await Profile.findOneAndUpdate(
+      { userId: companyId },
+      { $inc: { 'planUsage.monthlyInterviewsUsed': 1 } },
+      { new: true }
+    ).populate('planLimits');
+
+    if (!profile) {
+      const err = new Error('Profile not found when incrementing monthly interviews');
+      err.status = 404;
+      throw err;
+    }
+
+    console.log(`✅ [incrementMonthlyInterviewsUsage] monthlyInterviewsUsed -> ${profile.planUsage.monthlyInterviewsUsed}`);
+    return profile;
+  } catch (error) {
+    console.error('Error incrementing monthly interviews usage:', error.message || error);
+    throw error;
+  }
+};
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
@@ -14,7 +76,12 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     const post = await Post.findById(assessmentData.post);
     if (!post) throw new Error('Post not found');
 
+    // Determine company id from post
     const company = post.user;
+    const companyId = post.user && post.user._id ? post.user._id : post.user;
+
+    // Check monthly interview limit before creating assessment
+    await checkMonthlyInterviewLimit(companyId);
 
     // =======================
     // CREATE ASSESSMENT
@@ -24,6 +91,14 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       company,
       completed: false
     });
+
+    // Increment monthly interviews usage (best-effort)
+    try {
+      await incrementMonthlyInterviewsUsage(companyId);
+    } catch (incErr) {
+      console.error('⚠️ Warning: failed to increment monthly interviews usage:', incErr.message || incErr);
+      // Do not fail assessment creation if increment fails
+    }
 
     // =======================
     // INCREMENT CANDIDATE QUOTA
