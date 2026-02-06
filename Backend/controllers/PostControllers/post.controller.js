@@ -34,10 +34,59 @@ exports.createPost = async (req, res) => {
       user: req.user._id, //id => token ("membre" req.user.campagny)
     };
 
+    // ========== CHECK POSTS LIMIT ==========
+    const userProfile = await Profile.findOne({ userId: req.user._id }).populate('planLimits');
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        error: 'User profile not found'
+      });
+    }
+
+    // For companies, check posts limit
+    if (userProfile.type === 'Company') {
+      if (!userProfile.planLimits) {
+        return res.status(403).json({
+          success: false,
+          error: 'No plan assigned to your company',
+          message: 'Please contact support to get a plan assigned'
+        });
+      }
+
+      const postsUsed = userProfile.planUsage?.postsUsed || 0;
+      const postsLimit = userProfile.planLimits.postsLimit;
+
+      console.log(`📊 [createPost] Posts check - Used: ${postsUsed}/${postsLimit}`);
+
+      if (postsUsed >= postsLimit) {
+        return res.status(403).json({
+          success: false,
+          error: 'Posts limit reached',
+          message: `You have reached the maximum number of posts (${postsLimit}) for your current plan: ${userProfile.planLimits.name}`,
+          planName: userProfile.planLimits.name,
+          postsLimit: postsLimit,
+          postsUsed: postsUsed
+        });
+      }
+    }
+
     // Get token from Authorization header
     const token = req.headers.authorization?.replace("Bearer ", "");
 
     const post = await postService.createPost(postData, token);
+
+    // ========== INCREMENT POSTS USAGE ==========
+    if (userProfile.type === 'Company') {
+      try {
+        const profileService = require("../../services/ProfileService/profile.service");
+        const updatedProfile = await profileService.incrementPlanUsage(req.user._id, 'postsUsed');
+        console.log(`✅ [createPost] Posts usage updated: ${updatedProfile.planUsage.postsUsed}/${userProfile.planLimits.postsLimit}`);
+      } catch (usageError) {
+        console.error('⚠️ [createPost] Warning: Could not update posts usage:', usageError.message);
+        // Don't fail post creation if usage update fails
+      }
+    }
 
     // Create matching config if provided (non-blocking)
     let createdMatchingConfig = null;

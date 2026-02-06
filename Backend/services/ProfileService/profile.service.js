@@ -1133,3 +1133,110 @@ module.exports.updateProfileVisibility = async (userId, isPublicProfile) => {
     throw error;
   }
 };
+
+// ========== PLAN USAGE FUNCTIONS ==========
+
+/**
+ * Check if a user can perform an action based on plan limits
+ * @param {string} userId - User ID
+ * @param {string} limitType - Type of limit: 'posts', 'candidateUnlocks', 'monthlyInterviews'
+ * @returns {object} - { canUse: boolean, message: string, limitData: object }
+ */
+module.exports.checkPlanLimit = async (userId, limitType) => {
+  try {
+    const profile = await Profile.findOne({ userId }).populate('planLimits');
+
+    if (!profile) {
+      throw new Error('User profile not found');
+    }
+
+    if (profile.type !== 'Company') {
+      throw new Error('This action is only available for company accounts');
+    }
+
+    if (!profile.planLimits) {
+      throw new Error('No plan assigned to your company');
+    }
+
+    const planLimits = profile.planLimits;
+    const planUsage = profile.planUsage || {};
+
+    let used = 0;
+    let limit = 0;
+    let fieldName = '';
+
+    switch (limitType) {
+      case 'posts':
+        used = planUsage.postsUsed || 0;
+        limit = planLimits.postsLimit || 0;
+        fieldName = 'postsLimit';
+        break;
+      case 'candidateUnlocks':
+        used = planUsage.candidateUnlocksUsed || 0;
+        limit = planLimits.candidateUnlockLimit || 0;
+        fieldName = 'candidateUnlockLimit';
+        break;
+      case 'monthlyInterviews':
+        used = planUsage.monthlyInterviewsUsed || 0;
+        limit = planLimits.monthlyInterviewLimit || 0;
+        fieldName = 'monthlyInterviewLimit';
+        break;
+      default:
+        throw new Error('Invalid limit type');
+    }
+
+    const canUse = used < limit;
+    const message = canUse 
+      ? `You can create ${limit - used} more ${limitType}`
+      : `You have reached the maximum ${limitType} (${limit}) for your plan`;
+
+    return {
+      canUse,
+      message,
+      limitData: {
+        used,
+        limit,
+        remaining: Math.max(0, limit - used),
+        planName: planLimits.name,
+        fieldName
+      }
+    };
+  } catch (error) {
+    console.error('❌ Error checking plan limit:', error);
+    throw error;
+  }
+};
+
+/**
+ * Increment plan usage counter
+ * @param {string} userId - User ID
+ * @param {string} usageType - Type of usage: 'postsUsed', 'candidateUnlocksUsed', 'monthlyInterviewsUsed'
+ * @returns {object} - Updated profile
+ */
+module.exports.incrementPlanUsage = async (userId, usageType) => {
+  try {
+    if (!['postsUsed', 'candidateUnlocksUsed', 'monthlyInterviewsUsed'].includes(usageType)) {
+      throw new Error('Invalid usage type');
+    }
+
+    const updateObj = {};
+    updateObj[`planUsage.${usageType}`] = 1;
+
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { $inc: updateObj },
+      { new: true }
+    ).populate('planLimits');
+
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+
+    console.log(`✅ [incrementPlanUsage] ${usageType} incremented. New value: ${profile.planUsage[usageType]}`);
+
+    return profile;
+  } catch (error) {
+    console.error('❌ Error incrementing plan usage:', error);
+    throw error;
+  }
+};
