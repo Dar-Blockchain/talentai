@@ -8,6 +8,7 @@ const express = require("express");
 const router = express.Router();
 const planLimitsController = require("../controllers/planLimits.controller");
 const { requireAuthUser } = require("../middleware/auth.middleware");
+const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // Plans Management Routes (Public Read, Auth Required for Write)
 
@@ -23,12 +24,11 @@ router.get("/:id", planLimitsController.getPlanById);
 router.use(requireAuthUser,authLogMiddleware("planLimits"));
 
 // PUT /planLimits/:id - Update plan by ID (Admin only)
-router.put("/:id",  planLimitsController.updatePlan);
+router.put("/:id",controledAcces('Admin'),  planLimitsController.updatePlan);
 
 // DELETE /planLimits/:id - Delete plan by ID (Admin only)
-router.delete("/:id", planLimitsController.deletePlan);
+router.delete("/:id", controledAcces('Admin'), planLimitsController.deletePlan);
 
-// Company Plan Assignment and Usage Routes
-// (Usage and assignment routes removed — handled elsewhere)
+
 
 module.exports = router;
