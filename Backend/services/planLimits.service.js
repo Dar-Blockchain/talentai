@@ -87,36 +87,30 @@ module.exports.getPlanById = async (planId) => {
 };
 
 /**
- * Update plan by ID
+ * Update plan by name (no ID needed)
  */
-module.exports.updatePlan = async (planId, updateData) => {
+module.exports.updatePlanByName = async (planName, updateData) => {
   try {
-    if (!planId) {
-      const err = new Error("Plan ID is required");
+    if (!planName) {
+      const err = new Error("Plan name is required");
       err.status = 400;
       throw err;
     }
 
-    // Prevent updating name to an existing name
-    if (updateData.name) {
-      const existingPlan = await PlanLimits.findOne({
-        name: updateData.name,
-        _id: { $ne: planId },
-      });
-      if (existingPlan) {
-        const err = new Error("Plan with this name already exists");
-        err.status = 409;
-        throw err;
-      }
-    }
+    // Don't allow changing the name through update
+    delete updateData.name;
 
-    const plan = await PlanLimits.findByIdAndUpdate(planId, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const plan = await PlanLimits.findOneAndUpdate(
+      { name: planName },
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!plan) {
-      const err = new Error("Plan not found");
+      const err = new Error(`Plan "${planName}" not found`);
       err.status = 404;
       throw err;
     }
