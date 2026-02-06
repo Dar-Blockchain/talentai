@@ -1,6 +1,4 @@
 const unlockCandidateService = require("../services/unlockCandidate.service");
-const Profile = require("../models/Profile.model");
-const profileService = require("../services/ProfileService/profile.service");
 
 /**
  * Get all unlocked candidates by company with pagination
@@ -59,7 +57,7 @@ module.exports.unlockCandidate = async (req, res) => {
     const SINGLE_PRICE = 5;
     const PACK_PRICE = 500;
 
-    // Validate required fields
+    // ========== INPUT VALIDATION ==========
     if (!idJob) {
       return res.status(400).json({
         success: false,
@@ -81,80 +79,35 @@ module.exports.unlockCandidate = async (req, res) => {
       });
     }
 
-    // ========== CHECK CANDIDATE UNLOCK LIMIT ==========
-    const userProfile = await Profile.findOne({ userId: idCompany }).populate('planLimits');
-
-    if (!userProfile) {
-      return res.status(404).json({
-        success: false,
-        error: 'User profile not found'
-      });
-    }
-
-    // For companies, check candidate unlock limit
-    if (userProfile.type === 'Company') {
-      if (!userProfile.planLimits) {
-        return res.status(403).json({
-          success: false,
-          error: 'No plan assigned to your company',
-          message: 'Please contact support to get a plan assigned'
-        });
-      }
-
-      const unlocksUsed = userProfile.planUsage?.candidateUnlocksUsed || 0;
-      const unlocksLimit = userProfile.planLimits.candidateUnlockLimit;
-      const candidatesCount = candidateIds.length;
-
-      console.log(`📊 [unlockCandidate] Unlock check - Used: ${unlocksUsed}/${unlocksLimit}, Requesting: ${candidatesCount} candidates`);
-
-      // Check if enough unlocks remaining
-      if (unlocksUsed + candidatesCount > unlocksLimit) {
-        const remaining = Math.max(0, unlocksLimit - unlocksUsed);
-        return res.status(403).json({
-          success: false,
-          error: 'Candidate unlock limit reached',
-          message: `You have reached the maximum number of candidate unlocks (${unlocksLimit}) for your current plan: ${userProfile.planLimits.name}. You can unlock ${remaining} more candidate(s).`,
-          planName: userProfile.planLimits.name,
-          unlocksLimit: unlocksLimit,
-          unlocksUsed: unlocksUsed,
-          remaining: remaining,
-          requested: candidatesCount
-        });
-      }
-    }
-
-    // Determine flow: single (1 candidate) or pack (2-5 candidates)
+    // ========== DETERMINE PRICING ==========
     const isPack = candidateIds.length > 1;
     const price = isPack ? PACK_PRICE : SINGLE_PRICE;
 
-    // Call service with unified interface
+    // ========== CALL SERVICE (includes limit check and usage increment) ==========
     const result = await unlockCandidateService.unlockCandidate(
       idCompany,
       candidateIds,
       idJob,
-      price,
-      { pack: isPack }
+      price
     );
-
-    // ========== INCREMENT CANDIDATE UNLOCKS USAGE ==========
-    if (userProfile.type === 'Company') {
-      try {
-        const candidatesCount = candidateIds.length;
-        // Increment by the number of candidates being unlocked
-        userProfile.planUsage.candidateUnlocksUsed = (userProfile.planUsage?.candidateUnlocksUsed || 0) + candidatesCount;
-        await userProfile.save();
-        console.log(`✅ [unlockCandidate] Candidate unlocks usage incremented by ${candidatesCount} to ${userProfile.planUsage.candidateUnlocksUsed}`);
-      } catch (usageError) {
-        console.error('⚠️ [unlockCandidate] Warning: Could not update candidate unlocks usage:', usageError.message);
-        // Don't fail unlock if usage update fails
-      }
-    }
 
     const statusCode = result.success ? 201 : 400;
     res.status(statusCode).json(result);
   } catch (error) {
     console.error("Error creating unlock candidate:", error);
-    res.status(500).json({
+    
+    // Handle limit exceeded errors
+    if (error.status === 403) {
+      return res.status(error.status).json({
+        success: false,
+        error: error.message,
+        ...error.limitData
+      });
+    }
+
+    // Handle other errors
+    const status = error.status || 500;
+    res.status(status).json({
       success: false,
       message: "Failed to create unlock candidate",
       error: error.message

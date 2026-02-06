@@ -1,6 +1,7 @@
 const UnlockCandidate = require("../models/UnlockCandidate.model");
 const tokenService = require("./token.service");
 const User = require("../models/User.model");
+const Profile = require("../models/Profile.model");
 const postPaymentService = require('./postPayment.service');
 
 /**
@@ -116,6 +117,104 @@ const getUnlockedCandidatesByCompanyWithPagination = async (idCompany, page = 1,
 };
 
 /**
+ * ========== CHECK CANDIDATE UNLOCK LIMIT ==========
+ * Verify that company has not exceeded their plan limits
+ * @param {ObjectId} idCompany - Company ID
+ * @param {Number} candidateCount - Number of candidates to unlock
+ * @returns {object} - { canUnlock: boolean, limitData: object }
+ */
+const checkCandidateUnlockLimit = async (idCompany, candidateCount) => {
+  try {
+    const userProfile = await Profile.findOne({ userId: idCompany }).populate('planLimits');
+
+    if (!userProfile) {
+      const error = new Error('User profile not found');
+      error.status = 404;
+      throw error;
+    }
+
+    // For non-company profiles, allow unlock (shouldn't happen, but safe)
+    if (userProfile.type !== 'Company') {
+      const error = new Error('Only company accounts can unlock candidates');
+      error.status = 403;
+      throw error;
+    }
+
+    if (!userProfile.planLimits) {
+      const error = new Error('No plan assigned to your company. Please contact support to get a plan assigned');
+      error.status = 403;
+      throw error;
+    }
+
+    const unlocksUsed = userProfile.planUsage?.candidateUnlocksUsed || 0;
+    const unlocksLimit = userProfile.planLimits.candidateUnlockLimit;
+
+    console.log(`📊 [checkCandidateUnlockLimit] Used: ${unlocksUsed}/${unlocksLimit}, Requesting: ${candidateCount} candidates`);
+
+    // Check if enough unlocks remaining
+    if (unlocksUsed + candidateCount > unlocksLimit) {
+      const remaining = Math.max(0, unlocksLimit - unlocksUsed);
+      const error = new Error(`You have reached the maximum number of candidate unlocks (${unlocksLimit}) for your current plan: ${userProfile.planLimits.name}. You can unlock ${remaining} more candidate(s).`);
+      error.status = 403;
+      error.limitData = {
+        planName: userProfile.planLimits.name,
+        unlocksLimit: unlocksLimit,
+        unlocksUsed: unlocksUsed,
+        remaining: remaining,
+        requested: candidateCount
+      };
+      throw error;
+    }
+
+    return {
+      canUnlock: true,
+      limitData: {
+        planName: userProfile.planLimits.name,
+        unlocksLimit: unlocksLimit,
+        unlocksUsed: unlocksUsed,
+        remaining: unlocksLimit - unlocksUsed - candidateCount,
+        requested: candidateCount
+      },
+      userProfile
+    };
+  } catch (error) {
+    console.error("Error checking candidate unlock limit:", error.message);
+    throw error;
+  }
+};
+
+/**
+ * ========== INCREMENT CANDIDATE UNLOCKS USAGE ==========
+ * Update the profile with incremented candidate unlocks count
+ * @param {ObjectId} idCompany - Company ID
+ * @param {Number} candidateCount - Number of candidates unlocked
+ * @returns {object} - Updated profile
+ */
+const incrementCandidateUnlocksUsage = async (idCompany, candidateCount) => {
+  try {
+    const updateObj = {};
+    updateObj['planUsage.candidateUnlocksUsed'] = candidateCount;
+
+    const profile = await Profile.findOneAndUpdate(
+      { userId: idCompany },
+      { $inc: updateObj },
+      { new: true }
+    ).populate('planLimits');
+
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+
+    console.log(`✅ [incrementCandidateUnlocksUsage] Candidate unlocks incremented by ${candidateCount}. New value: ${profile.planUsage.candidateUnlocksUsed}`);
+
+    return profile;
+  } catch (error) {
+    console.error('❌ Error incrementing candidate unlocks usage:', error);
+    throw error;
+  }
+};
+
+/**
  * Create unlock candidate record (single or pack)
  * @param {ObjectId} idCompany - Company ID
  * @param {Array} candidateIds - Array of candidate IDs (1 = single, 2-5 = pack)
@@ -124,24 +223,33 @@ const getUnlockedCandidatesByCompanyWithPagination = async (idCompany, page = 1,
  */
 const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
   try {
-    // Validate company exists
+    // ========== STEP 1: CHECK UNLOCK LIMIT ==========
+    const limitCheck = await checkCandidateUnlockLimit(idCompany, candidateIds.length);
+    if (!limitCheck.canUnlock) {
+      throw new Error('Cannot unlock candidates due to plan limit');
+    }
+
+    // ========== STEP 2: VALIDATE COMPANY ==========
     const company = await User.findById(idCompany);
     if (!company) {
-      throw new Error("Company not found");
+      const error = new Error("Company not found");
+      error.status = 404;
+      throw error;
     }
 
-    // Validate Job exists
+    // ========== STEP 3: VALIDATE JOB ==========
     const job = await require("../models/Post.model").findById(idJob);
     if (!job) {
-      throw new Error("Job not found");
+      const error = new Error("Job not found");
+      error.status = 404;
+      throw error;
     }
 
-    // Validate candidateIds is always an array
+    // ========== STEP 4: VALIDATE CANDIDATES ==========
     if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
       throw new Error("candidateIds must be a non-empty array");
     }
 
-    // Validate candidates exist
     const candidates = await User.find({ _id: { $in: candidateIds } });
     if (candidates.length !== candidateIds.length) {
       throw new Error("One or more candidates not found");
@@ -151,7 +259,7 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
     const count = candidateIds.length;
     const perCandidateShare = Number((price / count).toFixed(8));
 
-    // Process single payment for all candidates
+    // ========== STEP 5: PROCESS PAYMENT ==========
     const paymentResult = await postPaymentService.processPayment(
       company.hederaAccountId,
       company.hederaPrivateKey,
@@ -163,7 +271,7 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
     const transactionId = paymentResult.transactionId;
     const unlockedRecords = [];
 
-    // Create unlock records for each candidate
+    // ========== STEP 6: CREATE UNLOCK RECORDS ==========
     for (const idCandidate of candidateIds) {
       // Check if already unlocked
       const existingUnlock = await UnlockCandidate.findOne({ idCompany, idCandidate });
@@ -183,6 +291,9 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
       await unlockRecord.save();
       unlockedRecords.push(unlockRecord);
     }
+
+    // ========== STEP 7: INCREMENT USAGE ==========
+    await incrementCandidateUnlocksUsage(idCompany, count);
 
     return {
       success: true,
@@ -220,6 +331,8 @@ const getUnlockById = async (unlockId) => {
 module.exports = {
   getUnlockedCandidatesByCompany,
   getUnlockedCandidatesByCompanyWithPagination,
+  checkCandidateUnlockLimit,
+  incrementCandidateUnlocksUsage,
   unlockCandidate,
   getUnlockById
 };
