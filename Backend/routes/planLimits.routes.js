@@ -21,13 +21,11 @@ router.get("/", planLimitsController.getAllPlans);
 // GET /planLimits/:id - Get plan by ID (Public)
 router.get("/:id", planLimitsController.getPlanById);
 
-router.use(requireAuthUser,authLogMiddleware("planLimits"));
+router.use(requireAuthUser,authLogMiddleware("planLimits"),controledAcces('Admin'));
 
 // PUT /planLimits/:id - Update plan by ID (Admin only)
-router.put("/:id",controledAcces('Admin'),  planLimitsController.updatePlan);
+router.put("/:id",  planLimitsController.updatePlan);
 
-// DELETE /planLimits/:id - Delete plan by ID (Admin only)
-router.delete("/:id", controledAcces('Admin'), planLimitsController.deletePlan);
 
 
 

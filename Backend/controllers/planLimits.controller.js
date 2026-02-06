@@ -82,19 +82,3 @@ module.exports.updatePlan = async (req, res) => {
     handleError(res, error, 400);
   }
 };
-
-/**
- * DELETE /planLimits/:id - Delete plan by ID
- */
-module.exports.deletePlan = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await planLimitsService.deletePlan(id);
-
-    res.status(200).json(result);
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-// (Assign/usage endpoints removed)
