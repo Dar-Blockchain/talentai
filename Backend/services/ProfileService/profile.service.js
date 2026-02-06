@@ -352,7 +352,7 @@ module.exports.getProfileByUserId = async (userId) => {
 
     const [profile, companyMembership] = await Promise.all([
       user.profile
-        ? Profile.findById(user.profile)
+        ? Profile.findById(user.profile).populate('planLimits')
         : null,
 
       user.companyMembership
