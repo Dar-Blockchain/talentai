@@ -494,7 +494,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
             >
               <img
-                src="/images/jobseeker_landing/heroSection.png"
+                src="/images/jobseeker_landing/Hero_Image.png"
                 alt="Get Hired - TalentAI Platform"
                 style={{
                   width: "100%",

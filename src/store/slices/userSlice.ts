@@ -5,6 +5,7 @@ interface UserState {
   connectedUser: {
     user: any | null;
     profile: any | null;
+    planLimits: any | null;
     companyMembership: any | null;
     loading: boolean;
     error: string | null;
@@ -12,6 +13,7 @@ interface UserState {
   targetUser: {
     user: any | null;
     profile: any | null;
+    planLimits: any | null;
     companyMembership: any | null;
     loading: boolean;
     error: string | null;
@@ -24,6 +26,7 @@ const initialState: UserState = {
   connectedUser: {
     user: null,
     profile: null,
+    planLimits: null,
     companyMembership: null,
     loading: false,
     error: null,
@@ -31,6 +34,7 @@ const initialState: UserState = {
   targetUser: {
     user: null,
     profile: null,
+    planLimits: null,
     companyMembership: null,
     loading: false,
     error: null,
@@ -225,6 +229,7 @@ const userSlice = createSlice({
     setConnectedUser(state, action: PayloadAction<any>) {
       state.connectedUser.user = action.payload.user;
       state.connectedUser.profile = action.payload.profile;
+      state.connectedUser.planLimits = action.payload.planLimits;
       state.connectedUser.companyMembership = action.payload.companyMembership;
     },
     setTargetUser(state, action: PayloadAction<any>) {
@@ -234,6 +239,7 @@ const userSlice = createSlice({
     clearConnectedUser(state) {
       state.connectedUser.user = null;
       state.connectedUser.profile = null;
+      state.connectedUser.planLimits = null;
       state.connectedUser.companyMembership = null;
     },
     clearTargetUser(state) {
@@ -333,6 +339,7 @@ const userSlice = createSlice({
           (state: UserState, action: PayloadAction<any>) => {
             state.connectedUser.loading = false;
             state.connectedUser.profile = action.payload.profile;
+            state.connectedUser.planLimits = action.payload.planLimits;
             state.connectedUser.companyMembership = action.payload.companyMembership;
             state.connectedUser.user = action.payload.user;
           }
@@ -353,6 +360,7 @@ const userSlice = createSlice({
           (state: UserState, action: PayloadAction<any>) => {
             state.targetUser.loading = false;
             state.targetUser.profile = action.payload.profile;
+            state.targetUser.planLimits = action.payload.planLimits || null;
             state.targetUser.user = action.payload.user;
             state.targetUser.companyMembership = action.payload.companyMembership || null;
           }
