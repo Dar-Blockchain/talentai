@@ -82,14 +82,14 @@ export const updatePlanLimits = createAsyncThunk<
     if (!token) throw new Error("Authentication token not found");
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}plan-limits/${id}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}plan-limits`,
       {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({ ...updates, _id: id }),
       }
     );
 
