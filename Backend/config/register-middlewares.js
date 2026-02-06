@@ -18,15 +18,20 @@ function registerMiddlewares(app) {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // CORS Configuration
+  // CORS Configuration with preflight support
   app.use(
     cors({
-      origin: '*', // Allow all origins (adjust for production)
-      methods: 'GET, POST, PUT, DELETE, PATCH',
-      allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+      origin: '*', // Allow all origins
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
       credentials: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 204
     })
   );
+
+  // Enable pre-flight for all routes
+  app.options('*', cors());
 
   // Static files
   app.use(express.static(path.join(__dirname, '../public')));
