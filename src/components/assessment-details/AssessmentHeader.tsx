@@ -135,7 +135,7 @@ const InfoChip: React.FC<{ label: string; icon: React.ReactElement }> = ({ label
       fontWeight: 500, fontSize: '0.75rem', height: 24,
       border: '0.25px solid rgba(95, 168, 211, 1)',
     }}
-    icon={React.cloneElement(icon, { sx: { color: 'rgba(95, 168, 211, 1)!important', width: '16px', height: '16px' } })}
+    icon={React.cloneElement(icon, { sx: { color: 'rgba(95, 168, 211, 1)!important', width: '16px', height: '16px' } } as any)}
   />
 );
 
@@ -149,7 +149,7 @@ const StatBox: React.FC<{ icon: React.ReactElement; value: string | number; labe
       textAlign: 'center',
     }}
   >
-    {React.cloneElement(icon, { sx: { color, fontSize: 24, mb: 0.5 } })}
+    {React.cloneElement(icon, { sx: { color, fontSize: 24, mb: 0.5 } } as any)}
     <Typography variant="h6" sx={{ color, fontWeight: 700, fontSize: '16px' }}>{value}</Typography>
     <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '11px' }}>{label}</Typography>
   </Box>

@@ -28,6 +28,7 @@ import notificationReducer from './slices/notificationSlice';
 import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import adminReducer from './slices/adminSlice';
+import planLimitsReducer from './slices/planLimitsSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
@@ -48,7 +49,8 @@ const rootReducer = combineReducers({
   notifications: notificationReducer,
   member: memberReducer,
   chat: chatReducer,
-  admin: adminReducer
+  admin: adminReducer,
+  planLimits: planLimitsReducer
 });
 
 const persistConfig = {
