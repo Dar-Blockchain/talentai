@@ -68,14 +68,21 @@ module.exports.getPlanById = async (req, res) => {
 };
 
 /**
- * PUT /planLimits/:id - Update plan by ID
+ * PUT /planLimits - Update plan by name (passed in body)
+ * Body: { name: "Trial", postsLimit: 10, ... }
  */
 module.exports.updatePlan = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updateData = req.body;
+    const { name, ...updateData } = req.body;
 
-    const result = await planLimitsService.updatePlan(id, updateData);
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        error: "Plan name is required in request body"
+      });
+    }
+
+    const result = await planLimitsService.updatePlanByName(name, updateData);
 
     res.status(200).json(result);
   } catch (error) {

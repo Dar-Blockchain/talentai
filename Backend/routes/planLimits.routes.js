@@ -8,6 +8,7 @@ const express = require("express");
 const router = express.Router();
 const planLimitsController = require("../controllers/planLimits.controller");
 const { requireAuthUser } = require("../middleware/auth.middleware");
+const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // Plans Management Routes (Public Read, Auth Required for Write)
@@ -23,8 +24,8 @@ router.get("/:id", planLimitsController.getPlanById);
 
 router.use(requireAuthUser,authLogMiddleware("planLimits"),controledAcces('Admin'));
 
-// PUT /planLimits/:id - Update plan by ID (Admin only)
-router.put("/:id",  planLimitsController.updatePlan);
+// PUT /planLimits - Update plan by name (passed in body)
+router.put("/",  planLimitsController.updatePlan);
 
 
 
