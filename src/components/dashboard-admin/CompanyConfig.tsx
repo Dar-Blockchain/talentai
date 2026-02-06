@@ -82,7 +82,7 @@ const CompanyConfig: React.FC = () => {
     if (!updates) return;
 
     try {
-      await dispatch(updatePlanLimits({ id: plan._id, updates })).unwrap();
+      await dispatch(updatePlanLimits({ id: plan._id, updates: { ...updates, name: plan.name } })).unwrap();
       setSnackbar({ open: true, message: `${plan.name} plan updated successfully!`, severity: 'success' });
     } catch (err: any) {
       setSnackbar({ open: true, message: err || 'Failed to update configuration', severity: 'error' });
