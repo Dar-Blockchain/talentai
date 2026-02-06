@@ -367,9 +367,20 @@ module.exports.getProfileByUserId = async (userId) => {
         : null
     ]);
 
+    // Extract planLimits from profile if it exists
+    let planLimits = null;
+    if (profile && profile.planLimits) {
+      planLimits = profile.planLimits;
+      // Remove planLimits from profile object to avoid duplication
+      profile.planLimits = undefined;
+    }
+
     return {
+      success: true,
+      message: "Profile retrieved successfully",
       user,
       profile,
+      planLimits,
       companyMembership
     };
   } catch (error) {

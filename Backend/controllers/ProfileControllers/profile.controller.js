@@ -139,6 +139,7 @@ module.exports.getMyProfile = async (req, res) => {
       message: "Profile retrieved successfully",
       user: result.user,
       profile: result.profile || null,
+      planLimits: result.planLimits,
       companyMembership: result.companyMembership || null
     });
   } catch (error) {
