@@ -12,7 +12,7 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 // Plans Management Routes (Public Read, Auth Required for Write)
 
 // POST /planLimits - Create a new plan (Admin only)
-router.post("/", requireAuthUser, planLimitsController.createPlan);
+router.post("/", requireAuthUser, authLogMiddleware("planLimits"),planLimitsController.createPlan);
 
 // GET /planLimits - Get all plans (Public)
 router.get("/", planLimitsController.getAllPlans);
@@ -20,11 +20,13 @@ router.get("/", planLimitsController.getAllPlans);
 // GET /planLimits/:id - Get plan by ID (Public)
 router.get("/:id", planLimitsController.getPlanById);
 
+router.use(requireAuthUser,authLogMiddleware("planLimits"));
+
 // PUT /planLimits/:id - Update plan by ID (Admin only)
-router.put("/:id", requireAuthUser, planLimitsController.updatePlan);
+router.put("/:id",  planLimitsController.updatePlan);
 
 // DELETE /planLimits/:id - Delete plan by ID (Admin only)
-router.delete("/:id", requireAuthUser, planLimitsController.deletePlan);
+router.delete("/:id", planLimitsController.deletePlan);
 
 // Company Plan Assignment and Usage Routes
 // (Usage and assignment routes removed — handled elsewhere)
