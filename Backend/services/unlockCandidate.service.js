@@ -293,7 +293,7 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
     }
 
     // ========== STEP 7: INCREMENT USAGE ==========
-    await incrementCandidateUnlocksUsage(idCompany, count);
+    const updatedProfile = await incrementCandidateUnlocksUsage(idCompany, count);
 
     return {
       success: true,
@@ -302,7 +302,8 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
       totalPrice: price,
       pricePerCandidate: perCandidateShare,
       candidateCount: count,
-      transactionId
+      transactionId,
+      planLimits: updatedProfile.planLimits
     };
   } catch (error) {
     console.error("Error creating unlock candidate:", error);
