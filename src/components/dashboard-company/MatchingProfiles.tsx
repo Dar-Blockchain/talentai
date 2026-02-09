@@ -17,9 +17,10 @@ import { useRouter } from "next/router";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { GradientCircle } from "../ui/GradientCircle";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import { broadcastSystemNotification } from "@/store/slices/notificationSlice";
+import { selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -96,6 +97,13 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
 }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const currentPlanLimit = useSelector(selectCurrentPlanLimit);
+
+  const hasReachedUnlockLimit =
+    currentPlanLimit?.candidateUnlockLimit !== undefined &&
+    profile?.planUsage?.candidateUnlocksUsed !== undefined &&
+    Number(profile.planUsage.candidateUnlocksUsed) >= Number(currentPlanLimit.candidateUnlockLimit);
 
   // Items per page selector - user can choose 5, 10, or 20
   const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
@@ -665,9 +673,11 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           color: "#9ca3af",
                         },
                       }}
-                      disabled={!candidate?.candidateId || !selectedJob}
+                      disabled={!candidate?.candidateId || !selectedJob || hasReachedUnlockLimit}
                     >
-                      Unlock Full Profile ({candidate?.unlockPrice} Tokens)
+                      {hasReachedUnlockLimit
+                        ? `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
+                        : `Unlock Full Profile (${candidate?.unlockPrice} Tokens)`}
                     </Button>}
                     {candidate?.unlocked && <Button
             variant="outlined"

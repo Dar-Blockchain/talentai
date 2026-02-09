@@ -25,6 +25,8 @@ import {
   unlockCandidate,
 } from "@/store/slices/candidateSlice";
 import { fetchJobMatches } from "@/store/slices/postSlice";
+import { selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";
+import { getMyProfile } from "@/store/slices/userSlice";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -52,9 +54,16 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
   const tokenBalance = useSelector(selectTokenBalance);
   const { walletInfo } = useSelector((state: RootState) => state.tokenPurchase);
   const { unlockResult, loading } = useSelector((state: RootState) => state.candidate);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const currentPlanLimit = useSelector(selectCurrentPlanLimit);
   const hasInsufficientBalance =
     walletInfo && walletInfo.balance < selectedCandidate?.unlockPrice;
   const [isCandidateUnlocked, setIsCandidateUnlocked] = useState(false);
+
+  const hasReachedUnlockLimit =
+    currentPlanLimit?.candidateUnlockLimit !== undefined &&
+    profile?.planUsage?.candidateUnlocksUsed !== undefined &&
+    Number(profile.planUsage.candidateUnlocksUsed) >= Number(currentPlanLimit.candidateUnlockLimit);
   const handleConfirmUnlock = async () => {
     const data = {
       candidateIds: [selectedCandidate.candidateId],
@@ -74,6 +83,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
       setIsCandidateUnlocked(true);
       dispatch(fetchTokenBalance());
       dispatch(fetchJobMatches({ selectedJobId: selectedJob, page: 1, limit: 10 }));
+      dispatch(getMyProfile());
     }
   }, [unlockResult, selectedJob]);
 
@@ -227,8 +237,14 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
             </Typography>
           </Box>
         </Box>
+        {/* Unlock Limit Reached */}
+        {hasReachedUnlockLimit && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Unlock limit reached ({profile?.planUsage?.candidateUnlocksUsed}/{currentPlanLimit?.candidateUnlockLimit}). Please upgrade your plan.
+          </Alert>
+        )}
         {/* Insufficient Balance */}
-        {hasInsufficientBalance && (
+        {hasInsufficientBalance && !hasReachedUnlockLimit && (
           <Alert severity="error">
             Insufficient balance. You need {selectedCandidate?.unlockPrice} HBAR
             but have {walletInfo.balance} HBAR.
@@ -305,6 +321,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
           <Button
             variant="outlined"
             onClick={handleConfirmUnlock}
+            disabled={hasReachedUnlockLimit}
             sx={{
               borderColor: "rgba(222, 147, 0, 1)",
               color: "rgba(222, 147, 0, 1)",
