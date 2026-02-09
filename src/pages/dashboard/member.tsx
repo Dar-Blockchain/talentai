@@ -196,6 +196,37 @@ const fetchMyJobs = useCallback(
       });
   }, [dispatch, matchesPerPage]);
 
+  // Handler to view only passed interview candidates for a job
+  const handleViewPassedInterview = useCallback((jobId: string) => {
+    const now = Date.now();
+
+    if (isFetchingMatchesRef.current) {
+      console.log('⚠️ Already fetching, skipping duplicate call');
+      return;
+    }
+
+    if (now - lastFetchTimeRef.current < 1000) {
+      console.log('⚠️ Called too soon (within 1s), skipping duplicate call');
+      return;
+    }
+
+    console.log('✅ Initiating fetchJobMatches (passed interview) for job:', jobId);
+    lastFetchTimeRef.current = now;
+    isFetchingMatchesRef.current = true;
+
+    setSelectedJob(jobId);
+    setMatchesPage(1);
+    setPassedInterviewOnly(true);
+
+    dispatch(fetchJobMatches({ selectedJobId: jobId, page: 1, limit: matchesPerPage, passedInterview: true }))
+      .finally(() => {
+        setTimeout(() => {
+          isFetchingMatchesRef.current = false;
+          console.log('🔓 Fetch lock released');
+        }, 500);
+      });
+  }, [dispatch, matchesPerPage]);
+
   // Handler for passed interview filter change
   const handlePassedInterviewFilterChange = useCallback((checked: boolean) => {
     setPassedInterviewOnly(checked);
@@ -214,6 +245,7 @@ const fetchMyJobs = useCallback(
               isLoadingJobs={isLoadingJobs}
               jobsError={jobsError}
               onViewMatches={handleViewMatches}
+              onViewPassedInterview={handleViewPassedInterview}
               onRefresh={fetchMyJobs}
               pagination={activeSection === "all" ? undefined : pagination}
               onPageChange={(page) => setCurrentPage(page)}

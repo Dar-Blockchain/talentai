@@ -50,6 +50,7 @@ interface MyJobPostsProps {
   isLoadingJobs: boolean;
   jobsError: string | null;
   onViewMatches: (jobId: string) => void;
+  onViewPassedInterview?: (jobId: string) => void;
   onRefresh?: () => void;
   pagination?: {
     total: number;
@@ -76,6 +77,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   isLoadingJobs,
   jobsError,
   onViewMatches,
+  onViewPassedInterview,
   onRefresh,
   pagination,
   onPageChange,
@@ -860,7 +862,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                         >
                           VIEW DETAILS
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="outlined"
                           fullWidth
                           onClick={() => onViewMatches(job._id)}
@@ -882,6 +884,29 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                           }}
                         >
                           VIEW MATCHES
+                        </Button> */}
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => onViewPassedInterview?.(job._id)}
+                          sx={{
+                            borderColor: "rgba(41, 210, 145, 0.53)",
+                            color: "rgba(41, 210, 145, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(41, 210, 145, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(41, 210, 145, 0.53)",
+                              backgroundColor: "rgba(41, 210, 145, 0.12)",
+                            },
+                          }}
+                        >
+                          PASSED INTERVIEW
                         </Button>
                         <Button
                           variant="outlined"
