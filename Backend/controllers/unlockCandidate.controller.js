@@ -42,48 +42,32 @@ module.exports.getUnlockedCandidatesByCompany = async (req, res) => {
   }
 };
 
+// ========== CONSTANTS ==========
+const UNLOCK_PRICING = {
+  PACK_SIZE: 5,
+  SINGLE_PRICE: 5,
+  PACK_PRICE: 500
+};
+
 /**
  * Create unlock candidate record (single or pack)
  * Body:
  *   Single (1 candidate): { candidateIds: ["id"], idJob: "jobId" } → 5 tokens
- *   Pack (2-5 candidates): { candidateIds: ["id1", "id2", ...], idJob: "jobId" } → 25 tokens
+ *   Pack (2-5 candidates): { candidateIds: ["id1", "id2", ...], idJob: "jobId" } → 500 tokens
  */
 module.exports.unlockCandidate = async (req, res) => {
   try {
+    // ========== 1. EXTRACT INPUT ==========
     const idCompany = req.user._id;
     const { idJob, candidateIds } = req.body;
 
-    const PACK_SIZE = 5;
-    const SINGLE_PRICE = 5;
-    const PACK_PRICE = 500;
+    // ========== 2. VALIDATE INPUT ==========
+    validateUnlockInput(idJob, candidateIds);
 
-    // ========== INPUT VALIDATION ==========
-    if (!idJob) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required field: idJob"
-      });
-    }
+    // ========== 3. DETERMINE PRICING ==========
+    const price = determinePricing(candidateIds.length);
 
-    if (!candidateIds || !Array.isArray(candidateIds)) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required field: candidateIds (must be an array)"
-      });
-    }
-
-    if (candidateIds.length < 1 || candidateIds.length > PACK_SIZE) {
-      return res.status(400).json({
-        success: false,
-        message: `candidateIds must contain between 1 and ${PACK_SIZE} candidates. Received ${candidateIds.length}`
-      });
-    }
-
-    // ========== DETERMINE PRICING ==========
-    const isPack = candidateIds.length > 1;
-    const price = isPack ? PACK_PRICE : SINGLE_PRICE;
-
-    // ========== CALL SERVICE (includes limit check and usage increment) ==========
+    // ========== 4. CALL SERVICE ==========
     const result = await unlockCandidateService.unlockCandidate(
       idCompany,
       candidateIds,
@@ -91,29 +75,91 @@ module.exports.unlockCandidate = async (req, res) => {
       price
     );
 
-    const statusCode = result.success ? 201 : 400;
-    res.status(statusCode).json(result);
+    // ========== 5. RETURN SUCCESS ==========
+    res.status(201).json(result);
   } catch (error) {
-    console.error("Error creating unlock candidate:", error);
-    
-    // Handle limit exceeded errors
-    if (error.status === 403) {
-      return res.status(error.status).json({
-        success: false,
-        error: error.message,
-        ...error.limitData
-      });
-    }
+    // ========== 6. ERROR HANDLING ==========
+    handleUnlockError(res, error);
+  }
+};
 
-    // Handle other errors
-    const status = error.status || 500;
-    res.status(status).json({
+/**
+ * Validate unlock candidate input
+ * @throws {Error} if validation fails
+ */
+function validateUnlockInput(idJob, candidateIds) {
+  if (!idJob) {
+    const error = new Error("Missing required field: idJob");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!candidateIds || !Array.isArray(candidateIds)) {
+    const error = new Error("Missing required field: candidateIds (must be an array)");
+    error.status = 400;
+    throw error;
+  }
+
+  if (candidateIds.length < 1 || candidateIds.length > UNLOCK_PRICING.PACK_SIZE) {
+    const error = new Error(
+      `candidateIds must contain between 1 and ${UNLOCK_PRICING.PACK_SIZE} candidates. Received ${candidateIds.length}`
+    );
+    error.status = 400;
+    throw error;
+  }
+}
+
+/**
+ * Determine pricing based on candidate count
+ * @param {Number} candidateCount - Number of candidates to unlock
+ * @returns {Number} - Total price
+ */
+function determinePricing(candidateCount) {
+  const isPack = candidateCount > 1;
+  return isPack ? UNLOCK_PRICING.PACK_PRICE : UNLOCK_PRICING.SINGLE_PRICE;
+}
+
+/**
+ * Handle unlock candidate errors
+ * @param {Object} res - Response object
+ * @param {Error} error - Error object
+ */
+function handleUnlockError(res, error) {
+  console.error("Error in unlockCandidate:", error);
+
+  // Handle limit exceeded errors (403)
+  if (error.status === 403) {
+    return res.status(403).json({
       success: false,
-      message: "Failed to create unlock candidate",
+      error: error.message,
+      ...error.limitData
+    });
+  }
+
+  // Handle validation errors (400)
+  if (error.status === 400) {
+    return res.status(400).json({
+      success: false,
       error: error.message
     });
   }
-};
+
+  // Handle not found errors (404)
+  if (error.status === 404) {
+    return res.status(404).json({
+      success: false,
+      error: error.message
+    });
+  }
+
+  // Handle all other errors (500)
+  const status = error.status || 500;
+  res.status(status).json({
+    success: false,
+    message: "Failed to create unlock candidate",
+    error: error.message
+  });
+}
 
 /**
  * Get unlock record by ID

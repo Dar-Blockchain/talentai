@@ -216,100 +216,175 @@ const incrementCandidateUnlocksUsage = async (idCompany, candidateCount) => {
 
 /**
  * Create unlock candidate record (single or pack)
+ * Orchestrates the entire unlock process:
+ *   1. Check plan limits (canUnlock)
+ *   2. Validate entities (company, job, candidates)
+ *   3. Calculate pricing per candidate
+ *   4. Process payment
+ *   5. Create unlock records
+ *   6. Increment usage counter
+ *   7. Return success response
+ *
  * @param {ObjectId} idCompany - Company ID
  * @param {Array} candidateIds - Array of candidate IDs (1 = single, 2-5 = pack)
  * @param {ObjectId} idJob - Job ID
- * @param {Number} price - Total price (5 for single, 25 for pack)
+ * @param {Number} price - Total price
+ * @returns {Promise<{success, message, data, totalPrice, pricePerCandidate, candidateCount, transactionId, planLimits}>}
  */
 const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
   try {
+    const candidateCount = candidateIds.length;
+
     // ========== STEP 1: CHECK UNLOCK LIMIT ==========
-    const limitCheck = await checkCandidateUnlockLimit(idCompany, candidateIds.length);
+    const limitCheck = await checkCandidateUnlockLimit(idCompany, candidateCount);
     if (!limitCheck.canUnlock) {
       throw new Error('Cannot unlock candidates due to plan limit');
     }
 
-    // ========== STEP 2: VALIDATE COMPANY ==========
-    const company = await User.findById(idCompany);
-    if (!company) {
-      const error = new Error("Company not found");
-      error.status = 404;
-      throw error;
-    }
+    // ========== STEP 2: VALIDATE ENTITIES ==========
+    const { company, job } = await validateUnlockEntities(idCompany, idJob, candidateIds);
 
-    // ========== STEP 3: VALIDATE JOB ==========
-    const job = await require("../models/Post.model").findById(idJob);
-    if (!job) {
-      const error = new Error("Job not found");
-      error.status = 404;
-      throw error;
-    }
+    // ========== STEP 3: CALCULATE PRICING ==========
+    const perCandidateShare = Number((price / candidateCount).toFixed(8));
 
-    // ========== STEP 4: VALIDATE CANDIDATES ==========
-    if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
-      throw new Error("candidateIds must be a non-empty array");
-    }
+    // ========== STEP 4: PROCESS PAYMENT ==========
+    const transactionId = await processUnlockPayment(company, price, idJob);
 
-    const candidates = await User.find({ _id: { $in: candidateIds } });
-    if (candidates.length !== candidateIds.length) {
-      throw new Error("One or more candidates not found");
-    }
+    // ========== STEP 5: CREATE UNLOCK RECORDS ==========
+    const unlockedRecords = await createUnlockRecords(idCompany, candidateIds, idJob, perCandidateShare, transactionId);
 
-    // Compute per-candidate share
-    const count = candidateIds.length;
-    const perCandidateShare = Number((price / count).toFixed(8));
+    // ========== STEP 6: INCREMENT USAGE ==========
+    const updatedProfile = await incrementCandidateUnlocksUsage(idCompany, candidateCount);
 
-    // ========== STEP 5: PROCESS PAYMENT ==========
-    const paymentResult = await postPaymentService.processPayment(
-      company.hederaAccountId,
-      company.hederaPrivateKey,
-      price,
-      idJob,
-      company._id
-    );
-
-    const transactionId = paymentResult.transactionId;
-    const unlockedRecords = [];
-
-    // ========== STEP 6: CREATE UNLOCK RECORDS ==========
-    for (const idCandidate of candidateIds) {
-      // Check if already unlocked
-      const existingUnlock = await UnlockCandidate.findOne({ idCompany, idCandidate });
-      if (existingUnlock) {
-        unlockedRecords.push(existingUnlock);
-        continue;
-      }
-
-      const unlockRecord = new UnlockCandidate({
-        idCompany,
-        idCandidate,
-        idJob,
-        unlockPrice: perCandidateShare,
-        transactionId
-      });
-
-      await unlockRecord.save();
-      unlockedRecords.push(unlockRecord);
-    }
-
-    // ========== STEP 7: INCREMENT USAGE ==========
-    const updatedProfile = await incrementCandidateUnlocksUsage(idCompany, count);
-
-    return {
-      success: true,
-      message: `${count === 1 ? 'Single' : 'Pack'} unlock processed successfully (${count} candidate${count > 1 ? 's' : ''})`,
-      data: unlockedRecords,
-      totalPrice: price,
-      pricePerCandidate: perCandidateShare,
-      candidateCount: count,
-      transactionId,
-      planLimits: updatedProfile.planLimits
-    };
+    // ========== STEP 7: BUILD & RETURN RESPONSE ==========
+    return buildUnlockSuccessResponse(candidateCount, unlockedRecords, price, perCandidateShare, transactionId, updatedProfile.planLimits);
   } catch (error) {
-    console.error("Error creating unlock candidate:", error);
+    console.error("Error in unlockCandidate:", error.message);
     throw error;
   }
 };
+
+/**
+ * Validate company, job, and candidate entities exist
+ * @param {ObjectId} idCompany - Company ID
+ * @param {ObjectId} idJob - Job ID
+ * @param {Array} candidateIds - Candidate IDs to validate
+ * @returns {Promise<{company, job}>}
+ * @throws {Error} if any validation fails
+ */
+async function validateUnlockEntities(idCompany, idJob, candidateIds) {
+  // Validate company
+  const company = await User.findById(idCompany);
+  if (!company) {
+    const error = new Error("Company not found");
+    error.status = 404;
+    throw error;
+  }
+
+  // Validate job
+  const Post = require("../models/Post.model");
+  const job = await Post.findById(idJob);
+  if (!job) {
+    const error = new Error("Job not found");
+    error.status = 404;
+    throw error;
+  }
+
+  // Validate candidate IDs array
+  if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
+    throw new Error("candidateIds must be a non-empty array");
+  }
+
+  // Validate all candidates exist
+  const candidates = await User.find({ _id: { $in: candidateIds } });
+  if (candidates.length !== candidateIds.length) {
+    throw new Error("One or more candidates not found");
+  }
+
+  return { company, job };
+}
+
+/**
+ * Process payment for candidate unlock
+ * @param {Object} company - Company object with Hedera credentials
+ * @param {Number} price - Total price to charge
+ * @param {ObjectId} idJob - Job ID for payment context
+ * @returns {Promise<String>} - Transaction ID
+ */
+async function processUnlockPayment(company, price, idJob) {
+  const paymentResult = await postPaymentService.processPayment(
+    company.hederaAccountId,
+    company.hederaPrivateKey,
+    price,
+    idJob,
+    company._id
+  );
+  return paymentResult.transactionId;
+}
+
+/**
+ * Create unlock records for each candidate
+ * Checks if candidate is already unlocked and skips if so
+ * @param {ObjectId} idCompany - Company ID
+ * @param {Array} candidateIds - Candidate IDs to unlock
+ * @param {ObjectId} idJob - Job ID
+ * @param {Number} pricePerCandidate - Price per candidate
+ * @param {String} transactionId - Payment transaction ID
+ * @returns {Promise<Array>} - Array of created unlock records
+ */
+async function createUnlockRecords(idCompany, candidateIds, idJob, pricePerCandidate, transactionId) {
+  const unlockedRecords = [];
+
+  for (const idCandidate of candidateIds) {
+    // Skip if already unlocked by this company for this candidate
+    const existingUnlock = await UnlockCandidate.findOne({ idCompany, idCandidate });
+    if (existingUnlock) {
+      unlockedRecords.push(existingUnlock);
+      continue;
+    }
+
+    // Create new unlock record
+    const unlockRecord = new UnlockCandidate({
+      idCompany,
+      idCandidate,
+      idJob,
+      unlockPrice: pricePerCandidate,
+      transactionId
+    });
+
+    await unlockRecord.save();
+    unlockedRecords.push(unlockRecord);
+  }
+
+  return unlockedRecords;
+}
+
+/**
+ * Build unlock success response
+ * @param {Number} candidateCount - Total candidates unlocked
+ * @param {Array} unlockedRecords - Unlock records created
+ * @param {Number} totalPrice - Total amount charged
+ * @param {Number} pricePerCandidate - Price per candidate
+ * @param {String} transactionId - Payment transaction ID
+ * @param {Object} planLimits - User plan limits
+ * @returns {Object} - Formatted success response
+ */
+function buildUnlockSuccessResponse(candidateCount, unlockedRecords, totalPrice, pricePerCandidate, transactionId, planLimits) {
+  const isPackUnlock = candidateCount > 1;
+  const unlockedType = isPackUnlock ? 'Pack' : 'Single';
+  const candidateText = candidateCount > 1 ? 's' : '';
+
+  return {
+    success: true,
+    message: `${unlockedType} unlock processed successfully (${candidateCount} candidate${candidateText})`,
+    data: unlockedRecords,
+    totalPrice: totalPrice,
+    pricePerCandidate: pricePerCandidate,
+    candidateCount: candidateCount,
+    transactionId: transactionId,
+    planLimits: planLimits
+  };
+}
 
 /**
  * Get unlock record by ID
