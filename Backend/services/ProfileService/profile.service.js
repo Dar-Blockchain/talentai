@@ -371,8 +371,7 @@ module.exports.getProfileByUserId = async (userId) => {
     let planLimits = null;
     if (profile && profile.planLimits) {
       planLimits = profile.planLimits;
-      // Remove planLimits from profile object to avoid duplication
-      profile.planLimits = undefined;
+      // Keep planLimits inside profile so callers receive it as part of the profile object
     }
 
     return {
