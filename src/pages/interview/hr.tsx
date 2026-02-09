@@ -720,6 +720,7 @@ const IntelligentInterviewTest = () => {
   const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [showFailedModal, setShowFailedModal] = useState(false);
   const [blockMessage, setBlockMessage] = useState('');
+  const [companyInterviewLimitReached, setCompanyInterviewLimitReached] = useState(false);
 
   // Parse URL query parameters and build dynamic interview config
   // 🔥 ENHANCED: Fetch job interview configuration with pipeline detection
@@ -749,6 +750,72 @@ const IntelligentInterviewTest = () => {
       console.log('📋 Raw post data:', postData);
       const post = postData.data || postData.post || postData;
       const isPipeline = post?.creationType === 'pipeline';
+
+      // Check company's interview limit
+      const companyRef = post?.user || post?.userId || post?.companyId || post?.createdBy || post?.owner;
+      const companyUserId = typeof companyRef === 'object' ? companyRef._id : companyRef;
+      console.log('🔍 [LIMIT] post keys:', Object.keys(post || {}));
+      console.log('🔍 [LIMIT] post.user:', post?.user);
+      console.log('🔍 [LIMIT] resolved companyUserId:', companyUserId);
+      if (companyUserId) {
+        try {
+          const profileRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/${companyUserId}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+          console.log('🔍 [LIMIT] profile fetch status:', profileRes.status);
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            console.log('🔍 [LIMIT] raw profileData:', JSON.stringify(profileData).substring(0, 1000));
+            // profiles/{userId} may return { profile: {...}, planLimits: "id" } like profiles/me
+            // or { data: { profile, planLimits } } or just the profile directly
+            const companyProfile = profileData.profile || profileData.data?.profile || profileData.data || profileData;
+            // planLimits could be at response top-level (like profiles/me), inside data, or on the profile itself
+            console.log('🔍 [LIMIT] resolved companyProfile:', companyProfile);
+            const companyPlanLimitId = profileData.planLimits || profileData.data?.planLimits || companyProfile?.planLimits;
+            const companyPlanUsage = companyProfile?.planUsage;
+            console.log('🔍 [LIMIT] companyPlanLimitId:', companyPlanLimitId, 'planUsage:', companyPlanUsage);
+            console.log('🔍 [LIMIT] companyProfile planLimits:', companyPlanLimitId);
+            if (companyPlanLimitId) {
+              const planLimitId = typeof companyPlanLimitId === 'object' ? companyPlanLimitId._id : companyPlanLimitId;
+              const planRes = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}plan-limits/${planLimitId}`,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                  }
+                }
+              );
+              console.log('🔍 [LIMIT] plan-limits fetch status:', planRes.status);
+              if (planRes.ok) {
+                const planData = await planRes.json();
+                const planLimit = planData.data || planData;
+                console.log('🔍 [LIMIT] planLimit monthlyInterviewLimit:', planLimit?.monthlyInterviewLimit);
+                console.log('🔍 [LIMIT] planUsage monthlyInterviewsUsed:', companyPlanUsage?.monthlyInterviewsUsed);
+                if (
+                  planLimit?.monthlyInterviewLimit !== undefined &&
+                  companyPlanUsage?.monthlyInterviewsUsed !== undefined &&
+                  Number(companyPlanUsage.monthlyInterviewsUsed) >= Number(planLimit.monthlyInterviewLimit)
+                ) {
+                  setCompanyInterviewLimitReached(true);
+                  showNotification(
+                    `The company has reached their monthly interview limit (${companyPlanUsage.monthlyInterviewsUsed}/${planLimit.monthlyInterviewLimit}). Please contact the recruiter.`,
+                    'warning'
+                  );
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.log('⚠️ [LIMIT] Could not check company interview limit:', err);
+        }
+      }
 
       console.log('📋 Job detection:', {
         postId: post._id,
@@ -3378,11 +3445,16 @@ const IntelligentInterviewTest = () => {
               >
                 This is an AI-powered interview simulation that adapts to your responses and provides real-time feedback.
               </Typography>
+              {companyInterviewLimitReached && (
+                <Alert severity="warning" sx={{ mb: 3, maxWidth: 600, mx: 'auto' }}>
+                  The company has reached their monthly interview limit. Please contact the recruiter.
+                </Alert>
+              )}
               <Button
                 variant="contained"
                 size="large"
                 onClick={startInterview}
-                disabled={!isHydrated || connectionStatus !== 'connected' || cameraStatus !== 'granted'}
+                disabled={!isHydrated || connectionStatus !== 'connected' || cameraStatus !== 'granted' || companyInterviewLimitReached}
                 startIcon={<PlayArrowIcon />}
                 sx={{
                   px: 5,
@@ -3390,12 +3462,12 @@ const IntelligentInterviewTest = () => {
                   fontSize: '1.1rem',
                   fontWeight: 600,
                   borderRadius: 3,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                  background: companyInterviewLimitReached ? '#bdbdbd' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  boxShadow: companyInterviewLimitReached ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
+                    transform: companyInterviewLimitReached ? 'none' : 'translateY(-2px)',
+                    boxShadow: companyInterviewLimitReached ? 'none' : '0 6px 20px rgba(102, 126, 234, 0.5)',
                   },
                   '&:disabled': {
                     background: '#bdbdbd',
@@ -3403,7 +3475,7 @@ const IntelligentInterviewTest = () => {
                   }
                 }}
               >
-                Start Interview
+                {companyInterviewLimitReached ? 'Interview Limit Reached' : 'Start Interview'}
               </Button>
               {(cameraStatus !== 'granted' && cameraStatus !== 'requesting') && (
                 <Typography
