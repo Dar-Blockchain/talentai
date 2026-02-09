@@ -17,26 +17,13 @@ const handleError = (res, error, defaultStatus = 500) => {
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
   try {
-    // Parse JSON fields safely from form-data
+    // ========== 1. VALIDATE & PREPARE INPUT ==========
     const parsedData = parseJsonFields(req.body);
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    const userId = req.user._id;
 
-    // Map workMode from companyDetails.employmentType if not already set
-    if (parsedData.jobDetails && !parsedData.jobDetails.workMode) {
-      if (parsedData.companyDetails?.employmentType) {
-        parsedData.jobDetails.workMode = parsedData.companyDetails.employmentType;
-      } else if (parsedData.employmentType) {
-        parsedData.jobDetails.workMode = parsedData.employmentType;
-      }
-    }
-
-    const postData = {
-      ...parsedData,
-      user: req.user._id, //id => token ("membre" req.user.campagny)
-    };
-
-    // ========== CHECK POSTS LIMIT ==========
-    const userProfile = await Profile.findOne({ userId: req.user._id }).populate('planLimits');
-
+    // ========== 2. AUTHORIZATION & PROFILE CHECK ==========
+    const userProfile = await Profile.findOne({ userId }).populate('planLimits');
     if (!userProfile) {
       return res.status(404).json({
         success: false,
@@ -44,7 +31,7 @@ exports.createPost = async (req, res) => {
       });
     }
 
-    // For companies, check posts limit
+    // ========== 3. RESOURCE LIMIT CHECK ==========
     if (userProfile.type === 'Company') {
       if (!userProfile.planLimits) {
         return res.status(403).json({
@@ -56,8 +43,6 @@ exports.createPost = async (req, res) => {
 
       const postsUsed = userProfile.planUsage?.postsUsed || 0;
       const postsLimit = userProfile.planLimits.postsLimit;
-
-      console.log(`📊 [createPost] Posts check - Used: ${postsUsed}/${postsLimit}`);
 
       if (postsUsed >= postsLimit) {
         return res.status(403).json({
@@ -71,140 +56,25 @@ exports.createPost = async (req, res) => {
       }
     }
 
-    // Get token from Authorization header
-    const token = req.headers.authorization?.replace("Bearer ", "");
+    // ========== 4. CREATE POST ==========
+    const postData = {
+      ...parsedData,
+      user: userId
+    };
 
-    const post = await postService.createPost(postData, token);
+    const result = await postService.createPostWithSideEffects(
+      postData,
+      token,
+      userProfile,
+      parsedData.matchingConfig
+    );
 
-    // ========== INCREMENT POSTS USAGE ==========
-    if (userProfile.type === 'Company') {
-      try {
-        const profileService = require("../../services/ProfileService/profile.service");
-        const updatedProfile = await profileService.incrementPlanUsage(req.user._id, 'postsUsed');
-        console.log(`✅ [createPost] Posts usage updated: ${updatedProfile.planUsage.postsUsed}/${userProfile.planLimits.postsLimit}`);
-      } catch (usageError) {
-        console.error('⚠️ [createPost] Warning: Could not update posts usage:', usageError.message);
-        // Don't fail post creation if usage update fails
-      }
-    }
-
-    // Create matching config if provided (non-blocking)
-    let createdMatchingConfig = null;
-    if (parsedData.matchingConfig) {
-      matchingConfigService.addConfig(req.user._id, {
-        ...parsedData.matchingConfig,
-        jobId: post._id
-      }).then(cfg => {
-        createdMatchingConfig = cfg;
-      }).catch(cfgErr => {
-        console.error('Error creating matching config:', cfgErr.message);
-      });
-    }
-
-    // Notify candidates who have at least one matching hard skill with the post (best-effort)
-    (async () => {
-      try {
-        console.log('🔔 Starting notification process...');
-        
-        // Extract skill names from the post (supports strings or objects)
-        const skillSources = [];
-        if (post.skillAnalysis && Array.isArray(post.skillAnalysis.requiredSkills)) {
-          skillSources.push(...post.skillAnalysis.requiredSkills);
-        }
-        if (post.jobDetails && Array.isArray(post.jobDetails.requiredSkills)) {
-          skillSources.push(...post.jobDetails.requiredSkills);
-        }
-        if (Array.isArray(parsedData.requiredSkills)) {
-          skillSources.push(...parsedData.requiredSkills);
-        }
-
-        console.log('📋 skillSources extracted:', skillSources);
-
-        // Normalize to lowercase names
-        const skillNames = [...new Set(skillSources.map(s => (typeof s === 'string' ? s : (s && s.name) || '').toString().trim().toLowerCase()).filter(Boolean))];
-
-        console.log('🏷️ Normalized skillNames:', skillNames);
-
-        if (skillNames.length === 0) {
-          console.log('⚠️ No hard skills found on post — skipping targeted notifications');
-          return;
-        }
-
-        // Find profiles of type Candidate having at least one matching skill ($in = OR logic)
-        console.log('🔍 Searching for Candidate profiles with AT LEAST ONE skill matching:', skillNames);
-        
-        // First, let's check what skills exist in the DB for debugging
-        const allCandidateProfiles = await Profile.find({
-          type: 'Candidate',
-          'skills': { $exists: true, $ne: [] }
-        }).select('userId skills').lean();
-        
-        console.log('📊 Total Candidate profiles with skills:', allCandidateProfiles.length);
-        if (allCandidateProfiles.length > 0) {
-          const sampleProfile = allCandidateProfiles[0];
-          const sampleSkills = sampleProfile.skills ? sampleProfile.skills.map(s => s.name) : [];
-          console.log('📋 Sample candidate skills from DB:', sampleSkills);
-          console.log('🔤 Skill names to match (normalized):', skillNames);
-          
-          // Check for case sensitivity issues
-          const lowerSampleSkills = sampleSkills.map(s => String(s).toLowerCase());
-          console.log('📋 Sample skills (lowercase):', lowerSampleSkills);
-        }
-        
-        const matchingProfiles = await Profile.find({
-          type: 'Candidate',
-          'skills.name': { $in: skillNames }
-        }).select('userId skills').lean();
-        
-        console.log('✅ matchingProfiles found (exact match):', matchingProfiles.length);
-        
-        // If no exact match, try case-insensitive search
-        if (matchingProfiles.length === 0 && skillNames.length > 0) {
-          console.log('⚠️ No exact matches found, trying case-insensitive search...');
-          const caseInsensitiveProfiles = await Profile.find({
-            type: 'Candidate'
-          }).lean();
-          
-          const matchedProfiles = caseInsensitiveProfiles.filter(profile => {
-            if (!profile.skills || profile.skills.length === 0) return false;
-            const profileSkillNames = profile.skills.map(s => String(s.name).toLowerCase());
-            return skillNames.some(skillName => profileSkillNames.includes(skillName));
-          });
-          
-          console.log('✅ matchingProfiles found (case-insensitive):', matchedProfiles.length);
-          matchingProfiles.push(...matchedProfiles);
-        }
-        
-        console.log('📋 Full matchingProfiles:', matchingProfiles.map(p => ({ userId: p.userId, skills: p.skills?.map(s => s.name) })));
-        
-        const recipientIds = matchingProfiles.map(p => String(p.userId)).filter(Boolean);
-        console.log('👥 recipientIds extracted:', recipientIds);
-        console.log('📊 recipientIds count:', recipientIds.length);
-        
-        if (recipientIds.length === 0) {
-          console.log('⚠️ No matching candidate profiles found for skills:', skillNames);
-          return;
-        }
-
-        const title = (post.jobDetails && post.jobDetails.title) || post.title || 'Nouvelle offre';
-        const content = `Nouvelle offre: ${title} — correspond à vos compétences techniques.`;
-
-        console.log('📤 Calling broadcastSystemNotification with:', { content, recipientIdsCount: recipientIds.length, recipientIds });
-        
-        await notificationService.broadcastSystemNotification(content, recipientIds);
-        
-        console.log(`✅ Sent notifications to ${recipientIds.length} matching candidates for skills:`, skillNames);
-      } catch (notifErr) {
-        console.error('❌ Failed to send targeted post notifications to candidates:', notifErr?.message || notifErr);
-        console.error('Stack trace:', notifErr?.stack);
-      }
-    })();
-
+    // ========== 5. RETURN RESPONSE ==========
     res.status(201).json({
       success: true,
-      data: post,
-      matchingConfig: createdMatchingConfig,
-      planLimits: userProfile.planLimits,
+      data: result.post,
+      matchingConfig: result.matchingConfig,
+      planLimits: userProfile.planLimits
     });
   } catch (error) {
     handleError(res, error, 400);
