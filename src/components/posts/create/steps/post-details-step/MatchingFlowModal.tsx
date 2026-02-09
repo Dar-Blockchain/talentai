@@ -19,7 +19,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import { selectJobMatches } from "@/store/slices/postSlice";
 import { MatchingCandidate } from "@/pages/dashboard/company";
 import { unlockCandidate } from "@/store/slices/candidateSlice";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
+import { selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";
+import { getMyProfile } from "@/store/slices/userSlice";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -44,10 +46,17 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
   const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const currentPlanLimit = useSelector(selectCurrentPlanLimit);
   const firstFiveUnlocked = matchingProfiles
     .slice(0, 5)
     .every((candidate) => candidate.unlocked === true);
-    
+
+  const hasReachedUnlockLimit =
+    currentPlanLimit?.candidateUnlockLimit !== undefined &&
+    profile?.planUsage?.candidateUnlocksUsed !== undefined &&
+    Number(profile.planUsage.candidateUnlocksUsed) >= Number(currentPlanLimit.candidateUnlockLimit);
+
   const PROFILE_UNLOCK_PACK_PRICE = 500;
 
   // Loading state for unlock action
@@ -76,6 +85,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         })
       ).unwrap();
 
+      dispatch(getMyProfile());
       onContinue?.(true);
     } catch (error) {
       console.error("Unlock candidate failed:", error);
@@ -157,12 +167,16 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         We've already found {matchingProfiles?.length} matching candidates for
         you.
         <br />
-        You can start reviewing and contacting them immediately <br/>by unlocking
-        maximum 5 profiles for{" "}
-        <b style={{ color: "rgba(222, 147, 0, 1)" }}>
-          {PROFILE_UNLOCK_PACK_PRICE} tokens
-        </b>{" "}
-        , or you can continue setting up your recruitment workflow.
+        {hasReachedUnlockLimit ? (
+          <>You have reached your unlock limit ({profile?.planUsage?.candidateUnlocksUsed}/{currentPlanLimit?.candidateUnlockLimit}). Please upgrade your plan or continue setting up your recruitment workflow.</>
+        ) : (
+          <>You can start reviewing and contacting them immediately <br/>by unlocking
+          maximum 5 profiles for{" "}
+          <b style={{ color: "rgba(222, 147, 0, 1)" }}>
+            {PROFILE_UNLOCK_PACK_PRICE} tokens
+          </b>{" "}
+          , or you can continue setting up your recruitment workflow.</>
+        )}
       </Typography>
       <Typography
         sx={{
@@ -413,7 +427,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
             <Button
               variant="outlined"
               onClick={handleConfirmUnlock}
-              disabled={isUnlocking || firstFiveUnlocked} // disable while loading
+              disabled={isUnlocking || firstFiveUnlocked || hasReachedUnlockLimit}
               sx={{
                 borderColor: "rgba(222, 147, 0, 1)",
                 color: "rgba(222, 147, 0, 1)",
@@ -434,6 +448,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                   size={20}
                   sx={{ color: "rgba(222, 147, 0, 1)" }}
                 />
+              ) : hasReachedUnlockLimit ? (
+                `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
               ) : (
                 "Unlock Candidate Profiles"
               )}
