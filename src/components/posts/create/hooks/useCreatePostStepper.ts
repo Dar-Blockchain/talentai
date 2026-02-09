@@ -13,6 +13,7 @@ import {
 import { createHRAgent } from "@/store/slices/hrAgentsSlice";
 import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
+import { getMyProfile } from "@/store/slices/userSlice";
 
 import {
   buildRecruitmentSteps,
@@ -69,7 +70,9 @@ export const useCreatePostStepper = (
       return dispatch(updatePost({ jobId, jobData })).unwrap();
     }
 
-    return dispatch(savePost(jobData)).unwrap();
+    const result = await dispatch(savePost(jobData)).unwrap();
+    dispatch(getMyProfile());
+    return result;
   };
 
   const savePipeline = async () => {

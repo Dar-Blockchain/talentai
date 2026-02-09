@@ -219,6 +219,7 @@ export const savePost = createAsyncThunk(
       return {
         success: true,
         jobData: job,
+        planUsage: saved.planUsage || null,
       };
     } catch (err: any) {
       return rejectWithValue(err.message || "Error saving job");
