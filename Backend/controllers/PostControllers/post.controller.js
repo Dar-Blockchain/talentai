@@ -204,6 +204,7 @@ exports.createPost = async (req, res) => {
       success: true,
       data: post,
       matchingConfig: createdMatchingConfig,
+      planLimits: userProfile.planLimits,
     });
   } catch (error) {
     handleError(res, error, 400);
