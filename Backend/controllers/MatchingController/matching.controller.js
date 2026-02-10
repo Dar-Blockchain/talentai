@@ -81,8 +81,11 @@ exports.matchCandidatesToJob = async (req, res) => {
        2️⃣c Get candidates who passed interview for this job
     ----------------------------------------- */
     // Always fetch passed assessments to show in response
+    // Note: removed "completed: true" filter because assessments are created with completed: false
+    // and the field is never updated to true. The existence of an assessment record for the post
+    // is sufficient to indicate the candidate has completed the interview.
     const passedAssessments = await PostInterviewAssessment.find(
-      { post: jobPostId, completed: true },
+      { post: jobPostId },
       { candidate: 1, _id: 0 }
     ).lean();
 
@@ -127,7 +130,8 @@ exports.matchCandidatesToJob = async (req, res) => {
           return null;
         }
 
-      if (!score || score === 0) return null;
+      // Skip candidates with no score, unless they passed interview and we're filtering for that
+      if ((!score || score === 0) && !(passedInterviewOnly && hasPassedInterview)) return null;
 
       return {
         candidateId: candidate.userId._id,
@@ -136,8 +140,8 @@ exports.matchCandidatesToJob = async (req, res) => {
         lastName: candidate.lastName,
         targetRole: candidate.targetRole,
         email: candidate.userId.email,
-        score: score.score,
-        unlocked: score.unlocked,
+        score: score?.score || 0,
+        unlocked: score?.unlocked || false,
         unlockPrice: 5,
         finalBid: candidate.companyBid?.finalBid || null,
         biddingCompany: candidate.companyBid?.company?.username || null,

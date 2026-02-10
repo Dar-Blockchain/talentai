@@ -197,7 +197,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             flexWrap: "wrap",
           }}
         >
-          {onPassedInterviewFilterChange && (
+          {/* {onPassedInterviewFilterChange && (
             <FormControlLabel
               control={
                 <Switch
@@ -229,7 +229,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                 mr: 1,
               }}
             />
-          )}
+          )} */}
           <Button
             variant="contained"
             startIcon={<ArrowBackIcon />}
