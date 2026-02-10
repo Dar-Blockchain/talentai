@@ -38,9 +38,10 @@ const inputStyle = {
 
 interface EditPostDetailsProps {
   onCancel: () => void;
+  onSaveSuccess?: () => void;
 }
 
-const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
+const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSuccess }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
   const job = useSelector(selectCurrentJob);
@@ -60,6 +61,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
         currency: "USD",
       },
     },
+    
     skillAnalysis: job?.skillAnalysis || {},
   });
 
@@ -127,9 +129,9 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
             updatePost({
               jobId: job?._id,
               jobData: {
-                ...job,
                 jobDetails: values.jobDetails,
                 skillAnalysis: values.skillAnalysis,
+                linkedinPost: job?.linkedinPost,
               },
             })
           ).unwrap();
@@ -139,6 +141,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel }) => {
             message: "Post details updated successfully",
             severity: "success",
           });
+          onSaveSuccess?.();
         }}
       >
         {({ values, handleChange, setFieldValue, handleSubmit, resetForm }) => (

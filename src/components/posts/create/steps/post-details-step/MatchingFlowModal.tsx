@@ -128,7 +128,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           mb: 1,
         }}
       >
-        Finding matching candidates…
+        Finding passed interview candidates…
       </Typography>
 
       <Typography
