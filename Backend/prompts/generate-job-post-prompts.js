@@ -21,6 +21,7 @@ const getQuickPrompt = (description, companyLocation) =>
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - Only one soft skill must be generated.
+    - **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
     
@@ -182,6 +183,7 @@ const getDetailedPrompt = (description, companyLocation) =>
     - For the "location" field, extract the location from the job description if specified.
     - If no location is specified in the job description, use the company location: "${companyLocation}".
     - Always include "location" in the output.
+    - **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
 
     - Set skill level based on years of experience mentioned in the job post:
       - 1 year = level 1
