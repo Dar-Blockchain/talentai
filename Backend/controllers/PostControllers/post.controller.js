@@ -62,6 +62,23 @@ exports.createPost = async (req, res) => {
       user: userId
     };
 
+    // Handle custom expiration date (optional)
+    if (parsedData.expirationDate) {
+      const expirationDate = new Date(parsedData.expirationDate);
+      const now = new Date();
+      
+      // Validate expiration date is in the future
+      if (expirationDate <= now) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid expiration date',
+          message: 'Expiration date must be in the future'
+        });
+      }
+      
+      postData.expirationDate = expirationDate;
+    }
+
     const result = await postService.createPostWithSideEffects(
       postData,
       token,
