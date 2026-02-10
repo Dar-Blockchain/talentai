@@ -137,11 +137,6 @@ const postSchema = new mongoose.Schema({
     required: true,
     description: 'Date d\'expiration du poste (par défaut 15 jours après la création)'
   },
-  expired: {
-    type: Boolean,
-    default: false,
-    description: 'Statut d\'expiration automatique du poste (true si date actuelle >= expirationDate)'
-  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -202,32 +197,6 @@ const postSchema = new mongoose.Schema({
     description: 'How the post was created: AI generated, pipeline builder, or manual'
   },
 
-});
-
-// Getter virtuel pour vérifier le statut d'expiration en temps réel
-postSchema.virtual('isExpired').get(function() {
-  return new Date() >= this.expirationDate;
-});
-
-// Middleware pre-save pour mettre à jour automatiquement le statut d'expiration
-postSchema.pre('save', function(next) {
-  // Actualiser le statut d'expiration en fonction de la date actuelle
-  if (this.expirationDate) {
-    this.expired = new Date() >= this.expirationDate;
-  }
-  next();
-});
-
-// Middleware pre-findOneAndUpdate pour mettre à jour le statut d'expiration
-postSchema.pre('findOneAndUpdate', function(next) {
-  const update = this.getUpdate();
-  if (update.expirationDate || this.getOptions().new) {
-    const expirationDate = update.expirationDate || this.getQuery().expirationDate;
-    if (expirationDate) {
-      update.expired = new Date() >= expirationDate;
-    }
-  }
-  next();
 });
 
 const Post = mongoose.models.Post || mongoose.model("Post", postSchema);
