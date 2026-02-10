@@ -21,6 +21,7 @@ const getQuickPrompt = (description, companyLocation) =>
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - Only one soft skill must be generated.
+    - If the job description explicitly mentions a spoken or written language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level" and do NOT generate any other soft skills. If no language is mentioned, generate one relevant soft skill as usual.
     - **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
@@ -184,6 +185,7 @@ const getDetailedPrompt = (description, companyLocation) =>
     - If no location is specified in the job description, use the company location: "${companyLocation}".
     - Always include "location" in the output.
     - **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
+    - If the job description explicitly mentions a spoken or written language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level" and do NOT generate any other soft skills. If no language is mentioned, generate one relevant soft skill as usual.
 
     - Set skill level based on years of experience mentioned in the job post:
       - 1 year = level 1
