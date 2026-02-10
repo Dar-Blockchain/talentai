@@ -44,10 +44,14 @@ interface MatchingCandidate {
   name: string;
   email: string;
   score: number;
+  matchScore?: number;
   targetRole: string;
   finalBid: number;
   unlockPrice: number;
   unlocked: boolean;
+  passedInterview?: boolean;
+  interviewScore?: number | null;
+  assessmentId?: string | null;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
@@ -72,7 +76,7 @@ interface MatchingProfilesProps {
   selectedJob: string;
   onBackToJobs: () => void;
   onLoadMore: () => void;
-  onBidDialogOpen: (candidate: MatchingCandidate) => void;
+  // onBidDialogOpen: (candidate: MatchingCandidate) => void;
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
@@ -88,7 +92,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   selectedJob,
   onBackToJobs,
   onLoadMore,
-  onBidDialogOpen,
+  // onBidDialogOpen,
   currentPage = 1,
   totalPages = 1,
   onPageChange,
@@ -186,7 +190,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               },
             }}
           >
-            Matching Candidates
+            Passed Interview Candidates
           </Typography>
         </Box>
         <Box
@@ -285,7 +289,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               mb: 1,
             }}
           >
-            Finding Perfect Matches
+            Finding Passed Interview Candidates
           </Typography>
           <Typography
             variant="body2"
@@ -382,7 +386,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               mb: 2,
             }}
           >
-            No Matching Candidates Found
+            No Passed Interview Candidates Found
           </Typography>
           <Typography
             variant="body1"
@@ -428,7 +432,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                 fontSize: "1rem",
               }}
             >
-              Found {matchingProfiles.length} matching candidates
+              Found {matchingProfiles.length} passed interview candidates
             </Typography>
           </Box>
 
@@ -642,7 +646,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                     >
                       Contact Candidate
                     </Button> */}
-                    {!candidate?.unlocked && <Button
+                    {/* {!candidate?.unlocked && <Button
                       variant="outlined"
                       fullWidth
                       startIcon={
@@ -678,7 +682,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       {hasReachedUnlockLimit
                         ? `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
                         : `Unlock Full Profile (${candidate?.unlockPrice} Tokens)`}
-                    </Button>}
+                    </Button>} */}
                     {candidate?.unlocked && <Button
             variant="outlined"
             onClick={() => handleViewProfile(candidate)}
@@ -704,6 +708,29 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           >
             View Full Profile
           </Button>}
+                    {candidate?.unlocked && candidate?.passedInterview && candidate?.assessmentId && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => router.push(`/assessment/${candidate.assessmentId}`)}
+                        sx={{
+                          borderColor: "rgba(41, 210, 145, 1)",
+                          color: "rgba(41, 210, 145, 1)",
+                          fontWeight: 600,
+                          borderRadius: "38px",
+                          py: 1.5,
+                          maxWidth: "300px",
+                          height: "42px",
+                          textTransform: "none",
+                          fontSize: "0.875rem",
+                          borderWidth: "1px",
+                          "&:hover": {
+                            backgroundColor: "rgba(41, 210, 145, 0.08)",
+                          },
+                        }}
+                      >
+                        View Interview Details
+                      </Button>
+                    )}
                   </Box>
                 </Box>
                 <GradientCircle
@@ -747,7 +774,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         mt: 0.5,
                       }}
                     >
-                      Matching Score
+                      Interview Score
                     </Typography>
                   </Box>
                 </GradientCircle>

@@ -123,6 +123,22 @@ export const useCreatePostStepper = (
           jobData: updatePayload,
         })
       ).unwrap();
+
+      // Auto-create HR agent and config (previously done in Agent Configuration step)
+      await dispatch(
+        createHRAgent({
+          agentData: {
+            jobId: savedPost?.jobData?._id,
+            companyName: profile?.companyDetails?.name || "Company",
+            postTitle: savedPost?.jobData?.jobDetails?.title,
+            companyId: profile?.userId,
+            jobSkills: getJobSkills(savedPost?.jobData),
+          },
+          configData: null,
+        })
+      ).unwrap();
+
+      await dispatch(createAgentConfig()).unwrap();
     } catch (error) {
       console.error("Pipeline save failed:", error);
       showToast({
@@ -179,7 +195,7 @@ export const useCreatePostStepper = (
   /* -------------------- Actions -------------------- */
 
   const handleNext = async (shouldContinue?: boolean) => {
-    /* ---------- STEP 0 ---------- */
+    /* ---------- STEP 0: Job Details ---------- */
     if (activeStep === 0 && !shouldContinue) {
       if (!validateStep0()) return;
 
@@ -210,20 +226,15 @@ export const useCreatePostStepper = (
       return;
     }
 
+    // AI flow: after matching modal "Continue" → auto-finalize agent and redirect
     if (activeStep === 0 && shouldContinue && creationType === "ai") {
       setModalOpen(false);
-      setActiveStep(1);
-      return;
-    }
-
-    /* ---------- STEP 1 ---------- */
-    if (activeStep === 1) {
       await finalizeCreation();
       return;
     }
 
-    /* ---------- STEP 2 ---------- */
-    if (activeStep === 2 && savedPost?.jobData?._id) {
+    /* ---------- STEP 1: Recruitment Flow (manual only) ---------- */
+    if (activeStep === 1 && savedPost?.jobData?._id) {
       const { isValid, unconfiguredNodes } = validatePipelineNodes(nodes);
 
       if (!isValid) {

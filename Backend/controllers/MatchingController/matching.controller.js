@@ -86,13 +86,32 @@ exports.matchCandidatesToJob = async (req, res) => {
     // is sufficient to indicate the candidate has completed the interview.
     const passedAssessments = await PostInterviewAssessment.find(
       { post: jobPostId },
-      { candidate: 1, _id: 0 }
+      { candidate: 1, 'interviewData.finalReport.scores': 1, 'interviewData.finalReport.coverage': 1 }
     ).lean();
 
     const passedInterviewCandidateIds = new Set(
       passedAssessments.map(a => String(a.candidate))
     );
+
+    // Build maps of candidate ID -> interview score and assessment ID
+    const interviewScoreMap = new Map();
+    const assessmentIdMap = new Map();
+    for (const a of passedAssessments) {
+      const candidateId = String(a.candidate);
+      const interviewScore = a.interviewData?.finalReport?.coverage?.overall || 0;
+      // Keep the highest score if multiple assessments exist
+      if (!interviewScoreMap.has(candidateId) || interviewScore > interviewScoreMap.get(candidateId)) {
+        interviewScoreMap.set(candidateId, interviewScore);
+        assessmentIdMap.set(candidateId, String(a._id));
+      }
+    }
+
     console.log(`Found ${passedInterviewCandidateIds.size} candidates who passed interview`);
+    console.log('Interview score map:', Object.fromEntries(interviewScoreMap));
+    // Log raw assessment data for debugging
+    for (const a of passedAssessments) {
+      console.log(`Assessment for candidate ${a.candidate}:`, JSON.stringify(a.interviewData?.finalReport?.scores || 'NO SCORES'));
+    }
 
     /* -----------------------------------------
        3️⃣ Traitement en parallèle
@@ -133,6 +152,11 @@ exports.matchCandidatesToJob = async (req, res) => {
       // Skip candidates with no score, unless they passed interview and we're filtering for that
       if ((!score || score === 0) && !(passedInterviewOnly && hasPassedInterview)) return null;
 
+      const matchScore = score?.score || 0;
+      const interviewScore = hasPassedInterview ? (interviewScoreMap.get(candidateIdStr) || 0) : null;
+      // Check unlocked from score object, or fallback to unlockedSet directly
+      const isUnlocked = score?.unlocked || unlockedSet.has(candidateIdStr);
+
       return {
         candidateId: candidate.userId._id,
         name: candidate.userId.username,
@@ -140,14 +164,17 @@ exports.matchCandidatesToJob = async (req, res) => {
         lastName: candidate.lastName,
         targetRole: candidate.targetRole,
         email: candidate.userId.email,
-        score: score?.score || 0,
-        unlocked: score?.unlocked || false,
+        score: hasPassedInterview && interviewScore > matchScore ? interviewScore : matchScore,
+        matchScore,
+        unlocked: isUnlocked,
         unlockPrice: 5,
         finalBid: candidate.companyBid?.finalBid || null,
         biddingCompany: candidate.companyBid?.company?.username || null,
         matchedSkills: candidateSkills.filter((cs) => requiredNames.has(cs.name)),
         requiredSkills,
         passedInterview: hasPassedInterview,
+        interviewScore,
+        assessmentId: hasPassedInterview ? (assessmentIdMap.get(candidateIdStr) || null) : null,
       };
     });
 
