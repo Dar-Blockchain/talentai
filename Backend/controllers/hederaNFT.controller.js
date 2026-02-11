@@ -49,7 +49,7 @@ class HederaNFTController {
       // Check if environment variables are set
       if (!process.env.HEDERA_ACCOUNT_ID || !process.env.HEDERA_PRIVATE_KEY) {
         console.warn(
-          "⚠️  Hedera environment variables not set. NFT functionality will be disabled."
+          "⚠️  Hedera environment variables not set. NFT functionality will be disabled.",
         );
         this.hederaConfigured = false;
         return;
@@ -60,10 +60,10 @@ class HederaNFTController {
 
       // Set operator account
       this.operatorAccountId = AccountId.fromString(
-        process.env.HEDERA_ACCOUNT_ID
+        process.env.HEDERA_ACCOUNT_ID,
       );
       this.operatorPrivateKey = PrivateKey.fromString(
-        process.env.HEDERA_PRIVATE_KEY
+        process.env.HEDERA_PRIVATE_KEY,
       );
 
       this.client.setOperator(this.operatorAccountId, this.operatorPrivateKey);
@@ -87,7 +87,7 @@ class HederaNFTController {
     }
     if (!this.hederaConfigured) {
       throw new Error(
-        "Hedera client is not configured. Please check your environment variables."
+        "Hedera client is not configured. Please check your environment variables.",
       );
     }
   }
@@ -96,7 +96,7 @@ class HederaNFTController {
   async queryNFTMetadata(tokenId, serial) {
     try {
       const response = await axios.get(
-        `${this.mirrorNodeApi}/tokens/${tokenId}/nfts/${serial}`
+        `${this.mirrorNodeApi}/tokens/${tokenId}/nfts/${serial}`,
       );
       return response.data;
     } catch (error) {
@@ -134,7 +134,7 @@ class HederaNFTController {
 
       const tokenCreateSubmit = await tokenCreateTx.execute(this.client);
       const tokenCreateReceipt = await tokenCreateSubmit.getReceipt(
-        this.client
+        this.client,
       );
       const tokenId = tokenCreateReceipt.tokenId;
 
@@ -205,7 +205,7 @@ class HederaNFTController {
         this.resumeTokenId = await this.createResumeToken();
         console.log(
           "📝 Note: Save this token ID to your .env file as RESUME_TOKEN_ID=" +
-            this.resumeTokenId
+            this.resumeTokenId,
         );
       }
 
@@ -219,7 +219,7 @@ class HederaNFTController {
       // Generate compact resume fingerprint
       const resumeFingerprint = this.generateResumeFingerprint(
         resumeData,
-        userInfo
+        userInfo,
       );
 
       // Create ultra-minimal metadata to fit Hedera's ~100 byte limit
@@ -247,11 +247,11 @@ class HederaNFTController {
           h: resumeFingerprint.substring(0, 6),
         };
         finalMetadataBytes = new TextEncoder().encode(
-          JSON.stringify(absoluteMinimal)
+          JSON.stringify(absoluteMinimal),
         );
         console.log(
           "📏 Absolute minimal metadata:",
-          JSON.stringify(absoluteMinimal)
+          JSON.stringify(absoluteMinimal),
         );
         console.log("📏 Final size:", finalMetadataBytes.length, "bytes");
       } else {

@@ -1,10 +1,14 @@
-const notificationSystemService = require('../services/notificationSystem.service');
+const notificationSystemService = require("../services/notificationSystem.service");
 
 // Create a system notification
 exports.createSystemNotification = async (req, res) => {
   try {
     const { recipient, content } = req.body;
-    const notification = await notificationSystemService.createSystemNotification(recipient, content);
+    const notification =
+      await notificationSystemService.createSystemNotification(
+        recipient,
+        content,
+      );
     res.status(201).json(notification);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -17,7 +21,11 @@ const createNotificationByType = (type) => {
     try {
       const { content } = req.body;
       const recipient = req.user._id;
-      const notification = await notificationSystemService.createNotification(recipient, content, type);
+      const notification = await notificationSystemService.createNotification(
+        recipient,
+        content,
+        type,
+      );
       res.status(201).json(notification);
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -26,28 +34,33 @@ const createNotificationByType = (type) => {
 };
 
 // Create notifications for each type
-exports.createInfoNotification = createNotificationByType('info');
-exports.createSuccessNotification = createNotificationByType('success');
-exports.createWarningNotification = createNotificationByType('warning');
-exports.createErrorNotification = createNotificationByType('error');
-exports.createCustomNotification = createNotificationByType('custom');
+exports.createInfoNotification = createNotificationByType("info");
+exports.createSuccessNotification = createNotificationByType("success");
+exports.createWarningNotification = createNotificationByType("warning");
+exports.createErrorNotification = createNotificationByType("error");
+exports.createCustomNotification = createNotificationByType("custom");
 
 // List system notifications (optional: filter by unread)
 exports.listForUser = async (req, res) => {
   try {
     const userId = req.user._id;
     if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+      return res.status(400).json({ error: "User ID is required" });
     }
     // 🔄 Auto-archive notifications older than 15 days
     await notificationSystemService.autoArchiveOldNotifications(userId, 15);
 
-    const nonArchivedList = await notificationSystemService.getNonArchivedNotifications(userId);
-    const archivedList = await notificationSystemService.getArchivedNotifications(userId);
+    const nonArchivedList =
+      await notificationSystemService.getNonArchivedNotifications(userId);
+    const archivedList =
+      await notificationSystemService.getArchivedNotifications(userId);
     const unreadCount = await notificationSystemService.getUnreadCount(userId);
 
     res.json({
-      nonArchived: { count: nonArchivedList.length, notifications: nonArchivedList },
+      nonArchived: {
+        count: nonArchivedList.length,
+        notifications: nonArchivedList,
+      },
       archived: { count: archivedList.length, notifications: archivedList },
       unreadCount,
     });
@@ -61,10 +74,14 @@ exports.getById = async (req, res) => {
   try {
     const userId = req.user && req.user._id;
     const userRole = req.user && req.user.role;
-    const notification = await notificationSystemService.getNotificationById(req.params.id, userId, userRole);
+    const notification = await notificationSystemService.getNotificationById(
+      req.params.id,
+      userId,
+      userRole,
+    );
     res.json(notification);
   } catch (err) {
-    const statusCode = err.message === 'Access denied.' ? 403 : 404;
+    const statusCode = err.message === "Access denied." ? 403 : 404;
     res.status(statusCode).json({ error: err.message });
   }
 };
@@ -73,10 +90,13 @@ exports.getById = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const userId = req.user && req.user._id;
-    const notification = await notificationSystemService.markNotificationAsRead(req.params.id, userId);
-    res.json({ message: 'Marked as read.', notification });
+    const notification = await notificationSystemService.markNotificationAsRead(
+      req.params.id,
+      userId,
+    );
+    res.json({ message: "Marked as read.", notification });
   } catch (err) {
-    const statusCode = err.message === 'Access denied.' ? 403 : 404;
+    const statusCode = err.message === "Access denied." ? 403 : 404;
     res.status(statusCode).json({ error: err.message });
   }
 };
@@ -85,12 +105,12 @@ exports.markAsRead = async (req, res) => {
 exports.markAllAsRead = async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log('markAllAsRead called with userId:', userId);
+    console.log("markAllAsRead called with userId:", userId);
     if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
+      return res.status(400).json({ error: "userId is required" });
     }
     const result = await notificationSystemService.markAllAsRead(userId);
-    res.json({ message: 'All notifications marked as read.', result });
+    res.json({ message: "All notifications marked as read.", result });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -101,10 +121,14 @@ exports.deleteNotification = async (req, res) => {
   try {
     const userId = req.user && req.user._id;
     const userRole = req.user && req.user.role;
-    const notification = await notificationSystemService.deleteNotification(req.params.id, userId, userRole);
-    res.json({ message: 'Notification deleted.', notification });
+    const notification = await notificationSystemService.deleteNotification(
+      req.params.id,
+      userId,
+      userRole,
+    );
+    res.json({ message: "Notification deleted.", notification });
   } catch (err) {
-    const statusCode = err.message === 'Access denied.' ? 403 : 404;
+    const statusCode = err.message === "Access denied." ? 403 : 404;
     res.status(statusCode).json({ error: err.message });
   }
 };
@@ -114,11 +138,15 @@ exports.archiveNotification = async (req, res) => {
   try {
     const userId = req.user && req.user._id;
     const userRole = req.user && req.user.role;
-    const notification = await notificationSystemService.archiveNotification(req.params.id, userId, userRole);
-    console.log('archiveNotification succeeded for id:', notification);
-    res.json({ message: 'Notification archived.', notification });
+    const notification = await notificationSystemService.archiveNotification(
+      req.params.id,
+      userId,
+      userRole,
+    );
+    console.log("archiveNotification succeeded for id:", notification);
+    res.json({ message: "Notification archived.", notification });
   } catch (err) {
-    const statusCode = err.message === 'Access denied.' ? 403 : 404;
+    const statusCode = err.message === "Access denied." ? 403 : 404;
     res.status(statusCode).json({ error: err.message });
   }
 };
@@ -128,11 +156,15 @@ exports.archiveAllNotifications = async (req, res) => {
   try {
     const userId = req.user && req.user._id;
     if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+      return res.status(400).json({ error: "User ID is required" });
     }
 
-    const result = await notificationSystemService.archiveAllNotifications(userId);
-    res.json({ message: 'All notifications archived.', archivedCount: result.archivedCount });
+    const result =
+      await notificationSystemService.archiveAllNotifications(userId);
+    res.json({
+      message: "All notifications archived.",
+      archivedCount: result.archivedCount,
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -141,12 +173,17 @@ exports.archiveAllNotifications = async (req, res) => {
 // Broadcast system notification to all users
 exports.broadcastSystemNotification = async (req, res) => {
   try {
-    const { content, recipientIds} = req.body;
+    const { content, recipientIds } = req.body;
     if (!content) {
-      return res.status(400).json({ error: 'Content is required' });
+      return res.status(400).json({ error: "Content is required" });
     }
-    const result = await notificationSystemService.broadcastSystemNotification(content, recipientIds);
-    res.status(201).json({ message: 'Notification broadcasted to all users.', result });
+    const result = await notificationSystemService.broadcastSystemNotification(
+      content,
+      recipientIds,
+    );
+    res
+      .status(201)
+      .json({ message: "Notification broadcasted to all users.", result });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -1,17 +1,17 @@
 require("dotenv").config();
-const { 
-  HederaLangchainToolkit, 
-  AgentMode, 
-  coreHTSPluginToolNames, 
-  coreConsensusPluginToolNames, 
+const {
+  HederaLangchainToolkit,
+  AgentMode,
+  coreHTSPluginToolNames,
+  coreConsensusPluginToolNames,
   coreQueriesPluginToolNames,
   coreQueriesPlugin,
   coreHTSPlugin,
-  coreConsensusPlugin
-} = require('hedera-agent-kit');
-const { Client, PrivateKey, PublicKey } = require('@hashgraph/sdk');
-const AgentModel = require('../models/Agent.model');
-const EvaluationTopicModel = require('../models/EvaluationTopic.model');
+  coreConsensusPlugin,
+} = require("hedera-agent-kit");
+const { Client, PrivateKey, PublicKey } = require("@hashgraph/sdk");
+const AgentModel = require("../models/Agent.model");
+const EvaluationTopicModel = require("../models/EvaluationTopic.model");
 
 // Lazy client initialization
 let client = null;
@@ -21,23 +21,28 @@ const getClient = () => {
   if (!client && !clientInitialized) {
     try {
       if (!process.env.HEDERA_ACCOUNT_ID || !process.env.HEDERA_PRIVATE_KEY) {
-        console.warn('⚠️  Hedera Tools: Environment variables not set. Functionality will be limited.');
+        console.warn(
+          "⚠️  Hedera Tools: Environment variables not set. Functionality will be limited.",
+        );
         clientInitialized = true;
         return null;
       }
-      
+
       client = Client.forTestnet().setOperator(
         process.env.HEDERA_ACCOUNT_ID,
         PrivateKey.fromStringECDSA(process.env.HEDERA_PRIVATE_KEY),
       );
-      
+
       // Set network timeout for faster response
       client.setNetworkTimeout(10000);
-      
+
       clientInitialized = true;
-      console.log('✅ Hedera Tools client initialized successfully');
+      console.log("✅ Hedera Tools client initialized successfully");
     } catch (error) {
-      console.error('❌ Error initializing Hedera Tools client:', error.message);
+      console.error(
+        "❌ Error initializing Hedera Tools client:",
+        error.message,
+      );
       clientInitialized = true;
       return null;
     }
@@ -46,18 +51,12 @@ const getClient = () => {
 };
 
 // Extract the four specific tools
-const {
-  CREATE_FUNGIBLE_TOKEN_TOOL,
-} = coreHTSPluginToolNames;
+const { CREATE_FUNGIBLE_TOKEN_TOOL } = coreHTSPluginToolNames;
 
-const {
-  CREATE_TOPIC_TOOL,
-  SUBMIT_TOPIC_MESSAGE_TOOL,
-} = coreConsensusPluginToolNames;
+const { CREATE_TOPIC_TOOL, SUBMIT_TOPIC_MESSAGE_TOOL } =
+  coreConsensusPluginToolNames;
 
-const {
-  GET_HBAR_BALANCE_QUERY_TOOL,
-} = coreQueriesPluginToolNames;
+const { GET_HBAR_BALANCE_QUERY_TOOL } = coreQueriesPluginToolNames;
 
 // Note: Individual toolkits are created per agent in endpoints using createAgentToolkit()
 // No global toolkit needed - each operation uses agent-specific credentials
@@ -67,17 +66,24 @@ const {
  */
 exports.createFungibleToken = async (req, res) => {
   try {
-    const { name, symbol, decimals = 2, initialSupply = 1000, treasuryAccount, agentId } = req.body;
+    const {
+      name,
+      symbol,
+      decimals = 2,
+      initialSupply = 1000,
+      treasuryAccount,
+      agentId,
+    } = req.body;
 
     if (!name || !symbol) {
-      return res.status(400).json({ 
-        error: "Token name and symbol are required" 
+      return res.status(400).json({
+        error: "Token name and symbol are required",
       });
     }
 
     if (!agentId) {
-      return res.status(400).json({ 
-        error: "Agent ID is required" 
+      return res.status(400).json({
+        error: "Agent ID is required",
       });
     }
 
@@ -87,35 +93,36 @@ exports.createFungibleToken = async (req, res) => {
     // Get the tools from the agent's toolkit
     const tools = agentToolkit.getTools();
     console.log(tools);
-    const createTokenTool = tools.find(tool => tool.name === 'create_fungible_token_tool');
-    
+    const createTokenTool = tools.find(
+      (tool) => tool.name === "create_fungible_token_tool",
+    );
+
     if (!createTokenTool) {
       return res.status(500).json({ error: "Create token tool not found" });
     }
 
-          // Call the tool directly without LLM
-      console.log('Creating token with params:', {
-          tokenName: name,
-          tokenSymbol: symbol,
-          decimals,
-          initialSupply
-      });
-      
-      const result = await createTokenTool._call({
-        tokenName: name,
-        tokenSymbol: symbol,
-        decimals,
-        initialSupply,
-        treasuryAccountId: treasuryAccount || process.env.HEDERA_ACCOUNT_ID
-      });
+    // Call the tool directly without LLM
+    console.log("Creating token with params:", {
+      tokenName: name,
+      tokenSymbol: symbol,
+      decimals,
+      initialSupply,
+    });
+
+    const result = await createTokenTool._call({
+      tokenName: name,
+      tokenSymbol: symbol,
+      decimals,
+      initialSupply,
+      treasuryAccountId: treasuryAccount || process.env.HEDERA_ACCOUNT_ID,
+    });
 
     res.json({
       success: true,
       tokenId: result.tokenId,
       transactionId: result.transactionId,
-      message: `Fungible token ${symbol} created successfully`
+      message: `Fungible token ${symbol} created successfully`,
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Token creation failed",
@@ -132,8 +139,8 @@ exports.createTopic = async (req, res) => {
     const { memo, adminKey, submitKey, agentId } = req.body;
 
     if (!agentId) {
-      return res.status(400).json({ 
-        error: "Agent ID is required" 
+      return res.status(400).json({
+        error: "Agent ID is required",
       });
     }
 
@@ -142,7 +149,9 @@ exports.createTopic = async (req, res) => {
 
     // Get the tools from the agent's toolkit
     const tools = agentToolkit.getTools();
-    const createTopicTool = tools.find(tool => tool.name === 'create_topic_tool');
+    const createTopicTool = tools.find(
+      (tool) => tool.name === "create_topic_tool",
+    );
 
     if (!createTopicTool) {
       return res.status(500).json({ error: "Create topic tool not found" });
@@ -150,7 +159,7 @@ exports.createTopic = async (req, res) => {
 
     // Prepare topic parameters
     const topicParams = {
-      topicMemo: memo || `Topic created at ${new Date().toISOString()}`
+      topicMemo: memo || `Topic created at ${new Date().toISOString()}`,
     };
 
     // Add keys if provided
@@ -168,9 +177,8 @@ exports.createTopic = async (req, res) => {
       success: true,
       topicId: result.topicId,
       transactionId: result.transactionId,
-      message: "Consensus topic created successfully"
+      message: "Consensus topic created successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Topic creation failed",
@@ -187,14 +195,14 @@ exports.submitTopicMessage = async (req, res) => {
     const { topicId, message, agentId } = req.body;
 
     if (!topicId || !message) {
-      return res.status(400).json({ 
-        error: "Topic ID and message are required" 
+      return res.status(400).json({
+        error: "Topic ID and message are required",
       });
     }
 
     if (!agentId) {
-      return res.status(400).json({ 
-        error: "Agent ID is required" 
+      return res.status(400).json({
+        error: "Agent ID is required",
       });
     }
 
@@ -203,7 +211,9 @@ exports.submitTopicMessage = async (req, res) => {
 
     // Get the tools from the agent's toolkit
     const tools = agentToolkit.getTools();
-    const submitMessageTool = tools.find(tool => tool.name === 'submit_topic_message_tool');
+    const submitMessageTool = tools.find(
+      (tool) => tool.name === "submit_topic_message_tool",
+    );
 
     if (!submitMessageTool) {
       return res.status(500).json({ error: "Submit message tool not found" });
@@ -212,16 +222,15 @@ exports.submitTopicMessage = async (req, res) => {
     // Call the tool directly without LLM
     const result = await submitMessageTool._call({
       topicId,
-      message
+      message,
     });
 
     res.json({
       success: true,
       transactionId: result.transactionId,
       topicId,
-      message: "Message submitted to topic successfully"
+      message: "Message submitted to topic successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Message submission failed",
@@ -238,14 +247,14 @@ exports.getHbarBalance = async (req, res) => {
     const { accountId, agentId } = req.query;
 
     if (!accountId) {
-      return res.status(400).json({ 
-        error: "Account ID is required" 
+      return res.status(400).json({
+        error: "Account ID is required",
       });
     }
 
     if (!agentId) {
-      return res.status(400).json({ 
-        error: "Agent ID is required" 
+      return res.status(400).json({
+        error: "Agent ID is required",
       });
     }
 
@@ -254,7 +263,9 @@ exports.getHbarBalance = async (req, res) => {
 
     // Get the tools from the agent's toolkit
     const tools = agentToolkit.getTools();
-    const balanceQueryTool = tools.find(tool => tool.name === 'get_hbar_balance_query_tool');
+    const balanceQueryTool = tools.find(
+      (tool) => tool.name === "get_hbar_balance_query_tool",
+    );
 
     if (!balanceQueryTool) {
       return res.status(500).json({ error: "Balance query tool not found" });
@@ -262,7 +273,7 @@ exports.getHbarBalance = async (req, res) => {
 
     // Call the tool directly without LLM
     const result = await balanceQueryTool._call({
-      accountId
+      accountId,
     });
 
     res.json({
@@ -270,9 +281,8 @@ exports.getHbarBalance = async (req, res) => {
       accountId,
       balance: result.balance,
       unit: "HBAR",
-      message: "Balance retrieved successfully"
+      message: "Balance retrieved successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Balance query failed",
@@ -289,8 +299,8 @@ exports.getMyBalance = async (req, res) => {
     const { agentId } = req.query;
 
     if (!agentId) {
-      return res.status(400).json({ 
-        error: "Agent ID is required" 
+      return res.status(400).json({
+        error: "Agent ID is required",
       });
     }
 
@@ -301,7 +311,9 @@ exports.getMyBalance = async (req, res) => {
 
     // Get the tools from the agent's toolkit
     const tools = agentToolkit.getTools();
-    const balanceQueryTool = tools.find(tool => tool.name === 'get_hbar_balance_query_tool');
+    const balanceQueryTool = tools.find(
+      (tool) => tool.name === "get_hbar_balance_query_tool",
+    );
 
     if (!balanceQueryTool) {
       return res.status(500).json({ error: "Balance query tool not found" });
@@ -309,7 +321,7 @@ exports.getMyBalance = async (req, res) => {
 
     // Call the tool directly without LLM
     const result = await balanceQueryTool._call({
-      accountId
+      accountId,
     });
 
     res.json({
@@ -317,9 +329,8 @@ exports.getMyBalance = async (req, res) => {
       accountId,
       balance: result.balance,
       unit: "HBAR",
-      message: "Your balance retrieved successfully"
+      message: "Your balance retrieved successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Balance query failed",
@@ -336,28 +347,27 @@ exports.getAvailableTools = async (req, res) => {
     const { agentId } = req.query;
 
     if (!agentId) {
-      return res.status(400).json({ 
-        error: "Agent ID is required" 
+      return res.status(400).json({
+        error: "Agent ID is required",
       });
     }
 
     // Create agent-specific toolkit
     const agentToolkit = await createAgentToolkit(agentId);
     const tools = agentToolkit.getTools();
-    
-    const toolsInfo = tools.map(tool => ({
+
+    const toolsInfo = tools.map((tool) => ({
       name: tool.name,
       description: tool.description || "No description available",
-      parameters: tool.parameters || {}
+      parameters: tool.parameters || {},
     }));
 
     res.json({
       success: true,
       tools: toolsInfo,
       count: tools.length,
-      message: "Available Hedera tools retrieved successfully"
+      message: "Available Hedera tools retrieved successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Failed to get tools information",
@@ -372,13 +382,13 @@ exports.getAvailableTools = async (req, res) => {
 async function createAgentToolkit(agentId) {
   const agent = await AgentModel.findById(agentId);
   if (!agent) {
-    throw new Error('Agent not found');
+    throw new Error("Agent not found");
   }
 
   // Create client with agent's credentials
   const agentClient = Client.forTestnet().setOperator(
     agent.hederaAccountId,
-    PrivateKey.fromStringDer(agent.hederaPrivateKey)
+    PrivateKey.fromStringDer(agent.hederaPrivateKey),
   );
 
   // Create toolkit for this specific agent
@@ -411,7 +421,7 @@ exports.createEvaluationTopic = async (req, res) => {
 
     if (!company || !postId || !candidateName || !agentId) {
       return res.status(400).json({
-        error: "Company, postId, candidateName, and agentId are required"
+        error: "Company, postId, candidateName, and agentId are required",
       });
     }
 
@@ -423,7 +433,9 @@ exports.createEvaluationTopic = async (req, res) => {
 
     // Get create topic tool
     const tools = toolkit.getTools();
-    const createTopicTool = tools.find(tool => tool.name === 'create_topic_tool');
+    const createTopicTool = tools.find(
+      (tool) => tool.name === "create_topic_tool",
+    );
 
     if (!createTopicTool) {
       return res.status(500).json({ error: "Create topic tool not found" });
@@ -433,8 +445,8 @@ exports.createEvaluationTopic = async (req, res) => {
     const publicKeyString = agent.hederaPublicKey;
     console.log(publicKeyString);
     if (!publicKeyString) {
-      return res.status(400).json({ 
-        error: "Agent public key not found in database" 
+      return res.status(400).json({
+        error: "Agent public key not found in database",
       });
     }
 
@@ -442,23 +454,29 @@ exports.createEvaluationTopic = async (req, res) => {
     try {
       agentPublicKey = PublicKey.fromString(publicKeyString);
     } catch (error) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Invalid public key format in database",
-        details: error.message 
+        details: error.message,
       });
     }
 
     const result = await createTopicTool._call({
       topicMemo: topicMemo,
-      isSubmitKey : false,
+      isSubmitKey: false,
       submitKey: agentPublicKey,
-      adminKey: agentPublicKey
+      adminKey: agentPublicKey,
     });
-    
+
     // Parse result as JSON
-    const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    let topicIdString = parsedResult.topicId.shard.low+"."+parsedResult.topicId.realm.low+"."+parsedResult.topicId.num.low;
-    
+    const parsedResult =
+      typeof result === "string" ? JSON.parse(result) : result;
+    let topicIdString =
+      parsedResult.topicId.shard.low +
+      "." +
+      parsedResult.topicId.realm.low +
+      "." +
+      parsedResult.topicId.num.low;
+
     // Save to database
     const evaluationTopic = new EvaluationTopicModel({
       topicId: topicIdString,
@@ -468,7 +486,7 @@ exports.createEvaluationTopic = async (req, res) => {
       candidateId,
       topicMemo,
       createdBy: agent.name,
-      evaluations: []
+      evaluations: [],
     });
 
     await evaluationTopic.save();
@@ -479,9 +497,8 @@ exports.createEvaluationTopic = async (req, res) => {
       transactionId: parsedResult.transactionId,
       topicMemo,
       message: `Evaluation topic created for ${candidateName} at ${company}`,
-      createdBy: agent.name
+      createdBy: agent.name,
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Failed to create evaluation topic",
@@ -496,15 +513,15 @@ exports.createEvaluationTopic = async (req, res) => {
  */
 exports.submitEvaluationMessage = async (req, res) => {
   try {
-    const { 
-      topicId, 
-      agentId, 
-      evaluation: { passed, score, feedback, interviewNotes } 
+    const {
+      topicId,
+      agentId,
+      evaluation: { passed, score, feedback, interviewNotes },
     } = req.body;
 
     if (!topicId || !agentId || passed === undefined) {
       return res.status(400).json({
-        error: "TopicId, agentId, and evaluation.passed are required"
+        error: "TopicId, agentId, and evaluation.passed are required",
       });
     }
 
@@ -525,7 +542,7 @@ exports.submitEvaluationMessage = async (req, res) => {
         name: agent.name,
         avatarName: agent.avatarName,
         role: agent.role,
-        accountId: agent.hederaAccountId || agent.accountId
+        accountId: agent.hederaAccountId || agent.accountId,
       },
       evaluation: {
         topicId,
@@ -536,20 +553,22 @@ exports.submitEvaluationMessage = async (req, res) => {
           passed,
           score: score || null,
           feedback: feedback || "",
-          interviewNotes: interviewNotes || ""
+          interviewNotes: interviewNotes || "",
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       coordinatorMessage: {
         to: "coordinator_agent",
         action: passed ? "candidate_approved" : "candidate_rejected",
-        summary: `${agent.role} evaluation: ${passed ? 'PASSED' : 'FAILED'}${score ? ` (Score: ${score})` : ''}`
-      }
+        summary: `${agent.role} evaluation: ${passed ? "PASSED" : "FAILED"}${score ? ` (Score: ${score})` : ""}`,
+      },
     };
 
     // Get submit message tool
     const tools = toolkit.getTools();
-    const submitMessageTool = tools.find(tool => tool.name === 'submit_topic_message_tool');
+    const submitMessageTool = tools.find(
+      (tool) => tool.name === "submit_topic_message_tool",
+    );
 
     if (!submitMessageTool) {
       return res.status(500).json({ error: "Submit message tool not found" });
@@ -558,11 +577,17 @@ exports.submitEvaluationMessage = async (req, res) => {
     // Submit the HCS-11 message to the topic
     const result = await submitMessageTool._call({
       topicId: topicId,
-      message: JSON.stringify(hcs11Message)
+      message: JSON.stringify(hcs11Message),
     });
     console.log(result);
-    const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    let topicIdString = parsedResult.transactionId.accountId.shard.low+"."+parsedResult.transactionId.accountId.realm.low+"."+parsedResult.transactionId.accountId.num.low;
+    const parsedResult =
+      typeof result === "string" ? JSON.parse(result) : result;
+    let topicIdString =
+      parsedResult.transactionId.accountId.shard.low +
+      "." +
+      parsedResult.transactionId.accountId.realm.low +
+      "." +
+      parsedResult.transactionId.accountId.num.low;
 
     console.log(result);
     // Update evaluation topic in database
@@ -575,8 +600,8 @@ exports.submitEvaluationMessage = async (req, res) => {
         passed,
         score,
         feedback,
-        interviewNotes
-      }
+        interviewNotes,
+      },
     });
 
     // Check if all required agents have evaluated
@@ -585,16 +610,24 @@ exports.submitEvaluationMessage = async (req, res) => {
 
     if (completedEvaluations >= requiredAgents.length) {
       evaluationTopic.status = "completed";
-      
+
       // Calculate final result
-      const passedCount = evaluationTopic.evaluations.filter(e => e.evaluation.passed).length;
-      const totalScore = evaluationTopic.evaluations.reduce((sum, e) => sum + (e.evaluation.score || 0), 0);
+      const passedCount = evaluationTopic.evaluations.filter(
+        (e) => e.evaluation.passed,
+      ).length;
+      const totalScore = evaluationTopic.evaluations.reduce(
+        (sum, e) => sum + (e.evaluation.score || 0),
+        0,
+      );
       const avgScore = totalScore / evaluationTopic.evaluations.length;
-      
+
       evaluationTopic.finalResult = {
         overallScore: avgScore,
-        recommendation: passedCount >= (requiredAgents.length * 0.7) ? "RECOMMENDED" : "NOT_RECOMMENDED",
-        completedAt: new Date()
+        recommendation:
+          passedCount >= requiredAgents.length * 0.7
+            ? "RECOMMENDED"
+            : "NOT_RECOMMENDED",
+        completedAt: new Date(),
       };
     }
 
@@ -608,9 +641,8 @@ exports.submitEvaluationMessage = async (req, res) => {
       evaluation: hcs11Message.evaluation,
       coordinatorMessage: hcs11Message.coordinatorMessage,
       topicStatus: evaluationTopic.status,
-      message: `HCS-11 evaluation message submitted by ${agent.name} to topic ${topicId}`
+      message: `HCS-11 evaluation message submitted by ${agent.name} to topic ${topicId}`,
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Failed to submit evaluation message",
@@ -625,15 +657,15 @@ exports.submitEvaluationMessage = async (req, res) => {
  */
 exports.sendValidationMessage = async (req, res) => {
   try {
-    const { 
-      topicId, 
-      agentId, 
-      evaluation: { passed, score, feedback, interviewNotes } 
+    const {
+      topicId,
+      agentId,
+      evaluation: { passed, score, feedback, interviewNotes },
     } = req.body;
 
     if (!topicId || !agentId || passed === undefined) {
       return res.status(400).json({
-        error: "TopicId, agentId, and evaluation.passed are required"
+        error: "TopicId, agentId, and evaluation.passed are required",
       });
     }
 
@@ -654,7 +686,7 @@ exports.sendValidationMessage = async (req, res) => {
         name: agent.name,
         avatarName: agent.avatarName,
         role: agent.role,
-        accountId: agent.hederaAccountId || agent.accountId
+        accountId: agent.hederaAccountId || agent.accountId,
       },
       evaluation: {
         topicId,
@@ -665,20 +697,22 @@ exports.sendValidationMessage = async (req, res) => {
           passed,
           score: score || null,
           feedback: feedback || "",
-          interviewNotes: interviewNotes || ""
+          interviewNotes: interviewNotes || "",
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       coordinatorMessage: {
         to: "coordinator_agent",
         action: passed ? "candidate_approved" : "candidate_rejected",
-        summary: `${agent.role} evaluation: ${passed ? 'PASSED' : 'FAILED'}${score ? ` (Score: ${score})` : ''}`
-      }
+        summary: `${agent.role} evaluation: ${passed ? "PASSED" : "FAILED"}${score ? ` (Score: ${score})` : ""}`,
+      },
     };
 
     // Get submit message tool
     const tools = toolkit.getTools();
-    const submitMessageTool = tools.find(tool => tool.name === 'submit_topic_message_tool');
+    const submitMessageTool = tools.find(
+      (tool) => tool.name === "submit_topic_message_tool",
+    );
 
     if (!submitMessageTool) {
       return res.status(500).json({ error: "Submit message tool not found" });
@@ -687,7 +721,7 @@ exports.sendValidationMessage = async (req, res) => {
     // Submit the message
     const result = await submitMessageTool._call({
       topicId: topicId,
-      message: JSON.stringify(validationMessage)
+      message: JSON.stringify(validationMessage),
     });
 
     // Update evaluation topic in database
@@ -700,8 +734,8 @@ exports.sendValidationMessage = async (req, res) => {
         passed,
         score,
         feedback,
-        interviewNotes
-      }
+        interviewNotes,
+      },
     });
 
     // Check if all required agents have evaluated
@@ -710,20 +744,31 @@ exports.sendValidationMessage = async (req, res) => {
 
     if (completedEvaluations >= requiredAgents.length) {
       evaluationTopic.status = "completed";
-      
+
       // Calculate final result
-      const allEvaluations = [...evaluationTopic.evaluations, {
-        evaluation: { passed, score }
-      }];
-      
-      const passedCount = allEvaluations.filter(e => e.evaluation.passed).length;
-      const totalScore = allEvaluations.reduce((sum, e) => sum + (e.evaluation.score || 0), 0);
+      const allEvaluations = [
+        ...evaluationTopic.evaluations,
+        {
+          evaluation: { passed, score },
+        },
+      ];
+
+      const passedCount = allEvaluations.filter(
+        (e) => e.evaluation.passed,
+      ).length;
+      const totalScore = allEvaluations.reduce(
+        (sum, e) => sum + (e.evaluation.score || 0),
+        0,
+      );
       const avgScore = totalScore / allEvaluations.length;
-      
+
       evaluationTopic.finalResult = {
         overallScore: avgScore,
-        recommendation: passedCount >= (requiredAgents.length * 0.7) ? "RECOMMENDED" : "NOT_RECOMMENDED",
-        completedAt: new Date()
+        recommendation:
+          passedCount >= requiredAgents.length * 0.7
+            ? "RECOMMENDED"
+            : "NOT_RECOMMENDED",
+        completedAt: new Date(),
       };
     }
 
@@ -736,9 +781,8 @@ exports.sendValidationMessage = async (req, res) => {
       evaluation: validationMessage.evaluation,
       coordinatorMessage: validationMessage.coordinatorMessage,
       topicStatus: evaluationTopic.status,
-      message: `Validation message sent by ${agent.name} (${agent.role})`
+      message: `Validation message sent by ${agent.name} (${agent.role})`,
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Failed to send validation message",
@@ -755,8 +799,9 @@ exports.getEvaluationTopic = async (req, res) => {
   try {
     const { topicId } = req.params;
 
-    const evaluationTopic = await EvaluationTopicModel.findOne({ topicId })
-      .populate('evaluations.agentId', 'name avatarName role');
+    const evaluationTopic = await EvaluationTopicModel.findOne({
+      topicId,
+    }).populate("evaluations.agentId", "name avatarName role");
 
     if (!evaluationTopic) {
       return res.status(404).json({ error: "Evaluation topic not found" });
@@ -764,9 +809,8 @@ exports.getEvaluationTopic = async (req, res) => {
 
     res.json({
       success: true,
-      data: evaluationTopic
+      data: evaluationTopic,
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Failed to get evaluation topic",
@@ -782,21 +826,20 @@ exports.getEvaluationTopic = async (req, res) => {
 exports.getEvaluationTopics = async (req, res) => {
   try {
     const { company, postId, status } = req.query;
-    
+
     const filter = {};
     if (company) filter.company = company;
     if (postId) filter.postId = postId;
     if (status) filter.status = status;
 
     const evaluationTopics = await EvaluationTopicModel.find(filter)
-      .populate('evaluations.agentId', 'name avatarName role')
+      .populate("evaluations.agentId", "name avatarName role")
       .sort({ createdAt: -1 });
 
     res.json({
       success: true,
-      data: evaluationTopics
+      data: evaluationTopics,
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Failed to get evaluation topics",

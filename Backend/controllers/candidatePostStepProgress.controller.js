@@ -5,7 +5,7 @@ class CandidatePostStepProgressController {
   async createProgress(req, res) {
     try {
       const result = await candidatePostStepProgressService.createProgress(
-        req.body
+        req.body,
       );
 
       if (result.success) {
@@ -93,7 +93,7 @@ class CandidatePostStepProgressController {
 
       const result =
         await candidatePostStepProgressService.getProgressByCandidate(
-          candidateId
+          candidateId,
         );
 
       if (result.success) {
@@ -125,7 +125,7 @@ class CandidatePostStepProgressController {
       const result =
         await candidatePostStepProgressService.getProgressByCandidateAndPost(
           candidateId,
-          postId
+          postId,
         );
 
       if (result.success) {
@@ -156,7 +156,7 @@ class CandidatePostStepProgressController {
       const { candidateId } = req.params;
       const result =
         await candidatePostStepProgressService.getProgressByCandidate(
-          candidateId
+          candidateId,
         );
 
       if (result.success) {
@@ -185,9 +185,8 @@ class CandidatePostStepProgressController {
   async getProgressByPost(req, res) {
     try {
       const { postId } = req.params;
-      const result = await candidatePostStepProgressService.getProgressByPost(
-        postId
-      );
+      const result =
+        await candidatePostStepProgressService.getProgressByPost(postId);
 
       if (result.success) {
         return res.status(200).json({
@@ -215,9 +214,8 @@ class CandidatePostStepProgressController {
   async getProgressByStatus(req, res) {
     try {
       const { status } = req.params;
-      const result = await candidatePostStepProgressService.getProgressByStatus(
-        status
-      );
+      const result =
+        await candidatePostStepProgressService.getProgressByStatus(status);
 
       if (result.success) {
         return res.status(200).json({
@@ -247,7 +245,7 @@ class CandidatePostStepProgressController {
       const { id } = req.params;
       const result = await candidatePostStepProgressService.updateProgress(
         id,
-        req.body
+        req.body,
       );
 
       if (result.success) {
@@ -280,7 +278,7 @@ class CandidatePostStepProgressController {
         await candidatePostStepProgressService.updateProgressByCandidateAndPost(
           candidateId,
           postId,
-          req.body
+          req.body,
         );
 
       if (result.success) {
@@ -340,7 +338,7 @@ class CandidatePostStepProgressController {
       const result =
         await candidatePostStepProgressService.deleteProgressByCandidateAndPost(
           candidateId,
-          postId
+          postId,
         );
 
       if (result.success) {
@@ -372,7 +370,7 @@ class CandidatePostStepProgressController {
       const result = await candidatePostStepProgressService.upsertProgress(
         candidateId,
         postId,
-        req.body
+        req.body,
       );
 
       if (result.success) {
@@ -432,7 +430,7 @@ class CandidatePostStepProgressController {
       const { postId } = req.params;
       const result =
         await candidatePostStepProgressService.getCompletedCandidatesByPost(
-          postId
+          postId,
         );
 
       if (result.success) {
@@ -463,7 +461,7 @@ class CandidatePostStepProgressController {
       const { postId } = req.params;
       const result =
         await candidatePostStepProgressService.getInProgressCandidatesByPost(
-          postId
+          postId,
         );
 
       if (result.success) {

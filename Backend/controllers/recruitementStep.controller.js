@@ -30,7 +30,7 @@ exports.generateQuestions = async (req, res) => {
       throw new HttpError(500, "post not found in the db");
     }
 
-    console.log(post)
+    console.log(post);
 
     const company = post.user;
     const companyProfile = await Profile.findOne({ userId: company });
@@ -46,7 +46,7 @@ exports.generateQuestions = async (req, res) => {
       post,
       userSkills,
       jobRequiredSkills,
-      user
+      user,
     );
 
     res.status(200).json(result);
@@ -65,7 +65,6 @@ exports.generateQuestions = async (req, res) => {
     });
   }
 };
-
 
 exports.analyseQuestions = async (req, res) => {
   try {
@@ -87,7 +86,7 @@ exports.analyseQuestions = async (req, res) => {
       throw new HttpError(400, `postId in postStep not found`);
     }
 
-console.log(postStep.data.type)
+    console.log(postStep.data.type);
     const post = await Post.findById(postStep.postId);
     if (!post) {
       throw new HttpError(500, "post not found in the db");
@@ -96,7 +95,7 @@ console.log(postStep.data.type)
     const result = await recruitementService.analyseQuestions({
       questions,
       postStep,
-      user,      
+      user,
     });
 
     res.status(200).json(result);
@@ -110,9 +109,7 @@ console.log(postStep.data.type)
 
     // Handle unexpected errors
     return res.status(500).json({
-      error:
-        "An unexpected error occurred while generating analyse questions.",
+      error: "An unexpected error occurred while generating analyse questions.",
     });
   }
 };
-

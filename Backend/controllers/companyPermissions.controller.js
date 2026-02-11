@@ -26,42 +26,47 @@ module.exports.getCompanyPermissions = async (req, res) => {
   try {
     const { companyId } = req.params;
 
-    console.log('📥 [Permissions] Fetching permissions for company:', companyId);
+    console.log(
+      "📥 [Permissions] Fetching permissions for company:",
+      companyId,
+    );
 
     // Find the user and populate their profile
-    const user = await User.findById(companyId).populate('profile');
+    const user = await User.findById(companyId).populate("profile");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Company user not found"
+        message: "Company user not found",
       });
     }
 
     // Verify this is a company user
-    if (user.role !== 'Company') {
+    if (user.role !== "Company") {
       return res.status(400).json({
         success: false,
-        message: "User is not a company"
+        message: "User is not a company",
       });
     }
 
     if (!user.profile) {
       return res.status(404).json({
         success: false,
-        message: "Company profile not found"
+        message: "Company profile not found",
       });
     }
 
     // Find or create permissions document
     let permission = await Permission.findOne({
       userId: user._id,
-      profileId: user.profile._id
+      profileId: user.profile._id,
     });
 
     // If no permissions exist, return defaults
     if (!permission) {
-      console.log('⚠️ [Permissions] No permission document found, returning defaults');
+      console.log(
+        "⚠️ [Permissions] No permission document found, returning defaults",
+      );
       return res.status(200).json({
         success: true,
         permissions: {
@@ -74,11 +79,11 @@ module.exports.getCompanyPermissions = async (req, res) => {
           canManageTeam: true,
           canInviteMembers: true,
           canAssignRoles: true,
-        }
+        },
       });
     }
 
-    console.log('✅ [Permissions] Found permission document:', permission._id);
+    console.log("✅ [Permissions] Found permission document:", permission._id);
 
     // Return the 9 permissions from PermissionModel
     const permissions = {
@@ -95,13 +100,13 @@ module.exports.getCompanyPermissions = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      permissions: permissions
+      permissions: permissions,
     });
   } catch (error) {
     console.error("❌ [Permissions] Error fetching permissions:", error);
     res.status(500).json({
       success: false,
-      message: "Error fetching company permissions: " + error.message
+      message: "Error fetching company permissions: " + error.message,
     });
   }
 };
@@ -116,61 +121,64 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     const { companyId } = req.params;
     const { permissions } = req.body;
 
-    console.log('📥 [Permissions] Updating permissions for company:', companyId);
-    console.log('📥 [Permissions] Received data:', permissions);
+    console.log(
+      "📥 [Permissions] Updating permissions for company:",
+      companyId,
+    );
+    console.log("📥 [Permissions] Received data:", permissions);
 
-    if (!permissions || typeof permissions !== 'object') {
+    if (!permissions || typeof permissions !== "object") {
       return res.status(400).json({
         success: false,
-        message: "Invalid permissions data"
+        message: "Invalid permissions data",
       });
     }
 
     // Validate all required permission fields
     const requiredFields = [
-      'canCreateJobPosts',
-      'canUnlockCandidates',
-      'canViewCandidateProfiles',
-      'canContactCandidates',
-      'canAccessMatching',
-      'canUseHRAgents',
-      'canManageTeam',
-      'canInviteMembers',
-      'canAssignRoles'
+      "canCreateJobPosts",
+      "canUnlockCandidates",
+      "canViewCandidateProfiles",
+      "canContactCandidates",
+      "canAccessMatching",
+      "canUseHRAgents",
+      "canManageTeam",
+      "canInviteMembers",
+      "canAssignRoles",
     ];
 
     for (const field of requiredFields) {
-      if (typeof permissions[field] !== 'boolean') {
+      if (typeof permissions[field] !== "boolean") {
         console.error(`❌ [Permissions] Missing or invalid field: ${field}`);
         return res.status(400).json({
           success: false,
-          message: `Missing or invalid field: ${field}`
+          message: `Missing or invalid field: ${field}`,
         });
       }
     }
 
     // Find the user and populate their profile
-    const user = await User.findById(companyId).populate('profile');
+    const user = await User.findById(companyId).populate("profile");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Company user not found"
+        message: "Company user not found",
       });
     }
 
     // Verify this is a company user
-    if (user.role !== 'Company') {
+    if (user.role !== "Company") {
       return res.status(400).json({
         success: false,
-        message: "User is not a company"
+        message: "User is not a company",
       });
     }
 
     if (!user.profile) {
       return res.status(404).json({
         success: false,
-        message: "Company profile not found"
+        message: "Company profile not found",
       });
     }
 
@@ -181,7 +189,7 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     const updatedPermission = await Permission.findOneAndUpdate(
       {
         userId: user._id,
-        profileId: user.profile._id
+        profileId: user.profile._id,
       },
       {
         $set: {
@@ -195,16 +203,19 @@ module.exports.updateCompanyPermissions = async (req, res) => {
           canInviteMembers: permissions.canInviteMembers,
           canAssignRoles: permissions.canAssignRoles,
           lastModifiedBy: adminUserId,
-        }
+        },
       },
       {
         new: true,
         upsert: true, // Create if doesn't exist
-        setDefaultsOnInsert: true
-      }
+        setDefaultsOnInsert: true,
+      },
     );
 
-    console.log('✅ [Permissions] Permission saved successfully:', updatedPermission._id);
+    console.log(
+      "✅ [Permissions] Permission saved successfully:",
+      updatedPermission._id,
+    );
 
     // Return the updated permissions
     const resultPermissions = {
@@ -222,13 +233,13 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Company permissions updated successfully",
-      permissions: resultPermissions
+      permissions: resultPermissions,
     });
   } catch (error) {
     console.error("❌ [Permissions] Error updating permissions:", error);
     res.status(500).json({
       success: false,
-      message: "Error updating company permissions: " + error.message
+      message: "Error updating company permissions: " + error.message,
     });
   }
 };
@@ -244,46 +255,51 @@ module.exports.getMyPermissions = async (req, res) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: "User not authenticated"
+        message: "User not authenticated",
       });
     }
 
-    console.log('📥 [Permissions] Fetching permissions for current user:', userId);
+    console.log(
+      "📥 [Permissions] Fetching permissions for current user:",
+      userId,
+    );
 
     // Find the user and populate their profile
-    const user = await User.findById(userId).populate('profile');
+    const user = await User.findById(userId).populate("profile");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     // Verify this is a company user
-    if (user.role !== 'Company') {
+    if (user.role !== "Company") {
       return res.status(400).json({
         success: false,
-        message: "User is not a company"
+        message: "User is not a company",
       });
     }
 
     if (!user.profile) {
       return res.status(404).json({
         success: false,
-        message: "Company profile not found"
+        message: "Company profile not found",
       });
     }
 
     // Find permissions document
     let permission = await Permission.findOne({
       userId: user._id,
-      profileId: user.profile._id
+      profileId: user.profile._id,
     });
 
     // If no permissions exist, return defaults
     if (!permission) {
-      console.log('⚠️ [Permissions] No permission document found, returning defaults');
+      console.log(
+        "⚠️ [Permissions] No permission document found, returning defaults",
+      );
       return res.status(200).json({
         success: true,
         permissions: {
@@ -296,11 +312,11 @@ module.exports.getMyPermissions = async (req, res) => {
           canManageTeam: true,
           canInviteMembers: true,
           canAssignRoles: true,
-        }
+        },
       });
     }
 
-    console.log('✅ [Permissions] Found permission document:', permission._id);
+    console.log("✅ [Permissions] Found permission document:", permission._id);
 
     // Return the 9 permissions from PermissionModel
     const permissions = {
@@ -317,13 +333,13 @@ module.exports.getMyPermissions = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      permissions: permissions
+      permissions: permissions,
     });
   } catch (error) {
     console.error("❌ [Permissions] Error fetching own permissions:", error);
     res.status(500).json({
       success: false,
-      message: "Error fetching permissions: " + error.message
+      message: "Error fetching permissions: " + error.message,
     });
   }
 };

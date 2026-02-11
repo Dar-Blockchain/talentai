@@ -290,7 +290,7 @@ module.exports.updatePostStepByNodeId = async (req, res) => {
     const { nodeId } = req.params;
     const result = await postStepsService.updatePostStepByNodeId(
       nodeId,
-      req.body
+      req.body,
     );
 
     if (result.success) {
@@ -353,7 +353,7 @@ module.exports.updateNodePosition = async (req, res) => {
 
     const result = await postStepsService.updateNodePosition(
       nodeId,
-      positionData
+      positionData,
     );
 
     if (result.success) {
@@ -384,7 +384,10 @@ module.exports.submitTask = async (req, res) => {
     const { nodeId } = req.params;
     const { githubLink } = req.body;
 
-    const result = await postStepsService.submitTaskByNodeId(nodeId, githubLink);
+    const result = await postStepsService.submitTaskByNodeId(
+      nodeId,
+      githubLink,
+    );
 
     if (result.success) {
       return res.status(200).json({
@@ -393,11 +396,13 @@ module.exports.submitTask = async (req, res) => {
         data: result.data,
       });
     } else {
-      return res.status(result.error === 'Post step not found' ? 404 : 400).json({
-        success: false,
-        message: "Error submitting task",
-        error: result.error,
-      });
+      return res
+        .status(result.error === "Post step not found" ? 404 : 400)
+        .json({
+          success: false,
+          message: "Error submitting task",
+          error: result.error,
+        });
     }
   } catch (error) {
     return res.status(500).json({
@@ -498,7 +503,7 @@ module.exports.getNodesBySpecificType = async (req, res) => {
     const { postId, nodeType } = req.params;
     const result = await postStepsService.getNodesBySpecificType(
       postId,
-      nodeType
+      nodeType,
     );
 
     if (result.success) {

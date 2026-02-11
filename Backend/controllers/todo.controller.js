@@ -46,19 +46,19 @@ exports.generateTodoListForProfile = async (req, res) => {
     } else {
       skillTodos.forEach((skillTodo) => {
         const existingSkillTodo = todo.todos.find(
-          (t) => t.title === skillTodo.title && t.type === "Skill"
+          (t) => t.title === skillTodo.title && t.type === "Skill",
         );
 
         // Add only up to 5 total tasks
         if (existingSkillTodo) {
           const remainingTodos = Math.max(
             0,
-            5 - existingSkillTodo.tasks.length
+            5 - existingSkillTodo.tasks.length,
           );
 
           if (remainingTodos > 0) {
             existingSkillTodo.tasks.push(
-              ...skillTodo.tasks.slice(0, remainingTodos)
+              ...skillTodo.tasks.slice(0, remainingTodos),
             );
           }
         } else {

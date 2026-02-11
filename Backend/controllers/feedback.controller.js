@@ -1,4 +1,4 @@
-const feedbackService = require('../services/feedback.service')
+const feedbackService = require("../services/feedback.service");
 
 exports.create = async (req, res) => {
   try {

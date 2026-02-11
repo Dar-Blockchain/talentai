@@ -18,5 +18,4 @@ const SKILL_LEVELS = Object.freeze({
   EXPERT: { experienceLevel: "Expert", proficiencyLevel: 5 },
 });
 
-
 module.exports = { DEFAULT_SOFT_SKILL_CATEGORIES, SKILL_TYPES, SKILL_LEVELS };
