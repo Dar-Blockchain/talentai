@@ -483,6 +483,17 @@ exports.getJobInterviewConfig = async (req, res) => {
       });
     }
 
+    // Check if post has expired
+    if (post.expirationDate && new Date(post.expirationDate) < new Date()) {
+      console.log('❌ Job post has expired');
+      return res.status(410).json({
+        success: false,
+        error: 'Job post has expired',
+        message: 'This job post has exceeded its expiration date and is no longer accepting applications',
+        expirationDate: post.expirationDate
+      });
+    }
+
     // Extract company and job details (for NON-pipeline jobs only)
     const companyName = post.user?.companyDetails?.name || 'Company';
     const jobTitle = post.jobDetails?.title || 'Position';
