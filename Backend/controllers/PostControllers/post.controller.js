@@ -494,6 +494,25 @@ exports.getJobInterviewConfig = async (req, res) => {
       });
     }
 
+    // Check if company has reached monthly interview limit
+    const companyProfile = await Profile.findOne({ userId: post.user._id }).populate('planLimits');
+    if (companyProfile && companyProfile.planLimits) {
+      const monthlyInterviewsUsed = companyProfile.planUsage?.monthlyInterviewsUsed || 0;
+      const monthlyInterviewLimit = companyProfile.planLimits.monthlyInterviewLimit;
+
+      if (monthlyInterviewsUsed >= monthlyInterviewLimit) {
+        console.log('❌ Company has reached maximum monthly interviews limit');
+        return res.status(429).json({
+          success: false,
+          error: 'Monthly interview limit reached',
+          message: `Your company has reached the maximum number of interviews (${monthlyInterviewLimit}) for this month`,
+          monthlyInterviewLimit: monthlyInterviewLimit,
+          monthlyInterviewsUsed: monthlyInterviewsUsed,
+          planName: companyProfile.planLimits.name
+        });
+      }
+    }
+
     // Extract company and job details (for NON-pipeline jobs only)
     const companyName = post.user?.companyDetails?.name || 'Company';
     const jobTitle = post.jobDetails?.title || 'Position';
