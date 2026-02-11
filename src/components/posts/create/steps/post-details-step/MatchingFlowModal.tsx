@@ -13,6 +13,8 @@ import {
   IconButton,
   Button,
   DialogActions,
+  Alert,
+  Chip,
 } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
@@ -57,7 +59,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
     profile?.planUsage?.candidateUnlocksUsed !== undefined &&
     Number(profile.planUsage.candidateUnlocksUsed) >= Number(currentPlanLimit.candidateUnlockLimit);
 
-  const PROFILE_UNLOCK_PACK_PRICE = 500;
+  // --- Token pricing commented out (free during beta) ---
+  // const PROFILE_UNLOCK_PACK_PRICE = 500;
 
   // Loading state for unlock action
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -159,6 +162,56 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
 
   const renderCandidates = () => (
     <Box py={2}>
+      {/* Free During Beta Banner */}
+      <Alert
+        severity="success"
+        icon={false}
+        sx={{
+          mb: 2,
+          borderRadius: "10px",
+          backgroundColor: "rgba(41, 210, 145, 0.08)",
+          border: "1px solid rgba(41, 210, 145, 0.3)",
+          "& .MuiAlert-message": { width: "100%" },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: "14px",
+              color: "rgba(41, 210, 145, 1)",
+            }}
+          >
+            Free During Beta
+          </Typography>
+          <Chip
+            label="FREE"
+            size="small"
+            sx={{
+              backgroundColor: "rgba(41, 210, 145, 1)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: "12px",
+            }}
+          />
+        </Box>
+        <Typography
+          sx={{
+            fontSize: "12px",
+            color: "rgba(75, 85, 99, 0.8)",
+            mt: 0.5,
+          }}
+        >
+          Unlock candidate profiles for free during the beta period.
+        </Typography>
+      </Alert>
+
       <Typography
         variant="h6"
         mb={2}
@@ -169,12 +222,22 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         <br />
         {hasReachedUnlockLimit ? (
           <>You have reached your unlock limit ({profile?.planUsage?.candidateUnlocksUsed}/{currentPlanLimit?.candidateUnlockLimit}). Please upgrade your plan or continue setting up your recruitment workflow.</>
+        ) : firstFiveUnlocked ? (
+          <>All top candidates have been unlocked! You can now view their full profiles and contact details.</>
         ) : (
+          /* --- Original token-based text (commented out) ---
           <>You can start reviewing and contacting them immediately <br/>by unlocking
           maximum 5 profiles for{" "}
           <b style={{ color: "rgba(222, 147, 0, 1)" }}>
             {PROFILE_UNLOCK_PACK_PRICE} tokens
           </b>{" "}
+          , or you can continue setting up your recruitment workflow.</>
+          */
+          <>You can start reviewing and contacting them immediately <br/>by unlocking
+          maximum 5 profiles{" "}
+          <b style={{ color: "rgba(41, 210, 145, 1)" }}>
+            for free
+          </b>
           , or you can continue setting up your recruitment workflow.</>
         )}
       </Typography>
@@ -183,7 +246,8 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           fontSize: "14px",
           fontWeight: 700,
           lineHeight: "34px",
-          color: "rgba(222, 147, 0, 1)",
+          // color: "rgba(222, 147, 0, 1)",
+          color: "rgba(41, 210, 145, 1)",
         }}
       >
         Candidates Found
@@ -194,9 +258,15 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           <Box
             key={candidate.candidateId}
             sx={{
-              background: "rgba(222, 147, 0, 0.04)",
+              // background: "rgba(222, 147, 0, 0.04)",
+              background: candidate?.unlocked
+                ? "rgba(41, 210, 145, 0.04)"
+                : "rgba(222, 147, 0, 0.04)",
               borderRadius: "8px",
-              border: "1px solid rgba(222, 147, 0, 1)",
+              // border: "1px solid rgba(222, 147, 0, 1)",
+              border: candidate?.unlocked
+                ? "1px solid rgba(41, 210, 145, 0.5)"
+                : "1px solid rgba(229, 231, 235, 1)",
               px: 3,
               py: 2,
             }}
@@ -246,6 +316,20 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                         {candidate?.firstName + " " + candidate?.lastName ||
                           candidate?.name}
                       </Typography>
+                      {candidate?.unlocked && (
+                        <Chip
+                          label="Unlocked"
+                          size="small"
+                          sx={{
+                            backgroundColor: "rgba(41, 210, 145, 0.1)",
+                            color: "rgba(41, 210, 145, 1)",
+                            fontWeight: 600,
+                            fontSize: "0.65rem",
+                            height: 20,
+                            border: "1px solid rgba(41, 210, 145, 0.3)",
+                          }}
+                        />
+                      )}
                       {candidate?.targetRole && (
                         <>
                           <Typography
@@ -423,14 +507,17 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
             Configure Hiring Agent
           </Button> */}
 
-          {matchingProfiles?.length > 0 && (
+          {matchingProfiles?.length > 0 && !firstFiveUnlocked && (
             <Button
               variant="outlined"
               onClick={handleConfirmUnlock}
-              disabled={isUnlocking || firstFiveUnlocked || hasReachedUnlockLimit}
+              disabled={isUnlocking || hasReachedUnlockLimit}
               sx={{
-                borderColor: "rgba(222, 147, 0, 1)",
-                color: "rgba(222, 147, 0, 1)",
+                // --- Original gold color (commented out) ---
+                // borderColor: "rgba(222, 147, 0, 1)",
+                // color: "rgba(222, 147, 0, 1)",
+                borderColor: "rgba(41, 210, 145, 1)",
+                color: "rgba(41, 210, 145, 1)",
                 fontWeight: 600,
                 borderRadius: "38px",
                 py: 1.5,
@@ -439,20 +526,50 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                 textTransform: "none",
                 fontSize: "0.875rem",
                 borderWidth: "1px",
-                "&:hover": { backgroundColor: "rgba(222, 147, 0, 0.08)" },
+                // "&:hover": { backgroundColor: "rgba(222, 147, 0, 0.08)" },
+                "&:hover": {
+                  backgroundColor: "rgba(41, 210, 145, 0.08)",
+                  borderColor: "rgba(41, 210, 145, 1)",
+                },
                 "&.Mui-disabled": { borderColor: "#e5e7eb", color: "#9ca3af" },
               }}
             >
               {isUnlocking ? (
                 <CircularProgress
                   size={20}
-                  sx={{ color: "rgba(222, 147, 0, 1)" }}
+                  // sx={{ color: "rgba(222, 147, 0, 1)" }}
+                  sx={{ color: "rgba(41, 210, 145, 1)" }}
                 />
               ) : hasReachedUnlockLimit ? (
                 `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
               ) : (
                 "Unlock Candidate Profiles"
               )}
+            </Button>
+          )}
+
+          {matchingProfiles?.length > 0 && firstFiveUnlocked && (
+            <Button
+              variant="outlined"
+              onClick={() => onContinue?.(true)}
+              sx={{
+                borderColor: "rgba(41, 210, 145, 1)",
+                color: "rgba(41, 210, 145, 1)",
+                fontWeight: 600,
+                borderRadius: "38px",
+                py: 1.5,
+                maxWidth: "300px",
+                height: "42px",
+                textTransform: "none",
+                fontSize: "0.875rem",
+                borderWidth: "1px",
+                "&:hover": {
+                  backgroundColor: "rgba(41, 210, 145, 0.08)",
+                  borderColor: "rgba(41, 210, 145, 1)",
+                },
+              }}
+            >
+              Continue to Recruitment Flow
             </Button>
           )}
         </DialogActions>

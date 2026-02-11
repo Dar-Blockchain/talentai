@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +11,7 @@ import {
   Button,
   Avatar,
   Alert,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useDispatch } from "react-redux";
@@ -18,7 +20,7 @@ import Image from "next/image";
 import { useSelector } from "react-redux";
 import {
   fetchTokenBalance,
-  selectTokenBalance,
+  // selectTokenBalance,
 } from "@/store/slices/tokenSlice";
 import {
   resetCandidateState,
@@ -51,13 +53,15 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
   companyId,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const tokenBalance = useSelector(selectTokenBalance);
-  const { walletInfo } = useSelector((state: RootState) => state.tokenPurchase);
+  const router = useRouter();
+  // --- Token balance check (commented out - free during beta) ---
+  // const tokenBalance = useSelector(selectTokenBalance);
+  // const { walletInfo } = useSelector((state: RootState) => state.tokenPurchase);
   const { unlockResult, loading } = useSelector((state: RootState) => state.candidate);
   const { profile } = useSelector((state: RootState) => state.user.connectedUser);
   const currentPlanLimit = useSelector(selectCurrentPlanLimit);
-  const hasInsufficientBalance =
-    walletInfo && walletInfo.balance < selectedCandidate?.unlockPrice;
+  // const hasInsufficientBalance =
+  //   walletInfo && walletInfo.balance < selectedCandidate?.unlockPrice;
   const [isCandidateUnlocked, setIsCandidateUnlocked] = useState(false);
 
   const hasReachedUnlockLimit =
@@ -206,6 +210,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
               </Typography>
             </Box>
           </Box>
+          {/* --- Original token price badge (commented out - free during beta) ---
           <Box
             sx={{
               py: 1,
@@ -236,6 +241,18 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
               {selectedCandidate?.unlockPrice} tokens
             </Typography>
           </Box>
+          */}
+          <Chip
+            label="FREE"
+            size="small"
+            sx={{
+              backgroundColor: "rgba(41, 210, 145, 0.1)",
+              color: "rgba(41, 210, 145, 1)",
+              fontWeight: 700,
+              fontSize: "12px",
+              border: "1px solid rgba(41, 210, 145, 0.3)",
+            }}
+          />
         </Box>
         {/* Unlock Limit Reached */}
         {hasReachedUnlockLimit && (
@@ -243,13 +260,15 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
             Unlock limit reached ({profile?.planUsage?.candidateUnlocksUsed}/{currentPlanLimit?.candidateUnlockLimit}). Please upgrade your plan.
           </Alert>
         )}
-        {/* Insufficient Balance */}
+        {/* --- Insufficient Balance (commented out - free during beta) ---
         {hasInsufficientBalance && !hasReachedUnlockLimit && (
           <Alert severity="error">
             Insufficient balance. You need {selectedCandidate?.unlockPrice} HBAR
             but have {walletInfo.balance} HBAR.
           </Alert>
         )}
+        */}
+        {/* --- Original token-based confirmation text (commented out) ---
         {!hasInsufficientBalance && !isCandidateUnlocked && (
           <Typography
             variant="body2"
@@ -270,6 +289,28 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
             permanent access to their contact information and detailed resume.
             Your remaining balance will be{" "}
             <b>{tokenBalance - selectedCandidate?.unlockPrice} Tokens</b>.
+          </Typography>
+        )}
+        */}
+        {!isCandidateUnlocked && (
+          <Typography
+            variant="body2"
+            sx={{
+              mt: 2.5,
+              color: "rgba(0, 0, 0, 1)",
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "14px",
+              lineHeight: "34px",
+              letterSpacing: "0px",
+              verticalAlign: "middle",
+            }}
+          >
+            You are about to unlock the full profile for this candidate{" "}
+            <b style={{ color: "rgba(41, 210, 145, 1)" }}>for free</b> during the beta period.
+            This will grant you permanent access to their contact information
+            and detailed resume.
           </Typography>
         )}
         {isCandidateUnlocked && (
@@ -323,8 +364,11 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
             onClick={handleConfirmUnlock}
             disabled={hasReachedUnlockLimit}
             sx={{
-              borderColor: "rgba(222, 147, 0, 1)",
-              color: "rgba(222, 147, 0, 1)",
+              // --- Original gold color (commented out) ---
+              // borderColor: "rgba(222, 147, 0, 1)",
+              // color: "rgba(222, 147, 0, 1)",
+              borderColor: "rgba(41, 210, 145, 1)",
+              color: "rgba(41, 210, 145, 1)",
               fontWeight: 600,
               borderRadius: "38px",
               py: 1.5,
@@ -334,7 +378,9 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
               fontSize: "0.875rem",
               borderWidth: "1px",
               "&:hover": {
-                backgroundColor: "rgba(222, 147, 0, 0.08)",
+                // backgroundColor: "rgba(222, 147, 0, 0.08)",
+                backgroundColor: "rgba(41, 210, 145, 0.08)",
+                borderColor: "rgba(41, 210, 145, 1)",
               },
               "&.Mui-disabled": {
                 borderColor: "#e5e7eb",
@@ -350,6 +396,10 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
         {isCandidateUnlocked && (
           <Button
             variant="outlined"
+            onClick={() => {
+              handleClose();
+              router.push(`/profile/candidate/${selectedCandidate?.candidateId}`);
+            }}
             sx={{
               borderColor: "rgba(11, 82, 198, 1)",
               color: "rgba(11, 82, 198, 1)",

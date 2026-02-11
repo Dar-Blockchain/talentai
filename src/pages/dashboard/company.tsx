@@ -74,7 +74,7 @@ const DashboardCompany = () => {
   const isLoadingJobs = useSelector(selectMyPostsLoading);
   const jobsError = useSelector(selectMyPostsError);
   const [displayCount, setDisplayCount] = useState(3); // Change initial display count to 3
-  // const [bidDialogOpen, setBidDialogOpen] = useState(false);
+  const [bidDialogOpen, setBidDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [jobsPerPage] = useState(10); // Set items per page
@@ -162,16 +162,16 @@ const fetchMyJobs = useCallback(
   }, [candidatesPage, activeSection]); // Refetch when page or section changes
 
 
-  // // Add handler for bid dialog
-  // const handleBidDialogOpen = (candidate: any) => {
-  //   setSelectedCandidate(candidate);
-  //   setBidDialogOpen(true);
-  // };
+  // Add handler for bid dialog
+  const handleBidDialogOpen = (candidate: any) => {
+    setSelectedCandidate(candidate);
+    setBidDialogOpen(true);
+  };
 
-  // const handleBidDialogClose = () => {
-  //   setBidDialogOpen(false);
-  //   setSelectedCandidate(null);
-  // };
+  const handleBidDialogClose = () => {
+    setBidDialogOpen(false);
+    setSelectedCandidate(null);
+  };
 
   // Memoized callback to prevent duplicate API calls
   const handleViewMatches = useCallback((jobId: string) => {
@@ -278,7 +278,7 @@ const fetchMyJobs = useCallback(
               selectedJob={selectedJob}
               onBackToJobs={() => setSelectedJob("")}
               onLoadMore={() => setDisplayCount((prev) => prev + 3)}
-              // onBidDialogOpen={handleBidDialogOpen}
+              onBidDialogOpen={handleBidDialogOpen}
               currentPage={matchesPage}
               totalPages={matchesPagination.totalPages}
               onPageChange={(page) => {
@@ -309,13 +309,13 @@ const fetchMyJobs = useCallback(
           {/* {activeSection === "all" && profile?._id && <HRAgentsTable companyId={profile._id} />} */}
 
           {/* Add Bid Dialog */}
-          {/* <UnlockCandidate
+          <UnlockCandidate
             open={bidDialogOpen}
             onClose={handleBidDialogClose}
             selectedCandidate={selectedCandidate}
             selectedJob={selectedJob}
             companyId={user?._id || ""}
-          /> */}
+          />
 
           {/* Company Profiles & Assessments Section - Only show when activeSection is "all" */}
           {/* {activeSection === "all" && <CompanyProfilesAssessments />} */}

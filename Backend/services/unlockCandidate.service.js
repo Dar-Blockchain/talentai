@@ -247,8 +247,9 @@ const unlockCandidate = async (idCompany, candidateIds, idJob, price) => {
     // ========== STEP 3: CALCULATE PRICING ==========
     const perCandidateShare = Number((price / candidateCount).toFixed(8));
 
-    // ========== STEP 4: PROCESS PAYMENT ==========
-    const transactionId = await processUnlockPayment(company, price, idJob);
+    // ========== STEP 4: PROCESS PAYMENT (commented out - free during beta) ==========
+    // const transactionId = await processUnlockPayment(company, price, idJob);
+    const transactionId = `FREE_BETA_${idJob}_${Date.now()}`;
 
     // ========== STEP 5: CREATE UNLOCK RECORDS ==========
     const unlockedRecords = await createUnlockRecords(idCompany, candidateIds, idJob, perCandidateShare, transactionId);

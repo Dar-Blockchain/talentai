@@ -76,7 +76,7 @@ interface MatchingProfilesProps {
   selectedJob: string;
   onBackToJobs: () => void;
   onLoadMore: () => void;
-  // onBidDialogOpen: (candidate: MatchingCandidate) => void;
+  onBidDialogOpen: (candidate: MatchingCandidate) => void;
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
@@ -92,7 +92,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   selectedJob,
   onBackToJobs,
   onLoadMore,
-  // onBidDialogOpen,
+  onBidDialogOpen,
   currentPage = 1,
   totalPages = 1,
   onPageChange,
@@ -646,7 +646,8 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                     >
                       Contact Candidate
                     </Button> */}
-                    {/* {!candidate?.unlocked && <Button
+                    {/* --- Original token-based unlock button (commented out - free during beta) ---
+                    {!candidate?.unlocked && <Button
                       variant="outlined"
                       fullWidth
                       startIcon={
@@ -682,7 +683,39 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       {hasReachedUnlockLimit
                         ? `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
                         : `Unlock Full Profile (${candidate?.unlockPrice} Tokens)`}
-                    </Button>} */}
+                    </Button>}
+                    */}
+                    {!candidate?.unlocked && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => onBidDialogOpen(candidate)}
+                        sx={{
+                          borderColor: "rgba(41, 210, 145, 1)",
+                          color: "rgba(41, 210, 145, 1)",
+                          fontWeight: 600,
+                          borderRadius: "38px",
+                          py: 1.5,
+                          maxWidth: "300px",
+                          height: "42px",
+                          textTransform: "none",
+                          fontSize: "0.875rem",
+                          borderWidth: "1px",
+                          "&:hover": {
+                            backgroundColor: "rgba(41, 210, 145, 0.08)",
+                            borderColor: "rgba(41, 210, 145, 1)",
+                          },
+                          "&.Mui-disabled": {
+                            borderColor: "#e5e7eb",
+                            color: "#9ca3af",
+                          },
+                        }}
+                        disabled={!candidate?.candidateId || !selectedJob || hasReachedUnlockLimit}
+                      >
+                        {hasReachedUnlockLimit
+                          ? `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
+                          : "Unlock Full Profile (FREE)"}
+                      </Button>
+                    )}
                     {candidate?.unlocked && <Button
             variant="outlined"
             onClick={() => handleViewProfile(candidate)}

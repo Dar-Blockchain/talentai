@@ -98,65 +98,100 @@ exports.processPostPayment = async (req, res) => {
       });
     }
 
-    // Get user's Hedera account details
-    const user = await User.findById(req.user._id);
+    // --- Original payment processing (commented out - free during beta) ---
+    // // Get user's Hedera account details
+    // const user = await User.findById(req.user._id);
+    //
+    // if (!user.hederaAccountId || !user.hederaPrivateKey) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: 'User Hedera account not configured. Please set up your wallet first.'
+    //   });
+    // }
+    //
+    // // Calculate price
+    // const numberOfSteps = post.PostSteps?.length || 0;
+    // const price = postPaymentService.calculatePrice(numberOfSteps);
+    //
+    // console.log(`🚀 Initiating payment for Post ${postId}`);
+    // console.log(`   User: ${user.username} (${user._id})`);
+    // console.log(`   Steps: ${numberOfSteps}`);
+    // console.log(`   Price: ${price} TAI`);
+    //
+    // // Update post status to pending payment
+    // post.paymentStatus = 'pending';
+    // await post.save();
+    //
+    // // Process payment
+    // const paymentResult = await postPaymentService.processPayment(
+    //   user.hederaAccountId,
+    //   user.hederaPrivateKey,
+    //   price,
+    //   postId,
+    //   user._id
+    // );
+    //
+    // // Update post with payment details
+    // post.paymentStatus = 'completed';
+    // post.paymentTransactionId = paymentResult.transactionId;
+    // post.pricePaid = price;
+    // post.paymentCompletedAt = new Date();
+    // await post.save();
+    //
+    // console.log(`✅ Payment completed successfully for Post ${postId}`);
+    //
+    // res.status(200).json({
+    //   success: true,
+    //   message: 'Payment processed successfully',
+    //   data: {
+    //     postId: post._id,
+    //     agentId: agentId || post.agentId,
+    //     payment: {
+    //       amount: price,
+    //       transactionId: paymentResult.transactionId,
+    //       hederaTransactionId: paymentResult.hederaTransactionId,
+    //       status: 'completed',
+    //       timestamp: new Date()
+    //     },
+    //     breakdown: {
+    //       baseFee: postPaymentService.BASE_FEE,
+    //       numberOfSteps: numberOfSteps,
+    //       stepRate: postPaymentService.STEP_RATE,
+    //       total: price
+    //     }
+    //   }
+    // });
 
-    if (!user.hederaAccountId || !user.hederaPrivateKey) {
-      return res.status(400).json({
-        success: false,
-        error: 'User Hedera account not configured. Please set up your wallet first.'
-      });
-    }
-
-    // Calculate price
+    // --- Free during beta: skip payment, mark as completed ---
     const numberOfSteps = post.PostSteps?.length || 0;
-    const price = postPaymentService.calculatePrice(numberOfSteps);
+    const freeTransactionId = `FREE_BETA_${postId}_${Date.now()}`;
 
-    console.log(`🚀 Initiating payment for Post ${postId}`);
-    console.log(`   User: ${user.username} (${user._id})`);
-    console.log(`   Steps: ${numberOfSteps}`);
-    console.log(`   Price: ${price} TAI`);
-
-    // Update post status to pending payment
-    post.paymentStatus = 'pending';
-    await post.save();
-
-    // Process payment
-    const paymentResult = await postPaymentService.processPayment(
-      user.hederaAccountId,
-      user.hederaPrivateKey,
-      price,
-      postId,
-      user._id
-    );
-
-    // Update post with payment details
     post.paymentStatus = 'completed';
-    post.paymentTransactionId = paymentResult.transactionId;
-    post.pricePaid = price;
+    post.paymentTransactionId = freeTransactionId;
+    post.pricePaid = 0;
     post.paymentCompletedAt = new Date();
     await post.save();
 
-    console.log(`✅ Payment completed successfully for Post ${postId}`);
+    console.log(`✅ Post ${postId} published for FREE (beta period)`);
 
     res.status(200).json({
       success: true,
-      message: 'Payment processed successfully',
+      message: 'Payment processed successfully (free during beta)',
       data: {
         postId: post._id,
         agentId: agentId || post.agentId,
         payment: {
-          amount: price,
-          transactionId: paymentResult.transactionId,
-          hederaTransactionId: paymentResult.hederaTransactionId,
+          amount: 0,
+          transactionId: freeTransactionId,
+          hederaTransactionId: null,
           status: 'completed',
           timestamp: new Date()
         },
         breakdown: {
-          baseFee: postPaymentService.BASE_FEE,
+          baseFee: 0,
           numberOfSteps: numberOfSteps,
-          stepRate: postPaymentService.STEP_RATE,
-          total: price
+          stepRate: 0,
+          total: 0
         }
       }
     });
