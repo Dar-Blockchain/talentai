@@ -247,7 +247,7 @@ function PipelineStepsAccordion({ steps }: { steps?: Step[] }) {
   return (
     <Stack spacing={1.5}>
       {sortedSteps.map((step) => {
-        const config = step.data.config ?? {};
+        const config = step.data?.config ?? {};
 
         return (
           <Accordion key={step.id} defaultExpanded={false} sx={accordionSx}>
@@ -257,11 +257,11 @@ function PipelineStepsAccordion({ steps }: { steps?: Step[] }) {
             >
               <Stack spacing={0.3}>
                 <Typography fontWeight={600} fontSize={14}>
-                  Step {step.order + 1} · {step.data.label}
+                  Step {step.order + 1} · {step.data?.label}
                 </Typography>
 
                 <Typography variant="caption" color="text.secondary">
-                  {step.data.type.toUpperCase()} · {step.status.toUpperCase()}
+                  {step.data?.type?.toUpperCase()} · {step.status?.toUpperCase()}
                 </Typography>
               </Stack>
             </AccordionSummary>
@@ -329,7 +329,7 @@ function PipelineStepsAccordion({ steps }: { steps?: Step[] }) {
                 )}
 
                 {/* Email */}
-                {step.data.type === "email" && (
+                {step.data?.type === "email" && (
                   <ConfigSection title="Email">
                     {config.emailType && (
                       <Tag label={`Type · ${config.emailType}`} />
@@ -342,7 +342,7 @@ function PipelineStepsAccordion({ steps }: { steps?: Step[] }) {
                 )}
 
                 {/* Task */}
-                {step.data.type === "task" && (
+                {step.data?.type === "task" && (
                   <ConfigSection title="Task">
                     {config.taskTitle && <Tag label={config.taskTitle} />}
                     {config.deliverableType && (

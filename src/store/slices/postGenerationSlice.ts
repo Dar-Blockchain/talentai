@@ -65,6 +65,7 @@ export interface PostGenerationResponse {
   jobDetails: JobDetails;
   skillAnalysis: SkillAnalysis;
   linkedinPost: LinkedinPost;
+  expirationDate: string | null;
 }
 
 // ------------------------------------------------------
@@ -79,6 +80,7 @@ export interface PostGenerationState {
   workMode: string;
   employmentType: string;
   salary: Salary;
+  expirationDate: string;
 
   loading: boolean;
   error: string | null;
@@ -90,6 +92,12 @@ export interface PostGenerationState {
 // Initial State
 // ------------------------------------------------------
 
+const getDefaultExpirationDate = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + 15);
+  return date.toISOString();
+};
+
 const initialState: PostGenerationState = {
   generatedPost: null,
   creationType: null,
@@ -98,6 +106,7 @@ const initialState: PostGenerationState = {
   workMode: "",
   employmentType: "",
   salary: { min: null, max: null, currency: "USD" },
+  expirationDate: getDefaultExpirationDate(),
 
   loading: false,
   error: null,
@@ -188,6 +197,7 @@ const postGenerationSlice = createSlice({
       state.workMode = "";
       state.employmentType = "";
       state.salary = { min: null, max: null, currency: "USD" };
+      state.expirationDate = getDefaultExpirationDate();
 
       state.loading = false;
     },
@@ -215,6 +225,13 @@ const postGenerationSlice = createSlice({
 
     setEmploymentType(state, action: PayloadAction<string>) {
       state.employmentType = action.payload;
+    },
+
+    setExpirationDate(state, action: PayloadAction<string>) {
+      state.expirationDate = action.payload;
+      if (state.generatedPost) {
+        state.generatedPost.expirationDate = action.payload;
+      }
     },
 
     setSalary(state, action: PayloadAction<Salary>) {
@@ -350,7 +367,10 @@ const postGenerationSlice = createSlice({
         generatePost.fulfilled,
         (state, action: PayloadAction<PostGenerationResponse>) => {
           state.loading = false;
-          state.generatedPost = action.payload;
+          state.generatedPost = {
+            ...action.payload,
+            expirationDate: state.expirationDate,
+          };
           state.generatedAt = Date.now();
         }
       )
@@ -373,6 +393,7 @@ export const {
   setGenerationType,
   setWorkMode,
   setEmploymentType,
+  setExpirationDate,
   setSalary,
   updateSalaryField,
   editHardSkill,

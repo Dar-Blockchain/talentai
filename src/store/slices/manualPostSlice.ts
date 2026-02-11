@@ -73,6 +73,7 @@ export interface ManualPostState {
   linkedinPost: LinkedinPost;
   matchingConfig: any;
   creationType: "manual";
+  expirationDate: string;
 }
 
 /* ========= Initial State ========= */
@@ -174,6 +175,7 @@ const initialState: ManualPostState = {
   },
 
   creationType: "manual",
+  expirationDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
 };
 
 /* ========= Slice ========= */
@@ -206,6 +208,9 @@ const manualPostSlice = createSlice({
     updateMatchingConfig: (state, action: PayloadAction<any>) => {
       state.matchingConfig = { ...state.matchingConfig, ...action.payload };
     },
+    setManualExpirationDate: (state, action: PayloadAction<string>) => {
+      state.expirationDate = action.payload;
+    },
     resetManualPost: () => initialState,
   },
 });
@@ -218,6 +223,7 @@ export const {
   updateSkillAnalysis,
   updateLinkedinPost,
   updateMatchingConfig,
+  setManualExpirationDate,
   resetManualPost,
 } = manualPostSlice.actions;
 
