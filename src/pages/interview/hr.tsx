@@ -749,6 +749,17 @@ const IntelligentInterviewTest = () => {
       const postData = await postResponse.json();
       console.log('📋 Raw post data:', postData);
       const post = postData.data || postData.post || postData;
+
+      // Check if job post has expired
+      if (post?.expirationDate && new Date(post.expirationDate) < new Date()) {
+        console.log('❌ Job post has expired, redirecting...');
+        router.replace({
+          pathname: '/interview/expired',
+          query: post.jobDetails?.title ? { jobTitle: post.jobDetails.title } : undefined,
+        });
+        return;
+      }
+
       const isPipeline = post?.creationType === 'pipeline';
 
       // Check company's interview limit
@@ -804,10 +815,11 @@ const IntelligentInterviewTest = () => {
                   Number(companyPlanUsage.monthlyInterviewsUsed) >= Number(planLimit.monthlyInterviewLimit)
                 ) {
                   setCompanyInterviewLimitReached(true);
-                  showNotification(
-                    `The company has reached their monthly interview limit (${companyPlanUsage.monthlyInterviewsUsed}/${planLimit.monthlyInterviewLimit}). Please contact the recruiter.`,
-                    'warning'
-                  );
+                  router.replace({
+                    pathname: '/interview/limit-reached',
+                    query: post.jobDetails?.title ? { jobTitle: post.jobDetails.title } : undefined,
+                  });
+                  return;
                 }
               }
             }
@@ -956,6 +968,24 @@ const IntelligentInterviewTest = () => {
           // Check if it's a pipeline job error
           if (errorData.isPipeline) {
             throw new Error('This is a pipeline job - please refresh the page. The interview configuration is being loaded from the pipeline steps.');
+          }
+
+          // Check if job post has expired (HTTP 410)
+          if (response.status === 410) {
+            router.replace({
+              pathname: '/interview/expired',
+              query: errorData.jobTitle ? { jobTitle: errorData.jobTitle } : undefined,
+            });
+            return;
+          }
+
+          // Check if company has reached monthly interview limit (HTTP 429)
+          if (response.status === 429) {
+            router.replace({
+              pathname: '/interview/limit-reached',
+              query: errorData.jobTitle ? { jobTitle: errorData.jobTitle } : undefined,
+            });
+            return;
           }
 
           throw new Error(`Failed to fetch job config: ${errorData.message || errorData.error || response.statusText}`);

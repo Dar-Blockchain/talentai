@@ -490,7 +490,8 @@ exports.getJobInterviewConfig = async (req, res) => {
         success: false,
         error: 'Job post has expired',
         message: 'This job post has exceeded its expiration date and is no longer accepting applications',
-        expirationDate: post.expirationDate
+        expirationDate: post.expirationDate,
+        jobTitle: post.jobDetails?.title || ''
       });
     }
 
@@ -508,7 +509,8 @@ exports.getJobInterviewConfig = async (req, res) => {
           message: `Your company has reached the maximum number of interviews (${monthlyInterviewLimit}) for this month`,
           monthlyInterviewLimit: monthlyInterviewLimit,
           monthlyInterviewsUsed: monthlyInterviewsUsed,
-          planName: companyProfile.planLimits.name
+          planName: companyProfile.planLimits.name,
+          jobTitle: post.jobDetails?.title || ''
         });
       }
     }
