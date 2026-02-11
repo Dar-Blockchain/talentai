@@ -743,6 +743,12 @@ const IntelligentInterviewTest = () => {
       );
 
       if (!postResponse.ok) {
+        // If unauthorized (logged out), redirect to sign in with return URL
+        if (postResponse.status === 401) {
+          const returnUrl = window.location.pathname + window.location.search;
+          router.replace(`/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
+          return;
+        }
         throw new Error('Failed to fetch job details');
       }
 
