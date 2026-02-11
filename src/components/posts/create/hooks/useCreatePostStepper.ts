@@ -10,14 +10,14 @@ import {
   updatePost,
   updatePostStatus,
 } from "@/store/slices/postSlice";
-import { createHRAgent } from "@/store/slices/hrAgentsSlice";
-import { createAgentConfig } from "@/store/slices/agentConfigSlice";
+// import { createHRAgent } from "@/store/slices/hrAgentsSlice";
+// import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 import { getMyProfile } from "@/store/slices/userSlice";
 
 import {
   buildRecruitmentSteps,
-  getJobSkills,
+  // getJobSkills,
   validatePipelineNodes,
 } from "@/utils/postHelpers";
 import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
@@ -45,7 +45,7 @@ export const useCreatePostStepper = (
 
   const [activeStep, setActiveStep] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-  const [agentLoadingOpen, setAgentLoadingOpen] = useState(false);
+  // const [agentLoadingOpen, setAgentLoadingOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
     "saving"
@@ -124,21 +124,21 @@ export const useCreatePostStepper = (
         })
       ).unwrap();
 
-      // Auto-create HR agent and config (previously done in Agent Configuration step)
-      await dispatch(
-        createHRAgent({
-          agentData: {
-            jobId: savedPost?.jobData?._id,
-            companyName: profile?.companyDetails?.name || "Company",
-            postTitle: savedPost?.jobData?.jobDetails?.title,
-            companyId: profile?.userId,
-            jobSkills: getJobSkills(savedPost?.jobData),
-          },
-          configData: null,
-        })
-      ).unwrap();
+      // --- Hiring agent creation commented out ---
+      // await dispatch(
+      //   createHRAgent({
+      //     agentData: {
+      //       jobId: savedPost?.jobData?._id,
+      //       companyName: profile?.companyDetails?.name || "Company",
+      //       postTitle: savedPost?.jobData?.jobDetails?.title,
+      //       companyId: profile?.userId,
+      //       jobSkills: getJobSkills(savedPost?.jobData),
+      //     },
+      //     configData: null,
+      //   })
+      // ).unwrap();
 
-      await dispatch(createAgentConfig()).unwrap();
+      // await dispatch(createAgentConfig()).unwrap();
     } catch (error) {
       console.error("Pipeline save failed:", error);
       showToast({
@@ -149,23 +149,24 @@ export const useCreatePostStepper = (
   };
 
   const finalizeCreation = async () => {
-    setAgentLoadingOpen(true);
+    // setAgentLoadingOpen(true);
 
     try {
-      await dispatch(
-        createHRAgent({
-          agentData: {
-            jobId: savedPost?.jobData?._id,
-            companyName: profile?.companyDetails?.name || "Company",
-            postTitle: savedPost?.jobData?.jobDetails?.title,
-            companyId: profile?.userId,
-            jobSkills: getJobSkills(savedPost?.jobData),
-          },
-          configData: null,
-        })
-      ).unwrap();
+      // --- Hiring agent creation commented out ---
+      // await dispatch(
+      //   createHRAgent({
+      //     agentData: {
+      //       jobId: savedPost?.jobData?._id,
+      //       companyName: profile?.companyDetails?.name || "Company",
+      //       postTitle: savedPost?.jobData?.jobDetails?.title,
+      //       companyId: profile?.userId,
+      //       jobSkills: getJobSkills(savedPost?.jobData),
+      //     },
+      //     configData: null,
+      //   })
+      // ).unwrap();
 
-      await dispatch(createAgentConfig()).unwrap();
+      // await dispatch(createAgentConfig()).unwrap();
 
       if (creationType === "ai") {
         await dispatch(
@@ -173,7 +174,7 @@ export const useCreatePostStepper = (
         ).unwrap();
       }
 
-      setAgentLoadingOpen(false);
+      // setAgentLoadingOpen(false);
 
       if (creationType === "ai") {
         router.push("/dashboard/company");
@@ -187,7 +188,7 @@ export const useCreatePostStepper = (
       setActiveStep(2);
     }  catch (error: any) {
   console.error("Error configuring hiring agent:", error);
-  setAgentLoadingOpen(false);
+  // setAgentLoadingOpen(false);
   showToast({ message: "Failed to configure hiring agent.", severity: "error" });
 }
   };
@@ -260,7 +261,7 @@ export const useCreatePostStepper = (
     modalOpen,
     modalMode,
     paymentModalOpen,
-    agentLoadingOpen,
+    // agentLoadingOpen,
 
     pipelineWarningOpen,
     unconfiguredNodes,

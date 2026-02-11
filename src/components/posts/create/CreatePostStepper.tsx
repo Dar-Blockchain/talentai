@@ -23,7 +23,7 @@ import { useRouter } from "next/router";
 import TokenPurchaseModal from "@/components/token-purchase/TokenPurchaseModal";
 import PostDetailsStep from "./steps/post-details-step/PostDetailsStep";
 // import AgentConfigurationStep from "./steps/agent-configuration-step/AgentConfigurationStep";
-import AgentConfigurationLoadingModal from "./steps/agent-configuration-step/LoadingModal";
+// import AgentConfigurationLoadingModal from "./steps/agent-configuration-step/LoadingModal";
 import PipelineWarningDialog from "./steps/recruitment-flow-step/PipelineWarningModal";
 
 // ------- Custom Stepper Styles -------
@@ -117,7 +117,7 @@ const CreatePostStepper: React.FC = () => {
     activeStep,
     modalOpen,
     modalMode,
-    agentLoadingOpen,
+    // agentLoadingOpen,
     paymentModalOpen,
     pipelineWarningOpen,
     unconfiguredNodes,
@@ -275,7 +275,7 @@ const CreatePostStepper: React.FC = () => {
         mode={modalMode}
         onContinue={handleNext}
       />
-      <AgentConfigurationLoadingModal open={agentLoadingOpen} />
+      {/* <AgentConfigurationLoadingModal open={agentLoadingOpen} /> */}
       <PipelineWarningDialog
         open={pipelineWarningOpen}
         nodes={unconfiguredNodes}

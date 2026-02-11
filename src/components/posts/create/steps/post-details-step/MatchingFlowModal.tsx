@@ -405,7 +405,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
             borderTop: "1px solid rgba(227, 229, 233, 1)",
           }}
         >
-          <Button
+          {/* <Button
             variant="outlined"
             onClick={() => onContinue(true)}
             sx={{
@@ -421,7 +421,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
             }}
           >
             Configure Hiring Agent
-          </Button>
+          </Button> */}
 
           {matchingProfiles?.length > 0 && (
             <Button
