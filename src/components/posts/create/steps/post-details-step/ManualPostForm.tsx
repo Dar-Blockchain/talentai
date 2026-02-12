@@ -1,4 +1,7 @@
 import { Box, MenuItem, TextField, Typography } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -8,7 +11,7 @@ import {
   workModes,
 } from "@/components/preferences/data/candidateData";
 import SalaryRange from "./SalaryRange";
-import { updateJobDetails, updateLinkedinPost } from "@/store/slices/manualPostSlice";
+import { updateJobDetails, updateLinkedinPost, setManualExpirationDate } from "@/store/slices/manualPostSlice";
 import { useEffect } from "react";
 
 const inputStyle = {
@@ -25,6 +28,7 @@ const ManualPostForm = () => {
   const manualPost = useSelector((state: any) => state.manualPost);
   const {
     jobDetails: { title, employmentType, location, salary },
+    expirationDate,
   } = manualPost;
 
   const handleSalaryChange = (
@@ -260,6 +264,39 @@ const ManualPostForm = () => {
           </Box>
         </Box>
         <SalaryRange salaryRange={salary} onSalaryChange={handleSalaryChange} />
+
+        {/* EXPIRATION DATE */}
+        <Box sx={{ mt: 2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              lineHeight: "42px",
+              fontWeight: 500,
+              fontSize: "12px",
+              color: "rgba(84, 98, 116, 0.53)",
+            }}
+          >
+            Expiration Date
+          </Typography>
+
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              value={expirationDate ? new Date(expirationDate) : null}
+              onChange={(date) => {
+                if (date) {
+                  dispatch(setManualExpirationDate(date.toISOString()));
+                }
+              }}
+              minDate={new Date()}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  sx: inputStyle,
+                },
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
       </Box>
     </Box>
   );

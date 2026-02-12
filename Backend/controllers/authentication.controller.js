@@ -1,11 +1,17 @@
 const authService = require("../services/authentication.service");
-const { validateEmail, validateOTPInput, validateIdToken } = require("../helpers/auth-validation.helpers");
+const {
+  validateEmail,
+  validateOTPInput,
+  validateIdToken,
+} = require("../helpers/auth-validation.helpers");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
-  console.error('Auth error:', error?.message || error);
+  console.error("Auth error:", error?.message || error);
   const status = error?.status || defaultStatus;
-  res.status(status).json({ success: false, error: error?.message || 'Internal error' });
+  res
+    .status(status)
+    .json({ success: false, error: error?.message || "Internal error" });
 };
 
 // Route d'inscription
@@ -37,7 +43,11 @@ module.exports.verifyOTP = async (req, res) => {
     // Validate input
     const { email: validEmail, otp: validOTP } = validateOTPInput(email, otp);
 
-    const result = await authService.verifyUserOTP(validEmail, validOTP, location);
+    const result = await authService.verifyUserOTP(
+      validEmail,
+      validOTP,
+      location,
+    );
 
     res.cookie("jwt_token", result.token, {
       httpOnly: false,
@@ -50,7 +60,7 @@ module.exports.verifyOTP = async (req, res) => {
       user: result.user,
       token: result.token,
       profile: result.profile || null,
-      companyMembership: result.companyMembership || null
+      companyMembership: result.companyMembership || null,
     });
   } catch (error) {
     handleError(res, error, 400);
@@ -92,7 +102,9 @@ module.exports.logout = (req, res) => {
       req.session.destroy((err) => {
         if (err) {
           console.error("Session destruction error:", err);
-          return res.status(500).json({ success: false, error: "Logout failed" });
+          return res
+            .status(500)
+            .json({ success: false, error: "Logout failed" });
         }
         res.status(200).json({ success: true, message: "Déconnexion réussie" });
       });
@@ -107,7 +119,9 @@ module.exports.logout = (req, res) => {
 module.exports.warnUser = async (req, res) => {
   try {
     if (!req.user || !req.user.email) {
-      return res.status(401).json({ success: false, error: 'User not authenticated' });
+      return res
+        .status(401)
+        .json({ success: false, error: "User not authenticated" });
     }
 
     const result = await authService.warnUser(req.user.email);

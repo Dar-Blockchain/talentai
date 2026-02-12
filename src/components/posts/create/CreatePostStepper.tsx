@@ -22,8 +22,8 @@ import { selectCreationType } from "@/store/slices/postGenerationSlice";
 import { useRouter } from "next/router";
 import TokenPurchaseModal from "@/components/token-purchase/TokenPurchaseModal";
 import PostDetailsStep from "./steps/post-details-step/PostDetailsStep";
-import AgentConfigurationStep from "./steps/agent-configuration-step/AgentConfigurationStep";
-import AgentConfigurationLoadingModal from "./steps/agent-configuration-step/LoadingModal";
+// import AgentConfigurationStep from "./steps/agent-configuration-step/AgentConfigurationStep";
+// import AgentConfigurationLoadingModal from "./steps/agent-configuration-step/LoadingModal";
 import PipelineWarningDialog from "./steps/recruitment-flow-step/PipelineWarningModal";
 
 // ------- Custom Stepper Styles -------
@@ -108,14 +108,16 @@ const CreatePostStepper: React.FC = () => {
   const creationType = useSelector(selectCreationType);
   const steps =
     creationType === "ai"
-      ? ["Job Details", "Agent Configuration"]
-      : ["Job Details", "Agent Configuration", "Recruitment Flow"];
+      ? ["Job Details"]
+      : ["Job Details", "Recruitment Flow"];
+      // ? ["Job Details", "Agent Configuration"]
+      // : ["Job Details", "Agent Configuration", "Recruitment Flow"];
 
   const {
     activeStep,
     modalOpen,
     modalMode,
-    agentLoadingOpen,
+    // agentLoadingOpen,
     paymentModalOpen,
     pipelineWarningOpen,
     unconfiguredNodes,
@@ -211,8 +213,8 @@ const CreatePostStepper: React.FC = () => {
       {/* Step Content */}
       <Box sx={{ mt: 2 }}>
         {activeStep === 0 && <PostDetailsStep />}
-        {activeStep === 1 && <AgentConfigurationStep />}
-        {activeStep === 2 && <RecruitmentFlowStep />}
+        {/* {activeStep === 1 && <AgentConfigurationStep />} */}
+        {activeStep === 1 && <RecruitmentFlowStep />}
       </Box>
 
       {/* Bottom Buttons */}
@@ -273,7 +275,7 @@ const CreatePostStepper: React.FC = () => {
         mode={modalMode}
         onContinue={handleNext}
       />
-      <AgentConfigurationLoadingModal open={agentLoadingOpen} />
+      {/* <AgentConfigurationLoadingModal open={agentLoadingOpen} /> */}
       <PipelineWarningDialog
         open={pipelineWarningOpen}
         nodes={unconfiguredNodes}

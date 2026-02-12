@@ -1,15 +1,23 @@
-const taskService = require('../services/task.service');
+const taskService = require("../services/task.service");
 
 // POST /task/send-task
 exports.sendTask = async (req, res) => {
   try {
-    const { postId, stepId, candidateId, candidateEmail, candidateName, jobTitle, stepLabel } = req.body;
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const {
+      postId,
+      stepId,
+      candidateId,
+      candidateEmail,
+      candidateName,
+      jobTitle,
+      stepLabel,
+    } = req.body;
+    const token = req.headers.authorization?.replace("Bearer ", "");
 
     if (!postId || !candidateEmail) {
       return res.status(400).json({
         success: false,
-        error: 'postId and candidateEmail are required'
+        error: "postId and candidateEmail are required",
       });
     }
 
@@ -21,13 +29,13 @@ exports.sendTask = async (req, res) => {
       stepId,
       candidateId,
       jobTitle,
-      stepLabel
+      stepLabel,
     });
 
     res.status(200).json({
       success: true,
       data: result,
-      message: 'Technical test sent successfully'
+      message: "Technical test sent successfully",
     });
   } catch (error) {
     res.status(400).json({
@@ -43,15 +51,13 @@ exports.testEmail = async (req, res) => {
     const result = await taskService.testEmailConfig();
     res.status(200).json({
       success: true,
-      message: 'Email configuration is valid and working',
-      email: result.email
+      message: "Email configuration is valid and working",
+      email: result.email,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: `Email configuration test failed: ${error.message}`
+      error: `Email configuration test failed: ${error.message}`,
     });
   }
 };
-
-

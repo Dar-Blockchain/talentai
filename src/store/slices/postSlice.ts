@@ -219,6 +219,7 @@ export const savePost = createAsyncThunk(
       return {
         success: true,
         jobData: job,
+        planUsage: saved.planUsage || null,
       };
     } catch (err: any) {
       return rejectWithValue(err.message || "Error saving job");
@@ -1036,7 +1037,7 @@ const postSlice = createSlice({
         state.savePost.loading = false;
         state.savePost.error = null;
         state.savePost.savedPost = action.payload;
-        state.currentJob = action.payload;
+        state.currentJob = action.payload.jobData || action.payload;
       })
       .addCase(updatePost.rejected, (state, action) => {
         state.savePost.loading = false;

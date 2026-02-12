@@ -1,6 +1,9 @@
 "use client";
 
 import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
@@ -12,6 +15,7 @@ import SalaryRange from "./SalaryRange";
 import {
   generatePost,
   setEmploymentType,
+  setExpirationDate,
   setGenerationType,
   setPromptDescription,
   setWorkMode,
@@ -30,7 +34,7 @@ const inputStyle = {
 
 const PostDescription = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { promptDescription, salary, workMode, employmentType } = useSelector(
+  const { promptDescription, salary, workMode, employmentType, expirationDate } = useSelector(
     (state: any) => state.postGeneration
   );
 
@@ -327,6 +331,41 @@ Additional Skills:
               ))}
             </TextField>
           </Box>
+        </Box>
+
+        {/* EXPIRATION DATE */}
+        <Box sx={{ mt: 2 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: "rgba(136, 151, 170, 1)",
+              mb: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              fontSize: 13,
+            }}
+          >
+            Expiration Date
+          </Typography>
+
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              value={expirationDate ? new Date(expirationDate) : null}
+              onChange={(date) => {
+                if (date) {
+                  dispatch(setExpirationDate(date.toISOString()));
+                }
+              }}
+              minDate={new Date()}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  sx: inputStyle,
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Box>
 
         {/* Buttons */}

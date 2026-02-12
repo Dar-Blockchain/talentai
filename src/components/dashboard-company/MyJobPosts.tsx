@@ -50,6 +50,7 @@ interface MyJobPostsProps {
   isLoadingJobs: boolean;
   jobsError: string | null;
   onViewMatches: (jobId: string) => void;
+  onViewPassedInterview?: (jobId: string) => void;
   onRefresh?: () => void;
   pagination?: {
     total: number;
@@ -76,6 +77,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   isLoadingJobs,
   jobsError,
   onViewMatches,
+  onViewPassedInterview,
   onRefresh,
   pagination,
   onPageChange,
@@ -640,35 +642,70 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                       />
                     )}
                   </Box>
-                  {job.createdAt && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "rgba(84, 98, 116, 0.53)",
-                        fontFamily: "Poppins",
-                        fontWeight: 400,
-                        fontSize: {
-                          xs: "10px", // mobile
-                          sm: "11px", // tablet
-                          md: "12px", // desktop
-                        },
-                        lineHeight: {
-                          xs: "19px",
-                          sm: "21px",
-                          md: "23px",
-                        },
-                        letterSpacing: "0px",
-                        ml: 2,
-                      }}
-                    >
-                      Date Posted :{" "}
-                      {new Date(job.createdAt).toLocaleDateString("en-US", {
-                        month: "2-digit",
-                        day: "2-digit",
-                        year: "numeric",
-                      })}
-                    </Typography>
-                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 2 }}>
+                    {job.createdAt && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "rgba(84, 98, 116, 0.53)",
+                          fontFamily: "Poppins",
+                          fontWeight: 400,
+                          fontSize: {
+                            xs: "10px",
+                            sm: "11px",
+                            md: "12px",
+                          },
+                          lineHeight: {
+                            xs: "19px",
+                            sm: "21px",
+                            md: "23px",
+                          },
+                          letterSpacing: "0px",
+                        }}
+                      >
+                        Date Posted :{" "}
+                        {new Date(job.createdAt).toLocaleDateString("en-US", {
+                          month: "2-digit",
+                          day: "2-digit",
+                          year: "numeric",
+                        })}
+                      </Typography>
+                    )}
+                    {job.expirationDate && (() => {
+                      const now = new Date();
+                      const expDate = new Date(job.expirationDate);
+                      const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                      const isExpired = daysLeft <= 0;
+
+                      return (
+                        <Chip
+                          label={isExpired ? "Expired" : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+                          size="small"
+                          sx={{
+                            backgroundColor: isExpired
+                              ? 'rgba(224, 62, 92, 0.1)'
+                              : daysLeft <= 3
+                                ? 'rgba(255, 152, 0, 0.1)'
+                                : 'rgba(41, 210, 145, 0.1)',
+                            color: isExpired
+                              ? '#E03E5C'
+                              : daysLeft <= 3
+                                ? '#FF9800'
+                                : 'rgba(41, 210, 145, 1)',
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            height: 22,
+                            border: `1px solid ${isExpired
+                              ? '#E03E5C'
+                              : daysLeft <= 3
+                                ? '#FF9800'
+                                : 'rgba(41, 210, 145, 1)'
+                            }`,
+                          }}
+                        />
+                      );
+                    })()}
+                  </Box>
                 </Box>
                 <Stack
                   direction="row"
@@ -860,7 +897,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                         >
                           VIEW DETAILS
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="outlined"
                           fullWidth
                           onClick={() => onViewMatches(job._id)}
@@ -882,12 +919,36 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                           }}
                         >
                           VIEW MATCHES
+                        </Button> */}
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => onViewPassedInterview?.(job._id)}
+                          sx={{
+                            borderColor: "rgba(41, 210, 145, 0.53)",
+                            color: "rgba(41, 210, 145, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(41, 210, 145, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(41, 210, 145, 0.53)",
+                              backgroundColor: "rgba(41, 210, 145, 0.12)",
+                            },
+                          }}
+                        >
+                          PASSED INTERVIEW
                         </Button>
                         <Button
                           variant="outlined"
                           fullWidth
                           startIcon={<ContentCopyIcon />}
                           onClick={() => handleCopyInterviewLink(job._id)}
+                          disabled={job.expirationDate && new Date(job.expirationDate) <= new Date()}
                           sx={{
                             borderColor: "rgba(16, 185, 129, 1)",
                             color: "rgba(16, 185, 129, 1)",
@@ -902,6 +963,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                             "&:hover": {
                               borderColor: "rgba(5, 150, 105, 1)",
                               backgroundColor: "rgba(16, 185, 129, 0.12)",
+                            },
+                            "&.Mui-disabled": {
+                              borderColor: "#e5e7eb",
+                              color: "#9ca3af",
+                              backgroundColor: "rgba(156, 163, 175, 0.08)",
                             },
                           }}
                         >

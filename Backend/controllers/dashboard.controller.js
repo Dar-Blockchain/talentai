@@ -3,7 +3,13 @@ const dashboardService = require("../services/dashboard.service");
 
 module.exports.getAllUsers = async (req, res) => {
   try {
-    const { username = '', email = '', role = '', page = 1, limit = 10 } = req.query;
+    const {
+      username = "",
+      email = "",
+      role = "",
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     // Créer l'objet searchQuery pour passer au service
     const searchQuery = { username, email, role };
@@ -13,7 +19,12 @@ module.exports.getAllUsers = async (req, res) => {
 
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message || "Erreur lors de la récupération des utilisateurs" });
+    res
+      .status(500)
+      .json({
+        message:
+          error.message || "Erreur lors de la récupération des utilisateurs",
+      });
   }
 };
 
@@ -22,15 +33,23 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
 
     // Appeler le service pour récupérer les résultats d'évaluation groupés par jobId
-    const result = await dashboardService.getJobAssessmentResultsGroupedByJobId(page, limit);
-    
+    const result = await dashboardService.getJobAssessmentResultsGroupedByJobId(
+      page,
+      limit,
+    );
+
     // Retourner la réponse avec les résultats et la pagination
     res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message || "Erreur lors de la récupération des résultats d'évaluation des jobs" });
+    res
+      .status(500)
+      .json({
+        message:
+          error.message ||
+          "Erreur lors de la récupération des résultats d'évaluation des jobs",
+      });
   }
 };
-
 
 // Fonction pour gérer la requête et envoyer les résultats
 module.exports.getCounts = async (req, res) => {
@@ -60,7 +79,8 @@ module.exports.getCountsByDay = async (req, res) => {
 module.exports.getUserCountsByLocation = async (req, res) => {
   try {
     // Appeler la fonction de service pour obtenir le nombre d'utilisateurs par localisation
-    const userCountsByLocation = await dashboardService.getUserCountsByLocation();
+    const userCountsByLocation =
+      await dashboardService.getUserCountsByLocation();
     res.status(200).json({ success: true, data: userCountsByLocation });
   } catch (error) {
     // En cas d'erreur, renvoyer un message d'erreur
@@ -73,10 +93,13 @@ module.exports.getJobAssessmentsBySkill = async (req, res) => {
   const { skillName } = req.body; // On récupère le nom de la compétence depuis les paramètres de l'URL
 
   try {
-    const assessments = await dashboardService.getJobAssessmentsBySkill(skillName);
-    
+    const assessments =
+      await dashboardService.getJobAssessmentsBySkill(skillName);
+
     if (!assessments || assessments.length === 0) {
-      return res.status(404).json({ message: "Aucune évaluation trouvée pour cette compétence." });
+      return res
+        .status(404)
+        .json({ message: "Aucune évaluation trouvée pour cette compétence." });
     }
 
     // Retourne les résultats des évaluations
@@ -93,43 +116,66 @@ module.exports.downloadUserExcel = async (req, res) => {
 
     // Définir les en-têtes de la réponse pour télécharger le fichier
     res.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
 
     // Envoyer le fichier en réponse
     res.send(fileBuffer);
   } catch (error) {
-    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erreur interne du serveur", error: error.message });
   }
-}
+};
 
 module.exports.downloadUserExcelWithAssessmentZero = async (req, res) => {
   try {
     // Appeler le service pour générer le fichier Excel des utilisateurs avec un overallScore de 0
-    const fileBuffer = await dashboardService.generateUserExcelWithAssessmentZero();
+    const fileBuffer =
+      await dashboardService.generateUserExcelWithAssessmentZero();
 
     // Définir les en-têtes de la réponse pour télécharger le fichier
-    res.setHeader("Content-Disposition", "attachment; filename=users_with_score_0.xlsx");
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=users_with_score_0.xlsx",
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
 
     // Envoyer le fichier en réponse
     res.send(fileBuffer);
   } catch (error) {
-    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erreur interne du serveur", error: error.message });
   }
 };
 
 module.exports.downloadUserExcelWithAssessmentAbove50 = async (req, res) => {
   try {
     // Appeler le service pour générer le fichier Excel des utilisateurs avec un overallScore de 0
-    const fileBuffer = await dashboardService.generateUserExcelWithAssessmentAbove50();
+    const fileBuffer =
+      await dashboardService.generateUserExcelWithAssessmentAbove50();
 
     // Définir les en-têtes de la réponse pour télécharger le fichier
-    res.setHeader("Content-Disposition", "attachment; filename=users_with_score_0.xlsx");
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=users_with_score_0.xlsx",
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
 
     // Envoyer le fichier en réponse
     res.send(fileBuffer);
   } catch (error) {
-    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Erreur interne du serveur", error: error.message });
   }
 };

@@ -25,7 +25,7 @@ module.exports.sentInvitation = async (company, userEmail, role, invitedBy, user
   });
 
   // Build the acceptance link (frontend)
-  const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendBase = process.env.FRONTEND_URL || 'https://app.talentai.bid';
   const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&company=${company}`;
 
   // Send the invitation email
@@ -52,7 +52,7 @@ module.exports.resendInvitation = async (invitationId) => {
   if (!updated) throw new Error("Invitation not found");
 
   // Build the acceptance link with the new token
-  const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendBase = process.env.FRONTEND_URL || 'https://app.talentai.bid';
   const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&company=${updated.company}`;
 
   // Resend the invitation email with the new token

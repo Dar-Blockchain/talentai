@@ -3,11 +3,11 @@
  * Centralized middleware setup
  */
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const logger = require('morgan');
-const cookieParser = require('cookie-parser');
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const logger = require("morgan");
+const cookieParser = require("cookie-parser");
 
 /**
  * Register all middlewares on the Express app
@@ -21,28 +21,34 @@ function registerMiddlewares(app) {
   // CORS Configuration with preflight support
   app.use(
     cors({
-      origin: '*', // Allow all origins
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+      origin: "*", // Allow all origins
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: [
+        "Origin",
+        "X-Requested-With",
+        "Content-Type",
+        "Accept",
+        "Authorization",
+      ],
       credentials: true,
       preflightContinue: false,
-      optionsSuccessStatus: 204
-    })
+      optionsSuccessStatus: 204,
+    }),
   );
 
   // Enable pre-flight for all routes
-  app.options('*', cors());
+  app.options("*", cors());
 
   // Static files
-  app.use(express.static(path.join(__dirname, '../public')));
+  app.use(express.static(path.join(__dirname, "../public")));
 
   // Request logging
-  app.use(logger('dev'));
+  app.use(logger("dev"));
 
   // Cookie parsing
   app.use(cookieParser());
 }
 
 module.exports = {
-  registerMiddlewares
+  registerMiddlewares,
 };

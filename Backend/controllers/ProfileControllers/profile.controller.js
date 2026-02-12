@@ -21,7 +21,9 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     const lastName = profileData.lastName || profileData.LastName;
 
     if (!firstName || !lastName) {
-      return res.status(400).json({ message: "First name and last name are required" });
+      return res
+        .status(400)
+        .json({ message: "First name and last name are required" });
     }
 
     // Validation: age should be a valid number if provided
@@ -30,42 +32,64 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     }
 
     // Validation: preferredContractType (optional)
-    if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
-      return res.status(400).json({ message: "Preferred contract type must be a valid string" });
+    if (
+      profileData.preferredContractType &&
+      typeof profileData.preferredContractType !== "string"
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Preferred contract type must be a valid string" });
     }
 
     // Validation: location (optional)
     if (profileData.location && typeof profileData.location !== "string") {
-      return res.status(400).json({ message: "Location must be a valid string" });
+      return res
+        .status(400)
+        .json({ message: "Location must be a valid string" });
     }
 
     // Validation: expectedSalary structure (optional)
     if (profileData.expectedSalary) {
       const { min, max, currency } = profileData.expectedSalary;
-      
+
       if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
-        return res.status(400).json({ message: "Expected salary min must be a positive number" });
+        return res
+          .status(400)
+          .json({ message: "Expected salary min must be a positive number" });
       }
-      
+
       if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
-        return res.status(400).json({ message: "Expected salary max must be a positive number" });
+        return res
+          .status(400)
+          .json({ message: "Expected salary max must be a positive number" });
       }
-      
+
       if (min !== null && max !== null && min > max) {
-        return res.status(400).json({ message: "Expected salary min cannot be greater than max" });
+        return res
+          .status(400)
+          .json({ message: "Expected salary min cannot be greater than max" });
       }
-      
+
       if (currency && typeof currency !== "string") {
-        return res.status(400).json({ message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
+        return res
+          .status(400)
+          .json({
+            message: "Currency must be a valid string (e.g., EUR, USD, GBP)",
+          });
       }
     }
 
     // Create or update the profile
-    const result = await profileService.createOrUpdateProfile(userId, profileData);
+    const result = await profileService.createOrUpdateProfile(
+      userId,
+      profileData,
+    );
 
     // Remove Hedera sensitive fields from user object
     if (result.user) {
-      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      result.user = result.user.toObject
+        ? result.user.toObject()
+        : { ...result.user };
       delete result.user.hederaAccountId;
       delete result.user.hederaPrivateKey;
       delete result.user.hederaPublicKey;
@@ -76,13 +100,13 @@ module.exports.createOrUpdateProfile = async (req, res) => {
       message: "Profile created/updated successfully",
       user: result.user,
       profile: result.profile || null,
-      companyMembership: result.companyMembership || null
+      companyMembership: result.companyMembership || null,
     });
   } catch (error) {
     console.error("Error creating/updating candidate profile:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Error creating/updating candidate profile"
+      message: error.message || "Error creating/updating candidate profile",
     });
   }
 };
@@ -100,12 +124,14 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
     // Create or update company profile with employment type support
     const result = await profileService.createOrUpdateCompanyProfile(
       userId,
-      profileData
+      profileData,
     );
 
     // Remove Hedera sensitive fields from user object
     if (result.user) {
-      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      result.user = result.user.toObject
+        ? result.user.toObject()
+        : { ...result.user };
       delete result.user.hederaAccountId;
       delete result.user.hederaPrivateKey;
       delete result.user.hederaPublicKey;
@@ -116,13 +142,13 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       message: "Company profile created/updated successfully",
       user: result.user,
       profile: result.profile || null,
-      companyMembership: result.companyMembership || null
+      companyMembership: result.companyMembership || null,
     });
   } catch (error) {
     console.error("Error creating/updating company profile:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Error creating/updating company profile"
+      message: error.message || "Error creating/updating company profile",
     });
   }
 };
@@ -140,17 +166,16 @@ module.exports.getMyProfile = async (req, res) => {
       user: result.user,
       profile: result.profile || null,
       planLimits: result.planLimits,
-      companyMembership: result.companyMembership || null
+      companyMembership: result.companyMembership || null,
     });
   } catch (error) {
     console.error("Error retrieving profile:", error);
     return res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Internal error retrieving profile"
+      message: error.message || "Internal error retrieving profile",
     });
   }
 };
-
 
 // Get a profile by ID
 module.exports.getProfileById = async (req, res) => {
@@ -162,7 +187,9 @@ module.exports.getProfileById = async (req, res) => {
 
     // Remove Hedera sensitive fields from user object
     if (result.user) {
-      result.user = result.user.toObject ? result.user.toObject() : { ...result.user };
+      result.user = result.user.toObject
+        ? result.user.toObject()
+        : { ...result.user };
       delete result.user.hederaAccountId;
       delete result.user.hederaPrivateKey;
       delete result.user.hederaPublicKey;
@@ -173,13 +200,13 @@ module.exports.getProfileById = async (req, res) => {
       message: "Profile retrieved successfully",
       user: result.user,
       profile: result.profile || null,
-      companyMembership: result.companyMembership || null
+      companyMembership: result.companyMembership || null,
     });
   } catch (error) {
     console.error("Error retrieving profile:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Error retrieving profile"
+      message: error.message || "Error retrieving profile",
     });
   }
 };
@@ -200,11 +227,9 @@ module.exports.searchProfilesBySkills = async (req, res) => {
     res.status(200).json(profiles);
   } catch (error) {
     console.error("Error searching profiles:", error);
-    res
-      .status(500)
-      .json({
-        message: error.message || "Error searching profiles",
-      });
+    res.status(500).json({
+      message: error.message || "Error searching profiles",
+    });
   }
 };
 
@@ -215,11 +240,9 @@ module.exports.addSoftSkills = async (req, res) => {
     const { softSkills } = req.body;
 
     if (!softSkills || !Array.isArray(softSkills)) {
-      return res
-        .status(400)
-        .json({
-          message: "Soft skills must be provided as an array",
-        });
+      return res.status(400).json({
+        message: "Soft skills must be provided as an array",
+      });
     }
 
     const result = await profileService.addSoftSkills(userId, softSkills);
@@ -227,7 +250,7 @@ module.exports.addSoftSkills = async (req, res) => {
     if (result.duplicateSoftSkills.length > 0) {
       return res.status(200).json({
         message: `The following soft skills already exist: ${result.duplicateSoftSkills.join(
-          ", "
+          ", ",
         )}`,
       });
     }
@@ -238,11 +261,9 @@ module.exports.addSoftSkills = async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding soft skills:", error);
-    res
-      .status(500)
-      .json({
-        message: error.message || "Error adding soft skills",
-      });
+    res.status(500).json({
+      message: error.message || "Error adding soft skills",
+    });
   }
 };
 
@@ -254,12 +275,9 @@ module.exports.getSoftSkills = async (req, res) => {
     res.status(200).json(softSkills);
   } catch (error) {
     console.error("Error retrieving soft skills:", error);
-    res
-      .status(500)
-      .json({
-        message:
-          error.message || "Error retrieving soft skills",
-      });
+    res.status(500).json({
+      message: error.message || "Error retrieving soft skills",
+    });
   }
 };
 
@@ -270,11 +288,9 @@ module.exports.updateSoftSkills = async (req, res) => {
     const { softSkills } = req.body;
 
     if (!softSkills || !Array.isArray(softSkills)) {
-      return res
-        .status(400)
-        .json({
-          message: "Soft skills must be provided as an array",
-        });
+      return res.status(400).json({
+        message: "Soft skills must be provided as an array",
+      });
     }
 
     const profile = await profileService.updateSoftSkills(userId, softSkills);
@@ -284,12 +300,9 @@ module.exports.updateSoftSkills = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating soft skills:", error);
-    res
-      .status(500)
-      .json({
-        message:
-          error.message || "Error updating soft skills",
-      });
+    res.status(500).json({
+      message: error.message || "Error updating soft skills",
+    });
   }
 };
 
@@ -300,11 +313,9 @@ module.exports.deleteHardSkill = async (req, res) => {
     const { skillToDelete } = req.body;
 
     if (!skillToDelete || typeof skillToDelete !== "string") {
-      return res
-        .status(400)
-        .json({
-          message: "The skill to be deleted must be provided as a string",
-        });
+      return res.status(400).json({
+        message: "The skill to be deleted must be provided as a string",
+      });
     }
 
     const profile = await profileService.deleteHardSkill(userId, skillToDelete);
@@ -327,16 +338,14 @@ module.exports.deleteSoftSkill = async (req, res) => {
     const { softSkillToDelete } = req.body;
 
     if (!softSkillToDelete || typeof softSkillToDelete !== "string") {
-      return res
-        .status(400)
-        .json({
-          message: "The skill to be deleted must be provided as a string",
-        });
+      return res.status(400).json({
+        message: "The skill to be deleted must be provided as a string",
+      });
     }
 
     const profile = await profileService.deleteSoftSkill(
       userId,
-      softSkillToDelete
+      softSkillToDelete,
     );
     res.status(200).json({
       message: `Soft Skills "${softSkillToDelete}" has been successfully deleted`,
@@ -353,10 +362,10 @@ module.exports.deleteSoftSkill = async (req, res) => {
 // Update finalBid
 module.exports.updateFinalBid = async (req, res) => {
   try {
-    const { newBid, userId, postId , companyId} = req.body;
+    const { newBid, userId, postId, companyId } = req.body;
 
     //const companyId = req.user._id;
-    
+
     if (typeof newBid !== "number" || newBid <= 0) {
       return res
         .status(401)
@@ -367,7 +376,7 @@ module.exports.updateFinalBid = async (req, res) => {
       userId,
       newBid,
       companyId,
-      postId
+      postId,
     );
 
     res.status(200).json({
@@ -399,13 +408,18 @@ exports.getCompanyWithAssessments = async (req, res) => {
   try {
     const { id } = req.user.profile;
     //const id = "68ff674d5d0454e0505e4d75"; // For testing purpose
-    
-    const { jobId } = req.params; 
-    
-    const profile = await profileService.getCompanyProfileWithAssessments(id, jobId);
+
+    const { jobId } = req.params;
+
+    const profile = await profileService.getCompanyProfileWithAssessments(
+      id,
+      jobId,
+    );
 
     if (!profile) {
-      return res.status(404).json({ message: "Profile not found or not a company." });
+      return res
+        .status(404)
+        .json({ message: "Profile not found or not a company." });
     }
 
     return res.status(200).json(profile);
@@ -420,16 +434,32 @@ module.exports.updateProfileVisibility = async (req, res) => {
     const userId = req.user._id;
     const { isPublicProfile } = req.body;
 
-    if (typeof isPublicProfile !== 'boolean') {
-      return res.status(400).json({ success: false, message: 'isPublicProfile must be a boolean' });
+    if (typeof isPublicProfile !== "boolean") {
+      return res
+        .status(400)
+        .json({ success: false, message: "isPublicProfile must be a boolean" });
     }
 
-    const updatedProfile = await profileService.updateProfileVisibility(userId, isPublicProfile);
+    const updatedProfile = await profileService.updateProfileVisibility(
+      userId,
+      isPublicProfile,
+    );
 
-    return res.status(200).json({ success: true, message: 'Profile visibility updated', profile: updatedProfile });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Profile visibility updated",
+        profile: updatedProfile,
+      });
   } catch (error) {
-    console.error('Error updating profile visibility:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Error updating profile visibility' });
+    console.error("Error updating profile visibility:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: error.message || "Error updating profile visibility",
+      });
   }
 };
 
@@ -441,9 +471,18 @@ module.exports.updateProfileComplete = async (req, res) => {
     const file = req.file;
     let result;
 
-    console.log("🔄 [updateProfileComplete] Starting profile update for userId:", userId);
-    console.log("📋 [updateProfileComplete] Profile data received:", JSON.stringify(profileData, null, 2));
-    console.log("📁 [updateProfileComplete] File provided:", file ? `${file.filename} (${file.size} bytes)` : "None");
+    console.log(
+      "🔄 [updateProfileComplete] Starting profile update for userId:",
+      userId,
+    );
+    console.log(
+      "📋 [updateProfileComplete] Profile data received:",
+      JSON.stringify(profileData, null, 2),
+    );
+    console.log(
+      "📁 [updateProfileComplete] File provided:",
+      file ? `${file.filename} (${file.size} bytes)` : "None",
+    );
 
     // Update user image if provided
     if (file) {
@@ -454,97 +493,202 @@ module.exports.updateProfileComplete = async (req, res) => {
     }
 
     // Determine account type from DB (profile.type or user.role). Do NOT rely on profileData.type from client.
-    console.log("🔍 [updateProfileComplete] Fetching existing profile to determine account type...");
-    const existing = await profileService.getProfileByUserId(userId).catch(() => null);
+    console.log(
+      "🔍 [updateProfileComplete] Fetching existing profile to determine account type...",
+    );
+    const existing = await profileService
+      .getProfileByUserId(userId)
+      .catch(() => null);
     let accountType = "Candidate";
     if (existing && existing.profile && existing.profile.type) {
       accountType = existing.profile.type;
     } else if (existing && existing.user && existing.user.role) {
       accountType = existing.user.role === "Company" ? "Company" : "Candidate";
     }
-    console.log("👤 [updateProfileComplete] Account type determined:", accountType);
+    console.log(
+      "👤 [updateProfileComplete] Account type determined:",
+      accountType,
+    );
 
     // If there are profile fields to update, route to the correct service based on accountType
     if (Object.values(profileData).some((val) => val)) {
-      console.log("📝 [updateProfileComplete] Profile fields detected, processing updates...");
+      console.log(
+        "📝 [updateProfileComplete] Profile fields detected, processing updates...",
+      );
       if (accountType === "Company") {
-        console.log("🏢 [updateProfileComplete] Processing COMPANY profile update");
+        console.log(
+          "🏢 [updateProfileComplete] Processing COMPANY profile update",
+        );
         // Validate company profile
         if (profileData.name && typeof profileData.name !== "string") {
-          console.log("❌ [updateProfileComplete] Company name validation failed");
-          return res.status(400).json({ success: false, message: "Company name must be a string" });
+          console.log(
+            "❌ [updateProfileComplete] Company name validation failed",
+          );
+          return res
+            .status(400)
+            .json({ success: false, message: "Company name must be a string" });
         }
-        if (profileData.employmentType && !["Remote", "Hybrid", "On-site"].includes(profileData.employmentType)) {
-          console.log("❌ [updateProfileComplete] Employment type validation failed");
-          return res.status(400).json({ success: false, message: "Invalid employment type. Must be 'Remote', 'Hybrid', or 'On-site'" });
+        if (
+          profileData.employmentType &&
+          !["Remote", "Hybrid", "On-site"].includes(profileData.employmentType)
+        ) {
+          console.log(
+            "❌ [updateProfileComplete] Employment type validation failed",
+          );
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "Invalid employment type. Must be 'Remote', 'Hybrid', or 'On-site'",
+            });
         }
 
-        console.log("✏️  [updateProfileComplete] Updating company profile with data:", JSON.stringify(profileData, null, 2));
-        result = await profileService.createOrUpdateCompanyProfile(userId, profileData);
-        console.log("✅ [updateProfileComplete] Company profile updated successfully");
+        console.log(
+          "✏️  [updateProfileComplete] Updating company profile with data:",
+          JSON.stringify(profileData, null, 2),
+        );
+        result = await profileService.createOrUpdateCompanyProfile(
+          userId,
+          profileData,
+        );
+        console.log(
+          "✅ [updateProfileComplete] Company profile updated successfully",
+        );
       } else {
-        console.log("👥 [updateProfileComplete] Processing CANDIDATE profile update");
+        console.log(
+          "👥 [updateProfileComplete] Processing CANDIDATE profile update",
+        );
         // Candidate validations - Allow single field updates (no requirement for both first+last)
         const firstName = profileData.firstName || profileData.FirstName;
         const lastName = profileData.lastName || profileData.LastName;
 
         // Validate types when provided (but not required to provide both)
         if (firstName && typeof firstName !== "string") {
-          console.log("❌ [updateProfileComplete] First name validation failed");
-          return res.status(400).json({ success: false, message: "firstName must be a string" });
+          console.log(
+            "❌ [updateProfileComplete] First name validation failed",
+          );
+          return res
+            .status(400)
+            .json({ success: false, message: "firstName must be a string" });
         }
         if (lastName && typeof lastName !== "string") {
           console.log("❌ [updateProfileComplete] Last name validation failed");
-          return res.status(400).json({ success: false, message: "lastName must be a string" });
+          return res
+            .status(400)
+            .json({ success: false, message: "lastName must be a string" });
         }
 
         if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
           console.log("❌ [updateProfileComplete] Age validation failed");
-          return res.status(400).json({ success: false, message: "Age must be a valid number" });
+          return res
+            .status(400)
+            .json({ success: false, message: "Age must be a valid number" });
         }
 
-        if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
-          console.log("❌ [updateProfileComplete] Preferred contract type validation failed");
-          return res.status(400).json({ success: false, message: "Preferred contract type must be a valid string" });
+        if (
+          profileData.preferredContractType &&
+          typeof profileData.preferredContractType !== "string"
+        ) {
+          console.log(
+            "❌ [updateProfileComplete] Preferred contract type validation failed",
+          );
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message: "Preferred contract type must be a valid string",
+            });
         }
 
         if (profileData.location && typeof profileData.location !== "string") {
           console.log("❌ [updateProfileComplete] Location validation failed");
-          return res.status(400).json({ success: false, message: "Location must be a valid string" });
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message: "Location must be a valid string",
+            });
         }
 
         if (profileData.expectedSalary) {
-          console.log("💰 [updateProfileComplete] Validating expected salary:", JSON.stringify(profileData.expectedSalary));
+          console.log(
+            "💰 [updateProfileComplete] Validating expected salary:",
+            JSON.stringify(profileData.expectedSalary),
+          );
           const { min, max, currency } = profileData.expectedSalary;
           if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
-            console.log("❌ [updateProfileComplete] Salary min validation failed");
-            return res.status(400).json({ success: false, message: "Expected salary min must be a positive number" });
+            console.log(
+              "❌ [updateProfileComplete] Salary min validation failed",
+            );
+            return res
+              .status(400)
+              .json({
+                success: false,
+                message: "Expected salary min must be a positive number",
+              });
           }
           if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
-            console.log("❌ [updateProfileComplete] Salary max validation failed");
-            return res.status(400).json({ success: false, message: "Expected salary max must be a positive number" });
+            console.log(
+              "❌ [updateProfileComplete] Salary max validation failed",
+            );
+            return res
+              .status(400)
+              .json({
+                success: false,
+                message: "Expected salary max must be a positive number",
+              });
           }
           if (min !== null && max !== null && min > max) {
-            console.log("❌ [updateProfileComplete] Salary min > max validation failed");
-            return res.status(400).json({ success: false, message: "Expected salary min cannot be greater than max" });
+            console.log(
+              "❌ [updateProfileComplete] Salary min > max validation failed",
+            );
+            return res
+              .status(400)
+              .json({
+                success: false,
+                message: "Expected salary min cannot be greater than max",
+              });
           }
           if (currency && typeof currency !== "string") {
-            console.log("❌ [updateProfileComplete] Currency validation failed");
-            return res.status(400).json({ success: false, message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
+            console.log(
+              "❌ [updateProfileComplete] Currency validation failed",
+            );
+            return res
+              .status(400)
+              .json({
+                success: false,
+                message:
+                  "Currency must be a valid string (e.g., EUR, USD, GBP)",
+              });
           }
         }
 
-        console.log("✏️  [updateProfileComplete] Updating candidate profile with data:", JSON.stringify(profileData, null, 2));
-        result = await profileService.createOrUpdateProfile(userId, profileData);
-        console.log("✅ [updateProfileComplete] Candidate profile updated successfully");
+        console.log(
+          "✏️  [updateProfileComplete] Updating candidate profile with data:",
+          JSON.stringify(profileData, null, 2),
+        );
+        result = await profileService.createOrUpdateProfile(
+          userId,
+          profileData,
+        );
+        console.log(
+          "✅ [updateProfileComplete] Candidate profile updated successfully",
+        );
       }
     } else if (file) {
       // Only image was updated
-      console.log("🖼️  [updateProfileComplete] Only image was updated, fetching profile...");
+      console.log(
+        "🖼️  [updateProfileComplete] Only image was updated, fetching profile...",
+      );
       result = await profileService.getProfileByUserId(userId);
-      console.log("✅ [updateProfileComplete] Profile fetched after image update");
+      console.log(
+        "✅ [updateProfileComplete] Profile fetched after image update",
+      );
     } else {
-      console.log("⚠️  [updateProfileComplete] No fields or file provided for update");
+      console.log(
+        "⚠️  [updateProfileComplete] No fields or file provided for update",
+      );
       return res.status(400).json({
         success: false,
         message: "At least one field must be provided for update",
@@ -553,13 +697,18 @@ module.exports.updateProfileComplete = async (req, res) => {
 
     // Build list of fields that were sent and thus considered updated
     const sentFields = Object.keys(profileData || {}).filter(
-      (k) => profileData[k] !== undefined && profileData[k] !== null && profileData[k] !== ""
+      (k) =>
+        profileData[k] !== undefined &&
+        profileData[k] !== null &&
+        profileData[k] !== "",
     );
     if (file) sentFields.push("file");
     const updatedFields = [...new Set(sentFields)];
 
     console.log("📊 [updateProfileComplete] Updated fields:", updatedFields);
-    console.log("✅ [updateProfileComplete] Profile update completed successfully");
+    console.log(
+      "✅ [updateProfileComplete] Profile update completed successfully",
+    );
 
     res.status(200).json({
       success: true,
@@ -569,12 +718,11 @@ module.exports.updateProfileComplete = async (req, res) => {
       profile: result.profile || null,
       companyMembership: result.companyMembership || null,
     });
-
   } catch (error) {
-    console.error('❌ [updateProfileComplete] Error updating profile:', error);
+    console.error("❌ [updateProfileComplete] Error updating profile:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || "Failed to update profile"
+      message: error.message || "Failed to update profile",
     });
   }
 };

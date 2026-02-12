@@ -14,7 +14,12 @@ module.exports.generateJobPost = async (req, res) => {
       });
     }
 
-    const result = await generateJobPostService.generateJobPost(description, type, user, { workMode, contractType });
+    const result = await generateJobPostService.generateJobPost(
+      description,
+      type,
+      user,
+      { workMode, contractType },
+    );
     res.json(result);
   } catch (error) {
     console.error("Error in generateJobPost:", error);

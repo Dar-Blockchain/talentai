@@ -127,6 +127,16 @@ const postSchema = new mongoose.Schema({
   },
 
   createdAt: { type: Date, default: Date.now },
+  expirationDate: {
+    type: Date,
+    default: function() {
+      const date = new Date();
+      date.setDate(date.getDate() + 15);
+      return date;
+    },
+    required: true,
+    description: 'Date d\'expiration du poste (par défaut 15 jours après la création)'
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

@@ -267,6 +267,11 @@ const userSlice = createSlice({
         state.connectedUser.profile.softSkills = action.payload;
       }
     },
+    updatePlanUsage(state, action: PayloadAction<any>) {
+      if (state?.connectedUser?.profile) {
+        state.connectedUser.profile.planUsage = action.payload;
+      }
+    },
   },
     extraReducers: (builder) => {
       builder
@@ -385,6 +390,7 @@ export const {
   updateProfileQuota,
   updateProfileSoftSkill,
   updateProfileSkills,
+  updatePlanUsage,
 } = userSlice.actions;
 
 export default userSlice.reducer;

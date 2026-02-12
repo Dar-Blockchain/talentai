@@ -10,7 +10,7 @@ import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
-import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill } from '@/store/slices/userSlice';
+import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill, getMyProfile } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
 import { saveInterviewAssessment, fetchInterviewDetailsById, claimInterviewReward } from '@/store/slices/interviewSlice';
 import PageContainer from '@/components/layout/PageContainer';
@@ -122,6 +122,12 @@ export default function InterviewResults() {
             return; // Don't throw, just return - the results are still valid
           }
 
+          // Always show plan limit errors as a toast
+          if (errorMsg?.includes('reached') && errorMsg?.includes('limit')) {
+            showToast({ message: errorMsg, severity: 'warning' });
+            return;
+          }
+
           if (showStatus) {
             showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
           }
@@ -148,6 +154,12 @@ export default function InterviewResults() {
               showToast({ message: 'This interview has already been saved.', severity: 'info' });
             }
             return; // Don't throw, just return - the results are still valid
+          }
+
+          // Always show plan limit errors as a toast
+          if (errorMsg?.includes('reached') && errorMsg?.includes('limit')) {
+            showToast({ message: errorMsg, severity: 'warning' });
+            return;
           }
 
           if (showStatus) {
@@ -180,6 +192,9 @@ export default function InterviewResults() {
       if (result.data?._id) {
         localStorage.setItem('last_interview_id', result.data._id);
       }
+
+      // Refresh profile to update planUsage (monthlyInterviewsUsed)
+      dispatch(getMyProfile());
 
       if (result.reward) {
         if (result.reward.success && !result.reward.skipped) {

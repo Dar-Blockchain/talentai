@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { io, Socket } from 'socket.io-client';
-import { Container, Box, Typography, Button, IconButton, CircularProgress } from '@mui/material';
+import { Container, Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChatIcon from '@mui/icons-material/Chat';
 import { useSelector, useDispatch } from 'react-redux';
@@ -39,13 +39,23 @@ import {
 const ConversationPage = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { conversationId } = router.query;
+  const { conversationId: routeConversationId } = router.query;
   const { showToast } = useToast();
 
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
   const profile = useSelector((state: RootState) => state.user?.connectedUser?.profile);
   const currentUserId = connectedUser?._id;
   const isCompany = profile?.type === 'Company';
+
+  // Active conversation managed via local state — no page reload on switch
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
+  // Sync route param to local state on initial load only
+  useEffect(() => {
+    if (routeConversationId && !activeConversationId) {
+      setActiveConversationId(routeConversationId as string);
+    }
+  }, [routeConversationId]);
 
   // Redux selectors
   const conversations = useSelector(selectConversations);
@@ -63,7 +73,7 @@ const ConversationPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
-  // Socket.IO connection
+  // Socket.IO connection — connect once, persist across conversation switches
   useEffect(() => {
     if (!currentUserId) return;
 
@@ -80,44 +90,41 @@ const ConversationPage = () => {
 
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      if (conversationId) {
-        socket.emit('join_conversation', { conversationId });
-      }
-    });
-
     socket.on('new_message', (message: any) => {
       dispatch(addMessage(message));
     });
 
     socket.on('message_read', ({ messageId, conversationId: convId }: any) => {
-      if (convId === conversationId) {
-        dispatch(markMessageRead({ messageId, conversationId: convId }));
-      }
+      dispatch(markMessageRead({ messageId, conversationId: convId }));
     });
 
     socket.on('message_deleted', ({ messageId, conversationId: convId }: any) => {
-      if (convId === conversationId) {
-        dispatch(removeMessage({ messageId, conversationId: convId }));
-        showToast({ message: 'A message was deleted', severity: 'info' });
-      }
+      dispatch(removeMessage({ messageId, conversationId: convId }));
+      showToast({ message: 'A message was deleted', severity: 'info' });
     });
 
     socket.on('conversation_deleted', ({ conversationId: convId }: any) => {
       dispatch(removeConversation(convId));
-      if (convId === conversationId) {
-        showToast({ message: 'This conversation was deleted', severity: 'info' });
-        router.push('/chat');
-      }
+      showToast({ message: 'This conversation was deleted', severity: 'info' });
+      router.push('/chat');
     });
 
     return () => {
-      if (conversationId) {
-        socket.emit('leave_conversation', conversationId);
-      }
       socket.disconnect();
     };
-  }, [currentUserId, conversationId, dispatch]);
+  }, [currentUserId, dispatch]);
+
+  // Join/leave conversation rooms when switching conversations
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !activeConversationId) return;
+
+    socket.emit('join_conversation', { conversationId: activeConversationId });
+
+    return () => {
+      socket.emit('leave_conversation', activeConversationId);
+    };
+  }, [activeConversationId]);
 
   // Fetch all conversations for sidebar
   useEffect(() => {
@@ -126,22 +133,30 @@ const ConversationPage = () => {
     }
   }, [currentUserId, dispatch]);
 
-  // Fetch current conversation and messages
+  // Fetch current conversation and messages when activeConversationId changes
   useEffect(() => {
-    if (!conversationId || !currentUserId) return;
-    const convId = conversationId as string;
+    if (!activeConversationId || !currentUserId) return;
 
-    dispatch(fetchConversation(convId));
-    dispatch(fetchMessages(convId));
-    dispatch(markConversationRead(convId));
+    dispatch(fetchConversation(activeConversationId));
+    dispatch(fetchMessages(activeConversationId));
+    dispatch(markConversationRead(activeConversationId));
 
     return () => {
       dispatch(clearCurrentConversation());
     };
-  }, [conversationId, currentUserId, dispatch]);
+  }, [activeConversationId, currentUserId, dispatch]);
+
+  // Handle switching conversations — state only, no navigation
+  const handleSelectConversation = useCallback((id: string) => {
+    if (id === activeConversationId) return;
+    setNewMessage('');
+    setActiveConversationId(id);
+    // Update URL without page reload
+    window.history.replaceState(null, '', `/chat/${id}`);
+  }, [activeConversationId]);
 
   const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !conversation || !currentUserId) return;
+    if (!newMessage.trim() || !conversation || !currentUserId || !activeConversationId) return;
 
     const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
     const phonePattern = /(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}|\d{10,}/;
@@ -168,7 +183,7 @@ const ConversationPage = () => {
     try {
       await dispatch(
         sendMessage({
-          conversationId: conversationId as string,
+          conversationId: activeConversationId,
           receiverId: otherParticipant._id,
           text: newMessage,
         })
@@ -177,7 +192,7 @@ const ConversationPage = () => {
     } catch (error: any) {
       showToast({ message: `Failed to send message: ${error || 'Unknown error'}`, severity: 'error' });
     }
-  }, [newMessage, conversation, currentUserId, conversationId, dispatch, showToast]);
+  }, [newMessage, conversation, currentUserId, activeConversationId, dispatch, showToast]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -196,9 +211,10 @@ const ConversationPage = () => {
   }, [dispatch, showToast]);
 
   const confirmDeleteConversation = useCallback(async () => {
+    if (!activeConversationId) return;
     setIsDeleting(true);
     try {
-      await dispatch(deleteConversationThunk(conversationId as string)).unwrap();
+      await dispatch(deleteConversationThunk(activeConversationId)).unwrap();
       showToast({ message: 'Conversation deleted successfully', severity: 'success' });
       setDeleteDialogOpen(false);
       router.push('/chat');
@@ -207,77 +223,14 @@ const ConversationPage = () => {
     } finally {
       setIsDeleting(false);
     }
-  }, [conversationId, dispatch, showToast, router]);
+  }, [activeConversationId, dispatch, showToast, router]);
 
   const getDashboardRoute = () => {
     const role = profile?.type?.toLowerCase();
     return role === 'company' ? '/dashboard/company' : '/dashboard/candidate';
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          backgroundColor: 'rgba(251, 254, 255, 1)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <CircularProgress sx={{ color: '#8310FF' }} />
-      </Box>
-    );
-  }
-
-  if (!conversation) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          backgroundColor: 'rgba(251, 254, 255, 1)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(131, 16, 255, 0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 2,
-          }}
-        >
-          <ChatIcon sx={{ fontSize: 40, color: '#8310FF' }} />
-        </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#000' }}>
-          Conversation not found
-        </Typography>
-        <Button
-          onClick={() => router.push('/chat')}
-          sx={{
-            color: '#8310FF',
-            fontWeight: 600,
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: 'rgba(131, 16, 255, 0.08)',
-            },
-          }}
-        >
-          Back to Messages
-        </Button>
-      </Box>
-    );
-  }
-
-  const otherUser = conversation.participants.find((p: any) => p._id !== currentUserId);
+  const otherUser = conversation?.participants?.find((p: any) => p._id !== currentUserId);
 
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: 'rgba(251, 254, 255, 1)' }}>
@@ -324,9 +277,9 @@ const ConversationPage = () => {
         <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 180px)' }}>
           <ConversationSidebar
             conversations={conversations}
-            currentConversationId={conversationId as string}
+            currentConversationId={activeConversationId || ''}
             currentUserId={currentUserId}
-            onSelectConversation={(id) => router.push(`/chat/${id}`)}
+            onSelectConversation={handleSelectConversation}
           />
 
           {/* Right Side - Current Conversation */}
@@ -341,26 +294,57 @@ const ConversationPage = () => {
               overflow: 'hidden',
             }}
           >
-            <ConversationHeader
-              otherUser={otherUser}
-              isCompany={isCompany}
-              onDeleteConversation={() => setDeleteDialogOpen(true)}
-            />
+            {loading ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <CircularProgress sx={{ color: '#8310FF' }} />
+              </Box>
+            ) : !conversation ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <ChatIcon sx={{ fontSize: 40, color: '#8310FF', opacity: 0.5 }} />
+                <Typography variant="body1" sx={{ color: '#6b7280' }}>
+                  Conversation not found
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <ConversationHeader
+                  otherUser={otherUser}
+                  isCompany={isCompany}
+                  onDeleteConversation={() => setDeleteDialogOpen(true)}
+                />
 
-            <MessageList
-              messages={messages}
-              currentUserId={currentUserId}
-              isCompany={isCompany}
-              onDeleteMessage={handleDeleteMessage}
-            />
+                <MessageList
+                  messages={messages}
+                  currentUserId={currentUserId}
+                  isCompany={isCompany}
+                  onDeleteMessage={handleDeleteMessage}
+                />
 
-            <MessageInput
-              value={newMessage}
-              onChange={setNewMessage}
-              onSend={handleSendMessage}
-              onKeyDown={handleKeyDown}
-              sending={sending}
-            />
+                <MessageInput
+                  value={newMessage}
+                  onChange={setNewMessage}
+                  onSend={handleSendMessage}
+                  onKeyDown={handleKeyDown}
+                  sending={sending}
+                />
+              </>
+            )}
           </Box>
         </Box>
       </Container>

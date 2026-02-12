@@ -15,7 +15,14 @@ const handleError = (res, error, defaultStatus = 500) => {
  */
 module.exports.createPlan = async (req, res) => {
   try {
-    const { name, postsLimit, candidateUnlockLimit, monthlyInterviewLimit, description, isActive } = req.body;
+    const {
+      name,
+      postsLimit,
+      candidateUnlockLimit,
+      monthlyInterviewLimit,
+      description,
+      isActive,
+    } = req.body;
 
     const result = await planLimitsService.createPlan({
       name,
@@ -78,7 +85,7 @@ module.exports.updatePlan = async (req, res) => {
     if (!name) {
       return res.status(400).json({
         success: false,
-        error: "Plan name is required in request body"
+        error: "Plan name is required in request body",
       });
     }
 

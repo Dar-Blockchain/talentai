@@ -5,4 +5,4 @@ const POST_STATUS = Object.freeze({
   CANCELLED: "cancelled",
 });
 
-module.exports = {POST_STATUS}
+module.exports = { POST_STATUS };

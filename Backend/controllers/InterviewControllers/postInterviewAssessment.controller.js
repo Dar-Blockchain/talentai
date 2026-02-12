@@ -7,46 +7,44 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
   try {
     const assessmentData = {
       ...req.body,
-      candidate: req.user._id
+      candidate: req.user._id,
     };
 
     if (!assessmentData.post) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: post'
+        message: "Missing required field: post",
       });
     }
 
     // ✅ Le service fait TOUT (assessment + progression)
     const assessment =
       await postInterviewAssessmentService.createPostInterviewAssessment(
-        assessmentData
+        assessmentData,
       );
 
     return res.status(201).json({
       success: true,
-      message: 'Post interview assessment created successfully',
-      data: assessment
+      message: "Post interview assessment created successfully",
+      data: assessment,
     });
-
   } catch (error) {
-    console.error('❌ Controller error:', error);
+    console.error("❌ Controller error:", error);
 
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'An assessment with this session ID already exists.',
-        code: 'DUPLICATE_SESSION_ID'
+        message: "An assessment with this session ID already exists.",
+        code: "DUPLICATE_SESSION_ID",
       });
     }
 
     return res.status(error.status || 500).json({
       success: false,
-      message: error.message || 'Error creating post interview assessment'
+      message: error.message || "Error creating post interview assessment",
     });
   }
 };
-
 
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
@@ -58,15 +56,16 @@ module.exports.getAllPostInterviewAssessments = async (req, res) => {
     if (candidate) filters.candidate = candidate;
     if (company) filters.company = company;
 
-    const result = await postInterviewAssessmentService.getAllPostInterviewAssessments(
-      filters,
-      parseInt(page),
-      parseInt(limit)
-    );
+    const result =
+      await postInterviewAssessmentService.getAllPostInterviewAssessments(
+        filters,
+        parseInt(page),
+        parseInt(limit),
+      );
 
     res.status(200).json({
       success: true,
-      message: 'All assessments retrieved successfully',
+      message: "All assessments retrieved successfully",
       data: result.data,
       pagination: {
         currentPage: result.currentPage,
@@ -74,14 +73,14 @@ module.exports.getAllPostInterviewAssessments = async (req, res) => {
         totalCount: result.totalCount,
         limit: result.limit,
         hasNextPage: result.hasNextPage,
-        hasPrevPage: result.hasPrevPage
-      }
+        hasPrevPage: result.hasPrevPage,
+      },
     });
   } catch (error) {
-    console.error('Error getting all assessments:', error);
+    console.error("Error getting all assessments:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || 'Error retrieving assessments'
+      message: error.message || "Error retrieving assessments",
     });
   }
 };
@@ -94,22 +93,25 @@ module.exports.getPostInterviewAssessmentById = async (req, res) => {
     if (!assessmentId) {
       return res.status(400).json({
         success: false,
-        message: 'Assessment ID is required'
+        message: "Assessment ID is required",
       });
     }
 
-    const assessment = await postInterviewAssessmentService.getPostInterviewAssessmentById(assessmentId);
+    const assessment =
+      await postInterviewAssessmentService.getPostInterviewAssessmentById(
+        assessmentId,
+      );
 
     res.status(200).json({
       success: true,
-      message: 'Post interview assessment retrieved successfully',
-      data: assessment
+      message: "Post interview assessment retrieved successfully",
+      data: assessment,
     });
   } catch (error) {
-    console.error('Error getting post interview assessment:', error);
+    console.error("Error getting post interview assessment:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || 'Error retrieving assessment'
+      message: error.message || "Error retrieving assessment",
     });
   }
 };
@@ -123,23 +125,27 @@ module.exports.getAssessmentsByPost = async (req, res) => {
     if (!postId) {
       return res.status(400).json({
         success: false,
-        message: 'Post ID is required'
+        message: "Post ID is required",
       });
     }
 
-    const assessments = await postInterviewAssessmentService.getAssessmentsByPost(postId, filters);
+    const assessments =
+      await postInterviewAssessmentService.getAssessmentsByPost(
+        postId,
+        filters,
+      );
 
     res.status(200).json({
       success: true,
-      message: 'Assessments retrieved successfully',
+      message: "Assessments retrieved successfully",
       count: assessments.length,
-      data: assessments
+      data: assessments,
     });
   } catch (error) {
-    console.error('Error getting assessments by post:', error);
+    console.error("Error getting assessments by post:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || 'Error retrieving assessments'
+      message: error.message || "Error retrieving assessments",
     });
   }
 };
@@ -154,15 +160,19 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
     if (!candidateId) {
       return res.status(400).json({
         success: false,
-        message: 'Candidate ID is required'
+        message: "Candidate ID is required",
       });
     }
 
-    const assessments = await postInterviewAssessmentService.getAssessmentsByCandidate(candidateId, filters);
+    const assessments =
+      await postInterviewAssessmentService.getAssessmentsByCandidate(
+        candidateId,
+        filters,
+      );
 
     // Group assessments by post
     const groups = {};
-    assessments.forEach(a => {
+    assessments.forEach((a) => {
       const post = a.post || {};
       const postId = String(post._id || post);
       if (!groups[postId]) {
@@ -177,28 +187,31 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
         const grp = groups[postId];
         const progress = await CandidatePostStepProgress.findOne({
           idCandidate: req.user._id,
-          idPost: postId
-        }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate');
+          idPost: postId,
+        })
+          .populate("currentStep")
+          .populate("steps.interviewDetails")
+          .populate("idCandidate");
 
         return {
           post: grp.post,
           assessments: grp.assessments,
-          candidatePostStepProgress: progress
+          candidatePostStepProgress: progress,
         };
-      })
+      }),
     );
 
     res.status(200).json({
       success: true,
-      message: 'Assessments retrieved and grouped by post successfully',
+      message: "Assessments retrieved and grouped by post successfully",
       count: grouped.length,
-      data: grouped
+      data: grouped,
     });
   } catch (error) {
-    console.error('Error getting assessments by candidate:', error);
+    console.error("Error getting assessments by candidate:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || 'Error retrieving assessments'
+      message: error.message || "Error retrieving assessments",
     });
   }
 };
@@ -211,15 +224,16 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
     if (!companyId) {
       return res.status(400).json({
         success: false,
-        message: 'Company ID is required'
+        message: "Company ID is required",
       });
     }
 
-    const assessments = await postInterviewAssessmentService.getAssessmentsByCompany(companyId);
+    const assessments =
+      await postInterviewAssessmentService.getAssessmentsByCompany(companyId);
 
     // Group assessments by post
     const groups = {};
-    assessments.forEach(a => {
+    assessments.forEach((a) => {
       const post = a.post || {};
       const postId = String(post._id || post);
       if (!groups[postId]) {
@@ -236,34 +250,40 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
           grp.assessments.map(async (ass) => {
             const progress = await CandidatePostStepProgress.findOne({
               idCandidate: ass.candidate,
-              idPost: postId
-            }).populate('currentStep').populate('steps.interviewDetails').populate('idCandidate',"-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+              idPost: postId,
+            })
+              .populate("currentStep")
+              .populate("steps.interviewDetails")
+              .populate(
+                "idCandidate",
+                "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+              );
 
             return {
               assessment: ass,
-              candidatePostStepProgress: progress
+              candidatePostStepProgress: progress,
             };
-          })
+          }),
         );
 
         return {
           post: grp.post,
-          assessments: assessmentsWithProgress
+          assessments: assessmentsWithProgress,
         };
-      })
+      }),
     );
 
     res.status(200).json({
       success: true,
-      message: 'Assessments retrieved and grouped by post successfully',
+      message: "Assessments retrieved and grouped by post successfully",
       count: grouped.length,
-      data: grouped
+      data: grouped,
     });
   } catch (error) {
-    console.error('Error getting assessments by company:', error);
+    console.error("Error getting assessments by company:", error);
     res.status(error.status || 500).json({
       success: false,
-      message: error.message || 'Error retrieving assessments'
+      message: error.message || "Error retrieving assessments",
     });
   }
 };

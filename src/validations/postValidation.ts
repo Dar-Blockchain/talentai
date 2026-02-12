@@ -31,7 +31,7 @@ export const validateAIPostStep0 = (
     return false;
   }
 
-  if (!jobDetails?.location?.trim()) {
+  if (!jobDetails?.workMode?.trim() && !jobDetails?.location?.trim()) {
     showToast({ message: "Work mode is required", severity: "error" });
     return false;
   }
@@ -93,7 +93,7 @@ export const validateManualPostStep0 = (
     return false;
   }
 
-  if (!jobDetails?.location?.trim()) {
+  if (!jobDetails?.workMode?.trim() && !jobDetails?.location?.trim()) {
     showToast({ message: "Work mode is required", severity: "error" });
     return false;
   }
@@ -170,7 +170,7 @@ export const validateEditPost = (
     return false;
   }
 
-  if (!jobDetails?.location?.trim()) {
+  if (!jobDetails?.workMode?.trim() && !jobDetails?.location?.trim()) {
     showToast({ message: "Work mode is required", severity: "error" });
     return false;
   }

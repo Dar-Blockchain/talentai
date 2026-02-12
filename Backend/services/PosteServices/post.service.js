@@ -1,5 +1,6 @@
 const Post = require("../../models/Post.model");
 const User = require("../../models/User.model");
+const Profile = require("../../models/Profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
 const AgentService = require("../Agent.service");
 const aiService = require("../ai.Service");
@@ -72,6 +73,154 @@ module.exports.createPost = async (postData, token) => {
     return post;
   } catch (error) {
     throw new Error(`Error creating post: ${error.message}`);
+  }
+};
+
+/**
+ * Create post with all side effects (matching config, notifications, usage increment)
+ * @param {Object} postData - Post data to create
+ * @param {String} token - Auth token for technical test
+ * @param {Object} userProfile - User profile with plan limits
+ * @param {Object} matchingConfigData - Matching config data if provided
+ * @returns {Promise<{post, matchingConfig}>}
+ */
+module.exports.createPostWithSideEffects = async (postData, token, userProfile, matchingConfigData) => {
+  try {
+    const profileService = require("../../services/ProfileService/profile.service");
+    const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
+
+    // ========== 1. MAP workMode FROM employmentType ==========
+    if (postData.jobDetails && !postData.jobDetails.workMode) {
+      if (postData.companyDetails?.employmentType) {
+        postData.jobDetails.workMode = postData.companyDetails.employmentType;
+      } else if (postData.employmentType) {
+        postData.jobDetails.workMode = postData.employmentType;
+      }
+    }
+
+    // ========== 2. CREATE POST ==========
+    const post = await module.exports.createPost(postData, token);
+
+    // ========== 3. INCREMENT USAGE (for companies only) ==========
+    if (userProfile.type === 'Company') {
+      try {
+        await profileService.incrementPlanUsage(postData.user, 'postsUsed');
+        console.log(`✅ [createPostWithSideEffects] Posts usage incremented`);
+      } catch (usageError) {
+        console.error('⚠️ [createPostWithSideEffects] Warning: Could not update posts usage:', usageError.message);
+        // Don't fail post creation if usage update fails
+      }
+    }
+
+    // ========== 4. CREATE MATCHING CONFIG (non-blocking) ==========
+    let createdMatchingConfig = null;
+    if (matchingConfigData) {
+      matchingConfigService.addConfig(postData.user, {
+        ...matchingConfigData,
+        jobId: post._id
+      }).then(cfg => {
+        createdMatchingConfig = cfg;
+      }).catch(cfgErr => {
+        console.error('Error creating matching config:', cfgErr.message);
+      });
+    }
+
+    // ========== 5. NOTIFY MATCHING CANDIDATES (async, non-blocking) ==========
+    module.exports.notifyMatchingCandidates(post).catch(notifErr => {
+      console.error('❌ [createPostWithSideEffects] Failed to send notifications:', notifErr?.message || notifErr);
+    });
+
+    return {
+      post,
+      matchingConfig: createdMatchingConfig
+    };
+  } catch (error) {
+    console.error('Error in createPostWithSideEffects:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * Notify candidates who have matching skills with the post
+ * @param {Object} post - Post object with skills
+ */
+module.exports.notifyMatchingCandidates = async (post) => {
+  try {
+    const notificationService = require("../../services/notificationSystem.service");
+
+    console.log('🔔 Starting notification process...');
+
+    // ========== 1. EXTRACT SKILL NAMES ==========
+    const skillSources = [];
+    if (post.skillAnalysis && Array.isArray(post.skillAnalysis.requiredSkills)) {
+      skillSources.push(...post.skillAnalysis.requiredSkills);
+    }
+    if (post.jobDetails && Array.isArray(post.jobDetails.requiredSkills)) {
+      skillSources.push(...post.jobDetails.requiredSkills);
+    }
+
+    // Normalize to lowercase names
+    const skillNames = [...new Set(
+      skillSources
+        .map(s => (typeof s === 'string' ? s : (s && s.name) || '').toString().trim().toLowerCase())
+        .filter(Boolean)
+    )];
+
+    console.log('🏷️ Normalized skillNames:', skillNames);
+
+    if (skillNames.length === 0) {
+      console.log('⚠️ No hard skills found on post — skipping targeted notifications');
+      return;
+    }
+
+    // ========== 2. FETCH MATCHING PROFILES ==========
+    let matchingProfiles = await Profile.find({
+      type: 'Candidate',
+      'skills.name': { $in: skillNames }
+    }).select('userId skills').lean();
+
+    console.log('✅ matchingProfiles found (exact match):', matchingProfiles.length);
+
+    // ========== 3. FALLBACK: CASE-INSENSITIVE SEARCH ==========
+    if (matchingProfiles.length === 0 && skillNames.length > 0) {
+      console.log('⚠️ No exact matches found, trying case-insensitive search...');
+      const caseInsensitiveProfiles = await Profile.find({
+        type: 'Candidate'
+      }).lean();
+
+      const matchedProfiles = caseInsensitiveProfiles.filter(profile => {
+        if (!profile.skills || profile.skills.length === 0) return false;
+        const profileSkillNames = profile.skills.map(s => String(s.name).toLowerCase());
+        return skillNames.some(skillName => profileSkillNames.includes(skillName));
+      });
+
+      console.log('✅ matchingProfiles found (case-insensitive):', matchedProfiles.length);
+      matchingProfiles.push(...matchedProfiles);
+    }
+
+    // ========== 4. EXTRACT RECIPIENT IDS ==========
+    const recipientIds = matchingProfiles
+      .map(p => String(p.userId))
+      .filter(Boolean);
+
+    console.log('👥 recipientIds count:', recipientIds.length);
+
+    if (recipientIds.length === 0) {
+      console.log('⚠️ No matching candidate profiles found for skills:', skillNames);
+      return;
+    }
+
+    // ========== 5. SEND NOTIFICATIONS ==========
+    const title = (post.jobDetails?.title) || post.title || 'Nouvelle offre';
+    const content = `Nouvelle offre: ${title} — correspond à vos compétences techniques.`;
+
+    console.log('📤 Sending notifications to', recipientIds.length, 'candidates');
+    await notificationService.broadcastSystemNotification(content, recipientIds);
+
+    console.log(`✅ Sent notifications to ${recipientIds.length} matching candidates for skills:`, skillNames);
+  } catch (error) {
+    console.error('❌ [notifyMatchingCandidates] Error:', error?.message || error);
+    throw error;
   }
 };
 

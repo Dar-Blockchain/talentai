@@ -17,9 +17,10 @@ import { useRouter } from "next/router";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { GradientCircle } from "../ui/GradientCircle";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import { broadcastSystemNotification } from "@/store/slices/notificationSlice";
+import { selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -43,10 +44,14 @@ interface MatchingCandidate {
   name: string;
   email: string;
   score: number;
+  matchScore?: number;
   targetRole: string;
   finalBid: number;
   unlockPrice: number;
   unlocked: boolean;
+  passedInterview?: boolean;
+  interviewScore?: number | null;
+  assessmentId?: string | null;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
@@ -96,6 +101,13 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
 }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const currentPlanLimit = useSelector(selectCurrentPlanLimit);
+
+  const hasReachedUnlockLimit =
+    currentPlanLimit?.candidateUnlockLimit !== undefined &&
+    profile?.planUsage?.candidateUnlocksUsed !== undefined &&
+    Number(profile.planUsage.candidateUnlocksUsed) >= Number(currentPlanLimit.candidateUnlockLimit);
 
   // Items per page selector - user can choose 5, 10, or 20
   const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
@@ -178,7 +190,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               },
             }}
           >
-            Matching Candidates
+            Passed Interview Candidates
           </Typography>
         </Box>
         <Box
@@ -189,7 +201,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             flexWrap: "wrap",
           }}
         >
-          {onPassedInterviewFilterChange && (
+          {/* {onPassedInterviewFilterChange && (
             <FormControlLabel
               control={
                 <Switch
@@ -221,7 +233,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                 mr: 1,
               }}
             />
-          )}
+          )} */}
           <Button
             variant="contained"
             startIcon={<ArrowBackIcon />}
@@ -277,7 +289,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               mb: 1,
             }}
           >
-            Finding Perfect Matches
+            Finding Passed Interview Candidates
           </Typography>
           <Typography
             variant="body2"
@@ -374,7 +386,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               mb: 2,
             }}
           >
-            No Matching Candidates Found
+            No Passed Interview Candidates Found
           </Typography>
           <Typography
             variant="body1"
@@ -420,7 +432,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                 fontSize: "1rem",
               }}
             >
-              Found {matchingProfiles.length} matching candidates
+              Found {matchingProfiles.length} passed interview candidates
             </Typography>
           </Box>
 
@@ -634,6 +646,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                     >
                       Contact Candidate
                     </Button> */}
+                    {/* --- Original token-based unlock button (commented out - free during beta) ---
                     {!candidate?.unlocked && <Button
                       variant="outlined"
                       fullWidth
@@ -665,10 +678,44 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           color: "#9ca3af",
                         },
                       }}
-                      disabled={!candidate?.candidateId || !selectedJob}
+                      disabled={!candidate?.candidateId || !selectedJob || hasReachedUnlockLimit}
                     >
-                      Unlock Full Profile ({candidate?.unlockPrice} Tokens)
+                      {hasReachedUnlockLimit
+                        ? `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
+                        : `Unlock Full Profile (${candidate?.unlockPrice} Tokens)`}
                     </Button>}
+                    */}
+                    {!candidate?.unlocked && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => onBidDialogOpen(candidate)}
+                        sx={{
+                          borderColor: "rgba(41, 210, 145, 1)",
+                          color: "rgba(41, 210, 145, 1)",
+                          fontWeight: 600,
+                          borderRadius: "38px",
+                          py: 1.5,
+                          maxWidth: "300px",
+                          height: "42px",
+                          textTransform: "none",
+                          fontSize: "0.875rem",
+                          borderWidth: "1px",
+                          "&:hover": {
+                            backgroundColor: "rgba(41, 210, 145, 0.08)",
+                            borderColor: "rgba(41, 210, 145, 1)",
+                          },
+                          "&.Mui-disabled": {
+                            borderColor: "#e5e7eb",
+                            color: "#9ca3af",
+                          },
+                        }}
+                        disabled={!candidate?.candidateId || !selectedJob || hasReachedUnlockLimit}
+                      >
+                        {hasReachedUnlockLimit
+                          ? `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
+                          : "Unlock Full Profile (FREE)"}
+                      </Button>
+                    )}
                     {candidate?.unlocked && <Button
             variant="outlined"
             onClick={() => handleViewProfile(candidate)}
@@ -694,6 +741,29 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           >
             View Full Profile
           </Button>}
+                    {candidate?.unlocked && candidate?.passedInterview && candidate?.assessmentId && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => router.push(`/assessment/${candidate.assessmentId}`)}
+                        sx={{
+                          borderColor: "rgba(41, 210, 145, 1)",
+                          color: "rgba(41, 210, 145, 1)",
+                          fontWeight: 600,
+                          borderRadius: "38px",
+                          py: 1.5,
+                          maxWidth: "300px",
+                          height: "42px",
+                          textTransform: "none",
+                          fontSize: "0.875rem",
+                          borderWidth: "1px",
+                          "&:hover": {
+                            backgroundColor: "rgba(41, 210, 145, 0.08)",
+                          },
+                        }}
+                      >
+                        View Interview Details
+                      </Button>
+                    )}
                   </Box>
                 </Box>
                 <GradientCircle
@@ -737,7 +807,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         mt: 0.5,
                       }}
                     >
-                      Matching Score
+                      Interview Score
                     </Typography>
                   </Box>
                 </GradientCircle>
