@@ -791,7 +791,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         lineHeight: 1,
                       }}
                     >
-                      {candidate.score.toFixed(2)}
+                      {candidate.interviewScore.toFixed(2)}
                     </Typography>
                     <Typography
                       variant="caption"
