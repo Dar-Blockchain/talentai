@@ -112,6 +112,22 @@ class AIUtils {
 
     return fallbacks[methodName] || { error: 'Parsing failed', fallback: true };
   }
+
+  /**
+   * Wrap a promise with a timeout. Rejects if the promise doesn't resolve within timeoutMs.
+   */
+  static withTimeout(promise, timeoutMs, label = 'AI call') {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timeoutId);
+    });
+  }
 }
 
 /**
@@ -1417,11 +1433,15 @@ Determine if interview objectives have been sufficiently met to end the session.
 
           // DON'T use this response for question generation
           // Generate next question based on coverage gaps ONLY, not response content
-          const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
-            "[LOW QUALITY - IGNORING CONTENT]",  // Don't pass actual response
-            updatedSession.coverage,
-            updatedSession.config.intelligenceContext.focusAreas,
-            updatedSession.conversation.slice(0, -1)  // Exclude this bad response
+          const coverageAnalysis = await AIUtils.withTimeout(
+            this.coverageAI.analyzeCoverageIntelligently(
+              "[LOW QUALITY - IGNORING CONTENT]",  // Don't pass actual response
+              updatedSession.coverage,
+              updatedSession.config.intelligenceContext.focusAreas,
+              updatedSession.conversation.slice(0, -1)  // Exclude this bad response
+            ),
+            15000,
+            'analyzeCoverageIntelligently (low quality path)'
           );
 
           // Update coverage (minimal impact for bad response)
@@ -1434,14 +1454,18 @@ Determine if interview objectives have been sufficiently met to end the session.
             await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
           }
 
-          // Get refreshed session
-          const refreshedSession = await this.sessionManager.getSession(sessionId);
+          // Build session locally instead of re-fetching from Redis
+          const refreshedSession = { ...updatedSession };
 
           // Generate new question ignoring the bad response
-          const nextQuestion = await this.questionAI.generateIntelligentQuestion(
-            refreshedSession,
-            coverageAnalysis,
-            { previousQuestions: refreshedSession.conversation.filter(e => e.type === 'interviewer') }
+          const nextQuestion = await AIUtils.withTimeout(
+            this.questionAI.generateIntelligentQuestion(
+              refreshedSession,
+              coverageAnalysis,
+              { previousQuestions: refreshedSession.conversation.filter(e => e.type === 'interviewer') }
+            ),
+            10000,
+            'generateIntelligentQuestion (low quality path)'
           );
 
           // Store the generated question
@@ -1485,51 +1509,69 @@ Determine if interview objectives have been sufficiently met to end the session.
       }
 
       // Perform intelligent coverage analysis
-      const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
-        transcript,
-        updatedSession.coverage,
-        updatedSession.config.intelligenceContext.focusAreas,
-        updatedSession.conversation
+      const coverageAnalysis = await AIUtils.withTimeout(
+        this.coverageAI.analyzeCoverageIntelligently(
+          transcript,
+          updatedSession.coverage,
+          updatedSession.config.intelligenceContext.focusAreas,
+          updatedSession.conversation
+        ),
+        15000,
+        'analyzeCoverageIntelligently'
       );
 
       // Update coverage based on AI analysis
+      let finalCoverage = updatedSession.coverage;
       if (coverageAnalysis.coverageUpdates) {
-        const updatedCoverage = await this.updateCoverageIntelligently(
+        finalCoverage = await this.updateCoverageIntelligently(
           sessionId,
           updatedSession.coverage,
           coverageAnalysis
         );
-        await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
+        await this.sessionManager.updateCoverage(sessionId, finalCoverage);
       }
 
-      // Get final updated session
-      const finalSession = await this.sessionManager.getSession(sessionId);
+      // Build finalSession locally instead of re-fetching from Redis
+      const finalSession = { ...updatedSession, coverage: finalCoverage };
 
-      // Make intelligent decision using all AI analyses
-      const decisionAnalysis = await this.decisionAI.makeIntelligentDecision(
-        finalSession,
-        transcript,
-        {
-          coverage: coverageAnalysis,
-          memory: candidateEntry.aiAnalysis
-        }
-      );
+      // Run decision analysis and question generation IN PARALLEL (both depend on coverageAnalysis but not each other)
+      const [decisionAnalysis, proposedQuestion] = await Promise.all([
+        AIUtils.withTimeout(
+          this.decisionAI.makeIntelligentDecision(
+            finalSession,
+            transcript,
+            {
+              coverage: coverageAnalysis,
+              memory: candidateEntry.aiAnalysis
+            }
+          ),
+          15000,
+          'makeIntelligentDecision'
+        ),
+        AIUtils.withTimeout(
+          this.questionAI.generateIntelligentQuestion(
+            finalSession,
+            coverageAnalysis,
+            { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+          ),
+          10000,
+          'generateIntelligentQuestion'
+        )
+      ]);
 
       // SIMPLIFIED: Just generate next question (no clarification requests - be more patient)
       let nextAction;
       if (decisionAnalysis.decision === 'explore_new_area' || decisionAnalysis.decision === 'continue_probing') {
-        // Normal flow - generate next question
-        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
-          finalSession,
-          coverageAnalysis,
-          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
-        );
-
+        // Normal flow - use the pre-generated question
         // Verify question isn't too similar to previous ones
-        const similarityAnalysis = await this.memoryAI.analyzeQuestionSimilarity(
-          proposedQuestion.question,
-          finalSession.conversation,
-          sessionId
+        const similarityAnalysis = await AIUtils.withTimeout(
+          this.memoryAI.analyzeQuestionSimilarity(
+            proposedQuestion.question,
+            finalSession.conversation,
+            sessionId
+          ),
+          8000,
+          'analyzeQuestionSimilarity'
         );
 
         if (similarityAnalysis.isSimilar && similarityAnalysis.confidence > 70) {
@@ -2969,17 +3011,30 @@ Update the real-time report with new AI-powered insights.`;
         const delayedIntervention = behaviorTracker.needsDelayedIntervention(responseAnalysis);
 
         // Generate next question using AI (still needed for quality questions)
-        const finalSession = await this.sessionManager.getSession(sessionId);
+        // Build session locally instead of re-fetching from Redis
+        const lightweightSession = {
+          ...session,
+          conversation: [...session.conversation, {
+            type: 'candidate',
+            content: transcript,
+            timestamp: new Date().toISOString(),
+            metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
+          }]
+        };
         const decisionAnalysis = {
           decision: 'continue_probing',
           targetArea: 'General',
           reasoning: 'Continue conversation based on lightweight analysis'
         };
 
-        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
-          finalSession,
-          { overallAssessment: { recommendedFocus: ['General'] } },
-          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+        const proposedQuestion = await AIUtils.withTimeout(
+          this.questionAI.generateIntelligentQuestion(
+            lightweightSession,
+            { overallAssessment: { recommendedFocus: ['General'] } },
+            { previousQuestions: lightweightSession.conversation.filter(e => e.type === 'interviewer') }
+          ),
+          10000,
+          'generateIntelligentQuestion (lightweight path)'
         );
 
         // Store interviewer question
