@@ -21,6 +21,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { broadcastSystemNotification } from "@/store/slices/notificationSlice";
 import { selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";
+import { createOrFindConversation } from "@/store/slices/chatSlice";
+import ChatIcon from "@mui/icons-material/Chat";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -101,13 +103,16 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
 }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const { profile, user } = useSelector((state: RootState) => state.user.connectedUser);
   const currentPlanLimit = useSelector(selectCurrentPlanLimit);
 
   const hasReachedUnlockLimit =
     currentPlanLimit?.candidateUnlockLimit !== undefined &&
     profile?.planUsage?.candidateUnlocksUsed !== undefined &&
     Number(profile.planUsage.candidateUnlocksUsed) >= Number(currentPlanLimit.candidateUnlockLimit);
+
+  // Contact candidate chat state
+  const [contactingCandidateId, setContactingCandidateId] = React.useState<string | null>(null);
 
   // Items per page selector - user can choose 5, 10, or 20
   const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
@@ -152,6 +157,27 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
 
     // Redirect to profile page
     router.push(`/profile/candidate/${candidate.candidateId}`);
+  };
+
+  // Handle contact candidate - open chat
+  const handleContactCandidate = async (candidateId: string) => {
+    if (!user?._id || !candidateId) return;
+    setContactingCandidateId(candidateId);
+    try {
+      const actionResult = await dispatch(
+        createOrFindConversation({
+          candidateId,
+          companyId: user._id,
+        })
+      );
+      if (createOrFindConversation.fulfilled.match(actionResult)) {
+        router.push(`/chat/${actionResult.payload._id}`);
+      }
+    } catch (err) {
+      console.error("Error creating conversation:", err);
+    } finally {
+      setContactingCandidateId(null);
+    }
   };
 
   return (
@@ -502,7 +528,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                             fontWeight: 500,
                             fontSize: "18px",
                             lineHeight: "28px",
-                            filter: candidate?.unlocked ? "none" :"blur(6px)" ,
+                            // filter: candidate?.unlocked ? "none" :"blur(6px)" ,
                             ...noCopyStyle
                           }}
                         >
@@ -540,7 +566,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         variant="body2"
                         sx={{
                           color: "rgba(84, 98, 116, 0.53)",
-                          filter: candidate?.unlocked ? 'none': "blur(4px)",
+                          // filter: candidate?.unlocked ? 'none': "blur(4px)",
                           userSelect: "none",
                           fontFamily: "Poppins",
                           fontWeight: 400,
@@ -611,41 +637,6 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       mt: 2,
                     }}
                   >
-                    {/* <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={
-                        <Image
-                          src="/icons/message.svg"
-                          alt="message"
-                          width={19.25}
-                          height={13.75}
-                        />
-                      }
-                      sx={{
-                        height: "42px",
-                        maxWidth: "300px",
-                        backgroundColor: "rgba(41, 210, 145, 0.83)",
-                        borderColor: "rgba(0, 135, 83, 1)",
-                        color: "white",
-                        fontWeight: 500,
-                        borderRadius: "38px",
-                        py: 1.5,
-                        textTransform: "none",
-                        fontSize: "0.875rem",
-                        borderWidth: "1px",
-                        "&:hover": {
-                          backgroundColor: "rgba(41, 210, 145, 0.6)",
-                        },
-                        "&.Mui-disabled": {
-                          backgroundColor: "rgba(41, 210, 145, 0.6)",
-                          color: "white",
-                        },
-                      }}
-                      disabled={!candidate?.unlocked}
-                    >
-                      Contact Candidate
-                    </Button> */}
                     {/* --- Original token-based unlock button (commented out - free during beta) ---
                     {!candidate?.unlocked && <Button
                       variant="outlined"
@@ -685,6 +676,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         : `Unlock Full Profile (${candidate?.unlockPrice} Tokens)`}
                     </Button>}
                     */}
+                    {/* --- Unlock Full Profile (FREE) button (commented out - passed interview candidates are already visible) ---
                     {!candidate?.unlocked && (
                       <Button
                         variant="outlined"
@@ -716,7 +708,43 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           : "Unlock Full Profile (FREE)"}
                       </Button>
                     )}
-                    {candidate?.unlocked && <Button
+                    */}
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={
+                        contactingCandidateId === candidate?.candidateId ? (
+                          <CircularProgress size={16} sx={{ color: "white" }} />
+                        ) : (
+                          <ChatIcon sx={{ fontSize: 18 }} />
+                        )
+                      }
+                      onClick={() => handleContactCandidate(candidate?.candidateId)}
+                      disabled={contactingCandidateId === candidate?.candidateId}
+                      sx={{
+                        height: "42px",
+                        maxWidth: "300px",
+                        backgroundColor: "rgba(41, 210, 145, 0.83)",
+                        borderColor: "rgba(0, 135, 83, 1)",
+                        color: "white",
+                        fontWeight: 500,
+                        borderRadius: "38px",
+                        py: 1.5,
+                        textTransform: "none",
+                        fontSize: "0.875rem",
+                        borderWidth: "1px",
+                        "&:hover": {
+                          backgroundColor: "rgba(41, 210, 145, 0.6)",
+                        },
+                        "&.Mui-disabled": {
+                          backgroundColor: "rgba(41, 210, 145, 0.6)",
+                          color: "white",
+                        },
+                      }}
+                    >
+                      Contact Candidate
+                    </Button>
+                    {/* candidate?.unlocked && */ <Button
             variant="outlined"
             onClick={() => handleViewProfile(candidate)}
             sx={{
@@ -741,7 +769,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           >
             View Full Profile
           </Button>}
-                    {candidate?.unlocked && candidate?.passedInterview && candidate?.assessmentId && (
+                    {/* candidate?.unlocked && */ candidate?.passedInterview && candidate?.assessmentId && (
                       <Button
                         variant="outlined"
                         onClick={() => router.push(`/assessment/${candidate.assessmentId}`)}

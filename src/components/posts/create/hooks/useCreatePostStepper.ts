@@ -5,7 +5,7 @@ import { AppDispatch } from "@/store/store";
 
 import {
   savePost,
-  fetchJobMatches,
+  // fetchJobMatches,
   postRecruitmentSteps,
   updatePost,
   updatePostStatus,
@@ -44,13 +44,14 @@ export const useCreatePostStepper = (
   const { nodes, edges } = recruitmentFlow;
 
   const [activeStep, setActiveStep] = useState(0);
-  const [modalOpen, setModalOpen] = useState(false);
+  // const [modalOpen, setModalOpen] = useState(false);
   // const [agentLoadingOpen, setAgentLoadingOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
-    "saving"
-  );
+  // const [modalMode, setModalMode] = useState<"saving" | "matching" | "done">(
+  //   "saving"
+  // );
 
+  const [isFinishing, setIsFinishing] = useState(false);
   const [pipelineWarningOpen, setPipelineWarningOpen] = useState(false);
   const [unconfiguredNodes, setUnconfiguredNodes] = useState<any[]>([]);
 
@@ -76,8 +77,10 @@ export const useCreatePostStepper = (
   };
 
   const savePipeline = async () => {
-    setPaymentModalOpen(true);
+    // --- Payment modal commented out (free during beta) ---
+    // setPaymentModalOpen(true);
 
+    setIsFinishing(true);
     try {
       await dispatch(
         postRecruitmentSteps({
@@ -139,17 +142,32 @@ export const useCreatePostStepper = (
       // ).unwrap();
 
       // await dispatch(createAgentConfig()).unwrap();
+
+      // Directly publish and redirect (free during beta, no payment modal needed)
+      await dispatch(
+        updatePostStatus({ postId: savedPost.jobData._id, status: "open" })
+      ).unwrap();
+
+      router.push("/dashboard/company");
+      showToast({
+        message: "Job post created successfully.",
+        severity: "success",
+      });
     } catch (error) {
       console.error("Pipeline save failed:", error);
       showToast({
         message: "Failed to save recruitment pipeline.",
         severity: "error",
       });
+    } finally {
+      setIsFinishing(false);
     }
   };
 
-  const finalizeCreation = async () => {
+  const finalizeCreation = async (postId?: string) => {
     // setAgentLoadingOpen(true);
+
+    const resolvedPostId = postId || savedPost?.jobData?._id;
 
     try {
       // --- Hiring agent creation commented out ---
@@ -170,7 +188,7 @@ export const useCreatePostStepper = (
 
       if (creationType === "ai") {
         await dispatch(
-          updatePostStatus({ postId: savedPost?.jobData?._id, status: "open" })
+          updatePostStatus({ postId: resolvedPostId, status: "open" })
         ).unwrap();
       }
 
@@ -200,39 +218,47 @@ export const useCreatePostStepper = (
     if (activeStep === 0 && !shouldContinue) {
       if (!validateStep0()) return;
 
-      setModalOpen(true);
-      setModalMode("saving");
+      // --- Matching flow modal commented out (not needed during beta) ---
+      // setModalOpen(true);
+      // setModalMode("saving");
 
+      setIsFinishing(true);
       try {
         const result = await saveOrUpdatePost();
 
         if (creationType === "ai") {
-          setModalMode("matching");
-          await dispatch(
-            fetchJobMatches({
-              selectedJobId: result.jobData._id,
-              page: 1,
-              limit: 10,
-            })
-          ).unwrap();
-          setModalMode("done");
+          // --- Matching modal flow commented out ---
+          // setModalMode("matching");
+          // await dispatch(
+          //   fetchJobMatches({
+          //     selectedJobId: result.jobData._id,
+          //     page: 1,
+          //     limit: 10,
+          //   })
+          // ).unwrap();
+          // setModalMode("done");
+
+          // Directly finalize and redirect to dashboard
+          await finalizeCreation(result.jobData._id);
           return;
         }
 
-        setModalOpen(false);
+        // setModalOpen(false);
         setActiveStep(1);
       } catch {
-        setModalOpen(false);
+        // setModalOpen(false);
+      } finally {
+        setIsFinishing(false);
       }
       return;
     }
 
-    // AI flow: after matching modal "Continue" → auto-finalize agent and redirect
-    if (activeStep === 0 && shouldContinue && creationType === "ai") {
-      setModalOpen(false);
-      await finalizeCreation();
-      return;
-    }
+    // --- AI flow: after matching modal "Continue" (commented out - modal removed) ---
+    // if (activeStep === 0 && shouldContinue && creationType === "ai") {
+    //   setModalOpen(false);
+    //   await finalizeCreation();
+    //   return;
+    // }
 
     /* ---------- STEP 1: Recruitment Flow (manual only) ---------- */
     if (activeStep === 1 && savedPost?.jobData?._id) {
@@ -258,8 +284,9 @@ export const useCreatePostStepper = (
 
   return {
     activeStep,
-    modalOpen,
-    modalMode,
+    isFinishing,
+    // modalOpen,
+    // modalMode,
     paymentModalOpen,
     // agentLoadingOpen,
 
@@ -267,7 +294,7 @@ export const useCreatePostStepper = (
     unconfiguredNodes,
 
     setPipelineWarningOpen,
-    setModalOpen,
+    // setModalOpen,
     setPaymentModalOpen,
 
     handleNext,
