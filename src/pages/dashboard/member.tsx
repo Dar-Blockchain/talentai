@@ -280,7 +280,7 @@ const fetchMyJobs = useCallback(
             />
           )}
 
-          {/* Only show when activeSection is "all" or "unlockedCandidates" */}
+          {/* --- Unlocked Candidates section commented out (not needed during beta) ---
           {(activeSection === "all" || activeSection === "unlockedCandidates") && (
             <UnlockedCandidates
               onViewAll={() => setActiveSection("unlockedCandidates")}
@@ -294,6 +294,7 @@ const fetchMyJobs = useCallback(
               companyUser={company}
             />
           )}
+          */}
 
           {/* HR Agents Section - Only show when activeSection is "all" */}
           {/* {activeSection === "all" && profile?._id && <HRAgentsTable companyId={profile._id} />} */}

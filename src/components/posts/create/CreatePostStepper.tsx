@@ -14,10 +14,10 @@ import Check from "@mui/icons-material/Check";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import { useSelector } from "react-redux";
 import RecruitmentFlowStep from "./steps/recruitment-flow-step/RecruitmentFlowStep";
-import MatchingFlowModal from "./steps/post-details-step/MatchingFlowModal";
+// import MatchingFlowModal from "./steps/post-details-step/MatchingFlowModal";
 import { RootState } from "@/store/store";
 import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
-import PaymentConfirmationModal from "./steps/recruitment-flow-step/PaymentConfirmationModal";
+// import PaymentConfirmationModal from "./steps/recruitment-flow-step/PaymentConfirmationModal";
 import { selectCreationType } from "@/store/slices/postGenerationSlice";
 import { useRouter } from "next/router";
 import TokenPurchaseModal from "@/components/token-purchase/TokenPurchaseModal";
@@ -115,18 +115,19 @@ const CreatePostStepper: React.FC = () => {
 
   const {
     activeStep,
-    modalOpen,
-    modalMode,
+    isFinishing,
+    // modalOpen,
+    // modalMode,
     // agentLoadingOpen,
-    paymentModalOpen,
+    // paymentModalOpen,
     pipelineWarningOpen,
     unconfiguredNodes,
     handleNext,
     handleBack,
-    setModalOpen,
+    // setModalOpen,
     setPipelineWarningOpen,
     savePipeline,
-    setPaymentModalOpen,
+    // setPaymentModalOpen,
   } = useCreatePostStepper(
     generatedPost,
     profile,
@@ -262,19 +263,19 @@ const CreatePostStepper: React.FC = () => {
             background: "rgba(0, 234, 144, 1)",
             color: "black",
           }}
-          disabled={!generatedPost && creationType === "ai"}
-          loading={createConfigStatus === "loading"}
+          disabled={(!generatedPost && creationType === "ai") || isFinishing}
+          loading={isFinishing || createConfigStatus === "loading"}
         >
           {activeStep === steps.length - 1 ? "Finish" : "Next"}
         </Button>
       </Box>
 
-      <MatchingFlowModal
+      {/* <MatchingFlowModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         onContinue={handleNext}
-      />
+      /> */}
       {/* <AgentConfigurationLoadingModal open={agentLoadingOpen} /> */}
       <PipelineWarningDialog
         open={pipelineWarningOpen}
@@ -285,10 +286,10 @@ const CreatePostStepper: React.FC = () => {
           await savePipeline();
         }}
       />
-      <PaymentConfirmationModal
+      {/* <PaymentConfirmationModal
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
-      />
+      /> */}
       <TokenPurchaseModal />
     </Box>
   );

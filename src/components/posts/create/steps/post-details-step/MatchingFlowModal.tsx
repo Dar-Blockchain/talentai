@@ -162,56 +162,6 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
 
   const renderCandidates = () => (
     <Box py={2}>
-      {/* Free During Beta Banner */}
-      <Alert
-        severity="success"
-        icon={false}
-        sx={{
-          mb: 2,
-          borderRadius: "10px",
-          backgroundColor: "rgba(41, 210, 145, 0.08)",
-          border: "1px solid rgba(41, 210, 145, 0.3)",
-          "& .MuiAlert-message": { width: "100%" },
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography
-            sx={{
-              fontWeight: 600,
-              fontSize: "14px",
-              color: "rgba(41, 210, 145, 1)",
-            }}
-          >
-            Free During Beta
-          </Typography>
-          <Chip
-            label="FREE"
-            size="small"
-            sx={{
-              backgroundColor: "rgba(41, 210, 145, 1)",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: "12px",
-            }}
-          />
-        </Box>
-        <Typography
-          sx={{
-            fontSize: "12px",
-            color: "rgba(75, 85, 99, 0.8)",
-            mt: 0.5,
-          }}
-        >
-          Unlock candidate profiles for free during the beta period.
-        </Typography>
-      </Alert>
-
       <Typography
         variant="h6"
         mb={2}
@@ -220,26 +170,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
         We've already found {matchingProfiles?.length} matching candidates for
         you.
         <br />
-        {hasReachedUnlockLimit ? (
-          <>You have reached your unlock limit ({profile?.planUsage?.candidateUnlocksUsed}/{currentPlanLimit?.candidateUnlockLimit}). Please upgrade your plan or continue setting up your recruitment workflow.</>
-        ) : firstFiveUnlocked ? (
-          <>All top candidates have been unlocked! You can now view their full profiles and contact details.</>
-        ) : (
-          /* --- Original token-based text (commented out) ---
-          <>You can start reviewing and contacting them immediately <br/>by unlocking
-          maximum 5 profiles for{" "}
-          <b style={{ color: "rgba(222, 147, 0, 1)" }}>
-            {PROFILE_UNLOCK_PACK_PRICE} tokens
-          </b>{" "}
-          , or you can continue setting up your recruitment workflow.</>
-          */
-          <>You can start reviewing and contacting them immediately <br/>by unlocking
-          maximum 5 profiles{" "}
-          <b style={{ color: "rgba(41, 210, 145, 1)" }}>
-            for free
-          </b>
-          , or you can continue setting up your recruitment workflow.</>
-        )}
+        You can start reviewing and contacting them immediately, or continue setting up your recruitment workflow.
       </Typography>
       <Typography
         sx={{
@@ -258,15 +189,9 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
           <Box
             key={candidate.candidateId}
             sx={{
-              // background: "rgba(222, 147, 0, 0.04)",
-              background: candidate?.unlocked
-                ? "rgba(41, 210, 145, 0.04)"
-                : "rgba(222, 147, 0, 0.04)",
+              background: "rgba(41, 210, 145, 0.04)",
               borderRadius: "8px",
-              // border: "1px solid rgba(222, 147, 0, 1)",
-              border: candidate?.unlocked
-                ? "1px solid rgba(41, 210, 145, 0.5)"
-                : "1px solid rgba(229, 231, 235, 1)",
+              border: "1px solid rgba(229, 231, 235, 1)",
               px: 3,
               py: 2,
             }}
@@ -309,27 +234,13 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                           fontWeight: 500,
                           fontSize: "16px",
                           lineHeight: "28px",
-                          filter: candidate?.unlocked ? "none" : "blur(6px)",
+                          // filter: candidate?.unlocked ? "none" : "blur(6px)",
                           ...noCopyStyle,
                         }}
                       >
                         {candidate?.firstName + " " + candidate?.lastName ||
                           candidate?.name}
                       </Typography>
-                      {candidate?.unlocked && (
-                        <Chip
-                          label="Unlocked"
-                          size="small"
-                          sx={{
-                            backgroundColor: "rgba(41, 210, 145, 0.1)",
-                            color: "rgba(41, 210, 145, 1)",
-                            fontWeight: 600,
-                            fontSize: "0.65rem",
-                            height: 20,
-                            border: "1px solid rgba(41, 210, 145, 0.3)",
-                          }}
-                        />
-                      )}
                       {candidate?.targetRole && (
                         <>
                           <Typography
@@ -361,7 +272,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                       variant="body2"
                       sx={{
                         color: "rgba(84, 98, 116, 0.53)",
-                        filter: candidate?.unlocked ? "none" : "blur(4px)",
+                        // filter: candidate?.unlocked ? "none" : "blur(4px)",
                         userSelect: "none",
                         fontFamily: "Poppins",
                         fontWeight: 400,
@@ -419,7 +330,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
       </List>
 
       <Typography sx={{ fontSize: "14px", fontWeight: 500, mt: 2 }}>
-        Go directly to your matches and unlock a profile to view contact details
+        Go directly to your matches to view contact details
         and full resumes.
       </Typography>
     </Box>
@@ -507,15 +418,13 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
             Configure Hiring Agent
           </Button> */}
 
+          {/* --- Unlock button (commented out - free during beta, no unlock needed) ---
           {matchingProfiles?.length > 0 && !firstFiveUnlocked && (
             <Button
               variant="outlined"
               onClick={handleConfirmUnlock}
               disabled={isUnlocking || hasReachedUnlockLimit}
               sx={{
-                // --- Original gold color (commented out) ---
-                // borderColor: "rgba(222, 147, 0, 1)",
-                // color: "rgba(222, 147, 0, 1)",
                 borderColor: "rgba(41, 210, 145, 1)",
                 color: "rgba(41, 210, 145, 1)",
                 fontWeight: 600,
@@ -526,7 +435,6 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
                 textTransform: "none",
                 fontSize: "0.875rem",
                 borderWidth: "1px",
-                // "&:hover": { backgroundColor: "rgba(222, 147, 0, 0.08)" },
                 "&:hover": {
                   backgroundColor: "rgba(41, 210, 145, 0.08)",
                   borderColor: "rgba(41, 210, 145, 1)",
@@ -535,11 +443,7 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
               }}
             >
               {isUnlocking ? (
-                <CircularProgress
-                  size={20}
-                  // sx={{ color: "rgba(222, 147, 0, 1)" }}
-                  sx={{ color: "rgba(41, 210, 145, 1)" }}
-                />
+                <CircularProgress size={20} sx={{ color: "rgba(41, 210, 145, 1)" }} />
               ) : hasReachedUnlockLimit ? (
                 `Unlock Limit Reached (${profile?.planUsage?.candidateUnlocksUsed}/${currentPlanLimit?.candidateUnlockLimit})`
               ) : (
@@ -547,31 +451,30 @@ const MatchingFlowModal: React.FC<MatchingFlowModalProps> = ({
               )}
             </Button>
           )}
+          */}
 
-          {matchingProfiles?.length > 0 && firstFiveUnlocked && (
-            <Button
-              variant="outlined"
-              onClick={() => onContinue?.(true)}
-              sx={{
+          <Button
+            variant="outlined"
+            onClick={() => onContinue?.(true)}
+            sx={{
+              borderColor: "rgba(41, 210, 145, 1)",
+              color: "rgba(41, 210, 145, 1)",
+              fontWeight: 600,
+              borderRadius: "38px",
+              py: 1.5,
+              maxWidth: "300px",
+              height: "42px",
+              textTransform: "none",
+              fontSize: "0.875rem",
+              borderWidth: "1px",
+              "&:hover": {
+                backgroundColor: "rgba(41, 210, 145, 0.08)",
                 borderColor: "rgba(41, 210, 145, 1)",
-                color: "rgba(41, 210, 145, 1)",
-                fontWeight: 600,
-                borderRadius: "38px",
-                py: 1.5,
-                maxWidth: "300px",
-                height: "42px",
-                textTransform: "none",
-                fontSize: "0.875rem",
-                borderWidth: "1px",
-                "&:hover": {
-                  backgroundColor: "rgba(41, 210, 145, 0.08)",
-                  borderColor: "rgba(41, 210, 145, 1)",
-                },
-              }}
-            >
-              Continue to Recruitment Flow
-            </Button>
-          )}
+              },
+            }}
+          >
+            Continue to Recruitment Flow
+          </Button>
         </DialogActions>
       )}
     </Dialog>
