@@ -557,6 +557,22 @@ class RedisSessionManager {
   }
 
   /**
+   * Set area start time if this is the first question targeting this area
+   */
+  async setAreaStartTime(sessionId, areaName) {
+    try {
+      const session = await this.getSession(sessionId);
+      if (session?.coverage?.areas?.[areaName] && !session.coverage.areas[areaName].startTime) {
+        session.coverage.areas[areaName].startTime = Date.now();
+        await this.updateCoverage(sessionId, session.coverage);
+        console.log(`⏱️ [Time Budget] Started timer for area: "${areaName}"`);
+      }
+    } catch (error) {
+      console.error('❌ Failed to set area start time:', error.message);
+    }
+  }
+
+  /**
    * Clean up expired sessions
    */
   async cleanupExpiredSessions() {

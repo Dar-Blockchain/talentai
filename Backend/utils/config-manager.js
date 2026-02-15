@@ -316,7 +316,7 @@ class ConfigManager {
       intelligenceContext: this.buildIntelligenceContext(userConfig, baseConfig),
 
       sessionSettings: {
-        duration: userConfig.sessionSettings?.duration || 45,
+        duration: userConfig.sessionSettings?.duration || 20,
         language: userConfig.sessionSettings?.language || "en",
         difficulty: userConfig.sessionSettings?.difficulty || "intermediate",
         silenceTimeout: userConfig.sessionSettings?.silenceTimeout || 5,

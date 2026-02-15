@@ -678,6 +678,25 @@ class DecisionEngineAI {
         currentArea = lastQuestion.metadata?.targetAreas?.[0];
       }
 
+      // TIME BUDGET CHECK: Force advance if area time budget exhausted
+      if (currentArea && session.timeBudgetPerAreaMs) {
+        const areaData = session.coverage?.areas?.[currentArea];
+        if (areaData?.startTime) {
+          const areaElapsed = Date.now() - areaData.startTime;
+          if (areaElapsed >= session.timeBudgetPerAreaMs) {
+            console.log(`⏰ [Time Budget] Exhausted for area "${currentArea}" (${Math.round(areaElapsed/1000)}s >= ${Math.round(session.timeBudgetPerAreaMs/1000)}s budget)`);
+            const nextArea = this.service.findLeastAskedArea(session.coverage.areas, currentArea);
+            return {
+              decision: 'explore_new_area',
+              targetArea: nextArea,
+              reasoning: `Time budget for "${currentArea}" exhausted (${Math.round(areaElapsed/1000)}s). Moving to "${nextArea}".`,
+              forceAdvance: true,
+              confidence: 95
+            };
+          }
+        }
+      }
+
       // SMART DECISION: Calculate quality-based limit for current area
       let forcedDecision = null;
       let maxQuestionsForArea = MAX_QUESTIONS_PER_AREA;
@@ -1168,9 +1187,17 @@ Determine if interview objectives have been sufficiently met to end the session.
       console.log('✅ [Service] Session created in Redis');
 
       // Initialize interview timing and quality tracking
+      const coverageAreas = Object.keys(session.coverage?.areas || {});
+      const totalMinutes = config.sessionSettings?.duration || 20;
+      const timeBudgetPerAreaMs = coverageAreas.length > 0
+        ? (totalMinutes * 60 * 1000) / coverageAreas.length
+        : totalMinutes * 60 * 1000;
+
       await this.sessionManager.updateSession(sessionId, {
         interviewStartTime: Date.now(),
-        maxDurationMinutes: config.sessionSettings?.duration || 20,
+        maxDurationMinutes: totalMinutes,
+        timeBudgetPerAreaMs,
+        coverageAreaCount: coverageAreas.length,
         qualityTracking: {
           consecutiveBadAnswers: 0,
           consecutiveGoodAnswers: 0,
@@ -1179,7 +1206,7 @@ Determine if interview objectives have been sufficiently met to end the session.
           lastQualityScore: null
         }
       });
-      console.log('✅ [Service] Interview timing and quality tracking initialized');
+      console.log(`✅ [Service] Interview timing initialized: ${totalMinutes}min total, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
 
       // Generate intelligent greeting with error handling
       let greeting;
@@ -1481,6 +1508,12 @@ Determine if interview objectives have been sufficiently met to end the session.
             }
           });
 
+          // Set area start time if this is the first question targeting this area
+          const lowQualityTargetArea = nextQuestion.targetAreas?.[0];
+          if (lowQualityTargetArea) {
+            await this.sessionManager.setAreaStartTime(sessionId, lowQualityTargetArea);
+          }
+
           return {
             action: 'continue_probing',
             content: nextQuestion.question,
@@ -1652,6 +1685,12 @@ Determine if interview objectives have been sufficiently met to end the session.
           console.log(`📊 [Question Counter] Incremented for area: ${targetArea}`);
         }
 
+        // Set area start time if this is the first question targeting this area
+        const questionTargetArea = nextAction.targetAreas?.[0] || decisionAnalysis.targetArea;
+        if (questionTargetArea) {
+          await this.sessionManager.setAreaStartTime(sessionId, questionTargetArea);
+        }
+
       } else if (decisionAnalysis.decision === 'end_interview') {
         nextAction = {
           type: 'end_interview',
@@ -1688,6 +1727,12 @@ Determine if interview objectives have been sufficiently met to end the session.
             fallback: true
           }
         });
+
+        // Set area start time if this is the first question targeting this area
+        const fallbackTargetArea = nextAction.targetAreas?.[0];
+        if (fallbackTargetArea) {
+          await this.sessionManager.setAreaStartTime(sessionId, fallbackTargetArea);
+        }
 
         console.log(`✅ [Fallback] Generated next question to keep interview moving`);
       }
@@ -2648,6 +2693,7 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
   async updateCoverageIntelligently(sessionId, currentCoverage, coverageAnalysis) {
     try {
       const updatedCoverage = { ...currentCoverage };
+      const session = await this.sessionManager.getSession(sessionId);
 
       if (coverageAnalysis.coverageUpdates) {
         Object.keys(coverageAnalysis.coverageUpdates).forEach(areaName => {
@@ -2674,6 +2720,22 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
                   });
                 }
               });
+            }
+
+            // SCORE BONUS: Reward candidates who cover an area before time budget expires
+            if (session?.timeBudgetPerAreaMs && area.percentage >= 60 && !area.earlyCompletionBonus) {
+              const areaStartTime = area.startTime;
+              if (areaStartTime) {
+                const elapsed = Date.now() - areaStartTime;
+                const timeBudget = session.timeBudgetPerAreaMs;
+                if (elapsed < timeBudget) {
+                  const timeRemainingRatio = (timeBudget - elapsed) / timeBudget;
+                  const bonus = Math.round(timeRemainingRatio * 15); // Up to 15 bonus points
+                  area.percentage = Math.min(100, area.percentage + bonus);
+                  area.earlyCompletionBonus = bonus;
+                  console.log(`🎁 [Score Bonus] Early completion: +${bonus}% for "${areaName}" (${Math.round(timeRemainingRatio*100)}% time remaining)`);
+                }
+              }
             }
 
             area.lastUpdated = new Date().toISOString();
@@ -3052,6 +3114,12 @@ Update the real-time report with new AI-powered insights.`;
         // Save question for potential rephrasing
         const complexity = await this.detectQuestionComplexity(proposedQuestion.question);
         await this.sessionManager.saveCurrentQuestion(sessionId, proposedQuestion.question, complexity);
+
+        // Set area start time if this is the first question targeting this area
+        const lightweightTargetArea = proposedQuestion.targetAreas?.[0];
+        if (lightweightTargetArea) {
+          await this.sessionManager.setAreaStartTime(sessionId, lightweightTargetArea);
+        }
 
         return {
           action: 'continue_probing',

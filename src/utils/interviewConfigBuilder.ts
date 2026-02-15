@@ -13,6 +13,7 @@ export interface URLParams {
   language?: string;        // e.g., "en", "fr"
   difficulty?: string;      // "beginner", "intermediate", "expert"
   duration?: string;        // Interview duration in minutes
+  deep?: string;            // "true" for deep interview (30 min), otherwise 20 min
 
   // 🔥 NEW: Pipeline-specific fields
   skills?: Array<{name: string; requiredLevel: number}>; // All skills from pipeline technical node
@@ -159,7 +160,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
       analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
     },
     sessionSettings: {
-      duration: parseInt(params.duration || '30'),
+      duration: params.duration ? parseInt(params.duration) : (params.deep === 'true' ? 30 : 20),
       language: params.language || 'en',
       difficulty: params.difficulty || 'intermediate',
       silenceTimeout: 5,

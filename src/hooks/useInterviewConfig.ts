@@ -270,6 +270,7 @@ export const useInterviewConfig = ({
       language: router.query.language as string,
       difficulty: router.query.difficulty as string,
       duration: router.query.duration as string,
+      deep: router.query.deep as string,
     };
 
     console.log('📋 Building interview config from URL params:', urlParams);
