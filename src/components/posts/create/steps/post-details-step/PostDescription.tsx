@@ -16,7 +16,6 @@ import {
   generatePost,
   setEmploymentType,
   setExpirationDate,
-  setGenerationType,
   setPromptDescription,
   setWorkMode,
   updateSalaryField,
@@ -89,15 +88,12 @@ const PostDescription = () => {
     if (errors.salary) setErrors({ ...errors, salary: "" });
   };
 
-  const handleGenerate = (type: "quick" | "detailed") => {
+  const handleGenerate = () => {
     if (!validateFields()) return;
-
-    dispatch(setGenerationType(type));
 
     dispatch(
       generatePost({
         jobDescription: promptDescription,
-        type,
         salary,
         workMode,
         contractType: employmentType,
@@ -368,17 +364,17 @@ Additional Skills:
           </LocalizationProvider>
         </Box>
 
-        {/* Buttons */}
+        {/* Button */}
         <Box sx={{ display: "flex", gap: 2, mt: 5 }}>
           <Button
             variant="contained"
-            onClick={() => handleGenerate("quick")}
+            onClick={handleGenerate}
             startIcon={
               <Image
-                src="/icons/lightning.svg"
-                alt="lightning"
-                width={16}
-                height={16}
+                src="/icons/magic.svg"
+                alt="generate"
+                width={20}
+                height={20}
               />
             }
             sx={{
@@ -395,35 +391,7 @@ Additional Skills:
               px: 3,
             }}
           >
-            Quick Generation
-          </Button>
-
-          <Button
-            variant="outlined"
-            onClick={() => handleGenerate("detailed")}
-            startIcon={
-              <Image
-                src="/icons/humble.svg"
-                alt="lightning"
-                width={24}
-                height={24}
-              />
-            }
-            sx={{
-              flex: 1,
-              backgroundColor: "rgba(106, 127, 219, 0.08)",
-              color: "rgba(106, 127, 219, 1)",
-              border: "1px solid rgba(106, 127, 219, 1)",
-              textTransform: "none",
-              fontWeight: 500,
-              fontSize: "14px",
-              borderRadius: "38px",
-              "&:hover": { backgroundColor: "rgba(106, 127, 219, 0.01)" },
-              height: 42,
-              px: 3,
-            }}
-          >
-            Detailed Generation
+            Generate
           </Button>
         </Box>
       </Box>

@@ -2,7 +2,7 @@ const generateJobPostService = require("../../services/PosteServices/generateJob
 
 module.exports.generateJobPost = async (req, res) => {
   try {
-    const { description, type = "detailed", workMode, contractType } = req.body;
+    const { description, workMode, contractType } = req.body;
     const user = req.user;
 
     if (!description) {
@@ -16,7 +16,6 @@ module.exports.generateJobPost = async (req, res) => {
 
     const result = await generateJobPostService.generateJobPost(
       description,
-      type,
       user,
       { workMode, contractType },
     );

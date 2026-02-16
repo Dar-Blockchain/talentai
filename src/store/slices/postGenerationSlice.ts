@@ -76,7 +76,6 @@ export interface PostGenerationState {
   generatedPost: PostGenerationResponse | null;
   creationType: "ai" | "manual" | null;
   promptDescription: string;
-  generationType: "quick" | "detailed";
   workMode: string;
   employmentType: string;
   salary: Salary;
@@ -102,7 +101,6 @@ const initialState: PostGenerationState = {
   generatedPost: null,
   creationType: null,
   promptDescription: "",
-  generationType: "quick",
   workMode: "",
   employmentType: "",
   salary: { min: null, max: null, currency: "USD" },
@@ -121,7 +119,6 @@ export const generatePost = createAsyncThunk<
   PostGenerationResponse,
   {
     jobDescription: string;
-    type: "quick" | "detailed";
     salary: Salary;
     contractType?: string;
     workMode?: string;
@@ -134,7 +131,7 @@ export const generatePost = createAsyncThunk<
       .find((row) => row.startsWith("api_token="))
       ?.split("=")[1];
 
-    const { jobDescription, salary, contractType, workMode, type } = payload;
+    const { jobDescription, salary, contractType, workMode } = payload;
 
     const salaryText = `\n\nSalary Range: ${
       salary.currency
@@ -159,7 +156,6 @@ export const generatePost = createAsyncThunk<
         },
         body: JSON.stringify({
           description: descriptionWithDetails,
-          type,
           contractType,
           workMode,
         }),
@@ -193,7 +189,6 @@ const postGenerationSlice = createSlice({
       state.generatedAt = null;
       state.creationType = null;
       state.promptDescription = "";
-      state.generationType = "quick";
       state.workMode = "";
       state.employmentType = "";
       state.salary = { min: null, max: null, currency: "USD" };
@@ -213,10 +208,6 @@ const postGenerationSlice = createSlice({
 
     setPromptDescription(state, action: PayloadAction<string>) {
       state.promptDescription = action.payload;
-    },
-
-    setGenerationType(state, action: PayloadAction<"quick" | "detailed">) {
-      state.generationType = action.payload;
     },
 
     setWorkMode(state, action: PayloadAction<string>) {
@@ -390,7 +381,6 @@ export const {
   clearPost,
   setCreationType,
   setPromptDescription,
-  setGenerationType,
   setWorkMode,
   setEmploymentType,
   setExpirationDate,
