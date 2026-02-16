@@ -74,15 +74,42 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
       {/* Logo */}
       <Box sx={{ p: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {(!collapsed || mobile) ? (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Box sx={{ bgcolor: "#000", px: 1, py: 0.5, borderRadius: 1, display: "flex", alignItems: "center" }}>
-              <Typography sx={{ color: "#fff", fontSize: "11px", fontWeight: 800, letterSpacing: "-0.5px" }}>TALENT</Typography>
-              <Box sx={{ bgcolor: "#0D9488", color: "#fff", fontSize: "9px", px: 0.5, borderRadius: 0.5, ml: 0.5, fontWeight: 800 }}>AI</Box>
-            </Box>
+          <Box
+            sx={{
+              backgroundColor: "#141415",
+              borderRadius: "50px",
+              width: 134,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Box
+              component="img"
+              src="/images/home/logocompany.png"
+              alt="TalentAI"
+              sx={{ height: 24 }}
+            />
           </Box>
         ) : (
-          <Box sx={{ bgcolor: "#000", width: 32, height: 32, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Box sx={{ bgcolor: "#0D9488", color: "#fff", fontSize: "9px", px: 0.5, borderRadius: 0.5, fontWeight: 800, fontStyle: "italic" }}>AI</Box>
+          <Box
+            sx={{
+              backgroundColor: "#141415",
+              borderRadius: "50%",
+              width: 36,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Box
+              component="img"
+              src="/images/home/logocompany.png"
+              alt="TalentAI"
+              sx={{ height: 16 }}
+            />
           </Box>
         )}
         {mobile && (
