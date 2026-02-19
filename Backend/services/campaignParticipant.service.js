@@ -197,7 +197,7 @@ exports.markParticipantAsDropped = async (participantId, reason = "") => {
   try {
     return await CampaignParticipant.findByIdAndUpdate(
       participantId,
-      ({
+      {
         status: "DROPPED",
         completedAt: new Date(),
       },
