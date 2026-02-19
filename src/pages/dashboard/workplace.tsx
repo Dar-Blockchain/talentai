@@ -11,7 +11,7 @@ const Loader = () => (
   </Box>
 );
 
-const DashboardOverview = dynamic(
+const DashboardOverview = dynamic<{ onNavigate: (tab: string) => void }>(
   () => import("@/components/dashboard-workplace/DashboardOverview"),
   { ssr: false, loading: Loader }
 );
@@ -42,26 +42,34 @@ const SettingsPlaceholder = () => (
   </Box>
 );
 
-const tabComponents: Record<string, React.ComponentType> = {
-  dashboard: DashboardOverview,
-  skills: SkillsMatrix,
-  campaigns: AssessmentCampaigns,
-  enablement: EmployeeEnablement,
-  analytics: AnalyticsReporting,
-  settings: SettingsPlaceholder,
-};
-
 const DashboardWorkplace = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const handleSetTab = useCallback((tab: string) => setActiveTab(tab), []);
 
-  const TabContent = tabComponents[activeTab] ?? DashboardOverview;
+  const renderTab = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return <DashboardOverview onNavigate={handleSetTab} />;
+      case "skills":
+        return <SkillsMatrix />;
+      case "campaigns":
+        return <AssessmentCampaigns />;
+      case "enablement":
+        return <EmployeeEnablement />;
+      case "analytics":
+        return <AnalyticsReporting />;
+      case "settings":
+        return <SettingsPlaceholder />;
+      default:
+        return <DashboardOverview onNavigate={handleSetTab} />;
+    }
+  };
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
       <WorkplaceLayout activeTab={activeTab} setActiveTab={handleSetTab}>
-        <TabContent />
+        {renderTab()}
       </WorkplaceLayout>
     </RoleGuard>
   );

@@ -1,14 +1,26 @@
-import React, { memo } from "react";
+import React, { memo, useEffect, useState, useCallback } from "react";
 import {
   Box,
   Typography,
   Button,
   Chip,
-  LinearProgress,
   IconButton,
-  Select,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
   MenuItem,
-  InputBase,
+  Select,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  CircularProgress,
+  Alert,
+  Skeleton,
+  Drawer,
+  Divider,
+  Tooltip,
 } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
@@ -18,29 +30,699 @@ import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOu
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import InfoOutlined from "@mui/icons-material/InfoOutlined";
-import { motion } from "framer-motion";
+import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+import VpnKeyOutlined from "@mui/icons-material/VpnKeyOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import { motion, AnimatePresence } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchCampaigns,
+  fetchCampaignById,
+  createCampaign,
+  clearCreateStatus,
+  clearSelectedCampaign,
+  selectCampaigns,
+  selectCampaignLoading,
+  selectCampaignCreating,
+  selectCreateSuccess,
+  selectCreateError,
+  selectSelectedCampaign,
+  selectDetailLoading,
+  selectDetailError,
+  Campaign,
+  CampaignType,
+  AnonymityMode,
+  AccessMethod,
+  ModuleType,
+} from "@/store/slices/campaignSlice";
 
-const campaignStats = [
-  { label: "Total Campaigns", value: "12", icon: DescriptionOutlined, color: "#6B7280" },
-  { label: "Active Now", value: "3", icon: AssignmentTurnedInOutlined, color: "#10B981", active: true },
-  { label: "Avg. Completion", value: "76%", icon: AccessTimeOutlined, color: "#3B82F6" },
-  { label: "Avg. Score", value: "74%", icon: PsychologyOutlined, color: "#8B5CF6" },
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const TYPE_LABELS: Record<CampaignType, string> = {
+  PRODUCTIVITY_DIAGNOSTIC: "Productivity Diagnostic",
+  SKILLS_MAPPING: "Skills Mapping",
+  ENABLEMENT: "Enablement",
+  CUSTOM: "Custom",
+};
+
+const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
+  DRAFT: { bg: "#F9FAFB", fg: "#6B7280" },
+  ACTIVE: { bg: "#F0FDF4", fg: "#16A34A" },
+  PAUSED: { bg: "#FFFBEB", fg: "#D97706" },
+  CLOSED: { bg: "#EFF6FF", fg: "#2563EB" },
+  EXPIRED: { bg: "#FEF2F2", fg: "#DC2626" },
+};
+
+const TYPE_COLORS: Record<CampaignType, { bg: string; fg: string; border: string }> = {
+  PRODUCTIVITY_DIAGNOSTIC: { bg: "#EFF6FF", fg: "#2563EB", border: "#BFDBFE" },
+  SKILLS_MAPPING: { bg: "#F0FDFA", fg: "#0D9488", border: "#99F6E4" },
+  ENABLEMENT: { bg: "#F5F3FF", fg: "#7C3AED", border: "#DDD6FE" },
+  CUSTOM: { bg: "#FFF7ED", fg: "#C2410C", border: "#FED7AA" },
+};
+
+const MODULE_TYPES: ModuleType[] = [
+  "QUESTIONNAIRE",
+  "AI_INTERVIEW",
+  "SKILL_TEST",
+  "TRAINING_PATH",
 ];
 
-const campaigns = [
-  { id: 1, name: "Q1 Technical Skills Assessment", status: "Active", type: "Technical Skills", typeColor: "blue", skills: ["React.js", "Node.js", "TypeScript", "PostgreSQL"], extraSkills: 3, completed: 78, total: 120, progress: 65, avgScore: 74, passRate: 82, created: "Jan 15, 2026", due: "Feb 15, 2026", remaining: 11 },
-  { id: 2, name: "Leadership Skills Eval", status: "Scheduled", type: "Soft Skills", typeColor: "purple", skills: ["Conflict Resolution", "Communication", "Strategic Thinking"], extraSkills: 1, completed: 0, total: 45, progress: 0, avgScore: 0, passRate: 0, created: "Jan 20, 2026", due: "Feb 20, 2026", remaining: 16 },
-  { id: 3, name: "Security Compliance Check", status: "Active", type: "Mixed", typeColor: "teal", skills: ["Data Privacy", "OWASP Top 10", "Social Engineering"], extraSkills: 0, completed: 34, total: 60, progress: 57, avgScore: 81, passRate: 95, created: "Jan 10, 2026", due: "Feb 10, 2026", remaining: 6 },
-  { id: 4, name: "Annual Culture & Values", status: "Completed", type: "Soft Skills", typeColor: "purple", skills: ["Collaboration", "Adaptability", "Integrity"], extraSkills: 0, completed: 247, total: 247, progress: 100, avgScore: 88, passRate: 100, created: "Dec 01, 2025", due: "Dec 30, 2025", remaining: 0 },
-];
+const MODULE_LABELS: Record<ModuleType, string> = {
+  QUESTIONNAIRE: "Questionnaire",
+  AI_INTERVIEW: "AI Interview",
+  SKILL_TEST: "Skill Test",
+  TRAINING_PATH: "Training Path",
+};
 
-const statusColors: any = { Active: { bg: "#F0FDF4", fg: "#16A34A" }, Scheduled: { bg: "#FFFBEB", fg: "#D97706" }, Completed: { bg: "#EFF6FF", fg: "#2563EB" } };
-const typeColors: any = { blue: { bg: "#EFF6FF", fg: "#2563EB", border: "#BFDBFE" }, purple: { bg: "#F5F3FF", fg: "#7C3AED", border: "#DDD6FE" }, teal: { bg: "#F0FDFA", fg: "#0D9488", border: "#99F6E4" } };
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const daysLeft = (deadline?: string) => {
+  if (!deadline) return null;
+  const diff = Math.ceil(
+    (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  );
+  return diff > 0 ? diff : 0;
+};
+
+const fmtDate = (iso?: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "—";
+
+// ─── Create Campaign Modal ────────────────────────────────────────────────────
+
+interface CreateModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const INITIAL_FORM = {
+  title: "",
+  type: "" as CampaignType | "",
+  description: "",
+  anonymityMode: "" as AnonymityMode | "",
+  accessMethod: "" as AccessMethod | "",
+  targetDepartment: "",
+  deadline: "",
+  modules: [] as ModuleType[],
+};
+
+const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const creating = useSelector(selectCampaignCreating);
+  const createSuccess = useSelector(selectCreateSuccess);
+  const createError = useSelector(selectCreateError);
+
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (createSuccess) {
+      dispatch(clearCreateStatus());
+      setForm(INITIAL_FORM);
+      setErrors({});
+      onClose();
+    }
+  }, [createSuccess, dispatch, onClose]);
+
+  const handleChange = useCallback((field: keyof typeof INITIAL_FORM, value: any) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+  }, []);
+
+  const toggleModule = useCallback((mod: ModuleType) => {
+    setForm((prev) => ({
+      ...prev,
+      modules: prev.modules.includes(mod)
+        ? prev.modules.filter((m) => m !== mod)
+        : [...prev.modules, mod],
+    }));
+    setErrors((prev) => ({ ...prev, modules: "" }));
+  }, []);
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.title.trim()) e.title = "Title is required";
+    if (!form.type) e.type = "Campaign type is required";
+    if (!form.anonymityMode) e.anonymityMode = "Anonymity mode is required";
+    if (!form.accessMethod) e.accessMethod = "Access method is required";
+    if (form.modules.length === 0) e.modules = "Select at least one module";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validate()) return;
+    dispatch(
+      createCampaign({
+        title: form.title.trim(),
+        type: form.type as CampaignType,
+        description: form.description.trim() || undefined,
+        anonymityMode: form.anonymityMode as AnonymityMode,
+        accessMethod: form.accessMethod as AccessMethod,
+        targetDepartment: form.targetDepartment.trim() || undefined,
+        deadline: form.deadline || undefined,
+        modules: form.modules.map((type, i) => ({ type, config: {}, order: i + 1 })),
+      })
+    );
+  };
+
+  const handleClose = () => {
+    if (creating) return;
+    dispatch(clearCreateStatus());
+    setForm(INITIAL_FORM);
+    setErrors({});
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ width: 36, height: 36, bgcolor: "#F0FDFA", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AssignmentTurnedInOutlined sx={{ fontSize: 20, color: "#0D9488" }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>New Assessment Campaign</Typography>
+            <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>Set up an AI-powered assessment for your team</Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={handleClose} size="small" disabled={creating}>
+          <CloseOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ pt: 2.5, display: "flex", flexDirection: "column", gap: 2.5 }}>
+        {createError && (
+          <Alert severity="error" sx={{ borderRadius: 2 }}>{createError}</Alert>
+        )}
+
+        {/* Title */}
+        <TextField
+          label="Campaign Title"
+          value={form.title}
+          onChange={(e) => handleChange("title", e.target.value)}
+          error={!!errors.title}
+          helperText={errors.title}
+          fullWidth
+          size="small"
+          placeholder="e.g. Q2 Technical Skills Assessment"
+          slotProps={{ formHelperText: { sx: { ml: 0 } } }}
+        />
+
+        {/* Type */}
+        <FormControl fullWidth size="small" error={!!errors.type}>
+          <InputLabel>Campaign Type</InputLabel>
+          <Select
+            value={form.type}
+            label="Campaign Type"
+            onChange={(e) => handleChange("type", e.target.value)}
+          >
+            {(Object.keys(TYPE_LABELS) as CampaignType[]).map((t) => (
+              <MenuItem key={t} value={t} sx={{ fontSize: "13px" }}>
+                {TYPE_LABELS[t]}
+              </MenuItem>
+            ))}
+          </Select>
+          {errors.type && <FormHelperText sx={{ ml: 0 }}>{errors.type}</FormHelperText>}
+        </FormControl>
+
+        {/* Description */}
+        <TextField
+          label="Description (optional)"
+          value={form.description}
+          onChange={(e) => handleChange("description", e.target.value)}
+          fullWidth
+          size="small"
+          multiline
+          minRows={2}
+          placeholder="Briefly describe the campaign goals..."
+        />
+
+        {/* Modules */}
+        <Box>
+          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>
+            Modules <span style={{ color: "#EF4444" }}>*</span>
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {MODULE_TYPES.map((mod) => {
+              const selected = form.modules.includes(mod);
+              return (
+                <Chip
+                  key={mod}
+                  label={MODULE_LABELS[mod]}
+                  onClick={() => toggleModule(mod)}
+                  sx={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    bgcolor: selected ? "#0D9488" : "#F3F4F6",
+                    color: selected ? "#fff" : "#374151",
+                    border: selected ? "1px solid #0D9488" : "1px solid transparent",
+                    "&:hover": { bgcolor: selected ? "#0b7a6f" : "#E5E7EB" },
+                  }}
+                />
+              );
+            })}
+          </Box>
+          {errors.modules && (
+            <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>{errors.modules}</Typography>
+          )}
+        </Box>
+
+        {/* Anonymity + Access */}
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <FormControl fullWidth size="small" error={!!errors.anonymityMode}>
+            <InputLabel>Anonymity Mode</InputLabel>
+            <Select
+              value={form.anonymityMode}
+              label="Anonymity Mode"
+              onChange={(e) => handleChange("anonymityMode", e.target.value)}
+            >
+              <MenuItem value="ANONYMOUS" sx={{ fontSize: "13px" }}>Anonymous</MenuItem>
+              <MenuItem value="NOMINATIVE" sx={{ fontSize: "13px" }}>Nominative</MenuItem>
+            </Select>
+            {errors.anonymityMode && <FormHelperText sx={{ ml: 0 }}>{errors.anonymityMode}</FormHelperText>}
+          </FormControl>
+
+          <FormControl fullWidth size="small" error={!!errors.accessMethod}>
+            <InputLabel>Access Method</InputLabel>
+            <Select
+              value={form.accessMethod}
+              label="Access Method"
+              onChange={(e) => handleChange("accessMethod", e.target.value)}
+            >
+              <MenuItem value="LINK" sx={{ fontSize: "13px" }}>Link</MenuItem>
+              <MenuItem value="ACCOUNTS" sx={{ fontSize: "13px" }}>Accounts</MenuItem>
+              <MenuItem value="BOTH" sx={{ fontSize: "13px" }}>Both</MenuItem>
+            </Select>
+            {errors.accessMethod && <FormHelperText sx={{ ml: 0 }}>{errors.accessMethod}</FormHelperText>}
+          </FormControl>
+        </Box>
+
+        {/* Department + Deadline */}
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <TextField
+            label="Target Department (optional)"
+            value={form.targetDepartment}
+            onChange={(e) => handleChange("targetDepartment", e.target.value)}
+            size="small"
+            placeholder="e.g. Engineering"
+          />
+          <TextField
+            label="Deadline (optional)"
+            value={form.deadline}
+            onChange={(e) => handleChange("deadline", e.target.value)}
+            size="small"
+            type="date"
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button
+          onClick={handleClose}
+          disabled={creating}
+          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", px: 3 }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={creating}
+          startIcon={creating ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <CheckCircleOutlined sx={{ fontSize: 16 }} />}
+          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", px: 3, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
+        >
+          {creating ? "Creating…" : "Create Campaign"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// ─── Campaign Detail Drawer ───────────────────────────────────────────────────
+
+const MODULE_ICONS: Record<ModuleType, React.ElementType> = {
+  QUESTIONNAIRE: DescriptionOutlined,
+  AI_INTERVIEW: PsychologyOutlined,
+  SKILL_TEST: AssignmentTurnedInOutlined,
+  TRAINING_PATH: PeopleOutlined,
+};
+
+const MODULE_COLORS: Record<ModuleType, { bg: string; fg: string }> = {
+  QUESTIONNAIRE: { bg: "#EFF6FF", fg: "#2563EB" },
+  AI_INTERVIEW: { bg: "#F0FDFA", fg: "#0D9488" },
+  SKILL_TEST: { bg: "#F5F3FF", fg: "#7C3AED" },
+  TRAINING_PATH: { bg: "#FFF7ED", fg: "#C2410C" },
+};
+
+interface DetailDrawerProps {
+  open: boolean;
+  campaignId: string | null;
+  onClose: () => void;
+}
+
+const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const campaign = useSelector(selectSelectedCampaign);
+  const loading = useSelector(selectDetailLoading);
+  const error = useSelector(selectDetailError);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (open && campaignId) {
+      dispatch(fetchCampaignById(campaignId));
+    }
+    return () => {
+      if (!open) dispatch(clearSelectedCampaign());
+    };
+  }, [open, campaignId, dispatch]);
+
+  const handleCopyLink = useCallback(() => {
+    if (!campaign?.linkToken) return;
+    const link = `${window.location.origin}/assessment/${campaign.linkToken}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [campaign?.linkToken]);
+
+  const sc = campaign ? STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT : STATUS_COLORS.DRAFT;
+  const tc = campaign ? TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM : TYPE_COLORS.CUSTOM;
+  const remaining = campaign ? daysLeft(campaign.deadline) : null;
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      slotProps={{ paper: { sx: { width: { xs: "100%", sm: 480 }, display: "flex", flexDirection: "column" } } }}
+    >
+      {/* Header */}
+      <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>Campaign Details</Typography>
+        <IconButton onClick={onClose} size="small"><CloseOutlined sx={{ fontSize: 18, color: "#6B7280" }} /></IconButton>
+      </Box>
+
+      {/* Body */}
+      <Box sx={{ flex: 1, overflowY: "auto" }}>
+        {loading && (
+          <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Skeleton variant="rectangular" height={28} width="70%" sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={20} width="40%" sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2 }} />
+          </Box>
+        )}
+
+        {error && !loading && (
+          <Box sx={{ p: 3 }}>
+            <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+          </Box>
+        )}
+
+        {campaign && !loading && (
+          <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+
+            {/* Title + Status */}
+            <Box>
+              <Box sx={{ display: "flex", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+                <Chip
+                  label={campaign.status}
+                  size="small"
+                  sx={{ bgcolor: sc.bg, color: sc.fg, fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, height: 24 }}
+                />
+                <Chip
+                  label={TYPE_LABELS[campaign.type]}
+                  size="small"
+                  sx={{ bgcolor: tc.bg, color: tc.fg, fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, height: 24, border: `1px solid ${tc.border}` }}
+                />
+              </Box>
+              <Typography sx={{ fontSize: "20px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
+                {campaign.title}
+              </Typography>
+              {campaign.description && (
+                <Typography sx={{ fontSize: "13px", color: "#6B7280", mt: 1, lineHeight: 1.6 }}>
+                  {campaign.description}
+                </Typography>
+              )}
+            </Box>
+
+            <Divider />
+
+            {/* Key Info Grid */}
+            <Box>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, mb: 2 }}>
+                Campaign Info
+              </Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                {[
+                  { icon: LockOutlined, label: "Anonymity", value: campaign.anonymityMode === "ANONYMOUS" ? "Anonymous" : "Nominative" },
+                  { icon: VpnKeyOutlined, label: "Access Method", value: campaign.accessMethod },
+                  { icon: BusinessOutlined, label: "Department", value: campaign.targetDepartment || "All departments" },
+                  { icon: PeopleOutlined, label: "Target Count", value: campaign.targetEmployeeCount ? `${campaign.targetEmployeeCount} employees` : "No limit" },
+                  { icon: CalendarTodayOutlined, label: "Created", value: fmtDate(campaign.createdAt) },
+                  { icon: CalendarTodayOutlined, label: "Last Updated", value: fmtDate(campaign.updatedAt) },
+                ].map((item, i) => (
+                  <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, p: 1.5, bgcolor: "#F9FAFB", borderRadius: 2 }}>
+                    <item.icon sx={{ fontSize: 16, color: "#9CA3AF", mt: 0.2, flexShrink: 0 }} />
+                    <Box>
+                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.8 }}>{item.label}</Typography>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151", mt: 0.3 }}>{item.value}</Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Deadline */}
+            {campaign.deadline && (
+              <Box sx={{ p: 2, borderRadius: 2, border: `1px solid ${remaining === 0 ? "#FCA5A5" : remaining !== null && remaining <= 7 ? "#FCD34D" : "#D1FAE5"}`, bgcolor: remaining === 0 ? "#FEF2F2" : remaining !== null && remaining <= 7 ? "#FFFBEB" : "#F0FDF4", display: "flex", alignItems: "center", gap: 2 }}>
+                <AccessTimeOutlined sx={{ fontSize: 20, color: remaining === 0 ? "#EF4444" : remaining !== null && remaining <= 7 ? "#D97706" : "#10B981" }} />
+                <Box>
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1 }}>Deadline</Typography>
+                  <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827" }}>{fmtDate(campaign.deadline)}</Typography>
+                  {remaining !== null && (
+                    <Typography sx={{ fontSize: "12px", fontWeight: 600, color: remaining === 0 ? "#EF4444" : remaining <= 7 ? "#D97706" : "#10B981" }}>
+                      {remaining === 0 ? "Expired" : `${remaining} day${remaining !== 1 ? "s" : ""} remaining`}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            <Divider />
+
+            {/* Modules */}
+            <Box>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, mb: 2 }}>
+                Modules ({campaign.modules.length})
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                {campaign.modules
+                  .sort((a, b) => a.order - b.order)
+                  .map((mod, i) => {
+                    const Icon = MODULE_ICONS[mod.type] ?? AssignmentTurnedInOutlined;
+                    const mc = MODULE_COLORS[mod.type] ?? MODULE_COLORS.QUESTIONNAIRE;
+                    return (
+                      <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2, p: 2, bgcolor: "#F9FAFB", borderRadius: 2, border: "1px solid #E5E7EB" }}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: mc.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Icon sx={{ fontSize: 18, color: mc.fg }} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{MODULE_LABELS[mod.type]}</Typography>
+                          <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Step {mod.order}</Typography>
+                        </Box>
+                        <Chip label={`#${i + 1}`} size="small" sx={{ fontSize: "10px", height: 20, bgcolor: mc.bg, color: mc.fg, fontWeight: 700 }} />
+                      </Box>
+                    );
+                  })}
+              </Box>
+            </Box>
+
+            {/* Link Token */}
+            {(campaign.accessMethod === "LINK" || campaign.accessMethod === "BOTH") && campaign.linkToken && (
+              <>
+                <Divider />
+                <Box>
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, mb: 2 }}>
+                    Shareable Link
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2 }}>
+                    <Typography sx={{ flex: 1, fontSize: "12px", color: "#374151", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {`${typeof window !== "undefined" ? window.location.origin : ""}/assessment/${campaign.linkToken}`}
+                    </Typography>
+                    <Tooltip title={copied ? "Copied!" : "Copy link"}>
+                      <IconButton size="small" onClick={handleCopyLink} sx={{ color: copied ? "#10B981" : "#6B7280", flexShrink: 0 }}>
+                        {copied ? <CheckCircleOutlined sx={{ fontSize: 16 }} /> : <ContentCopyOutlined sx={{ fontSize: 16 }} />}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              </>
+            )}
+          </Box>
+        )}
+      </Box>
+
+      {/* Footer */}
+      {campaign && !loading && (
+        <Box sx={{ px: 3, py: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0, display: "flex", gap: 1.5 }}>
+          <Button
+            fullWidth
+            onClick={onClose}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB" }}
+          >
+            Close
+          </Button>
+          <Button
+            fullWidth
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", "&:hover": { bgcolor: "#0b7a6f" } }}
+          >
+            Manage Campaign
+          </Button>
+        </Box>
+      )}
+    </Drawer>
+  );
+};
+
+// ─── Campaign Card ────────────────────────────────────────────────────────────
+
+const CampaignCard: React.FC<{ campaign: Campaign; onViewDetails: (id: string) => void }> = memo(({ campaign, onViewDetails }) => {
+  const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
+  const tc = TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM;
+  const remaining = daysLeft(campaign.deadline);
+
+  return (
+    <Box sx={{ bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.2s", overflow: "hidden" }}>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+          <Box sx={{ flex: 1, mr: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap" }}>
+              <Chip label={campaign.status} size="small" sx={{ bgcolor: sc.bg, color: sc.fg, fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, height: 22 }} />
+              <Chip label={TYPE_LABELS[campaign.type]} size="small" sx={{ bgcolor: tc.bg, color: tc.fg, fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, height: 22, border: `1px solid ${tc.border}` }} />
+            </Box>
+            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>{campaign.title}</Typography>
+            {campaign.description && (
+              <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {campaign.description}
+              </Typography>
+            )}
+          </Box>
+          <IconButton size="small" sx={{ color: "#9CA3AF" }}><MoreVertOutlined /></IconButton>
+        </Box>
+
+        {/* Modules chips */}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.7, mb: 3 }}>
+          {campaign.modules.map((mod, i) => (
+            <Chip key={i} label={MODULE_LABELS[mod.type]} size="small" sx={{ bgcolor: "#F3F4F6", color: "#4B5563", fontSize: "10px", fontWeight: 500, height: 24 }} />
+          ))}
+        </Box>
+
+        {/* Metadata */}
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2, pt: 2, borderTop: "1px solid #F3F4F6" }}>
+          {[
+            { label: "Anonymity", value: campaign.anonymityMode === "ANONYMOUS" ? "Anonymous" : "Nominative" },
+            { label: "Access", value: campaign.accessMethod },
+            { label: "Created", value: fmtDate(campaign.createdAt).split(",")[0] },
+          ].map((m, i) => (
+            <Box key={i}>
+              <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, mb: 0.5 }}>{m.label}</Typography>
+              <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>{m.value}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+
+      <Box sx={{ px: 3, py: 2, bgcolor: "#F9FAFB", borderTop: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <AccessTimeOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
+          <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>
+            {campaign.deadline
+              ? <><span>Due: </span><strong style={{ color: "#374151" }}>{fmtDate(campaign.deadline)}</strong></>
+              : "No deadline"}
+          </Typography>
+          {remaining !== null && remaining > 0 && (
+            <Typography sx={{ fontSize: "11px", color: "#0D9488", fontWeight: 700, ml: 0.5 }}>({remaining}d left)</Typography>
+          )}
+          {remaining === 0 && (
+            <Typography sx={{ fontSize: "11px", color: "#EF4444", fontWeight: 700, ml: 0.5 }}>(Expired)</Typography>
+          )}
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton size="small" sx={{ color: "#6B7280" }}><NotificationsOutlined sx={{ fontSize: 16 }} /></IconButton>
+          <Button
+            endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
+            onClick={() => onViewDetails(campaign._id)}
+            sx={{ bgcolor: "#0D9488", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "11px", fontWeight: 700, px: 2, py: 0.5, "&:hover": { bgcolor: "#0b7a6f" } }}
+          >
+            View Details
+          </Button>
+        </Box>
+      </Box>
+    </Box>
+  );
+});
+CampaignCard.displayName = "CampaignCard";
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+const SkeletonCard = () => (
+  <Box sx={{ bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", p: 3 }}>
+    <Skeleton variant="rectangular" height={20} width="60%" sx={{ borderRadius: 1, mb: 1 }} />
+    <Skeleton variant="rectangular" height={16} width="40%" sx={{ borderRadius: 1, mb: 2 }} />
+    <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+      <Skeleton variant="rectangular" height={24} width={80} sx={{ borderRadius: 2 }} />
+      <Skeleton variant="rectangular" height={24} width={90} sx={{ borderRadius: 2 }} />
+    </Box>
+    <Skeleton variant="rectangular" height={8} sx={{ borderRadius: 2 }} />
+  </Box>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const AssessmentCampaigns: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const campaigns = useSelector(selectCampaigns);
+  const loading = useSelector(selectCampaignLoading);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchCampaigns());
+  }, [dispatch]);
+
+  const handleOpenCreate = useCallback(() => setCreateOpen(true), []);
+  const handleCloseCreate = useCallback(() => setCreateOpen(false), []);
+  const handleOpenDetail = useCallback((id: string) => setDetailId(id), []);
+  const handleCloseDetail = useCallback(() => setDetailId(null), []);
+
+  const total = campaigns.length;
+  const active = campaigns.filter((c) => c.status === "ACTIVE").length;
+  const drafts = campaigns.filter((c) => c.status === "DRAFT").length;
+  const closed = campaigns.filter((c) => c.status === "CLOSED" || c.status === "EXPIRED").length;
+
+  const statsRow = [
+    { label: "Total Campaigns", value: String(total), icon: DescriptionOutlined, color: "#6B7280" },
+    { label: "Active Now", value: String(active), icon: AssignmentTurnedInOutlined, color: "#10B981", pulse: true },
+    { label: "Draft", value: String(drafts), icon: PsychologyOutlined, color: "#3B82F6" },
+    { label: "Closed / Expired", value: String(closed), icon: AccessTimeOutlined, color: "#8B5CF6" },
+  ];
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header */}
@@ -50,10 +732,17 @@ const AssessmentCampaigns: React.FC = () => {
           <Typography sx={{ color: "#6B7280" }}>Create and manage AI-powered skill assessments for your team</Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1.5 }}>
-          <Button startIcon={<DownloadOutlined />} sx={{ textTransform: "none", border: "1px solid #E5E7EB", borderRadius: 5, fontSize: "13px", fontWeight: 600, color: "#374151", px: 2 }}>
+          <Button
+            startIcon={<DownloadOutlined />}
+            sx={{ textTransform: "none", border: "1px solid #E5E7EB", borderRadius: 5, fontSize: "13px", fontWeight: 600, color: "#374151", px: 2 }}
+          >
             Export Results
           </Button>
-          <Button startIcon={<AddOutlined />} sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "13px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}>
+          <Button
+            startIcon={<AddOutlined />}
+            onClick={handleOpenCreate}
+            sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "13px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
+          >
             New Campaign
           </Button>
         </Box>
@@ -61,7 +750,7 @@ const AssessmentCampaigns: React.FC = () => {
 
       {/* Stats Row */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 3 }}>
-        {campaignStats.map((stat, i) => (
+        {statsRow.map((stat, i) => (
           <Box key={i} sx={{ bgcolor: "#fff", p: 2.5, borderRadius: 3, border: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${stat.color}20`, color: stat.color }}>
               <stat.icon sx={{ fontSize: 24 }} />
@@ -70,7 +759,9 @@ const AssessmentCampaigns: React.FC = () => {
               <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: 1 }}>{stat.label}</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography sx={{ fontSize: "22px", fontWeight: 700, color: "#111827" }}>{stat.value}</Typography>
-                {stat.active && <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#10B981", animation: "pulse 2s infinite", "@keyframes pulse": { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }} />}
+                {stat.pulse && active > 0 && (
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#10B981", "@keyframes pulse": { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } }, animation: "pulse 2s infinite" }} />
+                )}
               </Box>
             </Box>
           </Box>
@@ -78,176 +769,46 @@ const AssessmentCampaigns: React.FC = () => {
       </Box>
 
       {/* Campaign Grid */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
-        {campaigns.map((camp) => {
-          const sc = statusColors[camp.status] || statusColors.Active;
-          const tc = typeColors[camp.typeColor] || typeColors.blue;
-          return (
-            <motion.div key={camp.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <Box sx={{ bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.2s", overflow: "hidden" }}>
-                <Box sx={{ p: 3 }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-                    <Box>
-                      <Box sx={{ display: "flex", gap: 1, mb: 0.5 }}>
-                        <Chip label={camp.status} size="small" sx={{ bgcolor: sc.bg, color: sc.fg, fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, height: 22 }} />
-                        <Chip label={camp.type} size="small" sx={{ bgcolor: tc.bg, color: tc.fg, fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, height: 22, border: `1px solid ${tc.border}` }} />
-                      </Box>
-                      <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827", mt: 1 }}>{camp.name}</Typography>
-                    </Box>
-                    <IconButton size="small" sx={{ color: "#9CA3AF" }}><MoreVertOutlined /></IconButton>
-                  </Box>
-
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.7, mb: 3 }}>
-                    {camp.skills.map((s, i) => (
-                      <Chip key={i} label={s} size="small" sx={{ bgcolor: "#F3F4F6", color: "#4B5563", fontSize: "10px", fontWeight: 500, height: 24 }} />
-                    ))}
-                    {camp.extraSkills > 0 && <Chip label={`+${camp.extraSkills} more`} size="small" sx={{ bgcolor: "#F3F4F6", color: "#4B5563", fontSize: "10px", fontWeight: 500, height: 24 }} />}
-                  </Box>
-
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                      <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{camp.completed} / {camp.total} employees completed</Typography>
-                      <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#111827" }}>{camp.progress}%</Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={camp.progress}
-                      sx={{
-                        height: 8, borderRadius: 4, bgcolor: "#F3F4F6",
-                        "& .MuiLinearProgress-bar": {
-                          borderRadius: 4,
-                          background: camp.status === "Completed" ? "linear-gradient(to right, #3B82F6, #60A5FA)" : "linear-gradient(to right, #0D9488, #34D399)",
-                        },
-                      }}
-                    />
-                  </Box>
-
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2, pt: 2, borderTop: "1px solid #F3F4F6" }}>
-                    {[
-                      { label: "Avg Score", value: camp.avgScore > 0 ? `${camp.avgScore}%` : "\u2014", color: "#374151" },
-                      { label: "Pass Rate", value: camp.passRate > 0 ? `${camp.passRate}%` : "\u2014", color: "#10B981" },
-                      { label: "Created", value: camp.created.split(",")[0], color: "#374151" },
-                    ].map((m, i) => (
-                      <Box key={i}>
-                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1, mb: 0.5 }}>{m.label}</Typography>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: m.color }}>{m.value}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-
-                <Box sx={{ px: 3, py: 2, bgcolor: "#F9FAFB", borderTop: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <AccessTimeOutlined sx={{ fontSize: 16, color: "#6B7280" }} />
-                    <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>
-                      Due: <strong style={{ color: "#374151" }}>{camp.due}</strong>
-                    </Typography>
-                    {camp.remaining > 0 && <Typography sx={{ fontSize: "11px", color: "#0D9488", fontWeight: 700, ml: 0.5 }}>({camp.remaining} days left)</Typography>}
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <IconButton size="small" sx={{ color: "#6B7280" }}><NotificationsOutlined sx={{ fontSize: 16 }} /></IconButton>
-                    <Button
-                      endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
-                      sx={{ bgcolor: "#0D9488", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "11px", fontWeight: 700, px: 2, py: 0.5, "&:hover": { bgcolor: "#0b7a6f" } }}
-                    >
-                      View Results
-                    </Button>
-                  </Box>
-                </Box>
-              </Box>
-            </motion.div>
-          );
-        })}
-      </Box>
-
-      {/* Pipeline Config Preview */}
-      <Box sx={{ bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", overflow: "hidden", mt: 2 }}>
-        <Box sx={{ p: 3, borderBottom: "1px solid #E5E7EB", bgcolor: "rgba(249,250,251,0.5)" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: { xs: 4, md: 6 } }}>
-            {[
-              { step: 1, label: "Assessment Type", done: true },
-              { step: 2, label: "Configure Skills", active: true },
-              { step: 3, label: "Assign Employees" },
-              { step: 4, label: "Review & Launch" },
-            ].map((s, i) => (
-              <Box key={i} sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, position: "relative" }}>
-                <Box
-                  sx={{
-                    width: 32, height: 32, borderRadius: "50%",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "12px", fontWeight: 700, zIndex: 1,
-                    bgcolor: s.active ? "#0D9488" : s.done ? "#D1FAE5" : "#E5E7EB",
-                    color: s.active ? "#fff" : s.done ? "#16A34A" : "#6B7280",
-                  }}
-                >
-                  {s.done ? <CheckCircleOutlined sx={{ fontSize: 20 }} /> : s.step}
-                </Box>
-                <Typography sx={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: s.active ? "#0D9488" : "#6B7280", textAlign: "center" }}>
-                  {s.label}
-                </Typography>
-                {i < 3 && <Box sx={{ position: "absolute", top: 16, left: "calc(100% + 8px)", width: 48, height: 1, bgcolor: "#E5E7EB", display: { xs: "none", md: "block" } }} />}
-              </Box>
-            ))}
-          </Box>
+      {loading ? (
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
+          {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
         </Box>
-
-        <Box sx={{ p: { xs: 3, md: 4 }, maxWidth: 700, mx: "auto" }}>
-          <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827", mb: 2 }}>Selected Skills & Proficiency Levels</Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
-            {["React.js", "Node.js", "System Design", "AWS"].map((s) => (
-              <Chip
-                key={s}
-                label={s}
-                onDelete={() => {}}
-                sx={{ bgcolor: "#E6F7F5", color: "#0D9488", fontWeight: 600, fontSize: "13px", border: "1px solid rgba(13,148,136,0.3)", "& .MuiChip-deleteIcon": { color: "#0D9488" } }}
-              />
-            ))}
-            <Button startIcon={<AddOutlined />} sx={{ textTransform: "none", bgcolor: "#F3F4F6", color: "#6B7280", borderRadius: 5, fontSize: "13px", fontWeight: 600, "&:hover": { bgcolor: "#E5E7EB" } }}>
-              Add Skill
-            </Button>
+      ) : campaigns.length === 0 ? (
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", py: 8, gap: 2 }}>
+          <Box sx={{ width: 64, height: 64, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AssignmentTurnedInOutlined sx={{ fontSize: 32, color: "#0D9488" }} />
           </Box>
-
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3, mb: 3 }}>
-            <Box>
-              <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: 2, mb: 1 }}>Difficulty Level</Typography>
-              <Select defaultValue="Mid Level (Intermediate)" size="small" fullWidth sx={{ fontSize: "13px", borderRadius: 2 }}>
-                <MenuItem value="Junior (Beginner)" sx={{ fontSize: "13px" }}>Junior (Beginner)</MenuItem>
-                <MenuItem value="Mid Level (Intermediate)" sx={{ fontSize: "13px" }}>Mid Level (Intermediate)</MenuItem>
-                <MenuItem value="Senior (Expert)" sx={{ fontSize: "13px" }}>Senior (Expert)</MenuItem>
-              </Select>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: 2, mb: 1 }}>Proficiency Threshold</Typography>
-              <Box sx={{ pt: 3, position: "relative" }}>
-                <Box sx={{ height: 6, bgcolor: "#E5E7EB", borderRadius: 3, position: "relative" }}>
-                  <Box sx={{ position: "absolute", top: 0, left: 0, height: "100%", width: "70%", bgcolor: "#0D9488", borderRadius: 3 }} />
-                  <Box sx={{ position: "absolute", top: "50%", left: "70%", transform: "translate(-50%, -50%)", width: 16, height: 16, bgcolor: "#fff", border: "2px solid #0D9488", borderRadius: "50%", boxShadow: 1, cursor: "pointer" }} />
-                  <Box sx={{ position: "absolute", top: -24, left: "70%", transform: "translateX(-50%)", bgcolor: "#0D9488", color: "#fff", fontSize: "9px", fontWeight: 700, px: 0.7, py: 0.2, borderRadius: 1 }}>70%</Box>
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-
-          <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827", mb: 1 }}>Custom AI Interview Instructions</Typography>
-          <InputBase
-            multiline
-            minRows={4}
-            placeholder="e.g., Focus on microservices architecture and system design patterns used in our production environment..."
-            sx={{ width: "100%", bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: 2, p: 2, fontSize: "13px" }}
-          />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, mb: 3 }}>
-            <InfoOutlined sx={{ fontSize: 14, color: "#6B7280" }} />
-            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>Our AI will tailor the interview questions based on these instructions.</Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, pt: 2 }}>
-            <Button sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, fontSize: "13px", color: "#374151", border: "1px solid #E5E7EB", px: 3 }}>Back</Button>
-            <Button sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, fontSize: "13px", bgcolor: "#0D9488", color: "#fff", px: 3, boxShadow: "0 4px 14px rgba(13,148,136,0.2)", "&:hover": { bgcolor: "#0b7a6f" } }}>
-              Next: Assign Employees
-            </Button>
-          </Box>
+          <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827" }}>No Campaigns Yet</Typography>
+          <Typography sx={{ fontSize: "14px", color: "#6B7280" }}>Create your first assessment campaign to get started</Typography>
+          <Button
+            startIcon={<AddOutlined />}
+            onClick={handleOpenCreate}
+            sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontWeight: 700, px: 3, mt: 1, "&:hover": { bgcolor: "#0b7a6f" } }}
+          >
+            New Campaign
+          </Button>
         </Box>
-      </Box>
+      ) : (
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
+          <AnimatePresence>
+            {campaigns.map((camp) => (
+              <motion.div key={camp._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
+                <CampaignCard campaign={camp} onViewDetails={handleOpenDetail} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </Box>
+      )}
+
+      {/* Create Modal */}
+      <CreateCampaignModal open={createOpen} onClose={handleCloseCreate} />
+
+      {/* Detail Drawer */}
+      <CampaignDetailDrawer
+        open={detailId !== null}
+        campaignId={detailId}
+        onClose={handleCloseDetail}
+      />
     </Box>
   );
 };
