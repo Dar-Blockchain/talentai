@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Drawer,
@@ -69,6 +69,19 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
 
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
+  const handleToggleCollapse = useCallback(() => setCollapsed((c) => !c), []);
+  const handleCloseMobile = useCallback(() => setMobileOpen(false), []);
+  const handleOpenMobile = useCallback(() => setMobileOpen(true), []);
+
+  const companyInitial = useMemo(
+    () => profile?.companyDetails?.name?.[0] || "T",
+    [profile?.companyDetails?.name]
+  );
+  const companyName = useMemo(
+    () => profile?.companyDetails?.name || "Company",
+    [profile?.companyDetails?.name]
+  );
+
   const sidebarContent = (mobile = false) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Logo */}
@@ -113,7 +126,7 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
           </Box>
         )}
         {mobile && (
-          <IconButton onClick={() => setMobileOpen(false)} size="small">
+          <IconButton onClick={handleCloseMobile} size="small">
             <CloseOutlined sx={{ color: "#6B7280" }} />
           </IconButton>
         )}
@@ -128,7 +141,7 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
               key={item.id}
               onClick={() => {
                 setActiveTab(item.id);
-                if (mobile) setMobileOpen(false);
+                if (mobile) handleCloseMobile();
               }}
               sx={{
                 borderRadius: 2,
@@ -161,11 +174,7 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
               {(!collapsed || mobile) && (
                 <ListItemText
                   primary={item.label}
-                  primaryTypographyProps={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    whiteSpace: "nowrap",
-                  }}
+                  slotProps={{ primary: { sx: { fontSize: "13px", fontWeight: 500, whiteSpace: "nowrap" } } }}
                 />
               )}
             </ListItemButton>
@@ -177,19 +186,19 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
       <Box sx={{ p: 2, borderTop: "1px solid #E5E7EB" }}>
         {!isMobile && (
           <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-            <IconButton onClick={() => setCollapsed(!collapsed)} size="small" sx={{ color: "#6B7280" }}>
+            <IconButton onClick={handleToggleCollapse} size="small" sx={{ color: "#6B7280" }}>
               {collapsed ? <ChevronRightOutlined /> : <ChevronLeftOutlined />}
             </IconButton>
           </Box>
         )}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, justifyContent: collapsed && !mobile ? "center" : "flex-start", px: collapsed && !mobile ? 0 : 1 }}>
           <Avatar sx={{ width: 36, height: 36, bgcolor: "#0D9488", fontSize: 14 }}>
-            {profile?.companyDetails?.name?.[0] || "T"}
+            {companyInitial}
           </Avatar>
           {(!collapsed || mobile) && (
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {profile?.companyDetails?.name || "Company"}
+                {companyName}
               </Typography>
               <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>HR Director</Typography>
             </Box>
@@ -227,7 +236,7 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
         <Drawer
           variant="temporary"
           open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
+          onClose={handleCloseMobile}
           sx={{
             "& .MuiDrawer-paper": {
               width: 260,
@@ -256,7 +265,7 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {isMobile && (
-              <IconButton onClick={() => setMobileOpen(true)} sx={{ ml: -1 }}>
+              <IconButton onClick={handleOpenMobile} sx={{ ml: -1 }}>
                 <MenuOutlined sx={{ color: "#6B7280" }} />
               </IconButton>
             )}
@@ -294,10 +303,10 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
             {/* Company Info */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, pl: { xs: 1, md: 2 }, borderLeft: "1px solid #E5E7EB" }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: "#0D9488", fontSize: 12 }}>
-                {profile?.companyDetails?.name?.[0] || "T"}
+                {companyInitial}
               </Avatar>
               <Typography sx={{ display: { xs: "none", sm: "block" }, fontSize: "13px", fontWeight: 600, color: "#111827" }}>
-                {profile?.companyDetails?.name || "Company"}
+                {companyName}
               </Typography>
               <KeyboardArrowDownOutlined sx={{ color: "#6B7280", fontSize: 18 }} />
             </Box>

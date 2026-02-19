@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   Box,
   Typography,
@@ -444,4 +444,4 @@ const AnalyticsReporting = () => {
   );
 };
 
-export default AnalyticsReporting;
+export default memo(AnalyticsReporting);

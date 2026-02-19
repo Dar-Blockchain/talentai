@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { Box, Typography, Avatar, Button, LinearProgress } from "@mui/material";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
@@ -64,6 +64,19 @@ const campaigns = [
 ];
 
 const DashboardOverview: React.FC = () => {
+  const renderTooltip = useCallback(({ active, payload }: any) => {
+    if (active && payload?.length) {
+      return (
+        <Box sx={{ bgcolor: "#fff", p: 1.5, border: "1px solid #E5E7EB", borderRadius: 2, boxShadow: 2, fontSize: "11px" }}>
+          <Typography sx={{ fontWeight: 700, color: "#111827", mb: 0.5 }}>{payload[0].payload.name}</Typography>
+          <Typography sx={{ color: "#6B7280" }}>Current: <strong style={{ color: "#0D9488" }}>{payload[0].value}%</strong></Typography>
+          <Typography sx={{ color: "#6B7280" }}>Required: <strong>{payload[1]?.value}%</strong></Typography>
+        </Box>
+      );
+    }
+    return null;
+  }, []);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Stats Cards */}
@@ -117,20 +130,7 @@ const DashboardOverview: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F3F4F6" />
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 13, fontWeight: 500, fill: "#374151" }} width={110} />
-                <Tooltip
-                  content={({ active, payload }: any) => {
-                    if (active && payload?.length) {
-                      return (
-                        <Box sx={{ bgcolor: "#fff", p: 1.5, border: "1px solid #E5E7EB", borderRadius: 2, boxShadow: 2, fontSize: "11px" }}>
-                          <Typography sx={{ fontWeight: 700, color: "#111827", mb: 0.5 }}>{payload[0].payload.name}</Typography>
-                          <Typography sx={{ color: "#6B7280" }}>Current: <strong style={{ color: "#0D9488" }}>{payload[0].value}%</strong></Typography>
-                          <Typography sx={{ color: "#6B7280" }}>Required: <strong>{payload[1]?.value}%</strong></Typography>
-                        </Box>
-                      );
-                    }
-                    return null;
-                  }}
-                />
+                <Tooltip content={renderTooltip} />
                 <Bar dataKey="required" fill="#E5E7EB" radius={[0, 4, 4, 0]} />
                 <Bar dataKey="current" fill="#0D9488" radius={[0, 4, 4, 0]}>
                   {gapData.map((entry, index) => (
@@ -286,4 +286,4 @@ const DashboardOverview: React.FC = () => {
   );
 };
 
-export default DashboardOverview;
+export default memo(DashboardOverview);
