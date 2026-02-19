@@ -1,5 +1,5 @@
-import React, { memo, useCallback } from "react";
-import { Box, Typography, Avatar, Button, LinearProgress } from "@mui/material";
+import React, { memo, useCallback, useEffect } from "react";
+import { Box, Typography, Avatar, Button, LinearProgress, Chip, Skeleton } from "@mui/material";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -21,11 +21,18 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchCampaigns,
+  selectCampaigns,
+  selectCampaignLoading,
+  Campaign,
+} from "@/store/slices/campaignSlice";
 
-const statsData = [
+const STATIC_STATS = [
   { label: "Total Employees", value: "247", change: "+12 this month", trend: "up", icon: PeopleOutlined, color: "#0D9488" },
   { label: "Avg. Skill Score", value: "72%", change: "+5% vs last qtr", trend: "up", icon: PsychologyOutlined, color: "#3B82F6" },
-  { label: "Active Campaigns", value: "3", change: "2 completing soon", trend: "neutral", icon: AssignmentTurnedInOutlined, color: "#F59E0B" },
   { label: "Training Completion", value: "68%", change: "156 / 247 done", trend: "up", icon: SchoolOutlined, color: "#8B5CF6" },
 ];
 
@@ -57,13 +64,75 @@ const topPerformers = [
   { rank: 5, name: "Elena Rossi", dept: "Marketing", score: 85, trend: "up" },
 ];
 
-const campaigns = [
-  { title: "Q1 Technical Assessment", status: "In Progress", dot: "#10B981", meta: "78/120 completed", progress: 65, due: "Feb 15, 2026", type: "tech" },
-  { title: "Leadership Skills Eval", status: "Starting Soon", dot: "#F59E0B", meta: "0/45 assigned", progress: 0, due: "Feb 20, 2026", type: "soft" },
-  { title: "Security Compliance Check", status: "In Progress", dot: "#10B981", meta: "34/60 completed", progress: 57, due: "Feb 10, 2026", type: "compliance" },
-];
 
-const DashboardOverview: React.FC = () => {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const STATUS_DOT: Record<string, string> = {
+  ACTIVE: "#10B981",
+  DRAFT: "#F59E0B",
+  PAUSED: "#F59E0B",
+  CLOSED: "#6B7280",
+  EXPIRED: "#EF4444",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  ACTIVE: "In Progress",
+  DRAFT: "Draft",
+  PAUSED: "Paused",
+  CLOSED: "Closed",
+  EXPIRED: "Expired",
+};
+
+const TYPE_ICON: Record<string, any> = {
+  PRODUCTIVITY_DIAGNOSTIC: PsychologyOutlined,
+  SKILLS_MAPPING: AssignmentTurnedInOutlined,
+  ENABLEMENT: SchoolOutlined,
+  CUSTOM: PeopleOutlined,
+};
+
+const TYPE_COLOR: Record<string, { bg: string; fg: string }> = {
+  PRODUCTIVITY_DIAGNOSTIC: { bg: "#EFF6FF", fg: "#2563EB" },
+  SKILLS_MAPPING: { bg: "#F0FDFA", fg: "#0D9488" },
+  ENABLEMENT: { bg: "#F5F3FF", fg: "#7C3AED" },
+  CUSTOM: { bg: "#FFF7ED", fg: "#C2410C" },
+};
+
+const fmtDate = (iso?: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "—";
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+interface DashboardOverviewProps {
+  onNavigate: (tab: string) => void;
+}
+
+const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const campaigns = useSelector(selectCampaigns);
+  const campaignLoading = useSelector(selectCampaignLoading);
+
+  useEffect(() => {
+    dispatch(fetchCampaigns());
+  }, [dispatch]);
+
+  const activeCampaigns = campaigns.filter((c) => c.status === "ACTIVE");
+  const activeCount = activeCampaigns.length;
+
+  const statsData = [
+    ...STATIC_STATS.slice(0, 2),
+    {
+      label: "Active Campaigns",
+      value: campaignLoading ? "—" : String(activeCount),
+      change: campaigns.length > 0 ? `${campaigns.length} total campaigns` : "No campaigns yet",
+      trend: "neutral" as const,
+      icon: AssignmentTurnedInOutlined,
+      color: "#F59E0B",
+    },
+    STATIC_STATS[2],
+  ];
+
   const renderTooltip = useCallback(({ active, payload }: any) => {
     if (active && payload?.length) {
       return (
@@ -162,49 +231,103 @@ const DashboardOverview: React.FC = () => {
         {/* Active Campaigns */}
         <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB", display: "flex", flexDirection: "column" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-            <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827" }}>Active Campaigns</Typography>
-            <Button startIcon={<AddOutlined />} sx={{ bgcolor: "#0D9488", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "13px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}>
+            <Box>
+              <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827" }}>Active Campaigns</Typography>
+              {!campaignLoading && (
+                <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.3 }}>
+                  {activeCount} active · {campaigns.length} total
+                </Typography>
+              )}
+            </Box>
+            <Button
+              startIcon={<AddOutlined />}
+              onClick={() => onNavigate("campaigns")}
+              sx={{ bgcolor: "#0D9488", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "13px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
+            >
               New Campaign
             </Button>
           </Box>
+
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            {campaigns.map((camp, i) => {
-              const iconMap: any = { tech: PsychologyOutlined, soft: PeopleOutlined, compliance: AssignmentTurnedInOutlined };
-              const colorMap: any = { tech: { bg: "#EFF6FF", fg: "#2563EB" }, soft: { bg: "#F5F3FF", fg: "#7C3AED" }, compliance: { bg: "#FFFBEB", fg: "#D97706" } };
-              const Icon = iconMap[camp.type];
-              const colors = colorMap[camp.type];
-              return (
-                <Box key={i} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#0D9488" }, transition: "border-color 0.2s", cursor: "pointer" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Avatar sx={{ width: 36, height: 36, bgcolor: colors.bg, color: colors.fg }}><Icon sx={{ fontSize: 20 }} /></Avatar>
-                      <Box>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{camp.title}</Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.3 }}>
-                          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: camp.dot }} />
-                          <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{camp.status}</Typography>
+            {campaignLoading ? (
+              [1, 2, 3].map((i) => (
+                <Box key={i} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+                  <Skeleton variant="rectangular" height={16} width="60%" sx={{ borderRadius: 1, mb: 1 }} />
+                  <Skeleton variant="rectangular" height={12} width="40%" sx={{ borderRadius: 1, mb: 2 }} />
+                  <Skeleton variant="rectangular" height={6} sx={{ borderRadius: 3 }} />
+                </Box>
+              ))
+            ) : activeCampaigns.length === 0 ? (
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 5, gap: 1.5 }}>
+                <Box sx={{ width: 48, height: 48, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <AssignmentTurnedInOutlined sx={{ fontSize: 24, color: "#0D9488" }} />
+                </Box>
+                <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>No active campaigns</Typography>
+                <Typography sx={{ fontSize: "12px", color: "#9CA3AF", textAlign: "center" }}>
+                  Create a campaign to start assessing your team
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => onNavigate("campaigns")}
+                  sx={{ mt: 0.5, textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
+                >
+                  Get Started
+                </Button>
+              </Box>
+            ) : (
+              activeCampaigns.slice(0, 4).map((camp: Campaign) => {
+                const Icon = TYPE_ICON[camp.type] ?? AssignmentTurnedInOutlined;
+                const colors = TYPE_COLOR[camp.type] ?? TYPE_COLOR.CUSTOM;
+                const dot = STATUS_DOT[camp.status] ?? "#6B7280";
+                const statusLabel = STATUS_LABEL[camp.status] ?? camp.status;
+                const moduleCount = camp.modules.length;
+                return (
+                  <Box
+                    key={camp._id}
+                    onClick={() => onNavigate("campaigns")}
+                    sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#0D9488" }, transition: "border-color 0.2s", cursor: "pointer" }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Avatar sx={{ width: 36, height: 36, bgcolor: colors.bg, color: colors.fg }}>
+                          <Icon sx={{ fontSize: 20 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {camp.title}
+                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.3 }}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: dot }} />
+                            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{statusLabel}</Typography>
+                          </Box>
                         </Box>
                       </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Chip
+                          label={`${moduleCount} module${moduleCount !== 1 ? "s" : ""}`}
+                          size="small"
+                          sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }}
+                        />
+                        <ChevronRightOutlined sx={{ color: "#9CA3AF", fontSize: 20 }} />
+                      </Box>
                     </Box>
-                    <ChevronRightOutlined sx={{ color: "#9CA3AF", fontSize: 20 }} />
+                    {camp.deadline && (
+                      <Typography sx={{ mt: 1, fontSize: "9px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, color: "#9CA3AF" }}>
+                        Due: {fmtDate(camp.deadline)}
+                      </Typography>
+                    )}
                   </Box>
-                  <Box sx={{ mt: 2 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                      <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{camp.meta}</Typography>
-                      <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#111827" }}>{camp.progress}%</Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={camp.progress}
-                      sx={{ height: 6, borderRadius: 3, bgcolor: "#E5E7EB", "& .MuiLinearProgress-bar": { borderRadius: 3, background: "linear-gradient(to right, #0D9488, #34D399)" } }}
-                    />
-                  </Box>
-                  <Typography sx={{ mt: 1.5, fontSize: "9px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, color: "#9CA3AF" }}>
-                    Due Date: {camp.due}
-                  </Typography>
-                </Box>
-              );
-            })}
+                );
+              })
+            )}
+            {!campaignLoading && activeCampaigns.length > 4 && (
+              <Box
+                onClick={() => onNavigate("campaigns")}
+                sx={{ textAlign: "center", py: 1.5, cursor: "pointer", color: "#0D9488", fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
+              >
+                View all {activeCampaigns.length} active campaigns →
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
