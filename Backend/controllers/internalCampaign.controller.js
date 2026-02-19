@@ -179,6 +179,31 @@ exports.deleteInternalCampaign = async (req, res) => {
 };
 
 /**
+ * Get campaign statistics
+ */
+exports.getCampaignStats = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+
+    const {
+      getCampaignStats: getCampaignStatsService,
+    } = require("../services/internalCampaign.service");
+
+    const stats = await getCampaignStatsService(campaignId);
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Get all campaigns (admin only)
  */
 exports.getAllCampaigns = async (req, res) => {
