@@ -21,6 +21,9 @@ import {
   Drawer,
   Divider,
   Tooltip,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
@@ -39,6 +42,8 @@ import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
+import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -46,6 +51,7 @@ import {
   fetchCampaigns,
   fetchCampaignById,
   createCampaign,
+  deleteCampaign,
   clearCreateStatus,
   clearSelectedCampaign,
   selectCampaigns,
@@ -392,9 +398,10 @@ interface DetailDrawerProps {
   open: boolean;
   campaignId: string | null;
   onClose: () => void;
+  onDeleteRequest: (id: string, title: string) => void;
 }
 
-const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, onClose }) => {
+const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, onClose, onDeleteRequest }) => {
   const dispatch = useDispatch<AppDispatch>();
   const campaign = useSelector(selectSelectedCampaign);
   const loading = useSelector(selectDetailLoading);
@@ -582,17 +589,17 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
       {campaign && !loading && (
         <Box sx={{ px: 3, py: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0, display: "flex", gap: 1.5 }}>
           <Button
-            fullWidth
             onClick={onClose}
-            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB" }}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", flex: 1 }}
           >
             Close
           </Button>
           <Button
-            fullWidth
-            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", "&:hover": { bgcolor: "#0b7a6f" } }}
+            startIcon={<DeleteOutlined sx={{ fontSize: 16 }} />}
+            onClick={() => onDeleteRequest(campaign._id, campaign.title)}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#FEF2F2", color: "#EF4444", border: "1px solid #FCA5A5", "&:hover": { bgcolor: "#FEE2E2" }, px: 2.5 }}
           >
-            Manage Campaign
+            Delete
           </Button>
         </Box>
       )}
@@ -602,10 +609,11 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
 
 // ─── Campaign Card ────────────────────────────────────────────────────────────
 
-const CampaignCard: React.FC<{ campaign: Campaign; onViewDetails: (id: string) => void }> = memo(({ campaign, onViewDetails }) => {
+const CampaignCard: React.FC<{ campaign: Campaign; onViewDetails: (id: string) => void; onDelete: (id: string, title: string) => void }> = memo(({ campaign, onViewDetails, onDelete }) => {
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const tc = TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM;
   const remaining = daysLeft(campaign.deadline);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   return (
     <Box sx={{ bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.2s", overflow: "hidden" }}>
@@ -623,7 +631,19 @@ const CampaignCard: React.FC<{ campaign: Campaign; onViewDetails: (id: string) =
               </Typography>
             )}
           </Box>
-          <IconButton size="small" sx={{ color: "#9CA3AF" }}><MoreVertOutlined /></IconButton>
+          <IconButton size="small" sx={{ color: "#9CA3AF" }} onClick={(e) => setMenuAnchor(e.currentTarget)}>
+            <MoreVertOutlined />
+          </IconButton>
+          <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}
+            slotProps={{ paper: { sx: { borderRadius: 2, boxShadow: 3, minWidth: 160 } } }}>
+            <MenuItem
+              onClick={() => { setMenuAnchor(null); onDelete(campaign._id, campaign.title); }}
+              sx={{ color: "#EF4444", gap: 1 }}
+            >
+              <ListItemIcon sx={{ minWidth: 0 }}><DeleteOutlined sx={{ fontSize: 18, color: "#EF4444" }} /></ListItemIcon>
+              <ListItemText primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }}>Delete</ListItemText>
+            </MenuItem>
+          </Menu>
         </Box>
 
         {/* Modules chips */}
@@ -701,6 +721,8 @@ const AssessmentCampaigns: React.FC = () => {
   const loading = useSelector(selectCampaignLoading);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCampaigns());
@@ -710,6 +732,20 @@ const AssessmentCampaigns: React.FC = () => {
   const handleCloseCreate = useCallback(() => setCreateOpen(false), []);
   const handleOpenDetail = useCallback((id: string) => setDetailId(id), []);
   const handleCloseDetail = useCallback(() => setDetailId(null), []);
+
+  const handleDeleteRequest = useCallback((id: string, title: string) => {
+    setDeleteTarget({ id, title });
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTarget) return;
+    const targetId = deleteTarget.id;
+    setDeleting(true);
+    await dispatch(deleteCampaign(targetId));
+    setDeleting(false);
+    setDeleteTarget(null);
+    setDetailId((prev) => (prev === targetId ? null : prev));
+  }, [deleteTarget, dispatch]);
 
   const total = campaigns.length;
   const active = campaigns.filter((c) => c.status === "ACTIVE").length;
@@ -793,7 +829,7 @@ const AssessmentCampaigns: React.FC = () => {
           <AnimatePresence>
             {campaigns.map((camp) => (
               <motion.div key={camp._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
-                <CampaignCard campaign={camp} onViewDetails={handleOpenDetail} />
+                <CampaignCard campaign={camp} onViewDetails={handleOpenDetail} onDelete={handleDeleteRequest} />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -808,7 +844,55 @@ const AssessmentCampaigns: React.FC = () => {
         open={detailId !== null}
         campaignId={detailId}
         onClose={handleCloseDetail}
+        onDeleteRequest={handleDeleteRequest}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteTarget !== null}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <WarningAmberOutlined sx={{ fontSize: 22, color: "#EF4444" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>Delete Campaign</Typography>
+              <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>This action cannot be undone</Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Typography sx={{ fontSize: "14px", color: "#374151" }}>
+            Are you sure you want to delete{" "}
+            <Box component="span" sx={{ fontWeight: 700, color: "#111827" }}>
+              "{deleteTarget?.title}"
+            </Box>
+            ? All campaign data will be permanently removed.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleting}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", flex: 1 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <DeleteOutlined sx={{ fontSize: 16 }} />}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#EF4444", color: "#fff", flex: 1, "&:hover": { bgcolor: "#DC2626" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
