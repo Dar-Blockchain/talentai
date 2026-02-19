@@ -36,6 +36,44 @@ router.post("/", internalCampaignController.createInternalCampaign);
 router.get("/", internalCampaignController.getCompanyCampaigns);
 
 /**
+ * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
+ * NOTE: Route spécifique placée avant les routes générales avec :campaignId
+ */
+router.get(
+  "/:campaignId/stats",
+  internalCampaignController.getCampaignStats
+);
+
+/**
+ * PATCH /campaigns/:campaignId/status — Changer le statut d'une campagne
+ * Body: { status }
+ * NOTE: Route spécifique placée avant la route générale :campaignId
+ */
+router.patch("/:campaignId/status", async (req, res) => {
+  try {
+    const campaignService = require("../services/internalCampaign.service");
+    const { campaignId } = req.params;
+    const { status } = req.body;
+
+    const campaign = await campaignService.updateCampaignStatus(
+      campaignId,
+      status
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Campaign status updated successfully",
+      data: campaign,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
  * GET /campaigns/:campaignId — Récupérer une campagne spécifique
  */
 router.get("/:campaignId", internalCampaignController.getCampaign);
@@ -53,42 +91,6 @@ router.delete(
   "/:campaignId",
   internalCampaignController.deleteInternalCampaign
 );
-
-// Routes additionnelles (optionnelles)
-
-/**
- * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
- */
-router.get(
-  "/:campaignId/stats",
-  internalCampaignController.getCampaignStats
-);
-
-/**
- * PATCH /campaigns/:campaignId/status — Changer le statut d'une campagne
- * Body: { status }
- */
-router.patch("/:campaignId/status", (req, res) => {
-  const campaignService = require("../services/internalCampaign.service");
-  const { campaignId } = req.params;
-  const { status } = req.body;
-
-  campaignService
-    .updateCampaignStatus(campaignId, status)
-    .then((campaign) => {
-      res.status(200).json({
-        success: true,
-        message: "Campaign status updated successfully",
-        data: campaign,
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    });
-});
 
 // Routes pour les administrateurs uniquement (optionnel)
 router.get(
