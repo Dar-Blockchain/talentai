@@ -87,10 +87,7 @@ router.put("/:campaignId", internalCampaignController.updateInternalCampaign);
 /**
  * DELETE /campaigns/:campaignId — Supprimer une campagne
  */
-router.delete(
-  "/:campaignId",
-  internalCampaignController.deleteInternalCampaign
-);
+router.delete("/:campaignId",internalCampaignController.deleteInternalCampaign);
 
 // Routes pour les administrateurs uniquement (optionnel)
 router.get(

@@ -15,13 +15,31 @@ const {
  */
 exports.createInternalCampaign = async (req, res) => {
   try {
-    const { title, type, description, anonymityMode, modules, accessMethod, targetDepartment, targetEmployeeCount, deadline } = req.body;
+    const {
+      title,
+      type,
+      description,
+      anonymityMode,
+      modules,
+      accessMethod,
+      targetDepartment,
+      targetEmployeeCount,
+      deadline,
+    } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
 
-    if (!title || !type || !anonymityMode || !modules || modules.length === 0 || !accessMethod) {
+    if (
+      !title ||
+      !type ||
+      !anonymityMode ||
+      !modules ||
+      modules.length === 0 ||
+      !accessMethod
+    ) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: title, type, anonymityMode, modules, accessMethod",
+        error:
+          "Missing required fields: title, type, anonymityMode, modules, accessMethod",
       });
     }
 
@@ -60,7 +78,10 @@ exports.getCompanyCampaigns = async (req, res) => {
     const companyId = req.user.profile;
     const { status } = req.query;
 
-    const campaigns = await getCampaignsByCompany(companyId, status ? { status } : {});
+    const campaigns = await getCampaignsByCompany(
+      companyId,
+      status ? { status } : {},
+    );
 
     res.status(200).json({
       success: true,
