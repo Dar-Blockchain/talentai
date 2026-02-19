@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   Box,
   Typography,
@@ -20,7 +20,6 @@ import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import MailOutlined from "@mui/icons-material/MailOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import MoreHorizOutlined from "@mui/icons-material/MoreHorizOutlined";
-import { motion } from "framer-motion";
 
 const enablementStats = [
   { label: "Active Learners", value: "156", sub: "/ 247 total", p: 63, icon: PeopleOutlined, color: "#0D9488" },
@@ -285,4 +284,4 @@ const EmployeeEnablement: React.FC = () => {
   );
 };
 
-export default EmployeeEnablement;
+export default memo(EmployeeEnablement);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   Box,
   Typography,
@@ -14,7 +14,6 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVertOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
@@ -253,4 +252,4 @@ const AssessmentCampaigns: React.FC = () => {
   );
 };
 
-export default AssessmentCampaigns;
+export default memo(AssessmentCampaigns);

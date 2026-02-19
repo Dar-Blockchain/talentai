@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import {
   Box,
   Typography,
@@ -314,4 +314,4 @@ const SkillsMatrix: React.FC = () => {
   );
 };
 
-export default SkillsMatrix;
+export default memo(SkillsMatrix);
