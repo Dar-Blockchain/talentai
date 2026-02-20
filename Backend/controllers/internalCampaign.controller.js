@@ -140,7 +140,7 @@ exports.updateInternalCampaign = async (req, res) => {
       });
     }
 
-    if (campaign.company.toString() !== req.user.profile.toString()) {
+    if (campaign.company._id.toString() !== req.user.profile.toString()) {
       return res.status(403).json({
         success: false,
         error: "Unauthorized: You can only update your own campaigns",
@@ -178,9 +178,7 @@ exports.deleteInternalCampaign = async (req, res) => {
       });
     }
 
-    if (campaign.company.toString() !== req.user.profile.toString()) {
-      console.log("Unauthorized delete attempt by user:", req.user.profile.toString());
-      console.log("Campaign company ID:", campaign.company);
+    if (campaign.company._id.toString() !== req.user.profile.toString()) {
       return res.status(403).json({
         success: false,
         error: "Unauthorized: You can only delete your own campaigns",
