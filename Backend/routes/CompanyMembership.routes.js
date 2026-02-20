@@ -4,10 +4,11 @@ const CompanyMembershipController = require("../controllers/ProfileControllers/C
 const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
+const { controledAcces } = require("../middleware/authorize.middleware.js");
 
 // ========== MIDDLEWARE: Authentication + Logging ==========
 // All routes below require an authenticated user and are logged
-router.use(requireAuthUser, authLogMiddleware("memberships"));
+router.use(requireAuthUser,  controledAcces("Company"), authLogMiddleware("memberships"));
 
 // Get all memberships for a company owned by the user
 router.get("/memberships",resolveCompanyActor, CompanyMembershipController.getMembershipsByCompany);
