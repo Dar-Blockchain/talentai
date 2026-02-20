@@ -20,36 +20,56 @@ router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
  * POST /sentInvitation
  * Add a new employee to a Company account
  */
-router.post("/sentInvitation", resolveCompanyActor,CompanyInvitationController.sentInvitation);
+router.post(
+  "/sentInvitation",
+  resolveCompanyActor,
+  CompanyInvitationController.sentInvitation,
+);
 
 /**
  * POST /resendInvitation/:invitationId
  * Resend an invitation (regenerate token and reset expiration)
  */
-router.post("/resendInvitation/:invitationId", CompanyInvitationController.resendInvitation);
+router.post(
+  "/resendInvitation/:invitationId",
+  CompanyInvitationController.resendInvitation,
+);
 
 /**
  * DELETE /deleteInvitation/:invitationId
  * Delete/revoke an invitation
  */
-router.delete("/deleteInvitation/:invitationId", CompanyInvitationController.deleteInvitation);
+router.delete(
+  "/deleteInvitation/:invitationId",
+  CompanyInvitationController.deleteInvitation,
+);
 
 /**
  * POST /respondInvitation/:invitationId
  * Accept or reject an invitation (body: { action: 'accept'|'reject' })
  */
-router.post("/respondInvitation/:invitationId", CompanyInvitationController.respondInvitation);
+router.post(
+  "/respondInvitation/:invitationId",
+  CompanyInvitationController.respondInvitation,
+);
 
 /**
  * GET /myInvitations
  * Get all invitations for companies owned by current user
  */
-router.get("/myInvitations", resolveCompanyActor,CompanyInvitationController.getCompanyInvitations);
+router.get(
+  "/myInvitations",
+  resolveCompanyActor,
+  CompanyInvitationController.getCompanyInvitations,
+);
 
 /**
  * GET /details/:invitationId
  * Get invitation details by ID
  */
-router.get("/details/:invitationId", CompanyInvitationController.getInvitationDetails);
+router.get(
+  "/details/:invitationId",
+  CompanyInvitationController.getInvitationDetails,
+);
 
 module.exports = router;
