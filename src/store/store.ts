@@ -30,6 +30,7 @@ import chatReducer from './slices/chatSlice';
 import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
 import campaignReducer from './slices/campaignSlice';
+import participantReducer from './slices/participantSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
@@ -53,6 +54,7 @@ const rootReducer = combineReducers({
   admin: adminReducer,
   planLimits: planLimitsReducer,
   campaign: campaignReducer,
+  participant: participantReducer,
 });
 
 const persistConfig = {

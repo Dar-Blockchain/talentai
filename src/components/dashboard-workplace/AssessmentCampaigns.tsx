@@ -24,6 +24,9 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Tabs,
+  Tab,
+  Avatar,
 } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
@@ -44,6 +47,9 @@ import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
 import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
+import GroupAddOutlined from "@mui/icons-material/GroupAddOutlined";
+import PersonOutlined from "@mui/icons-material/PersonOutlined";
+import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -68,6 +74,22 @@ import {
   AccessMethod,
   ModuleType,
 } from "@/store/slices/campaignSlice";
+import {
+  fetchParticipants,
+  addParticipant,
+  addAnonymousParticipant,
+  bulkAddParticipants,
+  removeParticipant,
+  clearAddStatus,
+  selectParticipants,
+  selectParticipantsLoading,
+  selectParticipantAdding,
+  selectParticipantAddError,
+  selectParticipantAddSuccess,
+  Participant,
+  generateAnonymousToken,
+} from "@/store/slices/participantSlice";
+import { fetchMembers, selectMembers, Member } from "@/store/slices/memberSlice";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -401,16 +423,372 @@ interface DetailDrawerProps {
   onDeleteRequest: (id: string, title: string) => void;
 }
 
+// ─── Participant Status Config ─────────────────────────────────────────────────
+
+const PSTATUS_COLORS: Record<string, { bg: string; fg: string }> = {
+  INVITED:     { bg: "#EFF6FF", fg: "#2563EB" },
+  IN_PROGRESS: { bg: "#FFFBEB", fg: "#D97706" },
+  COMPLETED:   { bg: "#F0FDF4", fg: "#16A34A" },
+  DROPPED:     { bg: "#FEF2F2", fg: "#DC2626" },
+};
+
+// ─── Add Participant Modal ─────────────────────────────────────────────────────
+
+interface AddParticipantModalProps {
+  open: boolean;
+  campaignId: string;
+  onClose: () => void;
+}
+
+const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaignId, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const adding = useSelector(selectParticipantAdding);
+  const addSuccess = useSelector(selectParticipantAddSuccess);
+  const addError = useSelector(selectParticipantAddError);
+  const { members, loading: membersLoading } = useSelector(selectMembers);
+
+  const [mode, setMode] = useState<"single" | "bulk" | "anonymous">("single");
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [bulkText, setBulkText] = useState("");
+  const [generatedToken, setGeneratedToken] = useState<string>("");
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchMembers());
+      setGeneratedToken(generateAnonymousToken());
+    }
+  }, [open, dispatch]);
+
+  useEffect(() => {
+    if (mode === "anonymous") {
+      setGeneratedToken(generateAnonymousToken());
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    if (addSuccess) {
+      dispatch(clearAddStatus());
+      setSelectedMember(null); setBulkText(""); setErr("");
+      setGeneratedToken(generateAnonymousToken());
+      onClose();
+    }
+  }, [addSuccess, dispatch, onClose]);
+
+  const handleClose = () => {
+    if (adding) return;
+    dispatch(clearAddStatus());
+    setSelectedMember(null); setBulkText(""); setErr("");
+    onClose();
+  };
+
+  const handleRefreshToken = () => {
+    setGeneratedToken(generateAnonymousToken());
+  };
+
+  const handleSubmit = () => {
+    setErr("");
+    if (mode === "single") {
+      if (!selectedMember) return setErr("Please select a member");
+      dispatch(addParticipant({
+        campaignId,
+        email: selectedMember.user.email,
+        employeeId: selectedMember.user._id,
+        anonymousToken: generateAnonymousToken(),
+      }));
+    } else if (mode === "anonymous") {
+      dispatch(addAnonymousParticipant({ campaignId, anonymousToken: generatedToken }));
+    } else {
+      const emails = bulkText.split(/[\n,;]+/).map((e) => e.trim()).filter(Boolean);
+      if (emails.length === 0) return setErr("Enter at least one email");
+      dispatch(bulkAddParticipants({ campaignId, participants: emails.map((e) => ({ email: e })) }));
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ width: 36, height: 36, bgcolor: "#F0FDFA", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <GroupAddOutlined sx={{ fontSize: 20, color: "#0D9488" }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Add Participants</Typography>
+            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>Invite people to this campaign</Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={handleClose} size="small" disabled={adding}>
+          <CloseOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+        {addError && <Alert severity="error" sx={{ borderRadius: 2 }}>{addError}</Alert>}
+        {err && <Alert severity="warning" sx={{ borderRadius: 2 }}>{err}</Alert>}
+
+        {/* Mode toggle */}
+        <Box sx={{ display: "flex", bgcolor: "#F3F4F6", borderRadius: 2, p: 0.5, gap: 0.5 }}>
+          {(["single", "bulk", "anonymous"] as const).map((m) => (
+            <Box
+              key={m}
+              onClick={() => setMode(m)}
+              sx={{
+                flex: 1, textAlign: "center", py: 0.8, borderRadius: 1.5, cursor: "pointer",
+                bgcolor: mode === m ? "#fff" : "transparent",
+                boxShadow: mode === m ? 1 : 0,
+                fontSize: "12px", fontWeight: 600,
+                color: mode === m ? "#111827" : "#6B7280",
+                transition: "all 0.15s",
+              }}
+            >
+              {m === "single" ? "Single" : m === "bulk" ? "Bulk" : "Anonymous"}
+            </Box>
+          ))}
+        </Box>
+
+        {/* Single — member list */}
+        {mode === "single" && (
+          <Box>
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 1, textTransform: "uppercase", letterSpacing: 0.8 }}>
+              Select a member
+            </Typography>
+            {membersLoading ? (
+              [1, 2, 3].map((i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.2, mb: 0.5, borderRadius: 2, bgcolor: "#F9FAFB" }}>
+                  <Skeleton variant="circular" width={32} height={32} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="rectangular" height={13} width="50%" sx={{ borderRadius: 1, mb: 0.5 }} />
+                    <Skeleton variant="rectangular" height={11} width="70%" sx={{ borderRadius: 1 }} />
+                  </Box>
+                </Box>
+              ))
+            ) : members.length === 0 ? (
+              <Box sx={{ py: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                <PersonOutlined sx={{ fontSize: 28, color: "#D1D5DB" }} />
+                <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>No members found</Typography>
+              </Box>
+            ) : (
+              <Box sx={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.5, pr: 0.5 }}>
+                {members.map((member: Member) => {
+                  const isSelected = selectedMember?._id === member._id;
+                  const initials = (member.user.username || member.user.email)[0].toUpperCase();
+                  return (
+                    <Box
+                      key={member._id}
+                      onClick={() => setSelectedMember(isSelected ? null : member)}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1.5, p: 1.2,
+                        borderRadius: 2, cursor: "pointer",
+                        border: `1px solid ${isSelected ? "#0D9488" : "#E5E7EB"}`,
+                        bgcolor: isSelected ? "#F0FDFA" : "#F9FAFB",
+                        "&:hover": { bgcolor: isSelected ? "#CCFBF1" : "#F3F4F6" },
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <Avatar sx={{ width: 32, height: 32, bgcolor: isSelected ? "#0D9488" : "#E5E7EB", color: isSelected ? "#fff" : "#6B7280", fontSize: "13px", fontWeight: 700 }}>
+                        {initials}
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {member.user.username}
+                        </Typography>
+                        <Typography sx={{ fontSize: "11px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {member.user.email}
+                        </Typography>
+                      </Box>
+                      {isSelected && (
+                        <CheckCircleOutlined sx={{ fontSize: 18, color: "#0D9488", flexShrink: 0 }} />
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Bulk — textarea */}
+        {mode === "bulk" && (
+          <TextField
+            label="Emails (one per line, or comma-separated)"
+            value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            fullWidth size="small"
+            multiline minRows={4}
+            placeholder={"alice@co.com\nbob@co.com\ncarol@co.com"}
+          />
+        )}
+
+        {/* Anonymous — show generated token */}
+        {mode === "anonymous" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ p: 1.5, bgcolor: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 2 }}>
+              <Typography sx={{ fontSize: "11px", color: "#92400E", fontWeight: 600 }}>
+                A unique access token will be generated and sent to the backend. Share this token with the anonymous participant so they can access the campaign.
+              </Typography>
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 0.8, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                Token preview
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2 }}>
+                <VpnKeyOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0 }} />
+                <Typography sx={{ flex: 1, fontSize: "12px", color: "#374151", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {generatedToken}
+                </Typography>
+                <Tooltip title="Generate new token">
+                  <IconButton size="small" onClick={handleRefreshToken} sx={{ color: "#6B7280" }}>
+                    <ContentCopyOutlined sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button onClick={handleClose} disabled={adding} sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", flex: 1 }}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={adding || (mode === "single" && !selectedMember)}
+          startIcon={adding ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <GroupAddOutlined sx={{ fontSize: 16 }} />}
+          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", flex: 1, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
+        >
+          {adding ? "Adding…" : mode === "single" ? "Add" : mode === "anonymous" ? "Generate & Add" : "Import"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// ─── Participants Panel ────────────────────────────────────────────────────────
+
+const ParticipantsPanel: React.FC<{ campaignId: string }> = ({ campaignId }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const participants = useSelector(selectParticipants(campaignId));
+  const loading = useSelector(selectParticipantsLoading(campaignId));
+  const [addOpen, setAddOpen] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchParticipants(campaignId));
+  }, [campaignId, dispatch]);
+
+  const handleRemove = async (participantId: string) => {
+    setRemoving(participantId);
+    await dispatch(removeParticipant({ campaignId, participantId }));
+    setRemoving(null);
+  };
+
+  return (
+    <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Header row */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827" }}>
+            Participants
+            {!loading && (
+              <Box component="span" sx={{ ml: 1, px: 1, py: 0.3, bgcolor: "#F3F4F6", borderRadius: 5, fontSize: "11px", fontWeight: 700, color: "#6B7280" }}>
+                {participants.length}
+              </Box>
+            )}
+          </Typography>
+          <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Manage who is invited to this campaign</Typography>
+        </Box>
+        <Button
+          size="small"
+          startIcon={<GroupAddOutlined sx={{ fontSize: 15 }} />}
+          onClick={() => setAddOpen(true)}
+          sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 700, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
+        >
+          Add
+        </Button>
+      </Box>
+
+      {/* List */}
+      {loading ? (
+        [1, 2, 3].map((i) => (
+          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#F9FAFB", borderRadius: 2 }}>
+            <Skeleton variant="circular" width={36} height={36} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="rectangular" height={14} width="60%" sx={{ borderRadius: 1, mb: 0.5 }} />
+              <Skeleton variant="rectangular" height={11} width="30%" sx={{ borderRadius: 1 }} />
+            </Box>
+          </Box>
+        ))
+      ) : participants.length === 0 ? (
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 5, gap: 1.5 }}>
+          <Box sx={{ width: 48, height: 48, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <PersonOutlined sx={{ fontSize: 24, color: "#0D9488" }} />
+          </Box>
+          <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>No participants yet</Typography>
+          <Typography sx={{ fontSize: "12px", color: "#9CA3AF", textAlign: "center" }}>Add participants to start the campaign</Typography>
+          <Button size="small" onClick={() => setAddOpen(true)} startIcon={<GroupAddOutlined sx={{ fontSize: 15 }} />}
+            sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 700, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}>
+            Add Participants
+          </Button>
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {participants.map((p: Participant) => {
+            const sc = PSTATUS_COLORS[p.status] || PSTATUS_COLORS.INVITED;
+            const label = p.email || p.anonymousToken?.slice(0, 12) + "…" || p.employee || "Unknown";
+            const initials = (p.email || "?")[0].toUpperCase();
+            const isRemoving = removing === p._id;
+            return (
+              <Box key={p._id} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#F9FAFB", borderRadius: 2, border: "1px solid #E5E7EB" }}>
+                <Avatar sx={{ width: 34, height: 34, bgcolor: sc.bg, color: sc.fg, fontSize: "13px", fontWeight: 700 }}>
+                  {initials}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {label}
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
+                    <Chip label={p.status} size="small" sx={{ bgcolor: sc.bg, color: sc.fg, fontSize: "9px", fontWeight: 700, height: 18, textTransform: "uppercase", letterSpacing: 0.5 }} />
+                    {p.createdAt && (
+                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>
+                        {fmtDate(p.createdAt)}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+                <IconButton
+                  size="small"
+                  disabled={isRemoving}
+                  onClick={() => handleRemove(p._id)}
+                  sx={{ color: "#EF4444", "&:hover": { bgcolor: "#FEF2F2" } }}
+                >
+                  {isRemoving ? <CircularProgress size={14} sx={{ color: "#EF4444" }} /> : <DeleteOutlined sx={{ fontSize: 16 }} />}
+                </IconButton>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+
+      <AddParticipantModal open={addOpen} campaignId={campaignId} onClose={() => setAddOpen(false)} />
+    </Box>
+  );
+};
+
+// ─── Detail Drawer ─────────────────────────────────────────────────────────────
+
 const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, onClose, onDeleteRequest }) => {
   const dispatch = useDispatch<AppDispatch>();
   const campaign = useSelector(selectSelectedCampaign);
   const loading = useSelector(selectDetailLoading);
   const error = useSelector(selectDetailError);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     if (open && campaignId) {
       dispatch(fetchCampaignById(campaignId));
+      setActiveTab(0);
     }
     return () => {
       if (!open) dispatch(clearSelectedCampaign());
@@ -439,13 +817,34 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
     >
       {/* Header */}
       <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>Campaign Details</Typography>
+        <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
+          {campaign?.title || "Campaign Details"}
+        </Typography>
         <IconButton onClick={onClose} size="small"><CloseOutlined sx={{ fontSize: 18, color: "#6B7280" }} /></IconButton>
       </Box>
 
+      {/* Tabs */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v)}
+        sx={{
+          px: 2, borderBottom: "1px solid #E5E7EB", flexShrink: 0, minHeight: 40,
+          "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "13px", minHeight: 40, py: 1 },
+          "& .Mui-selected": { color: "#0D9488" },
+          "& .MuiTabs-indicator": { bgcolor: "#0D9488" },
+        }}
+      >
+        <Tab label="Details" />
+        <Tab label="Participants" />
+      </Tabs>
+
       {/* Body */}
       <Box sx={{ flex: 1, overflowY: "auto" }}>
-        {loading && (
+        {/* Participants Tab */}
+        {activeTab === 1 && campaignId && <ParticipantsPanel campaignId={campaignId} />}
+
+        {/* Details Tab */}
+        {activeTab === 0 && loading && (
           <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
             <Skeleton variant="rectangular" height={28} width="70%" sx={{ borderRadius: 1 }} />
             <Skeleton variant="rectangular" height={20} width="40%" sx={{ borderRadius: 1 }} />
@@ -455,13 +854,13 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
           </Box>
         )}
 
-        {error && !loading && (
+        {activeTab === 0 && error && !loading && (
           <Box sx={{ p: 3 }}>
             <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
           </Box>
         )}
 
-        {campaign && !loading && (
+        {activeTab === 0 && campaign && !loading && (
           <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
 
             {/* Title + Status */}
@@ -586,7 +985,7 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
       </Box>
 
       {/* Footer */}
-      {campaign && !loading && (
+      {campaign && !loading && activeTab === 0 && (
         <Box sx={{ px: 3, py: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0, display: "flex", gap: 1.5 }}>
           <Button
             onClick={onClose}
