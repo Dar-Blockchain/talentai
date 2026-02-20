@@ -1,16 +1,15 @@
 require("dotenv").config();
 const CampaignParticipant = require("../models/campaignParticipant.model");
 const InternalCampaign = require("../models/internalCampaign.model");
-const {
+const campaignParticipantService = require("../services/campaignParticipant.service");
+/*
   addParticipant,
   getParticipantById,
   getParticipantsByCampaign,
   updateParticipant,
   deleteParticipant,
   updateParticipantModuleProgress,
-  getParticipantByAnonymousToken,
-} = require("../services/campaignParticipant.service");
-
+  getParticipantByAnonymousToken,*/
 /**
  * Add a new participant to a campaign
  */
@@ -35,7 +34,7 @@ exports.addCampaignParticipant = async (req, res) => {
       });
     }
 
-    const participant = await addParticipant({
+    const participant = await campaignParticipantService.addParticipant({
       campaign: campaignId,
       employee: employeeId || null,
       email: email || null,
@@ -63,9 +62,9 @@ exports.getCampaignParticipants = async (req, res) => {
     const { campaignId } = req.params;
     const { status } = req.query;
 
-    const participants = await getParticipantsByCampaign(
+    const participants = await campaignParticipantService.getParticipantsByCampaign(
       campaignId,
-      status ? { status } : {}
+      status ? { status } : {},
     );
 
     res.status(200).json({
@@ -88,7 +87,7 @@ exports.getParticipant = async (req, res) => {
   try {
     const { participantId } = req.params;
 
-    const participant = await getParticipantById(participantId);
+    const participant = await campaignParticipantService.getParticipantById(participantId);
 
     if (!participant) {
       return res.status(404).json({
@@ -116,8 +115,8 @@ exports.getParticipantByToken = async (req, res) => {
   try {
     const { token } = req.params;
 
-    const participant = await getParticipantByAnonymousToken(token);
-
+    const participant = await campaignParticipantService.getParticipantByAnonymousToken(token);
+            
     if (!participant) {
       return res.status(404).json({
         success: false,
@@ -145,7 +144,7 @@ exports.updateCampaignParticipant = async (req, res) => {
     const { participantId } = req.params;
     const { status, accessedAt, completedAt } = req.body;
 
-    const participant = await updateParticipant(participantId, {
+    const participant = await campaignParticipantService.updateParticipant(participantId, {
       status,
       accessedAt,
       completedAt,
@@ -186,7 +185,7 @@ exports.updateModuleProgress = async (req, res) => {
       });
     }
 
-    const participant = await updateParticipantModuleProgress(participantId, {
+    const participant = await campaignParticipantService.updateParticipantModuleProgress(participantId, {
       moduleType,
       status,
       completedAt,
@@ -220,7 +219,7 @@ exports.deleteCampaignParticipant = async (req, res) => {
   try {
     const { participantId } = req.params;
 
-    await deleteParticipant(participantId);
+    await campaignParticipantService.deleteParticipant(participantId);
 
     res.status(200).json({
       success: true,

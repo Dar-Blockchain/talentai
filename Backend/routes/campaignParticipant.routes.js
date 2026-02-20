@@ -25,7 +25,7 @@ router.post(
   requireAuthUser,
   controledAcces("Company"),
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.addCampaignParticipant
+  campaignParticipantController.addCampaignParticipant,
 );
 
 /**
@@ -38,7 +38,7 @@ router.get(
   requireAuthUser,
   controledAcces("Company"),
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.getCampaignParticipants
+  campaignParticipantController.getCampaignParticipants,
 );
 
 /**
@@ -50,7 +50,7 @@ router.get(
   requireAuthUser,
   controledAcces("Company"),
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.getParticipant
+  campaignParticipantController.getParticipant,
 );
 
 /**
@@ -60,7 +60,7 @@ router.get(
 router.get(
   "/token/:token",
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.getParticipantByToken
+  campaignParticipantController.getParticipantByToken,
 );
 
 /**
@@ -73,7 +73,7 @@ router.put(
   requireAuthUser,
   controledAcces("Company"),
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.updateCampaignParticipant
+  campaignParticipantController.updateCampaignParticipant,
 );
 
 /**
@@ -85,7 +85,7 @@ router.put(
   "/:participantId/module-progress",
   requireAuthUser,
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.updateModuleProgress
+  campaignParticipantController.updateModuleProgress,
 );
 
 /**
@@ -97,7 +97,7 @@ router.delete(
   requireAuthUser,
   controledAcces("Company"),
   authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.deleteCampaignParticipant
+  campaignParticipantController.deleteCampaignParticipant,
 );
 
 // Routes additionnelles (optionnelles)
@@ -117,10 +117,11 @@ router.patch(
       const { reason } = req.body;
       const campaignParticipantService = require("../services/campaignParticipant.service");
 
-      const participant = await campaignParticipantService.markParticipantAsDropped(
-        participantId,
-        reason
-      );
+      const participant =
+        await campaignParticipantService.markParticipantAsDropped(
+          participantId,
+          reason,
+        );
 
       res.status(200).json({
         success: true,
@@ -133,7 +134,7 @@ router.patch(
         error: error.message,
       });
     }
-  }
+  },
 );
 
 /**
@@ -150,7 +151,11 @@ router.post(
       const { campaignId } = req.params;
       const { participants } = req.body;
 
-      if (!participants || !Array.isArray(participants) || participants.length === 0) {
+      if (
+        !participants ||
+        !Array.isArray(participants) ||
+        participants.length === 0
+      ) {
         return res.status(400).json({
           success: false,
           error: "participants array is required and must not be empty",
@@ -161,7 +166,7 @@ router.post(
 
       const result = await campaignParticipantService.bulkAddParticipants(
         campaignId,
-        participants
+        participants,
       );
 
       res.status(201).json({
@@ -175,7 +180,7 @@ router.post(
         error: error.message,
       });
     }
-  }
+  },
 );
 
 module.exports = router;
