@@ -25,6 +25,7 @@ exports.createInternalCampaign = async (req, res) => {
       targetDepartment,
       targetEmployeeCount,
       deadline,
+      skills,
     } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
 
@@ -54,6 +55,7 @@ exports.createInternalCampaign = async (req, res) => {
       targetDepartment,
       targetEmployeeCount,
       deadline,
+      skills: skills || [],
       createdBy: req.user._id,
     });
 

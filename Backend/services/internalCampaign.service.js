@@ -8,7 +8,7 @@ exports.createCampaign = async (campaignData) => {
   try {
     const campaign = new InternalCampaign(campaignData);
     await campaign.save();
-    return campaign.populate("company createdBy");
+    return campaign.populate(["company", "createdBy"]);
   } catch (error) {
     throw new Error(`Error creating campaign: ${error.message}`);
   }
@@ -72,7 +72,7 @@ exports.updateCampaign = async (campaignId, updateData) => {
       campaignId,
       updateData,
       { new: true, runValidators: true }
-    ).populate("company createdBy");
+    ).populate(["company", "createdBy"]);
 
     return campaign;
   } catch (error) {
@@ -110,7 +110,7 @@ exports.updateCampaignStatus = async (campaignId, status) => {
       campaignId,
       { status },
       { new: true, runValidators: true }
-    ).populate("company createdBy");
+    ).populate(["company", "createdBy"]);
   } catch (error) {
     throw new Error(`Error updating campaign status: ${error.message}`);
   }
