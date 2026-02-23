@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
-import { Box, Typography, CircularProgress } from "@mui/material";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import { Box, CircularProgress } from "@mui/material";
 import RoleGuard from "@/components/guards/RoleGuard";
 import WorkplaceLayout from "@/components/dashboard-workplace/WorkplaceLayout";
 import dynamic from "next/dynamic";
@@ -31,15 +30,13 @@ const AnalyticsReporting = dynamic(
   () => import("@/components/dashboard-workplace/AnalyticsReporting"),
   { ssr: false, loading: Loader }
 );
-
-const SettingsPlaceholder = () => (
-  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", textAlign: "center" }}>
-    <Box sx={{ width: 64, height: 64, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
-      <SettingsOutlined sx={{ fontSize: 32, color: "#0D9488" }} />
-    </Box>
-    <Typography sx={{ fontSize: "24px", fontWeight: 700, color: "#111827" }}>Settings</Typography>
-    <Typography sx={{ color: "#6B7280", mt: 1 }}>Configuration options and user management will appear here.</Typography>
-  </Box>
+const CompanySettings = dynamic(
+  () => import("@/components/dashboard-workplace/CompanySettings"),
+  { ssr: false, loading: Loader }
+);
+const DesignSystem = dynamic(
+  () => import("@/components/dashboard-workplace/DesignSystem"),
+  { ssr: false, loading: Loader }
 );
 
 const DashboardWorkplace = () => {
@@ -60,7 +57,9 @@ const DashboardWorkplace = () => {
       case "analytics":
         return <AnalyticsReporting />;
       case "settings":
-        return <SettingsPlaceholder />;
+        return <CompanySettings />;
+      case "design-system":
+        return <DesignSystem />;
       default:
         return <DashboardOverview onNavigate={handleSetTab} />;
     }

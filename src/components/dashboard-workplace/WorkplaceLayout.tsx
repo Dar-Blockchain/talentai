@@ -19,6 +19,7 @@ import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOu
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import BarChartOutlined from "@mui/icons-material/BarChartOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
@@ -38,7 +39,8 @@ const navItems = [
   { id: "campaigns", icon: AssignmentTurnedInOutlined, label: "Assessment Campaigns" },
   { id: "enablement", icon: SchoolOutlined, label: "Employee Enablement" },
   { id: "analytics", icon: BarChartOutlined, label: "Analytics & Reports" },
-  { id: "settings", icon: SettingsOutlined, label: "Settings" },
+  { id: "settings",      icon: SettingsOutlined, label: "Settings" },
+  { id: "design-system", icon: PaletteOutlined,  label: "Design System" },
 ];
 
 const breadcrumbMap: Record<string, string> = {
@@ -48,6 +50,7 @@ const breadcrumbMap: Record<string, string> = {
   enablement: "Employee Enablement",
   analytics: "Analytics & Reports",
   settings: "Settings",
+  "design-system": "Design System",
 };
 
 interface WorkplaceLayoutProps {
