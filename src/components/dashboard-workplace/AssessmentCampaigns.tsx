@@ -446,31 +446,23 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
   const addSuccess = useSelector(selectParticipantAddSuccess);
   const addError = useSelector(selectParticipantAddError);
   const { members, loading: membersLoading } = useSelector(selectMembers);
+  const existingParticipants = useSelector(selectParticipants(campaignId));
 
-  const [mode, setMode] = useState<"single" | "bulk" | "anonymous">("single");
+  const [mode, setMode] = useState<"single" | "bulk">("single");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [bulkText, setBulkText] = useState("");
-  const [generatedToken, setGeneratedToken] = useState<string>("");
+  const [selectedBulk, setSelectedBulk] = useState<Member[]>([]);
   const [err, setErr] = useState("");
 
   useEffect(() => {
     if (open) {
       dispatch(fetchMembers());
-      setGeneratedToken(generateAnonymousToken());
     }
   }, [open, dispatch]);
 
   useEffect(() => {
-    if (mode === "anonymous") {
-      setGeneratedToken(generateAnonymousToken());
-    }
-  }, [mode]);
-
-  useEffect(() => {
     if (addSuccess) {
       dispatch(clearAddStatus());
-      setSelectedMember(null); setBulkText(""); setErr("");
-      setGeneratedToken(generateAnonymousToken());
+      setSelectedMember(null); setSelectedBulk([]); setErr("");
       onClose();
     }
   }, [addSuccess, dispatch, onClose]);
@@ -478,12 +470,16 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
   const handleClose = () => {
     if (adding) return;
     dispatch(clearAddStatus());
-    setSelectedMember(null); setBulkText(""); setErr("");
+    setSelectedMember(null); setSelectedBulk([]); setErr("");
     onClose();
   };
 
-  const handleRefreshToken = () => {
-    setGeneratedToken(generateAnonymousToken());
+  const toggleBulkMember = (member: Member) => {
+    setSelectedBulk((prev) =>
+      prev.some((m) => m._id === member._id)
+        ? prev.filter((m) => m._id !== member._id)
+        : [...prev, member]
+    );
   };
 
   const handleSubmit = () => {
@@ -496,12 +492,16 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
         employeeId: selectedMember.user._id,
         anonymousToken: generateAnonymousToken(),
       }));
-    } else if (mode === "anonymous") {
-      dispatch(addAnonymousParticipant({ campaignId, anonymousToken: generatedToken }));
     } else {
-      const emails = bulkText.split(/[\n,;]+/).map((e) => e.trim()).filter(Boolean);
-      if (emails.length === 0) return setErr("Enter at least one email");
-      dispatch(bulkAddParticipants({ campaignId, participants: emails.map((e) => ({ email: e })) }));
+      if (selectedBulk.length === 0) return setErr("Select at least one member");
+      dispatch(bulkAddParticipants({
+        campaignId,
+        participants: selectedBulk.map((m) => ({
+          email: m.user.email,
+          employeeId: m.user._id,
+          anonymousToken: generateAnonymousToken(),
+        })),
+      }));
     }
   };
 
@@ -528,7 +528,7 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
 
         {/* Mode toggle */}
         <Box sx={{ display: "flex", bgcolor: "#F3F4F6", borderRadius: 2, p: 0.5, gap: 0.5 }}>
-          {(["single", "bulk", "anonymous"] as const).map((m) => (
+          {(["single", "bulk"] as const).map((m) => (
             <Box
               key={m}
               onClick={() => setMode(m)}
@@ -536,12 +536,12 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
                 flex: 1, textAlign: "center", py: 0.8, borderRadius: 1.5, cursor: "pointer",
                 bgcolor: mode === m ? "#fff" : "transparent",
                 boxShadow: mode === m ? 1 : 0,
-                fontSize: "12px", fontWeight: 600,
+                fontSize: "13px", fontWeight: 600,
                 color: mode === m ? "#111827" : "#6B7280",
                 transition: "all 0.15s",
               }}
             >
-              {m === "single" ? "Single" : m === "bulk" ? "Bulk" : "Anonymous"}
+              {m === "single" ? "Single" : "Bulk Import"}
             </Box>
           ))}
         </Box>
@@ -571,21 +571,26 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
               <Box sx={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.5, pr: 0.5 }}>
                 {members.map((member: Member) => {
                   const isSelected = selectedMember?._id === member._id;
+                  const alreadyAdded = existingParticipants.some(
+                    (p) => p.email === member.user.email
+                  );
                   const initials = (member.user.username || member.user.email)[0].toUpperCase();
                   return (
                     <Box
                       key={member._id}
-                      onClick={() => setSelectedMember(isSelected ? null : member)}
+                      onClick={() => !alreadyAdded && setSelectedMember(isSelected ? null : member)}
                       sx={{
                         display: "flex", alignItems: "center", gap: 1.5, p: 1.2,
-                        borderRadius: 2, cursor: "pointer",
-                        border: `1px solid ${isSelected ? "#0D9488" : "#E5E7EB"}`,
-                        bgcolor: isSelected ? "#F0FDFA" : "#F9FAFB",
-                        "&:hover": { bgcolor: isSelected ? "#CCFBF1" : "#F3F4F6" },
+                        borderRadius: 2,
+                        cursor: alreadyAdded ? "default" : "pointer",
+                        border: `1px solid ${alreadyAdded ? "#D1FAE5" : isSelected ? "#0D9488" : "#E5E7EB"}`,
+                        bgcolor: alreadyAdded ? "#F0FDF4" : isSelected ? "#F0FDFA" : "#F9FAFB",
+                        opacity: alreadyAdded ? 0.75 : 1,
+                        "&:hover": !alreadyAdded ? { bgcolor: isSelected ? "#CCFBF1" : "#F3F4F6" } : {},
                         transition: "all 0.15s",
                       }}
                     >
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: isSelected ? "#0D9488" : "#E5E7EB", color: isSelected ? "#fff" : "#6B7280", fontSize: "13px", fontWeight: 700 }}>
+                      <Avatar sx={{ width: 32, height: 32, bgcolor: alreadyAdded ? "#D1FAE5" : isSelected ? "#0D9488" : "#E5E7EB", color: alreadyAdded ? "#16A34A" : isSelected ? "#fff" : "#6B7280", fontSize: "13px", fontWeight: 700 }}>
                         {initials}
                       </Avatar>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -596,8 +601,96 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
                           {member.user.email}
                         </Typography>
                       </Box>
-                      {isSelected && (
+                      {alreadyAdded ? (
+                        <Chip
+                          label="Added"
+                          size="small"
+                          sx={{ bgcolor: "#D1FAE5", color: "#16A34A", fontSize: "10px", fontWeight: 700, height: 20, flexShrink: 0 }}
+                        />
+                      ) : isSelected ? (
                         <CheckCircleOutlined sx={{ fontSize: 18, color: "#0D9488", flexShrink: 0 }} />
+                      ) : null}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Bulk — multi-select member list */}
+        {mode === "bulk" && (
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 0.8 }}>
+                Select members
+              </Typography>
+              {selectedBulk.length > 0 && (
+                <Chip
+                  label={`${selectedBulk.length} selected`}
+                  size="small"
+                  sx={{ bgcolor: "#F0FDFA", color: "#0D9488", fontSize: "10px", fontWeight: 700, height: 20 }}
+                />
+              )}
+            </Box>
+            {membersLoading ? (
+              [1, 2, 3].map((i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.2, mb: 0.5, borderRadius: 2, bgcolor: "#F9FAFB" }}>
+                  <Skeleton variant="circular" width={32} height={32} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="rectangular" height={13} width="50%" sx={{ borderRadius: 1, mb: 0.5 }} />
+                    <Skeleton variant="rectangular" height={11} width="70%" sx={{ borderRadius: 1 }} />
+                  </Box>
+                </Box>
+              ))
+            ) : members.length === 0 ? (
+              <Box sx={{ py: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                <PersonOutlined sx={{ fontSize: 28, color: "#D1D5DB" }} />
+                <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>No members found</Typography>
+              </Box>
+            ) : (
+              <Box sx={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.5, pr: 0.5 }}>
+                {members.map((member: Member) => {
+                  const alreadyAdded = existingParticipants.some((p) => p.email === member.user.email);
+                  const isChecked = selectedBulk.some((m) => m._id === member._id);
+                  const initials = (member.user.username || member.user.email)[0].toUpperCase();
+                  return (
+                    <Box
+                      key={member._id}
+                      onClick={() => !alreadyAdded && toggleBulkMember(member)}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1.5, p: 1.2,
+                        borderRadius: 2,
+                        cursor: alreadyAdded ? "default" : "pointer",
+                        border: `1px solid ${alreadyAdded ? "#D1FAE5" : isChecked ? "#0D9488" : "#E5E7EB"}`,
+                        bgcolor: alreadyAdded ? "#F0FDF4" : isChecked ? "#F0FDFA" : "#F9FAFB",
+                        opacity: alreadyAdded ? 0.75 : 1,
+                        "&:hover": !alreadyAdded ? { bgcolor: isChecked ? "#CCFBF1" : "#F3F4F6" } : {},
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <Avatar sx={{ width: 32, height: 32, bgcolor: alreadyAdded ? "#D1FAE5" : isChecked ? "#0D9488" : "#E5E7EB", color: alreadyAdded ? "#16A34A" : isChecked ? "#fff" : "#6B7280", fontSize: "13px", fontWeight: 700 }}>
+                        {initials}
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {member.user.username}
+                        </Typography>
+                        <Typography sx={{ fontSize: "11px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {member.user.email}
+                        </Typography>
+                      </Box>
+                      {alreadyAdded ? (
+                        <Chip label="Added" size="small" sx={{ bgcolor: "#D1FAE5", color: "#16A34A", fontSize: "10px", fontWeight: 700, height: 20, flexShrink: 0 }} />
+                      ) : (
+                        <Box sx={{
+                          width: 18, height: 18, borderRadius: "4px", flexShrink: 0,
+                          border: `2px solid ${isChecked ? "#0D9488" : "#D1D5DB"}`,
+                          bgcolor: isChecked ? "#0D9488" : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          {isChecked && <CheckCircleOutlined sx={{ fontSize: 13, color: "#fff" }} />}
+                        </Box>
                       )}
                     </Box>
                   );
@@ -607,44 +700,6 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
           </Box>
         )}
 
-        {/* Bulk — textarea */}
-        {mode === "bulk" && (
-          <TextField
-            label="Emails (one per line, or comma-separated)"
-            value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
-            fullWidth size="small"
-            multiline minRows={4}
-            placeholder={"alice@co.com\nbob@co.com\ncarol@co.com"}
-          />
-        )}
-
-        {/* Anonymous — show generated token */}
-        {mode === "anonymous" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            <Box sx={{ p: 1.5, bgcolor: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 2 }}>
-              <Typography sx={{ fontSize: "11px", color: "#92400E", fontWeight: 600 }}>
-                A unique access token will be generated and sent to the backend. Share this token with the anonymous participant so they can access the campaign.
-              </Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 0.8, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                Token preview
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2 }}>
-                <VpnKeyOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0 }} />
-                <Typography sx={{ flex: 1, fontSize: "12px", color: "#374151", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {generatedToken}
-                </Typography>
-                <Tooltip title="Generate new token">
-                  <IconButton size="small" onClick={handleRefreshToken} sx={{ color: "#6B7280" }}>
-                    <ContentCopyOutlined sx={{ fontSize: 14 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-          </Box>
-        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
@@ -653,11 +708,11 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={adding || (mode === "single" && !selectedMember)}
+          disabled={adding || (mode === "single" && !selectedMember) || (mode === "bulk" && selectedBulk.length === 0)}
           startIcon={adding ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <GroupAddOutlined sx={{ fontSize: 16 }} />}
           sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", flex: 1, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
         >
-          {adding ? "Adding…" : mode === "single" ? "Add" : mode === "anonymous" ? "Generate & Add" : "Import"}
+          {adding ? "Adding…" : mode === "single" ? "Add" : "Import"}
         </Button>
       </DialogActions>
     </Dialog>
