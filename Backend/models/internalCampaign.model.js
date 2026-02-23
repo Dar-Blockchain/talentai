@@ -89,7 +89,7 @@ const internalCampaignSchema = new mongoose.Schema(
       index: true,
     },
 
-    skills: {
+    skill: {
       type: String,
       default: "",
     },

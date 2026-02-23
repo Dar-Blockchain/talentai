@@ -5507,9 +5507,9 @@
           "description": "Campaign deadline",
           "example": "2026-03-31T23:59:59Z"
         },
-        "skills": {
+        "skill": {
           "type": "string",
-          "description": "Skills to be evaluated",
+          "description": "Skill to be evaluated",
           "example": "Leadership, Communication, Problem Solving"
         }
       },
@@ -5608,9 +5608,9 @@
           "format": "date-time",
           "example": "2026-03-31T23:59:59Z"
         },
-        "skills": {
+        "skill": {
           "type": "string",
-          "description": "Skills to be evaluated",
+          "description": "Skill to be evaluated",
           "example": "Leadership, Communication, Problem Solving"
         },
         "createdBy": {
@@ -5648,3 +5648,5 @@
       },
       "required": ["_id", "company", "title", "type", "anonymityMode", "modules", "accessMethod", "createdBy"]
     }
+  }
+}
