@@ -192,7 +192,7 @@ const fmtDate = (iso?: string) =>
       })
     : "—";
 
-// ─── Create Campaign Modal ────────────────────────────────────────────────────
+// ─── Create Campaign Modal (Stepper) ─────────────────────────────────────────
 
 interface CreateModalProps {
   open: boolean;
@@ -212,12 +212,16 @@ const INITIAL_FORM = {
   aiInterviewType: "" as string,
 };
 
+const STEPS = ["Basics", "Modules", "Settings"];
+
+
 const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const creating = useSelector(selectCampaignCreating);
   const createSuccess = useSelector(selectCreateSuccess);
   const createError = useSelector(selectCreateError);
 
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -226,6 +230,7 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
       dispatch(clearCreateStatus());
       setForm(INITIAL_FORM);
       setErrors({});
+      setStep(0);
       onClose();
     }
   }, [createSuccess, dispatch, onClose]);
@@ -248,19 +253,34 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
     setErrors((prev) => ({ ...prev, modules: "" }));
   }, []);
 
-  const validate = () => {
+  const validateStep = (s: number) => {
     const e: Record<string, string> = {};
-    if (!form.title.trim()) e.title = "Title is required";
-    if (!form.type) e.type = "Campaign type is required";
-    if (!form.anonymityMode) e.anonymityMode = "Anonymity mode is required";
-    if (!form.accessMethod) e.accessMethod = "Access method is required";
-    if (form.modules.length === 0) e.modules = "Select at least one module";
+    if (s === 0) {
+      if (!form.title.trim()) e.title = "Title is required";
+      if (!form.type) e.type = "Campaign type is required";
+    }
+    if (s === 1) {
+      if (form.modules.length === 0) e.modules = "Select at least one module";
+    }
+    if (s === 2) {
+      if (!form.anonymityMode) e.anonymityMode = "Required";
+      if (!form.accessMethod) e.accessMethod = "Required";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
+  const handleNext = () => {
+    if (validateStep(step)) setStep((s) => s + 1);
+  };
+
+  const handleBack = () => {
+    setErrors({});
+    setStep((s) => s - 1);
+  };
+
   const handleSubmit = () => {
-    if (!validate()) return;
+    if (!validateStep(2)) return;
     dispatch(
       createCampaign({
         title: form.title.trim(),
@@ -270,12 +290,11 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
         accessMethod: form.accessMethod as AccessMethod,
         targetDepartment: form.targetDepartment.trim() || undefined,
         deadline: form.deadline || undefined,
+        skill: form.skillTestSkill || undefined,
         modules: form.modules.map((type, i) => ({
           type,
           config:
-            type === "SKILL_TEST" && form.skillTestSkill
-              ? { skill: form.skillTestSkill }
-              : type === "AI_INTERVIEW" && form.aiInterviewType
+            type === "AI_INTERVIEW" && form.aiInterviewType
               ? { interviewType: form.aiInterviewType }
               : {},
           order: i + 1,
@@ -289,274 +308,473 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
     dispatch(clearCreateStatus());
     setForm(INITIAL_FORM);
     setErrors({});
+    setStep(0);
     onClose();
   };
 
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: "92vh" } } }}>
-      <DialogTitle sx={{ pb: 0, pt: 2.5, px: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{
-              width: 44, height: 44, borderRadius: 2.5,
-              background: "linear-gradient(135deg, #0D9488 0%, #0891B2 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(13,148,136,0.3)",
-            }}>
-              <AssignmentTurnedInOutlined sx={{ fontSize: 22, color: "#fff" }} />
-            </Box>
+  // ── Step content renderers ──────────────────────────────────────────────────
+
+  const renderStep0 = () => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      {/* Step hint */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, bgcolor: "#F0FDFA", borderRadius: 2, border: "1px solid #99F6E4" }}>
+        <AssignmentTurnedInOutlined sx={{ fontSize: 15, color: "#0D9488" }} />
+        <Typography sx={{ fontSize: "11px", color: "#0D9488", fontWeight: 500 }}>
+          Start by naming your campaign and choosing its type.
+        </Typography>
+      </Box>
+
+      {/* Title */}
+      <TextField
+        label="Campaign Title"
+        value={form.title}
+        onChange={(e) => handleChange("title", e.target.value)}
+        error={!!errors.title}
+        helperText={errors.title || "e.g. Q2 Technical Skills Assessment"}
+        fullWidth
+        size="small"
+        placeholder="Enter a clear, descriptive campaign name"
+        slotProps={{ formHelperText: { sx: { ml: 0 } } }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            "&.Mui-focused fieldset": { borderColor: "#0D9488" },
+          },
+          "& label.Mui-focused": { color: "#0D9488" },
+        }}
+      />
+
+      {/* Type dropdown */}
+      <FormControl fullWidth size="small" error={!!errors.type}
+        sx={{
+          "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "#0D9488" },
+          "& label.Mui-focused": { color: "#0D9488" },
+        }}
+      >
+        <InputLabel>Campaign Type</InputLabel>
+        <Select
+          value={form.type}
+          label="Campaign Type"
+          onChange={(e) => handleChange("type", e.target.value)}
+        >
+          <MenuItem value="PRODUCTIVITY_DIAGNOSTIC" sx={{ fontSize: "13px" }}>
             <Box>
-              <Typography sx={{ fontSize: "17px", fontWeight: 800, color: "#111827" }}>New Assessment Campaign</Typography>
-              <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>Configure your AI-powered assessment below</Typography>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Productivity Diagnostic</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Measure team productivity & output</Typography>
             </Box>
-          </Box>
-          <IconButton onClick={handleClose} size="small" disabled={creating} sx={{ bgcolor: "#F9FAFB", "&:hover": { bgcolor: "#F3F4F6" } }}>
-            <CloseOutlined sx={{ fontSize: 16, color: "#6B7280" }} />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+          </MenuItem>
+          <MenuItem value="SKILLS_MAPPING" sx={{ fontSize: "13px" }}>
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Skills Mapping</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Map existing skill sets across teams</Typography>
+            </Box>
+          </MenuItem>
+          <MenuItem value="ENABLEMENT" sx={{ fontSize: "13px" }}>
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Enablement</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Enable & upskill your teams</Typography>
+            </Box>
+          </MenuItem>
+          <MenuItem value="CUSTOM" sx={{ fontSize: "13px" }}>
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Custom</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Build your own assessment flow</Typography>
+            </Box>
+          </MenuItem>
+        </Select>
+        {errors.type && <FormHelperText sx={{ ml: 0 }}>{errors.type}</FormHelperText>}
+      </FormControl>
 
-      <DialogContent dividers sx={{ pt: 2.5, px: 3, display: "flex", flexDirection: "column", gap: 2.5, overflowY: "auto" }}>
-        {createError && (
-          <Alert severity="error" sx={{ borderRadius: 2 }}>{createError}</Alert>
-        )}
+      {/* Description */}
+      <TextField
+        label="Description (optional)"
+        value={form.description}
+        onChange={(e) => handleChange("description", e.target.value)}
+        fullWidth
+        size="small"
+        multiline
+        minRows={3}
+        placeholder="Briefly describe the goals, target audience, or expected outcomes of this campaign…"
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            "&.Mui-focused fieldset": { borderColor: "#0D9488" },
+          },
+          "& label.Mui-focused": { color: "#0D9488" },
+        }}
+      />
+    </Box>
+  );
 
-        {/* Title + Type side by side */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <TextField
-            label="Campaign Title"
-            value={form.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-            error={!!errors.title}
-            helperText={errors.title}
-            fullWidth
+  const renderStep1 = () => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Step hint */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, bgcolor: "#F5F3FF", borderRadius: 2, border: "1px solid #DDD6FE" }}>
+        <PsychologyOutlined sx={{ fontSize: 15, color: "#7C3AED" }} />
+        <Typography sx={{ fontSize: "11px", color: "#7C3AED", fontWeight: 500 }}>
+          Pick one or more assessment modules. Sub-options appear after selection.
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>
+          Modules <span style={{ color: "#EF4444" }}>*</span>
+        </Typography>
+        {form.modules.length > 0 && (
+          <Chip
+            label={`${form.modules.length} selected`}
             size="small"
-            placeholder="e.g. Q2 Technical Skills Assessment"
-            slotProps={{ formHelperText: { sx: { ml: 0 } } }}
+            sx={{ bgcolor: "#F0FDFA", color: "#0D9488", fontWeight: 700, fontSize: "10px", height: 18 }}
           />
-          <FormControl fullWidth size="small" error={!!errors.type}>
-            <InputLabel>Campaign Type</InputLabel>
-            <Select
-              value={form.type}
-              label="Campaign Type"
-              onChange={(e) => handleChange("type", e.target.value)}
+        )}
+      </Box>
+
+      {/* Module cards — each with its own accent color */}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+        {([
+          { mod: "QUESTIONNAIRE" as ModuleType, accent: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
+          { mod: "AI_INTERVIEW"  as ModuleType, accent: "#0D9488", bg: "#F0FDFA", border: "#99F6E4" },
+          { mod: "SKILL_TEST"    as ModuleType, accent: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+          { mod: "TRAINING_PATH" as ModuleType, accent: "#C2410C", bg: "#FFF7ED", border: "#FED7AA" },
+        ] as const).map(({ mod, accent, bg, border }) => {
+          const selected = form.modules.includes(mod);
+          const Icon = MODULE_ICONS_INLINE[mod];
+          return (
+            <Box
+              key={mod}
+              onClick={() => toggleModule(mod)}
+              sx={{
+                border: `2px solid ${selected ? accent : "#E5E7EB"}`,
+                borderRadius: 2.5, p: 1.8, cursor: "pointer",
+                bgcolor: selected ? bg : "#FAFAFA",
+                transition: "all 0.15s", position: "relative",
+                "&:hover": { borderColor: accent, bgcolor: bg },
+              }}
             >
-              {(Object.keys(TYPE_LABELS) as CampaignType[]).map((t) => (
-                <MenuItem key={t} value={t} sx={{ fontSize: "13px" }}>
-                  {TYPE_LABELS[t]}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.type && <FormHelperText sx={{ ml: 0 }}>{errors.type}</FormHelperText>}
-          </FormControl>
-        </Box>
+              {selected && (
+                <Box sx={{ position: "absolute", top: 8, right: 8, width: 18, height: 18, bgcolor: accent, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckCircleOutlined sx={{ fontSize: 12, color: "#fff" }} />
+                </Box>
+              )}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.6 }}>
+                <Box sx={{ width: 32, height: 32, bgcolor: selected ? accent : "#F3F4F6", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
+                  <Icon sx={{ fontSize: 17, color: selected ? "#fff" : "#6B7280" }} />
+                </Box>
+                <Typography sx={{ fontSize: "13px", fontWeight: 700, color: selected ? accent : "#111827" }}>
+                  {MODULE_LABELS[mod]}
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.4 }}>
+                {MODULE_DESCRIPTIONS[mod]}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+      {errors.modules && <Typography sx={{ fontSize: "11px", color: "#EF4444" }}>{errors.modules}</Typography>}
 
-        {/* Description */}
-        <TextField
-          label="Description (optional)"
-          value={form.description}
-          onChange={(e) => handleChange("description", e.target.value)}
-          fullWidth
-          size="small"
-          multiline
-          minRows={2}
-          placeholder="Briefly describe the campaign goals..."
-        />
-
-        {/* Modules */}
-        <Box>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>
-              Modules <span style={{ color: "#EF4444" }}>*</span>
-            </Typography>
-            {form.modules.length > 0 && (
-              <Chip label={`${form.modules.length} selected`} size="small" sx={{ bgcolor: "#F0FDFA", color: "#0D9488", fontWeight: 700, fontSize: "10px", height: 18 }} />
-            )}
-          </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
-            {MODULE_TYPES.map((mod) => {
-              const selected = form.modules.includes(mod);
-              const Icon = MODULE_ICONS_INLINE[mod];
+      {/* SKILL_TEST sub-panel — purple */}
+      {form.modules.includes("SKILL_TEST") && (
+        <Box sx={{ p: 2, bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 2.5 }}>
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#7C3AED", mb: 1.2, display: "flex", alignItems: "center", gap: 0.5 }}>
+            <AssignmentTurnedInOutlined sx={{ fontSize: 13 }} />
+            Choose a Skill to Test
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.8 }}>
+            {SKILL_TEST_OPTIONS.map((opt) => {
+              const active = form.skillTestSkill === opt.value;
               return (
                 <Box
-                  key={mod}
-                  onClick={() => toggleModule(mod)}
+                  key={opt.value}
+                  onClick={() => handleChange("skillTestSkill", active ? "" : opt.value)}
                   sx={{
-                    border: `2px solid ${selected ? "#0D9488" : "#E5E7EB"}`,
-                    borderRadius: 2.5,
-                    p: 1.5,
-                    cursor: "pointer",
-                    bgcolor: selected ? "#F0FDFA" : "#FAFAFA",
-                    transition: "all 0.15s ease",
-                    position: "relative",
-                    "&:hover": { borderColor: "#0D9488", bgcolor: "#F0FDFA" },
+                    display: "flex", alignItems: "center", gap: 0.6,
+                    px: 1.2, py: 0.6, borderRadius: 5, cursor: "pointer",
+                    border: `1.5px solid ${active ? "#7C3AED" : "#DDD6FE"}`,
+                    bgcolor: active ? "#7C3AED" : "#fff",
+                    transition: "all 0.12s",
+                    "&:hover": { borderColor: "#7C3AED", bgcolor: active ? "#6D28D9" : "#EDE9FE" },
                   }}
                 >
-                  {selected && (
-                    <Box sx={{ position: "absolute", top: 8, right: 8, width: 16, height: 16, bgcolor: "#0D9488", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <CheckCircleOutlined sx={{ fontSize: 12, color: "#fff" }} />
-                    </Box>
-                  )}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                    <Box sx={{ width: 28, height: 28, bgcolor: selected ? "#0D9488" : "#F3F4F6", borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
-                      <Icon sx={{ fontSize: 15, color: selected ? "#fff" : "#6B7280" }} />
-                    </Box>
-                    <Typography sx={{ fontSize: "12px", fontWeight: 700, color: selected ? "#0D9488" : "#111827" }}>
-                      {MODULE_LABELS[mod]}
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.4, ml: 0 }}>
-                    {MODULE_DESCRIPTIONS[mod]}
+                  <Typography sx={{ fontSize: "13px" }}>{opt.icon}</Typography>
+                  <Typography sx={{ fontSize: "11px", fontWeight: 600, color: active ? "#fff" : "#374151" }}>
+                    {opt.label}
                   </Typography>
                 </Box>
               );
             })}
           </Box>
-          {errors.modules && (
-            <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>{errors.modules}</Typography>
+          {!form.skillTestSkill && (
+            <Typography sx={{ fontSize: "10px", color: "#A78BFA", mt: 1 }}>
+              Select a skill above to configure this module.
+            </Typography>
           )}
+        </Box>
+      )}
 
-          {/* SKILL_TEST sub-options */}
-          {form.modules.includes("SKILL_TEST") && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 2.5 }}>
-              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#7C3AED", mb: 1.2, display: "flex", alignItems: "center", gap: 0.5 }}>
-                <AssignmentTurnedInOutlined sx={{ fontSize: 13 }} />
-                Choose a Skill to Test
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.8 }}>
-                {SKILL_TEST_OPTIONS.map((opt) => {
-                  const active = form.skillTestSkill === opt.value;
-                  return (
-                    <Box
-                      key={opt.value}
-                      onClick={() => handleChange("skillTestSkill", active ? "" : opt.value)}
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 0.6,
-                        px: 1.2, py: 0.5, borderRadius: 5, cursor: "pointer",
-                        border: `1.5px solid ${active ? "#7C3AED" : "#DDD6FE"}`,
-                        bgcolor: active ? "#7C3AED" : "#fff",
-                        transition: "all 0.12s",
-                        "&:hover": { borderColor: "#7C3AED", bgcolor: active ? "#6D28D9" : "#EDE9FE" },
-                      }}
-                    >
-                      <Typography sx={{ fontSize: "13px" }}>{opt.icon}</Typography>
-                      <Typography sx={{ fontSize: "11px", fontWeight: 600, color: active ? "#fff" : "#374151" }}>
-                        {opt.label}
-                      </Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
+      {/* AI_INTERVIEW sub-panel — teal */}
+      {form.modules.includes("AI_INTERVIEW") && (
+        <Box sx={{ p: 2, bgcolor: "#F0FDFA", border: "1px solid #99F6E4", borderRadius: 2.5 }}>
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#0D9488", mb: 1.2, display: "flex", alignItems: "center", gap: 0.5 }}>
+            <PsychologyOutlined sx={{ fontSize: 13 }} />
+            Choose Interview Type
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+            {AI_INTERVIEW_OPTIONS.map((opt) => {
+              const active = form.aiInterviewType === opt.value;
+              return (
+                <Box
+                  key={opt.value}
+                  onClick={() => handleChange("aiInterviewType", active ? "" : opt.value)}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 1.5,
+                    px: 1.5, py: 1, borderRadius: 2, cursor: "pointer",
+                    border: `1.5px solid ${active ? "#0D9488" : "#99F6E4"}`,
+                    bgcolor: active ? "#0D9488" : "#fff",
+                    transition: "all 0.12s",
+                    "&:hover": { borderColor: "#0D9488", bgcolor: active ? "#0b7a6f" : "#CCFBF1" },
+                  }}
+                >
+                  <Typography sx={{ fontSize: "18px", lineHeight: 1 }}>{opt.icon}</Typography>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? "#fff" : "#111827" }}>{opt.label}</Typography>
+                    <Typography sx={{ fontSize: "10px", color: active ? "#CCFBF1" : "#9CA3AF" }}>{opt.desc}</Typography>
+                  </Box>
+                  {active && <CheckCircleOutlined sx={{ fontSize: 16, color: "#fff", flexShrink: 0 }} />}
+                </Box>
+              );
+            })}
+          </Box>
+          {!form.aiInterviewType && (
+            <Typography sx={{ fontSize: "10px", color: "#5EEAD4", mt: 1 }}>
+              Select an interview type above to configure this module.
+            </Typography>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+
+  const renderStep2 = () => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      {/* Step hint */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, bgcolor: "#EFF6FF", borderRadius: 2, border: "1px solid #BFDBFE" }}>
+        <LockOutlined sx={{ fontSize: 15, color: "#2563EB" }} />
+        <Typography sx={{ fontSize: "11px", color: "#2563EB", fontWeight: 500 }}>
+          Configure access rules and optional targeting before launching.
+        </Typography>
+      </Box>
+
+      {/* Anonymity Mode */}
+      <FormControl fullWidth size="small" error={!!errors.anonymityMode}
+        sx={{
+          "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "#2563EB" },
+          "& label.Mui-focused": { color: "#2563EB" },
+        }}
+      >
+        <InputLabel>Anonymity Mode</InputLabel>
+        <Select
+          value={form.anonymityMode}
+          label="Anonymity Mode"
+          onChange={(e) => handleChange("anonymityMode", e.target.value)}
+        >
+          <MenuItem value="NOMINATIVE">
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Nominative</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Participant names are visible to organizers</Typography>
             </Box>
-          )}
-
-          {/* AI_INTERVIEW sub-options */}
-          {form.modules.includes("AI_INTERVIEW") && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: "#F0FDFA", border: "1px solid #99F6E4", borderRadius: 2.5 }}>
-              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#0D9488", mb: 1.2, display: "flex", alignItems: "center", gap: 0.5 }}>
-                <PsychologyOutlined sx={{ fontSize: 13 }} />
-                Choose Interview Type
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
-                {AI_INTERVIEW_OPTIONS.map((opt) => {
-                  const active = form.aiInterviewType === opt.value;
-                  return (
-                    <Box
-                      key={opt.value}
-                      onClick={() => handleChange("aiInterviewType", active ? "" : opt.value)}
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 1.5,
-                        px: 1.5, py: 1, borderRadius: 2, cursor: "pointer",
-                        border: `1.5px solid ${active ? "#0D9488" : "#99F6E4"}`,
-                        bgcolor: active ? "#0D9488" : "#fff",
-                        transition: "all 0.12s",
-                        "&:hover": { borderColor: "#0D9488", bgcolor: active ? "#0b7a6f" : "#CCFBF1" },
-                      }}
-                    >
-                      <Typography sx={{ fontSize: "18px", lineHeight: 1 }}>{opt.icon}</Typography>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? "#fff" : "#111827" }}>
-                          {opt.label}
-                        </Typography>
-                        <Typography sx={{ fontSize: "10px", color: active ? "#CCFBF1" : "#9CA3AF" }}>
-                          {opt.desc}
-                        </Typography>
-                      </Box>
-                      {active && <CheckCircleOutlined sx={{ fontSize: 16, color: "#fff", flexShrink: 0 }} />}
-                    </Box>
-                  );
-                })}
-              </Box>
+          </MenuItem>
+          <MenuItem value="ANONYMOUS">
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Anonymous</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Responses are fully anonymized</Typography>
             </Box>
-          )}
+          </MenuItem>
+        </Select>
+        {errors.anonymityMode && <FormHelperText sx={{ ml: 0 }}>{errors.anonymityMode}</FormHelperText>}
+      </FormControl>
+
+      {/* Access Method */}
+      <FormControl fullWidth size="small" error={!!errors.accessMethod}
+        sx={{
+          "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "#2563EB" },
+          "& label.Mui-focused": { color: "#2563EB" },
+        }}
+      >
+        <InputLabel>Access Method</InputLabel>
+        <Select
+          value={form.accessMethod}
+          label="Access Method"
+          onChange={(e) => handleChange("accessMethod", e.target.value)}
+        >
+          <MenuItem value="LINK">
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Link</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Anyone with the link can participate</Typography>
+            </Box>
+          </MenuItem>
+          <MenuItem value="ACCOUNTS">
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Accounts</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Participants must sign in with their account</Typography>
+            </Box>
+          </MenuItem>
+          <MenuItem value="BOTH">
+            <Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>Both</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Supports both link access and account login</Typography>
+            </Box>
+          </MenuItem>
+        </Select>
+        {errors.accessMethod && <FormHelperText sx={{ ml: 0 }}>{errors.accessMethod}</FormHelperText>}
+      </FormControl>
+
+      {/* Department + Deadline */}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <TextField
+          label="Target Department"
+          value={form.targetDepartment}
+          onChange={(e) => handleChange("targetDepartment", e.target.value)}
+          size="small"
+          placeholder="e.g. Engineering, Sales…"
+          helperText="Optional"
+          slotProps={{ formHelperText: { sx: { ml: 0 } } }}
+          sx={{
+            "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "#2563EB" },
+            "& label.Mui-focused": { color: "#2563EB" },
+          }}
+        />
+        <TextField
+          label="Deadline"
+          value={form.deadline}
+          onChange={(e) => handleChange("deadline", e.target.value)}
+          size="small"
+          type="date"
+          helperText="Optional"
+          slotProps={{
+            inputLabel: { shrink: true },
+            formHelperText: { sx: { ml: 0 } },
+            input: {
+              endAdornment: (
+                <CalendarTodayOutlined sx={{ fontSize: 16, color: "#9CA3AF", pointerEvents: "none" }} />
+              ),
+            },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root.Mui-focused fieldset": { borderColor: "#2563EB" },
+            "& label.Mui-focused": { color: "#2563EB" },
+            "& input[type='date']::-webkit-calendar-picker-indicator": { display: "none" },
+          }}
+        />
+      </Box>
+
+      {/* Review Summary */}
+      <Box sx={{ bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2.5, p: 2 }}>
+        <Typography sx={{ fontSize: "11px", fontWeight: 800, color: "#374151", mb: 1.5, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Review Summary
+        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {[
+            { label: "Title",         value: form.title || "—",                                    color: "#0D9488" },
+            { label: "Type",          value: form.type ? TYPE_LABELS[form.type as CampaignType] : "—", color: "#2563EB" },
+            { label: "Modules",       value: form.modules.length ? form.modules.map((m) => MODULE_LABELS[m]).join(", ") : "—", color: "#7C3AED" },
+            ...(form.skillTestSkill   ? [{ label: "Skill",          value: SKILL_TEST_OPTIONS.find((o) => o.value === form.skillTestSkill)?.label  ?? form.skillTestSkill,  color: "#7C3AED" }] : []),
+            ...(form.aiInterviewType  ? [{ label: "Interview Type", value: AI_INTERVIEW_OPTIONS.find((o) => o.value === form.aiInterviewType)?.label ?? form.aiInterviewType, color: "#0D9488" }] : []),
+          ].map(({ label, value, color }) => (
+            <Box key={label} sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color, flexShrink: 0, mt: 0.3 }} />
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", minWidth: 100 }}>{label}</Typography>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#111827" }}>{value}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+
+      {createError && <Alert severity="error" sx={{ borderRadius: 2 }}>{createError}</Alert>}
+    </Box>
+  );
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: "92vh", overflow: "hidden", display: "flex", flexDirection: "column" } } }}
+    >
+      {/* Header */}
+      <Box sx={{
+        px: 3, pt: 2.5, pb: 2,
+        background: "linear-gradient(135deg, #0D9488 0%, #0891B2 100%)",
+        flexShrink: 0,
+      }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 38, height: 38, bgcolor: "rgba(255,255,255,0.2)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <AssignmentTurnedInOutlined sx={{ fontSize: 20, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#fff" }}>New Assessment Campaign</Typography>
+              <Typography sx={{ fontSize: "11px", color: "rgba(255,255,255,0.75)" }}>
+                Step {step + 1} of {STEPS.length} — {STEPS[step]}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleClose} disabled={creating} size="small" sx={{ color: "rgba(255,255,255,0.8)", "&:hover": { bgcolor: "rgba(255,255,255,0.15)" } }}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
         </Box>
 
-        {/* Anonymity + Access */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <FormControl fullWidth size="small" error={!!errors.anonymityMode}>
-            <InputLabel>Anonymity Mode</InputLabel>
-            <Select
-              value={form.anonymityMode}
-              label="Anonymity Mode"
-              onChange={(e) => handleChange("anonymityMode", e.target.value)}
-            >
-              <MenuItem value="ANONYMOUS" sx={{ fontSize: "13px" }}>Anonymous</MenuItem>
-              <MenuItem value="NOMINATIVE" sx={{ fontSize: "13px" }}>Nominative</MenuItem>
-            </Select>
-            {errors.anonymityMode && <FormHelperText sx={{ ml: 0 }}>{errors.anonymityMode}</FormHelperText>}
-          </FormControl>
-
-          <FormControl fullWidth size="small" error={!!errors.accessMethod}>
-            <InputLabel>Access Method</InputLabel>
-            <Select
-              value={form.accessMethod}
-              label="Access Method"
-              onChange={(e) => handleChange("accessMethod", e.target.value)}
-            >
-              <MenuItem value="LINK" sx={{ fontSize: "13px" }}>Link</MenuItem>
-              <MenuItem value="ACCOUNTS" sx={{ fontSize: "13px" }}>Accounts</MenuItem>
-              <MenuItem value="BOTH" sx={{ fontSize: "13px" }}>Both</MenuItem>
-            </Select>
-            {errors.accessMethod && <FormHelperText sx={{ ml: 0 }}>{errors.accessMethod}</FormHelperText>}
-          </FormControl>
+        {/* Custom stepper bar */}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {STEPS.map((label, i) => (
+            <Box key={label} sx={{ flex: 1 }}>
+              <Box sx={{
+                height: 4, borderRadius: 2,
+                bgcolor: i <= step ? "#fff" : "rgba(255,255,255,0.3)",
+                transition: "all 0.3s",
+              }} />
+              <Typography sx={{ fontSize: "10px", color: i <= step ? "#fff" : "rgba(255,255,255,0.5)", mt: 0.5, fontWeight: i === step ? 700 : 400 }}>
+                {label}
+              </Typography>
+            </Box>
+          ))}
         </Box>
+      </Box>
 
-        {/* Department + Deadline */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <TextField
-            label="Target Department (optional)"
-            value={form.targetDepartment}
-            onChange={(e) => handleChange("targetDepartment", e.target.value)}
-            size="small"
-            placeholder="e.g. Engineering"
-          />
-          <TextField
-            label="Deadline (optional)"
-            value={form.deadline}
-            onChange={(e) => handleChange("deadline", e.target.value)}
-            size="small"
-            type="date"
-            slotProps={{ inputLabel: { shrink: true } }}
-          />
-        </Box>
+      {/* Content */}
+      <DialogContent sx={{ px: 3, py: 2.5, flex: 1, overflowY: "auto" }}>
+        {step === 0 && renderStep0()}
+        {step === 1 && renderStep1()}
+        {step === 2 && renderStep2()}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+      {/* Footer */}
+      <DialogActions sx={{ px: 3, py: 2, borderTop: "1px solid #F3F4F6", gap: 1, flexShrink: 0 }}>
         <Button
-          onClick={handleClose}
+          onClick={step === 0 ? handleClose : handleBack}
           disabled={creating}
           sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", px: 3 }}
         >
-          Cancel
+          {step === 0 ? "Cancel" : "Back"}
         </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={creating}
-          startIcon={creating ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <CheckCircleOutlined sx={{ fontSize: 16 }} />}
-          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", px: 3, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
-        >
-          {creating ? "Creating…" : "Create Campaign"}
-        </Button>
+        <Box sx={{ flex: 1 }} />
+        {step < 2 ? (
+          <Button
+            onClick={handleNext}
+            endIcon={<ChevronRightOutlined />}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", px: 3, "&:hover": { bgcolor: "#0b7a6f" } }}
+          >
+            Next
+          </Button>
+        ) : (
+          <Button
+            onClick={handleSubmit}
+            disabled={creating}
+            startIcon={creating ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <CheckCircleOutlined sx={{ fontSize: 16 }} />}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", px: 3, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
+          >
+            {creating ? "Creating…" : "Create Campaign"}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

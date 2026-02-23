@@ -58,6 +58,7 @@ export interface CreateCampaignPayload {
   targetDepartment?: string;
   targetEmployeeCount?: number;
   deadline?: string;
+  skill?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ export const fetchCampaigns = createAsyncThunk<
   try {
     const token = getToken();
     const url = new URL(BASE);
-    if (params?.status) url.searchParams.set("status", params.status);
+    if (params && params.status) url.searchParams.set("status", params.status);
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },
