@@ -3897,6 +3897,285 @@
           }
         }
       }
+    },
+    "/internal-campaigns": {
+      "post": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Create a new internal campaign",
+        "description": "Create a new internal campaign for the authenticated company",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternalCampaignInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Campaign created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Campaign created successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/InternalCampaign"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Get company campaigns",
+        "description": "Get all campaigns for the authenticated company",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by campaign status",
+            "schema": {
+              "type": "string",
+              "enum": ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InternalCampaign"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/internal-campaigns/{campaignId}": {
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Get campaign details",
+        "description": "Get a specific campaign by ID",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/InternalCampaign"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Update campaign",
+        "description": "Update a campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternalCampaignInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Campaign updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/InternalCampaign"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized - You can only update your own campaigns"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Delete campaign",
+        "description": "Delete a campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Campaign deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Unauthorized - You can only delete your own campaigns"
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/internal-campaigns/{campaignId}/stats": {
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Get campaign statistics",
+        "description": "Get statistics for a campaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Campaign not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5156,6 +5435,216 @@
         }
       },
       "required": ["_id", "content", "type", "read", "recipient", "emailed", "createdAt"]
+    },
+    "InternalCampaignInput": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Campaign title",
+          "example": "Q4 Skills Assessment"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["PRODUCTIVITY_DIAGNOSTIC", "SKILLS_MAPPING", "ENABLEMENT", "CUSTOM"],
+          "description": "Campaign type",
+          "example": "SKILLS_MAPPING"
+        },
+        "description": {
+          "type": "string",
+          "description": "Campaign description",
+          "example": "Assess employee skills for Q4"
+        },
+        "anonymityMode": {
+          "type": "string",
+          "enum": ["ANONYMOUS", "NOMINATIVE"],
+          "description": "Whether campaign is anonymous or not",
+          "example": "NOMINATIVE"
+        },
+        "modules": {
+          "type": "array",
+          "description": "Campaign modules",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"],
+                "example": "SKILL_TEST"
+              },
+              "config": {
+                "type": "object",
+                "description": "Module configuration",
+                "example": {}
+              },
+              "order": {
+                "type": "number",
+                "example": 1
+              }
+            },
+            "required": ["type", "order"]
+          }
+        },
+        "accessMethod": {
+          "type": "string",
+          "enum": ["LINK", "ACCOUNTS", "BOTH"],
+          "description": "How participants access the campaign",
+          "example": "LINK"
+        },
+        "targetDepartment": {
+          "type": "string",
+          "description": "Target department",
+          "example": "Engineering"
+        },
+        "targetEmployeeCount": {
+          "type": "number",
+          "description": "Target number of employees",
+          "example": 50
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Campaign deadline",
+          "example": "2026-03-31T23:59:59Z"
+        },
+        "skills": {
+          "type": "string",
+          "description": "Skills to be evaluated",
+          "example": "Leadership, Communication, Problem Solving"
+        }
+      },
+      "required": ["title", "type", "anonymityMode", "modules", "accessMethod"]
+    },
+    "InternalCampaign": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "description": "Campaign ID",
+          "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+        },
+        "company": {
+          "type": "object",
+          "description": "Company that created the campaign",
+          "properties": {
+            "_id": {
+              "type": "string",
+              "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+            },
+            "name": {
+              "type": "string",
+              "example": "Acme Corp"
+            },
+            "email": {
+              "type": "string",
+              "example": "info@acme.com"
+            }
+          }
+        },
+        "title": {
+          "type": "string",
+          "example": "Q4 Skills Assessment"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["PRODUCTIVITY_DIAGNOSTIC", "SKILLS_MAPPING", "ENABLEMENT", "CUSTOM"],
+          "example": "SKILLS_MAPPING"
+        },
+        "description": {
+          "type": "string",
+          "example": "Assess employee skills for Q4"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"],
+          "example": "ACTIVE"
+        },
+        "anonymityMode": {
+          "type": "string",
+          "enum": ["ANONYMOUS", "NOMINATIVE"],
+          "example": "NOMINATIVE"
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"],
+                "example": "SKILL_TEST"
+              },
+              "config": {
+                "type": "object",
+                "example": {}
+              },
+              "order": {
+                "type": "number",
+                "example": 1
+              }
+            }
+          }
+        },
+        "accessMethod": {
+          "type": "string",
+          "enum": ["LINK", "ACCOUNTS", "BOTH"],
+          "example": "LINK"
+        },
+        "linkToken": {
+          "type": "string",
+          "nullable": true,
+          "example": "abc123xyz"
+        },
+        "targetDepartment": {
+          "type": "string",
+          "example": "Engineering"
+        },
+        "targetEmployeeCount": {
+          "type": "number",
+          "example": 50
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-03-31T23:59:59Z"
+        },
+        "skills": {
+          "type": "string",
+          "description": "Skills to be evaluated",
+          "example": "Leadership, Communication, Problem Solving"
+        },
+        "createdBy": {
+          "type": "object",
+          "description": "User who created the campaign",
+          "properties": {
+            "_id": {
+              "type": "string",
+              "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+            },
+            "firstName": {
+              "type": "string",
+              "example": "John"
+            },
+            "lastName": {
+              "type": "string",
+              "example": "Doe"
+            },
+            "email": {
+              "type": "string",
+              "example": "john@acme.com"
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-02-23T10:30:00Z"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-02-23T10:30:00Z"
+        }
+      },
+      "required": ["_id", "company", "title", "type", "anonymityMode", "modules", "accessMethod", "createdBy"]
     }
-  }
-}
