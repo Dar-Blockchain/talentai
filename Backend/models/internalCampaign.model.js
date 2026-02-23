@@ -89,6 +89,11 @@ const internalCampaignSchema = new mongoose.Schema(
       index: true,
     },
 
+    skill: {
+      type: String,
+      default: "",
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
