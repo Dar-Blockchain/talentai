@@ -138,6 +138,41 @@ const MODULE_LABELS: Record<ModuleType, string> = {
   TRAINING_PATH: "Training Path",
 };
 
+const MODULE_DESCRIPTIONS: Record<ModuleType, string> = {
+  QUESTIONNAIRE: "Structured questionnaire with custom questions",
+  AI_INTERVIEW: "Conversational AI-powered interview session",
+  SKILL_TEST: "Technical skill assessment with scoring",
+  TRAINING_PATH: "Guided learning & development path",
+};
+
+const SKILL_TEST_OPTIONS = [
+  { value: "javascript", label: "JavaScript", icon: "⚡" },
+  { value: "python", label: "Python", icon: "🐍" },
+  { value: "react", label: "React", icon: "⚛️" },
+  { value: "sql", label: "SQL", icon: "🗄️" },
+  { value: "java", label: "Java", icon: "☕" },
+  { value: "devops", label: "DevOps", icon: "🔧" },
+  { value: "data_science", label: "Data Science", icon: "📊" },
+  { value: "design", label: "UI/UX Design", icon: "🎨" },
+  { value: "management", label: "Management", icon: "📋" },
+  { value: "custom", label: "Custom", icon: "✏️" },
+];
+
+const AI_INTERVIEW_OPTIONS = [
+  { value: "technical", label: "Technical", icon: "💻", desc: "Coding & system design" },
+  { value: "behavioral", label: "Behavioral", icon: "🤝", desc: "Soft skills & culture fit" },
+  { value: "leadership", label: "Leadership", icon: "🏆", desc: "Management & strategy" },
+  { value: "sales", label: "Sales", icon: "📈", desc: "Pitch & negotiation" },
+  { value: "creative", label: "Creative", icon: "🎯", desc: "Problem-solving & innovation" },
+];
+
+const MODULE_ICONS_INLINE: Record<ModuleType, React.ElementType> = {
+  QUESTIONNAIRE: DescriptionOutlined,
+  AI_INTERVIEW: PsychologyOutlined,
+  SKILL_TEST: AssignmentTurnedInOutlined,
+  TRAINING_PATH: PeopleOutlined,
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const daysLeft = (deadline?: string) => {
@@ -173,6 +208,8 @@ const INITIAL_FORM = {
   targetDepartment: "",
   deadline: "",
   modules: [] as ModuleType[],
+  skillTestSkill: "" as string,
+  aiInterviewType: "" as string,
 };
 
 const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
@@ -199,12 +236,15 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
   }, []);
 
   const toggleModule = useCallback((mod: ModuleType) => {
-    setForm((prev) => ({
-      ...prev,
-      modules: prev.modules.includes(mod)
-        ? prev.modules.filter((m) => m !== mod)
-        : [...prev.modules, mod],
-    }));
+    setForm((prev) => {
+      const removing = prev.modules.includes(mod);
+      return {
+        ...prev,
+        modules: removing ? prev.modules.filter((m) => m !== mod) : [...prev.modules, mod],
+        skillTestSkill: removing && mod === "SKILL_TEST" ? "" : prev.skillTestSkill,
+        aiInterviewType: removing && mod === "AI_INTERVIEW" ? "" : prev.aiInterviewType,
+      };
+    });
     setErrors((prev) => ({ ...prev, modules: "" }));
   }, []);
 
@@ -230,7 +270,16 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
         accessMethod: form.accessMethod as AccessMethod,
         targetDepartment: form.targetDepartment.trim() || undefined,
         deadline: form.deadline || undefined,
-        modules: form.modules.map((type, i) => ({ type, config: {}, order: i + 1 })),
+        modules: form.modules.map((type, i) => ({
+          type,
+          config:
+            type === "SKILL_TEST" && form.skillTestSkill
+              ? { skill: form.skillTestSkill }
+              : type === "AI_INTERVIEW" && form.aiInterviewType
+              ? { interviewType: form.aiInterviewType }
+              : {},
+          order: i + 1,
+        })),
       })
     );
   };
@@ -244,56 +293,63 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 36, height: 36, bgcolor: "#F0FDFA", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <AssignmentTurnedInOutlined sx={{ fontSize: 20, color: "#0D9488" }} />
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: "92vh" } } }}>
+      <DialogTitle sx={{ pb: 0, pt: 2.5, px: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{
+              width: 44, height: 44, borderRadius: 2.5,
+              background: "linear-gradient(135deg, #0D9488 0%, #0891B2 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(13,148,136,0.3)",
+            }}>
+              <AssignmentTurnedInOutlined sx={{ fontSize: 22, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "17px", fontWeight: 800, color: "#111827" }}>New Assessment Campaign</Typography>
+              <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>Configure your AI-powered assessment below</Typography>
+            </Box>
           </Box>
-          <Box>
-            <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>New Assessment Campaign</Typography>
-            <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>Set up an AI-powered assessment for your team</Typography>
-          </Box>
+          <IconButton onClick={handleClose} size="small" disabled={creating} sx={{ bgcolor: "#F9FAFB", "&:hover": { bgcolor: "#F3F4F6" } }}>
+            <CloseOutlined sx={{ fontSize: 16, color: "#6B7280" }} />
+          </IconButton>
         </Box>
-        <IconButton onClick={handleClose} size="small" disabled={creating}>
-          <CloseOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-        </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ pt: 2.5, display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <DialogContent dividers sx={{ pt: 2.5, px: 3, display: "flex", flexDirection: "column", gap: 2.5, overflowY: "auto" }}>
         {createError && (
           <Alert severity="error" sx={{ borderRadius: 2 }}>{createError}</Alert>
         )}
 
-        {/* Title */}
-        <TextField
-          label="Campaign Title"
-          value={form.title}
-          onChange={(e) => handleChange("title", e.target.value)}
-          error={!!errors.title}
-          helperText={errors.title}
-          fullWidth
-          size="small"
-          placeholder="e.g. Q2 Technical Skills Assessment"
-          slotProps={{ formHelperText: { sx: { ml: 0 } } }}
-        />
-
-        {/* Type */}
-        <FormControl fullWidth size="small" error={!!errors.type}>
-          <InputLabel>Campaign Type</InputLabel>
-          <Select
-            value={form.type}
-            label="Campaign Type"
-            onChange={(e) => handleChange("type", e.target.value)}
-          >
-            {(Object.keys(TYPE_LABELS) as CampaignType[]).map((t) => (
-              <MenuItem key={t} value={t} sx={{ fontSize: "13px" }}>
-                {TYPE_LABELS[t]}
-              </MenuItem>
-            ))}
-          </Select>
-          {errors.type && <FormHelperText sx={{ ml: 0 }}>{errors.type}</FormHelperText>}
-        </FormControl>
+        {/* Title + Type side by side */}
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <TextField
+            label="Campaign Title"
+            value={form.title}
+            onChange={(e) => handleChange("title", e.target.value)}
+            error={!!errors.title}
+            helperText={errors.title}
+            fullWidth
+            size="small"
+            placeholder="e.g. Q2 Technical Skills Assessment"
+            slotProps={{ formHelperText: { sx: { ml: 0 } } }}
+          />
+          <FormControl fullWidth size="small" error={!!errors.type}>
+            <InputLabel>Campaign Type</InputLabel>
+            <Select
+              value={form.type}
+              label="Campaign Type"
+              onChange={(e) => handleChange("type", e.target.value)}
+            >
+              {(Object.keys(TYPE_LABELS) as CampaignType[]).map((t) => (
+                <MenuItem key={t} value={t} sx={{ fontSize: "13px" }}>
+                  {TYPE_LABELS[t]}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.type && <FormHelperText sx={{ ml: 0 }}>{errors.type}</FormHelperText>}
+          </FormControl>
+        </Box>
 
         {/* Description */}
         <TextField
@@ -309,32 +365,129 @@ const CreateCampaignModal: React.FC<CreateModalProps> = ({ open, onClose }) => {
 
         {/* Modules */}
         <Box>
-          <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>
-            Modules <span style={{ color: "#EF4444" }}>*</span>
-          </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>
+              Modules <span style={{ color: "#EF4444" }}>*</span>
+            </Typography>
+            {form.modules.length > 0 && (
+              <Chip label={`${form.modules.length} selected`} size="small" sx={{ bgcolor: "#F0FDFA", color: "#0D9488", fontWeight: 700, fontSize: "10px", height: 18 }} />
+            )}
+          </Box>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
             {MODULE_TYPES.map((mod) => {
               const selected = form.modules.includes(mod);
+              const Icon = MODULE_ICONS_INLINE[mod];
               return (
-                <Chip
+                <Box
                   key={mod}
-                  label={MODULE_LABELS[mod]}
                   onClick={() => toggleModule(mod)}
                   sx={{
-                    fontSize: "12px",
-                    fontWeight: 600,
+                    border: `2px solid ${selected ? "#0D9488" : "#E5E7EB"}`,
+                    borderRadius: 2.5,
+                    p: 1.5,
                     cursor: "pointer",
-                    bgcolor: selected ? "#0D9488" : "#F3F4F6",
-                    color: selected ? "#fff" : "#374151",
-                    border: selected ? "1px solid #0D9488" : "1px solid transparent",
-                    "&:hover": { bgcolor: selected ? "#0b7a6f" : "#E5E7EB" },
+                    bgcolor: selected ? "#F0FDFA" : "#FAFAFA",
+                    transition: "all 0.15s ease",
+                    position: "relative",
+                    "&:hover": { borderColor: "#0D9488", bgcolor: "#F0FDFA" },
                   }}
-                />
+                >
+                  {selected && (
+                    <Box sx={{ position: "absolute", top: 8, right: 8, width: 16, height: 16, bgcolor: "#0D9488", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <CheckCircleOutlined sx={{ fontSize: 12, color: "#fff" }} />
+                    </Box>
+                  )}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                    <Box sx={{ width: 28, height: 28, bgcolor: selected ? "#0D9488" : "#F3F4F6", borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
+                      <Icon sx={{ fontSize: 15, color: selected ? "#fff" : "#6B7280" }} />
+                    </Box>
+                    <Typography sx={{ fontSize: "12px", fontWeight: 700, color: selected ? "#0D9488" : "#111827" }}>
+                      {MODULE_LABELS[mod]}
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.4, ml: 0 }}>
+                    {MODULE_DESCRIPTIONS[mod]}
+                  </Typography>
+                </Box>
               );
             })}
           </Box>
           {errors.modules && (
             <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>{errors.modules}</Typography>
+          )}
+
+          {/* SKILL_TEST sub-options */}
+          {form.modules.includes("SKILL_TEST") && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 2.5 }}>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#7C3AED", mb: 1.2, display: "flex", alignItems: "center", gap: 0.5 }}>
+                <AssignmentTurnedInOutlined sx={{ fontSize: 13 }} />
+                Choose a Skill to Test
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.8 }}>
+                {SKILL_TEST_OPTIONS.map((opt) => {
+                  const active = form.skillTestSkill === opt.value;
+                  return (
+                    <Box
+                      key={opt.value}
+                      onClick={() => handleChange("skillTestSkill", active ? "" : opt.value)}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 0.6,
+                        px: 1.2, py: 0.5, borderRadius: 5, cursor: "pointer",
+                        border: `1.5px solid ${active ? "#7C3AED" : "#DDD6FE"}`,
+                        bgcolor: active ? "#7C3AED" : "#fff",
+                        transition: "all 0.12s",
+                        "&:hover": { borderColor: "#7C3AED", bgcolor: active ? "#6D28D9" : "#EDE9FE" },
+                      }}
+                    >
+                      <Typography sx={{ fontSize: "13px" }}>{opt.icon}</Typography>
+                      <Typography sx={{ fontSize: "11px", fontWeight: 600, color: active ? "#fff" : "#374151" }}>
+                        {opt.label}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+
+          {/* AI_INTERVIEW sub-options */}
+          {form.modules.includes("AI_INTERVIEW") && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: "#F0FDFA", border: "1px solid #99F6E4", borderRadius: 2.5 }}>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#0D9488", mb: 1.2, display: "flex", alignItems: "center", gap: 0.5 }}>
+                <PsychologyOutlined sx={{ fontSize: 13 }} />
+                Choose Interview Type
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                {AI_INTERVIEW_OPTIONS.map((opt) => {
+                  const active = form.aiInterviewType === opt.value;
+                  return (
+                    <Box
+                      key={opt.value}
+                      onClick={() => handleChange("aiInterviewType", active ? "" : opt.value)}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1.5,
+                        px: 1.5, py: 1, borderRadius: 2, cursor: "pointer",
+                        border: `1.5px solid ${active ? "#0D9488" : "#99F6E4"}`,
+                        bgcolor: active ? "#0D9488" : "#fff",
+                        transition: "all 0.12s",
+                        "&:hover": { borderColor: "#0D9488", bgcolor: active ? "#0b7a6f" : "#CCFBF1" },
+                      }}
+                    >
+                      <Typography sx={{ fontSize: "18px", lineHeight: 1 }}>{opt.icon}</Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontSize: "12px", fontWeight: 700, color: active ? "#fff" : "#111827" }}>
+                          {opt.label}
+                        </Typography>
+                        <Typography sx={{ fontSize: "10px", color: active ? "#CCFBF1" : "#9CA3AF" }}>
+                          {opt.desc}
+                        </Typography>
+                      </Box>
+                      {active && <CheckCircleOutlined sx={{ fontSize: 16, color: "#fff", flexShrink: 0 }} />}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
           )}
         </Box>
 
