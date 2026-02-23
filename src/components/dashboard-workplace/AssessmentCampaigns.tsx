@@ -52,7 +52,10 @@ import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import SendOutlined from "@mui/icons-material/SendOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
+import PlayCircleOutlined from "@mui/icons-material/PlayCircleOutlined";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import {
@@ -1592,6 +1595,20 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
   const error = useSelector(selectDetailError);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const router = useRouter();
+
+  const handleStartModuleInterview = useCallback((mod: { type: ModuleType; config?: Record<string, any>; order: number }) => {
+    if (!campaign) return;
+    const params = new URLSearchParams({
+      campaignId: campaign._id,
+      campaignTitle: campaign.title,
+      moduleType: mod.type,
+    });
+    if (campaign.skill) params.set("skill", campaign.skill);
+    if (mod.config?.interviewType) params.set("interviewType", mod.config.interviewType);
+    if (mod.config?.skill) params.set("skill", mod.config.skill);
+    router.push(`/interview/campaign?${params.toString()}`);
+  }, [campaign, router]);
 
   useEffect(() => {
     if (open && campaignId) {
@@ -1761,6 +1778,17 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
                           <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Step {mod.order}</Typography>
                         </Box>
                         <Chip label={`#${i + 1}`} size="small" sx={{ fontSize: "10px", height: 20, bgcolor: mc.bg, color: mc.fg, fontWeight: 700 }} />
+                        {(mod.type === "AI_INTERVIEW" || mod.type === "SKILL_TEST") && (
+                          <Tooltip title="Start Interview">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleStartModuleInterview(mod)}
+                              sx={{ color: mc.fg, bgcolor: mc.bg, borderRadius: 1.5, "&:hover": { opacity: 0.8 }, ml: 0.5 }}
+                            >
+                              <PlayCircleOutlined sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Box>
                     );
                   })}
@@ -1794,20 +1822,48 @@ const CampaignDetailDrawer: React.FC<DetailDrawerProps> = ({ open, campaignId, o
 
       {/* Footer */}
       {campaign && !loading && activeTab === 0 && (
-        <Box sx={{ px: 3, py: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0, display: "flex", gap: 1.5 }}>
-          <Button
-            onClick={onClose}
-            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", flex: 1 }}
-          >
-            Close
-          </Button>
-          <Button
-            startIcon={<DeleteOutlined sx={{ fontSize: 16 }} />}
-            onClick={() => onDeleteRequest(campaign._id, campaign.title)}
-            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#FEF2F2", color: "#EF4444", border: "1px solid #FCA5A5", "&:hover": { bgcolor: "#FEE2E2" }, px: 2.5 }}
-          >
-            Delete
-          </Button>
+        <Box sx={{ px: 3, py: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {/* Launch Interview button — shown when campaign has interview/skill modules */}
+          {campaign.modules.some((m) => m.type === "AI_INTERVIEW" || m.type === "SKILL_TEST") && (
+            <Button
+              fullWidth
+              startIcon={<PlayCircleOutlined sx={{ fontSize: 16 }} />}
+              endIcon={<OpenInNewOutlined sx={{ fontSize: 14 }} />}
+              onClick={() => {
+                const firstInterviewMod = campaign.modules
+                  .sort((a, b) => a.order - b.order)
+                  .find((m) => m.type === "AI_INTERVIEW" || m.type === "SKILL_TEST");
+                if (firstInterviewMod) handleStartModuleInterview(firstInterviewMod);
+              }}
+              sx={{
+                textTransform: "none",
+                borderRadius: 2,
+                fontWeight: 700,
+                fontSize: "13px",
+                py: 1.2,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "#fff",
+                "&:hover": { background: "linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)" },
+              }}
+            >
+              Launch Interview
+            </Button>
+          )}
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Button
+              onClick={onClose}
+              sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", flex: 1 }}
+            >
+              Close
+            </Button>
+            <Button
+              startIcon={<DeleteOutlined sx={{ fontSize: 16 }} />}
+              onClick={() => onDeleteRequest(campaign._id, campaign.title)}
+              sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#FEF2F2", color: "#EF4444", border: "1px solid #FCA5A5", "&:hover": { bgcolor: "#FEE2E2" }, px: 2.5 }}
+            >
+              Delete
+            </Button>
+          </Box>
         </Box>
       )}
     </Drawer>

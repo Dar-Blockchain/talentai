@@ -43,6 +43,7 @@ export interface Campaign {
   targetDepartment?: string;
   targetEmployeeCount?: number;
   deadline?: string;
+  skill?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
