@@ -50,6 +50,8 @@ import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import GroupAddOutlined from "@mui/icons-material/GroupAddOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
+import SendOutlined from "@mui/icons-material/SendOutlined";
+import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -89,7 +91,14 @@ import {
   Participant,
   generateAnonymousToken,
 } from "@/store/slices/participantSlice";
-import { fetchMembers, selectMembers, Member } from "@/store/slices/memberSlice";
+import {
+  fetchMembers,
+  selectMembers,
+  addEmployee,
+  clearAddMemberSuccess,
+  Member,
+  MemberRole,
+} from "@/store/slices/memberSlice";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -446,31 +455,41 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
   const addSuccess = useSelector(selectParticipantAddSuccess);
   const addError = useSelector(selectParticipantAddError);
   const { members, loading: membersLoading } = useSelector(selectMembers);
+  const existingParticipants = useSelector(selectParticipants(campaignId));
 
-  const [mode, setMode] = useState<"single" | "bulk" | "anonymous">("single");
+  const [mode, setMode] = useState<"single" | "bulk">("single");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [bulkText, setBulkText] = useState("");
-  const [generatedToken, setGeneratedToken] = useState<string>("");
+  const [selectedBulk, setSelectedBulk] = useState<Member[]>([]);
+  const [search, setSearch] = useState("");
   const [err, setErr] = useState("");
+
+  const availableMembers = members.filter(
+    (m) => m.user && !existingParticipants.some((p) => p.email === m.user.email)
+  );
+  const filteredMembers = members.filter(
+    (m) =>
+      m.user &&
+      (m.user.username.toLowerCase().includes(search.toLowerCase()) ||
+        m.user.email.toLowerCase().includes(search.toLowerCase()))
+  );
+  const filteredAvailable = filteredMembers.filter(
+    (m) => m.user && !existingParticipants.some((p) => p.email === m.user.email)
+  );
+  const allBulkSelected =
+    filteredAvailable.length > 0 &&
+    filteredAvailable.every((m) => selectedBulk.some((s) => s._id === m._id));
 
   useEffect(() => {
     if (open) {
       dispatch(fetchMembers());
-      setGeneratedToken(generateAnonymousToken());
+      setSearch("");
     }
   }, [open, dispatch]);
 
   useEffect(() => {
-    if (mode === "anonymous") {
-      setGeneratedToken(generateAnonymousToken());
-    }
-  }, [mode]);
-
-  useEffect(() => {
     if (addSuccess) {
       dispatch(clearAddStatus());
-      setSelectedMember(null); setBulkText(""); setErr("");
-      setGeneratedToken(generateAnonymousToken());
+      setSelectedMember(null); setSelectedBulk([]); setSearch(""); setErr("");
       onClose();
     }
   }, [addSuccess, dispatch, onClose]);
@@ -478,188 +497,527 @@ const AddParticipantModal: React.FC<AddParticipantModalProps> = ({ open, campaig
   const handleClose = () => {
     if (adding) return;
     dispatch(clearAddStatus());
-    setSelectedMember(null); setBulkText(""); setErr("");
+    setSelectedMember(null); setSelectedBulk([]); setSearch(""); setErr("");
     onClose();
   };
 
-  const handleRefreshToken = () => {
-    setGeneratedToken(generateAnonymousToken());
+  const toggleBulkMember = (member: Member) => {
+    setSelectedBulk((prev) =>
+      prev.some((m) => m._id === member._id)
+        ? prev.filter((m) => m._id !== member._id)
+        : [...prev, member]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (allBulkSelected) {
+      setSelectedBulk((prev) => prev.filter((m) => !filteredAvailable.some((a) => a._id === m._id)));
+    } else {
+      const toAdd = filteredAvailable.filter((a) => !selectedBulk.some((s) => s._id === a._id));
+      setSelectedBulk((prev) => [...prev, ...toAdd]);
+    }
   };
 
   const handleSubmit = () => {
     setErr("");
     if (mode === "single") {
       if (!selectedMember) return setErr("Please select a member");
+      if (!selectedMember.user) return setErr("Selected member has no user data");
       dispatch(addParticipant({
         campaignId,
         email: selectedMember.user.email,
         employeeId: selectedMember.user._id,
         anonymousToken: generateAnonymousToken(),
       }));
-    } else if (mode === "anonymous") {
-      dispatch(addAnonymousParticipant({ campaignId, anonymousToken: generatedToken }));
     } else {
-      const emails = bulkText.split(/[\n,;]+/).map((e) => e.trim()).filter(Boolean);
-      if (emails.length === 0) return setErr("Enter at least one email");
-      dispatch(bulkAddParticipants({ campaignId, participants: emails.map((e) => ({ email: e })) }));
+      if (selectedBulk.length === 0) return setErr("Select at least one member");
+      dispatch(bulkAddParticipants({
+        campaignId,
+        participants: selectedBulk
+          .filter((m) => m.user)
+          .map((m) => ({
+            email: m.user!.email,
+            employeeId: m.user!._id,
+            anonymousToken: generateAnonymousToken(),
+          })),
+      }));
     }
   };
 
-  return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 36, height: 36, bgcolor: "#F0FDFA", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <GroupAddOutlined sx={{ fontSize: 20, color: "#0D9488" }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Add Participants</Typography>
-            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>Invite people to this campaign</Typography>
-          </Box>
-        </Box>
-        <IconButton onClick={handleClose} size="small" disabled={adding}>
-          <CloseOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-        </IconButton>
-      </DialogTitle>
+  const MemberRow = ({
+    member,
+    isSingle,
+  }: {
+    member: Member;
+    isSingle: boolean;
+  }) => {
+    const alreadyAdded = !!member.user && existingParticipants.some((p) => p.email === member.user!.email);
+    const isSelected = isSingle
+      ? selectedMember?._id === member._id
+      : selectedBulk.some((m) => m._id === member._id);
+    const initials = member.user
+      ? (member.user.username || member.user.email)[0].toUpperCase()
+      : "?";
 
-      <DialogContent dividers sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-        {addError && <Alert severity="error" sx={{ borderRadius: 2 }}>{addError}</Alert>}
-        {err && <Alert severity="warning" sx={{ borderRadius: 2 }}>{err}</Alert>}
+    return (
+      <Box
+        onClick={() => {
+          if (alreadyAdded) return;
+          isSingle
+            ? setSelectedMember(isSelected ? null : member)
+            : toggleBulkMember(member);
+        }}
+        sx={{
+          display: "flex", alignItems: "center", gap: 1.5, px: 1.5, py: 1.2,
+          borderRadius: 2, cursor: alreadyAdded ? "not-allowed" : "pointer",
+          border: `1px solid ${alreadyAdded ? "#D1FAE5" : isSelected ? "#0D9488" : "#E5E7EB"}`,
+          bgcolor: alreadyAdded ? "#F0FDF4" : isSelected ? "#F0FDFA" : "#fff",
+          opacity: alreadyAdded ? 0.7 : 1,
+          "&:hover": !alreadyAdded ? {
+            borderColor: isSelected ? "#0D9488" : "#0D9488",
+            bgcolor: isSelected ? "#CCFBF1" : "#F0FDFA",
+            transform: "translateX(2px)",
+          } : {},
+          transition: "all 0.15s ease",
+        }}
+      >
+        {/* Avatar */}
+        <Avatar sx={{
+          width: 36, height: 36, flexShrink: 0,
+          bgcolor: alreadyAdded ? "#D1FAE5" : isSelected ? "#0D9488" : "#F3F4F6",
+          color: alreadyAdded ? "#16A34A" : isSelected ? "#fff" : "#6B7280",
+          fontSize: "13px", fontWeight: 700,
+          boxShadow: isSelected && !alreadyAdded ? "0 0 0 2px #0D9488" : "none",
+        }}>
+          {initials}
+        </Avatar>
+
+        {/* Info */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {member.user?.username ?? "Unknown"}
+          </Typography>
+          <Typography sx={{ fontSize: "11px", color: "#9CA3AF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {member.user?.email ?? ""}
+          </Typography>
+        </Box>
+
+        {/* Right indicator */}
+        {alreadyAdded ? (
+          <Chip label="Already added" size="small" sx={{ bgcolor: "#D1FAE5", color: "#16A34A", fontSize: "9px", fontWeight: 700, height: 18, flexShrink: 0 }} />
+        ) : isSingle ? (
+          isSelected
+            ? <CheckCircleOutlined sx={{ fontSize: 20, color: "#0D9488", flexShrink: 0 }} />
+            : <Box sx={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid #D1D5DB", flexShrink: 0 }} />
+        ) : (
+          <Box sx={{
+            width: 18, height: 18, borderRadius: "4px", flexShrink: 0,
+            border: `2px solid ${isSelected ? "#0D9488" : "#D1D5DB"}`,
+            bgcolor: isSelected ? "#0D9488" : "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.15s",
+          }}>
+            {isSelected && <CheckCircleOutlined sx={{ fontSize: 12, color: "#fff" }} />}
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: "85vh" } } }}
+    >
+      {/* Header */}
+      <DialogTitle sx={{ pb: 0, pt: 2.5, px: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 40, height: 40, bgcolor: "#F0FDFA", borderRadius: 2.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <GroupAddOutlined sx={{ fontSize: 22, color: "#0D9488" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
+                {mode === "single" ? "Add Participant" : "Bulk Add Participants"}
+              </Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+                {availableMembers.length} member{availableMembers.length !== 1 ? "s" : ""} available · {existingParticipants.length} already added
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleClose} size="small" disabled={adding} sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6" } }}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Box>
 
         {/* Mode toggle */}
-        <Box sx={{ display: "flex", bgcolor: "#F3F4F6", borderRadius: 2, p: 0.5, gap: 0.5 }}>
-          {(["single", "bulk", "anonymous"] as const).map((m) => (
+        <Box sx={{ display: "flex", bgcolor: "#F9FAFB", borderRadius: 2, p: 0.5, gap: 0.5, mt: 2, border: "1px solid #E5E7EB" }}>
+          {(["single", "bulk"] as const).map((m) => (
             <Box
               key={m}
-              onClick={() => setMode(m)}
+              onClick={() => { setMode(m); setSelectedMember(null); setSelectedBulk([]); }}
               sx={{
-                flex: 1, textAlign: "center", py: 0.8, borderRadius: 1.5, cursor: "pointer",
-                bgcolor: mode === m ? "#fff" : "transparent",
-                boxShadow: mode === m ? 1 : 0,
-                fontSize: "12px", fontWeight: 600,
-                color: mode === m ? "#111827" : "#6B7280",
-                transition: "all 0.15s",
+                flex: 1, textAlign: "center", py: 1, borderRadius: 1.5, cursor: "pointer",
+                bgcolor: mode === m ? "#0D9488" : "transparent",
+                fontSize: "13px", fontWeight: 600,
+                color: mode === m ? "#fff" : "#6B7280",
+                transition: "all 0.2s",
+                "&:hover": mode !== m ? { bgcolor: "#F3F4F6" } : {},
               }}
             >
-              {m === "single" ? "Single" : m === "bulk" ? "Bulk" : "Anonymous"}
+              {m === "single" ? "Single" : "Bulk Import"}
             </Box>
           ))}
         </Box>
+      </DialogTitle>
 
-        {/* Single — member list */}
-        {mode === "single" && (
-          <Box>
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 1, textTransform: "uppercase", letterSpacing: 0.8 }}>
-              Select a member
-            </Typography>
-            {membersLoading ? (
-              [1, 2, 3].map((i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.2, mb: 0.5, borderRadius: 2, bgcolor: "#F9FAFB" }}>
-                  <Skeleton variant="circular" width={32} height={32} />
-                  <Box sx={{ flex: 1 }}>
-                    <Skeleton variant="rectangular" height={13} width="50%" sx={{ borderRadius: 1, mb: 0.5 }} />
-                    <Skeleton variant="rectangular" height={11} width="70%" sx={{ borderRadius: 1 }} />
-                  </Box>
-                </Box>
-              ))
-            ) : members.length === 0 ? (
-              <Box sx={{ py: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                <PersonOutlined sx={{ fontSize: 28, color: "#D1D5DB" }} />
-                <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>No members found</Typography>
+      <DialogContent sx={{ px: 3, pt: 2, pb: 0, display: "flex", flexDirection: "column", gap: 1.5, overflow: "hidden" }}>
+        {addError && <Alert severity="error" sx={{ borderRadius: 2, py: 0.5 }}>{addError}</Alert>}
+        {err && <Alert severity="warning" sx={{ borderRadius: 2, py: 0.5 }}>{err}</Alert>}
+
+        {/* Search */}
+        <TextField
+          size="small"
+          placeholder="Search by name or email…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          fullWidth
+          slotProps={{
+            input: {
+              startAdornment: <EmailOutlined sx={{ fontSize: 16, color: "#9CA3AF", mr: 1 }} />,
+              endAdornment: search ? (
+                <IconButton size="small" onClick={() => setSearch("")} sx={{ p: 0.3 }}>
+                  <CloseOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+                </IconButton>
+              ) : null,
+            }
+          }}
+          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#F9FAFB", fontSize: "13px" } }}
+        />
+
+        {/* Bulk: select-all bar */}
+        {mode === "bulk" && !membersLoading && filteredAvailable.length > 0 && (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 0.5 }}>
+            <Box
+              onClick={handleSelectAll}
+              sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }}
+            >
+              <Box sx={{
+                width: 16, height: 16, borderRadius: "3px",
+                border: `2px solid ${allBulkSelected ? "#0D9488" : "#D1D5DB"}`,
+                bgcolor: allBulkSelected ? "#0D9488" : "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.15s",
+              }}>
+                {allBulkSelected && <CheckCircleOutlined sx={{ fontSize: 11, color: "#fff" }} />}
               </Box>
-            ) : (
-              <Box sx={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.5, pr: 0.5 }}>
-                {members.map((member: Member) => {
-                  const isSelected = selectedMember?._id === member._id;
-                  const initials = (member.user.username || member.user.email)[0].toUpperCase();
-                  return (
-                    <Box
-                      key={member._id}
-                      onClick={() => setSelectedMember(isSelected ? null : member)}
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 1.5, p: 1.2,
-                        borderRadius: 2, cursor: "pointer",
-                        border: `1px solid ${isSelected ? "#0D9488" : "#E5E7EB"}`,
-                        bgcolor: isSelected ? "#F0FDFA" : "#F9FAFB",
-                        "&:hover": { bgcolor: isSelected ? "#CCFBF1" : "#F3F4F6" },
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: isSelected ? "#0D9488" : "#E5E7EB", color: isSelected ? "#fff" : "#6B7280", fontSize: "13px", fontWeight: 700 }}>
-                        {initials}
-                      </Avatar>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {member.user.username}
-                        </Typography>
-                        <Typography sx={{ fontSize: "11px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {member.user.email}
-                        </Typography>
-                      </Box>
-                      {isSelected && (
-                        <CheckCircleOutlined sx={{ fontSize: 18, color: "#0D9488", flexShrink: 0 }} />
-                      )}
-                    </Box>
-                  );
-                })}
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#374151" }}>
+                Select all ({filteredAvailable.length})
+              </Typography>
+            </Box>
+            {selectedBulk.length > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Chip
+                  label={`${selectedBulk.length} selected`}
+                  size="small"
+                  onDelete={() => setSelectedBulk([])}
+                  sx={{ bgcolor: "#F0FDFA", color: "#0D9488", fontSize: "11px", fontWeight: 700, height: 22, border: "1px solid #99F6E4" }}
+                />
               </Box>
             )}
           </Box>
         )}
 
-        {/* Bulk — textarea */}
-        {mode === "bulk" && (
-          <TextField
-            label="Emails (one per line, or comma-separated)"
-            value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
-            fullWidth size="small"
-            multiline minRows={4}
-            placeholder={"alice@co.com\nbob@co.com\ncarol@co.com"}
-          />
-        )}
-
-        {/* Anonymous — show generated token */}
-        {mode === "anonymous" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            <Box sx={{ p: 1.5, bgcolor: "#FFFBEB", border: "1px solid #FCD34D", borderRadius: 2 }}>
-              <Typography sx={{ fontSize: "11px", color: "#92400E", fontWeight: 600 }}>
-                A unique access token will be generated and sent to the backend. Share this token with the anonymous participant so they can access the campaign.
-              </Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 0.8, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                Token preview
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2 }}>
-                <VpnKeyOutlined sx={{ fontSize: 16, color: "#9CA3AF", flexShrink: 0 }} />
-                <Typography sx={{ flex: 1, fontSize: "12px", color: "#374151", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {generatedToken}
-                </Typography>
-                <Tooltip title="Generate new token">
-                  <IconButton size="small" onClick={handleRefreshToken} sx={{ color: "#6B7280" }}>
-                    <ContentCopyOutlined sx={{ fontSize: 14 }} />
-                  </IconButton>
-                </Tooltip>
+        {/* Member list */}
+        <Box sx={{ overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.8, pr: 0.5, pb: 1, maxHeight: 340 }}>
+          {membersLoading ? (
+            [1, 2, 3, 4].map((i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB" }}>
+                <Skeleton variant="circular" width={36} height={36} />
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton variant="rectangular" height={13} width="45%" sx={{ borderRadius: 1, mb: 0.6 }} />
+                  <Skeleton variant="rectangular" height={11} width="65%" sx={{ borderRadius: 1 }} />
+                </Box>
               </Box>
+            ))
+          ) : filteredMembers.length === 0 ? (
+            <Box sx={{ py: 5, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 48, height: 48, bgcolor: "#F3F4F6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PersonOutlined sx={{ fontSize: 24, color: "#D1D5DB" }} />
+              </Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>No members found</Typography>
+              <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>Try a different search term</Typography>
             </Box>
-          </Box>
-        )}
+          ) : (
+            filteredMembers.map((member) => (
+              <MemberRow key={member._id} member={member} isSingle={mode === "single"} />
+            ))
+          )}
+        </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button onClick={handleClose} disabled={adding} sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", flex: 1 }}>
+      {/* Footer */}
+      <Box sx={{ px: 3, py: 2, borderTop: "1px solid #E5E7EB", display: "flex", gap: 1.5, alignItems: "center" }}>
+        {mode === "bulk" && selectedBulk.length > 0 && (
+          <Typography sx={{ fontSize: "12px", color: "#6B7280", flex: 1 }}>
+            Adding <Box component="span" sx={{ fontWeight: 700, color: "#0D9488" }}>{selectedBulk.length}</Box> participant{selectedBulk.length !== 1 ? "s" : ""}
+          </Typography>
+        )}
+        {!(mode === "bulk" && selectedBulk.length > 0) && <Box sx={{ flex: 1 }} />}
+        <Button
+          onClick={handleClose}
+          disabled={adding}
+          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", px: 3, "&:hover": { bgcolor: "#F9FAFB" } }}
+        >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={adding || (mode === "single" && !selectedMember)}
+          disabled={adding || (mode === "single" && !selectedMember) || (mode === "bulk" && selectedBulk.length === 0)}
           startIcon={adding ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <GroupAddOutlined sx={{ fontSize: 16 }} />}
-          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", flex: 1, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#9CA3AF" } }}
+          sx={{ textTransform: "none", borderRadius: 5, fontWeight: 700, bgcolor: "#0D9488", color: "#fff", px: 3, "&:hover": { bgcolor: "#0b7a6f" }, "&:disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" } }}
         >
-          {adding ? "Adding…" : mode === "single" ? "Add" : mode === "anonymous" ? "Generate & Add" : "Import"}
+          {adding ? "Adding…" : mode === "single" ? "Add Member" : `Import ${selectedBulk.length > 0 ? `(${selectedBulk.length})` : ""}`}
         </Button>
-      </DialogActions>
+      </Box>
+    </Dialog>
+  );
+};
+
+// ─── Invite Member Modal ───────────────────────────────────────────────────────
+
+const ROLE_OPTIONS: { value: MemberRole; label: string; description: string; color: string }[] = [
+  { value: "RH",         label: "HR",               description: "Human resources & people ops",   color: "#8B5CF6" },
+  { value: "TechLead",   label: "Tech Lead",         description: "Technical leadership & code review", color: "#2563EB" },
+  { value: "Supervisor", label: "Supervisor",        description: "Team oversight & daily management",  color: "#D97706" },
+  { value: "Manager",    label: "Manager",           description: "Department management & strategy",   color: "#0D9488" },
+  { value: "Owner",      label: "Owner",             description: "Full company access & control",      color: "#DC2626" },
+];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface InviteMemberModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { addingMember, addMemberSuccess, error } = useSelector(selectMembers);
+
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<MemberRole | "">("");
+  const [emailErr, setEmailErr] = useState("");
+  const [roleErr, setRoleErr] = useState("");
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (addMemberSuccess) {
+      setSent(true);
+      dispatch(clearAddMemberSuccess());
+      setTimeout(() => {
+        setSent(false);
+        setEmail(""); setRole(""); setEmailErr(""); setRoleErr("");
+        onClose();
+      }, 1800);
+    }
+  }, [addMemberSuccess, dispatch, onClose]);
+
+  const handleClose = () => {
+    if (addingMember) return;
+    dispatch(clearAddMemberSuccess());
+    setEmail(""); setRole(""); setEmailErr(""); setRoleErr(""); setSent(false);
+    onClose();
+  };
+
+  const validate = () => {
+    let ok = true;
+    if (!email.trim() || !EMAIL_RE.test(email.trim())) {
+      setEmailErr("Enter a valid email address"); ok = false;
+    } else setEmailErr("");
+    if (!role) {
+      setRoleErr("Select a role"); ok = false;
+    } else setRoleErr("");
+    return ok;
+  };
+
+  const handleSubmit = () => {
+    if (!validate()) return;
+    dispatch(addEmployee({ email: email.trim(), role: role as MemberRole }));
+  };
+
+  const selectedRoleOption = ROLE_OPTIONS.find((r) => r.value === role);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: 3, overflow: "visible" } } }}
+    >
+      {/* Header */}
+      <DialogTitle sx={{ pb: 0, pt: 2.5, px: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{
+              width: 42, height: 42, borderRadius: 2.5,
+              background: "linear-gradient(135deg, #0D9488 0%, #0891B2 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(13,148,136,0.3)",
+            }}>
+              <SendOutlined sx={{ fontSize: 20, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
+                Invite to Company
+              </Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+                Send a membership invitation via email
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleClose} size="small" disabled={addingMember} sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6" } }}>
+            <CloseOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
+        {/* Success state */}
+        {sent ? (
+          <Box sx={{ py: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <Box sx={{ width: 56, height: 56, bgcolor: "#F0FDF4", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #86EFAC" }}>
+              <CheckCircleOutlined sx={{ fontSize: 28, color: "#16A34A" }} />
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Invitation Sent!</Typography>
+              <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
+                <Box component="span" sx={{ fontWeight: 600, color: "#0D9488" }}>{email}</Box> will receive an email to join your company as <Box component="span" sx={{ fontWeight: 600 }}>{selectedRoleOption?.label}</Box>.
+              </Typography>
+            </Box>
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            {error && !addMemberSuccess && (
+              <Alert severity="error" sx={{ borderRadius: 2, py: 0.5, fontSize: "12px" }}>{error}</Alert>
+            )}
+
+            {/* Email field */}
+            <Box>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 0.8, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                Email Address <Box component="span" sx={{ color: "#EF4444" }}>*</Box>
+              </Typography>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="colleague@company.com"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setEmailErr(""); }}
+                error={!!emailErr}
+                helperText={emailErr}
+                slotProps={{
+                  input: {
+                    startAdornment: <EmailOutlined sx={{ fontSize: 16, color: "#9CA3AF", mr: 1 }} />,
+                  },
+                  formHelperText: { sx: { ml: 0, mt: 0.5 } },
+                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px" } }}
+              />
+            </Box>
+
+            {/* Role selection */}
+            <Box>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#374151", mb: 0.8, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                Role <Box component="span" sx={{ color: "#EF4444" }}>*</Box>
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                {ROLE_OPTIONS.map((opt) => {
+                  const isSelected = role === opt.value;
+                  return (
+                    <Box
+                      key={opt.value}
+                      onClick={() => { setRole(opt.value); setRoleErr(""); }}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1.5, px: 1.5, py: 1.2,
+                        borderRadius: 2, cursor: "pointer",
+                        border: `1px solid ${isSelected ? opt.color : "#E5E7EB"}`,
+                        bgcolor: isSelected ? `${opt.color}10` : "#F9FAFB",
+                        "&:hover": { borderColor: opt.color, bgcolor: `${opt.color}08` },
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <Box sx={{ width: 34, height: 34, borderRadius: 2, bgcolor: isSelected ? `${opt.color}20` : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <WorkOutlined sx={{ fontSize: 16, color: isSelected ? opt.color : "#9CA3AF" }} />
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: isSelected ? opt.color : "#111827" }}>
+                          {opt.label}
+                        </Typography>
+                        <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+                          {opt.description}
+                        </Typography>
+                      </Box>
+                      <Box sx={{
+                        width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                        border: `2px solid ${isSelected ? opt.color : "#D1D5DB"}`,
+                        bgcolor: isSelected ? opt.color : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.15s",
+                      }}>
+                        {isSelected && <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#fff" }} />}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+              {roleErr && (
+                <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>{roleErr}</Typography>
+              )}
+            </Box>
+
+            {/* Preview banner */}
+            {email && EMAIL_RE.test(email) && role && (
+              <Box sx={{ p: 1.5, bgcolor: "#F0FDFA", border: "1px solid #99F6E4", borderRadius: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
+                <SendOutlined sx={{ fontSize: 16, color: "#0D9488", flexShrink: 0 }} />
+                <Typography sx={{ fontSize: "12px", color: "#0D9488", fontWeight: 500 }}>
+                  An invitation email will be sent to <Box component="span" sx={{ fontWeight: 700 }}>{email}</Box> as <Box component="span" sx={{ fontWeight: 700 }}>{selectedRoleOption?.label}</Box>
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+      </DialogContent>
+
+      {!sent && (
+        <DialogActions sx={{ px: 3, py: 2, gap: 1.5, borderTop: "1px solid #F3F4F6" }}>
+          <Button
+            onClick={handleClose}
+            disabled={addingMember}
+            sx={{ textTransform: "none", borderRadius: 5, fontWeight: 600, color: "#374151", border: "1px solid #E5E7EB", px: 3, "&:hover": { bgcolor: "#F9FAFB" } }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={addingMember}
+            startIcon={addingMember ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : <SendOutlined sx={{ fontSize: 15 }} />}
+            sx={{
+              textTransform: "none", borderRadius: 5, fontWeight: 700, px: 3,
+              background: "linear-gradient(135deg, #0D9488 0%, #0891B2 100%)",
+              color: "#fff",
+              "&:hover": { background: "linear-gradient(135deg, #0b7a6f 0%, #0770a0 100%)" },
+              "&:disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF", background: "none" },
+              boxShadow: "0 2px 8px rgba(13,148,136,0.25)",
+            }}
+          >
+            {addingMember ? "Sending…" : "Send Invitation"}
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };
@@ -671,6 +1029,7 @@ const ParticipantsPanel: React.FC<{ campaignId: string }> = ({ campaignId }) => 
   const participants = useSelector(selectParticipants(campaignId));
   const loading = useSelector(selectParticipantsLoading(campaignId));
   const [addOpen, setAddOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
@@ -683,94 +1042,172 @@ const ParticipantsPanel: React.FC<{ campaignId: string }> = ({ campaignId }) => 
     setRemoving(null);
   };
 
+  const statusCounts = {
+    INVITED: participants.filter((p) => p.status === "INVITED").length,
+    IN_PROGRESS: participants.filter((p) => p.status === "IN_PROGRESS").length,
+    COMPLETED: participants.filter((p) => p.status === "COMPLETED").length,
+    DROPPED: participants.filter((p) => p.status === "DROPPED").length,
+  };
+
   return (
-    <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-      {/* Header row */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827" }}>
-            Participants
-            {!loading && (
-              <Box component="span" sx={{ ml: 1, px: 1, py: 0.3, bgcolor: "#F3F4F6", borderRadius: 5, fontSize: "11px", fontWeight: 700, color: "#6B7280" }}>
-                {participants.length}
-              </Box>
-            )}
-          </Typography>
-          <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>Manage who is invited to this campaign</Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+
+      {/* Header */}
+      <Box sx={{ px: 3, pt: 3, pb: 2, borderBottom: "1px solid #F3F4F6" }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Participants</Typography>
+              {!loading && (
+                <Box sx={{ px: 1.2, py: 0.2, bgcolor: "#F0FDFA", borderRadius: 5, border: "1px solid #99F6E4" }}>
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#0D9488" }}>{participants.length}</Typography>
+                </Box>
+              )}
+            </Box>
+            <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.3 }}>Manage who's invited to this campaign</Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Tooltip title="Invite someone new to your company">
+              <Button
+                size="small"
+                startIcon={<SendOutlined sx={{ fontSize: 14 }} />}
+                onClick={() => setInviteOpen(true)}
+                sx={{
+                  textTransform: "none", borderRadius: 5, fontSize: "12px", fontWeight: 700, px: 2, py: 0.8,
+                  border: "1px solid #E5E7EB", color: "#374151", bgcolor: "#fff",
+                  "&:hover": { bgcolor: "#F9FAFB", borderColor: "#0D9488", color: "#0D9488" },
+                  transition: "all 0.15s",
+                }}
+              >
+                Invite
+              </Button>
+            </Tooltip>
+            <Button
+              size="small"
+              startIcon={<GroupAddOutlined sx={{ fontSize: 15 }} />}
+              onClick={() => setAddOpen(true)}
+              sx={{
+                textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5,
+                fontSize: "12px", fontWeight: 700, px: 2, py: 0.8,
+                "&:hover": { bgcolor: "#0b7a6f" },
+                boxShadow: "0 1px 4px rgba(13,148,136,0.3)",
+              }}
+            >
+              Add Members
+            </Button>
+          </Box>
         </Box>
-        <Button
-          size="small"
-          startIcon={<GroupAddOutlined sx={{ fontSize: 15 }} />}
-          onClick={() => setAddOpen(true)}
-          sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 700, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
-        >
-          Add
-        </Button>
+
+        {/* Stats bar */}
+        {!loading && participants.length > 0 && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
+            {(["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"] as const).map((s) => {
+              const sc = PSTATUS_COLORS[s];
+              const labels: Record<string, string> = { INVITED: "Invited", IN_PROGRESS: "In Progress", COMPLETED: "Done", DROPPED: "Dropped" };
+              return (
+                <Box key={s} sx={{ p: 1, bgcolor: sc.bg, borderRadius: 2, textAlign: "center", border: `1px solid ${sc.bg}` }}>
+                  <Typography sx={{ fontSize: "16px", fontWeight: 700, color: sc.fg }}>{statusCounts[s]}</Typography>
+                  <Typography sx={{ fontSize: "9px", fontWeight: 600, color: sc.fg, textTransform: "uppercase", letterSpacing: 0.5, opacity: 0.8 }}>{labels[s]}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
       </Box>
 
       {/* List */}
-      {loading ? (
-        [1, 2, 3].map((i) => (
-          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#F9FAFB", borderRadius: 2 }}>
-            <Skeleton variant="circular" width={36} height={36} />
-            <Box sx={{ flex: 1 }}>
-              <Skeleton variant="rectangular" height={14} width="60%" sx={{ borderRadius: 1, mb: 0.5 }} />
-              <Skeleton variant="rectangular" height={11} width="30%" sx={{ borderRadius: 1 }} />
-            </Box>
-          </Box>
-        ))
-      ) : participants.length === 0 ? (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 5, gap: 1.5 }}>
-          <Box sx={{ width: 48, height: 48, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <PersonOutlined sx={{ fontSize: 24, color: "#0D9488" }} />
-          </Box>
-          <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>No participants yet</Typography>
-          <Typography sx={{ fontSize: "12px", color: "#9CA3AF", textAlign: "center" }}>Add participants to start the campaign</Typography>
-          <Button size="small" onClick={() => setAddOpen(true)} startIcon={<GroupAddOutlined sx={{ fontSize: 15 }} />}
-            sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 700, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}>
-            Add Participants
-          </Button>
-        </Box>
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {participants.map((p: Participant) => {
-            const sc = PSTATUS_COLORS[p.status] || PSTATUS_COLORS.INVITED;
-            const label = p.email || p.anonymousToken?.slice(0, 12) + "…" || p.employee || "Unknown";
-            const initials = (p.email || "?")[0].toUpperCase();
-            const isRemoving = removing === p._id;
-            return (
-              <Box key={p._id} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#F9FAFB", borderRadius: 2, border: "1px solid #E5E7EB" }}>
-                <Avatar sx={{ width: 34, height: 34, bgcolor: sc.bg, color: sc.fg, fontSize: "13px", fontWeight: 700 }}>
-                  {initials}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {label}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
-                    <Chip label={p.status} size="small" sx={{ bgcolor: sc.bg, color: sc.fg, fontSize: "9px", fontWeight: 700, height: 18, textTransform: "uppercase", letterSpacing: 0.5 }} />
-                    {p.createdAt && (
-                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>
-                        {fmtDate(p.createdAt)}
-                      </Typography>
-                    )}
-                  </Box>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 3, py: 2 }}>
+        {loading ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {[1, 2, 3, 4].map((i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#F9FAFB", borderRadius: 2, border: "1px solid #E5E7EB" }}>
+                <Skeleton variant="circular" width={38} height={38} />
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton variant="rectangular" height={13} width="55%" sx={{ borderRadius: 1, mb: 0.6 }} />
+                  <Skeleton variant="rectangular" height={10} width="35%" sx={{ borderRadius: 1 }} />
                 </Box>
-                <IconButton
-                  size="small"
-                  disabled={isRemoving}
-                  onClick={() => handleRemove(p._id)}
-                  sx={{ color: "#EF4444", "&:hover": { bgcolor: "#FEF2F2" } }}
-                >
-                  {isRemoving ? <CircularProgress size={14} sx={{ color: "#EF4444" }} /> : <DeleteOutlined sx={{ fontSize: 16 }} />}
-                </IconButton>
+                <Skeleton variant="rectangular" width={50} height={18} sx={{ borderRadius: 5 }} />
               </Box>
-            );
-          })}
-        </Box>
-      )}
+            ))}
+          </Box>
+        ) : participants.length === 0 ? (
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 6, gap: 2 }}>
+            <Box sx={{ width: 64, height: 64, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px dashed #99F6E4" }}>
+              <PersonOutlined sx={{ fontSize: 28, color: "#0D9488" }} />
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#374151" }}>No participants yet</Typography>
+              <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>Add company members to invite them to this campaign</Typography>
+            </Box>
+            <Button
+              onClick={() => setAddOpen(true)}
+              startIcon={<GroupAddOutlined sx={{ fontSize: 16 }} />}
+              sx={{ textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontWeight: 700, px: 3, "&:hover": { bgcolor: "#0b7a6f" } }}
+            >
+              Add First Member
+            </Button>
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {participants.map((p: Participant) => {
+              const sc = PSTATUS_COLORS[p.status] || PSTATUS_COLORS.INVITED;
+              const label = p.email || (p.anonymousToken ? p.anonymousToken.slice(0, 14) + "…" : null) || p.employee || "Unknown";
+              const isAnon = !p.email;
+              const initials = (p.email || p.employee || "?")[0].toUpperCase();
+              const isRemoving = removing === p._id;
+              return (
+                <Box
+                  key={p._id}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 1.5, p: 1.5,
+                    bgcolor: "#fff", borderRadius: 2.5,
+                    border: "1px solid #E5E7EB",
+                    "&:hover": { borderColor: "#D1D5DB", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" },
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Avatar sx={{ width: 38, height: 38, bgcolor: sc.bg, color: sc.fg, fontSize: "14px", fontWeight: 700, border: `2px solid ${sc.bg}` }}>
+                    {isAnon ? <VpnKeyOutlined sx={{ fontSize: 16 }} /> : initials}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {label}
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.3 }}>
+                      <Chip
+                        label={p.status.replace("_", " ")}
+                        size="small"
+                        sx={{ bgcolor: sc.bg, color: sc.fg, fontSize: "9px", fontWeight: 700, height: 16, textTransform: "uppercase", letterSpacing: 0.5 }}
+                      />
+                      {p.createdAt && (
+                        <Typography sx={{ fontSize: "10px", color: "#D1D5DB" }}>·</Typography>
+                      )}
+                      {p.createdAt && (
+                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtDate(p.createdAt)}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                  <Tooltip title="Remove participant">
+                    <IconButton
+                      size="small"
+                      disabled={isRemoving}
+                      onClick={() => handleRemove(p._id)}
+                      sx={{ color: "#D1D5DB", "&:hover": { bgcolor: "#FEF2F2", color: "#EF4444" }, transition: "all 0.15s" }}
+                    >
+                      {isRemoving
+                        ? <CircularProgress size={14} sx={{ color: "#EF4444" }} />
+                        : <DeleteOutlined sx={{ fontSize: 16 }} />}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+      </Box>
 
       <AddParticipantModal open={addOpen} campaignId={campaignId} onClose={() => setAddOpen(false)} />
+      <InviteMemberModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </Box>
   );
 };
