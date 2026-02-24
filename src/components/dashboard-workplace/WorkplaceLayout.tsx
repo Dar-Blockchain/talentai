@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -25,6 +25,7 @@ import BarChartOutlined from "@mui/icons-material/BarChartOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
 import NotificationsActiveOutlined from "@mui/icons-material/NotificationsActiveOutlined";
+import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
@@ -39,9 +40,10 @@ import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
 import ArchiveOutlined from "@mui/icons-material/ArchiveOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import MarkEmailReadOutlined from "@mui/icons-material/MarkEmailReadOutlined";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { selectConversations, fetchConversations } from "@/store/slices/chatSlice";
 
 const DRAWER_WIDTH = 240;
 const COLLAPSED_WIDTH = 72;
@@ -53,6 +55,7 @@ const navItems = [
   { id: "enablement", icon: SchoolOutlined, label: "Employee Enablement" },
   { id: "analytics", icon: BarChartOutlined, label: "Analytics & Reports" },
   { id: "notifications", icon: NotificationsActiveOutlined, label: "Notifications" },
+  { id: "chat",          icon: ChatOutlined,                label: "Messages" },
   { id: "settings",      icon: SettingsOutlined,            label: "Settings" },
   { id: "design-system", icon: PaletteOutlined,             label: "Design System" },
 ];
@@ -64,7 +67,8 @@ const breadcrumbMap: Record<string, string> = {
   enablement: "Employee Enablement",
   analytics: "Analytics & Reports",
   notifications: "Notifications",
-  settings: "Settings",
+  chat:          "Messages",
+  settings:      "Settings",
   "design-system": "Design System",
 };
 
@@ -92,8 +96,16 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [bellAnchor, setBellAnchor] = useState<null | HTMLElement>(null);
-  const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const [chatAnchor, setChatAnchor] = useState<null | HTMLElement>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const { profile } = useSelector((state: RootState) => (state as any).user.connectedUser);
   const { notifications, unreadCount, markAsRead, markAllAsRead, archive } = useNotifications();
+  const conversations = useSelector(selectConversations);
+  const totalUnreadMessages = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+
+  useEffect(() => {
+    dispatch(fetchConversations({}));
+  }, [dispatch]);
 
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -416,6 +428,121 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
                     sx={{ textTransform: "none", fontWeight: 600, color: "#0D9488", borderRadius: 2, "&:hover": { bgcolor: "#F0FDFA" } }}
                   >
                     View all notifications
+                  </Button>
+                </Box>
+              )}
+            </Popover>
+
+            {/* Chat icon */}
+            <IconButton
+              onClick={(e) => setChatAnchor(e.currentTarget)}
+              sx={{ color: "#6B7280" }}
+            >
+              <Badge
+                badgeContent={totalUnreadMessages > 9 ? "9+" : totalUnreadMessages || undefined}
+                sx={{ "& .MuiBadge-badge": { bgcolor: "#0D9488", color: "#fff", fontSize: "10px", fontWeight: 700, minWidth: 18, height: 18 } }}
+              >
+                <ChatOutlined sx={{ fontSize: 20 }} />
+              </Badge>
+            </IconButton>
+
+            {/* Chat popover */}
+            <Popover
+              open={Boolean(chatAnchor)}
+              anchorEl={chatAnchor}
+              onClose={() => setChatAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{ paper: { sx: { width: 340, maxHeight: 480, borderRadius: 3, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden", mt: 1 } } }}
+            >
+              {/* Chat popover header */}
+              <Box sx={{ px: 2.5, py: 2, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E5E7EB" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Messages</Typography>
+                  {totalUnreadMessages > 0 && (
+                    <Box sx={{ bgcolor: "#0D9488", color: "#fff", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700 }}>
+                      {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Chat popover list */}
+              <Box sx={{ maxHeight: 340, overflowY: "auto", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#E5E7EB", borderRadius: 2 } }}>
+                {conversations.length === 0 ? (
+                  <Box sx={{ py: 6, textAlign: "center" }}>
+                    <ChatOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
+                    <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No conversations yet</Typography>
+                  </Box>
+                ) : (
+                  conversations.slice(0, 6).map((conv, i) => {
+                    const other = conv.participants?.find((p: any) => p._id !== profile?._id);
+                    const name = other
+                      ? `${other.firstName || ""} ${other.lastName || ""}`.trim() || other.email || "Unknown"
+                      : "Unknown";
+                    const initial = name[0]?.toUpperCase() || "?";
+                    const lastMsg = conv.lastMessage;
+                    const hasUnread = (conv.unreadCount || 0) > 0;
+                    return (
+                      <React.Fragment key={conv._id}>
+                        <Box
+                          onClick={() => { setActiveTab("chat"); setChatAnchor(null); }}
+                          sx={{
+                            display: "flex", gap: 1.5, px: 2, py: 1.5, cursor: "pointer",
+                            bgcolor: hasUnread ? "#F0FDFA" : "transparent",
+                            "&:hover": { bgcolor: "#F9FAFB" }, transition: "background 0.15s",
+                          }}
+                        >
+                          <Badge
+                            overlap="circular"
+                            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                            badgeContent={conv.unreadCount > 0 ? conv.unreadCount : 0}
+                            sx={{ "& .MuiBadge-badge": { bgcolor: "#0D9488", color: "#fff", fontSize: "9px", minWidth: 16, height: 16 } }}
+                          >
+                            <Avatar sx={{ width: 38, height: 38, bgcolor: "#0D9488", fontSize: 14, flexShrink: 0 }}>
+                              {initial}
+                            </Avatar>
+                          </Badge>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.25 }}>
+                              <Typography sx={{ fontSize: "13px", fontWeight: hasUnread ? 700 : 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {name}
+                              </Typography>
+                              {lastMsg?.timestamp && (
+                                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", flexShrink: 0, ml: 1 }}>
+                                  {(() => {
+                                    const d = new Date(lastMsg.timestamp);
+                                    const now = new Date();
+                                    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+                                    if (diffDays === 0) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                                    if (diffDays === 1) return "Yesterday";
+                                    if (diffDays < 7) return d.toLocaleDateString([], { weekday: "short" });
+                                    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+                                  })()}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Typography sx={{ fontSize: "12px", color: hasUnread ? "#0D9488" : "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: hasUnread ? 600 : 400 }}>
+                              {lastMsg?.text || "No messages yet"}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        {i < Math.min(conversations.length, 6) - 1 && <Divider />}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </Box>
+
+              {/* Chat popover footer */}
+              {conversations.length > 0 && (
+                <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
+                  <Button
+                    fullWidth size="small"
+                    onClick={() => { setActiveTab("chat"); setChatAnchor(null); }}
+                    sx={{ textTransform: "none", fontWeight: 600, color: "#0D9488", borderRadius: 2, "&:hover": { bgcolor: "#F0FDFA" } }}
+                  >
+                    Open Messages
                   </Button>
                 </Box>
               )}
