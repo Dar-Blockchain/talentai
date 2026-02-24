@@ -34,6 +34,26 @@ import SendOutlined from "@mui/icons-material/SendOutlined";
 import StarOutlined from "@mui/icons-material/StarOutlined";
 import FavoriteOutlined from "@mui/icons-material/Favorite";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import BarChartOutlined from "@mui/icons-material/BarChartOutlined";
+import LightbulbOutlined from "@mui/icons-material/LightbulbOutlined";
+
+// Reusable UI sub-components
+import StatCard from "./ui/StatCard";
+import SectionCard from "./ui/SectionCard";
+import SectionHeader from "./ui/SectionHeader";
+import PageBanner from "./ui/PageBanner";
+import TabBar from "./ui/TabBar";
+import ProgressRing from "./ui/ProgressRing";
+import StatusBadge from "./ui/StatusBadge";
+import DataRow from "./ui/DataRow";
+import InfoBanner from "./ui/InfoBanner";
+import EmptyState from "./ui/EmptyState";
+import LoadingOverlay from "./ui/LoadingOverlay";
+import ActionMenu from "./ui/ActionMenu";
+import FilterBar from "./ui/FilterBar";
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 const TOKENS = {
@@ -100,10 +120,10 @@ const Swatch: React.FC<{ name: string; hex: string; bg?: string }> = ({ name, he
 );
 
 // Row helper
-const Row: React.FC<{ children: React.ReactNode; gap?: number; wrap?: boolean }> = ({
-  children, gap = 2, wrap = true,
+const Row: React.FC<{ children: React.ReactNode; gap?: number; wrap?: boolean; sx?: any }> = ({
+  children, gap = 2, wrap = true, sx = {},
 }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap, flexWrap: wrap ? "wrap" : "nowrap" }}>
+  <Box sx={{ display: "flex", alignItems: "center", gap, flexWrap: wrap ? "wrap" : "nowrap", ...sx }}>
     {children}
   </Box>
 );
@@ -141,7 +161,11 @@ const DesignSystem: React.FC = () => {
   const [inputVal, setInputVal] = useState("");
   const [activeNav, setActiveNav] = useState("Colors");
 
-  const navItems = ["Colors", "Typography", "Inputs", "Buttons", "Chips & Badges", "Feedback", "Data"];
+  const [demoTab, setDemoTab] = useState("overview");
+  const [demoSearch, setDemoSearch] = useState("");
+  const [demoDept, setDemoDept] = useState("all");
+
+  const navItems = ["Colors", "Typography", "Inputs", "Buttons", "Chips & Badges", "Feedback", "Data", "Components"];
 
   return (
     <Box>
@@ -179,7 +203,7 @@ const DesignSystem: React.FC = () => {
           <Box sx={{ display: "flex", gap: 4, mt: 3, flexWrap: "wrap" }}>
             {[
               { label: "Colors",     val: "8" },
-              { label: "Components", val: "24+" },
+              { label: "Components", val: "36+" },
               { label: "Font",       val: "Poppins" },
               { label: "Theme",      val: "Teal" },
             ].map(({ label, val }) => (
@@ -770,6 +794,483 @@ const DesignSystem: React.FC = () => {
               </Box>
             </Box>
           </Section>
+        </>
+      )}
+
+      {/* ── COMPONENTS ── */}
+      {activeNav === "Components" && (
+        <>
+          {/* ── Inline helper for code snippets ── */}
+          {(() => {
+            const Code: React.FC<{ children: string }> = ({ children }) => (
+              <Box
+                component="pre"
+                sx={{
+                  mt: 1.5, mb: 0, p: 1.5,
+                  bgcolor: "#0f172a", color: "#7dd3fc",
+                  borderRadius: 2, fontSize: "11px", fontFamily: "monospace",
+                  overflowX: "auto", lineHeight: 1.7,
+                  whiteSpace: "pre",
+                }}
+              >
+                {children}
+              </Box>
+            );
+
+            const ComponentSection: React.FC<{
+              name: string;
+              desc: string;
+              importPath: string;
+              demo: React.ReactNode;
+              props?: { name: string; type: string; desc: string; required?: boolean }[];
+            }> = ({ name, desc, importPath, demo, props }) => (
+              <Box
+                sx={{
+                  mb: 5, border: "1px solid #e5e7eb", borderRadius: 3,
+                  overflow: "hidden", bgcolor: "#fff",
+                }}
+              >
+                {/* Header stripe */}
+                <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 2 }}>
+                  <Box>
+                    <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>{name}</Typography>
+                    <Typography sx={{ fontSize: "13px", color: "#6b7280", mt: 0.25 }}>{desc}</Typography>
+                  </Box>
+                  <Chip
+                    label="UI Primitive"
+                    size="small"
+                    sx={{ ml: "auto", bgcolor: "#f0fdfa", color: "#0D9488", fontWeight: 700, fontSize: "10px", height: 20 }}
+                  />
+                </Box>
+
+                {/* Live demo area */}
+                <Box sx={{ p: 3, bgcolor: "#fafafa", borderBottom: "1px solid #f3f4f6" }}>
+                  <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", mb: 2 }}>
+                    Live Demo
+                  </Typography>
+                  {demo}
+                </Box>
+
+                {/* Import code */}
+                <Box sx={{ px: 3, pt: 2, pb: props ? 0 : 3 }}>
+                  <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Import
+                  </Typography>
+                  <Code>{`import { ${name} } from "@/components/dashboard-workplace/ui";\n// or directly:\nimport ${name} from "${importPath}";`}</Code>
+                </Box>
+
+                {/* Props table */}
+                {props && (
+                  <Box sx={{ px: 3, pt: 2, pb: 3 }}>
+                    <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", mb: 1.5 }}>
+                      Props
+                    </Typography>
+                    <Box sx={{ border: "1px solid #f3f4f6", borderRadius: 2, overflow: "hidden" }}>
+                      {/* header */}
+                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", bgcolor: "#f9fafb", px: 2, py: 1, gap: 2 }}>
+                        {["Prop", "Type", "Description"].map((h) => (
+                          <Typography key={h} sx={{ fontSize: "11px", fontWeight: 700, color: "#374151" }}>{h}</Typography>
+                        ))}
+                      </Box>
+                      {props.map((p, i) => (
+                        <Box
+                          key={p.name}
+                          sx={{
+                            display: "grid", gridTemplateColumns: "1fr 1fr 2fr",
+                            px: 2, py: 1, gap: 2,
+                            bgcolor: i % 2 === 0 ? "#fff" : "#fafafa",
+                            borderTop: "1px solid #f3f4f6",
+                          }}
+                        >
+                          <Typography sx={{ fontSize: "12px", fontFamily: "monospace", color: "#0D9488", fontWeight: 600 }}>
+                            {p.name}{p.required ? " *" : ""}
+                          </Typography>
+                          <Typography sx={{ fontSize: "12px", fontFamily: "monospace", color: "#7c3aed" }}>{p.type}</Typography>
+                          <Typography sx={{ fontSize: "12px", color: "#6b7280" }}>{p.desc}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                    <Typography sx={{ fontSize: "11px", color: "#9ca3af", mt: 1 }}>* required</Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+
+            return (
+              <>
+                {/* ─── StatCard ─── */}
+                <ComponentSection
+                  name="StatCard"
+                  desc="Metric card with icon, value, label, and optional trend indicator."
+                  importPath="@/components/dashboard-workplace/ui/StatCard"
+                  demo={
+                    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 2 }}>
+                      <StatCard icon={<PeopleOutlined />} label="Total Employees" value={142} trend={5} color="#0D9488" />
+                      <StatCard icon={<CampaignOutlined />} label="Active Campaigns" value={8} trend={-2} trendLabel="this week" color="#7C3AED" />
+                      <StatCard icon={<TrendingUpIcon />} label="Avg Skill Score" value="78%" color="#2563EB" />
+                      <StatCard icon={<BarChartOutlined />} label="Completion Rate" value="91%" trend={12} color="#C2410C" />
+                    </Box>
+                  }
+                  props={[
+                    { name: "icon",       type: "ReactNode",       desc: "MUI icon element rendered in the coloured box", required: true },
+                    { name: "label",      type: "string",          desc: "Short descriptive label below the value", required: true },
+                    { name: "value",      type: "string | number", desc: "Main metric value", required: true },
+                    { name: "trend",      type: "number",          desc: "Signed number — positive shows up arrow (green), negative shows down arrow (red)" },
+                    { name: "trendLabel", type: "string",          desc: 'Text next to trend. Default: "vs last month"' },
+                    { name: "color",      type: "string",          desc: "Accent colour for icon background. Default: #0D9488 (teal)" },
+                    { name: "onClick",    type: "() => void",      desc: "Optional click handler — enables hover lift effect" },
+                  ]}
+                />
+
+                {/* ─── SectionCard ─── */}
+                <ComponentSection
+                  name="SectionCard"
+                  desc="White card wrapper providing consistent padding, border and shadow for any content block."
+                  importPath="@/components/dashboard-workplace/ui/SectionCard"
+                  demo={
+                    <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                      <SectionCard sx={{ flex: 1, minWidth: 200 }}>
+                        <Typography sx={{ fontWeight: 600, color: "#111827" }}>Default (padded)</Typography>
+                        <Typography sx={{ fontSize: "13px", color: "#6b7280", mt: 0.5 }}>Cards have p: 3, borderRadius: 3, and a soft box-shadow.</Typography>
+                      </SectionCard>
+                      <SectionCard noPadding sx={{ flex: 1, minWidth: 200 }}>
+                        <Box sx={{ p: 2, borderBottom: "1px solid #f3f4f6" }}>
+                          <Typography sx={{ fontWeight: 600, fontSize: "13px", color: "#111827" }}>noPadding — full-bleed</Typography>
+                        </Box>
+                        <Box sx={{ p: 2 }}>
+                          <Typography sx={{ fontSize: "13px", color: "#6b7280" }}>Used for tables that need edge-to-edge rows.</Typography>
+                        </Box>
+                      </SectionCard>
+                    </Box>
+                  }
+                  props={[
+                    { name: "children",  type: "ReactNode", desc: "Content to render inside the card", required: true },
+                    { name: "noPadding", type: "boolean",   desc: "Remove internal padding (e.g. for full-bleed tables). Default: false" },
+                    { name: "sx",        type: "object",    desc: "MUI sx overrides applied to the outer Box" },
+                  ]}
+                />
+
+                {/* ─── SectionHeader ─── */}
+                <ComponentSection
+                  name="SectionHeader"
+                  desc="Title + subtitle block with an optional right-side action element."
+                  importPath="@/components/dashboard-workplace/ui/SectionHeader"
+                  demo={
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      <SectionHeader title="Skills Matrix" subtitle="View and manage skill levels across your team" action={<Button size="small" variant="outlined" sx={{ borderRadius: 2, textTransform: "none", borderColor: "#0D9488", color: "#0D9488" }}>Export</Button>} />
+                      <Divider />
+                      <SectionHeader title="Team Members" compact />
+                    </Box>
+                  }
+                  props={[
+                    { name: "title",    type: "string",    desc: "Main heading text", required: true },
+                    { name: "subtitle", type: "string",    desc: "Optional secondary line below the title" },
+                    { name: "action",   type: "ReactNode", desc: "Element rendered on the right (button, chips, etc.)" },
+                    { name: "compact",  type: "boolean",   desc: "Reduces font size and bottom margin. Default: false" },
+                  ]}
+                />
+
+                {/* ─── PageBanner ─── */}
+                <ComponentSection
+                  name="PageBanner"
+                  desc="Gradient hero banner with icon, stats row, and optional action. Used at the top of major dashboard pages."
+                  importPath="@/components/dashboard-workplace/ui/PageBanner"
+                  demo={
+                    <PageBanner
+                      title="Assessment Campaigns"
+                      subtitle="Create and manage skill assessments across your team"
+                      icon={<CampaignOutlined />}
+                      gradient="135deg, #0D9488 0%, #0891B2 100%"
+                      stats={[{ label: "Active", value: 4 }, { label: "Completed", value: 12 }, { label: "Participants", value: 86 }]}
+                      action={<Button size="small" variant="contained" sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "#fff", textTransform: "none", fontWeight: 600, borderRadius: 2, "&:hover": { bgcolor: "rgba(255,255,255,0.3)" } }}>+ New Campaign</Button>}
+                    />
+                  }
+                  props={[
+                    { name: "title",    type: "string",      desc: "Banner headline", required: true },
+                    { name: "subtitle", type: "string",      desc: "Secondary text below title" },
+                    { name: "icon",     type: "ReactNode",   desc: "Icon in semi-transparent circle" },
+                    { name: "gradient", type: "string",      desc: 'CSS gradient angle + stops. Default: "135deg, #0D9488 0%, #0f766e 100%"' },
+                    { name: "stats",    type: "BannerStat[]",desc: "Array of { label, value } shown as stat pills" },
+                    { name: "action",   type: "ReactNode",   desc: "Button(s) placed top-right" },
+                  ]}
+                />
+
+                {/* ─── TabBar ─── */}
+                <ComponentSection
+                  name="TabBar"
+                  desc="Horizontal tab switcher with teal active underline and optional count badges."
+                  importPath="@/components/dashboard-workplace/ui/TabBar"
+                  demo={
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <TabBar
+                        tabs={[
+                          { id: "overview",  label: "Overview" },
+                          { id: "active",    label: "Active",   count: 8 },
+                          { id: "archived",  label: "Archived", count: 24 },
+                          { id: "settings",  label: "Settings" },
+                        ]}
+                        activeTab={demoTab}
+                        onChange={setDemoTab}
+                      />
+                      <TabBar
+                        tabs={[
+                          { id: "all",    label: "All members",   count: 142 },
+                          { id: "active", label: "Active",        count: 108 },
+                          { id: "invite", label: "Invites sent",  count: 7,  countColor: "#7C3AED" },
+                        ]}
+                        activeTab={demoTab}
+                        onChange={setDemoTab}
+                        color="#7C3AED"
+                      />
+                    </Box>
+                  }
+                  props={[
+                    { name: "tabs",      type: "TabItem[]", desc: "Array of { id, label, count?, countColor? }", required: true },
+                    { name: "activeTab", type: "string",    desc: "Currently active tab id", required: true },
+                    { name: "onChange",  type: "(id) => void", desc: "Called when user clicks a tab", required: true },
+                    { name: "color",     type: "string",    desc: "Active underline + badge colour. Default: #0D9488" },
+                  ]}
+                />
+
+                {/* ─── ProgressRing ─── */}
+                <ComponentSection
+                  name="ProgressRing"
+                  desc="SVG circular progress indicator with a centred label and optional sublabel."
+                  importPath="@/components/dashboard-workplace/ui/ProgressRing"
+                  demo={
+                    <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+                      <ProgressRing value={92} size={88} color="#16A34A" label="92%" sublabel="Excellent" />
+                      <ProgressRing value={75} size={88} color="#2563EB" label="75%"  sublabel="Good" />
+                      <ProgressRing value={58} size={88} color="#D97706" label="58%"  sublabel="Average" />
+                      <ProgressRing value={33} size={88} color="#DC2626" label="33%"  sublabel="Poor" />
+                      <ProgressRing value={65} size={56} strokeWidth={5} color="#0D9488" label="65" />
+                      <ProgressRing value={80} size={40} strokeWidth={4} color="#7C3AED" label="80" />
+                    </Box>
+                  }
+                  props={[
+                    { name: "value",       type: "number", desc: "Progress value 0–100", required: true },
+                    { name: "size",        type: "number", desc: "Diameter in px. Default: 80" },
+                    { name: "strokeWidth", type: "number", desc: "Arc thickness in px. Default: 7" },
+                    { name: "color",       type: "string", desc: "Arc colour. Default: #0D9488" },
+                    { name: "trackColor",  type: "string", desc: "Background track colour. Default: #e5e7eb" },
+                    { name: "label",       type: "ReactNode", desc: "Text rendered in the centre" },
+                    { name: "sublabel",    type: "string", desc: "Smaller text below the label" },
+                  ]}
+                />
+
+                {/* ─── StatusBadge ─── */}
+                <ComponentSection
+                  name="StatusBadge"
+                  desc="Coloured dot + label pill for status display. Ships with built-in presets for common statuses."
+                  importPath="@/components/dashboard-workplace/ui/StatusBadge"
+                  demo={
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Box>
+                        <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", mb: 1 }}>Built-in presets</Typography>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                          {(["active", "completed", "pending", "in_progress", "paused", "cancelled", "error", "success", "warning", "info"] as const).map((s) => (
+                            <StatusBadge key={s} status={s} />
+                          ))}
+                        </Box>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", mb: 1 }}>Small size & custom</Typography>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                          <StatusBadge status="active"    size="sm" />
+                          <StatusBadge status="pending"   size="sm" />
+                          <StatusBadge status="custom" label="Beta" bg="#f0fdfa" color="#0D9488" dot="#0D9488" />
+                          <StatusBadge status="custom" label="Live" bg="#fef2f2" color="#dc2626" dot="#dc2626" noDot />
+                        </Box>
+                      </Box>
+                    </Box>
+                  }
+                  props={[
+                    { name: "status",  type: "string",  desc: "Preset key (active, completed, pending…) or any custom string when using custom colours", required: true },
+                    { name: "label",   type: "string",  desc: "Override the displayed text" },
+                    { name: "bg",      type: "string",  desc: "Background colour override" },
+                    { name: "color",   type: "string",  desc: "Text colour override" },
+                    { name: "dot",     type: "string",  desc: "Dot colour override" },
+                    { name: "noDot",   type: "boolean", desc: "Hide the leading dot. Default: false" },
+                    { name: "size",    type: '"sm" | "md"', desc: 'Size variant. Default: "md"' },
+                  ]}
+                />
+
+                {/* ─── DataRow ─── */}
+                <ComponentSection
+                  name="DataRow"
+                  desc="Standard member / result list row with avatar, name, subtitle, badge and actions."
+                  importPath="@/components/dashboard-workplace/ui/DataRow"
+                  demo={
+                    <SectionCard noPadding>
+                      <Box sx={{ px: 2 }}>
+                        <DataRow avatar="AD" avatarColor="#0D9488" primary="Alice Dupont" secondary="Product Designer · Paris" badge={<StatusBadge status="active" size="sm" />} actions={<ActionMenu items={[{ label: "Edit", icon: <EditOutlined sx={{ fontSize: 16 }} />, onClick: () => {} }, { label: "Remove", icon: <DeleteOutlined sx={{ fontSize: 16 }} />, onClick: () => {}, danger: true }]} />} />
+                        <DataRow avatar="BM" avatarColor="#7C3AED" primary="Bob Martin" secondary="Backend Engineer · Remote" badge={<StatusBadge status="pending" size="sm" />} actions={<ActionMenu items={[{ label: "Edit", icon: <EditOutlined sx={{ fontSize: 16 }} />, onClick: () => {} }]} />} />
+                        <DataRow avatar="CR" avatarColor="#2563EB" primary="Carla Rossi" secondary="Tech Lead · Milan" badge={<StatusBadge status="in_progress" size="sm" />} actions={<ActionMenu items={[{ label: "Edit", icon: <EditOutlined sx={{ fontSize: 16 }} />, onClick: () => {} }]} />} divider={false} />
+                      </Box>
+                    </SectionCard>
+                  }
+                  props={[
+                    { name: "primary",     type: "string",    desc: "Main label — name, title, etc.", required: true },
+                    { name: "avatar",      type: "string",    desc: "Initials (e.g. ) or full image URL" },
+                    { name: "avatarColor", type: "string",    desc: "Avatar background colour. Default: #0D9488" },
+                    { name: "secondary",   type: "string",    desc: "Secondary text below the primary label" },
+                    { name: "badge",       type: "ReactNode", desc: "Element rendered next to the primary text (e.g. StatusBadge)" },
+                    { name: "actions",     type: "ReactNode", desc: "Element at the far right (e.g. ActionMenu or IconButton)" },
+                    { name: "divider",     type: "boolean",   desc: "Show bottom divider. Default: true" },
+                    { name: "onClick",     type: "() => void",desc: "Optional row click handler" },
+                  ]}
+                />
+
+                {/* ─── InfoBanner ─── */}
+                <ComponentSection
+                  name="InfoBanner"
+                  desc="Inline alert / hint box with four severity types."
+                  importPath="@/components/dashboard-workplace/ui/InfoBanner"
+                  demo={
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                      <InfoBanner type="info"    message="3 employees are pending their first assessment. Send a reminder to get started." />
+                      <InfoBanner type="success" message="All active campaigns are on track. Great work!" />
+                      <InfoBanner type="warning" message="Your plan expires in 3 days. Upgrade to keep all features." action={<Button size="small" sx={{ textTransform: "none", color: "#92400e", fontWeight: 700, whiteSpace: "nowrap" }}>Upgrade now</Button>} />
+                      <InfoBanner type="error"   message="Failed to sync with the skills database. Please retry." />
+                      <InfoBanner type="info" icon={<LightbulbOutlined sx={{ fontSize: 20 }} />} message="Tip: use bulk import to add multiple participants at once." />
+                    </Box>
+                  }
+                  props={[
+                    { name: "message", type: "ReactNode",                     desc: "Main text content", required: true },
+                    { name: "type",    type: '"info"|"warning"|"success"|"error"', desc: 'Colour theme. Default: "info"' },
+                    { name: "icon",    type: "ReactNode",                     desc: "Override the default icon for this type" },
+                    { name: "action",  type: "ReactNode",                     desc: "Element placed at the right end (e.g. a button)" },
+                  ]}
+                />
+
+                {/* ─── EmptyState ─── */}
+                <ComponentSection
+                  name="EmptyState"
+                  desc="Placeholder shown when a list or section has no data yet."
+                  importPath="@/components/dashboard-workplace/ui/EmptyState"
+                  demo={
+                    <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                      <SectionCard sx={{ flex: 1, minWidth: 260 }}>
+                        <EmptyState
+                          icon={<CampaignOutlined />}
+                          title="No campaigns yet"
+                          description="Create your first assessment campaign to start measuring your team's skills."
+                          action={<Button size="small" variant="contained" sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2, bgcolor: "#0D9488", "&:hover": { bgcolor: "#0f766e" } }}>Create Campaign</Button>}
+                        />
+                      </SectionCard>
+                      <SectionCard sx={{ flex: 1, minWidth: 260 }}>
+                        <EmptyState icon={<SearchOutlined />} title="No results found" description='Try adjusting your search or filter.' minHeight={180} />
+                      </SectionCard>
+                    </Box>
+                  }
+                  props={[
+                    { name: "icon",       type: "ReactNode",       desc: "Icon shown in the grey circle", required: true },
+                    { name: "title",      type: "string",          desc: "Main empty-state headline", required: true },
+                    { name: "description",type: "string",          desc: "Supporting text" },
+                    { name: "action",     type: "ReactNode",       desc: "Optional CTA button" },
+                    { name: "minHeight",  type: "string | number", desc: "Container height. Default: 260" },
+                  ]}
+                />
+
+                {/* ─── LoadingOverlay ─── */}
+                <ComponentSection
+                  name="LoadingOverlay"
+                  desc="Centred teal spinner for async loading states."
+                  importPath="@/components/dashboard-workplace/ui/LoadingOverlay"
+                  demo={
+                    <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                      <SectionCard sx={{ flex: 1, minWidth: 200, minHeight: 140 }}>
+                        <LoadingOverlay />
+                      </SectionCard>
+                      <SectionCard sx={{ flex: 1, minWidth: 200, minHeight: 140 }}>
+                        <LoadingOverlay message="Loading campaigns…" color="#7C3AED" />
+                      </SectionCard>
+                    </Box>
+                  }
+                  props={[
+                    { name: "height",  type: "string | number", desc: 'Container height. Default: "100%"' },
+                    { name: "message", type: "string",          desc: "Optional text below the spinner" },
+                    { name: "color",   type: "string",          desc: "Spinner colour. Default: #0D9488" },
+                  ]}
+                />
+
+                {/* ─── ActionMenu ─── */}
+                <ComponentSection
+                  name="ActionMenu"
+                  desc="Three-dot ⋮ icon button that opens a dropdown menu with optional danger items."
+                  importPath="@/components/dashboard-workplace/ui/ActionMenu"
+                  demo={
+                    <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
+                      <Box>
+                        <Typography sx={{ fontSize: "12px", color: "#6b7280", mb: 1 }}>Default</Typography>
+                        <ActionMenu
+                          items={[
+                            { label: "Edit",     icon: <EditOutlined sx={{ fontSize: 16 }} />,    onClick: () => {} },
+                            { label: "Download", icon: <DownloadOutlined sx={{ fontSize: 16 }} />,onClick: () => {} },
+                            { label: "Delete",   icon: <DeleteOutlined sx={{ fontSize: 16 }} />,  onClick: () => {}, danger: true },
+                          ]}
+                        />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontSize: "12px", color: "#6b7280", mb: 1 }}>With disabled</Typography>
+                        <ActionMenu
+                          items={[
+                            { label: "View",     icon: <InfoOutlined sx={{ fontSize: 16 }} />,     onClick: () => {} },
+                            { label: "Export",   icon: <DownloadOutlined sx={{ fontSize: 16 }} />, onClick: () => {}, disabled: true },
+                            { label: "Archive",  icon: <StarOutlined sx={{ fontSize: 16 }} />,     onClick: () => {} },
+                          ]}
+                        />
+                      </Box>
+                    </Box>
+                  }
+                  props={[
+                    { name: "items",     type: "ActionMenuItem[]", desc: "Array of { label, icon?, onClick, danger?, disabled? }", required: true },
+                    { name: "ariaLabel", type: "string",           desc: 'Accessible label for the trigger. Default: "More options"' },
+                    { name: "size",      type: '"small"|"medium"', desc: 'Trigger button size. Default: "small"' },
+                  ]}
+                />
+
+                {/* ─── FilterBar ─── */}
+                <ComponentSection
+                  name="FilterBar"
+                  desc="Combined search field + filter selects + optional right-side action, all in one responsive row."
+                  importPath="@/components/dashboard-workplace/ui/FilterBar"
+                  demo={
+                    <FilterBar
+                      searchValue={demoSearch}
+                      onSearchChange={setDemoSearch}
+                      searchPlaceholder="Search employees…"
+                      filters={[
+                        {
+                          value: demoDept,
+                          onChange: setDemoDept,
+                          options: [
+                            { value: "all",  label: "All Departments" },
+                            { value: "eng",  label: "Engineering" },
+                            { value: "hr",   label: "HR" },
+                            { value: "prod", label: "Product" },
+                          ],
+                        },
+                      ]}
+                      action={
+                        <Button size="small" variant="outlined" startIcon={<DownloadOutlined sx={{ fontSize: 15 }} />}
+                          sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2, borderColor: "#0D9488", color: "#0D9488" }}>
+                          Export
+                        </Button>
+                      }
+                    />
+                  }
+                  props={[
+                    { name: "searchValue",    type: "string",         desc: "Controlled search input value" },
+                    { name: "onSearchChange", type: "(v) => void",    desc: "Called on each keystroke — enables the search field" },
+                    { name: "searchPlaceholder", type: "string",      desc: 'Placeholder text. Default: "Search…"' },
+                    { name: "filters",        type: "FilterSelect[]", desc: "Array of { value, onChange, options[], minWidth? } select controls" },
+                    { name: "action",         type: "ReactNode",      desc: "Element placed at the far right (e.g. Export button)" },
+                  ]}
+                />
+              </>
+            );
+          })()}
         </>
       )}
 
