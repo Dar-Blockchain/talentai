@@ -406,7 +406,7 @@ export default function InterviewResults() {
       primarySkillName = category;
     } else if (interviewType === 'HR_INTERVIEW') {
       primarySkillName = 'HR Interview';
-    } else if (interviewType === 'TECHNICAL_SKILL') {
+    } else if (interviewType === 'TECHNICAL_INTERVIEW') {
       primarySkillName = 'Technical Assessment';
     }
 

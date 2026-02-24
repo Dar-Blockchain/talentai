@@ -26,6 +26,7 @@ import JobDetailBanner from "@/components/features/company/posts/details/JobDeta
 import JobDetailToolbar from "@/components/features/company/posts/details/JobDetailToolbar";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
+import PassedInterviewView from "@/components/features/company/posts/details/PassedInterviewView";
 
 const TEAL = "#0D9488";
 
@@ -43,8 +44,9 @@ const PostDetailsPage: React.FC = () => {
   const tokenBalance = useSelector(selectTokenBalance);
   const { data: paymentData, loading: isProcessingPayment, error: paymentError } = useSelector(selectPostPayment);
 
-  const [activeEdit,       setActiveEdit]       = useState<"post" | "recruitment" | null>(null);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [activeEdit,          setActiveEdit]          = useState<"post" | "recruitment" | null>(null);
+  const [paymentModalOpen,    setPaymentModalOpen]    = useState(false);
+  const [showPassedInterview, setShowPassedInterview] = useState(false);
 
   const paymentSucceeded = !!paymentData;
 
@@ -109,7 +111,7 @@ const PostDetailsPage: React.FC = () => {
 
   const handlePassInterview = () => {
     if (!job?._id) return;
-    window.open(`${window.location.origin}/interview/hr?jobId=${job._id}`, "_blank", "noopener,noreferrer");
+    setShowPassedInterview(true);
   };
 
   const jd      = job?.jobDetails || {};
@@ -117,7 +119,6 @@ const PostDetailsPage: React.FC = () => {
   const bannerSubtitle = job
     ? `${jd.workMode || ""} · ${jd.employmentType || ""} · Posted by ${job.user?.companyName || "your company"}`
     : "Loading job details…";
-
   return (
     <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
@@ -144,33 +145,43 @@ const PostDetailsPage: React.FC = () => {
 
           {!loading && !error && job && (
             <>
-              <JobDetailBanner
-                title={jd.title}
-                subtitle={bannerSubtitle}
-                creationType={job.creationType}
-                isDraft={isDraft}
-              />
+              {showPassedInterview ? (
+                <PassedInterviewView
+                  jobId={job._id}
+                  jobTitle={jd.title}
+                  onBack={() => setShowPassedInterview(false)}
+                />
+              ) : (
+                <>
+                  <JobDetailBanner
+                    title={jd.title}
+                    subtitle={bannerSubtitle}
+                    creationType={job.creationType}
+                    isDraft={isDraft}
+                  />
 
-              <JobDetailToolbar
-                isDraft={isDraft}
-                isOwner={isOwner}
-                isEditing={activeEdit !== null}
-                onPublish={() => setPaymentModalOpen(true)}
-                onEdit={() => setActiveEdit("post")}
-                onPassInterview={handlePassInterview}
-                onCopyLink={handleCopyLink}
-                onDelete={deletePost.handleOpen}
-              />
+                  <JobDetailToolbar
+                    isDraft={isDraft}
+                    isOwner={isOwner}
+                    isEditing={activeEdit !== null}
+                    onPublish={() => setPaymentModalOpen(true)}
+                    onEdit={() => setActiveEdit("post")}
+                    onPassInterview={handlePassInterview}
+                    onCopyLink={handleCopyLink}
+                    onDelete={deletePost.handleOpen}
+                  />
 
-              <JobDetailContent
-                activeEdit={activeEdit}
-                isOwner={isOwner}
-                creationType={job.creationType}
-                onEditPost={() => setActiveEdit("post")}
-                onEditRecruitment={() => setActiveEdit("recruitment")}
-                onCancelEdit={() => setActiveEdit(null)}
-                onSaveSuccess={handleSaveSuccess}
-              />
+                  <JobDetailContent
+                    activeEdit={activeEdit}
+                    isOwner={isOwner}
+                    creationType={job.creationType}
+                    onEditPost={() => setActiveEdit("post")}
+                    onEditRecruitment={() => setActiveEdit("recruitment")}
+                    onCancelEdit={() => setActiveEdit(null)}
+                    onSaveSuccess={handleSaveSuccess}
+                  />
+                </>
+              )}
             </>
           )}
 

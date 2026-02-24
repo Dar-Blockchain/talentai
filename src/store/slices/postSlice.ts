@@ -720,6 +720,22 @@ export const savePostInterviewAssessment = createAsyncThunk(
     try {
       const token = Cookies.get("api_token");
 
+      // Normalise legacy interviewType values to the enum the backend model accepts
+      const interviewTypeMap: Record<string, string> = {
+        TECHNICAL_SKILL: "TECHNICAL_INTERVIEW",
+        SOFT_SKILL:      "ASSESSMENT",
+        SALARY_INTERVIEW: "HR_INTERVIEW",
+        PSYCHOTECHNIC:   "EVALUATION",
+      };
+      const normalizedInterviewData = interviewData?.interviewType
+        ? {
+            ...interviewData,
+            interviewType:
+              interviewTypeMap[interviewData.interviewType] ??
+              interviewData.interviewType,
+          }
+        : interviewData;
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments`,
         {
@@ -730,7 +746,7 @@ export const savePostInterviewAssessment = createAsyncThunk(
           },
           body: JSON.stringify({
             post: postId,
-            interviewData,
+            interviewData: normalizedInterviewData,
           }),
         }
       );

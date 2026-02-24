@@ -130,7 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <Box sx={{ flex: 1, overflowY: "auto" }} className="custom-scrollbar">
         <List sx={{ px: 1.5 }}>
           {navigation.map((item) => {
-            const isActive = router.pathname === item.href;
+            const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
             return (
               <Link key={item.id} href={item.href} passHref>
                 <ListItemButton

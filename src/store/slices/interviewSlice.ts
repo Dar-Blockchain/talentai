@@ -114,6 +114,22 @@ export const saveInterviewAssessment = createAsyncThunk<
   async ({ skill, proficiency, interviewData, skillType }, { rejectWithValue }) => {
     const token = localStorage.getItem('api_token');
 
+    // Normalise legacy interviewType values to the enum the backend model accepts
+    const interviewTypeMap: Record<string, string> = {
+      TECHNICAL_SKILL:  'TECHNICAL_INTERVIEW',
+      SOFT_SKILL:       'ASSESSMENT',
+      SALARY_INTERVIEW: 'HR_INTERVIEW',
+      PSYCHOTECHNIC:    'EVALUATION',
+    };
+    const normalizedInterviewData = interviewData?.interviewType
+      ? {
+          ...interviewData,
+          interviewType:
+            interviewTypeMap[interviewData.interviewType] ??
+            interviewData.interviewType,
+        }
+      : interviewData;
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/`,
@@ -123,7 +139,7 @@ export const saveInterviewAssessment = createAsyncThunk<
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ skill, proficiency, interviewData, skillType }),
+          body: JSON.stringify({ skill, proficiency, interviewData: normalizedInterviewData, skillType }),
         }
       );
 
