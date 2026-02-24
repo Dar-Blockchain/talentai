@@ -10,6 +10,10 @@ import {
   IconButton,
   InputBase,
   Avatar,
+  Badge,
+  Popover,
+  Divider,
+  Button,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -20,6 +24,7 @@ import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import BarChartOutlined from "@mui/icons-material/BarChartOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
+import NotificationsActiveOutlined from "@mui/icons-material/NotificationsActiveOutlined";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
@@ -27,8 +32,16 @@ import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
+import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import InfoOutlined from "@mui/icons-material/InfoOutlined";
+import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
+import ErrorOutlined from "@mui/icons-material/ErrorOutlined";
+import ArchiveOutlined from "@mui/icons-material/ArchiveOutlined";
+import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
+import MarkEmailReadOutlined from "@mui/icons-material/MarkEmailReadOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const DRAWER_WIDTH = 240;
 const COLLAPSED_WIDTH = 72;
@@ -39,8 +52,9 @@ const navItems = [
   { id: "campaigns", icon: AssignmentTurnedInOutlined, label: "Assessment Campaigns" },
   { id: "enablement", icon: SchoolOutlined, label: "Employee Enablement" },
   { id: "analytics", icon: BarChartOutlined, label: "Analytics & Reports" },
-  { id: "settings",      icon: SettingsOutlined, label: "Settings" },
-  { id: "design-system", icon: PaletteOutlined,  label: "Design System" },
+  { id: "notifications", icon: NotificationsActiveOutlined, label: "Notifications" },
+  { id: "settings",      icon: SettingsOutlined,            label: "Settings" },
+  { id: "design-system", icon: PaletteOutlined,             label: "Design System" },
 ];
 
 const breadcrumbMap: Record<string, string> = {
@@ -49,6 +63,7 @@ const breadcrumbMap: Record<string, string> = {
   campaigns: "Assessment Campaigns",
   enablement: "Employee Enablement",
   analytics: "Analytics & Reports",
+  notifications: "Notifications",
   settings: "Settings",
   "design-system": "Design System",
 };
@@ -59,6 +74,14 @@ interface WorkplaceLayoutProps {
   setActiveTab: (tab: string) => void;
 }
 
+// ─── Notification type helpers (used inside popover) ──────────────────────────
+const NOTIF_TYPE: Record<string, { color: string; bg: string; Icon: React.ElementType }> = {
+  success: { color: "#16A34A", bg: "#F0FDF4", Icon: CheckCircleOutlined },
+  warning: { color: "#D97706", bg: "#FFFBEB", Icon: WarningAmberOutlined },
+  error:   { color: "#DC2626", bg: "#FEF2F2", Icon: ErrorOutlined },
+  info:    { color: "#2563EB", bg: "#EFF6FF", Icon: InfoOutlined },
+};
+
 const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
   children,
   activeTab,
@@ -68,7 +91,9 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [bellAnchor, setBellAnchor] = useState<null | HTMLElement>(null);
   const { profile } = useSelector((state: RootState) => state.user.connectedUser);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, archive } = useNotifications();
 
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -297,11 +322,104 @@ const WorkplaceLayout: React.FC<WorkplaceLayoutProps> = ({
               <InputBase placeholder="Search anything..." sx={{ fontSize: "13px", flex: 1 }} />
             </Box>
 
-            {/* Notifications */}
-            <IconButton sx={{ color: "#6B7280", position: "relative" }}>
-              <NotificationsOutlined sx={{ fontSize: 20 }} />
-              <Box sx={{ position: "absolute", top: 8, right: 8, width: 8, height: 8, bgcolor: "#EF4444", borderRadius: "50%", border: "2px solid #fff" }} />
+            {/* Notifications bell */}
+            <IconButton
+              onClick={(e) => setBellAnchor(e.currentTarget)}
+              sx={{ color: "#6B7280" }}
+            >
+              <Badge
+                badgeContent={unreadCount > 9 ? "9+" : unreadCount || undefined}
+                sx={{ "& .MuiBadge-badge": { bgcolor: "#EF4444", color: "#fff", fontSize: "10px", fontWeight: 700, minWidth: 18, height: 18 } }}
+              >
+                <NotificationsOutlined sx={{ fontSize: 20 }} />
+              </Badge>
             </IconButton>
+
+            {/* Notification popover */}
+            <Popover
+              open={Boolean(bellAnchor)}
+              anchorEl={bellAnchor}
+              onClose={() => setBellAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{ paper: { sx: { width: 380, maxHeight: 520, borderRadius: 3, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", overflow: "hidden", mt: 1 } } }}
+            >
+              {/* Popover header */}
+              <Box sx={{ px: 2.5, py: 2, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E5E7EB" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>Notifications</Typography>
+                  {unreadCount > 0 && (
+                    <Box sx={{ bgcolor: "#EF4444", color: "#fff", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700 }}>
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </Box>
+                  )}
+                </Box>
+                <Box sx={{ display: "flex", gap: 0.5 }}>
+                  {unreadCount > 0 && (
+                    <IconButton size="small" onClick={markAllAsRead} title="Mark all as read" sx={{ color: "#6B7280", "&:hover": { color: "#0D9488", bgcolor: "#F0FDFA" } }}>
+                      <MarkEmailReadOutlined sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Popover list */}
+              <Box sx={{ maxHeight: 380, overflowY: "auto", "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "#E5E7EB", borderRadius: 2 } }}>
+                {notifications.length === 0 ? (
+                  <Box sx={{ py: 6, textAlign: "center" }}>
+                    <NotificationsOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }} />
+                    <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No notifications yet</Typography>
+                  </Box>
+                ) : (
+                  notifications.slice(0, 6).map((n, i) => {
+                    const cfg = NOTIF_TYPE[n.type] ?? NOTIF_TYPE.info;
+                    const { Icon } = cfg;
+                    return (
+                      <React.Fragment key={n.id}>
+                        <Box
+                          onClick={() => !n.isRead && markAsRead(n.id)}
+                          sx={{
+                            display: "flex", gap: 1.5, px: 2, py: 1.5, cursor: n.isRead ? "default" : "pointer",
+                            bgcolor: n.isRead ? "transparent" : "#FAFAFA",
+                            "&:hover": { bgcolor: "#F9FAFB" }, transition: "background 0.15s",
+                          }}
+                        >
+                          <Box sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: "50%", bgcolor: cfg.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Icon sx={{ fontSize: 17, color: cfg.color }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", mb: 0.25 }}>{n.title}</Typography>
+                            <Typography sx={{ fontSize: "12px", color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{n.message}</Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                              <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{n.timestamp}</Typography>
+                              {!n.isRead && <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#0D9488", ml: 0.5 }} />}
+                            </Box>
+                          </Box>
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); archive(n.id); }} sx={{ alignSelf: "flex-start", color: "#D1D5DB", "&:hover": { color: "#6B7280" } }}>
+                            <ArchiveOutlined sx={{ fontSize: 15 }} />
+                          </IconButton>
+                        </Box>
+                        {i < Math.min(notifications.length, 6) - 1 && <Divider />}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </Box>
+
+              {/* Popover footer */}
+              {notifications.length > 0 && (
+                <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
+                  <Button
+                    fullWidth size="small"
+                    onClick={() => { setActiveTab("notifications"); setBellAnchor(null); }}
+                    sx={{ textTransform: "none", fontWeight: 600, color: "#0D9488", borderRadius: 2, "&:hover": { bgcolor: "#F0FDFA" } }}
+                  >
+                    View all notifications
+                  </Button>
+                </Box>
+              )}
+            </Popover>
 
             {/* Company Info */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, pl: { xs: 1, md: 2 }, borderLeft: "1px solid #E5E7EB" }}>
