@@ -41,9 +41,10 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle, onBack }) => {
   const router      = useRouter();
   const { user }    = useSelector((state: RootState) => state.user.connectedUser);
 
-  const { matches, isLoadingMatches, matchError, totalPages } = useSelector(
-    (state: any) => state.post.jobMatches ?? {}
-  );
+  const matches        = useSelector((state: any) => state.post.jobMatches ?? []);
+  const isLoadingMatches = useSelector((state: any) => state.post.jobMatchesLoading);
+  const matchError     = useSelector((state: any) => state.post.jobMatchesError);
+  const totalPages     = useSelector((state: any) => state.post.jobMatchesPagination?.totalPages ?? 1);
 
   const [page, setPage] = useState(1);
   const [contactingId, setContactingId] = useState<string | null>(null);
