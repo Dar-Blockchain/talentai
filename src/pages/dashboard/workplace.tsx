@@ -42,6 +42,10 @@ const WorkplaceNotifications = dynamic(
   () => import("@/components/dashboard-workplace/WorkplaceNotifications"),
   { ssr: false, loading: Loader }
 );
+const WorkplaceChat = dynamic(
+  () => import("@/components/dashboard-workplace/WorkplaceChat"),
+  { ssr: false, loading: Loader }
+);
 
 const DashboardWorkplace = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -64,6 +68,8 @@ const DashboardWorkplace = () => {
         return <CompanySettings />;
       case "notifications":
         return <WorkplaceNotifications />;
+      case "chat":
+        return <WorkplaceChat />;
       case "design-system":
         return <DesignSystem />;
       default:
