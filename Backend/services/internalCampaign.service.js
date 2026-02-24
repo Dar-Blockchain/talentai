@@ -59,6 +59,44 @@ exports.getCampaignsByCompany = async (companyId, filters = {}) => {
 };
 
 /**
+ * Get campaigns by company with pagination
+ */
+exports.getCampaignsByCompanyPaginated = async (
+  companyId,
+  page = 1,
+  limit = 10,
+  filters = {}
+) => {
+  try {
+    const skip = (page - 1) * limit;
+    const query = {
+      company: companyId,
+      ...filters,
+    };
+
+    const data = await InternalCampaign.find(query)
+      .populate("createdBy", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await InternalCampaign.countDocuments(query);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    throw new Error(`Error fetching company campaigns: ${error.message}`);
+  }
+};
+
+/**
  * Update campaign
  */
 exports.updateCampaign = async (campaignId, updateData) => {
