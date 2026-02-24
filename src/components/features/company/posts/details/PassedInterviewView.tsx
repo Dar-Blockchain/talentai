@@ -75,7 +75,10 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle, onBack }) => {
     try {
       const result = await dispatch(createOrFindConversation({ candidateId, companyId: user._id }));
       if (createOrFindConversation.fulfilled.match(result)) {
-        router.push(`/chat/${result.payload._id}`);
+        const query: Record<string, string> = {};
+        if (jobId)    query.postId    = jobId;
+        if (jobTitle) query.jobTitle  = jobTitle;
+        router.push({ pathname: `/company/messages/${result.payload._id}`, query });
       }
     } catch { /* silent */ }
     finally { setContactingId(null); }

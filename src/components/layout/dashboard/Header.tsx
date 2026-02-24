@@ -2,14 +2,13 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, IconButton, InputBase, Avatar, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Typography, IconButton, InputBase, useMediaQuery, useTheme } from "@mui/material";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
-import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import UserHeader from "./UserHeader";
+import HeaderNotification from "@/components/header/HeaderNotification";
 
 interface HeaderProps {
   onOpenMobile: () => void;
@@ -58,9 +57,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, breadcrumb }) => {
           <InputBase placeholder="Search..." sx={{ fontSize: 13 }} />
         </Box>
 
-        <IconButton>
-          <NotificationsOutlined />
-        </IconButton>
+        <HeaderNotification />
 
         <UserHeader companyName={companyName} companyInitial={companyInitial} />
       </Box>
