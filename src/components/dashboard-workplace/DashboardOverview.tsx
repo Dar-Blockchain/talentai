@@ -104,11 +104,7 @@ const fmtDate = (iso?: string) =>
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-interface DashboardOverviewProps {
-  onNavigate: (tab: string) => void;
-}
-
-const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => {
+const DashboardOverview: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const campaigns = useSelector(selectCampaigns);
   const campaignLoading = useSelector(selectCampaignLoading);
@@ -241,7 +237,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => 
             </Box>
             <Button
               startIcon={<AddOutlined />}
-              onClick={() => onNavigate("campaigns")}
+              onClick={() => {}}
               sx={{ bgcolor: "#0D9488", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "13px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
             >
               New Campaign
@@ -268,7 +264,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => 
                 </Typography>
                 <Button
                   size="small"
-                  onClick={() => onNavigate("campaigns")}
+                  onClick={() => {}}
                   sx={{ mt: 0.5, textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
                 >
                   Get Started
@@ -284,7 +280,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => 
                 return (
                   <Box
                     key={camp._id}
-                    onClick={() => onNavigate("campaigns")}
+                    onClick={() => {}}
                     sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#0D9488" }, transition: "border-color 0.2s", cursor: "pointer" }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
@@ -322,7 +318,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate }) => 
             )}
             {!campaignLoading && activeCampaigns.length > 4 && (
               <Box
-                onClick={() => onNavigate("campaigns")}
+                onClick={() => {}}
                 sx={{ textAlign: "center", py: 1.5, cursor: "pointer", color: "#0D9488", fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
               >
                 View all {activeCampaigns.length} active campaigns →
