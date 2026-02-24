@@ -22,6 +22,7 @@ import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import BarChartOutlined from "@mui/icons-material/BarChartOutlined";
+import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import PaletteOutlined from "@mui/icons-material/PaletteOutlined";
 import NotificationsActiveOutlined from "@mui/icons-material/NotificationsActiveOutlined";
@@ -54,6 +55,7 @@ const navItems = [
   { id: "campaigns", icon: AssignmentTurnedInOutlined, label: "Assessment Campaigns" },
   { id: "enablement", icon: SchoolOutlined, label: "Employee Enablement" },
   { id: "analytics", icon: BarChartOutlined, label: "Analytics & Reports" },
+  { id: "jobs",          icon: WorkOutlined,                label: "Job Posts" },
   { id: "notifications", icon: NotificationsActiveOutlined, label: "Notifications" },
   { id: "chat",          icon: ChatOutlined,                label: "Messages" },
   { id: "settings",      icon: SettingsOutlined,            label: "Settings" },
@@ -66,6 +68,7 @@ const breadcrumbMap: Record<string, string> = {
   campaigns: "Assessment Campaigns",
   enablement: "Employee Enablement",
   analytics: "Analytics & Reports",
+  jobs:          "Job Posts",
   notifications: "Notifications",
   chat:          "Messages",
   settings:      "Settings",
