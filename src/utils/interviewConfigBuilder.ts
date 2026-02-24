@@ -25,7 +25,7 @@ export interface URLParams {
 }
 
 export interface InterviewConfig {
-  interviewType: 'HR_INTERVIEW' | 'SALARY_INTERVIEW' | 'TECHNICAL_SKILL' | 'SOFT_SKILL' | 'PSYCHOTECHNIC';
+  interviewType: 'HR_INTERVIEW' | 'TECHNICAL_INTERVIEW' | 'ASSESSMENT' | 'EVALUATION';
   testReason: string;
   context: {
     targetCompany: string;
@@ -80,10 +80,9 @@ const PROFICIENCY_MAP: { [key: string]: string } = {
 function getInterviewGoal(interviewType: string, params: URLParams): string {
   const goals: { [key: string]: string } = {
     'HR_INTERVIEW': 'Assess behavioral competencies and cultural fit',
-    'TECHNICAL_SKILL': `Validate ${params.skill || 'technical'} proficiency and problem-solving ability`,
-    'SOFT_SKILL': `Evaluate ${params.category || params.language || 'language'} ${params.skill || 'communication'} proficiency through interactive conversation`,
-    'SALARY_INTERVIEW': 'Discuss compensation expectations and market alignment',
-    'PSYCHOTECHNIC': 'Assess cognitive abilities and personality traits'
+    'TECHNICAL_INTERVIEW': `Validate ${params.skill || 'technical'} proficiency and problem-solving ability`,
+    'ASSESSMENT': `Evaluate ${params.category || params.language || 'language'} ${params.skill || 'communication'} proficiency through interactive conversation`,
+    'EVALUATION': 'Assess cognitive abilities and personality traits'
   };
   return goals[interviewType] || 'Comprehensive candidate assessment';
 }
@@ -97,11 +96,11 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
   // Map URL type to interviewType enum
   const interviewTypeMap: { [key: string]: InterviewConfig['interviewType'] } = {
     'hr': 'HR_INTERVIEW',
-    'technical': 'TECHNICAL_SKILL',
-    'technicalSkill': 'TECHNICAL_SKILL',
-    'soft': 'SOFT_SKILL',
-    'salary': 'SALARY_INTERVIEW',
-    'psycho': 'PSYCHOTECHNIC'
+    'technical': 'TECHNICAL_INTERVIEW',
+    'technicalSkill': 'TECHNICAL_INTERVIEW',
+    'soft': 'ASSESSMENT',
+    'salary': 'HR_INTERVIEW',
+    'psycho': 'EVALUATION'
   };
 
   const interviewType = interviewTypeMap[params.type || 'hr'] || 'HR_INTERVIEW';
@@ -221,24 +220,19 @@ export function getDefaultConfig(interviewType: InterviewConfig['interviewType']
       proficiency: 'Mid-Level',
       company: 'Google'
     },
-    'TECHNICAL_SKILL': {
+    'TECHNICAL_INTERVIEW': {
       type: 'technical',
       skill: 'JavaScript',
       proficiency: '3',
       role: 'Software Developer'
     },
-    'SOFT_SKILL': {
+    'ASSESSMENT': {
       type: 'soft',
       skill: 'Communication',
       proficiency: '3',
       category: 'English'
     },
-    'SALARY_INTERVIEW': {
-      type: 'salary',
-      role: 'Software Engineer',
-      proficiency: 'Mid-Level'
-    },
-    'PSYCHOTECHNIC': {
+    'EVALUATION': {
       type: 'psycho',
       role: 'Professional',
       proficiency: 'Mid-Level'

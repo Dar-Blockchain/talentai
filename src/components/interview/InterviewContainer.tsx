@@ -72,13 +72,11 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
               textShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
           >
-            {interviewConfig.interviewType === 'TECHNICAL_SKILL'
+            {interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
               ? `${interviewConfig.context.targetRole} Technical Interview`
-              : interviewConfig.interviewType === 'SOFT_SKILL'
+              : interviewConfig.interviewType === 'ASSESSMENT'
               ? 'Soft Skills Assessment'
-              : interviewConfig.interviewType === 'SALARY_INTERVIEW'
-              ? 'Salary Negotiation Interview'
-              : interviewConfig.interviewType === 'PSYCHOTECHNIC'
+              : interviewConfig.interviewType === 'EVALUATION'
               ? 'Psychotechnic Assessment'
               : 'HR Interview Simulation'}
           </Typography>
@@ -90,9 +88,9 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
               fontWeight: 300
             }}
           >
-            {interviewConfig.interviewType === 'TECHNICAL_SKILL'
+            {interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
               ? `Validate ${routerQuery.skill || 'technical'} expertise • ${interviewConfig.context.experienceLevel}`
-              : interviewConfig.interviewType === 'SOFT_SKILL'
+              : interviewConfig.interviewType === 'ASSESSMENT'
               ? `Assess ${routerQuery.skill || 'soft skill'} in ${routerQuery.category || 'general'} context • ${interviewConfig.context.experienceLevel}`
               : 'Intelligent Real-time Interview with AI'}
           </Typography>
