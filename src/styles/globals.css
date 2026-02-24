@@ -11,7 +11,7 @@
 }
 
 html {
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
@@ -45,4 +45,23 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #F5F5F4;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #D6D3D1;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #A8A29E;
 }

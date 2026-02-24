@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
   transpilePackages: ['@hashgraph/hedera-wallet-connect'],
+  devIndicators: {
+    position: "bottom-right",
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
