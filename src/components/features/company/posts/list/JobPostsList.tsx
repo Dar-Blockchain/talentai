@@ -100,7 +100,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
     }
     return (
       <>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, mb: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
           {jobs.map((job: any) => (
             <JobPostCard
               key={job._id}
@@ -110,6 +110,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
               onViewPassed={onViewPassed}
               onViewDetails={onViewDetails}
             />
+
           ))}
         </Box>
         {pagination.totalPages > 1 && (
