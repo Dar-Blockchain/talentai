@@ -1542,9 +1542,7 @@ module.exports.getPostMetrics = async (userId) => {
       total: allPosts.length,
       active: 0,
       draft: 0,
-      expired: 0,
-      closed: 0,
-      cancelled: 0,
+      expired: 0
     };
 
     // Count posts by status and expiration
