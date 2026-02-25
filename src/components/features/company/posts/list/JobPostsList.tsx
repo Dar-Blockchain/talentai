@@ -5,7 +5,6 @@ import SectionHeader from "@/components/dashboard-workplace/ui/SectionHeader";
 import LoadingOverlay from "@/components/dashboard-workplace/ui/LoadingOverlay";
 import EmptyState from "@/components/dashboard-workplace/ui/EmptyState";
 import JobPostCard from "./JobPostCard";
-import JobPostsActions from "./JobPostsActions";
 import JobPostsFilters from "./JobPostsFilters";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
@@ -13,7 +12,6 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 const TEAL = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-type SortOption = "newest" | "oldest" | "title-asc" | "title-desc";
 type TabType = "all" | "active" | "draft" | "expired";
 
 interface TabItem {
@@ -35,8 +33,6 @@ interface JobPostsListProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   tabItems: TabItem[];
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
   page: number;
   pagination: PaginationInfo;
   onPageChange: (page: number) => void;
@@ -56,8 +52,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
   activeTab,
   onTabChange,
   tabItems,
-  sortBy,
-  onSortChange,
   page,
   pagination,
   onPageChange,
@@ -144,13 +138,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
       <SectionHeader
         title="My Job Posts"
         subtitle={`${jobs.length} post${jobs.length !== 1 ? "s" : ""} shown`}
-        action={
-          <JobPostsActions
-            sortBy={sortBy}
-            onSortChange={onSortChange}
-            onCreateClick={onCreateClick}
-          />
-        }
       />
       <JobPostsFilters
         search={search}

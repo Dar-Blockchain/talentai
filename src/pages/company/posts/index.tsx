@@ -16,8 +16,11 @@ import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "@/components/posts/delete/DeletePostModal";
 import { useDeletePost } from "@/components/posts/delete/useDeletePost";
 import WorkplaceJobDetail from "@/components/dashboard-workplace/WorkplaceJobDetail";
-import JobPostsHeader from "@/components/features/company/posts/list/JobPostsHeader";
 import JobPostsList from "@/components/features/company/posts/list/JobPostsList";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
+import AppButton from "@/components/ui/AppButton";
+import AddOutlined from "@mui/icons-material/AddOutlined";
+import PostsStats from "@/components/features/company/posts/list/Stats";
 
 const getDaysLeft = (expirationDate?: string) => {
   if (!expirationDate) return null;
@@ -39,8 +42,8 @@ const PostsPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [page, setPage] = useState(1);
+  const sortBy: SortOption = "newest";
+const [page, setPage] = useState(1);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
@@ -89,7 +92,6 @@ const PostsPage: React.FC = () => {
     });
   }, [posts, activeTab]);
 
-  const total   = pagination.total || posts.length;
   const active  = posts.filter((p: any) => p.status !== "draft" && (getDaysLeft(p.expirationDate) === null || getDaysLeft(p.expirationDate)! > 0)).length;
   const drafts  = posts.filter((p: any) => p.status === "draft").length;
   const expired = posts.filter((p: any) => getDaysLeft(p.expirationDate) !== null && getDaysLeft(p.expirationDate)! <= 0).length;
@@ -111,13 +113,26 @@ const PostsPage: React.FC = () => {
           />
         ) : (
           <Box>
-            <JobPostsHeader
-              total={total}
-              active={active}
-              drafts={drafts}
-              expired={expired}
-              onCreateClick={handleCreateClick}
+            <PageHeader
+              title="Job Posts"
+              subtitle="Manage your open positions, track candidates, and share interview links."
+              breadcrumbs={[
+                { label: "Dashboard", href: "/company/dashboard" },
+                { label: "Job Posts" },
+              ]}
+              actions={[
+                <AppButton
+                  key="new"
+                  label="New Job Post"
+                  variant="contained"
+                  startIcon={<AddOutlined />}
+                  size="medium"
+                  onClick={handleCreateClick}
+                />,
+              ]}
             />
+
+            <PostsStats />
 
             <JobPostsList
               jobs={filtered}
@@ -128,8 +143,6 @@ const PostsPage: React.FC = () => {
               activeTab={activeTab}
               onTabChange={(t) => { setActiveTab(t); setPage(1); }}
               tabItems={tabItems}
-              sortBy={sortBy}
-              onSortChange={(s) => { setSortBy(s); setPage(1); }}
               page={page}
               pagination={pagination}
               onPageChange={setPage}

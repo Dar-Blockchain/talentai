@@ -204,9 +204,7 @@ const IntelligentInterviewTest = () => {
                           0;
 
         const passed = finalScore >= passThreshold;
-
         console.log(`📊 Interview Result: ${finalScore}% (threshold: ${passThreshold}%) - ${passed ? 'PASSED ✅' : 'FAILED ❌'}`);
-
         if (jobId && stepId) {
           console.log('📊 Updating pipeline step pass/fail status...');
 
