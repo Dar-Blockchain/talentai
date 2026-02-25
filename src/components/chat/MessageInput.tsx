@@ -1,6 +1,8 @@
 import React from 'react';
-import { Box, TextField, Button, CircularProgress } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import { Box, TextField, IconButton, CircularProgress } from '@mui/material';
+import SendOutlined from '@mui/icons-material/SendOutlined';
+
+const TEAL = '#0D9488';
 
 interface MessageInputProps {
   value: string;
@@ -20,75 +22,55 @@ const MessageInput: React.FC<MessageInputProps> = ({
   return (
     <Box
       sx={{
-        px: 3,
-        py: 2,
-        borderTop: '1px solid rgba(84,98,116,0.1)',
-        backgroundColor: 'white',
+        px: 2.5,
+        py: 1.5,
+        borderTop: '1px solid #E5E7EB',
+        bgcolor: '#fff',
+        display: 'flex',
+        gap: 1.5,
+        alignItems: 'flex-end',
       }}
     >
-      <Box
+      <TextField
+        fullWidth
+        multiline
+        maxRows={4}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder="Type a message… (Enter to send)"
+        disabled={sending}
+        size="small"
         sx={{
-          display: 'flex',
-          gap: 2,
-          alignItems: 'flex-end',
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '12px',
+            bgcolor: '#F9FAFB',
+            fontSize: '13px',
+            '& fieldset': { borderColor: '#E5E7EB' },
+            '&:hover fieldset': { borderColor: TEAL },
+            '&.Mui-focused fieldset': { borderColor: TEAL, borderWidth: '1.5px' },
+          },
+        }}
+      />
+      <IconButton
+        onClick={onSend}
+        disabled={!value.trim() || sending}
+        sx={{
+          bgcolor: TEAL,
+          color: '#fff',
+          width: 40,
+          height: 40,
+          borderRadius: '12px',
+          flexShrink: 0,
+          '&:hover': { bgcolor: '#0F766E' },
+          '&:disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
         }}
       >
-        <TextField
-          fullWidth
-          multiline
-          maxRows={4}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="Type your message here..."
-          disabled={sending}
-          size="small"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-              backgroundColor: 'rgba(243, 245, 247, 1)',
-              fontSize: '13px',
-              '& fieldset': {
-                borderColor: 'transparent',
-              },
-              '&:hover fieldset': {
-                borderColor: 'rgba(131, 16, 255, 0.2)',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#8310FF',
-                borderWidth: '1px',
-              },
-            },
-          }}
-        />
-        <Button
-          variant="contained"
-          onClick={onSend}
-          disabled={!value.trim() || sending}
-          sx={{
-            backgroundColor: 'rgba(163, 98, 239, 1)',
-            borderRadius: '38px',
-            px: 3,
-            py: 1,
-            minWidth: '100px',
-            fontSize: '13px',
-            fontWeight: 600,
-            textTransform: 'none',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: 'rgba(131, 16, 255, 1)',
-              boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-            },
-            '&:disabled': {
-              backgroundColor: 'rgba(200, 200, 200, 1)',
-              color: 'white',
-            },
-          }}
-          endIcon={sending ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <SendIcon sx={{ fontSize: 18 }} />}
-        >
-          {sending ? 'Sending' : 'Send'}
-        </Button>
-      </Box>
+        {sending
+          ? <CircularProgress size={16} sx={{ color: '#fff' }} />
+          : <SendOutlined sx={{ fontSize: 18 }} />
+        }
+      </IconButton>
     </Box>
   );
 };

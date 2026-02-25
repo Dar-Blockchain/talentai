@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import ChatIcon from '@mui/icons-material/Chat';
-import DeleteIcon from '@mui/icons-material/Delete';
+import ChatOutlined from '@mui/icons-material/ChatOutlined';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import { formatTime } from './helpers';
+
+const TEAL = '#0D9488';
 
 interface Message {
   _id: string;
@@ -45,121 +47,92 @@ const MessageList: React.FC<MessageListProps> = ({
       sx={{
         flex: 1,
         overflow: 'auto',
-        p: 3,
-        backgroundColor: 'rgba(250, 246, 255, 0.5)',
-        '&::-webkit-scrollbar': {
-          width: '6px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: 'transparent',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          background: 'rgba(131, 16, 255, 0.2)',
-          borderRadius: '3px',
-          '&:hover': {
-            background: 'rgba(131, 16, 255, 0.3)',
-          },
-        },
+        p: 2.5,
+        bgcolor: '#F9FAFB',
+        '&::-webkit-scrollbar': { width: '4px' },
+        '&::-webkit-scrollbar-track': { background: 'transparent' },
+        '&::-webkit-scrollbar-thumb': { background: '#E5E7EB', borderRadius: '2px' },
       }}
     >
       {messages.length === 0 ? (
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-            gap: 1.5,
+            display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'center',
+            height: '100%', gap: 1.5,
           }}
         >
           <Box
             sx={{
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              backgroundColor: 'rgba(131, 16, 255, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              width: 56, height: 56, borderRadius: '50%',
+              bgcolor: '#F0FDFA',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
-            <ChatIcon sx={{ fontSize: 32, color: '#8310FF' }} />
+            <ChatOutlined sx={{ fontSize: 28, color: TEAL }} />
           </Box>
-          <Typography variant="body2" sx={{ color: '#000', fontWeight: 500 }}>
+          <Typography sx={{ color: '#111827', fontWeight: 600, fontSize: '14px' }}>
             No messages yet
           </Typography>
-          <Typography variant="caption" sx={{ color: 'rgba(84,98,116,0.7)' }}>
+          <Typography sx={{ color: '#9CA3AF', fontSize: '12px', textAlign: 'center' }}>
             Start the conversation by sending a message below
           </Typography>
         </Box>
       ) : (
-        messages.map((message: Message) => {
+        messages.map((message) => {
           const isOwn = message.sender._id === currentUserId;
 
           return (
             <Box
               key={message._id}
               sx={{
-                mb: 2,
+                mb: 1.5,
                 display: 'flex',
                 justifyContent: isOwn ? 'flex-end' : 'flex-start',
-                gap: 1,
+                gap: 0.5,
                 alignItems: 'flex-end',
-                '&:hover .delete-icon': {
-                  opacity: 1,
-                },
+                '&:hover .delete-btn': { opacity: 1 },
               }}
             >
               {isCompany && isOwn && (
                 <IconButton
-                  className="delete-icon"
+                  className="delete-btn"
                   onClick={() => onDeleteMessage(message._id)}
                   size="small"
                   sx={{
                     opacity: 0,
-                    transition: 'opacity 0.2s ease',
-                    color: 'rgba(220, 38, 38, 0.7)',
-                    padding: '4px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(220, 38, 38, 0.08)',
-                    },
+                    transition: 'opacity 0.15s',
+                    color: 'rgba(220,38,38,0.7)',
+                    p: '4px',
+                    '&:hover': { bgcolor: 'rgba(220,38,38,0.08)' },
                   }}
                 >
-                  <DeleteIcon sx={{ fontSize: 16 }} />
+                  <DeleteOutlined sx={{ fontSize: 15 }} />
                 </IconButton>
               )}
               <Box
                 sx={{
-                  maxWidth: '70%',
+                  maxWidth: '68%',
                   px: 2,
-                  py: 1.5,
-                  backgroundColor: isOwn ? '#8310FF' : 'white',
-                  color: isOwn ? 'white' : '#000',
+                  py: 1.2,
+                  bgcolor: isOwn ? TEAL : '#fff',
+                  color: isOwn ? '#fff' : '#111827',
                   borderRadius: isOwn ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                   boxShadow: isOwn
-                    ? '0 2px 8px rgba(131, 16, 255, 0.25)'
-                    : '0 1px 4px rgba(0, 0, 0, 0.06)',
-                  border: isOwn ? 'none' : '1px solid rgba(84,98,116,0.1)',
+                    ? '0 2px 8px rgba(13,148,136,0.25)'
+                    : '0 1px 3px rgba(0,0,0,0.06)',
+                  border: isOwn ? 'none' : '1px solid #E5E7EB',
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: '13px',
-                    lineHeight: 1.5,
-                    wordBreak: 'break-word',
-                  }}
-                >
+                <Typography sx={{ fontSize: '13px', lineHeight: 1.5, wordBreak: 'break-word' }}>
                   {message.text}
                 </Typography>
                 <Typography
-                  variant="caption"
                   sx={{
                     display: 'block',
                     textAlign: 'right',
-                    mt: 0.5,
-                    opacity: isOwn ? 0.8 : 0.5,
+                    mt: 0.4,
+                    opacity: isOwn ? 0.75 : 0.5,
                     fontSize: '10px',
                   }}
                 >
