@@ -8,7 +8,6 @@ import {
   Pagination,
   Typography,
 } from "@mui/material";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
@@ -36,7 +35,7 @@ interface Props {
 
 const ITEMS_PER_PAGE = 10;
 
-const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle, onBack }) => {
+const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle }) => {
   const dispatch    = useDispatch<AppDispatch>();
   const router      = useRouter();
   const { user }    = useSelector((state: RootState) => state.user.connectedUser);
@@ -89,39 +88,6 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle, onBack }) => {
 
   return (
     <Box>
-      {/* ── Header ── */}
-      <SectionCard sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <EmojiEventsOutlined sx={{ fontSize: 20, color: TEAL }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-                Passed Interview Candidates
-              </Typography>
-              {jobTitle && (
-                <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>
-                  {jobTitle}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-
-          <Button
-            startIcon={<ArrowBackOutlined sx={{ fontSize: 15 }} />}
-            onClick={onBack}
-            sx={{
-              textTransform: "none", fontWeight: 600, fontSize: "12px",
-              color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: 2,
-              px: 2, py: 0.75,
-              "&:hover": { bgcolor: TEAL_BG, borderColor: TEAL, color: TEAL },
-            }}
-          >
-            Back to Job Post
-          </Button>
-        </Box>
-      </SectionCard>
 
       {/* ── Loading ── */}
       {isLoadingMatches && <LoadingOverlay height={300} message="Finding passed interview candidates…" color={TEAL} />}
@@ -141,7 +107,7 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle, onBack }) => {
       {!isLoadingMatches && !matchError && (!matches || matches.length === 0) && (
         <EmptyState
           title="No candidates yet"
-          subtitle="No candidates have passed the interview for this job post yet."
+          description="No candidates have passed the interview for this job post yet."
           icon={<EmojiEventsOutlined sx={{ fontSize: 40 }} />}
         />
       )}
