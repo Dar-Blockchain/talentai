@@ -1,7 +1,15 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
-import { Box, Typography, CircularProgress, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Button,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
@@ -10,6 +18,7 @@ import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
 import {
   fetchConversations,
   fetchConversation,
@@ -43,25 +52,28 @@ const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
 const CompanyMessagesPage: React.FC = () => {
-  const router     = useRouter();
-  const dispatch   = useDispatch<AppDispatch>();
+  const router   = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const theme    = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { showToast } = useToast();
 
   const { conversationId: routeConversationId, postId, jobTitle } = router.query;
-  const returnPostId    = typeof postId   === "string" ? postId   : null;
-  const returnJobTitle  = typeof jobTitle === "string" ? jobTitle : null;
+  const returnPostId   = typeof postId   === "string" ? postId   : null;
+  const returnJobTitle = typeof jobTitle === "string" ? jobTitle : null;
 
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
-  const profile       = useSelector((state: RootState) => state.user?.connectedUser?.profile);
   const currentUserId = connectedUser?._id;
-  const isCompany     = true; // always Company in this page
+  const isCompany     = true;
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  // On mobile: show sidebar (false) or chat panel (true)
+  const [showChat, setShowChat] = useState(false);
 
-  // Sync route param → state on first load
   useEffect(() => {
     if (routeConversationId && !activeConversationId) {
       setActiveConversationId(routeConversationId as string);
+      setShowChat(true);
     }
   }, [routeConversationId]);
 
@@ -129,13 +141,14 @@ const CompanyMessagesPage: React.FC = () => {
     return () => { dispatch(clearCurrentConversation()); };
   }, [activeConversationId, currentUserId, dispatch]);
 
-  // ── Switch conversation without page reload ──
+  // ── Switch conversation ──
   const handleSelectConversation = useCallback((id: string) => {
     if (id === activeConversationId) return;
     setNewMessage("");
     setActiveConversationId(id);
     window.history.replaceState(null, "", `/company/messages/${id}`);
-  }, [activeConversationId]);
+    if (isMobile) setShowChat(true);
+  }, [activeConversationId, isMobile]);
 
   // ── Send message ──
   const handleSendMessage = useCallback(async () => {
@@ -194,45 +207,25 @@ const CompanyMessagesPage: React.FC = () => {
     }
   }, [activeConversationId, dispatch, showToast, router]);
 
-  const otherUser = conversation?.participants?.find((p: any) => p._id !== currentUserId);
-
-  // Total unread count for badge in header
-  const totalUnread = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+  const otherUser    = conversation?.participants?.find((p: any) => p._id !== currentUserId);
+  const totalUnread  = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
 
-          {/* ── Page header ── */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-            <Box sx={{
-              width: 40, height: 40, borderRadius: 2,
-              bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <ChatOutlined sx={{ fontSize: 20, color: TEAL }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-                Messages
-                {totalUnread > 0 && (
-                  <Box component="span" sx={{
-                    ml: 1, display: "inline-flex", alignItems: "center", justifyContent: "center",
-                    width: 20, height: 20, borderRadius: "50%",
-                    bgcolor: "#EF4444", color: "#fff", fontSize: "10px", fontWeight: 700,
-                  }}>
-                    {totalUnread}
-                  </Box>
-                )}
-              </Typography>
-              <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>
-                {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
-              </Typography>
-            </Box>
-          </Box>
+          {/* Page header */}
+          <PageHeader
+            title="Messages"
+            subtitle={`${conversations.length} conversation${conversations.length !== 1 ? "s" : ""}${totalUnread > 0 ? ` · ${totalUnread} unread` : ""}`}
+            breadcrumbs={[
+              { label: "Dashboard", href: "/company/dashboard" },
+              { label: "Messages" },
+            ]}
+          />
 
-          {/* ── Return to post banner ── */}
+          {/* Return to post banner */}
           {returnPostId && (
             <Box sx={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -243,9 +236,7 @@ const CompanyMessagesPage: React.FC = () => {
                 <WorkOutlined sx={{ fontSize: 16, color: TEAL }} />
                 <Typography sx={{ fontSize: "13px", fontWeight: 600, color: TEAL }}>
                   Chatting about:{" "}
-                  <Box component="span" sx={{ fontWeight: 700 }}>
-                    {returnJobTitle || "Job Post"}
-                  </Box>
+                  <Box component="span" sx={{ fontWeight: 700 }}>{returnJobTitle || "Job Post"}</Box>
                 </Typography>
               </Box>
               <Button
@@ -264,45 +255,53 @@ const CompanyMessagesPage: React.FC = () => {
             </Box>
           )}
 
-          {/* ── Main layout: sidebar + chat panel ── */}
+          {/* Main layout */}
           <Box sx={{ display: "flex", gap: 2, flex: 1, minHeight: 0 }}>
 
-            {/* Sidebar */}
-            <Box sx={{
-              width: 300, flexShrink: 0, borderRadius: 2,
-              border: "1px solid #E5E7EB", bgcolor: "#fff",
-              display: "flex", flexDirection: "column", overflow: "hidden",
-            }}>
-              {/* Sidebar header */}
-              <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid #F3F4F6" }}>
+            {/* Sidebar — hidden on mobile when chat is open */}
+            <Box
+              sx={{
+                width: { xs: "100%", md: 280 },
+                flexShrink: 0,
+                borderRadius: 2,
+                border: "1px solid #E5E7EB",
+                bgcolor: "#fff",
+                display: { xs: isMobile && showChat ? "none" : "flex", md: "flex" },
+                flexDirection: "column",
+                overflow: "hidden",
+              }}
+            >
+              <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid #F3F4F6" }}>
                 <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>
                   All Conversations ({conversations.length})
                 </Typography>
               </Box>
-
-              {/* Reuse sidebar component */}
-              <Box sx={{ flex: 1, overflowY: "auto" }}>
-                <ConversationSidebar
-                  conversations={conversations}
-                  currentConversationId={activeConversationId || ""}
-                  currentUserId={currentUserId}
-                  onSelectConversation={handleSelectConversation}
-                />
-              </Box>
+              <ConversationSidebar
+                conversations={conversations}
+                currentConversationId={activeConversationId || ""}
+                currentUserId={currentUserId}
+                onSelectConversation={handleSelectConversation}
+              />
             </Box>
 
-            {/* Chat panel */}
-            <Box sx={{
-              flex: 1, display: "flex", flexDirection: "column",
-              borderRadius: 2, border: "1px solid #E5E7EB",
-              bgcolor: "#fff", overflow: "hidden", minHeight: 0,
-            }}>
+            {/* Chat panel — hidden on mobile when sidebar is shown */}
+            <Box
+              sx={{
+                flex: 1,
+                display: { xs: isMobile && !showChat ? "none" : "flex", md: "flex" },
+                flexDirection: "column",
+                borderRadius: 2,
+                border: "1px solid #E5E7EB",
+                bgcolor: "#fff",
+                overflow: "hidden",
+                minHeight: 0,
+              }}
+            >
               {loading ? (
                 <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <CircularProgress sx={{ color: TEAL }} />
                 </Box>
               ) : !conversation ? (
-                /* Empty / select a conversation */
                 <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, p: 4 }}>
                   <Box sx={{
                     width: 64, height: 64, borderRadius: "50%",
@@ -319,9 +318,26 @@ const CompanyMessagesPage: React.FC = () => {
                       ? "Contact a candidate to start chatting"
                       : "Choose a conversation from the sidebar to open it"}
                   </Typography>
+                  {isMobile && (
+                    <Button
+                      startIcon={<ArrowBackOutlined />}
+                      onClick={() => setShowChat(false)}
+                      sx={{ textTransform: "none", color: TEAL, fontWeight: 600 }}
+                    >
+                      Back to conversations
+                    </Button>
+                  )}
                 </Box>
               ) : (
                 <>
+                  {/* On mobile, show a back button in the header */}
+                  {isMobile && (
+                    <Box sx={{ px: 1, pt: 1 }}>
+                      <IconButton size="small" onClick={() => setShowChat(false)} sx={{ color: "#6B7280" }}>
+                        <ArrowBackOutlined sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Box>
+                  )}
                   <ConversationHeader
                     otherUser={otherUser}
                     isCompany={isCompany}

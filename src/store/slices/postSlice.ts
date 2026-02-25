@@ -59,6 +59,19 @@ interface AssessmentDetailsState {
   error: string | null;
 }
 
+interface PostMetrics {
+  total: number;
+  active: number;
+  draft: number;
+  expired: number;
+}
+
+interface PostMetricsState {
+  data: PostMetrics | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -86,6 +99,7 @@ interface PostState {
   candidateAssessments: CandidateAssessmentsState;
   companyAssessments: CompanyAssessmentsState;
   assessmentDetails: AssessmentDetailsState;
+  postMetrics: PostMetricsState;
 }
 
 // Initial state
@@ -182,6 +196,11 @@ const initialState: PostState = {
   assessmentDetails: {
     assessment: null,
     stepsData: null,
+    loading: false,
+    error: null,
+  },
+  postMetrics: {
+    data: null,
     loading: false,
     error: null,
   },
@@ -371,11 +390,12 @@ export const fetchMyPosts = createAsyncThunk(
       limit?: number;
       search?: string;
       sort?: string;
+      status?: string;
     } = {},
     { rejectWithValue }
   ) => {
     try {
-      const { page = 1, limit = 10, search = "", sort = "newest" } = params;
+      const { page = 1, limit = 12, search = "", sort = "newest", status } = params;
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("api_token="))
@@ -387,6 +407,7 @@ export const fetchMyPosts = createAsyncThunk(
         limit: limit.toString(),
         ...(search && { search }),
         sort,
+        ...(status && status !== "all" && { status }),
       });
 
       const response = await fetch(
@@ -970,6 +991,23 @@ export const fetchAssessmentDetails = createAsyncThunk<
   }
 );
 
+export const fetchPostMetrics = createAsyncThunk(
+  "post/fetchPostMetrics",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = Cookies.get("api_token");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/metrics`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch post metrics");
+      const json = await res.json();
+      return json.data as PostMetrics;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to fetch post metrics");
+    }
+  }
+);
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
@@ -1220,6 +1258,19 @@ const postSlice = createSlice({
       .addCase(fetchAssessmentDetails.rejected, (state, action) => {
         state.assessmentDetails.loading = false;
         state.assessmentDetails.error = action.payload as string;
+      })
+      // ---- POST METRICS ----
+      .addCase(fetchPostMetrics.pending, (state) => {
+        state.postMetrics.loading = true;
+        state.postMetrics.error = null;
+      })
+      .addCase(fetchPostMetrics.fulfilled, (state, action) => {
+        state.postMetrics.loading = false;
+        state.postMetrics.data = action.payload;
+      })
+      .addCase(fetchPostMetrics.rejected, (state, action) => {
+        state.postMetrics.loading = false;
+        state.postMetrics.error = action.payload as string;
       });
   },
 });
@@ -1326,3 +1377,11 @@ export const selectAssessmentDetailsLoading = (state: { post: PostState }) =>
   state.post.assessmentDetails.loading;
 export const selectAssessmentDetailsError = (state: { post: PostState }) =>
   state.post.assessmentDetails.error;
+
+// Post Metrics Selectors
+export const selectPostMetrics = (state: { post: PostState }) =>
+  state.post.postMetrics.data;
+export const selectPostMetricsLoading = (state: { post: PostState }) =>
+  state.post.postMetrics.loading;
+export const selectPostMetricsError = (state: { post: PostState }) =>
+  state.post.postMetrics.error;

@@ -22,6 +22,7 @@ interface TabItem {
 
 interface PaginationInfo {
   totalPages: number;
+  total?: number;
 }
 
 interface JobPostsListProps {
@@ -138,7 +139,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
     <SectionCard>
       <SectionHeader
         title="My Job Posts"
-        subtitle={`${jobs.length} post${jobs.length !== 1 ? "s" : ""} shown`}
+        subtitle={pagination.total != null ? `${pagination.total} post${pagination.total !== 1 ? "s" : ""} total` : `${jobs.length} post${jobs.length !== 1 ? "s" : ""} shown`}
       />
       <JobPostsFilters
         search={search}

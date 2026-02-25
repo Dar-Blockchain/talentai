@@ -1,7 +1,9 @@
 import React from 'react';
 import { Box, Typography, Avatar, IconButton } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import { Participant, getParticipantDisplayName, getParticipantInitial } from './helpers';
+
+const TEAL = '#0D9488';
 
 interface ConversationHeaderProps {
   otherUser: Participant | undefined;
@@ -17,41 +19,33 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
   return (
     <Box
       sx={{
-        px: 3,
-        py: 2,
-        borderBottom: '1px solid rgba(84,98,116,0.1)',
+        px: 2.5,
+        py: 1.5,
+        borderBottom: '1px solid #E5E7EB',
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
+        gap: 1.5,
+        bgcolor: '#fff',
       }}
     >
       <Avatar
         sx={{
-          width: 48,
-          height: 48,
-          backgroundColor: '#8310FF',
-          fontSize: '1.1rem',
-          fontWeight: 600,
+          width: 40, height: 40,
+          bgcolor: TEAL,
+          fontSize: '15px',
+          fontWeight: 700,
         }}
       >
         {getParticipantInitial(otherUser)}
       </Avatar>
+
       <Box sx={{ flex: 1 }}>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            fontWeight: 600,
-            color: '#000',
-            fontSize: '15px',
-            lineHeight: 1.3,
-          }}
-        >
+        <Typography sx={{ fontWeight: 600, color: '#111827', fontSize: '14px', lineHeight: 1.3 }}>
           {getParticipantDisplayName(otherUser)}
         </Typography>
         <Typography
-          variant="caption"
           sx={{
-            color: 'rgba(84,98,116,0.8)',
+            color: '#9CA3AF',
             fontSize: '12px',
             filter: 'blur(4px)',
             userSelect: 'none',
@@ -60,48 +54,31 @@ const ConversationHeader: React.FC<ConversationHeaderProps> = ({
           {otherUser?.email}
         </Typography>
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-        }}
-      >
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            px: 1.5,
-            py: 0.5,
-            borderRadius: '20px',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            display: 'flex', alignItems: 'center', gap: 0.5,
+            px: 1.2, py: 0.4, borderRadius: '20px',
+            bgcolor: 'rgba(16, 185, 129, 0.1)',
           }}
         >
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: 'rgba(16, 185, 129, 1)',
-            }}
-          />
-          <Typography variant="caption" sx={{ color: 'rgba(16, 185, 129, 1)', fontWeight: 500, fontSize: '11px' }}>
+          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#10B981' }} />
+          <Typography sx={{ color: '#10B981', fontWeight: 500, fontSize: '11px' }}>
             Active
           </Typography>
         </Box>
+
         {isCompany && (
           <IconButton
             onClick={onDeleteConversation}
             size="small"
             sx={{
-              color: 'rgba(220, 38, 38, 0.8)',
-              '&:hover': {
-                backgroundColor: 'rgba(220, 38, 38, 0.08)',
-              },
+              color: '#DC2626',
+              '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.08)' },
             }}
           >
-            <DeleteIcon fontSize="small" />
+            <DeleteOutlined sx={{ fontSize: 18 }} />
           </IconButton>
         )}
       </Box>
