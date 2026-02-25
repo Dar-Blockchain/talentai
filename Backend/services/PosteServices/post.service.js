@@ -1524,3 +1524,56 @@ module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail
     throw new Error(`Error in createAndSendTechnicalTest: ${error.message}`);
   }
 };
+
+/**
+ * Get post metrics (count by status) for a user
+ */
+module.exports.getPostMetrics = async (userId) => {
+  try {
+    const now = new Date();
+
+    // Get all posts for the user
+    const allPosts = await Post.find({ user: userId }).select(
+      'status expirationDate'
+    );
+
+    // Initialize counters
+    const metrics = {
+      total: allPosts.length,
+      active: 0,
+      draft: 0,
+      expired: 0
+    };
+
+    // Count posts by status and expiration
+    allPosts.forEach((post) => {
+      const isExpired = post.expirationDate && new Date(post.expirationDate) < now;
+
+      if (isExpired) {
+        metrics.expired++;
+      } else {
+        // Only count as active/draft if not expired
+        switch (post.status?.toLowerCase()) {
+          case 'draft':
+            metrics.draft++;
+            break;
+          case 'open':
+            metrics.active++;
+            break;
+          case 'closed':
+            metrics.closed++;
+            break;
+          case 'cancelled':
+            metrics.cancelled++;
+            break;
+          default:
+            break;
+        }
+      }
+    });
+
+    return metrics;
+  } catch (error) {
+    throw new Error(`Error getting post metrics: ${error.message}`);
+  }
+};

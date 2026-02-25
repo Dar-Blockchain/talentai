@@ -687,3 +687,21 @@ exports.getJobInterviewConfig = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get post metrics (count by status)
+ */
+exports.getPostMetrics = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const metrics = await postService.getPostMetrics(userId);
+
+    res.status(200).json({
+      success: true,
+      data: metrics,
+    });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};

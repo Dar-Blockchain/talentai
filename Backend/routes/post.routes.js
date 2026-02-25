@@ -46,6 +46,10 @@ router.get("/get-all-posts", postController.getAllPosts);
 // Description: Posts de l'utilisateur courant
 router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
+// GET /post/metrics
+// Description: Rétrourne les métriques des posts (total, active, draft, expired, closed, cancelled)
+router.get("/metrics", postController.getPostMetrics);
+
 // GET /post/getPostById/:id
 // Description: Détails d'un post
 router.get("/getPostById/:id", postController.getPostById);
