@@ -41,7 +41,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) 
           cursor: "pointer",
           padding: "4px 8px",
           borderRadius: 2,
-          "&:hover": { bgcolor: "#F3F4F6" },
         }}
         onClick={handleOpenMenu}
       >

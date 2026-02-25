@@ -51,3 +51,20 @@ export const isEmpty = (value: any) =>
 
 export const isInvalidNumber = (value: any) =>
   isEmpty(value) || isNaN(Number(value));
+
+export const daysLeft = (deadline?: string) => {
+  if (!deadline) return null;
+  const diff = Math.ceil(
+    (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+  );
+  return diff > 0 ? diff : 0;
+};
+
+export const fmtDate = (iso?: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "—";
