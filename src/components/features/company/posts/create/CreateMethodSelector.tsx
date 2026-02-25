@@ -7,8 +7,7 @@ import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
-import PageBanner from "@/components/dashboard-workplace/ui/PageBanner";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
@@ -122,23 +121,17 @@ const CreateMethodSelector: React.FC = () => {
 
   return (
     <Box>
-      <PageBanner
-        title="Create Job Post"
+      <PageHeader
+        title="New Job Post"
         subtitle="Choose how you want to create your job post — AI-powered or fully custom."
-        icon={<WorkOutlined />}
-        gradient="135deg, #0D9488 0%, #0891B2 100%"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/company/dashboard" },
+          { label: "Job Posts", href: "/company/posts" },
+          { label: "New Job Post" },
+        ]}
       />
 
       <Box sx={{ maxWidth: 840, mx: "auto" }}>
-        <Box sx={{ mb: 3 }}>
-          <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827", mb: 0.5 }}>
-            Select creation method
-          </Typography>
-          <Typography sx={{ fontSize: "13px", color: "#6B7280" }}>
-            Both methods produce a fully featured job post. Pick the one that fits your workflow.
-          </Typography>
-        </Box>
-
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
           <MethodCard
             title="AI-Powered"
