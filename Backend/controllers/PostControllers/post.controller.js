@@ -307,7 +307,7 @@ exports.getUserPosts = async (req, res) => {
         .json({ success: false, error: "User not authenticated" });
     }
 
-    const { page = 1, limit = 6, search = "", sort = "newest" } = req.query;
+    const { page = 1, limit = 6, search = "", sort = "newest", status = "" } = req.query;
 
     // Parse and validate pagination
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -323,6 +323,7 @@ exports.getUserPosts = async (req, res) => {
       limitNum,
       search,
       sortOption,
+      status,
     );
 
     res.status(200).json({

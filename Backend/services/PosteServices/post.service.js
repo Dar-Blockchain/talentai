@@ -542,7 +542,7 @@ module.exports.getPostsByUserId = async (userId) => {
 };
 
 // Get user's posts with pagination, search and sorting
-module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest') => {
+module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '') => {
   try {
     // Validate pagination parameters
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -553,6 +553,11 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
     let query = { user: userId };
     if (search && search.trim() !== '') {
       query['jobDetails.title'] = { $regex: search.trim(), $options: 'i' }; // Case-insensitive search
+    }
+
+    // Add status filter if provided
+    if (status && status.trim() !== '') {
+      query.status = status.toLowerCase();
     }
 
     // Build sort object based on sort parameter
