@@ -1,5 +1,6 @@
 const InternalCampaign = require("../models/internalCampaign.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
+const mongoose = require("mongoose");
 
 /**
  * Create a new campaign
@@ -197,5 +198,51 @@ exports.getCampaignStats = async (campaignId) => {
     };
   } catch (error) {
     throw new Error(`Error getting campaign stats: ${error.message}`);
+  }
+};
+
+/**
+ * Get campaign metrics (count by status)
+ */
+exports.getCampaignMetrics = async (companyId) => {
+  try {
+    const metrics = await InternalCampaign.aggregate([
+      { $match: { company: new mongoose.Types.ObjectId(companyId) } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Initialize all status counters
+    const statusCounts = {
+      total: 0,
+      active: 0,
+      draft: 0,
+      closed: 0,
+      paused: 0,
+      expired: 0,
+    };
+
+    // Populate counts from aggregation result
+    if (metrics && metrics.length > 0) {
+      metrics.forEach((metric) => {
+        const status = metric._id ? metric._id.toLowerCase() : null;
+        if (status && statusCounts.hasOwnProperty(status)) {
+          statusCounts[status] = metric.count;
+        }
+      });
+    }
+
+    // Calculate total
+    statusCounts.total = Object.keys(statusCounts)
+      .filter((key) => key !== "total")
+      .reduce((sum, key) => sum + statusCounts[key], 0);
+
+    return statusCounts;
+  } catch (error) {
+    throw new Error(`Error getting campaign metrics: ${error.message}`);
   }
 };

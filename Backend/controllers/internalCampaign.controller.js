@@ -254,3 +254,28 @@ exports.getAllCampaigns = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get campaign metrics (count by status)
+ */
+exports.getCampaignMetrics = async (req, res) => {
+  try {
+    const companyId = req.user.profile;
+
+    const {
+      getCampaignMetrics: getCampaignMetricsService,
+    } = require("../services/internalCampaign.service");
+
+    const metrics = await getCampaignMetricsService(companyId);
+
+    res.status(200).json({
+      success: true,
+      data: metrics,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};

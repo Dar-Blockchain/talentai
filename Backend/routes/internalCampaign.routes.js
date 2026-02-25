@@ -36,6 +36,12 @@ router.post("/", internalCampaignController.createInternalCampaign);
 router.get("/", internalCampaignController.getCompanyCampaigns);
 
 /**
+ * GET /campaigns/metrics — Obtenir les métriques des campagnes (total, active, draft, closed, etc.)
+ * NOTE: Route spécifique placée avant les routes générales avec :campaignId
+ */
+router.get("/metrics", internalCampaignController.getCampaignMetrics);
+
+/**
  * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
  * NOTE: Route spécifique placée avant les routes générales avec :campaignId
  */
