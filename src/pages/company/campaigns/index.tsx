@@ -11,14 +11,19 @@ import CampaignsStats from "@/components/features/company/campaigns/list/Stats";
 import CampaignsGrid from "@/components/features/company/campaigns/list/CampaignsGrid";
 import {
   fetchCampaigns,
+  selectCampaignLimit,
+  selectCampaignPage,
+  selectCampaignCount,
+  setPage,
+  setLimit
 } from "@/store/slices/campaignSlice";
+import { useSelector } from "react-redux";
+import Pagination from "@/components/ui/Pagination";
+import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
+import EmptyState from "@/components/ui/EmptyState"; 
 
 const CampaignsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    dispatch(fetchCampaigns());
-  }, [dispatch]);
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
@@ -31,14 +36,15 @@ const CampaignsPage: React.FC = () => {
             { label: "Campaigns" },
           ]}
           actions={[
-            <Link href='/company/campaigns/new'>
-            <AppButton
-              key="new"
-              label="New Campaign"
-              variant="contained"
-              startIcon={<AddOutlined />}
-              size="medium"
-            /></Link>,
+            <Link href="/company/campaigns/new">
+              <AppButton
+                key="new"
+                label="New Campaign"
+                variant="contained"
+                startIcon={<AddOutlined />}
+                size="medium"
+              />
+            </Link>,
           ]}
         />
         <CampaignsStats />

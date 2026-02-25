@@ -1,24 +1,29 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { Box } from "@mui/material";
 import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import { useSelector } from "react-redux";
-import { selectCampaigns } from "@/store/slices/campaignSlice";
+import { fetchCampaignMetrics, selectCampaignMetrics, selectCampaignMetricsLoading, selectCampaigns } from "@/store/slices/campaignSlice";
 import StatCard from "@/components/ui/StatCard";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import StatsSkeleton from "./StatsSkeleton";
 
 const CampaignsStats: React.FC = () => {
-  const campaigns = useSelector(selectCampaigns);
+  const dispatch = useDispatch<AppDispatch>();
 
-  const total = campaigns.length;
-  const active = campaigns.filter(c => c.status === "ACTIVE").length;
-  const drafts = campaigns.filter(c => c.status === "DRAFT").length;
-  const closed = campaigns.filter(
-    c => c.status === "CLOSED" || c.status === "EXPIRED"
-  ).length;
+useEffect(() => {
+  dispatch(fetchCampaignMetrics());
+}, [dispatch]);
+
+const metrics = useSelector(selectCampaignMetrics);
+const loading = useSelector(selectCampaignMetricsLoading);
+
+if (loading || !metrics) return <StatsSkeleton />;
 
   return (
     <Box
@@ -31,28 +36,28 @@ const CampaignsStats: React.FC = () => {
       <StatCard
         icon={<CampaignOutlined sx={{ fontSize: 18 }} />}
         label="Total"
-        value={total}
+        value={metrics.total}
         color="#6B7280"
       />
 
       <StatCard
         icon={<CheckCircleOutline sx={{ fontSize: 18 }} />}
         label="Active"
-        value={active}
+        value={metrics.active}
         color="#10B981"
       />
 
       <StatCard
         icon={<EditNoteOutlined sx={{ fontSize: 18 }} />}
         label="Drafts"
-        value={drafts}
+        value={metrics.draft}
         color="#3B82F6"
       />
 
       <StatCard
         icon={<HourglassEmptyOutlined sx={{ fontSize: 18 }} />}
-        label="Closed"
-        value={closed}
+        label="Closed/Expired"
+        value={metrics.closed + metrics.expired}
         color="#8B5CF6"
       />
     </Box>
