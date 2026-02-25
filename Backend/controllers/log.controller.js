@@ -3,8 +3,18 @@ const logService = require("../services/log.service"); // Importer le service de
 // Fonction pour récupérer tous les logs
 module.exports.getAllLogs = async (req, res) => {
   try {
-    const logs = await logService.getAllLogs(); // Appeler la fonction du service pour récupérer les logs
-    res.status(200).json(logs); // Retourner les logs au format JSON
+    const { page = 1, limit = 20, type, method, statusCode, user_id } = req.query;
+
+    // Construire les filtres optionnels
+    const filters = {};
+    if (type) filters.type = type;
+    if (method) filters.method = method;
+    if (statusCode) filters.statusCode = Number(statusCode);
+    if (user_id) filters.user_id = user_id;
+
+    const result = await logService.getAllLogs({ page, limit, filters });
+
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     res.status(500).json({ message: error.message }); // Retourner une erreur si la récupération échoue
   }
