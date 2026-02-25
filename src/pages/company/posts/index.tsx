@@ -1,6 +1,6 @@
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -11,37 +11,37 @@ import {
   selectMyPostsLoading,
   selectMyPostsError,
   selectMyPostsPagination,
+  selectPostMetrics,
 } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
-import DeletePostModal from "@/components/posts/delete/DeletePostModal";
-import { useDeletePost } from "@/components/posts/delete/useDeletePost";
+import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
+import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import WorkplaceJobDetail from "@/components/dashboard-workplace/WorkplaceJobDetail";
-import JobPostsHeader from "@/components/features/company/posts/list/JobPostsHeader";
 import JobPostsList from "@/components/features/company/posts/list/JobPostsList";
-
-const getDaysLeft = (expirationDate?: string) => {
-  if (!expirationDate) return null;
-  return Math.ceil((new Date(expirationDate).getTime() - Date.now()) / 86400000);
-};
+import PageHeader from "@/components/layout/dashboard/PageHeader";
+import AppButton from "@/components/ui/AppButton";
+import AddOutlined from "@mui/icons-material/AddOutlined";
+import PostsStats from "@/components/features/company/posts/list/Stats";
 
 type SortOption = "newest" | "oldest" | "title-asc" | "title-desc";
 type TabType = "all" | "active" | "draft" | "expired";
 
 const PostsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
+  const router   = useRouter();
   const { showToast } = useToast();
 
-  const posts = useSelector(selectMyPosts);
-  const loading = useSelector(selectMyPostsLoading);
-  const error = useSelector(selectMyPostsError);
+  const posts      = useSelector(selectMyPosts);
+  const loading    = useSelector(selectMyPostsLoading);
+  const error      = useSelector(selectMyPostsError);
   const pagination = useSelector(selectMyPostsPagination);
+  const metrics    = useSelector(selectPostMetrics);
 
-  const [activeTab, setActiveTab] = useState<TabType>("all");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [page, setPage] = useState(1);
-  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [activeTab, setActiveTab]         = useState<TabType>("all");
+  const [search, setSearch]               = useState("");
+  const sortBy: SortOption                = "newest";
+  const [page, setPage]                   = useState(1);
+  const [jobToDelete, setJobToDelete]     = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const deletePostHook = useDeletePost({
@@ -55,8 +55,8 @@ const PostsPage: React.FC = () => {
   });
 
   const load = useCallback(() => {
-    dispatch(fetchMyPosts({ page, limit: 8, search, sort: sortBy }));
-  }, [dispatch, page, search, sortBy]);
+    dispatch(fetchMyPosts({ page, limit: 9, search, sort: sortBy, status: activeTab }));
+  }, [dispatch, page, search, sortBy, activeTab]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -74,31 +74,12 @@ const PostsPage: React.FC = () => {
 
   const handleCreateClick = () => router.push("/company/posts/create");
 
-  const filtered = useMemo(() => {
-    if (activeTab === "all") return posts;
-    return posts.filter((p: any) => {
-      if (activeTab === "draft") return p.status === "draft";
-      if (activeTab === "expired")
-        return getDaysLeft(p.expirationDate) !== null && getDaysLeft(p.expirationDate)! <= 0;
-      if (activeTab === "active")
-        return (
-          p.status !== "draft" &&
-          (getDaysLeft(p.expirationDate) === null || getDaysLeft(p.expirationDate)! > 0)
-        );
-      return true;
-    });
-  }, [posts, activeTab]);
-
-  const total   = pagination.total || posts.length;
-  const active  = posts.filter((p: any) => p.status !== "draft" && (getDaysLeft(p.expirationDate) === null || getDaysLeft(p.expirationDate)! > 0)).length;
-  const drafts  = posts.filter((p: any) => p.status === "draft").length;
-  const expired = posts.filter((p: any) => getDaysLeft(p.expirationDate) !== null && getDaysLeft(p.expirationDate)! <= 0).length;
-
+  // Tab counts use real API metrics totals, not the current page slice
   const tabItems = [
-    { id: "all",     label: "All",     count: posts.length },
-    { id: "active",  label: "Active",  count: active },
-    { id: "draft",   label: "Drafts",  count: drafts },
-    { id: "expired", label: "Expired", count: expired },
+    { id: "all",     label: "All",     count: metrics?.total   ?? pagination.total },
+    { id: "active",  label: "Active",  count: metrics?.active  ?? 0 },
+    { id: "draft",   label: "Drafts",  count: metrics?.draft   ?? 0 },
+    { id: "expired", label: "Expired", count: metrics?.expired ?? 0 },
   ];
 
   return (
@@ -111,25 +92,36 @@ const PostsPage: React.FC = () => {
           />
         ) : (
           <Box>
-            <JobPostsHeader
-              total={total}
-              active={active}
-              drafts={drafts}
-              expired={expired}
-              onCreateClick={handleCreateClick}
+            <PageHeader
+              title="Job Posts"
+              subtitle="Manage your open positions, track candidates, and share interview links."
+              breadcrumbs={[
+                { label: "Dashboard", href: "/company/dashboard" },
+                { label: "Job Posts" },
+              ]}
+              actions={[
+                <AppButton
+                  key="new"
+                  label="New Job Post"
+                  variant="contained"
+                  startIcon={<AddOutlined />}
+                  size="medium"
+                  onClick={handleCreateClick}
+                />,
+              ]}
             />
 
+            <PostsStats />
+
             <JobPostsList
-              jobs={filtered}
+              jobs={posts}
               loading={loading}
               error={error}
               search={search}
               onSearchChange={(v) => { setSearch(v); setPage(1); }}
               activeTab={activeTab}
-              onTabChange={(t) => { setActiveTab(t); setPage(1); }}
+              onTabChange={(t) => { setActiveTab(t as TabType); setPage(1); }}
               tabItems={tabItems}
-              sortBy={sortBy}
-              onSortChange={(s) => { setSortBy(s); setPage(1); }}
               page={page}
               pagination={pagination}
               onPageChange={setPage}

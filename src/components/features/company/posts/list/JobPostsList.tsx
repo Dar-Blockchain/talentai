@@ -5,7 +5,6 @@ import SectionHeader from "@/components/dashboard-workplace/ui/SectionHeader";
 import LoadingOverlay from "@/components/dashboard-workplace/ui/LoadingOverlay";
 import EmptyState from "@/components/dashboard-workplace/ui/EmptyState";
 import JobPostCard from "./JobPostCard";
-import JobPostsActions from "./JobPostsActions";
 import JobPostsFilters from "./JobPostsFilters";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
@@ -13,7 +12,6 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 const TEAL = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-type SortOption = "newest" | "oldest" | "title-asc" | "title-desc";
 type TabType = "all" | "active" | "draft" | "expired";
 
 interface TabItem {
@@ -24,6 +22,7 @@ interface TabItem {
 
 interface PaginationInfo {
   totalPages: number;
+  total?: number;
 }
 
 interface JobPostsListProps {
@@ -35,8 +34,6 @@ interface JobPostsListProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   tabItems: TabItem[];
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
   page: number;
   pagination: PaginationInfo;
   onPageChange: (page: number) => void;
@@ -56,8 +53,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
   activeTab,
   onTabChange,
   tabItems,
-  sortBy,
-  onSortChange,
   page,
   pagination,
   onPageChange,
@@ -106,7 +101,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
     }
     return (
       <>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, mb: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
           {jobs.map((job: any) => (
             <JobPostCard
               key={job._id}
@@ -116,6 +111,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
               onViewPassed={onViewPassed}
               onViewDetails={onViewDetails}
             />
+
           ))}
         </Box>
         {pagination.totalPages > 1 && (
@@ -143,14 +139,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
     <SectionCard>
       <SectionHeader
         title="My Job Posts"
-        subtitle={`${jobs.length} post${jobs.length !== 1 ? "s" : ""} shown`}
-        action={
-          <JobPostsActions
-            sortBy={sortBy}
-            onSortChange={onSortChange}
-            onCreateClick={onCreateClick}
-          />
-        }
+        subtitle={pagination.total != null ? `${pagination.total} post${pagination.total !== 1 ? "s" : ""} total` : `${jobs.length} post${jobs.length !== 1 ? "s" : ""} shown`}
       />
       <JobPostsFilters
         search={search}

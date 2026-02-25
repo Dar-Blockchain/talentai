@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Alert } from "@mui/material";
+import { Box, Button, Alert, Chip, Typography, Menu, MenuItem, IconButton } from "@mui/material";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
+import EditOutlined from "@mui/icons-material/EditOutlined";
+import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
+import PublishOutlined from "@mui/icons-material/PublishOutlined";
+import MoreVertOutlined from "@mui/icons-material/MoreVert";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutline";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
@@ -16,11 +22,9 @@ import {
 import { selectTokenBalance, fetchTokenBalance } from "@/store/slices/tokenSlice";
 import { openModal as openTokenPurchaseModal } from "@/store/slices/tokenPurchaseSlice";
 import { useToast } from "@/hooks/useToast";
-import { useDeletePost } from "@/components/posts/delete/useDeletePost";
-import DeletePostModal from "@/components/posts/delete/DeletePostModal";
+import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
+import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import LoadingOverlay from "./ui/LoadingOverlay";
-import JobDetailBanner from "@/components/features/company/posts/details/JobDetailBanner";
-import JobDetailToolbar from "@/components/features/company/posts/details/JobDetailToolbar";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
 
@@ -45,6 +49,7 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
 
   const [activeEdit,       setActiveEdit]       = useState<"post" | "recruitment" | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [menuAnchor,       setMenuAnchor]       = useState<null | HTMLElement>(null);
 
   const paymentSucceeded = !!paymentData;
 
@@ -114,9 +119,6 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
 
   const jd      = job?.jobDetails || {};
   const isDraft = job?.status === "draft";
-  const bannerSubtitle = job
-    ? `${jd.workMode || ""} · ${jd.employmentType || ""} · Posted by ${job.user?.companyName || "your company"}`
-    : "Loading job details…";
 
   return (
     <Box>
@@ -142,23 +144,104 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
 
       {!loading && !error && job && (
         <>
-          <JobDetailBanner
-            title={jd.title}
-            subtitle={bannerSubtitle}
-            creationType={job.creationType}
-            isDraft={isDraft}
-          />
+          {/* Banner */}
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2, gap: 2, flexWrap: "wrap" }}>
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: "22px", color: "#1a1a2e" }}>
+                  {jd.title || "Job Post"}
+                </Typography>
+                {isDraft && (
+                  <Chip label="Draft" size="small" sx={{ bgcolor: "#FEF3C7", color: "#92400E", fontWeight: 600, fontSize: "11px" }} />
+                )}
+                {!isDraft && (
+                  <Chip label="Published" size="small" sx={{ bgcolor: "#D1FAE5", color: "#065F46", fontWeight: 600, fontSize: "11px" }} />
+                )}
+                {job.creationType === "ai" && (
+                  <Chip label="AI" size="small" sx={{ bgcolor: "#EDE9FE", color: "#5B21B6", fontWeight: 600, fontSize: "11px" }} />
+                )}
+              </Box>
+              <Typography sx={{ fontSize: "13px", color: "#6B7280" }}>
+                {jd.workMode && <span>{jd.workMode}</span>}
+                {jd.workMode && jd.employmentType && <span> · </span>}
+                {jd.employmentType && <span>{jd.employmentType}</span>}
+                {(jd.workMode || jd.employmentType) && job.user?.companyName && <span> · </span>}
+                {job.user?.companyName && <span>Posted by {job.user.companyName}</span>}
+              </Typography>
+            </Box>
 
-          <JobDetailToolbar
-            isDraft={isDraft}
-            isOwner={isOwner}
-            isEditing={activeEdit !== null}
-            onPublish={() => setPaymentModalOpen(true)}
-            onEdit={() => setActiveEdit("post")}
-            onPassInterview={handlePassInterview}
-            onCopyLink={handleCopyLink}
-            onDelete={deletePost.handleOpen}
-          />
+            {/* Toolbar actions */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              {isOwner && isDraft && (
+                <Button
+                  variant="contained"
+                  startIcon={<PublishOutlined sx={{ fontSize: 16 }} />}
+                  onClick={() => setPaymentModalOpen(true)}
+                  sx={{ textTransform: "none", fontSize: "13px", fontWeight: 600, borderRadius: "20px", px: 2.5, bgcolor: "#F59E0B", "&:hover": { bgcolor: "#D97706" } }}
+                >
+                  Publish
+                </Button>
+              )}
+
+              {isOwner && activeEdit === null && (
+                <Button
+                  variant="outlined"
+                  startIcon={<EditOutlined sx={{ fontSize: 16 }} />}
+                  onClick={() => setActiveEdit("post")}
+                  sx={{ textTransform: "none", fontSize: "13px", fontWeight: 600, borderRadius: "20px", px: 2.5, color: TEAL, borderColor: TEAL, "&:hover": { bgcolor: "#F0FDFA", borderColor: TEAL } }}
+                >
+                  Edit
+                </Button>
+              )}
+
+              {!isDraft && (
+                <Button
+                  variant="outlined"
+                  startIcon={<OpenInNewOutlined sx={{ fontSize: 16 }} />}
+                  onClick={handlePassInterview}
+                  sx={{ textTransform: "none", fontSize: "13px", fontWeight: 600, borderRadius: "20px", px: 2.5, color: "#7C3AED", borderColor: "#7C3AED", "&:hover": { bgcolor: "#F5F3FF", borderColor: "#7C3AED" } }}
+                >
+                  Pass Interview
+                </Button>
+              )}
+
+              {!isDraft && (
+                <Button
+                  variant="outlined"
+                  startIcon={<ContentCopyOutlined sx={{ fontSize: 16 }} />}
+                  onClick={handleCopyLink}
+                  sx={{ textTransform: "none", fontSize: "13px", fontWeight: 600, borderRadius: "20px", px: 2.5, color: "#059669", borderColor: "#059669", "&:hover": { bgcolor: "#F0FDF4", borderColor: "#059669" } }}
+                >
+                  Copy Link
+                </Button>
+              )}
+
+              {isOwner && (
+                <>
+                  <IconButton
+                    onClick={(e) => setMenuAnchor(e.currentTarget)}
+                    sx={{ border: "1px solid #E5E7EB", borderRadius: "8px", p: 0.75, "&:hover": { bgcolor: "#FEF2F2", borderColor: "#E03E5C" } }}
+                  >
+                    <MoreVertOutlined sx={{ fontSize: 20, color: "#6B7280" }} />
+                  </IconButton>
+                  <Menu
+                    anchorEl={menuAnchor}
+                    open={Boolean(menuAnchor)}
+                    onClose={() => setMenuAnchor(null)}
+                    slotProps={{ paper: { sx: { borderRadius: "10px", minWidth: 160, boxShadow: "0 4px 20px rgba(0,0,0,0.12)" } } }}
+                  >
+                    <MenuItem
+                      onClick={() => { setMenuAnchor(null); deletePost.handleOpen(); }}
+                      sx={{ color: "#E03E5C", fontWeight: 600, fontSize: "14px", gap: 1 }}
+                    >
+                      <DeleteOutlineOutlined sx={{ fontSize: 18 }} />
+                      Delete Post
+                    </MenuItem>
+                  </Menu>
+                </>
+              )}
+            </Box>
+          </Box>
 
           <JobDetailContent
             activeEdit={activeEdit}

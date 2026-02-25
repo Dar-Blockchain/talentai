@@ -1,25 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
-  Button,
   Chip,
   IconButton,
   Divider,
-  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import { useRouter } from "next/router";
+import AppButton from "@/components/ui/AppButton";
+import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import StatusBadge from "@/components/dashboard-workplace/ui/StatusBadge";
-import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
-import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
-import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
+import MoreVertOutlined from "@mui/icons-material/MoreVert";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 
 const TEAL = "#0D9488";
 const TEAL_BG = "#F0FDFA";
@@ -50,11 +50,10 @@ interface JobPostCardProps {
 const JobPostCard: React.FC<JobPostCardProps> = ({
   job,
   onDelete,
-  onCopyLink,
-  onViewPassed,
-  onViewDetails,
 }) => {
   const router = useRouter();
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+
   const jd = job.jobDetails || {};
   const isDraft = job.status === "draft";
   const daysLeft = getDaysLeft(job.expirationDate);
@@ -103,29 +102,6 @@ const JobPostCard: React.FC<JobPostCardProps> = ({
                 size="small"
                 sx={{ fontSize: "10px", fontWeight: 600, height: 20, color: ctInfo.color, bgcolor: ctInfo.bg, border: `1px solid ${ctInfo.color}30` }}
               />
-              {jd.workMode && (
-                <Chip
-                  icon={<LocationOnOutlined sx={{ fontSize: 11 }} />}
-                  label={jd.workMode}
-                  size="small"
-                  sx={{ fontSize: "10px", height: 20, color: "#2563EB", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE" }}
-                />
-              )}
-              {jd.employmentType && (
-                <Chip
-                  label={jd.employmentType}
-                  size="small"
-                  sx={{ fontSize: "10px", height: 20, color: "#6B7280", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB" }}
-                />
-              )}
-              {jd.salary?.min && (
-                <Chip
-                  icon={<AttachMoneyOutlined sx={{ fontSize: 11 }} />}
-                  label={`${jd.salary.currency || "USD"} ${jd.salary.min.toLocaleString()}–${jd.salary.max?.toLocaleString() || "?"}`}
-                  size="small"
-                  sx={{ fontSize: "10px", height: 20, color: "#16A34A", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0" }}
-                />
-              )}
             </Box>
           </Box>
 
@@ -168,81 +144,42 @@ const JobPostCard: React.FC<JobPostCardProps> = ({
         <Divider sx={{ mb: 2 }} />
 
         {/* Actions */}
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-          <Button
-            size="small"
-            startIcon={<OpenInNewOutlined sx={{ fontSize: 14 }} />}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <AppButton
+            endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
             onClick={() => router.push(`/company/posts/${job._id}`)}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "12px",
-              borderRadius: 2,
-              color: "#2563EB",
-              border: "1px solid #BFDBFE",
-              bgcolor: "#EFF6FF",
-              "&:hover": { bgcolor: "#DBEAFE" },
-            }}
+            label="View Details"
+            size="small"
+            variant="outlined"
+          />
+
+          {/* 3-dot menu */}
+          <IconButton
+            size="small"
+            onClick={(e) => setMenuAnchor(e.currentTarget)}
+            sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6" }, borderRadius: 1.5 }}
           >
-            View Details
-          </Button>
+            <MoreVertOutlined sx={{ fontSize: 18 }} />
+          </IconButton>
 
-          {!isDraft && (
-            <>
-              <Button
-                size="small"
-                startIcon={<EmojiEventsOutlined sx={{ fontSize: 14 }} />}
-                onClick={() => onViewPassed(job._id)}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "12px",
-                  borderRadius: 2,
-                  color: TEAL,
-                  border: `1px solid ${TEAL_BORDER}`,
-                  bgcolor: TEAL_BG,
-                  "&:hover": { bgcolor: "#CCFBF1" },
-                }}
-              >
-                Passed Interview
-              </Button>
-              <Tooltip title={isExpired ? "Link expired" : "Copy interview link"}>
-                <span>
-                  <Button
-                    size="small"
-                    startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
-                    onClick={() => onCopyLink(job._id)}
-                    disabled={isExpired}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 600,
-                      fontSize: "12px",
-                      borderRadius: 2,
-                      color: "#16A34A",
-                      border: "1px solid #BBF7D0",
-                      bgcolor: "#F0FDF4",
-                      "&:hover": { bgcolor: "#DCFCE7" },
-                      "&.Mui-disabled": { color: "#9CA3AF", border: "1px solid #E5E7EB", bgcolor: "#F9FAFB" },
-                    }}
-                  >
-                    Copy Link
-                  </Button>
-                </span>
-              </Tooltip>
-            </>
-          )}
-
-          <Box sx={{ ml: "auto" }}>
-            <Tooltip title="Delete post">
-              <IconButton
-                size="small"
-                onClick={() => onDelete(job._id)}
-                sx={{ color: "#EF4444", "&:hover": { bgcolor: "#FEF2F2" }, border: "1px solid #FECACA", borderRadius: 2 }}
-              >
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={() => setMenuAnchor(null)}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+            PaperProps={{ sx: { borderRadius: 2, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 150, mt: 0.5 } }}
+          >
+            <MenuItem
+              onClick={() => { setMenuAnchor(null); onDelete(job._id); }}
+              sx={{ gap: 1, color: "#EF4444", fontSize: "13px", fontWeight: 600, "&:hover": { bgcolor: "#FEF2F2" } }}
+            >
+              <ListItemIcon sx={{ minWidth: "auto", color: "#EF4444" }}>
                 <DeleteOutlineOutlined sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
+              </ListItemIcon>
+              <ListItemText primary="Delete" primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
+            </MenuItem>
+          </Menu>
         </Box>
       </Box>
     </Box>

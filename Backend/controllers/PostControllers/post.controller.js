@@ -307,7 +307,7 @@ exports.getUserPosts = async (req, res) => {
         .json({ success: false, error: "User not authenticated" });
     }
 
-    const { page = 1, limit = 6, search = "", sort = "newest" } = req.query;
+    const { page = 1, limit = 6, search = "", sort = "newest", status = "" } = req.query;
 
     // Parse and validate pagination
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -323,6 +323,7 @@ exports.getUserPosts = async (req, res) => {
       limitNum,
       search,
       sortOption,
+      status,
     );
 
     res.status(200).json({
@@ -685,5 +686,23 @@ exports.getJobInterviewConfig = async (req, res) => {
       success: false,
       error: "Internal server error",
     });
+  }
+};
+
+/**
+ * Get post metrics (count by status)
+ */
+exports.getPostMetrics = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const metrics = await postService.getPostMetrics(userId);
+
+    res.status(200).json({
+      success: true,
+      data: metrics,
+    });
+  } catch (error) {
+    handleError(res, error, 500);
   }
 };
