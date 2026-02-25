@@ -2,15 +2,14 @@ import React, { useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Button, Alert, Avatar, Chip, Typography } from "@mui/material";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
-import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
+import { Box, Alert, Chip, Typography } from "@mui/material";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
 import SectionCard from "@/components/dashboard-workplace/ui/SectionCard";
 import LoadingOverlay from "@/components/dashboard-workplace/ui/LoadingOverlay";
 import { AppDispatch } from "@/store/store";
@@ -76,8 +75,8 @@ const CompanyAssessmentPage: React.FC = () => {
   const suggestedSkills = useMemo(() => assessment?.post?.skillAnalysis?.suggestedSkills || {}, [assessment]);
   const summary         = useMemo(() => assessment?.interviewData?.finalReport?.summary  || "", [assessment]);
   const recommendations = useMemo(() => assessment?.interviewData?.finalReport?.recommendations || [], [assessment]);
-  const jobDescription   = useMemo(() => assessment?.post?.jobDetails?.description    || "", [assessment]);
-  const jobRequirements  = useMemo(() => assessment?.post?.jobDetails?.requirements,   [assessment]);
+  const jobDescription      = useMemo(() => assessment?.post?.jobDetails?.description       || "", [assessment]);
+  const jobRequirements     = useMemo(() => assessment?.post?.jobDetails?.requirements,   [assessment]);
   const jobResponsibilities = useMemo(() => assessment?.post?.jobDetails?.responsibilities, [assessment]);
 
   const candidateName  = assessment?.candidate?.username || "Unknown Candidate";
@@ -85,26 +84,14 @@ const CompanyAssessmentPage: React.FC = () => {
   const interviewType  = assessment?.interviewData?.interviewType || "HR_INTERVIEW";
   const coverageScore  = assessment?.interviewData?.finalReport?.coverage?.overall || 0;
   const analytics      = assessment?.interviewData?.analytics || {};
-  const timestamp      = assessment?.createdAt ? new Date(assessment.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—";
+  const timestamp      = assessment?.createdAt
+    ? new Date(assessment.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+    : "—";
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box>
-          {/* ── Back button ── */}
-          <Button
-            startIcon={<ArrowBackOutlined sx={{ fontSize: 16 }} />}
-            onClick={() => router.back()}
-            sx={{
-              mb: 2, textTransform: "none", fontWeight: 600, fontSize: "13px",
-              color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: 2,
-              px: 2, py: 0.75,
-              "&:hover": { bgcolor: TEAL_BG, borderColor: TEAL, color: TEAL },
-            }}
-          >
-            Back
-          </Button>
-
           {loading && <LoadingOverlay height={400} message="Loading assessment…" color={TEAL} />}
 
           {!loading && error && (
@@ -114,77 +101,68 @@ const CompanyAssessmentPage: React.FC = () => {
           {!loading && !error && assessment && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 
-              {/* ── Header card ── */}
-              <SectionCard>
-                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-                  {/* Left: icon + title */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              {/* ── PageHeader ── */}
+              <PageHeader
+                title="Interview Assessment"
+                subtitle={`${candidateName} · ${jobTitle} · ${timestamp}`}
+                breadcrumbs={[
+                  { label: "Dashboard", href: "/company/dashboard" },
+                  { label: "Job Posts", href: "/company/posts" },
+                  { label: "Assessment" },
+                ]}
+                actions={
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                    <Chip
+                      label={interviewType.replace(/_/g, " ")}
+                      size="small"
+                      sx={{ height: 26, fontSize: "12px", fontWeight: 600, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}`, borderRadius: "13px" }}
+                    />
+                    {/* Score badge */}
                     <Box sx={{
-                      width: 48, height: 48, borderRadius: 2,
-                      bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 56, height: 56, borderRadius: "50%",
+                      border: `3px solid ${scoreColor(coverageScore)}`,
+                      bgcolor: `${scoreColor(coverageScore)}10`,
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
                     }}>
-                      <AssessmentOutlined sx={{ fontSize: 24, color: TEAL }} />
-                    </Box>
-                    <Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                        <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
-                          Interview Assessment
-                        </Typography>
-                        <Chip
-                          label={interviewType.replace(/_/g, " ")}
-                          size="small"
-                          sx={{
-                            height: 22, fontSize: "11px", fontWeight: 600,
-                            bgcolor: TEAL_BG, color: TEAL,
-                            border: `1px solid ${TEAL_BORDER}`, borderRadius: "11px",
-                          }}
-                        />
-                      </Box>
-                      {/* Meta chips */}
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 0.75 }}>
-                        <MetaChip icon={<PersonOutlined sx={{ fontSize: 14 }} />} label={candidateName} />
-                        <MetaChip icon={<WorkOutlined sx={{ fontSize: 14 }} />} label={jobTitle} />
-                        <MetaChip icon={<CalendarTodayOutlined sx={{ fontSize: 14 }} />} label={timestamp} />
-                        {analytics.duration > 0 && (
-                          <MetaChip icon={<AccessTimeOutlined sx={{ fontSize: 14 }} />} label={formatDuration(analytics.duration)} />
-                        )}
-                      </Box>
+                      <Typography sx={{ fontSize: "16px", fontWeight: 800, color: scoreColor(coverageScore), lineHeight: 1 }}>
+                        {Math.round(coverageScore)}
+                      </Typography>
+                      <Typography sx={{ fontSize: "9px", fontWeight: 600, color: "#6B7280", mt: 0.25 }}>
+                        Score
+                      </Typography>
                     </Box>
                   </Box>
+                }
+              />
 
-                  {/* Right: score circle */}
-                  <Box sx={{
-                    width: 80, height: 80, borderRadius: "50%",
-                    border: `4px solid ${scoreColor(coverageScore)}`,
-                    bgcolor: `${scoreColor(coverageScore)}10`,
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center",
-                    flexShrink: 0,
-                  }}>
-                    <Typography sx={{ fontSize: "20px", fontWeight: 800, color: scoreColor(coverageScore), lineHeight: 1 }}>
-                      {Math.round(coverageScore)}
-                    </Typography>
-                    <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#6B7280", mt: 0.25 }}>
-                      Score
-                    </Typography>
-                  </Box>
+              {/* ── Meta + stats card ── */}
+              <SectionCard>
+                {/* Meta chips row */}
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+                  <MetaChip icon={<PersonOutlined sx={{ fontSize: 14 }} />} label={candidateName} />
+                  <MetaChip icon={<WorkOutlined sx={{ fontSize: 14 }} />} label={jobTitle} />
+                  <MetaChip icon={<CalendarTodayOutlined sx={{ fontSize: 14 }} />} label={timestamp} />
+                  {analytics.duration > 0 && (
+                    <MetaChip icon={<AccessTimeOutlined sx={{ fontSize: 14 }} />} label={formatDuration(analytics.duration)} />
+                  )}
                 </Box>
 
                 {/* Analytics stats row */}
                 {(analytics.messageCount || analytics.completedAreas || analytics.coveragePercentage) ? (
-                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 1.5, mt: 2.5 }}>
-                    <StatBox label="Messages"      value={analytics.messageCount || 0}                           color="#6366F1" />
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 1.5 }}>
+                    <StatBox label="Messages"      value={analytics.messageCount || 0}                                    color="#6366F1" />
                     <StatBox label="Areas Covered" value={`${analytics.completedAreas || 0}/${analytics.totalAreas || 4}`} color="#F59E0B" />
-                    <StatBox label="Coverage"      value={`${Math.round(analytics.coveragePercentage || 0)}%`}  color="#8B5CF6" />
+                    <StatBox label="Coverage"      value={`${Math.round(analytics.coveragePercentage || 0)}%`}             color="#8B5CF6" />
                     {analytics.duration > 0 && (
-                      <StatBox label="Duration"    value={formatDuration(analytics.duration)}                   color={TEAL}    />
+                      <StatBox label="Duration"    value={formatDuration(analytics.duration)}                              color={TEAL}    />
                     )}
                   </Box>
                 ) : null}
               </SectionCard>
 
-              {/* ── Pipeline steps (if any) ── */}
+              {/* ── Pipeline steps ── */}
               {stepsData && <PipelineSteps stepsData={stepsData} />}
 
               {/* ── Coverage charts ── */}

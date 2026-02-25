@@ -1,9 +1,9 @@
 import React from "react";
 import { Box } from "@mui/material";
-import PostBasicDetails from "@/components/posts/details/PostBasicDetails";
-import RecruitmentFlowDetails from "@/components/posts/details/RecruitmentFlowDetails";
-import EditPostDetails from "@/components/posts/edit/EditPostDetails";
-import EditRecruitmentFlow from "@/components/posts/edit/EditRecruitmentFlow";
+import PostBasicDetails from "./PostBasicDetails";
+import RecruitmentFlowDetails from "./RecruitmentFlowDetails";
+import EditPostDetails from "./EditPostDetails";
+import EditRecruitmentFlow from "./EditRecruitmentFlow";
 
 type EditMode = "post" | "recruitment" | null;
 
