@@ -6,7 +6,6 @@ import {
   HowToRegOutlined,
   PsychologyOutlined,
   SettingsOutlined,
-  ChatOutlined,
 } from "@mui/icons-material";
 
 export const navigation = [
@@ -45,12 +44,6 @@ export const navigation = [
     icon: PsychologyOutlined,
     label: "Skills Matrix",
     href: "/company/skills",
-  },
-  {
-    id: "messages",
-    icon: ChatOutlined,
-    label: "Messages",
-    href: "/company/messages",
   },
   {
     id: "settings",

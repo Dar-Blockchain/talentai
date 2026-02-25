@@ -1,71 +1,51 @@
 "use client";
 
-import React, { memo } from "react";
-import { Box } from "@mui/material";
+import React, { memo, useEffect } from "react";
+import { Box, Skeleton } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import { useSelector } from "react-redux";
-import { selectMyPosts } from "@/store/slices/postSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchPostMetrics,
+  selectPostMetrics,
+  selectPostMetricsLoading,
+} from "@/store/slices/postSlice";
 import StatCard from "@/components/ui/StatCard";
 
-const getDaysLeft = (expirationDate?: string) => {
-  if (!expirationDate) return null;
-  return Math.ceil((new Date(expirationDate).getTime() - Date.now()) / 86400000);
-};
-
 const PostsStats: React.FC = () => {
-  const posts = useSelector(selectMyPosts);
+  const dispatch = useDispatch<AppDispatch>();
+  const metrics  = useSelector(selectPostMetrics);
+  const loading  = useSelector(selectPostMetricsLoading);
 
-  const total   = posts.length;
-  const active  = posts.filter(
-    (p: any) =>
-      p.status !== "draft" &&
-      (getDaysLeft(p.expirationDate) === null || getDaysLeft(p.expirationDate)! > 0)
-  ).length;
-  const drafts  = posts.filter((p: any) => p.status === "draft").length;
-  const expired = posts.filter(
-    (p: any) =>
-      getDaysLeft(p.expirationDate) !== null && getDaysLeft(p.expirationDate)! <= 0
-  ).length;
+  useEffect(() => {
+    dispatch(fetchPostMetrics());
+  }, [dispatch]);
+
+  const cards = [
+    { icon: <WorkOutlined sx={{ fontSize: 18 }} />,        label: "Total Posts", value: metrics?.total   ?? 0, color: "#0D9488" },
+    { icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,  label: "Active",      value: metrics?.active  ?? 0, color: "#10B981" },
+    { icon: <EditNoteOutlined sx={{ fontSize: 18 }} />,    label: "Drafts",      value: metrics?.draft   ?? 0, color: "#D97706" },
+    { icon: <AccessTimeOutlined sx={{ fontSize: 18 }} />,  label: "Expired",     value: metrics?.expired ?? 0, color: "#DC2626" },
+  ];
 
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <StatCard
-        icon={<WorkOutlined sx={{ fontSize: 18 }} />}
-        label="Total Posts"
-        value={total}
-        color="#0D9488"
-      />
-
-      <StatCard
-        icon={<CheckCircleOutline sx={{ fontSize: 18 }} />}
-        label="Active"
-        value={active}
-        color="#10B981"
-      />
-
-      <StatCard
-        icon={<EditNoteOutlined sx={{ fontSize: 18 }} />}
-        label="Drafts"
-        value={drafts}
-        color="#D97706"
-      />
-
-      <StatCard
-        icon={<AccessTimeOutlined sx={{ fontSize: 18 }} />}
-        label="Expired"
-        value={expired}
-        color="#DC2626"
-      />
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+      {cards.map((card) =>
+        loading ? (
+          <Skeleton key={card.label} variant="rounded" height={80} sx={{ borderRadius: 2 }} />
+        ) : (
+          <StatCard
+            key={card.label}
+            icon={card.icon}
+            label={card.label}
+            value={card.value}
+            color={card.color}
+          />
+        )
+      )}
     </Box>
   );
 };

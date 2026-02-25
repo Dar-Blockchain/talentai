@@ -5,7 +5,6 @@ import {
   Box,
   IconButton,
   InputBase,
-  Badge,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -14,23 +13,21 @@ import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import UserHeader from "./UserHeader";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
 import HeaderNotification from "@/components/header/HeaderNotification";
+import HeaderChat from "./HeaderChat";
 
 interface HeaderProps {
   onOpenMobile: () => void;
   breadcrumb: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onOpenMobile, breadcrumb }) => {
+const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const profile = useSelector(
-    (state: RootState) => state.user.connectedUser.profile,
-  );
+
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const companyName = profile?.companyDetails?.name || "Company";
   const companyInitial = companyName[0] || "C";
-  const totalUnreadMessages = 1;
 
   return (
     <Box
@@ -64,36 +61,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, breadcrumb }) => {
           }}
         >
           <SearchOutlined sx={{ color: "#9CA3AF", fontSize: 18, mr: 1 }} />
-          <InputBase
-            placeholder="Search anything..."
-            sx={{ fontSize: "13px", flex: 1 }}
-          />
-        </Box>{" "}
+          <InputBase placeholder="Search anything..." sx={{ fontSize: "13px", flex: 1 }} />
+        </Box>
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        {/* Chat icon */}
-        <IconButton sx={{ color: "#6B7280" }}>
-          <Badge
-            badgeContent={
-              totalUnreadMessages > 9 ? "9+" : totalUnreadMessages || undefined
-            }
-            sx={{
-              "& .MuiBadge-badge": {
-                bgcolor: "#EF4444",
-                color: "#fff",
-                fontSize: "10px",
-                fontWeight: 700,
-                minWidth: 18,
-                height: 18,
-              },
-            }}
-          >
-            <ChatOutlined sx={{ fontSize: 20 }} />
-          </Badge>
-        </IconButton>
+        <HeaderChat />
         <HeaderNotification />
-
         <UserHeader companyName={companyName} companyInitial={companyInitial} />
       </Box>
     </Box>
