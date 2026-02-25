@@ -10,7 +10,6 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
-import { Campaign } from "@/store/slices/campaignSlice";
 import {
   AccessTimeOutlined,
   ChevronRightOutlined,
@@ -25,6 +24,7 @@ import {
   TYPE_LABELS,
 } from "@/constants/campaign";
 import AppButton from "@/components/ui/AppButton";
+import { Campaign } from "@/types/campaign";
 
 const CampaignCard: React.FC<{
   campaign: Campaign;

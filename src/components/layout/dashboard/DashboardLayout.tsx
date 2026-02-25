@@ -71,6 +71,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             px: 4,
             height: `calc(100vh - ${HEADER_HEIGHT}px)`,
             overflowY: "auto",
+            backgroundColor: "rgb(249 250 251)!important",
             p: 3
           }}
           className="custom-scrollbar"
