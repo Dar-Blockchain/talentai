@@ -8,6 +8,7 @@ const {
   updateCampaign,
   deleteCampaign,
   getCampaignsByCompany,
+  getCampaignsByCompanyPaginated,
 } = require("../services/internalCampaign.service");
 
 /**
@@ -73,21 +74,30 @@ exports.createInternalCampaign = async (req, res) => {
 };
 
 /**
- * Get all campaigns for the authenticated company
+ * Get all campaigns for the authenticated company with pagination
  */
 exports.getCompanyCampaigns = async (req, res) => {
   try {
     const companyId = req.user.profile;
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
 
-    const campaigns = await getCampaignsByCompany(
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+
+    const filters = status ? { status } : {};
+
+    const result = await getCampaignsByCompanyPaginated(
       companyId,
-      status ? { status } : {},
+      pageNum,
+      limitNum,
+      filters
     );
 
     res.status(200).json({
       success: true,
-      data: campaigns,
+      data: result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     res.status(500).json({

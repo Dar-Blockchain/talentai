@@ -1,6 +1,6 @@
 // Interview Configuration Types
 export interface InterviewConfig {
-  interviewType: 'HR_INTERVIEW' | 'SALARY_INTERVIEW' | 'TECHNICAL_SKILL' | 'SOFT_SKILL' | 'PSYCHOTECHNIC';
+  interviewType: 'HR_INTERVIEW' | 'TECHNICAL_INTERVIEW' | 'ASSESSMENT' | 'EVALUATION';
   testReason: string;
   context: {
     targetCompany: string;
