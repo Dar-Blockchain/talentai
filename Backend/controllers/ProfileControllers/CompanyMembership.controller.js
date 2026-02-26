@@ -48,3 +48,16 @@ module.exports.updateMembershipRole = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+// Get simple statistics for memberships belonging to a company
+module.exports.getMembershipStats = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const stats = await CompanyMembershipService.getMembershipStatsByCompany(
+      companyId,
+    );
+    res.json({ success: true, stats });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};

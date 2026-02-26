@@ -10,6 +10,13 @@ const { controledAcces } = require("../middleware/authorize.middleware.js");
 // All routes below require an authenticated user and are logged
 router.use(requireAuthUser,  controledAcces("Company"), authLogMiddleware("memberships"));
 
+// Get statistics for a company's memberships (counts by role/status)
+router.get(
+  "/memberships/stats",
+  resolveCompanyActor,
+  CompanyMembershipController.getMembershipStats,
+);
+
 // Get all memberships for a company owned by the user
 router.get("/memberships",resolveCompanyActor, CompanyMembershipController.getMembershipsByCompany);
 
