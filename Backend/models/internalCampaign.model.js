@@ -53,7 +53,7 @@ const internalCampaignSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"],
-      default: "ACTIVE",
+      default: "DRAFT",
       index: true,
     },
 
