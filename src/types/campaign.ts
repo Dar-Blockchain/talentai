@@ -19,12 +19,6 @@ export type ModuleType =
   | "SKILL_TEST"
   | "TRAINING_PATH";
 
-export interface CampaignModule {
-  type: ModuleType;
-  config: Record<string, any>;
-  order: number;
-}
-
 export interface Campaign {
   _id: string;
   company: string;
@@ -45,6 +39,17 @@ export interface Campaign {
   updatedAt: string;
 }
 
+export interface CreateCampaignForm {
+  title: string;
+  type: CampaignType;
+  description?: string;
+  anonymityMode: AnonymityMode;
+  modules: ModuleType[];
+  accessMethod: AccessMethod;
+  targetDepartment?: string;
+  deadline?: string;
+}
+
 export interface CreateCampaignPayload {
   title: string;
   type: CampaignType;
@@ -53,9 +58,7 @@ export interface CreateCampaignPayload {
   modules: CampaignModule[];
   accessMethod: AccessMethod;
   targetDepartment?: string;
-  targetEmployeeCount?: number;
   deadline?: string;
-  skill?: string;
 }
 
 export interface CampaignsResponse {
@@ -78,3 +81,56 @@ export interface CampaignMetrics {
   paused: number;
   expired: number;
 }
+
+export interface QuestionnaireModule {
+  type: "QUESTIONNAIRE";
+  order: number;
+  config: {
+    questions: {
+      question: string;
+      type: "TEXT" | "MULTIPLE_CHOICE" | "RATING";
+      options?: string[];
+    }[];
+  } | null;
+}
+
+export interface AIInterviewModule {
+  type: "AI_INTERVIEW";
+  order: number;
+  config: {
+    agentPrompt: string;
+    durationMinutes?: number;
+    scoringCriteria?: string[];
+  } | null;
+}
+
+export interface SkillTestModule {
+  type: "SKILL_TEST";
+  order: number;
+  config: {
+    skill: string;
+    passingScore?: number;
+    maxAttempts?: number;
+  } | null;
+}
+
+interface TrainingPathModule {
+  type: "TRAINING_PATH";
+  order: number;
+  config: {
+    resources: LearningResource[];
+  } | null;
+}
+
+interface LearningResource {
+  type: "LINK" | "DOCUMENT" | "COURSE" | "VIDEO";
+  title: string;
+  url: string;
+  estimatedTime?: number;
+}
+
+export type CampaignModule =
+  | QuestionnaireModule
+  | AIInterviewModule
+  | SkillTestModule
+  | TrainingPathModule;

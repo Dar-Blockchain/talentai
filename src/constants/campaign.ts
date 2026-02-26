@@ -1,5 +1,80 @@
-import { CampaignType, ModuleType } from "@/store/slices/campaignSlice";
+import { CampaignType, ModuleType } from "@/types/campaign";
+import {
+  InsightsOutlined,
+  AccountTreeOutlined,
+  SchoolOutlined,
+  TuneOutlined,
+  DescriptionOutlined,
+  PsychologyOutlined,
+  AssignmentTurnedInOutlined,
+  PeopleOutlined,
+} from "@mui/icons-material";
 
+export const CAMPAIGN_TYPES = [
+  {
+    value: "PRODUCTIVITY_DIAGNOSTIC",
+    label: "Productivity Diagnostic",
+    description: "Measure team productivity & output",
+    icon: InsightsOutlined,
+    color: "#3B82F6",
+  },
+  {
+    value: "SKILLS_MAPPING",
+    label: "Skills Mapping",
+    description: "Map existing skill sets across teams",
+    icon: AccountTreeOutlined,
+    color: "#10B981",
+  },
+  {
+    value: "ENABLEMENT",
+    label: "Enablement",
+    description: "Enable & upskill your teams",
+    icon: SchoolOutlined,
+    color: "#F59E0B",
+  },
+  {
+    value: "CUSTOM",
+    label: "Custom",
+    description: "Build your own assessment flow",
+    icon: TuneOutlined,
+    color: "#8B5CF6",
+  },
+] as const;
+
+export const MODULE_CONFIG: Record<
+  ModuleType,
+  {
+    label: string;
+    description: string;
+    icon: React.ElementType;
+    color: string;
+  }
+> = {
+  QUESTIONNAIRE: {
+    label: "Questionnaire",
+    description: "Structured questionnaire with custom questions",
+    icon: DescriptionOutlined,
+    color: "#3B82F6",
+  },
+  AI_INTERVIEW: {
+    label: "AI Interview",
+    description: "Conversational AI-powered interview session",
+    icon: PsychologyOutlined,
+    color: "#8B5CF6",
+  },
+  SKILL_TEST: {
+    label: "Skill Test",
+    description: "Technical skill assessment with scoring",
+    icon: AssignmentTurnedInOutlined,
+    color: "#10B981",
+  },
+  TRAINING_PATH: {
+    label: "Training Path",
+    description: "Guided learning & development path",
+    icon: PeopleOutlined,
+    color: "#F59E0B",
+  },
+};
 export const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   DRAFT: { bg: "#F9FAFB", fg: "#6B7280" },
   ACTIVE: { bg: "#F0FDF4", fg: "#16A34A" },
