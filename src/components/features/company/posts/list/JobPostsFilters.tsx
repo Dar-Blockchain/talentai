@@ -5,7 +5,7 @@ import TabBar from "@/components/dashboard-workplace/ui/TabBar";
 
 const TEAL = "#0D9488";
 
-type TabType = "all" | "active" | "draft" | "expired";
+type TabType = "all" | "open" | "draft" | "expired";
 
 interface TabItem {
   id: string;
