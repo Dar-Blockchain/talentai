@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, IconButton,
-  Alert, CircularProgress,
+  CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -30,28 +30,24 @@ const PURPLE = '#8310FF';
 const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, onClose, onSave }) => {
   const [email, setEmail]            = useState('');
   const [role, setRole]              = useState('hr');
-  const [loading, setLoading]        = useState(false);
-  const [error, setError]            = useState<string | null>(null);
-  const [successMessage, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open) { setEmail(''); setRole('hr'); setError(null); setSuccess(null); }
+    if (open) { setEmail(''); setRole('hr'); }
   }, [open]);
 
   const isFormValid = useMemo(() => email.trim() && EMAIL_REGEX.test(email) && role, [email, role]);
 
   const handleSave = useCallback(async () => {
-    if (!email.trim())            { setError('Email is required'); return; }
-    if (!EMAIL_REGEX.test(email)) { setError('Please enter a valid email address'); return; }
-    setLoading(true); setError(null); setSuccess(null);
+    if (!email.trim() || !EMAIL_REGEX.test(email)) return;
+    setLoading(true);
     try {
       await onSave(email, role);
-      setSuccess('Invitation sent successfully!');
-      setTimeout(onClose, 1500);
-    } catch (err: any) {
-      setError(err.message || 'Failed to invite team member');
+    } catch {
+      // error already handled by parent via showToast
     } finally {
       setLoading(false);
+      onClose();
     }
   }, [email, role, onSave, onClose]);
 
@@ -107,9 +103,6 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
 
       <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-
-          {error          && <Alert severity="error"   onClose={() => setError(null)} sx={{ borderRadius: 2, fontSize: '0.85rem' }}>{error}</Alert>}
-          {successMessage && <Alert severity="success" sx={{ borderRadius: 2, fontSize: '0.85rem' }}>{successMessage}</Alert>}
 
           {/* Email */}
           <Box>

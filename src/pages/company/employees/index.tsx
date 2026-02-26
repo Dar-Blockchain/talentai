@@ -26,6 +26,7 @@ import {
   clearAddMemberSuccess,
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
+  clearError,
   Member,
   MemberRole,
 } from "@/store/slices/memberSlice";
@@ -108,9 +109,11 @@ const EmployeesPage: React.FC = () => {
     const apiRole = roleMapping[role] || "RH";
     const result = await dispatch(addEmployee({ email, role: apiRole }));
     if (addEmployee.rejected.match(result)) {
-      throw new Error((result.payload as string) || "Failed to send invitation");
+      const msg = (result.payload as string) || "Failed to send invitation";
+      showToast({ message: msg, severity: "error" });
+      dispatch(clearError());
     }
-  }, [dispatch]);
+  }, [dispatch, showToast]);
 
   const handleUpdateRole = useCallback(async (role: string) => {
     if (!selectedMember) throw new Error("No member selected");
