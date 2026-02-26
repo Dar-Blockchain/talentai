@@ -30,12 +30,6 @@ const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ stats, loading = fals
       color: "#10B981",
     },
     {
-      icon: <AdminPanelSettingsOutlined sx={{ fontSize: 18 }} />,
-      label: "Owners",
-      value: owners,
-      color: "#0891B2",
-    },
-    {
       icon: <HourglassEmptyOutlined sx={{ fontSize: 18 }} />,
       label: "Invitations",
       value: stats?.invitations.total ?? 0,
