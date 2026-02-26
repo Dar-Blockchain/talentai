@@ -5,7 +5,17 @@ const CompanyInvitationService = require("../../services/ProfileService/CompanyI
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const memberships = await CompanyMembershipService.getMembershipsByCompany(companyId);
+    const { username, role } = req.query;
+
+    // Build filters object
+    const filters = {};
+    if (username) filters.username = username;
+    if (role) filters.role = role;
+
+    const memberships = await CompanyMembershipService.getMembershipsByCompany(
+      companyId,
+      filters,
+    );
     res.json({ success: true, memberships });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
