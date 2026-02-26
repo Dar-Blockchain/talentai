@@ -60,9 +60,15 @@ module.exports.getMembershipStats = async (req, res) => {
     const invitationStats = await CompanyInvitationService.getInvitationStatsByCompany(
       companyId,
     );
+
+    // combine totals for overall count
+    const combinedTotal =
+      (membershipStats?.total || 0) + (invitationStats?.total || 0);
+
     res.json({
       success: true,
       stats: {
+        total: combinedTotal,
         memberships: membershipStats,
         invitations: invitationStats,
       },
