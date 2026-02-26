@@ -65,6 +65,12 @@ export interface Invitation {
   acceptedAt?: string;
 }
 
+export interface MemberStats {
+  total: number;
+  memberships: { total: number };
+  invitations: { total: number };
+}
+
 interface MemberState {
   members: Member[];
   loading: boolean;
@@ -84,6 +90,8 @@ interface MemberState {
   fetchingInvitationDetails: boolean;
   respondingToInvitation: boolean;
   invitationResponse: { success: boolean; action: 'accept' | 'reject' } | null;
+  stats: MemberStats | null;
+  fetchingStats: boolean;
 }
 
 const initialState: MemberState = {
@@ -105,6 +113,8 @@ const initialState: MemberState = {
   fetchingInvitationDetails: false,
   respondingToInvitation: false,
   invitationResponse: null,
+  stats: null,
+  fetchingStats: false,
 };
 
 // Add a new member (employee)
@@ -663,6 +673,31 @@ export const respondToInvitation = createAsyncThunk<
   }
 });
 
+// Fetch membership stats
+export const fetchMemberStats = createAsyncThunk<
+  MemberStats,
+  void,
+  { rejectValue: string }
+>("member/fetchMemberStats", async (_, { rejectWithValue }) => {
+  if (isLoggingOutCheck()) return rejectWithValue("Logout in progress");
+  const token = localStorage.getItem("api_token");
+  if (!token) return rejectWithValue("No authentication token found");
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/memberships/stats`,
+      { method: "GET", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Failed to fetch stats" }));
+      return rejectWithValue(error.message || "Failed to fetch stats");
+    }
+    const data = await response.json();
+    return data.stats as MemberStats;
+  } catch (error: any) {
+    return rejectWithValue("An error occurred while fetching stats");
+  }
+});
+
 // Fetch invitation details by ID
 export const fetchInvitationDetails = createAsyncThunk<
   Invitation & { organization?: { _id: string; name: string } },
@@ -924,6 +959,17 @@ const memberSlice = createSlice({
           state.error = action.payload || "An error occurred";
         }
       )
+      // Handle fetchMemberStats
+      .addCase(fetchMemberStats.pending, (state: MemberState) => {
+        state.fetchingStats = true;
+      })
+      .addCase(fetchMemberStats.fulfilled, (state: MemberState, action: PayloadAction<MemberStats>) => {
+        state.fetchingStats = false;
+        state.stats = action.payload;
+      })
+      .addCase(fetchMemberStats.rejected, (state: MemberState) => {
+        state.fetchingStats = false;
+      })
       // Handle fetchInvitationDetails
       .addCase(fetchInvitationDetails.pending, (state: MemberState) => {
         state.fetchingInvitationDetails = true;
@@ -969,6 +1015,8 @@ export const selectMembers = (state: RootState) => ({
   fetchingInvitationDetails: state.member.fetchingInvitationDetails,
   respondingToInvitation: state.member.respondingToInvitation,
   invitationResponse: state.member.invitationResponse,
+  stats: state.member.stats,
+  fetchingStats: state.member.fetchingStats,
 });
 
 export default memberSlice.reducer;

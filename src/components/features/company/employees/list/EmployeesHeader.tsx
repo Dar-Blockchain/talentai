@@ -5,21 +5,42 @@ import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 import AdminPanelSettingsOutlined from "@mui/icons-material/AdminPanelSettingsOutlined";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import StatCard from "@/components/ui/StatCard";
+import { MemberStats } from "@/store/slices/memberSlice";
 
 interface EmployeesHeaderProps {
-  total: number;
+  stats: MemberStats | null;
+  loading?: boolean;
+  // fallback counts used while stats are loading
   active: number;
   owners: number;
-  pending: number;
-  loading?: boolean;
 }
 
-const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ total, active, owners, pending, loading = false }) => {
+const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ stats, loading = false, active, owners }) => {
   const cards = [
-    { icon: <PeopleAltOutlined sx={{ fontSize: 18 }} />,         label: "Total Members", value: total,   color: "#8310FF" },
-    { icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,         label: "Active",        value: active,  color: "#10B981" },
-    { icon: <AdminPanelSettingsOutlined sx={{ fontSize: 18 }} />, label: "Owners",        value: owners,  color: "#0891B2" },
-    { icon: <HourglassEmptyOutlined sx={{ fontSize: 18 }} />,     label: "Pending",       value: pending, color: "#D97706" },
+    {
+      icon: <PeopleAltOutlined sx={{ fontSize: 18 }} />,
+      label: "Total",
+      value: stats?.total ?? 0,
+      color: "#8310FF",
+    },
+    {
+      icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,
+      label: "Members",
+      value: stats?.memberships.total ?? 0,
+      color: "#10B981",
+    },
+    {
+      icon: <AdminPanelSettingsOutlined sx={{ fontSize: 18 }} />,
+      label: "Owners",
+      value: owners,
+      color: "#0891B2",
+    },
+    {
+      icon: <HourglassEmptyOutlined sx={{ fontSize: 18 }} />,
+      label: "Invitations",
+      value: stats?.invitations.total ?? 0,
+      color: "#D97706",
+    },
   ];
 
   return (

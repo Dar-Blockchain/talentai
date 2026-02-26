@@ -27,9 +27,9 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ROLE_STYLES: Record<string, { color: string; bg: string }> = {
   RH: { color: "#16A34A", bg: "#F0FDF4" }, TechLead: { color: "#0891B2", bg: "#ECFEFF" },
-  Supervisor: { color: "#D97706", bg: "#FFFBEB" }, Manager: { color: PURPLE, bg: "#F5F3FF" },
+  Supervisor: { color: AMBER, bg: "#FFFBEB" }, Manager: { color: PURPLE, bg: "#F5F3FF" },
   hr: { color: "#16A34A", bg: "#F0FDF4" }, technical_leader: { color: "#0891B2", bg: "#ECFEFF" },
-  supervisor: { color: "#D97706", bg: "#FFFBEB" }, manager: { color: PURPLE, bg: "#F5F3FF" },
+  supervisor: { color: AMBER, bg: "#FFFBEB" }, manager: { color: PURPLE, bg: "#F5F3FF" },
 };
 
 const AVATAR_GRADIENTS = [
@@ -44,7 +44,7 @@ function pickGradient(str: string) {
   return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length];
 }
 
-type TabType = "all" | "active" | "pending" | "inactive";
+type TabType = "active" | "pending";
 interface TabItem { id: string; label: string; count: number; }
 
 interface EmployeesListProps {
@@ -65,7 +65,7 @@ interface EmployeesListProps {
   onCancel?: (id: string) => Promise<void>;
 }
 
-/* ── Invitation card — exact same shell as EmployeeCard ── */
+/* ── Invitation card — same shell as EmployeeCard ── */
 const InvitationCard: React.FC<{
   invitation: Invitation;
   onResend: (id: string) => Promise<void>;
@@ -90,27 +90,19 @@ const InvitationCard: React.FC<{
 
   return (
     <Box sx={{
-      bgcolor: "#fff",
-      borderRadius: "16px",
-      border: "1px solid #F1F5F9",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-      overflow: "hidden",
+      bgcolor: "#fff", borderRadius: "16px", border: "1px solid #F1F5F9",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.05)", overflow: "hidden",
       transition: "all 0.2s ease",
       "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(215,119,6,0.10)", borderColor: "#FDE68A" },
     }}>
-      {/* Top strip — amber + amber (pending colour) */}
       <Box sx={{ height: 4, background: `linear-gradient(90deg, ${AMBER}, #FCD34D)` }} />
-
       <Box sx={{ p: 2.5 }}>
-        {/* Avatar row with 3-dot menu */}
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
           <Avatar sx={{
             width: 52, height: 52, fontWeight: 800, fontSize: "1.2rem", color: "#fff",
             background: `linear-gradient(${pickGradient(invitation.email)})`,
             boxShadow: "0 4px 12px rgba(0,0,0,0.12)", border: "2px solid #fff",
-          }}>
-            {letter}
-          </Avatar>
+          }}>{letter}</Avatar>
 
           {busy ? (
             <CircularProgress size={18} sx={{ color: PURPLE, mt: 0.5 }} />
@@ -120,8 +112,7 @@ const InvitationCard: React.FC<{
                 sx={{ color: "#CBD5E1", "&:hover": { bgcolor: "#F8FAFC", color: "#64748B" } }}>
                 <MoreVertOutlined sx={{ fontSize: 18 }} />
               </IconButton>
-              <Menu
-                anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}
+              <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}
                 transformOrigin={{ horizontal: "right", vertical: "top" }}
                 anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
                 slotProps={{ paper: { elevation: 0, sx: {
@@ -149,7 +140,6 @@ const InvitationCard: React.FC<{
           )}
         </Box>
 
-        {/* Email */}
         <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827", mb: 0.25 }}>
           {invitation.email}
         </Typography>
@@ -158,10 +148,8 @@ const InvitationCard: React.FC<{
           <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>Invitation sent</Typography>
         </Box>
 
-        {/* Divider */}
         <Box sx={{ height: "1px", bgcolor: "#F1F5F9", mb: 2 }} />
 
-        {/* Role chip + pending dot */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Chip label={roleLabel} size="small" sx={{
             fontWeight: 700, fontSize: "11px", height: 24,
@@ -179,6 +167,8 @@ const InvitationCard: React.FC<{
   );
 };
 
+const GRID = { display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2 };
+
 /* ── Main component ── */
 const EmployeesList: React.FC<EmployeesListProps> = ({
   members, loading, error, search, onSearchChange,
@@ -186,58 +176,78 @@ const EmployeesList: React.FC<EmployeesListProps> = ({
   invitations = [], fetchingInvitations = false, onResend, onCancel,
 }) => {
 
-  const pendingInvitationsSection = activeTab === "pending" && invitations.length > 0 && onResend && onCancel && (
-    fetchingInvitations ? (
-      <LoadingOverlay height={120} message="Loading invitations…" color={AMBER} />
-    ) : (
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2, mt: members.length > 0 ? 2 : 0 }}>
-        {invitations.map((inv) => (
-          <InvitationCard key={inv._id} invitation={inv} onResend={onResend} onCancel={onCancel} />
-        ))}
-      </Box>
-    )
-  );
+  const showInvitations = activeTab === "pending" && invitations.length > 0 && onResend && onCancel;
+  const totalShown = members.length + (showInvitations ? invitations.length : 0);
 
-  const membersBody = () => {
+  const body = () => {
     if (loading) return <LoadingOverlay height={300} message="Loading team members…" color={PURPLE} />;
     if (error)   return <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>;
 
-    if (members.length === 0) {
-      // In "pending" tab with invitations but no pending members — don't show empty state
-      if (activeTab === "pending" && invitations.length > 0) return null;
+    const noMembers  = members.length === 0;
+    const noInvites  = !showInvitations;
 
-      return (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 6, gap: 2 }}>
-          <Box sx={{
-            width: 72, height: 72, borderRadius: "50%", bgcolor: "#F5F3FF",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <PeopleAltOutlined sx={{ fontSize: 36, color: "#C4B5FD" }} />
-          </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#374151" }}>
-            {search ? "No members match your search" : "No team members yet"}
-          </Typography>
-          <Typography sx={{ fontSize: "0.875rem", color: "#9CA3AF", textAlign: "center", maxWidth: 300 }}>
-            {search ? "Try different keywords or clear the search." : "Invite your first team member to get started."}
-          </Typography>
+    if (noMembers && noInvites) return (
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 6, gap: 2 }}>
+        <Box sx={{ width: 72, height: 72, borderRadius: "50%", bgcolor: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <PeopleAltOutlined sx={{ fontSize: 36, color: "#C4B5FD" }} />
         </Box>
-      );
-    }
+        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#374151" }}>
+          {search ? "No members match your search" : "No team members yet"}
+        </Typography>
+        <Typography sx={{ fontSize: "0.875rem", color: "#9CA3AF", textAlign: "center", maxWidth: 300 }}>
+          {search ? "Try different keywords or clear the search." : "Invite your first team member to get started."}
+        </Typography>
+      </Box>
+    );
 
     return (
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2 }}>
-        {members.map((m) => <EmployeeCard key={m._id} member={m} onEdit={onEdit} onDelete={onDelete} onSelect={onSelect} />)}
-      </Box>
+      <>
+        {/* Member cards */}
+        {members.length > 0 && (
+          <Box sx={{ ...GRID, mb: showInvitations ? 3 : 0 }}>
+            {members.map((m) => (
+              <EmployeeCard key={m._id} member={m} onEdit={onEdit} onDelete={onDelete} onSelect={onSelect} />
+            ))}
+          </Box>
+        )}
+
+        {/* Invitation cards (pending tab only) */}
+        {showInvitations && (
+          <>
+            {members.length > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                <Box sx={{ height: 1, flex: 1, bgcolor: "#F1F5F9" }} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.5, borderRadius: 999, bgcolor: `${AMBER}12` }}>
+                  <EmailOutlined sx={{ fontSize: 13, color: AMBER }} />
+                  <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: AMBER }}>
+                    {invitations.length} Invitation{invitations.length !== 1 ? "s" : ""}
+                  </Typography>
+                </Box>
+                <Box sx={{ height: 1, flex: 1, bgcolor: "#F1F5F9" }} />
+              </Box>
+            )}
+            {fetchingInvitations ? (
+              <LoadingOverlay height={120} message="Loading invitations…" color={AMBER} />
+            ) : (
+              <Box sx={GRID}>
+                {invitations.map((inv) => (
+                  <InvitationCard key={inv._id} invitation={inv} onResend={onResend!} onCancel={onCancel!} />
+                ))}
+              </Box>
+            )}
+          </>
+        )}
+      </>
     );
   };
 
-  const subtitle = activeTab === "pending"
-    ? `${members.length} member${members.length !== 1 ? "s" : ""} · ${invitations.length} invitation${invitations.length !== 1 ? "s" : ""}`
-    : `${members.length} member${members.length !== 1 ? "s" : ""} shown`;
-
   return (
     <SectionCard>
-      <SectionHeader title="Team Members" subtitle={subtitle} />
+      <SectionHeader
+        title="Team Members"
+        subtitle={`${totalShown} ${totalShown !== 1 ? "members" : "member"} shown`}
+      />
+
       <TextField size="small" fullWidth placeholder="Search by name or email…"
         value={search} onChange={(e) => onSearchChange(e.target.value)}
         slotProps={{ input: { startAdornment: (
@@ -255,9 +265,10 @@ const EmployeesList: React.FC<EmployeesListProps> = ({
           },
         }}
       />
+
       <TabBar tabs={tabItems} activeTab={activeTab} onChange={(id) => onTabChange(id as TabType)} color={PURPLE} />
-      {membersBody()}
-      {pendingInvitationsSection}
+
+      {body()}
     </SectionCard>
   );
 };
