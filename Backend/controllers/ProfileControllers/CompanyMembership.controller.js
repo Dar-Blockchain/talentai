@@ -1,10 +1,21 @@
 const CompanyMembershipService = require("../../services/ProfileService/CompanyMembership.service");
+const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
 
 // Get all memberships for a company
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const memberships = await CompanyMembershipService.getMembershipsByCompany(companyId);
+    const { username, role } = req.query;
+
+    // Build filters object
+    const filters = {};
+    if (username) filters.username = username;
+    if (role) filters.role = role;
+
+    const memberships = await CompanyMembershipService.getMembershipsByCompany(
+      companyId,
+      filters,
+    );
     res.json({ success: true, memberships });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -44,6 +55,34 @@ module.exports.updateMembershipRole = async (req, res) => {
       role,
     );
     res.json({ success: true, updated });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Get simple statistics for memberships and invitations belonging to a company
+module.exports.getMembershipStats = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const membershipStats = await CompanyMembershipService.getMembershipStatsByCompany(
+      companyId,
+    );
+    const invitationStats = await CompanyInvitationService.getInvitationStatsByCompany(
+      companyId,
+    );
+
+    // combine totals for overall count
+    const combinedTotal =
+      (membershipStats?.total || 0) + (invitationStats?.total || 0);
+
+    res.json({
+      success: true,
+      stats: {
+        total: combinedTotal,
+        memberships: membershipStats,
+        invitations: invitationStats,
+      },
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

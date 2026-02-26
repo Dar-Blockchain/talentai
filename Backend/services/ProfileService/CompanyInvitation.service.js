@@ -150,6 +150,13 @@ module.exports.getCompanyInvitations = async (ownerId) => {
     .sort({ createdAt: -1 });
 };
 
+// Compute simple statistics for a company's invitations (counts by role/status)
+module.exports.getInvitationStatsByCompany = async (companyId) => {
+  const total = await CompanyInvitationModel.countDocuments({ company: companyId });
+
+  return { total };
+};
+
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)

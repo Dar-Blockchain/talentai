@@ -1,9 +1,29 @@
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
 const User = require("../../models/User.model");
 
-// Get all memberships for a company owned by the current user
-module.exports.getMembershipsByCompany = async (companyId) => {
-  const memberships = await CompanyMembershipModel.find({ company: companyId })
+// Get all memberships for a company owned by the current user (with optional filters)
+module.exports.getMembershipsByCompany = async (companyId, filters = {}) => {
+  const query = { company: companyId };
+
+  // Filter by username if provided (case-insensitive partial match)
+  if (filters.username) {
+    const userWithUsername = await User.findOne({
+      username: { $regex: filters.username, $options: "i" },
+    });
+    if (userWithUsername) {
+      query.user = userWithUsername._id;
+    } else {
+      // Return empty array if username not found
+      return [];
+    }
+  }
+
+  // Filter by role if provided
+  if (filters.role) {
+    query.role = filters.role;
+  }
+
+  const memberships = await CompanyMembershipModel.find(query)
     .populate("user", "username email")
     .populate("invitedBy", "username email")
     .sort({ createdAt: -1 });
@@ -53,4 +73,12 @@ module.exports.updateMembershipRole = async (membershipId, newRole) => {
 
   if (!updated) throw new Error("Membership not found");
   return updated;
+};
+
+// Compute simple statistics for a company's memberships (counts by role/status)
+module.exports.getMembershipStatsByCompany = async (companyId) => {
+
+  const total = await CompanyMembershipModel.countDocuments({ company: companyId });
+
+  return { total };
 };
