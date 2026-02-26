@@ -12,7 +12,7 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 const TEAL = "#0D9488";
 const TEAL_BG = "#F0FDFA";
 
-type TabType = "all" | "active" | "draft" | "expired";
+type TabType = "all" | "open" | "draft" | "expired";
 
 interface TabItem {
   id: string;
