@@ -72,6 +72,13 @@ export const useInterviewConfig = ({
   const fetchJobInterviewConfig = async (jobId: string) => {
     try {
       const token = Cookies.get('api_token');
+
+      if (!token) {
+        const returnUrl = window.location.pathname + window.location.search;
+        router.push(`/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
+        return;
+      }
+
       setPipelineLoading(true);
 
       console.log('🔍 Fetching interview config for jobId:', jobId);
@@ -88,6 +95,11 @@ export const useInterviewConfig = ({
       );
 
       if (!postResponse.ok) {
+        if (postResponse.status === 401 || postResponse.status === 403) {
+          const returnUrl = window.location.pathname + window.location.search;
+          router.push(`/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
+          return;
+        }
         throw new Error('Failed to fetch job details');
       }
 
