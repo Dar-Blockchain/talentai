@@ -1,4 +1,5 @@
 const CompanyMembershipService = require("../../services/ProfileService/CompanyMembership.service");
+const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
 
 // Get all memberships for a company
 module.exports.getMembershipsByCompany = async (req, res) => {
@@ -49,14 +50,23 @@ module.exports.updateMembershipRole = async (req, res) => {
   }
 };
 
-// Get simple statistics for memberships belonging to a company
+// Get simple statistics for memberships and invitations belonging to a company
 module.exports.getMembershipStats = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const stats = await CompanyMembershipService.getMembershipStatsByCompany(
+    const membershipStats = await CompanyMembershipService.getMembershipStatsByCompany(
       companyId,
     );
-    res.json({ success: true, stats });
+    const invitationStats = await CompanyInvitationService.getInvitationStatsByCompany(
+      companyId,
+    );
+    res.json({
+      success: true,
+      stats: {
+        memberships: membershipStats,
+        invitations: invitationStats,
+      },
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

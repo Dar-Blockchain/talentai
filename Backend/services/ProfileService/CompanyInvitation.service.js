@@ -150,6 +150,23 @@ module.exports.getCompanyInvitations = async (ownerId) => {
     .sort({ createdAt: -1 });
 };
 
+// Compute simple statistics for a company's invitations (counts by role/status)
+module.exports.getInvitationStatsByCompany = async (companyId) => {
+  const roleStats = await CompanyInvitationModel.aggregate([
+    { $match: { company: companyId } },
+    { $group: { _id: "$role", count: { $sum: 1 } } }
+  ]);
+
+  const statusStats = await CompanyInvitationModel.aggregate([
+    { $match: { company: companyId } },
+    { $group: { _id: "$status", count: { $sum: 1 } } }
+  ]);
+
+  const total = await CompanyInvitationModel.countDocuments({ company: companyId });
+
+  return { total, byRole: roleStats, byStatus: statusStats };
+};
+
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
