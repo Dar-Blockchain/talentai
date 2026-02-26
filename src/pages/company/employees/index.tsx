@@ -16,6 +16,7 @@ import { AppDispatch } from "@/store/store";
 import {
   fetchMembers,
   fetchInvitations,
+  fetchMemberStats,
   addEmployee,
   updateMemberRole,
   deleteMember,
@@ -30,7 +31,7 @@ import {
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
 
-type TabType = "all" | "active" | "pending" | "inactive";
+type TabType = "active" | "pending";
 
 const roleMapping: Record<string, MemberRole> = {
   hr: "RH",
@@ -52,19 +53,22 @@ const EmployeesPage: React.FC = () => {
     deleteMemberSuccess,
     invitations,
     fetchingInvitations,
+    stats,
+    fetchingStats,
   } = useSelector(selectMembers);
 
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen]         = useState(false);
+  const [editModalOpen, setEditModalOpen]       = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [detailMember, setDetailMember] = useState<Member | null>(null);
-  const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [selectedMember, setSelectedMember]     = useState<Member | null>(null);
+  const [detailMember, setDetailMember]         = useState<Member | null>(null);
+  const [search, setSearch]                     = useState("");
+  const [activeTab, setActiveTab]               = useState<TabType>("active");
 
   useEffect(() => {
     dispatch(fetchMembers());
     dispatch(fetchInvitations());
+    dispatch(fetchMemberStats());
   }, [dispatch]);
 
   useEffect(() => {
@@ -74,6 +78,7 @@ const EmployeesPage: React.FC = () => {
       showToast({ message: "Team member invited successfully!", severity: "success" });
       dispatch(fetchInvitations());
       dispatch(fetchMembers());
+      dispatch(fetchMemberStats());
     }
   }, [addMemberSuccess, dispatch, showToast]);
 
@@ -95,6 +100,7 @@ const EmployeesPage: React.FC = () => {
       dispatch(clearDeleteMemberSuccess());
       showToast({ message: "Team member removed successfully!", severity: "success" });
       dispatch(fetchMembers());
+      dispatch(fetchMemberStats());
     }
   }, [deleteMemberSuccess, dispatch, showToast]);
 
@@ -113,9 +119,8 @@ const EmployeesPage: React.FC = () => {
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedMember) return;
-    try {
-      await dispatch(deleteMember({ membershipId: selectedMember._id })).unwrap();
-    } catch (e) { console.error(e); }
+    try { await dispatch(deleteMember({ membershipId: selectedMember._id })).unwrap(); }
+    catch (e) { console.error(e); }
   }, [dispatch, selectedMember]);
 
   const handleResendInvitation = useCallback(async (invitationId: string) => {
@@ -131,14 +136,14 @@ const EmployeesPage: React.FC = () => {
     try {
       await dispatch(cancelInvitation(invitationId)).unwrap();
       showToast({ message: "Invitation cancelled successfully!", severity: "success" });
+      dispatch(fetchMemberStats());
     } catch {
       showToast({ message: "Failed to cancel invitation", severity: "error" });
     }
   }, [dispatch, showToast]);
 
   const filteredMembers = useMemo(() => {
-    let list = members;
-    if (activeTab !== "all") list = list.filter((m) => m.status === activeTab);
+    let list = members.filter((m) => m.status === activeTab);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((m) =>
@@ -149,17 +154,14 @@ const EmployeesPage: React.FC = () => {
     return list;
   }, [members, activeTab, search]);
 
-  const total   = members.length;
-  const active  = members.filter((m) => m.status === "active").length;
-  const owners  = members.filter((m) => m.role === "Owner").length;
-  const pending = members.filter((m) => m.status === "pending").length;
-  const inactive = members.filter((m) => m.status === "inactive").length;
+  const active       = members.filter((m) => m.status === "active").length;
+  const owners       = members.filter((m) => m.role === "Owner").length;
+  const pending      = members.filter((m) => m.status === "pending").length;
+  const pendingCount = pending + invitations.length;
 
   const tabItems = [
-    { id: "all",      label: "All",      count: total    },
-    { id: "active",   label: "Active",   count: active   },
-    { id: "pending",  label: "Pending",  count: pending  },
-    { id: "inactive", label: "Inactive", count: inactive },
+    { id: "active",  label: "Active",  count: active       },
+    { id: "pending", label: "Pending", count: pendingCount },
   ];
 
   return (
@@ -196,11 +198,10 @@ const EmployeesPage: React.FC = () => {
             />
 
             <EmployeesHeader
-              total={total}
+              stats={stats}
+              loading={fetchingStats}
               active={active}
               owners={owners}
-              pending={pending}
-              loading={loading}
             />
 
             <EmployeesList
@@ -223,7 +224,6 @@ const EmployeesPage: React.FC = () => {
           </Box>
         )}
 
-        {/* Modals — always mounted */}
         <AddEmployeeModal
           open={addModalOpen}
           onClose={() => setAddModalOpen(false)}

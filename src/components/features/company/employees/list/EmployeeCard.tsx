@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 import {
   Box, Typography, Avatar, Chip, IconButton,
   Menu, MenuItem, ListItemIcon, ListItemText,
@@ -52,6 +53,7 @@ interface EmployeeCardProps {
 }
 
 const EmployeeCard: React.FC<EmployeeCardProps> = ({ member, onEdit, onDelete, onSelect }) => {
+  const router = useRouter();
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
 
   const name   = member.user?.username || "Pending";
@@ -64,7 +66,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ member, onEdit, onDelete, o
   const statusLabel = member.status.charAt(0).toUpperCase() + member.status.slice(1);
 
   return (
-    <Box onClick={() => onSelect(member)} sx={{
+    <Box onClick={() => router.push(`/company/employees/${member._id}`)} sx={{
       bgcolor: "#fff",
       borderRadius: "16px",
       border: "1px solid #F1F5F9",
