@@ -7,6 +7,20 @@ const mongoose = require("mongoose");
  */
 exports.createCampaign = async (campaignData) => {
   try {
+    // convert modules array to Map if necessary
+    if (Array.isArray(campaignData.modules)) {
+      const map = new Map();
+      campaignData.modules.forEach((mod) => {
+        // generate an _id for each module entry so the map key exists
+        const id = new mongoose.Types.ObjectId().toString();
+        map.set(id, {
+          ...mod,
+          order: mod.order,
+        });
+      });
+      campaignData.modules = map;
+    }
+
     const campaign = new InternalCampaign(campaignData);
     await campaign.save();
     return campaign.populate(["company", "createdBy"]);
@@ -113,6 +127,19 @@ exports.updateCampaign = async (campaignId, updateData) => {
     delete updateData.company;
     delete updateData.createdBy;
     delete updateData.linkToken;
+
+    // if modules provided as array convert to Map
+    if (Array.isArray(updateData.modules)) {
+      const map = new Map();
+      updateData.modules.forEach((mod) => {
+        const id = mod._id ? mod._id.toString() : new mongoose.Types.ObjectId().toString();
+        map.set(id, {
+          ...mod,
+          order: mod.order,
+        });
+      });
+      updateData.modules = map;
+    }
 
     const campaign = await InternalCampaign.findByIdAndUpdate(
       campaignId,
@@ -257,7 +284,7 @@ exports.getCampaignMetrics = async (companyId) => {
 /**
  * Update module configuration in a campaign
  */
-exports.updateModuleConfig = async (campaignId, moduleIndex, newConfig) => {
+exports.updateModuleConfig = async (campaignId, moduleId, newConfig) => {
   try {
     const campaign = await InternalCampaign.findById(campaignId);
     if (!campaign) {
@@ -266,18 +293,20 @@ exports.updateModuleConfig = async (campaignId, moduleIndex, newConfig) => {
       throw err;
     }
 
-    // Validate module index
-    if (moduleIndex < 0 || moduleIndex >= campaign.modules.length) {
-      const err = new Error(`Invalid module index: ${moduleIndex}`);
+    // ensure modules map exists
+    if (!campaign.modules || !campaign.modules.has(moduleId)) {
+      const err = new Error(`Module not found for id: ${moduleId}`);
       err.status = 400;
       throw err;
     }
 
-    // Update the module config
-    campaign.modules[moduleIndex].config = {
-      ...campaign.modules[moduleIndex].config,
+    // Get the module object, update config and put back
+    const mod = campaign.modules.get(moduleId);
+    mod.config = {
+      ...mod.config,
       ...newConfig,
     };
+    campaign.modules.set(moduleId, mod);
 
     await campaign.save();
 
