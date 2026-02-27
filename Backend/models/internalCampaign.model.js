@@ -53,7 +53,7 @@ const internalCampaignSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"],
-      default: "ACTIVE",
+      default: "DRAFT",
       index: true,
     },
 
@@ -64,8 +64,13 @@ const internalCampaignSchema = new mongoose.Schema(
     },
 
     modules: {
-      type: [moduleSchema],
-      validate: [(arr) => arr.length > 0, "At least one module required"],
+      type: Map,
+      of: moduleSchema,
+      default: {},
+      validate: [
+        (map) => map && map.size > 0,
+        "At least one module required",
+      ],
     },
 
     accessMethod: {
@@ -102,6 +107,17 @@ const internalCampaignSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// transform modules map to array when converting to JSON/object
+internalCampaignSchema.set("toJSON", {
+  transform(doc, ret) {
+    if (ret.modules && typeof ret.modules === "object") {
+      // convert map values to array so frontend can continue to work with arrays
+      ret.modules = Object.values(ret.modules);
+    }
+    return ret;
+  },
+});
 
 internalCampaignSchema.index({ company: 1, status: 1 });
 

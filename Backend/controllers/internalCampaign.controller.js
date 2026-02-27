@@ -9,7 +9,29 @@ const {
   deleteCampaign,
   getCampaignsByCompany,
   getCampaignsByCompanyPaginated,
+  getCampaignStats,
+  getCampaignMetrics,
+  updateCampaignStatus,
+  updateModuleConfig,
 } = require("../services/internalCampaign.service");
+
+// ========== UTILITY FUNCTIONS ==========
+const verifyOwnership = async (campaignId, companyId) => {
+  const campaign = await getCampaignById(campaignId);
+  if (!campaign) {
+    const error = new Error("Campaign not found");
+    error.status = 404;
+    throw error;
+  }
+  if (campaign.company._id.toString() !== companyId.toString()) {
+    const error = new Error("Unauthorized: You can only manage your own campaigns");
+    error.status = 403;
+    throw error;
+  }
+  return campaign;
+};
+
+// ========== CONTROLLER METHODS ==========
 
 /**
  * Create a new internal campaign
@@ -141,33 +163,15 @@ exports.getCampaign = async (req, res) => {
 exports.updateInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    const updateData = req.body;
-
-    // Verify ownership
-    const campaign = await getCampaignById(campaignId);
-    if (!campaign) {
-      return res.status(404).json({
-        success: false,
-        error: "Campaign not found",
-      });
-    }
-
-    if (campaign.company._id.toString() !== req.user.profile.toString()) {
-      return res.status(403).json({
-        success: false,
-        error: "Unauthorized: You can only update your own campaigns",
-      });
-    }
-
-    const updatedCampaign = await updateCampaign(campaignId, updateData);
-
+    await verifyOwnership(campaignId, req.user.profile);
+    const updatedCampaign = await updateCampaign(campaignId, req.body);
     res.status(200).json({
       success: true,
       message: "Campaign updated successfully",
       data: updatedCampaign,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message,
     });
@@ -180,31 +184,14 @@ exports.updateInternalCampaign = async (req, res) => {
 exports.deleteInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-
-    // Verify ownership
-    const campaign = await getCampaignById(campaignId);
-    if (!campaign) {
-      return res.status(404).json({
-        success: false,
-        error: "Campaign not found",
-      });
-    }
-
-    if (campaign.company._id.toString() !== req.user.profile.toString()) {
-      return res.status(403).json({
-        success: false,
-        error: "Unauthorized: You can only delete your own campaigns",
-      });
-    }
-
+    await verifyOwnership(campaignId, req.user.profile);
     await deleteCampaign(campaignId);
-
     res.status(200).json({
       success: true,
       message: "Campaign deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       error: error.message,
     });
@@ -217,13 +204,7 @@ exports.deleteInternalCampaign = async (req, res) => {
 exports.getCampaignStats = async (req, res) => {
   try {
     const { campaignId } = req.params;
-
-    const {
-      getCampaignStats: getCampaignStatsService,
-    } = require("../services/internalCampaign.service");
-
-    const stats = await getCampaignStatsService(campaignId);
-
+    const stats = await getCampaignStats(campaignId);
     res.status(200).json({
       success: true,
       data: stats,
@@ -242,7 +223,6 @@ exports.getCampaignStats = async (req, res) => {
 exports.getAllCampaigns = async (req, res) => {
   try {
     const campaigns = await getAllCampaigns();
-
     res.status(200).json({
       success: true,
       data: campaigns,
@@ -261,19 +241,66 @@ exports.getAllCampaigns = async (req, res) => {
 exports.getCampaignMetrics = async (req, res) => {
   try {
     const companyId = req.user.profile;
-
-    const {
-      getCampaignMetrics: getCampaignMetricsService,
-    } = require("../services/internalCampaign.service");
-
-    const metrics = await getCampaignMetricsService(companyId);
-
+    const metrics = await getCampaignMetrics(companyId);
     res.status(200).json({
       success: true,
       data: metrics,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Update campaign status
+ */
+exports.updateCampaignStatus = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { status } = req.body;
+    await verifyOwnership(campaignId, req.user.profile);
+    const campaign = await updateCampaignStatus(campaignId, status);
+    res.status(200).json({
+      success: true,
+      message: "Campaign status updated successfully",
+      data: campaign,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Update module configuration in a campaign
+ */
+exports.updateModuleConfig = async (req, res) => {
+  try {
+    const { moduleId, campaignId } = req.params;
+    const { config } = req.body;
+
+    if (!config) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: config",
+      });
+    }
+
+    await verifyOwnership(campaignId, req.user.profile);
+    const campaign = await updateModuleConfig(campaignId, moduleId, config);
+
+    res.status(200).json({
+      success: true,
+      message: "Module configuration updated successfully",
+      data: campaign,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
       success: false,
       error: error.message,
     });

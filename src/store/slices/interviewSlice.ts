@@ -76,6 +76,13 @@ interface InterviewReportState {
   error: string | null;
 }
 
+interface CompanyInterviewsState {
+  items: any[];
+  total: number;
+  loading: boolean;
+  error: string | null;
+}
+
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -87,6 +94,7 @@ interface InterviewState {
   technicalAssessments: SkillTypeAssessments;
   softAssessments: SkillTypeAssessments;
   report: InterviewReportState;
+  companyInterviews: CompanyInterviewsState;
 }
 
 const initialState: InterviewState = {
@@ -100,6 +108,7 @@ const initialState: InterviewState = {
   technicalAssessments: { data: [], loading: false, error: null, total: 0 },
   softAssessments: { data: [], loading: false, error: null, total: 0 },
   report: { data: null, loading: false, error: null },
+  companyInterviews: { items: [], total: 0, loading: false, error: null },
 };
 
 /**
@@ -356,6 +365,66 @@ export const claimInterviewReward = createAsyncThunk<
   }
 );
 
+/**
+ * Fetch company post-interview assessments
+ */
+export const fetchCompanyInterviews = createAsyncThunk<
+  { items: any[]; total: number },
+  { postTitle?: string; candidateUsername?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>(
+  'interview/fetchCompanyInterviews',
+  async ({ postTitle, candidateUsername, page = 1, limit = 12 }, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const params = new URLSearchParams();
+      if (postTitle) params.append('postTitle', postTitle);
+      if (candidateUsername) params.append('candidateUsername', candidateUsername);
+      params.append('page', String(page));
+      params.append('limit', String(limit));
+
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine?${params.toString()}`;
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return rejectWithValue(errorData.message || `Failed to fetch interviews: ${response.status}`);
+      }
+
+      const json = await response.json();
+
+      // Response shape: { data: [ { post, assessments: [ { assessment, candidatePostStepProgress } ] } ] }
+      let items: any[] = [];
+      if (Array.isArray(json.data)) {
+        json.data.forEach((group: any) => {
+          if (Array.isArray(group.assessments)) {
+            group.assessments.forEach((entry: any) => {
+              if (entry.assessment) {
+                items.push(entry.assessment);
+              }
+            });
+          }
+        });
+      }
+
+      const total = typeof json.count === 'number' ? json.count
+        : typeof json.total === 'number' ? json.total
+        : items.length;
+
+      return { items, total };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching company interviews');
+    }
+  }
+);
+
 const interviewSlice = createSlice({
   name: 'interview',
   initialState,
@@ -429,6 +498,20 @@ const interviewSlice = createSlice({
       .addCase(fetchInterviewReport.rejected, (state, action) => {
         state.report.loading = false;
         state.report.error = action.payload || 'An error occurred';
+      })
+      // ---- COMPANY INTERVIEWS ----
+      .addCase(fetchCompanyInterviews.pending, (state) => {
+        state.companyInterviews.loading = true;
+        state.companyInterviews.error = null;
+      })
+      .addCase(fetchCompanyInterviews.fulfilled, (state, action) => {
+        state.companyInterviews.loading = false;
+        state.companyInterviews.items = action.payload.items;
+        state.companyInterviews.total = action.payload.total;
+      })
+      .addCase(fetchCompanyInterviews.rejected, (state, action) => {
+        state.companyInterviews.loading = false;
+        state.companyInterviews.error = action.payload || 'An error occurred';
       });
   },
 });
@@ -448,5 +531,8 @@ export const selectSoftAssessments = (state: RootState) => state.interview.softA
 export const selectInterviewReport = (state: RootState) => state.interview.report.data;
 export const selectInterviewReportLoading = (state: RootState) => state.interview.report.loading;
 export const selectInterviewReportError = (state: RootState) => state.interview.report.error;
+export const selectCompanyInterviews = (state: RootState) => state.interview.companyInterviews.items;
+export const selectCompanyInterviewsLoading = (state: RootState) => state.interview.companyInterviews.loading;
+export const selectCompanyInterviewsTotal = (state: RootState) => state.interview.companyInterviews.total;
 
 export default interviewSlice.reducer;
