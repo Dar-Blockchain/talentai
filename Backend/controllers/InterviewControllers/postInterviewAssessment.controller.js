@@ -217,9 +217,11 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 };
 
 // ========== READ - Get all for authenticated company ==========
+// supports query parameters jobTitle and candidateUsername for filtering
 module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
+    const { jobTitle, postTitle, candidateUsername, page = 1, limit = 10 } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -228,8 +230,19 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
       });
     }
 
-    const assessments =
-      await postInterviewAssessmentService.getAssessmentsByCompany(companyId);
+    const filters = {};
+    // allow either `jobTitle` or `postTitle` parameter
+    if (jobTitle || postTitle) filters.jobTitle = jobTitle || postTitle;
+    if (candidateUsername) filters.candidateUsername = candidateUsername;
+
+    const assessmentsResult =
+      await postInterviewAssessmentService.getAssessmentsByCompany(
+        companyId,
+        filters,
+        parseInt(page),
+        parseInt(limit),
+      );
+    const assessments = assessmentsResult.data;
 
     // Group assessments by post
     const groups = {};
@@ -278,12 +291,57 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
       message: "Assessments retrieved and grouped by post successfully",
       count: grouped.length,
       data: grouped,
+      pagination: {
+        currentPage: assessmentsResult.currentPage,
+        totalPages: assessmentsResult.totalPages,
+        totalCount: assessmentsResult.totalCount,
+        limit: assessmentsResult.limit,
+        hasNextPage: assessmentsResult.hasNextPage,
+        hasPrevPage: assessmentsResult.hasPrevPage,
+      },
     });
   } catch (error) {
     console.error("Error getting assessments by company:", error);
     res.status(error.status || 500).json({
       success: false,
       message: error.message || "Error retrieving assessments",
+    });
+  }
+};
+
+// ========== READ - Interview metrics for authenticated company ==========
+module.exports.getInterviewMetricsForCompany = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { jobTitle, postTitle, candidateUsername } = req.query;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const filters = {};
+    if (jobTitle || postTitle) filters.jobTitle = jobTitle || postTitle;
+    if (candidateUsername) filters.candidateUsername = candidateUsername;
+
+    const metrics =
+      await postInterviewAssessmentService.getInterviewMetricsForCompany(
+        companyId,
+        filters,
+      );
+
+    res.status(200).json({
+      success: true,
+      message: "Interview metrics retrieved successfully",
+      data: metrics,
+    });
+  } catch (error) {
+    console.error("Error getting interview metrics:", error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Error retrieving metrics",
     });
   }
 };
