@@ -452,3 +452,85 @@ module.exports.getAssessmentsByCompany = async (
     throw error;
   }
 };
+
+// ========== METRICS - Company interview summary ==========
+module.exports.getInterviewMetricsForCompany = async (companyId, filters = {}) => {
+  try {
+    const matchStage = { company: companyId };
+
+    const pipeline = [
+      { $match: matchStage },
+      // populate candidate & post for filtering
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'candidate',
+          foreignField: '_id',
+          as: 'candidate',
+        },
+      },
+      { $unwind: { path: '$candidate', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
+        },
+      },
+      { $unwind: { path: '$post', preserveNullAndEmptyArrays: true } },
+    ];
+
+    if (filters.jobTitle) {
+      pipeline.push({
+        $match: { 'post.jobDetails.title': { $regex: filters.jobTitle, $options: 'i' } },
+      });
+    }
+    if (filters.candidateUsername) {
+      pipeline.push({
+        $match: { 'candidate.username': { $regex: filters.candidateUsername, $options: 'i' } },
+      });
+    }
+
+    // compute summary metrics
+    pipeline.push({
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        sumScore: { $sum: '$interviewData.finalReport.scores.overall' },
+        needWork: {
+          $sum: {
+            $cond: [
+              { $lt: ['$interviewData.finalReport.scores.overall', 20] },
+              1,
+              0,
+            ],
+          },
+        },
+        excellent: {
+          $sum: {
+            $cond: [
+              { $gt: ['$interviewData.finalReport.scores.overall', 70] },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    });
+
+    const agg = await PostInterviewAssessment.aggregate(pipeline);
+    const row = agg[0] || { total: 0, sumScore: 0, needWork: 0, excellent: 0 };
+    const avgScore = row.total > 0 ? row.sumScore / row.total : 0;
+
+    return {
+      total: row.total,
+      needWork: row.needWork,
+      excellent: row.excellent,
+      avgScore,
+    };
+  } catch (error) {
+    console.error('❌ Error computing interview metrics for company:', error.message);
+    throw error;
+  }
+};
