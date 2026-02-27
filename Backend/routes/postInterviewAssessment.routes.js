@@ -28,6 +28,7 @@ router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments
 
 // GET /post-interview-assessments/company/mine — Get all assessments for authenticated company
 router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
+
 // GET /post-interview-assessments/company/mine/metrics — Get interview metrics for authenticated company
 router.get('/company/mine/metrics', postInterviewAssessmentController.getInterviewMetricsForCompany);
 
