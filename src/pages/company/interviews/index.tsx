@@ -12,9 +12,11 @@ import type { InterviewAssessment } from "@/components/features/company/intervie
 import { AppDispatch } from "@/store/store";
 import {
   fetchCompanyInterviews,
+  fetchCompanyInterviewMetrics,
   selectCompanyInterviews,
   selectCompanyInterviewsLoading,
   selectCompanyInterviewsTotal,
+  selectCompanyMetrics,
 } from "@/store/slices/interviewSlice";
 
 type TabType = "all" | "excellent" | "satisfactory" | "needs-work";
@@ -33,6 +35,7 @@ const InterviewsPage: React.FC = () => {
   const results   = useSelector(selectCompanyInterviews) as InterviewAssessment[];
   const loading   = useSelector(selectCompanyInterviewsLoading);
   const total     = useSelector(selectCompanyInterviewsTotal) as number;
+  const metrics   = useSelector(selectCompanyMetrics);
 
   const [search,   setSearch]   = useState("");
   const [tab,      setTab]      = useState<TabType>("all");
@@ -40,6 +43,7 @@ const InterviewsPage: React.FC = () => {
   const [page,     setPage]     = useState(0);
 
   useEffect(() => {
+    dispatch(fetchCompanyInterviewMetrics());
     dispatch(fetchCompanyInterviews({ page: page + 1, limit: ROW }));
   }, [dispatch, page]);
 
@@ -59,20 +63,15 @@ const InterviewsPage: React.FC = () => {
     return list;
   }, [results, search, tab]);
 
-  const excellent    = results.filter((a) => getScore(a) >= 70).length;
   const satisfactory = results.filter((a) => { const s = getScore(a); return s >= 50 && s < 70; }).length;
-  const needsWork    = results.filter((a) => getScore(a) < 50).length;
-  const avgScore     = results.length
-    ? Math.round(results.reduce((s, a) => s + getScore(a), 0) / results.length)
-    : 0;
 
   const tabItems = TABS.map((t) => ({
     id: t.id, label: t.label,
     count:
-      t.id === "all"          ? results.length :
-      t.id === "excellent"    ? excellent :
+      t.id === "all"          ? total :
+      t.id === "excellent"    ? metrics.excellent :
       t.id === "satisfactory" ? satisfactory :
-                                needsWork,
+                                metrics.needWork,
   }));
 
   const handleTabChange = useCallback((t: TabType) => { setTab(t); setPage(0); }, []);
@@ -82,7 +81,6 @@ const InterviewsPage: React.FC = () => {
     <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {detail ? (
-          /* ── Detail view (same pattern as EmployeesPage) ── */
           <Box>
             <InterviewDetail
               assessment={detail}
@@ -90,7 +88,6 @@ const InterviewsPage: React.FC = () => {
             />
           </Box>
         ) : (
-          /* ── List view ── */
           <Box>
             <PageHeader
               title="Interviews"
@@ -102,8 +99,13 @@ const InterviewsPage: React.FC = () => {
             />
 
             <InterviewsHeader
-              stats={{ total, excellent, avgScore, needsWork }}
-              loading={loading && page === 0}
+              stats={{
+                total:     metrics.total,
+                excellent: metrics.excellent,
+                avgScore:  metrics.avgScore,
+                needsWork: metrics.needWork,
+              }}
+              loading={metrics.loading && page === 0}
             />
 
             <InterviewsList
