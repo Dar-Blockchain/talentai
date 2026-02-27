@@ -363,16 +363,90 @@ module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => 
 };
 
 // ========== READ - Get all for a company ==========
-module.exports.getAssessmentsByCompany = async (companyId, filters = {}) => {
+// supports optional filters:
+//   jobTitle           -> partial/case-insensitive match against post.jobDetails.title
+//   candidateUsername  -> partial/case-insensitive match against candidate.username
+// pagination parameters page & limit
+module.exports.getAssessmentsByCompany = async (
+  companyId,
+  filters = {},
+  page = 1,
+  limit = 10,
+) => {
   try {
-    const query = { company: companyId };
+    const matchStage = { company: companyId };
 
-    const assessments = await PostInterviewAssessment.find(query)
-      .populate('candidate', '-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey')
-      .populate('post', '-linkedinPost')
-      .sort({ createdAt: -1 });
+    const pipeline = [
+      { $match: matchStage },
+      // bring in candidate and post documents
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'candidate',
+          foreignField: '_id',
+          as: 'candidate',
+        },
+      },
+      { $unwind: { path: '$candidate', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
+        },
+      },
+      { $unwind: { path: '$post', preserveNullAndEmptyArrays: true } },
+    ];
 
-    return assessments;
+    if (filters.jobTitle) {
+      pipeline.push({
+        $match: { 'post.jobDetails.title': { $regex: filters.jobTitle, $options: 'i' } },
+      });
+    }
+
+    if (filters.candidateUsername) {
+      pipeline.push({
+        $match: { 'candidate.username': { $regex: filters.candidateUsername, $options: 'i' } },
+      });
+    }
+
+    // project out sensitive or unnecessary fields before pagination
+    pipeline.push({
+      $project: {
+        'candidate.authHistory': 0,
+        'candidate.notifications': 0,
+        'candidate.hederaAccountId': 0,
+        'candidate.hederaPrivateKey': 0,
+        'candidate.hederaPublicKey': 0,
+        'post.linkedinPost': 0,
+      },
+    });
+
+    // prepare faceted pagination
+    const skip = (page - 1) * limit;
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [{ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: limit }],
+      },
+    });
+
+    const aggResult = await PostInterviewAssessment.aggregate(pipeline);
+    const meta = (aggResult[0] && aggResult[0].metadata[0]) || { total: 0 };
+    const data = (aggResult[0] && aggResult[0].data) || [];
+    const totalCount = meta.total;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data,
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   } catch (error) {
     console.error('❌ Error getting assessments by company:', error.message);
     throw error;

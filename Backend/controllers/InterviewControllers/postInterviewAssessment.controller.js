@@ -217,9 +217,11 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 };
 
 // ========== READ - Get all for authenticated company ==========
+// supports query parameters jobTitle and candidateUsername for filtering
 module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
+    const { jobTitle, postTitle, candidateUsername, page = 1, limit = 10 } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -228,8 +230,19 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
       });
     }
 
-    const assessments =
-      await postInterviewAssessmentService.getAssessmentsByCompany(companyId);
+    const filters = {};
+    // allow either `jobTitle` or `postTitle` parameter
+    if (jobTitle || postTitle) filters.jobTitle = jobTitle || postTitle;
+    if (candidateUsername) filters.candidateUsername = candidateUsername;
+
+    const assessmentsResult =
+      await postInterviewAssessmentService.getAssessmentsByCompany(
+        companyId,
+        filters,
+        parseInt(page),
+        parseInt(limit),
+      );
+    const assessments = assessmentsResult.data;
 
     // Group assessments by post
     const groups = {};
@@ -278,6 +291,14 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
       message: "Assessments retrieved and grouped by post successfully",
       count: grouped.length,
       data: grouped,
+      pagination: {
+        currentPage: assessmentsResult.currentPage,
+        totalPages: assessmentsResult.totalPages,
+        totalCount: assessmentsResult.totalCount,
+        limit: assessmentsResult.limit,
+        hasNextPage: assessmentsResult.hasNextPage,
+        hasPrevPage: assessmentsResult.hasPrevPage,
+      },
     });
   } catch (error) {
     console.error("Error getting assessments by company:", error);
