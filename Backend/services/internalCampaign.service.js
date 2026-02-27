@@ -11,22 +11,29 @@ exports.createCampaign = async (campaignData) => {
     await campaign.save();
     return campaign.populate(["company", "createdBy"]);
   } catch (error) {
-    throw new Error(`Error creating campaign: ${error.message}`);
+    const err = new Error(`Error creating campaign: ${error.message}`);
+    err.status = 400;
+    throw err;
   }
 };
+
 
 /**
  * Get campaign by ID
  */
 exports.getCampaignById = async (campaignId) => {
   try {
-    return await InternalCampaign.findById(campaignId)
+    const campaign = await InternalCampaign.findById(campaignId)
       .populate("company", "name email")
       .populate("createdBy", "firstName lastName email");
+    return campaign;
   } catch (error) {
-    throw new Error(`Error fetching campaign: ${error.message}`);
+    const err = new Error(`Error fetching campaign: ${error.message}`);
+    err.status = 404;
+    throw err;
   }
 };
+
 
 /**
  * Get all campaigns with optional filters
@@ -142,7 +149,9 @@ exports.updateCampaignStatus = async (campaignId, status) => {
   try {
     const validStatuses = ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"];
     if (!validStatuses.includes(status)) {
-      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+      const err = new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+      err.status = 400;
+      throw err;
     }
 
     return await InternalCampaign.findByIdAndUpdate(
@@ -151,7 +160,8 @@ exports.updateCampaignStatus = async (campaignId, status) => {
       { new: true, runValidators: true }
     ).populate(["company", "createdBy"]);
   } catch (error) {
-    throw new Error(`Error updating campaign status: ${error.message}`);
+    error.status = error.status || 500;
+    throw error;
   }
 };
 
@@ -210,38 +220,35 @@ exports.getCampaignMetrics = async (companyId) => {
       { $match: { company: new mongoose.Types.ObjectId(companyId) } },
       {
         $group: {
-          _id: "$status",
+          _id: { $toLower: "$status" },
           count: { $sum: 1 },
         },
       },
     ]);
 
-    // Initialize all status counters
-    const statusCounts = {
+    // Initialize structure with all possible statuses
+    const result = {
       total: 0,
-      active: 0,
       draft: 0,
-      closed: 0,
+      active: 0,
       paused: 0,
+      closed: 0,
       expired: 0,
     };
 
-    // Populate counts from aggregation result
-    if (metrics && metrics.length > 0) {
-      metrics.forEach((metric) => {
-        const status = metric._id ? metric._id.toLowerCase() : null;
-        if (status && statusCounts.hasOwnProperty(status)) {
-          statusCounts[status] = metric.count;
-        }
-      });
-    }
+    // Populate from aggregation results
+    metrics.forEach(({ _id, count }) => {
+      if (_id && result.hasOwnProperty(_id)) {
+        result[_id] = count;
+      }
+    });
 
     // Calculate total
-    statusCounts.total = Object.keys(statusCounts)
+    result.total = Object.keys(result)
       .filter((key) => key !== "total")
-      .reduce((sum, key) => sum + statusCounts[key], 0);
+      .reduce((sum, key) => sum + result[key], 0);
 
-    return statusCounts;
+    return result;
   } catch (error) {
     throw new Error(`Error getting campaign metrics: ${error.message}`);
   }

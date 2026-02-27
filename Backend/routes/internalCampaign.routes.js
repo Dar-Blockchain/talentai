@@ -10,13 +10,10 @@
 const express = require("express");
 const router = express.Router();
 const internalCampaignController = require("../controllers/internalCampaign.controller");
-
-// Import des middlewares
 const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 
-// Appliquer les middlewares globaux
 router.use(
   requireAuthUser,
   controledAcces("Company"),
@@ -25,59 +22,33 @@ router.use(
 
 /**
  * POST /campaigns — Créer une nouvelle campagne
- * Body: { title, type, description, anonymityMode, modules, accessMethod, targetDepartment, targetEmployeeCount, deadline }
  */
 router.post("/", internalCampaignController.createInternalCampaign);
 
 /**
  * GET /campaigns — Récupérer toutes les campagnes de l'entreprise
- * Query: ?status=ACTIVE|DRAFT|PAUSED|CLOSED|EXPIRED
  */
 router.get("/", internalCampaignController.getCompanyCampaigns);
 
 /**
- * GET /campaigns/metrics — Obtenir les métriques des campagnes (total, active, draft, closed, etc.)
- * NOTE: Route spécifique placée avant les routes générales avec :campaignId
+ * GET /campaigns/metrics — Obtenir les métriques des campagnes
  */
 router.get("/metrics", internalCampaignController.getCampaignMetrics);
 
 /**
  * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
- * NOTE: Route spécifique placée avant les routes générales avec :campaignId
  */
-router.get(
-  "/:campaignId/stats",
-  internalCampaignController.getCampaignStats
-);
+router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
 
 /**
  * PATCH /campaigns/:campaignId/status — Changer le statut d'une campagne
- * Body: { status }
- * NOTE: Route spécifique placée avant la route générale :campaignId
  */
-router.patch("/:campaignId/status", async (req, res) => {
-  try {
-    const campaignService = require("../services/internalCampaign.service");
-    const { campaignId } = req.params;
-    const { status } = req.body;
+router.patch("/:campaignId/status", internalCampaignController.updateCampaignStatus);
 
-    const campaign = await campaignService.updateCampaignStatus(
-      campaignId,
-      status
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Campaign status updated successfully",
-      data: campaign,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
+/**
+ * PATCH /campaigns/:campaignId/modules/:moduleIndex/config — Modifier la configuration d'un module
+ */
+router.patch("/:campaignId/modules/:moduleIndex/config", internalCampaignController.updateModuleConfig);
 
 /**
  * GET /campaigns/:campaignId — Récupérer une campagne spécifique
@@ -86,14 +57,13 @@ router.get("/:campaignId", internalCampaignController.getCampaign);
 
 /**
  * PUT /campaigns/:campaignId — Mettre à jour une campagne
- * Body: { title, type, description, anonymityMode, modules, accessMethod, targetDepartment, targetEmployeeCount, deadline }
  */
 router.put("/:campaignId", internalCampaignController.updateInternalCampaign);
 
 /**
  * DELETE /campaigns/:campaignId — Supprimer une campagne
  */
-router.delete("/:campaignId",internalCampaignController.deleteInternalCampaign);
+router.delete("/:campaignId", internalCampaignController.deleteInternalCampaign);
 
 // Routes pour les administrateurs uniquement (optionnel)
 router.get(
