@@ -253,3 +253,39 @@ exports.getCampaignMetrics = async (companyId) => {
     throw new Error(`Error getting campaign metrics: ${error.message}`);
   }
 };
+
+/**
+ * Update module configuration in a campaign
+ */
+exports.updateModuleConfig = async (campaignId, moduleIndex, newConfig) => {
+  try {
+    const campaign = await InternalCampaign.findById(campaignId);
+    if (!campaign) {
+      const err = new Error("Campaign not found");
+      err.status = 404;
+      throw err;
+    }
+
+    // Validate module index
+    if (moduleIndex < 0 || moduleIndex >= campaign.modules.length) {
+      const err = new Error(`Invalid module index: ${moduleIndex}`);
+      err.status = 400;
+      throw err;
+    }
+
+    // Update the module config
+    campaign.modules[moduleIndex].config = {
+      ...campaign.modules[moduleIndex].config,
+      ...newConfig,
+    };
+
+    await campaign.save();
+
+    return await InternalCampaign.findById(campaignId)
+      .populate("company", "name email")
+      .populate("createdBy", "firstName lastName email");
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};

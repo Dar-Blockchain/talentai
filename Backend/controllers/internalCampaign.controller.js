@@ -275,3 +275,35 @@ exports.updateCampaignStatus = async (req, res) => {
     });
   }
 };
+
+/**
+ * Update module configuration in a campaign
+ */
+exports.updateModuleConfig = async (req, res) => {
+  try {
+    const { moduleIndex } = req.params;
+    const { campaignId } = req.params;
+    const { config } = req.body;
+
+    if (!config) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: config",
+      });
+    }
+
+    await verifyOwnership(campaignId, req.user.profile);
+    const campaign = await updateModuleConfig(campaignId, parseInt(moduleIndex), config);
+
+    res.status(200).json({
+      success: true,
+      message: "Module configuration updated successfully",
+      data: campaign,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
