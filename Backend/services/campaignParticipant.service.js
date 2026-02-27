@@ -13,7 +13,8 @@ exports.addParticipant = async (participantData) => {
       throw new Error("Campaign not found");
     }
 
-    const moduleProgress = campaign.modules.map((module) => ({
+    // campaign.modules is now a Map; convert values to array for iteration
+    const moduleProgress = Array.from(campaign.modules.values()).map((module) => ({
       moduleType: module.type,
       status: "NOT_STARTED",
     }));
@@ -225,7 +226,7 @@ exports.bulkAddParticipants = async (campaignId, participants) => {
       throw new Error("Campaign not found");
     }
 
-    const moduleProgress = campaign.modules.map((module) => ({
+    const moduleProgress = Array.from(campaign.modules.values()).map((module) => ({
       moduleType: module.type,
       status: "NOT_STARTED",
     }));

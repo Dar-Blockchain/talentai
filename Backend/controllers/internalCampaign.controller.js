@@ -281,8 +281,7 @@ exports.updateCampaignStatus = async (req, res) => {
  */
 exports.updateModuleConfig = async (req, res) => {
   try {
-    const { moduleIndex } = req.params;
-    const { campaignId } = req.params;
+    const { moduleId, campaignId } = req.params;
     const { config } = req.body;
 
     if (!config) {
@@ -293,7 +292,7 @@ exports.updateModuleConfig = async (req, res) => {
     }
 
     await verifyOwnership(campaignId, req.user.profile);
-    const campaign = await updateModuleConfig(campaignId, parseInt(moduleIndex), config);
+    const campaign = await updateModuleConfig(campaignId, moduleId, config);
 
     res.status(200).json({
       success: true,
