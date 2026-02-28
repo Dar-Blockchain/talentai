@@ -1,4 +1,4 @@
-import { CampaignType, ModuleType } from "@/types/campaign";
+import { CampaignStatus, CampaignType, ModuleType } from "@/types/campaign";
 import {
   InsightsOutlined,
   AccountTreeOutlined,
@@ -105,4 +105,18 @@ export const MODULE_LABELS: Record<ModuleType, string> = {
   AI_INTERVIEW: "AI Interview",
   SKILL_TEST: "Skill Test",
   TRAINING_PATH: "Training Path",
+};
+
+export const STATUS_TRANSITIONS: Partial<Record<CampaignStatus, CampaignStatus[]>> = {
+  DRAFT: ["ACTIVE"],
+  ACTIVE: ["PAUSED", "CLOSED"],
+  PAUSED: ["ACTIVE", "CLOSED"],
+};
+
+export const STATUS_TRANSITION_LABELS: Record<CampaignStatus, string> = {
+  DRAFT: "Draft",
+  ACTIVE: "Activate",
+  PAUSED: "Pause",
+  CLOSED: "Close",
+  EXPIRED: "Expired",
 };

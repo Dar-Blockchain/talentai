@@ -82,13 +82,21 @@ export interface CampaignMetrics {
   expired: number;
 }
 
+export type QuestionType = "TEXT" | "MULTIPLE_CHOICE" | "RATING";
+
+export interface Question {
+  question: string;
+  type: QuestionType;
+  options?: string[];
+}
+
 export interface QuestionnaireModule {
   type: "QUESTIONNAIRE";
   order: number;
   config: {
     questions: {
       question: string;
-      type: "TEXT" | "MULTIPLE_CHOICE" | "RATING";
+      type: QuestionType;
       options?: string[];
     }[];
   } | null;

@@ -83,6 +83,15 @@ interface CompanyInterviewsState {
   error: string | null;
 }
 
+interface CompanyInterviewMetrics {
+  total: number;
+  needWork: number;
+  excellent: number;
+  avgScore: number;
+  loading: boolean;
+  error: string | null;
+}
+
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -95,6 +104,7 @@ interface InterviewState {
   softAssessments: SkillTypeAssessments;
   report: InterviewReportState;
   companyInterviews: CompanyInterviewsState;
+  companyMetrics: CompanyInterviewMetrics;
 }
 
 const initialState: InterviewState = {
@@ -109,6 +119,7 @@ const initialState: InterviewState = {
   softAssessments: { data: [], loading: false, error: null, total: 0 },
   report: { data: null, loading: false, error: null },
   companyInterviews: { items: [], total: 0, loading: false, error: null },
+  companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
 };
 
 /**
@@ -366,6 +377,46 @@ export const claimInterviewReward = createAsyncThunk<
 );
 
 /**
+ * Fetch company interview metrics
+ */
+export const fetchCompanyInterviewMetrics = createAsyncThunk<
+  { total: number; needWork: number; excellent: number; avgScore: number },
+  void,
+  { rejectValue: string }
+>(
+  'interview/fetchCompanyInterviewMetrics',
+  async (_, { rejectWithValue }) => {
+    const token = localStorage.getItem('api_token');
+
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine/metrics`;
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return rejectWithValue(errorData.message || `Failed to fetch metrics: ${response.status}`);
+      }
+
+      const json = await response.json();
+      const d = json.data ?? {};
+      return {
+        total:     typeof d.total    === 'number' ? d.total    : 0,
+        needWork:  typeof d.needWork === 'number' ? d.needWork : 0,
+        excellent: typeof d.excellent === 'number' ? d.excellent : 0,
+        avgScore:  typeof d.avgScore  === 'number' ? d.avgScore  : 0,
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching interview metrics');
+    }
+  }
+);
+
+/**
  * Fetch company post-interview assessments
  */
 export const fetchCompanyInterviews = createAsyncThunk<
@@ -512,6 +563,22 @@ const interviewSlice = createSlice({
       .addCase(fetchCompanyInterviews.rejected, (state, action) => {
         state.companyInterviews.loading = false;
         state.companyInterviews.error = action.payload || 'An error occurred';
+      })
+      // ---- COMPANY METRICS ----
+      .addCase(fetchCompanyInterviewMetrics.pending, (state) => {
+        state.companyMetrics.loading = true;
+        state.companyMetrics.error = null;
+      })
+      .addCase(fetchCompanyInterviewMetrics.fulfilled, (state, action) => {
+        state.companyMetrics.loading = false;
+        state.companyMetrics.total    = action.payload.total;
+        state.companyMetrics.needWork = action.payload.needWork;
+        state.companyMetrics.excellent = action.payload.excellent;
+        state.companyMetrics.avgScore  = action.payload.avgScore;
+      })
+      .addCase(fetchCompanyInterviewMetrics.rejected, (state, action) => {
+        state.companyMetrics.loading = false;
+        state.companyMetrics.error = action.payload || 'An error occurred';
       });
   },
 });
@@ -534,5 +601,6 @@ export const selectInterviewReportError = (state: RootState) => state.interview.
 export const selectCompanyInterviews = (state: RootState) => state.interview.companyInterviews.items;
 export const selectCompanyInterviewsLoading = (state: RootState) => state.interview.companyInterviews.loading;
 export const selectCompanyInterviewsTotal = (state: RootState) => state.interview.companyInterviews.total;
+export const selectCompanyMetrics = (state: RootState) => state.interview.companyMetrics;
 
 export default interviewSlice.reducer;

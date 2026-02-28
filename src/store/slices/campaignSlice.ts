@@ -1,9 +1,11 @@
 import {
   Campaign,
   CampaignMetrics,
+  CampaignModule,
   CampaignStatus,
   CreateCampaignPayload,
   CampaignsResponse,
+  ModuleType,
 } from "@/types/campaign";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
@@ -132,6 +134,32 @@ export const fetchCampaignById = createAsyncThunk<
   }
 });
 
+export const updateModuleConfig = createAsyncThunk<
+  Campaign,
+  { campaignId: string; moduleType: ModuleType; config: NonNullable<CampaignModule["config"]> },
+  { rejectValue: string }
+>(
+  "campaign/updateModuleConfig",
+  async ({ campaignId, moduleType, config }, { rejectWithValue }) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${BASE}/${campaignId}/modules/${moduleType}/config`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ config }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update module config");
+      return data.data as Campaign;
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  },
+);
+
 export const fetchCampaignMetrics = createAsyncThunk<
   CampaignMetrics,
   void,
@@ -165,6 +193,9 @@ interface CampaignState {
   detailLoading: boolean;
   detailError: string | null;
 
+  savingConfig: boolean;
+  saveConfigError: string | null;
+
   metrics: CampaignMetrics | null;
   metricsLoading: boolean;
   metricsError: string | null;
@@ -184,6 +215,9 @@ const initialState: CampaignState = {
   selectedCampaign: null,
   detailLoading: false,
   detailError: null,
+
+  savingConfig: false,
+  saveConfigError: null,
 
   metrics: null,
   metricsLoading: false,
@@ -268,6 +302,7 @@ const campaignSlice = createSlice({
           (c) => c._id === action.payload._id,
         );
         if (idx !== -1) state.campaigns[idx] = action.payload;
+        state.selectedCampaign.status = action.payload.status;
       },
     );
 
@@ -280,6 +315,23 @@ const campaignSlice = createSlice({
         );
       },
     );
+
+    // updateModuleConfig
+    builder
+      .addCase(updateModuleConfig.pending, (state) => {
+        state.savingConfig = true;
+        state.saveConfigError = null;
+      })
+      .addCase(updateModuleConfig.fulfilled, (state, action: PayloadAction<Campaign>) => {
+        state.savingConfig = false;
+        state.selectedCampaign = action.payload;
+        const idx = state.campaigns.findIndex((c) => c._id === action.payload._id);
+        if (idx !== -1) state.campaigns[idx] = action.payload;
+      })
+      .addCase(updateModuleConfig.rejected, (state, action) => {
+        state.savingConfig = false;
+        state.saveConfigError = action.payload || "Failed to save module configuration";
+      });
 
     // fetchCampaignById
     builder
@@ -342,6 +394,10 @@ export const selectDetailLoading = (state: any) =>
   state.campaign.detailLoading as boolean;
 export const selectDetailError = (state: any) =>
   state.campaign.detailError as string | null;
+export const selectSavingConfig = (state: any) =>
+  state.campaign.savingConfig as boolean;
+export const selectSaveConfigError = (state: any) =>
+  state.campaign.saveConfigError as string | null;
 
 export const selectCampaignPage = (state: any) => state.campaign.page as number;
 export const selectCampaignLimit = (state: any) => state.campaign.limit as number;

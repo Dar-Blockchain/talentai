@@ -25,6 +25,7 @@ import {
 } from "@/constants/campaign";
 import AppButton from "@/components/ui/AppButton";
 import { Campaign } from "@/types/campaign";
+import Link from "next/link";
 
 const CampaignCard: React.FC<{
   campaign: Campaign;
@@ -211,12 +212,13 @@ const CampaignCard: React.FC<{
           )}
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <AppButton
-            endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
-            onClick={() => onViewDetails(campaign._id)}
-            label="View"
-            size="xs"
-          />
+          <Link href={`/company/campaigns/${campaign._id}`}>
+            <AppButton
+              endIcon={<ChevronRightOutlined sx={{ fontSize: 14 }} />}
+              label="View"
+              size="xs"
+            />
+          </Link>
         </Box>
       </Box>
     </Box>
