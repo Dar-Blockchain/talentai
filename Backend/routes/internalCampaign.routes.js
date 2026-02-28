@@ -14,6 +14,17 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 
+// admin-specific endpoint is defined before we apply the company-only middleware
+// so that an admin user can access it without being blocked by the "Company" role check.
+router.get(
+  "/admin/all",
+  requireAuthUser,           // ensure the request is authenticated
+  controledAcces("Admin"),  // only users with role 'Admin' may proceed
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getAllCampaigns
+);
+
+// apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuthUser,
   controledAcces("Company"),
@@ -65,20 +76,5 @@ router.put("/:campaignId", internalCampaignController.updateInternalCampaign);
  */
 router.delete("/:campaignId", internalCampaignController.deleteInternalCampaign);
 
-// Routes pour les administrateurs uniquement (optionnel)
-router.get(
-  "/admin/all",
-  (req, res, next) => {
-    // Middleware pour vérifier que c'est un admin
-    if (req.user.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        error: "Unauthorized: Admin access required",
-      });
-    }
-    next();
-  },
-  internalCampaignController.getAllCampaigns
-);
 
 module.exports = router;
