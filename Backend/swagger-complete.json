@@ -1,0 +1,1122 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "TalentAI Platform API",
+    "version": "2.0.0",
+    "description": "API complète pour la plateforme TalentAI - Plateforme de recrutement, d'évaluation des talents et gestion RH utilisant Hedera et HCS-11",
+    "contact": {
+      "name": "TalentAI Support",
+      "email": "support@talentai.com"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5001",
+      "description": "Serveur de développement"
+    },
+    {
+      "url": "https://api.talentai.bid",
+      "description": "Serveur de production"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Welcome",
+      "description": "Endpoint d'accueil"
+    },
+    {
+      "name": "Authentication",
+      "description": "Authentification et gestion des utilisateurs"
+    },
+    {
+      "name": "Profiles",
+      "description": "Gestion des profils utilisateur"
+    },
+    {
+      "name": "Posts",
+      "description": "Gestion des annonces d'emploi"
+    },
+    {
+      "name": "Matching",
+      "description": "Moteur d'appariement candidat-emploi"
+    },
+    {
+      "name": "Interviews",
+      "description": "Gestion des entretiens et évaluations"
+    },
+    {
+      "name": "Evaluation",
+      "description": "Systèmes d'évaluation et tests"
+    },
+    {
+      "name": "HR Agents",
+      "description": "Agents RH autonomes avec HCS-11"
+    },
+    {
+      "name": "Hedera Tools",
+      "description": "Outils Hedera pour blockchain"
+    },
+    {
+      "name": "HCS-11",
+      "description": "Profils HCS-11 et gestion d'identité"
+    },
+    {
+      "name": "Notification System",
+      "description": "Système de notifications"
+    },
+    {
+      "name": "Internal Campaigns",
+      "description": "Campagnes internes d'évaluation"
+    },
+    {
+      "name": "Campaign Participants",
+      "description": "Gestion des participants aux campagnes"
+    },
+    {
+      "name": "Company Management",
+      "description": "Gestion des entreprises"
+    },
+    {
+      "name": "Chat",
+      "description": "Système de chat et messagerie"
+    },
+    {
+      "name": "Payment",
+      "description": "Gestion des paiements"
+    },
+    {
+      "name": "Utilities",
+      "description": "Utilitaires et gestion générale"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Welcome"],
+        "summary": "Page d'accueil",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Message de bienvenue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Bienvenue sur l'API Express!"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Inscription utilisateur",
+        "description": "Inscription d'un nouvel utilisateur avec envoi d'un code OTP par email",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "utilisateur@example.com"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Inscription réussie"
+          },
+          "400": {
+            "description": "Données invalides"
+          }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Vérification OTP",
+        "description": "Vérification du code OTP reçu par email",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
+                },
+                "required": ["email", "otp"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email vérifié avec succès"
+          },
+          "400": {
+            "description": "Code OTP invalide"
+          }
+        }
+      }
+    },
+    "/auth/connect-with-gmail": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Connexion avec Gmail",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Connexion réussie"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Déconnexion",
+        "responses": {
+          "200": {
+            "description": "Déconnexion réussie"
+          }
+        }
+      }
+    },
+    "/auth/users": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Récupérer tous les utilisateurs",
+        "responses": {
+          "200": {
+            "description": "Liste des utilisateurs"
+          },
+          "403": {
+            "description": "Accès non autorisé"
+          }
+        }
+      }
+    },
+    "/profiles": {
+      "post": {
+        "tags": ["Profiles"],
+        "summary": "Créer ou mettre à jour un profil",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["Candidate", "Recruiter", "Company"]
+                  },
+                  "skills": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil créé/mis à jour avec succès"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Récupérer tous les profils",
+        "responses": {
+          "200": {
+            "description": "Liste des profils"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profiles"],
+        "summary": "Supprimer son profil",
+        "responses": {
+          "200": {
+            "description": "Profil supprimé avec succès"
+          }
+        }
+      }
+    },
+    "/profiles/me": {
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Récupérer son propre profil",
+        "responses": {
+          "200": {
+            "description": "Profil de l'utilisateur connecté"
+          }
+        }
+      }
+    },
+    "/profiles/{userId}": {
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Récupérer un profil par ID",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil trouvé"
+          },
+          "404": {
+            "description": "Profil non trouvé"
+          }
+        }
+      }
+    },
+    "/profiles/search/skills": {
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Rechercher des profils par compétences",
+        "parameters": [
+          {
+            "name": "skills",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profils trouvés"
+          }
+        }
+      }
+    },
+    "/post": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Créer une nouvelle annonce d'emploi",
+        "responses": {
+          "201": {
+            "description": "Annonce créée"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Récupérer toutes les annonces",
+        "responses": {
+          "200": {
+            "description": "Liste des annonces"
+          }
+        }
+      }
+    },
+    "/post/{postId}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Récupérer une annonce par ID",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Annonce trouvée"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Mettre à jour une annonce",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Annonce mise à jour"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Supprimer une annonce",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Annonce supprimée"
+          }
+        }
+      }
+    },
+    "/matching": {
+      "get": {
+        "tags": ["Matching"],
+        "summary": "Récupérer les appariements",
+        "responses": {
+          "200": {
+            "description": "Appariements trouvés"
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobPostId}/matches": {
+      "get": {
+        "tags": ["Matching"],
+        "summary": "Obtenir les candidats correspondant à une annonce",
+        "parameters": [
+          {
+            "name": "jobPostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Candidats trouvés"
+          }
+        }
+      }
+    },
+    "/matchingConfig": {
+      "post": {
+        "tags": ["Matching"],
+        "summary": "Créer une configuration de matching"
+      },
+      "get": {
+        "tags": ["Matching"],
+        "summary": "Récupérer les configurations de matching"
+      }
+    },
+    "/chat": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Créer une conversation de chat"
+      },
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Récupérer les conversations de chat"
+      }
+    },
+    "/api/generate-questions": {
+      "post": {
+        "tags": ["Evaluation"],
+        "summary": "Générer des questions d'entretien",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "skills": {
+                    "type": "string"
+                  },
+                  "experience": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Questions générées"
+          }
+        }
+      }
+    },
+    "/skill-interview-assessments": {
+      "post": {
+        "tags": ["Interviews"],
+        "summary": "Créer une évaluation de compétences"
+      },
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "Récupérer les évaluations de compétences"
+      }
+    },
+    "/post-interview-assessments": {
+      "post": {
+        "tags": ["Interviews"],
+        "summary": "Créer une évaluation post-entretien"
+      },
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "Récupérer les évaluations post-entretien"
+      }
+    },
+    "/post-steps": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Créer les étapes d'une annonce"
+      },
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Récupérer les étapes des annonces"
+      }
+    },
+    "/candidate-progress": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Récupérer la progression des candidats"
+      }
+    },
+    "/notification-system": {
+      "post": {
+        "tags": ["Notification System"],
+        "summary": "Créer une notification système"
+      },
+      "get": {
+        "tags": ["Notification System"],
+        "summary": "Récupérer les notifications"
+      }
+    },
+    "/notification-system/{id}": {
+      "get": {
+        "tags": ["Notification System"],
+        "summary": "Récupérer une notification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Notification System"],
+        "summary": "Supprimer une notification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/notification-system/{id}/read": {
+      "patch": {
+        "tags": ["Notification System"],
+        "summary": "Marquer une notification comme lue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/create-agent": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Créer un agent autonome Hedera",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/create-token": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Créer un token fongible Hedera"
+      }
+    },
+    "/api/create-talentai-token": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Créer le token TalentAI (TALAI)"
+      }
+    },
+    "/api/mint-tokens": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Minter des tokens TALAI"
+      }
+    },
+    "/hedera-tools/create-token": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Créer un token fongible avec Hedera Tools"
+      }
+    },
+    "/hedera-tools/create-topic": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Créer un topic de consensus Hedera"
+      }
+    },
+    "/hedera-tools/submit-message": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Soumettre un message à un topic"
+      }
+    },
+    "/hedera-tools/balance": {
+      "get": {
+        "tags": ["Hedera Tools"],
+        "summary": "Récupérer le solde HBAR",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/hedera-tools/my-balance": {
+      "get": {
+        "tags": ["Hedera Tools"],
+        "summary": "Récupérer mon solde HBAR"
+      }
+    },
+    "/hedera-tools/tools": {
+      "get": {
+        "tags": ["Hedera Tools"],
+        "summary": "Récupérer les outils Hedera disponibles"
+      }
+    },
+    "/hedera-tools/create-evaluation-topic": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Créer un topic d'évaluation"
+      }
+    },
+    "/hedera-tools/submit-evaluation-message": {
+      "post": {
+        "tags": ["Hedera Tools"],
+        "summary": "Soumettre un message d'évaluation"
+      }
+    },
+    "/hr-agents/initialize": {
+      "post": {
+        "tags": ["HR Agents"],
+        "summary": "Initialiser tous les agents RH avec HCS-11"
+      }
+    },
+    "/hr-agents/initialize-single": {
+      "post": {
+        "tags": ["HR Agents"],
+        "summary": "Initialiser un agent RH avec HCS-11"
+      }
+    },
+    "/hr-agents": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Récupérer tous les agents RH"
+      }
+    },
+    "/hr-agents/avatar/{avatarName}": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Récupérer un agent par nom d'avatar",
+        "parameters": [
+          {
+            "name": "avatarName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/hr-agents/role/{role}": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Récupérer un agent par rôle",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/hr-agents/all": {
+      "delete": {
+        "tags": ["HR Agents"],
+        "summary": "Supprimer tous les agents"
+      }
+    },
+    "/hr-agents/submit-evaluation-message": {
+      "post": {
+        "tags": ["HR Agents"],
+        "summary": "Messagerie HCS-10/HCS-11 entre agents"
+      }
+    },
+    "/hr-agents/diagnose/{coordinatorId}": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Diagnostiquer les problèmes d'un coordinateur",
+        "parameters": [
+          {
+            "name": "coordinatorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/hr-agents/fix-proof-of-reception": {
+      "post": {
+        "tags": ["HR Agents"],
+        "summary": "Corriger la preuve de réception"
+      }
+    },
+    "/hr-agents/fix-memo/{agentId}": {
+      "post": {
+        "tags": ["HR Agents"],
+        "summary": "Corriger le memo HCS-11 d'un agent",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/hr-agents/check-all": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Vérifier la configuration de tous les agents"
+      }
+    },
+    "/hr-agents/profile/{agentId}": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Récupérer le profil HCS-11 d'un agent",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/hr-agents/hcs11-profile/{agentId}": {
+      "get": {
+        "tags": ["HR Agents"],
+        "summary": "Récupérer le profil HCS-11 du réseau",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/hcs11/status": {
+      "get": {
+        "tags": ["HCS-11"],
+        "summary": "Vérifier le statut du service HCS-11"
+      }
+    },
+    "/api/hcs11/validate": {
+      "post": {
+        "tags": ["HCS-11"],
+        "summary": "Valider les données du profil HCS-11"
+      }
+    },
+    "/api/hcs11/create-profile": {
+      "post": {
+        "tags": ["HCS-11"],
+        "summary": "Créer un profil HCS-11"
+      }
+    },
+    "/api/hcs11/create-and-inscribe": {
+      "post": {
+        "tags": ["HCS-11"],
+        "summary": "Créer et inscrire un profil HCS-11 sur Hedera"
+      }
+    },
+    "/api/hcs11/create-company-agent": {
+      "post": {
+        "tags": ["HCS-11"],
+        "summary": "Créer un agent d'entreprise avec profil HCS-11"
+      }
+    },
+    "/todo": {
+      "post": {
+        "tags": ["Utilities"],
+        "summary": "Créer une tâche à faire"
+      },
+      "get": {
+        "tags": ["Utilities"],
+        "summary": "Récupérer les tâches"
+      }
+    },
+    "/feedback": {
+      "post": {
+        "tags": ["Utilities"],
+        "summary": "Créer un feedback"
+      },
+      "get": {
+        "tags": ["Utilities"],
+        "summary": "Récupérer les feedbacks"
+      }
+    },
+    "/logs": {
+      "get": {
+        "tags": ["Utilities"],
+        "summary": "Récupérer les logs du système"
+      }
+    },
+    "/task": {
+      "post": {
+        "tags": ["Utilities"],
+        "summary": "Créer une tâche"
+      },
+      "get": {
+        "tags": ["Utilities"],
+        "summary": "Récupérer les tâches"
+      }
+    },
+    "/tokens": {
+      "get": {
+        "tags": ["Utilities"],
+        "summary": "Récupérer les tokens"
+      }
+    },
+    "/payment": {
+      "post": {
+        "tags": ["Payment"],
+        "summary": "Traiter un paiement"
+      },
+      "get": {
+        "tags": ["Payment"],
+        "summary": "Récupérer les paiements"
+      }
+    },
+    "/api/stripe": {
+      "post": {
+        "tags": ["Payment"],
+        "summary": "Intégration Stripe"
+      }
+    },
+    "/unlock-candidate": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Débloquer un candidat"
+      }
+    },
+    "/permission": {
+      "get": {
+        "tags": ["Company Management"],
+        "summary": "Récupérer les permissions"
+      }
+    },
+    "/admin": {
+      "get": {
+        "tags": ["Company Management"],
+        "summary": "Récupérer les permissions admin"
+      }
+    },
+    "/plan-limits": {
+      "get": {
+        "tags": ["Company Management"],
+        "summary": "Récupérer les limites de plan"
+      }
+    },
+    "/CompanyInvitation": {
+      "post": {
+        "tags": ["Company Management"],
+        "summary": "Créer une invitation d'entreprise"
+      },
+      "get": {
+        "tags": ["Company Management"],
+        "summary": "Récupérer les invitations d'entreprise"
+      }
+    },
+    "/CompanyMembership": {
+      "post": {
+        "tags": ["Company Management"],
+        "summary": "Créer une adhésion d'entreprise"
+      },
+      "get": {
+        "tags": ["Company Management"],
+        "summary": "Récupérer les adhésions d'entreprise"
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": ["Company Management"],
+        "summary": "Récupérer le tableau de bord"
+      }
+    },
+    "/internal-campaigns": {
+      "post": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Créer une campagne interne"
+      },
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Récupérer les campagnes internes"
+      }
+    },
+    "/internal-campaigns/{campaignId}": {
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Récupérer une campagne",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "put": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Mettre à jour une campagne",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Supprimer une campagne",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/internal-campaigns/{campaignId}/stats": {
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Récupérer les statistiques d'une campagne",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/campaign-participants": {
+      "post": {
+        "tags": ["Campaign Participants"],
+        "summary": "Créer un participant à une campagne"
+      },
+      "get": {
+        "tags": ["Campaign Participants"],
+        "summary": "Récupérer les participants aux campagnes"
+      }
+    },
+    "/linkedinPost": {
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Générer un post LinkedIn"
+      },
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Récupérer les posts LinkedIn"
+      }
+    },
+    "/api/pipeline-interview": {
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "Récupérer les entretiens du pipeline"
+      }
+    },
+    "/api/docs": {
+      "get": {
+        "tags": ["Welcome"],
+        "summary": "Documentation Swagger API principale"
+      }
+    },
+    "/api/docs/campaigns": {
+      "get": {
+        "tags": ["Welcome"],
+        "summary": "Documentation Swagger pour les campagnes"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token pour l'authentification"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array"
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer"
+              },
+              "pageSize": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
