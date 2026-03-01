@@ -237,6 +237,17 @@
           }
         }
       },
+      "CampaignMetrics": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "number" },
+          "active": { "type": "number" },
+          "draft": { "type": "number" },
+          "closed": { "type": "number" },
+          "paused": { "type": "number" },
+          "expired": { "type": "number" }
+        }
+      },
       "SuccessResponse": {
         "type": "object",
         "properties": {
@@ -425,23 +436,85 @@
         }
       }
     },
-    "/internal-campaigns/{campaignId}": {
+    "/internal-campaigns/metrics": {
       "get": {
         "tags": ["Internal Campaigns"],
-        "summary": "Récupérer une campagne spécifique",
+        "summary": "Obtenir les métriques des campagnes",
         "security": [
-          {
-            "bearerAuth": []
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Métriques des campagnes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/CampaignMetrics" }
+                  }
+                }
+              }
+            }
           }
+        }
+      }
+    },
+    "/internal-campaigns/{campaignId}/modules/{moduleId}/config": {
+      "patch": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Modifier la configuration d'un module",
+        "security": [
+          { "bearerAuth": [] }
         ],
         "parameters": [
           {
             "name": "campaignId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "moduleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "config": { "type": "object" }
+                }
+              }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration du module mise à jour"
+          }
+        }
+      }
+    },
+    "/internal-campaigns/{campaignId}": {
+      "get": {
+        "tags": ["Internal Campaigns"],
+        "summary": "Récupérer une campagne spécifique",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
           }
         ],
         "responses": {
@@ -452,38 +525,28 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/InternalCampaign"
-                    }
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/InternalCampaign" }
                   }
                 }
               }
             }
           },
-          "404": {
-            "description": "Campagne non trouvée"
-          }
+          "404": { "description": "Campagne non trouvée" }
         }
       },
       "put": {
         "tags": ["Internal Campaigns"],
         "summary": "Mettre à jour une campagne",
         "security": [
-          {
-            "bearerAuth": []
-          }
+          { "bearerAuth": [] }
         ],
         "parameters": [
           {
             "name": "campaignId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string" }
           }
         ],
         "requestBody": {
@@ -492,26 +555,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
                   "status": {
                     "type": "string",
                     "enum": ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"]
                   },
                   "modules": {
                     "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/Module"
-                    }
+                    "items": { "$ref": "#/components/schemas/Module" }
                   },
-                  "deadline": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
+                  "deadline": { "type": "string", "format": "date-time" }
                 }
               }
             }
@@ -525,15 +579,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/InternalCampaign"
-                    }
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/InternalCampaign" }
                   }
                 }
               }
@@ -545,30 +593,21 @@
         "tags": ["Internal Campaigns"],
         "summary": "Supprimer une campagne",
         "security": [
-          {
-            "bearerAuth": []
-          }
+          { "bearerAuth": [] }
         ],
         "parameters": [
           {
             "name": "campaignId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string" }
           }
         ],
         "responses": {
-          "200": {
-            "description": "Campagne supprimée"
-          },
-          "404": {
-            "description": "Campagne non trouvée"
-          }
+          "200": { "description": "Campagne supprimée" },
+          "404": { "description": "Campagne non trouvée" }
         }
-      }
-    },
+      },
     "/internal-campaigns/{campaignId}/stats": {
       "get": {
         "tags": ["Internal Campaigns"],
