@@ -686,7 +686,7 @@ module.exports.getStatsCards = async (userId) => {
         { $match: { companyId: new mongoose.Types.ObjectId(userId), "interviewData.finalReport.coverage.overall": { $ne: null } } },
         { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
       ]),
-      Post.countDocuments({ companyId: userId, status: POST_STATUS.OPEN }),
+      Post.countDocuments({ user: userId, status: POST_STATUS.OPEN }),
       InternalCampaign.countDocuments({ company: userId, status: "ACTIVE" })
     ]);
 
