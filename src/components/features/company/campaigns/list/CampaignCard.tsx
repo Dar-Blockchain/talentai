@@ -16,11 +16,13 @@ import {
   ChevronRightOutlined,
   DeleteOutlined,
   MoreVertOutlined,
+  SwapHorizOutlined,
 } from "@mui/icons-material";
 import { daysLeft, fmtDate } from "@/utils/functions";
 import {
   MODULE_LABELS,
   STATUS_COLORS,
+  STATUS_TRANSITIONS,
   TYPE_COLORS,
   TYPE_LABELS,
 } from "@/constants/campaign";
@@ -32,7 +34,8 @@ const CampaignCard: React.FC<{
   campaign: Campaign;
   onViewDetails: (id: string) => void;
   onDelete: (id: string, title: string) => void;
-}> = memo(({ campaign, onViewDetails, onDelete }) => {
+  onStatusChange: (id: string, title: string, currentStatus: Campaign["status"]) => void;
+}> = memo(({ campaign, onViewDetails, onDelete, onStatusChange }) => {
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const tc = TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM;
   const remaining = daysLeft(campaign.deadline);
@@ -122,31 +125,124 @@ const CampaignCard: React.FC<{
           >
             <MoreVertOutlined />
           </IconButton>
-          <Menu
-            anchorEl={menuAnchor}
-            open={Boolean(menuAnchor)}
-            onClose={() => setMenuAnchor(null)}
-            slotProps={{
-              paper: { sx: { borderRadius: 2, boxShadow: 3, minWidth: 160 } },
-            }}
-          >
-            <MenuItem
-              onClick={() => {
-                setMenuAnchor(null);
-                onDelete(campaign._id, campaign.title);
-              }}
-              sx={{ color: "#EF4444", gap: 1 }}
-            >
-              <ListItemIcon sx={{ minWidth: 0 }}>
-                <DeleteOutlined sx={{ fontSize: 18, color: "#EF4444" }} />
-              </ListItemIcon>
-              <ListItemText
-                primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }}
-              >
-                Delete
-              </ListItemText>
-            </MenuItem>
-          </Menu>
+<Menu
+  anchorEl={menuAnchor}
+  open={Boolean(menuAnchor)}
+  onClose={() => setMenuAnchor(null)}
+  slotProps={{
+    paper: {
+      sx: {
+        borderRadius: 2.5,
+        minWidth: 170,
+        p: 0.5,
+        backgroundColor: "#FFFFFF",
+        boxShadow: "0px 6px 18px rgba(15, 23, 42, 0.05)",
+        border: "1px solid #F1F5F9",
+      },
+    },
+  }}
+>
+  <MenuItem
+    onClick={() => {
+      setMenuAnchor(null);
+      onStatusChange(campaign._id, campaign.title, campaign.status);
+    }}
+    disabled={!STATUS_TRANSITIONS[campaign.status]?.length}
+    sx={{
+      borderRadius: 2,
+      px: 1.25,
+      py: 0.9,
+      gap: 1,
+      minHeight: 34,
+      transition: "background-color 0.12s ease",
+      "&:hover": {
+        backgroundColor: "#F8FAFC",
+      },
+      "&.Mui-disabled": {
+        opacity: 0.4,
+      },
+    }}
+  >
+    <ListItemIcon sx={{ minWidth: 0 }}>
+      <Box
+        sx={{
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#EEF2FF",
+        }}
+      >
+        <SwapHorizOutlined sx={{ fontSize: 14, color: "#6366F1" }} />
+      </Box>
+    </ListItemIcon>
+
+    <ListItemText
+      primary="Change status"
+      primaryTypographyProps={{
+        fontSize: 12.5,
+        fontWeight: 500,
+        color: "#475569",
+      }}
+    />
+  </MenuItem>
+
+  {/* Ultra-soft divider */}
+  <Box
+    sx={{
+      my: 0.5,
+      mx: 1,
+      height: 1,
+      backgroundColor: "#F1F5F9",
+      opacity: 0.6,
+    }}
+  />
+
+  <MenuItem
+    onClick={() => {
+      setMenuAnchor(null);
+      onDelete(campaign._id, campaign.title);
+    }}
+    sx={{
+      borderRadius: 2,
+      px: 1.25,
+      py: 0.9,
+      gap: 1,
+      minHeight: 34,
+      transition: "background-color 0.12s ease",
+      "&:hover": {
+        backgroundColor: "#FFF5F5",
+      },
+    }}
+  >
+    <ListItemIcon sx={{ minWidth: 0 }}>
+      <Box
+        sx={{
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#FEE2E2",
+        }}
+      >
+        <DeleteOutlined sx={{ fontSize: 14, color: "#F87171" }} />
+      </Box>
+    </ListItemIcon>
+
+    <ListItemText
+      primary="Delete"
+      primaryTypographyProps={{
+        fontSize: 12.5,
+        fontWeight: 500,
+        color: "#64748B",
+      }}
+    />
+  </MenuItem>
+</Menu>
         </Box>
 
         {/* Module chip */}

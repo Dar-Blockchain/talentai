@@ -1,7 +1,7 @@
-import BackToLandingButton from "@/components/signin/BackToLandingButton";
-import SigninForm from "@/components/signin/SigninForm";
-import SignInHeader from "@/components/signin/SignInHeader";
-import SigninContainer from "@/components/signin/SinginContainer";
+import BackToLandingButton from "@/components/features/signin/BackToLandingButton";
+import SigninForm from "@/components/features/signin/SigninForm";
+import SignInHeader from "@/components/features/signin/SignInHeader";
+import SigninContainer from "@/components/features/signin/SinginContainer";
 import { RootState } from "@/store/store";
 import { Divider } from "@mui/material";
 import { useSelector } from "react-redux";

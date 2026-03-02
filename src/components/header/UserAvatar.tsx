@@ -67,7 +67,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const goToDashboard = useCallback(() => {
     if (isAdmin) router.push("/dashboard/admin");
-    else if (isCompany) router.push("/dashboard/company");
+    else if (isCompany) router.push("/company/dashboard");
     else router.push("/dashboard/candidate");
   }, [isAdmin, isCompany, router]);
 

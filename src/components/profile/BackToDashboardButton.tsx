@@ -12,7 +12,7 @@ const BackToDashboardButton: React.FC<BackToDashboardButtonProps> = ({ profileTy
 
   const handleClick = () => {
     const dashboardPath = profileType === 'Company'
-      ? '/dashboard/company'
+      ? '/company/dashboard'
       : '/dashboard/candidate';
     router.push(dashboardPath);
   };

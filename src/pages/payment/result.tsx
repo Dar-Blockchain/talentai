@@ -151,7 +151,7 @@ export default function PaymentResultPage() {
             <Button
               variant="contained"
               component={Link}
-              href="/dashboard/company"
+              href="/company/dashboard"
               sx={{
                 textTransform: "none",
                 width: "100%",

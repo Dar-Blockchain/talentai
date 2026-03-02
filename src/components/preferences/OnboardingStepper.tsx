@@ -205,7 +205,7 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
       const resultAction = await dispatch(createOrUpdateProfile(profileData));
       if (createOrUpdateProfile.fulfilled.match(resultAction)) {
         // Redirect after successful update
-        if (userType === "company") return router.push("/dashboard/company");
+        if (userType === "company") return router.push("/company/dashboard");
         const returnUrl = router.query.returnUrl as string;
         if (returnUrl) return router.push(decodeURIComponent(returnUrl));
 

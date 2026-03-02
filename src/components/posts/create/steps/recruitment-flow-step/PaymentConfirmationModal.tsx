@@ -149,7 +149,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     // dispatch(resetPostPayment());
     setPublishSuccess(false);
     setError(null);
-    router.push("/dashboard/company");
+    router.push("/company/dashboard");
   };
 
   /* ================= Render ================= */
