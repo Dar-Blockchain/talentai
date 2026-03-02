@@ -52,6 +52,8 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 // jobAssessmentService.js
 const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
 const JobAssessmentResult = PostInterviewAssessment; // alias pour compatibilité
+const { POST_STATUS } = require("../constants/posts.constants");
+const InternalCampaign = require("../models/internalCampaign.model");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
@@ -670,5 +672,30 @@ module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
     return fileBuffer;
   } catch (error) {
     throw new Error("Error generating Excel file: " + error.message);
+  }
+};
+
+module.exports.getStatsCards = async () => {
+  try {
+    const [totalUsers, avgOverallScoreAgg, openPostsCount, activeCampaignsCount] = await Promise.all([
+      User.countDocuments(),
+      PostInterviewAssessment.aggregate([
+        { $match: { "interviewData.finalReport.coverage.overall": { $ne: null } } },
+        { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
+      ]),
+      Post.countDocuments({ status: POST_STATUS.OPEN }),
+      InternalCampaign.countDocuments({ status: "ACTIVE" })
+    ]);
+
+    const avgOverall = (avgOverallScoreAgg && avgOverallScoreAgg.length > 0) ? Math.round(avgOverallScoreAgg[0].avgOverallScore) : 0;
+
+    return {
+      totalEmployees: totalUsers,
+      avgInterviewScore: avgOverall,
+      activeJobPosts: openPostsCount,
+      activeCampaigns: activeCampaignsCount
+    };
+  } catch (error) {
+    throw new Error('Error fetching statsCards: ' + error.message);
   }
 };

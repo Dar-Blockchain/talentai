@@ -27,6 +27,10 @@ router.get("/getAllUsers", dashboardController.getAllUsers);
 // Description: Récupère les compteurs globaux (utilisateurs, etc.)
 router.get("/getCounts", dashboardController.getCounts);
 
+// GET /dashboard/statsCards
+// Description: Récupère les statistiques affichées sous forme de cartes sur le dashboard
+router.get("/statsCards", dashboardController.getStatsCards);
+
 // GET /dashboard/getUserCountsByDay
 // Description: Récupère l'évolution journalière du nombre d'utilisateurs
 router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
