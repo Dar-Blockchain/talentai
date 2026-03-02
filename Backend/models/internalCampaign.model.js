@@ -11,10 +11,7 @@ const moduleSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,  //QUESTIONNAIRE [Q1,Q2] 
       default: {},
     },
-    order: {
-      type: Number,
-      required: true,
-    },
+    // 'order' removed — single module no longer needs ordering
   },
   { _id: false }
 );

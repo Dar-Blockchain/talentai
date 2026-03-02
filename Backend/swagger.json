@@ -5475,12 +5475,8 @@
                 "description": "Module configuration",
                 "example": {}
               },
-              "order": {
-                "type": "number",
-                "example": 1
-              }
             },
-            "required": ["type", "order"]
+            "required": ["type"]
           }
         },
         "accessMethod": {
@@ -5574,10 +5570,6 @@
                 "type": "object",
                 "example": {}
               },
-              "order": {
-                "type": "number",
-                "example": 1
-              }
             }
           }
         },
