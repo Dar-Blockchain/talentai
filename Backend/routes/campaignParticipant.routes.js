@@ -77,18 +77,6 @@ router.put(
 );
 
 /**
- * PUT /participants/:participantId/module-progress — Mettre à jour la progression d'un module
- * Body: { moduleType, status, completedAt, responseRef }
- * Middleware: authentification requise (peut être un participant ou une entreprise)
- */
-router.put(
-  "/:participantId/module-progress",
-  requireAuthUser,
-  authLogMiddleware("CampaignParticipant"),
-  campaignParticipantController.updateModuleProgress,
-);
-
-/**
  * DELETE /participants/:participantId — Supprimer un participant
  * Middleware: authentification requise + access company
  */

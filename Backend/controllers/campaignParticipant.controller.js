@@ -8,7 +8,6 @@ const campaignParticipantService = require("../services/campaignParticipant.serv
   getParticipantsByCampaign,
   updateParticipant,
   deleteParticipant,
-  updateParticipantModuleProgress,
   getParticipantByAnonymousToken,*/
 /**
  * Add a new participant to a campaign
@@ -144,6 +143,15 @@ exports.updateCampaignParticipant = async (req, res) => {
     const { participantId } = req.params;
     const { status, accessedAt, completedAt } = req.body;
 
+    // Validate status enum
+    const validStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+      });
+    }
+
     const participant = await campaignParticipantService.updateParticipant(participantId, {
       status,
       accessedAt,
@@ -160,48 +168,6 @@ exports.updateCampaignParticipant = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Participant updated successfully",
-      data: participant,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-};
-
-/**
- * Update module progress for a participant
- */
-exports.updateModuleProgress = async (req, res) => {
-  try {
-    const { participantId } = req.params;
-    const { moduleType, status, completedAt, responseRef } = req.body;
-
-    if (!moduleType || !status) {
-      return res.status(400).json({
-        success: false,
-        error: "moduleType and status are required",
-      });
-    }
-
-    const participant = await campaignParticipantService.updateParticipantModuleProgress(participantId, {
-      moduleType,
-      status,
-      completedAt,
-      responseRef,
-    });
-
-    if (!participant) {
-      return res.status(404).json({
-        success: false,
-        error: "Participant not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Module progress updated successfully",
       data: participant,
     });
   } catch (error) {

@@ -1,26 +1,5 @@
 const mongoose = require("mongoose");
 
-const moduleProgressSchema = new mongoose.Schema(
-  {
-    moduleType: {
-      type: String,
-      enum: ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"],
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
-      default: "NOT_STARTED",
-    },
-    completedAt: Date,
-    responseRef: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CampaignResponse",
-    },
-  },
-  { _id: false }
-);
-
 const campaignParticipantSchema = new mongoose.Schema(
   {
     campaign: {
@@ -50,12 +29,10 @@ const campaignParticipantSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"],
-      default: "INVITED",
+      enum: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+      default: "NOT_STARTED",
       index: true,
     },
-
-    moduleProgress: [moduleProgressSchema],
 
     accessedAt: Date,
     completedAt: Date,

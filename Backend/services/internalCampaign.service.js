@@ -197,25 +197,10 @@ exports.getCampaignStats = async (campaignId) => {
       },
     ]);
 
-    const moduleStats = await CampaignParticipant.aggregate([
-      { $match: { campaign: campaign._id } },
-      { $unwind: "$moduleProgress" },
-      {
-        $group: {
-          _id: {
-            moduleType: "$moduleProgress.moduleType",
-            status: "$moduleProgress.status",
-          },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
     return {
       campaignId,
       title: campaign.title,
       participantStats: participants,
-      moduleStats: moduleStats,
       totalParticipants: participants.reduce((sum, p) => sum + p.count, 0),
     };
   } catch (error) {

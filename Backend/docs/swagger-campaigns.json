@@ -123,28 +123,6 @@
           }
         }
       },
-      "ModuleProgress": {
-        "type": "object",
-        "properties": {
-          "moduleType": {
-            "type": "string",
-            "enum": ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"]
-          },
-          "status": {
-            "type": "string",
-            "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
-            "default": "NOT_STARTED"
-          },
-          "completedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "responseRef": {
-            "type": "string",
-            "description": "Référence à la réponse/évaluation"
-          }
-        }
-      },
       "CampaignParticipant": {
         "type": "object",
         "required": ["campaign"],
@@ -172,14 +150,8 @@
           },
           "status": {
             "type": "string",
-            "enum": ["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"],
-            "default": "INVITED"
-          },
-          "moduleProgress": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModuleProgress"
-            }
+            "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+            "default": "NOT_STARTED"
           },
           "accessedAt": {
             "type": "string",
