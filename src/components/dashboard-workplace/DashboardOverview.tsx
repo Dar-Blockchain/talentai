@@ -7,6 +7,11 @@ import {
   selectCompanyInterviews,
   selectCompanyInterviewsLoading,
 } from "@/store/slices/interviewSlice";
+import {
+  fetchMyPosts,
+  selectMyPosts,
+  selectMyPostsLoading,
+} from "@/store/slices/postSlice";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -72,12 +77,6 @@ const STATS = [
 ];
 
 
-const ACTIVE_POSTS = [
-  { title: "Senior React Developer",  applicants: 34, status: "Active",  deadline: "Mar 15, 2026", skills: ["React", "TypeScript"] },
-  { title: "DevOps Engineer",         applicants: 21, status: "Active",  deadline: "Mar 20, 2026", skills: ["Docker", "AWS"] },
-  { title: "Product Manager",         applicants: 58, status: "Active",  deadline: "Mar 10, 2026", skills: ["Strategy", "Roadmap"] },
-  { title: "Backend Engineer",        applicants: 12, status: "Draft",   deadline: "—",             skills: ["Node.js", "MongoDB"] },
-];
 
 const ACTIVE_CAMPAIGNS = [
   { title: "Q1 Leadership Eval",       type: "ASSESSMENT",  modules: 4, progress: 72, status: "ACTIVE",  deadline: "Mar 30, 2026" },
@@ -158,13 +157,21 @@ const getVerdict = (score: number): string => {
 const getInitials = (name: string) =>
   name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
+const fmtDate = (iso?: string) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
 const DashboardOverview: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const rawInterviews = useSelector(selectCompanyInterviews);
   const interviewsLoading = useSelector(selectCompanyInterviewsLoading);
+  const rawPosts = useSelector(selectMyPosts);
+  const postsLoading = useSelector(selectMyPostsLoading);
 
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ limit: 5 }));
+    dispatch(fetchMyPosts({ limit: 5 }));
   }, [dispatch]);
 
   const recentInterviews = rawInterviews.slice(0, 5).map((iv: any) => {
@@ -338,44 +345,71 @@ const DashboardOverview: React.FC = () => {
         {/* Active Job Posts */}
         <SectionBox>
           <SectionTitle
-            title="Active Job Posts"
-            subtitle={`${ACTIVE_POSTS.length} positions open`}
+            title=" Job Posts"
+            subtitle={postsLoading ? "Loading..." : `${rawPosts.slice(0, 5).length} recent posts`}
             action={
-              <Button startIcon={<AddOutlined />} size="small" sx={{ bgcolor: TEAL, color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0F766E" } }}>
-                New Post
-              </Button>
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
+                View all <ChevronRightOutlined sx={{ fontSize: 15 }} />
+              </Typography>
             }
           />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {ACTIVE_POSTS.map((post, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{post.title}</Typography>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
-                      {post.skills.map((s) => (
-                        <Chip key={s} label={s} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />
-                      ))}
+            {postsLoading ? (
+              [1,2,3,4,5].map((i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Skeleton variant="rounded" width={38} height={38} />
+                    <Box>
+                      <Skeleton variant="text" width={150} height={16} />
+                      <Skeleton variant="text" width={100} height={12} />
                     </Box>
                   </Box>
+                  <Skeleton variant="rounded" width={60} height={20} />
                 </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Chip
-                    label={post.status}
-                    size="small"
-                    sx={{ fontSize: "10px", height: 20, fontWeight: 600,
-                      bgcolor: post.status === "Active" ? "#F0FDFA" : "#F3F4F6",
-                      color: post.status === "Active" ? TEAL : "#6B7280",
-                    }}
-                  />
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>{post.applicants} applicants</Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {post.deadline}</Typography>
-                </Box>
+              ))
+            ) : rawPosts.length === 0 ? (
+              <Box sx={{ py: 5, textAlign: "center" }}>
+                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No job posts yet</Typography>
               </Box>
-            ))}
+            ) : (
+              rawPosts.slice(0, 5).map((post: any, i: number) => {
+                const title = post.jobDetails?.title || "—";
+                const status = post.status || "draft";
+                const isActive = status.toLowerCase() === "active";
+                const workMode = post.jobDetails?.workMode;
+                const employmentType = post.jobDetails?.employmentType;
+                const expiry = fmtDate(post.expirationDate);
+                return (
+                  <Box key={post._id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{title}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
+                          {workMode && <Chip label={workMode} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
+                          {employmentType && <Chip label={employmentType} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Chip
+                        label={status.charAt(0).toUpperCase() + status.slice(1)}
+                        size="small"
+                        sx={{ fontSize: "10px", height: 20, fontWeight: 600,
+                          bgcolor: isActive ? "#F0FDFA" : "#F3F4F6",
+                          color: isActive ? TEAL : "#6B7280",
+                        }}
+                      />
+                      {post.expirationDate && (
+                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>Expires {expiry}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                );
+              })
+            )}
           </Box>
           <Box sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: TEAL, fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
             View all posts →
