@@ -34,7 +34,6 @@ const ECard: React.FC<{ children: React.ReactNode; c1: string; c2?: string }> = 
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
     overflow: "hidden",
   }}>
-    <Box sx={{ height: 4, background: `linear-gradient(90deg, ${c1}, ${c2 ?? c1})` }} />
     <Box sx={{ p: 2.5 }}>{children}</Box>
   </Box>
 );

@@ -79,11 +79,9 @@
             "description": "Mode d'anonymat"
           },
           "modules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Module"
-            },
-            "description": "Modules de la campagne"
+            "type": "object",
+            "$ref": "#/components/schemas/Module",
+            "description": "Module de la campagne"
           },
           "accessMethod": {
             "type": "string",
@@ -125,28 +123,6 @@
           }
         }
       },
-      "ModuleProgress": {
-        "type": "object",
-        "properties": {
-          "moduleType": {
-            "type": "string",
-            "enum": ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"]
-          },
-          "status": {
-            "type": "string",
-            "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
-            "default": "NOT_STARTED"
-          },
-          "completedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "responseRef": {
-            "type": "string",
-            "description": "Référence à la réponse/évaluation"
-          }
-        }
-      },
       "CampaignParticipant": {
         "type": "object",
         "required": ["campaign"],
@@ -174,14 +150,8 @@
           },
           "status": {
             "type": "string",
-            "enum": ["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"],
-            "default": "INVITED"
-          },
-          "moduleProgress": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModuleProgress"
-            }
+            "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+            "default": "NOT_STARTED"
           },
           "accessedAt": {
             "type": "string",
@@ -312,22 +282,13 @@
                     "example": "NOMINATIVE"
                   },
                   "modules": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/Module"
-                    },
-                    "example": [
-                      {
-                        "type": "QUESTIONNAIRE",
-                        "order": 1,
-                        "config": {}
-                      },
-                      {
-                        "type": "SKILL_TEST",
-                        "order": 2,
-                        "config": {}
-                      }
-                    ]
+                    "type": "object",
+                    "$ref": "#/components/schemas/Module",
+                    "example": {
+                      "type": "QUESTIONNAIRE",
+                      "order": 1,
+                      "config": {}
+                    }
                   },
                   "accessMethod": {
                     "type": "string",
@@ -562,8 +523,8 @@
                     "enum": ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"]
                   },
                   "modules": {
-                    "type": "array",
-                    "items": { "$ref": "#/components/schemas/Module" }
+                    "type": "object",
+                    "$ref": "#/components/schemas/Module"
                   },
                   "deadline": { "type": "string", "format": "date-time" }
                 }

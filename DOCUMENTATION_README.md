@@ -258,7 +258,7 @@ POST /internal-campaigns
 Body: {
   "title": "Q4 Skills Assessment",
   "type": "SKILLS_MAPPING",
-  "modules": [{"type": "SKILL_TEST", "order": 1}]
+  "modules": {"type": "SKILL_TEST", "order": 1}
 }
 ```
 

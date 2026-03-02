@@ -7,18 +7,11 @@ const mongoose = require("mongoose");
  */
 exports.createCampaign = async (campaignData) => {
   try {
-    // convert modules array to Map if necessary
-    if (Array.isArray(campaignData.modules)) {
-      const map = new Map();
-      campaignData.modules.forEach((mod) => {
-        // generate an _id for each module entry so the map key exists
-        const id = new mongoose.Types.ObjectId().toString();
-        map.set(id, {
-          ...mod,
-          order: mod.order,
-        });
-      });
-      campaignData.modules = map;
+    // modules should be a plain object now, validate expectations
+    if (!campaignData.modules || typeof campaignData.modules !== "object") {
+      const err = new Error("Invalid modules format; expected object");
+      err.status = 400;
+      throw err;
     }
 
     const campaign = new InternalCampaign(campaignData);
@@ -128,17 +121,9 @@ exports.updateCampaign = async (campaignId, updateData) => {
     delete updateData.createdBy;
     delete updateData.linkToken;
 
-    // if modules provided as array convert to Map
-    if (Array.isArray(updateData.modules)) {
-      const map = new Map();
-      updateData.modules.forEach((mod) => {
-        const id = mod._id ? mod._id.toString() : new mongoose.Types.ObjectId().toString();
-        map.set(id, {
-          ...mod,
-          order: mod.order,
-        });
-      });
-      updateData.modules = map;
+    // modules should already be a plain object; ensure format is correct
+    if (updateData.modules && typeof updateData.modules !== "object") {
+      throw new Error("Invalid modules format during update; expected object");
     }
 
     const campaign = await InternalCampaign.findByIdAndUpdate(
@@ -212,25 +197,10 @@ exports.getCampaignStats = async (campaignId) => {
       },
     ]);
 
-    const moduleStats = await CampaignParticipant.aggregate([
-      { $match: { campaign: campaign._id } },
-      { $unwind: "$moduleProgress" },
-      {
-        $group: {
-          _id: {
-            moduleType: "$moduleProgress.moduleType",
-            status: "$moduleProgress.status",
-          },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
     return {
       campaignId,
       title: campaign.title,
       participantStats: participants,
-      moduleStats: moduleStats,
       totalParticipants: participants.reduce((sum, p) => sum + p.count, 0),
     };
   } catch (error) {
@@ -278,43 +248,5 @@ exports.getCampaignMetrics = async (companyId) => {
     return result;
   } catch (error) {
     throw new Error(`Error getting campaign metrics: ${error.message}`);
-  }
-};
-
-/**
- * Update module configuration in a campaign
- */
-exports.updateModuleConfig = async (campaignId, moduleId, newConfig) => {
-  try {
-    const campaign = await InternalCampaign.findById(campaignId);
-    if (!campaign) {
-      const err = new Error("Campaign not found");
-      err.status = 404;
-      throw err;
-    }
-
-    // ensure modules map exists
-    if (!campaign.modules || !campaign.modules.has(moduleId)) {
-      const err = new Error(`Module not found for id: ${moduleId}`);
-      err.status = 400;
-      throw err;
-    }
-
-    // Get the module object, update config and put back
-    const mod = campaign.modules.get(moduleId);
-    mod.config = {
-      ...mod.config,
-      ...newConfig,
-    };
-    campaign.modules.set(moduleId, mod);
-
-    await campaign.save();
-
-    return await InternalCampaign.findById(campaignId)
-      .populate("company", "name email")
-      .populate("createdBy", "firstName lastName email");
-  } catch (error) {
-    error.status = error.status || 500;
-    throw error;
   }
 };

@@ -57,11 +57,6 @@ router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
 router.patch("/:campaignId/status", internalCampaignController.updateCampaignStatus);
 
 /**
- * PATCH /campaigns/:campaignId/modules/:moduleId/config — Modifier la configuration d'un module
- */
-router.patch("/:campaignId/modules/:moduleId/config", internalCampaignController.updateModuleConfig);
-
-/**
  * GET /campaigns/:campaignId — Récupérer une campagne spécifique
  */
 router.get("/:campaignId", internalCampaignController.getCampaign);

@@ -5462,11 +5462,9 @@
           "example": "NOMINATIVE"
         },
         "modules": {
-          "type": "array",
-          "description": "Campaign modules",
-          "items": {
-            "type": "object",
-            "properties": {
+          "type": "object",
+          "description": "Campaign module",
+          "properties": {
               "type": {
                 "type": "string",
                 "enum": ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"],
@@ -5565,10 +5563,8 @@
           "example": "NOMINATIVE"
         },
         "modules": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
+          "type": "object",
+          "properties": {
               "type": {
                 "type": "string",
                 "enum": ["QUESTIONNAIRE", "AI_INTERVIEW", "SKILL_TEST", "TRAINING_PATH"],
@@ -5648,5 +5644,4 @@
       },
       "required": ["_id", "company", "title", "type", "anonymityMode", "modules", "accessMethod", "createdBy"]
     }
-  }
-}
+  

@@ -7,22 +7,15 @@ const crypto = require("crypto");
  */
 exports.addParticipant = async (participantData) => {
   try {
-    // Initialize moduleProgress based on campaign modules
+    // Verify campaign exists
     const campaign = await InternalCampaign.findById(participantData.campaign);
     if (!campaign) {
       throw new Error("Campaign not found");
     }
 
-    // campaign.modules is now a Map; convert values to array for iteration
-    const moduleProgress = Array.from(campaign.modules.values()).map((module) => ({
-      moduleType: module.type,
-      status: "NOT_STARTED",
-    }));
-
     const participant = new CampaignParticipant({
       ...participantData,
-      moduleProgress,
-      status: "INVITED",
+      status: "NOT_STARTED",
     });
 
     await participant.save();
@@ -97,66 +90,6 @@ exports.updateParticipant = async (participantId, updateData) => {
 };
 
 /**
- * Update participant module progress
- */
-exports.updateParticipantModuleProgress = async (
-  participantId,
-  progressData
-) => {
-  try {
-    const { moduleType, status, completedAt, responseRef } = progressData;
-
-    const validStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
-    if (!validStatuses.includes(status)) {
-      throw new Error(
-        `Invalid status. Must be one of: ${validStatuses.join(", ")}`
-      );
-    }
-
-    // Find the participant
-    const participant = await CampaignParticipant.findById(participantId);
-    if (!participant) {
-      throw new Error("Participant not found");
-    }
-
-    // Find and update the module progress
-    const moduleIndex = participant.moduleProgress.findIndex(
-      (m) => m.moduleType === moduleType
-    );
-
-    if (moduleIndex === -1) {
-      throw new Error(`Module type ${moduleType} not found in this campaign`);
-    }
-
-    participant.moduleProgress[moduleIndex].status = status;
-    if (completedAt) {
-      participant.moduleProgress[moduleIndex].completedAt = completedAt;
-    }
-    if (responseRef) {
-      participant.moduleProgress[moduleIndex].responseRef = responseRef;
-    }
-
-    // If all modules are completed, update participant status
-    const allModulesCompleted = participant.moduleProgress.every(
-      (m) => m.status === "COMPLETED"
-    );
-    if (allModulesCompleted) {
-      participant.status = "COMPLETED";
-      participant.completedAt = new Date();
-    } else if (
-      participant.moduleProgress.some((m) => m.status === "IN_PROGRESS")
-    ) {
-      participant.status = "IN_PROGRESS";
-    }
-
-    await participant.save();
-    return participant.populate("campaign employee");
-  } catch (error) {
-    throw new Error(`Error updating module progress: ${error.message}`);
-  }
-};
-
-/**
  * Delete participant
  */
 exports.deleteParticipant = async (participantId) => {
@@ -226,18 +159,12 @@ exports.bulkAddParticipants = async (campaignId, participants) => {
       throw new Error("Campaign not found");
     }
 
-    const moduleProgress = Array.from(campaign.modules.values()).map((module) => ({
-      moduleType: module.type,
-      status: "NOT_STARTED",
-    }));
-
     const participantsToAdd = participants.map((p) => ({
       campaign: campaignId,
       employee: p.employeeId || null,
       email: p.email || null,
       anonymousToken: p.anonymousToken || null,
-      moduleProgress: [...moduleProgress],
-      status: "INVITED",
+      status: "NOT_STARTED",
     }));
 
     const result = await CampaignParticipant.insertMany(participantsToAdd);

@@ -52,12 +52,14 @@ exports.createInternalCampaign = async (req, res) => {
     } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
 
+    // modules should now be a single object describing the assessment module
     if (
       !title ||
       !type ||
       !anonymityMode ||
       !modules ||
-      modules.length === 0 ||
+      typeof modules !== "object" ||
+      !modules.type ||
       !accessMethod
     ) {
       return res.status(400).json({
@@ -276,33 +278,3 @@ exports.updateCampaignStatus = async (req, res) => {
   }
 };
 
-/**
- * Update module configuration in a campaign
- */
-exports.updateModuleConfig = async (req, res) => {
-  try {
-    const { moduleId, campaignId } = req.params;
-    const { config } = req.body;
-
-    if (!config) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing required field: config",
-      });
-    }
-
-    await verifyOwnership(campaignId, req.user.profile);
-    const campaign = await updateModuleConfig(campaignId, moduleId, config);
-
-    res.status(200).json({
-      success: true,
-      message: "Module configuration updated successfully",
-      data: campaign,
-    });
-  } catch (error) {
-    res.status(error.status || 500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-};

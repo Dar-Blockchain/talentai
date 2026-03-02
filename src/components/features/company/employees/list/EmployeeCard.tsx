@@ -76,9 +76,6 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({ member, onEdit, onDelete, o
       transition: "all 0.2s ease",
       "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(131,16,255,0.10)", borderColor: "#E0D7FF" },
     }}>
-      {/* Top coloured strip */}
-      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${roleStyle.color}, ${statusStyle.color})` }} />
-
       <Box sx={{ p: 2.5 }}>
         {/* Avatar row */}
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>

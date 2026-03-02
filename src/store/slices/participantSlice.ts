@@ -2,13 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ParticipantStatus = "INVITED" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
-
-export interface ModuleProgress {
-  moduleType: string;
-  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-  completedAt?: string;
-}
+export type ParticipantStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 
 export interface Participant {
   _id: string;
@@ -17,7 +11,6 @@ export interface Participant {
   email?: string | null;
   anonymousToken?: string | null;
   status: ParticipantStatus;
-  moduleProgress: ModuleProgress[];
   accessedAt?: string;
   completedAt?: string;
   createdAt: string;
