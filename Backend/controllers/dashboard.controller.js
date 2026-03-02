@@ -63,6 +63,20 @@ module.exports.getCounts = async (req, res) => {
   }
 };
 
+// GET stats for dashboard cards (total employees, avg interview score, active posts, active campaigns)
+module.exports.getStatsCards = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID missing in request' });
+    }
+    const stats = await dashboardService.getStatsCards(userId);
+    res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Fonction pour gérer la requête et envoyer les résultats
 module.exports.getCountsByDay = async (req, res) => {
   try {
