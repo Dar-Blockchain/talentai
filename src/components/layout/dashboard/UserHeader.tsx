@@ -6,13 +6,13 @@ import {
   Box,
   Avatar,
   Typography,
-  IconButton,
   Menu,
   MenuItem,
   Divider,
 } from "@mui/material";
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import { LogoutOutlined, SettingsOutlined } from "@mui/icons-material";
+import { useRouter } from "next/router";
 
 interface UserHeaderProps {
   companyName: string;
@@ -22,6 +22,7 @@ interface UserHeaderProps {
 const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const router = useRouter();
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -70,7 +71,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) 
           sx: { minWidth: 180, borderRadius: 2, mt: 1 },
         }}
       >
-        <MenuItem onClick={handleCloseMenu} sx={{fontSize: 14}}>
+        <MenuItem
+          onClick={() => {
+            handleCloseMenu();
+            router.push("/company/settings");
+          }}
+          sx={{ fontSize: 14 }}
+        >
           <SettingsOutlined sx={{ mr: 1, fontSize: 16 }} />
           Settings
         </MenuItem>
