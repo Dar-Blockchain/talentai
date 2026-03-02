@@ -607,7 +607,8 @@
           "200": { "description": "Campagne supprimée" },
           "404": { "description": "Campagne non trouvée" }
         }
-      },
+      }
+    },
     "/internal-campaigns/{campaignId}/stats": {
       "get": {
         "tags": ["Internal Campaigns"],
