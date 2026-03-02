@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect } from "react";
-import { Box, Typography, Avatar, Button, Chip, LinearProgress, Skeleton } from "@mui/material";
+import { useRouter } from "next/router";
+import { Box, Typography, Avatar, Button, Chip, Skeleton } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import {
@@ -12,6 +13,11 @@ import {
   selectMyPosts,
   selectMyPostsLoading,
 } from "@/store/slices/postSlice";
+import {
+  fetchCampaigns,
+  selectCampaigns,
+  selectCampaignLoading,
+} from "@/store/slices/campaignSlice";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -21,7 +27,6 @@ import TrendingDownOutlined from "@mui/icons-material/TrendingDownOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
-import AddOutlined from "@mui/icons-material/AddOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
@@ -78,12 +83,6 @@ const STATS = [
 
 
 
-const ACTIVE_CAMPAIGNS = [
-  { title: "Q1 Leadership Eval",       type: "ASSESSMENT",  modules: 4, progress: 72, status: "ACTIVE",  deadline: "Mar 30, 2026" },
-  { title: "Engineering Skills Mapping", type: "SKILLS",    modules: 6, progress: 45, status: "ACTIVE",  deadline: "Apr 5, 2026" },
-  { title: "Onboarding Enablement",    type: "ENABLEMENT",  modules: 3, progress: 90, status: "ACTIVE",  deadline: "Mar 12, 2026" },
-  { title: "Sales Productivity Check", type: "DIAGNOSTIC",  modules: 5, progress: 20, status: "ACTIVE",  deadline: "Apr 20, 2026" },
-];
 
 const GAP_DATA = [
   { name: "React.js",       current: 85, required: 90 },
@@ -106,10 +105,10 @@ const VERDICT_STYLE: Record<string, { bg: string; color: string; icon: React.Ele
 };
 
 const CAMPAIGN_TYPE_COLOR: Record<string, { bg: string; fg: string }> = {
-  ASSESSMENT: { bg: "#F0FDFA", fg: "#0D9488" },
-  SKILLS:     { bg: "#EFF6FF", fg: "#2563EB" },
-  ENABLEMENT: { bg: "#F5F3FF", fg: "#7C3AED" },
-  DIAGNOSTIC: { bg: "#FFF7ED", fg: "#C2410C" },
+  PRODUCTIVITY_DIAGNOSTIC: { bg: "#FFF7ED", fg: "#C2410C" },
+  SKILLS_MAPPING:          { bg: "#EFF6FF", fg: "#2563EB" },
+  ENABLEMENT:              { bg: "#F5F3FF", fg: "#7C3AED" },
+  CUSTOM:                  { bg: "#F0FDFA", fg: "#0D9488" },
 };
 
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
@@ -164,14 +163,18 @@ const fmtDate = (iso?: string) => {
 
 const DashboardOverview: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
   const rawInterviews = useSelector(selectCompanyInterviews);
   const interviewsLoading = useSelector(selectCompanyInterviewsLoading);
   const rawPosts = useSelector(selectMyPosts);
   const postsLoading = useSelector(selectMyPostsLoading);
+  const rawCampaigns = useSelector(selectCampaigns);
+  const campaignsLoading = useSelector(selectCampaignLoading);
 
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ limit: 5 }));
     dispatch(fetchMyPosts({ limit: 5 }));
+    dispatch(fetchCampaigns({ limit: 5 }));
   }, [dispatch]);
 
   const recentInterviews = rawInterviews.slice(0, 5).map((iv: any) => {
@@ -348,7 +351,7 @@ const DashboardOverview: React.FC = () => {
             title=" Job Posts"
             subtitle={postsLoading ? "Loading..." : `${rawPosts.slice(0, 5).length} recent posts`}
             action={
-              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
+              <Typography onClick={() => router.push("/company/posts")} sx={{ fontSize: "12px", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
                 View all <ChevronRightOutlined sx={{ fontSize: 15 }} />
               </Typography>
             }
@@ -411,54 +414,73 @@ const DashboardOverview: React.FC = () => {
               })
             )}
           </Box>
-          <Box sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: TEAL, fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
-            View all posts →
-          </Box>
         </SectionBox>
 
         {/* Active Campaigns */}
         <SectionBox>
           <SectionTitle
             title="Active Campaigns"
-            subtitle={`${ACTIVE_CAMPAIGNS.length} running`}
+            subtitle={campaignsLoading ? "Loading..." : `${rawCampaigns.slice(0, 5).length} recent campaigns`}
             action={
-              <Button startIcon={<AddOutlined />} size="small" sx={{ bgcolor: "#8B5CF6", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#7C3AED" } }}>
-                New
-              </Button>
+              <Typography onClick={() => router.push("/company/campaigns")} sx={{ fontSize: "12px", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
+                View all <ChevronRightOutlined sx={{ fontSize: 15 }} />
+              </Typography>
             }
           />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {ACTIVE_CAMPAIGNS.map((camp, i) => {
-              const colors = CAMPAIGN_TYPE_COLOR[camp.type] ?? CAMPAIGN_TYPE_COLOR.ASSESSMENT;
-              const progressColor = camp.progress >= 75 ? "#10B981" : camp.progress >= 40 ? TEAL : "#F59E0B";
-              return (
-                <Box key={i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#8B5CF6" }, transition: "border-color 0.2s", cursor: "pointer" }}>
+            {campaignsLoading ? (
+              [1,2,3,4,5].map((i) => (
+                <Box key={i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB" }}>
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                      <Box sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: colors.bg }}>
-                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: colors.fg, textTransform: "uppercase", letterSpacing: 0.8 }}>{camp.type}</Typography>
-                      </Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {camp.title}
-                      </Typography>
+                      <Skeleton variant="rounded" width={80} height={20} />
+                      <Skeleton variant="text" width={130} height={16} />
                     </Box>
-                    <Typography sx={{ fontSize: "12px", fontWeight: 800, color: progressColor }}>{camp.progress}%</Typography>
+                    <Skeleton variant="text" width={30} height={16} />
                   </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={camp.progress}
-                    sx={{ height: 6, borderRadius: 3, bgcolor: "#F3F4F6", "& .MuiLinearProgress-bar": { bgcolor: progressColor, borderRadius: 3 } }}
-                  />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{camp.modules} modules</Typography>
-                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {camp.deadline}</Typography>
-                  </Box>
+                  <Skeleton variant="rounded" width="100%" height={6} />
                 </Box>
-              );
-            })}
-          </Box>
-          <Box sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "#8B5CF6", fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
-            View all campaigns →
+              ))
+            ) : rawCampaigns.length === 0 ? (
+              <Box sx={{ py: 5, textAlign: "center" }}>
+                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No campaigns yet</Typography>
+              </Box>
+            ) : (
+              rawCampaigns.slice(0, 5).map((camp: any, i: number) => {
+                const colors = CAMPAIGN_TYPE_COLOR[camp.type] ?? CAMPAIGN_TYPE_COLOR.CUSTOM;
+                const isActive = camp.status === "ACTIVE";
+                const statusColor = isActive ? "#10B981" : camp.status === "PAUSED" ? "#F59E0B" : "#6B7280";
+                return (
+                  <Box key={camp._id || i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#8B5CF6" }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                        <Box sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: colors.bg }}>
+                          <Typography sx={{ fontSize: "9px", fontWeight: 700, color: colors.fg, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                            {camp.type?.replace("_", " ")}
+                          </Typography>
+                        </Box>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {camp.title}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={camp.status}
+                        size="small"
+                        sx={{ fontSize: "9px", height: 18, fontWeight: 700, bgcolor: isActive ? "#D1FAE5" : "#F3F4F6", color: statusColor }}
+                      />
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
+                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>
+                        {camp.module?.type?.replace("_", " ") || "—"}
+                      </Typography>
+                      {camp.deadline && (
+                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {fmtDate(camp.deadline)}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                );
+              })
+            )}
           </Box>
         </SectionBox>
       </Box>
