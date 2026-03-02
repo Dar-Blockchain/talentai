@@ -5474,13 +5474,9 @@
                 "type": "object",
                 "description": "Module configuration",
                 "example": {}
-              },
-              "order": {
-                "type": "number",
-                "example": 1
               }
             },
-            "required": ["type", "order"]
+            "required": ["type"]
           }
         },
         "accessMethod": {
@@ -5573,10 +5569,6 @@
               "config": {
                 "type": "object",
                 "example": {}
-              },
-              "order": {
-                "type": "number",
-                "example": 1
               }
             }
           }
