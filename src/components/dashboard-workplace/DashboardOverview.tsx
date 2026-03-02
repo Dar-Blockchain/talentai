@@ -1,5 +1,12 @@
-import React, { memo, useCallback } from "react";
-import { Box, Typography, Avatar, Button, Chip, LinearProgress } from "@mui/material";
+import React, { memo, useCallback, useEffect } from "react";
+import { Box, Typography, Avatar, Button, Chip, LinearProgress, Skeleton } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import {
+  fetchCompanyInterviews,
+  selectCompanyInterviews,
+  selectCompanyInterviewsLoading,
+} from "@/store/slices/interviewSlice";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -64,13 +71,6 @@ const STATS = [
   },
 ];
 
-const RECENT_INTERVIEWS = [
-  { name: "Sarah Chen",       email: "s.chen@mail.com",     job: "Senior React Developer",   score: 92, verdict: "Excellent", avatar: "SC", time: "2h ago" },
-  { name: "Marcus Johnson",   email: "m.johnson@mail.com",  job: "DevOps Engineer",           score: 78, verdict: "Good",      avatar: "MJ", time: "5h ago" },
-  { name: "Priya Patel",      email: "p.patel@mail.com",    job: "Product Manager",           score: 45, verdict: "Needs Work", avatar: "PP", time: "Yesterday" },
-  { name: "David Kim",        email: "d.kim@mail.com",      job: "Backend Engineer",          score: 88, verdict: "Excellent", avatar: "DK", time: "Yesterday" },
-  { name: "Elena Rossi",      email: "e.rossi@mail.com",    job: "UX Designer",               score: 61, verdict: "Good",      avatar: "ER", time: "2 days ago" },
-];
 
 const ACTIVE_POSTS = [
   { title: "Senior React Developer",  applicants: 34, status: "Active",  deadline: "Mar 15, 2026", skills: ["React", "TypeScript"] },
@@ -135,7 +135,53 @@ const SectionTitle: React.FC<{ title: string; subtitle?: string; action?: React.
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const fmtTime = (iso?: string) => {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+};
+
+const getVerdict = (score: number): string => {
+  if (score >= 80) return "Excellent";
+  if (score >= 60) return "Good";
+  return "Needs Work";
+};
+
+const getInitials = (name: string) =>
+  name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
 const DashboardOverview: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const rawInterviews = useSelector(selectCompanyInterviews);
+  const interviewsLoading = useSelector(selectCompanyInterviewsLoading);
+
+  useEffect(() => {
+    dispatch(fetchCompanyInterviews({ limit: 5 }));
+  }, [dispatch]);
+
+  const recentInterviews = rawInterviews.slice(0, 5).map((iv: any) => {
+    const score = Math.round(
+      iv.interviewData?.finalReport?.coverage?.overall ?? iv.score ?? 0
+    );
+    const candidateName =
+      iv.candidate?.username ||
+      (iv.candidate?.firstName
+        ? `${iv.candidate?.firstName || ""} ${iv.candidate?.lastName || ""}`.trim()
+        : "Candidate");
+    const jobTitle = iv.post?.jobDetails?.title || iv.post?.title || "—";
+    const verdict = getVerdict(score);
+    const time = fmtTime(iv.createdAt);
+    return { name: candidateName, job: jobTitle, score, verdict, avatar: getInitials(candidateName), time };
+  });
+
   const renderTooltip = useCallback(({ active, payload }: any) => {
     if (active && payload?.length) {
       return (
@@ -226,7 +272,7 @@ const DashboardOverview: React.FC = () => {
         <SectionBox>
           <SectionTitle
             title="Recent Interviews"
-            subtitle={`${RECENT_INTERVIEWS.length} latest results`}
+            subtitle={interviewsLoading ? "Loading..." : `${recentInterviews.length} latest results`}
             action={
               <Typography sx={{ fontSize: "12px", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
                 View all <ChevronRightOutlined sx={{ fontSize: 15 }} />
@@ -234,35 +280,54 @@ const DashboardOverview: React.FC = () => {
             }
           />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {RECENT_INTERVIEWS.map((iv, i) => {
-              const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
-              const VIcon = vs.icon;
-              return (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
+            {interviewsLoading ? (
+              [1,2,3,4,5].map((i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
-                      {iv.avatar}
-                    </Avatar>
+                    <Skeleton variant="circular" width={36} height={36} />
                     <Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
-                      <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
+                      <Skeleton variant="text" width={120} height={16} />
+                      <Skeleton variant="text" width={80} height={12} />
                     </Box>
                   </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box sx={{ textAlign: "right" }}>
-                      <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
-                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
-                    </Box>
-                    <Chip
-                      icon={<VIcon sx={{ fontSize: "12px !important" }} />}
-                      label={iv.verdict}
-                      size="small"
-                      sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
-                    />
-                  </Box>
+                  <Skeleton variant="rounded" width={70} height={22} />
                 </Box>
-              );
-            })}
+              ))
+            ) : recentInterviews.length === 0 ? (
+              <Box sx={{ py: 5, textAlign: "center" }}>
+                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No interviews yet</Typography>
+              </Box>
+            ) : (
+              recentInterviews.map((iv, i) => {
+                const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
+                const VIcon = vs.icon;
+                return (
+                  <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
+                        {iv.avatar}
+                      </Avatar>
+                      <Box>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
+                        <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
+                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
+                      </Box>
+                      <Chip
+                        icon={<VIcon sx={{ fontSize: "12px !important" }} />}
+                        label={iv.verdict}
+                        size="small"
+                        sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
+                      />
+                    </Box>
+                  </Box>
+                );
+              })
+            )}
           </Box>
         </SectionBox>
       </Box>

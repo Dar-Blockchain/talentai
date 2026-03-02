@@ -63,7 +63,7 @@ const NewCampaignPage: React.FC = () => {
       anonymityMode: "ANONYMOUS",
       accessMethod: "LINK",
       targetDepartment: "",
-      modules: [] as ModuleType[],
+      module: "" as ModuleType,
       deadline: "",
     },
   });
@@ -72,11 +72,7 @@ const NewCampaignPage: React.FC = () => {
     try {
       const formattedPayload: CreateCampaignPayload = {
         ...data,
-        modules: data.modules.map((moduleType, index) => ({
-          type: moduleType,
-          order: index + 1,
-          config: null,
-        })),
+        module: { type: data.module, config: null },
       };
       await dispatch(createCampaign(formattedPayload)).unwrap();
 
@@ -495,17 +491,16 @@ const NewCampaignPage: React.FC = () => {
               <FormCard
                 icon={<ChecklistIcon sx={{ fontSize: 20 }} />}
                 title="Assessment Modules"
-                subtitle="Select at least one module (order matters)"
+                subtitle="Select one module"
               >
                 <Controller
-                  name="modules"
+                  name="module"
                   control={control}
                   rules={{
-                    validate: (value) =>
-                      value.length > 0 || "Select at least one module",
+                    validate: (value) => !!value || "Select a module",
                   }}
                   render={({ field }) => (
-                    <FormControl error={!!errors.modules} fullWidth>
+                    <FormControl error={!!errors.module} fullWidth>
                       <Box
                         sx={{
                           display: "grid",
@@ -516,42 +511,23 @@ const NewCampaignPage: React.FC = () => {
                         {Object.keys(MODULE_CONFIG).map((mod) => {
                           const module = MODULE_CONFIG[mod as ModuleType];
                           const Icon = module.icon;
-
-                          const isSelected = field.value.includes(
-                            mod as ModuleType,
-                          );
-                          const orderIndex = field.value.indexOf(
-                            mod as ModuleType,
-                          );
-                          const order =
-                            orderIndex !== -1 ? orderIndex + 1 : null;
+                          const isSelected = field.value === (mod as ModuleType);
 
                           return (
                             <Box
                               key={mod}
-                              onClick={() => {
-                                const newValue = isSelected
-                                  ? field.value.filter((v) => v !== mod)
-                                  : [...field.value, mod];
-
-                                field.onChange(newValue);
-                              }}
+                              onClick={() =>
+                                field.onChange(isSelected ? "" : mod)
+                              }
                               sx={{
-                                position: "relative",
                                 display: "flex",
                                 alignItems: "flex-start",
                                 gap: 1,
                                 p: 1,
                                 borderRadius: 1.5,
                                 cursor: "pointer",
-                                border: `1px solid ${
-                                  isSelected
-                                    ? module.color
-                                    : theme.palette.divider
-                                }`,
-                                bgcolor: isSelected
-                                  ? alpha(module.color, 0.03)
-                                  : "transparent",
+                                border: `1px solid ${isSelected ? module.color : theme.palette.divider}`,
+                                bgcolor: isSelected ? alpha(module.color, 0.03) : "transparent",
                                 transition: "all 0.2s",
                                 "&:hover": {
                                   borderColor: module.color,
@@ -559,29 +535,6 @@ const NewCampaignPage: React.FC = () => {
                                 },
                               }}
                             >
-                              {/* ORDER BADGE */}
-                              {order && (
-                                <Box
-                                  sx={{
-                                    position: "absolute",
-                                    top: 6,
-                                    right: 6,
-                                    width: 20,
-                                    height: 20,
-                                    borderRadius: "50%",
-                                    bgcolor: module.color,
-                                    color: "#fff",
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  {order}
-                                </Box>
-                              )}
-
                               {/* ICON */}
                               <Box
                                 sx={{
@@ -624,14 +577,18 @@ const NewCampaignPage: React.FC = () => {
                                   {module.description}
                                 </Typography>
                               </Box>
+
+                              {isSelected && (
+                                <CheckCircleIcon sx={{ fontSize: 16, color: module.color, mt: 0.5 }} />
+                              )}
                             </Box>
                           );
                         })}
                       </Box>
 
-                      {errors.modules && (
+                      {errors.module && (
                         <FormHelperText error sx={{ mt: 1 }}>
-                          {errors.modules.message}
+                          {errors.module.message}
                         </FormHelperText>
                       )}
                     </FormControl>

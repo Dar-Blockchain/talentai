@@ -8,6 +8,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -43,12 +44,16 @@ const CampaignCard: React.FC<{
         bgcolor: "#fff",
         borderRadius: 3,
         border: "1px solid #E5E7EB",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
         "&:hover": { boxShadow: 3 },
         transition: "box-shadow 0.2s",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
       }}
     >
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, flex: 1 }}>
         <Box
           sx={{
             display: "flex",
@@ -65,8 +70,9 @@ const CampaignCard: React.FC<{
                 sx={{
                   bgcolor: sc.bg,
                   color: sc.fg,
-                  fontSize: "9px",
-                  fontWeight: 700,
+                  fontSize: "8px",
+                  fontWeight: 900,
+                  fontFamily: "Poppins, sans-serif",
                   textTransform: "uppercase",
                   letterSpacing: 1,
                   height: 22,
@@ -78,8 +84,9 @@ const CampaignCard: React.FC<{
                 sx={{
                   bgcolor: tc.bg,
                   color: tc.fg,
-                  fontSize: "9px",
-                  fontWeight: 700,
+                  fontSize: "8px",
+                  fontWeight: 900,
+                  fontFamily: "Poppins, sans-serif",
                   textTransform: "uppercase",
                   letterSpacing: 1,
                   height: 22,
@@ -142,23 +149,20 @@ const CampaignCard: React.FC<{
           </Menu>
         </Box>
 
-        {/* Modules chips */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.7 }}>
-          {campaign.modules.map((mod, i) => (
-            <Chip
-              key={i}
-              label={MODULE_LABELS[mod.type]}
-              size="small"
-              sx={{
-                bgcolor: "#F3F4F6",
-                color: "#4B5563",
-                fontSize: "10px",
-                fontWeight: 500,
-                height: 24,
-              }}
-            />
-          ))}
-        </Box>
+        {/* Module chip */}
+        {campaign.module && (
+          <Chip
+            label={MODULE_LABELS[campaign.module.type]}
+            size="small"
+            sx={{
+              bgcolor: "#F3F4F6",
+              color: "#4B5563",
+              fontSize: "10px",
+              fontWeight: 500,
+              height: 24,
+            }}
+          />
+        )}
       </Box>
 
       <Box
@@ -176,40 +180,28 @@ const CampaignCard: React.FC<{
           <AccessTimeOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
           <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>
             {campaign.deadline ? (
-              <>
-                <span>Due: </span>
-                <strong style={{ color: "#374151" }}>
-                  {fmtDate(campaign.deadline)}
-                </strong>
-              </>
+              <Tooltip
+                title={
+                  remaining === 0
+                    ? "Expired"
+                    : remaining !== null && remaining > 0
+                      ? `${remaining} day${remaining !== 1 ? "s" : ""} left`
+                      : ""
+                }
+                placement="top"
+                arrow
+              >
+                <span>
+                  Due:{" "}
+                  <strong style={{ color: remaining === 0 ? "#EF4444" : "#374151" }}>
+                    {fmtDate(campaign.deadline)}
+                  </strong>
+                </span>
+              </Tooltip>
             ) : (
               "No deadline"
             )}
           </Typography>
-          {remaining !== null && remaining > 0 && (
-            <Typography
-              sx={{
-                fontSize: "11px",
-                color: "#0D9488",
-                fontWeight: 700,
-                ml: 0.5,
-              }}
-            >
-              ({remaining}d left)
-            </Typography>
-          )}
-          {remaining === 0 && (
-            <Typography
-              sx={{
-                fontSize: "11px",
-                color: "#EF4444",
-                fontWeight: 700,
-                ml: 0.5,
-              }}
-            >
-              (Expired)
-            </Typography>
-          )}
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Link href={`/company/campaigns/${campaign._id}`}>

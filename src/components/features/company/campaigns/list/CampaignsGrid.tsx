@@ -1,5 +1,5 @@
 import React, { useEffect, memo } from "react";
-import { Box } from "@mui/material";
+import { Box, Card } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { motion, AnimatePresence } from "framer-motion";
@@ -83,6 +83,7 @@ const CampaignsStats: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              style={{ height: "100%" }}
             >
               <CampaignCard
                 campaign={camp}

@@ -1,52 +1,43 @@
 import React from "react";
-import { Box, Button, Chip, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { SettingsOutlined } from "@mui/icons-material";
-import { Campaign } from "@/types/campaign";
+import { Campaign, CampaignModule, ModuleType } from "@/types/campaign";
 import { MODULE_CONFIG } from "@/constants/campaign";
 
 const CARD = { bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", p: 2.5 } as const;
 
 interface Props {
-  modules: Campaign["modules"];
-  onConfigureModule?: (moduleType: string) => void;
+  module: Campaign["module"];
+  onConfigureModule?: (moduleType: ModuleType) => void;
 }
 
-const CampaignModulesCard: React.FC<Props> = ({ modules, onConfigureModule }) => (
-  <Box sx={CARD}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-      <Typography sx={{ fontWeight: 700, fontSize: "13px", color: "#111827" }}>
-        Assessment Modules
-      </Typography>
-      <Chip
-        label={modules.length}
-        size="small"
-        sx={{ bgcolor: "#F3F4F6", color: "#4B5563", fontWeight: 700, fontSize: "11px", height: 20 }}
-      />
-    </Box>
+const CampaignModuleCard: React.FC<Props> = ({ module, onConfigureModule }) => {
+  const mod = module ?? null;
 
-    {modules.length === 0 ? (
-      <Box sx={{ py: 3, textAlign: "center" }}>
-        <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-          No modules configured yet.
-        </Typography>
-      </Box>
-    ) : (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        {[...modules]
-          .sort((a, b) => a.order - b.order)
-          .map((mod, i) => (
-            <ModuleItem key={i} mod={mod} onConfigure={onConfigureModule} />
-          ))}
-      </Box>
-    )}
-  </Box>
-);
+  return (
+    <Box sx={CARD}>
+      <Typography sx={{ fontWeight: 700, fontSize: "13px", color: "#111827", mb: 2 }}>
+        Assessment Module
+      </Typography>
+
+      {!mod ? (
+        <Box sx={{ py: 3, textAlign: "center" }}>
+          <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
+            Module not configured yet.
+          </Typography>
+        </Box>
+      ) : (
+        <ModuleItem mod={mod} onConfigure={onConfigureModule} />
+      )}
+    </Box>
+  );
+};
 
 // ─── ModuleItem ───────────────────────────────────────────────────────────────
 
 const ModuleItem: React.FC<{
-  mod: Campaign["modules"][number];
-  onConfigure?: (moduleType: string) => void;
+  mod: CampaignModule;
+  onConfigure?: (moduleType: ModuleType) => void;
 }> = ({ mod, onConfigure }) => {
   const cfg = MODULE_CONFIG[mod.type];
   const Icon = cfg.icon;
@@ -82,7 +73,6 @@ const ModuleItem: React.FC<{
 
       {/* Content */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        {/* Title row */}
         <Box
           sx={{
             display: "flex",
@@ -92,23 +82,9 @@ const ModuleItem: React.FC<{
             mb: 0.5,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "13px", color: "#111827" }}>
-              {cfg.label}
-            </Typography>
-            <Chip
-              label={`Step ${mod.order}`}
-              size="small"
-              sx={{
-                height: 18,
-                fontSize: "10px",
-                bgcolor: `${cfg.color}18`,
-                color: cfg.color,
-                fontWeight: 600,
-                flexShrink: 0,
-              }}
-            />
-          </Box>
+          <Typography sx={{ fontWeight: 700, fontSize: "13px", color: "#111827" }}>
+            {cfg.label}
+          </Typography>
           <Button
             size="small"
             variant="outlined"
@@ -136,7 +112,6 @@ const ModuleItem: React.FC<{
           {cfg.description}
         </Typography>
 
-        {/* Config snippets */}
         <ModuleConfigSnippet mod={mod} />
       </Box>
     </Box>
@@ -145,7 +120,7 @@ const ModuleItem: React.FC<{
 
 // ─── ModuleConfigSnippet ──────────────────────────────────────────────────────
 
-const ModuleConfigSnippet: React.FC<{ mod: Campaign["modules"][number] }> = ({ mod }) => {
+const ModuleConfigSnippet: React.FC<{ mod: CampaignModule }> = ({ mod }) => {
   if (!mod.config) {
     return (
       <Typography sx={{ fontSize: "11px", color: "#D1D5DB", mt: 0.5 }}>
@@ -155,7 +130,7 @@ const ModuleConfigSnippet: React.FC<{ mod: Campaign["modules"][number] }> = ({ m
   }
 
   if (mod.type === "QUESTIONNAIRE") {
-    const count = (mod.config as any).questions?.length ?? 0;
+    const count = mod.config.questions?.length ?? 0;
     return (
       <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.75 }}>
         {count} question{count !== 1 ? "s" : ""}
@@ -163,16 +138,16 @@ const ModuleConfigSnippet: React.FC<{ mod: Campaign["modules"][number] }> = ({ m
     );
   }
 
-  if (mod.type === "AI_INTERVIEW" && (mod.config as any).durationMinutes) {
-    return (
+  if (mod.type === "AI_INTERVIEW") {
+    return mod.config.durationMinutes ? (
       <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.75 }}>
-        Duration: {(mod.config as any).durationMinutes} min
+        Duration: {mod.config.durationMinutes} min
       </Typography>
-    );
+    ) : null;
   }
 
   if (mod.type === "SKILL_TEST") {
-    const { passingScore, maxAttempts } = mod.config as any;
+    const { passingScore, maxAttempts } = mod.config;
     return (
       <Box sx={{ display: "flex", gap: 2, mt: 0.75 }}>
         {passingScore !== undefined && (
@@ -190,7 +165,7 @@ const ModuleConfigSnippet: React.FC<{ mod: Campaign["modules"][number] }> = ({ m
   }
 
   if (mod.type === "TRAINING_PATH") {
-    const count = (mod.config as any).resources?.length ?? 0;
+    const count = mod.config.resources?.length ?? 0;
     return (
       <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.75 }}>
         {count} resource{count !== 1 ? "s" : ""}
@@ -201,4 +176,4 @@ const ModuleConfigSnippet: React.FC<{ mod: Campaign["modules"][number] }> = ({ m
   return null;
 };
 
-export default CampaignModulesCard;
+export default CampaignModuleCard;
