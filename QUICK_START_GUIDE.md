@@ -172,7 +172,7 @@ curl -X POST http://localhost:5001/internal-campaigns \
     "type": "SKILLS_MAPPING",
     "description": "Assess employee skills",
     "anonymityMode": "NOMINATIVE",
-    "modules": [
+    "modules": {
       {
         "type": "SKILL_TEST",
         "config": {},

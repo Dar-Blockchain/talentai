@@ -1024,13 +1024,11 @@ POST /internal-campaigns
   "type": "SKILLS_MAPPING",
   "description": "Assess employee skills for Q4",
   "anonymityMode": "NOMINATIVE",
-  "modules": [
-    {
-      "type": "SKILL_TEST",
-      "config": {},
-      "order": 1
-    }
-  ],
+  "modules": {
+    "type": "SKILL_TEST",
+    "config": {},
+    "order": 1
+  },
   "accessMethod": "LINK",
   "targetDepartment": "Engineering",
   "targetEmployeeCount": 50,
