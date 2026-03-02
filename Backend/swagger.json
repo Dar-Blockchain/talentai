@@ -5461,7 +5461,7 @@
           "description": "Whether campaign is anonymous or not",
           "example": "NOMINATIVE"
         },
-        "modules": {
+        "module": {
           "type": "object",
           "description": "Campaign module",
           "properties": {
@@ -5511,7 +5511,7 @@
           "example": "Leadership, Communication, Problem Solving"
         }
       },
-      "required": ["title", "type", "anonymityMode", "modules", "accessMethod"]
+      "required": ["title", "type", "anonymityMode", "module", "accessMethod"]
     },
     "InternalCampaign": {
       "type": "object",
@@ -5562,7 +5562,7 @@
           "enum": ["ANONYMOUS", "NOMINATIVE"],
           "example": "NOMINATIVE"
         },
-        "modules": {
+        "module": {
           "type": "object",
           "properties": {
               "type": {
@@ -5642,6 +5642,6 @@
           "example": "2026-02-23T10:30:00Z"
         }
       },
-      "required": ["_id", "company", "title", "type", "anonymityMode", "modules", "accessMethod", "createdBy"]
+      "required": ["_id", "company", "title", "type", "anonymityMode", "module", "accessMethod", "createdBy"]
     }
   

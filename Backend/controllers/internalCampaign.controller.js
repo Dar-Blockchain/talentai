@@ -40,32 +40,32 @@ exports.createInternalCampaign = async (req, res) => {
   try {
     const {
       title,
-      type,
-      description,
-      anonymityMode,
-      modules,
-      accessMethod,
-      targetDepartment,
-      targetEmployeeCount,
-      deadline,
-      skill,
+        type,
+        description,
+        anonymityMode,
+        module,
+        accessMethod,
+        targetDepartment,
+        targetEmployeeCount,
+        deadline,
+        skill,
     } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
 
-    // modules should now be a single object describing the assessment module
+    // `module` should be a single object describing the assessment module
     if (
       !title ||
       !type ||
       !anonymityMode ||
-      !modules ||
-      typeof modules !== "object" ||
-      !modules.type ||
+      !module ||
+      typeof module !== "object" ||
+      !module.type ||
       !accessMethod
     ) {
       return res.status(400).json({
         success: false,
         error:
-          "Missing required fields: title, type, anonymityMode, modules, accessMethod",
+          "Missing required fields: title, type, anonymityMode, module, accessMethod",
       });
     }
 
@@ -75,7 +75,7 @@ exports.createInternalCampaign = async (req, res) => {
       type,
       description,
       anonymityMode,
-      modules,
+      module,
       accessMethod,
       targetDepartment,
       targetEmployeeCount,

@@ -7,9 +7,9 @@ const mongoose = require("mongoose");
  */
 exports.createCampaign = async (campaignData) => {
   try {
-    // modules should be a plain object now, validate expectations
-    if (!campaignData.modules || typeof campaignData.modules !== "object") {
-      const err = new Error("Invalid modules format; expected object");
+    // `module` should be a plain object now, validate expectations
+    if (!campaignData.module || typeof campaignData.module !== "object") {
+      const err = new Error("Invalid module format; expected object");
       err.status = 400;
       throw err;
     }
@@ -121,9 +121,9 @@ exports.updateCampaign = async (campaignId, updateData) => {
     delete updateData.createdBy;
     delete updateData.linkToken;
 
-    // modules should already be a plain object; ensure format is correct
-    if (updateData.modules && typeof updateData.modules !== "object") {
-      throw new Error("Invalid modules format during update; expected object");
+    // `module` should already be a plain object; ensure format is correct
+    if (updateData.module && typeof updateData.module !== "object") {
+      throw new Error("Invalid module format during update; expected object");
     }
 
     const campaign = await InternalCampaign.findByIdAndUpdate(

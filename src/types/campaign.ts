@@ -27,7 +27,7 @@ export interface Campaign {
   description?: string;
   status: CampaignStatus;
   anonymityMode: AnonymityMode;
-  modules: CampaignModule; // single module object
+  module: CampaignModule; // single module object
   accessMethod: AccessMethod;
   linkToken?: string | null;
   targetDepartment?: string;
@@ -44,7 +44,7 @@ export interface CreateCampaignForm {
   type: CampaignType;
   description?: string;
   anonymityMode: AnonymityMode;
-  modules: ModuleType; // select a single module type
+  module: ModuleType; // select a single module type
   accessMethod: AccessMethod;
   targetDepartment?: string;
   deadline?: string;
@@ -55,7 +55,7 @@ export interface CreateCampaignPayload {
   type: CampaignType;
   description?: string;
   anonymityMode: AnonymityMode;
-  modules: CampaignModule; // single module record
+  module: CampaignModule; // single module record
   accessMethod: AccessMethod;
   targetDepartment?: string;
   deadline?: string;
