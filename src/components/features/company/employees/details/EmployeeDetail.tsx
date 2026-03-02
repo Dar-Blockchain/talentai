@@ -50,7 +50,7 @@ const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
 /* ── Exact same card shell as EmployeeCard ── */
-const ECard: React.FC<{ children: React.ReactNode; c1: string; c2?: string }> = ({ children, c1, c2 }) => (
+const ECard: React.FC<{ children: React.ReactNode; c1?: string; c2?: string }> = ({ children }) => (
   <Box sx={{
     bgcolor: "#fff",
     borderRadius: "16px",
@@ -58,7 +58,6 @@ const ECard: React.FC<{ children: React.ReactNode; c1: string; c2?: string }> = 
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
     overflow: "hidden",
   }}>
-    <Box sx={{ height: 4, background: `linear-gradient(90deg, ${c1}, ${c2 ?? c1})` }} />
     <Box sx={{ p: 2.5 }}>{children}</Box>
   </Box>
 );

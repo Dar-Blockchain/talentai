@@ -75,8 +75,6 @@ const JobPostCard: React.FC<JobPostCardProps> = ({
         overflow: "hidden",
       }}
     >
-      <Box sx={{ height: 3, bgcolor: isDraft ? "#9CA3AF" : isExpired ? "#DC2626" : TEAL }} />
-
       <Box sx={{ p: 2.5 }}>
         {/* Header row */}
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5, gap: 1 }}>

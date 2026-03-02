@@ -1,7 +1,5 @@
 import React from "react";
-import { Box, Typography, Avatar, Chip, LinearProgress } from "@mui/material";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
+import { Box, Typography, Avatar, Chip } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 
 const AVATAR_GRADIENTS = [
@@ -84,14 +82,12 @@ interface InterviewCardProps {
 }
 
 const InterviewCard: React.FC<InterviewCardProps> = ({ assessment, onClick }) => {
-  const name     = assessment.candidate?.username || assessment.candidate?.email || "Unknown";
-  const email    = assessment.candidate?.email || "";
-  const letter   = name[0]?.toUpperCase() || "?";
-  const score    = getScore(assessment);
-  const sc       = scoreStyle(score);
-  const title    = assessment.post?.jobDetails?.title || "Untitled Position";
-  const duration = fmtDuration(assessment.interviewData?.analytics?.duration);
-  const msgs     = assessment.interviewData?.analytics?.messageCount ?? "—";
+  const name   = assessment.candidate?.username || assessment.candidate?.email || "Unknown";
+  const email  = assessment.candidate?.email || "";
+  const letter = name[0]?.toUpperCase() || "?";
+  const score  = getScore(assessment);
+  const sc     = scoreStyle(score);
+  const title  = assessment.post?.jobDetails?.title || "Untitled Position";
 
   return (
     <Box
@@ -102,71 +98,51 @@ const InterviewCard: React.FC<InterviewCardProps> = ({ assessment, onClick }) =>
         boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         overflow: "hidden", cursor: "pointer",
         transition: "all 0.2s ease",
-        "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(131,16,255,0.10)", borderColor: "#E0D7FF" },
+        "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", borderColor: "#E5E7EB" },
       }}
     >
-      {/* top colour strip */}
-      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${sc.color}, #8310FF)` }} />
-
       <Box sx={{ p: 2.5 }}>
-        {/* avatar + score badge */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+        {/* Avatar + score badge */}
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
           <Avatar sx={{
-            width: 48, height: 48, fontWeight: 800, fontSize: "1.1rem", color: "#fff",
+            width: 44, height: 44, fontWeight: 800, fontSize: "1rem", color: "#fff",
             background: `linear-gradient(${pickGradient(email || name)})`,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.12)", border: "2px solid #fff",
+            border: "2px solid #F1F5F9",
           }}>
             {letter}
           </Avatar>
-          <Box sx={{ px: 1.5, py: 0.5, borderRadius: "8px", bgcolor: sc.bg, border: `1px solid ${sc.color}30` }}>
-            <Typography sx={{ fontSize: "13px", fontWeight: 800, color: sc.color }}>
+          <Box sx={{ px: 1.25, py: 0.4, borderRadius: "8px", bgcolor: sc.bg, border: `1px solid ${sc.color}30` }}>
+            <Typography sx={{ fontSize: "12px", fontWeight: 800, color: sc.color }}>
               {score.toFixed(0)}%
             </Typography>
           </Box>
         </Box>
 
-        {/* name + email */}
-        <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827", mb: 0.25, lineHeight: 1.3 }}>
+        {/* Name + email */}
+        <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#111827", mb: 0.25, lineHeight: 1.3 }}>
           {name}
         </Typography>
-        <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mb: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mb: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {email}
         </Typography>
 
-        {/* score bar */}
-        <ScoreBar value={score} color={sc.color} />
-
-        <Box sx={{ height: "1px", bgcolor: "#F1F5F9", my: 2 }} />
-
-        {/* job title */}
+        {/* Job title */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5 }}>
-          <WorkOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
-          <Typography sx={{ fontSize: "12px", color: "#374151", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <WorkOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+          <Typography sx={{ fontSize: "12px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {title}
           </Typography>
         </Box>
 
-        {/* duration + messages */}
-        <Box sx={{ display: "flex", gap: 1.5, mb: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <AccessTimeOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{duration}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <ChatBubbleOutlineOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{msgs} msgs</Typography>
-          </Box>
-        </Box>
-
-        {/* status chip + date */}
+        {/* Verdict chip + date */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Chip label={sc.label} size="small" sx={{
-            fontWeight: 700, fontSize: "11px", height: 22,
+            fontWeight: 700, fontSize: "10px", height: 20,
             color: sc.color, bgcolor: sc.bg,
             border: `1px solid ${sc.color}25`, borderRadius: "6px",
             "& .MuiChip-label": { px: 1 },
           }} />
-          <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+          <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>
             {fmtDate(assessment.createdAt)}
           </Typography>
         </Box>
