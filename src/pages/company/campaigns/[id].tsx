@@ -12,11 +12,11 @@ import {
   fetchCampaignById,
   deleteCampaign,
   updateCampaignStatus,
-  updateModuleConfig,
   selectSelectedCampaign,
   selectDetailLoading,
   selectDetailError,
   clearSelectedCampaign,
+  updateCampaign,
 } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
 import { CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
@@ -75,7 +75,13 @@ const CampaignDetailsPage: React.FC = () => {
       config: NonNullable<CampaignModule["config"]>,
     ) => {
       try {
-        await dispatch(updateModuleConfig({ campaignId, moduleType, config })).unwrap();
+        const updatePayload = {
+          module: {
+            type: moduleType,
+            config
+          } as CampaignModule
+        }
+        await dispatch(updateCampaign({campaignId, updatePayload})).unwrap();
         showToast({ message: "Module configuration saved!", severity: "success" });
       } catch (e: any) {
         showToast({ message: e || "Failed to save module configuration", severity: "error" });

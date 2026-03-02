@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { Campaign, CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
 import CampaignHeader from "./CampaignHeader";
 import CampaignDetailsCard from "./CampaignDetailsCard";
-import CampaignModulesCard from "./CampaignModulesCard";
+import CampaignModuleCard from "./CampaignModuleCard";
 import CampaignSidebar from "./CampaignSidebar";
 import DeleteCampaignDialog from "./DeleteCampaignDialog";
 import ConfigureModuleModal from "./configure/ConfigureModuleModal";
@@ -29,7 +29,7 @@ const CampaignDetail: React.FC<Props> = ({
   const [configureModuleType, setConfigureModuleType] = useState<ModuleType | null>(null);
 
   const currentModuleConfig = configureModuleType
-    ? (campaign.modules.find((m) => m.type === configureModuleType)?.config ?? null)
+    ? (campaign.module?.config ?? null)
     : null;
 
   const handleSaveConfig = (
@@ -59,9 +59,9 @@ const CampaignDetail: React.FC<Props> = ({
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           <CampaignDetailsCard campaign={campaign} />
-          <CampaignModulesCard
-            modules={campaign.modules}
-            onConfigureModule={(type) => setConfigureModuleType(type as ModuleType)}
+          <CampaignModuleCard
+            module={campaign.module}
+            onConfigureModule={setConfigureModuleType}
           />
         </Box>
 
