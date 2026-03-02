@@ -63,14 +63,10 @@ const internalCampaignSchema = new mongoose.Schema(
       required: true,
     },
 
+    // a single assessment module (no longer a map/array)
     modules: {
-      type: Map,
-      of: moduleSchema,
-      default: {},
-      validate: [
-        (map) => map && map.size > 0,
-        "At least one module required",
-      ],
+      type: moduleSchema,
+      required: true,
     },
 
     accessMethod: {
@@ -108,16 +104,8 @@ const internalCampaignSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// transform modules map to array when converting to JSON/object
-internalCampaignSchema.set("toJSON", {
-  transform(doc, ret) {
-    if (ret.modules && typeof ret.modules === "object") {
-      // convert map values to array so frontend can continue to work with arrays
-      ret.modules = Object.values(ret.modules);
-    }
-    return ret;
-  },
-});
+// note: modules is now a single object; no conversion is necessary
+// (previous map-to-array transform has been removed)
 
 internalCampaignSchema.index({ company: 1, status: 1 });
 
