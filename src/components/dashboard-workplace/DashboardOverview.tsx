@@ -1,15 +1,18 @@
-import React, { memo, useCallback, useEffect } from "react";
-import { Box, Typography, Avatar, Button, LinearProgress, Chip, Skeleton } from "@mui/material";
+import React, { memo, useCallback } from "react";
+import { Box, Typography, Avatar, Button, Chip, LinearProgress } from "@mui/material";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
-import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
+import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlined from "@mui/icons-material/TrendingDownOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
+import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import CancelOutlined from "@mui/icons-material/CancelOutlined";
+import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import { motion } from "framer-motion";
 import {
   BarChart,
@@ -21,120 +24,124 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import {
-  fetchCampaigns,
-  selectCampaigns,
-  selectCampaignLoading,
-  Campaign,
-} from "@/store/slices/campaignSlice";
 
-const STATIC_STATS = [
-  { label: "Total Employees", value: "247", change: "+12 this month", trend: "up", icon: PeopleOutlined, color: "#0D9488" },
-  { label: "Avg. Skill Score", value: "72%", change: "+5% vs last qtr", trend: "up", icon: PsychologyOutlined, color: "#3B82F6" },
-  { label: "Training Completion", value: "68%", change: "156 / 247 done", trend: "up", icon: SchoolOutlined, color: "#8B5CF6" },
+const TEAL = "#0D9488";
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const STATS = [
+  {
+    label: "Total Employees",
+    value: "247",
+    change: "+12 this month",
+    trend: "up",
+    icon: PeopleOutlined,
+    color: "#0D9488",
+  },
+  {
+    label: "Avg. Interview Score",
+    value: "74%",
+    change: "+5% vs last quarter",
+    trend: "up",
+    icon: PsychologyOutlined,
+    color: "#3B82F6",
+  },
+  {
+    label: "Active Job Posts",
+    value: "18",
+    change: "4 closing soon",
+    trend: "neutral",
+    icon: WorkOutlined,
+    color: "#F59E0B",
+  },
+  {
+    label: "Active Campaigns",
+    value: "6",
+    change: "3 in progress",
+    trend: "up",
+    icon: AssignmentTurnedInOutlined,
+    color: "#8B5CF6",
+  },
 ];
 
-const gapData = [
-  { name: "React.js", current: 85, required: 90 },
-  { name: "Python", current: 72, required: 85, alert: true },
-  { name: "System Design", current: 45, required: 80, critical: true },
-  { name: "AWS", current: 68, required: 75 },
-  { name: "TypeScript", current: 78, required: 85 },
-  { name: "Docker", current: 55, required: 70, alert: true },
-  { name: "Leadership", current: 62, required: 80, critical: true },
-  { name: "Communication", current: 88, required: 85, success: true },
+const RECENT_INTERVIEWS = [
+  { name: "Sarah Chen",       email: "s.chen@mail.com",     job: "Senior React Developer",   score: 92, verdict: "Excellent", avatar: "SC", time: "2h ago" },
+  { name: "Marcus Johnson",   email: "m.johnson@mail.com",  job: "DevOps Engineer",           score: 78, verdict: "Good",      avatar: "MJ", time: "5h ago" },
+  { name: "Priya Patel",      email: "p.patel@mail.com",    job: "Product Manager",           score: 45, verdict: "Needs Work", avatar: "PP", time: "Yesterday" },
+  { name: "David Kim",        email: "d.kim@mail.com",      job: "Backend Engineer",          score: 88, verdict: "Excellent", avatar: "DK", time: "Yesterday" },
+  { name: "Elena Rossi",      email: "e.rossi@mail.com",    job: "UX Designer",               score: 61, verdict: "Good",      avatar: "ER", time: "2 days ago" },
 ];
 
-const recentActivity = [
-  { user: "Sarah Chen", action: "completed React.js assessment", score: "92%", time: "2h ago" },
-  { user: "John M.", action: "created campaign 'Leadership Eval'", time: "5h ago" },
-  { user: "Engineering Team", action: "12 employees enrolled in AWS Training", time: "Yesterday" },
-  { user: "Ahmed R.", action: "earned 'Advanced Python' credential", time: "Yesterday", achievement: true },
-  { user: "System", action: "Q4 Assessment Report generated", time: "2 days ago" },
-  { user: "Admin", action: "Skills matrix updated for Engineering", time: "3 days ago" },
+const ACTIVE_POSTS = [
+  { title: "Senior React Developer",  applicants: 34, status: "Active",  deadline: "Mar 15, 2026", skills: ["React", "TypeScript"] },
+  { title: "DevOps Engineer",         applicants: 21, status: "Active",  deadline: "Mar 20, 2026", skills: ["Docker", "AWS"] },
+  { title: "Product Manager",         applicants: 58, status: "Active",  deadline: "Mar 10, 2026", skills: ["Strategy", "Roadmap"] },
+  { title: "Backend Engineer",        applicants: 12, status: "Draft",   deadline: "—",             skills: ["Node.js", "MongoDB"] },
 ];
 
-const topPerformers = [
-  { rank: 1, name: "Sarah Chen", dept: "Engineering", score: 94, trend: "up" },
-  { rank: 2, name: "Marcus Johnson", dept: "DevOps", score: 91, trend: "up" },
-  { rank: 3, name: "Priya Patel", dept: "Product", score: 89, trend: "neutral" },
-  { rank: 4, name: "David Kim", dept: "Engineering", score: 87, trend: "up" },
-  { rank: 5, name: "Elena Rossi", dept: "Marketing", score: 85, trend: "up" },
+const ACTIVE_CAMPAIGNS = [
+  { title: "Q1 Leadership Eval",       type: "ASSESSMENT",  modules: 4, progress: 72, status: "ACTIVE",  deadline: "Mar 30, 2026" },
+  { title: "Engineering Skills Mapping", type: "SKILLS",    modules: 6, progress: 45, status: "ACTIVE",  deadline: "Apr 5, 2026" },
+  { title: "Onboarding Enablement",    type: "ENABLEMENT",  modules: 3, progress: 90, status: "ACTIVE",  deadline: "Mar 12, 2026" },
+  { title: "Sales Productivity Check", type: "DIAGNOSTIC",  modules: 5, progress: 20, status: "ACTIVE",  deadline: "Apr 20, 2026" },
 ];
 
+const GAP_DATA = [
+  { name: "React.js",       current: 85, required: 90 },
+  { name: "Python",         current: 72, required: 85, alert: true },
+  { name: "System Design",  current: 45, required: 80, critical: true },
+  { name: "AWS",            current: 68, required: 75 },
+  { name: "TypeScript",     current: 78, required: 85 },
+  { name: "Docker",         current: 55, required: 70, alert: true },
+  { name: "Leadership",     current: 62, required: 80, critical: true },
+  { name: "Communication",  current: 88, required: 85, success: true },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const STATUS_DOT: Record<string, string> = {
-  ACTIVE: "#10B981",
-  DRAFT: "#F59E0B",
-  PAUSED: "#F59E0B",
-  CLOSED: "#6B7280",
-  EXPIRED: "#EF4444",
+const VERDICT_STYLE: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
+  Excellent:  { bg: "#F0FDFA", color: "#0D9488", icon: CheckCircleOutlined },
+  Good:       { bg: "#EFF6FF", color: "#2563EB", icon: CheckCircleOutlined },
+  "Needs Work": { bg: "#FEF2F2", color: "#DC2626", icon: CancelOutlined },
+  Pending:    { bg: "#FFFBEB", color: "#D97706", icon: HourglassEmptyOutlined },
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE: "In Progress",
-  DRAFT: "Draft",
-  PAUSED: "Paused",
-  CLOSED: "Closed",
-  EXPIRED: "Expired",
-};
-
-const TYPE_ICON: Record<string, any> = {
-  PRODUCTIVITY_DIAGNOSTIC: PsychologyOutlined,
-  SKILLS_MAPPING: AssignmentTurnedInOutlined,
-  ENABLEMENT: SchoolOutlined,
-  CUSTOM: PeopleOutlined,
-};
-
-const TYPE_COLOR: Record<string, { bg: string; fg: string }> = {
-  PRODUCTIVITY_DIAGNOSTIC: { bg: "#EFF6FF", fg: "#2563EB" },
-  SKILLS_MAPPING: { bg: "#F0FDFA", fg: "#0D9488" },
+const CAMPAIGN_TYPE_COLOR: Record<string, { bg: string; fg: string }> = {
+  ASSESSMENT: { bg: "#F0FDFA", fg: "#0D9488" },
+  SKILLS:     { bg: "#EFF6FF", fg: "#2563EB" },
   ENABLEMENT: { bg: "#F5F3FF", fg: "#7C3AED" },
-  CUSTOM: { bg: "#FFF7ED", fg: "#C2410C" },
+  DIAGNOSTIC: { bg: "#FFF7ED", fg: "#C2410C" },
 };
 
-const fmtDate = (iso?: string) =>
-  iso
-    ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-    : "—";
+const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const SectionBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+    {children}
+  </Box>
+);
+
+const SectionTitle: React.FC<{ title: string; subtitle?: string; action?: React.ReactNode }> = ({ title, subtitle, action }) => (
+  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+    <Box>
+      <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>{title}</Typography>
+      {subtitle && <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.3 }}>{subtitle}</Typography>}
+    </Box>
+    {action}
+  </Box>
+);
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const DashboardOverview: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const campaigns = useSelector(selectCampaigns);
-  const campaignLoading = useSelector(selectCampaignLoading);
-
-  useEffect(() => {
-    dispatch(fetchCampaigns());
-  }, [dispatch]);
-
-  const activeCampaigns = campaigns.filter((c) => c.status === "ACTIVE");
-  const activeCount = activeCampaigns.length;
-
-  const statsData = [
-    ...STATIC_STATS.slice(0, 2),
-    {
-      label: "Active Campaigns",
-      value: campaignLoading ? "—" : String(activeCount),
-      change: campaigns.length > 0 ? `${campaigns.length} total campaigns` : "No campaigns yet",
-      trend: "neutral" as const,
-      icon: AssignmentTurnedInOutlined,
-      color: "#F59E0B",
-    },
-    STATIC_STATS[2],
-  ];
-
   const renderTooltip = useCallback(({ active, payload }: any) => {
     if (active && payload?.length) {
       return (
         <Box sx={{ bgcolor: "#fff", p: 1.5, border: "1px solid #E5E7EB", borderRadius: 2, boxShadow: 2, fontSize: "11px" }}>
           <Typography sx={{ fontWeight: 700, color: "#111827", mb: 0.5 }}>{payload[0].payload.name}</Typography>
-          <Typography sx={{ color: "#6B7280" }}>Current: <strong style={{ color: "#0D9488" }}>{payload[0].value}%</strong></Typography>
+          <Typography sx={{ color: "#6B7280" }}>Current: <strong style={{ color: TEAL }}>{payload[0].value}%</strong></Typography>
           <Typography sx={{ color: "#6B7280" }}>Required: <strong>{payload[1]?.value}%</strong></Typography>
         </Box>
       );
@@ -144,29 +151,28 @@ const DashboardOverview: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {/* Stats Cards */}
+
+      {/* ── Row 1: Stat Cards ─────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 3 }}>
-        {statsData.map((stat, idx) => (
-          <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-            <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s" }}>
+        {STATS.map((stat, idx) => (
+          <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
+            <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.2s" }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-                <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${stat.color}10` }}>
-                  <stat.icon sx={{ fontSize: 24, color: stat.color }} />
+                <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${stat.color}15` }}>
+                  <stat.icon sx={{ fontSize: 22, color: stat.color }} />
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.3, height: 32, width: 60 }}>
+                {/* Mini sparkline */}
+                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.3, height: 28, width: 52 }}>
                   {[4, 6, 3, 7, 5, 8, 6].map((h, i) => (
-                    <Box key={i} sx={{ flex: 1, borderRadius: "1px 1px 0 0", height: `${h * 10}%`, bgcolor: stat.color, opacity: 0.3 }} />
+                    <Box key={i} sx={{ flex: 1, borderRadius: "1px 1px 0 0", height: `${h * 10}%`, bgcolor: stat.color, opacity: 0.25 }} />
                   ))}
                 </Box>
               </Box>
-              <Typography sx={{ fontSize: "28px", fontWeight: 700, color: "#111827" }}>{stat.value}</Typography>
-              <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#6B7280", mt: 0.5, textTransform: "uppercase", letterSpacing: 1 }}>{stat.label}</Typography>
+              <Typography sx={{ fontSize: "26px", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{stat.value}</Typography>
+              <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", mt: 0.5, textTransform: "uppercase", letterSpacing: 0.8 }}>{stat.label}</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1.5 }}>
-                {stat.trend === "up" ? (
-                  <TrendingUpOutlined sx={{ fontSize: 16, color: "#10B981" }} />
-                ) : stat.trend === "down" ? (
-                  <TrendingDownOutlined sx={{ fontSize: 16, color: "#EF4444" }} />
-                ) : null}
+                {stat.trend === "up"   && <TrendingUpOutlined sx={{ fontSize: 15, color: "#10B981" }} />}
+                {stat.trend === "down" && <TrendingDownOutlined sx={{ fontSize: 15, color: "#EF4444" }} />}
                 <Typography sx={{ fontSize: "11px", fontWeight: 600, color: stat.trend === "up" ? "#10B981" : stat.trend === "down" ? "#EF4444" : "#6B7280" }}>
                   {stat.change}
                 </Typography>
@@ -176,231 +182,188 @@ const DashboardOverview: React.FC = () => {
         ))}
       </Box>
 
-      {/* Skills Gap + Active Campaigns */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "7fr 5fr" }, gap: 3 }}>
-        {/* Skills Gap Analysis */}
-        <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 4 }}>
-            <Box>
-              <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827" }}>Skills Gap Analysis</Typography>
-              <Typography sx={{ fontSize: "13px", color: "#6B7280" }}>Current vs. Required proficiency levels</Typography>
-            </Box>
-            <Button startIcon={<FilterListOutlined />} sx={{ textTransform: "none", color: "#374151", border: "1px solid #E5E7EB", borderRadius: 2, fontSize: "13px" }}>
-              All Departments
-            </Button>
-          </Box>
-          <Box sx={{ height: 340 }}>
+      {/* ── Row 2: Skills Gap + Recent Interviews ─────────────────────────── */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "6fr 5fr" }, gap: 3 }}>
+
+        {/* Skills Gap Chart */}
+        <SectionBox>
+          <SectionTitle
+            title="Skills Gap Analysis"
+            subtitle="Current vs. required proficiency levels"
+            action={
+              <Button startIcon={<FilterListOutlined />} size="small" sx={{ textTransform: "none", color: "#374151", border: "1px solid #E5E7EB", borderRadius: 2, fontSize: "12px" }}>
+                All Depts
+              </Button>
+            }
+          />
+          <Box sx={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gapData} layout="vertical" margin={{ left: 20, right: 30 }} barSize={12}>
+              <BarChart data={GAP_DATA} layout="vertical" margin={{ left: 10, right: 24 }} barSize={10}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F3F4F6" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 13, fontWeight: 500, fill: "#374151" }} width={110} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500, fill: "#374151" }} width={105} />
                 <Tooltip content={renderTooltip} />
                 <Bar dataKey="required" fill="#E5E7EB" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="current" fill="#0D9488" radius={[0, 4, 4, 0]}>
-                  {gapData.map((entry, index) => (
-                    <Cell key={index} fill={entry.critical ? "#EF4444" : entry.alert ? "#F59E0B" : "#0D9488"} />
+                <Bar dataKey="current"  fill={TEAL}     radius={[0, 4, 4, 0]}>
+                  {GAP_DATA.map((entry, i) => (
+                    <Cell key={i} fill={entry.critical ? "#EF4444" : entry.alert ? "#F59E0B" : entry.success ? "#10B981" : TEAL} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </Box>
-          <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              {[
-                { color: "#0D9488", label: "On Track" },
-                { color: "#F59E0B", label: "Minor Gap" },
-                { color: "#EF4444", label: "Critical Gap" },
-              ].map((l) => (
-                <Box key={l.label} sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
-                  <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: l.color }} />
-                  <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{l.label}</Typography>
-                </Box>
-              ))}
-            </Box>
-            <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0D9488", cursor: "pointer", display: "flex", alignItems: "center", gap: 0.5, "&:hover": { textDecoration: "underline" } }}>
-              View Full Matrix <ChevronRightOutlined sx={{ fontSize: 16 }} />
-            </Typography>
+          <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #E5E7EB", display: "flex", gap: 2 }}>
+            {[{ color: TEAL, label: "On Track" }, { color: "#F59E0B", label: "Minor Gap" }, { color: "#EF4444", label: "Critical Gap" }].map((l) => (
+              <Box key={l.label} sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: l.color }} />
+                <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{l.label}</Typography>
+              </Box>
+            ))}
           </Box>
-        </Box>
+        </SectionBox>
+
+        {/* Recent Interviews */}
+        <SectionBox>
+          <SectionTitle
+            title="Recent Interviews"
+            subtitle={`${RECENT_INTERVIEWS.length} latest results`}
+            action={
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: TEAL, cursor: "pointer", display: "flex", alignItems: "center", gap: 0.3, "&:hover": { textDecoration: "underline" } }}>
+                View all <ChevronRightOutlined sx={{ fontSize: 15 }} />
+              </Typography>
+            }
+          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {RECENT_INTERVIEWS.map((iv, i) => {
+              const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
+              const VIcon = vs.icon;
+              return (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
+                      {iv.avatar}
+                    </Avatar>
+                    <Box>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
+                      <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
+                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
+                    </Box>
+                    <Chip
+                      icon={<VIcon sx={{ fontSize: "12px !important" }} />}
+                      label={iv.verdict}
+                      size="small"
+                      sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
+                    />
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </SectionBox>
+      </Box>
+
+      {/* ── Row 3: Active Job Posts + Active Campaigns ────────────────────── */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
+
+        {/* Active Job Posts */}
+        <SectionBox>
+          <SectionTitle
+            title="Active Job Posts"
+            subtitle={`${ACTIVE_POSTS.length} positions open`}
+            action={
+              <Button startIcon={<AddOutlined />} size="small" sx={{ bgcolor: TEAL, color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0F766E" } }}>
+                New Post
+              </Button>
+            }
+          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {ACTIVE_POSTS.map((post, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{post.title}</Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
+                      {post.skills.map((s) => (
+                        <Chip key={s} label={s} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ textAlign: "right" }}>
+                  <Chip
+                    label={post.status}
+                    size="small"
+                    sx={{ fontSize: "10px", height: 20, fontWeight: 600,
+                      bgcolor: post.status === "Active" ? "#F0FDFA" : "#F3F4F6",
+                      color: post.status === "Active" ? TEAL : "#6B7280",
+                    }}
+                  />
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>{post.applicants} applicants</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {post.deadline}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+          <Box sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: TEAL, fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
+            View all posts →
+          </Box>
+        </SectionBox>
 
         {/* Active Campaigns */}
-        <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB", display: "flex", flexDirection: "column" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-            <Box>
-              <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827" }}>Active Campaigns</Typography>
-              {!campaignLoading && (
-                <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.3 }}>
-                  {activeCount} active · {campaigns.length} total
-                </Typography>
-              )}
-            </Box>
-            <Button
-              startIcon={<AddOutlined />}
-              onClick={() => {}}
-              sx={{ bgcolor: "#0D9488", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "13px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
-            >
-              New Campaign
-            </Button>
-          </Box>
-
-          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            {campaignLoading ? (
-              [1, 2, 3].map((i) => (
-                <Box key={i} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
-                  <Skeleton variant="rectangular" height={16} width="60%" sx={{ borderRadius: 1, mb: 1 }} />
-                  <Skeleton variant="rectangular" height={12} width="40%" sx={{ borderRadius: 1, mb: 2 }} />
-                  <Skeleton variant="rectangular" height={6} sx={{ borderRadius: 3 }} />
-                </Box>
-              ))
-            ) : activeCampaigns.length === 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 5, gap: 1.5 }}>
-                <Box sx={{ width: 48, height: 48, bgcolor: "#F0FDFA", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <AssignmentTurnedInOutlined sx={{ fontSize: 24, color: "#0D9488" }} />
-                </Box>
-                <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>No active campaigns</Typography>
-                <Typography sx={{ fontSize: "12px", color: "#9CA3AF", textAlign: "center" }}>
-                  Create a campaign to start assessing your team
-                </Typography>
-                <Button
-                  size="small"
-                  onClick={() => {}}
-                  sx={{ mt: 0.5, textTransform: "none", bgcolor: "#0D9488", color: "#fff", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#0b7a6f" } }}
-                >
-                  Get Started
-                </Button>
-              </Box>
-            ) : (
-              activeCampaigns.slice(0, 4).map((camp: Campaign) => {
-                const Icon = TYPE_ICON[camp.type] ?? AssignmentTurnedInOutlined;
-                const colors = TYPE_COLOR[camp.type] ?? TYPE_COLOR.CUSTOM;
-                const dot = STATUS_DOT[camp.status] ?? "#6B7280";
-                const statusLabel = STATUS_LABEL[camp.status] ?? camp.status;
-                const moduleCount = camp.modules.length;
-                return (
-                  <Box
-                    key={camp._id}
-                    onClick={() => {}}
-                    sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#0D9488" }, transition: "border-color 0.2s", cursor: "pointer" }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Avatar sx={{ width: 36, height: 36, bgcolor: colors.bg, color: colors.fg }}>
-                          <Icon sx={{ fontSize: 20 }} />
-                        </Avatar>
-                        <Box>
-                          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {camp.title}
-                          </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.3 }}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: dot }} />
-                            <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{statusLabel}</Typography>
-                          </Box>
-                        </Box>
+        <SectionBox>
+          <SectionTitle
+            title="Active Campaigns"
+            subtitle={`${ACTIVE_CAMPAIGNS.length} running`}
+            action={
+              <Button startIcon={<AddOutlined />} size="small" sx={{ bgcolor: "#8B5CF6", color: "#fff", textTransform: "none", borderRadius: 5, fontSize: "12px", fontWeight: 600, px: 2, "&:hover": { bgcolor: "#7C3AED" } }}>
+                New
+              </Button>
+            }
+          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            {ACTIVE_CAMPAIGNS.map((camp, i) => {
+              const colors = CAMPAIGN_TYPE_COLOR[camp.type] ?? CAMPAIGN_TYPE_COLOR.ASSESSMENT;
+              const progressColor = camp.progress >= 75 ? "#10B981" : camp.progress >= 40 ? TEAL : "#F59E0B";
+              return (
+                <Box key={i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#8B5CF6" }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                      <Box sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: colors.bg }}>
+                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: colors.fg, textTransform: "uppercase", letterSpacing: 0.8 }}>{camp.type}</Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Chip
-                          label={`${moduleCount} module${moduleCount !== 1 ? "s" : ""}`}
-                          size="small"
-                          sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }}
-                        />
-                        <ChevronRightOutlined sx={{ color: "#9CA3AF", fontSize: 20 }} />
-                      </Box>
-                    </Box>
-                    {camp.deadline && (
-                      <Typography sx={{ mt: 1, fontSize: "9px", textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600, color: "#9CA3AF" }}>
-                        Due: {fmtDate(camp.deadline)}
+                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {camp.title}
                       </Typography>
-                    )}
-                  </Box>
-                );
-              })
-            )}
-            {!campaignLoading && activeCampaigns.length > 4 && (
-              <Box
-                onClick={() => {}}
-                sx={{ textAlign: "center", py: 1.5, cursor: "pointer", color: "#0D9488", fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
-              >
-                View all {activeCampaigns.length} active campaigns →
-              </Box>
-            )}
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Activity + Top Performers */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
-        {/* Recent Activity */}
-        <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB" }}>
-          <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827", mb: 3 }}>Recent Activity</Typography>
-          <Box sx={{ position: "relative", pl: 3 }}>
-            <Box sx={{ position: "absolute", left: "5px", top: 8, bottom: 8, width: 1, bgcolor: "#E5E7EB" }} />
-            {recentActivity.map((a, i) => (
-              <Box key={i} sx={{ position: "relative", mb: 3, "&:last-child": { mb: 0 } }}>
-                <Box sx={{ position: "absolute", left: -21, top: 6, width: 12, height: 12, borderRadius: "50%", bgcolor: "#0D9488", border: "2px solid #fff", zIndex: 1 }} />
-                <Typography sx={{ fontSize: "13px", color: "#374151" }}>
-                  <Box component="span" sx={{ fontWeight: 700, color: "#0D9488", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>{a.user}</Box>{" "}
-                  {a.action}
-                  {a.score && (
-                    <Box component="span" sx={{ ml: 0.5, px: 0.7, py: 0.2, bgcolor: "#E6F7F5", color: "#0D9488", borderRadius: 1, fontWeight: 700, fontSize: "11px" }}>
-                      {a.score}
                     </Box>
-                  )}
-                  {a.achievement && " \u{1F3C6}"}
-                </Typography>
-                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.5 }}>{a.time}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Top Performers */}
-        <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-            <EmojiEventsOutlined sx={{ color: "#F59E0B", fontSize: 20 }} />
-            <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#111827" }}>Top Performers This Quarter</Typography>
-          </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {topPerformers.map((p) => (
-              <Box key={p.rank} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 3, "&:hover": { bgcolor: "#F0FDFA", border: "1px solid #E6F7F5" }, border: "1px solid transparent", transition: "all 0.2s" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography sx={{ width: 24, fontSize: "13px", fontWeight: 700, color: p.rank === 1 ? "#F59E0B" : "#6B7280", textAlign: "center" }}>
-                    #{p.rank}
-                  </Typography>
-                  <Avatar sx={{ width: 36, height: 36, bgcolor: p.rank % 2 === 0 ? "#3B82F6" : "#0D9488", fontSize: 13 }}>
-                    {p.name.split(" ").map((n) => n[0]).join("")}
-                  </Avatar>
-                  <Box>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{p.name}</Typography>
-                    <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{p.dept}</Typography>
+                    <Typography sx={{ fontSize: "12px", fontWeight: 800, color: progressColor }}>{camp.progress}%</Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={camp.progress}
+                    sx={{ height: 6, borderRadius: 3, bgcolor: "#F3F4F6", "& .MuiLinearProgress-bar": { bgcolor: progressColor, borderRadius: 3 } }}
+                  />
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{camp.modules} modules</Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {camp.deadline}</Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{p.score}%</Typography>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.3 }}>
-                      {p.trend === "up" && <TrendingUpOutlined sx={{ fontSize: 12, color: "#10B981" }} />}
-                      <Typography sx={{ fontSize: "9px", color: "#10B981", fontWeight: 700 }}>UP</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ width: 40, height: 40, position: "relative" }}>
-                    <svg width="40" height="40" style={{ transform: "rotate(-90deg)" }}>
-                      <circle cx="20" cy="20" r="15" stroke="#E5E7EB" strokeWidth="3" fill="transparent" />
-                      <circle
-                        cx="20" cy="20" r="15"
-                        stroke="#0D9488" strokeWidth="3" fill="transparent"
-                        strokeDasharray={2 * Math.PI * 15}
-                        strokeDashoffset={2 * Math.PI * 15 * (1 - p.score / 100)}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </Box>
-                </Box>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
-        </Box>
+          <Box sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "#8B5CF6", fontSize: "13px", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
+            View all campaigns →
+          </Box>
+        </SectionBox>
       </Box>
+
     </Box>
   );
 };
