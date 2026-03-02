@@ -64,7 +64,7 @@ const internalCampaignSchema = new mongoose.Schema(
     },
 
     // a single assessment module (no longer a map/array)
-    modules: {
+    module: {
       type: moduleSchema,
       required: true,
     },
