@@ -63,7 +63,7 @@ const internalCampaignSchema = new mongoose.Schema(
       required: true,
     },
 
-    // a single assessment module (no longer a map/array)
+    // a single assessment module (renamed from `modules` to `module`)
     module: {
       type: moduleSchema,
       required: true,
@@ -104,7 +104,7 @@ const internalCampaignSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// note: modules is now a single object; no conversion is necessary
+// note: `module` is a single object; field was renamed from `modules` to `module`
 // (previous map-to-array transform has been removed)
 
 internalCampaignSchema.index({ company: 1, status: 1 });
