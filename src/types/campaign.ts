@@ -27,7 +27,7 @@ export interface Campaign {
   description?: string;
   status: CampaignStatus;
   anonymityMode: AnonymityMode;
-  modules: CampaignModule[];
+  module: CampaignModule;
   accessMethod: AccessMethod;
   linkToken?: string | null;
   targetDepartment?: string;
@@ -44,7 +44,7 @@ export interface CreateCampaignForm {
   type: CampaignType;
   description?: string;
   anonymityMode: AnonymityMode;
-  modules: ModuleType[];
+  module: ModuleType;
   accessMethod: AccessMethod;
   targetDepartment?: string;
   deadline?: string;
@@ -55,7 +55,7 @@ export interface CreateCampaignPayload {
   type: CampaignType;
   description?: string;
   anonymityMode: AnonymityMode;
-  modules: CampaignModule[];
+  module: CampaignModule;
   accessMethod: AccessMethod;
   targetDepartment?: string;
   deadline?: string;
@@ -92,7 +92,6 @@ export interface Question {
 
 export interface QuestionnaireModule {
   type: "QUESTIONNAIRE";
-  order: number;
   config: {
     questions: {
       question: string;
@@ -104,7 +103,6 @@ export interface QuestionnaireModule {
 
 export interface AIInterviewModule {
   type: "AI_INTERVIEW";
-  order: number;
   config: {
     agentPrompt: string;
     durationMinutes?: number;
@@ -114,7 +112,6 @@ export interface AIInterviewModule {
 
 export interface SkillTestModule {
   type: "SKILL_TEST";
-  order: number;
   config: {
     skill: string;
     passingScore?: number;
@@ -122,15 +119,14 @@ export interface SkillTestModule {
   } | null;
 }
 
-interface TrainingPathModule {
+export interface TrainingPathModule {
   type: "TRAINING_PATH";
-  order: number;
   config: {
     resources: LearningResource[];
   } | null;
 }
 
-interface LearningResource {
+export interface LearningResource {
   type: "LINK" | "DOCUMENT" | "COURSE" | "VIDEO";
   title: string;
   url: string;
