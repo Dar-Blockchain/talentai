@@ -5644,5 +5644,4 @@
       },
       "required": ["_id", "company", "title", "type", "anonymityMode", "modules", "accessMethod", "createdBy"]
     }
-  }
-}
+  
