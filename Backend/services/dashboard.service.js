@@ -683,7 +683,7 @@ module.exports.getStatsCards = async (userId) => {
     const [totalUsers, avgOverallScoreAgg, openPostsCount, activeCampaignsCount] = await Promise.all([
       CompanyMembership.countDocuments({ company: userId, status: "active" }),
       PostInterviewAssessment.aggregate([
-        { $match: { companyId: new mongoose.Types.ObjectId(userId), "interviewData.finalReport.coverage.overall": { $ne: null } } },
+        { $match: { company: new mongoose.Types.ObjectId(userId), "interviewData.finalReport.coverage.overall": { $ne: null } } },
         { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
       ]),
       Post.countDocuments({ user: userId, status: POST_STATUS.OPEN }),
