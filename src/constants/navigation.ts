@@ -6,6 +6,7 @@ import {
   HowToRegOutlined,
   PsychologyOutlined,
   SettingsOutlined,
+  CorporateFareOutlined,
 } from "@mui/icons-material";
 
 export const navigation = [
@@ -32,6 +33,12 @@ export const navigation = [
     icon: GroupsOutlined,
     label: "Employees",
     href: "/company/employees",
+  },
+  {
+    id: "departments",
+    icon: CorporateFareOutlined,
+    label: "Departments",
+    href: "/company/departments",
   },
   {
     id: "interviews",
