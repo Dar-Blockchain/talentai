@@ -24,13 +24,13 @@ import {
   selectDepartmentDeleteError,
   Department,
 } from "@/store/slices/departmentSlice";
-import DepartmentSearch from "@/components/features/departments/DepartmentSearch";
-import DepartmentFetchError from "@/components/features/departments/DepartmentFetchError";
-import DepartmentGrid from "@/components/features/departments/DepartmentGrid";
-import DepartmentEmptyState from "@/components/features/departments/DepartmentEmptyState";
-import CreateDepartmentModal from "@/components/features/departments/CreateDepartmentModal";
-import EditDepartmentModal from "@/components/features/departments/EditDepartmentModal";
-import DeleteDepartmentDialog from "@/components/features/departments/DeleteDepartmentDialog";
+import DepartmentSearch from "@/components/features/company/departments/DepartmentSearch";
+import DepartmentFetchError from "@/components/features/company/departments/DepartmentFetchError";
+import DepartmentGrid from "@/components/features/company/departments/DepartmentGrid";
+import DepartmentEmptyState from "@/components/features/company/departments/DepartmentEmptyState";
+import CreateDepartmentModal from "@/components/features/company/departments/CreateDepartmentModal";
+import EditDepartmentModal from "@/components/features/company/departments/EditDepartmentModal";
+import DeleteDepartmentDialog from "@/components/features/company/departments/DeleteDepartmentDialog";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 
 const DepartmentsPage: React.FC = () => {
