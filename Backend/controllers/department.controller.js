@@ -61,7 +61,7 @@ exports.getDepartment = async (req, res) => {
     }
     res.status(200).json({ success: true, data: dept });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(error.status || 500).json({ success: false, error: error.message });
   }
 };
 
@@ -77,7 +77,7 @@ exports.updateDepartment = async (req, res) => {
     }
     res.status(200).json({ success: true, data: updated });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(error.status || 500).json({ success: false, error: error.message });
   }
 };
 
@@ -90,6 +90,6 @@ exports.deleteDepartment = async (req, res) => {
     await departmentService.deleteDepartment(id);
     res.status(200).json({ success: true, message: "Department deleted" });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(error.status || 500).json({ success: false, error: error.message });
   }
 };
