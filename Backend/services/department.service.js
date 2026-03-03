@@ -1,4 +1,10 @@
 const Department = require("../models/department.model");
+const mongoose = require("mongoose");
+
+/**
+ * Validate if a string is a valid MongoDB ObjectId
+ */
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 /**
  * Create a new department
@@ -20,6 +26,11 @@ exports.createDepartment = async (departmentData) => {
  */
 exports.getDepartmentById = async (id) => {
   try {
+    if (!isValidObjectId(id)) {
+      const err = new Error(`Invalid department ID format`);
+      err.status = 400;
+      throw err;
+    }
     return await Department.findById(id);
   } catch (error) {
     throw new Error(`Error fetching department: ${error.message}`);
@@ -66,6 +77,11 @@ exports.getDepartmentsByCompany = async (companyId, page = 1, limit = 20, search
  */
 exports.updateDepartment = async (id, updateData) => {
   try {
+    if (!isValidObjectId(id)) {
+      const err = new Error(`Invalid department ID format`);
+      err.status = 400;
+      throw err;
+    }
     if (updateData.companyId) delete updateData.companyId; // cannot change owner
     const dept = await Department.findByIdAndUpdate(id, updateData, {
       new: true,
@@ -82,6 +98,11 @@ exports.updateDepartment = async (id, updateData) => {
  */
 exports.deleteDepartment = async (id) => {
   try {
+    if (!isValidObjectId(id)) {
+      const err = new Error(`Invalid department ID format`);
+      err.status = 400;
+      throw err;
+    }
     return await Department.findByIdAndDelete(id);
   } catch (error) {
     throw new Error(`Error deleting department: ${error.message}`);

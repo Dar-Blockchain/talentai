@@ -723,7 +723,7 @@ const CampaignInterview = () => {
           showSecurityModal={security.showSecurityModal}
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
-          onReturnToDashboard={() => router.push('/dashboard/workplace')}
+          onReturnToDashboard={() => router.push('/company/dashboard')}
         />
 
         {/* Fixed Timer */}
