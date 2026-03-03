@@ -22,7 +22,7 @@ module.exports.sentInvitation = async (req, res) => {
 module.exports.resendInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
-    const { department } = req.body;
+    const { department : departmentId } = req.body;
     const updated =
       await CompanyInvitationService.resendInvitation(invitationId, department);
     res.json({ success: true, updated });
