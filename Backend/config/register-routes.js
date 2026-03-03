@@ -6,6 +6,7 @@
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("../swagger.json");
 const campaignSwagger = require("../docs/swagger-campaigns.json");
+const departmentSwagger = require("../docs/swagger-departments.json");
 
 // Import all route modules
 const authRouter = require("../routes/authentication.routes");
@@ -55,6 +56,9 @@ function registerRoutes(app) {
   
   // Campaign API Documentation (Swagger)
   app.use("/api/docs/campaigns", swaggerUi.serve, swaggerUi.setup(campaignSwagger));
+  
+  // Department API Documentation (Swagger)
+  app.use("/api/docs/departments", swaggerUi.serve, swaggerUi.setup(departmentSwagger));
 
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
