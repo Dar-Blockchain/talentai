@@ -41,6 +41,7 @@ const chatRouter = require("../routes/chat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
 const internalCampaignRoutes = require('../routes/internalCampaign.routes');
 const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
+const departmentRoutes = require('../routes/department.routes');
 
 // const backupRouter = require('../routes/backupRouter');
 
@@ -126,6 +127,7 @@ function registerRoutes(app) {
   // Register internal campaign routes
   app.use('/internal-campaigns', internalCampaignRoutes);
   app.use('/campaign-participants', campaignParticipantRoutes);
+  app.use('/departments', departmentRoutes);
 
   app.get("/some-route", (req, res) => {
     res.json("Route accessible");
