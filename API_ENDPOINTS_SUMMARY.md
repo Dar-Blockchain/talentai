@@ -159,6 +159,9 @@ This complete documentation package includes everything you need to understand, 
 
 ## 🔗 Direct Links to Key Endpoints
 
+### Dashboard (`/dashboard`)
+- Stats Cards: `GET /dashboard/statsCards` (requires auth, scoped to user)
+
 ### Authentication (`/auth`)
 - Register: `POST /auth/register`
 - Verify OTP: `POST /auth/verify-otp`
