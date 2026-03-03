@@ -22,7 +22,7 @@ const MemberGuard = ({ children }: MemberGuardProps) => {
     if (!!companyMembership?._id) return;
 
     if (user?.role === "Company") {
-      router.replace("/dashboard/company");
+      router.replace("/company/dashboard");
     } else if (user?.role === "Candidate") {
       router.replace("/dashboard/candidate");
     } else if (user?.role === "Admin") {

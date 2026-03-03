@@ -74,14 +74,14 @@ const NewCampaignPage: React.FC = () => {
         ...data,
         module: { type: data.module, config: null },
       };
-      await dispatch(createCampaign(formattedPayload)).unwrap();
+      const campaign = await dispatch(createCampaign(formattedPayload)).unwrap();
 
       showToast({
         message: "Campaign created successfully",
         severity: "success",
       });
 
-      router.push("/company/campaigns");
+      router.push(`/company/campaigns/${campaign._id}`);
     } catch (error: any) {
       showToast({
         message:

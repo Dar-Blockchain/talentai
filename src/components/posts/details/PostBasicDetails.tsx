@@ -45,7 +45,7 @@ const PostBasicDetails: React.FC<Props> = ({ canEdit, onEdit }) => {
 
   const deletePost = useDeletePost({
     postId: job?._id,
-    redirectTo: "/dashboard/company",
+    redirectTo: "/company/dashboard",
     onSuccess: () =>
       showToast({
         message: "Post deleted successfully",

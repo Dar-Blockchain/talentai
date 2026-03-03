@@ -19,7 +19,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
 import { selectJobMatches } from "@/store/slices/postSlice";
-import { MatchingCandidate } from "@/pages/dashboard/company";
+import { MatchingCandidate } from "@/pages/company/dashboard";
 import { unlockCandidate } from "@/store/slices/candidateSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import { selectCurrentPlanLimit } from "@/store/slices/planLimitsSlice";

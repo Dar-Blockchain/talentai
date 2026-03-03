@@ -48,7 +48,7 @@ export const useAuthCheck = () => {
 
     router.replace(
       userRole === "Company"
-        ? "/dashboard/company"
+        ? "/company/dashboard"
         : "/dashboard/candidate"
     );
   };

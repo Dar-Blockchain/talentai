@@ -110,8 +110,8 @@ const CampaignOverviewCard: React.FC<{ campaign: Campaign; statusColor: string }
       <SidebarRow label="Type" value={TYPE_LABELS[campaign.type]} />
       <Divider sx={{ my: 1.25 }} />
       <SidebarRow
-        label="Modules"
-        value={`${campaign.modules.length} module${campaign.modules.length !== 1 ? "s" : ""}`}
+        label="Module"
+        value={`${campaign.module.type}`}
       />
       {campaign.targetDepartment && (
         <>
