@@ -54,15 +54,86 @@ exports.getParticipantByAnonymousToken = async (token) => {
 /**
  * Get all participants for a campaign
  */
-exports.getParticipantsByCampaign = async (campaignId, filters = {}) => {
+exports.getParticipantsByCampaign = async (campaignId, filters = {}, search = {}) => {
   try {
-    const query = {
-      campaign: campaignId,
-      ...filters,
-    };
-    return await CampaignParticipant.find(query)
-      .populate("employee", "firstName lastName email")
-      .sort({ createdAt: -1 });
+    const baseMatch = { campaign: campaignId };
+    if (filters && Object.keys(filters).length > 0) Object.assign(baseMatch, filters);
+
+    // If no advanced search requested, use simple find + populate for performance
+    const needsAdvancedSearch = search && search.q;
+    if (!needsAdvancedSearch) {
+      return await CampaignParticipant.find(baseMatch)
+        .populate("employee", "firstName lastName email")
+        .sort({ createdAt: -1 });
+    }
+
+    // Build aggregation pipeline to lookup employee and profile and filter by name/email
+    const pipeline = [
+      { $match: baseMatch },
+      // lookup employee document
+      {
+        $lookup: {
+          from: "users",
+          localField: "employee",
+          foreignField: "_id",
+          as: "employee",
+        },
+      },
+      { $unwind: { path: "$employee", preserveNullAndEmptyArrays: true } },
+      // lookup profile for employee to check department fields
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "employee.profile",
+          foreignField: "_id",
+          as: "profile",
+        },
+      },
+      { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
+    ];
+
+    const andMatch = [];
+
+    if (search.q && typeof search.q === "string" && search.q.trim().length > 0) {
+      const regex = { $regex: search.q.trim(), $options: "i" };
+      andMatch.push({
+        $or: [
+          { "employee.firstName": regex },
+          { "employee.lastName": regex },
+          { "employee.email": regex },
+          { "profile.firstName": regex },
+          { "profile.lastName": regex },
+        ],
+      });
+    }
+
+    // department filtering removed — search scope limited to employee name/email
+
+    if (andMatch.length > 0) pipeline.push({ $match: { $and: andMatch } });
+
+    // sort and project
+    pipeline.push({ $sort: { createdAt: -1 } });
+    pipeline.push({
+      $project: {
+        campaign: 1,
+        email: 1,
+        anonymousToken: 1,
+        status: 1,
+        accessedAt: 1,
+        completedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        employee: {
+          _id: "$employee._id",
+          firstName: "$employee.firstName",
+          lastName: "$employee.lastName",
+          email: "$employee.email",
+        },
+      },
+    });
+
+    const results = await CampaignParticipant.aggregate(pipeline);
+    return results;
   } catch (error) {
     throw new Error(`Error fetching campaign participants: ${error.message}`);
   }

@@ -91,7 +91,7 @@ function Preferences() {
 
             // If no returnUrl, redirect to appropriate dashboard immediately
             if (data.type === "Company") {
-              router.replace("/dashboard/company");
+              router.replace("/company/dashboard");
             } else {
               router.replace("/dashboard/candidate");
             }

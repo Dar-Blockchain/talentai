@@ -13,6 +13,9 @@ import {
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import { LogoutOutlined, SettingsOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
+import { logout } from "@/store/slices/authSlice";
 
 interface UserHeaderProps {
   companyName: string;
@@ -23,6 +26,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -83,10 +87,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) 
         </MenuItem>
         <Divider />
         <MenuItem
-          sx={{fontSize: 14}}
-          onClick={() => {
-            console.log("Logout clicked");
+          sx={{ fontSize: 14 }}
+          onClick={async () => {
             handleCloseMenu();
+            await dispatch(logout());
+            router.push("/signin");
           }}
         >
           <LogoutOutlined sx={{ mr: 1, fontSize: 16 }} />

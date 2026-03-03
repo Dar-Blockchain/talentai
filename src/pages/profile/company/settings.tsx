@@ -46,7 +46,7 @@ const CompanySettingsPage: React.FC = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="/dashboard/company"
+            href="/company/dashboard"
             sx={{
               cursor: 'pointer',
               fontSize: '0.875rem',

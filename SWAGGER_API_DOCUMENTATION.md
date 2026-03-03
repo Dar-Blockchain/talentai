@@ -1166,6 +1166,52 @@ GET /dashboard
 
 ---
 
+#### Get Dashboard Stats Cards
+```
+GET /dashboard/statsCards
+```
+**Protected**
+
+Returns the four statistics shown on the admin dashboard cards (total employees, average interview score, active job posts and active campaigns) filtered by the authenticated company user (uses `req.user._id`).
+
+Example response:
+```json
+{
+  "success": true,
+  "data": {
+    "totalEmployees": 247,
+    "avgInterviewScore": 74,
+    "activeJobPosts": 18,
+    "activeCampaigns": 6
+  }
+}
+```
+
+---
+
+#### Get Dashboard Stats Cards
+```
+GET /dashboard/statsCards
+```
+**Protected**
+
+Returns the four statistics shown on the admin dashboard cards (total employees, average interview score, active job posts and active campaigns) filtered by the authenticated company user (uses `req.user._id`).
+
+Example response:
+```json
+{
+  "success": true,
+  "data": {
+    "totalEmployees": 247,
+    "avgInterviewScore": 74,
+    "activeJobPosts": 18,
+    "activeCampaigns": 6
+  }
+}
+```
+
+---
+
 ### 💳 PAYMENT
 
 #### Process Payment

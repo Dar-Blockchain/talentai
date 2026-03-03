@@ -1,7 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
@@ -9,21 +7,8 @@ import AppButton from "@/components/ui/AppButton";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import CampaignsStats from "@/components/features/company/campaigns/list/Stats";
 import CampaignsGrid from "@/components/features/company/campaigns/list/CampaignsGrid";
-import {
-  fetchCampaigns,
-  selectCampaignLimit,
-  selectCampaignPage,
-  selectCampaignCount,
-  setPage,
-  setLimit
-} from "@/store/slices/campaignSlice";
-import { useSelector } from "react-redux";
-import Pagination from "@/components/ui/Pagination";
-import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
-import EmptyState from "@/components/ui/EmptyState"; 
 
 const CampaignsPage: React.FC = () => {
-
 
   return (
     <RoleGuard allowedRoles={["Company"]}>

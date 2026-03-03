@@ -103,13 +103,22 @@ exports.createInternalCampaign = async (req, res) => {
 exports.getCompanyCampaigns = async (req, res) => {
   try {
     const companyId = req.user.profile;
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, type, targetDepartment, title, page = 1, limit = 10 } = req.query;
 
     // Validate pagination parameters
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
 
-    const filters = status ? { status } : {};
+    // Build filters supporting search on title (partial, case-insensitive),
+    // and exact filters for type, status and targetDepartment.
+    const filters = {};
+    if (status) filters.status = status;
+    if (type) filters.type = type;
+    if (targetDepartment) filters.targetDepartment = targetDepartment;
+    if (title && typeof title === "string" && title.trim().length > 0) {
+      const search = title.trim();
+      filters.title = { $regex: search, $options: "i" };
+    }
 
     const result = await getCampaignsByCompanyPaginated(
       companyId,

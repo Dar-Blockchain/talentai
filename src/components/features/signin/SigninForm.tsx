@@ -138,7 +138,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
       return;
     }else{
     const redirctTo =
-      userRole === "Company" ? "/dashboard/company" : "/dashboard/candidate";
+      userRole === "Company" ? "/company/dashboard" : "/dashboard/candidate";
     router.replace(redirctTo);
     }
 

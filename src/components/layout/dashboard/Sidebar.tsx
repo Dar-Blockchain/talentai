@@ -16,8 +16,9 @@ import {
 } from "@mui/material";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import Link from "next/link";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { logout } from "@/store/slices/authSlice";
 import { navigation } from "@/constants/navigation";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
@@ -43,6 +44,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const handleLogout = useCallback(async () => {
+    await dispatch(logout());
+    router.push("/signin");
+  }, [dispatch, router]);
 
   const profile = useSelector(
     (state: RootState) => state.user.connectedUser.profile,
@@ -223,9 +230,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <IconButton
               size="small"
               sx={{ color: "#6B7280" }}
-              onClick={() => {
-                console.log("Logout clicked");
-              }}
+              onClick={handleLogout}
             >
               <LogoutOutlined />
             </IconButton>

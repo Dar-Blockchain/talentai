@@ -16,7 +16,7 @@ const WorkspaceSelector: React.FC = () => {
 
   const goToPersonalWorkspace = () => {
     const redirctTo =
-      userRole === "Company" ? "/dashboard/company" : "/dashboard/candidate";
+      userRole === "Company" ? "/company/dashboard" : "/dashboard/candidate";
     router.replace(redirctTo);
     dispatch(setCurrentSpace('personal'))
   }

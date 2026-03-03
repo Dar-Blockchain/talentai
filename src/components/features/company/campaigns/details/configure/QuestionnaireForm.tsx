@@ -161,6 +161,7 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
 const EmptyState: React.FC<{ label: string }> = ({ label }) => (
   <Box
     sx={{
+      mt: 2,
       py: 3,
       textAlign: "center",
       bgcolor: "#F9FAFB",
