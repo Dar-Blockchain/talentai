@@ -60,6 +60,22 @@ module.exports.updateMembershipRole = async (req, res) => {
   }
 };
 
+// Update membership department (assign or unassign from department)
+module.exports.updateMembershipDepartment = async (req, res) => {
+  try {
+    const { membershipId } = req.params;
+    const { departmentId } = req.body;
+
+    const updated = await CompanyMembershipService.updateMembershipDepartment(
+      membershipId,
+      departmentId,
+    );
+    res.json({ success: true, updated });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 // Get simple statistics for memberships and invitations belonging to a company
 module.exports.getMembershipStats = async (req, res) => {
   try {

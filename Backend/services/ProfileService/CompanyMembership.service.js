@@ -75,6 +75,21 @@ module.exports.updateMembershipRole = async (membershipId, newRole) => {
   return updated;
 };
 
+// Update the department of a membership (assign or unassign from department)
+module.exports.updateMembershipDepartment = async (membershipId, departmentId) => {
+  const updated = await CompanyMembershipModel.findByIdAndUpdate(
+    membershipId,
+    { department: departmentId || null },
+    { new: true }
+  )
+    .populate("user", "username email")
+    .populate("department", "name description")
+    .populate("invitedBy", "username email");
+
+  if (!updated) throw new Error("Membership not found");
+  return updated;
+};
+
 // Compute simple statistics for a company's memberships (counts by role/status)
 module.exports.getMembershipStatsByCompany = async (companyId) => {
 
