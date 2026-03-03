@@ -12,6 +12,7 @@ module.exports.sentInvitation = async (
   role,
   invitedBy,
   username,
+  departmentId = null,
 ) => {
   const existing = await CompanyInvitationModel.findOne({
     email: userEmail,
@@ -25,14 +26,21 @@ module.exports.sentInvitation = async (
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
 
-  const member = await CompanyInvitationModel.create({
+  const invitationData = {
     email: userEmail,
     company,
     role,
     invitedBy,
     token,
     expiresAt,
-  });
+  };
+  
+  // Add department if provided
+  if (departmentId) {
+    invitationData.department = departmentId;
+  }
+
+  const member = await CompanyInvitationModel.create(invitationData);
 
   // Build the acceptance link (frontend)
   const frontendBase = process.env.FRONTEND_URL || "https://app.talentai.bid";
@@ -55,13 +63,20 @@ module.exports.sentInvitation = async (
 };
 
 // Resend an invitation (regenerate token and reset expiration)
-module.exports.resendInvitation = async (invitationId) => {
+module.exports.resendInvitation = async (invitationId, departmentId = null) => {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
 
+  const updateData = { token, expiresAt, status: "pending" };
+  
+  // Update department if provided
+  if (departmentId) {
+    updateData.department = departmentId;
+  }
+
   const updated = await CompanyInvitationModel.findByIdAndUpdate(
     invitationId,
-    { token, expiresAt, status: "pending" },
+    updateData,
     { new: true },
   ).populate("invitedBy");
 
@@ -110,11 +125,18 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
     throw new Error("Invitation not for this user");
 
   // Create the CompanyMembership entry
-  const membership = await CompanyMembershipModel.create({
+  const membershipData = {
     user: userId,
     company: invitation.company,
     role: invitation.role,
-  });
+  };
+  
+  // Add department if provided in invitation
+  if (invitation.department) {
+    membershipData.department = invitation.department;
+  }
+
+  const membership = await CompanyMembershipModel.create(membershipData);
 
   // Delete the invitation after acceptance
   await CompanyInvitationModel.findByIdAndDelete(invitationId);
