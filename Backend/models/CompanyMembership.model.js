@@ -8,6 +8,7 @@ const CompanyMembershipSchema = new mongoose.Schema({
     enum: ["Owner", "RH", "TechLead", "Supervisor", "Manager"],
     default: "Manager",
   },
+  department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   status: { type: String, enum: ["active", "pending", "revoked"], default: "active" },
   invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
