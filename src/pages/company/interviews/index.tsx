@@ -16,7 +16,6 @@ import {
   selectCompanyInterviews,
   selectCompanyInterviewsLoading,
   selectCompanyInterviewsTotal,
-  selectCompanyMetrics,
 } from "@/store/slices/interviewSlice";
 
 type TabType = "all" | "excellent" | "satisfactory" | "needs-work";
@@ -35,7 +34,6 @@ const InterviewsPage: React.FC = () => {
   const results   = useSelector(selectCompanyInterviews) as InterviewAssessment[];
   const loading   = useSelector(selectCompanyInterviewsLoading);
   const total     = useSelector(selectCompanyInterviewsTotal) as number;
-  const metrics   = useSelector(selectCompanyMetrics);
 
   const [search,   setSearch]   = useState("");
   const [tab,      setTab]      = useState<TabType>("all");
@@ -63,15 +61,17 @@ const InterviewsPage: React.FC = () => {
     return list;
   }, [results, search, tab]);
 
-  const satisfactory = results.filter((a) => { const s = getScore(a); return s >= 50 && s < 70; }).length;
+  const excellentCount    = results.filter((a) => getScore(a) >= 70).length;
+  const satisfactoryCount = results.filter((a) => { const s = getScore(a); return s >= 50 && s < 70; }).length;
+  const needsWorkCount    = results.filter((a) => getScore(a) < 50).length;
 
   const tabItems = TABS.map((t) => ({
     id: t.id, label: t.label,
     count:
       t.id === "all"          ? total :
-      t.id === "excellent"    ? metrics.excellent :
-      t.id === "satisfactory" ? satisfactory :
-                                metrics.needWork,
+      t.id === "excellent"    ? excellentCount :
+      t.id === "satisfactory" ? satisfactoryCount :
+                                needsWorkCount,
   }));
 
   const handleTabChange = useCallback((t: TabType) => { setTab(t); setPage(0); }, []);
@@ -100,12 +100,14 @@ const InterviewsPage: React.FC = () => {
 
             <InterviewsHeader
               stats={{
-                total:     metrics.total,
-                excellent: metrics.excellent,
-                avgScore:  metrics.avgScore,
-                needsWork: metrics.needWork,
+                total:     total,
+                excellent: excellentCount,
+                avgScore:  results.length > 0
+                  ? Math.round(results.reduce((sum, a) => sum + getScore(a), 0) / results.length)
+                  : 0,
+                needsWork: needsWorkCount,
               }}
-              loading={metrics.loading && page === 0}
+              loading={loading && page === 0}
             />
 
             <InterviewsList

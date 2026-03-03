@@ -204,6 +204,7 @@ const initialState: PostState = {
     loading: false,
     error: null,
   },
+
 };
 
 export const savePost = createAsyncThunk(
@@ -1008,6 +1009,7 @@ export const fetchPostMetrics = createAsyncThunk(
   }
 );
 
+
 // Post slice
 const postSlice = createSlice({
   name: "post",
@@ -1271,7 +1273,8 @@ const postSlice = createSlice({
       .addCase(fetchPostMetrics.rejected, (state, action) => {
         state.postMetrics.loading = false;
         state.postMetrics.error = action.payload as string;
-      });
+      })
+      ;
   },
 });
 
@@ -1385,3 +1388,4 @@ export const selectPostMetricsLoading = (state: { post: PostState }) =>
   state.post.postMetrics.loading;
 export const selectPostMetricsError = (state: { post: PostState }) =>
   state.post.postMetrics.error;
+

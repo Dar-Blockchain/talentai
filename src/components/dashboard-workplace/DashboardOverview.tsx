@@ -14,6 +14,11 @@ import {
   selectMyPostsLoading,
 } from "@/store/slices/postSlice";
 import {
+  fetchDashboardStats,
+  selectDashboardStats,
+  selectDashboardStatsLoading,
+} from "@/store/slices/companySlice";
+import {
   fetchCampaigns,
   selectCampaigns,
   selectCampaignLoading,
@@ -22,10 +27,7 @@ import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import AssignmentTurnedInOutlined from "@mui/icons-material/AssignmentTurnedInOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
-import TrendingDownOutlined from "@mui/icons-material/TrendingDownOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
-import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
@@ -46,39 +48,11 @@ const TEAL = "#0D9488";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const STATS = [
-  {
-    label: "Total Employees",
-    value: "247",
-    change: "+12 this month",
-    trend: "up",
-    icon: PeopleOutlined,
-    color: "#0D9488",
-  },
-  {
-    label: "Avg. Interview Score",
-    value: "74%",
-    change: "+5% vs last quarter",
-    trend: "up",
-    icon: PsychologyOutlined,
-    color: "#3B82F6",
-  },
-  {
-    label: "Active Job Posts",
-    value: "18",
-    change: "4 closing soon",
-    trend: "neutral",
-    icon: WorkOutlined,
-    color: "#F59E0B",
-  },
-  {
-    label: "Active Campaigns",
-    value: "6",
-    change: "3 in progress",
-    trend: "up",
-    icon: AssignmentTurnedInOutlined,
-    color: "#8B5CF6",
-  },
+const STAT_CONFIG = [
+  { key: "totalEmployees",    label: "Total Employees",     icon: PeopleOutlined,             color: "#0D9488", format: (v: number) => String(v) },
+  { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined,         color: "#3B82F6", format: (v: number) => `${v}%` },
+  { key: "activeJobPosts",    label: "Active Job Posts",    icon: WorkOutlined,               color: "#F59E0B", format: (v: number) => String(v) },
+  { key: "activeCampaigns",   label: "Active Campaigns",    icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
 ];
 
 
@@ -170,11 +144,14 @@ const DashboardOverview: React.FC = () => {
   const postsLoading = useSelector(selectMyPostsLoading);
   const rawCampaigns = useSelector(selectCampaigns);
   const campaignsLoading = useSelector(selectCampaignLoading);
+  const dashboardStats = useSelector(selectDashboardStats);
+  const statsLoading = useSelector(selectDashboardStatsLoading);
 
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ limit: 5 }));
     dispatch(fetchMyPosts({ limit: 5 }));
     dispatch(fetchCampaigns({ limit: 5 }));
+    dispatch(fetchDashboardStats());
   }, [dispatch]);
 
   const recentInterviews = rawInterviews.slice(0, 5).map((iv: any) => {
@@ -210,32 +187,32 @@ const DashboardOverview: React.FC = () => {
 
       {/* ── Row 1: Stat Cards ─────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 3 }}>
-        {STATS.map((stat, idx) => (
-          <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
-            <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.2s" }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-                <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${stat.color}15` }}>
-                  <stat.icon sx={{ fontSize: 22, color: stat.color }} />
+        {STAT_CONFIG.map((stat, idx) => {
+          const rawValue = dashboardStats ? (dashboardStats as any)[stat.key] : null;
+          const displayValue = statsLoading ? null : rawValue != null ? stat.format(rawValue) : "—";
+          return (
+            <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
+              <Box sx={{ bgcolor: "#fff", p: 3, borderRadius: 3, border: "1px solid #E5E7EB", "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.2s" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                  <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${stat.color}15` }}>
+                    <stat.icon sx={{ fontSize: 22, color: stat.color }} />
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.3, height: 28, width: 52 }}>
+                    {[4, 6, 3, 7, 5, 8, 6].map((h, i) => (
+                      <Box key={i} sx={{ flex: 1, borderRadius: "1px 1px 0 0", height: `${h * 10}%`, bgcolor: stat.color, opacity: 0.25 }} />
+                    ))}
+                  </Box>
                 </Box>
-                {/* Mini sparkline */}
-                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 0.3, height: 28, width: 52 }}>
-                  {[4, 6, 3, 7, 5, 8, 6].map((h, i) => (
-                    <Box key={i} sx={{ flex: 1, borderRadius: "1px 1px 0 0", height: `${h * 10}%`, bgcolor: stat.color, opacity: 0.25 }} />
-                  ))}
-                </Box>
+                {statsLoading ? (
+                  <Skeleton variant="text" width={80} height={36} />
+                ) : (
+                  <Typography sx={{ fontSize: "26px", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{displayValue}</Typography>
+                )}
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", mt: 0.5, textTransform: "uppercase", letterSpacing: 0.8 }}>{stat.label}</Typography>
               </Box>
-              <Typography sx={{ fontSize: "26px", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{stat.value}</Typography>
-              <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", mt: 0.5, textTransform: "uppercase", letterSpacing: 0.8 }}>{stat.label}</Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1.5 }}>
-                {stat.trend === "up"   && <TrendingUpOutlined sx={{ fontSize: 15, color: "#10B981" }} />}
-                {stat.trend === "down" && <TrendingDownOutlined sx={{ fontSize: 15, color: "#EF4444" }} />}
-                <Typography sx={{ fontSize: "11px", fontWeight: 600, color: stat.trend === "up" ? "#10B981" : stat.trend === "down" ? "#EF4444" : "#6B7280" }}>
-                  {stat.change}
-                </Typography>
-              </Box>
-            </Box>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </Box>
 
       {/* ── Row 2: Skills Gap + Recent Interviews ─────────────────────────── */}
