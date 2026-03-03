@@ -2,7 +2,7 @@ const CompanyInvitationService = require("../../services/ProfileService/CompanyI
 
 module.exports.sentInvitation = async (req, res) => {
   try {
-    const { email, role, department } = req.body;
+    const { email, role, departmentId } = req.body;
     const invitedBy = req.user._id;
     const username = req.user.username;
     const member = await CompanyInvitationService.sentInvitation(
@@ -11,7 +11,7 @@ module.exports.sentInvitation = async (req, res) => {
       role,
       invitedBy,
       username,
-      department,
+      departmentId,
     );
     res.json({ success: true, member });
   } catch (error) {
@@ -22,9 +22,9 @@ module.exports.sentInvitation = async (req, res) => {
 module.exports.resendInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
-    const { department : departmentId } = req.body;
+    const { departmentId } = req.body;
     const updated =
-      await CompanyInvitationService.resendInvitation(invitationId, department);
+      await CompanyInvitationService.resendInvitation(invitationId, departmentId);
     res.json({ success: true, updated });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
