@@ -10,7 +10,7 @@ const authenticate = require("../../middleware/authenticate");
 router.post(
   "/:campaignId/responses",
   authenticate,
-  campaignResponseController.createCampaignResponse
+  campaignResponseController.createCampaignResponse,
 );
 
 /**
@@ -20,7 +20,7 @@ router.post(
 router.get(
   "/:campaignId/responses",
   authenticate,
-  campaignResponseController.getCampaignResponses
+  campaignResponseController.getCampaignResponses,
 );
 
 /**
@@ -30,7 +30,7 @@ router.get(
 router.get(
   "/:campaignId/responses/module/:moduleType",
   authenticate,
-  campaignResponseController.getResponsesByModuleType
+  campaignResponseController.getResponsesByModuleType,
 );
 
 /**
@@ -40,7 +40,7 @@ router.get(
 router.get(
   "/:campaignId/responses/stats",
   authenticate,
-  campaignResponseController.getCampaignStatistics
+  campaignResponseController.getCampaignStatistics,
 );
 
 /**
@@ -50,7 +50,7 @@ router.get(
 router.get(
   "/:campaignId/responses/:responseId",
   authenticate,
-  campaignResponseController.getCampaignResponse
+  campaignResponseController.getCampaignResponse,
 );
 
 /**
@@ -60,7 +60,7 @@ router.get(
 router.put(
   "/:campaignId/responses/:responseId",
   authenticate,
-  campaignResponseController.updateCampaignResponse
+  campaignResponseController.updateCampaignResponse,
 );
 
 /**
@@ -70,7 +70,7 @@ router.put(
 router.post(
   "/:campaignId/responses/:responseId/answers",
   authenticate,
-  campaignResponseController.addAnswer
+  campaignResponseController.addAnswer,
 );
 
 /**
@@ -80,7 +80,7 @@ router.post(
 router.put(
   "/:campaignId/responses/:responseId/answers/:questionId",
   authenticate,
-  campaignResponseController.updateAnswer
+  campaignResponseController.updateAnswer,
 );
 
 /**
@@ -90,7 +90,7 @@ router.put(
 router.post(
   "/:campaignId/responses/:responseId/transcript",
   authenticate,
-  campaignResponseController.addTranscriptMessage
+  campaignResponseController.addTranscriptMessage,
 );
 
 /**
@@ -100,7 +100,7 @@ router.post(
 router.put(
   "/:campaignId/responses/:responseId/ai-score",
   authenticate,
-  campaignResponseController.updateAIScore
+  campaignResponseController.updateAIScore,
 );
 
 /**
@@ -110,7 +110,7 @@ router.put(
 router.put(
   "/:campaignId/responses/:responseId/test-results",
   authenticate,
-  campaignResponseController.updateTestResults
+  campaignResponseController.updateTestResults,
 );
 
 /**
@@ -120,7 +120,7 @@ router.put(
 router.delete(
   "/:campaignId/responses/:responseId",
   authenticate,
-  campaignResponseController.deleteCampaignResponse
+  campaignResponseController.deleteCampaignResponse,
 );
 
 /**
@@ -130,7 +130,7 @@ router.delete(
 router.delete(
   "/:campaignId/responses",
   authenticate,
-  campaignResponseController.deleteAllCampaignResponses
+  campaignResponseController.deleteAllCampaignResponses,
 );
 
 // Participant responses routes
@@ -141,7 +141,7 @@ router.delete(
 router.get(
   "/participant/:participantId/responses",
   authenticate,
-  campaignResponseController.getParticipantResponses
+  campaignResponseController.getParticipantResponses,
 );
 
 module.exports = router;

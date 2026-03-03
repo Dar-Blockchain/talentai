@@ -59,17 +59,24 @@ exports.addCampaignParticipant = async (req, res) => {
 exports.getCampaignParticipants = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    const { status } = req.query;
+    const { status, search: searchParam } = req.query;
+
+    const filters = {};
+    if (status) filters.status = status;
+
+    const search = {};
+    if (searchParam) search.q = searchParam;
 
     const participants = await campaignParticipantService.getParticipantsByCampaign(
       campaignId,
-      status ? { status } : {},
+      filters,
+      search,
     );
 
     res.status(200).json({
       success: true,
       data: participants,
-      count: participants.length,
+      count: Array.isArray(participants) ? participants.length : 0,
     });
   } catch (error) {
     res.status(500).json({
