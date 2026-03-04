@@ -1568,9 +1568,6 @@ module.exports.getPostMetrics = async (userId) => {
           case 'closed':
             metrics.closed++;
             break;
-          case 'cancelled':
-            metrics.cancelled++;
-            break;
           default:
             break;
         }
