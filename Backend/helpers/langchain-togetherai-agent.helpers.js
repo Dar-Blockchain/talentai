@@ -18,7 +18,7 @@ class LangChainTogetherAIAgent {
     
     // Initialize TogetherAI with LangChain
     this.llm = new ChatTogetherAI({
-      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", // or any other TogetherAI model
+      model: "meta-llama/Llama-3.2-3B-Instruct-Turbo", // or any other TogetherAI model
       apiKey: process.env.TOGETHER_API_KEY,
       temperature: 0.7,
       maxTokens: 2000,
@@ -122,7 +122,7 @@ class LangChainTogetherAIAgent {
         response: parsedResponse,
         success: true,
         metadata: {
-          model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+          model: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
           provider: "together-ai",
           timestamp: new Date().toISOString()
         }
