@@ -6,18 +6,7 @@ import {
   CampaignsResponse,
 } from "@/types/campaign";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const getToken = () =>
-  localStorage.getItem("api_token") ||
-  document.cookie
-    .split("; ")
-    .find((r) => r.startsWith("api_token="))
-    ?.split("=")[1] ||
-  "";
-
-const BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}internal-campaigns`;
+import axiosInstance from "@/utils/axiosInstance";
 
 // ─── Thunks ───────────────────────────────────────────────────────────────────
 
@@ -27,20 +16,14 @@ export const fetchCampaigns = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchCampaigns", async (params, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const url = new URL(BASE);
-
-    if (params?.status) url.searchParams.set("status", params.status);
-    if (params?.page) url.searchParams.set("page", params.page.toString());
-    if (params?.limit) url.searchParams.set("limit", params.limit.toString());
-
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await axiosInstance.get("internal-campaigns", {
+      params: {
+        ...(params?.status ? { status: params.status } : {}),
+        ...(params?.page ? { page: params.page } : {}),
+        ...(params?.limit ? { limit: params.limit } : {}),
+      },
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch campaigns");
-
-    return data as CampaignsResponse;
+    return response.data as CampaignsResponse;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -52,18 +35,8 @@ export const createCampaign = createAsyncThunk<
   { rejectValue: string }
 >("campaign/createCampaign", async (payload, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(BASE, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to create campaign");
-    return data.data as Campaign;
+    const response = await axiosInstance.post("internal-campaigns", payload);
+    return response.data.data as Campaign;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -77,18 +50,8 @@ export const updateCampaignStatus = createAsyncThunk<
   "campaign/updateStatus",
   async ({ campaignId, status }, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const res = await fetch(`${BASE}/${campaignId}/status`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update status");
-      return data.data as Campaign;
+      const response = await axiosInstance.patch(`internal-campaigns/${campaignId}/status`, { status });
+      return response.data.data as Campaign;
     } catch (err: any) {
       return rejectWithValue(err.message);
     }
@@ -101,13 +64,7 @@ export const deleteCampaign = createAsyncThunk<
   { rejectValue: string }
 >("campaign/deleteCampaign", async (campaignId, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${campaignId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to delete campaign");
+    await axiosInstance.delete(`internal-campaigns/${campaignId}`);
     return campaignId;
   } catch (err: any) {
     return rejectWithValue(err.message);
@@ -120,13 +77,8 @@ export const fetchCampaignById = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchCampaignById", async (campaignId, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${campaignId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch campaign");
-    return data.data as Campaign;
+    const response = await axiosInstance.get(`internal-campaigns/${campaignId}`);
+    return response.data.data as Campaign;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -140,18 +92,8 @@ export const updateCampaign = createAsyncThunk<
   "campaign/updateCampaign",
   async ({ campaignId, updatePayload }, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const res = await fetch(`${BASE}/${campaignId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...updatePayload }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update campaign");
-      return data.data as Campaign;
+      const response = await axiosInstance.put(`internal-campaigns/${campaignId}`, { ...updatePayload });
+      return response.data.data as Campaign;
     } catch (err: any) {
       return rejectWithValue(err.message);
     }
@@ -164,15 +106,8 @@ export const fetchCampaignMetrics = createAsyncThunk<
   { rejectValue: string }
 >("campaign/fetchMetrics", async (_, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/metrics`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch metrics");
-
-    return data.data as CampaignMetrics;
+    const response = await axiosInstance.get("internal-campaigns/metrics");
+    return response.data.data as CampaignMetrics;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }

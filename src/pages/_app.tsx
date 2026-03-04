@@ -16,7 +16,10 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { useAuthCheck } from "@/hooks/useAuthCheck";
 import { isTokenExpired } from "@/utils/tokenUtils";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { isLoggingOutCheck } from "@/store/slices/authSlice";
+import { isLoggingOutCheck, clearAuth } from "@/store/slices/authSlice";
+import { clearConnectedUser } from "@/store/slices/userSlice";
+import { setToastHandler } from "@/utils/toastEmitter";
+import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -105,7 +108,20 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 
 function MuiToastWrapper() {
-  const { open, toastOptions, closeToast } = useToast();
+  const { open, toastOptions, closeToast, showToast } = useToast();
+
+  useEffect(() => {
+    setToastHandler(showToast);
+  }, [showToast]);
+
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      store.dispatch(clearAuth());
+      store.dispatch(clearConnectedUser());
+      persistor.purge();
+    });
+  }, []);
+
   return (
     <MuiToast
       open={open}

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
 
 // Types
 export interface TokenState {
@@ -80,14 +80,7 @@ export const fetchTokenBalance = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       console.log("🔄 Fetching token balance from Hedera Mirror Node...");
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/balance`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get('tokens/balance');
       console.log("✅ Token balance received:", response.data);
       return response.data;
     } catch (error: any) {
@@ -112,15 +105,7 @@ export const purchaseTokens = createAsyncThunk(
   "token/purchase",
   async (payload: PurchaseTokensPayload, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/purchase`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post('tokens/purchase', payload);
       return response.data;
     } catch (error: any) {
       console.error("Failed to purchase tokens:", error);
@@ -142,14 +127,7 @@ export const fetchTokenTransactions = createAsyncThunk(
   "token/fetchTransactions",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/transactions`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get('tokens/transactions');
       return response.data;
     } catch (error: any) {
       console.error("Failed to fetch token transactions:", error);
@@ -171,15 +149,7 @@ export const verifyPayment = createAsyncThunk(
   "token/verifyPayment",
   async (transactionHash: string, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}tokens/verify-payment`,
-        { transactionHash },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("api_token")}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post('tokens/verify-payment', { transactionHash });
       return response.data;
     } catch (error: any) {
       console.error("Failed to verify payment:", error);
@@ -202,17 +172,7 @@ export const fetchPricingPlans = createAsyncThunk(
   "token/fetchPricingPlans",
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/plans`;
-      console.log("📊 Fetching pricing plans from:", apiUrl);
-
-      const response = await axios.get(apiUrl, {
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem("token") || localStorage.getItem("api_token")
-          }`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.get('payment/plans');
 
       if (!response.data.success) {
         throw new Error(
@@ -249,21 +209,7 @@ export const completePayment = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/complete`;
-
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("api_token");
-
-      const response = await axios.post(
-        apiUrl,
-        { planId, hederaTransactionId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axiosInstance.post('payment/complete', { planId, hederaTransactionId });
 
       return response.data;
     } catch (error: any) {
@@ -293,20 +239,7 @@ export const completeStripePayment = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/complete-stripe`;
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("api_token");
-
-      const response = await axios.post(
-        apiUrl,
-        { stripeSessionId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axiosInstance.post('payment/complete-stripe', { stripeSessionId });
 
       return response.data;
     } catch (error: any) {

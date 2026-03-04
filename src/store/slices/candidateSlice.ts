@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
 import { RootState } from "../store";
 import { broadcastSystemNotification } from "./notificationSlice";
 
@@ -55,19 +55,7 @@ export const unlockCandidate = createAsyncThunk<
   { state: RootState }
 >("candidate/unlock", async ({ candidateIds, idJob }, { rejectWithValue, dispatch }) => {
   try {
-    const token =
-      localStorage.getItem("token") || localStorage.getItem("api_token");
-
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate`,
-      { candidateIds, idJob },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await axiosInstance.post('unlock-candidate', { candidateIds, idJob });
 
     if (!response.data.success) {
       return rejectWithValue(response.data.message || "Unlock failed");
@@ -106,24 +94,13 @@ export const fetchUnlockedCandidates = createAsyncThunk<
   async (params, { rejectWithValue }) => {
     try {
       const { page = 1, limit = 10 } = params || {};
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("api_token");
 
-      // Build query parameters
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-
       });
 
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/?${queryParams}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get(`unlock-candidate/?${queryParams}`);
 
       if (!response.data.success) {
         return rejectWithValue(

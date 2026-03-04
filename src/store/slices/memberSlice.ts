@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { isLoggingOutCheck } from "./authSlice";
+import axiosInstance from "@/utils/axiosInstance";
 
 // Type definitions based on your API response
 export type MemberRole = "RH" | "TechLead" | "Supervisor" | "Manager" | "Owner";
@@ -32,6 +33,7 @@ export interface AddMemberPayload {
   accountId?: string; // Optional - kept for backwards compatibility but not used in new invitation API
   email: string;
   role: MemberRole;
+  departmentId?: string;
 }
 
 export interface UpdateRolePayload {
@@ -131,69 +133,33 @@ export const addEmployee = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Sending invitation via API...`);
 
-    // Transform payload to match new invitation API
-    const apiPayload = {
+    const apiPayload: { email: string; role: MemberRole; departmentId?: string } = {
       email: payload.email,
-      role: payload.role
+      role: payload.role,
+      ...(payload.departmentId && { departmentId: payload.departmentId }),
     };
 
     console.log(`📡 [MemberSlice] Sending invitation payload:`, apiPayload);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/sentInvitation`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apiPayload),
-      }
-    );
+    const response = await axiosInstance.post("CompanyInvitation/sentInvitation", apiPayload);
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to add employee" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to add employee");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Employee added successfully`, data);
-    return data;
+    console.log(`✅ [MemberSlice] Employee added successfully`, response.data);
+    return response.data;
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while adding employee");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while adding employee");
   }
 });
 
@@ -211,68 +177,30 @@ export const updateMemberRole = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Updating member role via API...`);
 
-    const apiPayload = {
-      role: payload.role
-    };
+    const apiPayload = { role: payload.role };
 
     console.log(`📡 [MemberSlice] Sending payload:`, apiPayload);
     console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}/role`);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/${payload.membershipId}/role`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apiPayload),
-      }
-    );
+    const response = await axiosInstance.patch(`CompanyMembership/${payload.membershipId}/role`, apiPayload);
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to update role" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to update role");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Role updated successfully`, data);
-    return data.updated || data;
+    console.log(`✅ [MemberSlice] Role updated successfully`, response.data);
+    return response.data.updated || response.data;
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while updating role");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while updating role");
   }
 });
 
@@ -290,62 +218,26 @@ export const deleteMember = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Deleting member via API...`);
     console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/${payload.membershipId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await axiosInstance.delete(`CompanyMembership/${payload.membershipId}`);
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to delete member" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to delete member");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Member deleted successfully`, data);
-    // Return the membershipId so we can remove it from the state
+    console.log(`✅ [MemberSlice] Member deleted successfully`, response.data);
     return { membershipId: payload.membershipId };
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while deleting member");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while deleting member");
   }
 });
 
@@ -362,59 +254,24 @@ export const fetchMembers = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Fetching members from API...`);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/memberships`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await axiosInstance.get("CompanyMembership/memberships");
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to fetch members" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to fetch members");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Members fetched successfully`, data);
-    return data.memberships || data.members || [];
+    console.log(`✅ [MemberSlice] Members fetched successfully`, response.data);
+    return response.data.memberships || response.data.members || [];
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while fetching members");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
 });
 
@@ -431,59 +288,24 @@ export const fetchInvitations = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Fetching invitations from API...`);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/myInvitations`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await axiosInstance.get("CompanyInvitation/myInvitations");
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to fetch invitations" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to fetch invitations");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Invitations fetched successfully`, data);
-    return data.invitations || [];
+    console.log(`✅ [MemberSlice] Invitations fetched successfully`, response.data);
+    return response.data.invitations || [];
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while fetching invitations");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitations");
   }
 });
 
@@ -500,59 +322,24 @@ export const resendInvitation = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Resending invitation via API...`);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/resendInvitation/${invitationId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await axiosInstance.post(`CompanyInvitation/resendInvitation/${invitationId}`);
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to resend invitation" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to resend invitation");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Invitation resent successfully`, data);
-    return data.updated;
+    console.log(`✅ [MemberSlice] Invitation resent successfully`, response.data);
+    return response.data.updated;
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while resending invitation");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while resending invitation");
   }
 });
 
@@ -569,59 +356,24 @@ export const cancelInvitation = createAsyncThunk<
     return rejectWithValue("Logout in progress");
   }
 
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Deleting invitation via API...`);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/deleteInvitation/${invitationId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await axiosInstance.delete(`CompanyInvitation/deleteInvitation/${invitationId}`);
 
     if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
       return rejectWithValue("Logout in progress");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn(`⚠️ [MemberSlice] Unauthorized (401) - Token expired or invalid`);
-        return rejectWithValue("Token expired or invalid - Please login again");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to delete invitation" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to delete invitation");
-    }
-
-    const data = await response.json();
-
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after response - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
-    console.log(`✅ [MemberSlice] Invitation deleted successfully`, data);
+    console.log(`✅ [MemberSlice] Invitation deleted successfully`, response.data);
     return invitationId;
   } catch (error: any) {
-    if (error.name === "AbortError" || isLoggingOutCheck()) {
+    if (isLoggingOutCheck()) {
       console.log(`🚫 [MemberSlice] Request aborted due to logout`);
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while deleting invitation");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while deleting invitation");
   }
 });
 
@@ -632,44 +384,17 @@ export const respondToInvitation = createAsyncThunk<
   { rejectValue: string }
 >("member/respondToInvitation", async ({ invitationId, action }, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] respondToInvitation CALLED with id: ${invitationId}, action: ${action}`);
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
   try {
     console.log(`📡 [MemberSlice] Responding to invitation via API...`);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/respondInvitation/${invitationId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ action }),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return rejectWithValue("Invitation not found or has expired");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: `Failed to ${action} invitation` }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || `Failed to ${action} invitation`);
-    }
-
-    const data = await response.json();
-    console.log(`✅ [MemberSlice] Invitation ${action}ed successfully`, data);
-    return data;
+    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, { action });
+    console.log(`✅ [MemberSlice] Invitation ${action}ed successfully`, response.data);
+    return response.data;
   } catch (error: any) {
+    if (error.response?.status === 404) {
+      return rejectWithValue("Invitation not found or has expired");
+    }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue(`An error occurred while ${action}ing invitation`);
+    return rejectWithValue(error.response?.data?.message || `An error occurred while ${action}ing invitation`);
   }
 });
 
@@ -680,21 +405,11 @@ export const fetchMemberStats = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMemberStats", async (_, { rejectWithValue }) => {
   if (isLoggingOutCheck()) return rejectWithValue("Logout in progress");
-  const token = localStorage.getItem("api_token");
-  if (!token) return rejectWithValue("No authentication token found");
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyMembership/memberships/stats`,
-      { method: "GET", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-    );
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "Failed to fetch stats" }));
-      return rejectWithValue(error.message || "Failed to fetch stats");
-    }
-    const data = await response.json();
-    return data.stats as MemberStats;
+    const response = await axiosInstance.get("CompanyMembership/memberships/stats");
+    return response.data.stats as MemberStats;
   } catch (error: any) {
-    return rejectWithValue("An error occurred while fetching stats");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while fetching stats");
   }
 });
 
@@ -705,44 +420,17 @@ export const fetchInvitationDetails = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchInvitationDetails", async (invitationId, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] fetchInvitationDetails CALLED with id:`, invitationId);
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    console.error(`❌ [MemberSlice] No token found - skipping API call`);
-    return rejectWithValue("No authentication token found");
-  }
   try {
-    console.log(token, 'aaaaaaaaaa')
     console.log(`📡 [MemberSlice] Fetching invitation details from API...`);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}CompanyInvitation/details/${invitationId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return rejectWithValue("Invitation not found or has expired");
-      }
-
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Failed to load invitation details" }));
-      console.error(`❌ [MemberSlice] API error:`, error);
-      return rejectWithValue(error.message || "Failed to load invitation details");
-    }
-
-    const data = await response.json();
-    console.log(`✅ [MemberSlice] Invitation details fetched successfully`, data);
-    return data.invitation || data;
+    const response = await axiosInstance.get(`CompanyInvitation/details/${invitationId}`);
+    console.log(`✅ [MemberSlice] Invitation details fetched successfully`, response.data);
+    return response.data.invitation || response.data;
   } catch (error: any) {
+    if (error.response?.status === 404) {
+      return rejectWithValue("Invitation not found or has expired");
+    }
     console.error(`❌ [MemberSlice] Exception:`, error);
-    return rejectWithValue("An error occurred while fetching invitation details");
+    return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitation details");
   }
 });
 

@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import axiosInstance from "@/utils/axiosInstance";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,18 +32,6 @@ interface DepartmentsResponse {
   };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const getToken = () =>
-  localStorage.getItem("api_token") ||
-  document.cookie
-    .split("; ")
-    .find((r) => r.startsWith("api_token="))
-    ?.split("=")[1] ||
-  "";
-
-const BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}departments`;
-
 // ─── Thunks ───────────────────────────────────────────────────────────────────
 
 export const fetchDepartments = createAsyncThunk<
@@ -51,18 +40,14 @@ export const fetchDepartments = createAsyncThunk<
   { rejectValue: string }
 >("department/fetchAll", async (params, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const url = new URL(BASE);
-    if (params?.page) url.searchParams.set("page", params.page.toString());
-    if (params?.limit) url.searchParams.set("limit", params.limit.toString());
-    if (params?.search) url.searchParams.set("search", params.search);
-
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await axiosInstance.get("departments", {
+      params: {
+        ...(params?.page ? { page: params.page } : {}),
+        ...(params?.limit ? { limit: params.limit } : {}),
+        ...(params?.search ? { search: params.search } : {}),
+      },
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch departments");
-    return data as DepartmentsResponse;
+    return response.data as DepartmentsResponse;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -74,18 +59,8 @@ export const createDepartment = createAsyncThunk<
   { rejectValue: string }
 >("department/create", async (payload, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(BASE, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to create department");
-    return data.data as Department;
+    const response = await axiosInstance.post("departments", payload);
+    return response.data.data as Department;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -97,18 +72,8 @@ export const updateDepartment = createAsyncThunk<
   { rejectValue: string }
 >("department/update", async ({ departmentId, ...body }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${departmentId}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to update department");
-    return data.data as Department;
+    const response = await axiosInstance.put(`departments/${departmentId}`, body);
+    return response.data.data as Department;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -120,13 +85,7 @@ export const deleteDepartment = createAsyncThunk<
   { rejectValue: string }
 >("department/delete", async (departmentId, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${departmentId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to delete department");
+    await axiosInstance.delete(`departments/${departmentId}`);
     return departmentId;
   } catch (err: any) {
     return rejectWithValue(err.message);

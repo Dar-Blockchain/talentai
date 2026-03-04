@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
 
 interface BidState {
   placeBid: {
@@ -30,16 +30,7 @@ export const placeBid = createAsyncThunk(
   "bids/placeBid",
   async (newBid: any, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        return rejectWithValue("No authentication token found");
-      }
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateFinalBid`, newBid, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.put('profiles/updateFinalBid', newBid);
       return response.data;
     } catch (error: any) {
         const errorMessage =
@@ -57,16 +48,7 @@ export const fetchBids = createAsyncThunk(
   "bids/fetchBids",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        return rejectWithValue("No authentication token found");
-      }
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyBid`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.get('profiles/getCompanyBid');
       return response.data;
     } catch (error: any) {
       return rejectWithValue(

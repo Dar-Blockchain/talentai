@@ -10,7 +10,7 @@ import AddEmployeeModal from "@/components/features/company/employees/create/Add
 import EditRoleModal from "@/components/dashboard-company/EditRoleModal";
 import DeleteMemberDialog from "@/components/profile/team-members/DeleteMemberDialog";
 import EmployeesHeader from "@/components/features/company/employees/list/EmployeesHeader";
-import EmployeesList from "@/components/features/company/employees/list/EmployeesList";
+import EmployeesList, { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";
 import { AppDispatch } from "@/store/store";
 import {
@@ -32,8 +32,6 @@ import {
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
 
-type TabType = "active" | "pending";
-
 const roleMapping: Record<string, MemberRole> = {
   hr: "RH",
   technical_leader: "TechLead",
@@ -46,25 +44,19 @@ const EmployeesPage: React.FC = () => {
   const { showToast } = useToast();
 
   const {
-    members,
-    loading,
-    error,
-    addMemberSuccess,
-    updateRoleSuccess,
-    deleteMemberSuccess,
-    invitations,
-    fetchingInvitations,
-    stats,
-    fetchingStats,
+    members, loading, error,
+    addMemberSuccess, updateRoleSuccess, deleteMemberSuccess,
+    invitations, fetchingInvitations, stats, fetchingStats,
   } = useSelector(selectMembers);
 
-  const [addModalOpen, setAddModalOpen]         = useState(false);
-  const [editModalOpen, setEditModalOpen]       = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember]     = useState<Member | null>(null);
-  const [detailMember, setDetailMember]         = useState<Member | null>(null);
-  const [search, setSearch]                     = useState("");
-  const [activeTab, setActiveTab]               = useState<TabType>("active");
+  const [addModalOpen,    setAddModalOpen]    = useState(false);
+  const [editModalOpen,   setEditModalOpen]   = useState(false);
+  const [deleteDialogOpen,setDeleteDialogOpen]= useState(false);
+  const [selectedMember,  setSelectedMember]  = useState<Member | null>(null);
+  const [detailMember,    setDetailMember]    = useState<Member | null>(null);
+  const [search,          setSearch]          = useState("");
+  const [roleFilter,      setRoleFilter]      = useState<RoleFilter>("all");
+  const [sortBy,          setSortBy]          = useState<SortOption>("newest");
 
   useEffect(() => {
     dispatch(fetchMembers());
@@ -105,9 +97,9 @@ const EmployeesPage: React.FC = () => {
     }
   }, [deleteMemberSuccess, dispatch, showToast]);
 
-  const handleAddMember = useCallback(async (email: string, role: string) => {
+  const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
     const apiRole = roleMapping[role] || "RH";
-    const result = await dispatch(addEmployee({ email, role: apiRole }));
+    const result = await dispatch(addEmployee({ email, role: apiRole, departmentId }));
     if (addEmployee.rejected.match(result)) {
       const msg = (result.payload as string) || "Failed to send invitation";
       showToast({ message: msg, severity: "error" });
@@ -146,7 +138,8 @@ const EmployeesPage: React.FC = () => {
   }, [dispatch, showToast]);
 
   const filteredMembers = useMemo(() => {
-    let list = members.filter((m) => m.status === activeTab);
+    let list = [...members];
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((m) =>
@@ -154,18 +147,16 @@ const EmployeesPage: React.FC = () => {
         m.user?.email?.toLowerCase().includes(q)
       );
     }
+
+    if (roleFilter !== "all") list = list.filter((m) => m.role === roleFilter);
+
+    if (sortBy === "name-asc")  return list.sort((a, b) => (a.user?.username || "").localeCompare(b.user?.username || ""));
+    if (sortBy === "name-desc") return list.sort((a, b) => (b.user?.username || "").localeCompare(a.user?.username || ""));
     return list;
-  }, [members, activeTab, search]);
+  }, [members, search, roleFilter, sortBy]);
 
-  const active       = members.filter((m) => m.status === "active").length;
-  const owners       = members.filter((m) => m.role === "Owner").length;
-  const pending      = members.filter((m) => m.status === "pending").length;
-  const pendingCount = pending + invitations.length;
-
-  const tabItems = [
-    { id: "active",  label: "Active",  count: active       },
-    { id: "pending", label: "Pending", count: pendingCount },
-  ];
+  const active = members.filter((m) => m.status === "active").length;
+  const owners = members.filter((m) => m.role === "Owner").length;
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
@@ -212,11 +203,12 @@ const EmployeesPage: React.FC = () => {
               loading={loading}
               error={error}
               search={search}
-              onSearchChange={(v) => setSearch(v)}
-              activeTab={activeTab}
-              onTabChange={(t) => setActiveTab(t)}
-              tabItems={tabItems}
-              onSelect={(m) => setDetailMember(m)}
+              onSearchChange={setSearch}
+              roleFilter={roleFilter}
+              onRoleFilterChange={setRoleFilter}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              onSelect={setDetailMember}
               onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
               onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
               invitations={invitations}

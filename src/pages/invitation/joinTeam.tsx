@@ -1,33 +1,27 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import {
-  Box,
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Divider,
-  Chip,
-  CircularProgress,
-} from '@mui/material';
-import {
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Email as EmailIcon,
-  Business as BusinessIcon,
-  Person as PersonIcon,
-  BarChart as BarChartIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
+import { Box, Container, Typography, Chip, CircularProgress } from '@mui/material';
+import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
+import CancelOutlined from '@mui/icons-material/CancelOutlined';
+import EmailOutlined from '@mui/icons-material/EmailOutlined';
+import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
+import BadgeOutlined from '@mui/icons-material/BadgeOutlined';
+import PersonOutlined from '@mui/icons-material/PersonOutlined';
+import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
+import AccessTimeOutlined from '@mui/icons-material/AccessTimeOutlined';
+import AppButton from '@/components/ui/AppButton';
 import {
   fetchInvitationDetails,
   respondToInvitation,
   selectMembers,
 } from '@/store/slices/memberSlice';
 import Cookies from 'js-cookie';
+
+const PURPLE = '#8310FF';
+const TEAL   = '#0D9488';
 
 const ROLE_LABELS: Record<string, string> = {
   RH: 'HR',
@@ -36,607 +30,300 @@ const ROLE_LABELS: Record<string, string> = {
   Manager: 'Manager',
 };
 
-const ROLE_ICONS: Record<string, React.ReactElement> = {
-  RH: <PersonIcon sx={{ fontSize: 20 }} />,
-  TechLead: <BarChartIcon sx={{ fontSize: 20 }} />,
-  Supervisor: <BarChartIcon sx={{ fontSize: 20 }} />,
-  Manager: <BarChartIcon sx={{ fontSize: 20 }} />,
+const ROLE_STYLES: Record<string, { color: string; bg: string; lightBg: string }> = {
+  RH:         { color: '#059669', bg: '#D1FAE5', lightBg: '#ECFDF5' },
+  TechLead:   { color: '#2563EB', bg: '#DBEAFE', lightBg: '#EFF6FF' },
+  Supervisor: { color: '#B45309', bg: '#FEF3C7', lightBg: '#FFFBEB' },
+  Manager:    { color: PURPLE,    bg: '#EDE9FE', lightBg: '#F5F3FF' },
 };
 
+// ─── Info row ─────────────────────────────────────────────────────────────────
+
+const InfoRow: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  iconColor?: string;
+  last?: boolean;
+}> = ({ icon, label, value, iconColor = TEAL, last = false }) => (
+  <Box sx={{
+    display: 'flex', alignItems: 'center', gap: 2,
+    py: 1.75, px: 2.5,
+    borderBottom: last ? 'none' : '1px solid #F1F5F9',
+  }}>
+    <Box sx={{ color: iconColor, display: 'flex', flexShrink: 0, '& svg': { fontSize: 18 } }}>
+      {icon}
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+      <Typography sx={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 500, flexShrink: 0 }}>
+        {label}
+      </Typography>
+      {typeof value === 'string'
+        ? <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }}>
+            {value}
+          </Typography>
+        : value}
+    </Box>
+  </Box>
+);
+
+// ─── Page shell ───────────────────────────────────────────────────────────────
+
+const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Box sx={{
+    minHeight: '100vh', bgcolor: '#F8FAFC',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    pt: { xs: 4, sm: 7 }, pb: 6, px: 2,
+  }}>
+    {/* TalentAI logo */}
+    <Box sx={{ mb: 5 }}>
+      <Image src="/logo-purple.svg" alt="TalentAI" width={120} height={25} priority />
+    </Box>
+
+    <Container maxWidth="xs">{children}</Container>
+  </Box>
+);
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 const InvitationAcceptationPage: React.FC = () => {
-  const router = useRouter();
+  const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { invitationId, token } = router.query;
+  const { invitationId } = router.query;
 
   const {
-    currentInvitation,
-    fetchingInvitationDetails,
-    respondingToInvitation,
-    invitationResponse,
-    error,
+    currentInvitation, fetchingInvitationDetails,
+    respondingToInvitation, invitationResponse, error,
   } = useSelector(selectMembers);
-
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const user            = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  // Check authentication and redirect to signin if needed
   useEffect(() => {
-    const checkAuth = () => {
-      if (typeof window === 'undefined') return;
-
-      const apiToken = Cookies.get('api_token') || localStorage.getItem('api_token');
-
-      if (!apiToken && !isAuthenticated) {
-        // Store the invitation link to return after signin
-        const currentUrl = window.location.href;
-        console.log('🔒 No authentication token found, redirecting to signin...');
-        router.push(`/signin?returnUrl=${encodeURIComponent(currentUrl)}`);
-      }
-    };
-
-    // Only check after router is ready and we have the invitation ID
-    if (router.isReady && invitationId) {
-      checkAuth();
+    if (!router.isReady || !invitationId) return;
+    const token = Cookies.get('api_token') || localStorage.getItem('api_token');
+    if (!token && !isAuthenticated) {
+      router.push(`/signin?returnUrl=${encodeURIComponent(window.location.href)}`);
     }
   }, [router.isReady, isAuthenticated, router, invitationId]);
 
-  // Fetch invitation details when component mounts (only if authenticated)
   useEffect(() => {
-    const apiToken = Cookies.get('api_token') || localStorage.getItem('api_token');
-
-    if (invitationId && typeof invitationId === 'string' && (apiToken || isAuthenticated)) {
-      console.log('🔍 Fetching invitation details for ID:', invitationId);
+    const token = Cookies.get('api_token') || localStorage.getItem('api_token');
+    if (invitationId && typeof invitationId === 'string' && (token || isAuthenticated)) {
       dispatch(fetchInvitationDetails(invitationId));
     }
   }, [invitationId, dispatch, isAuthenticated]);
 
   const handleAccept = async () => {
     if (!invitationId || typeof invitationId !== 'string') return;
-
-    try {
-      await dispatch(
-        respondToInvitation({ invitationId, action: 'accept' })
-      ).unwrap();
-    } catch (err) {
-      console.error('Failed to accept invitation:', err);
-    }
+    try { await dispatch(respondToInvitation({ invitationId, action: 'accept' })).unwrap(); }
+    catch { /* handled by redux */ }
   };
 
   const handleDecline = async () => {
     if (!invitationId || typeof invitationId !== 'string') return;
-
-    try {
-      await dispatch(
-        respondToInvitation({ invitationId, action: 'reject' })
-      ).unwrap();
-    } catch (err) {
-      console.error('Failed to decline invitation:', err);
-    }
+    try { await dispatch(respondToInvitation({ invitationId, action: 'reject' })).unwrap(); }
+    catch { /* handled by redux */ }
   };
 
-  // Loading state
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (fetchingInvitationDetails) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#f8fafc',
-          p: 3,
-        }}
-      >
-        <CircularProgress sx={{ color: '#8310FF' }} size={60} />
-      </Box>
+      <Shell>
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <CircularProgress size={32} thickness={3} sx={{ color: TEAL, mb: 2 }} />
+          <Typography sx={{ color: '#94A3B8', fontSize: '0.875rem', fontWeight: 500 }}>
+            Loading invitation…
+          </Typography>
+        </Box>
+      </Shell>
     );
   }
 
-  // Check if logged-in user email matches invitation email
-  const emailMismatch = currentInvitation && user && (currentInvitation as any).email &&
+  // ── Email mismatch / error ─────────────────────────────────────────────────
+  const emailMismatch =
+    currentInvitation && user && (currentInvitation as any).email &&
     user.email.toLowerCase() !== (currentInvitation as any).email.toLowerCase();
 
-  // Error state or email mismatch
   if (error || !currentInvitation || emailMismatch) {
+    const isWarning = Boolean(emailMismatch);
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#f8fafc',
-          p: 3,
-        }}
-      >
-        <Container maxWidth="sm">
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              border: '1px solid #e5e7eb',
-            }}
-          >
-            <CardContent sx={{ p: 5, textAlign: 'center' }}>
-              <Box
-                sx={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: '50%',
-                  bgcolor: emailMismatch ? '#fef3c7' : '#fee2e2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto',
-                  mb: 3,
-                }}
-              >
-                {emailMismatch ? (
-                  <WarningIcon sx={{ fontSize: 48, color: '#f59e0b' }} />
-                ) : (
-                  <CancelIcon sx={{ fontSize: 48, color: '#ef4444' }} />
-                )}
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 2 }}>
-                {emailMismatch ? 'Email Mismatch' : 'Invalid Invitation'}
-              </Typography>
-              <Typography variant="body1" sx={{ color: '#64748b', mb: 4 }}>
-                {emailMismatch
-                  ? `This invitation was sent to ${(currentInvitation as any).email}, but you are logged in as ${user?.email}. Please log in with the correct account to accept this invitation.`
-                  : error || 'This invitation is no longer valid or has expired.'}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => router.push(emailMismatch ? '/dashboard/member' : '/')}
-                sx={{
-                  bgcolor: '#8310FF',
-                  '&:hover': { bgcolor: '#6b0fd6' },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  px: 4,
-                  borderRadius: 2,
-                }}
-              >
-                {emailMismatch ? 'Go to Dashboard' : 'Go to Home'}
-              </Button>
-            </CardContent>
-          </Card>
-        </Container>
-      </Box>
+      <Shell>
+        <Box sx={{
+          bgcolor: '#fff', borderRadius: '20px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+          overflow: 'hidden',
+        }}>
+          <Box sx={{
+            height: 88,
+            background: isWarning ? 'linear-gradient(145deg, #FFFBEB, #fff)' : 'linear-gradient(145deg, #FEF2F2, #fff)',
+            borderBottom: '1px solid #F1F5F9', position: 'relative',
+          }}>
+            <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: isWarning ? 'radial-gradient(circle at 50% 100%, #FBBF2415, transparent 70%)' : 'radial-gradient(circle at 50% 100%, #F8717115, transparent 70%)' }} />
+          </Box>
+
+          <Box sx={{ px: 3.5, pb: 3.5, mt: '-32px', textAlign: 'center' }}>
+            <Box sx={{ width: 64, height: 64, borderRadius: '16px', mx: 'auto', mb: 2.5, bgcolor: isWarning ? '#FEF3C7' : '#FEE2E2', border: '3px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+              {isWarning
+                ? <WarningAmberOutlined sx={{ fontSize: 28, color: '#D97706' }} />
+                : <CancelOutlined sx={{ fontSize: 28, color: '#EF4444' }} />}
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', mb: 0.75, letterSpacing: '-0.02em' }}>
+              {isWarning ? 'Email Mismatch' : 'Invalid Invitation'}
+            </Typography>
+            <Typography sx={{ color: '#64748B', fontSize: '0.825rem', lineHeight: 1.65, mb: 3 }}>
+              {isWarning
+                ? `Invitation sent to ${(currentInvitation as any).email}. You're signed in as ${user?.email}.`
+                : error || 'This invitation is no longer valid or has expired.'}
+            </Typography>
+            <AppButton
+              variant="primary" label={isWarning ? 'Go to Dashboard' : 'Go to Home'}
+              size="large" fullWidth
+              onClick={() => router.push(isWarning ? '/dashboard/member' : '/')}
+              sx={{ borderRadius: '12px' }}
+            />
+          </Box>
+        </Box>
+      </Shell>
     );
   }
 
-  // Success state
   if (invitationResponse) {
+    const accepted = invitationResponse.action === 'accept';
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#f8fafc',
-          p: 3,
-        }}
-      >
-        <Container maxWidth="sm">
-          <Card
-            sx={{
-              borderRadius: 3,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              border: '1px solid #e5e7eb',
-            }}
-          >
-            <CardContent sx={{ p: 5, textAlign: 'center' }}>
-              {invitationResponse.action === 'accept' ? (
-                <>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: '#dcfce7',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto',
-                      mb: 3,
-                    }}
-                  >
-                    <CheckCircleIcon sx={{ fontSize: 48, color: '#10b981' }} />
-                  </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 2 }}>
-                    Invitation Accepted!
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: '#64748b', mb: 1 }}>
-                    Welcome to {(currentInvitation as any).Company?.username || currentInvitation.organization?.name || 'the team'}!
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                    You can now close this window
-                  </Typography>
-                </>
-              ) : (
-                <>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: '#f1f5f9',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto',
-                      mb: 3,
-                    }}
-                  >
-                    <CancelIcon sx={{ fontSize: 48, color: '#64748b' }} />
-                  </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 2 }}>
-                    Invitation Declined
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: '#64748b', mb: 1 }}>
-                    You have declined the invitation.
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                    You can now close this window
-                  </Typography>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </Container>
-      </Box>
+      <Shell>
+        <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #E5E7EB', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+          <Box sx={{
+            height: 88,
+            background: accepted ? 'linear-gradient(145deg, #ECFDF5, #fff)' : 'linear-gradient(145deg, #F8FAFC, #fff)',
+            borderBottom: '1px solid #F1F5F9', position: 'relative',
+          }}>
+            <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: accepted ? 'radial-gradient(circle at 50% 100%, #34D39915, transparent 70%)' : 'radial-gradient(circle at 50% 100%, #94A3B815, transparent 70%)' }} />
+          </Box>
+
+          <Box sx={{ px: 3.5, pb: 3.5, mt: '-32px', textAlign: 'center' }}>
+            <Box sx={{ width: 64, height: 64, borderRadius: '16px', mx: 'auto', mb: 2.5, bgcolor: accepted ? '#D1FAE5' : '#F1F5F9', border: '3px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
+              {accepted
+                ? <CheckCircleOutlined sx={{ fontSize: 28, color: '#059669' }} />
+                : <CancelOutlined sx={{ fontSize: 28, color: '#64748B' }} />}
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', mb: 0.75, letterSpacing: '-0.02em' }}>
+              {accepted ? 'Invitation Accepted!' : 'Invitation Declined'}
+            </Typography>
+            <Typography sx={{ color: '#64748B', fontSize: '0.825rem', lineHeight: 1.65, mb: 0.5 }}>
+              {accepted ? `Welcome to ${(currentInvitation as any).Company?.username || currentInvitation.organization?.name || 'the team'}!` : 'You have declined this invitation.'}
+            </Typography>
+            <Typography sx={{ color: '#CBD5E1', fontSize: '0.775rem', mb: 3 }}>
+              You can now close this window.
+            </Typography>
+            {accepted && (
+              <AppButton
+                variant="primary" label="Go to Dashboard"
+                size="large" fullWidth
+                onClick={() => router.push('/dashboard/member')}
+                sx={{ borderRadius: '12px' }}
+              />
+            )}
+          </Box>
+        </Box>
+      </Shell>
     );
   }
 
-  // Main invitation view
+  // ── Main invitation view ───────────────────────────────────────────────────
+  const roleStyle    = ROLE_STYLES[currentInvitation.role] ?? ROLE_STYLES.Manager;
+  const roleLabel    = ROLE_LABELS[currentInvitation.role] ?? currentInvitation.role;
+  const companyName  = (currentInvitation as any).Company?.username || currentInvitation.organization?.name || 'Company';
+  const invitedBy    = (currentInvitation as any).invitedBy?.username || (currentInvitation as any).invitedBy?.email || 'Team Admin';
+  const inviteeEmail = (currentInvitation as any).email;
+  const companyLetter = companyName[0]?.toUpperCase() || 'C';
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: '#f8fafc',
-        p: 3,
-      }}
-    >
-      <Container maxWidth="sm">
-        <Card
-          sx={{
-            borderRadius: 3,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            border: '1px solid #e5e7eb',
-          }}
-        >
-          <CardContent sx={{ p: 4 }}>
-            {/* Header */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    bgcolor: 'rgba(131, 16, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <EmailIcon sx={{ fontSize: 28, color: '#8310FF' }} />
-                </Box>
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 0.5 }}>
-                    Team Invitation
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#64748b' }}>
-                    You've been invited to join a team
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
+    <Shell>
+      <Box sx={{
+        bgcolor: '#fff', borderRadius: '20px',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+        overflow: 'hidden',
+      }}>
+        {/* Soft role-tinted header */}
+        <Box sx={{
+          height: 96,
+          background: `linear-gradient(145deg, ${roleStyle.lightBg}, #FFFFFF)`,
+          borderBottom: '1px solid #F1F5F9', position: 'relative',
+        }}>
+          <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(circle at 15% 50%, ${roleStyle.color}12, transparent 65%)` }} />
+          <Box sx={{ position: 'absolute', bottom: -24, right: -24, width: 100, height: 100, borderRadius: '50%', pointerEvents: 'none', background: `radial-gradient(circle, ${roleStyle.color}0A, transparent 70%)` }} />
+        </Box>
 
-            <Divider sx={{ mb: 4 }} />
+        {/* Company avatar */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: '-32px', mb: 2, position: 'relative', zIndex: 1 }}>
+          <Box sx={{
+            width: 64, height: 64, borderRadius: '16px',
+            background: `linear-gradient(135deg, ${PURPLE} 0%, #A855F7 100%)`,
+            border: '3px solid #fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 6px 20px ${PURPLE}30`,
+          }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.5rem', color: '#fff', lineHeight: 1 }}>
+              {companyLetter}
+            </Typography>
+          </Box>
+        </Box>
 
-            {/* Invitation Details */}
-            <Box sx={{ mb: 4 }}>
-              {/* Organization */}
-              <Box
-                sx={{
-                  mb: 3,
-                  p: 2.5,
-                  borderRadius: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px solid #e5e7eb',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '10px',
-                      bgcolor: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid #e5e7eb',
-                    }}
-                  >
-                    <BusinessIcon sx={{ fontSize: 20, color: '#8310FF' }} />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#94a3b8',
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Organization
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
-                      {(currentInvitation as any).Company?.username || currentInvitation.organization?.name || 'Company'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
+        {/* Heading */}
+        <Box sx={{ textAlign: 'center', px: 3, mb: 3 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', letterSpacing: '-0.02em', mb: 0.5 }}>
+            You're Invited!
+          </Typography>
+          <Typography sx={{ color: '#64748B', fontSize: '0.825rem', lineHeight: 1.65 }}>
+            <Box component="span" sx={{ fontWeight: 700, color: PURPLE }}>{companyName}</Box>
+            {' '}has invited you to join their team.
+          </Typography>
+        </Box>
 
-              {/* Role */}
-              <Box
-                sx={{
-                  mb: 3,
-                  p: 2.5,
-                  borderRadius: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px solid #e5e7eb',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '10px',
-                      bgcolor: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid #e5e7eb',
-                    }}
-                  >
-                    {ROLE_ICONS[currentInvitation.role] || <PersonIcon sx={{ fontSize: 20, color: '#8310FF' }} />}
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#94a3b8',
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Role
-                    </Typography>
-                    <Box sx={{ mt: 0.5 }}>
-                      <Chip
-                        label={ROLE_LABELS[currentInvitation.role] || currentInvitation.role}
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          fontSize: '0.8rem',
-                          bgcolor: '#8310FF',
-                          color: 'white',
-                          height: 28,
-                          '& .MuiChip-label': {
-                            px: 1.5,
-                          },
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
+        {/* Info rows */}
+        <Box sx={{ mx: 3, mb: 3, borderRadius: '12px', border: '1px solid #F1F5F9', overflow: 'hidden' }}>
+          <InfoRow icon={<BusinessOutlined />} label="Organization" value={companyName} iconColor={TEAL} />
+          <InfoRow
+            icon={<BadgeOutlined />} label="Role" iconColor={roleStyle.color}
+            value={
+              <Chip label={roleLabel} size="small" sx={{ fontWeight: 700, fontSize: '0.72rem', height: 22, color: roleStyle.color, bgcolor: roleStyle.bg, border: `1px solid ${roleStyle.color}25`, borderRadius: '6px', '& .MuiChip-label': { px: 1.25 } }} />
+            }
+          />
+          {inviteeEmail && (
+            <InfoRow icon={<EmailOutlined />} label="Email" value={inviteeEmail} iconColor="#0891B2" />
+          )}
+          <InfoRow icon={<PersonOutlined />} label="Invited by" value={invitedBy} iconColor="#D97706" last={!currentInvitation.expiresAt} />
+          {currentInvitation.expiresAt && (
+            <InfoRow
+              icon={<AccessTimeOutlined />} label="Expires"
+              value={new Date(currentInvitation.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              iconColor="#2563EB" last
+            />
+          )}
+        </Box>
 
-              {/* Email */}
-              {(currentInvitation as any).email && (
-                <Box
-                  sx={{
-                    mb: 3,
-                    p: 2.5,
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                    border: '1px solid #e5e7eb',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '10px',
-                        bgcolor: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid #e5e7eb',
-                      }}
-                    >
-                      <EmailIcon sx={{ fontSize: 20, color: '#8310FF' }} />
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: '#94a3b8',
-                          fontSize: '0.75rem',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Email
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
-                        {(currentInvitation as any).email}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-
-              {/* Invited By */}
-              <Box
-                sx={{
-                  mb: 3,
-                  p: 2.5,
-                  borderRadius: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px solid #e5e7eb',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '10px',
-                      bgcolor: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid #e5e7eb',
-                    }}
-                  >
-                    <PersonIcon sx={{ fontSize: 20, color: '#8310FF' }} />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#94a3b8',
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      Invited by
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
-                      {(currentInvitation as any).invitedBy?.username || (currentInvitation as any).invitedBy?.email || 'Team Admin'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Expiration Info */}
-              {currentInvitation.expiresAt && (
-                <Box
-                  sx={{
-                    bgcolor: '#eff6ff',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: 2,
-                    p: 2.5,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: '#3b82f6',
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontWeight: 600,
-                      display: 'block',
-                      mb: 0.5,
-                    }}
-                  >
-                    Expiration Date
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#1e40af', fontSize: '0.875rem', fontWeight: 600 }}>
-                    {new Date(currentInvitation.expiresAt).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-
-            {/* Action Buttons */}
-            <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={handleDecline}
-                disabled={respondingToInvitation}
-                sx={{
-                  borderColor: '#e5e7eb',
-                  color: '#64748b',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  borderRadius: 2,
-                  fontSize: '0.95rem',
-                  '&:hover': {
-                    borderColor: '#cbd5e1',
-                    bgcolor: '#f8fafc',
-                  },
-                  '&:disabled': {
-                    borderColor: '#e5e7eb',
-                    color: '#cbd5e1',
-                  },
-                }}
-              >
-                {respondingToInvitation ? 'Processing...' : 'Decline'}
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={handleAccept}
-                disabled={respondingToInvitation}
-                startIcon={
-                  respondingToInvitation ? (
-                    <CircularProgress size={20} sx={{ color: 'white' }} />
-                  ) : (
-                    <CheckCircleIcon />
-                  )
-                }
-                sx={{
-                  bgcolor: '#8310FF',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  borderRadius: 2,
-                  fontSize: '0.95rem',
-                  boxShadow: '0 2px 8px rgba(131, 16, 255, 0.2)',
-                  '&:hover': {
-                    bgcolor: '#6b0fd6',
-                    boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-                  },
-                  '&:disabled': {
-                    bgcolor: '#cbd5e1',
-                    boxShadow: 'none',
-                  },
-                }}
-              >
-                {respondingToInvitation ? 'Processing...' : 'Accept Invitation'}
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Container>
-    </Box>
+        {/* Action buttons */}
+        <Box sx={{ px: 3, pb: 3.5, display: 'flex', gap: 1.5 }}>
+          <AppButton
+            variant="outlined" label="Decline"
+            size="large" fullWidth
+            disabled={respondingToInvitation}
+            onClick={handleDecline}
+            sx={{ borderRadius: '12px', borderColor: '#E2E8F0', color: '#64748B', '&:hover': { bgcolor: '#F8FAFC', borderColor: '#CBD5E1' } }}
+          />
+          <AppButton
+            variant="primary" label="Accept"
+            size="large" fullWidth
+            loading={respondingToInvitation}
+            startIcon={<CheckCircleOutlined sx={{ fontSize: 17 }} />}
+            onClick={handleAccept}
+            sx={{ borderRadius: '12px', boxShadow: `0 4px 14px ${PURPLE}35`, '&:hover': { boxShadow: `0 6px 20px ${PURPLE}45` } }}
+          />
+        </Box>
+      </Box>
+    </Shell>
   );
 };
 

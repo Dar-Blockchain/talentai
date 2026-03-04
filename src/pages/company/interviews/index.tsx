@@ -5,48 +5,54 @@ import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import InterviewsHeader from "@/components/features/company/interviews/list/InterviewsHeader";
-import InterviewsList from "@/components/features/company/interviews/list/InterviewsList";
+import InterviewsList, { ScoreFilter, SortOption } from "@/components/features/company/interviews/list/InterviewsList";
 import InterviewDetail from "@/components/features/company/interviews/details/InterviewDetail";
 import { getScore } from "@/components/features/company/interviews/list/InterviewCard";
 import type { InterviewAssessment } from "@/components/features/company/interviews/list/InterviewCard";
 import { AppDispatch } from "@/store/store";
 import {
   fetchCompanyInterviews,
-  fetchCompanyInterviewMetrics,
   selectCompanyInterviews,
   selectCompanyInterviewsLoading,
   selectCompanyInterviewsTotal,
 } from "@/store/slices/interviewSlice";
 
-type TabType = "all" | "excellent" | "satisfactory" | "needs-work";
-
-const TABS = [
-  { id: "all",          label: "All"          },
-  { id: "excellent",    label: "Excellent"    },
-  { id: "satisfactory", label: "Satisfactory" },
-  { id: "needs-work",   label: "Needs Work"   },
-];
-
 const ROW = 12;
 
 const InterviewsPage: React.FC = () => {
-  const dispatch  = useDispatch<AppDispatch>();
-  const results   = useSelector(selectCompanyInterviews) as InterviewAssessment[];
-  const loading   = useSelector(selectCompanyInterviewsLoading);
-  const total     = useSelector(selectCompanyInterviewsTotal) as number;
+  const dispatch = useDispatch<AppDispatch>();
+  const results  = useSelector(selectCompanyInterviews) as InterviewAssessment[];
+  const loading  = useSelector(selectCompanyInterviewsLoading);
+  const total    = useSelector(selectCompanyInterviewsTotal) as number;
 
-  const [search,   setSearch]   = useState("");
-  const [tab,      setTab]      = useState<TabType>("all");
-  const [detail,   setDetail]   = useState<InterviewAssessment | null>(null);
-  const [page,     setPage]     = useState(0);
+  const [search,      setSearch]      = useState("");
+  const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
+  const [sortBy,      setSortBy]      = useState<SortOption>("newest");
+  const [detail,      setDetail]      = useState<InterviewAssessment | null>(null);
+  const [page,        setPage]        = useState(0);
 
   useEffect(() => {
-    dispatch(fetchCompanyInterviewMetrics());
     dispatch(fetchCompanyInterviews({ page: page + 1, limit: ROW }));
   }, [dispatch, page]);
 
+  const { excellentCount, needsWorkCount, avgScore } = useMemo(() => {
+    let excellent = 0, needsWork = 0, scoreSum = 0;
+    for (const a of results) {
+      const s = getScore(a);
+      scoreSum += s;
+      if (s >= 70) excellent++;
+      else if (s < 50) needsWork++;
+    }
+    return {
+      excellentCount: excellent,
+      needsWorkCount: needsWork,
+      avgScore:       results.length > 0 ? Math.round(scoreSum / results.length) : 0,
+    };
+  }, [results]);
+
   const filtered = useMemo(() => {
     let list = results;
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((a) =>
@@ -55,37 +61,27 @@ const InterviewsPage: React.FC = () => {
         a.post?.jobDetails?.title?.toLowerCase().includes(q)
       );
     }
-    if (tab === "excellent")    list = list.filter((a) => getScore(a) >= 70);
-    if (tab === "satisfactory") list = list.filter((a) => { const s = getScore(a); return s >= 50 && s < 70; });
-    if (tab === "needs-work")   list = list.filter((a) => getScore(a) < 50);
+
+    if (scoreFilter === "excellent")    list = list.filter((a) => getScore(a) >= 70);
+    if (scoreFilter === "satisfactory") list = list.filter((a) => { const s = getScore(a); return s >= 50 && s < 70; });
+    if (scoreFilter === "needs-work")   list = list.filter((a) => getScore(a) < 50);
+
+    if (sortBy === "newest")  return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (sortBy === "highest") return [...list].sort((a, b) => getScore(b) - getScore(a));
+    if (sortBy === "lowest")  return [...list].sort((a, b) => getScore(a) - getScore(b));
     return list;
-  }, [results, search, tab]);
+  }, [results, search, scoreFilter, sortBy]);
 
-  const excellentCount    = results.filter((a) => getScore(a) >= 70).length;
-  const satisfactoryCount = results.filter((a) => { const s = getScore(a); return s >= 50 && s < 70; }).length;
-  const needsWorkCount    = results.filter((a) => getScore(a) < 50).length;
-
-  const tabItems = TABS.map((t) => ({
-    id: t.id, label: t.label,
-    count:
-      t.id === "all"          ? total :
-      t.id === "excellent"    ? excellentCount :
-      t.id === "satisfactory" ? satisfactoryCount :
-                                needsWorkCount,
-  }));
-
-  const handleTabChange = useCallback((t: TabType) => { setTab(t); setPage(0); }, []);
-  const handleLoadMore  = useCallback(() => setPage((p) => p + 1), []);
+  const handleScoreFilter = useCallback((f: ScoreFilter) => { setScoreFilter(f); setPage(0); }, []);
+  const handleLoadMore    = useCallback(() => setPage((p) => p + 1), []);
+  const handleBack        = useCallback(() => setDetail(null), []);
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {detail ? (
           <Box>
-            <InterviewDetail
-              assessment={detail}
-              onBack={() => setDetail(null)}
-            />
+            <InterviewDetail assessment={detail} onBack={handleBack} />
           </Box>
         ) : (
           <Box>
@@ -99,14 +95,7 @@ const InterviewsPage: React.FC = () => {
             />
 
             <InterviewsHeader
-              stats={{
-                total:     total,
-                excellent: excellentCount,
-                avgScore:  results.length > 0
-                  ? Math.round(results.reduce((sum, a) => sum + getScore(a), 0) / results.length)
-                  : 0,
-                needsWork: needsWorkCount,
-              }}
+              stats={{ total, excellent: excellentCount, avgScore, needsWork: needsWorkCount }}
               loading={loading && page === 0}
             />
 
@@ -115,9 +104,10 @@ const InterviewsPage: React.FC = () => {
               loading={loading && page === 0}
               search={search}
               onSearchChange={setSearch}
-              activeTab={tab}
-              onTabChange={handleTabChange}
-              tabItems={tabItems}
+              scoreFilter={scoreFilter}
+              onScoreFilterChange={handleScoreFilter}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
               onSelect={setDetail}
               hasMore={results.length < total}
               onLoadMore={handleLoadMore}

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import axiosInstance from "@/utils/axiosInstance";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -35,10 +36,6 @@ const initialState: PlanLimitsState = {
   updateError: null,
 };
 
-// ─── Helper ──────────────────────────────────────────────
-
-const getToken = () => localStorage.getItem("api_token");
-
 // ─── Thunks ──────────────────────────────────────────────
 
 export const fetchPlanLimits = createAsyncThunk<
@@ -47,30 +44,14 @@ export const fetchPlanLimits = createAsyncThunk<
   { rejectValue: string }
 >("planLimits/fetchAll", async (_, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}plan-limits`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    const data = await res.json();
-
+    const res = await axiosInstance.get("plan-limits");
+    const data = res.data;
     if (data.success && data.data) {
       return data.data as PlanLimit[];
     }
-
     return [];
   } catch (error: any) {
-    return rejectWithValue(error.message || "Error fetching plan limits");
+    return rejectWithValue(error.response?.data?.message || error.message || "Error fetching plan limits");
   }
 });
 
@@ -80,30 +61,14 @@ export const fetchPlanLimitById = createAsyncThunk<
   { rejectValue: string }
 >("planLimits/fetchById", async (planLimitId, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}plan-limits/${planLimitId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    const data = await res.json();
-
+    const res = await axiosInstance.get(`plan-limits/${planLimitId}`);
+    const data = res.data;
     if (data.success && data.data) {
       return data.data as PlanLimit;
     }
-
     throw new Error("Failed to fetch plan limit");
   } catch (error: any) {
-    return rejectWithValue(error.message || "Error fetching plan limit");
+    return rejectWithValue(error.response?.data?.message || error.message || "Error fetching plan limit");
   }
 });
 
@@ -113,32 +78,14 @@ export const updatePlanLimits = createAsyncThunk<
   { rejectValue: string }
 >("planLimits/update", async ({ id, updates }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}plan-limits`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...updates, _id: id }),
-      }
-    );
-
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    const data = await res.json();
-
+    const res = await axiosInstance.put("plan-limits", { ...updates, _id: id });
+    const data = res.data;
     if (data.success && data.data) {
       return data.data as PlanLimit;
     }
-
     throw new Error("Failed to update plan limits");
   } catch (error: any) {
-    return rejectWithValue(error.message || "Error updating plan limits");
+    return rejectWithValue(error.response?.data?.message || error.message || "Error updating plan limits");
   }
 });
 

@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import axiosInstance from '@/utils/axiosInstance';
 
 interface Notification {
   id: string;
@@ -52,69 +53,15 @@ const formatTimestamp = (date: Date): string => {
   return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
 };
 
-// Helper to get API headers
-const getApiHeaders = () => {
-  const token = localStorage.getItem('api_token');
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
-
 // Async thunks
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('api_token');
+      console.log('🔍 Fetching notifications...');
 
-      console.log('🔍 Fetching notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
-      console.log('🔑 Token exists:', !!token);
-
-      const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
-        headers: getApiHeaders(),
-      });
-
-      console.log('📡 Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Fetch failed:', response.status, errorText);
-
-        // Handle 401 errors gracefully (user not authenticated)
-        if (response.status === 401) {
-          console.warn('⚠️ Unauthorized - user not logged in, returning empty array');
-          return {
-            notifications: [],
-            nonArchivedCount: 0,
-            archivedCount: 0,
-            unreadCount: 0,
-          };
-        }
-
-        // Handle 400 errors gracefully (user might not have notifications set up)
-        if (response.status === 400) {
-          console.warn('⚠️ Bad request for notifications - returning empty array');
-          return {
-            notifications: [],
-            nonArchivedCount: 0,
-            archivedCount: 0,
-            unreadCount: 0,
-          };
-        }
-
-        // For other errors, return empty data instead of throwing
-        console.warn('⚠️ Failed to fetch notifications, returning empty array');
-        return {
-          notifications: [],
-          nonArchivedCount: 0,
-          archivedCount: 0,
-          unreadCount: 0,
-        };
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get('notification-system/GetMyNotification');
+      const data = response.data;
       console.log('📦 Raw API response:', data);
 
       // New API format: { nonArchived: { count, notifications: [...] }, archived: { count, notifications: [...] }, unreadCount: number }
@@ -160,7 +107,12 @@ export const fetchNotifications = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('❌ Error fetching notifications:', error);
-      return rejectWithValue(error.message);
+      const status = error.response?.status;
+      if (status === 401 || status === 400) {
+        console.warn('⚠️ Notifications not available, returning empty array');
+        return { notifications: [], nonArchivedCount: 0, archivedCount: 0, unreadCount: 0 };
+      }
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -169,19 +121,10 @@ export const markNotificationAsRead = createAsyncThunk(
   'notifications/markAsRead',
   async (id: string, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/notification-system/markAsRead/${id}/read`, {
-        method: 'PATCH',
-        headers: getApiHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark notification as read');
-      }
-
+      await axiosInstance.patch(`notification-system/markAsRead/${id}/read`);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -190,19 +133,10 @@ export const markAllNotificationsAsRead = createAsyncThunk(
   'notifications/markAllAsRead',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/notification-system/mark-all-read`, {
-        method: 'PATCH',
-        headers: getApiHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark all notifications as read');
-      }
-
+      await axiosInstance.patch('notification-system/mark-all-read');
       return true;
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -212,21 +146,10 @@ export const createNotification = createAsyncThunk(
   'notifications/create',
   async ({ type, content }: { type: 'info' | 'success' | 'warning' | 'error' | 'custom'; content: string }, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/notification-system/AddNotification/${type}`, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ content }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to create ${type} notification`);
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await axiosInstance.post(`notification-system/AddNotification/${type}`, { content });
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -236,38 +159,13 @@ export const broadcastSystemNotification = createAsyncThunk(
   'notifications/broadcast',
   async ({ content, recipientIds }: { content: string; recipientIds: string[] }, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('api_token');
-
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       console.log('📢 [BroadcastThunk] Sending broadcast to:', recipientIds.length, 'recipients');
-
-      const response = await fetch(`${apiUrl}/notification-system/broadcastSystemNotification`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content,
-          recipientIds,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to broadcast notification: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [BroadcastThunk] Notification sent successfully:', result);
-      return result;
+      const result = await axiosInstance.post('notification-system/broadcastSystemNotification', { content, recipientIds });
+      console.log('✅ [BroadcastThunk] Notification sent successfully:', result.data);
+      return result.data;
     } catch (error: any) {
       console.error('❌ [BroadcastThunk] Error broadcasting notification:', error);
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -277,19 +175,10 @@ export const archiveNotification = createAsyncThunk(
   'notifications/archive',
   async (id: string, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/notification-system/archiveNotification/${id}`, {
-        method: 'PATCH',
-        headers: getApiHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to archive notification');
-      }
-
+      await axiosInstance.patch(`notification-system/archiveNotification/${id}`);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -299,21 +188,11 @@ export const archiveAllNotifications = createAsyncThunk(
   'notifications/archiveAll',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/notification-system/archive-all`, {
-        method: 'PATCH',
-        headers: getApiHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to archive all notifications');
-      }
-
-      const result = await response.json();
-      console.log('✅ Archived all notifications:', result);
-      return result;
+      const result = await axiosInstance.patch('notification-system/archive-all');
+      console.log('✅ Archived all notifications:', result.data);
+      return result.data;
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -323,23 +202,10 @@ export const fetchArchivedNotifications = createAsyncThunk(
   'notifications/fetchArchived',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      console.log('🗄️ Fetching archived notifications...');
 
-      console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
-
-      const response = await fetch(`${apiUrl}/notification-system/GetMyNotification`, {
-        headers: getApiHeaders(),
-      });
-
-      console.log('📡 Archived response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Fetch archived failed:', response.status, errorText);
-        throw new Error(`Failed to fetch archived notifications: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get('notification-system/GetMyNotification');
+      const data = response.data;
       console.log('📦 Raw archived API response:', data);
 
       // New API format: { archived: { count, notifications: [...] }, nonArchived: { count, notifications: [...] } }
@@ -382,7 +248,7 @@ export const fetchArchivedNotifications = createAsyncThunk(
       };
     } catch (error: any) {
       console.error('❌ Error fetching archived notifications:', error);
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
