@@ -221,7 +221,7 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { jobTitle, postTitle, candidateUsername, page = 1, limit = 10 } = req.query;
+    const { jobTitle, postTitle, candidateUsername, candidateName, candidateEmail, page = 1, limit = 10 } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -234,6 +234,8 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
     // allow either `jobTitle` or `postTitle` parameter
     if (jobTitle || postTitle) filters.jobTitle = jobTitle || postTitle;
     if (candidateUsername) filters.candidateUsername = candidateUsername;
+    if (candidateName) filters.candidateName = candidateName;
+    if (candidateEmail) filters.candidateEmail = candidateEmail;
 
     const assessmentsResult =
       await postInterviewAssessmentService.getAssessmentsByCompany(
@@ -313,7 +315,7 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
 module.exports.getInterviewMetricsForCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { jobTitle, postTitle, candidateUsername } = req.query;
+    const { jobTitle, postTitle, candidateUsername, candidateName, candidateEmail } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -325,6 +327,8 @@ module.exports.getInterviewMetricsForCompany = async (req, res) => {
     const filters = {};
     if (jobTitle || postTitle) filters.jobTitle = jobTitle || postTitle;
     if (candidateUsername) filters.candidateUsername = candidateUsername;
+    if (candidateName) filters.candidateName = candidateName;
+    if (candidateEmail) filters.candidateEmail = candidateEmail;
 
     const metrics =
       await postInterviewAssessmentService.getInterviewMetricsForCompany(

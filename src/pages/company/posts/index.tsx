@@ -1,6 +1,6 @@
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -11,20 +11,17 @@ import {
   selectMyPostsLoading,
   selectMyPostsError,
   selectMyPostsPagination,
-  selectPostMetrics,
 } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import WorkplaceJobDetail from "@/components/dashboard-workplace/WorkplaceJobDetail";
-import JobPostsList from "@/components/features/company/posts/list/JobPostsList";
+import JobPostsList, { StatusFilter, SortOption } from "@/components/features/company/posts/list/JobPostsList";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import PostsStats from "@/components/features/company/posts/list/Stats";
 
-type SortOption = "newest" | "oldest" | "title-asc" | "title-desc";
-type TabType = "all" | "active" | "draft" | "expired";
 
 const PostsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,13 +32,12 @@ const PostsPage: React.FC = () => {
   const loading    = useSelector(selectMyPostsLoading);
   const error      = useSelector(selectMyPostsError);
   const pagination = useSelector(selectMyPostsPagination);
-  const metrics    = useSelector(selectPostMetrics);
 
-  const [activeTab, setActiveTab]         = useState<TabType>("all");
-  const [search, setSearch]               = useState("");
-  const sortBy: SortOption                = "newest";
-  const [page, setPage]                   = useState(1);
-  const [jobToDelete, setJobToDelete]     = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy]             = useState<SortOption>("newest");
+  const [search, setSearch]             = useState("");
+  const [page, setPage]                 = useState(1);
+  const [jobToDelete, setJobToDelete]   = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const deletePostHook = useDeletePost({
@@ -54,11 +50,26 @@ const PostsPage: React.FC = () => {
     onError: () => showToast({ message: "Failed to delete post", severity: "error" }),
   });
 
+  // Map UI filter → API status param
+  const apiStatus = statusFilter === "all"     ? undefined
+    : statusFilter === "active"  ? "open"
+    : statusFilter === "draft"   ? "draft"
+    : "closed";
+
   const load = useCallback(() => {
-    dispatch(fetchMyPosts({ page, limit: 9, search, sort: sortBy, status: activeTab }));
-  }, [dispatch, page, search, sortBy, activeTab]);
+    dispatch(fetchMyPosts({ page, limit: 9, search, sort: sortBy, status: apiStatus }));
+  }, [dispatch, page, search, sortBy, apiStatus]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Client-side sort only (API handles status + search filtering)
+  const filteredPosts = useMemo(() => {
+    const list = [...posts] as any[];
+    if (sortBy === "oldest")     list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    if (sortBy === "title-asc")  list.sort((a, b) => (a.jobDetails?.title ?? "").localeCompare(b.jobDetails?.title ?? ""));
+    if (sortBy === "title-desc") list.sort((a, b) => (b.jobDetails?.title ?? "").localeCompare(a.jobDetails?.title ?? ""));
+    return list;
+  }, [posts, sortBy]);
 
   const handleCopyLink = (id: string) => {
     navigator.clipboard
@@ -73,14 +84,6 @@ const PostsPage: React.FC = () => {
   };
 
   const handleCreateClick = () => router.push("/company/posts/create");
-
-  // Tab counts use real API metrics totals, not the current page slice
-  const tabItems = [
-    { id: "all",     label: "All",     count: metrics?.total   ?? pagination.total },
-    { id: "active",  label: "Active",  count: metrics?.active  ?? 0 },
-    { id: "draft",   label: "Drafts",  count: metrics?.draft   ?? 0 },
-    { id: "expired", label: "Expired", count: metrics?.expired ?? 0 },
-  ];
 
   return (
     <RoleGuard allowedRoles={["Company"]}>
@@ -114,14 +117,15 @@ const PostsPage: React.FC = () => {
             <PostsStats />
 
             <JobPostsList
-              jobs={posts}
+              jobs={filteredPosts}
               loading={loading}
               error={error}
               search={search}
               onSearchChange={(v) => { setSearch(v); setPage(1); }}
-              activeTab={activeTab}
-              onTabChange={(t) => { setActiveTab(t as TabType); setPage(1); }}
-              tabItems={tabItems}
+              statusFilter={statusFilter}
+              onStatusFilterChange={(f) => { setStatusFilter(f); setPage(1); }}
+              sortBy={sortBy}
+              onSortChange={(s) => { setSortBy(s); setPage(1); }}
               page={page}
               pagination={pagination}
               onPageChange={setPage}

@@ -25,12 +25,15 @@ const InterviewsPage: React.FC = () => {
   const loading  = useSelector(selectCompanyInterviewsLoading);
   const total    = useSelector(selectCompanyInterviewsTotal) as number;
 
-  const [search,      setSearch]      = useState("");
+  const [searchName,  setSearchName]  = useState("");
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchTitle, setSearchTitle] = useState("");
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
   const [sortBy,      setSortBy]      = useState<SortOption>("newest");
   const [detail,      setDetail]      = useState<InterviewAssessment | null>(null);
   const [page,        setPage]        = useState(0);
 
+  // Fetch only on page change — all filtering is client-side
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ page: page + 1, limit: ROW }));
   }, [dispatch, page]);
@@ -50,16 +53,21 @@ const InterviewsPage: React.FC = () => {
     };
   }, [results]);
 
+  // Client-side filtering by name, email, job title
   const filtered = useMemo(() => {
     let list = results;
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((a) =>
-        a.candidate?.username?.toLowerCase().includes(q) ||
-        a.candidate?.email?.toLowerCase().includes(q) ||
-        a.post?.jobDetails?.title?.toLowerCase().includes(q)
-      );
+    if (searchName.trim()) {
+      const q = searchName.toLowerCase();
+      list = list.filter((a) => a.candidate?.username?.toLowerCase().includes(q));
+    }
+    if (searchEmail.trim()) {
+      const q = searchEmail.toLowerCase();
+      list = list.filter((a) => a.candidate?.email?.toLowerCase().includes(q));
+    }
+    if (searchTitle.trim()) {
+      const q = searchTitle.toLowerCase();
+      list = list.filter((a) => a.post?.jobDetails?.title?.toLowerCase().includes(q));
     }
 
     if (scoreFilter === "excellent")    list = list.filter((a) => getScore(a) >= 70);
@@ -70,7 +78,7 @@ const InterviewsPage: React.FC = () => {
     if (sortBy === "highest") return [...list].sort((a, b) => getScore(b) - getScore(a));
     if (sortBy === "lowest")  return [...list].sort((a, b) => getScore(a) - getScore(b));
     return list;
-  }, [results, search, scoreFilter, sortBy]);
+  }, [results, searchName, searchEmail, searchTitle, scoreFilter, sortBy]);
 
   const handleScoreFilter = useCallback((f: ScoreFilter) => { setScoreFilter(f); setPage(0); }, []);
   const handleLoadMore    = useCallback(() => setPage((p) => p + 1), []);
@@ -102,8 +110,12 @@ const InterviewsPage: React.FC = () => {
             <InterviewsList
               assessments={filtered}
               loading={loading && page === 0}
-              search={search}
-              onSearchChange={setSearch}
+              searchName={searchName}
+              onSearchNameChange={setSearchName}
+              searchEmail={searchEmail}
+              onSearchEmailChange={setSearchEmail}
+              searchTitle={searchTitle}
+              onSearchTitleChange={setSearchTitle}
               scoreFilter={scoreFilter}
               onScoreFilterChange={handleScoreFilter}
               sortBy={sortBy}
