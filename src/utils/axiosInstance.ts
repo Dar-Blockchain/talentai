@@ -34,8 +34,12 @@ axiosInstance.interceptors.response.use(
       status === 401 &&
       (data?.code === 'TOKEN_INVALID' ||
         data?.error === 'TOKEN_INVALID' ||
-        data?.message === 'Invalid or expired token');
-
+        data?.message === 'Invalid or expired token' || 'Token missing');
+    console.log('❌ Axios error:', {
+      status,
+      data,
+      isTokenInvalid,
+    });
     if (isTokenInvalid) {
       clearTokens();
       emitSessionExpired();
