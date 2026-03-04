@@ -8,6 +8,7 @@ const CompanyInvitationSchema = new mongoose.Schema({
     enum: ["Owner", "RH", "TechLead", "Supervisor", "Manager"],
     default: "Manager",
   },
+  department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   status: { type: String, enum: ["active", "pending", "revoked"], default: "pending" },
   invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   token: { type: String, required: true, unique: true, index: true },

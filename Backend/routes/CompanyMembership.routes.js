@@ -25,5 +25,6 @@ router.delete("/:membershipId", resolveCompanyActor,CompanyMembershipController.
 
 // Update membership role
 router.patch("/:membershipId/role", CompanyMembershipController.updateMembershipRole);
-
+// Update membership department (assign or unassign)
+router.patch("/:membershipId/department", resolveCompanyActor, CompanyMembershipController.updateMembershipDepartment);
 module.exports = router;

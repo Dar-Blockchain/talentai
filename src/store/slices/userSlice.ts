@@ -144,7 +144,17 @@ export const getMyProfile = createAsyncThunk<
     );
 
     if (!response.ok) {
-
+      if (response.status === 401 || response.status === 403 || response.status === 404) {
+        // Token exists but user is gone — clear everything and redirect to signin
+        localStorage.clear();
+        if (typeof window !== "undefined") {
+          document.cookie.split(";").forEach((c) => {
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+          });
+          window.location.replace("/signin");
+        }
+        return rejectWithValue("Session expired");
+      }
       return rejectWithValue("Failed to fetch profile");
     }
 

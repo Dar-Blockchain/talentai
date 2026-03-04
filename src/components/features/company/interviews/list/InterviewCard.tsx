@@ -1,6 +1,9 @@
-import React from "react";
-import { Box, Typography, Avatar, Chip } from "@mui/material";
+import React, { memo } from "react";
+import { Box, Typography, Avatar, Chip, LinearProgress } from "@mui/material";
+import { motion } from "framer-motion";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import EmailOutlined from "@mui/icons-material/EmailOutlined";
 
 const AVATAR_GRADIENTS = [
   "135deg, #8310FF, #A855F7",
@@ -78,77 +81,108 @@ export interface InterviewAssessment {
 
 interface InterviewCardProps {
   assessment: InterviewAssessment;
+  index?: number;
   onClick: (assessment: InterviewAssessment) => void;
 }
 
-const InterviewCard: React.FC<InterviewCardProps> = ({ assessment, onClick }) => {
-  const name   = assessment.candidate?.username || assessment.candidate?.email || "Unknown";
-  const email  = assessment.candidate?.email || "";
-  const letter = name[0]?.toUpperCase() || "?";
-  const score  = getScore(assessment);
-  const sc     = scoreStyle(score);
-  const title  = assessment.post?.jobDetails?.title || "Untitled Position";
+const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick }) => {
+  const name  = assessment.candidate?.username || assessment.candidate?.email || "Unknown";
+  const email = assessment.candidate?.email || "";
+  const score = getScore(assessment);
+  const sc    = scoreStyle(score);
+  const title = assessment.post?.jobDetails?.title || "Untitled Position";
 
   return (
-    <Box
-      onClick={() => onClick(assessment)}
-      sx={{
-        bgcolor: "#fff", borderRadius: "16px",
-        border: "1px solid #F1F5F9",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        overflow: "hidden", cursor: "pointer",
-        transition: "all 0.2s ease",
-        "&:hover": { transform: "translateY(-2px)", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", borderColor: "#E5E7EB" },
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.35 }}
+      style={{ height: "100%" }}
     >
-      <Box sx={{ p: 2.5 }}>
-        {/* Avatar + score badge */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
-          <Avatar sx={{
-            width: 44, height: 44, fontWeight: 800, fontSize: "1rem", color: "#fff",
-            background: `linear-gradient(${pickGradient(email || name)})`,
-            border: "2px solid #F1F5F9",
-          }}>
-            {letter}
-          </Avatar>
-          <Box sx={{ px: 1.25, py: 0.4, borderRadius: "8px", bgcolor: sc.bg, border: `1px solid ${sc.color}30` }}>
-            <Typography sx={{ fontSize: "12px", fontWeight: 800, color: sc.color }}>
+      <Box
+        onClick={() => onClick(assessment)}
+        sx={{
+          bgcolor: "#fff",
+          border: "1px solid #E5E7EB",
+          borderRadius: 3,
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          height: "100%",
+          cursor: "pointer",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          "&:hover": { boxShadow: "0 6px 24px rgba(0,0,0,0.10)", borderColor: `${sc.color}60`, transform: "translateY(-2px)" },
+          transition: "all 0.2s",
+        }}
+      >
+        {/* Header: avatar + name + score badge */}
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar sx={{
+              width: 42, height: 42, fontWeight: 800, fontSize: "0.95rem", color: "#fff",
+              background: `linear-gradient(${pickGradient(email || name)})`,
+              flexShrink: 0,
+            }}>
+              {name[0]?.toUpperCase() || "?"}
+            </Avatar>
+            <Box>
+              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
+                {name}
+              </Typography>
+              {email && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, mt: 0.2 }}>
+                  <EmailOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                  <Typography sx={{ fontSize: "11px", color: "#9CA3AF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
+                    {email}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+
+          <Box sx={{ px: 1.25, py: 0.5, borderRadius: "8px", bgcolor: sc.bg, border: `1px solid ${sc.color}30`, flexShrink: 0 }}>
+            <Typography sx={{ fontSize: "13px", fontWeight: 800, color: sc.color, lineHeight: 1 }}>
               {score.toFixed(0)}%
             </Typography>
           </Box>
         </Box>
 
-        {/* Name + email */}
-        <Typography sx={{ fontWeight: 700, fontSize: "14px", color: "#111827", mb: 0.25, lineHeight: 1.3 }}>
-          {name}
-        </Typography>
-        <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mb: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {email}
-        </Typography>
+        {/* Score bar */}
+        <ScoreBar value={score} color={sc.color} />
 
         {/* Job title */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5 }}>
-          <WorkOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-          <Typography sx={{ fontSize: "12px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+          <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <WorkOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
+          </Box>
+          <Typography sx={{ fontSize: "13px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {title}
           </Typography>
         </Box>
 
-        {/* Verdict chip + date */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Chip label={sc.label} size="small" sx={{
-            fontWeight: 700, fontSize: "10px", height: 20,
-            color: sc.color, bgcolor: sc.bg,
-            border: `1px solid ${sc.color}25`, borderRadius: "6px",
-            "& .MuiChip-label": { px: 1 },
-          }} />
-          <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>
-            {fmtDate(assessment.createdAt)}
-          </Typography>
+        {/* Footer: verdict chip + date */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
+          <Chip
+            label={sc.label}
+            size="small"
+            sx={{
+              fontWeight: 700, fontSize: "10px", height: 20,
+              color: sc.color, bgcolor: sc.bg,
+              border: `1px solid ${sc.color}25`, borderRadius: "6px",
+              "& .MuiChip-label": { px: 1 },
+            }}
+          />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <CalendarTodayOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+              {fmtDate(assessment.createdAt)}
+            </Typography>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </motion.div>
   );
-};
+});
 
 export default InterviewCard;
