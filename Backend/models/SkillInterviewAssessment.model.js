@@ -137,7 +137,7 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
     },
     interviewType: {
       type: String,
-      enum: ['HR_INTERVIEW', 'TECHNICAL_INTERVIEW', 'ASSESSMENT', 'EVALUATION'],
+      enum: ['HR_INTERVIEW', 'TECHNICAL_INTERVIEW', 'TECHNICAL_SKILL', 'SOFT_SKILL', 'SALARY_INTERVIEW', 'PSYCHOTECHNIC', 'ASSESSMENT', 'EVALUATION'],
       default: 'HR_INTERVIEW'
     },
     timestamp: Date

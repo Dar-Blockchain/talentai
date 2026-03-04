@@ -137,7 +137,7 @@ class MemoryAI {
   constructor(together, sessionManager) {
     this.together = together;
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
   }
 
   async analyzeQuestionSimilarity(newQuestion, sessionHistory, sessionId) {
@@ -318,7 +318,7 @@ class CoverageAnalysisAI {
   constructor(together, sessionManager) {
     this.together = together;
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
   }
 
   async analyzeCoverageIntelligently(candidateResponse, currentCoverage, focusAreas, sessionHistory) {
@@ -636,7 +636,7 @@ class DecisionEngineAI {
     this.together = together;
     this.sessionManager = sessionManager;
     this.service = serviceInstance; // Reference to parent IntelligentInterviewService
-    this.model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
   }
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
@@ -822,7 +822,7 @@ class IntelligentInterviewService {
   constructor() {
     this.together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
     this.sessionManager = redisSessionManager;
-    this.model = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
 
     // Initialize AI service components
     this.memoryAI = new MemoryAI(this.together, this.sessionManager);
@@ -2438,7 +2438,7 @@ ${recentContext}
 Rephrase this question to help the candidate answer it.`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", // Use better model for rephrasing
+        model: "meta-llama/Llama-3.2-3B-Instruct-Turbo", // Use better model for rephrasing
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
@@ -2865,7 +2865,7 @@ ${JSON.stringify(decisionAnalysis, null, 2)}
 Update the real-time report with new AI-powered insights.`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        model: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }

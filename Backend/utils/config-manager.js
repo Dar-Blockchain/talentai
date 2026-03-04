@@ -9,8 +9,8 @@ class ConfigManager {
       HR_INTERVIEW: {
         models: {
           fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-          analysisModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "professional",
@@ -65,8 +65,8 @@ class ConfigManager {
       TECHNICAL_SKILL: {
         models: {
           fastModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-          analysisModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "technical",
@@ -108,8 +108,8 @@ class ConfigManager {
       SALARY_INTERVIEW: {
         models: {
           fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-          analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "professional",
@@ -151,8 +151,8 @@ class ConfigManager {
       SOFT_SKILL: {
         models: {
           fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-          analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "empathetic",
@@ -194,8 +194,8 @@ class ConfigManager {
       PSYCHOTECHNIC: {
         models: {
           fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-          analysisModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "analytical",
