@@ -372,7 +372,6 @@ export const {
   deleteSoftSkill,
   addHardSkill,
   addSoftSkill,
-
   updateJobField,
   updateJobSalaryField,
   updateRequirements,
