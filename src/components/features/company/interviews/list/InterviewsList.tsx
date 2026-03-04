@@ -1,6 +1,9 @@
 import React, { memo } from "react";
 import { Box, Typography, InputAdornment, TextField, Skeleton, Chip, Menu, MenuItem } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
+import PersonOutlined from "@mui/icons-material/PersonOutlined";
+import EmailOutlined from "@mui/icons-material/EmailOutlined";
+import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import HowToRegOutlined from "@mui/icons-material/HowToRegOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
@@ -28,8 +31,12 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
 interface InterviewsListProps {
   assessments: InterviewAssessment[];
   loading: boolean;
-  search: string;
-  onSearchChange: (value: string) => void;
+  searchName: string;
+  onSearchNameChange: (v: string) => void;
+  searchEmail: string;
+  onSearchEmailChange: (v: string) => void;
+  searchTitle: string;
+  onSearchTitleChange: (v: string) => void;
   scoreFilter: ScoreFilter;
   onScoreFilterChange: (f: ScoreFilter) => void;
   sortBy: SortOption;
@@ -112,31 +119,44 @@ const SortButton: React.FC<{ sortBy: SortOption; onChange: (s: SortOption) => vo
 };
 
 const InterviewsList: React.FC<InterviewsListProps> = memo(({
-  assessments, loading, search, onSearchChange,
+  assessments, loading,
+  searchName, onSearchNameChange,
+  searchEmail, onSearchEmailChange,
+  searchTitle, onSearchTitleChange,
   scoreFilter, onScoreFilterChange, sortBy, onSortChange,
   onSelect, hasMore, onLoadMore,
 }) => (
   <Box>
-    {/* Toolbar: search + filters + sort */}
-    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
+    {/* Search inputs row */}
+    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
       <TextField
         size="small"
-        placeholder="Search by candidate name, email or job title…"
-        value={search}
-        onChange={(e) => onSearchChange(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          flexGrow: 1, maxWidth: 380,
-          "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "14px", bgcolor: "#fff" },
-        }}
+        placeholder="Candidate name…"
+        value={searchName}
+        onChange={(e) => onSearchNameChange(e.target.value)}
+        InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
+        sx={{ flex: 1, minWidth: 160, "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px", bgcolor: "#fff" } }}
       />
+      <TextField
+        size="small"
+        placeholder="Email…"
+        value={searchEmail}
+        onChange={(e) => onSearchEmailChange(e.target.value)}
+        InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
+        sx={{ flex: 1, minWidth: 160, "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px", bgcolor: "#fff" } }}
+      />
+      <TextField
+        size="small"
+        placeholder="Job title…"
+        value={searchTitle}
+        onChange={(e) => onSearchTitleChange(e.target.value)}
+        InputProps={{ startAdornment: <InputAdornment position="start"><WorkOutlineOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
+        sx={{ flex: 1, minWidth: 160, "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px", bgcolor: "#fff" } }}
+      />
+    </Box>
 
+    {/* Filters + sort row */}
+    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
       {/* Score filter chips */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
         <FilterListOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} />
@@ -161,7 +181,9 @@ const InterviewsList: React.FC<InterviewsListProps> = memo(({
         })}
       </Box>
 
-      <SortButton sortBy={sortBy} onChange={onSortChange} />
+      <Box sx={{ ml: "auto" }}>
+        <SortButton sortBy={sortBy} onChange={onSortChange} />
+      </Box>
     </Box>
 
     {/* Grid / States — white container */}
@@ -174,10 +196,10 @@ const InterviewsList: React.FC<InterviewsListProps> = memo(({
         <Box sx={{ textAlign: "center", py: 10 }}>
           <HowToRegOutlined sx={{ fontSize: 48, color: "#D1D5DB", mb: 2 }} />
           <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>
-            {search ? "No results match your search" : "No interviews yet"}
+            {(searchName || searchEmail || searchTitle) ? "No results match your search" : "No interviews yet"}
           </Typography>
           <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
-            {search
+            {(searchName || searchEmail || searchTitle)
               ? "Try different keywords or clear the search."
               : "Candidate interview results will appear here once completed."}
           </Typography>
