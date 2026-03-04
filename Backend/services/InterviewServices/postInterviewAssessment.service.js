@@ -411,6 +411,24 @@ module.exports.getAssessmentsByCompany = async (
       });
     }
 
+    if (filters.candidateName) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'candidate.username': { $regex: filters.candidateName, $options: 'i' } },
+            { 'candidate.profile.firstName': { $regex: filters.candidateName, $options: 'i' } },
+            { 'candidate.profile.lastName': { $regex: filters.candidateName, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    if (filters.candidateEmail) {
+      pipeline.push({
+        $match: { 'candidate.email': { $regex: filters.candidateEmail, $options: 'i' } },
+      });
+    }
+
     // project out sensitive or unnecessary fields before pagination
     pipeline.push({
       $project: {
@@ -489,6 +507,24 @@ module.exports.getInterviewMetricsForCompany = async (companyId, filters = {}) =
     if (filters.candidateUsername) {
       pipeline.push({
         $match: { 'candidate.username': { $regex: filters.candidateUsername, $options: 'i' } },
+      });
+    }
+
+    if (filters.candidateName) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'candidate.username': { $regex: filters.candidateName, $options: 'i' } },
+            { 'candidate.profile.firstName': { $regex: filters.candidateName, $options: 'i' } },
+            { 'candidate.profile.lastName': { $regex: filters.candidateName, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    if (filters.candidateEmail) {
+      pipeline.push({
+        $match: { 'candidate.email': { $regex: filters.candidateEmail, $options: 'i' } },
       });
     }
 
