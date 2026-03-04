@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import axiosInstance from "@/utils/axiosInstance";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -134,10 +135,6 @@ const initialState: AdminState = {
   },
 };
 
-// ─── Helper ──────────────────────────────────────────────
-
-const getToken = () => localStorage.getItem("api_token");
-
 // ─── Thunks ──────────────────────────────────────────────
 
 export const fetchAdminStats = createAsyncThunk<
@@ -146,14 +143,8 @@ export const fetchAdminStats = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchStats", async (_, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
+    const response = await axiosInstance.get("dashboard/getCounts");
+    const data = response.data;
     if (data.success && data.data) {
       return {
         users: data.data.users || 0,
@@ -185,15 +176,8 @@ export const fetchAllUsersForMap = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchAllUsersForMap", async (_, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?limit=1000`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
-    return data?.users || [];
+    const response = await axiosInstance.get("dashboard/getAllUsers", { params: { limit: 1000 } });
+    return response.data?.users || [];
   } catch (error: any) {
     return rejectWithValue(error.message || "Error fetching users for map");
   }
@@ -205,14 +189,8 @@ export const fetchUserGrowthData = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchUserGrowthData", async (_, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getUserCountsByDay`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
+    const response = await axiosInstance.get("dashboard/getUserCountsByDay");
+    const data = response.data;
     if (data.success && data.data) {
       const processedData = data.data.usersCreatedByDay.map((item: any) => ({
         day: new Date(item.day).toLocaleDateString("en-US", {
@@ -291,28 +269,10 @@ export const fetchAdminPostAssessments = createAsyncThunk<
 >("admin/fetchPostAssessments", async (params, { rejectWithValue }) => {
   try {
     const { page = 1, limit = 10, company } = params;
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-    const queryParams = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
+    const response = await axiosInstance.get("post-interview-assessments", {
+      params: { page, limit, ...(company ? { company } : {}) },
     });
-    if (company) queryParams.append("company", company);
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments?${queryParams.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to fetch admin assessments");
-    }
-    const data = await response.json();
+    const data = response.data;
     const assessments = data.data || data.results || [];
     const total =
       data.pagination?.totalCount ||
@@ -332,24 +292,10 @@ export const fetchAdminSkillAssessments = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchSkillAssessments", async ({ page, limit, skill }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-    const params = new URLSearchParams();
-    params.append("page", String(page + 1));
-    params.append("limit", String(limit));
-    if (skill) params.append("skill", skill);
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments?${params.toString()}`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+    const response = await axiosInstance.get("skill-interview-assessments", {
+      params: { page: page + 1, limit, ...(skill ? { skill } : {}) },
     });
-    if (!response.ok) {
-      return rejectWithValue(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+    const data = response.data;
     if (data.success || data.data || data.results) {
       const results = data.data || data.results || [];
       const total =
@@ -374,22 +320,17 @@ export const fetchAdminUsers = createAsyncThunk<
   { rejectValue: string }
 >("admin/fetchUsers", async (params, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    if (!token) throw new Error("Authentication token not found");
-    const queryParams = new URLSearchParams({
-      page: String(params.page ?? 1),
-      limit: String(params.limit ?? 10),
+    const response = await axiosInstance.get("dashboard/getAllUsers", {
+      params: {
+        page: params.page ?? 1,
+        limit: params.limit ?? 10,
+        ...(params.username ? { username: params.username } : {}),
+        ...(params.email ? { email: params.email } : {}),
+        ...(params.role ? { role: params.role } : {}),
+        ...(params.status ? { status: params.status } : {}),
+      },
     });
-    if (params.username) queryParams.append("username", params.username);
-    if (params.email) queryParams.append("email", params.email);
-    if (params.role) queryParams.append("role", params.role);
-    if (params.status) queryParams.append("status", params.status);
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?${queryParams.toString()}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
-    const data = await res.json();
+    const data = response.data;
     return {
       users: data.users || [],
       total: data.pagination?.totalUsers ?? data.total ?? 0,
@@ -407,24 +348,11 @@ export const saveCompanyPermissions = createAsyncThunk<
   "admin/saveCompanyPermissions",
   async ({ companyId, permissions }, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      if (!token) throw new Error("Authentication required");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}admin/companies/${companyId}/permissions`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ permissions }),
-        }
+      const response = await axiosInstance.post(
+        `admin/companies/${companyId}/permissions`,
+        { permissions }
       );
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update permissions");
-      }
-      return await response.json();
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error saving permissions");
     }

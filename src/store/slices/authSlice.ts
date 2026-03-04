@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
 import Cookies from "js-cookie";
 import { createNotification } from "./notificationSlice";
 import { clearConnectedUser, setConnectedUser } from "./userSlice";
@@ -36,10 +36,7 @@ export const registerUser = createAsyncThunk(
   "auth/register",
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`,
-        { email }
-      );
+      const response = await axiosInstance.post('auth/register', { email });
       return response.data;
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -70,18 +67,11 @@ export const verifyOTP = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`,
+      const response = await axiosInstance.post(
+        'auth/verify-otp',
+        { email, otp, location },
         {
-          email,
-          otp,
-          location,
-        },
-        {
-          validateStatus: (status) => {
-            // Accept all status codes to prevent axios from throwing
-            return status >= 200 && status < 500;
-          },
+          validateStatus: (status) => status >= 200 && status < 500,
         }
       );
 

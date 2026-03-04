@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, IconButton,
-  CircularProgress,
+  CircularProgress, Select, MenuItem, FormControl,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -10,11 +10,19 @@ import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
 import CodeOutlined from '@mui/icons-material/CodeOutlined';
 import SupervisorAccountOutlined from '@mui/icons-material/SupervisorAccountOutlined';
 import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
+import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import {
+  fetchDepartments,
+  selectDepartments,
+  selectDepartmentsLoading,
+} from '@/store/slices/departmentSlice';
 
 interface AddEmployeeModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (email: string, role: string) => Promise<void>;
+  onSave: (email: string, role: string, departmentId?: string) => Promise<void>;
 }
 
 const ROLES = [
@@ -28,13 +36,23 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PURPLE = '#8310FF';
 
 const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, onClose, onSave }) => {
-  const [email, setEmail]            = useState('');
-  const [role, setRole]              = useState('hr');
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const departments       = useSelector(selectDepartments);
+  const departmentsLoading = useSelector(selectDepartmentsLoading);
+
+  const [email, setEmail]             = useState('');
+  const [role, setRole]               = useState('hr');
+  const [departmentId, setDepartmentId] = useState('');
+  const [loading, setLoading]         = useState(false);
 
   useEffect(() => {
-    if (open) { setEmail(''); setRole('hr'); }
-  }, [open]);
+    if (open) {
+      setEmail('');
+      setRole('hr');
+      setDepartmentId('');
+      if (departments.length === 0) dispatch(fetchDepartments({}));
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isFormValid = useMemo(() => email.trim() && EMAIL_REGEX.test(email) && role, [email, role]);
 
@@ -42,14 +60,14 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
     if (!email.trim() || !EMAIL_REGEX.test(email)) return;
     setLoading(true);
     try {
-      await onSave(email, role);
+      await onSave(email, role, departmentId || undefined);
     } catch {
       // error already handled by parent via showToast
     } finally {
       setLoading(false);
       onClose();
     }
-  }, [email, role, onSave, onClose]);
+  }, [email, role, departmentId, onSave, onClose]);
 
   const handleClose = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
 
@@ -127,6 +145,40 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
             <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', mt: 0.75 }}>
               They'll receive an email invitation to join your team.
             </Typography>
+          </Box>
+
+          {/* Department (optional) */}
+          <Box>
+            <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
+              Department <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>(optional)</Typography>
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
+                disabled={loading || departmentsLoading}
+                displayEmpty
+                startAdornment={
+                  <BusinessOutlined sx={{ fontSize: 18, color: '#9CA3AF', mr: 1 }} />
+                }
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: '#F8FAFC',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: PURPLE, borderWidth: 2 },
+                }}
+              >
+                <MenuItem value="">
+                  <Typography sx={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No department</Typography>
+                </MenuItem>
+                {departments.map((d) => (
+                  <MenuItem key={d._id} value={d._id}>
+                    {d.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
           {/* Role — StatCard style list */}

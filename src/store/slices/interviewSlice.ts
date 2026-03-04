@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
+import axiosInstance from '@/utils/axiosInstance';
 
 export interface SkillInterviewAssessment {
   _id: string;
@@ -132,8 +133,6 @@ export const saveInterviewAssessment = createAsyncThunk<
 >(
   'interview/saveAssessment',
   async ({ skill, proficiency, interviewData, skillType }, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     // Normalise legacy interviewType values to the enum the backend model accepts
     const interviewTypeMap: Record<string, string> = {
       TECHNICAL_SKILL:  'TECHNICAL_INTERVIEW',
@@ -151,25 +150,13 @@ export const saveInterviewAssessment = createAsyncThunk<
       : interviewData;
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ skill, proficiency, interviewData: normalizedInterviewData, skillType }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return rejectWithValue(errorData.message || `Failed to save interview: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await axiosInstance.post('skill-interview-assessments/', {
+        skill,
+        proficiency,
+        interviewData: normalizedInterviewData,
+        skillType,
+      });
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error saving interview assessment');
     }
@@ -188,24 +175,14 @@ export const fetchInterviewAssessments = createAsyncThunk<
   async ({ type, page, limit, candidateId }, { rejectWithValue }) => {
     console.log('🔄 [InterviewSlice] fetchInterviewAssessments CALLED:', { type, page, limit, candidateId });
 
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/my?page=${page + 1}&limit=${limit}&candidateId=${candidateId}`;
+      console.log('📡 [InterviewSlice] Making HTTP request to skill-interview-assessments/my');
 
-      console.log('📡 [InterviewSlice] Making HTTP request to:', url);
-
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      const response = await axiosInstance.get('skill-interview-assessments/my', {
+        params: { page: page + 1, limit, candidateId },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [InterviewSlice] API Error:', response.status, errorText);
-        return rejectWithValue(`Failed to fetch interview details: ${response.status}`);
-      }
-
-      const json = await response.json();
+      const json = response.data;
       console.log('📦 [InterviewSlice] Raw API Response:', json);
 
       const results = Array.isArray(json.results)
@@ -243,32 +220,13 @@ export const fetchSkillAssessmentsByType = createAsyncThunk<
 >(
   'interview/fetchSkillAssessmentsByType',
   async ({ skillType, limit = 20 }, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const params = new URLSearchParams();
-      params.append('skillType', skillType);
-      params.append('limit', limit.toString());
-
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/my?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+      const response = await axiosInstance.get('skill-interview-assessments/my', {
+        params: { skillType, limit },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return rejectWithValue(errorData.message || `Failed to fetch skill assessments: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       const results = data.data || data.results || [];
       const total = data.pagination?.totalCount || data.total || results.length;
-
       return { results, total, skillType };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching skill assessments');
@@ -286,20 +244,9 @@ export const fetchInterviewReport = createAsyncThunk<
 >(
   'interview/fetchReport',
   async (id, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/${id}`;
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) {
-        return rejectWithValue('Failed to fetch interview details');
-      }
-
-      const json = await response.json();
-      return json.data;
+      const response = await axiosInstance.get(`skill-interview-assessments/${id}`);
+      return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching data');
     }
@@ -316,19 +263,9 @@ export const fetchInterviewDetailsById = createAsyncThunk<
 >(
   'interview/fetchDetailsById',
   async (interviewId, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interview-details/getInterviewDetailsById/${interviewId}`;
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) {
-        return rejectWithValue('Failed to fetch interview details');
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get(`interview-details/getInterviewDetailsById/${interviewId}`);
+      const data = response.data;
       if (data.success && data.data) {
         return data.data;
       }
@@ -349,22 +286,9 @@ export const claimInterviewReward = createAsyncThunk<
 >(
   'interview/claimReward',
   async (interviewId, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/${interviewId}/claim-reward`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        }
-      );
-
-      const result = await response.json();
-
+      const response = await axiosInstance.post(`interviewDetails/${interviewId}/claim-reward`);
+      const result = response.data;
       if (result.success) {
         return result;
       } else {
@@ -386,24 +310,9 @@ export const fetchCompanyInterviewMetrics = createAsyncThunk<
 >(
   'interview/fetchCompanyInterviewMetrics',
   async (_, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine/metrics`;
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return rejectWithValue(errorData.message || `Failed to fetch metrics: ${response.status}`);
-      }
-
-      const json = await response.json();
-      const d = json.data ?? {};
+      const response = await axiosInstance.get('post-interview-assessments/company/mine/metrics');
+      const d = response.data.data ?? {};
       return {
         total:     typeof d.total    === 'number' ? d.total    : 0,
         needWork:  typeof d.needWork === 'number' ? d.needWork : 0,
@@ -426,30 +335,17 @@ export const fetchCompanyInterviews = createAsyncThunk<
 >(
   'interview/fetchCompanyInterviews',
   async ({ postTitle, candidateUsername, page = 1, limit = 12 }, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const params = new URLSearchParams();
-      if (postTitle) params.append('postTitle', postTitle);
-      if (candidateUsername) params.append('candidateUsername', candidateUsername);
-      params.append('page', String(page));
-      params.append('limit', String(limit));
-
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine?${params.toString()}`;
-
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const response = await axiosInstance.get('post-interview-assessments/company/mine', {
+        params: {
+          page,
+          limit,
+          ...(postTitle ? { postTitle } : {}),
+          ...(candidateUsername ? { candidateUsername } : {}),
         },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return rejectWithValue(errorData.message || `Failed to fetch interviews: ${response.status}`);
-      }
-
-      const json = await response.json();
+      const json = response.data;
 
       // Response shape: { data: [ { post, assessments: [ { assessment, candidatePostStepProgress } ] } ] }
       let items: any[] = [];

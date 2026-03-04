@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
+import axiosInstance from "@/utils/axiosInstance";
 
 interface DashboardStats {
   totalEmployees: number;
@@ -28,14 +28,8 @@ export const fetchDashboardStats = createAsyncThunk(
   "company/fetchDashboardStats",
   async (_, { rejectWithValue }) => {
     try {
-      const token = Cookies.get("api_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/statsCards`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!res.ok) throw new Error("Failed to fetch dashboard stats");
-      const json = await res.json();
-      return json.data as DashboardStats;
+      const response = await axiosInstance.get("dashboard/statsCards");
+      return response.data.data as DashboardStats;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch dashboard stats");
     }

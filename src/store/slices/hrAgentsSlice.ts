@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
 
 interface HRAgent {
   _id: string;
@@ -65,10 +65,6 @@ export const createHRAgent = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        return rejectWithValue("No authentication token found");
-      }
       const agentName = `${agentData?.companyName}_${agentData?.companyId}${agentData?.postTitle}_${agentData?.jobId}`;
       const avatarName = `${agentData?.companyName}_${agentData?.companyId}${agentData?.postTitle}_${agentData?.jobId}`;
       const agentConfig = {
@@ -102,19 +98,10 @@ export const createHRAgent = createAsyncThunk(
           },
         },
       };
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/initialize`,
-        {
-          agentData: [agentConfig],
-          configData,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post('hr-agents/initialize', {
+        agentData: [agentConfig],
+        configData,
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -133,19 +120,7 @@ export const fetchHRAgents = createAsyncThunk(
   "hrAgents/fetchHRAgents",
   async (companyId: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        return rejectWithValue("No authentication token found");
-      }
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/company`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get('hr-agents/company');
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -164,19 +139,7 @@ export const fetchHRAgent = createAsyncThunk(
   "hrAgents/fetchHRAgent",
   async (agentId: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        return rejectWithValue("No authentication token found");
-      }
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/${agentId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get(`hr-agents/${agentId}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -198,20 +161,7 @@ export const placeHRAgentBid = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        return rejectWithValue("No authentication token found");
-      }
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/bid`,
-        bidData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post('hr-agents/bid', bidData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(

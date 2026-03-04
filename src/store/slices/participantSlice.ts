@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import axiosInstance from "@/utils/axiosInstance";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,14 +32,6 @@ export interface BulkAddPayload {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const getToken = () =>
-  localStorage.getItem("api_token") ||
-  document.cookie
-    .split("; ")
-    .find((r) => r.startsWith("api_token="))
-    ?.split("=")[1] ||
-  "";
-
 /**
  * Generate a cryptographically random anonymous token (16 bytes → 32 hex chars).
  * Falls back to Math.random when crypto is unavailable (SSR).
@@ -57,8 +50,6 @@ export const generateAnonymousToken = (): string => {
   ).join("");
 };
 
-const BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}campaign-participants`;
-
 // ─── Thunks ───────────────────────────────────────────────────────────────────
 
 export const fetchParticipants = createAsyncThunk<
@@ -67,15 +58,10 @@ export const fetchParticipants = createAsyncThunk<
   { rejectValue: string }
 >("participant/fetchParticipants", async (campaignId, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${campaignId}/participants`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch participants");
-    return { campaignId, participants: data.data as Participant[] };
+    const res = await axiosInstance.get(`campaign-participants/${campaignId}/participants`);
+    return { campaignId, participants: res.data.data as Participant[] };
   } catch (err: any) {
-    return rejectWithValue(err.message);
+    return rejectWithValue(err.response?.data?.error || err.message);
   }
 });
 
@@ -85,20 +71,10 @@ export const addParticipant = createAsyncThunk<
   { rejectValue: string }
 >("participant/addParticipant", async ({ campaignId, ...body }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${campaignId}/participants`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add participant");
-    return { campaignId, participant: data.data as Participant };
+    const res = await axiosInstance.post(`campaign-participants/${campaignId}/participants`, body);
+    return { campaignId, participant: res.data.data as Participant };
   } catch (err: any) {
-    return rejectWithValue(err.message);
+    return rejectWithValue(err.response?.data?.error || err.message);
   }
 });
 
@@ -108,20 +84,10 @@ export const addAnonymousParticipant = createAsyncThunk<
   { rejectValue: string }
 >("participant/addAnonymous", async ({ campaignId, anonymousToken }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${campaignId}/participants`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ anonymousToken }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add anonymous participant");
-    return { campaignId, participant: data.data as Participant, anonymousToken };
+    const res = await axiosInstance.post(`campaign-participants/${campaignId}/participants`, { anonymousToken });
+    return { campaignId, participant: res.data.data as Participant, anonymousToken };
   } catch (err: any) {
-    return rejectWithValue(err.message);
+    return rejectWithValue(err.response?.data?.error || err.message);
   }
 });
 
@@ -131,20 +97,10 @@ export const bulkAddParticipants = createAsyncThunk<
   { rejectValue: string }
 >("participant/bulkAdd", async ({ campaignId, participants }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${campaignId}/participants/bulk`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ participants }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to bulk add participants");
-    return { campaignId, participants: data.data as Participant[] };
+    const res = await axiosInstance.post(`campaign-participants/${campaignId}/participants/bulk`, { participants });
+    return { campaignId, participants: res.data.data as Participant[] };
   } catch (err: any) {
-    return rejectWithValue(err.message);
+    return rejectWithValue(err.response?.data?.error || err.message);
   }
 });
 
@@ -154,16 +110,10 @@ export const removeParticipant = createAsyncThunk<
   { rejectValue: string }
 >("participant/remove", async ({ campaignId, participantId }, { rejectWithValue }) => {
   try {
-    const token = getToken();
-    const res = await fetch(`${BASE}/${participantId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to remove participant");
+    await axiosInstance.delete(`campaign-participants/${participantId}`);
     return { campaignId, participantId };
   } catch (err: any) {
-    return rejectWithValue(err.message);
+    return rejectWithValue(err.response?.data?.error || err.message);
   }
 });
 

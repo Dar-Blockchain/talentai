@@ -105,9 +105,9 @@ const EmployeesPage: React.FC = () => {
     }
   }, [deleteMemberSuccess, dispatch, showToast]);
 
-  const handleAddMember = useCallback(async (email: string, role: string) => {
+  const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
     const apiRole = roleMapping[role] || "RH";
-    const result = await dispatch(addEmployee({ email, role: apiRole }));
+    const result = await dispatch(addEmployee({ email, role: apiRole, departmentId }));
     if (addEmployee.rejected.match(result)) {
       const msg = (result.payload as string) || "Failed to send invitation";
       showToast({ message: msg, severity: "error" });
