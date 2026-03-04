@@ -6,7 +6,7 @@ const requireAuthUser = async (req, res, next) => {
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Token missing" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 
   try {
@@ -19,7 +19,7 @@ const requireAuthUser = async (req, res, next) => {
       .populate("companyMembership");
 
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid or expired token" });
     }
 
     req.user = user; // ✅ TOUJOURS l’utilisateur
@@ -31,7 +31,7 @@ const requireAuthUser = async (req, res, next) => {
         .populate("profile");
 
       if (!company) {
-        return res.status(401).json({ message: "Company not found" });
+        return res.status(401).json({ message: "Invalid or expired token" });
       }
 
       req.company = company; // ✅ séparé
