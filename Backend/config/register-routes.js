@@ -38,9 +38,9 @@ const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
 const chatRouter = require("../routes/chat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
-const internalCampaignRoutes = require('../routes/internalCampaign.routes');
-const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
-const departmentRoutes = require('../routes/department.routes');
+// const internalCampaignRoutes = require('../routes/internalCampaign.routes');
+// const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
+// const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
 
 // const backupRouter = require('../routes/backupRouter');
