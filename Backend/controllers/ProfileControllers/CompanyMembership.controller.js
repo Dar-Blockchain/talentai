@@ -5,18 +5,17 @@ const CompanyInvitationService = require("../../services/ProfileService/CompanyI
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { username, role } = req.query;
+    const { search, status, department, page = 1, limit = 10 } = req.query;
 
-    // Build filters object
-    const filters = {};
-    if (username) filters.username = username;
-    if (role) filters.role = role;
-
-    const memberships = await CompanyMembershipService.getMembershipsByCompany(
+    const result = await CompanyMembershipService.getMembershipsByCompany(
       companyId,
-      filters,
+      search,
+      status,
+      department,
+      parseInt(page),
+      parseInt(limit),
     );
-    res.json({ success: true, memberships });
+    res.json({ success: true, ...result });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
