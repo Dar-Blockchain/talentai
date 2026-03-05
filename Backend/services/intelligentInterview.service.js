@@ -2527,16 +2527,20 @@ Rephrase this question to help the candidate answer it.`;
     let exampleGreeting = '';
 
     if (config.interviewType === 'TECHNICAL_SKILL') {
-      interviewFocus = `⚠️ CRITICAL: This is a PURELY TECHNICAL interview assessing ${config.context.targetRole} technical skills at ${config.context.experienceLevel} level.
+      const focusAreaNames = config.intelligenceContext?.focusAreas
+        ?.map(a => a.skillName || a.area) || [];
+      const focusDescription = focusAreaNames.length > 0
+        ? focusAreaNames.join(', ')
+        : 'domain-specific expertise';
+
+      interviewFocus = `This is a SKILL ASSESSMENT interview for the role of "${config.context.targetRole}" at ${config.context.experienceLevel} level.
 
 FOCUS:
-- ONLY technical competencies and hands-on experience
-- Code architecture, problem-solving, system design
-- NO behavioral or soft skill topics
-- NO general career questions
-- This is a technical depth assessment`;
+- Assess practical expertise in: ${focusDescription}
+- Probe for hands-on experience and real-world results
+- Match the greeting to the role's domain (NOT generic software engineering unless the role IS a dev role)`;
 
-      exampleGreeting = `"Hello! I'm excited to discuss your technical experience with ${config.context.targetRole}. Today we'll be exploring your hands-on technical skills, problem-solving approach, and expertise at the ${config.context.experienceLevel} level. Let's dive into the technical aspects of your work."`;
+      exampleGreeting = `"Hello! I'm excited to discuss your experience in ${focusDescription} as it relates to the ${config.context.targetRole} role. Today we'll be exploring your hands-on expertise, problem-solving approach, and practical experience at the ${config.context.experienceLevel} level. Let's dive in!"`;
 
     } else if (config.interviewType === 'HR_INTERVIEW') {
       interviewFocus = `This is a BEHAVIORAL and CULTURAL FIT interview focusing on soft skills, teamwork, and alignment with company values.`;
