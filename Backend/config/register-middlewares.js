@@ -41,9 +41,6 @@ function registerMiddlewares(app) {
     }),
   );
 
-  // Enable pre-flight for all routes
-  app.options("*", cors());
-
   // Static files
   app.use(express.static(path.join(__dirname, "../public")));
 
