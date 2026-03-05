@@ -262,17 +262,21 @@ const BiasFreeEvaluation: React.FC = () => {
             </Typography>
             <Button
               variant="contained"
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
                 textTransform: "none",
-                backgroundColor: "#10B981",
-                borderRadius: 2,
+                backgroundColor: "rgba(12,218,139,1)",
+                color: "#0b1b1f",
+                borderRadius: 0.5,
+                boxShadow: "none",
                 px: 3,
                 py: 1.5,
+                fontFamily: "Poppins",
                 fontSize: "0.95rem",
                 fontWeight: 500,
                 zIndex: 2,
                 position: "relative",
-                "&:hover": { backgroundColor: "#059669" },
+                "&:hover": { backgroundColor: "rgba(12,218,139,0.7)" },
               }}
             >
               Request a Demo
