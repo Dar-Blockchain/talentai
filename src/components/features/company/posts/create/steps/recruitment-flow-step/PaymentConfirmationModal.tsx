@@ -76,9 +76,6 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   const recruitmentFlow = useSelector(
     (state: any) => state.post.recruitmentFlow
   );
-  // const { value: agent } = useSelector(
-  //   (state: RootState) => state.agentConfig.createConfig
-  // );
 
   /* ===== Local State (replaces payment processing state) ===== */
   const [isPublishing, setIsPublishing] = useState(false);

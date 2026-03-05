@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import Cookies from "js-cookie";
-import { usePreferences } from "@/components/preferences/hooks/usePreferences";
+import { usePreferences } from "@/components/features/preferences/hooks/usePreferences";
 import { Box, Card, Typography } from "@mui/material";
-import OnboardingStepper from "@/components/preferences/OnboardingStepper";
+import OnboardingStepper from "@/components/features/preferences/OnboardingStepper";
 
 function Preferences() {
   const router = useRouter();

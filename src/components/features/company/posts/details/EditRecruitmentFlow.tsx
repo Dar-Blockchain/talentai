@@ -21,15 +21,15 @@ import {
   selectCurrentJob,
   selectPostStepsLoading,
 } from "@/store/slices/postSlice";
-import SidebarMenu from "@/components/posts/create/steps/recruitment-flow-step/SidebarMenu";
-import { nodeTypes } from "@/components/posts/create/steps/recruitment-flow-step/CustomNode";
-import NodeConfigurationModal from "@/components/posts/create/steps/recruitment-flow-step/NodeConfigurationModal";
 import {
   buildRecruitmentSteps,
   extractNodesAndEdges,
   generateDefaultPipelineNodes,
 } from "@/utils/postHelpers";
 import { useToast } from "@/hooks/useToast";
+import SidebarMenu from "../create/steps/recruitment-flow-step/SidebarMenu";
+import { nodeTypes } from "../create/steps/recruitment-flow-step/CustomNode";
+import NodeConfigurationModal from "../create/steps/recruitment-flow-step/NodeConfigurationModal";
 
 const ReactFlow = dynamic(() => import("reactflow").then((mod) => mod.default), { ssr: false });
 const MiniMap = dynamic(() => import("reactflow").then((mod) => mod.MiniMap), { ssr: false });

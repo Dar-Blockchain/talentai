@@ -16,11 +16,10 @@ import {
   selectPostPayment,
 } from "@/store/slices/postSlice";
 import { selectTokenBalance, fetchTokenBalance } from "@/store/slices/tokenSlice";
-import { openModal as openTokenPurchaseModal } from "@/store/slices/tokenPurchaseSlice";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
-import LoadingOverlay from "@/components/dashboard-workplace/ui/LoadingOverlay";
+import LoadingOverlay from "@/components/ui/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
 import PassedInterviewView from "@/components/features/company/posts/details/PassedInterviewView";
@@ -88,7 +87,6 @@ const PostDetailsPage: React.FC = () => {
 
   const handlePaymentConfirm = async () => {
     if (!paymentData && Number(tokenBalance) < 1000) {
-      dispatch(openTokenPurchaseModal());
       setPaymentModalOpen(false);
       dispatch(resetPostPayment());
       return;

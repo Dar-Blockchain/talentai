@@ -13,7 +13,7 @@ import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import UserHeader from "./UserHeader";
-import HeaderNotification from "@/components/header/HeaderNotification";
+import HeaderNotification from "@/components/layout/header/HeaderNotification";
 import HeaderChat from "./HeaderChat";
 
 interface HeaderProps {

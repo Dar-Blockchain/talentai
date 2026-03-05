@@ -34,7 +34,7 @@ import {
   MessageList,
   MessageInput,
   DeleteConversationDialog,
-} from '@/components/chat';
+} from '@/components/features/chat';
 
 const ConversationPage = () => {
   const router = useRouter();

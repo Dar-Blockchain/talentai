@@ -9,10 +9,10 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { setUserType } from "@/store/slices/userSlice";
-import UserOutlineIcon from "../icons/UserOutlineIcon";
-import LogoutIcon from "../icons/LogoutIcon";
-import SwitchUserIcon from "../icons/SwitchUserIcon";
-import SettingsIcon from "../icons/SettingsIcon";
+import UserOutlineIcon from "../../icons/UserOutlineIcon";
+import LogoutIcon from "../../icons/LogoutIcon";
+import SwitchUserIcon from "../../icons/SwitchUserIcon";
+import SettingsIcon from "../../icons/SettingsIcon";
 
 interface UserDropdownMenuProps extends Omit<MenuProps, "children"> {
   onCompany?: () => void;

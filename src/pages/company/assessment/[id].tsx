@@ -10,8 +10,8 @@ import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
-import SectionCard from "@/components/dashboard-workplace/ui/SectionCard";
-import LoadingOverlay from "@/components/dashboard-workplace/ui/LoadingOverlay";
+import SectionCard from "@/components/ui/ui/SectionCard";
+import LoadingOverlay from "@/components/ui/ui/LoadingOverlay";
 import { AppDispatch } from "@/store/store";
 import {
   fetchAssessmentDetails,

@@ -18,7 +18,7 @@ import { useCreatePostStepper } from "./hooks/useCreatePostStepper";
 import PostDetailsStep from "./steps/post-details-step/PostDetailsStep";
 import RecruitmentFlowStep from "./steps/recruitment-flow-step/RecruitmentFlowStep";
 import PipelineWarningDialog from "./steps/recruitment-flow-step/PipelineWarningModal";
-import SectionCard from "@/components/dashboard-workplace/ui/SectionCard";
+import SectionCard from "@/components/ui/ui/SectionCard";
 
 const TEAL        = "#0D9488";
 const TEAL_LIGHT  = "#CCFBF1";
@@ -64,9 +64,6 @@ const CreateStepper: React.FC = () => {
   const { profile } = useSelector((state: RootState) => state.user.connectedUser);
   const { generatedPost } = useSelector((state: any) => state.postGeneration);
   const manualPost = useSelector((state: any) => state.manualPost);
-  const { status: createConfigStatus } = useSelector(
-    (state: RootState) => state.agentConfig.createConfig
-  );
   const recruitmentFlow = useSelector((state: any) => state.post.recruitmentFlow);
   const savedPost = useSelector((state: any) => state.post.savePost.savedPost);
   const creationType = useSelector(selectCreationType);

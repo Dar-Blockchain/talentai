@@ -15,7 +15,7 @@ import {
 import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
-import WorkplaceJobDetail from "@/components/dashboard-workplace/WorkplaceJobDetail";
+import WorkplaceJobDetail from "@/components/features/company/posts/details/WorkplaceJobDetail";
 import JobPostsList, { StatusFilter, SortOption } from "@/components/features/company/posts/list/JobPostsList";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";

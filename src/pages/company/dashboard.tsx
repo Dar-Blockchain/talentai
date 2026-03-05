@@ -1,7 +1,7 @@
 import React from "react";
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import DashboardOverview from "@/components/dashboard-workplace/DashboardOverview";
+import DashboardOverview from "@/components/features/company/DashboardOverview";
 
 const CompanyDashboard: React.FC = () => {
   return (
