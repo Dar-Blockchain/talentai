@@ -1,157 +1,138 @@
-# Time-Budgeted Coverage Interview System
+# Fix AI Interview Agent Intelligence
 
 ## Context
 
-Interviews are running 40+ minutes instead of the target 20-30 minutes. The user wants:
-1. A `deep` URL parameter: `deep=true` → 30 min, otherwise → 20 min
-2. Time budgeted per coverage item: `maxTime / numberOfCoverageItems`
-3. Auto-advance to next coverage item when its time budget is exhausted
-4. Score bonus when candidate covers an item before its time budget expires
+The AI interview agent asks irrelevant questions for the job role. Example: a "Growth Marketing Senior" position gets technical dev questions about code, architecture, and algorithms. There are two root causes:
 
-## Files to Modify
+1. **Models are too small and hardcoded** — AI classes ignore `config.models` and hardcode `Llama-3.2-3B` (3B!) for coverage analysis, decision making, and memory. A 3B model is far too weak for complex reasoning about job-role relevance.
+2. **Question generation prompt forces dev-specific topics** — The `TECHNICAL_SKILL` system prompt explicitly tells the AI to ask about "Code, architecture, algorithms" and FORBIDS behavioral questions, regardless of whether the role is a developer or a marketer.
+3. **Focus areas are interview-type-based, not role-based** — Non-pipeline interviews use generic defaults like `technical_depth`, `problem_approach` instead of role-specific skills.
+4. **`roleSpecifics` only maps 3 hardcoded roles** — Everything else defaults to "Software Engineer".
+
+---
+
+## Fix 1: Upgrade Models & Use Config Models (Most Impactful)
+
+### Problem
+AI classes hardcode small models and ignore `session.config.models`:
+- `QuestionGeneratorAI` (line 453): hardcoded `8B`
+- `CoverageAnalysisAI` (line 321): hardcoded `3B`
+- `DecisionEngineAI` (line 639): hardcoded `3B`
+- `MemoryAI` (line 140): hardcoded `3B`
+
+### File: `Backend/services/intelligentInterview.service.js`
+
+**a)** Change all AI class constructors to accept and store model config:
+```javascript
+// QuestionGeneratorAI constructor (line 450-453):
+constructor(together, sessionManager, models = {}) {
+  this.model = models.fastModel || "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo";
+}
+
+// CoverageAnalysisAI constructor (line 318-321):
+constructor(together, sessionManager, models = {}) {
+  this.model = models.analysisModel || "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"; // Upgraded from 3B
+}
+
+// DecisionEngineAI constructor (line 634-639):
+constructor(together, sessionManager, serviceInstance, models = {}) {
+  this.model = models.thinkingModel || "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"; // Upgraded from 3B
+}
+
+// MemoryAI constructor (line 137-140):
+constructor(together, sessionManager, models = {}) {
+  this.model = models.analysisModel || "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"; // Upgraded from 3B
+}
+```
+
+**b)** Update `IntelligentInterviewService` constructor (line 821-831) to pass models to AI classes.
+
+### File: `Backend/utils/config-manager.js`
+
+**c)** Update default models in all interview type configs (lines 66-198) from `3B` to `8B`:
+```javascript
+thinkingModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",   // was 3B
+analysisModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"    // was 3B
+```
+
+---
+
+## Fix 2: Make Question Generation Role-Aware (Critical)
+
+### Problem
+`TECHNICAL_SKILL` question guidelines (line 461-480) hardcode dev-specific topics ("Code, architecture, algorithms") and FORBID behavioral questions. A "Growth Marketing Senior" gets forced into asking about code.
+
+### File: `Backend/services/intelligentInterview.service.js` — `generateIntelligentQuestion()` (line 456)
+
+Replace the hardcoded TECHNICAL_SKILL guidelines with role-aware guidelines:
+
+```javascript
+if (session.config.interviewType === 'TECHNICAL_SKILL') {
+  const focusAreaNames = session.config.intelligenceContext?.focusAreas?.map(a => a.skillName || a.area) || [];
+  const roleContext = session.config.context.targetRole;
+
+  questionGuidelines = `
+⚠️ CRITICAL: This is a TECHNICAL SKILL interview for the role of "${roleContext}".
+Ask questions specifically related to the technical skills required for this role.
+
+FOCUS AREAS FOR THIS ROLE:
+${focusAreaNames.map(a => `- ${a}`).join('\n')}
+
+RULES:
+- Ask questions that assess practical expertise in the focus areas listed above
+- Probe for real-world experience, implementation details, and best practices
+- Match the technical domain to the role (e.g., marketing role → marketing analytics, campaign tools; dev role → code, architecture)
+- Do NOT ask about topics outside the listed focus areas
+- Be natural and conversational`;
+}
+```
+
+---
+
+## Fix 3: Make Focus Areas Role-Aware for Non-Pipeline Interviews
+
+### Problem
+When no `pipelineConfig` exists, `buildIntelligenceContext()` (line 408-424) falls back to generic defaults from `defaultConfigs[interviewType]` (e.g., `technical_depth`, `problem_approach`). These are dev-centric.
+
+### File: `Backend/utils/config-manager.js` — `buildIntelligenceContext()` (line 408)
+
+Add role-based focus area generation when no pipeline config exists. Add new method `generateRoleFocusAreas(targetRole)` with keyword matching:
+- `marketing`/`growth` → marketing_strategy, analytics_data, channel_expertise, execution_results
+- `sales`/`business development` → sales_process, relationship_building, negotiation_closing, pipeline_management
+- `design`/`ux`/`ui` → design_process, user_research, visual_interaction, tools_collaboration
+- `data`/`analyst` → data_analysis, tools_technologies, insights_communication, methodology
+- No match → `null` (use generic defaults)
+
+---
+
+## Fix 4: Expand `roleSpecifics` With Dynamic Matching
+
+### Problem
+`generateRoleSpecifics()` (line 365-403) only has 3 hardcoded roles. "Growth Marketing Senior" defaults to "Software Engineer" specs.
+
+### File: `Backend/utils/config-manager.js` — `generateRoleSpecifics()` (line 365)
+
+Add keyword-based matching fallback before defaulting to Software Engineer:
+- `marketing`/`growth` → Marketing Manager specs
+- `product` → Product Manager specs
+- `engineer`/`developer` → Software Engineer specs
+- No match → Generic professional fallback (NOT Software Engineer)
+
+---
+
+## Files Modified Summary
 
 | File | Changes |
 |------|---------|
-| `src/utils/interviewConfigBuilder.ts` | Add `deep` param, set duration 20/30 |
-| `src/hooks/useInterviewConfig.ts` | Parse `deep` from URL query |
-| `Backend/services/intelligentInterview.service.js` | Time-budget logic in decision engine, score bonus, auto-advance |
-| `Backend/utils/redis-session-manager.js` | Store `areaStartTime` and `timeBudgetPerArea` in session |
-| `Backend/utils/config-manager.js` | Fix default duration from 45 → respect frontend value |
-
----
-
-## Fix 1: Add `deep` URL Parameter (Frontend)
-
-### `src/utils/interviewConfigBuilder.ts`
-- Add `deep?: string` to `URLParams` interface (line ~15)
-- In `buildInterviewConfigFromURL()` (line 162), change duration logic:
-  ```typescript
-  duration: params.deep === 'true' ? 30 : 20
-  ```
-
-### `src/hooks/useInterviewConfig.ts`
-- Add `deep` to URL param extraction (line ~272):
-  ```typescript
-  deep: router.query.deep as string,
-  ```
-
----
-
-## Fix 2: Compute & Store Time Budget Per Coverage Area (Backend)
-
-### `Backend/services/intelligentInterview.service.js` — `startInterview()` (line ~1171)
-
-After session creation, compute time budget per area and store it:
-```javascript
-const coverageAreas = Object.keys(session.coverage.areas);
-const totalMinutes = config.sessionSettings?.duration || 20;
-const timeBudgetPerAreaMs = (totalMinutes * 60 * 1000) / coverageAreas.length;
-
-await this.sessionManager.updateSession(sessionId, {
-  interviewStartTime: Date.now(),
-  maxDurationMinutes: totalMinutes,
-  timeBudgetPerAreaMs,
-  coverageAreaCount: coverageAreas.length,
-  // ... existing qualityTracking ...
-});
-```
-
-### `Backend/utils/redis-session-manager.js` — Coverage area tracking
-
-When the first question targets a new area, record `areaStartTime` on the coverage area object. Add a helper method:
-```javascript
-async setAreaStartTime(sessionId, areaName) {
-  const session = await this.getSession(sessionId);
-  if (session?.coverage?.areas?.[areaName] && !session.coverage.areas[areaName].startTime) {
-    session.coverage.areas[areaName].startTime = Date.now();
-    await this.updateCoverage(sessionId, session.coverage);
-  }
-}
-```
-
----
-
-## Fix 3: Auto-Advance When Area Time Budget Expires (Backend)
-
-### `Backend/services/intelligentInterview.service.js` — `makeIntelligentDecision()` (line ~660)
-
-Add a time budget check BEFORE the existing quality-based logic:
-
-```javascript
-// TIME BUDGET CHECK: Force advance if area time budget exhausted
-if (currentArea && session.timeBudgetPerAreaMs) {
-  const areaData = session.coverage.areas[currentArea];
-  if (areaData?.startTime) {
-    const areaElapsed = Date.now() - areaData.startTime;
-    if (areaElapsed >= session.timeBudgetPerAreaMs) {
-      console.log(`Time budget exhausted for area "${currentArea}" (${Math.round(areaElapsed/1000)}s)`);
-      const nextArea = this.findLeastAskedArea(session.coverage.areas, currentArea);
-      return {
-        decision: 'explore_new_area',
-        targetArea: nextArea,
-        reasoning: `Time budget for "${currentArea}" exhausted. Moving to "${nextArea}".`,
-        forceAdvance: true
-      };
-    }
-  }
-}
-```
-
-Also: after question generation, when storing the interviewer question, mark `areaStartTime` if this is the first question in that area. This goes in `processCandidateResponse()` and `processCandidateResponseIntelligently()` after storing the question:
-
-```javascript
-// Set area start time if this is the first question targeting this area
-const targetArea = proposedQuestion.targetAreas?.[0];
-if (targetArea) {
-  await this.sessionManager.setAreaStartTime(sessionId, targetArea);
-}
-```
-
----
-
-## Fix 4: Score Bonus for Early Coverage Completion (Backend)
-
-### `Backend/services/intelligentInterview.service.js` — `updateCoverageIntelligently()` (line ~2648)
-
-After updating an area's coverage, check if it reached "covered" threshold (percentage >= 60%) before its time budget expired. If so, apply a bonus:
-
-```javascript
-// SCORE BONUS: Reward candidates who cover an area before time expires
-if (session.timeBudgetPerAreaMs && updatedArea.percentage >= 60 && !updatedArea.earlyCompletionBonus) {
-  const areaStartTime = updatedArea.startTime;
-  if (areaStartTime) {
-    const elapsed = Date.now() - areaStartTime;
-    const timeBudget = session.timeBudgetPerAreaMs;
-    if (elapsed < timeBudget) {
-      const timeRemainingRatio = (timeBudget - elapsed) / timeBudget;
-      const bonus = Math.round(timeRemainingRatio * 15); // Up to 15 bonus points
-      updatedArea.percentage = Math.min(100, updatedArea.percentage + bonus);
-      updatedArea.earlyCompletionBonus = bonus;
-      console.log(`Early completion bonus: +${bonus}% for "${areaName}" (${Math.round(timeRemainingRatio*100)}% time remaining)`);
-    }
-  }
-}
-```
-
----
-
-## Fix 5: Enforce Duration Default in Config Manager (Backend)
-
-### `Backend/utils/config-manager.js` — `createIntelligentConfig()` (line ~319)
-
-Change the session settings default from 45 to respect the frontend value:
-```javascript
-duration: userConfig.sessionSettings?.duration || 20,  // was 45
-```
-
-This ensures the backend doesn't override the 20/30 min duration set by the `deep` param.
+| `Backend/services/intelligentInterview.service.js` | AI class constructors accept models; question prompt made role-aware; model upgrade 3B→8B |
+| `Backend/utils/config-manager.js` | Default models 3B→8B; `generateRoleFocusAreas()` for non-pipeline; expand `roleSpecifics` |
 
 ---
 
 ## Verification
 
-1. **URL param test**: Navigate to `/interview/hr?jobId=xxx&deep=true` → verify 30 min timer. Without `deep` → verify 20 min timer.
-2. **Time budget test**: With 4 coverage areas and 20 min → each area gets 5 min. Monitor backend logs for "Time budget exhausted" after ~5 min per area.
-3. **Auto-advance test**: Let the clock run on one area without answering well → verify it auto-advances to next area.
-4. **Score bonus test**: Answer a coverage item well and quickly → check backend logs for "Early completion bonus" and verify the area percentage has the bonus applied.
-5. **Total duration**: Verify interview ends at 20 or 30 min total.
+1. **Model check**: Start an interview, confirm backend logs show `Meta-Llama-3.1-8B` (not 3B) for all AI calls
+2. **Role-specific questions**: Create a "Growth Marketing Senior" interview → verify questions are about marketing strategy, analytics, campaigns — NOT code/architecture
+3. **Focus areas**: Check Redis session data → confirm focus areas include marketing-relevant terms
+4. **roleSpecifics**: Check logs for enriched role context containing marketing responsibilities
+5. **Dev role sanity check**: Create a "Software Engineer" interview → verify it still asks technical dev questions correctly

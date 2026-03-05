@@ -34,9 +34,9 @@ const DEFAULT_CONFIG: InterviewConfig = {
     interviewGoal: 'Assess behavioral competencies and cultural fit'
   },
   models: {
-    fastModel: 'meta-llama/Llama-Guard-3-11B-Vision-Turbo',
-    thinkingModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
-    analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
+    fastModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    thinkingModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    analysisModel: 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
   },
   sessionSettings: {
     duration: 30,
