@@ -8,9 +8,9 @@ class ConfigManager {
     this.defaultConfigs = {
       HR_INTERVIEW: {
         models: {
-          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+          fastModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          thinkingModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "professional",
@@ -64,9 +64,9 @@ class ConfigManager {
       },
       TECHNICAL_SKILL: {
         models: {
-          fastModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+          fastModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          thinkingModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "technical",
@@ -107,9 +107,9 @@ class ConfigManager {
       },
       SALARY_INTERVIEW: {
         models: {
-          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+          fastModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          thinkingModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "professional",
@@ -150,9 +150,9 @@ class ConfigManager {
       },
       SOFT_SKILL: {
         models: {
-          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+          fastModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          thinkingModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "empathetic",
@@ -193,9 +193,9 @@ class ConfigManager {
       },
       PSYCHOTECHNIC: {
         models: {
-          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-          thinkingModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
-          analysisModel: "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+          fastModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          thinkingModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          analysisModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         interviewerPersona: {
           style: "analytical",
@@ -399,7 +399,30 @@ class ConfigManager {
       }
     };
 
-    return roleMap[context?.targetRole] || roleMap["Software Engineer"];
+    // Exact match first
+    if (roleMap[context?.targetRole]) return roleMap[context.targetRole];
+
+    // Keyword-based matching
+    const roleLower = (context?.targetRole || '').toLowerCase();
+    if (roleLower.includes('marketing') || roleLower.includes('growth'))
+      return roleMap["Marketing Manager"];
+    if (roleLower.includes('product'))
+      return roleMap["Product Manager"];
+    if (roleLower.includes('engineer') || roleLower.includes('developer') || roleLower.includes('devops'))
+      return roleMap["Software Engineer"];
+
+    // Generic professional fallback
+    return {
+      keyResponsibilities: [
+        "drive results in area of expertise",
+        "collaborate with cross-functional teams",
+        "develop and execute strategies",
+        "analyze and report on key metrics"
+      ],
+      requiredSkills: ["domain expertise", "communication", "problem-solving", "strategic thinking"],
+      desiredQualities: ["leadership", "analytical mindset", "adaptability", "results orientation"],
+      typicalChallenges: ["competing priorities", "resource constraints", "market changes", "stakeholder alignment"]
+    };
   }
 
   /**
@@ -414,6 +437,16 @@ class ConfigManager {
         userConfig.interviewType,
         baseConfig.intelligenceContext
       );
+    }
+
+    // Generate role-aware focus areas for non-pipeline interviews
+    const targetRole = userConfig.context?.targetRole;
+    if (targetRole) {
+      const roleFocusAreas = this.generateRoleFocusAreas(targetRole);
+      if (roleFocusAreas) {
+        console.log(`🎯 Role-aware focus areas generated for "${targetRole}"`);
+        return { ...baseConfig.intelligenceContext, focusAreas: roleFocusAreas };
+      }
     }
 
     // Regular interview - merge base and user configs
@@ -518,6 +551,100 @@ class ConfigManager {
       pipelineMode: true,  // Flag to indicate this is a pipeline interview
       pipelineConfig: pipelineConfig  // Store original pipeline config for reference
     };
+  }
+
+  /**
+   * Generate role-aware focus areas based on job title keywords
+   */
+  generateRoleFocusAreas(targetRole) {
+    const roleLower = targetRole.toLowerCase();
+
+    if (roleLower.includes('marketing') || roleLower.includes('growth')) {
+      return [
+        { area: "marketing_strategy", weight: 0.3,
+          indicators: ["campaign planning", "market analysis", "growth tactics", "brand strategy"],
+          depth: "assess strategic marketing thinking and planning ability" },
+        { area: "analytics_data", weight: 0.25,
+          indicators: ["metrics tracking", "data-driven decisions", "ROI analysis", "A/B testing"],
+          depth: "evaluate analytical capabilities and data literacy" },
+        { area: "channel_expertise", weight: 0.25,
+          indicators: ["digital channels", "content strategy", "audience targeting", "SEO/SEM"],
+          depth: "assess knowledge of marketing channels and tools" },
+        { area: "execution_results", weight: 0.2,
+          indicators: ["campaign execution", "budget management", "performance optimization", "stakeholder reporting"],
+          depth: "evaluate practical execution and results orientation" }
+      ];
+    }
+
+    if (roleLower.includes('sales') || roleLower.includes('business development') || roleLower.includes('account')) {
+      return [
+        { area: "sales_process", weight: 0.3,
+          indicators: ["prospecting", "qualification", "pipeline management", "closing techniques"],
+          depth: "assess sales methodology and process knowledge" },
+        { area: "relationship_building", weight: 0.25,
+          indicators: ["client management", "trust building", "networking", "stakeholder engagement"],
+          depth: "evaluate relationship and communication skills" },
+        { area: "negotiation_closing", weight: 0.25,
+          indicators: ["deal structuring", "objection handling", "value selling", "contract negotiation"],
+          depth: "assess negotiation and closing abilities" },
+        { area: "market_knowledge", weight: 0.2,
+          indicators: ["industry trends", "competitive landscape", "target market", "customer needs"],
+          depth: "evaluate market and industry understanding" }
+      ];
+    }
+
+    if (roleLower.includes('design') || roleLower.includes('ux') || roleLower.includes('ui')) {
+      return [
+        { area: "design_process", weight: 0.3,
+          indicators: ["design thinking", "user-centered design", "wireframing", "prototyping"],
+          depth: "assess design methodology and process" },
+        { area: "user_research", weight: 0.25,
+          indicators: ["user interviews", "usability testing", "persona development", "journey mapping"],
+          depth: "evaluate research and user empathy skills" },
+        { area: "visual_interaction", weight: 0.25,
+          indicators: ["visual design", "interaction patterns", "accessibility", "responsive design"],
+          depth: "assess visual and interaction design expertise" },
+        { area: "tools_collaboration", weight: 0.2,
+          indicators: ["design tools", "design systems", "developer handoff", "cross-functional work"],
+          depth: "evaluate tooling proficiency and collaboration" }
+      ];
+    }
+
+    if (roleLower.includes('data') || roleLower.includes('analyst') || roleLower.includes('analytics')) {
+      return [
+        { area: "data_analysis", weight: 0.3,
+          indicators: ["statistical analysis", "data modeling", "hypothesis testing", "data cleaning"],
+          depth: "assess analytical and statistical skills" },
+        { area: "tools_technologies", weight: 0.25,
+          indicators: ["SQL", "Python/R", "visualization tools", "ETL processes"],
+          depth: "evaluate technical data tools proficiency" },
+        { area: "insights_communication", weight: 0.25,
+          indicators: ["data storytelling", "dashboard design", "stakeholder presentations", "recommendations"],
+          depth: "assess ability to communicate insights" },
+        { area: "business_acumen", weight: 0.2,
+          indicators: ["business metrics", "KPI definition", "strategic thinking", "problem framing"],
+          depth: "evaluate business understanding and impact" }
+      ];
+    }
+
+    if (roleLower.includes('project') || roleLower.includes('program') || roleLower.includes('scrum')) {
+      return [
+        { area: "project_planning", weight: 0.3,
+          indicators: ["scope management", "timeline planning", "resource allocation", "risk management"],
+          depth: "assess project planning and management skills" },
+        { area: "execution_delivery", weight: 0.25,
+          indicators: ["milestone tracking", "blocker resolution", "quality assurance", "delivery management"],
+          depth: "evaluate execution and delivery capabilities" },
+        { area: "stakeholder_management", weight: 0.25,
+          indicators: ["communication", "expectation management", "status reporting", "conflict resolution"],
+          depth: "assess stakeholder management abilities" },
+        { area: "methodology", weight: 0.2,
+          indicators: ["agile/scrum", "waterfall", "process improvement", "retrospectives"],
+          depth: "evaluate methodology knowledge and adaptability" }
+      ];
+    }
+
+    return null; // No match — use generic defaults
   }
 
   /**
