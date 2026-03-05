@@ -88,8 +88,12 @@ export default function App({ Component, pageProps }: AppProps) {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Head>
-            <title>TalentAI</title>
+            <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
+            <meta name="description" content="TalentAI automates your entire hiring pipeline with AI agents that conduct natural video interviews, score candidates objectively, and issue blockchain-verified credentials. Cut 42-day hiring cycles to under 10 days. AI interviews from $8 each. Plans from $99/mo." />
+            <meta property="og:title" content="TalentAI — AI Agents That Interview Candidates For You" />
+            <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception & built on Hedera." />
+            <meta property="og:type" content="website" />
             <link rel="icon" href="/favicon.ico" />
           </Head>
           <main className={poppins.variable}>

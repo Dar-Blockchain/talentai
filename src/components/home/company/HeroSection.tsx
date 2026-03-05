@@ -133,7 +133,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               mx: "auto",
               color: "text.secondary",
               mb: 3,
-              fontFamily: "Fustat, sans-serif",
+              fontFamily: "Poppins, sans-serif",
               fontWeight: 400,
               fontStyle: "normal",
               fontSize: "16px",

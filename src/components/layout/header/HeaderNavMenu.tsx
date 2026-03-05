@@ -15,7 +15,7 @@ const getNavItems = (type: string): NavItem[] => {
     return [
       { label: "Features", id: "features" },
       { label: "How It Works", id: "howitworks" },
-      { label: "Are You a Job Seeker?", href: "/home/candidate/" },
+      // { label: "Are You a Job Seeker?", href: "/home/candidate/" },
     ];
   }
   if (type === "candidate") {
