@@ -8,7 +8,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import AssignmentLateOutlined from "@mui/icons-material/AssignmentLateOutlined";
-import SectionCard from "@/components/ui/ui/SectionCard";
+import SectionCard from "@/components/ui/SectionCard";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

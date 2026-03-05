@@ -47,11 +47,11 @@ import {
 } from '@/store/slices/adminSlice';
 
 // Types
-import { User, UserFilters } from '../../types/admin';
+import { User, UserFilters } from '../../../types/admin';
 // Hooks
-import { usePagination } from '../../hooks/usePagination';
+import { usePagination } from '../../../hooks/usePagination';
 // Utils
-import { getRoleColor } from '../../utils/colorMappings';
+import { getRoleColor } from '../../../utils/colorMappings';
 
 const PRIMARY = '#8310FF';
 

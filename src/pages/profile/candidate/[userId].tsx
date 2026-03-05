@@ -33,7 +33,7 @@ import {
 
 import Header from "@/components/layout/Header";
 import PageContainer from "@/components/layout/PageContainer";
-import SkillsSection from "@/components/profile/SkillsSection";
+import SkillsSection from "@/components/features/profile/SkillsSection";
 import { getProfileById, clearTargetUser } from "@/store/slices/userSlice";
 import { generateBadgesFromProfile } from "@/utils/generateProfileBadges";
 

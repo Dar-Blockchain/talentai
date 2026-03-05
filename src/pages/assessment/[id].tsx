@@ -31,7 +31,7 @@ import {
   SummarySection,
   JobDetailsSection,
   RecommendationsSection,
-} from '@/components/assessment-details';
+} from '@/components/features/interview/assessment';
 
 const AssessmentDetailsPage = () => {
   const router = useRouter();

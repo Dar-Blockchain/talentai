@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Chip, Alert, Button, LinearProgress } from '@mui/material';
 import { Assignment as AssignmentIcon, Add as AddIcon } from '@mui/icons-material';
-import { CandidateProgress } from '../../../types/postInterview';
+import { CandidateProgress } from '../../../../types/postInterview';
 import ProgressAccordionItem from './ProgressAccordionItem';
 
 interface ApplicationProgressSectionProps {

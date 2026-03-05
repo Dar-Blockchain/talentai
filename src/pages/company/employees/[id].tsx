@@ -4,8 +4,8 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import EditRoleModal from "@/components/dashboard-company/EditRoleModal";
-import DeleteMemberDialog from "@/components/profile/team-members/DeleteMemberDialog";
+import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
+import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";
 import { AppDispatch } from "@/store/store";
 import {

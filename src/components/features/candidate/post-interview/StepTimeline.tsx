@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { Step } from '../../../types/postInterview';
+import { Step } from '../../../../types/postInterview';
 import StepCard from './StepCard';
 
 interface StepTimelineProps {

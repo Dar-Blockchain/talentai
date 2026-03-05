@@ -7,7 +7,7 @@ import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
-import SectionCard from "@/components/ui/ui/SectionCard";
+import SectionCard from "@/components/ui/SectionCard";
 import { formatSalary, getLevelFromNumber, getPostSkills, getSoftSkillLevelLabel, Skill } from "@/utils/postHelpers";
 import { formatDate } from "@/utils/functions";
 

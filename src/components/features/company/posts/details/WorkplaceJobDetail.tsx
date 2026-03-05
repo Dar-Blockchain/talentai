@@ -26,7 +26,7 @@ import { useDeletePost } from "@/components/features/company/posts/details/useDe
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
-import { LoadingOverlay } from "@/components/ui/ui";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 const TEAL = "#0D9488";
 

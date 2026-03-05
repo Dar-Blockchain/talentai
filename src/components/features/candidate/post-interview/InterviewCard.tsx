@@ -21,8 +21,8 @@ import {
   Visibility as VisibilityIcon,
   Feedback as FeedbackIcon,
 } from '@mui/icons-material';
-import { PostInterviewData } from '../../../types/postInterview';
-import { getScoreColor, getScoreLabel, formatDate } from '../../../utils/postInterviewHelpers';
+import { PostInterviewData } from '../../../../types/postInterview';
+import { getScoreColor, getScoreLabel, formatDate } from '../../../../utils/postInterviewHelpers';
 
 interface InterviewCardProps {
   interview: PostInterviewData;

@@ -1,8 +1,9 @@
 import React from "react";
 import { Box, TextField, MenuItem } from "@mui/material";
-import { SectionCard, SectionHeader } from "@/components/ui/ui";
 import EditActions from "./EditActions";
 import { UserProfile } from "@/types/profile";
+import SectionCard from "@/components/ui/SectionCard";
+import SectionHeader from "@/components/ui/SectionHeader";
 
 const TEAL = "#0D9488";
 

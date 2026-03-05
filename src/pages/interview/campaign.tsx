@@ -35,14 +35,14 @@ import { useInterviewSocket, InterviewStartedData, InterviewEndedData, SilenceRe
 import { useAudioTranscription } from '@/hooks/useAudioTranscription';
 
 // Shared interview UI components (display-only, no hr-specific logic)
-import QuestionPanel from '@/components/interview/QuestionPanel';
-import CameraPreview from '@/components/interview/CameraPreview';
-import AgentStatusPanel from '@/components/interview/AgentStatusPanel';
-import CoverageDashboard from '@/components/interview/CoverageDashboard';
-import PipelineModals from '@/components/interview/PipelineModals';
-import SecurityModals from '@/components/interview/SecurityModals';
-import InterviewTimer from '@/components/interview/InterviewTimer';
-import { GlobalStyles } from '@/components/interview/styles';
+import QuestionPanel from '@/components/features/interview/start/QuestionPanel';
+import CameraPreview from '@/components/features/interview/start/CameraPreview';
+import AgentStatusPanel from '@/components/features/interview/start/AgentStatusPanel';
+import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
+import PipelineModals from '@/components/features/interview/start/PipelineModals';
+import SecurityModals from '@/components/features/interview/start/SecurityModals';
+import InterviewTimer from '@/components/features/interview/start/InterviewTimer';
+import { GlobalStyles } from '@/components/features/interview/start/styles';
 
 // MUI icons
 import AssignmentTurnedInOutlined from '@mui/icons-material/AssignmentTurnedInOutlined';

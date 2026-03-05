@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { PostInterviewData } from '../../../types/postInterview';
+import { PostInterviewData } from '../../../../types/postInterview';
 import InterviewCard from './InterviewCard';
 
 interface InterviewListSectionProps {

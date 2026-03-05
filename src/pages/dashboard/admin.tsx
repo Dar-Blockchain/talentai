@@ -12,15 +12,15 @@ import {
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { logout } from '@/store/slices/authSlice';
 import { saveCompanyPermissions } from '@/store/slices/adminSlice';
-import AdminSidebar from '@/components/dashboard-admin/AdminSidebar';
-import AdminDashboardHome from '@/components/dashboard-admin/AdminDashboardHome';
-import UserManagement from '@/components/dashboard-admin/UserManagement';
-import UserDetailsDialog from '@/components/dashboard-admin/UserDetailsDialog';
-import AssessmentDetailsDialog from '@/components/dashboard-admin/AssessmentDetailsDialog';
-import PostInterviewAssessments from '@/components/dashboard-admin/PostInterviewAssessments';
-import SkillInterviewAssessments from '@/components/dashboard-admin/SkillInterviewAssessments';
-import CompanyConfig from '@/components/dashboard-admin/CompanyConfig';
-import CompanyPermissionsModal, { CompanyPermissions } from '@/components/dashboard-admin/CompanyPermissionsModal';
+import AdminSidebar from '@/components/features/admin/AdminSidebar';
+import AdminDashboardHome from '@/components/features/admin/AdminDashboardHome';
+import UserManagement from '@/components/features/admin/UserManagement';
+import UserDetailsDialog from '@/components/features/admin/UserDetailsDialog';
+import AssessmentDetailsDialog from '@/components/features/admin/AssessmentDetailsDialog';
+import PostInterviewAssessments from '@/components/features/admin/PostInterviewAssessments';
+import SkillInterviewAssessments from '@/components/features/admin/SkillInterviewAssessments';
+import CompanyConfig from '@/components/features/admin/CompanyConfig';
+import CompanyPermissionsModal, { CompanyPermissions } from '@/components/features/admin/CompanyPermissionsModal';
 import RoleGuard from '@/components/guards/RoleGuard';
 import dynamic from 'next/dynamic';
 

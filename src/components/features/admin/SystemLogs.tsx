@@ -20,11 +20,11 @@ import {
 import { Refresh as RefreshIcon } from '@mui/icons-material';
 
 // Types
-import { Log, FetchLogsResponse } from '../../types/admin';
+import { Log, FetchLogsResponse } from '../../../types/admin';
 
 // Hooks
-import { usePagination } from '../../hooks/usePagination';
-import { useAuthToken } from '../../hooks/useAuthToken';
+import { usePagination } from '../../../hooks/usePagination';
+import { useAuthToken } from '../../../hooks/useAuthToken';
 
 const GREEN_MAIN = '#7851a9';
 

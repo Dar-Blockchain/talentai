@@ -5,10 +5,11 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import LanguageIcon from "@mui/icons-material/Language";
-import { SectionCard, SectionHeader } from "@/components/ui/ui";
 import EditActions from "./EditActions";
 import { getAllCountryNames } from "@/utils/countryMappings";
 import { UserProfile } from "@/types/profile";
+import SectionCard from "@/components/ui/SectionCard";
+import SectionHeader from "@/components/ui/SectionHeader";
 
 const TEAL = "#0D9488";
 
