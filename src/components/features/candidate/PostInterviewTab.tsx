@@ -4,12 +4,12 @@ import { Assessment as AssessmentIcon } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
 // Types
-import { PostInterviewData } from '../../types/postInterview';
+import { PostInterviewData } from '../../../types/postInterview';
 
 // Hooks
-import { useCandidateProgress } from '../../hooks/useCandidateProgress';
-import { useTaskSubmission } from '../../hooks/useTaskSubmission';
-import { useNotification } from '../../hooks/useNotification';
+import { useCandidateProgress } from '../../../hooks/useCandidateProgress';
+import { useTaskSubmission } from '../../../hooks/useTaskSubmission';
+import { useNotification } from '../../../hooks/useNotification';
 
 // Components
 import DashboardHeader from './post-interview/DashboardHeader';

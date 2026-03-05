@@ -26,7 +26,7 @@ import {
   InterviewAnalysis,
   RewardInfo,
   determineLevel,
-} from '@/components/post-interview-results';
+} from '@/components/features/interview/results';
 
 export default function InterviewResults() {
   const router = useRouter();

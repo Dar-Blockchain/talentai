@@ -6,8 +6,8 @@ import {
   Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import { keyframes } from '@mui/system';
-import { Step } from '../../../types/postInterview';
-import { getStepNodeKey, formatDateTime } from '../../../utils/postInterviewHelpers';
+import { Step } from '../../../../types/postInterview';
+import { getStepNodeKey, formatDateTime } from '../../../../utils/postInterviewHelpers';
 import TaskSubmissionForm from './TaskSubmissionForm';
 
 const slideIn = keyframes`

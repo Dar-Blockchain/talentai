@@ -6,12 +6,12 @@ import { RootState } from "@/store/store";
 import axios from "axios";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
-import ProfileSidebar from "@/components/profile/ProfileSidebar";
-import NotificationsTab from "@/components/profile/NotificationsTab";
-import PersonalInformationTab from "@/components/profile/PersonalInformationTab";
-import ContactInformationTab from "@/components/profile/ContactInformationTab";
-import ProfileVisibilityTab from "@/components/profile/ProfileVisibilityTab";
-import SnackbarNotifications from "@/components/profile/SnackbarNotifications";
+import ProfileSidebar from "@/components/features/profile/ProfileSidebar";
+import NotificationsTab from "@/components/features/profile/NotificationsTab";
+import PersonalInformationTab from "@/components/features/profile/PersonalInformationTab";
+import ContactInformationTab from "@/components/features/profile/ContactInformationTab";
+import ProfileVisibilityTab from "@/components/features/profile/ProfileVisibilityTab";
+import SnackbarNotifications from "@/components/features/profile/SnackbarNotifications";
 import { useProfileManagement } from "@/hooks/useProfileManagement";
 import PageContainer from "@/components/layout/PageContainer";
 

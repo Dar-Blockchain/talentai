@@ -19,7 +19,7 @@ import { selectTokenBalance, fetchTokenBalance } from "@/store/slices/tokenSlice
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
-import LoadingOverlay from "@/components/ui/ui/LoadingOverlay";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
 import PassedInterviewView from "@/components/features/company/posts/details/PassedInterviewView";

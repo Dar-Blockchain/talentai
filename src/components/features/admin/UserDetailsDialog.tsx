@@ -21,7 +21,7 @@ import {
   LocationOn as LocationIcon,
   Badge as BadgeIcon,
 } from '@mui/icons-material';
-import { User } from '../../types/admin';
+import { User } from '../../../types/admin';
 
 const PRIMARY = '#8310FF';
 

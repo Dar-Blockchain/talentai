@@ -14,7 +14,7 @@ import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import EmployeeCard, { ROLE_LABELS, ROLE_STYLES } from "./EmployeeCard";
 import { Member } from "@/store/slices/memberSlice";
-import { Invitation } from "@/components/dashboard-company/PendingInvitationsList";
+import { Invitation } from "@/types/employee";
 
 const PURPLE = "#8310FF";
 const AMBER  = "#D97706";

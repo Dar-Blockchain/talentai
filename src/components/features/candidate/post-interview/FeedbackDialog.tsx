@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Feedback as FeedbackIcon } from '@mui/icons-material';
-import { PostInterviewData, FeedbackFormData } from '../../../types/postInterview';
+import { PostInterviewData, FeedbackFormData } from '../../../../types/postInterview';
 
 interface FeedbackDialogProps {
   open: boolean;

@@ -3,8 +3,8 @@ import { Box, Avatar, Typography, Chip, CircularProgress } from "@mui/material";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
-import { SectionCard } from "@/components/ui/ui";
 import { UserProfile } from "@/types/profile";
+import SectionCard from "@/components/ui/SectionCard";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

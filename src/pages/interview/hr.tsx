@@ -43,10 +43,10 @@ import {
   PipelineModals,
   SecurityModals,
   InterviewTimer,
-} from '@/components/interview';
+} from '@/components/features/interview/start';
 
 // Styles
-import { GlobalStyles } from '@/components/interview/styles';
+import { GlobalStyles } from '@/components/features/interview/start/styles';
 
 const IntelligentInterviewTest = () => {
   const router = useRouter();

@@ -37,7 +37,7 @@ import {
   workModes,
 } from "@/components/features/preferences/data/candidateData";
 import SalaryRange from "./SalaryRange";
-import SectionCard from "@/components/ui/ui/SectionCard";
+import SectionCard from "@/components/ui/SectionCard";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

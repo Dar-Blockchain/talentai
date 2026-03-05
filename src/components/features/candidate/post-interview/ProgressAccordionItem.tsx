@@ -10,13 +10,13 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, Email as EmailIcon, Assignment as AssignmentIcon } from '@mui/icons-material';
-import { CandidateProgress } from '../../../types/postInterview';
+import { CandidateProgress } from '../../../../types/postInterview';
 import {
   calculateProgressPercentage,
   getNextStep,
   isTaskStep,
   areAllStepsCompleted,
-} from '../../../utils/postInterviewHelpers';
+} from '../../../../utils/postInterviewHelpers';
 import StepTimeline from './StepTimeline';
 
 interface ProgressAccordionItemProps {

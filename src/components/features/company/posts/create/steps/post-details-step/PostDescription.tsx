@@ -24,7 +24,7 @@ import {
   updateSalaryField,
 } from "@/store/slices/postGenerationSlice";
 import { AppDispatch } from "@/store/store";
-import SectionCard from "@/components/ui/ui/SectionCard";
+import SectionCard from "@/components/ui/SectionCard";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

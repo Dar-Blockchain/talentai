@@ -25,7 +25,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import TimelineIcon from "@mui/icons-material/Timeline";
-import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
+import PostInterviewTab from "@/components/features/candidate/PostInterviewTab";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
