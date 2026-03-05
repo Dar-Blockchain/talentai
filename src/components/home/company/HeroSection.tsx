@@ -156,7 +156,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             <Button
               variant="contained"
               onClick={() =>
-                window.open("https://calendly.com/talentai-demo", "_blank")
+                window.open("https://calendly.com/talent__ai/30min", "_blank")
               }
               sx={{
                 backgroundColor: "rgba(12, 218, 139, 1)",
