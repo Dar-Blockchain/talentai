@@ -38,6 +38,11 @@ const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
 const chatRouter = require("../routes/chat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
+const internalCampaignRoutes = require('../routes/internalCampaign.routes');
+const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
+const departmentRoutes = require('../routes/department.routes');
+const contactRouter = require('../routes/contact.routes');
+
 // const backupRouter = require('../routes/backupRouter');
 
 /**
@@ -115,6 +120,12 @@ function registerRoutes(app) {
   app.get("/", (req, res) => {
     res.json({ message: "Bienvenue sur l'API Express!" });
   });
+
+  // Register internal campaign routes
+  app.use('/internal-campaigns', internalCampaignRoutes);
+  app.use('/campaign-participants', campaignParticipantRoutes);
+  app.use('/departments', departmentRoutes);
+  app.use('/contact', contactRouter);
 
   app.get("/some-route", (req, res) => {
     res.json("Route accessible");

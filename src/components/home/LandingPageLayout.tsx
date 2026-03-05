@@ -9,7 +9,7 @@ interface LandingPageLayoutProps {
   logo: string;
   type: "candidate" | "company";
   color: string;
-  headerLink: string;
+  headerLink?: string;
   heroTitle: string;
   heroSubtitle: string;
   backgroundColor?: string;

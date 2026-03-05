@@ -8,30 +8,38 @@ import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import dynamic from 'next/dynamic';
+import { useRouter } from "next/router";
 
 const JobSeekerLanding: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
   useEffect(() => {
-    localStorage.setItem("userType", "candidate");
-    dispatch(setUserType("candidate"));
-  }, [dispatch]);
+    router.replace("/home/company");
+  }, [router]);
 
-  return (
-    <LandingPageLayout
-      logo="/images/home/logocandidate.png"
-      type="candidate"
-      color="#8310FF"
-      headerLink="Are you hiring?"
-      heroTitle="Get Hired"
-      heroSubtitle="For Who You Really Are"
-    >
-      <HowItWorksSection />
-      <CandidateRewardsSection />
-      <JobListingsSection />
-      <Footer />
-    </LandingPageLayout>
-  );
+  // useEffect(() => {
+  //   localStorage.setItem("userType", "candidate");
+  //   dispatch(setUserType("candidate"));
+  // }, [dispatch]);
+
+  // return (
+  //   <LandingPageLayout
+  //     logo="/images/home/logocandidate.png"
+  //     type="candidate"
+  //     color="#8310FF"
+  //     headerLink="Are you hiring?"
+  //     heroTitle="Get Hired"
+  //     heroSubtitle="For Who You Really Are"
+  //   >
+  //     <HowItWorksSection />
+  //     <CandidateRewardsSection />
+  //     <JobListingsSection />
+  //     <Footer />
+  //   </LandingPageLayout>
+  // );
+
+  return null;
 };
 
 // Export with dynamic import to prevent SSR issues
