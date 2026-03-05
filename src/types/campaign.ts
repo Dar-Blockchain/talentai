@@ -46,7 +46,6 @@ export interface CreateCampaignForm {
   anonymityMode: AnonymityMode;
   module: ModuleType; // select a single module type
   accessMethod: AccessMethod;
-  targetDepartment?: string;
   deadline?: string;
 }
 
@@ -57,8 +56,8 @@ export interface CreateCampaignPayload {
   anonymityMode: AnonymityMode;
   module: CampaignModule; // single module record
   accessMethod: AccessMethod;
-  targetDepartment?: string;
   deadline?: string;
+  participants?: string[];
 }
 
 export interface CampaignsResponse {
