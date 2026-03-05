@@ -1,35 +1,68 @@
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
 const User = require("../../models/User.model");
 
-// Get all memberships for a company owned by the current user (with optional filters)
-module.exports.getMembershipsByCompany = async (companyId, filters = {}) => {
+// Get all memberships for a company owned by the current user (with optional search, status filter, department filter and pagination)
+module.exports.getMembershipsByCompany = async (companyId, search = "", status = "", department = "", page = 1, limit = 10) => {
   const query = { company: companyId };
 
-  // Filter by username if provided (case-insensitive partial match)
-  if (filters.username) {
-    const userWithUsername = await User.findOne({
-      username: { $regex: filters.username, $options: "i" },
-    });
-    if (userWithUsername) {
-      query.user = userWithUsername._id;
-    } else {
-      // Return empty array if username not found
-      return [];
+  // Apply status filter if provided
+  if (status) {
+    query.status = status;
+  }
+
+  // Apply department filter if provided (support multiple departments)
+  if (department) {
+    const departments = Array.isArray(department) ? department : [department];
+    if (departments.length > 0) {
+      query.department = { $in: departments };
     }
   }
 
-  // Filter by role if provided
-  if (filters.role) {
-    query.role = filters.role;
+  // If search is provided, search across username, email, role
+  if (search) {
+    // First, try to find users by username or email
+    const users = await User.find({
+      $or: [
+        { username: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    });
+
+    const userIds = users.map((u) => u._id);
+
+    // Build an OR query for search across multiple fields
+    query.$or = [
+      ...(userIds.length > 0 ? [{ user: { $in: userIds } }] : []),
+      { role: { $regex: search, $options: "i" } },
+    ];
   }
 
+  // Calculate pagination
+  const skip = (page - 1) * limit;
+
+  // Get total count for pagination
+  const total = await CompanyMembershipModel.countDocuments(query);
+
+  // Fetch paginated memberships
   const memberships = await CompanyMembershipModel.find(query)
     .populate("user", "username email")
+    .populate("department", "name")
     .populate("invitedBy", "username email")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   if (!memberships) throw new Error("No memberships found for this company");
-  return memberships;
+
+  return {
+    memberships,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    },
+  };
 };
 
 // Delete a membership (remove a member from a company)

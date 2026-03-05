@@ -15,7 +15,7 @@ const Bullet: React.FC<{ label: string }> = ({ label }) => (
     <Typography
       variant="body2"
       sx={{
-        fontFamily: "Fustat",
+        fontFamily: "Poppins",
         fontWeight: 400,
         fontStyle: "normal",
         fontSize: "16px",
@@ -114,7 +114,7 @@ const BiasFreeEvaluation: React.FC = () => {
           <Typography
             variant="h5"
             sx={{
-              fontFamily: "Inter",
+              fontFamily: "Poppins",
               fontWeight: 400,
               fontStyle: "normal",
               fontSize: "36px",
@@ -124,12 +124,12 @@ const BiasFreeEvaluation: React.FC = () => {
               mb: 1,
             }}
           >
-            The inteligent hiring platform you deserve
+            The intelligent hiring platform you deserve
           </Typography>
           <Typography
             variant="h5"
             sx={{
-              fontFamily: "Fustat",
+              fontFamily: "Poppins",
               fontWeight: 400,
               fontStyle: "normal",
               fontSize: "16px",
@@ -238,12 +238,12 @@ const BiasFreeEvaluation: React.FC = () => {
                 position: "relative",
               }}
             >
-              Watch How We Cut Hiring Time in Half
+              Watch How We Cut Hiring Time by 75%
             </Typography>
             <Typography
               variant="body1"
               sx={{
-                fontFamily: "Fustat, sans-serif",
+                fontFamily: "Poppins, sans-serif",
                 fontWeight: 400,
                 fontStyle: "normal",
                 color: "#D1D5DB",
@@ -262,17 +262,21 @@ const BiasFreeEvaluation: React.FC = () => {
             </Typography>
             <Button
               variant="contained"
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
                 textTransform: "none",
-                backgroundColor: "#10B981",
-                borderRadius: 2,
+                backgroundColor: "rgba(12,218,139,1)",
+                color: "#0b1b1f",
+                borderRadius: 0.5,
+                boxShadow: "none",
                 px: 3,
                 py: 1.5,
+                fontFamily: "Poppins",
                 fontSize: "0.95rem",
                 fontWeight: 500,
                 zIndex: 2,
                 position: "relative",
-                "&:hover": { backgroundColor: "#059669" },
+                "&:hover": { backgroundColor: "rgba(12,218,139,0.7)" },
               }}
             >
               Request a Demo
@@ -321,7 +325,7 @@ const BiasFreeEvaluation: React.FC = () => {
               <Typography
                 variant="body1"
                 sx={{
-                  fontFamily: "Fustat",
+                  fontFamily: "Poppins",
                   fontWeight: 400,
                   fontStyle: "normal",
                   fontSize: "16px",
@@ -339,8 +343,6 @@ const BiasFreeEvaluation: React.FC = () => {
               <Stack spacing={2} sx={{ mb: 4 }}>
                 <Bullet label="Conversational AI Interviews" />
                 <Bullet label="Blockchain-Verified Credentials" />
-                <Bullet label="Interview-to-Earn Rewards" />
-
                 <Bullet label="Drag-&-Drop Pipeline Builder" />
                 <Bullet label="Automated Decision-Making" />
                 <Bullet label="Fair Credit Pricing" />
@@ -355,7 +357,7 @@ const BiasFreeEvaluation: React.FC = () => {
                   borderRadius: '2px',
                   maxWidth: 235,
                   height: 48,
-                  fontFamily: 'Fustat',
+                  fontFamily: 'Poppins',
                   fontWeight: 400,
                   fontStyle: 'normal',
                   fontSize: '16px',

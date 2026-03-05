@@ -133,7 +133,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               mx: "auto",
               color: "text.secondary",
               mb: 3,
-              fontFamily: "Fustat, sans-serif",
+              fontFamily: "Poppins, sans-serif",
               fontWeight: 400,
               fontStyle: "normal",
               fontSize: "16px",
@@ -156,7 +156,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             <Button
               variant="contained"
               onClick={() =>
-                window.open("https://calendly.com/talentai-demo", "_blank")
+                window.open("https://calendly.com/talent__ai/30min", "_blank")
               }
               sx={{
                 backgroundColor: "rgba(12, 218, 139, 1)",

@@ -137,7 +137,7 @@ class MemoryAI {
   constructor(together, sessionManager) {
     this.together = together;
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async analyzeQuestionSimilarity(newQuestion, sessionHistory, sessionId) {
@@ -318,7 +318,7 @@ class CoverageAnalysisAI {
   constructor(together, sessionManager) {
     this.together = together;
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async analyzeCoverageIntelligently(candidateResponse, currentCoverage, focusAreas, sessionHistory) {
@@ -450,7 +450,7 @@ class QuestionGeneratorAI {
   constructor(together, sessionManager) {
     this.together = together;
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"; // Faster model for question generation
+    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo"; // Faster model for question generation
   }
 
   async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis) {
@@ -459,25 +459,24 @@ class QuestionGeneratorAI {
       let questionGuidelines = '';
 
       if (session.config.interviewType === 'TECHNICAL_SKILL') {
+        const focusAreaNames = session.config.intelligenceContext?.focusAreas
+          ?.map(a => a.skillName || a.area) || [];
+        const roleContext = session.config.context.targetRole;
+
         questionGuidelines = `
-⚠️ CRITICAL: This is a TECHNICAL SKILL interview - ask ONLY technical questions about:
-✅ ALLOWED TOPICS:
-- Code implementation, architecture, and design patterns
-- Problem-solving approaches and algorithms
-- System design, scalability, and performance optimization
-- Debugging, testing, and code quality practices
-- Specific technologies, frameworks, and tools (${session.config.context.targetRole})
-- Technical trade-offs and decision-making
-- Hands-on coding experience and real-world technical challenges
-- Best practices and technical expertise at ${session.config.context.experienceLevel} level
+⚠️ CRITICAL: This is a TECHNICAL SKILL interview for the role of "${roleContext}".
+Ask questions that assess the practical, domain-specific expertise required for this role.
 
-❌ STRICTLY FORBIDDEN:
-- Behavioral questions (team dynamics, leadership style, conflict resolution)
-- Soft skill questions (communication, collaboration, interpersonal skills)
-- General career questions (why you want to work here, where you see yourself)
-- Cultural fit or HR-style questions
+FOCUS AREAS FOR THIS ROLE:
+${focusAreaNames.map(a => `- ${a}`).join('\n')}
 
-FOCUS: Technical depth, code quality, practical implementation, problem-solving technical approach.`;
+RULES:
+- Ask questions about the focus areas listed above — these define what "technical" means for THIS role
+- Probe for real-world experience, implementation details, and best practices
+- Match the technical domain to the role (marketing → analytics, campaigns, growth metrics; dev → code, architecture; design → UX process, tools)
+- Do NOT ask about topics outside the listed focus areas
+- Be natural and conversational
+- Assess expertise at ${session.config.context.experienceLevel} level`;
       } else if (session.config.interviewType === 'HR_INTERVIEW') {
         questionGuidelines = `
 This is an HR/BEHAVIORAL interview - focus on soft skills, teamwork, cultural fit, and behavioral patterns.`;
@@ -636,7 +635,7 @@ class DecisionEngineAI {
     this.together = together;
     this.sessionManager = sessionManager;
     this.service = serviceInstance; // Reference to parent IntelligentInterviewService
-    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
@@ -822,7 +821,7 @@ class IntelligentInterviewService {
   constructor() {
     this.together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
     this.sessionManager = redisSessionManager;
-    this.model = "meta-llama/Llama-3.2-3B-Instruct-Turbo";
+    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
 
     // Initialize AI service components
     this.memoryAI = new MemoryAI(this.together, this.sessionManager);
@@ -2253,7 +2252,7 @@ RESPONSE FORMAT (JSON only):
 }`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Analyze this question: "${questionText}"` }
@@ -2299,7 +2298,7 @@ Examples:
 - "Whenever you're ready."`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }
@@ -2358,7 +2357,7 @@ Examples:
 - "Would you like me to provide a specific example?"`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }
@@ -2438,7 +2437,7 @@ ${recentContext}
 Rephrase this question to help the candidate answer it.`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.2-3B-Instruct-Turbo", // Use better model for rephrasing
+        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo", // Use better model for rephrasing
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
@@ -2528,16 +2527,20 @@ Rephrase this question to help the candidate answer it.`;
     let exampleGreeting = '';
 
     if (config.interviewType === 'TECHNICAL_SKILL') {
-      interviewFocus = `⚠️ CRITICAL: This is a PURELY TECHNICAL interview assessing ${config.context.targetRole} technical skills at ${config.context.experienceLevel} level.
+      const focusAreaNames = config.intelligenceContext?.focusAreas
+        ?.map(a => a.skillName || a.area) || [];
+      const focusDescription = focusAreaNames.length > 0
+        ? focusAreaNames.join(', ')
+        : 'domain-specific expertise';
+
+      interviewFocus = `This is a SKILL ASSESSMENT interview for the role of "${config.context.targetRole}" at ${config.context.experienceLevel} level.
 
 FOCUS:
-- ONLY technical competencies and hands-on experience
-- Code architecture, problem-solving, system design
-- NO behavioral or soft skill topics
-- NO general career questions
-- This is a technical depth assessment`;
+- Assess practical expertise in: ${focusDescription}
+- Probe for hands-on experience and real-world results
+- Match the greeting to the role's domain (NOT generic software engineering unless the role IS a dev role)`;
 
-      exampleGreeting = `"Hello! I'm excited to discuss your technical experience with ${config.context.targetRole}. Today we'll be exploring your hands-on technical skills, problem-solving approach, and expertise at the ${config.context.experienceLevel} level. Let's dive into the technical aspects of your work."`;
+      exampleGreeting = `"Hello! I'm excited to discuss your experience in ${focusDescription} as it relates to the ${config.context.targetRole} role. Today we'll be exploring your hands-on expertise, problem-solving approach, and practical experience at the ${config.context.experienceLevel} level. Let's dive in!"`;
 
     } else if (config.interviewType === 'HR_INTERVIEW') {
       interviewFocus = `This is a BEHAVIORAL and CULTURAL FIT interview focusing on soft skills, teamwork, and alignment with company values.`;
@@ -2865,7 +2868,7 @@ ${JSON.stringify(decisionAnalysis, null, 2)}
 Update the real-time report with new AI-powered insights.`;
 
       const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }

@@ -39,7 +39,7 @@ Generate a brief encouraging message.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ], {
-        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
         max_tokens: 150,
         temperature: 0.7
       });
@@ -102,7 +102,7 @@ Generate a natural request for more detail.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ], {
-        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
         max_tokens: 150,
         temperature: 0.7
       });
@@ -163,7 +163,7 @@ Generate a gentle clarification request.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ], {
-        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
         max_tokens: 150,
         temperature: 0.7
       });
@@ -224,7 +224,7 @@ Generate a polite refocusing message.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ], {
-        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
         max_tokens: 150,
         temperature: 0.7
       });
@@ -286,7 +286,7 @@ Generate a probing follow-up question.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ], {
-        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
         max_tokens: 150,
         temperature: 0.7
       });
@@ -345,7 +345,7 @@ Generate a natural continuation prompt.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ], {
-        model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
         max_tokens: 150,
         temperature: 0.7
       });

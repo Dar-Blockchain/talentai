@@ -45,7 +45,7 @@ const SolutionsSection = ({
             display: "flex",
             alignItems: "center",
             gap: 1,
-            fontFamily: "Inter",
+            fontFamily: "Poppins",
             fontWeight: 600,
             fontStyle: "normal",
             fontSize: "36px",
@@ -59,7 +59,7 @@ const SolutionsSection = ({
         </Typography>
         <Typography
           sx={{
-            fontFamily: "Fustat",
+            fontFamily: "Poppins",
             fontWeight: 400,
             fontStyle: "normal",
             fontSize: "20px",

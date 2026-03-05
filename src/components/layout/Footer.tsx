@@ -12,6 +12,7 @@ import YouTubeIcon from "@mui/icons-material/YouTube";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import FacebookIcon from "@mui/icons-material/Facebook";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 
 const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
   children,
@@ -63,7 +64,20 @@ const Footer: React.FC = () => {
               verticalAlign: "middle",
             }}
           >
-            Copyright © 2025. TalentAI Inc. All rights reserved.
+            Copyright © 2026. TalentAI Inc. All rights reserved.
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.35)",
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontSize: "10px",
+              lineHeight: "16px",
+              mt: 0.5,
+            }}
+          >
+            By using TalentAI, you agree to our Terms of Service. TalentAI provides AI-powered hiring insights and candidate evaluations designed to support recruitment decisions. All final hiring decisions remain the sole responsibility of the employer.
           </Typography>
           {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
             *Numbers on this page are based on internal data compiled from existing customer base and speed assumption is based on the fact that standard onboarding may take 30 days and Remote's average onboarding time is 2.3 days.
@@ -84,17 +98,27 @@ const Footer: React.FC = () => {
           spacing={{ xs: 2, md: 0 }}
         >
           {/* Policy Links */}
-          <Stack direction="row" spacing={3} flexWrap="wrap">
+          {/* <Stack direction="row" spacing={3} flexWrap="wrap">
             <FooterLink>Privacy Policy</FooterLink>
             <FooterLink>Cookie Policy</FooterLink>
             <FooterLink>Terms of Use</FooterLink>
             <FooterLink>Disclaimer</FooterLink>
             <FooterLink>Imprint</FooterLink>
-          </Stack>
+          </Stack> */}
+
+          {/* Contact email */}
+          <Link
+            href="mailto:contact@talent-ai.com"
+            underline="none"
+            sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "rgba(255,255,255,0.7)", fontSize: "12px", "&:hover": { color: "#fff" } }}
+          >
+            <EmailOutlinedIcon sx={{ fontSize: 16 }} />
+            contact@talentai.bid
+          </Link>
 
           {/* Social Media Icons */}
           <Stack direction="row" spacing={1.5}>
-            <IconButton
+            {/* <IconButton
               sx={{
                 color: "#ffffff",
                 backgroundColor: "#ffffff",
@@ -105,8 +129,12 @@ const Footer: React.FC = () => {
               size="small"
             >
               <YouTubeIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton>
+            </IconButton> */}
             <IconButton
+              component="a"
+              href="https://www.linkedin.com/company/talentai-bid/"
+              target="_blank"
+              rel="noopener noreferrer"
               sx={{
                 color: "#ffffff",
                 backgroundColor: "#ffffff",
@@ -119,6 +147,10 @@ const Footer: React.FC = () => {
               <LinkedInIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
             <IconButton
+              component="a"
+              href="https://x.com/talentai_bid"
+              target="_blank"
+              rel="noopener noreferrer"
               sx={{
                 color: "#ffffff",
                 backgroundColor: "#ffffff",
@@ -130,7 +162,7 @@ const Footer: React.FC = () => {
             >
               <TwitterIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
-            <IconButton
+            {/* <IconButton
               sx={{
                 color: "#ffffff",
                 backgroundColor: "#ffffff",
@@ -141,8 +173,8 @@ const Footer: React.FC = () => {
               size="small"
             >
               <InstagramIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton>
-            <IconButton
+            </IconButton> */}
+            {/* <IconButton
               sx={{
                 color: "#ffffff",
                 backgroundColor: "#ffffff",
@@ -153,7 +185,7 @@ const Footer: React.FC = () => {
               size="small"
             >
               <FacebookIcon sx={{ color: "#121212", fontSize: "1rem" }} />
-            </IconButton>
+            </IconButton> */}
           </Stack>
         </Stack>
       </Box>
