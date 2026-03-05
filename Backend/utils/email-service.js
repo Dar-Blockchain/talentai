@@ -384,4 +384,4 @@ const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitation
 };
 
 // Exporter les fonctions
-module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation };
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, transporter };

@@ -1,148 +1,64 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 
-const GlobalCompanies: React.FC = () => {
-  const companies = [
-    { name: "OpenAI", logo: "/images/GLOBAL_COMPANIES/OpenAI_Logo.png" },
-    { name: "NVIDIA", logo: "/images/GLOBAL_COMPANIES/NVIDIA_logo.png" },
-    { name: "F6S", logo: "/images/GLOBAL_COMPANIES/F6S_Logo.png" },
-    { name: "Hedera", logo: "/images/GLOBAL_COMPANIES/hedera_Logo.png" },
-    { name: "Dar Blockchain", logo: "/images/GLOBAL_COMPANIES/DarBlockchain_Logo.png" },
-    { name: "Hashgraph", logo: "/images/GLOBAL_COMPANIES/Hashgraph_Logo.png" },
-    { name: "The Hashgraph Association", logo: "/images/GLOBAL_COMPANIES/HashgraphAssoctition_Logo.png" },
-    { name: "Hashgraph Online", logo: "/images/GLOBAL_COMPANIES/HashgraphOnline_Logo.png" },
-  ];
+const ROW_LABEL_SX = {
+  fontFamily: "Poppins",
+  fontWeight: 600,
+  fontSize: "14px",
+  letterSpacing: "0.8px",
+  textTransform: "uppercase" as const,
+  color: "rgba(89,91,95,0.6)",
+  mb: 2,
+  textAlign: "center",
+};
 
+const clients = [
+  { name: "Lightency",     logo: "/images/GLOBAL_COMPANIES/Lightency.png" },
+  { name: "Dar Blockchain", logo: "/images/GLOBAL_COMPANIES/DarBlockchain.png" },
+];
+
+
+const GlobalCompanies: React.FC = () => {
   return (
-    <Box sx={{ 
-    
+    <Box sx={{
       maxWidth: 1400,
-      mx: 'auto',
-      background: '#EFF0F0',
+      mx: "auto",
+      background: "#EFF0F0",
       borderRadius: 3,
-      position: 'relative',
-      overflow: 'hidden',
+      px: { xs: 3, md: 6 },
+      py: { xs: 4, md: 5 },
     }}>
-      {/* Title */}
-      <Typography 
-        sx={{ 
-          fontFamily: "Inter",
-          fontWeight: 600,
-          fontStyle: "normal",
-          fontSize: "14px",
-          lineHeight: "21px",
-          letterSpacing: "0.7px",
-          textAlign: "center",
-          verticalAlign: "middle",
-          textTransform: "uppercase",
-          color: 'rgba(89, 91, 95, 1)',
-          mb: 6
-        }}
-      >
-        GLOBAL COMPANIES GROW WITH REMOTE
-      </Typography>
-    
-      {/* Company Logos */}
-      <Box sx={{
-        display: 'flex',
-        flexWrap: 'nowrap',
-        alignItems: 'center',
-        gap: { xs: 4, md: 6 },
-        px: 2,
-        overflow: 'hidden',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(90deg, #EFF0F0 0%, rgba(239,240,240,0) 10%, rgba(239,240,240,0) 90%, #EFF0F0 100%)',
-          zIndex: 1,
-          pointerEvents: 'none'
-        }
-      }}>
-        <Box sx={{
-          display: 'flex',
-          gap: { xs: 4, md: 6 },
-          animation: 'slide 20s linear infinite',
-          '@keyframes slide': {
-            '0%': {
-              transform: 'translateX(0)',
-            },
-            '100%': {
-              transform: 'translateX(-50%)',
-            },
-          },
-        }}>
-          {/* First set of logos */}
-          {companies.map((company, index) => (
-            <Box
-              key={`first-${index}`}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                opacity: 0.7,
-                transition: 'opacity 0.2s',
-                flexShrink: 0,
-                minWidth: 'fit-content',
-                '&:hover': {
-                  opacity: 1
-                }
-              }}
-            >
-              <Box
-                component="img"
-                src={company.logo}
-                alt={`${company.name} logo`}
-                sx={{
-                  height: { xs: 24, md: 32 },
-                  width: 'auto',
-                  objectFit: 'contain',
-                  filter: 'grayscale(100%)',
-                  transition: 'filter 0.2s',
-                  '&:hover': {
-                    filter: 'grayscale(0%)'
-                  }
-                }}
-              />
-            </Box>
-          ))}
-          {/* Duplicate set for seamless loop */}
-          {companies.map((company, index) => (
-            <Box
-              key={`second-${index}`}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                opacity: 0.7,
-                transition: 'opacity 0.2s',
-                flexShrink: 0,
-                minWidth: 'fit-content',
-                '&:hover': {
-                  opacity: 1
-                }
-              }}
-            >
-              <Box
-                component="img"
-                src={company.logo}
-                alt={`${company.name} logo`}
-                sx={{
-                  height: { xs: 24, md: 32 },
-                  width: 'auto',
-                  objectFit: 'contain',
-                  filter: 'grayscale(100%)',
-                  transition: 'filter 0.2s',
-                  '&:hover': {
-                    filter: 'grayscale(0%)'
-                  }
-                }}
-              />
-            </Box>
-          ))}
-        </Box>
+      {/* Row 1 — Clients (static) */}
+      <Typography sx={ROW_LABEL_SX}>Trusted by</Typography>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: { xs: 4, md: 6 }, px: 2, flexWrap: "wrap" }}>
+        {clients.map((item) => (
+          <Box
+            key={item.name}
+            component="img"
+            src={item.logo}
+            alt={`${item.name} logo`}
+            sx={{
+              height: { xs: 24, md: 32 },
+              width: "auto",
+              objectFit: "contain",
+              opacity: 0.7,
+              filter: "grayscale(100%)",
+              transition: "opacity 0.2s, filter 0.2s",
+              "&:hover": { opacity: 1, filter: "grayscale(0%)" },
+            }}
+          />
+        ))}
+      </Box>
+
+      {/* Divider */}
+      <Box sx={{ my: 4, borderTop: "1px solid rgba(89,91,95,0.15)" }} />
+
+      {/* Row 2 — Technology partners */}
+      <Typography sx={ROW_LABEL_SX}>Partners</Typography>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, mt: 2, flexWrap: "wrap" }}>
+        <Box component="img" src="/images/partners/nivdia.png"          alt="NVIDIA Inception Program" sx={{ height: "60px", width: "auto", objectFit: "contain" }} />
+        <Box component="img" src="/images/partners/F6s.png"            alt="F6S Top Company AI"       sx={{ height: "60px", width: "auto", objectFit: "contain" }} />
+        <Box component="img" src="/images/partners/Hedera-Logo-Lockup-Dark.png" alt="Hedera"          sx={{ height: "60px", width: "auto", objectFit: "contain" }} />
       </Box>
     </Box>
   );
