@@ -4,7 +4,12 @@ module.exports = {
   init: (server) => {
     io = require('socket.io')(server, {
       cors: {
-        origin: '*',
+        origin: [
+          "https://staging.talentai.bid",
+          "https://backend.staging.talentai.bid",
+          "http://localhost:3000",
+          "http://localhost:5173",
+        ],
         methods: ['GET', 'POST'],
         credentials: true,
         allowedHeaders: ['Content-Type', 'Authorization']

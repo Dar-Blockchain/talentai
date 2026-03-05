@@ -21,7 +21,12 @@ function registerMiddlewares(app) {
   // CORS Configuration with preflight support
   app.use(
     cors({
-      origin: "*", // Allow all origins
+      origin: [
+        "https://staging.talentai.bid",
+        "https://backend.staging.talentai.bid",
+        "http://localhost:3000",
+        "http://localhost:5173",
+      ],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: [
         "Origin",
