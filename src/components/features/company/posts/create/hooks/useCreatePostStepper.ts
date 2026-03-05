@@ -5,19 +5,15 @@ import { AppDispatch } from "@/store/store";
 
 import {
   savePost,
-  // fetchJobMatches,
   postRecruitmentSteps,
   updatePost,
   updatePostStatus,
 } from "@/store/slices/postSlice";
-// import { createHRAgent } from "@/store/slices/hrAgentsSlice";
-// import { createAgentConfig } from "@/store/slices/agentConfigSlice";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 import { getMyProfile } from "@/store/slices/userSlice";
 
 import {
   buildRecruitmentSteps,
-  // getJobSkills,
   validatePipelineNodes,
 } from "@/utils/postHelpers";
 import { extractSkillsFromPipeline } from "@/utils/jobHelpers";
@@ -127,21 +123,6 @@ export const useCreatePostStepper = (
         })
       ).unwrap();
 
-      // --- Hiring agent creation commented out ---
-      // await dispatch(
-      //   createHRAgent({
-      //     agentData: {
-      //       jobId: savedPost?.jobData?._id,
-      //       companyName: profile?.companyDetails?.name || "Company",
-      //       postTitle: savedPost?.jobData?.jobDetails?.title,
-      //       companyId: profile?.userId,
-      //       jobSkills: getJobSkills(savedPost?.jobData),
-      //     },
-      //     configData: null,
-      //   })
-      // ).unwrap();
-
-      // await dispatch(createAgentConfig()).unwrap();
 
       // Directly publish and redirect (free during beta, no payment modal needed)
       await dispatch(
@@ -165,34 +146,16 @@ export const useCreatePostStepper = (
   };
 
   const finalizeCreation = async (postId?: string) => {
-    // setAgentLoadingOpen(true);
 
     const resolvedPostId = postId || savedPost?.jobData?._id;
 
     try {
-      // --- Hiring agent creation commented out ---
-      // await dispatch(
-      //   createHRAgent({
-      //     agentData: {
-      //       jobId: savedPost?.jobData?._id,
-      //       companyName: profile?.companyDetails?.name || "Company",
-      //       postTitle: savedPost?.jobData?.jobDetails?.title,
-      //       companyId: profile?.userId,
-      //       jobSkills: getJobSkills(savedPost?.jobData),
-      //     },
-      //     configData: null,
-      //   })
-      // ).unwrap();
-
-      // await dispatch(createAgentConfig()).unwrap();
 
       if (creationType === "ai") {
         await dispatch(
           updatePostStatus({ postId: resolvedPostId, status: "open" })
         ).unwrap();
       }
-
-      // setAgentLoadingOpen(false);
 
       if (creationType === "ai") {
         router.push("/company/posts");

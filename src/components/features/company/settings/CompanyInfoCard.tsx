@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, TextField, MenuItem } from "@mui/material";
-import { SectionCard, SectionHeader } from "@/components/dashboard-workplace/ui";
+import { SectionCard, SectionHeader } from "@/components/ui/ui";
 import EditActions from "./EditActions";
 import { UserProfile } from "@/types/profile";
 

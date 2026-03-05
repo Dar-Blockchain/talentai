@@ -1,10 +1,3 @@
-/**
- * Workplace Dashboard — Reusable UI Primitives
- * ─────────────────────────────────────────────
- * Import any component from this barrel:
- *
- *   import { StatCard, TabBar, StatusBadge } from "@/components/dashboard-workplace/ui";
- */
 
 // Layout & structure
 export { default as SectionCard } from "./SectionCard";

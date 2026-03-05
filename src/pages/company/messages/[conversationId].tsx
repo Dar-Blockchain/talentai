@@ -45,7 +45,7 @@ import {
   MessageList,
   MessageInput,
   DeleteConversationDialog,
-} from "@/components/chat";
+} from "@/components/features/chat";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

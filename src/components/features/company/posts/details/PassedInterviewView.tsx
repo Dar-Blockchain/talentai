@@ -19,9 +19,9 @@ import { AppDispatch, RootState } from "@/store/store";
 import { fetchJobMatches } from "@/store/slices/postSlice";
 import { createOrFindConversation } from "@/store/slices/chatSlice";
 import { broadcastSystemNotification } from "@/store/slices/notificationSlice";
-import SectionCard from "@/components/dashboard-workplace/ui/SectionCard";
-import EmptyState from "@/components/dashboard-workplace/ui/EmptyState";
-import LoadingOverlay from "@/components/dashboard-workplace/ui/LoadingOverlay";
+import SectionCard from "@/components/ui/ui/SectionCard";
+import EmptyState from "@/components/ui/ui/EmptyState";
+import LoadingOverlay from "@/components/ui/ui/LoadingOverlay";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

@@ -2,7 +2,6 @@
 import React, { useCallback, useMemo } from "react";
 import { Drawer, Box, Divider, Button } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
-import TokenDisplay from "./TokenDisplay";
 import { logout } from "@/store/slices/authSlice";
 import { useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -112,8 +111,6 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
             <Box sx={{ mb: 1 }}>
               <UserAvatar showDropdown={false} />
             </Box>
-            {/* Tokens */}
-            <TokenDisplay />
           </Box>
 
           {/* Logout */}

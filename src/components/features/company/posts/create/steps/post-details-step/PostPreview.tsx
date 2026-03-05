@@ -35,9 +35,9 @@ import { experienceLevels } from "@/constants/candidate";
 import {
   contractTypes,
   workModes,
-} from "@/components/preferences/data/candidateData";
+} from "@/components/features/preferences/data/candidateData";
 import SalaryRange from "./SalaryRange";
-import SectionCard from "@/components/dashboard-workplace/ui/SectionCard";
+import SectionCard from "@/components/ui/ui/SectionCard";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";

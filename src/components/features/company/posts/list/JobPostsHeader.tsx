@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Button } from "@mui/material";
-import PageBanner from "@/components/dashboard-workplace/ui/PageBanner";
-import StatCard from "@/components/dashboard-workplace/ui/StatCard";
+import PageBanner from "@/components/ui/ui/PageBanner";
+import StatCard from "@/components/ui/ui/StatCard";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
