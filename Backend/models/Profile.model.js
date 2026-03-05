@@ -92,7 +92,7 @@ const profileSchema = new mongoose.Schema(
       default: Date.now,
     },
     readyForMatch: { type: Boolean, default: false },
-    isPublicProfile: { type: Boolean, default: false, index: true },
+    isPublicProfile: { type: Boolean, default: false },
 
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },

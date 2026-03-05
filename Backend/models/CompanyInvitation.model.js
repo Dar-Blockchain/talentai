@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const CompanyInvitationSchema = new mongoose.Schema({
-  email: { type: String, required: true, index: true },
+  email: { type: String, required: true },
   company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   role: {
     type: String,
@@ -10,7 +10,7 @@ const CompanyInvitationSchema = new mongoose.Schema({
   },
   status: { type: String, enum: ["active", "pending", "revoked"], default: "pending" },
   invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  token: { type: String, required: true, unique: true, index: true },
+  token: { type: String, required: true, unique: true },
   expiresAt: { type: Date, required: true },
 }, { timestamps: true });
 
