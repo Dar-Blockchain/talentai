@@ -11,7 +11,6 @@ const permissionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     profileId: {
       type: mongoose.Schema.Types.ObjectId,

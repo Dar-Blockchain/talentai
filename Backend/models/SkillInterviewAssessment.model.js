@@ -66,8 +66,7 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
   candidateId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Profile',
-    required: true,
-    index: true
+    required: true
   },
 
   // ========== METADATA FIELDS ==========
@@ -146,8 +145,7 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
   // ========== TIMESTAMPS ==========
   createdAt: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   },
   updatedAt: {
     type: Date,
@@ -160,7 +158,6 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
 
 // ========== INDEXES ==========
 skillInterviewAssessmentSchema.index({ candidateId: 1 });
-skillInterviewAssessmentSchema.index({ interviewerId: 1 });
 skillInterviewAssessmentSchema.index({ skill: 1 });
 skillInterviewAssessmentSchema.index({ proficiency: 1 });
 skillInterviewAssessmentSchema.index({ createdAt: -1 });

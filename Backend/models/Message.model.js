@@ -11,7 +11,6 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Conversation',
       required: true,
-      index: true,
     },
 
     // Message sender

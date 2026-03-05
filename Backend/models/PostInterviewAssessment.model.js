@@ -66,20 +66,17 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
   post: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Post',
-    required: true,
-    index: true
+    required: true
   },
   candidate: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
   },
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: false,
-    index: true
+    required: false
   },
   step: {
     type: mongoose.Schema.Types.ObjectId,
@@ -158,8 +155,7 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
   // ========== TIMESTAMPS ==========
   createdAt: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   },
   updatedAt: {
     type: Date,

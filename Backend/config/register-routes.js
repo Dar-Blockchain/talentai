@@ -131,9 +131,9 @@ function registerRoutes(app) {
   });
 
   // Register internal campaign routes
-  app.use('/internal-campaigns', internalCampaignRoutes);
-  app.use('/campaign-participants', campaignParticipantRoutes);
-  app.use('/departments', departmentRoutes);
+  // app.use('/internal-campaigns', internalCampaignRoutes);
+  // app.use('/campaign-participants', campaignParticipantRoutes);
+  // app.use('/departments', departmentRoutes);
   app.use('/contact', contactRouter);
   app.use('/interview-applicants', interviewApplicantRouter);
 
