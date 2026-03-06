@@ -33,9 +33,8 @@ const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
 // Auto-load CRON jobs
-// ⛔ DISABLED: All cron jobs disabled
-// const { initializeCronJobs } = require("./cron");
-// initializeCronJobs();
+const { initializeCronJobs } = require("./cron");
+initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module
@@ -71,20 +70,18 @@ const initializeApp = async () => {
     await connectDB();
 
     // Step 1.5: Seed PlanLimits if table is empty
-    // ⛔ DISABLED: PlanLimits seeding disabled
-    // logger.section("Initializing default plans...");
-    // try {
-    //   await seedDefaultPlans();
-    //   logger.success("PlanLimits initialization completed");
-    // } catch (error) {
-    //   logger.warn(
-    //     "PlanLimits seeding encountered an issue, but application will continue",
-    //   );
-    // }
+    logger.section("Initializing default plans...");
+    try {
+      await seedDefaultPlans();
+      logger.success("PlanLimits initialization completed");
+    } catch (error) {
+      logger.warn(
+        "PlanLimits seeding encountered an issue, but application will continue",
+      );
+    }
 
     // Step 2: Initialize scheduler
-    // ⛔ DISABLED: Agenda scheduler disabled
-    // await initializeAgenda();
+    await initializeAgenda();
 
     // Step 2.5: Initialize daily backup scheduler
     // const agenda = require('agenda');
@@ -106,17 +103,16 @@ const initializeApp = async () => {
     app.use(errorHandler);
 
     // Step 6: Initialize AI service
-    // ⛔ DISABLED: Intelligent interview service disabled
-    // logger.section("Initializing intelligent interview service...");
-    // const serviceInitialized = await intelligentInterviewService.initialize();
+    logger.section("Initializing intelligent interview service...");
+    const serviceInitialized = await intelligentInterviewService.initialize();
 
-    // if (serviceInitialized) {
-    //   logger.success("Interview service initialization completed");
-    // } else {
-    //   logger.warn(
-    //     "Interview service initialization completed with warnings - Interview features may be limited",
-    //   );
-    // }
+    if (serviceInitialized) {
+      logger.success("Interview service initialization completed");
+    } else {
+      logger.warn(
+        "Interview service initialization completed with warnings - Interview features may be limited",
+      );
+    }
 
     // Step 6.5: Initialize backup service
     // logger.section('Initializing database backup service...');

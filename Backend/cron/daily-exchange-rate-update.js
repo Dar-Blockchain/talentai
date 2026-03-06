@@ -1,5 +1,4 @@
 // cron/daily-exchange-rate-update.js
-// ⛔ DISABLED - daily exchange rate update
 const cron = require('node-cron');
 const axios = require('axios');
 const MatchingConfig = require('../models/MatchingConfig.model');
@@ -31,14 +30,13 @@ async function updateExchangeRatesForAll(newRates = {}) {
 }
 
 function initialize() {
-  console.log('⛔ Daily exchange rate update cron is DISABLED');
-  // cron.schedule('0 0 * * *', async () => {
-  //   console.log('⏰ [Cron] Fetching live exchange rates...');
-  //   const liveRates = await fetchLiveExchangeRates();
-  //   if (!liveRates) return console.log('⚠️ No live rates available, skipping update...');
-  //   await updateExchangeRatesForAll(liveRates);
-  //   console.log('✅ [Cron] Live exchange rate update complete');
-  // });
+  cron.schedule('0 0 * * *', async () => {
+    console.log('⏰ [Cron] Fetching live exchange rates...');
+    const liveRates = await fetchLiveExchangeRates();
+    if (!liveRates) return console.log('⚠️ No live rates available, skipping update...');
+    await updateExchangeRatesForAll(liveRates);
+    console.log('✅ [Cron] Live exchange rate update complete');
+  });
 }
 
 module.exports = { initialize };
