@@ -1,10 +1,13 @@
 import React from 'react';
-import { Box, Typography, Paper, Button } from '@mui/material';
+import { Box, Typography, Button, LinearProgress, Chip, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { InterviewStatus, InterviewConfig, ConnectionStatus, CameraStatus, AgentState } from '@/types/interview';
-import StatusChips from './StatusChips';
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
@@ -12,7 +15,6 @@ interface InterviewContainerProps {
   isHydrated: boolean;
   connectionStatus: ConnectionStatus;
   cameraStatus: CameraStatus;
-  isVoiceActive: boolean;
   agentState: AgentState;
   onStartInterview: () => void;
   onEndInterview: () => void;
@@ -20,216 +22,274 @@ interface InterviewContainerProps {
   routerQuery: any;
 }
 
+const PURPLE = '#8310FF';
+
 const InterviewContainer: React.FC<InterviewContainerProps> = ({
   interviewStatus,
   interviewConfig,
   isHydrated,
   connectionStatus,
   cameraStatus,
-  isVoiceActive,
   agentState,
   onStartInterview,
   onEndInterview,
   onViewResults,
   routerQuery,
 }) => {
+  const interviewLabel =
+    interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
+      ? `${interviewConfig.context.targetRole} Technical Interview`
+      : interviewConfig.interviewType === 'ASSESSMENT'
+      ? 'Soft Skills Assessment'
+      : interviewConfig.interviewType === 'EVALUATION'
+      ? 'Psychotechnic Assessment'
+      : 'HR Interview';
+
+  const interviewSub =
+    interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
+      ? `${routerQuery.skill || 'Technical'} · ${interviewConfig.context.experienceLevel}`
+      : interviewConfig.interviewType === 'ASSESSMENT'
+      ? `${routerQuery.skill || 'Soft Skills'} · ${interviewConfig.context.experienceLevel}`
+      : 'AI-powered conversational interview';
+
+  const isActive = interviewStatus === 'active';
+  const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
+
+  const checks = [
+    { label: 'Camera access', ok: cameraStatus === 'granted' },
+    { label: 'System connected', ok: connectionStatus === 'connected' },
+    { label: 'Page loaded', ok: isHydrated },
+  ];
+
   return (
-    <Paper
-      elevation={6}
+    <Box
       sx={{
-        borderRadius: 4,
+        bgcolor: 'transparent',
+        borderRadius: '16px',
+        border: '1px solid #ede9f8',
         overflow: 'hidden',
-        background: 'linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%)',
-        border: '1px solid rgba(0,0,0,0.08)'
       }}
     >
-      {/* Header */}
-      <Box sx={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        p: 4,
-        textAlign: 'center',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
-          pointerEvents: 'none'
-        }
-      }}>
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Typography
-            variant="h3"
-            gutterBottom
-            sx={{
-              fontWeight: 700,
-              letterSpacing: '-0.5px',
-              mb: 1,
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
-          >
-            {interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
-              ? `${interviewConfig.context.targetRole} Technical Interview`
-              : interviewConfig.interviewType === 'ASSESSMENT'
-              ? 'Soft Skills Assessment'
-              : interviewConfig.interviewType === 'EVALUATION'
-              ? 'Psychotechnic Assessment'
-              : 'HR Interview Simulation'}
+      {/* ── Purple header stripe ── */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+          px: 2.5,
+          py: 1.75,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
+        <Box>
+          <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', fontFamily: 'Poppins', lineHeight: 1.2 }}>
+            {interviewLabel}
           </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              opacity: 0.95,
-              fontSize: '1.1rem',
-              fontWeight: 300
-            }}
-          >
-            {interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
-              ? `Validate ${routerQuery.skill || 'technical'} expertise • ${interviewConfig.context.experienceLevel}`
-              : interviewConfig.interviewType === 'ASSESSMENT'
-              ? `Assess ${routerQuery.skill || 'soft skill'} in ${routerQuery.category || 'general'} context • ${interviewConfig.context.experienceLevel}`
-              : 'Intelligent Real-time Interview with AI'}
+          <Typography sx={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.72rem', fontFamily: 'Poppins', mt: 0.2 }}>
+            {interviewSub}
           </Typography>
+        </Box>
 
-          {/* Status Indicators */}
-          <StatusChips
-            interviewStatus={interviewStatus}
-            isVoiceActive={isVoiceActive}
-            cameraStatus={cameraStatus}
-            agentState={agentState}
+        {/* Status pill */}
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.75,
+            bgcolor: 'rgba(255,255,255,0.18)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '20px',
+            px: 1.5,
+            py: 0.5,
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <Box
+            sx={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              bgcolor: isActive ? '#4ade80' : interviewStatus === 'ended' ? '#e9d5ff' : '#fff',
+              boxShadow: isActive ? '0 0 0 3px rgba(74,222,128,0.4)' : 'none',
+            }}
           />
+          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', color: '#fff' }}>
+            {interviewStatus === 'idle' ? 'Ready' : interviewStatus === 'connecting' ? 'Connecting…' : isActive ? 'Live' : 'Completed'}
+          </Typography>
         </Box>
       </Box>
 
-      {/* Interview Content */}
-      <Box sx={{ p: 5 }}>
+      {/* ── Progress bar (active only) ── */}
+      {isActive && (
+        <LinearProgress
+          variant="indeterminate"
+          sx={{
+            height: 3,
+            bgcolor: 'rgba(131,16,255,0.12)',
+            '& .MuiLinearProgress-bar': {
+              background: 'linear-gradient(90deg, #8310FF, #a855f7)',
+            },
+          }}
+        />
+      )}
+
+      {/* ── Body ── */}
+      <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
+
+        {/* ── IDLE ── */}
         {interviewStatus === 'idle' && (
-          <Box
-            textAlign="center"
-            py={6}
-            sx={{
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%)',
-              borderRadius: 3,
-              border: '2px dashed rgba(102, 126, 234, 0.2)'
-            }}
-          >
-            <Box sx={{ mb: 3 }}>
-              <PlayArrowIcon sx={{ fontSize: 60, color: '#667eea', opacity: 0.8 }} />
-            </Box>
-            <Typography
-              variant="h4"
-              gutterBottom
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon */}
+            <Box
               sx={{
-                fontWeight: 600,
-                color: '#2c3e50',
-                mb: 2
-              }}
-            >
-              Ready to Start Your Interview?
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                mb: 4,
-                fontSize: '1.1rem',
-                maxWidth: 600,
+                width: 72,
+                height: 72,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(131,16,255,0.12) 0%, rgba(168,85,247,0.08) 100%)',
+                border: '2px solid rgba(131,16,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 mx: 'auto',
-                lineHeight: 1.7
+                mb: 2,
               }}
             >
-              This is an AI-powered interview simulation that adapts to your responses and provides real-time feedback.
+              <PlayArrowIcon sx={{ fontSize: 36, color: PURPLE }} />
+            </Box>
+
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>
+              Ready to begin?
             </Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>
+              Your AI interviewer is ready and waiting.
+            </Typography>
+
+            {/* Pre-flight checks — inline, no box wrapper */}
+            <Box sx={{ mb: 3 }}>
+              {checks.map(({ label, ok }) => (
+                <Box
+                  key={label}
+                  display="flex"
+                  alignItems="center"
+                  gap={1.25}
+                  sx={{ py: 0.6, borderBottom: '1px solid #f3f4f6', '&:last-child': { borderBottom: 'none' } }}
+                >
+                  {ok
+                    ? <CheckCircleIcon sx={{ fontSize: 17, color: '#22c55e', flexShrink: 0 }} />
+                    : <RadioButtonUncheckedIcon sx={{ fontSize: 17, color: '#d1d5db', flexShrink: 0 }} />
+                  }
+                  <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: ok ? '#374151' : '#9ca3af', flex: 1, textAlign: 'left' }}>
+                    {label}
+                  </Typography>
+                  <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', fontWeight: 600, color: ok ? '#22c55e' : '#f59e0b' }}>
+                    {ok ? 'OK' : 'Waiting'}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+
             <Button
               variant="contained"
-              size="large"
+              fullWidth
               onClick={onStartInterview}
-              disabled={!isHydrated || connectionStatus !== 'connected' || cameraStatus !== 'granted'}
+              disabled={!allReady}
               startIcon={<PlayArrowIcon />}
               sx={{
-                px: 5,
-                py: 1.8,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                borderRadius: 3,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
-                },
-                '&:disabled': {
-                  background: '#bdbdbd',
-                  boxShadow: 'none'
-                }
+                fontFamily: 'Poppins',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                py: 1.5,
+                borderRadius: '12px',
+                background: allReady ? 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)' : undefined,
+                bgcolor: allReady ? undefined : '#e5e7eb',
+                textTransform: 'none',
+                boxShadow: allReady ? '0 6px 20px rgba(131,16,255,0.4)' : 'none',
+                '&:hover': { background: 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)', boxShadow: '0 8px 24px rgba(131,16,255,0.5)' },
+                '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
               }}
             >
               Start Interview
             </Button>
-            {(cameraStatus !== 'granted' && cameraStatus !== 'requesting') && (
-              <Typography
-                variant="caption"
-                color="warning.main"
-                sx={{
-                  mt: 2,
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  fontWeight: 500
-                }}
-              >
-                ⚠️ Camera access required to start interview
-              </Typography>
+
+            {cameraStatus !== 'granted' && cameraStatus !== 'requesting' && (
+              <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} sx={{ mt: 1.5 }}>
+                <VideocamIcon sx={{ fontSize: 15, color: '#f59e0b' }} />
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#f59e0b' }}>
+                  Camera permission required
+                </Typography>
+              </Box>
             )}
           </Box>
         )}
 
-        {interviewStatus === 'active' && (
-          <Box
-            textAlign="center"
-            py={8}
-            sx={{
-              background: 'linear-gradient(135deg, rgba(244, 67, 54, 0.03) 0%, rgba(229, 57, 53, 0.03) 100%)',
-              borderRadius: 3,
-              border: '2px solid rgba(244, 67, 54, 0.15)'
-            }}
-          >
-            <Box sx={{ mb: 3 }}>
-              <StopIcon sx={{ fontSize: 60, color: '#f44336', opacity: 0.8 }} />
-            </Box>
-            <Typography
-              variant="h5"
-              gutterBottom
-              sx={{
-                fontWeight: 600,
-                color: '#2c3e50',
-                mb: 4
-              }}
-            >
-              Interview in Progress
+        {/* ── CONNECTING ── */}
+        {interviewStatus === 'connecting' && (
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <CircularProgress size={48} sx={{ color: PURPLE, mb: 2 }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
+              Starting interview…
             </Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>
+              Please wait while we connect you to your AI interviewer.
+            </Typography>
+          </Box>
+        )}
+
+        {/* ── ACTIVE ── */}
+        {interviewStatus === 'active' && (
+          <Box sx={{ textAlign: 'center', py: 1 }}>
+            <Chip
+              label={
+                agentState === 'thinking' ? 'AI is thinking…'
+                : agentState === 'processing' ? 'Processing your answer…'
+                : agentState === 'waiting' ? 'Listening to you…'
+                : 'Ready'
+              }
+              sx={{
+                fontFamily: 'Poppins',
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                mb: 3,
+                height: 32,
+                bgcolor:
+                  agentState === 'thinking' || agentState === 'processing'
+                    ? 'rgba(245,158,11,0.1)'
+                    : agentState === 'waiting'
+                    ? 'rgba(34,197,94,0.1)'
+                    : 'rgba(131,16,255,0.08)',
+                color:
+                  agentState === 'thinking' || agentState === 'processing'
+                    ? '#d97706'
+                    : agentState === 'waiting'
+                    ? '#16a34a'
+                    : PURPLE,
+                border: '1px solid',
+                borderColor:
+                  agentState === 'thinking' || agentState === 'processing'
+                    ? 'rgba(245,158,11,0.25)'
+                    : agentState === 'waiting'
+                    ? 'rgba(34,197,94,0.25)'
+                    : 'rgba(131,16,255,0.2)',
+              }}
+            />
+
             <Button
               variant="contained"
-              size="large"
+              fullWidth
               onClick={onEndInterview}
               startIcon={<StopIcon />}
-              color="error"
               sx={{
-                px: 5,
-                py: 1.8,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                borderRadius: 3,
-                boxShadow: '0 4px 15px rgba(244, 67, 54, 0.3)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(244, 67, 54, 0.4)',
-                }
+                fontFamily: 'Poppins',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                py: 1.5,
+                borderRadius: '12px',
+                bgcolor: '#ef4444',
+                textTransform: 'none',
+                boxShadow: '0 6px 20px rgba(239,68,68,0.3)',
+                '&:hover': { bgcolor: '#dc2626', boxShadow: '0 8px 24px rgba(239,68,68,0.4)' },
               }}
             >
               End Interview
@@ -237,51 +297,46 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
         )}
 
+        {/* ── ENDED ── */}
         {interviewStatus === 'ended' && (
-          <Box
-            textAlign="center"
-            py={8}
-            sx={{
-              background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.03) 0%, rgba(67, 160, 71, 0.03) 100%)',
-              borderRadius: 3,
-              border: '2px solid rgba(76, 175, 80, 0.15)'
-            }}
-          >
-            <Box sx={{ mb: 3 }}>
-              <AssessmentIcon sx={{ fontSize: 60, color: '#4caf50', opacity: 0.8 }} />
-            </Box>
-            <Typography
-              variant="h4"
-              gutterBottom
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
               sx={{
-                fontWeight: 600,
-                color: '#2c3e50',
-                mb: 2
+                width: 72,
+                height: 72,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.08) 100%)',
+                border: '2px solid rgba(34,197,94,0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
               }}
             >
-              Interview Completed!
+              <CheckCircleOutlineIcon sx={{ fontSize: 36, color: '#22c55e' }} />
+            </Box>
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>
+              Interview complete!
             </Typography>
-            <Typography variant="body1" color="text.secondary" mb={4} sx={{ fontSize: '1.1rem' }}>
-              Thank you for participating. Your responses have been recorded and analyzed.
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>
+              Your responses have been recorded and are being analyzed.
             </Typography>
             <Button
               variant="contained"
-              size="large"
+              fullWidth
               onClick={onViewResults}
               startIcon={<AssessmentIcon />}
               sx={{
-                px: 5,
-                py: 1.8,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                borderRadius: 3,
-                background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
-                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)',
-                }
+                fontFamily: 'Poppins',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                py: 1.5,
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+                textTransform: 'none',
+                boxShadow: '0 6px 20px rgba(131,16,255,0.4)',
+                '&:hover': { background: 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)' },
               }}
             >
               View Results
@@ -289,7 +344,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
         )}
       </Box>
-    </Paper>
+    </Box>
   );
 };
 

@@ -1,19 +1,14 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Card,
-  CardContent,
-  Chip,
-  LinearProgress,
-  IconButton,
-} from '@mui/material';
+import { Box, Typography, LinearProgress, IconButton, Chip } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { InterviewStatus, Coverage, RealTimeReport } from '@/types/interview';
+
+const PURPLE = '#8310FF';
 
 interface CoverageDashboardProps {
   interviewStatus: InterviewStatus;
@@ -32,260 +27,312 @@ const CoverageDashboard: React.FC<CoverageDashboardProps> = ({
   coverageDashboardExpanded,
   onToggleExpand,
 }) => {
-  if (!(interviewStatus === 'active' || coverage)) {
-    return null;
-  }
+  if (!(interviewStatus === 'active' || coverage)) return null;
+
+  const overall = coverage?.overall || 0;
+
+  const getScoreColor = (pct: number) =>
+    pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+
+  const getScoreBg = (pct: number) =>
+    pct >= 80 ? 'rgba(34,197,94,0.1)' : pct >= 50 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
+
+  const getScoreBorder = (pct: number) =>
+    pct >= 80 ? 'rgba(34,197,94,0.25)' : pct >= 50 ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)';
 
   return (
-    <Paper elevation={3} sx={{
-      mt: 3,
-      background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.1) 0%, rgba(0, 184, 212, 0.1) 100%)',
-      border: '1px solid rgba(131, 16, 255, 0.2)',
-      borderRadius: 4,
-      overflow: 'hidden'
-    }}>
-      <Box sx={{
-        p: 2,
-        background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.8) 0%, rgba(0, 184, 212, 0.8) 100%)',
-        color: 'white',
-        cursor: 'pointer'
+    <Box
+      sx={{
+        bgcolor: '#fff',
+        borderRadius: '20px',
+        border: '1px solid #e8e2f5',
+        boxShadow: '0 8px 32px rgba(131,16,255,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
       }}
-      onClick={onToggleExpand}
+    >
+      {/* ── Header stripe ── */}
+      <Box
+        onClick={onToggleExpand}
+        sx={{
+          background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+          px: 2.5,
+          py: 1.75,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <AssessmentIcon sx={{ color: '#fff', fontSize: 20 }} />
           <Box>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}>
-              <AssessmentIcon />
-              AI Coverage Intelligence Dashboard
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#fff', lineHeight: 1.2 }}>
+              AI Coverage Intelligence
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-              Real-time intelligent analysis of interview coverage
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: 'rgba(255,255,255,0.72)', mt: 0.15 }}>
+              Real-time analysis of interview coverage
             </Typography>
           </Box>
-          <IconButton sx={{ color: 'white' }}>
-            {coverageDashboardExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </Box>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          {overall > 0 && (
+            <Box
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.18)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '20px',
+                px: 1.5,
+                py: 0.4,
+              }}
+            >
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.78rem', color: '#fff' }}>
+                {overall}% coverage
+              </Typography>
+            </Box>
+          )}
+          <IconButton size="small" sx={{ color: '#fff', p: 0.5 }}>
+            {coverageDashboardExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
           </IconButton>
         </Box>
       </Box>
 
-      {/* Collapsible Content */}
       {coverageDashboardExpanded && (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, p: 3 }}>
-        {/* Overall Coverage */}
-        <Box sx={{ width: { xs: '100%', md: 'calc(33.333% - 11px)' } }}>
-          <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
-            <CardContent>
-              <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+          {/* ── Top row: Overall score + AI Focus ── */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 2fr' }, gap: 2 }}>
+
+            {/* Overall coverage donut-style */}
+            <Box
+              sx={{
+                bgcolor: 'rgba(250,246,255,1)',
+                border: '1px solid rgba(189,133,255,0.25)',
+                borderRadius: '14px',
+                p: 2.5,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.8rem', color: '#374151' }}>
                 Overall Coverage
               </Typography>
-              <Box sx={{ textAlign: 'center', mb: 2 }}>
-                <Typography variant="h3" sx={{ color: '#00ff9d', fontWeight: 700 }}>
-                  {coverage?.overall || 0}%
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#666' }}>
-                  Interview Completion
-                </Typography>
-              </Box>
+              <Typography
+                sx={{
+                  fontFamily: 'Poppins',
+                  fontWeight: 800,
+                  fontSize: '2.4rem',
+                  color: overall > 0 ? getScoreColor(overall) : PURPLE,
+                  lineHeight: 1,
+                }}
+              >
+                {overall}%
+              </Typography>
               <LinearProgress
                 variant="determinate"
-                value={coverage?.overall || 0}
+                value={overall}
                 sx={{
+                  width: '100%',
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  bgcolor: 'rgba(131,16,255,0.08)',
                   '& .MuiLinearProgress-bar': {
-                    background: 'linear-gradient(90deg, #8310FF 0%, #00ff9d 100%)',
+                    background: overall > 0
+                      ? `linear-gradient(90deg, ${getScoreColor(overall)}, ${getScoreColor(overall)}cc)`
+                      : 'linear-gradient(90deg, #8310FF, #a855f7)',
                     borderRadius: 4,
                   },
                 }}
               />
-            </CardContent>
-          </Card>
-        </Box>
-
-        {/* AI Insights */}
-        <Box sx={{ width: { xs: '100%', md: 'calc(66.666% - 11px)' } }}>
-          <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
-            <CardContent>
-              <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
-                AI Intelligence Insights
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af' }}>
+                Interview Completion
               </Typography>
-              {realTimeReport?.aiInsights ? (
-                <Box sx={{ maxHeight: 120, overflowY: 'auto' }}>
-                  {realTimeReport.aiInsights.map((insight: string, index: number) => (
-                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <PsychologyIcon sx={{ fontSize: 16, color: '#00ff9d' }} />
-                      <Typography variant="body2" sx={{ color: '#333' }}>
-                        {insight}
-                      </Typography>
-                    </Box>
-                  ))}
+            </Box>
+
+            {/* AI current focus */}
+            <Box
+              sx={{
+                bgcolor: 'rgba(250,246,255,1)',
+                border: '1px solid rgba(189,133,255,0.25)',
+                borderRadius: '14px',
+                p: 2.5,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={0.75}>
+                <Box
+                  sx={{
+                    width: 28, height: 28, borderRadius: '8px',
+                    bgcolor: 'rgba(131,16,255,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <PsychologyIcon sx={{ fontSize: 16, color: PURPLE }} />
                 </Box>
-              ) : (
-                <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic' }}>
-                  AI insights will appear as the interview progresses...
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: '#374151' }}>
+                  AI Decision Intelligence
                 </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: '#fff',
+                  border: '1px solid rgba(189,133,255,0.2)',
+                  borderRadius: '10px',
+                  p: 1.5,
+                  flex: 1,
+                }}
+              >
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#374151', lineHeight: 1.6, fontWeight: 500 }}>
+                  {agentMessage || 'Analyzing conversation flow…'}
+                </Typography>
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', mt: 0.75, lineHeight: 1.5 }}>
+                  The AI continuously analyzes responses, prevents repetition, and ensures comprehensive coverage of all competency areas.
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
 
-        {/* Coverage Areas Breakdown */}
-        <Box sx={{ width: '100%' }}>
-          <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
-            <CardContent>
-              <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 3 }}>
-                Competency Coverage Analysis
+          {/* ── Competency areas ── */}
+          {coverage?.areas && Object.keys(coverage.areas).length > 0 && (
+            <Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.85rem', color: '#111827', mb: 1.5, position: 'relative', display: 'inline-block', '&::after': { content: '""', position: 'absolute', bottom: -3, left: 0, width: 28, height: 3, bgcolor: PURPLE, borderRadius: 1 } }}>
+                Competency Coverage
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {coverage?.areas && Object.entries(coverage.areas).map(([areaName, areaData]: [string, any]) => (
-                  <Box key={areaName} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                    <Box sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      background: 'rgba(131, 16, 255, 0.1)',
-                      border: '1px solid rgba(131, 16, 255, 0.2)',
-                      height: '100%'
-                    }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#333' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: 1.5, mt: 0.5 }}>
+                {Object.entries(coverage.areas).map(([areaName, areaData]: [string, any]) => {
+                  const pct = areaData.percentage || 0;
+                  return (
+                    <Box
+                      key={areaName}
+                      sx={{
+                        p: 1.75,
+                        borderRadius: '12px',
+                        bgcolor: getScoreBg(pct),
+                        border: `1px solid ${getScoreBorder(pct)}`,
+                      }}
+                    >
+                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: '#374151' }}>
                           {areaName}
                         </Typography>
                         <Chip
                           size="small"
-                          label={`${areaData.percentage || 0}%`}
+                          label={`${pct}%`}
                           sx={{
-                            backgroundColor: areaData.percentage >= 80 ? '#4caf50' : areaData.percentage >= 50 ? '#ff9800' : '#f44336',
-                            color: 'white',
-                            fontWeight: 600
+                            height: 20,
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            fontFamily: 'Poppins',
+                            bgcolor: getScoreColor(pct),
+                            color: '#fff',
                           }}
                         />
                       </Box>
                       <LinearProgress
                         variant="determinate"
-                        value={areaData.percentage || 0}
+                        value={pct}
                         sx={{
-                          height: 6,
+                          height: 5,
                           borderRadius: 3,
-                          backgroundColor: 'rgba(255,255,255,0.2)',
+                          bgcolor: 'rgba(255,255,255,0.5)',
                           '& .MuiLinearProgress-bar': {
-                            background: areaData.percentage >= 80 ?
-                              'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)' :
-                              areaData.percentage >= 50 ?
-                              'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
-                              'linear-gradient(90deg, #f44336 0%, #e57373 100%)',
+                            bgcolor: getScoreColor(pct),
                             borderRadius: 3,
                           },
                         }}
                       />
-                      {areaData.aiAnalysis && (
-                        <Typography variant="caption" sx={{
-                          color: '#666',
-                          display: 'block',
-                          mt: 1,
-                          fontSize: '0.7rem',
-                          fontStyle: 'italic'
-                        }}>
-                          AI: {areaData.aiAnalysis.reasoning?.substring(0, 60)}...
+                      {areaData.aiAnalysis?.reasoning && (
+                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', color: '#6b7280', mt: 0.75, lineHeight: 1.4, fontStyle: 'italic' }}>
+                          {areaData.aiAnalysis.reasoning.substring(0, 60)}…
                         </Typography>
                       )}
                     </Box>
-                  </Box>
-                ))}
+                  );
+                })}
               </Box>
-            </CardContent>
-          </Card>
-        </Box>
+            </Box>
+          )}
 
-        {/* Real-time Recommendations */}
-        {realTimeReport?.recommendations && realTimeReport.recommendations.length > 0 && (
-          <Box sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-            <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
-              <CardContent>
-                <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
-                  AI Recommendations
-                </Typography>
-                <Box sx={{ maxHeight: 150, overflowY: 'auto' }}>
-                  {realTimeReport.recommendations.map((rec: string, index: number) => (
-                    <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
-                      <Box sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: '#00ff9d',
-                        mt: 0.5,
-                        flexShrink: 0
-                      }} />
-                      <Typography variant="body2" sx={{ color: '#333', lineHeight: 1.4 }}>
-                        {rec}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
+          {/* ── Insights + Recommendations + Trends ── */}
+          {(realTimeReport?.aiInsights?.length > 0 || realTimeReport?.recommendations?.length > 0 || realTimeReport?.trends?.length > 0) && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
 
-        {/* Performance Trends */}
-        {realTimeReport?.trends && realTimeReport.trends.length > 0 && (
-          <Box sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-            <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
-              <CardContent>
-                <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
-                  Performance Trends
-                </Typography>
-                <Box sx={{ maxHeight: 150, overflowY: 'auto' }}>
-                  {realTimeReport.trends.map((trend: string, index: number) => (
-                    <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
-                      <Box sx={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '4px solid transparent',
-                        borderRight: '4px solid transparent',
-                        borderBottom: '6px solid #00b8d4',
-                        mt: 0.5,
-                        flexShrink: 0
-                      }} />
-                      <Typography variant="body2" sx={{ color: '#333', lineHeight: 1.4 }}>
-                        {trend}
-                      </Typography>
-                    </Box>
-                  ))}
+              {realTimeReport?.aiInsights?.length > 0 && (
+                <Box sx={{ bgcolor: 'rgba(250,246,255,1)', border: '1px solid rgba(189,133,255,0.25)', borderRadius: '14px', p: 2 }}>
+                  <Box display="flex" alignItems="center" gap={0.75} mb={1.25}>
+                    <PsychologyIcon sx={{ fontSize: 15, color: PURPLE }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.78rem', color: '#374151' }}>
+                      AI Insights
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, maxHeight: 130, overflowY: 'auto' }}>
+                    {realTimeReport.aiInsights.map((insight: string, i: number) => (
+                      <Box key={i} display="flex" alignItems="flex-start" gap={0.75}>
+                        <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: PURPLE, mt: 0.55, flexShrink: 0 }} />
+                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#4b5563', lineHeight: 1.5 }}>{insight}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
+              )}
 
-        {/* AI Decision History */}
-        {interviewStatus === 'active' && (
-          <Box sx={{ width: '100%' }}>
-            <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
-              <CardContent>
-                <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
-                  AI Decision Intelligence
-                </Typography>
-                <Box sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  background: 'rgba(0, 255, 157, 0.1)',
-                  border: '1px solid rgba(0, 255, 157, 0.2)'
-                }}>
-                  <Typography variant="body2" sx={{ color: '#333', mb: 1, fontWeight: 500 }}>
-                    Current AI Focus: {agentMessage || 'Analyzing conversation flow...'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>
-                    The AI is continuously analyzing responses, preventing question repetition, and ensuring comprehensive coverage of all competency areas.
-                  </Typography>
+              {realTimeReport?.recommendations?.length > 0 && (
+                <Box sx={{ bgcolor: 'rgba(240,253,244,1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '14px', p: 2 }}>
+                  <Box display="flex" alignItems="center" gap={0.75} mb={1.25}>
+                    <LightbulbOutlinedIcon sx={{ fontSize: 15, color: '#22c55e' }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.78rem', color: '#374151' }}>
+                      Recommendations
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, maxHeight: 130, overflowY: 'auto' }}>
+                    {realTimeReport.recommendations.map((rec: string, i: number) => (
+                      <Box key={i} display="flex" alignItems="flex-start" gap={0.75}>
+                        <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#22c55e', mt: 0.55, flexShrink: 0 }} />
+                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#4b5563', lineHeight: 1.5 }}>{rec}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
+              )}
+
+              {realTimeReport?.trends?.length > 0 && (
+                <Box sx={{ bgcolor: 'rgba(254,252,232,1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '14px', p: 2 }}>
+                  <Box display="flex" alignItems="center" gap={0.75} mb={1.25}>
+                    <TrendingUpIcon sx={{ fontSize: 15, color: '#f59e0b' }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.78rem', color: '#374151' }}>
+                      Performance Trends
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, maxHeight: 130, overflowY: 'auto' }}>
+                    {realTimeReport.trends.map((trend: string, i: number) => (
+                      <Box key={i} display="flex" alignItems="flex-start" gap={0.75}>
+                        <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: '#f59e0b', mt: 0.55, flexShrink: 0 }} />
+                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#4b5563', lineHeight: 1.5 }}>{trend}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+            </Box>
+          )}
+
+          {/* Empty state when interview is active but no data yet */}
+          {!coverage && !realTimeReport && interviewStatus === 'active' && (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#9ca3af', fontStyle: 'italic' }}>
+                Coverage data will appear as the interview progresses…
+              </Typography>
+            </Box>
+          )}
+
         </Box>
       )}
-    </Paper>
+    </Box>
   );
 };
 
