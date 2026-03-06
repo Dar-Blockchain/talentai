@@ -22,9 +22,7 @@ const { initializeSocketServer } = require("./socket-handlers/socket-server");
 // Import services
 const connectDB = require("./config/mongo.connection");
 const socket = require("./socket");
-const {
-  initializeAgenda,
-} = require("./services/Agent&AgendaServices/agenda.service");
+//const { initializeAgenda } = require("./services/Agent&AgendaServices/agenda.service");
 const intelligentInterviewService = require("./services/intelligentInterview.service");
 const intelligentInterviewController = require("./controllers/intelligentInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
@@ -33,8 +31,9 @@ const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
 // Auto-load CRON jobs
-const { initializeCronJobs } = require("./cron");
-initializeCronJobs();
+// ⛔ DISABLED: All cron jobs disabled
+//const { initializeCronJobs } = require("./cron");
+//initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module
@@ -81,7 +80,7 @@ const initializeApp = async () => {
     }
 
     // Step 2: Initialize scheduler
-    await initializeAgenda();
+    //await initializeAgenda();
 
     // Step 2.5: Initialize daily backup scheduler
     // const agenda = require('agenda');
