@@ -463,18 +463,28 @@ class IntelligentInterviewController {
     try {
       const timestamp = new Date().toISOString();
 
+      // Validate socket is still connected before emitting
+      if (!socket.connected) {
+        console.warn(`⚠️ [Controller] Socket disconnected, skipping emit for session: ${sessionId}`);
+        return;
+      }
+
+      // Validate decision.content — fallback if undefined
+      const content = decision.content || "Can you tell me more about your experience?";
+      if (!decision.content) {
+        console.warn(`⚠️ [Controller] decision.content was undefined for action: ${decision.action}, using fallback`);
+      }
+
       switch (decision.action) {
         case "immediate_intervention":
-          // INTELLIGENT SYSTEM: Immediate help needed (< 1s response)
           socket.emit("interviewer_message", {
             type: "intervention",
             subtype: decision.interventionType,
-            content: decision.content,
+            content,
             reasoning: decision.reasoning,
             urgency: decision.urgency,
             timestamp,
             sessionId,
-            lightweight: true,
           });
           console.log(
             `🚨 [Immediate Intervention] ${decision.interventionType} - ${decision.urgency} urgency`,
@@ -482,25 +492,20 @@ class IntelligentInterviewController {
           break;
 
         case "continue_probing":
-          // INTELLIGENT SYSTEM or normal AI decision
           socket.emit("interviewer_message", {
             type: "question",
-            content: decision.content,
+            content,
             reasoning: decision.reasoning,
             timestamp,
             sessionId,
-            lightweight: decision.metadata?.lightweight || false,
           });
-          console.log(
-            `💬 [Continue Probing] ${decision.metadata?.lightweight ? "(Optimized)" : "(Full AI)"}`,
-          );
+          console.log(`💬 [Continue Probing] (Full AI)`);
           break;
 
         case "question":
-          // Send new question to candidate
           socket.emit("interviewer_message", {
             type: "question",
-            content: decision.content,
+            content,
             reasoning: decision.reasoning,
             nextFocus: decision.nextFocus,
             timestamp,
@@ -509,10 +514,9 @@ class IntelligentInterviewController {
           break;
 
         case "probe_deeper":
-          // Send follow-up question
           socket.emit("interviewer_message", {
             type: "follow_up",
-            content: decision.content,
+            content,
             reasoning: decision.reasoning,
             timestamp,
             sessionId,
@@ -520,7 +524,6 @@ class IntelligentInterviewController {
           break;
 
         case "change_topic":
-          // Signal topic change and send new question
           socket.emit("topic_change", {
             newTopic: decision.nextFocus,
             reason: decision.reasoning,
@@ -528,19 +531,30 @@ class IntelligentInterviewController {
             sessionId,
           });
 
-          socket.emit("interviewer_message", {
-            type: "new_topic",
-            content: decision.content,
-            topic: decision.nextFocus,
+          if (socket.connected) {
+            socket.emit("interviewer_message", {
+              type: "new_topic",
+              content,
+              topic: decision.nextFocus,
+              timestamp,
+              sessionId,
+            });
+          }
+          break;
+
+        case "wrap_up":
+          socket.emit("interview_wrap_up", {
+            message: content,
+            reasoning: decision.reasoning,
             timestamp,
             sessionId,
           });
           break;
 
-        case "wrap_up":
-          // Signal interview wrap-up
-          socket.emit("interview_wrap_up", {
-            message: decision.content,
+        case "end_interview":
+          socket.emit("interviewer_message", {
+            type: "end_interview",
+            content,
             reasoning: decision.reasoning,
             timestamp,
             sessionId,
@@ -548,37 +562,39 @@ class IntelligentInterviewController {
           break;
 
         default:
-          // Default to question
           socket.emit("interviewer_message", {
             type: "question",
-            content: decision.content,
+            content,
             timestamp,
             sessionId,
           });
       }
 
-      // Always emit coverage update
-      const session = await this.service.sessionManager.getSession(sessionId);
-      if (session) {
-        socket.emit("coverage_update", {
-          coverage: session.coverage,
-          timestamp,
-          sessionId,
-        });
+      // Always emit coverage update (check connected)
+      if (socket.connected) {
+        const session = await this.service.sessionManager.getSession(sessionId);
+        if (session) {
+          socket.emit("coverage_update", {
+            coverage: session.coverage,
+            timestamp,
+            sessionId,
+          });
 
-        // Emit real-time report update
-        socket.emit("report_update", {
-          report: session.realTimeReport,
-          timestamp,
-          sessionId,
-        });
+          socket.emit("report_update", {
+            report: session.realTimeReport,
+            timestamp,
+            sessionId,
+          });
+        }
       }
     } catch (error) {
       console.error("❌ Failed to handle AI decision:", error.message);
-      socket.emit("interview_error", {
-        error: "Failed to process AI decision",
-        message: error.message,
-      });
+      if (socket.connected) {
+        socket.emit("interview_error", {
+          error: "Failed to process AI decision",
+          message: error.message,
+        });
+      }
     }
   }
 

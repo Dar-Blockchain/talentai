@@ -236,48 +236,8 @@ class ConfigManager {
       }
     };
 
-    this.companyProfiles = {
-      Google: {
-        culture: ["innovation", "collaboration", "data-driven", "user-focused"],
-        values: ["transparency", "excellence", "diversity", "impact"],
-        workStyle: "fast-paced",
-        decisionMaking: "consensus-based",
-        growthOpportunities: ["technical leadership", "mentoring", "cross-team projects"],
-        challenges: ["scale", "performance", "user experience", "technical debt"]
-      },
-      Meta: {
-        culture: ["move fast", "be bold", "focus on impact", "build social value"],
-        values: ["connection", "community", "innovation", "authenticity"],
-        workStyle: "move fast and break things",
-        decisionMaking: "data-driven",
-        growthOpportunities: ["product ownership", "global impact", "technical innovation"],
-        challenges: ["massive scale", "real-time systems", "global compliance"]
-      },
-      Amazon: {
-        culture: ["customer obsession", "ownership", "invent and simplify", "learn and be curious"],
-        values: ["customer first", "operational excellence", "frugality", "bias for action"],
-        workStyle: "high ownership",
-        decisionMaking: "written narratives",
-        growthOpportunities: ["leadership principles", "business ownership", "innovation"],
-        challenges: ["scale efficiency", "cost optimization", "customer satisfaction"]
-      },
-      Airbnb: {
-        culture: ["belong anywhere", "champion the mission", "be a host", "embrace adventure"],
-        values: ["belonging", "trust", "quality", "innovation"],
-        workStyle: "collaborative",
-        decisionMaking: "design thinking",
-        growthOpportunities: ["global perspective", "design excellence", "community building"],
-        challenges: ["trust and safety", "global regulations", "community management"]
-      },
-      EY: {
-        culture: ["building trust", "quality excellence", "professional integrity", "client focus"],
-        values: ["integrity", "respect", "teaming", "inclusiveness"],
-        workStyle: "professional excellence",
-        decisionMaking: "consensus and expertise",
-        growthOpportunities: ["client leadership", "industry expertise", "global mobility"],
-        challenges: ["regulatory compliance", "client expectations", "digital transformation"]
-      }
-    };
+    // Dynamic company profiles — no longer hardcoded to 5 companies
+    this.companyProfiles = {};
   }
 
   /**
@@ -285,7 +245,15 @@ class ConfigManager {
    */
   createIntelligentConfig(userConfig) {
     const baseConfig = this.defaultConfigs[userConfig.interviewType] || this.defaultConfigs.HR_INTERVIEW;
-    const companyProfile = this.companyProfiles[userConfig.context?.targetCompany] || this.companyProfiles.Google;
+    const companyName = userConfig.context?.targetCompany || 'the company';
+    const companyProfile = this.companyProfiles[companyName] || {
+      culture: ["professional growth", "collaboration", "excellence"],
+      values: ["integrity", "innovation", "teamwork"],
+      workStyle: "professional",
+      decisionMaking: "collaborative",
+      growthOpportunities: ["career development", "skill building"],
+      challenges: ["industry challenges", "growth and scaling"]
+    };
 
     return {
       interviewType: userConfig.interviewType,

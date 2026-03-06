@@ -2,12 +2,9 @@
  * Contextual Interventions Generator
  * Generates appropriate AI-powered intervention messages based on context
  * 6 intervention types: encouragement, elaboration, clarification, refocus, probe, continuation
- *
- * NOTE: Disabled for MVP - using manual "Next" button flow only
  */
 
-// REMOVED: Module doesn't exist - not needed for MVP manual flow
-// const togetherAI = require('../services/togetherAI');
+const bedrock = require('../helpers/bedrock.helpers');
 
 class ContextualInterventions {
 
@@ -35,13 +32,12 @@ Confidence level: ${lastResponse.confidence}
 Generate a brief encouraging message.`;
 
     try {
-      const response = await togetherAI.chat([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
-        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-        max_tokens: 150,
-        temperature: 0.7
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: 150,
+        temperature: 0.7,
+        timeout: 8000
       });
 
       let message = response.content.trim();
@@ -98,13 +94,12 @@ Candidate's response summary:
 Generate a natural request for more detail.`;
 
     try {
-      const response = await togetherAI.chat([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
-        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-        max_tokens: 150,
-        temperature: 0.7
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: 150,
+        temperature: 0.7,
+        timeout: 8000
       });
 
       let message = response.content.trim();
@@ -159,13 +154,12 @@ Candidate's response analysis:
 Generate a gentle clarification request.`;
 
     try {
-      const response = await togetherAI.chat([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
-        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-        max_tokens: 150,
-        temperature: 0.7
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: 150,
+        temperature: 0.7,
+        timeout: 8000
       });
 
       let message = response.content.trim();
@@ -220,13 +214,12 @@ Candidate's response:
 Generate a polite refocusing message.`;
 
     try {
-      const response = await togetherAI.chat([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
-        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-        max_tokens: 150,
-        temperature: 0.7
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: 150,
+        temperature: 0.7,
+        timeout: 8000
       });
 
       let message = response.content.trim();
@@ -282,13 +275,12 @@ Candidate's response:
 Generate a probing follow-up question.`;
 
     try {
-      const response = await togetherAI.chat([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
-        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-        max_tokens: 150,
-        temperature: 0.7
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: 150,
+        temperature: 0.7,
+        timeout: 8000
       });
 
       let message = response.content.trim();
@@ -341,13 +333,12 @@ Candidate's communication style: ${behaviorProfile?.style || 'medium'}
 Generate a natural continuation prompt.`;
 
     try {
-      const response = await togetherAI.chat([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
-        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-        max_tokens: 150,
-        temperature: 0.7
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        maxTokens: 150,
+        temperature: 0.7,
+        timeout: 8000
       });
 
       let message = response.content.trim();

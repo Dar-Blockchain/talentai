@@ -3,9 +3,11 @@
  * Core AI engine for adaptive interview management
  */
 
-const { Together } = require("together-ai");
+const bedrock = require("../helpers/bedrock.helpers");
+const ragService = require("./rag.service");
 const configManager = require("../utils/config-manager");
 const redisSessionManager = require("../utils/redis-session-manager");
+const Post = require("../models/Post.model");
 require('dotenv').config();
 
 /**
@@ -134,59 +136,23 @@ class AIUtils {
  * Memory AI - Manages conversation memory and semantic deduplication
  */
 class MemoryAI {
-  constructor(together, sessionManager) {
-    this.together = together;
+  constructor(sessionManager) {
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async analyzeQuestionSimilarity(newQuestion, sessionHistory, sessionId) {
     try {
-      // Extract previous questions from session history
-      const previousQuestions = sessionHistory
-        .filter(entry => entry.type === 'interviewer' && entry.content.includes('?'))
-        .map(entry => ({ question: entry.content, timestamp: entry.timestamp }));
-
-      if (previousQuestions.length === 0) {
-        return { isSimilar: false, confidence: 0, reasoning: "No previous questions to compare" };
-      }
-
-      const systemPrompt = `You are an AI that analyzes interview question similarity. Determine if questions have similar INTENT and PURPOSE, not just similar words.
-
-CRITICAL ANALYSIS CRITERIA:
-- Questions asking about the same skill/competency are SIMILAR
-- Different phrasings of the same concept are SIMILAR
-- Questions targeting different aspects of the same topic may be DIFFERENT
-- Consider the interview flow and natural progression
-
-RESPONSE FORMAT (JSON only):
-{
-  "isSimilar": boolean,
-  "confidence": number,
-  "reasoning": "detailed explanation",
-  "similarQuestions": [{"index": number, "similarity": number}],
-  "recommendations": "suggestions for question variation"
-}`;
-
-      const userPrompt = `NEW QUESTION: "${newQuestion}"
-
-PREVIOUS QUESTIONS:
-${previousQuestions.map((q, i) => `${i + 1}. "${q.question}" (${q.timestamp})`).join('\n')}
-
-Analyze if the new question is semantically similar to any previous questions.`;
-
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.2,
-        max_tokens: 800
-      });
-
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'analyzeQuestionSimilarity');
+      // Use RAG vector search instead of LLM call (100x faster, near-free)
+      const result = await ragService.findSimilarQuestions(sessionId, newQuestion);
+      return {
+        isSimilar: result.isSimilar,
+        confidence: result.isSimilar ? Math.round(result.score * 100) : 0,
+        reasoning: result.isSimilar
+          ? `Similar to: "${result.similarQuestion}" (score: ${result.score.toFixed(2)})`
+          : "No similar questions found via vector search",
+        similarQuestions: result.isSimilar ? [{ question: result.similarQuestion, similarity: result.score }] : [],
+        recommendations: result.isSimilar ? "Generate alternative question for same area" : "Question is unique"
+      };
     } catch (error) {
       console.error('Error in analyzeQuestionSimilarity:', error);
       return { isSimilar: false, confidence: 0, reasoning: "Analysis failed", error: error.message };
@@ -228,18 +194,15 @@ RESPONSE FORMAT (JSON only):
   "keyInsights": ["important insights about candidate"]
 }`;
 
-      const aiResponse = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyze: "${candidateResponse}"` }
-        ],
+      const aiResponse = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Analyze: "${candidateResponse}"` }],
         temperature: 0.3,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 12000
       });
 
-      const responseContent = aiResponse.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'analyzeResponseIntelligence');
+      return AIUtils.parseJSONResponse(aiResponse.content, 'analyzeResponseIntelligence');
     } catch (error) {
       console.error('Error analyzing response intelligence:', error);
       return { error: error.message };
@@ -279,18 +242,15 @@ TARGET AREA: ${targetArea || 'General'}
 
 Evaluate if the response adequately answered the question. If clarification is needed, suggest a specific follow-up question.`;
 
-      const aiResponse = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const aiResponse = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.3,
-        max_tokens: 700
+        maxTokens: 700,
+        timeout: 12000
       });
 
-      const responseContent = aiResponse.choices[0].message.content.trim();
-      const result = AIUtils.parseJSONResponse(responseContent, 'analyzeResponseQuality');
+      const result = AIUtils.parseJSONResponse(aiResponse.content, 'analyzeResponseQuality');
 
       console.log(`🔍 [Response Quality] ${result.answeredQuestion ? '✅ Answered' : '❌ Not Answered'} - Score: ${result.qualityScore}/100`);
 
@@ -315,10 +275,8 @@ Evaluate if the response adequately answered the question. If clarification is n
  * Coverage Analysis AI - Intelligent topic coverage evaluation
  */
 class CoverageAnalysisAI {
-  constructor(together, sessionManager) {
-    this.together = together;
+  constructor(sessionManager) {
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async analyzeCoverageIntelligently(candidateResponse, currentCoverage, focusAreas, sessionHistory) {
@@ -351,7 +309,7 @@ RESPONSE FORMAT (JSON only):
   }
 }`;
 
-      const contextHistory = sessionHistory.slice(-5).map(entry =>
+      const contextHistory = sessionHistory.slice(-20).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
 
@@ -368,18 +326,15 @@ ${contextHistory}
 
 Analyze this response intelligently for coverage of focus areas. Look for implicit evidence and progressive skill demonstration.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.2,
-        max_tokens: 1200
+        maxTokens: 1200,
+        timeout: 15000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'analyzeCoverageIntelligently');
+      return AIUtils.parseJSONResponse(response.content, 'analyzeCoverageIntelligently');
     } catch (error) {
       console.error('Error in intelligent coverage analysis:', error);
       throw error;
@@ -424,18 +379,15 @@ ${areaHistory.map(entry => `${entry.type}: ${entry.content}`).join('\n')}
 
 Determine if this competency area has been sufficiently explored for the target role.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 12000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'determineIfCoverageIsSufficient');
+      return AIUtils.parseJSONResponse(response.content, 'determineIfCoverageIsSufficient');
     } catch (error) {
       console.error('Error determining coverage sufficiency:', error);
       return { isSufficient: false, confidence: 0, reasoning: "Analysis failed" };
@@ -447,10 +399,8 @@ Determine if this competency area has been sufficiently explored for the target 
  * Question Generator AI - Creates intelligent, targeted questions
  */
 class QuestionGeneratorAI {
-  constructor(together, sessionManager) {
-    this.together = together;
+  constructor(sessionManager) {
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo"; // Faster model for question generation
   }
 
   async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis) {
@@ -507,20 +457,26 @@ RESPONSE FORMAT (JSON only):
   "followUpStrategy": "potential follow-up approach"
 }`;
 
-      const recentContext = session.conversation.slice(-3).map(entry =>
+      const recentContext = session.conversation.slice(-20).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
+
+      // Include full JD context if cached in session
+      const jdContext = session.jobDescription
+        ? `\nJOB DESCRIPTION:\n${session.jobDescription.description || ''}\n\nREQUIREMENTS:\n${(session.jobDescription.requirements || []).join('\n')}\n\nRESPONSIBILITIES:\n${(session.jobDescription.responsibilities || []).join('\n')}`
+        : '';
 
       const userPrompt = `INTERVIEW CONTEXT:
 Role: ${session.config.context.targetRole}
 Company: ${session.config.context.targetCompany}
 Experience Level: ${session.config.context.experienceLevel}
+${jdContext}
 
 CURRENT COVERAGE ANALYSIS:
 ${JSON.stringify(coverageAnalysis, null, 2)}
 
 MEMORY ANALYSIS:
-Previous Questions: ${JSON.stringify(memoryAnalysis?.previousQuestions?.slice(-3) || [])}
+Previous Questions: ${JSON.stringify(memoryAnalysis?.previousQuestions?.slice(-5) || [])}
 
 RECENT CONVERSATION:
 ${recentContext}
@@ -528,20 +484,17 @@ ${recentContext}
 COVERAGE GAPS TO ADDRESS:
 ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || [])}
 
-Generate the next intelligent question that targets the most important coverage gap while maintaining natural conversation flow.`;
+Generate the next intelligent question that targets the most important coverage gap while maintaining natural conversation flow. Reference specific job requirements when relevant.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.7,
-        max_tokens: 500
+        maxTokens: 500,
+        timeout: 10000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'generateIntelligentQuestion');
+      return AIUtils.parseJSONResponse(response.content, 'generateIntelligentQuestion');
     } catch (error) {
       console.error('Error generating intelligent question:', error);
       throw error;
@@ -589,17 +542,15 @@ ${relevantHistory.map(entry => entry.content).join('\n---\n')}
 
 Generate a targeted question to explore this competency area more deeply. Respond with ONLY valid JSON.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const aiResponse = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 12000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
+      const responseContent = aiResponse.content;
 
       // Validate response is not suspiciously short or malformed
       if (responseContent.length < 10 || !responseContent.includes('{')) {
@@ -631,11 +582,9 @@ Generate a targeted question to explore this competency area more deeply. Respon
  * Decision Engine AI - Makes intelligent interview flow decisions
  */
 class DecisionEngineAI {
-  constructor(together, sessionManager, serviceInstance) {
-    this.together = together;
+  constructor(sessionManager, serviceInstance) {
     this.sessionManager = sessionManager;
     this.service = serviceInstance; // Reference to parent IntelligentInterviewService
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
@@ -797,18 +746,15 @@ Current Topic Area: ${currentArea || 'N/A'}
 
 Make the next intelligent decision for interview progression. Consider question counts to avoid over-asking on same topic.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.3,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 15000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'makeIntelligentDecision');
+      return AIUtils.parseJSONResponse(response.content, 'makeIntelligentDecision');
     } catch (error) {
       console.error('Error in intelligent decision making:', error);
       throw error;
@@ -819,15 +765,13 @@ Make the next intelligent decision for interview progression. Consider question 
 
 class IntelligentInterviewService {
   constructor() {
-    this.together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
     this.sessionManager = redisSessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
 
-    // Initialize AI service components
-    this.memoryAI = new MemoryAI(this.together, this.sessionManager);
-    this.coverageAI = new CoverageAnalysisAI(this.together, this.sessionManager);
-    this.questionAI = new QuestionGeneratorAI(this.together, this.sessionManager);
-    this.decisionAI = new DecisionEngineAI(this.together, this.sessionManager, this);
+    // Initialize AI service components (no longer need Together AI client)
+    this.memoryAI = new MemoryAI(this.sessionManager);
+    this.coverageAI = new CoverageAnalysisAI(this.sessionManager);
+    this.questionAI = new QuestionGeneratorAI(this.sessionManager);
+    this.decisionAI = new DecisionEngineAI(this.sessionManager, this);
   }
 
   /**
@@ -1137,18 +1081,15 @@ CONVERSATION LENGTH: ${session.conversation.length} exchanges
 
 Determine if interview objectives have been sufficiently met to end the session.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
-        max_tokens: 500
+        maxTokens: 500,
+        timeout: 12000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'shouldEndInterview');
+      return AIUtils.parseJSONResponse(response.content, 'shouldEndInterview');
     } catch (error) {
       console.error('Error determining interview end:', error);
       return { shouldEnd: false, confidence: 0, reasoning: "Analysis failed" };
@@ -1185,6 +1126,32 @@ Determine if interview objectives have been sufficiently met to end the session.
       const session = await this.sessionManager.createSession(sessionId, config, candidateId);
       console.log('✅ [Service] Session created in Redis');
 
+      // Fetch full job description from Post model and cache in session
+      let jobDescription = null;
+      try {
+        const jobId = userConfig.context?.jobId || userConfig.jobId;
+        if (jobId) {
+          const post = await Post.findById(jobId).select('title companyName jobDetails');
+          if (post?.jobDetails) {
+            jobDescription = {
+              title: post.title,
+              companyName: post.companyName,
+              description: post.jobDetails.description,
+              requirements: post.jobDetails.requirements || [],
+              responsibilities: post.jobDetails.responsibilities || []
+            };
+            console.log(`✅ [Service] Full JD loaded: ${jobDescription.title} (${jobDescription.requirements.length} requirements, ${jobDescription.responsibilities.length} responsibilities)`);
+
+            // Index JD for RAG (runs once, skips if already indexed)
+            ragService.indexJobDescription(jobId, jobDescription).catch(err =>
+              console.warn('⚠️ [RAG] JD indexing failed (non-blocking):', err.message)
+            );
+          }
+        }
+      } catch (jdError) {
+        console.warn('⚠️ [Service] Failed to load JD:', jdError.message);
+      }
+
       // Initialize interview timing and quality tracking
       const coverageAreas = Object.keys(session.coverage?.areas || {});
       const totalMinutes = config.sessionSettings?.duration || 20;
@@ -1197,6 +1164,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         maxDurationMinutes: totalMinutes,
         timeBudgetPerAreaMs,
         coverageAreaCount: coverageAreas.length,
+        jobDescription,
         qualityTracking: {
           consecutiveBadAnswers: 0,
           consecutiveGoodAnswers: 0,
@@ -1289,24 +1257,16 @@ Determine if interview objectives have been sufficiently met to end the session.
 
         console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
-        const response = await this.together.chat.completions.create({
-          model: config.models.fastModel,
-          messages: [
-            {
-              role: "system",
-              content: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
+        const response = await bedrock.callLLM({
+          systemPrompt: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences.",
+          messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
-          max_tokens: 400
+          maxTokens: 400,
+          timeout: 10000
         });
 
         const processingTime = Date.now() - startTime;
-        const greeting = response.choices[0].message.content.trim();
+        const greeting = response.content.trim();
 
         // Log the actual response for debugging
         console.log('✅ [Greeting] AI response received:', {
@@ -1736,14 +1696,17 @@ Determine if interview objectives have been sufficiently met to end the session.
         console.log(`✅ [Fallback] Generated next question to keep interview moving`);
       }
 
-      // Update real-time report with AI insights
-      const reportUpdate = await this.updateRealTimeReportIntelligently(
-        finalSession,
-        transcript,
-        coverageAnalysis,
-        decisionAnalysis
-      );
-      await this.sessionManager.updateRealTimeReport(sessionId, reportUpdate);
+      // Index the generated question in RAG for deduplication (fire-and-forget)
+      if (nextAction?.content) {
+        ragService.indexAskedQuestion(sessionId, nextAction.content).catch(err =>
+          console.warn('⚠️ [RAG] Question indexing failed (non-blocking):', err.message)
+        );
+      }
+
+      // Update real-time report with AI insights (FIRE-AND-FORGET — don't block question delivery)
+      this.updateRealTimeReportIntelligently(finalSession, transcript, coverageAnalysis, decisionAnalysis)
+        .then(reportUpdate => this.sessionManager.updateRealTimeReport(sessionId, reportUpdate))
+        .catch(err => console.warn('⚠️ [Report] Background update failed (non-blocking):', err.message));
 
       console.log('✅ AI processing complete');
 
@@ -1777,24 +1740,16 @@ Determine if interview objectives have been sufficiently met to end the session.
 
       const prompt = this.buildDecisionPrompt(session, candidateResponse);
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.thinkingModel,
-        messages: [
-          {
-            role: "system",
-            content: this.getDecisionSystemPrompt(config)
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt: this.getDecisionSystemPrompt(config),
+        messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
-        max_tokens: 800
+        maxTokens: 800,
+        timeout: 15000
       });
 
       const processingTime = Date.now() - startTime;
-      const decisionContent = response.choices[0].message.content.trim();
+      const decisionContent = response.content.trim();
 
       // Parse AI decision (expecting JSON format)
       let decision;
@@ -1865,23 +1820,15 @@ Determine if interview objectives have been sufficiently met to end the session.
         Return JSON format with coverage updates.
       `;
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.thinkingModel,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert interview analyst. Analyze responses for evidence of competencies and skills. Return structured JSON data."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt: "You are an expert interview analyst. Analyze responses for evidence of competencies and skills. Return structured JSON data.",
+        messages: [{ role: "user", content: prompt }],
         temperature: 0.3,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 12000
       });
 
-      const analysisContent = response.choices[0].message.content.trim();
+      const analysisContent = response.content.trim();
 
       let coverageAnalysis;
       try {
@@ -1973,23 +1920,15 @@ Determine if interview objectives have been sufficiently met to end the session.
         Return JSON format.
       `;
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.analysisModel,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert interview evaluator. Provide constructive, actionable feedback in real-time. Be specific and evidence-based."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt: "You are an expert interview evaluator. Provide constructive, actionable feedback in real-time. Be specific and evidence-based.",
+        messages: [{ role: "user", content: prompt }],
         temperature: 0.4,
-        max_tokens: 800
+        maxTokens: 800,
+        timeout: 15000
       });
 
-      const reportContent = response.choices[0].message.content.trim();
+      const reportContent = response.content.trim();
 
       let reportUpdate;
       try {
@@ -2145,23 +2084,15 @@ Example: "Take your time - there's no rush. Would you like me to rephrase the qu
 
         console.log(`🔇 [Silence] Attempt ${attempt}/${maxRetries} - Generating silence prompt...`);
 
-        const response = await this.together.chat.completions.create({
-          model: config.models.fastModel,
-          messages: [
-            {
-              role: "system",
-              content: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
+        const response = await bedrock.callLLM({
+          systemPrompt: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural.",
+          messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
-          max_tokens: 300
+          maxTokens: 300,
+          timeout: 8000
         });
 
-        const silencePrompt = response.choices[0].message.content.trim();
+        const silencePrompt = response.content.trim();
 
         // Log the response for debugging
         console.log('✅ [Silence] AI response received:', {
@@ -2251,18 +2182,15 @@ RESPONSE FORMAT (JSON only):
   "estimatedThinkingTime": number (in seconds)
 }`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyze this question: "${questionText}"` }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Analyze this question: "${questionText}"` }],
         temperature: 0.2,
-        max_tokens: 200
+        maxTokens: 200,
+        timeout: 8000
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      const parsed = AIUtils.parseJSONResponse(responseContent, 'detectQuestionComplexity');
+      const parsed = AIUtils.parseJSONResponse(response.content, 'detectQuestionComplexity');
 
       console.log(`🔍 [Complexity] Detected:`, {
         complexity: parsed.complexity,
@@ -2297,17 +2225,15 @@ Examples:
 - "No rush - I'm listening."
 - "Whenever you're ready."`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }],
         temperature: 0.7,
-        max_tokens: 100
+        maxTokens: 100,
+        timeout: 8000
       });
 
-      const patiencePrompt = response.choices[0].message.content.trim();
+      const patiencePrompt = response.content.trim();
 
       // Validation
       if (patiencePrompt.length < 10 || /^[a-z]+\d*$/i.test(patiencePrompt)) {
@@ -2356,17 +2282,15 @@ Examples:
 - "Can I break this into smaller parts for you?"
 - "Would you like me to provide a specific example?"`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }],
         temperature: 0.7,
-        max_tokens: 150
+        maxTokens: 150,
+        timeout: 8000
       });
 
-      const helpOffer = response.choices[0].message.content.trim();
+      const helpOffer = response.content.trim();
 
       // Validation
       if (helpOffer.length < 15 || /^[a-z]+\d*$/i.test(helpOffer)) {
@@ -2436,17 +2360,15 @@ ${recentContext}
 
 Rephrase this question to help the candidate answer it.`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo", // Use better model for rephrasing
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
-        max_tokens: 400
+        maxTokens: 400,
+        timeout: 10000
       });
 
-      const rephrasedQuestion = response.choices[0].message.content.trim();
+      const rephrasedQuestion = response.content.trim();
 
       // Validation
       if (rephrasedQuestion.length < 20 || /^[a-z]+\d*$/i.test(rephrasedQuestion)) {
@@ -2867,17 +2789,15 @@ ${JSON.stringify(decisionAnalysis, null, 2)}
 
 Update the real-time report with new AI-powered insights.`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.4,
-        max_tokens: 1000
+        maxTokens: 1000,
+        timeout: 15000
       });
 
-      const reportUpdate = AIUtils.parseJSONResponse(response.choices[0].message.content, 'updateRealTimeReport');
+      const reportUpdate = AIUtils.parseJSONResponse(response.content, 'updateRealTimeReport');
 
       return {
         ...reportUpdate,
@@ -2896,255 +2816,16 @@ Update the real-time report with new AI-powered insights.`;
     }
   }
 
-  /**
-   * INTELLIGENT RESPONSE SYSTEM - NEW METHODS
-   * Selective AI analysis to reduce costs by 60%
-   */
+  // REMOVED: shouldDoFullAnalysis — every response now gets full AI analysis
+
+  // REMOVED: quickCoverageUpdate — every response now gets full AI coverage analysis
 
   /**
-   * Determine if response needs full AI analysis or can use lightweight heuristics
-   */
-  shouldDoFullAnalysis(responseAnalysis, session) {
-    // SKIP AI for obviously good responses (save $$$ - 30% of responses)
-    if (responseAnalysis.quality >= 75) {
-      console.log('⚡ [Optimization] Skipping AI - response quality excellent:', responseAnalysis.quality);
-      return false;
-    }
-
-    // SKIP AI for obviously insufficient responses (save $$$ - 10% of responses)
-    if (responseAnalysis.wordCount < 10) {
-      console.log('⚡ [Optimization] Skipping AI - response too short:', responseAnalysis.wordCount);
-      return false;
-    }
-
-    // SKIP AI for generic acknowledgments (save $$$ - 5% of responses)
-    const genericPatterns = /^(yes|no|okay|ok|sure|i see|right|understood|got it)\.?$/i;
-    if (genericPatterns.test(session.lastTranscript?.trim())) {
-      console.log('⚡ [Optimization] Skipping AI - generic acknowledgment');
-      return false;
-    }
-
-    // USE AI every 3rd response minimum to maintain coverage tracking (15% of remaining)
-    const conversationLength = session.conversation?.length || 0;
-    const responseCount = Math.floor(conversationLength / 2); // Rough estimate of candidate responses
-    if (responseCount > 0 && responseCount % 3 !== 0) {
-      // Check if quality is consistently good
-      if (responseAnalysis.quality >= 60 && !responseAnalysis.needsSupport) {
-        console.log('⚡ [Optimization] Skipping AI - consistent quality, not 3rd response');
-        return false;
-      }
-    }
-
-    // USE AI for medium-quality responses needing interpretation (40% of responses)
-    if (responseAnalysis.quality >= 50 && responseAnalysis.quality < 75) {
-      console.log('🧠 [AI Required] Medium quality - needs interpretation:', responseAnalysis.quality);
-      return true;
-    }
-
-    // USE AI for struggling/off-topic/rambling responses (need better understanding)
-    if (['struggling', 'off_topic', 'rambling'].includes(responseAnalysis.type)) {
-      console.log('🧠 [AI Required] Problematic response type:', responseAnalysis.type);
-      return true;
-    }
-
-    // USE AI for longer responses needing interpretation
-    if (responseAnalysis.wordCount > 80) {
-      console.log('🧠 [AI Required] Long response needs analysis:', responseAnalysis.wordCount);
-      return true;
-    }
-
-    // Default: skip AI
-    console.log('⚡ [Optimization] Skipping AI - default case');
-    return false;
-  }
-
-  /**
-   * Quick coverage update without full AI analysis
-   * Update based on heuristic analysis only
-   */
-  async quickCoverageUpdate(sessionId, responseAnalysis) {
-    try {
-      const session = await this.sessionManager.getSession(sessionId);
-
-      // Extract likely areas from keywords in response
-      const keywords = responseAnalysis.signals.responseKeywords || [];
-      const updatedCoverage = { ...session.coverage };
-
-      // Simple keyword-to-area mapping
-      const areaKeywords = {
-        'technical_skills': ['code', 'programming', 'develop', 'build', 'system', 'database', 'api'],
-        'problem_solving': ['solve', 'problem', 'challenge', 'solution', 'approach', 'debug'],
-        'leadership': ['lead', 'manage', 'team', 'mentor', 'guide', 'coordinate'],
-        'communication': ['explain', 'present', 'discuss', 'communicate', 'collaborate'],
-        'experience': ['project', 'work', 'experience', 'role', 'position', 'company']
-      };
-
-      // Quick scoring based on keyword matches
-      for (const [area, areaWords] of Object.entries(areaKeywords)) {
-        const matches = keywords.filter(kw => areaWords.some(aw => kw.includes(aw) || aw.includes(kw)));
-
-        if (matches.length > 0 && updatedCoverage.areas[area]) {
-          // Increment score based on quality
-          const increment = Math.round(responseAnalysis.quality / 20); // 0-5 points
-          updatedCoverage.areas[area].score = Math.min(100, updatedCoverage.areas[area].score + increment);
-          updatedCoverage.areas[area].questionsAsked += 1;
-
-          console.log(`📊 [Quick Update] ${area}: +${increment} points (${matches.length} keywords matched)`);
-        }
-      }
-
-      await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
-
-      return {
-        updated: true,
-        method: 'heuristic',
-        areasUpdated: Object.keys(areaKeywords).filter(area =>
-          keywords.some(kw => areaKeywords[area].some(aw => kw.includes(aw) || aw.includes(kw)))
-        )
-      };
-
-    } catch (error) {
-      console.error('❌ Error in quick coverage update:', error);
-      return { updated: false, error: error.message };
-    }
-  }
-
-  /**
-   * Process candidate response with intelligent decision:
-   * - Use lightweight analysis first
-   * - Selectively call expensive AI (60% cost reduction)
+   * Process candidate response — always uses full AI analysis.
+   * Legacy alias kept for backward compatibility with controller.
    */
   async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
-    try {
-      const ResponseQualityAnalyzer = require('../utils/response-quality-analyzer');
-      const CandidateBehaviorTracker = require('../utils/candidate-behavior-tracker');
-      const ContextualInterventions = require('../utils/contextual-interventions');
-
-      const session = await this.sessionManager.getSession(sessionId);
-      if (!session) {
-        throw new Error(`Session ${sessionId} not found`);
-      }
-
-      // STEP 1: Lightweight heuristic analysis (< 1ms, $0)
-      const currentQuestion = session.currentQuestionContext?.originalQuestion || session.conversation[session.conversation.length - 1]?.content;
-      const responseAnalysis = ResponseQualityAnalyzer.analyzeResponseQuality(transcript, currentQuestion);
-
-      console.log('📊 [Response Analysis]', {
-        quality: responseAnalysis.quality,
-        type: responseAnalysis.type,
-        wordCount: responseAnalysis.wordCount,
-        needsSupport: responseAnalysis.needsSupport,
-        supportType: responseAnalysis.supportType
-      });
-
-      // STEP 2: Update behavior tracker
-      let behaviorTracker = CandidateBehaviorTracker.fromJSON(session.behaviorTrackerData);
-      behaviorTracker.addResponse(responseAnalysis);
-      await this.sessionManager.updateSession(sessionId, {
-        behaviorTrackerData: behaviorTracker.toJSON()
-      });
-
-      // REMOVED: No interventions for MVP - just generate next question always
-      // const immediateIntervention = behaviorTracker.needsImmediateIntervention(responseAnalysis);
-      // if (immediateIntervention.needed) { ... }
-
-      // STEP 3: Decide if full AI analysis is needed
-      const needsAI = this.shouldDoFullAnalysis(responseAnalysis, session);
-
-      if (needsAI) {
-        // USE EXPENSIVE AI ANALYSIS (40% of responses)
-        console.log('🧠 [Full AI Analysis] Response needs deep interpretation');
-
-        // Call original processCandidateResponse for full AI processing
-        return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
-      } else {
-        // SKIP EXPENSIVE AI (60% of responses - COST SAVINGS!)
-        console.log('⚡ [Optimized Path] Using lightweight processing');
-
-        // Store candidate response with lightweight analysis
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'candidate',
-          content: transcript,
-          timestamp: new Date().toISOString(),
-          metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
-        });
-
-        // Quick coverage update without AI
-        const coverageUpdate = await this.quickCoverageUpdate(sessionId, responseAnalysis);
-
-        // Check if delayed intervention is recommended
-        const delayedIntervention = behaviorTracker.needsDelayedIntervention(responseAnalysis);
-
-        // Generate next question using AI (still needed for quality questions)
-        // Build session locally instead of re-fetching from Redis
-        const lightweightSession = {
-          ...session,
-          conversation: [...session.conversation, {
-            type: 'candidate',
-            content: transcript,
-            timestamp: new Date().toISOString(),
-            metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
-          }]
-        };
-        const decisionAnalysis = {
-          decision: 'continue_probing',
-          targetArea: 'General',
-          reasoning: 'Continue conversation based on lightweight analysis'
-        };
-
-        const proposedQuestion = await AIUtils.withTimeout(
-          this.questionAI.generateIntelligentQuestion(
-            lightweightSession,
-            { overallAssessment: { recommendedFocus: ['General'] } },
-            { previousQuestions: lightweightSession.conversation.filter(e => e.type === 'interviewer') }
-          ),
-          10000,
-          'generateIntelligentQuestion (lightweight path)'
-        );
-
-        // Store interviewer question
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'interviewer',
-          content: proposedQuestion.question,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            aiGenerated: true,
-            lightweightProcessing: true,
-            targetAreas: proposedQuestion.targetAreas
-          }
-        });
-
-        // Save question for potential rephrasing
-        const complexity = await this.detectQuestionComplexity(proposedQuestion.question);
-        await this.sessionManager.saveCurrentQuestion(sessionId, proposedQuestion.question, complexity);
-
-        // Set area start time if this is the first question targeting this area
-        const lightweightTargetArea = proposedQuestion.targetAreas?.[0];
-        if (lightweightTargetArea) {
-          await this.sessionManager.setAreaStartTime(sessionId, lightweightTargetArea);
-        }
-
-        return {
-          action: 'continue_probing',
-          content: proposedQuestion.question,
-          reasoning: proposedQuestion.reasoning,
-          delayedIntervention: delayedIntervention.needed ? delayedIntervention : null,
-          metadata: {
-            lightweight: true,
-            costOptimized: true,
-            responseQuality: responseAnalysis.quality,
-            timestamp: new Date().toISOString()
-          }
-        };
-      }
-
-    } catch (error) {
-      console.error('❌ Failed to process candidate response intelligently:', error);
-
-      // Fallback to full AI processing on error
-      console.log('⚠️ Falling back to full AI processing due to error');
-      return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
-    }
+    return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
   }
 }
 
