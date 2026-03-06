@@ -6,7 +6,6 @@ const AgentConfig = require("../../models/AgentConfig.model");
 const {
   calculateMatchScore,
 } = require("../MatchingService/matchingForBid.service");
-const axios = require("axios");
 const profileService = require("../ProfileService/profile.service");
 const {
   submitEvaluationMessage,
