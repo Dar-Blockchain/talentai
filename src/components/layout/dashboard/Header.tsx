@@ -71,6 +71,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         <UserHeader companyName={companyName} companyInitial={companyInitial} />
       </Box>
     </Box>
+    
   );
 };
 
