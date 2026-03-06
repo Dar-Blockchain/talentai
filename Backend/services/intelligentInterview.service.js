@@ -1150,7 +1150,23 @@ Determine if interview objectives have been sufficiently met to end the session.
           }
         }
       } catch (jdError) {
-        console.warn('⚠️ [Service] Failed to load JD:', jdError.message);
+        console.warn('⚠️ [Service] Failed to load JD from DB:', jdError.message);
+      }
+
+      // Fallback: load JD from config context (sent by getJobInterviewConfig endpoint)
+      if (!jobDescription && userConfig.context?.jobDescription) {
+        jobDescription = {
+          title: userConfig.context.targetRole || 'Position',
+          companyName: userConfig.context.targetCompany || 'the company',
+          description: userConfig.context.jobDescription,
+          requirements: Array.isArray(userConfig.context.requirements)
+            ? userConfig.context.requirements
+            : [],
+          responsibilities: Array.isArray(userConfig.context.responsibilities)
+            ? userConfig.context.responsibilities
+            : []
+        };
+        console.log(`✅ [Service] JD loaded from config context: ${jobDescription.title} at ${jobDescription.companyName}`);
       }
 
       // Initialize interview timing and quality tracking
@@ -1221,7 +1237,16 @@ Determine if interview objectives have been sufficiently met to end the session.
           interviewType: config.interviewType,
           duration: config.sessionSettings.duration,
           silenceTimeout: config.sessionSettings.silenceTimeout
-        }
+        },
+        jobDetails: jobDescription ? {
+          title: jobDescription.title,
+          companyName: jobDescription.companyName,
+          description: jobDescription.description,
+          requirements: jobDescription.requirements,
+          responsibilities: jobDescription.responsibilities
+        } : null,
+        targetRole: config.context.targetRole,
+        targetCompany: config.context.targetCompany
       };
 
       console.log('✅ [Service] Result prepared:', {

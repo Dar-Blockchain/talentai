@@ -5,13 +5,31 @@ const {
 } = require("@aws-sdk/client-bedrock-runtime");
 require("dotenv").config();
 
-const client = new BedrockRuntimeClient({
+const clientConfig = {
   region: process.env.AWS_BEDROCK_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+};
+
+const _accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+const _secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+if (
+  _accessKeyId &&
+  _secretAccessKey &&
+  !_accessKeyId.includes("your_") &&
+  !_secretAccessKey.includes("your_")
+) {
+  clientConfig.credentials = {
+    accessKeyId: _accessKeyId,
+    secretAccessKey: _secretAccessKey,
+  };
+  console.log("✅ AWS Bedrock: Using explicit credentials from .env");
+} else {
+  console.warn(
+    "⚠️ AWS Bedrock: No valid explicit credentials in .env — using default credential chain (AWS profile/IAM role/instance role)"
+  );
+}
+
+const client = new BedrockRuntimeClient(clientConfig);
 
 const MODEL_ID =
   process.env.BEDROCK_MODEL_ID || "us.anthropic.claude-sonnet-4-20250514-v1:0";

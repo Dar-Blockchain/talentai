@@ -66,6 +66,9 @@ class IntelligentInterviewController {
             sessionId,
             greeting: result.greeting,
             config: result.config,
+            jobDetails: result.jobDetails,
+            targetRole: result.targetRole,
+            targetCompany: result.targetCompany,
           });
           console.log(`✅ [Controller] interview_started event emitted`);
 

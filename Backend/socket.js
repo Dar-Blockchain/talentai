@@ -2,14 +2,19 @@ let io;
 
 module.exports = {
   init: (server) => {
+    const corsOrigins = [
+      "https://staging.talentai.bid",
+      "https://backend.staging.talentai.bid",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ];
+    if (process.env.FRONTEND_URL && !corsOrigins.includes(process.env.FRONTEND_URL)) {
+      corsOrigins.push(process.env.FRONTEND_URL);
+    }
+
     io = require('socket.io')(server, {
       cors: {
-        origin: [
-          "https://staging.talentai.bid",
-          "https://backend.staging.talentai.bid",
-          "http://localhost:3000",
-          "http://localhost:5173",
-        ],
+        origin: corsOrigins,
         methods: ['GET', 'POST'],
         credentials: true,
         allowedHeaders: ['Content-Type', 'Authorization']
