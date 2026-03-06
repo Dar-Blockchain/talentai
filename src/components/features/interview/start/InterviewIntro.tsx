@@ -1,5 +1,8 @@
-import React from 'react';
-import { Box, Typography, Container, Button, Divider } from '@mui/material';
+import React, { useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Box, Typography, Container, Button, Divider, CircularProgress } from '@mui/material';
+import { AppDispatch, RootState } from '@/store/store';
+import { registerApplicant, selectRegisterLoading } from '@/store/slices/interviewApplicantSlice';
 import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
@@ -15,11 +18,20 @@ const PURPLE_DARK = '#8310FF';
 const PURPLE_BG = 'rgba(244,235,255,1)';
 const PURPLE_BORDER = 'rgba(189,133,255,0.35)';
 
+export interface ApplicantData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  applicantId: string;
+}
+
 interface InterviewIntroProps {
   interviewConfig: any;
   hasJobId: boolean;
-  totalSteps: number; // 2 if no jobId, 3 if jobId
-  onNext: () => void;
+  jobId?: string;
+  refParam?: string;
+  totalSteps: number;
+  onNext: (applicantData: ApplicantData) => void;
 }
 
 const steps = [
@@ -55,9 +67,52 @@ const tips = [
 const InterviewIntro: React.FC<InterviewIntroProps> = ({
   interviewConfig,
   hasJobId,
+  jobId,
+  refParam,
   totalSteps,
   onNext,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const submitting = useSelector(selectRegisterLoading);
+  const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+
+  // Auto-register applicant on mount (no form needed — use logged-in user data)
+  const registered = useRef(false);
+  useEffect(() => {
+    if (!jobId || registered.current) return;
+    registered.current = true;
+
+    const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
+    const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
+    const email = authUser?.email || profile?.email || '';
+
+    const payload: Parameters<typeof registerApplicant>[0] = { jobId, firstName, lastName, email };
+    if (refParam) payload.ref = refParam;
+
+    dispatch(registerApplicant(payload));
+    // We intentionally don't await here — registration is fire-and-forget at mount
+    // The applicantId is picked up in handleNext via the store
+  }, [jobId]);
+
+  const handleNext = async () => {
+    const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
+    const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
+    const email = authUser?.email || profile?.email || '';
+
+    // If not yet registered (e.g. dispatch still in flight), dispatch now and wait
+    if (!registered.current) {
+      registered.current = true;
+      const payload: Parameters<typeof registerApplicant>[0] = { jobId: jobId!, firstName, lastName, email };
+      if (refParam) payload.ref = refParam;
+      const result = await dispatch(registerApplicant(payload));
+      const applicantId = registerApplicant.fulfilled.match(result) ? result.payload._id : '';
+      onNext({ firstName, lastName, email, applicantId });
+    } else {
+      onNext({ firstName, lastName, email, applicantId: '' });
+    }
+  };
+
   const duration = interviewConfig?.sessionSettings?.duration || 20;
   const interviewType =
     interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
@@ -77,7 +132,6 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
 
           {/* Step indicator */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-            {/* Step 1 — active */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', fontFamily: 'Poppins' }}>1</Typography>
@@ -85,7 +139,6 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', color: PURPLE }}>Introduction</Typography>
             </Box>
             <Box sx={{ flex: 1, height: 2, bgcolor: '#e8e2f5', borderRadius: 1 }} />
-            {/* Step 2 */}
             {hasJobId && (
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -97,7 +150,6 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 <Box sx={{ flex: 1, height: 2, bgcolor: '#e8e2f5', borderRadius: 1 }} />
               </>
             )}
-            {/* Last step */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#e8e2f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography sx={{ color: '#9ca3af', fontWeight: 700, fontSize: '0.7rem', fontFamily: 'Poppins' }}>{totalSteps}</Typography>
@@ -112,14 +164,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
             {/* Header */}
             <Box sx={{ px: { xs: 3, md: 4 }, pt: 3.5, pb: 2.5, borderBottom: '1px solid rgba(232,232,232,1)' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 48, height: 48, borderRadius: '12px',
-                    bgcolor: PURPLE_BG,
-                    border: `1px solid ${PURPLE_BORDER}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}
-                >
+                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <VideocamOutlinedIcon sx={{ color: PURPLE, fontSize: 24 }} />
                 </Box>
                 <Box>
@@ -146,32 +191,13 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 </Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5, mt: 0.5 }}>
                   {steps.map((s, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        display: 'flex', alignItems: 'flex-start', gap: 1.5,
-                        p: 2, borderRadius: '12px',
-                        bgcolor: PURPLE_BG,
-                        border: `1px solid ${PURPLE_BORDER}`,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 36, height: 36, borderRadius: '10px', flexShrink: 0,
-                          bgcolor: '#fff',
-                          border: `1px solid ${PURPLE_BORDER}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 2, borderRadius: '12px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}` }}>
+                      <Box sx={{ width: 36, height: 36, borderRadius: '10px', flexShrink: 0, bgcolor: '#fff', border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {s.icon}
                       </Box>
                       <Box>
-                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: '#111827', mb: 0.3 }}>
-                          {s.title}
-                        </Typography>
-                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.76rem', color: '#6b7280', lineHeight: 1.55 }}>
-                          {s.desc}
-                        </Typography>
+                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: '#111827', mb: 0.3 }}>{s.title}</Typography>
+                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.76rem', color: '#6b7280', lineHeight: 1.55 }}>{s.desc}</Typography>
                       </Box>
                     </Box>
                   ))}
@@ -199,8 +225,9 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
-                  endIcon={<ArrowForwardIcon />}
-                  onClick={onNext}
+                  endIcon={submitting ? undefined : <ArrowForwardIcon />}
+                  onClick={handleNext}
+                  disabled={submitting}
                   sx={{
                     background: PURPLE,
                     fontFamily: 'Poppins',
@@ -211,10 +238,17 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                     borderRadius: '38px',
                     textTransform: 'none',
                     boxShadow: '0 4px 14px rgba(163,98,239,0.3)',
+                    minWidth: 180,
                     '&:hover': { background: PURPLE_DARK, boxShadow: '0 6px 18px rgba(131,16,255,0.35)' },
+                    '&.Mui-disabled': { background: 'rgba(163,98,239,0.5)', color: '#fff' },
                   }}
                 >
-                  {hasJobId ? 'Next: Job Overview' : 'Start Interview'}
+                  {submitting ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CircularProgress size={16} sx={{ color: '#fff' }} />
+                      <span>Please wait…</span>
+                    </Box>
+                  ) : hasJobId ? 'Next: Job Overview' : 'Start Interview'}
                 </Button>
               </Box>
             </Box>

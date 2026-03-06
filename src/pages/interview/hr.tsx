@@ -49,7 +49,7 @@ import {
   InterviewTimer,
 } from '@/components/features/interview/start';
 import JobOverview from '@/components/features/interview/start/JobOverview';
-import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
+import InterviewIntro, { ApplicantData } from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
 
 // Styles
@@ -66,9 +66,12 @@ const IntelligentInterviewTest = () => {
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [realTimeReport, setRealTimeReport] = useState<RealTimeReport | null>(null);
+  const [applicantData, setApplicantData] = useState<ApplicantData | null>(null);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
+  const jobId = router.isReady ? (router.query.jobId as string | undefined) : undefined;
+  const refParam = router.isReady ? (router.query.ref as string | undefined) : undefined;
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -95,7 +98,7 @@ const IntelligentInterviewTest = () => {
     jobData,
   } = useInterviewConfig({ showNotification: notify });
 
-  const endInterviewRef = useRef<() => void>(() => {});
+  const endInterviewRef = useRef<() => void>(() => { });
 
   const handleInterviewStarted = useCallback((data: InterviewStartedData) => {
     timer.startTimer(data.config.duration || 20);
@@ -263,10 +266,10 @@ const IntelligentInterviewTest = () => {
     interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
       ? `${interviewConfig.context?.targetRole || 'Technical'} Interview`
       : interviewConfig?.interviewType === 'ASSESSMENT'
-      ? 'Soft Skills Assessment'
-      : interviewConfig?.interviewType === 'EVALUATION'
-      ? 'Psychotechnic Assessment'
-      : 'HR Interview';
+        ? 'Soft Skills Assessment'
+        : interviewConfig?.interviewType === 'EVALUATION'
+          ? 'Psychotechnic Assessment'
+          : 'HR Interview';
 
   const isActive = socket.interviewStatus === 'active';
 
@@ -276,8 +279,13 @@ const IntelligentInterviewTest = () => {
       <InterviewIntro
         interviewConfig={interviewConfig}
         hasJobId={hasJobId}
+        jobId={jobId}
+        refParam={refParam}
         totalSteps={hasJobId ? 3 : 2}
-        onNext={() => setStep(hasJobId ? 'overview' : 'interview')}
+        onNext={(data) => {
+          setApplicantData(data);
+          setStep(hasJobId ? 'overview' : 'interview');
+        }}
       />
     );
   }
@@ -334,21 +342,7 @@ const IntelligentInterviewTest = () => {
             }}
           >
             <Box display="flex" alignItems="center" gap={1.5}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 4px 12px rgba(131,16,255,0.35)',
-                }}
-              >
-                <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.72rem', fontFamily: 'Poppins' }}>AI</Typography>
-              </Box>
+
               <Box>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#000', lineHeight: 1.2 }}>
                   {interviewLabel}
