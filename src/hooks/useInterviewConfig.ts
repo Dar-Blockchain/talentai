@@ -18,6 +18,7 @@ export interface UseInterviewConfigReturn {
   blockMessage: string;
   setShowBlockedModal: (show: boolean) => void;
   setShowFailedModal: (show: boolean) => void;
+  jobData: any | null;
 }
 
 export interface UseInterviewConfigOptions {
@@ -68,6 +69,7 @@ export const useInterviewConfig = ({
   const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [showFailedModal, setShowFailedModal] = useState(false);
   const [blockMessage, setBlockMessage] = useState('');
+  const [jobData, setJobData] = useState<any | null>(null);
 
   const fetchJobInterviewConfig = async (jobId: string) => {
     try {
@@ -106,6 +108,7 @@ export const useInterviewConfig = ({
       const postData = await postResponse.json();
       console.log('📋 Raw post data:', postData);
       const post = postData.data || postData.post || postData;
+      setJobData(post);
       const isPipeline = post?.creationType === 'pipeline';
 
       console.log('📋 Job detection:', {
@@ -336,5 +339,6 @@ export const useInterviewConfig = ({
     blockMessage,
     setShowBlockedModal,
     setShowFailedModal,
+    jobData,
   };
 };

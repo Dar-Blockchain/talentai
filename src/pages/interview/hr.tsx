@@ -1,16 +1,15 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Container,
-  Paper,
   Box,
   Typography,
   Chip,
   LinearProgress,
   Snackbar,
   Alert,
+  Container,
 } from '@mui/material';
 import Cookies from 'js-cookie';
 import { RootState } from '@/store/store';
@@ -33,41 +32,60 @@ import { useInterviewConfig } from '@/hooks/useInterviewConfig';
 import { useInterviewSocket, InterviewStartedData, InterviewEndedData, SilenceResponseData } from '@/hooks/useInterviewSocket';
 import { useAudioTranscription } from '@/hooks/useAudioTranscription';
 
-// Components
+// Icons
+
+// Layout
+import Header from '@/components/layout/Header';
+
+// Interview components
 import {
   QuestionPanel,
   CameraPreview,
   AgentStatusPanel,
-  CoverageDashboard,
   InterviewContainer,
+  CoverageDashboard,
   PipelineModals,
   SecurityModals,
   InterviewTimer,
 } from '@/components/features/interview/start';
+import JobOverview from '@/components/features/interview/start/JobOverview';
+import InterviewIntro, { ApplicantData } from '@/components/features/interview/start/InterviewIntro';
+import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
 
 // Styles
 import { GlobalStyles } from '@/components/features/interview/start/styles';
+
+const PURPLE = '#8310FF';
 
 const IntelligentInterviewTest = () => {
   const router = useRouter();
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  // Coverage & Report state (managed at orchestrator level since socket events feed them)
+  const [step, setStep] = useState<'intro' | 'overview' | 'interview'>('intro');
+  const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [realTimeReport, setRealTimeReport] = useState<RealTimeReport | null>(null);
+  const [applicantData, setApplicantData] = useState<ApplicantData | null>(null);
 
-  // --- Initialize Hooks ---
+  // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
+  const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
+  const jobId = router.isReady ? (router.query.jobId as string | undefined) : undefined;
+  const refParam = router.isReady ? (router.query.ref as string | undefined) : undefined;
 
-  // Notification hook (reuse existing project hook)
+  useEffect(() => {
+    if (!router.isReady) return;
+    // Only show intro/overview when jobId is present
+    if (!router.query.jobId) setStep('interview');
+    else setStep('intro');
+  }, [router.isReady, router.query.jobId]);
+
   const { notification, showNotification, hideNotification } = useNotification();
 
-  // Adapter: bridge existing useNotification API to the simple (message, severity) signature used by other hooks
   const notify = useCallback((message: string, severity: 'success' | 'error' | 'warning' | 'info') => {
     showNotification(message, severity);
   }, [showNotification]);
 
-  // Interview config (URL params + pipeline)
   const {
     interviewConfig,
     isPipelineJob,
@@ -77,75 +95,47 @@ const IntelligentInterviewTest = () => {
     showBlockedModal,
     showFailedModal,
     blockMessage,
+    jobData,
   } = useInterviewConfig({ showNotification: notify });
 
-  // Forward declaration refs for cross-hook dependencies
-  const endInterviewRef = useRef<() => void>(() => {});
+  const endInterviewRef = useRef<() => void>(() => { });
 
-  // Interview socket callbacks
   const handleInterviewStarted = useCallback((data: InterviewStartedData) => {
-    // Start timer
     timer.startTimer(data.config.duration || 20);
     timer.setDuration(data.config.duration * 60 * 1000);
-
-    // Configure backend silence intelligence
     if (data.config.silenceIntelligence) {
       audio.setBackendSilenceConfig(data.config.silenceIntelligence);
       const typeThreshold = data.config.silenceIntelligence.threshold || 5000;
       audio.setAdaptiveSilenceThreshold(typeThreshold);
-
-      console.log('🧠 Silence intelligence configured:', {
-        threshold: typeThreshold,
-        interviewType: data.config.interviewType,
-        maxPrompts: data.config.silenceIntelligence.maxPrompts
-      });
     }
   }, []);
 
   const handleInterviewMessage = useCallback((message: InterviewMessage) => {
     audio.setConversationHistory(prev => [...prev, message]);
-
-    // Trigger question highlight animation
     audio.setQuestionHighlight(true);
     setTimeout(() => audio.setQuestionHighlight(false), 600);
-
-    // Start reading time buffer for new questions
     if (message.type === 'question' || message.type === 'follow_up') {
       audio.setQuestionReadingTime(Date.now());
       audio.setAgentState('waiting');
       audio.setAgentMessage('Waiting for you to read the question...');
       audio.resetSilenceDetection();
-
-      console.log('📖 Starting reading time buffer for new question');
     }
   }, []);
 
-  const handleCoverageUpdate = useCallback((newCoverage: Coverage) => {
-    setCoverage(newCoverage);
-  }, []);
-
-  const handleReportUpdate = useCallback((report: RealTimeReport) => {
-    setRealTimeReport(report);
-  }, []);
+  const handleCoverageUpdate = useCallback((newCoverage: Coverage) => { setCoverage(newCoverage); }, []);
+  const handleReportUpdate = useCallback((report: RealTimeReport) => { setRealTimeReport(report); }, []);
 
   const handleSilenceResponse = useCallback((data: SilenceResponseData) => {
     audio.setSilenceCount(data.silenceCount);
-
     if (data.action === 'silence_prompt') {
       notify('Take your time to think...', 'info');
       audio.setAgentState('waiting');
       audio.setAgentMessage(data.content || 'AI provided encouragement');
-      audio.setConversationHistory(prev => [...prev, {
-        type: 'system' as const,
-        content: data.content || '',
-        timestamp: data.timestamp || new Date().toISOString()
-      }]);
+      audio.setConversationHistory(prev => [...prev, { type: 'system' as const, content: data.content || '', timestamp: data.timestamp || new Date().toISOString() }]);
     } else if (data.action === 'move_forward') {
       audio.setAgentState('thinking');
       audio.setAgentMessage('Moving to next topic...');
-      console.log('⏭️ Moving forward due to max silence prompts reached');
     }
-
     if (data.silenceIntelligence?.adaptiveThreshold) {
       audio.setAdaptiveSilenceThreshold(data.silenceIntelligence.adaptiveThreshold);
     }
@@ -153,43 +143,17 @@ const IntelligentInterviewTest = () => {
 
   const handleVoiceActivity = useCallback((data: { isActive: boolean }) => {
     audio.setIsVoiceActive(data.isActive);
-    if (data.isActive) {
-      audio.setLastVoiceActivity(Date.now());
-    }
+    if (data.isActive) audio.setLastVoiceActivity(Date.now());
   }, []);
 
   const handleInterviewEnded = useCallback(async (data: InterviewEndedData) => {
     audio.setIsRecording(false);
     timer.stopTimer();
-
-    // Store session ID for results page
-    if (data.sessionId) {
-      localStorage.setItem('last_interview_id', data.sessionId);
-    }
-
-    // Store the complete analysis data for the results page
+    if (data.sessionId) localStorage.setItem('last_interview_id', data.sessionId);
     if (data.finalReport || data.analytics) {
-      console.log('💾 Storing interview analysis in localStorage:', {
-        hasFinalReport: !!data.finalReport,
-        hasAnalytics: !!data.analytics,
-        sessionId: data.sessionId
-      });
-
-      const analysisData = {
-        finalReport: data.finalReport,
-        analytics: data.analytics,
-        sessionId: data.sessionId,
-        interviewType: interviewConfig?.interviewType || 'HR_INTERVIEW',
-        timestamp: new Date().toISOString()
-      };
-
+      const analysisData = { finalReport: data.finalReport, analytics: data.analytics, sessionId: data.sessionId, interviewType: interviewConfig?.interviewType || 'HR_INTERVIEW', timestamp: new Date().toISOString() };
       localStorage.setItem('last_interview_analysis', JSON.stringify(analysisData));
-      console.log('✅ Analysis data stored successfully');
-    } else {
-      console.warn('⚠️ No analysis data received from socket event');
     }
-
-    // Pipeline progress: Update pass/fail and score
     const candidateId = profile?.userId?._id || profile?.userId || authUser?._id;
     if (isPipelineJob && candidateId) {
       try {
@@ -197,65 +161,25 @@ const IntelligentInterviewTest = () => {
         const jobId = localStorage.getItem('interview_jobId');
         const stepId = localStorage.getItem('interview_stepId');
         const passThreshold = parseInt(localStorage.getItem('interview_passThreshold') || '70');
-
-        const finalScore = data.finalReport?.overallScore ||
-                          data.analytics?.overallScore ||
-                          data.analytics?.totalScore ||
-                          0;
-
+        const finalScore = data.finalReport?.overallScore || data.analytics?.overallScore || data.analytics?.totalScore || 0;
         const passed = finalScore >= passThreshold;
-        console.log(`📊 Interview Result: ${finalScore}% (threshold: ${passThreshold}%) - ${passed ? 'PASSED ✅' : 'FAILED ❌'}`);
         if (jobId && stepId) {
-          console.log('📊 Updating pipeline step pass/fail status...');
-
-          const updateResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/update-step`,
-            {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                candidateId: candidateId,
-                jobId,
-                stepId,
-                passed: passed,
-                finalScore: finalScore
-              })
-            }
-          );
-
-          const updateResult = await updateResponse.json();
-          console.log('✅ Pipeline step pass/fail updated:', updateResult);
-
-          const progressResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              }
-            }
-          );
-
+          const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/update-step`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ candidateId, jobId, stepId, passed, finalScore }) });
+          await updateResponse.json();
+          const progressResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}api/pipeline-interview/progress/${candidateId}/${jobId}`, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
           if (progressResponse.ok) {
             const progressData = await progressResponse.json();
             const completedSteps = progressData.stats?.completedSteps || 0;
             const totalSteps = progressData.stats?.totalSteps || 0;
-
             if (passed) {
               if (completedSteps < totalSteps) {
-                console.log(`✅ Next step available (${completedSteps}/${totalSteps} completed)`);
                 localStorage.setItem('pipeline_has_next_step', 'true');
                 localStorage.setItem('pipeline_next_step', progressData.currentStep?.stepNumber?.toString() || '');
               } else {
-                console.log('🎉 Pipeline complete!');
                 localStorage.setItem('pipeline_has_next_step', 'false');
                 localStorage.setItem('pipeline_complete', 'true');
               }
             } else {
-              console.log('❌ Step failed - pipeline cannot continue');
               localStorage.setItem('pipeline_has_next_step', 'false');
               localStorage.setItem('pipeline_failed', 'true');
               localStorage.setItem('pipeline_failed_score', finalScore.toString());
@@ -264,19 +188,17 @@ const IntelligentInterviewTest = () => {
           }
         }
       } catch (error) {
-        console.error('❌ Error updating pipeline progress:', error);
+        console.error('Error updating pipeline progress:', error);
       }
     }
   }, [interviewConfig, isPipelineJob, profile, authUser]);
 
   const handleInterviewError = useCallback((error: { message: string }) => {
-    // Reset agentState so the user is not stuck on "AI Thinking..."
     audio.setAgentState('waiting');
     audio.setAgentMessage('Something went wrong. You can re-submit your answer or continue.');
     console.error('Interview error received:', error.message);
   }, []);
 
-  // Socket hook
   const socket = useInterviewSocket({
     onNotification: notify,
     onInterviewStarted: handleInterviewStarted,
@@ -289,7 +211,6 @@ const IntelligentInterviewTest = () => {
     onInterviewError: handleInterviewError,
   });
 
-  // Audio transcription hook (derives currentMessage internally from its own conversationHistory)
   const audio = useAudioTranscription({
     socketRef: socket.socketRef,
     sessionIdRef: socket.sessionIdRef,
@@ -298,125 +219,280 @@ const IntelligentInterviewTest = () => {
     showNotification: notify,
   });
 
-  // Derive lastInterviewerMessage from audio's conversation history for UI display
-  const lastInterviewerMessage = audio.conversationHistory
-    .filter(m => m.type !== 'system')
-    .slice(-1)[0] || null;
+  const lastInterviewerMessage = audio.conversationHistory.filter(m => m.type !== 'system').slice(-1)[0] || null;
 
-  // Timer hook
   const timer = useInterviewTimer({
     interviewStatus: socket.interviewStatus,
-    onTimeUp: useCallback(() => {
-      endInterviewRef.current();
-    }, []),
+    onTimeUp: useCallback(() => { endInterviewRef.current(); }, []),
     showNotification: notify as any,
   });
 
-  // Camera hook
   const camera = useCamera({ showNotification: notify as any });
 
-  // Security monitoring
-  const security = useSecurityMonitoring({
-    interviewStatus: socket.interviewStatus,
-  });
-
-  // --- Orchestration Functions ---
+  const security = useSecurityMonitoring({ interviewStatus: socket.interviewStatus });
 
   const startInterview = useCallback(async () => {
-    if (!socket.socketRef.current || !socket.isConnected) {
-      notify('Not connected to interview system', 'error');
-      return;
-    }
-
+    if (!socket.socketRef.current || !socket.isConnected) { notify('Not connected to interview system', 'error'); return; }
     try {
       socket.setInterviewStatus('connecting');
-      console.log('🚀 Starting interview with config:', interviewConfig);
-
       const candidateId = authUser?.email || 'anonymous';
-      console.log('Testiiiiiiiiiiiiiiiiiiiiiiiiiing', candidateId);
-
       await audio.initializeAudio();
-
-      socket.socketRef.current.emit('start_interview', {
-        config: {
-          ...interviewConfig,
-          silenceIntelligence: {
-            interviewType: interviewConfig.interviewType,
-            candidateBehavior: {
-              interactionStyle: 'balanced',
-              confidenceLevel: 'medium',
-              communicationStyle: 'mixed'
-            },
-            adaptiveMode: true,
-            contextualAdjustments: true
-          }
-        },
-        candidateId
-      });
-
+      socket.socketRef.current.emit('start_interview', { config: { ...interviewConfig, silenceIntelligence: { interviewType: interviewConfig.interviewType, candidateBehavior: { interactionStyle: 'balanced', confidenceLevel: 'medium', communicationStyle: 'mixed' }, adaptiveMode: true, contextualAdjustments: true } }, candidateId });
     } catch (error) {
-      console.error('❌ Failed to start interview:', error);
+      console.error('Failed to start interview:', error);
       notify('Failed to start interview', 'error');
       socket.setInterviewStatus('idle');
     }
   }, [socket.socketRef, socket.isConnected, interviewConfig, authUser, audio.initializeAudio, notify]);
 
   const endInterview = useCallback(() => {
-    if (socket.socketRef.current && socket.sessionId) {
-      socket.socketRef.current.emit('end_interview', { sessionId: socket.sessionId });
-    }
-
-    // Stop audio recording
-    if (audio.audioStreamRef.current) {
-      audio.audioStreamRef.current.getTracks().forEach(track => track.stop());
-    }
-
-    // Stop voice activity detection
+    if (socket.socketRef.current && socket.sessionId) socket.socketRef.current.emit('end_interview', { sessionId: socket.sessionId });
+    if (audio.audioStreamRef.current) audio.audioStreamRef.current.getTracks().forEach(track => track.stop());
     audio.resetSilenceDetection();
-
-    // Cleanup Assembly AI connections
     audio.cleanupAssemblyAI();
-
     audio.setIsRecording(false);
     socket.setInterviewStatus('ended');
-
-    // Store session ID for results page
-    if (socket.sessionId) {
-      localStorage.setItem('last_interview_id', socket.sessionId);
-    }
+    if (socket.sessionId) localStorage.setItem('last_interview_id', socket.sessionId);
   }, [socket.socketRef, socket.sessionId, audio]);
 
-  // Wire the endInterview ref for timer callback
   endInterviewRef.current = endInterview;
 
   const handleViewResults = useCallback(() => {
     const jobId = localStorage.getItem('interview_jobId');
-    if (jobId) {
-      router.push(`/interview/results?jobId=${jobId}`);
-    } else {
-      router.push('/interview/results');
-    }
+    router.push(jobId ? `/interview/results?jobId=${jobId}` : '/interview/results');
   }, [router]);
 
-  // --- Render ---
+  const interviewLabel =
+    interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+      ? `${interviewConfig.context?.targetRole || 'Technical'} Interview`
+      : interviewConfig?.interviewType === 'ASSESSMENT'
+        ? 'Soft Skills Assessment'
+        : interviewConfig?.interviewType === 'EVALUATION'
+          ? 'Psychotechnic Assessment'
+          : 'HR Interview';
+
+  const isActive = socket.interviewStatus === 'active';
+
+  /* ── Step 1: Introduction ── */
+  if (step === 'intro') {
+    return (
+      <InterviewIntro
+        interviewConfig={interviewConfig}
+        hasJobId={hasJobId}
+        jobId={jobId}
+        refParam={refParam}
+        totalSteps={hasJobId ? 3 : 2}
+        onNext={(data) => {
+          setApplicantData(data);
+          setStep(hasJobId ? 'overview' : 'interview');
+        }}
+      />
+    );
+  }
+
+  /* ── Step 2: Job Overview (only when jobId present) ── */
+  if (step === 'overview') {
+    return (
+      <JobOverview
+        jobData={jobData}
+        interviewConfig={interviewConfig}
+        pipelineLoading={pipelineLoading}
+        hasJobId={hasJobId}
+        onStart={() => setStep('interview')}
+      />
+    );
+  }
 
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        {/* Alert Snackbar */}
-        <Snackbar
-          open={notification.open}
-          autoHideDuration={4000}
-          onClose={hideNotification}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert severity={notification.severity} onClose={hideNotification}>
-            {notification.message}
-          </Alert>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
+
+        {/* ── Shared Header (same as dashboard/candidate) ── */}
+        <Header />
+
+        {/* ── Connection warning banner ── */}
+        {socket.isHydrated && socket.connectionStatus !== 'connected' && (
+          <Box sx={{ bgcolor: '#fefce8', borderBottom: '1px solid #fde047', px: { xs: 2, md: 4 }, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04' }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#854d0e' }}>
+              {socket.connectionStatus === 'connecting' ? 'Connecting to interview system…' : socket.connectionStatus === 'error' ? 'Connection error — please refresh' : 'Disconnected — attempting to reconnect…'}
+            </Typography>
+          </Box>
+        )}
+
+        {/* ── Main content ── */}
+        <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+
+          {/* ── Title card ── */}
+          <Box
+            sx={{
+              bgcolor: '#fff',
+              borderRadius: '20px',
+              border: '1px solid #e8e2f5',
+              boxShadow: '0 8px 32px rgba(131,16,255,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+              px: { xs: 2.5, md: 3.5 },
+              py: { xs: 2, md: 2.5 },
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1.5,
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1.5}>
+
+              <Box>
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#000', lineHeight: 1.2 }}>
+                  {interviewLabel}
+                </Typography>
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: 'rgba(100,113,131,1)', mt: 0.25 }}>
+                  {interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+                    ? `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`
+                    : 'AI-powered conversational interview'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+              {/* Pipeline step chip */}
+              {isPipelineJob && currentPipelineStep && candidateProgress && (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Chip
+                    label={`Step ${currentPipelineStep} / ${candidateProgress.steps.length}`}
+                    size="small"
+                    sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
+                  />
+                  <LinearProgress
+                    variant="determinate"
+                    value={(candidateProgress.steps.filter((s: any) => s.status === 'done').length / candidateProgress.steps.length) * 100}
+                    sx={{ width: 64, borderRadius: 4, bgcolor: 'rgba(131,16,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: PURPLE } }}
+                  />
+                </Box>
+              )}
+
+              {/* Status pill */}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  bgcolor: isActive ? 'rgba(34,197,94,0.08)' : socket.interviewStatus === 'ended' ? 'rgba(139,92,246,0.08)' : 'rgba(100,113,131,0.08)',
+                  border: `1px solid ${isActive ? 'rgba(34,197,94,0.25)' : socket.interviewStatus === 'ended' ? 'rgba(139,92,246,0.25)' : 'rgba(100,113,131,0.15)'}`,
+                  borderRadius: '20px',
+                  px: 1.5,
+                  py: 0.5,
+                }}
+              >
+                <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: isActive ? '#22c55e' : socket.interviewStatus === 'ended' ? '#8b5cf6' : '#6b7280', boxShadow: isActive ? '0 0 0 3px rgba(34,197,94,0.25)' : 'none' }} />
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.75rem', color: isActive ? '#16a34a' : socket.interviewStatus === 'ended' ? '#7c3aed' : 'rgba(100,113,131,1)' }}>
+                  {isActive ? 'Live' : socket.interviewStatus === 'ended' ? 'Completed' : 'Ready'}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* ── Main white card wrapping everything ── */}
+          <Box
+            sx={{
+              bgcolor: '#fff',
+              borderRadius: '20px',
+              border: '1px solid #e8e2f5',
+              boxShadow: '0 8px 32px rgba(131,16,255,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Question panel (full-width, active only) */}
+            {isActive && lastInterviewerMessage && (
+              <QuestionPanel
+                currentMessage={lastInterviewerMessage}
+                isInReadingTime={audio.isInReadingTime}
+                readingTimeLeft={audio.readingTimeLeft}
+                questionHighlight={audio.questionHighlight}
+              />
+            )}
+
+            {/* Two-column grid: camera LEFT · controls RIGHT */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '7fr 3fr' },
+                gap: 0,
+              }}
+            >
+              {/* LEFT: Camera — border-right divider */}
+              <Box sx={{ borderRight: { md: '1px solid #f0edf8' }, p: 2.5 }}>
+                <CameraPreview
+                  videoRef={camera.videoRef}
+                  cameraStatus={camera.cameraStatus}
+                  cameraError={camera.cameraError}
+                  isConnecting={audio.isConnecting}
+                  interviewStatus={socket.interviewStatus}
+                  audioContextRef={audio.audioContextRef}
+                  attachStream={camera.attachStream}
+                />
+              </Box>
+
+              {/* RIGHT: Interview controls + agent status */}
+              <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <InterviewContainer
+                  interviewStatus={socket.interviewStatus}
+                  interviewConfig={interviewConfig}
+                  isHydrated={socket.isHydrated}
+                  connectionStatus={socket.connectionStatus}
+                  cameraStatus={camera.cameraStatus}
+                  agentState={audio.agentState}
+                  onStartInterview={startInterview}
+                  onEndInterview={endInterview}
+                  onViewResults={handleViewResults}
+                  routerQuery={router.query}
+                />
+
+                <AgentStatusPanel
+                  interviewStatus={socket.interviewStatus}
+                  agentState={audio.agentState}
+                  agentMessage={audio.agentMessage}
+                  isInReadingTime={audio.isInReadingTime}
+                  readingTimeLeft={audio.readingTimeLeft}
+                  accumulatedTurns={audio.accumulatedTurns}
+                  isVoiceActive={audio.isVoiceActive}
+                  currentTranscript={audio.currentTranscript}
+                  debugMode={audio.debugMode}
+                  setDebugMode={audio.setDebugMode}
+                  silenceDebugLog={audio.silenceDebugLog}
+                  transcriptDebugLog={audio.transcriptDebugLog}
+                  onSubmitAnswer={audio.sendAccumulatedAnswer}
+                />
+              </Box>
+            </Box>
+          </Box>
+
+          {/* ── Coverage Dashboard (full width, below camera+controls) ── */}
+          <Box sx={{ mt: 3 }}>
+            <CoverageDashboard
+              interviewStatus={socket.interviewStatus}
+              coverage={coverage}
+              realTimeReport={realTimeReport}
+              agentMessage={audio.agentMessage}
+              coverageDashboardExpanded={coverageDashboardExpanded}
+              onToggleExpand={() => setCoverageDashboardExpanded(prev => !prev)}
+            />
+          </Box>
+        </Container>
+
+        {/* ── GDPR Consent Modal ── */}
+        <GDPRConsentModal
+          open={!camera.consentGiven}
+          onAccept={camera.giveConsent}
+          onDecline={() => router.back()}
+        />
+
+        {/* ── Notifications & modals ── */}
+        <Snackbar open={notification.open} autoHideDuration={4000} onClose={hideNotification} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+          <Alert severity={notification.severity} onClose={hideNotification}>{notification.message}</Alert>
         </Snackbar>
 
-        {/* Pipeline Modals */}
         <PipelineModals
           pipelineLoading={pipelineLoading}
           showBlockedModal={showBlockedModal}
@@ -425,109 +501,6 @@ const IntelligentInterviewTest = () => {
           onReturnToDashboard={() => router.push('/dashboard')}
         />
 
-        {/* Connection Status */}
-        {socket.isHydrated && socket.connectionStatus !== 'connected' && (
-          <Paper elevation={3} sx={{ p: 3, mb: 3, bgcolor: '#fff3cd', borderLeft: '4px solid #ffc107' }}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Typography variant="h6" color="text.primary">
-                {socket.connectionStatus === 'connecting' && 'Connecting to Interview System...'}
-                {socket.connectionStatus === 'error' && 'Connection Error - Please refresh the page'}
-                {socket.connectionStatus === 'disconnected' && 'Disconnected - Attempting to reconnect...'}
-              </Typography>
-            </Box>
-          </Paper>
-        )}
-
-        {/* Pipeline Progress Indicator */}
-        {isPipelineJob && currentPipelineStep && candidateProgress && (
-          <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: '#f5f5ff', borderLeft: '4px solid #8310FF' }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Box display="flex" alignItems="center" gap={2}>
-                <Chip
-                  label={`Step ${currentPipelineStep}`}
-                  color="primary"
-                  sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
-                />
-                <Typography variant="body1" color="text.primary">
-                  Pipeline Interview
-                </Typography>
-              </Box>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Typography variant="body2" color="text.secondary">
-                  {candidateProgress.steps.filter((s: any) => s.status === 'done').length + 1} / {candidateProgress.steps.length} completed
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={(candidateProgress.steps.filter((s: any) => s.status === 'done').length + 1 / candidateProgress.steps.length) * 100}
-                  sx={{ width: 100, ml: 1 }}
-                />
-              </Box>
-            </Box>
-          </Paper>
-        )}
-
-        {/* Prominent Question Panel */}
-        {socket.interviewStatus === 'active' && lastInterviewerMessage && (
-          <QuestionPanel
-            currentMessage={lastInterviewerMessage}
-            isInReadingTime={audio.isInReadingTime}
-            readingTimeLeft={audio.readingTimeLeft}
-            questionHighlight={audio.questionHighlight}
-          />
-        )}
-
-        {/* Camera Preview */}
-        <CameraPreview
-          videoRef={camera.videoRef}
-          cameraStatus={camera.cameraStatus}
-          cameraError={camera.cameraError}
-          isConnecting={audio.isConnecting}
-          interviewStatus={socket.interviewStatus}
-        />
-
-        {/* Agent Status Panel */}
-        <AgentStatusPanel
-          interviewStatus={socket.interviewStatus}
-          agentState={audio.agentState}
-          agentMessage={audio.agentMessage}
-          isInReadingTime={audio.isInReadingTime}
-          readingTimeLeft={audio.readingTimeLeft}
-          accumulatedTurns={audio.accumulatedTurns}
-          isVoiceActive={audio.isVoiceActive}
-          currentTranscript={audio.currentTranscript}
-          debugMode={audio.debugMode}
-          setDebugMode={audio.setDebugMode}
-          silenceDebugLog={audio.silenceDebugLog}
-          transcriptDebugLog={audio.transcriptDebugLog}
-          onSubmitAnswer={audio.sendAccumulatedAnswer}
-        />
-
-        {/* Coverage Dashboard */}
-        <CoverageDashboard
-          interviewStatus={socket.interviewStatus}
-          coverage={coverage}
-          realTimeReport={realTimeReport}
-          agentMessage={audio.agentMessage}
-          coverageDashboardExpanded={audio.coverageDashboardExpanded}
-          onToggleExpand={() => audio.setCoverageDashboardExpanded(!audio.coverageDashboardExpanded)}
-        />
-
-        {/* Interview Container (main card) */}
-        <InterviewContainer
-          interviewStatus={socket.interviewStatus}
-          interviewConfig={interviewConfig}
-          isHydrated={socket.isHydrated}
-          connectionStatus={socket.connectionStatus}
-          cameraStatus={camera.cameraStatus}
-          isVoiceActive={audio.isVoiceActive}
-          agentState={audio.agentState}
-          onStartInterview={startInterview}
-          onEndInterview={endInterview}
-          onViewResults={handleViewResults}
-          routerQuery={router.query}
-        />
-
-        {/* Security Modals */}
         <SecurityModals
           showFirstViolationModal={security.showFirstViolationModal}
           showSecurityModal={security.showSecurityModal}
@@ -536,19 +509,12 @@ const IntelligentInterviewTest = () => {
           onReturnToDashboard={() => router.push('/dashboard/candidate')}
         />
 
-        {/* Fixed Timer */}
-        {socket.interviewStatus === 'active' && (
-          <InterviewTimer
-            elapsedTime={timer.elapsedTime}
-            timeWarning={timer.timeWarning}
-          />
+        {isActive && (
+          <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />
         )}
-      </Container>
+      </Box>
     </>
   );
 };
 
-// Export with dynamic import to prevent SSR issues
-export default dynamic(() => Promise.resolve(IntelligentInterviewTest), {
-  ssr: false
-});
+export default dynamic(() => Promise.resolve(IntelligentInterviewTest), { ssr: false });
