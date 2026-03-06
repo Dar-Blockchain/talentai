@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { CameraStatus } from '@/types/interview';
 
 export interface UseCameraReturn {
@@ -6,6 +6,9 @@ export interface UseCameraReturn {
   cameraStatus: CameraStatus;
   cameraError: string;
   streamRef: React.MutableRefObject<MediaStream | null>;
+  attachStream: () => void;
+  consentGiven: boolean;
+  giveConsent: () => void;
 }
 
 export interface UseCameraOptions {
@@ -17,8 +20,15 @@ export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraRetu
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
   const [cameraError, setCameraError] = useState<string>('');
+  const [consentGiven, setConsentGiven] = useState(false);
+
+  const giveConsent = useCallback(() => {
+    setConsentGiven(true);
+  }, []);
 
   useEffect(() => {
+    if (!consentGiven) return;
+
     const initializeCamera = async () => {
       try {
         setCameraStatus('requesting');
@@ -33,10 +43,12 @@ export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraRetu
         setCameraStatus('granted');
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play();
-          };
+          const video = videoRef.current;
+          video.srcObject = stream;
+          video.muted = true;
+          video.play().catch(() => {
+            video.onloadedmetadata = () => { video.play().catch(() => {}); };
+          });
         }
 
         console.log('✅ Camera initialized successfully');
@@ -72,6 +84,18 @@ export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraRetu
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
+  }, [consentGiven]);
+
+  const attachStream = useCallback(() => {
+    if (!streamRef.current || !videoRef.current) return;
+    const video = videoRef.current;
+    // Don't re-attach if already playing the same stream
+    if (video.srcObject === streamRef.current) return;
+    video.srcObject = streamRef.current;
+    video.muted = true;
+    video.play().catch(() => {
+      video.onloadedmetadata = () => { video.play().catch(() => {}); };
+    });
   }, []);
 
   return {
@@ -79,5 +103,8 @@ export const useCamera = ({ showNotification }: UseCameraOptions): UseCameraRetu
     cameraStatus,
     cameraError,
     streamRef,
+    attachStream,
+    consentGiven,
+    giveConsent,
   };
 };

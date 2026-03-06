@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Chip } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
@@ -16,30 +16,41 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
     <Box
       sx={{
         position: 'fixed',
-        bottom: 20,
+        top: 20,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 1000,
+        zIndex: 1200,
       }}
     >
-      <Chip
-        icon={timeWarning ? <WarningIcon /> : <AccessTimeIcon />}
-        label={`${Math.floor(elapsedTime / 60)}:${String(elapsedTime % 60).padStart(2, '0')}`}
-        color={timeWarning ? 'warning' : 'default'}
-        variant="filled"
+      <Box
         sx={{
-          color: 'white',
-          bgcolor: timeWarning ? 'rgba(255, 152, 0, 0.9)' : 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 2,
-          px: 3,
-          py: 2.5,
-          fontWeight: 600,
-          fontFamily: 'monospace',
-          fontSize: '1.2rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          bgcolor: timeWarning ? 'rgba(239,68,68,0.92)' : 'rgba(11,11,15,0.88)',
+          backdropFilter: 'blur(12px)',
+          border: `1px solid ${timeWarning ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)'}`,
+          borderRadius: '40px',
+          px: 2.5,
+          py: 1,
+          boxShadow: timeWarning ? '0 4px 20px rgba(239,68,68,0.35)' : '0 4px 20px rgba(0,0,0,0.25)',
         }}
-      />
+      >
+        {timeWarning
+          ? <WarningIcon sx={{ fontSize: 16, color: '#fff' }} />
+          : <AccessTimeIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.6)' }} />}
+        <Typography
+          sx={{
+            fontFamily: 'Poppins',
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            color: '#fff',
+            letterSpacing: '0.04em',
+          }}
+        >
+          {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}
+        </Typography>
+      </Box>
     </Box>
   );
 };

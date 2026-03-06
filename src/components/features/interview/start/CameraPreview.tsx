@@ -1,6 +1,12 @@
-import React from 'react';
-import { Paper, Typography, Box, CircularProgress, Button } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Typography, CircularProgress, Button } from '@mui/material';
+import VideocamOffIcon from '@mui/icons-material/VideocamOff';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import { CameraStatus, InterviewStatus } from '@/types/interview';
+
+const PURPLE = '#8310FF';
+const BAR_COUNT = 24;
 
 interface CameraPreviewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -8,6 +14,8 @@ interface CameraPreviewProps {
   cameraError: string | null;
   isConnecting: boolean;
   interviewStatus: InterviewStatus;
+  audioContextRef?: React.MutableRefObject<AudioContext | null>;
+  attachStream?: () => void;
 }
 
 const CameraPreview: React.FC<CameraPreviewProps> = ({
@@ -16,149 +24,266 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   cameraError,
   isConnecting,
   interviewStatus,
+  audioContextRef,
+  attachStream,
 }) => {
+  const isActive = interviewStatus === 'active';
+
+  // Re-attach stream once on mount (e.g. after the overview step transition)
+  useEffect(() => {
+    attachStream?.();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [bars, setBars] = useState<number[]>(Array(BAR_COUNT).fill(3));
+  const animFrameRef = useRef<number | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+
+  useEffect(() => {
+    if (!audioContextRef?.current || !isActive || analyserRef.current) return;
+    const ctx = audioContextRef.current;
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 64;
+    analyserRef.current = analyser;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      ctx.createMediaStreamSource(stream).connect(analyser);
+    }).catch(() => {});
+    return () => { analyserRef.current = null; };
+  }, [audioContextRef, isActive]);
+
+  useEffect(() => {
+    if (!isActive) {
+      setBars(Array(BAR_COUNT).fill(3));
+      return;
+    }
+    let frame = 0;
+    const tick = () => {
+      if (analyserRef.current) {
+        const data = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(data);
+        const binSize = Math.max(1, Math.floor(data.length / BAR_COUNT));
+        setBars(Array.from({ length: BAR_COUNT }, (_, i) => {
+          const slice = data.slice(i * binSize, (i + 1) * binSize);
+          const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+          return Math.max(3, Math.round((avg / 255) * 36));
+        }));
+      } else {
+        frame++;
+        const t = frame / 10;
+        setBars(Array.from({ length: BAR_COUNT }, (_, i) => {
+          const h = 3 + Math.abs(Math.sin(t + i * 0.4) * 18 + Math.sin(t * 1.4 + i * 0.9) * 10);
+          return Math.round(h);
+        }));
+      }
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [isActive]);
+
   return (
-    <Paper elevation={2} sx={{
-      p: 2,
-      mb: 3,
-      ...(interviewStatus === 'active' ? {
-        position: 'relative',
-        maxWidth: '300px',
-        ml: 'auto',
-        mr: 0
-      } : {})
-    }}>
-      <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1rem' }}>
-        Camera Preview
-      </Typography>
-      <Box sx={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: interviewStatus === 'active' ? '280px' : '400px',
-        aspectRatio: '4/3',
-        mx: interviewStatus === 'active' ? 0 : 'auto',
-        borderRadius: '12px',
+    <Box
+      sx={{
+        borderRadius: '16px',
         overflow: 'hidden',
-        boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)',
-        border: '1px solid #e0f7fa',
-        bgcolor: '#f5f5f5',
-        transition: 'all 0.3s ease'
-      }}>
+        bgcolor: 'transparent',
+        border: '1px solid #ede9f8',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
+      {/* ── Header stripe ── */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+          px: 2.5,
+          py: 1.75,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1}>
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: isActive ? '#4ade80' : cameraStatus === 'granted' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)',
+              boxShadow: isActive ? '0 0 0 3px rgba(74,222,128,0.4)' : 'none',
+            }}
+          />
+          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
+            {isActive ? 'Live Camera' : 'Camera Preview'}
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            bgcolor: 'rgba(255,255,255,0.18)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '20px',
+            px: 1.25,
+            py: 0.4,
+          }}
+        >
+          {isActive
+            ? <MicIcon sx={{ fontSize: 12, color: '#fff' }} />
+            : <MicOffIcon sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }} />
+          }
+          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', fontWeight: 600, color: isActive ? '#fff' : 'rgba(255,255,255,0.6)' }}>
+            {isActive ? 'Mic On' : 'Mic Off'}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Video area ── */}
+      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '21/9', bgcolor: '#1a1a2e', flexShrink: 0, overflow: 'hidden' }}>
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
+            position: 'absolute', top: 0, left: 0,
+            width: '100%', height: '100%',
             objectFit: 'cover',
-            transform: 'scaleX(-1)', // Mirror the video
-            display: cameraStatus === 'granted' ? 'block' : 'none'
+            transform: 'scaleX(-1)',
+            display: cameraStatus === 'granted' ? 'block' : 'none',
           }}
         />
 
-        {/* Camera Status Overlays */}
-        {cameraStatus === 'idle' && (
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            color: '#666'
-          }}>
-            <Typography variant="body2">Camera will initialize when page loads</Typography>
+        {/* No-camera placeholder */}
+        {cameraStatus !== 'granted' && (
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#f8f5ff' }}>
+            {cameraStatus === 'requesting' ? (
+              <>
+                <CircularProgress size={32} sx={{ color: PURPLE }} />
+                <Typography sx={{ color: '#6b7280', fontSize: '0.8rem', fontFamily: 'Poppins' }}>
+                  Requesting camera access…
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Box sx={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(131,16,255,0.1)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <VideocamOffIcon sx={{ color: PURPLE, fontSize: 28 }} />
+                </Box>
+                <Typography sx={{ color: '#6b7280', fontSize: '0.82rem', fontFamily: 'Poppins', fontWeight: 500, textAlign: 'center', px: 3 }}>
+                  {cameraStatus === 'denied' ? 'Camera access denied' : cameraError || 'Camera unavailable'}
+                </Typography>
+                {(cameraStatus === 'denied' || cameraStatus === 'error') && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => window.location.reload()}
+                    sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none', color: PURPLE, borderColor: 'rgba(131,16,255,0.3)', borderRadius: '8px' }}
+                  >
+                    Retry
+                  </Button>
+                )}
+              </>
+            )}
           </Box>
         )}
 
-        {cameraStatus === 'requesting' && (
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 1,
-            color: '#666'
-          }}>
-            <CircularProgress size={24} />
-            <Typography variant="caption">Requesting camera permission...</Typography>
-          </Box>
-        )}
-
-        {cameraStatus === 'denied' && (
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            color: '#f44336'
-          }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>Camera access denied</Typography>
-            <Typography variant="caption" sx={{ mb: 2, display: 'block' }}>
-              Please allow camera access and try again
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => window.location.reload()}
-              sx={{ mt: 1 }}
-            >
-              Refresh Page
-            </Button>
-          </Box>
-        )}
-
-        {cameraStatus === 'error' && (
-          <Box sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            color: '#f44336'
-          }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>Camera error</Typography>
-            <Typography variant="caption" sx={{ mb: 2, display: 'block' }}>
-              {cameraError || 'Unable to access camera'}
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => window.location.reload()}
-              sx={{ mt: 1 }}
-            >
-              Retry
-            </Button>
-          </Box>
-        )}
-
+        {/* Connecting badge */}
         {isConnecting && cameraStatus === 'granted' && (
-          <Box sx={{
-            position: 'absolute',
-            top: 10,
-            right: 10,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            bgcolor: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            p: 1,
-            borderRadius: 1
-          }}>
-            <CircularProgress size={16} sx={{ color: 'white' }} />
-            <Typography variant="caption">Connecting transcription...</Typography>
+          <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', px: 1.5, py: 0.5, borderRadius: '8px', border: '1px solid rgba(131,16,255,0.2)' }}>
+            <CircularProgress size={11} sx={{ color: PURPLE }} />
+            <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: PURPLE, fontWeight: 700 }}>Connecting…</Typography>
+          </Box>
+        )}
+
+        {/* REC badge */}
+        {isActive && cameraStatus === 'granted' && (
+          <Box sx={{ position: 'absolute', top: 10, left: 10, display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: 'rgba(239,68,68,0.88)', px: 1.25, py: 0.4, borderRadius: '6px' }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#fff', animation: 'recPulse 1.2s infinite', '@keyframes recPulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.3 } } }} />
+            <Typography sx={{ color: '#fff', fontSize: '0.66rem', fontWeight: 800, fontFamily: 'Poppins', letterSpacing: '0.08em' }}>REC</Typography>
           </Box>
         )}
       </Box>
-    </Paper>
+
+      {/* ── Mic / waveform section ── */}
+      <Box sx={{ px: 2, pt: 1.5, pb: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" gap={0.75}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '8px',
+                bgcolor: isActive ? 'rgba(131,16,255,0.1)' : 'rgba(156,163,175,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {isActive
+                ? <MicIcon sx={{ fontSize: 15, color: PURPLE }} />
+                : <MicOffIcon sx={{ fontSize: 15, color: '#9ca3af' }} />
+              }
+            </Box>
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: '#374151' }}>
+              Microphone
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              px: 1,
+              py: 0.3,
+              borderRadius: '20px',
+              bgcolor: isActive ? 'rgba(34,197,94,0.1)' : 'rgba(156,163,175,0.1)',
+              border: `1px solid ${isActive ? 'rgba(34,197,94,0.25)' : 'rgba(156,163,175,0.2)'}`,
+            }}
+          >
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.65rem', fontWeight: 700, color: isActive ? '#16a34a' : '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {isActive ? 'Active' : 'Inactive'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Waveform bars */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2.5px',
+            height: 36,
+            borderRadius: '10px',
+            px: 1.5,
+            bgcolor: isActive ? 'rgba(131,16,255,0.06)' : '#f9fafb',
+            border: `1px solid ${isActive ? 'rgba(131,16,255,0.18)' : '#f0f0f0'}`,
+            transition: 'all 0.3s ease',
+          }}
+        >
+          {bars.map((h, i) => (
+            <Box
+              key={i}
+              sx={{
+                flex: 1,
+                height: `${h}px`,
+                borderRadius: '3px',
+                background: isActive
+                  ? `linear-gradient(180deg, #a855f7 0%, #8310FF 100%)`
+                  : 'rgba(209,213,219,0.6)',
+                transition: 'height 0.05s ease',
+                minWidth: 0,
+              }}
+            />
+          ))}
+        </Box>
+
+        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', textAlign: 'center', lineHeight: 1.4 }}>
+          {isActive
+            ? 'Speak clearly — your voice is being captured'
+            : cameraStatus === 'granted'
+            ? 'Start the interview to enable recording'
+            : 'Allow camera & microphone access to begin'}
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 

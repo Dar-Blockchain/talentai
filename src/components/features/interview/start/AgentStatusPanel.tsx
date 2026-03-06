@@ -1,12 +1,10 @@
 import React from 'react';
-import { Box, Typography, Button, CardContent } from '@mui/material';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import ProcessingIcon from '@mui/icons-material/Autorenew';
-import ReadyIcon from '@mui/icons-material/CheckCircle';
-import TimerIcon from '@mui/icons-material/Timer';
+import { Box, Typography, Button, LinearProgress } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
 import { InterviewStatus, AgentState } from '@/types/interview';
-import { StyledAgentStatusPanel, AgentStateIndicator, TimerDisplay } from './styles';
 
 interface AgentStatusPanelProps {
   interviewStatus: InterviewStatus;
@@ -24,6 +22,8 @@ interface AgentStatusPanelProps {
   onSubmitAnswer: () => void;
 }
 
+const PURPLE = '#8310FF';
+
 const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   interviewStatus,
   agentState,
@@ -39,246 +39,264 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   transcriptDebugLog,
   onSubmitAnswer,
 }) => {
-  if (!(interviewStatus === 'active' || agentState !== 'idle')) {
-    return null;
-  }
+  if (!(interviewStatus === 'active' || agentState !== 'idle')) return null;
+
+  const isProcessing = agentState === 'thinking' || agentState === 'processing';
+  const hasAnswer = accumulatedTurns.length > 0;
+
+  const stateColor = isProcessing
+    ? { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.25)', icon: '#d97706', ring: 'rgba(245,158,11,0.3)' }
+    : isVoiceActive
+    ? { bg: 'rgba(131,16,255,0.1)', border: 'rgba(131,16,255,0.25)', icon: PURPLE, ring: 'rgba(131,16,255,0.3)' }
+    : agentState === 'ready'
+    ? { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.25)', icon: '#22c55e', ring: 'rgba(34,197,94,0.3)' }
+    : { bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.2)', icon: '#22c55e', ring: 'rgba(34,197,94,0.2)' };
+
+  const statusLabel = isProcessing
+    ? agentState === 'thinking' ? 'AI is thinking…' : 'Processing your answer…'
+    : agentState === 'ready' ? 'Ready for next question'
+    : isVoiceActive ? 'Listening to your response'
+    : 'Recording your response';
+
+  const statusSub = agentMessage
+    ? agentMessage
+    : hasAnswer
+    ? `${accumulatedTurns.length} turn${accumulatedTurns.length > 1 ? 's' : ''} recorded`
+    : 'Speak clearly into your microphone';
 
   return (
-    <StyledAgentStatusPanel>
-      <CardContent sx={{ pb: '16px !important' }}>
-        {/* Agent State Display */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-            AI AGENT STATUS
-          </Typography>
-          <AgentStateIndicator className={agentState}>
-            {/* Agent State Icon */}
-            {agentState === 'thinking' && (
-              <PsychologyIcon sx={{ color: '#ffc107', fontSize: 20 }} />
-            )}
-            {agentState === 'waiting' && (
-              <HourglassEmptyIcon sx={{ color: '#2196f3', fontSize: 20 }} />
-            )}
-            {agentState === 'processing' && (
-              <ProcessingIcon sx={{ color: '#9c27b0', fontSize: 20, animation: 'spin 2s linear infinite' }} />
-            )}
-            {agentState === 'ready' && (
-              <ReadyIcon sx={{ color: '#4caf50', fontSize: 20 }} />
-            )}
-            {agentState === 'idle' && (
-              <TimerIcon sx={{ color: '#9e9e9e', fontSize: 20 }} />
+    <Box
+      sx={{
+        bgcolor: 'transparent',
+        borderRadius: '16px',
+        border: '1px solid #ede9f8',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Purple top line when processing */}
+      {isProcessing ? (
+        <LinearProgress
+          variant="indeterminate"
+          sx={{
+            height: 3,
+            bgcolor: 'rgba(131,16,255,0.08)',
+            '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #8310FF, #a855f7)' },
+          }}
+        />
+      ) : (
+        <Box sx={{ height: 3, background: isVoiceActive ? 'linear-gradient(90deg, #8310FF, #a855f7)' : 'transparent' }} />
+      )}
+
+      <Box sx={{ p: { xs: 2.5, md: 3 } }}>
+
+        {/* ── Status row ── */}
+        <Box display="flex" alignItems="center" gap={2} mb={2.5}>
+          {/* Icon circle */}
+          <Box
+            sx={{
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              bgcolor: stateColor.bg,
+              border: `1.5px solid ${stateColor.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              position: 'relative',
+            }}
+          >
+            {isProcessing ? (
+              <AutorenewIcon
+                sx={{
+                  fontSize: 24,
+                  color: stateColor.icon,
+                  animation: 'agentSpin 1.2s linear infinite',
+                  '@keyframes agentSpin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                }}
+              />
+            ) : agentState === 'ready' ? (
+              <CheckCircleIcon sx={{ fontSize: 24, color: stateColor.icon }} />
+            ) : isVoiceActive ? (
+              <KeyboardVoiceIcon
+                sx={{
+                  fontSize: 24,
+                  color: stateColor.icon,
+                  animation: 'agentPulse 0.8s ease-in-out infinite',
+                  '@keyframes agentPulse': { '0%,100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(1.15)' } },
+                }}
+              />
+            ) : (
+              <MicIcon sx={{ fontSize: 24, color: stateColor.icon }} />
             )}
 
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="body2" sx={{
-                color: '#fff',
-                fontWeight: 600,
-                textTransform: 'capitalize'
-              }}>
-                {agentState === 'thinking' && 'AI Thinking...'}
-                {agentState === 'waiting' && 'Waiting for Response'}
-                {agentState === 'processing' && 'Processing Answer'}
-                {agentState === 'ready' && 'Ready'}
-                {agentState === 'idle' && 'Idle'}
-              </Typography>
-              {agentMessage && (
-                <Typography variant="caption" sx={{
-                  color: '#bbb',
-                  display: 'block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {agentMessage}
-                </Typography>
-              )}
-            </Box>
-          </AgentStateIndicator>
-        </Box>
-
-        {/* Reading Time Display */}
-        {isInReadingTime && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-              READING TIME
-            </Typography>
-            <Box sx={{
-              p: 1.5,
-              borderRadius: 2,
-              background: 'rgba(255, 183, 77, 0.15)',
-              border: '1px solid rgba(255, 183, 77, 0.3)'
-            }}>
-              <TimerDisplay className="reading-time">
-                {Math.ceil(readingTimeLeft / 1000)}s remaining
-              </TimerDisplay>
-              <Typography variant="caption" sx={{ color: '#ffb74d', textAlign: 'center', display: 'block', mt: 0.5 }}>
-                Please read the question
-              </Typography>
-            </Box>
+            {/* Ripple ring */}
+            {isVoiceActive && !isProcessing && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: -5,
+                  borderRadius: '50%',
+                  border: `2px solid ${stateColor.ring}`,
+                  animation: 'agentRipple 1.4s ease-out infinite',
+                  '@keyframes agentRipple': {
+                    '0%': { transform: 'scale(1)', opacity: 0.6 },
+                    '100%': { transform: 'scale(1.5)', opacity: 0 },
+                  },
+                }}
+              />
+            )}
           </Box>
-        )}
 
-        {/* Manual Next Button - Always clickable when interview active */}
-        {interviewStatus === 'active' && !isInReadingTime && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-              {agentState === 'thinking' || agentState === 'processing'
-                ? 'AI PROCESSING'
-                : agentState === 'waiting' && accumulatedTurns.length > 0
-                ? 'SUBMIT ANSWER'
-                : 'ACTIONS'
-              }
+          <Box flex={1} minWidth={0}>
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', color: '#111827', lineHeight: 1.3 }}>
+              {statusLabel}
             </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={() => {
-                console.log('🎯 [MANUAL] User clicked Next Question button');
-                onSubmitAnswer();
-              }}
-              disabled={agentState === 'thinking' || agentState === 'processing'}
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', color: '#6b7280', mt: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {statusSub}
+            </Typography>
+          </Box>
+
+          {/* Turn count badge */}
+          {hasAnswer && !isProcessing && (
+            <Box
               sx={{
-                background: agentState === 'thinking' || agentState === 'processing'
-                  ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
-                  : accumulatedTurns.length > 0
-                  ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
-                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                py: 1.5,
-                textTransform: 'none',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  background: agentState === 'thinking' || agentState === 'processing'
-                    ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
-                    : accumulatedTurns.length > 0
-                    ? 'linear-gradient(135deg, #45a049 0%, #388e3c 100%)'
-                    : 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
-                },
-                '&:disabled': {
-                  color: '#fff',
-                  opacity: 0.7
-                }
+                px: 1.25,
+                py: 0.5,
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+                flexShrink: 0,
               }}
             >
-              {agentState === 'thinking'
-                ? '⏳ AI is Thinking...'
-                : agentState === 'processing'
-                ? '⚙️ Processing Your Answer...'
-                : agentState === 'waiting' && accumulatedTurns.length > 0
-                ? `✓ Submit Answer (${accumulatedTurns.length} ${accumulatedTurns.length === 1 ? 'turn' : 'turns'} recorded)`
-                : accumulatedTurns.length > 0
-                ? `Next Question (${accumulatedTurns.length} ${accumulatedTurns.length === 1 ? 'turn' : 'turns'} recorded)`
-                : isVoiceActive
-                ? '🎤 Speaking... Click when done'
-                : ' Next Question'
-              }
-            </Button>
-            <Typography variant="caption" sx={{
-              color: '#bbb',
-              textAlign: 'center',
-              display: 'block',
-              mt: 1,
-              fontSize: '0.7rem'
-            }}>
-              {agentState === 'thinking'
-                ? 'Please wait while the AI prepares the next question'
-                : agentState === 'processing'
-                ? 'Your answer is being analyzed'
-                : agentState === 'waiting' && accumulatedTurns.length > 0
-                ? 'Click to submit your answer and continue'
-                : accumulatedTurns.length > 0
-                ? 'Click when you\'re done answering'
-                : isVoiceActive
-                ? 'Listening to your response...'
-                : 'Click to skip this question'
-              }
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.72rem', color: '#fff' }}>
+                {accumulatedTurns.length}t
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {/* ── Reading time banner ── */}
+        {isInReadingTime && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              bgcolor: 'rgba(245,158,11,0.06)',
+              border: '1px solid rgba(245,158,11,0.2)',
+              borderRadius: '12px',
+              px: 2,
+              py: 1.25,
+              mb: 2,
+            }}
+          >
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#92400e', fontWeight: 500 }}>
+              Take a moment to read the question
             </Typography>
+            <Box sx={{ px: 1.25, py: 0.4, bgcolor: 'rgba(245,158,11,0.15)', borderRadius: '8px' }}>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '0.92rem', color: '#d97706' }}>
+                {Math.ceil(readingTimeLeft / 1000)}s
+              </Typography>
+            </Box>
           </Box>
         )}
 
-        {/* Current Transcript Preview */}
+        {/* ── Live transcript ── */}
         {currentTranscript && interviewStatus === 'active' && (
-          <Box sx={{
-            mt: 2,
-            pt: 2,
-            borderTop: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-              CURRENT RESPONSE
-            </Typography>
-            <Typography variant="caption" sx={{
-              color: '#fff',
-              opacity: 0.8,
-              fontStyle: 'italic',
-              display: 'block',
-              maxHeight: '60px',
+          <Box
+            sx={{
+              bgcolor: '#fafafa',
+              border: '1px solid #f0eefc',
+              borderLeft: `3px solid ${PURPLE}`,
+              borderRadius: '0 10px 10px 0',
+              px: 2,
+              py: 1.25,
+              mb: 2,
+              maxHeight: 68,
               overflowY: 'auto',
-              padding: '8px',
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: '6px',
-              fontSize: '0.7rem',
-              lineHeight: 1.4
-            }}>
-              "{currentTranscript.slice(-150)}{currentTranscript.length > 150 ? '...' : ''}"
+              '&::-webkit-scrollbar': { width: 3 },
+              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(131,16,255,0.2)', borderRadius: 2 },
+            }}
+          >
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#374151', fontStyle: 'italic', lineHeight: 1.6 }}>
+              {currentTranscript.slice(-200)}{currentTranscript.length > 200 ? '…' : ''}
             </Typography>
           </Box>
         )}
 
-        {/* Debug Panel (only show in development or when debug mode is enabled) */}
+        {/* ── Submit button ── */}
+        {interviewStatus === 'active' && !isInReadingTime && (
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={onSubmitAnswer}
+            disabled={isProcessing}
+            sx={{
+              fontFamily: 'Poppins',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              py: 1.5,
+              borderRadius: '12px',
+              textTransform: 'none',
+              background: isProcessing
+                ? undefined
+                : hasAnswer
+                ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                : 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+              bgcolor: isProcessing ? '#f3f4f6' : undefined,
+              color: isProcessing ? '#9ca3af' : '#fff',
+              boxShadow: isProcessing
+                ? 'none'
+                : hasAnswer
+                ? '0 6px 20px rgba(34,197,94,0.35)'
+                : '0 6px 20px rgba(131,16,255,0.4)',
+              '&:hover': {
+                background: isProcessing
+                  ? undefined
+                  : hasAnswer
+                  ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
+                  : 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)',
+              },
+              '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
+            }}
+          >
+            {agentState === 'thinking'
+              ? 'AI is thinking…'
+              : agentState === 'processing'
+              ? 'Processing…'
+              : hasAnswer
+              ? `Submit & Continue (${accumulatedTurns.length} turn${accumulatedTurns.length > 1 ? 's' : ''})`
+              : isVoiceActive
+              ? 'Speaking… click when done'
+              : 'Submit & Continue'}
+          </Button>
+        )}
+
+        {/* ── Debug panel ── */}
         {(debugMode || process.env.NODE_ENV === 'development') && (
-          <Box sx={{
-            mt: 2,
-            pt: 2,
-            borderTop: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: '#ccc', fontSize: '0.75rem', fontWeight: 600 }}>
-                DEBUG LOGS
+          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #f3f4f6' }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Debug
               </Typography>
               <Button
                 size="small"
-                variant="outlined"
                 onClick={() => setDebugMode(!debugMode)}
-                sx={{
-                  fontSize: '0.6rem',
-                  padding: '2px 8px',
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: '#fff'
-                }}
+                sx={{ fontFamily: 'Poppins', fontSize: '0.65rem', textTransform: 'none', color: '#9ca3af', minWidth: 0, px: 1 }}
               >
                 {debugMode ? 'Hide' : 'Show'}
               </Button>
             </Box>
             {debugMode && (
-              <Box sx={{
-                maxHeight: '120px',
-                overflowY: 'auto',
-                fontSize: '0.6rem',
-                fontFamily: 'monospace',
-                background: 'rgba(0,0,0,0.3)',
-                padding: '6px',
-                borderRadius: '4px',
-                '&::-webkit-scrollbar': { width: '4px' },
-                '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.2)' }
-              }}>
-                {silenceDebugLog.map((log, index) => (
-                  <Box key={index} sx={{ color: '#64b5f6', marginBottom: '2px' }}>
-                    {log}
-                  </Box>
-                ))}
-                {transcriptDebugLog.map((log, index) => (
-                  <Box key={index} sx={{ color: '#81c784', marginBottom: '2px' }}>
-                    {log}
-                  </Box>
-                ))}
+              <Box sx={{ maxHeight: 100, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.6rem', bgcolor: '#f9fafb', p: 1, borderRadius: '6px' }}>
+                {silenceDebugLog.map((log, i) => <Box key={i} sx={{ color: '#3b82f6', mb: '1px' }}>{log}</Box>)}
+                {transcriptDebugLog.map((log, i) => <Box key={i} sx={{ color: '#22c55e', mb: '1px' }}>{log}</Box>)}
               </Box>
             )}
           </Box>
         )}
-      </CardContent>
-    </StyledAgentStatusPanel>
+      </Box>
+    </Box>
   );
 };
 
