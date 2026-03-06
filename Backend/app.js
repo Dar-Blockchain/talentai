@@ -57,6 +57,19 @@ const io = socket.init(server);
 initializeSocketServer(io);
 
 /**
+ * Initialize default plan limits
+ */
+const initializePlanLimits = async () => {
+  logger.section("Initializing default plans...");
+  try {
+    await seedDefaultPlans();
+    logger.success("PlanLimits initialization completed");
+  } catch (error) {
+    logger.warn("PlanLimits seeding failed but application will continue");
+  }
+};
+
+/**
  * Application initialization sequence
  */
 const initializeApp = async () => {
@@ -70,14 +83,7 @@ const initializeApp = async () => {
 
     // Step 1.5: Seed PlanLimits if table is empty
     logger.section("Initializing default plans...");
-    try {
-      await seedDefaultPlans();
-      logger.success("PlanLimits initialization completed");
-    } catch (error) {
-      logger.warn(
-        "PlanLimits seeding encountered an issue, but application will continue",
-      );
-    }
+    await initializePlanLimits();
 
     // Step 2: Initialize scheduler
     //await initializeAgenda();
