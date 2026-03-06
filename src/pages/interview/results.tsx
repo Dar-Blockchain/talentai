@@ -10,6 +10,7 @@ import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
+import { createNotification, broadcastSystemNotification } from '@/store/slices/notificationSlice';
 import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill, getMyProfile } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
 import { saveInterviewAssessment, fetchInterviewDetailsById, claimInterviewReward } from '@/store/slices/interviewSlice';
@@ -229,6 +230,31 @@ export default function InterviewResults() {
           }
         } else {
           notifySkillTestCompleted(dispatch, skillName);
+        }
+
+        // Persistent notification saved to DB — visible in the notification bell
+        const scoreText = score > 0 ? ` — you scored ${Math.round(score)}%` : '';
+        const level = score >= 80 ? 'Expert' : score >= 60 ? 'Intermediate' : score >= 40 ? 'Beginner' : null;
+        const levelText = level ? ` and reached ${level} level` : '';
+        dispatch(createNotification({
+          type: 'success',
+          content: `You completed your ${skillName} interview${scoreText}${levelText}. Your results are now available in your dashboard.`,
+        }));
+
+        // Notify company — fetch post owner userId then broadcast to them
+        if (jobId) {
+          try {
+            const companyUserId = result.data?.post?.user?._id || result.data?.post?.user;
+            if (companyUserId) {
+              const candidateName = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim() || 'A candidate';
+              dispatch(broadcastSystemNotification({
+                content: `${candidateName} has just completed the ${skillName} interview${scoreText}. Check your dashboard to review their results.`,
+                recipientIds: [companyUserId],
+              }));
+            }
+          } catch (companyNotifError) {
+            console.error('❌ [Save] Error notifying company:', companyNotifError);
+          }
         }
       } catch (notifError) {
         console.error('❌ [Save] Error sending notification:', notifError);
