@@ -11,11 +11,6 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     const userId = req.user._id;
     const profileData = req.body;
 
-    // Validation: profile type is required
-    if (!profileData.type) {
-      return res.status(400).json({ message: "Profile type is required" });
-    }
-
     // Validation: firstName and lastName (handle both camelCase and PascalCase)
     const firstName = profileData.firstName || profileData.FirstName;
     const lastName = profileData.lastName || profileData.LastName;
