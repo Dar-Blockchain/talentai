@@ -1078,11 +1078,12 @@ FOCUS AREAS:
 ${JSON.stringify(session.config.intelligenceContext.focusAreas, null, 2)}
 
 CONVERSATION LENGTH: ${session.conversation.length} exchanges
-
 Determine if interview objectives have been sufficiently met to end the session.`;
+
 
       const response = await bedrock.callLLM({
         systemPrompt,
+        
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
         maxTokens: 500,
