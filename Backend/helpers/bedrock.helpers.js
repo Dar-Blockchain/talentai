@@ -1,9 +1,10 @@
 const {
   BedrockRuntimeClient,
   InvokeModelCommand,
-  InvokeModelWithResponseStreamCommand,
 } = require("@aws-sdk/client-bedrock-runtime");
 require("dotenv").config();
+
+// ── Client setup (bearer token auth via AWS_BEARER_TOKEN_BEDROCK) ──
 
 const clientConfig = {
   region: process.env.AWS_BEDROCK_REGION || "us-east-1",
@@ -25,17 +26,20 @@ if (
   console.log("✅ AWS Bedrock: Using explicit credentials from .env");
 } else {
   console.warn(
-    "⚠️ AWS Bedrock: No valid explicit credentials in .env — using default credential chain (AWS profile/IAM role/instance role)"
+    "⚠️ AWS Bedrock: No valid explicit credentials in .env — using default credential chain (AWS profile/IAM role/bearer token)"
   );
 }
 
 const client = new BedrockRuntimeClient(clientConfig);
 
-const MODEL_ID =
-  process.env.BEDROCK_MODEL_ID || "us.anthropic.claude-sonnet-4-20250514-v1:0";
+const REGION = process.env.AWS_BEDROCK_REGION || "us-east-1";
+const MODEL_ID = process.env.BEDROCK_MODEL_ID || "openai.gpt-oss-120b-1:0";
+const BEARER_TOKEN = process.env.AWS_BEARER_TOKEN_BEDROCK;
+
+console.log(`🤖 Bedrock model: ${MODEL_ID} (region: ${REGION})`);
 
 /**
- * Call Bedrock Claude with timeout and JSON parsing support.
+ * Call Bedrock gpt-oss via InvokeModelCommand (OpenAI-native body format).
  *
  * @param {Object} options
  * @param {string} options.systemPrompt - System-level instruction
@@ -52,18 +56,28 @@ async function callLLM({
   maxTokens = 1024,
   timeout = 15000,
 }) {
-  const payload = {
-    anthropic_version: "bedrock-2023-05-31",
-    max_tokens: maxTokens,
-    temperature,
-    system: systemPrompt || "",
-    messages: messages.map((m) => ({
+  // Build OpenAI-format messages array
+  const msgs = [];
+  if (systemPrompt) {
+    msgs.push({ role: "system", content: systemPrompt });
+  }
+  for (const m of messages) {
+    msgs.push({
       role: m.role,
       content:
         typeof m.content === "string"
-          ? [{ type: "text", text: m.content }]
-          : m.content,
-    })),
+          ? m.content
+          : Array.isArray(m.content)
+            ? m.content.map((c) => c.text || c).join("")
+            : String(m.content),
+    });
+  }
+
+  const payload = {
+    model: MODEL_ID,
+    max_completion_tokens: maxTokens,
+    temperature,
+    messages: msgs,
   };
 
   const command = new InvokeModelCommand({
@@ -73,26 +87,39 @@ async function callLLM({
     body: JSON.stringify(payload),
   });
 
-  const result = await withTimeout(
-    client.send(command),
-    timeout,
-    `Bedrock callLLM (timeout ${timeout}ms)`
-  );
+  // Use AbortController for clean timeout
+  const abortController = new AbortController();
+  const timer = setTimeout(() => abortController.abort(), timeout);
 
-  const responseBody = JSON.parse(new TextDecoder().decode(result.body));
-  const content = responseBody.content?.[0]?.text || "";
+  try {
+    const result = await client.send(command, {
+      abortSignal: abortController.signal,
+    });
 
-  return { content };
+    const responseBody = JSON.parse(new TextDecoder().decode(result.body));
+    const content = responseBody.choices?.[0]?.message?.content || "";
+
+    return { content };
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`Timeout: Bedrock callLLM exceeded ${timeout}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
- * Call Bedrock Claude with streaming. Yields chunks via onChunk callback.
+ * Call Bedrock gpt-oss with streaming via OpenAI-compatible HTTP SSE endpoint.
+ * ConverseStreamCommand does NOT work with gpt-oss — use HTTP SSE instead.
  *
  * @param {Object} options
  * @param {string} options.systemPrompt
  * @param {Array}  options.messages
  * @param {number} [options.temperature=0.5]
  * @param {number} [options.maxTokens=1024]
+ * @param {number} [options.timeout=30000]
  * @param {Function} options.onChunk - Called with each text chunk: onChunk(textDelta)
  * @returns {Promise<{ content: string }>} - Full accumulated response
  */
@@ -101,49 +128,110 @@ async function callLLMStreaming({
   messages,
   temperature = 0.5,
   maxTokens = 1024,
+  timeout = 30000,
   onChunk,
 }) {
-  const payload = {
-    anthropic_version: "bedrock-2023-05-31",
-    max_tokens: maxTokens,
-    temperature,
-    system: systemPrompt || "",
-    messages: messages.map((m) => ({
+  if (!BEARER_TOKEN) {
+    throw new Error(
+      "AWS_BEARER_TOKEN_BEDROCK is required for streaming. Set it in .env"
+    );
+  }
+
+  const url = `https://bedrock-runtime.${REGION}.amazonaws.com/openai/v1/chat/completions`;
+
+  // Build OpenAI-format messages array
+  const msgs = [];
+  if (systemPrompt) {
+    msgs.push({ role: "system", content: systemPrompt });
+  }
+  for (const m of messages) {
+    msgs.push({
       role: m.role,
       content:
         typeof m.content === "string"
-          ? [{ type: "text", text: m.content }]
-          : m.content,
-    })),
-  };
-
-  const command = new InvokeModelWithResponseStreamCommand({
-    modelId: MODEL_ID,
-    contentType: "application/json",
-    accept: "application/json",
-    body: JSON.stringify(payload),
-  });
-
-  const response = await client.send(command);
-
-  let fullContent = "";
-
-  for await (const item of response.body) {
-    if (item.chunk) {
-      const chunkData = JSON.parse(new TextDecoder().decode(item.chunk.bytes));
-
-      if (
-        chunkData.type === "content_block_delta" &&
-        chunkData.delta?.type === "text_delta"
-      ) {
-        const text = chunkData.delta.text;
-        fullContent += text;
-        if (onChunk) onChunk(text);
-      }
-    }
+          ? m.content
+          : Array.isArray(m.content)
+            ? m.content.map((c) => c.text || c).join("")
+            : String(m.content),
+    });
   }
 
-  return { content: fullContent };
+  const payload = {
+    model: MODEL_ID,
+    max_completion_tokens: maxTokens,
+    temperature,
+    stream: true,
+    messages: msgs,
+  };
+
+  const abortController = new AbortController();
+  const timer = setTimeout(() => abortController.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${BEARER_TOKEN}`,
+      },
+      body: JSON.stringify(payload),
+      signal: abortController.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Bedrock streaming HTTP ${response.status}: ${errorText.substring(0, 300)}`
+      );
+    }
+
+    let fullContent = "";
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete SSE lines
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(":")) continue;
+
+        if (trimmed === "data: [DONE]") {
+          return { content: fullContent };
+        }
+
+        if (trimmed.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            const delta = data.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullContent += delta;
+              if (onChunk) onChunk(delta);
+            }
+          } catch {
+            // Skip malformed JSON chunks
+          }
+        }
+      }
+    }
+
+    return { content: fullContent };
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`Timeout: Bedrock streaming exceeded ${timeout}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
