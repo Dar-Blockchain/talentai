@@ -3,6 +3,231 @@
  * Handles rich configuration for adaptive interview experiences
  */
 
+/**
+ * Detect job category from title and description keywords.
+ * Used by Agent Persona to select category-specific evaluation frameworks.
+ */
+function detectJobCategory(title, description) {
+  const combined = (title + " " + (description || "")).toLowerCase();
+  const categoryKeywords = {
+    engineering: ["developer", "engineer", "programmer", "architect", "devops", "sre", "frontend", "backend", "fullstack", "full-stack", "mobile", "ios", "android", "qa", "tester", "software"],
+    marketing: ["marketing", "growth", "seo", "content", "brand", "social media", "demand gen", "campaign"],
+    sales: ["sales", "account executive", "bdr", "sdr", "business development", "revenue", "account manager"],
+    design: ["designer", "ux", "ui", "product design", "visual", "graphic", "creative"],
+    product: ["product manager", "product owner", "program manager"],
+    data: ["data scientist", "data analyst", "data engineer", "ml engineer", "machine learning", "analytics"],
+    customer_support: ["support", "customer success", "helpdesk", "customer service"],
+    management: ["director", "vp", "head of", "chief", "cto", "cmo", "manager", "team lead"],
+    operations: ["operations", "logistics", "supply chain", "procurement"],
+    finance: ["finance", "accounting", "controller", "auditor", "treasury"],
+  };
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    if (keywords.some(kw => combined.includes(kw))) return category;
+  }
+  return "engineering";
+}
+
+/**
+ * Get category-specific evaluation framework for a given job category and interview type.
+ * Returns focusAreas (with weights, descriptions, indicators) and questionStyles.
+ */
+function getEvaluationFramework(jobCategory, interviewType) {
+  const frameworks = {
+    engineering: {
+      TECHNICAL_SKILL: {
+        focusAreas: {
+          technical_depth: { weight: 35, description: "Deep technical knowledge, system design, architecture trade-offs", indicators: ["system design", "architecture patterns", "performance trade-offs", "code quality"] },
+          problem_solving: { weight: 25, description: "Systematic debugging, algorithm thinking, edge-case handling", indicators: ["debugging approach", "algorithm choice", "edge cases", "root cause analysis"] },
+          code_quality: { weight: 20, description: "Clean code, testing practices, code review, maintainability", indicators: ["testing strategy", "refactoring", "code review", "documentation"] },
+          practical_experience: { weight: 20, description: "Real-world project experience, production systems, DevOps", indicators: ["production issues", "deployment", "monitoring", "team collaboration"] },
+        },
+        questionStyles: ["scenario-based", "code review", "architecture discussion", "debugging walkthrough"],
+      },
+      HR_INTERVIEW: {
+        focusAreas: {
+          leadership_potential: { weight: 25, description: "Mentoring, project ownership, initiative, conflict resolution", indicators: ["mentoring", "ownership", "initiative", "conflict resolution"] },
+          problem_solving: { weight: 30, description: "Technical challenges overcome, creative solutions, systematic thinking", indicators: ["challenge examples", "creative solutions", "systematic approach"] },
+          collaboration: { weight: 25, description: "Cross-team work, communication style, feedback handling", indicators: ["cross-team", "communication", "feedback", "pair programming"] },
+          growth_mindset: { weight: 20, description: "Learning from failure, skill development, feedback incorporation", indicators: ["learning examples", "skill growth", "feedback response"] },
+        },
+        questionStyles: ["behavioral STAR", "situational", "values-based", "motivational"],
+      },
+      SOFT_SKILL: {
+        focusAreas: {
+          communication: { weight: 30, description: "Technical communication, documentation, presenting ideas", indicators: ["clarity", "technical writing", "presentation", "active listening"] },
+          teamwork: { weight: 25, description: "Pair programming, code reviews, team dynamics", indicators: ["collaboration", "knowledge sharing", "team support"] },
+          adaptability: { weight: 25, description: "Learning new tech, handling changing requirements", indicators: ["tech adoption", "change response", "flexibility"] },
+          emotional_intelligence: { weight: 20, description: "Self-awareness, empathy, handling pressure", indicators: ["self-awareness", "empathy", "pressure handling"] },
+        },
+        questionStyles: ["behavioral STAR", "scenario-based", "reflective"],
+      },
+    },
+    marketing: {
+      TECHNICAL_SKILL: {
+        focusAreas: {
+          strategy_thinking: { weight: 30, description: "Campaign strategy, market analysis, brand positioning", indicators: ["campaign planning", "market analysis", "positioning", "competitive analysis"] },
+          data_driven: { weight: 25, description: "Analytics, A/B testing, ROI measurement, attribution", indicators: ["metrics", "A/B testing", "ROI", "attribution models"] },
+          creativity: { weight: 25, description: "Content creation, messaging, innovative campaigns", indicators: ["content strategy", "messaging", "campaign innovation", "storytelling"] },
+          execution: { weight: 20, description: "Campaign management, budget handling, cross-functional delivery", indicators: ["project management", "budget", "stakeholder coordination", "timelines"] },
+        },
+        questionStyles: ["case study", "portfolio review", "campaign analysis", "metrics discussion"],
+      },
+      HR_INTERVIEW: {
+        focusAreas: {
+          leadership_potential: { weight: 25, description: "Team management, stakeholder influence, initiative", indicators: ["team leadership", "influence", "initiative"] },
+          strategic_thinking: { weight: 30, description: "Market vision, long-term planning, competitive awareness", indicators: ["vision", "planning", "market awareness"] },
+          collaboration: { weight: 25, description: "Cross-functional work, agency management, stakeholder alignment", indicators: ["cross-functional", "agency work", "alignment"] },
+          growth_mindset: { weight: 20, description: "Industry trends, skill development, experimentation", indicators: ["trend awareness", "learning", "experimentation"] },
+        },
+        questionStyles: ["behavioral STAR", "situational", "case study"],
+      },
+      SOFT_SKILL: {
+        focusAreas: {
+          communication: { weight: 30, description: "Storytelling, presenting to stakeholders, written communication", indicators: ["storytelling", "presentations", "written clarity"] },
+          teamwork: { weight: 25, description: "Cross-functional collaboration, agency management", indicators: ["collaboration", "agency work", "team dynamics"] },
+          adaptability: { weight: 25, description: "Handling shifting priorities, market changes", indicators: ["priority shifts", "market adaptation", "flexibility"] },
+          emotional_intelligence: { weight: 20, description: "Brand empathy, customer understanding, team dynamics", indicators: ["empathy", "customer focus", "self-awareness"] },
+        },
+        questionStyles: ["behavioral STAR", "scenario-based", "reflective"],
+      },
+    },
+    sales: {
+      TECHNICAL_SKILL: {
+        focusAreas: {
+          selling_skills: { weight: 35, description: "Prospecting, qualification, pipeline management, closing", indicators: ["prospecting", "qualification", "pipeline", "closing techniques"] },
+          product_knowledge: { weight: 20, description: "Product understanding, value articulation, competitive positioning", indicators: ["product mastery", "value prop", "competitive awareness"] },
+          process_discipline: { weight: 25, description: "CRM usage, forecasting, activity management, methodology", indicators: ["CRM discipline", "forecasting", "methodology adherence"] },
+          relationship_building: { weight: 20, description: "Client relationships, trust building, long-term accounts", indicators: ["trust building", "account management", "networking"] },
+        },
+        questionStyles: ["role-play", "deal walkthrough", "objection handling", "pipeline review"],
+      },
+      HR_INTERVIEW: {
+        focusAreas: {
+          drive_resilience: { weight: 30, description: "Motivation, handling rejection, persistence", indicators: ["motivation", "rejection handling", "persistence", "quota achievement"] },
+          communication: { weight: 25, description: "Persuasion, active listening, presentation skills", indicators: ["persuasion", "listening", "presenting"] },
+          collaboration: { weight: 25, description: "Team selling, cross-functional work, manager relationships", indicators: ["team selling", "cross-functional", "manager relationship"] },
+          growth_mindset: { weight: 20, description: "Coachability, skill development, market learning", indicators: ["coachability", "learning", "improvement"] },
+        },
+        questionStyles: ["behavioral STAR", "deal storytelling", "situational"],
+      },
+      SOFT_SKILL: {
+        focusAreas: {
+          communication: { weight: 30, description: "Persuasion, active listening, tailoring message to audience", indicators: ["persuasion", "listening", "audience adaptation"] },
+          emotional_intelligence: { weight: 25, description: "Reading buyer signals, empathy, managing relationships", indicators: ["buyer signals", "empathy", "relationship management"] },
+          teamwork: { weight: 25, description: "Team selling, knowledge sharing, mentoring", indicators: ["team selling", "sharing", "mentoring"] },
+          adaptability: { weight: 20, description: "Handling objections, pivoting strategy, market changes", indicators: ["objection handling", "pivoting", "market adaptation"] },
+        },
+        questionStyles: ["behavioral STAR", "role-play", "scenario-based"],
+      },
+    },
+    design: {
+      TECHNICAL_SKILL: {
+        focusAreas: {
+          design_process: { weight: 30, description: "Design thinking, user-centered design, wireframing, prototyping", indicators: ["design thinking", "user-centered", "wireframing", "prototyping"] },
+          user_research: { weight: 25, description: "User interviews, usability testing, persona development", indicators: ["user research", "usability testing", "personas", "journey mapping"] },
+          visual_craft: { weight: 25, description: "Visual design, interaction patterns, accessibility, design systems", indicators: ["visual design", "interaction", "accessibility", "design systems"] },
+          tools_collaboration: { weight: 20, description: "Design tools proficiency, developer handoff, design systems", indicators: ["Figma/Sketch", "developer handoff", "design system contribution"] },
+        },
+        questionStyles: ["portfolio review", "design critique", "whiteboard exercise", "case study"],
+      },
+      HR_INTERVIEW: {
+        focusAreas: {
+          leadership_potential: { weight: 25, description: "Design advocacy, mentoring, process improvement", indicators: ["design advocacy", "mentoring", "process improvement"] },
+          problem_solving: { weight: 30, description: "Design challenges, constraint handling, creative solutions", indicators: ["design challenges", "constraints", "creative solutions"] },
+          collaboration: { weight: 25, description: "Working with PMs, engineers, stakeholders", indicators: ["PM collaboration", "engineering handoff", "stakeholder management"] },
+          growth_mindset: { weight: 20, description: "Design trends, skill development, feedback incorporation", indicators: ["trend awareness", "skill growth", "feedback response"] },
+        },
+        questionStyles: ["behavioral STAR", "situational", "portfolio discussion"],
+      },
+      SOFT_SKILL: {
+        focusAreas: {
+          communication: { weight: 30, description: "Presenting designs, articulating decisions, stakeholder communication", indicators: ["design presentations", "decision articulation", "stakeholder communication"] },
+          teamwork: { weight: 25, description: "Cross-functional collaboration, design reviews", indicators: ["cross-functional", "design reviews", "team dynamics"] },
+          adaptability: { weight: 25, description: "Handling feedback, iterating on designs, changing requirements", indicators: ["feedback handling", "iteration", "requirement changes"] },
+          emotional_intelligence: { weight: 20, description: "User empathy, team dynamics, handling critique", indicators: ["user empathy", "critique handling", "self-awareness"] },
+        },
+        questionStyles: ["behavioral STAR", "scenario-based", "reflective"],
+      },
+    },
+    product: {
+      TECHNICAL_SKILL: {
+        focusAreas: {
+          product_strategy: { weight: 30, description: "Roadmap planning, prioritization, market analysis, vision", indicators: ["roadmap", "prioritization frameworks", "market analysis", "product vision"] },
+          user_focus: { weight: 25, description: "User research, customer empathy, problem definition", indicators: ["user research", "customer interviews", "problem statements", "personas"] },
+          execution: { weight: 25, description: "Sprint management, stakeholder alignment, metrics tracking", indicators: ["sprint planning", "stakeholder management", "KPIs", "launch process"] },
+          technical_acumen: { weight: 20, description: "Technical understanding, API knowledge, data fluency", indicators: ["tech understanding", "API awareness", "data analysis", "technical tradeoffs"] },
+        },
+        questionStyles: ["case study", "prioritization exercise", "metrics discussion", "roadmap review"],
+      },
+      HR_INTERVIEW: {
+        focusAreas: {
+          leadership_potential: { weight: 30, description: "Influence without authority, stakeholder management, vision setting", indicators: ["influence", "stakeholder management", "vision"] },
+          problem_solving: { weight: 25, description: "Ambiguity handling, data-driven decisions, trade-off analysis", indicators: ["ambiguity", "data-driven", "trade-offs"] },
+          collaboration: { weight: 25, description: "Engineering partnership, design collaboration, executive communication", indicators: ["engineering partnership", "design collaboration", "exec communication"] },
+          growth_mindset: { weight: 20, description: "Market learning, user empathy development, skill growth", indicators: ["market learning", "empathy growth", "skill development"] },
+        },
+        questionStyles: ["behavioral STAR", "case study", "situational"],
+      },
+      SOFT_SKILL: {
+        focusAreas: {
+          communication: { weight: 30, description: "Stakeholder communication, executive presentations, writing PRDs", indicators: ["stakeholder communication", "presentations", "PRD writing"] },
+          teamwork: { weight: 25, description: "Cross-functional leadership, engineering collaboration", indicators: ["cross-functional", "engineering collaboration", "team alignment"] },
+          adaptability: { weight: 25, description: "Pivoting strategy, handling ambiguity, market changes", indicators: ["pivoting", "ambiguity handling", "market adaptation"] },
+          emotional_intelligence: { weight: 20, description: "User empathy, team dynamics, conflict resolution", indicators: ["user empathy", "team dynamics", "conflict resolution"] },
+        },
+        questionStyles: ["behavioral STAR", "scenario-based", "case study"],
+      },
+    },
+    data: {
+      TECHNICAL_SKILL: {
+        focusAreas: {
+          analytical_skills: { weight: 30, description: "Statistical analysis, hypothesis testing, data modeling", indicators: ["statistics", "hypothesis testing", "data modeling", "experimental design"] },
+          tools_technologies: { weight: 25, description: "SQL, Python/R, visualization tools, ML frameworks", indicators: ["SQL", "Python/R", "visualization", "ML tools"] },
+          insights_communication: { weight: 25, description: "Data storytelling, dashboard design, stakeholder presentations", indicators: ["storytelling", "dashboards", "presentations", "recommendations"] },
+          business_acumen: { weight: 20, description: "KPI definition, business metrics, strategic impact", indicators: ["KPIs", "business metrics", "strategic thinking", "problem framing"] },
+        },
+        questionStyles: ["case study", "SQL challenge", "metrics discussion", "analysis walkthrough"],
+      },
+      HR_INTERVIEW: {
+        focusAreas: {
+          problem_solving: { weight: 30, description: "Analytical challenges, ambiguity handling, creative approaches", indicators: ["analytical challenges", "ambiguity", "creative solutions"] },
+          collaboration: { weight: 25, description: "Stakeholder partnership, cross-functional work", indicators: ["stakeholder partnership", "cross-functional", "data democratization"] },
+          communication: { weight: 25, description: "Explaining complex findings, influencing decisions with data", indicators: ["simplifying complexity", "data influence", "presenting findings"] },
+          growth_mindset: { weight: 20, description: "Learning new tools, staying current, mentoring", indicators: ["tool learning", "staying current", "mentoring"] },
+        },
+        questionStyles: ["behavioral STAR", "case study", "situational"],
+      },
+      SOFT_SKILL: {
+        focusAreas: {
+          communication: { weight: 30, description: "Explaining complex findings to non-technical stakeholders", indicators: ["simplifying complexity", "stakeholder communication", "data storytelling"] },
+          teamwork: { weight: 25, description: "Cross-functional collaboration, knowledge sharing", indicators: ["cross-functional", "knowledge sharing", "pair analysis"] },
+          adaptability: { weight: 25, description: "New tools, changing data sources, evolving requirements", indicators: ["tool adoption", "data source changes", "requirement evolution"] },
+          emotional_intelligence: { weight: 20, description: "Handling pushback on findings, empathy for stakeholders", indicators: ["pushback handling", "stakeholder empathy", "self-awareness"] },
+        },
+        questionStyles: ["behavioral STAR", "scenario-based", "reflective"],
+      },
+    },
+  };
+
+  // Fallback categories share engineering framework with adjusted descriptions
+  const fallbackCategories = ["customer_support", "management", "operations", "finance"];
+
+  const categoryFramework = frameworks[jobCategory];
+  if (categoryFramework) {
+    const typeFramework = categoryFramework[interviewType] || categoryFramework.TECHNICAL_SKILL || categoryFramework.HR_INTERVIEW;
+    return typeFramework;
+  }
+
+  // For categories without specific frameworks, use engineering as base
+  if (fallbackCategories.includes(jobCategory)) {
+    const engFramework = frameworks.engineering;
+    return engFramework[interviewType] || engFramework.TECHNICAL_SKILL;
+  }
+
+  // Ultimate fallback
+  return frameworks.engineering[interviewType] || frameworks.engineering.TECHNICAL_SKILL;
+}
+
 class ConfigManager {
   constructor() {
     this.defaultConfigs = {
@@ -703,4 +928,7 @@ class ConfigManager {
   }
 }
 
-module.exports = new ConfigManager();
+const configManager = new ConfigManager();
+module.exports = configManager;
+module.exports.detectJobCategory = detectJobCategory;
+module.exports.getEvaluationFramework = getEvaluationFramework;

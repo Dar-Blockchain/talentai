@@ -6,6 +6,7 @@
 const bedrock = require("../helpers/bedrock.helpers");
 const ragService = require("./rag.service");
 const configManager = require("../utils/config-manager");
+const { detectJobCategory, getEvaluationFramework } = require("../utils/config-manager");
 const redisSessionManager = require("../utils/redis-session-manager");
 const Post = require("../models/Post.model");
 require('dotenv').config();
@@ -108,6 +109,25 @@ class AIUtils {
         overallProgress: 50,
         aiInsights: ["Report generation failed, using fallback"],
         trends: ["Unable to analyze trends"],
+        fallback: true
+      },
+      'combinedAnalysis': {
+        quality: { score: 50, answeredQuestion: true, depthLevel: "moderate", isOffTopic: false, completeness: "partial" },
+        skills: { demonstrated: [], hinted: [], gaps: [] },
+        coverage: { areasImpacted: [] },
+        style: { verbosity: "detailed", confidence: "moderate", usesExamples: false },
+        interestingTopics: [],
+        shouldEnd: { shouldEnd: false, reason: "" },
+        fallback: true
+      },
+      'buildAgentPersona': {
+        mustHaveSkills: [],
+        niceToHaveSkills: [],
+        keyBehaviors: [],
+        redFlags: [],
+        seniorityExpectations: "Standard expectations",
+        domainSpecificTopics: [],
+        agentTone: "professional and conversational",
         fallback: true
       }
     };
@@ -407,98 +427,120 @@ class QuestionGeneratorAI {
     this.sessionManager = sessionManager;
   }
 
-  async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis) {
+  async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis, questionStrategy = null) {
     try {
-      // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
-      let questionGuidelines = '';
+      const persona = session.agentPersona || {};
+      const candidateProfile = session.candidateProfile || {};
 
-      if (session.config.interviewType === 'TECHNICAL_SKILL') {
-        const focusAreaNames = session.config.intelligenceContext?.focusAreas
-          ?.map(a => a.skillName || a.area) || [];
-        const roleContext = session.config.context.targetRole;
-
-        questionGuidelines = `
-⚠️ CRITICAL: This is a TECHNICAL SKILL interview for the role of "${roleContext}".
-Ask questions that assess the practical, domain-specific expertise required for this role.
-
-FOCUS AREAS FOR THIS ROLE:
-${focusAreaNames.map(a => `- ${a}`).join('\n')}
-
-RULES:
-- Ask questions about the focus areas listed above — these define what "technical" means for THIS role
-- Probe for real-world experience, implementation details, and best practices
-- Match the technical domain to the role (marketing → analytics, campaigns, growth metrics; dev → code, architecture; design → UX process, tools)
-- Do NOT ask about topics outside the listed focus areas
-- Be natural and conversational
-- Assess expertise at ${session.config.context.experienceLevel} level`;
-      } else if (session.config.interviewType === 'HR_INTERVIEW') {
-        questionGuidelines = `
-This is an HR/BEHAVIORAL interview - focus on soft skills, teamwork, cultural fit, and behavioral patterns.`;
-      } else if (session.config.interviewType === 'SOFT_SKILL') {
-        questionGuidelines = `
-This is a SOFT SKILLS interview - focus on communication, emotional intelligence, collaboration, and interpersonal abilities.`;
+      // Build persona context for the prompt
+      let personaBlock = '';
+      if (persona.job) {
+        personaBlock = `
+=== AGENT PERSONA ===
+Role: ${persona.job.title} at ${persona.job.company}
+Category: ${persona.jobCategory} | Interview: ${persona.interviewType}
+Must-Have Skills: ${persona.idealCandidate?.mustHaveSkills?.join(", ") || "N/A"}
+Nice-to-Have: ${persona.idealCandidate?.niceToHaveSkills?.join(", ") || "N/A"}
+Red Flags: ${persona.idealCandidate?.redFlags?.join(", ") || "N/A"}
+Tone: ${persona.agentBehavior?.tone || "professional"}
+Domain Topics: ${persona.agentBehavior?.domainTopics?.join(", ") || "N/A"}`;
       }
 
-      const systemPrompt = `You are an expert interviewer generating intelligent, targeted questions based on coverage gaps and conversation flow.
+      // Build candidate profile context
+      let profileBlock = '';
+      if (candidateProfile.responseQualities?.length > 0) {
+        profileBlock = `
+=== CANDIDATE PROFILE ===
+Style: ${candidateProfile.communicationStyle?.verbosity || "unknown"} speaker, ${candidateProfile.communicationStyle?.confidenceLevel || "unknown"} confidence
+Uses Examples: ${candidateProfile.communicationStyle?.usesExamples ? "yes" : "not yet"}
+Expertise Shown: ${candidateProfile.revealedExpertise?.slice(-5).join(", ") || "none yet"}
+Gaps Identified: ${candidateProfile.revealedGaps?.slice(-3).join(", ") || "none yet"}
+Current Difficulty: ${candidateProfile.currentDifficulty || "intermediate"}`;
+      }
+
+      // Build strategy context
+      let strategyBlock = '';
+      if (questionStrategy) {
+        const modeInstructions = {
+          bridge: `BRIDGE MODE: The candidate just mentioned "${questionStrategy.context}". Naturally bridge from that topic to explore ${questionStrategy.targetArea}. Use what they said as a springboard.`,
+          probe: `PROBE MODE: ${questionStrategy.context}. Ask for a specific, concrete example or deeper technical detail about ${questionStrategy.targetArea}.`,
+          transition: `TRANSITION MODE: ${questionStrategy.context}. Smoothly transition to ${questionStrategy.targetArea} — connect it to something already discussed if possible.`,
+          validate: `VALIDATE MODE: ${questionStrategy.context}. Ask a quick validation question for ${questionStrategy.targetArea} to confirm the candidate's strength.`,
+        };
+        strategyBlock = `\n=== QUESTION STRATEGY ===\n${modeInstructions[questionStrategy.mode] || `Target: ${questionStrategy.targetArea}`}`;
+      }
+
+      // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
+      let questionGuidelines = '';
+      if (session.config.interviewType === 'TECHNICAL_SKILL') {
+        const focusAreaNames = Object.keys(session.coverage?.areas || {});
+        questionGuidelines = `
+TECHNICAL SKILL interview for "${session.config.context.targetRole}".
+Focus areas: ${focusAreaNames.join(', ')}
+Assess at ${session.config.context.experienceLevel} level.`;
+      } else if (session.config.interviewType === 'HR_INTERVIEW') {
+        questionGuidelines = `HR/BEHAVIORAL interview — focus on soft skills, teamwork, cultural fit.`;
+      } else if (session.config.interviewType === 'SOFT_SKILL') {
+        questionGuidelines = `SOFT SKILLS interview — focus on communication, EQ, collaboration.`;
+      }
+
+      // Adapt style based on candidate profile
+      let styleInstruction = '';
+      if (candidateProfile.communicationStyle?.verbosity === 'concise') {
+        styleInstruction = 'Candidate is concise — ask open-ended questions that invite elaboration.';
+      } else if (candidateProfile.communicationStyle?.verbosity === 'rambling') {
+        styleInstruction = 'Candidate tends to ramble — ask focused, specific questions.';
+      }
+
+      const systemPrompt = `You are an expert interviewer. Generate ONE targeted question.
+${personaBlock}
+${profileBlock}
+${strategyBlock}
 
 ${questionGuidelines}
+${styleInstruction}
 
-QUESTION GENERATION PRINCIPLES:
-- Target specific coverage gaps identified
-- Build naturally on previous conversation
-- Match candidate's communication style
-- Avoid repetitive or similar questions
-- Progress logically through competency exploration
-- Be natural and conversational, not robotic
-- Keep questions concise — ONE clear question in 1-2 sentences (max 40 words)
-- Do NOT combine multiple questions into one
-- Do NOT add preambles or context explanations in the question itself
-- STRICTLY follow the interview type guidelines above
+RULES:
+- ONE clear question, 1-2 sentences, max 40 words
+- No preambles ("That's great...", "Interesting...")
+- No multi-part questions
+- Target the specified coverage gap
+- Be natural and conversational
 
 RESPONSE FORMAT (JSON only):
 {
-  "question": "the actual question to ask",
-  "targetAreas": ["coverage areas this addresses"],
-  "reasoning": "why this question was chosen",
-  "expectedOutcomes": ["what we hope to learn"],
-  "followUpStrategy": "potential follow-up approach"
+  "question": "the actual question",
+  "targetAreas": ["area"],
+  "reasoning": "why this question",
+  "expectedOutcomes": ["what we learn"],
+  "followUpStrategy": "approach"
 }`;
 
-      const recentContext = session.conversation.slice(-20).map(entry =>
+      const recentContext = session.conversation.slice(-10).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
 
-      // Include full JD context if cached in session
-      const jdContext = session.jobDescription
-        ? `\nJOB DESCRIPTION:\n${session.jobDescription.description || ''}\n\nREQUIREMENTS:\n${(session.jobDescription.requirements || []).join('\n')}\n\nRESPONSIBILITIES:\n${(session.jobDescription.responsibilities || []).join('\n')}`
-        : '';
+      const coverageSummary = Object.fromEntries(
+        Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, `${d.percentage}% (${d.questionsAsked || 0}q)`])
+      );
 
-      const userPrompt = `INTERVIEW CONTEXT:
-Role: ${session.config.context.targetRole}
-Company: ${session.config.context.targetCompany}
-Experience Level: ${session.config.context.experienceLevel}
-${jdContext}
+      const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
 
-CURRENT COVERAGE ANALYSIS:
-${JSON.stringify(coverageAnalysis, null, 2)}
-
-MEMORY ANALYSIS:
-Previous Questions: ${JSON.stringify(memoryAnalysis?.previousQuestions?.slice(-5) || [])}
+COVERAGE: ${JSON.stringify(coverageSummary)}
+WEAKEST: ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || Object.entries(session.coverage?.areas || {}).filter(([_,d]) => d.percentage < 50).map(([a]) => a))}
 
 RECENT CONVERSATION:
 ${recentContext}
 
-COVERAGE GAPS TO ADDRESS:
-${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || [])}
-
-Generate the next intelligent question that targets the most important coverage gap while maintaining natural conversation flow. Reference specific job requirements when relevant.`;
+Generate the next question.`;
 
       const response = await bedrock.callLLM({
         systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.7,
         maxTokens: 300,
-        timeout: 30000
+        timeout: 30000,
+        useFastModel: true
       });
 
       return AIUtils.parseJSONResponse(response.content, 'generateIntelligentQuestion');
@@ -554,7 +596,8 @@ Generate a targeted question to explore this competency area more deeply. Respon
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
         maxTokens: 600,
-        timeout: 30000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const responseContent = aiResponse.content;
@@ -780,6 +823,229 @@ class IntelligentInterviewService {
     this.coverageAI = new CoverageAnalysisAI(this.sessionManager);
     this.questionAI = new QuestionGeneratorAI(this.sessionManager);
     this.decisionAI = new DecisionEngineAI(this.sessionManager, this);
+  }
+
+  /**
+   * Build agent persona from job description — ONE LLM call at interview start.
+   * Creates a job-aware AI profile with must-have skills, red flags, and evaluation framework.
+   */
+  async buildAgentPersona(jobData, interviewConfig) {
+    const jobCategory = interviewConfig.jobCategory || detectJobCategory(jobData.title, jobData.description);
+    const evaluationFramework = getEvaluationFramework(jobCategory, interviewConfig.interviewType);
+
+    try {
+      const analysis = await bedrock.callLLM({
+        systemPrompt: "You are an expert recruiter. Analyze this job and return JSON only.",
+        messages: [{ role: "user", content: `
+Title: ${jobData.title}
+Company: ${jobData.company || jobData.companyName || ""}
+Description: ${jobData.description || ""}
+Requirements: ${JSON.stringify(jobData.requirements || [])}
+Responsibilities: ${JSON.stringify(jobData.responsibilities || [])}
+Experience Level: ${jobData.experienceLevel || interviewConfig.context?.experienceLevel || "mid"}
+Category: ${jobCategory}
+Interview Type: ${interviewConfig.interviewType}
+
+Return JSON:
+{
+  "mustHaveSkills": ["3-5 critical skills"],
+  "niceToHaveSkills": ["3-5 bonus skills"],
+  "keyBehaviors": ["3-5 needed behaviors"],
+  "redFlags": ["3-5 disqualifying signs"],
+  "seniorityExpectations": "one sentence",
+  "domainSpecificTopics": ["3-5 industry topics to explore"],
+  "agentTone": "description of interviewer tone for this role"
+}` }],
+        temperature: 0.2,
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: true
+      });
+
+      var parsed = AIUtils.parseJSONResponse(analysis.content, 'buildAgentPersona');
+    } catch (error) {
+      console.warn('⚠️ [Persona] LLM analysis failed, using defaults:', error.message);
+      var parsed = AIUtils.getFallbackResponse('buildAgentPersona', '');
+    }
+
+    console.log(`🎭 [Persona] Built for ${jobCategory}/${interviewConfig.interviewType}: ${parsed.mustHaveSkills?.length || 0} must-haves, ${parsed.redFlags?.length || 0} red flags`);
+
+    return {
+      job: {
+        title: jobData.title,
+        company: jobData.company || jobData.companyName,
+        description: jobData.description,
+        requirements: jobData.requirements || [],
+        responsibilities: jobData.responsibilities || [],
+        experienceLevel: jobData.experienceLevel || interviewConfig.context?.experienceLevel || "mid",
+      },
+      interviewType: interviewConfig.interviewType,
+      jobCategory,
+      idealCandidate: parsed,
+      evaluationFramework,
+      agentBehavior: {
+        tone: parsed.agentTone || "professional and conversational",
+        domainTopics: parsed.domainSpecificTopics || [],
+      },
+    };
+  }
+
+  /**
+   * Combined Analysis — ONE LLM call replaces analyzeResponseIntelligence + analyzeResponseQuality
+   * + analyzeCoverageIntelligently + shouldEndInterview (LLM part).
+   */
+  async combinedAnalysis(candidateResponse, session, lastQuestion, targetArea) {
+    const persona = session.agentPersona || {};
+    const personaContext = persona.job ? `
+=== AGENT PERSONA ===
+Role: ${persona.job.title} at ${persona.job.company}
+Category: ${persona.jobCategory} (${persona.interviewType})
+Must-Have Skills: ${persona.idealCandidate?.mustHaveSkills?.join(", ") || "N/A"}
+Red Flags: ${persona.idealCandidate?.redFlags?.join(", ") || "N/A"}
+=== FOCUS AREAS ===
+${Object.entries(session.coverage?.areas || {}).map(([a, d]) => `${a} (${d.weight || 0}%): ${d.description || a}`).join("\n")}
+` : `
+=== FOCUS AREAS ===
+${Object.entries(session.coverage?.areas || {}).map(([a, d]) => `${a}: ${d.percentage || 0}%`).join("\n")}
+`;
+
+    const systemPrompt = `You are an expert interview analyst. Analyze this candidate response comprehensively in ONE pass.
+${personaContext}
+Return ONLY valid JSON with ALL of these fields:
+{
+  "quality": { "score": 0-100, "answeredQuestion": true/false, "depthLevel": "surface|moderate|deep", "isOffTopic": true/false, "completeness": "complete|partial|minimal|avoided" },
+  "skills": { "demonstrated": ["skill1"], "hinted": ["skill2"], "gaps": ["skill3"] },
+  "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-15, "evidence": "brief evidence" }] },
+  "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
+  "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
+  "shouldEnd": { "shouldEnd": false, "reason": "" }
+}`;
+
+    const coverageSummary = Object.fromEntries(
+      Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, d.percentage + "%"])
+    );
+
+    const userPrompt = `INTERVIEWER QUESTION: "${lastQuestion || "N/A"}"
+TARGET AREA: ${targetArea || "General"}
+CANDIDATE RESPONSE: "${candidateResponse}"
+CURRENT COVERAGE: ${JSON.stringify(coverageSummary)}
+CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
+
+    try {
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+        temperature: 0.2,
+        maxTokens: 800,
+        timeout: 15000,
+        useFastModel: true
+      });
+
+      return AIUtils.parseJSONResponse(response.content, 'combinedAnalysis');
+    } catch (error) {
+      console.warn('⚠️ [Combined Analysis] Failed, using fallback:', error.message);
+      return AIUtils.getFallbackResponse('combinedAnalysis', '');
+    }
+  }
+
+  /**
+   * Update candidate profile with analysis results. Pure logic — no LLM call.
+   */
+  updateCandidateProfile(profile, analysis, turnNumber) {
+    if (!profile) {
+      profile = {
+        communicationStyle: { verbosity: null, confidenceLevel: null, usesExamples: null },
+        revealedExpertise: [], revealedGaps: [], mentionedProjects: [], anchors: [],
+        currentDifficulty: "intermediate", responseQualities: [],
+      };
+    }
+
+    if (analysis.style) {
+      profile.communicationStyle.verbosity = analysis.style.verbosity;
+      profile.communicationStyle.confidenceLevel = analysis.style.confidence;
+      profile.communicationStyle.usesExamples = analysis.style.usesExamples;
+    }
+
+    if (analysis.skills?.demonstrated) {
+      for (const s of analysis.skills.demonstrated) {
+        if (!profile.revealedExpertise.includes(s)) profile.revealedExpertise.push(s);
+      }
+    }
+    if (analysis.skills?.gaps) {
+      for (const s of analysis.skills.gaps) {
+        if (!profile.revealedGaps.includes(s)) profile.revealedGaps.push(s);
+      }
+    }
+
+    if (analysis.interestingTopics) {
+      for (const topic of analysis.interestingTopics) {
+        profile.anchors.push({
+          turn: turnNumber,
+          topic: topic.topic,
+          unexplored: topic.unexplored || [],
+          relevantArea: topic.relevantArea
+        });
+      }
+      profile.anchors = profile.anchors.slice(-10);
+    }
+
+    profile.responseQualities.push(analysis.quality?.score || 50);
+    const avg = profile.responseQualities.reduce((a, b) => a + b, 0) / profile.responseQualities.length;
+    profile.currentDifficulty = avg >= 75 ? "advanced" : avg >= 50 ? "intermediate" : "foundational";
+
+    return profile;
+  }
+
+  /**
+   * Decide question strategy based on analysis + profile + coverage. Pure logic — no LLM call.
+   * Returns one of 4 modes: bridge, probe, transition, validate.
+   */
+  decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
+    const areas = coverage.areas || {};
+    const currentArea = session.currentFocusArea;
+    const questionsInArea = areas[currentArea]?.questionsAsked || 0;
+
+    // Priority 1: BRIDGE — candidate mentioned something mapping to a gap
+    for (const topic of (analysis.interestingTopics || [])) {
+      if (topic.relevantArea && areas[topic.relevantArea] && areas[topic.relevantArea].percentage < 60) {
+        return {
+          mode: "bridge",
+          targetArea: topic.relevantArea,
+          context: `Candidate mentioned "${topic.topic}"`,
+          unexploredAngles: topic.unexplored
+        };
+      }
+    }
+
+    // Priority 2: PROBE — current area needs more depth
+    if (currentArea && questionsInArea < 3 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === "surface") {
+      return {
+        mode: "probe",
+        targetArea: currentArea,
+        context: "Answer was surface-level — ask for specific example"
+      };
+    }
+
+    // Priority 3: TRANSITION — explore weakest uncovered area
+    const weakest = Object.entries(areas)
+      .filter(([_, d]) => d.percentage < 50 && !d.completed)
+      .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+
+    if (weakest) {
+      const anchor = candidateProfile?.anchors?.find(a => a.unexplored?.length > 0);
+      return {
+        mode: "transition",
+        targetArea: weakest[0],
+        context: anchor ? `Bridge from "${anchor.topic}" to ${weakest[0]}` : `Transition to ${weakest[0]}`
+      };
+    }
+
+    // Priority 4: VALIDATE
+    return {
+      mode: "validate",
+      targetArea: currentArea || Object.keys(areas)[0],
+      context: "Ask a final validation question"
+    };
   }
 
   /**
@@ -1178,8 +1444,54 @@ Determine if interview objectives have been sufficiently met to end the session.
         console.log(`✅ [Service] JD loaded from config context: ${jobDescription.title} at ${jobDescription.companyName}`);
       }
 
+      // Build agent persona from JD (ONE LLM call — sets evaluation framework + ideal candidate)
+      let agentPersona = null;
+      if (jobDescription) {
+        try {
+          agentPersona = await this.buildAgentPersona(jobDescription, config);
+          await this.sessionManager.updateSession(sessionId, { agentPersona });
+
+          // Override coverage areas with evaluation framework from persona
+          const frameworkAreas = {};
+          for (const [area, areaConfig] of Object.entries(agentPersona.evaluationFramework.focusAreas)) {
+            frameworkAreas[area] = {
+              percentage: 0,
+              weight: areaConfig.weight,
+              questionsAsked: 0,
+              completed: false,
+              indicators: [],
+              description: areaConfig.description,
+            };
+          }
+          await this.sessionManager.updateCoverage(sessionId, {
+            overall: 0,
+            areas: frameworkAreas,
+            completedAreas: [],
+            lastUpdated: new Date().toISOString()
+          });
+          console.log(`✅ [Service] Persona-driven coverage initialized: ${Object.keys(frameworkAreas).length} areas from ${agentPersona.jobCategory} framework`);
+        } catch (personaError) {
+          console.warn('⚠️ [Service] Persona building failed (non-blocking):', personaError.message);
+        }
+      }
+
+      // Initialize candidate profile for adaptive behavior
+      await this.sessionManager.updateSession(sessionId, {
+        candidateProfile: {
+          communicationStyle: { verbosity: null, confidenceLevel: null, usesExamples: null },
+          revealedExpertise: [],
+          revealedGaps: [],
+          mentionedProjects: [],
+          anchors: [],
+          currentDifficulty: "intermediate",
+          responseQualities: [],
+        }
+      });
+
       // Initialize interview timing and quality tracking
-      const coverageAreas = Object.keys(session.coverage?.areas || {});
+      // Re-fetch session to get updated coverage (may have been overridden by persona)
+      const updatedSessionForTiming = await this.sessionManager.getSession(sessionId);
+      const coverageAreas = Object.keys(updatedSessionForTiming.coverage?.areas || {});
       const totalMinutes = config.sessionSettings?.duration || 20;
       const timeBudgetPerAreaMs = coverageAreas.length > 0
         ? (totalMinutes * 60 * 1000) / coverageAreas.length
@@ -1205,7 +1517,7 @@ Determine if interview objectives have been sufficiently met to end the session.
       let greeting;
       try {
         console.log('🤖 Generating AI greeting...');
-        greeting = await this.generateIntelligentGreeting(config, onGreetingChunk);
+        greeting = await this.generateIntelligentGreeting(config, onGreetingChunk, agentPersona);
         console.log('✅ AI greeting generated');
       } catch (greetingError) {
         console.error('⚠️ AI greeting failed, using fallback:', greetingError.message);
@@ -1280,7 +1592,7 @@ Determine if interview objectives have been sufficiently met to end the session.
   /**
    * Generate intelligent greeting based on context
    */
-  async generateIntelligentGreeting(config, onChunk = null) {
+  async generateIntelligentGreeting(config, onChunk = null, persona = null) {
     const maxRetries = 2;
     let lastError = null;
 
@@ -1288,7 +1600,7 @@ Determine if interview objectives have been sufficiently met to end the session.
       try {
         const startTime = Date.now();
 
-        const prompt = this.buildGreetingPrompt(config);
+        const prompt = this.buildGreetingPrompt(config, persona);
 
         console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
@@ -1384,419 +1696,280 @@ Determine if interview objectives have been sufficiently met to end the session.
   }
 
   /**
-   * Process candidate response with full AI intelligence
+   * Process candidate response — NEW PIPELINE (target: <5s per turn)
+   *
+   * Step 1: combinedAnalysis()              — Nova Lite (~2-3s)
+   * Step 2: updateCandidateProfile()        — Pure logic (0ms)
+   * Step 3: Apply coverage updates          — Pure logic (0ms)
+   * Step 4: Quality filter + termination    — Pure logic (0ms)
+   * Step 5: decideQuestionStrategy()        — Pure logic (0ms)
+   * Step 6: generateIntelligentQuestion()   — Nova Lite (~2-3s)
+   * Step 7: Quick dedup (RAG vector)        — ~50ms
+   * Step 8: Emit + background updates       — Immediate
    */
   async processCandidateResponse(sessionId, transcript, audioMetadata = {}) {
     try {
+      const pipelineStart = Date.now();
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) {
         throw new Error(`Session ${sessionId} not found`);
       }
 
-      console.log('🧠 Processing candidate response with AI intelligence...');
+      console.log('🧠 [Pipeline] Processing candidate response...');
 
-      // Store conversation entry with AI analysis
+      // Store conversation entry (without separate AI analysis — combined analysis handles it)
       const candidateEntry = {
         type: 'candidate',
         content: transcript,
         timestamp: new Date().toISOString(),
         metadata: audioMetadata
       };
+      await this.sessionManager.addConversationEntry(sessionId, candidateEntry);
 
-      await this.memoryAI.storeConversationWithIntelligence(sessionId, candidateEntry);
-
-      // Get updated session with new conversation entry
-      const updatedSession = await this.sessionManager.getSession(sessionId);
-
-      // Check if candidate adequately answered the previous question
-      const recentInterviewerMessages = updatedSession.conversation
+      // Get last interviewer question context
+      const recentInterviewerMessages = session.conversation
         .filter(entry => entry.type === 'interviewer')
         .slice(-1);
+      const lastQuestion = recentInterviewerMessages[0]?.content || null;
+      const targetArea = recentInterviewerMessages[0]?.metadata?.targetAreas?.[0] || null;
 
-      let responseQuality = null;
-      if (recentInterviewerMessages.length > 0) {
-        const lastQuestion = recentInterviewerMessages[0].content;
-        const targetArea = recentInterviewerMessages[0].metadata?.targetAreas?.[0];
+      // ── STEP 1: Combined Analysis (ONE Nova Lite call, ~2-3s) ──
+      const step1Start = Date.now();
+      const analysis = await this.combinedAnalysis(transcript, session, lastQuestion, targetArea);
+      console.log(`⚡ [Step 1] Combined analysis: ${Date.now() - step1Start}ms — quality: ${analysis.quality?.score}/100, depth: ${analysis.quality?.depthLevel}`);
 
-        responseQuality = await this.memoryAI.analyzeResponseQuality(
-          lastQuestion,
-          transcript,
-          targetArea
-        );
+      // ── STEP 2: Update Candidate Profile (pure logic, ~0ms) ──
+      const turnNumber = Math.floor((session.conversation?.length || 0) / 2);
+      const updatedProfile = this.updateCandidateProfile(
+        session.candidateProfile || null,
+        analysis,
+        turnNumber
+      );
+      await this.sessionManager.updateSession(sessionId, { candidateProfile: updatedProfile });
 
-        console.log(`📊 [Response Quality] Answered: ${responseQuality.answeredQuestion}, Score: ${responseQuality.qualityScore}/100`);
+      // Store quality metadata on the candidate entry
+      candidateEntry.metadata = {
+        ...candidateEntry.metadata,
+        qualityScore: analysis.quality?.score,
+        answeredQuestion: analysis.quality?.answeredQuestion,
+        completeness: analysis.quality?.completeness,
+        targetArea
+      };
 
-        // STORE QUALITY SCORES: Add quality metadata to candidate entry for smart limit calculations
-        candidateEntry.metadata = {
-          ...candidateEntry.metadata,
-          qualityScore: responseQuality.qualityScore,
-          answeredQuestion: responseQuality.answeredQuestion,
-          completeness: responseQuality.completeness,
-          targetArea: targetArea  // Track which area this response relates to
-        };
-
-        console.log(`💾 [Quality Storage] Stored quality score ${responseQuality.qualityScore}/100 for area: ${targetArea}`);
-
-        // 🚫 INTELLIGENT FILTER: Ignore off-topic/inappropriate responses
-        // Don't build questions from low-quality or irrelevant content
-        if (responseQuality.qualityScore < 30 || (responseQuality.completeness === 'avoided' && responseQuality.qualityScore < 50)) {
-          console.log(`🚫 [Low Quality Filter] Ignoring response content (quality: ${responseQuality.qualityScore}, completeness: ${responseQuality.completeness})`);
-          console.log(`   Response was off-topic, rude, or inappropriate - generating next question without using this content`);
-
-          // Update quality counters (for 8 bad answers termination)
-          await this.updateQualityCounters(sessionId, responseQuality.qualityScore);
-
-          // Check if should end interview due to poor quality
-          const endCheck = await this.shouldEndInterview(updatedSession);
-          if (endCheck.shouldEnd) {
-            return {
-              action: 'end_interview',
-              content: endCheck.message,
-              reasoning: endCheck.reason,
-              metadata: { terminationReason: endCheck.reason, score: endCheck.score }
-            };
-          }
-
-          // DON'T use this response for question generation
-          // Generate next question based on coverage gaps ONLY, not response content
-          const coverageAnalysis = await AIUtils.withTimeout(
-            this.coverageAI.analyzeCoverageIntelligently(
-              "[LOW QUALITY - IGNORING CONTENT]",  // Don't pass actual response
-              updatedSession.coverage,
-              updatedSession.config.intelligenceContext.focusAreas,
-              updatedSession.conversation.slice(0, -1)  // Exclude this bad response
-            ),
-            30000,
-            'analyzeCoverageIntelligently (low quality path)'
-          );
-
-          // Update coverage (minimal impact for bad response)
-          if (coverageAnalysis.coverageUpdates) {
-            const updatedCoverage = await this.updateCoverageIntelligently(
-              sessionId,
-              updatedSession.coverage,
-              coverageAnalysis
-            );
-            await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
-          }
-
-          // Build session locally instead of re-fetching from Redis
-          const refreshedSession = { ...updatedSession };
-
-          // Generate new question ignoring the bad response
-          const nextQuestion = await AIUtils.withTimeout(
-            this.questionAI.generateIntelligentQuestion(
-              refreshedSession,
-              coverageAnalysis,
-              { previousQuestions: refreshedSession.conversation.filter(e => e.type === 'interviewer') }
-            ),
-            30000,
-            'generateIntelligentQuestion (low quality path)'
-          );
-
-          // Store the generated question
-          await this.sessionManager.addConversationEntry(sessionId, {
-            type: 'interviewer',
-            content: nextQuestion.question,
-            timestamp: new Date().toISOString(),
-            metadata: {
-              aiGenerated: true,
-              targetAreas: nextQuestion.targetAreas,
-              reasoning: 'Previous response was off-topic/inappropriate - moving forward',
-              ignoredPreviousResponse: true
+      // ── STEP 3: Apply coverage updates from analysis (pure logic, ~0ms) ──
+      let finalCoverage = { ...session.coverage };
+      if (analysis.coverage?.areasImpacted?.length > 0) {
+        for (const impact of analysis.coverage.areasImpacted) {
+          if (finalCoverage.areas[impact.area]) {
+            const area = finalCoverage.areas[impact.area];
+            area.percentage = Math.min(100, (area.percentage || 0) + (impact.increase || 0));
+            area.lastUpdated = new Date().toISOString();
+            if (impact.evidence) {
+              area.indicators = area.indicators || [];
+              area.indicators.push({
+                name: `AI-detected: ${impact.area}`,
+                covered: true,
+                evidence: [impact.evidence],
+                quality: analysis.quality?.score || 50,
+                aiGenerated: true
+              });
             }
-          });
 
-          // Set area start time if this is the first question targeting this area
-          const lowQualityTargetArea = nextQuestion.targetAreas?.[0];
-          if (lowQualityTargetArea) {
-            await this.sessionManager.setAreaStartTime(sessionId, lowQualityTargetArea);
-          }
-
-          return {
-            action: 'continue_probing',
-            content: nextQuestion.question,
-            reasoning: 'Response was off-topic/inappropriate - moving to next question without referencing it',
-            targetAreas: nextQuestion.targetAreas,
-            metadata: {
-              ignoredResponse: true,
-              originalQuality: responseQuality.qualityScore
+            // SCORE BONUS: Reward candidates who cover an area before time budget expires
+            if (session.timeBudgetPerAreaMs && area.percentage >= 60 && !area.earlyCompletionBonus) {
+              const areaStartTime = area.startTime;
+              if (areaStartTime) {
+                const elapsed = Date.now() - areaStartTime;
+                const timeBudget = session.timeBudgetPerAreaMs;
+                if (elapsed < timeBudget) {
+                  const timeRemainingRatio = (timeBudget - elapsed) / timeBudget;
+                  const bonus = Math.round(timeRemainingRatio * 15);
+                  area.percentage = Math.min(100, area.percentage + bonus);
+                  area.earlyCompletionBonus = bonus;
+                  console.log(`🎁 [Score Bonus] +${bonus}% for "${impact.area}"`);
+                }
+              }
             }
-          };
+          }
         }
 
-        // Update quality counters for valid responses too
-        await this.updateQualityCounters(sessionId, responseQuality.qualityScore);
+        // Recalculate overall coverage
+        const areaEntries = Object.values(finalCoverage.areas);
+        const totalWeight = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
+        finalCoverage.overall = totalWeight > 0
+          ? Math.round(areaEntries.reduce((sum, a) => sum + ((a.percentage / 100) * (a.weight || 25)), 0) / totalWeight * 100)
+          : 0;
+        finalCoverage.lastUpdated = new Date().toISOString();
 
-        // Check if should end interview (time or quality thresholds)
-        const endCheck = await this.shouldEndInterview(updatedSession);
-        if (endCheck.shouldEnd) {
-          return {
-            action: 'end_interview',
-            content: endCheck.message,
-            reasoning: endCheck.reason,
-            metadata: { terminationReason: endCheck.reason, score: endCheck.score }
-          };
-        }
-      }
-
-      // Perform intelligent coverage analysis (resilient — fallback to empty if fails)
-      let coverageAnalysis;
-      try {
-        coverageAnalysis = await AIUtils.withTimeout(
-          this.coverageAI.analyzeCoverageIntelligently(
-            transcript,
-            updatedSession.coverage,
-            updatedSession.config.intelligenceContext.focusAreas,
-            updatedSession.conversation
-          ),
-          30000,
-          'analyzeCoverageIntelligently'
-        );
-      } catch (coverageError) {
-        console.warn('⚠️ Coverage analysis failed, proceeding with empty coverage:', coverageError.message);
-        coverageAnalysis = {
-          coverageUpdates: null,
-          overallAssessment: { weakestAreas: [], strongestAreas: [], overallScore: 50 }
-        };
-      }
-
-      // Update coverage based on AI analysis
-      let finalCoverage = updatedSession.coverage;
-      if (coverageAnalysis.coverageUpdates) {
-        finalCoverage = await this.updateCoverageIntelligently(
-          sessionId,
-          updatedSession.coverage,
-          coverageAnalysis
-        );
         await this.sessionManager.updateCoverage(sessionId, finalCoverage);
       }
 
-      // Build finalSession locally instead of re-fetching from Redis
-      const finalSession = { ...updatedSession, coverage: finalCoverage };
+      // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
+      const qualityScore = analysis.quality?.score || 50;
+      await this.updateQualityCounters(sessionId, qualityScore);
 
-      // Run decision analysis and question generation IN PARALLEL (resilient — fallback if either fails)
-      let decisionAnalysis, proposedQuestion;
-      try {
-        [decisionAnalysis, proposedQuestion] = await Promise.all([
-          AIUtils.withTimeout(
-            this.decisionAI.makeIntelligentDecision(
-              finalSession,
-              transcript,
-              {
-                coverage: coverageAnalysis,
-                memory: candidateEntry.aiAnalysis
-              }
-            ),
-            30000,
-            'makeIntelligentDecision'
-          ),
-          AIUtils.withTimeout(
-            this.questionAI.generateIntelligentQuestion(
-              finalSession,
-              coverageAnalysis,
-              { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
-            ),
-            30000,
-            'generateIntelligentQuestion'
-          )
-        ]);
-      } catch (parallelError) {
-        console.warn('⚠️ Parallel AI calls failed, using fallbacks:', parallelError.message);
-        decisionAnalysis = decisionAnalysis || {
-          decision: 'continue_probing',
-          reasoning: 'Fallback due to AI timeout',
-          targetArea: 'General',
-          confidence: 50
+      // LOW QUALITY FILTER: If off-topic/garbage, generate from gaps only
+      const isLowQuality = qualityScore < 30 || (analysis.quality?.completeness === 'avoided' && qualityScore < 50);
+
+      // Check rule-based termination (time, consecutive bad/good, avg quality)
+      const updatedSessionForEnd = { ...session, coverage: finalCoverage, qualityTracking: session.qualityTracking };
+      const endCheck = await this.shouldEndInterview(updatedSessionForEnd);
+      if (endCheck.shouldEnd) {
+        console.log(`🛑 [Pipeline] Ending interview: ${endCheck.terminationReason}`);
+        return {
+          action: 'end_interview',
+          content: endCheck.message,
+          reasoning: endCheck.reason || endCheck.reasoning,
+          metadata: { terminationReason: endCheck.terminationReason, score: endCheck.score }
         };
-        proposedQuestion = proposedQuestion || {
+      }
+
+      // AI-suggested termination from combined analysis
+      if (analysis.shouldEnd?.shouldEnd) {
+        console.log(`🛑 [Pipeline] AI suggests ending: ${analysis.shouldEnd.reason}`);
+        return {
+          action: 'end_interview',
+          content: 'Thank you for your time. This concludes our interview.',
+          reasoning: analysis.shouldEnd.reason,
+          metadata: { terminationReason: 'ai_determined', score: 'ai' }
+        };
+      }
+
+      if (isLowQuality) {
+        console.log(`🚫 [Pipeline] Low quality (${qualityScore}) — generating from gaps only`);
+      }
+
+      // ── STEP 5: Decide question strategy (pure logic, ~0ms) ──
+      const finalSession = { ...session, coverage: finalCoverage, candidateProfile: updatedProfile, currentFocusArea: targetArea };
+      const strategy = this.decideQuestionStrategy(analysis, updatedProfile, finalCoverage, finalSession);
+      console.log(`🎯 [Step 5] Strategy: ${strategy.mode} → ${strategy.targetArea} (${strategy.context})`);
+
+      // ── STEP 6: Generate question with strategy context (Nova Lite, ~2-3s) ──
+      const step6Start = Date.now();
+
+      // Build a lightweight coverage analysis object for question generator
+      const coverageForQGen = {
+        overallAssessment: {
+          weakestAreas: Object.entries(finalCoverage.areas)
+            .filter(([_, d]) => d.percentage < 50)
+            .sort((a, b) => a[1].percentage - b[1].percentage)
+            .map(([a]) => a),
+          strongestAreas: Object.entries(finalCoverage.areas)
+            .filter(([_, d]) => d.percentage >= 60)
+            .map(([a]) => a)
+        }
+      };
+
+      const proposedQuestion = await AIUtils.withTimeout(
+        this.questionAI.generateIntelligentQuestion(
+          finalSession,
+          coverageForQGen,
+          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer').slice(-5) },
+          strategy  // Pass strategy for adaptive prompting
+        ),
+        30000,
+        'generateIntelligentQuestion'
+      ).catch(err => {
+        console.warn('⚠️ Question generation failed, using fallback:', err.message);
+        return {
           question: 'Can you elaborate on your most recent project experience?',
-          targetAreas: ['General'],
+          targetAreas: [strategy.targetArea || 'General'],
           reasoning: 'Fallback question due to AI timeout',
           fallback: true
         };
-      }
+      });
 
-      // SIMPLIFIED: Just generate next question (no clarification requests - be more patient)
-      let nextAction;
-      if (decisionAnalysis.decision === 'explore_new_area' || decisionAnalysis.decision === 'continue_probing') {
-        // Normal flow - use the pre-generated question
-        // Verify question isn't too similar to previous ones (non-blocking — timeout = proceed with question)
-        let similarityAnalysis = { isSimilar: false, confidence: 0 };
-        try {
-          similarityAnalysis = await AIUtils.withTimeout(
-            this.memoryAI.analyzeQuestionSimilarity(
-              proposedQuestion.question,
+      console.log(`⚡ [Step 6] Question generated: ${Date.now() - step6Start}ms`);
+
+      // ── STEP 7: Quick dedup via RAG vector search (~50ms) ──
+      let finalQuestion = proposedQuestion;
+      try {
+        const similarityCheck = await AIUtils.withTimeout(
+          this.memoryAI.analyzeQuestionSimilarity(proposedQuestion.question, finalSession.conversation, sessionId),
+          8000,
+          'analyzeQuestionSimilarity'
+        );
+
+        if (similarityCheck.isSimilar && similarityCheck.confidence > 70) {
+          console.log('🔄 [Step 7] Similar question detected — regenerating once');
+          try {
+            const altQuestion = await this.questionAI.generateTargetedQuestionForArea(
+              strategy.targetArea,
+              finalCoverage.areas[strategy.targetArea] || {},
               finalSession.conversation,
-              sessionId
-            ),
-            8000,
-            'analyzeQuestionSimilarity'
-          );
-        } catch (simError) {
-          console.warn('⚠️ Question similarity check failed/timed out, proceeding with question:', simError.message);
-        }
-
-        if (similarityAnalysis.isSimilar && similarityAnalysis.confidence > 70) {
-          // Generate alternative question for same target area
-          console.log('🔄 Question similarity detected - generating alternative for area:', decisionAnalysis.targetArea);
-
-          // Validate that we have the required data before calling AI
-          const targetArea = decisionAnalysis.targetArea;
-          const areaData = finalSession.coverage.areas[targetArea];
-
-          if (!targetArea || !areaData) {
-            console.warn('⚠️ Missing targetArea or areaData, using original question instead');
-            console.warn('   targetArea:', targetArea);
-            console.warn('   areaData exists:', !!areaData);
-
-            // Fall back to using the original proposed question
-            nextAction = {
-              type: 'question',
-              content: proposedQuestion.question,
-              reasoning: proposedQuestion.reasoning + ' (similarity detected but fallback used)',
-              targetAreas: proposedQuestion.targetAreas
-            };
-          } else {
-            try {
-              // Try to generate targeted question with validated data
-              nextAction = await this.questionAI.generateTargetedQuestionForArea(
-                targetArea,
-                areaData,
-                finalSession.conversation,
-                finalSession.config.context
-              );
-              nextAction.type = 'question';
-              nextAction.content = nextAction.question;
-
-              console.log('✅ Successfully generated alternative question');
-            } catch (targetedQuestionError) {
-              console.error('❌ Failed to generate targeted question, falling back to original:', targetedQuestionError.message);
-
-              // Fall back to the original proposed question
-              nextAction = {
-                type: 'question',
-                content: proposedQuestion.question,
-                reasoning: proposedQuestion.reasoning + ' (targeted generation failed)',
-                targetAreas: proposedQuestion.targetAreas
-              };
-            }
+              finalSession.config.context
+            );
+            finalQuestion = { ...altQuestion, targetAreas: [strategy.targetArea] };
+          } catch (altErr) {
+            console.warn('⚠️ Alt question failed, using original:', altErr.message);
           }
-        } else {
-          nextAction = {
-            type: 'question',
-            content: proposedQuestion.question,
-            reasoning: proposedQuestion.reasoning,
-            targetAreas: proposedQuestion.targetAreas
-          };
         }
-
-        // Store interviewer question in conversation
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'interviewer',
-          content: nextAction.content,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            aiGenerated: true,
-            targetAreas: nextAction.targetAreas || [decisionAnalysis.targetArea],
-            reasoning: nextAction.reasoning
-          }
-        });
-
-        // Detect complexity and save question for potential rephrasing
-        const complexity = await this.detectQuestionComplexity(nextAction.content);
-        await this.sessionManager.saveCurrentQuestion(sessionId, nextAction.content, complexity);
-        console.log(`💾 [Question] Saved with complexity: ${complexity}`);
-
-        // Track questions asked per coverage area (max 5 per area to avoid repetition)
-        const targetArea = decisionAnalysis.targetArea;
-        if (targetArea && finalSession.coverage.areas[targetArea]) {
-          await this.incrementAreaQuestionCount(sessionId, targetArea);
-          console.log(`📊 [Question Counter] Incremented for area: ${targetArea}`);
-        }
-
-        // Set area start time if this is the first question targeting this area
-        const questionTargetArea = nextAction.targetAreas?.[0] || decisionAnalysis.targetArea;
-        if (questionTargetArea) {
-          await this.sessionManager.setAreaStartTime(sessionId, questionTargetArea);
-        }
-
-      } else if (decisionAnalysis.decision === 'end_interview') {
-        nextAction = {
-          type: 'end_interview',
-          content: 'Thank you for your time. This concludes our interview.',
-          reasoning: decisionAnalysis.reasoning
-        };
-      } else {
-        // FALLBACK: For ANY other decision type (seek_examples, wrap_up_area, unexpected, etc.)
-        // Always generate next question to keep interview moving forward
-        console.log(`⚠️ Unhandled decision type: "${decisionAnalysis.decision}" - generating next question anyway`);
-
-        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
-          finalSession,
-          coverageAnalysis,
-          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
-        );
-
-        nextAction = {
-          type: 'question',
-          content: proposedQuestion.question,
-          reasoning: `Fallback for "${decisionAnalysis.decision}": ${decisionAnalysis.reasoning}`,
-          targetAreas: proposedQuestion.targetAreas
-        };
-
-        // Store interviewer question in conversation
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'interviewer',
-          content: nextAction.content,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            aiGenerated: true,
-            targetAreas: nextAction.targetAreas,
-            reasoning: nextAction.reasoning,
-            fallback: true
-          }
-        });
-
-        // Set area start time if this is the first question targeting this area
-        const fallbackTargetArea = nextAction.targetAreas?.[0];
-        if (fallbackTargetArea) {
-          await this.sessionManager.setAreaStartTime(sessionId, fallbackTargetArea);
-        }
-
-        console.log(`✅ [Fallback] Generated next question to keep interview moving`);
+      } catch (simError) {
+        console.warn('⚠️ Dedup check failed, proceeding:', simError.message);
       }
 
-      // Index the generated question in RAG for deduplication (fire-and-forget)
-      if (nextAction?.content) {
-        ragService.indexAskedQuestion(sessionId, nextAction.content).catch(err =>
-          console.warn('⚠️ [RAG] Question indexing failed (non-blocking):', err.message)
-        );
+      // ── STEP 8: Store question + background updates ──
+      const questionContent = finalQuestion.question || finalQuestion.content;
+      const questionTargetAreas = finalQuestion.targetAreas || [strategy.targetArea];
+
+      await this.sessionManager.addConversationEntry(sessionId, {
+        type: 'interviewer',
+        content: questionContent,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          aiGenerated: true,
+          targetAreas: questionTargetAreas,
+          reasoning: finalQuestion.reasoning,
+          strategy: strategy.mode,
+          ignoredPreviousResponse: isLowQuality
+        }
+      });
+
+      // Track area and question count
+      if (strategy.targetArea && finalCoverage.areas[strategy.targetArea]) {
+        await this.incrementAreaQuestionCount(sessionId, strategy.targetArea);
+        await this.sessionManager.setAreaStartTime(sessionId, strategy.targetArea);
+        await this.sessionManager.updateSession(sessionId, { currentFocusArea: strategy.targetArea });
       }
 
-      // Update real-time report with AI insights (FIRE-AND-FORGET — don't block question delivery)
-      this.updateRealTimeReportIntelligently(finalSession, transcript, coverageAnalysis, decisionAnalysis)
+      // Detect complexity for silence handling
+      const complexity = await this.detectQuestionComplexity(questionContent);
+      await this.sessionManager.saveCurrentQuestion(sessionId, questionContent, complexity);
+
+      // Fire-and-forget: index question in RAG + update report
+      ragService.indexAskedQuestion(sessionId, questionContent).catch(err =>
+        console.warn('⚠️ [RAG] Question indexing failed (non-blocking):', err.message)
+      );
+
+      const coverageAnalysisForReport = {
+        overallAssessment: coverageForQGen.overallAssessment,
+        coverageUpdates: analysis.coverage?.areasImpacted || []
+      };
+      this.updateRealTimeReportIntelligently(finalSession, transcript, coverageAnalysisForReport, { decision: strategy.mode, targetArea: strategy.targetArea })
         .then(reportUpdate => this.sessionManager.updateRealTimeReport(sessionId, reportUpdate))
-        .catch(err => console.warn('⚠️ [Report] Background update failed (non-blocking):', err.message));
+        .catch(err => console.warn('⚠️ [Report] Background update failed:', err.message));
 
-      console.log('✅ AI processing complete');
+      const totalTime = Date.now() - pipelineStart;
+      console.log(`✅ [Pipeline] Complete in ${totalTime}ms (target: <5000ms) — strategy: ${strategy.mode}, quality: ${qualityScore}/100`);
 
       return {
-        action: decisionAnalysis.decision,
-        content: nextAction?.content || 'Continue...',
-        reasoning: decisionAnalysis.reasoning,
-        targetArea: decisionAnalysis.targetArea,
-        confidence: decisionAnalysis.confidence,
-        coverageUpdate: coverageAnalysis.overallAssessment,
+        action: strategy.mode === 'validate' ? 'wrap_up_area' : 'continue_probing',
+        content: questionContent,
+        reasoning: finalQuestion.reasoning,
+        targetArea: strategy.targetArea,
+        confidence: analysis.quality?.score || 50,
+        coverageUpdate: coverageForQGen.overallAssessment,
         metadata: {
-          aiDecision: decisionAnalysis,
-          coverageAnalysis: coverageAnalysis.overallAssessment,
+          strategy: strategy.mode,
+          pipelineTimeMs: totalTime,
+          qualityScore,
+          coverageAnalysis: coverageForQGen.overallAssessment,
           timestamp: new Date().toISOString()
         }
       };
 
     } catch (error) {
-      console.error('❌ Failed to process candidate response intelligently:', error);
+      console.error('❌ Failed to process candidate response:', error);
       throw error;
     }
   }
@@ -2517,11 +2690,25 @@ Rephrase this question to help the candidate answer it.`;
   /**
    * Helper method to build greeting prompt
    */
-  buildGreetingPrompt(config) {
+  buildGreetingPrompt(config, persona = null) {
     // Extract only the essential information, avoid large JSON objects
     const interviewerStyle = config.interviewerPersona?.style || 'professional';
-    const interviewerTone = config.interviewerPersona?.tone || 'friendly';
+    const interviewerTone = persona?.agentBehavior?.tone || config.interviewerPersona?.tone || 'friendly';
     const cultureTrait = config.companyProfile?.culture?.values?.[0] || 'innovation';
+
+    // Build persona-specific context for the greeting
+    let personaContext = '';
+    if (persona?.idealCandidate) {
+      const domainTopics = persona.agentBehavior?.domainTopics?.slice(0, 3).join(', ') || '';
+      const mustHaves = persona.idealCandidate?.mustHaveSkills?.slice(0, 3).join(', ') || '';
+      personaContext = `
+JOB-SPECIFIC CONTEXT (use to make greeting relevant):
+- Job Category: ${persona.jobCategory}
+- Key Skills to Explore: ${mustHaves}
+- Domain Topics: ${domainTopics}
+- Tone: ${persona.agentBehavior?.tone || 'professional'}
+- Seniority: ${persona.idealCandidate?.seniorityExpectations || 'standard'}`;
+    }
 
     // INTERVIEW TYPE SPECIFIC FOCUS
     let interviewFocus = '';
@@ -2552,7 +2739,6 @@ FOCUS:
       exampleGreeting = `"Hello! Today we'll be discussing your communication style and collaboration experiences. I'm looking forward to understanding how you work with others and handle various workplace scenarios."`;
 
     } else {
-      // Default/generic
       interviewFocus = `Standard professional interview.`;
       exampleGreeting = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position. Let's have a great conversation."`;
     }
@@ -2561,6 +2747,7 @@ FOCUS:
 
 INTERVIEW TYPE & FOCUS:
 ${interviewFocus}
+${personaContext}
 
 INTERVIEW CONTEXT:
 - Position: ${config.context.targetRole}
@@ -2573,6 +2760,7 @@ REQUIREMENTS:
 - Write 2-3 natural, conversational sentences
 - Welcome the candidate warmly
 - Briefly mention the position and set expectations for the interview type
+- If persona context is available, reference specific aspects of the role (domain, key topics)
 - Set a comfortable, professional tone appropriate for ${config.interviewType}
 - DO NOT use labels, bullet points, or structured format
 - DO NOT include explanations or meta-text

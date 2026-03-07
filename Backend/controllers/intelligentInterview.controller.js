@@ -13,6 +13,17 @@ class IntelligentInterviewController {
   }
 
   /**
+   * Safe socket emit — prevents crashes when socket disconnects mid-processing.
+   */
+  safeEmit(socket, event, data) {
+    if (socket.connected) {
+      socket.emit(event, data);
+    } else {
+      console.error(`[Socket] Disconnected — ${event} event lost for session ${data?.sessionId || 'unknown'}`);
+    }
+  }
+
+  /**
    * Initialize WebSocket handlers
    */
   initializeHandlers(io) {
@@ -72,7 +83,7 @@ class IntelligentInterviewController {
           console.log(
             `📤 [Controller] Emitting interview_started event to client...`,
           );
-          socket.emit("interview_started", {
+          this.safeEmit(socket, "interview_started", {
             success: true,
             sessionId,
             greeting: result.greeting,
@@ -84,7 +95,7 @@ class IntelligentInterviewController {
           console.log(`✅ [Controller] interview_started event emitted`);
 
           // Send initial greeting message (full content for clients that don't support streaming)
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "greeting",
             content: result.greeting,
             timestamp: new Date().toISOString(),
@@ -115,7 +126,7 @@ class IntelligentInterviewController {
             errorCode: error.code,
           });
 
-          socket.emit("interview_error", {
+          this.safeEmit(socket, "interview_error", {
             error: "Failed to start interview",
             message: error.message,
             details: error.stack,
@@ -134,7 +145,7 @@ class IntelligentInterviewController {
           const sessionId = socket.sessionId;
 
           if (!sessionId) {
-            socket.emit("interview_error", { error: "No active session" });
+            this.safeEmit(socket, "interview_error", { error: "No active session" });
             return;
           }
 
@@ -149,7 +160,7 @@ class IntelligentInterviewController {
 
           // Emit typing indicator so frontend can show "..." while AI processes
           if (socket.connected) {
-            socket.emit("interviewer_typing", { sessionId, status: "thinking" });
+            this.safeEmit(socket, "interviewer_typing", { sessionId, status: "thinking" });
           }
 
           // Reset inter-turn pause timer when new turn is received
@@ -170,7 +181,7 @@ class IntelligentInterviewController {
           await this.handleAIDecision(socket, sessionId, decision);
 
           // Send acknowledgment that message was processed successfully
-          socket.emit("response_processed", {
+          this.safeEmit(socket, "response_processed", {
             status: "success",
             transcript: transcript.substring(0, 100), // First 100 chars
             decisionType: decision.type || "continue",
@@ -189,13 +200,13 @@ class IntelligentInterviewController {
             "❌ Failed to process candidate response:",
             error.message,
           );
-          socket.emit("interview_error", {
+          this.safeEmit(socket, "interview_error", {
             error: "Failed to process response",
             message: error.message,
           });
 
           // Send failure acknowledgment
-          socket.emit("response_processed", {
+          this.safeEmit(socket, "response_processed", {
             status: "error",
             error: error.message,
             timestamp: new Date().toISOString(),
@@ -213,7 +224,7 @@ class IntelligentInterviewController {
           const sessionId = socket.sessionId;
 
           if (!sessionId) {
-            socket.emit("interview_error", { error: "No active session" });
+            this.safeEmit(socket, "interview_error", { error: "No active session" });
             return;
           }
 
@@ -244,7 +255,7 @@ class IntelligentInterviewController {
             );
 
           // Send polite interrupt message
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "polite_interrupt",
             content:
               "Thank you for that detailed answer. Let's move on to the next question.",
@@ -254,7 +265,7 @@ class IntelligentInterviewController {
 
           // Wait 2 seconds, then send next question
           setTimeout(() => {
-            socket.emit("interviewer_message", {
+            this.safeEmit(socket, "interviewer_message", {
               type: "question",
               content: nextQuestion.question,
               timestamp: new Date().toISOString(),
@@ -282,7 +293,7 @@ class IntelligentInterviewController {
           }, 2000);
         } catch (error) {
           console.error("❌ Failed to handle long speaking:", error.message);
-          socket.emit("interview_error", {
+          this.safeEmit(socket, "interview_error", {
             error: "Failed to handle long response",
             message: error.message,
           });
@@ -295,7 +306,7 @@ class IntelligentInterviewController {
           const sessionId = socket.sessionId;
 
           if (!sessionId) {
-            socket.emit("interview_error", { error: "No active session" });
+            this.safeEmit(socket, "interview_error", { error: "No active session" });
             return;
           }
 
@@ -305,7 +316,7 @@ class IntelligentInterviewController {
           const result = await this.service.endInterview(sessionId);
 
           // Send final report
-          socket.emit("interview_ended", {
+          this.safeEmit(socket, "interview_ended", {
             success: true,
             finalReport: result.finalReport,
             analytics: result.sessionAnalytics,
@@ -319,7 +330,7 @@ class IntelligentInterviewController {
           console.log(`✅ Interview session ended successfully: ${sessionId}`);
         } catch (error) {
           console.error("❌ Failed to end interview:", error.message);
-          socket.emit("interview_error", {
+          this.safeEmit(socket, "interview_error", {
             error: "Failed to end interview",
             message: error.message,
           });
@@ -335,7 +346,7 @@ class IntelligentInterviewController {
           if (!sessionId) return;
 
           // Emit voice activity status to client
-          socket.emit("voice_activity", {
+          this.safeEmit(socket, "voice_activity", {
             isActive,
             timestamp: new Date().toISOString(),
             sessionId,
@@ -344,7 +355,7 @@ class IntelligentInterviewController {
           // Update session with voice activity if needed
           if (isActive) {
             // Reset any silence timers or counters
-            socket.emit("silence_reset");
+            this.safeEmit(socket, "silence_reset", {});
           }
         } catch (error) {
           console.error("❌ Failed to process audio stream:", error.message);
@@ -360,7 +371,7 @@ class IntelligentInterviewController {
           // Update session status to paused
           // Implementation depends on specific requirements
 
-          socket.emit("interview_paused", {
+          this.safeEmit(socket, "interview_paused", {
             sessionId,
             timestamp: new Date().toISOString(),
           });
@@ -379,7 +390,7 @@ class IntelligentInterviewController {
           // Update session status to active
           // Implementation depends on specific requirements
 
-          socket.emit("interview_resumed", {
+          this.safeEmit(socket, "interview_resumed", {
             sessionId,
             timestamp: new Date().toISOString(),
           });
@@ -395,7 +406,7 @@ class IntelligentInterviewController {
         try {
           const sessionId = socket.sessionId;
           if (!sessionId) {
-            socket.emit("session_status", { error: "No active session" });
+            this.safeEmit(socket, "session_status", { error: "No active session" });
             return;
           }
 
@@ -405,7 +416,7 @@ class IntelligentInterviewController {
           const session =
             await this.service.sessionManager.getSession(sessionId);
 
-          socket.emit("session_status", {
+          this.safeEmit(socket, "session_status", {
             sessionId,
             status: session?.status || "unknown",
             analytics,
@@ -415,7 +426,7 @@ class IntelligentInterviewController {
           });
         } catch (error) {
           console.error("❌ Failed to get session status:", error.message);
-          socket.emit("session_status", {
+          this.safeEmit(socket, "session_status", {
             error: "Failed to get session status",
           });
         }
@@ -464,7 +475,7 @@ class IntelligentInterviewController {
       // Handle connection error
       socket.on("error", (error) => {
         console.error(`❌ Socket error for ${socket.id}:`, error.message);
-        socket.emit("interview_error", {
+        this.safeEmit(socket, "interview_error", {
           error: "Connection error",
           message: error.message,
         });
@@ -496,7 +507,7 @@ class IntelligentInterviewController {
 
       switch (decision.action) {
         case "immediate_intervention":
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "intervention",
             subtype: decision.interventionType,
             content,
@@ -511,7 +522,7 @@ class IntelligentInterviewController {
           break;
 
         case "continue_probing":
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "question",
             content,
             reasoning: decision.reasoning,
@@ -522,7 +533,7 @@ class IntelligentInterviewController {
           break;
 
         case "question":
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "question",
             content,
             reasoning: decision.reasoning,
@@ -533,7 +544,7 @@ class IntelligentInterviewController {
           break;
 
         case "probe_deeper":
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "follow_up",
             content,
             reasoning: decision.reasoning,
@@ -543,7 +554,7 @@ class IntelligentInterviewController {
           break;
 
         case "change_topic":
-          socket.emit("topic_change", {
+          this.safeEmit(socket, "topic_change", {
             newTopic: decision.nextFocus,
             reason: decision.reasoning,
             timestamp,
@@ -551,7 +562,7 @@ class IntelligentInterviewController {
           });
 
           if (socket.connected) {
-            socket.emit("interviewer_message", {
+            this.safeEmit(socket, "interviewer_message", {
               type: "new_topic",
               content,
               topic: decision.nextFocus,
@@ -562,7 +573,7 @@ class IntelligentInterviewController {
           break;
 
         case "wrap_up":
-          socket.emit("interview_wrap_up", {
+          this.safeEmit(socket, "interview_wrap_up", {
             message: content,
             reasoning: decision.reasoning,
             timestamp,
@@ -571,7 +582,7 @@ class IntelligentInterviewController {
           break;
 
         case "end_interview":
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "end_interview",
             content,
             reasoning: decision.reasoning,
@@ -581,7 +592,7 @@ class IntelligentInterviewController {
           break;
 
         default:
-          socket.emit("interviewer_message", {
+          this.safeEmit(socket, "interviewer_message", {
             type: "question",
             content,
             timestamp,
@@ -593,13 +604,13 @@ class IntelligentInterviewController {
       if (socket.connected) {
         const session = await this.service.sessionManager.getSession(sessionId);
         if (session) {
-          socket.emit("coverage_update", {
+          this.safeEmit(socket, "coverage_update", {
             coverage: session.coverage,
             timestamp,
             sessionId,
           });
 
-          socket.emit("report_update", {
+          this.safeEmit(socket, "report_update", {
             report: session.realTimeReport,
             timestamp,
             sessionId,
@@ -609,7 +620,7 @@ class IntelligentInterviewController {
     } catch (error) {
       console.error("❌ Failed to handle AI decision:", error.message);
       if (socket.connected) {
-        socket.emit("interview_error", {
+        this.safeEmit(socket, "interview_error", {
           error: "Failed to process AI decision",
           message: error.message,
         });

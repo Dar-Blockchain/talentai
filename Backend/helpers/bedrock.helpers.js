@@ -1,6 +1,7 @@
 const {
   BedrockRuntimeClient,
   InvokeModelCommand,
+  ConverseCommand,
 } = require("@aws-sdk/client-bedrock-runtime");
 require("dotenv").config();
 
@@ -73,52 +74,80 @@ async function callLLM({
   timeout = 15000,
   useFastModel = false,
 }) {
-  const activeModel = useFastModel ? FAST_MODEL_ID : MODEL_ID;
+  const activeModel = useFastModel && FAST_MODEL_ID !== MODEL_ID ? FAST_MODEL_ID : MODEL_ID;
+  const useConverseAPI = useFastModel && FAST_MODEL_ID !== MODEL_ID;
 
-  // Build OpenAI-format messages array
-  const msgs = [];
-  if (systemPrompt) {
-    msgs.push({ role: "system", content: systemPrompt });
-  }
-  for (const m of messages) {
-    msgs.push({
-      role: m.role,
-      content:
-        typeof m.content === "string"
-          ? m.content
-          : Array.isArray(m.content)
-            ? m.content.map((c) => c.text || c).join("")
-            : String(m.content),
-    });
-  }
-
-  const payload = {
-    model: activeModel,
-    max_completion_tokens: maxTokens,
-    temperature,
-    messages: msgs,
-  };
-
-  const command = new InvokeModelCommand({
-    modelId: activeModel,
-    contentType: "application/json",
-    accept: "application/json",
-    body: JSON.stringify(payload),
-  });
+  // Normalize message content to plain strings
+  const normalizeContent = (content) =>
+    typeof content === "string"
+      ? content
+      : Array.isArray(content)
+        ? content.map((c) => c.text || c).join("")
+        : String(content);
 
   // Use AbortController for clean timeout
   const abortController = new AbortController();
   const timer = setTimeout(() => abortController.abort(), timeout);
 
   try {
-    const result = await client.send(command, {
-      abortSignal: abortController.signal,
-    });
+    if (useConverseAPI) {
+      // ── ConverseCommand: universal API for Nova, Claude, Llama, etc. ──
+      const converseMessages = messages.map((m) => ({
+        role: m.role,
+        content: [{ text: normalizeContent(m.content) }],
+      }));
 
-    const responseBody = JSON.parse(new TextDecoder().decode(result.body));
-    const content = stripThinkingTags(responseBody.choices?.[0]?.message?.content || "");
+      const converseParams = {
+        modelId: activeModel,
+        messages: converseMessages,
+        inferenceConfig: { maxTokens, temperature },
+      };
+      if (systemPrompt) {
+        converseParams.system = [{ text: systemPrompt }];
+      }
 
-    return { content };
+      const result = await client.send(new ConverseCommand(converseParams), {
+        abortSignal: abortController.signal,
+      });
+
+      const content = stripThinkingTags(
+        result.output?.message?.content?.[0]?.text || ""
+      );
+      return { content };
+    } else {
+      // ── InvokeModelCommand: OpenAI-native format for gpt-oss ──
+      const msgs = [];
+      if (systemPrompt) {
+        msgs.push({ role: "system", content: systemPrompt });
+      }
+      for (const m of messages) {
+        msgs.push({ role: m.role, content: normalizeContent(m.content) });
+      }
+
+      const payload = {
+        model: activeModel,
+        max_completion_tokens: maxTokens,
+        temperature,
+        messages: msgs,
+      };
+
+      const command = new InvokeModelCommand({
+        modelId: activeModel,
+        contentType: "application/json",
+        accept: "application/json",
+        body: JSON.stringify(payload),
+      });
+
+      const result = await client.send(command, {
+        abortSignal: abortController.signal,
+      });
+
+      const responseBody = JSON.parse(new TextDecoder().decode(result.body));
+      const content = stripThinkingTags(
+        responseBody.choices?.[0]?.message?.content || ""
+      );
+      return { content };
+    }
   } catch (error) {
     if (error.name === "AbortError") {
       throw new Error(`Timeout: Bedrock callLLM exceeded ${timeout}ms`);
