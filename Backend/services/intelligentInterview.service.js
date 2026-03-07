@@ -446,6 +446,9 @@ QUESTION GENERATION PRINCIPLES:
 - Avoid repetitive or similar questions
 - Progress logically through competency exploration
 - Be natural and conversational, not robotic
+- Keep questions concise — ONE clear question in 1-2 sentences (max 40 words)
+- Do NOT combine multiple questions into one
+- Do NOT add preambles or context explanations in the question itself
 - STRICTLY follow the interview type guidelines above
 
 RESPONSE FORMAT (JSON only):
@@ -490,7 +493,7 @@ Generate the next intelligent question that targets the most important coverage 
         systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.7,
-        maxTokens: 500,
+        maxTokens: 300,
         timeout: 10000
       });
 
@@ -1100,7 +1103,7 @@ Determine if interview objectives have been sufficiently met to end the session.
   /**
    * Start new interview session
    */
-  async startInterview(sessionId, userConfig, candidateId) {
+  async startInterview(sessionId, userConfig, candidateId, onGreetingChunk = null) {
     try {
       console.log(`🚀 [Service] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
 
@@ -1196,7 +1199,7 @@ Determine if interview objectives have been sufficiently met to end the session.
       let greeting;
       try {
         console.log('🤖 Generating AI greeting...');
-        greeting = await this.generateIntelligentGreeting(config);
+        greeting = await this.generateIntelligentGreeting(config, onGreetingChunk);
         console.log('✅ AI greeting generated');
       } catch (greetingError) {
         console.error('⚠️ AI greeting failed, using fallback:', greetingError.message);
@@ -1271,7 +1274,7 @@ Determine if interview objectives have been sufficiently met to end the session.
   /**
    * Generate intelligent greeting based on context
    */
-  async generateIntelligentGreeting(config) {
+  async generateIntelligentGreeting(config, onChunk = null) {
     const maxRetries = 2;
     let lastError = null;
 
@@ -1283,13 +1286,18 @@ Determine if interview objectives have been sufficiently met to end the session.
 
         console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
-        const response = await bedrock.callLLM({
+        const llmOptions = {
           systemPrompt: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences.",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
           maxTokens: 400,
           timeout: 10000
-        });
+        };
+
+        // Use streaming if onChunk callback is provided
+        const response = onChunk
+          ? await bedrock.callLLMStreaming({ ...llmOptions, onChunk })
+          : await bedrock.callLLM(llmOptions);
 
         const processingTime = Date.now() - startTime;
         const greeting = response.content.trim();

@@ -42,14 +42,20 @@ class IntelligentInterviewController {
           socket.sessionId = sessionId;
           console.log(`✅ [Controller] Session mapping stored`);
 
-          // Start interview with AI service
+          // Start interview with AI service (stream greeting chunks to client)
           console.log(
             `⏳ [Controller] Calling intelligentInterviewService.startInterview()...`,
           );
+          const onGreetingChunk = (chunk) => {
+            if (socket.connected) {
+              socket.emit("greeting_chunk", { content: chunk, sessionId });
+            }
+          };
           const result = await this.service.startInterview(
             sessionId,
             config,
             candidateId,
+            onGreetingChunk,
           );
           console.log(`✅ [Controller] Service returned:`, {
             success: result.success,
@@ -57,7 +63,12 @@ class IntelligentInterviewController {
             greetingLength: result.greeting?.length,
           });
 
-          // Send success response with greeting
+          // Signal greeting streaming is complete
+          if (socket.connected) {
+            socket.emit("greeting_complete", { sessionId });
+          }
+
+          // Send success response with full greeting + metadata
           console.log(
             `📤 [Controller] Emitting interview_started event to client...`,
           );
@@ -72,7 +83,7 @@ class IntelligentInterviewController {
           });
           console.log(`✅ [Controller] interview_started event emitted`);
 
-          // Send initial greeting message
+          // Send initial greeting message (full content for clients that don't support streaming)
           socket.emit("interviewer_message", {
             type: "greeting",
             content: result.greeting,
@@ -134,6 +145,11 @@ class IntelligentInterviewController {
             console.log(
               `✅ V3 Turn ${turnOrder || "N/A"} detected with ${transcript?.length || 0} chars`,
             );
+          }
+
+          // Emit typing indicator so frontend can show "..." while AI processes
+          if (socket.connected) {
+            socket.emit("interviewer_typing", { sessionId, status: "thinking" });
           }
 
           // Reset inter-turn pause timer when new turn is received

@@ -39,6 +39,17 @@ const BEARER_TOKEN = process.env.AWS_BEARER_TOKEN_BEDROCK;
 console.log(`🤖 Bedrock model: ${MODEL_ID} (region: ${REGION})`);
 
 /**
+ * Strip <think>/<thinking> reasoning tags from model responses.
+ * Reasoning models (gpt-oss, o1, etc.) may wrap responses in thinking tags.
+ */
+function stripThinkingTags(text) {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+    .trim();
+}
+
+/**
  * Call Bedrock gpt-oss via InvokeModelCommand (OpenAI-native body format).
  *
  * @param {Object} options
@@ -97,7 +108,7 @@ async function callLLM({
     });
 
     const responseBody = JSON.parse(new TextDecoder().decode(result.body));
-    const content = responseBody.choices?.[0]?.message?.content || "";
+    const content = stripThinkingTags(responseBody.choices?.[0]?.message?.content || "");
 
     return { content };
   } catch (error) {
@@ -205,7 +216,7 @@ async function callLLMStreaming({
         if (!trimmed || trimmed.startsWith(":")) continue;
 
         if (trimmed === "data: [DONE]") {
-          return { content: fullContent };
+          return { content: stripThinkingTags(fullContent) };
         }
 
         if (trimmed.startsWith("data: ")) {
@@ -223,7 +234,7 @@ async function callLLMStreaming({
       }
     }
 
-    return { content: fullContent };
+    return { content: stripThinkingTags(fullContent) };
   } catch (error) {
     if (error.name === "AbortError") {
       throw new Error(`Timeout: Bedrock streaming exceeded ${timeout}ms`);
