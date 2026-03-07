@@ -1589,16 +1589,21 @@ Determine if interview objectives have been sufficiently met to end the session.
       let nextAction;
       if (decisionAnalysis.decision === 'explore_new_area' || decisionAnalysis.decision === 'continue_probing') {
         // Normal flow - use the pre-generated question
-        // Verify question isn't too similar to previous ones
-        const similarityAnalysis = await AIUtils.withTimeout(
-          this.memoryAI.analyzeQuestionSimilarity(
-            proposedQuestion.question,
-            finalSession.conversation,
-            sessionId
-          ),
-          8000,
-          'analyzeQuestionSimilarity'
-        );
+        // Verify question isn't too similar to previous ones (non-blocking — timeout = proceed with question)
+        let similarityAnalysis = { isSimilar: false, confidence: 0 };
+        try {
+          similarityAnalysis = await AIUtils.withTimeout(
+            this.memoryAI.analyzeQuestionSimilarity(
+              proposedQuestion.question,
+              finalSession.conversation,
+              sessionId
+            ),
+            8000,
+            'analyzeQuestionSimilarity'
+          );
+        } catch (simError) {
+          console.warn('⚠️ Question similarity check failed/timed out, proceeding with question:', simError.message);
+        }
 
         if (similarityAnalysis.isSimilar && similarityAnalysis.confidence > 70) {
           // Generate alternative question for same target area

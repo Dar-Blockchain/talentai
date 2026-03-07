@@ -46,6 +46,7 @@ function stripThinkingTags(text) {
   return text
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
     .trim();
 }
 

@@ -13,6 +13,8 @@ interface Notification {
   archived?: boolean;
 }
 
+
+
 interface NotificationState {
   notifications: Notification[];
   archivedNotifications: Notification[];
