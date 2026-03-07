@@ -918,7 +918,7 @@ Return ONLY valid JSON with ALL of these fields:
   "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-15, "evidence": "brief evidence" }] },
   "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
   "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
-  "shouldEnd": { "shouldEnd": false, "reason": "" }
+  "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." }
 }`;
 
     const coverageSummary = Object.fromEntries(
@@ -1824,15 +1824,18 @@ Determine if interview objectives have been sufficiently met to end the session.
         };
       }
 
-      // AI-suggested termination from combined analysis
-      if (analysis.shouldEnd?.shouldEnd) {
-        console.log(`🛑 [Pipeline] AI suggests ending: ${analysis.shouldEnd.reason}`);
+      // AI-suggested termination from combined analysis (only trusted after 6+ turns)
+      const turnCount = Math.floor((session.conversation?.length || 0) / 2);
+      if (analysis.shouldEnd?.shouldEnd && turnCount >= 6) {
+        console.log(`🛑 [Pipeline] AI suggests ending at turn ${turnCount}: ${analysis.shouldEnd.reason}`);
         return {
           action: 'end_interview',
           content: 'Thank you for your time. This concludes our interview.',
           reasoning: analysis.shouldEnd.reason,
           metadata: { terminationReason: 'ai_determined', score: 'ai' }
         };
+      } else if (analysis.shouldEnd?.shouldEnd && turnCount < 6) {
+        console.log(`⚠️ [Pipeline] LLM suggested ending at turn ${turnCount} — IGNORED (min 6 turns required)`);
       }
 
       if (isLowQuality) {
