@@ -199,7 +199,8 @@ RESPONSE FORMAT (JSON only):
         messages: [{ role: "user", content: `Analyze: "${candidateResponse}"` }],
         temperature: 0.3,
         maxTokens: 600,
-        timeout: 12000
+        timeout: 30000,
+        useFastModel: true
       });
 
       return AIUtils.parseJSONResponse(aiResponse.content, 'analyzeResponseIntelligence');
@@ -247,7 +248,8 @@ Evaluate if the response adequately answered the question. If clarification is n
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.3,
         maxTokens: 700,
-        timeout: 12000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const result = AIUtils.parseJSONResponse(aiResponse.content, 'analyzeResponseQuality');
@@ -331,7 +333,8 @@ Analyze this response intelligently for coverage of focus areas. Look for implic
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.2,
         maxTokens: 1200,
-        timeout: 15000
+        timeout: 30000,
+        useFastModel: true
       });
 
       return AIUtils.parseJSONResponse(response.content, 'analyzeCoverageIntelligently');
@@ -384,7 +387,8 @@ Determine if this competency area has been sufficiently explored for the target 
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
         maxTokens: 600,
-        timeout: 12000
+        timeout: 30000,
+        useFastModel: true
       });
 
       return AIUtils.parseJSONResponse(response.content, 'determineIfCoverageIsSufficient');
@@ -494,7 +498,7 @@ Generate the next intelligent question that targets the most important coverage 
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.7,
         maxTokens: 300,
-        timeout: 10000
+        timeout: 30000
       });
 
       return AIUtils.parseJSONResponse(response.content, 'generateIntelligentQuestion');
@@ -550,7 +554,7 @@ Generate a targeted question to explore this competency area more deeply. Respon
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
         maxTokens: 600,
-        timeout: 12000
+        timeout: 30000
       });
 
       const responseContent = aiResponse.content;
@@ -754,7 +758,8 @@ Make the next intelligent decision for interview progression. Consider question 
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.3,
         maxTokens: 600,
-        timeout: 15000
+        timeout: 30000,
+        useFastModel: true
       });
 
       return AIUtils.parseJSONResponse(response.content, 'makeIntelligentDecision');
@@ -1086,11 +1091,12 @@ Determine if interview objectives have been sufficiently met to end the session.
 
       const response = await bedrock.callLLM({
         systemPrompt,
-        
+
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
         maxTokens: 500,
-        timeout: 12000
+        timeout: 30000,
+        useFastModel: true
       });
 
       return AIUtils.parseJSONResponse(response.content, 'shouldEndInterview');
@@ -1291,7 +1297,7 @@ Determine if interview objectives have been sufficiently met to end the session.
           messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
           maxTokens: 400,
-          timeout: 10000
+          timeout: 30000
         };
 
         // Use streaming if onChunk callback is provided
@@ -1460,7 +1466,7 @@ Determine if interview objectives have been sufficiently met to end the session.
               updatedSession.config.intelligenceContext.focusAreas,
               updatedSession.conversation.slice(0, -1)  // Exclude this bad response
             ),
-            15000,
+            30000,
             'analyzeCoverageIntelligently (low quality path)'
           );
 
@@ -1484,7 +1490,7 @@ Determine if interview objectives have been sufficiently met to end the session.
               coverageAnalysis,
               { previousQuestions: refreshedSession.conversation.filter(e => e.type === 'interviewer') }
             ),
-            10000,
+            30000,
             'generateIntelligentQuestion (low quality path)'
           );
 
@@ -1534,17 +1540,26 @@ Determine if interview objectives have been sufficiently met to end the session.
         }
       }
 
-      // Perform intelligent coverage analysis
-      const coverageAnalysis = await AIUtils.withTimeout(
-        this.coverageAI.analyzeCoverageIntelligently(
-          transcript,
-          updatedSession.coverage,
-          updatedSession.config.intelligenceContext.focusAreas,
-          updatedSession.conversation
-        ),
-        15000,
-        'analyzeCoverageIntelligently'
-      );
+      // Perform intelligent coverage analysis (resilient — fallback to empty if fails)
+      let coverageAnalysis;
+      try {
+        coverageAnalysis = await AIUtils.withTimeout(
+          this.coverageAI.analyzeCoverageIntelligently(
+            transcript,
+            updatedSession.coverage,
+            updatedSession.config.intelligenceContext.focusAreas,
+            updatedSession.conversation
+          ),
+          30000,
+          'analyzeCoverageIntelligently'
+        );
+      } catch (coverageError) {
+        console.warn('⚠️ Coverage analysis failed, proceeding with empty coverage:', coverageError.message);
+        coverageAnalysis = {
+          coverageUpdates: null,
+          overallAssessment: { weakestAreas: [], strongestAreas: [], overallScore: 50 }
+        };
+      }
 
       // Update coverage based on AI analysis
       let finalCoverage = updatedSession.coverage;
@@ -1560,30 +1575,47 @@ Determine if interview objectives have been sufficiently met to end the session.
       // Build finalSession locally instead of re-fetching from Redis
       const finalSession = { ...updatedSession, coverage: finalCoverage };
 
-      // Run decision analysis and question generation IN PARALLEL (both depend on coverageAnalysis but not each other)
-      const [decisionAnalysis, proposedQuestion] = await Promise.all([
-        AIUtils.withTimeout(
-          this.decisionAI.makeIntelligentDecision(
-            finalSession,
-            transcript,
-            {
-              coverage: coverageAnalysis,
-              memory: candidateEntry.aiAnalysis
-            }
+      // Run decision analysis and question generation IN PARALLEL (resilient — fallback if either fails)
+      let decisionAnalysis, proposedQuestion;
+      try {
+        [decisionAnalysis, proposedQuestion] = await Promise.all([
+          AIUtils.withTimeout(
+            this.decisionAI.makeIntelligentDecision(
+              finalSession,
+              transcript,
+              {
+                coverage: coverageAnalysis,
+                memory: candidateEntry.aiAnalysis
+              }
+            ),
+            30000,
+            'makeIntelligentDecision'
           ),
-          15000,
-          'makeIntelligentDecision'
-        ),
-        AIUtils.withTimeout(
-          this.questionAI.generateIntelligentQuestion(
-            finalSession,
-            coverageAnalysis,
-            { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
-          ),
-          10000,
-          'generateIntelligentQuestion'
-        )
-      ]);
+          AIUtils.withTimeout(
+            this.questionAI.generateIntelligentQuestion(
+              finalSession,
+              coverageAnalysis,
+              { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+            ),
+            30000,
+            'generateIntelligentQuestion'
+          )
+        ]);
+      } catch (parallelError) {
+        console.warn('⚠️ Parallel AI calls failed, using fallbacks:', parallelError.message);
+        decisionAnalysis = decisionAnalysis || {
+          decision: 'continue_probing',
+          reasoning: 'Fallback due to AI timeout',
+          targetArea: 'General',
+          confidence: 50
+        };
+        proposedQuestion = proposedQuestion || {
+          question: 'Can you elaborate on your most recent project experience?',
+          targetAreas: ['General'],
+          reasoning: 'Fallback question due to AI timeout',
+          fallback: true
+        };
+      }
 
       // SIMPLIFIED: Just generate next question (no clarification requests - be more patient)
       let nextAction;
@@ -1784,7 +1816,8 @@ Determine if interview objectives have been sufficiently met to end the session.
         messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
         maxTokens: 800,
-        timeout: 15000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const processingTime = Date.now() - startTime;
@@ -1864,7 +1897,8 @@ Determine if interview objectives have been sufficiently met to end the session.
         messages: [{ role: "user", content: prompt }],
         temperature: 0.3,
         maxTokens: 600,
-        timeout: 12000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const analysisContent = response.content.trim();
@@ -1964,7 +1998,8 @@ Determine if interview objectives have been sufficiently met to end the session.
         messages: [{ role: "user", content: prompt }],
         temperature: 0.4,
         maxTokens: 800,
-        timeout: 15000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const reportContent = response.content.trim();
@@ -2128,7 +2163,8 @@ Example: "Take your time - there's no rush. Would you like me to rephrase the qu
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
           maxTokens: 300,
-          timeout: 8000
+          timeout: 30000,
+          useFastModel: true
         });
 
         const silencePrompt = response.content.trim();
@@ -2226,7 +2262,8 @@ RESPONSE FORMAT (JSON only):
         messages: [{ role: "user", content: `Analyze this question: "${questionText}"` }],
         temperature: 0.2,
         maxTokens: 200,
-        timeout: 8000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const parsed = AIUtils.parseJSONResponse(response.content, 'detectQuestionComplexity');
@@ -2269,7 +2306,8 @@ Examples:
         messages: [{ role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }],
         temperature: 0.7,
         maxTokens: 100,
-        timeout: 8000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const patiencePrompt = response.content.trim();
@@ -2326,7 +2364,8 @@ Examples:
         messages: [{ role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }],
         temperature: 0.7,
         maxTokens: 150,
-        timeout: 8000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const helpOffer = response.content.trim();
@@ -2404,7 +2443,8 @@ Rephrase this question to help the candidate answer it.`;
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
         maxTokens: 400,
-        timeout: 10000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const rephrasedQuestion = response.content.trim();
@@ -2833,7 +2873,8 @@ Update the real-time report with new AI-powered insights.`;
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.4,
         maxTokens: 1000,
-        timeout: 15000
+        timeout: 30000,
+        useFastModel: true
       });
 
       const reportUpdate = AIUtils.parseJSONResponse(response.content, 'updateRealTimeReport');

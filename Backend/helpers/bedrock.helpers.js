@@ -34,9 +34,13 @@ const client = new BedrockRuntimeClient(clientConfig);
 
 const REGION = process.env.AWS_BEDROCK_REGION || "us-east-1";
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || "openai.gpt-oss-120b-1:0";
+const FAST_MODEL_ID = process.env.BEDROCK_FAST_MODEL_ID || MODEL_ID;
 const BEARER_TOKEN = process.env.AWS_BEARER_TOKEN_BEDROCK;
 
 console.log(`🤖 Bedrock model: ${MODEL_ID} (region: ${REGION})`);
+if (FAST_MODEL_ID !== MODEL_ID) {
+  console.log(`⚡ Bedrock fast model: ${FAST_MODEL_ID}`);
+}
 
 /**
  * Strip <think>/<thinking> reasoning tags from model responses.
@@ -67,7 +71,10 @@ async function callLLM({
   temperature = 0.5,
   maxTokens = 1024,
   timeout = 15000,
+  useFastModel = false,
 }) {
+  const activeModel = useFastModel ? FAST_MODEL_ID : MODEL_ID;
+
   // Build OpenAI-format messages array
   const msgs = [];
   if (systemPrompt) {
@@ -86,14 +93,14 @@ async function callLLM({
   }
 
   const payload = {
-    model: MODEL_ID,
+    model: activeModel,
     max_completion_tokens: maxTokens,
     temperature,
     messages: msgs,
   };
 
   const command = new InvokeModelCommand({
-    modelId: MODEL_ID,
+    modelId: activeModel,
     contentType: "application/json",
     accept: "application/json",
     body: JSON.stringify(payload),
@@ -142,6 +149,7 @@ async function callLLMStreaming({
   maxTokens = 1024,
   timeout = 30000,
   onChunk,
+  useFastModel = false,
 }) {
   if (!BEARER_TOKEN) {
     throw new Error(
@@ -149,6 +157,7 @@ async function callLLMStreaming({
     );
   }
 
+  const activeModel = useFastModel ? FAST_MODEL_ID : MODEL_ID;
   const url = `https://bedrock-runtime.${REGION}.amazonaws.com/openai/v1/chat/completions`;
 
   // Build OpenAI-format messages array
@@ -169,7 +178,7 @@ async function callLLMStreaming({
   }
 
   const payload = {
-    model: MODEL_ID,
+    model: activeModel,
     max_completion_tokens: maxTokens,
     temperature,
     stream: true,
