@@ -1407,16 +1407,20 @@ Determine if interview objectives have been sufficiently met to end the session.
       try {
         const jobId = userConfig.context?.jobId || userConfig.jobId;
         if (jobId) {
-          const post = await Post.findById(jobId).select('title companyName jobDetails');
+          const post = await Post.findById(jobId)
+            .populate({ path: 'user', populate: { path: 'profile', select: 'companyDetails' } });
           if (post?.jobDetails) {
+            const companyName = post.user?.profile?.companyDetails?.name || config.context.targetCompany || 'the company';
             jobDescription = {
-              title: post.title,
-              companyName: post.companyName,
+              title: post.jobDetails?.title || config.context.targetRole,
+              companyName: companyName,
               description: post.jobDetails.description,
               requirements: post.jobDetails.requirements || [],
               responsibilities: post.jobDetails.responsibilities || []
             };
-            console.log(`✅ [Service] Full JD loaded: ${jobDescription.title} (${jobDescription.requirements.length} requirements, ${jobDescription.responsibilities.length} responsibilities)`);
+            // Propagate real company name to all downstream uses (greeting, prompts, result)
+            config.context.targetCompany = companyName;
+            console.log(`✅ [Service] Full JD loaded: ${jobDescription.title} at ${companyName} (${jobDescription.requirements.length} requirements, ${jobDescription.responsibilities.length} responsibilities)`);
 
             // Index JD for RAG (runs once, skips if already indexed)
             ragService.indexJobDescription(jobId, jobDescription).catch(err =>

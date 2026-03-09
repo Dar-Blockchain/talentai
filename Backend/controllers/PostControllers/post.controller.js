@@ -570,7 +570,7 @@ exports.getJobInterviewConfig = async (req, res) => {
     }
 
     // Extract company and job details (for NON-pipeline jobs only)
-    const companyName = post.user?.companyDetails?.name || "Company";
+    const companyName = companyProfile?.companyDetails?.name || "Company";
     const jobTitle = post.jobDetails?.title || "Position";
     const experienceLevel = post.jobDetails?.experienceLevel || "Mid Level";
 
