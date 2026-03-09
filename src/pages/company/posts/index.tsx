@@ -1,6 +1,6 @@
 import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -54,22 +54,22 @@ const PostsPage: React.FC = () => {
   const apiStatus = statusFilter === "all"     ? undefined
     : statusFilter === "active"  ? "open"
     : statusFilter === "draft"   ? "draft"
-    : "closed";
+    : statusFilter === "expired" ? "closed"
+    : undefined;
+
+  // Map UI sort → API sort param (UI uses dash, API uses underscore)
+  const apiSort = sortBy === "title-asc"  ? "title_asc"
+    : sortBy === "title-desc" ? "title_desc"
+    : sortBy; // "newest" | "oldest" pass through
 
   const load = useCallback(() => {
-    dispatch(fetchMyPosts({ page, limit: 9, search, sort: sortBy, status: apiStatus }));
-  }, [dispatch, page, search, sortBy, apiStatus]);
+    dispatch(fetchMyPosts({ page, limit: 9, search, sort: apiSort, status: apiStatus }));
+  }, [dispatch, page, search, apiSort, apiStatus]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Client-side sort only (API handles status + search filtering)
-  const filteredPosts = useMemo(() => {
-    const list = [...posts] as any[];
-    if (sortBy === "oldest")     list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    if (sortBy === "title-asc")  list.sort((a, b) => (a.jobDetails?.title ?? "").localeCompare(b.jobDetails?.title ?? ""));
-    if (sortBy === "title-desc") list.sort((a, b) => (b.jobDetails?.title ?? "").localeCompare(a.jobDetails?.title ?? ""));
-    return list;
-  }, [posts, sortBy]);
+  // API handles all filtering + sorting server-side
+  const filteredPosts = posts as any[];
 
   const handleCopyLink = (id: string) => {
     navigator.clipboard

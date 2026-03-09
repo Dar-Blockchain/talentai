@@ -557,7 +557,24 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
 
     // Add status filter if provided
     if (status && status.trim() !== '') {
-      query.status = status.toLowerCase();
+      const s = status.toLowerCase();
+      if (s === 'closed') {
+        // Treat as closed: explicitly closed OR expiration date passed
+        query.$or = [
+          { status: 'closed' },
+          { status: 'open', expirationDate: { $lt: new Date() } },
+        ];
+      } else if (s === 'open') {
+        // Active open posts: status open AND (no expiration OR not yet expired)
+        query.status = 'open';
+        query.$or = [
+          { expirationDate: { $exists: false } },
+          { expirationDate: null },
+          { expirationDate: { $gte: new Date() } },
+        ];
+      } else {
+        query.status = s;
+      }
     }
 
     // Build sort object based on sort parameter
@@ -1547,30 +1564,20 @@ module.exports.getPostMetrics = async (userId) => {
       total: allPosts.length,
       active: 0,
       draft: 0,
-      expired: 0
+      closed: 0,
     };
 
-    // Count posts by status and expiration
+    // Count posts by status — expired open posts count as closed
     allPosts.forEach((post) => {
       const isExpired = post.expirationDate && new Date(post.expirationDate) < now;
+      const s = post.status?.toLowerCase();
 
-      if (isExpired) {
-        metrics.expired++;
-      } else {
-        // Only count as active/draft if not expired
-        switch (post.status?.toLowerCase()) {
-          case 'draft':
-            metrics.draft++;
-            break;
-          case 'open':
-            metrics.active++;
-            break;
-          case 'closed':
-            metrics.closed++;
-            break;
-          default:
-            break;
-        }
+      if (s === 'draft') {
+        metrics.draft++;
+      } else if (s === 'closed' || isExpired) {
+        metrics.closed++;
+      } else if (s === 'open') {
+        metrics.active++;
       }
     });
 

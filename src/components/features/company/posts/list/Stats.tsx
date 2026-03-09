@@ -28,7 +28,7 @@ const PostsStats: React.FC = () => {
     { icon: <WorkOutlined sx={{ fontSize: 18 }} />,        label: "Total Posts", value: metrics?.total   ?? 0, color: "#0D9488" },
     { icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,  label: "Active",      value: metrics?.active  ?? 0, color: "#10B981" },
     { icon: <EditNoteOutlined sx={{ fontSize: 18 }} />,    label: "Drafts",      value: metrics?.draft   ?? 0, color: "#D97706" },
-    { icon: <AccessTimeOutlined sx={{ fontSize: 18 }} />,  label: "Expired",     value: metrics?.expired ?? 0, color: "#DC2626" },
+    { icon: <AccessTimeOutlined sx={{ fontSize: 18 }} />,  label: "Closed",      value: metrics?.closed  ?? 0, color: "#DC2626" },
   ];
 
   return (
