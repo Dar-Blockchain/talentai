@@ -17,18 +17,35 @@ const handleError = (res, error, defaultStatus = 500) => {
 // Route d'inscription
 module.exports.register = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, firstName, lastName } = req.body;
 
     // Validate email
     const validEmail = validateEmail(email);
 
-    const result = await authService.registerUser(validEmail);
+    // Validate firstName and lastName (optional but recommended)
+    if (firstName && typeof firstName !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'firstName must be a valid string'
+      });
+    }
+
+    if (lastName && typeof lastName !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'lastName must be a valid string'
+      });
+    }
+
+    const result = await authService.registerUser(validEmail, firstName, lastName);
 
     res.status(201).json({
       success: true,
       message: result.message,
       email: result.email,
       username: result.username,
+      user: result.user || null,
+      profile: result.profile || null,
     });
   } catch (error) {
     handleError(res, error, 400);
