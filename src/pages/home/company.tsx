@@ -17,7 +17,9 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("userType", "company");
     dispatch(setUserType("company"));
+    
   }, [dispatch]);
+
 
   return (
     <LandingPageLayout
