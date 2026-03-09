@@ -111,35 +111,42 @@ const BiasFreeEvaluation: React.FC = () => {
         }}
       >
         <Box sx={{ mx: 3 }}>
+          {/* Overline pill */}
+          <Box sx={{
+            display: "inline-flex", alignItems: "center", gap: 0.75,
+            bgcolor: "rgba(12,218,139,0.10)", border: "1px solid rgba(12,218,139,0.25)",
+            borderRadius: "20px", px: 2, py: 0.5, mb: 2,
+          }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "rgba(12,218,139,1)" }} />
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+              The Solution
+            </Typography>
+          </Box>
+
           <Typography
             variant="h5"
             sx={{
               fontFamily: "Poppins",
-              fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "36px",
-              lineHeight: "43.2px",
-              letterSpacing: 0,
-              verticalAlign: "middle",
+              fontWeight: 700,
+              fontSize: { xs: "26px", md: "38px" },
+              lineHeight: 1.2,
+              color: "#111827",
               mb: 1,
             }}
           >
-            The intelligent hiring platform you deserve
+            Stop Guessing. Start Hiring With Confidence.
           </Typography>
           <Typography
-            variant="h5"
             sx={{
               fontFamily: "Poppins",
               fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "16px",
-              lineHeight: "24px",
-              letterSpacing: 0,
-              verticalAlign: "middle",
+              fontSize: { xs: "15px", md: "17px" },
+              lineHeight: 1.65,
+              color: "#4B5563",
+              maxWidth: 620,
             }}
           >
-            End-to-end recruitment automation powered by conversational AI and
-            Hedera blockchain.
+            TalentAI replaces manual screening with AI-driven conversations and blockchain-verified proof — so every hire is based on performance, not paperwork.
           </Typography>
         </Box>
         {/* Floating Blocks Row */}

@@ -5,6 +5,10 @@ import BiasFreeEvaluation from "@/components/home/company/BiasFreeEvaluation";
 import Footer from "@/components/layout/Footer";
 import SolutionsSection from "@/components/home/company/HowItWorksSection";
 import ContactSection from "@/components/home/company/ContactSection";
+import FAQSection from "@/components/home/company/FAQSection";
+import FinalCTA from "@/components/home/company/FinalCTA";
+import StakesSection from "@/components/home/company/StakesSection";
+import SuccessSection from "@/components/home/company/SuccessSection";
 import { useEffect } from "react";
 import { setUserType } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
@@ -34,7 +38,11 @@ const HomePage: React.FC = () => {
       <GlobalCompanies />
       <AISpotlight />
       <BiasFreeEvaluation />
+      <StakesSection />
       <SolutionsSection />
+      <SuccessSection />
+      <FAQSection />
+      <FinalCTA />
       <ContactSection />
       <Footer />
     </LandingPageLayout>

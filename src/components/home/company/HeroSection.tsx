@@ -123,8 +123,8 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               mb: 3,
             }}
           >
-            Automate Hiring with AI Agents
-            <br /> & Blockchain Credentials
+            Stop Losing Top Talent
+            <br /> to Slow Hiring
           </Typography>
           <Typography
             variant="body1"
@@ -132,7 +132,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               maxWidth: 720,
               mx: "auto",
               color: "text.secondary",
-              mb: 3,
+              mb: 1.5,
               fontFamily: "Poppins, sans-serif",
               fontWeight: 400,
               fontStyle: "normal",
@@ -143,15 +143,14 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               verticalAlign: "middle",
             }}
           >
-            Reduce hiring time by 75%. AI conducts natural video interviews.
-            Candidates earn blockchain-verified credentials they own forever.
+            TalentAI's conversational AI agents interview candidates through natural video dialogue, evaluate technical and soft skills in real time, and rank your applicants objectively — cutting your average 42-day hiring cycle by up to 75%.
           </Typography>
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={2}
             justifyContent="center"
-            sx={{ mb: { xs: 6, md: 10 } }}
+            sx={{ mb: 1.5 }}
           >
             <Button
               variant="contained"
@@ -168,12 +167,12 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                 "&:hover": { backgroundColor: "rgba(12, 218, 139, 0.7)" },
               }}
             >
-              Request a Demo
+              Start Hiring Smarter
             </Button>
 
             <Button
               variant="outlined"
-              onClick={() => router.push("/signin")}
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
                 borderColor: "rgba(12, 218, 139, 1)",
                 color: "#0b1b1f",
@@ -183,9 +182,21 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                 px: 3,
               }}
             >
-              Sign-in
+              Watch the 2-Min Demo
             </Button>
           </Stack>
+
+          <Typography
+            sx={{
+              fontFamily: "Poppins, sans-serif",
+              fontSize: "13px",
+              color: "#6B7280",
+              textAlign: "center",
+              mb: { xs: 6, md: 10 },
+            }}
+          >
+            No credit card required. Your first pipeline is live in under 30 minutes.
+          </Typography>
         </Box>
 
         {/* Showcase cards */}

@@ -20,17 +20,17 @@ const steps = [
   {
     label: "Build Your Pipeline",
     description:
-      "Select assessment modules. Customize pass/fail thresholds. Launch in 30 minutes.",
+      "Choose your interview modules, set pass/fail thresholds, and launch your first AI-driven role in under 30 minutes. No IT required.",
   },
   {
-    label: " AI Agents Interview Candidates",
+    label: "AI Agents Interview Candidates",
     description:
-      "Conversational agents evaluate technical skills, soft skills, and cultural fit through natural dialogue.",
+      "Your AI recruiter runs 24/7 — assessing technical depth, soft skills, and culture fit through natural conversation, at scale, without bias.",
   },
   {
     label: "Review & Hire",
     description:
-      "AI automatically ranks candidates. Blockchain verifies credentials. You approve the best fit.",
+      "Receive auto-ranked shortlists with blockchain-verified credentials. Compare candidates side-by-side and extend offers with full confidence.",
   },
 ];
 
