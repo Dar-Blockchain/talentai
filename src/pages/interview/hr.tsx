@@ -91,10 +91,10 @@ const IntelligentInterviewTest = () => {
 
     // Update config with real company name from backend
     if (data.targetCompany) {
-      setInterviewConfig(prev => ({
-        ...prev,
-        context: { ...prev.context, targetCompany: data.targetCompany }
-      }));
+      setInterviewConfig({
+        ...interviewConfig,
+        context: { ...interviewConfig.context, targetCompany: data.targetCompany }
+      });
     }
 
     // Configure backend silence intelligence
