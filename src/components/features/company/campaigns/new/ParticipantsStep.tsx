@@ -89,7 +89,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
 
   useEffect(() => {
     dispatch(fetchMembers());
-    dispatch(fetchDepartments());
+    dispatch(fetchDepartments(undefined));
   }, [dispatch]);
 
   useEffect(() => {
