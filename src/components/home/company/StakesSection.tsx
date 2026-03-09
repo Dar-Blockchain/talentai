@@ -16,30 +16,8 @@ const PAIN_POINTS = [
 ];
 
 const StakesSection: React.FC = () => (
-  <Box
-    sx={{
-      maxWidth: "98%",
-      mx: "auto",
-      borderRadius: "10px",
-      overflow: "hidden",
-      background: "#141415",
-      position: "relative",
-    }}
-  >
-    {/* Red glow top-left */}
-    <Box sx={{
-      position: "absolute", width: 400, height: 400,
-      borderRadius: "50%", bgcolor: "rgba(239,68,68,0.05)",
-      top: -100, left: -100, filter: "blur(80px)", pointerEvents: "none",
-    }} />
-    {/* Green glow bottom-right */}
-    <Box sx={{
-      position: "absolute", width: 360, height: 360,
-      borderRadius: "50%", bgcolor: "rgba(12,218,139,0.05)",
-      bottom: -80, right: -80, filter: "blur(80px)", pointerEvents: "none",
-    }} />
-
-    <Box sx={{ position: "relative", px: { xs: 4, md: 10 }, py: { xs: 6, md: 9 } }}>
+  <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
+    <Box sx={{ position: "relative" }}>
 
       {/* Overline */}
       <Box sx={{

@@ -1,159 +1,239 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 
-const ROW_LABEL_SX = {
-  fontFamily: "Poppins",
-  fontWeight: 600,
-  fontSize: "11px",
-  letterSpacing: "1px",
-  textTransform: "uppercase" as const,
-  color: "rgba(89,91,95,0.5)",
-  mb: 2,
-  textAlign: "center",
-};
-
 const STATS = [
   {
     value: "90%",
     label: "Less Screening Time",
+    sub: "AI filters candidates automatically",
     accent: "#0CDA8B",
     bg: "rgba(12,218,139,0.08)",
-    bar: 90,
-    icon: "⚡",
+    border: "rgba(12,218,139,0.20)",
   },
   {
     value: "10x",
     label: "Cheaper Than Traditional",
+    sub: "vs. recruiters & agencies",
     accent: "#6366F1",
     bg: "rgba(99,102,241,0.08)",
-    bar: 75,
-    icon: "💰",
+    border: "rgba(99,102,241,0.20)",
   },
   {
     value: "24/7",
     label: "AI Interviews Available",
+    sub: "No scheduling, no delays",
     accent: "#F59E0B",
     bg: "rgba(245,158,11,0.08)",
-    bar: 100,
-    icon: "🤖",
+    border: "rgba(245,158,11,0.20)",
   },
   {
     value: "0",
     label: "Bias in Evaluation",
+    sub: "Standardized scoring, always",
     accent: "#10B981",
     bg: "rgba(16,185,129,0.08)",
-    bar: 0,
-    icon: "⚖️",
+    border: "rgba(16,185,129,0.20)",
   },
 ];
 
 const clients = [
-  { name: "Lightency",      logo: "/images/GLOBAL_COMPANIES/Lightency.png" },
-  { name: "Dar Blockchain",  logo: "/images/GLOBAL_COMPANIES/DarBlockchain.png" },
+  { name: "Lightency",     logo: "/images/GLOBAL_COMPANIES/Lightency.png" },
+  { name: "Dar Blockchain", logo: "/images/GLOBAL_COMPANIES/DarBlockchain.png" },
 ];
 
-const GlobalCompanies: React.FC = () => {
-  return (
-    <Box sx={{
-      maxWidth: 1400,
-      mx: "auto",
-      background: "#EFF0F0",
-      borderRadius: 3,
-      px: { xs: 3, md: 6 },
-      py: { xs: 4, md: 5 },
-    }}>
+const partners = [
+  { logo: "/images/partners/nivdia.png",                  alt: "NVIDIA Inception Program" },
+  { logo: "/images/partners/F6s.png",                     alt: "F6S #22 Top AI Company" },
+  { logo: "/images/partners/Hedera-Logo-Lockup-Dark.png", alt: "Built on Hedera Hashgraph" },
+];
 
-      {/* ── Stats cards ── */}
+const GlobalCompanies: React.FC = () => (
+  <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 }, py: { xs: 4, md: 6 } }}>
+
+    {/* ── Stats row ── */}
+    <Box sx={{
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
+      gap: { xs: 0, md: 0 },
+      mb: 7,
+      borderRadius: "14px",
+      overflow: "hidden",
+      border: "1px solid rgba(0,0,0,0.07)",
+      boxShadow: "0 2px 16px rgba(0,0,0,0.05)",
+    }}>
+      {STATS.map((stat, i) => (
+        <Box
+          key={stat.label}
+          sx={{
+            bgcolor: "#fff",
+            px: { xs: 2.5, md: 3.5 },
+            py: { xs: 3, md: 3.5 },
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+            borderRight: { md: i < STATS.length - 1 ? "1px solid rgba(0,0,0,0.07)" : "none" },
+            borderBottom: { xs: i < 2 ? "1px solid rgba(0,0,0,0.07)" : "none", md: "none" },
+            position: "relative",
+            overflow: "hidden",
+            transition: "background 0.2s",
+            "&:hover": { bgcolor: stat.bg },
+            /* left accent bar */
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              left: 0, top: "20%", bottom: "20%",
+              width: "3px",
+              borderRadius: "0 3px 3px 0",
+              background: stat.accent,
+              opacity: 0,
+              transition: "opacity 0.2s",
+            },
+            "&:hover::before": { opacity: 1 },
+          }}
+        >
+          <Typography sx={{
+            fontFamily: "Poppins",
+            fontWeight: 800,
+            fontSize: { xs: "36px", md: "48px" },
+            lineHeight: 1,
+            color: stat.accent,
+            letterSpacing: "-2px",
+          }}>
+            {stat.value}
+          </Typography>
+          <Typography sx={{
+            fontFamily: "Poppins",
+            fontWeight: 700,
+            fontSize: { xs: "13px", md: "14px" },
+            color: "#111827",
+            lineHeight: 1.3,
+            mt: 0.5,
+          }}>
+            {stat.label}
+          </Typography>
+          <Typography sx={{
+            fontFamily: "Poppins",
+            fontSize: "11px",
+            color: "#9CA3AF",
+            lineHeight: 1.5,
+          }}>
+            {stat.sub}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+
+    {/* ── Trusted by ── */}
+    <Box sx={{ mb: 5 }}>
       <Box sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
-        gap: { xs: 2, md: 2.5 },
-        mb: 5,
+        display: "flex", alignItems: "center", gap: 2, mb: 3,
+        "&::before, &::after": {
+          content: '""', flex: 1,
+          height: "1px", bgcolor: "rgba(0,0,0,0.08)",
+        },
       }}>
-        {STATS.map((stat) => (
-          <Box
-            key={stat.label}
-            sx={{
-              bgcolor: "#fff",
-              borderRadius: 3,
-              p: { xs: 2, md: 3 },
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.5,
-              boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
-              border: "1px solid rgba(0,0,0,0.04)",
-              transition: "transform 0.18s, box-shadow 0.18s",
-              "&:hover": {
-                transform: "translateY(-3px)",
-                boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
-              },
-            }}
-          >
-            <Box sx={{
-              width: 36, height: 36, borderRadius: 2,
-              bgcolor: stat.bg,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "18px",
-            }}>
-              {stat.icon}
-            </Box>
-            <Typography sx={{
-              fontFamily: "Poppins", fontWeight: 800,
-              fontSize: { xs: "28px", md: "36px" },
-              lineHeight: 1, color: stat.accent, letterSpacing: "-0.5px",
-            }}>
-              {stat.value}
-            </Typography>
-            <Typography sx={{
-              fontFamily: "Poppins", fontSize: "12px",
-              fontWeight: 600, color: "#374151", lineHeight: 1.4,
-            }}>
-              {stat.label}
-            </Typography>
-            <Box sx={{ height: 4, bgcolor: "rgba(0,0,0,0.06)", borderRadius: 2, overflow: "hidden" }}>
-              <Box sx={{
-                height: "100%", width: `${stat.bar}%`,
-                bgcolor: stat.accent, borderRadius: 2, transition: "width 1s ease",
-              }} />
-            </Box>
-          </Box>
-        ))}
+        <Typography sx={{
+          fontFamily: "Poppins", fontWeight: 600, fontSize: "11px",
+          letterSpacing: "1.5px", textTransform: "uppercase",
+          color: "rgba(89,91,95,0.5)", whiteSpace: "nowrap", px: 1,
+        }}>
+          Trusted by
+        </Typography>
       </Box>
 
-      {/* ── Divider ── */}
-      <Box sx={{ mb: 4, borderTop: "1px solid rgba(89,91,95,0.12)" }} />
-
-      {/* ── Clients ── */}
-      <Typography sx={ROW_LABEL_SX}>Trusted by teams that can't afford a slow hire</Typography>
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: { xs: 4, md: 6 }, px: 2, flexWrap: "wrap", mb: 4 }}>
+      <Box sx={{
+        display: "flex", justifyContent: "center", alignItems: "center",
+        gap: { xs: 3, md: 4 }, flexWrap: "wrap",
+      }}>
         {clients.map((item) => (
           <Box
             key={item.name}
-            component="img"
-            src={item.logo}
-            alt={`${item.name} logo`}
             sx={{
-              height: { xs: 24, md: 32 }, width: "auto", objectFit: "contain",
-              opacity: 0.6, filter: "grayscale(100%)",
-              transition: "opacity 0.2s, filter 0.2s",
-              "&:hover": { opacity: 1, filter: "grayscale(0%)" },
+              display: "flex", alignItems: "center", gap: 1.5,
+              px: 3, py: 1.5,
+              bgcolor: "#fff",
+              border: "1px solid rgba(0,0,0,0.08)",
+              borderRadius: "10px",
+              boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+              transition: "box-shadow 0.2s, border-color 0.2s",
+              "&:hover": {
+                boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+                borderColor: "rgba(12,218,139,0.30)",
+              },
             }}
-          />
+          >
+            <Box
+              component="img"
+              src={item.logo}
+              alt={item.name}
+              sx={{
+                height: { xs: 22, md: 28 }, width: "auto", objectFit: "contain",
+                opacity: 0.7,
+                transition: "opacity 0.2s",
+                "&:hover": { opacity: 1 },
+              }}
+            />
+          </Box>
         ))}
       </Box>
+    </Box>
 
-      {/* ── Divider ── */}
-      <Box sx={{ mb: 4, borderTop: "1px solid rgba(89,91,95,0.12)" }} />
+    {/* ── Built on ── */}
+    <Box>
+      <Box sx={{
+        display: "flex", alignItems: "center", gap: 2, mb: 3,
+        "&::before, &::after": {
+          content: '""', flex: 1,
+          height: "1px", bgcolor: "rgba(0,0,0,0.08)",
+        },
+      }}>
+        <Typography sx={{
+          fontFamily: "Poppins", fontWeight: 600, fontSize: "11px",
+          letterSpacing: "1.5px", textTransform: "uppercase",
+          color: "rgba(89,91,95,0.5)", whiteSpace: "nowrap", px: 1,
+        }}>
+          Award-winning infrastructure
+        </Typography>
+      </Box>
 
-      {/* ── Partners ── */}
-      <Typography sx={ROW_LABEL_SX}>Built on award-winning infrastructure</Typography>
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: { xs: 3, md: 5 }, mt: 2, flexWrap: "wrap" }}>
-        <Box component="img" src="/images/partners/nivdia.png"                  alt="NVIDIA Inception Program"  sx={{ height: "52px", width: "auto", objectFit: "contain", opacity: 0.85, "&:hover": { opacity: 1 } }} />
-        <Box component="img" src="/images/partners/F6s.png"                     alt="FGS #22 Top AI Company"    sx={{ height: "52px", width: "auto", objectFit: "contain", opacity: 0.85, "&:hover": { opacity: 1 } }} />
-        <Box component="img" src="/images/partners/Hedera-Logo-Lockup-Dark.png" alt="Built on Hedera Hashgraph" sx={{ height: "52px", width: "auto", objectFit: "contain", opacity: 0.85, "&:hover": { opacity: 1 } }} />
+      <Box sx={{
+        display: "flex", justifyContent: "center", alignItems: "center",
+        gap: { xs: 3, md: 4 }, flexWrap: "wrap",
+      }}>
+        {partners.map((p) => (
+          <Box
+            key={p.alt}
+            sx={{
+              display: "flex", alignItems: "center",
+              px: 3, py: 1.5,
+              bgcolor: "#fff",
+              border: "1px solid rgba(0,0,0,0.08)",
+              borderRadius: "10px",
+              boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+              transition: "box-shadow 0.2s, border-color 0.2s",
+              "&:hover": {
+                boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+                borderColor: "rgba(12,218,139,0.30)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src={p.logo}
+              alt={p.alt}
+              sx={{
+                height: { xs: 28, md: 36 }, width: "auto", objectFit: "contain",
+                opacity: 0.65, filter: "grayscale(20%)",
+                transition: "opacity 0.2s, filter 0.2s",
+                "&:hover": { opacity: 1, filter: "grayscale(0%)" },
+              }}
+            />
+          </Box>
+        ))}
       </Box>
     </Box>
-  );
-};
+
+  </Box>
+);
 
 export default GlobalCompanies;

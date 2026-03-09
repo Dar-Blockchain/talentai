@@ -128,12 +128,10 @@ const FAQSection: React.FC = () => (
 
     <Box
       sx={{
-        maxWidth: "98%",
+        maxWidth: 1200,
         mx: "auto",
-        px: { xs: 3, md: 6 },
-        py: { xs: 5, md: 7 },
-        background: "#EFF0F0",
-        borderRadius: "10px",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
       }}
     >
       {/* Header */}

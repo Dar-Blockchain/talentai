@@ -19,12 +19,10 @@ const TRUST_BADGES = [
 const FinalCTA: React.FC = () => (
   <Box
     sx={{
-      background: "#141415",
-      borderRadius: "10px",
-      maxWidth: "98%",
+      maxWidth: 1200,
       mx: "auto",
-      px: { xs: 4, md: 8 },
-      py: { xs: 7, md: 10 },
+      px: { xs: 3, md: 8 },
+      py: { xs: 6, md: 8 },
       textAlign: "center",
       position: "relative",
       overflow: "hidden",

@@ -39,12 +39,10 @@ const ROWS = [
 const SuccessSection: React.FC = () => (
   <Box
     sx={{
-      maxWidth: "98%",
+      maxWidth: 1200,
       mx: "auto",
-      px: { xs: 3, md: 6 },
-      py: { xs: 6, md: 9 },
-      background: "#F8FAFB",
-      borderRadius: "10px",
+      px: { xs: 2, md: 4 },
+      py: { xs: 2, md: 3 },
     }}
   >
     {/* ── Header ── */}

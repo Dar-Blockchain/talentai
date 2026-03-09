@@ -6,20 +6,15 @@ const ACCENT_BG = "rgba(12,218,139,0.10)";
 
 const AISpotlight: React.FC = () => {
   return (
-    <Box sx={{ px: 3, py: { xs: 4, md: 5 }, maxWidth: 1400, mx: "auto" }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
       <Box
         sx={{
-          background: "linear-gradient(145deg, #141415 0%, #0d1f1a 100%)",
-          borderRadius: 3,
-          px: { xs: 3, md: 6 },
-          py: { xs: 5, md: 7 },
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 5,
           position: "relative",
           overflow: "hidden",
-          border: "1px solid rgba(12,218,139,0.10)",
         }}
       >
         {/* Green glow */}
