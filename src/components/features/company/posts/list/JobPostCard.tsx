@@ -208,9 +208,9 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
 
           {/* Date / days left */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {daysLeft !== null && (
+            {daysLeft !== null && !isExpired && (
               <Chip
-                label={isExpired ? "Closed" : `${daysLeft}d left`}
+                label={`${daysLeft}d left`}
                 size="small"
                 sx={{
                   fontSize: "10px", fontWeight: 700, height: 20,
