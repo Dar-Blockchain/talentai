@@ -9,7 +9,7 @@ const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-va
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 // Service d'inscription
-module.exports.registerUser = async (email, firstName = null, lastName = null) => {
+module.exports.registerUser = async (email, roleType = 'Candidate', profileDataOptions = {}) => {
   try {
     if (!email || typeof email !== 'string') {
       const err = new Error('Email is required');
@@ -55,12 +55,16 @@ module.exports.registerUser = async (email, firstName = null, lastName = null) =
       };
     }
 
+    // Determine user role
+    const userRole = roleType === 'Company' ? 'Company' : 'Candidate';
+
     // Create new user
     const user = new User({
       username,
       email,
-      FirstName: firstName || '',
-      LastName: lastName || '',
+      FirstName: profileDataOptions.firstName || '',
+      LastName: profileDataOptions.lastName || '',
+      role: userRole,
       otp: {
         code: otp,
         expiresAt: otpExpiry
@@ -69,23 +73,53 @@ module.exports.registerUser = async (email, firstName = null, lastName = null) =
 
     await user.save();
 
-    // Create profile if firstName and lastName are provided
+    // Create profile based on roleType
     let profile = null;
-    if (firstName && lastName) {
-      profile = await Profile.create({
-        userId: user._id,
-        firstName,
-        lastName,
-        type: 'Candidate',
-        skills: [],
-        overallScore: 0,
-      });
-      console.log('✅ Profile created during registration for userId:', user._id);
+    
+    if (roleType === 'Company') {
+      // For Company: need at least email or name
+      if (profileDataOptions.name || profileDataOptions.companyDetails?.name) {
+        profile = await Profile.create({
+          userId: user._id,
+          type: 'Company',
+          companyDetails: {
+            email: profileDataOptions.companyDetails?.email || email,
+            name: profileDataOptions.companyDetails?.name || profileDataOptions.name || '',
+            industry: profileDataOptions.companyDetails?.industry || '',
+            size: profileDataOptions.companyDetails?.size || '',
+            location: profileDataOptions.companyDetails?.location || '',
+            website: profileDataOptions.companyDetails?.website || '',
+            linkedin: profileDataOptions.companyDetails?.linkedin || '',
+            employmentType: profileDataOptions.companyDetails?.employmentType || '',
+          },
+          requiredSkills: [],
+          requiredExperienceLevel: 'Entry Level',
+        });
+        console.log('✅ Company profile created during registration for userId:', user._id);
 
-      // Link profile to user as ObjectID
-      user.profile = profile._id;
-      await user.save();
-      console.log('🔗 Profile linked to user - user.profile:', profile._id);
+        // Link profile to user as ObjectID
+        user.profile = profile._id;
+        await user.save();
+        console.log('🔗 Company profile linked to user - user.profile:', profile._id);
+      }
+    } else {
+      // For Candidate: create profile if both firstName and lastName are provided
+      if (profileDataOptions.firstName && profileDataOptions.lastName) {
+        profile = await Profile.create({
+          userId: user._id,
+          type: 'Candidate',
+          firstName: profileDataOptions.firstName,
+          lastName: profileDataOptions.lastName,
+          skills: [],
+          overallScore: 0,
+        });
+        console.log('✅ Candidate profile created during registration for userId:', user._id);
+
+        // Link profile to user as ObjectID
+        user.profile = profile._id;
+        await user.save();
+        console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
+      }
     }
 
     // Send OTP

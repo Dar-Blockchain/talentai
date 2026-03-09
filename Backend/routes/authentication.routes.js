@@ -20,8 +20,9 @@ router.use(authLogMiddleware("Auth"));
 
 // POST /auth/register
 // Accès: Public
-// Corps attendu: { email, firstName (optional), lastName (optional) }
-// Description: Crée un nouvel utilisateur et son profil (si firstName et lastName fournis), puis envoie un OTP
+// Corps attendu pour Candidate: { email, roleType: "Candidate", firstName (optional), lastName (optional) }
+// Corps attendu pour Company: { email, roleType: "Company", name (optional), companyDetails (optional) }
+// Description: Crée un nouvel utilisateur et son profil selon roleType, puis envoie un OTP
 router.post("/register", authController.register);
 
 // POST /auth/verify-otp
