@@ -11,6 +11,7 @@ import {
 
 export interface InterviewStartedData {
   sessionId: string;
+  targetCompany?: string;
   config: {
     duration: number;
     interviewType: string;
