@@ -132,7 +132,7 @@ const PostsPage: React.FC = () => {
               onDelete={handleDelete}
               onCopyLink={handleCopyLink}
               onViewPassed={(id) => router.push(`/posts/${id}?tab=passed`)}
-              onViewDetails={setSelectedJobId}
+              onViewDetails={(id) => router.push(`/company/posts/${id}`)}
               onCreateClick={handleCreateClick}
             />
 

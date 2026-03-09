@@ -16,6 +16,7 @@ import {
   selectCompanyInterviewsLoading,
   selectCompanyInterviewsTotal,
 } from "@/store/slices/interviewSlice";
+import { fetchMyPosts, selectMyPosts } from "@/store/slices/postSlice";
 
 const ROW = 12;
 
@@ -24,6 +25,7 @@ const InterviewsPage: React.FC = () => {
   const results  = useSelector(selectCompanyInterviews) as InterviewAssessment[];
   const loading  = useSelector(selectCompanyInterviewsLoading);
   const total    = useSelector(selectCompanyInterviewsTotal) as number;
+  const myPosts  = useSelector(selectMyPosts) as any[];
 
   const [searchName,  setSearchName]  = useState("");
   const [searchEmail, setSearchEmail] = useState("");
@@ -37,6 +39,17 @@ const InterviewsPage: React.FC = () => {
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ page: page + 1, limit: ROW }));
   }, [dispatch, page]);
+
+  // Fetch all job titles for autocomplete (once)
+  useEffect(() => {
+    dispatch(fetchMyPosts({ limit: 100 }));
+  }, [dispatch]);
+
+  const jobTitleOptions = useMemo(() =>
+    Array.from(new Set(
+      (myPosts || []).map((p: any) => p.jobDetails?.title).filter(Boolean)
+    )) as string[],
+  [myPosts]);
 
   const { excellentCount, needsWorkCount, avgScore } = useMemo(() => {
     let excellent = 0, needsWork = 0, scoreSum = 0;
@@ -116,6 +129,7 @@ const InterviewsPage: React.FC = () => {
               onSearchEmailChange={setSearchEmail}
               searchTitle={searchTitle}
               onSearchTitleChange={setSearchTitle}
+              jobTitleOptions={jobTitleOptions}
               scoreFilter={scoreFilter}
               onScoreFilterChange={handleScoreFilter}
               sortBy={sortBy}
