@@ -46,12 +46,12 @@ export const navigation = [
     label: "Interviews",
     href: "/company/interviews",
   },
-  {
-    id: "skills",
-    icon: PsychologyOutlined,
-    label: "Skills Matrix",
-    href: "/company/skills",
-  },
+  // {
+  //   id: "skills",
+  //   icon: PsychologyOutlined,
+  //   label: "Skills Matrix",
+  //   href: "/company/skills",
+  // },
   {
     id: "settings",
     icon: SettingsOutlined,
