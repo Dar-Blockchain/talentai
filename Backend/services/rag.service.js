@@ -1,40 +1,9 @@
 const mongoose = require("mongoose");
-const Together = require("together-ai");
+const { generateEmbedding, generateEmbeddings } = require("../helpers/bedrock.helpers");
 require("dotenv").config();
 
-const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-
-const EMBEDDING_MODEL = "BAAI/bge-large-en-v1.5";
-const EMBEDDING_DIMS = 1024;
-const SIMILARITY_THRESHOLD = 0.85;
-
-// ─── Embedding Generation ───────────────────────────────────────────────────
-
-/**
- * Generate a single embedding vector using Together AI.
- * @param {string} text
- * @returns {Promise<number[]>} 1024-dim vector
- */
-async function generateEmbedding(text) {
-  const response = await together.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: text,
-  });
-  return response.data[0].embedding;
-}
-
-/**
- * Generate embeddings for multiple texts in one batch.
- * @param {string[]} texts
- * @returns {Promise<number[][]>}
- */
-async function generateEmbeddings(texts) {
-  const response = await together.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: texts,
-  });
-  return response.data.map((d) => d.embedding);
-}
+const EMBEDDING_DIMS = 1024; // Titan Text Embeddings V2 default
+const SIMILARITY_THRESHOLD = 0.72; // Lowered from 0.85 to catch theme-similar questions
 
 // ─── Collection Helpers ─────────────────────────────────────────────────────
 

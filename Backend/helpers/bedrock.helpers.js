@@ -334,9 +334,55 @@ async function withRetry(fn, maxRetries = 2, baseDelay = 1000) {
   throw lastError;
 }
 
+// ── Titan Text Embeddings V2 ──
+
+const EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v2:0";
+
+/**
+ * Generate a single embedding vector using Amazon Titan Text Embeddings V2.
+ * Returns a 1024-dimensional float array (same dims as previous BAAI/bge model).
+ *
+ * @param {string} text - Text to embed (max 50,000 chars)
+ * @returns {Promise<number[]>} - 1024-dim embedding vector
+ */
+async function generateEmbedding(text) {
+  const command = new InvokeModelCommand({
+    modelId: EMBEDDING_MODEL_ID,
+    contentType: "application/json",
+    accept: "application/json",
+    body: JSON.stringify({
+      inputText: (text || "").substring(0, 50000),
+      dimensions: 1024,
+      normalize: true,
+    }),
+  });
+
+  const result = await client.send(command);
+  const responseBody = JSON.parse(new TextDecoder().decode(result.body));
+  return responseBody.embedding;
+}
+
+/**
+ * Generate embeddings for multiple texts using Amazon Titan Text Embeddings V2.
+ * Titan doesn't support batch embedding — processes sequentially.
+ *
+ * @param {string[]} texts - Array of texts to embed
+ * @returns {Promise<number[][]>} - Array of 1024-dim embedding vectors
+ */
+async function generateEmbeddings(texts) {
+  const embeddings = [];
+  for (const text of texts) {
+    const embedding = await generateEmbedding(text);
+    embeddings.push(embedding);
+  }
+  return embeddings;
+}
+
 module.exports = {
   callLLM,
   callLLMStreaming,
   withTimeout,
   withRetry,
+  generateEmbedding,
+  generateEmbeddings,
 };
