@@ -44,18 +44,29 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
         <Typography
           variant="body1"
           sx={{
-            maxWidth: 720,
+            maxWidth: 740,
             mx: "auto",
-            color: "text.secondary",
-            mb: 1.5,
+            color: "#4B5563",
+            mb: 2.5,
             fontFamily: "Poppins, sans-serif",
-            fontSize: "16px",
-            lineHeight: "24px",
+            fontSize: { xs: "15px", md: "17px" },
+            lineHeight: 1.8,
             textAlign: "center",
           }}
         >
-          TalentAI's conversational AI agents interview candidates through natural video dialogue, evaluate technical and soft skills in real time, and rank your applicants objectively — cutting your average 42-day hiring cycle by up to 75%.
+          TalentAI's conversational AI agents{" "}
+          <Box component="span" sx={{ color: "#111827", fontWeight: 600 }}>interview candidates through natural video dialogue</Box>,
+          {" "}evaluate technical and soft skills in real time, and rank applicants objectively.{" "}
+          <Box component="span" sx={{
+            display: "inline-flex", alignItems: "center",
+            bgcolor: "rgba(12,218,139,0.10)", border: "1px solid rgba(12,218,139,0.25)",
+            borderRadius: "6px", px: 0.8, py: 0.1, mx: 0.3,
+            fontWeight: 700, color: "#0CDA8B", fontSize: "15px",
+          }}>
+            cutting your 42-day hiring cycle by up to 75% 
+          </Box>
         </Typography>
+
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mb: 1.5 }}>
           <Button
