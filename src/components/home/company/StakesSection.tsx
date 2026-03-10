@@ -7,7 +7,6 @@ import CancelOutlined from "@mui/icons-material/CancelOutlined";
 
 const RED        = "#EF4444";
 const RED_BG     = "rgba(239,68,68,0.08)";
-const RED_BORDER = "rgba(239,68,68,0.20)";
 const ACCENT     = "#0CDA8B";
 
 
@@ -98,12 +97,12 @@ const StakesSection: React.FC = () => (
             endIcon={<ArrowForwardOutlined />}
             onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
             sx={{
-              bgcolor: ACCENT, color: "#0b1b1f",
+              bgcolor: ACCENT, color: "#fff",
               fontFamily: "Poppins", fontWeight: 700, fontSize: "15px",
-              textTransform: "none", borderRadius: "10px",
+              textTransform: "none", borderRadius: 0,
               px: 4, py: 1.75,
-              boxShadow: "0 0 28px rgba(12,218,139,0.35)",
-              "&:hover": { bgcolor: ACCENT, boxShadow: "0 0 28px rgba(12,218,139,0.35)" },
+              boxShadow: "none",
+              "&:hover": { bgcolor: ACCENT, boxShadow: "none" },
             }}
           >
             Start Hiring Smarter Today
@@ -131,27 +130,8 @@ const StakesSection: React.FC = () => (
       }}>
         {PAIN_POINTS.map((p, i) => (
           <Box key={i} sx={{
-            position: "relative",
-            borderRadius: "18px",
-            overflow: "hidden",
-            bgcolor: "rgba(255,255,255,0.03)",
-            border: `1px solid ${RED_BORDER}`,
             p: { xs: 2.5, md: 3 },
-            backdropFilter: "blur(10px)",
           }}>
-            {/* Top accent line */}
-            <Box sx={{
-              position: "absolute", top: 0, left: 0, right: 0, height: "3px",
-              background: "linear-gradient(90deg, rgba(239,68,68,0.9) 0%, rgba(239,68,68,0.2) 100%)",
-            }} />
-
-            {/* Glow */}
-            <Box sx={{
-              position: "absolute", width: 100, height: 100,
-              borderRadius: "50%", bgcolor: "rgba(239,68,68,0.06)",
-              bottom: -30, right: -20, filter: "blur(30px)",
-              pointerEvents: "none",
-            }} />
 
             <Typography sx={{
               fontFamily: "Poppins", fontWeight: 900,

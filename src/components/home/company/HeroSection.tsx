@@ -140,10 +140,16 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
           <Box sx={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 2,
+            gap: 0,
+            borderTop: "1px solid #E5E7EB",
+            pt: 3,
           }}>
-            {STATS.map((s) => (
-              <Box key={s.value}>
+            {STATS.map((s, i) => (
+              <Box key={s.value} sx={{
+                borderRight: i < STATS.length - 1 ? "1px solid #E5E7EB" : "none",
+                px: 2,
+                pl: i === 0 ? 0 : 2,
+              }}>
                 <Typography sx={{
                   fontFamily: "Poppins", fontWeight: 800,
                   fontSize: { xs: "22px", md: "28px" },

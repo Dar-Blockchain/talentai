@@ -6,7 +6,6 @@ import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import VerifiedUserOutlined from "@mui/icons-material/VerifiedUserOutlined";
 
 const ACCENT     = "#0CDA8B";
-const ACCENT_DIM = "rgba(12,218,139,0.7)";
 const ACCENT_BG  = "rgba(12,218,139,0.12)";
 
 const TRUST_BADGES = [
@@ -28,20 +27,6 @@ const FinalCTA: React.FC = () => (
       overflow: "hidden",
     }}
   >
-    {/* Subtle green glow blob */}
-    <Box sx={{
-      position: "absolute",
-      width: 480,
-      height: 480,
-      borderRadius: "50%",
-      bgcolor: "rgba(12,218,139,0.06)",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%,-50%)",
-      filter: "blur(80px)",
-      pointerEvents: "none",
-    }} />
-
     {/* Overline */}
     <Typography sx={{
       fontFamily: "Poppins",
@@ -99,16 +84,16 @@ const FinalCTA: React.FC = () => (
         onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
         sx={{
           bgcolor: ACCENT,
-          color: "#0b1b1f",
+          color: "#fff",
           fontFamily: "Poppins",
           fontWeight: 700,
           fontSize: "15px",
           textTransform: "none",
-          borderRadius: 1,
+          borderRadius: 0,
           px: 4,
           py: 1.5,
-          boxShadow: `0 0 24px rgba(12,218,139,0.35)`,
-          "&:hover": { bgcolor: ACCENT_DIM, boxShadow: `0 0 36px rgba(12,218,139,0.50)` },
+          boxShadow: "none",
+          "&:hover": { bgcolor: ACCENT, boxShadow: "none" },
         }}
       >
         Start Hiring Smarter — Free to Try →

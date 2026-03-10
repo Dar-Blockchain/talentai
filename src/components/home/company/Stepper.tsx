@@ -85,7 +85,7 @@ export default function GradientStepper() {
                 fontFamily: "Poppins",
                 fontWeight: 800,
                 fontSize: "14px",
-                color: "#059669",
+                color: "#0CDA8B",
                 lineHeight: 1,
               }}>
                 {step.number}
@@ -166,12 +166,11 @@ function StepCard({ step }: { step: typeof STEPS[number] }) {
         py: 0.4,
         mb: 2,
       }}>
-        <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: ACCENT }} />
         <Typography sx={{
           fontFamily: "Poppins",
           fontSize: "11px",
           fontWeight: 700,
-          color: "#059669",
+          color: "#0CDA8B",
           letterSpacing: "0.5px",
           textTransform: "uppercase",
         }}>
@@ -252,8 +251,7 @@ function MobileStepCard({ step, isLast }: { step: typeof STEPS[number]; isLast: 
           bgcolor: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`,
           borderRadius: "20px", px: 1.5, py: 0.4, mb: 1.5,
         }}>
-          <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: ACCENT }} />
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: "#059669", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.5px", textTransform: "uppercase" }}>
             {step.tag}
           </Typography>
         </Box>

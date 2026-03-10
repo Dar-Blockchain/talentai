@@ -15,7 +15,6 @@ import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 
 const ACCENT     = "rgba(12,218,139,1)";
-const ACCENT_DIM = "rgba(12,218,139,0.7)";
 const ACCENT_BG  = "rgba(12,218,139,0.10)";
 const TEXT_DARK  = "#0b1b1f";
 
@@ -116,7 +115,7 @@ const ContactSection: React.FC = () => {
           bgcolor: ACCENT_BG, border: `1.5px solid rgba(12,218,139,0.40)`,
           borderRadius: "24px", px: 2.5, py: 1, mb: 2,
         }}>
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>
             Let's Talk
           </Typography>
         </Box>
@@ -130,7 +129,7 @@ const ContactSection: React.FC = () => {
           mb: 1.5,
         }}>
           Reclaim Your Calendar.{" "}
-          <Box component="span" sx={{ color: "#059669" }}>Hire with Confidence.</Box>
+          <Box component="span" sx={{ color: "#0CDA8B" }}>Hire with Confidence.</Box>
         </Typography>
 
         <Typography sx={{
@@ -160,7 +159,7 @@ const ContactSection: React.FC = () => {
 
         {/* ── Left dark panel ── */}
         <Box sx={{
-          background: "linear-gradient(160deg, #141415 60%, #0d1f1a 100%)",
+          background: "#0E0F10",
           p: { xs: 4, md: 5 },
           display: "flex",
           flexDirection: "column",
@@ -169,19 +168,6 @@ const ContactSection: React.FC = () => {
           position: "relative",
           overflow: "hidden",
         }}>
-          {/* Decorative green orb */}
-          <Box sx={{
-            position: "absolute",
-            width: 200,
-            height: 200,
-            borderRadius: "50%",
-            bgcolor: "rgba(12,218,139,0.07)",
-            bottom: -60,
-            right: -60,
-            filter: "blur(40px)",
-            pointerEvents: "none",
-          }} />
-
           <Box sx={{ position: "relative" }}>
             <Typography sx={{
               fontFamily: "Poppins",
@@ -295,16 +281,16 @@ const ContactSection: React.FC = () => {
                 onClick={handleSubmit}
                 sx={{
                   backgroundColor: ACCENT,
-                  color: TEXT_DARK,
-                  boxShadow: "0 4px 16px rgba(12,218,139,0.30)",
-                  borderRadius: 1.5,
+                  color: "#fff",
+                  boxShadow: "none",
+                  borderRadius: 0,
                   textTransform: "none",
                   fontFamily: "Poppins",
                   fontWeight: 700,
                   fontSize: "15px",
                   py: 1.5,
-                  "&:hover": { backgroundColor: ACCENT_DIM, boxShadow: "0 6px 20px rgba(12,218,139,0.40)" },
-                  "&.Mui-disabled": { backgroundColor: ACCENT_DIM, color: TEXT_DARK, opacity: 0.7 },
+                  "&:hover": { backgroundColor: ACCENT, boxShadow: "none" },
+                  "&.Mui-disabled": { backgroundColor: ACCENT, color: "#fff", opacity: 0.7 },
                 }}
               >
                 {sending ? "Sending…" : "Send Message"}

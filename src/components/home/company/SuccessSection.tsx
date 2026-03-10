@@ -51,7 +51,7 @@ const SuccessSection: React.FC = () => (
         bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
         borderRadius: "24px", px: 2.5, py: 1, mb: 2,
       }}>
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>
           The Transformation
         </Typography>
       </Box>
@@ -114,7 +114,7 @@ const SuccessSection: React.FC = () => (
           }}>
             <CheckOutlined sx={{ fontSize: 14, color: "#0b1b1f" }} />
           </Box>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", color: "#059669" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", color: "#0CDA8B" }}>
             With TalentAI
           </Typography>
         </Box>
@@ -172,7 +172,7 @@ const SuccessSection: React.FC = () => (
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0, mt: 0.15,
               }}>
-                <CheckOutlined sx={{ fontSize: 11, color: "#059669" }} />
+                <CheckOutlined sx={{ fontSize: 11, color: "#0CDA8B" }} />
               </Box>
               <Typography sx={{
                 fontFamily: "Poppins", fontSize: { xs: "13px", md: "14px" },

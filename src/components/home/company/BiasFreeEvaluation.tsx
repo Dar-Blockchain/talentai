@@ -2,8 +2,8 @@ import React from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 
-const ACCENT     = "rgba(12,218,139,1)";
-const ACCENT_BG  = "rgba(12,218,139,0.08)";
+const ACCENT = "#0CDA8B";
+const ACCENT_BG = "rgba(12,218,139,0.08)";
 
 const BULLETS = [
   "AI Video Interviews — No Scheduling Needed",
@@ -14,12 +14,12 @@ const BULLETS = [
 ];
 
 const PILLS = [
-  { label: "Technical",  icon: "/icons/technical.svg"  },
-  { label: "Task",       icon: "/icons/task.svg"        },
-  { label: "Soft",       icon: "/icons/soft.svg"        },
-  { label: "Condition",  icon: "/icons/condition.svg"   },
-  { label: "HR",         icon: "/icons/hr.svg"          },
-  { label: "Email",      icon: "/icons/email.svg"       },
+  { label: "Technical", icon: "/icons/technical.svg" },
+  { label: "Task", icon: "/icons/task.svg" },
+  { label: "Soft", icon: "/icons/soft.svg" },
+  { label: "Condition", icon: "/icons/condition.svg" },
+  { label: "HR", icon: "/icons/hr.svg" },
+  { label: "Email", icon: "/icons/email.svg" },
 ];
 
 const BiasFreeEvaluation: React.FC = () => (
@@ -113,8 +113,7 @@ const BiasFreeEvaluation: React.FC = () => (
           fontSize: { xs: "22px", md: "28px" },
           lineHeight: 1.25, color: "#111827", mb: 1.5,
         }}>
-          Every Candidate Evaluated<br />
-          <Box component="span" sx={{ color: "#0CDA8B" }}>on Merit.</Box><br />
+          Every Candidate Evaluated <Box component="span" sx={{ color: "#0CDA8B" }}>on Merit.</Box><br />
           <Box component="span" sx={{ color: "#0CDA8B" }}>Nothing Else.</Box>
         </Typography>
         <Typography sx={{
