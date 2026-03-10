@@ -12,7 +12,8 @@ const router = express.Router();
 const authController = require("../controllers/authentication.controller");
 
 const { requireAuthUser } = require("../middleware/auth.middleware");
-const authLogMiddleware = require("../middleware/security/request-log.middleware")
+const authLogMiddleware = require("../middleware/security/request-log.middleware");
+const uploadfile = require("../middleware/fileResume-upload.middleware");
 
 
 // Journalisation de toutes les requêtes de ce routeur
@@ -20,10 +21,10 @@ router.use(authLogMiddleware("Auth"));
 
 // POST /auth/register
 // Accès: Public
-// Corps attendu pour Candidate: { email, roleType: "Candidate", firstName (REQUIRED), lastName (REQUIRED), phone (optional) }
+// Corps attendu pour Candidate: { email, roleType: "Candidate", firstName (REQUIRED), lastName (REQUIRED), phone (optional), resume (optional file) }
 // Corps attendu pour Company: { email, roleType: "Company", name (optional), companyDetails (optional) }
-// Description: Crée un nouvel utilisateur et son profil selon roleType, puis envoie un OTP. firstName et lastName sont obligatoires pour Candidate.
-router.post("/register", authController.register);
+// Description: Crée un nouvel utilisateur et son profil selon roleType, puis envoie un OTP. firstName et lastName sont obligatoires pour Candidate. Resume peut être téléchargé pour les Candidates.
+router.post("/register", uploadfile.single('resume'), authController.register);
 
 // POST /auth/login
 // Accès: Public

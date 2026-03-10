@@ -82,16 +82,22 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
       }
     } else {
       // For Candidate: create profile with firstName and lastName (now required)
+      const resumePath = profileDataOptions.resumeFile ? profileDataOptions.resumeFile.filename : '';
+      
       profile = await Profile.create({
         userId: user._id,
         type: 'Candidate',
         firstName: profileDataOptions.firstName,
         lastName: profileDataOptions.lastName,
         phone: profileDataOptions.phone || '',
+        resume: resumePath,
         skills: [],
         overallScore: 0,
       });
       console.log('✅ Candidate profile created during registration for userId:', user._id);
+      if (resumePath) {
+        console.log('📄 Resume uploaded:', resumePath);
+      }
 
       // Link profile to user as ObjectID
       user.profile = profile._id;
