@@ -549,6 +549,7 @@ RULES:
 - NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
 - NEVER ask a question similar to any in the "ALREADY ASKED" list
 - Each question must explore a NEW angle or sub-topic not yet covered
+- Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -573,10 +574,19 @@ RESPONSE FORMAT (JSON only):
         Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, `${d.percentage}% (${d.questionsAsked || 0}q)`])
       );
 
+      // Build explored topics summary per area to prevent theme repetition
+      const exploredTopicsSummary = Object.entries(session.coverage?.areas || {})
+        .filter(([_, d]) => d.topicsExplored?.length > 0)
+        .map(([area, d]) => `${area}: ${d.topicsExplored.join(', ')}`)
+        .join('\n') || 'none yet';
+
       const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
 
 COVERAGE: ${JSON.stringify(coverageSummary)}
 WEAKEST: ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || Object.entries(session.coverage?.areas || {}).filter(([_,d]) => d.percentage < 50).map(([a]) => a))}
+
+TOPICS ALREADY EXPLORED (do NOT revisit these — pick a DIFFERENT sub-topic):
+${exploredTopicsSummary}
 
 ALREADY ASKED (DO NOT repeat or rephrase these):
 ${allAskedQuestions || '(none yet)'}
@@ -1991,6 +2001,24 @@ Determine if interview objectives have been sufficiently met to end the session.
                 quality: Math.min(10, Math.round((analysis.quality?.score || 50) / 10)),
                 aiGenerated: true
               });
+            }
+
+            // Mark area completed when coverage is sufficient
+            if (area.percentage >= 80 && !area.completed) {
+              area.completed = true;
+              console.log(`✅ [Coverage] Area "${impact.area}" marked completed at ${area.percentage}%`);
+            }
+
+            // Track explored sub-topics to prevent theme repetition
+            const topicsFromResponse = (analysis.skills?.demonstrated || [])
+              .concat(analysis.interestingTopics?.map(t => t.topic) || []);
+            if (topicsFromResponse.length > 0) {
+              area.topicsExplored = area.topicsExplored || [];
+              for (const topic of topicsFromResponse) {
+                if (!area.topicsExplored.includes(topic)) {
+                  area.topicsExplored.push(topic);
+                }
+              }
             }
 
             // SCORE BONUS: Reward candidates who cover an area before time budget expires
