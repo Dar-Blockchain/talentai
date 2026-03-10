@@ -516,7 +516,7 @@ RESPONSE FORMAT (JSON only):
   "followUpStrategy": "approach"
 }`;
 
-      const recentContext = session.conversation.slice(-10).map(entry =>
+      const recentContext = session.conversation.slice(-6).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
 
@@ -1005,6 +1005,20 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
     const currentArea = session.currentFocusArea;
     const questionsInArea = areas[currentArea]?.questionsAsked || 0;
 
+    // HARD CAP: After 3 questions in current area, always transition to weakest area
+    if (questionsInArea >= 3 && currentArea) {
+      const weakest = Object.entries(areas)
+        .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+        .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+      if (weakest) {
+        return {
+          mode: "transition",
+          targetArea: weakest[0],
+          context: `Forced transition after ${questionsInArea} questions in ${currentArea}`
+        };
+      }
+    }
+
     // Priority 1: BRIDGE — candidate mentioned something mapping to a gap
     for (const topic of (analysis.interestingTopics || [])) {
       if (topic.relevantArea && areas[topic.relevantArea] && areas[topic.relevantArea].percentage < 60) {
@@ -1017,8 +1031,8 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       }
     }
 
-    // Priority 2: PROBE — current area needs more depth
-    if (currentArea && questionsInArea < 3 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === "surface") {
+    // Priority 2: PROBE — only 1 follow-up before moving on
+    if (currentArea && questionsInArea < 2 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === "surface") {
       return {
         mode: "probe",
         targetArea: currentArea,
@@ -1026,9 +1040,9 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       };
     }
 
-    // Priority 3: TRANSITION — explore weakest uncovered area
+    // Priority 3: TRANSITION — explore weakest uncovered area (threshold raised to < 70%)
     const weakest = Object.entries(areas)
-      .filter(([_, d]) => d.percentage < 50 && !d.completed)
+      .filter(([_, d]) => d.percentage < 70 && !d.completed)
       .sort((a, b) => a[1].percentage - b[1].percentage)[0];
 
     if (weakest) {
@@ -1874,12 +1888,19 @@ Determine if interview objectives have been sufficiently met to end the session.
           { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer').slice(-5) },
           strategy  // Pass strategy for adaptive prompting
         ),
-        30000,
+        15000,
         'generateIntelligentQuestion'
       ).catch(err => {
         console.warn('⚠️ Question generation failed, using fallback:', err.message);
+        const areaLabel = strategy.targetArea?.replace(/_/g, ' ') || 'your background';
+        const fallbackQuestions = {
+          bridge: `Can you tell me more about how your experience relates to ${areaLabel}?`,
+          probe: `Could you walk me through a specific example related to ${areaLabel}?`,
+          transition: `Let's shift gears — can you share your experience with ${areaLabel}?`,
+          validate: `How would you rate your confidence in ${areaLabel}?`
+        };
         return {
-          question: 'Can you elaborate on your most recent project experience?',
+          question: fallbackQuestions[strategy.mode] || 'Can you tell me about a challenging project you worked on recently?',
           targetAreas: [strategy.targetArea || 'General'],
           reasoning: 'Fallback question due to AI timeout',
           fallback: true
