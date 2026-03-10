@@ -591,6 +591,17 @@ class IntelligentInterviewController {
             timestamp,
             sessionId,
           });
+          // Auto-generate final report and properly close the session
+          try {
+            const result = await this.service.endInterview(sessionId);
+            this.safeEmit(socket, "interview_ended", {
+              finalReport: result.finalReport,
+              analytics: result.analytics,
+              sessionId,
+            });
+          } catch (endErr) {
+            console.warn('⚠️ Auto-end report generation failed:', endErr.message);
+          }
           break;
 
         default:
