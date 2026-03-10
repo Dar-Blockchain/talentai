@@ -22,11 +22,11 @@ const StakesSection: React.FC = () => (
       {/* Overline */}
       <Box sx={{
         display: "inline-flex", alignItems: "center", gap: 1,
-        bgcolor: RED_BG, border: "1px solid rgba(239,68,68,0.25)",
-        borderRadius: "20px", px: 2, py: 0.5, mb: 3,
+        bgcolor: RED_BG, border: "1.5px solid rgba(239,68,68,0.40)",
+        borderRadius: "24px", px: 2.5, py: 1, mb: 3,
       }}>
-        <WarningAmberOutlined sx={{ fontSize: 13, color: RED }} />
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 700, color: RED, letterSpacing: "0.5px" }}>
+        <WarningAmberOutlined sx={{ fontSize: 15, color: RED }} />
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: RED, letterSpacing: "0.6px" }}>
           The Cost of Inaction
         </Typography>
       </Box>

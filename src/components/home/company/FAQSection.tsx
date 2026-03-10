@@ -138,12 +138,12 @@ const FAQSection: React.FC = () => (
       <Box sx={{ textAlign: "center", mb: { xs: 4, md: 6 } }}>
         {/* Overline pill */}
         <Box sx={{
-          display: "inline-flex", alignItems: "center", gap: 0.75,
-          bgcolor: "rgba(12,218,139,0.10)", border: "1px solid rgba(12,218,139,0.25)",
-          borderRadius: "20px", px: 2, py: 0.5, mb: 2,
+          display: "inline-flex", alignItems: "center", gap: 1,
+          bgcolor: "rgba(12,218,139,0.10)", border: "1.5px solid rgba(12,218,139,0.40)",
+          borderRadius: "24px", px: 2.5, py: 1, mb: 2,
         }}>
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT }} />
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+          <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT }} />
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
             FAQ
           </Typography>
         </Box>

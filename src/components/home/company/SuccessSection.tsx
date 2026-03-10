@@ -48,12 +48,12 @@ const SuccessSection: React.FC = () => (
     {/* ── Header ── */}
     <Box sx={{ textAlign: "center", mb: { xs: 5, md: 7 } }}>
       <Box sx={{
-        display: "inline-flex", alignItems: "center", gap: 0.75,
-        bgcolor: ACCENT_BG, border: "1px solid rgba(12,218,139,0.25)",
-        borderRadius: "20px", px: 2, py: 0.5, mb: 2,
+        display: "inline-flex", alignItems: "center", gap: 1,
+        bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
+        borderRadius: "24px", px: 2.5, py: 1, mb: 2,
       }}>
-        <AutoAwesomeOutlined sx={{ fontSize: 13, color: "#059669" }} />
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+        <AutoAwesomeOutlined sx={{ fontSize: 15, color: "#059669" }} />
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
           The Transformation
         </Typography>
       </Box>
