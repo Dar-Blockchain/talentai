@@ -29,20 +29,19 @@ const BiasFreeEvaluation: React.FC = () => (
     {/* ── Section header ── */}
     <Box sx={{ mb: { xs: 5, md: 7 } }}>
       <Box sx={{
-        display: "inline-flex", alignItems: "center", gap: 0.75,
-        bgcolor: ACCENT_BG, border: "1px solid rgba(12,218,139,0.25)",
-        borderRadius: "20px", px: 2, py: 0.5, mb: 2,
+        display: "inline-flex", alignItems: "center", gap: 1,
+        bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
+        borderRadius: "24px", px: 2.5, py: 1, mb: 3,
       }}>
-        <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT }} />
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
           The Solution
         </Typography>
       </Box>
 
       <Typography sx={{
         fontFamily: "Poppins", fontWeight: 700,
-        fontSize: { xs: "26px", md: "38px" },
-        lineHeight: 1.2, color: "#111827", mb: 1.5,
+        fontSize: { xs: "28px", md: "44px" },
+        lineHeight: 1.15, color: "#111827", mb: 1.5,
       }}>
         Stop Guessing. Start Hiring With Confidence.
       </Typography>
