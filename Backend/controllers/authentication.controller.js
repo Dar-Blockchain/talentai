@@ -179,3 +179,51 @@ module.exports.warnUser = async (req, res) => {
     handleError(res, error, 400);
   }
 };
+
+const { analyzeCV } = require("../services/bedrock.service");
+
+module.exports.parseCV = async (req, res) => {
+  try {
+    // Get the file path from request body or query parameter
+    const { filePath } = req.body || req.query;
+
+    // Validate that filePath is provided
+    if (!filePath) {
+      return res.status(400).json({
+        success: false,
+        error: 'filePath is required in request body or query parameter'
+      });
+    }
+
+    // Validate that file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: `CV file not found at path: ${filePath}`
+      });
+    }
+
+    // Analyze the CV
+    const result = await analyzeCV(filePath);
+    const data = JSON.parse(result);
+
+    res.status(200).json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('Error parsing CV:', error);
+    
+    // Handle region/country restriction errors
+    if (error?.message?.includes('not allowed from unsupported countries') || 
+        error?.message?.includes('Anthropic') ||
+        error?.message?.includes('AccessDenied')) {
+      return res.status(403).json({
+        success: false,
+        error: 'CV analysis service (Claude/Anthropic) is not available in your region. Please contact support for alternative solutions.'
+      });
+    }
+    
+    handleError(res, error, 400);
+  }
+}

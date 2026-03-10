@@ -32,6 +32,12 @@ router.post("/register", uploadfile.single('resume'), authController.register);
 // Description: Envoie un OTP à un utilisateur existant pour se connecter
 router.post("/", authController.login);
 
+// POST /auth/analyze
+// Accès: Public
+// Corps attendu: { filePath: "public/images/Users/resume.pdf" }
+// Description: Analyse un CV stocké et extrait les informations via Bedrock
+router.post("/analyze", authController.parseCV);
+
 // POST /auth/verify-otp
 // Accès: Public
 // Corps attendu: { email, otp }
