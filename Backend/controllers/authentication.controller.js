@@ -4,6 +4,8 @@ const {
   validateOTPInput,
   validateIdToken,
 } = require("../helpers/auth-validation.helpers");
+const fs = require('fs');
+const path = require('path');
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -16,15 +18,49 @@ const handleError = (res, error, defaultStatus = 500) => {
 
 // Route d'inscription
 module.exports.register = async (req, res) => {
+  const resumeFile = req.file; // Get uploaded file if exists
+  
   try {
     const { email, roleType, firstName, lastName, name, companyDetails, phone } = req.body;
-    const resumeFile = req.file; // Get uploaded file if exists
 
     // Validate email
-    const validEmail = email;
+    const validEmail = validateEmail(email);
 
     // Validate roleType
     const validRoleType = roleType && ['Candidate', 'Company'].includes(roleType) ? roleType : 'Candidate';
+
+    // Validate based on roleType BEFORE calling service
+    if (validRoleType === 'Candidate') {
+      // firstName and lastName are REQUIRED for Candidate
+      if (!firstName || typeof firstName !== 'string' || firstName.trim() === '') {
+        throw {
+          status: 400,
+          message: 'firstName is required and must be a valid string'
+        };
+      }
+
+      if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
+        throw {
+          status: 400,
+          message: 'lastName is required and must be a valid string'
+        };
+      }
+
+      // phone is optional but must be string if provided
+      if (phone && typeof phone !== 'string') {
+        throw {
+          status: 400,
+          message: 'phone must be a valid string'
+        };
+      }
+    } else if (validRoleType === 'Company') {
+      if (name && typeof name !== 'string') {
+        throw {
+          status: 400,
+          message: 'name must be a valid string for company profile'
+        };
+      }
+    }
 
     const result = await authService.registerUser(
       validEmail,
@@ -41,6 +77,16 @@ module.exports.register = async (req, res) => {
       profile: result.profile || null,
     });
   } catch (error) {
+    // Delete the uploaded file if registration fails
+    if (resumeFile && resumeFile.path) {
+      fs.unlink(resumeFile.path, (err) => {
+        if (err) {
+          console.error('Error deleting resume file after failed registration:', err);
+        } else {
+          console.log('📁 Resume file deleted after failed registration:', resumeFile.filename);
+        }
+      });
+    }
     handleError(res, error, 400);
   }
 };
