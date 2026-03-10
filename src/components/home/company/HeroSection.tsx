@@ -1,6 +1,15 @@
 import React from "react";
 import { Box, Button, Typography, Stack } from "@mui/material";
 
+const ACCENT = "#0CDA8B";
+
+const STATS = [
+  { value: "90%",  label: "Less Screening Time",         sub: "AI filters candidates automatically" },
+  { value: "10x",  label: "Cheaper Than Traditional",    sub: "vs. recruiters & agencies" },
+  { value: "24/7", label: "AI Interviews Available",     sub: "No scheduling, no delays" },
+  { value: "0",    label: "Bias in Evaluation",          sub: "Standardized scoring, always" },
+];
+
 type HeroSectionProps = {
   color?: string;
   title?: string;
@@ -11,8 +20,9 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
   return (
     <Box
       sx={{
-        px: 3,
-        pt: 4,
+        px: { xs: 3, md: 6 },
+        pt: { xs: 6, md: 8 },
+        pb: { xs: 4, md: 6 },
         color: "#000000",
         position: "relative",
         overflow: "hidden",
@@ -25,97 +35,148 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
         backgroundBlendMode: "overlay",
       }}
     >
-      <Box sx={{ width: "100%", textAlign: "center" }}>
-        <Typography
-          variant="h2"
-          sx={{
-            fontFamily: 'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            fontWeight: 600,
-            fontSize: { xs: "32px", sm: "40px", md: "48px" },
-            lineHeight: "104%",
-            textAlign: "center",
-            mb: 3,
-          }}
-        >
-          Stop Losing Top Talent
-          <br /> to Slow Hiring
-        </Typography>
+      <Box sx={{
+        maxWidth: 1200,
+        mx: "auto",
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "3fr 2fr" },
+        gap: { xs: 5, md: 8 },
+        alignItems: "center",
+      }}>
 
-        <Typography
-          variant="body1"
-          sx={{
-            maxWidth: 740,
-            mx: "auto",
-            color: "#4B5563",
-            mb: 2.5,
-            fontFamily: "Poppins, sans-serif",
-            fontSize: { xs: "15px", md: "17px" },
-            lineHeight: 1.8,
-            textAlign: "center",
-          }}
-        >
-          TalentAI's conversational AI agents{" "}
-          <Box component="span" sx={{ color: "#111827", fontWeight: 600 }}>interview candidates through natural video dialogue</Box>,
-          {" "}evaluate technical and soft skills in real time, and rank applicants objectively.{" "}
-          <Box component="span" sx={{
-            display: "inline-flex", alignItems: "center",
-            bgcolor: "rgba(12,218,139,0.10)", border: "1px solid rgba(12,218,139,0.25)",
-            borderRadius: "6px", px: 0.8, py: 0.1, mx: 0.3,
-            fontWeight: 700, color: "#0CDA8B", fontSize: "15px",
+        {/* ── LEFT column ── */}
+        <Box>
+          {/* Headline */}
+          <Typography
+            variant="h1"
+            sx={{
+              fontFamily: "Poppins, sans-serif",
+              fontWeight: 700,
+              fontSize: { xs: "36px", sm: "44px", md: "52px" },
+              lineHeight: 1.08,
+              color: "#111827",
+              mb: 2.5,
+            }}
+          >
+            Stop Losing Top Talent
+            <br />
+            to{" "}
+            <Box component="span" sx={{ color: "#0CDA8B" }}>
+              Slow Hiring
+            </Box>
+          </Typography>
+
+          {/* Body */}
+          <Typography
+            sx={{
+              fontFamily: "Poppins, sans-serif",
+              fontSize: { xs: "15px", md: "16px" },
+              color: "#4B5563",
+              lineHeight: 1.75,
+              mb: 3.5,
+              maxWidth: 520,
+            }}
+          >
+            TalentAI's conversational AI agents{" "}
+            <Box component="span" sx={{ color: "#111827", fontWeight: 600 }}>
+              interview candidates through natural video dialogue
+            </Box>
+            , evaluate technical and soft skills in real time, and rank your applicants objectively.
+            <br />
+            <Box component="span" sx={{
+              color: "#0CDA8B", fontWeight: 700,
+            }}>
+              cutting your average 42-day hiring cycle by up to 75%
+            </Box>.
+          </Typography>
+
+          {/* Buttons */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mb: 1.5 }}>
+            <Button
+              variant="contained"
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
+              sx={{
+                backgroundColor: ACCENT,
+                color: "#0b1b1f",
+                boxShadow: "none",
+                borderRadius: "",
+                textTransform: "none",
+                fontFamily: "Poppins",
+                fontWeight: 700,
+                fontSize: "15px",
+                px: 3.5, py: 1.25,
+                "&:hover": { backgroundColor: ACCENT },
+              }}
+            >
+              Start Hiring Smarter
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
+              sx={{
+                border: "2px solid #0CDA8B",
+                color: "#111827",
+                borderRadius: "6px",
+                textTransform: "none",
+                fontFamily: "Poppins",
+                fontWeight: 500,
+                fontSize: "15px",
+                px: 3.5, py: 1.25,
+                "&:hover": { border: "2px solid #0CDA8B", bgcolor: "transparent" },
+              }}
+            >
+              Watch 2-Min Demo
+            </Button>
+          </Stack>
+
+          {/* Trust line */}
+          <Typography sx={{ fontFamily: "Poppins, sans-serif", fontSize: "13px", color: "#9CA3AF", mb: 5 }}>
+            No credit card required. Your first pipeline is live in under 30 minutes.
+          </Typography>
+
+          {/* Stats row */}
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 2,
           }}>
-            cutting your 42-day hiring cycle by up to 75% 
+            {STATS.map((s) => (
+              <Box key={s.value}>
+                <Typography sx={{
+                  fontFamily: "Poppins", fontWeight: 800,
+                  fontSize: { xs: "22px", md: "28px" },
+                  color: "#111827", lineHeight: 1,
+                }}>
+                  {s.value}
+                </Typography>
+                <Typography sx={{
+                  fontFamily: "Poppins", fontWeight: 700,
+                  fontSize: "11px", color: "#111827",
+                  lineHeight: 1.3, mt: 0.5,
+                }}>
+                  {s.label}
+                </Typography>
+                <Typography sx={{
+                  fontFamily: "Poppins", fontSize: "10px",
+                  color: "#9CA3AF", lineHeight: 1.4, mt: 0.25,
+                }}>
+                  {s.sub}
+                </Typography>
+              </Box>
+            ))}
           </Box>
-        </Typography>
+        </Box>
 
+        {/* ── RIGHT column — product screenshot ── */}
+        <Box sx={{ display: { xs: "none", md: "block" }, position: "relative" }}>
+          <img
+            src="/images/home/HeroSectionLanding.png"
+            alt="TalentAI Dashboard"
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }}
+          />
+        </Box>
 
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" sx={{ mb: 1.5 }}>
-          <Button
-            variant="contained"
-            onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
-            sx={{
-              backgroundColor: "rgba(12, 218, 139, 1)",
-              color: "#0b1b1f",
-              boxShadow: "none",
-              borderRadius: 0.5,
-              textTransform: "none",
-              fontFamily: "Poppins",
-              fontWeight: 600,
-              px: 3,
-              "&:hover": { backgroundColor: "rgba(12, 218, 139, 0.7)" },
-            }}
-          >
-            Start Hiring Smarter
-          </Button>
-
-          <Button
-            variant="outlined"
-            onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
-            sx={{
-              borderColor: "rgba(12, 218, 139, 1)",
-              color: "#0b1b1f",
-              borderRadius: 0.5,
-              textTransform: "none",
-              fontFamily: "Poppins",
-              fontWeight: 500,
-              px: 3,
-            }}
-          >
-            Watch the 2-Min Demo
-          </Button>
-        </Stack>
-
-        <Typography sx={{ fontFamily: "Poppins, sans-serif", fontSize: "13px", color: "#6B7280", textAlign: "center", mb: { xs: 6, md: 10 } }}>
-          No credit card required. Your first pipeline is live in under 30 minutes.
-        </Typography>
-      </Box>
-
-      {/* Hero screenshot */}
-      <Box sx={{ width: "95%", position: "relative", height: { xs: 150, sm: 200, md: 250 }, maxWidth: "1300px", margin: "20px auto", mb: { xs: 4, md: 0 } }}>
-        <img
-          src="/images/home/heroSection.png"
-          alt="TalentAI Dashboard"
-          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }}
-        />
       </Box>
     </Box>
   );
