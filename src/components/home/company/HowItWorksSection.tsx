@@ -36,7 +36,7 @@ const SolutionsSection = () => {
           sx={{
             fontFamily: "Poppins",
             fontWeight: 700,
-            fontSize: { xs: "26px", md: "38px" },
+            fontSize: { xs: "28px", md: "44px" },
             lineHeight: 1.2,
             textAlign: "center",
             color: "#111827",
