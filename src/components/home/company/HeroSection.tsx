@@ -4,10 +4,10 @@ import { Box, Button, Typography, Stack } from "@mui/material";
 const ACCENT = "#0CDA8B";
 
 const STATS = [
-  { value: "90%",  label: "Less Screening Time",         sub: "AI filters candidates automatically" },
-  { value: "10x",  label: "Cheaper Than Traditional",    sub: "vs. recruiters & agencies" },
-  { value: "24/7", label: "AI Interviews Available",     sub: "No scheduling, no delays" },
-  { value: "0",    label: "Bias in Evaluation",          sub: "Standardized scoring, always" },
+  { value: "90%", label: "Less Screening Time", sub: "AI filters candidates automatically" },
+  { value: "10x", label: "Cheaper Than Traditional", sub: "vs. recruiters & agencies" },
+  { value: "24/7", label: "AI Interviews Available", sub: "No scheduling, no delays" },
+  { value: "0", label: "Bias in Evaluation", sub: "Standardized scoring, always" },
 ];
 
 type HeroSectionProps = {
@@ -97,9 +97,9 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
                 backgroundColor: ACCENT,
-                color: "#0b1b1f",
+                color: "white",
                 boxShadow: "none",
-                borderRadius: "",
+                borderRadius: 0,
                 textTransform: "none",
                 fontFamily: "Poppins",
                 fontWeight: 700,
@@ -117,12 +117,13 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               sx={{
                 border: "2px solid #0CDA8B",
                 color: "#111827",
-                borderRadius: "6px",
+                borderRadius: 0,
                 textTransform: "none",
                 fontFamily: "Poppins",
                 fontWeight: 500,
                 fontSize: "15px",
                 px: 3.5, py: 1.25,
+
                 "&:hover": { border: "2px solid #0CDA8B", bgcolor: "transparent" },
               }}
             >
