@@ -116,7 +116,6 @@ const ContactSection: React.FC = () => {
           bgcolor: ACCENT_BG, border: `1.5px solid rgba(12,218,139,0.40)`,
           borderRadius: "24px", px: 2.5, py: 1, mb: 2,
         }}>
-          <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT }} />
           <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
             Let's Talk
           </Typography>

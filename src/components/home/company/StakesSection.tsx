@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
-import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
@@ -60,7 +59,6 @@ const StakesSection: React.FC = () => (
           bgcolor: RED_BG, border: "1.5px solid rgba(239,68,68,0.40)",
           borderRadius: "24px", px: 2.5, py: 1, mb: 3,
         }}>
-          <WarningAmberOutlined sx={{ fontSize: 15, color: RED }} />
           <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: RED, letterSpacing: "0.6px" }}>
             The Cost of Inaction
           </Typography>

@@ -17,13 +17,6 @@ const AISpotlight: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        {/* Green glow */}
-        <Box sx={{
-          position: "absolute", width: 360, height: 360,
-          borderRadius: "50%", bgcolor: "rgba(12,218,139,0.06)",
-          top: -100, right: 80, filter: "blur(80px)", pointerEvents: "none",
-        }} />
-
         {/* Left copy */}
         <Box sx={{ maxWidth: 580, position: "relative" }}>
           {/* Overline pill */}
@@ -32,7 +25,6 @@ const AISpotlight: React.FC = () => {
             bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
             borderRadius: "24px", px: 2.5, py: 1, mb: 2.5,
           }}>
-            <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT }} />
             <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
               The Hiring Crisis Is Real
             </Typography>

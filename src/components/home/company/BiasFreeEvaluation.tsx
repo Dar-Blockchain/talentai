@@ -1,58 +1,38 @@
 import React from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
-import SpeedOutlined from "@mui/icons-material/SpeedOutlined";
-import VerifiedOutlined from "@mui/icons-material/VerifiedOutlined";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import AttachMoneyOutlined from "@mui/icons-material/AttachMoneyOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 
-const ACCENT     = "#0CDA8B";
+const ACCENT     = "rgba(12,218,139,1)";
 const ACCENT_BG  = "rgba(12,218,139,0.08)";
-const ACCENT_MID = "rgba(12,218,139,0.15)";
 const ACCENT_DIM = "rgba(12,218,139,0.7)";
 
-const FEATURES = [
-  {
-    icon: <SpeedOutlined sx={{ fontSize: 18, color: ACCENT }} />,
-    title: "AI Video Interviews",
-    desc: "No scheduling needed — runs 24/7",
-  },
-  {
-    icon: <VerifiedOutlined sx={{ fontSize: 18, color: ACCENT }} />,
-    title: "Blockchain Credentials",
-    desc: "Verified, fraud-proof, candidate-owned",
-  },
-  {
-    icon: <AccessTimeOutlined sx={{ fontSize: 18, color: ACCENT }} />,
-    title: "30-Min Pipeline Setup",
-    desc: "Drag-and-drop, live today",
-  },
-  {
-    icon: <AutoAwesomeOutlined sx={{ fontSize: 18, color: ACCENT }} />,
-    title: "Auto-Ranked Shortlists",
-    desc: "You review the best, skip the rest",
-  },
-  {
-    icon: <AttachMoneyOutlined sx={{ fontSize: 18, color: ACCENT }} />,
-    title: "Pay-Per-Hire Credits",
-    desc: "No bloated contracts, ever",
-  },
+const BULLETS = [
+  "AI Video Interviews — No Scheduling Needed",
+  "Blockchain-Verified Credentials, Owned by Candidates",
+  "Drag-&-Drop Pipeline, Live in 30 Minutes",
+  "Auto-Ranked Shortlists — You Just Approve",
+  "Pay-Per-Hire Credits, No Bloated Contracts",
 ];
 
+const PILLS = [
+  { label: "Technical",  icon: "/icons/technical.svg"  },
+  { label: "Task",       icon: "/icons/task.svg"        },
+  { label: "Soft",       icon: "/icons/soft.svg"        },
+  { label: "Condition",  icon: "/icons/condition.svg"   },
+  { label: "HR",         icon: "/icons/hr.svg"          },
+  { label: "Email",      icon: "/icons/email.svg"       },
+];
 
 const BiasFreeEvaluation: React.FC = () => (
   <Box id="features" sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
 
     {/* ── Section header ── */}
-    <Box sx={{ mb: { xs: 6, md: 9 }, maxWidth: 720, mx: "auto", textAlign: "center" }}>
+    <Box sx={{ mb: { xs: 5, md: 7 } }}>
       <Box sx={{
         display: "inline-flex", alignItems: "center", gap: 1,
         bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
         borderRadius: "24px", px: 2.5, py: 1, mb: 3,
       }}>
-        <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT }} />
         <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
           The Solution
         </Typography>
@@ -60,209 +40,128 @@ const BiasFreeEvaluation: React.FC = () => (
 
       <Typography sx={{
         fontFamily: "Poppins", fontWeight: 700,
-        fontSize: { xs: "30px", md: "46px" },
-        lineHeight: 1.1, color: "#111827", mb: 2.5,
+        fontSize: { xs: "28px", md: "44px" },
+        lineHeight: 1.15, color: "#111827", mb: 1.5,
       }}>
-        Stop Guessing.{" "}
-        <Box component="span" sx={{
-          background: "linear-gradient(90deg, #059669 0%, #0CDA8B 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}>
-          Start Hiring With Confidence.
-        </Box>
+        Stop Guessing. Start Hiring With Confidence.
       </Typography>
       <Typography sx={{
         fontFamily: "Poppins", fontSize: { xs: "15px", md: "17px" },
-        lineHeight: 1.75, color: "#6B7280", maxWidth: 560, mx: "auto",
+        lineHeight: 1.65, color: "#4B5563", maxWidth: 600,
       }}>
         TalentAI replaces manual screening with AI-driven conversations and
         blockchain-verified proof — so every hire is based on performance, not paperwork.
       </Typography>
     </Box>
 
-    {/* ── Main two-column grid ── */}
+    {/* ── Two-column body ── */}
     <Box sx={{
       display: "grid",
-      gridTemplateColumns: { xs: "1fr", lg: "5fr 4fr" },
-      gap: { xs: 5, md: 6 },
+      gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+      gap: { xs: 5, md: 8 },
       alignItems: "start",
     }}>
 
-      {/* ══ LEFT — product screenshot card ══ */}
+      {/* Left — video card + promo banner */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-
-        {/* Browser mockup */}
+        {/* Video frame */}
         <Box sx={{
-          borderRadius: "20px",
-          overflow: "hidden",
-          bgcolor: "#0E0F10",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.07), inset 0 1px 0 rgba(255,255,255,0.05)",
-          position: "relative",
+          bgcolor: "#0E0F10", borderRadius: 3, overflow: "hidden",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+          aspect: "16/9", display: "flex", alignItems: "center", justifyContent: "center",
+          p: 2,
         }}>
-          {/* Glow behind screen */}
-          <Box sx={{
-            position: "absolute", width: 300, height: 200,
-            background: "radial-gradient(ellipse, rgba(12,218,139,0.12) 0%, transparent 70%)",
-            top: "30%", left: "50%", transform: "translateX(-50%)",
-            pointerEvents: "none",
-          }} />
-
-          {/* Browser chrome */}
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 1.25,
-            px: 2.5, py: 2,
-            background: "rgba(255,255,255,0.03)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-          }}>
-            {["#FF5F57","#FFBD2E","#28CA41"].map((c) => (
-              <Box key={c} sx={{ width: 11, height: 11, borderRadius: "50%", bgcolor: c }} />
-            ))}
-            <Box sx={{
-              flex: 1, mx: 2, height: 24, borderRadius: "8px",
-              bgcolor: "rgba(255,255,255,0.05)",
-              display: "flex", alignItems: "center", gap: 1, px: 2,
-            }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: ACCENT, opacity: 0.7 }} />
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.3px" }}>
-                app.talentai.bid/interview
-              </Typography>
-            </Box>
-            {/* Live badge */}
-            <Box sx={{
-              display: "flex", alignItems: "center", gap: 0.5,
-              bgcolor: "rgba(12,218,139,0.12)", border: "1px solid rgba(12,218,139,0.25)",
-              borderRadius: "6px", px: 1, py: 0.25,
-            }}>
-              <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: ACCENT, animation: "pulse 2s infinite" }} />
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "9px", fontWeight: 700, color: ACCENT, letterSpacing: "0.5px" }}>
-                LIVE
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Screenshot */}
-          <Box sx={{ p: { xs: 1.5, md: 2 } }}>
-            <img
-              src="/images/home/Iframe.png"
-              alt="AI Interview Demo"
-              style={{ width: "100%", height: "auto", borderRadius: "10px", display: "block" }}
-            />
-          </Box>
+          <img
+            src="/images/home/Iframe.png"
+            alt="AI Interview Demo"
+            style={{ width: "100%", height: "auto", borderRadius: "8px", display: "block" }}
+          />
         </Box>
 
-        {/* CTA card — dark gradient */}
+        {/* Promo banner */}
         <Box sx={{
-          background: "linear-gradient(145deg, #0a1410 0%, #0e1a15 50%, #0E0F10 100%)",
-          borderRadius: "20px",
-          p: { xs: 3, md: 4 },
+          background: "linear-gradient(135deg, #0E0F10 0%, #0d1f1a 100%)",
+          borderRadius: 3, p: 3,
           border: "1px solid rgba(12,218,139,0.15)",
           position: "relative", overflow: "hidden",
-          display: "flex", flexDirection: { xs: "column", sm: "row" },
-          alignItems: { sm: "center" }, gap: 3,
         }}>
           <Box sx={{
-            position: "absolute", width: 280, height: 280, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(12,218,139,0.10) 0%, transparent 70%)",
-            top: -80, right: -60, pointerEvents: "none",
+            position: "absolute", width: 200, height: 200, borderRadius: "50%",
+            bgcolor: "rgba(12,218,139,0.06)", top: -60, right: -60, filter: "blur(40px)",
           }} />
-
-          <Box sx={{ flex: 1, position: "relative" }}>
-            <Box sx={{
-              display: "inline-flex", alignItems: "center", gap: 0.75,
-              bgcolor: "rgba(12,218,139,0.10)", border: "1px solid rgba(12,218,139,0.22)",
-              borderRadius: "20px", px: 1.5, py: 0.4, mb: 1.5,
-            }}>
-              <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: ACCENT }} />
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
-                75% LESS HIRING WORK
-              </Typography>
-            </Box>
-            <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: { xs: "16px", md: "18px" }, color: "#fff", lineHeight: 1.35, mb: 0.75 }}>
-              See It Work in 2 Minutes
-            </Typography>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-              Watch a real AI agent interview a candidate — no scheduling, no bias.
-            </Typography>
-          </Box>
-
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "18px", color: "#fff", mb: 1, lineHeight: 1.3, position: "relative" }}>
+            See How We Eliminate 75% of Your Hiring Workload
+          </Typography>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.50)", mb: 2.5, position: "relative" }}>
+            Watch a real AI agent conduct a full technical + soft-skills interview in minutes.
+          </Typography>
           <Button
             variant="contained"
-            startIcon={<PlayArrowRounded sx={{ fontSize: 18 }} />}
             onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
             sx={{
               bgcolor: ACCENT, color: "#0b1b1f",
-              fontFamily: "Poppins", fontWeight: 700, fontSize: "15px",
-              textTransform: "none", borderRadius: "8px",
-              px: 4, py: 1.5, flexShrink: 0,
-              boxShadow: "0 0 24px rgba(12,218,139,0.40)",
+              fontFamily: "Poppins", fontWeight: 600, fontSize: "13px",
+              textTransform: "none", borderRadius: 1,
+              boxShadow: "0 0 16px rgba(12,218,139,0.30)",
               position: "relative",
-              whiteSpace: "nowrap",
-              "&:hover": { bgcolor: ACCENT_DIM, boxShadow: "0 0 36px rgba(12,218,139,0.55)" },
+              "&:hover": { bgcolor: ACCENT_DIM },
             }}
           >
-            Start Hiring Smarter
+            Watch a 2-Min Demo
           </Button>
         </Box>
       </Box>
 
-      {/* ══ RIGHT — features + modules ══ */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-
-        {/* Sub-headline */}
-        <Box>
-          <Typography sx={{
-            fontFamily: "Poppins", fontWeight: 700,
-            fontSize: { xs: "22px", md: "28px" },
-            lineHeight: 1.2, color: "#111827", mb: 1.5,
-          }}>
-            Every Candidate Evaluated<br />
-            <Box component="span" sx={{ color: "#059669" }}>on Merit. Nothing Else.</Box>
-          </Typography>
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", color: "#6B7280", lineHeight: 1.75 }}>
-            Unconscious bias costs companies top talent. TalentAI's AI agents evaluate every
-            candidate on identical criteria — skills, communication, cultural fit — with zero room
-            for gut instinct to override the data.
-          </Typography>
-        </Box>
-
-        {/* Feature rows */}
-        <Stack spacing={0} sx={{
-          border: "1px solid #E5E7EB",
-          borderRadius: "16px",
-          overflow: "hidden",
-          bgcolor: "#fff",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
+      {/* Right — Bias-Free copy + bullets + module grid */}
+      <Box>
+        <Typography sx={{
+          fontFamily: "Poppins", fontWeight: 700,
+          fontSize: { xs: "22px", md: "28px" },
+          lineHeight: 1.25, color: "#111827", mb: 1.5,
         }}>
-          {FEATURES.map((f, i) => (
-            <Box key={f.title} sx={{
-              display: "flex", alignItems: "center", gap: 2,
-              px: 3, py: 2.25,
-              borderBottom: i < FEATURES.length - 1 ? "1px solid #F3F4F6" : "none",
-              transition: "background 0.15s",
-              "&:hover": { bgcolor: ACCENT_BG },
-            }}>
-              <Box sx={{
-                width: 36, height: 36, borderRadius: "10px",
-                bgcolor: ACCENT_BG, border: "1px solid rgba(12,218,139,0.25)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}>
-                {f.icon}
-              </Box>
-              <Box>
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>
-                  {f.title}
-                </Typography>
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#9CA3AF", lineHeight: 1.4 }}>
-                  {f.desc}
-                </Typography>
-              </Box>
-              <CheckCircleOutlined sx={{ fontSize: 16, color: ACCENT, ml: "auto", flexShrink: 0 }} />
+          Every Candidate Evaluated<br />
+          <Box component="span" sx={{ color: "#059669" }}>on Merit. Nothing Else.</Box>
+        </Typography>
+        <Typography sx={{
+          fontFamily: "Poppins", fontSize: "15px",
+          color: "#4B5563", lineHeight: 1.7, mb: 3,
+        }}>
+          Unconscious bias costs companies top talent and exposes them to legal risk.
+          TalentAI's AI agents evaluate every candidate on the same criteria — skills,
+          communication, cultural alignment — with zero room for gut instinct to override the data.
+        </Typography>
+
+        {/* Bullets */}
+        <Stack spacing={1.5} sx={{ mb: 4 }}>
+          {BULLETS.map((b) => (
+            <Box key={b} sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+              <CheckCircleOutlined sx={{ fontSize: 18, color: ACCENT, mt: 0.15, flexShrink: 0 }} />
+              <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 500, color: "#374151", lineHeight: 1.5 }}>
+                {b}
+              </Typography>
             </Box>
           ))}
         </Stack>
 
+        {/* Module grid */}
+        <Box sx={{
+          display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.5,
+        }}>
+          {PILLS.map((p) => (
+            <Box key={p.label} sx={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 1, p: 2, borderRadius: 2,
+              bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
+              transition: "all 0.2s",
+              "&:hover": { border: `1px solid rgba(12,218,139,0.40)`, bgcolor: ACCENT_BG, transform: "translateY(-2px)" },
+            }}>
+              <Box component="img" src={p.icon} alt={p.label} sx={{ width: 28, height: 28, objectFit: "contain" }} />
+              <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", fontWeight: 600, color: "#374151" }}>
+                {p.label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
       </Box>
     </Box>
   </Box>
