@@ -26,7 +26,7 @@ const SolutionsSection = () => {
           borderRadius: "20px", px: 2, py: 0.5, mb: 2,
         }}>
           <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT }} />
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
             The Plan
           </Typography>
         </Box>

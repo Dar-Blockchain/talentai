@@ -33,7 +33,7 @@ const AISpotlight: React.FC = () => {
             borderRadius: "20px", px: 2, py: 0.5, mb: 2.5,
           }}>
             <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT }} />
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: ACCENT, letterSpacing: "0.5px" }}>
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 600, color: ACCENT, letterSpacing: "0.5px" }}>
               The Hiring Crisis Is Real
             </Typography>
           </Box>

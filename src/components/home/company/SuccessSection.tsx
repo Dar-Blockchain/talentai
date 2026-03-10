@@ -53,7 +53,7 @@ const SuccessSection: React.FC = () => (
         borderRadius: "20px", px: 2, py: 0.5, mb: 2,
       }}>
         <AutoAwesomeOutlined sx={{ fontSize: 13, color: "#059669" }} />
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
           The Transformation
         </Typography>
       </Box>

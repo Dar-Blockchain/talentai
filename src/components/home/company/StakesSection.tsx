@@ -26,7 +26,7 @@ const StakesSection: React.FC = () => (
         borderRadius: "20px", px: 2, py: 0.5, mb: 3,
       }}>
         <WarningAmberOutlined sx={{ fontSize: 13, color: RED }} />
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 700, color: RED, letterSpacing: "0.5px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 700, color: RED, letterSpacing: "0.5px" }}>
           The Cost of Inaction
         </Typography>
       </Box>

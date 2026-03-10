@@ -34,14 +34,14 @@ const BiasFreeEvaluation: React.FC = () => (
         borderRadius: "20px", px: 2, py: 0.5, mb: 2,
       }}>
         <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT }} />
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 600, color: "#059669", letterSpacing: "0.5px" }}>
           The Solution
         </Typography>
       </Box>
 
       <Typography sx={{
         fontFamily: "Poppins", fontWeight: 700,
-        fontSize: { xs: "26px", md: "38px" },
+        fontSize: { xs: "28px", md: "44px" },
         lineHeight: 1.2, color: "#111827", mb: 1.5,
       }}>
         Stop Guessing. Start Hiring With Confidence.
