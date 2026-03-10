@@ -1,7 +1,6 @@
-import React from "react";
 import { Box, Typography } from "@mui/material";
 
-const ACCENT    = "rgba(12,218,139,1)";
+const ACCENT    = "#0CDA8B";
 const ACCENT_BG = "rgba(12,218,139,0.08)";
 const ACCENT_BORDER = "rgba(12,218,139,0.25)";
 
@@ -85,7 +84,7 @@ export default function GradientStepper() {
                 fontFamily: "Poppins",
                 fontWeight: 800,
                 fontSize: "14px",
-                color: "#0CDA8B",
+                color: ACCENT,
                 lineHeight: 1,
               }}>
                 {step.number}
@@ -170,7 +169,7 @@ function StepCard({ step }: { step: typeof STEPS[number] }) {
           fontFamily: "Poppins",
           fontSize: "11px",
           fontWeight: 700,
-          color: "#0CDA8B",
+          color: ACCENT,
           letterSpacing: "0.5px",
           textTransform: "uppercase",
         }}>
@@ -251,7 +250,7 @@ function MobileStepCard({ step, isLast }: { step: typeof STEPS[number]; isLast: 
           bgcolor: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`,
           borderRadius: "20px", px: 1.5, py: 0.4, mb: 1.5,
         }}>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: ACCENT, letterSpacing: "0.5px", textTransform: "uppercase" }}>
             {step.tag}
           </Typography>
         </Box>

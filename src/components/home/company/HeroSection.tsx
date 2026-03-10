@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Button, Typography, Stack } from "@mui/material";
 
 const ACCENT = "#0CDA8B";
@@ -10,13 +9,7 @@ const STATS = [
   { value: "0", label: "Bias in Evaluation", sub: "Standardized scoring, always" },
 ];
 
-type HeroSectionProps = {
-  color?: string;
-  title?: string;
-  subtitle?: string;
-};
-
-const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
+const CompanyHeroSection = () => {
   return (
     <Box
       sx={{
@@ -61,7 +54,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             Stop Losing Top Talent
             <br />
             to{" "}
-            <Box component="span" sx={{ color: "#0CDA8B" }}>
+            <Box component="span" sx={{ color: ACCENT }}>
               Slow Hiring
             </Box>
           </Typography>
@@ -83,9 +76,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             </Box>
             , evaluate technical and soft skills in real time, and rank your applicants objectively.
             <br />
-            <Box component="span" sx={{
-              color: "#0CDA8B", fontWeight: 700,
-            }}>
+            <Box component="span" sx={{ color: ACCENT, fontWeight: 700 }}>
               cutting your average 42-day hiring cycle by up to 75%
             </Box>.
           </Typography>
@@ -97,7 +88,7 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
                 backgroundColor: ACCENT,
-                color: "white",
+                color: "#fff",
                 boxShadow: "none",
                 borderRadius: 0,
                 textTransform: "none",
@@ -115,16 +106,15 @@ const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               variant="outlined"
               onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
-                border: "2px solid #0CDA8B",
-                color: "#111827",
+                border: `2px solid ${ACCENT}`,
+                color: "black",
                 borderRadius: 0,
                 textTransform: "none",
                 fontFamily: "Poppins",
                 fontWeight: 500,
                 fontSize: "15px",
                 px: 3.5, py: 1.25,
-
-                "&:hover": { border: "2px solid #0CDA8B", bgcolor: "transparent" },
+                "&:hover": { border: `2px solid ${ACCENT}`, backgroundColor: ACCENT },
               }}
             >
               Watch 2-Min Demo

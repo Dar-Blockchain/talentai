@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -14,7 +14,7 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 
-const ACCENT     = "rgba(12,218,139,1)";
+const ACCENT     = "#0CDA8B";
 const ACCENT_BG  = "rgba(12,218,139,0.10)";
 const TEXT_DARK  = "#0b1b1f";
 
@@ -115,7 +115,7 @@ const ContactSection: React.FC = () => {
           bgcolor: ACCENT_BG, border: `1.5px solid rgba(12,218,139,0.40)`,
           borderRadius: "24px", px: 2.5, py: 1, mb: 2,
         }}>
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
             Let's Talk
           </Typography>
         </Box>
@@ -129,7 +129,7 @@ const ContactSection: React.FC = () => {
           mb: 1.5,
         }}>
           Reclaim Your Calendar.{" "}
-          <Box component="span" sx={{ color: "#0CDA8B" }}>Hire with Confidence.</Box>
+          <Box component="span" sx={{ color: ACCENT }}>Hire with Confidence.</Box>
         </Typography>
 
         <Typography sx={{

@@ -1,7 +1,6 @@
-import React from "react";
 import { Box, Typography } from "@mui/material";
 
-const ACCENT    = "rgba(12,218,139,1)";
+const ACCENT    = "#0CDA8B";
 const ACCENT_BG = "rgba(12,218,139,0.10)";
 
 const AISpotlight: React.FC = () => {

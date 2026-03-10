@@ -1,7 +1,7 @@
-import React from "react";
 import { Box, Typography } from "@mui/material";
 import GradientStepper from "./Stepper";
 
+const ACCENT    = "#0CDA8B";
 const ACCENT_BG = "rgba(12,218,139,0.10)";
 
 const SolutionsSection = () => {
@@ -24,7 +24,7 @@ const SolutionsSection = () => {
           bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
           borderRadius: "24px", px: 2.5, py: 1, mb: 2,
         }}>
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
             The Plan
           </Typography>
         </Box>

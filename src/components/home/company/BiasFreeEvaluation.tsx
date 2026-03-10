@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 
@@ -32,7 +31,7 @@ const BiasFreeEvaluation: React.FC = () => (
         bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
         borderRadius: "24px", px: 2.5, py: 1, mb: 3,
       }}>
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
           The Solution
         </Typography>
       </Box>
@@ -113,8 +112,8 @@ const BiasFreeEvaluation: React.FC = () => (
           fontSize: { xs: "22px", md: "28px" },
           lineHeight: 1.25, color: "#111827", mb: 1.5,
         }}>
-          Every Candidate Evaluated <Box component="span" sx={{ color: "#0CDA8B" }}>on Merit.</Box><br />
-          <Box component="span" sx={{ color: "#0CDA8B" }}>Nothing Else.</Box>
+          Every Candidate Evaluated <Box component="span" sx={{ color: ACCENT }}>on Merit.</Box><br />
+          <Box component="span" sx={{ color: ACCENT }}>Nothing Else.</Box>
         </Typography>
         <Typography sx={{
           fontFamily: "Poppins", fontSize: "15px",

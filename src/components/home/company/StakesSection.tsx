@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";

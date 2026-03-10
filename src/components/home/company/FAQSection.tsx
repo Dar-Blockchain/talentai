@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import RemoveOutlined from "@mui/icons-material/RemoveOutlined";
 import Head from "next/head";
 
-const ACCENT = "#0CDA8B";
+const ACCENT        = "#0CDA8B";
+const ACCENT_BG     = "rgba(12,218,139,0.10)";
+const ACCENT_BORDER = "rgba(12,218,139,0.40)";
 
 const FAQS = [
   {
@@ -83,7 +85,7 @@ const FAQItem: React.FC<{ faq: typeof FAQS[number]; index: number }> = ({ faq, i
             width: 28,
             height: 28,
             borderRadius: "50%",
-            bgcolor: open ? ACCENT : "rgba(12,218,139,0.10)",
+            bgcolor: open ? ACCENT : ACCENT_BG,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -139,7 +141,7 @@ const FAQSection: React.FC = () => (
         {/* Overline pill */}
         <Box sx={{
           display: "inline-flex", alignItems: "center", gap: 1,
-          bgcolor: "rgba(12,218,139,0.10)", border: "1.5px solid rgba(12,218,139,0.40)",
+          bgcolor: ACCENT_BG, border: `1.5px solid ${ACCENT_BORDER}`,
           borderRadius: "24px", px: 2.5, py: 1, mb: 2,
         }}>
           <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>

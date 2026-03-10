@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Button, Stack } from "@mui/material";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
