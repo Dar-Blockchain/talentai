@@ -616,16 +616,16 @@ export default function InterviewResults() {
             window.location.href = '/dashboard/candidate';
           }}
           sx={{
-            background: 'rgba(163, 98, 239, 1)',
-            color: '#ffffff',
+            bgcolor: '#8310FF',
+            color: '#fff',
             fontWeight: 600,
-            borderRadius: '38px',
+            borderRadius: '10px',
             px: 4,
             py: 1.5,
             textTransform: 'none',
-            '&:hover': {
-              background: 'rgba(163, 98, 239, 0.8)',
-            },
+            boxShadow: 'none',
+            fontFamily: 'Poppins',
+            '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
           }}
         >
           Back to Dashboard
