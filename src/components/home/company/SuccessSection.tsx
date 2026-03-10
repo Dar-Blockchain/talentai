@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 
 const ACCENT   = "rgba(12,218,139,1)";
 const ACCENT_BG = "rgba(12,218,139,0.08)";
@@ -52,7 +51,6 @@ const SuccessSection: React.FC = () => (
         bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
         borderRadius: "24px", px: 2.5, py: 1, mb: 2,
       }}>
-        <AutoAwesomeOutlined sx={{ fontSize: 15, color: "#059669" }} />
         <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
           The Transformation
         </Typography>
