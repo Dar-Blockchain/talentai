@@ -81,23 +81,22 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
         console.log('🔗 Company profile linked to user - user.profile:', profile._id);
       }
     } else {
-      // For Candidate: create profile if both firstName and lastName are provided
-      if (profileDataOptions.firstName && profileDataOptions.lastName) {
-        profile = await Profile.create({
-          userId: user._id,
-          type: 'Candidate',
-          firstName: profileDataOptions.firstName,
-          lastName: profileDataOptions.lastName,
-          skills: [],
-          overallScore: 0,
-        });
-        console.log('✅ Candidate profile created during registration for userId:', user._id);
+      // For Candidate: create profile with firstName and lastName (now required)
+      profile = await Profile.create({
+        userId: user._id,
+        type: 'Candidate',
+        firstName: profileDataOptions.firstName,
+        lastName: profileDataOptions.lastName,
+        phone: profileDataOptions.phone || '',
+        skills: [],
+        overallScore: 0,
+      });
+      console.log('✅ Candidate profile created during registration for userId:', user._id);
 
-        // Link profile to user as ObjectID
-        user.profile = profile._id;
-        await user.save();
-        console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
-      }
+      // Link profile to user as ObjectID
+      user.profile = profile._id;
+      await user.save();
+      console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
     }
 
     // Send OTP

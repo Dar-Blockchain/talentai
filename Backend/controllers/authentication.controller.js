@@ -17,7 +17,7 @@ const handleError = (res, error, defaultStatus = 500) => {
 // Route d'inscription
 module.exports.register = async (req, res) => {
   try {
-    const { email, roleType, firstName, lastName, name, companyDetails } = req.body;
+    const { email, roleType, firstName, lastName, name, companyDetails, phone } = req.body;
 
     // Validate email
     const validEmail = validateEmail(email);
@@ -27,17 +27,26 @@ module.exports.register = async (req, res) => {
 
     // Validate based on roleType
     if (validRoleType === 'Candidate') {
-      if (firstName && typeof firstName !== 'string') {
+      // firstName and lastName are REQUIRED for Candidate
+      if (!firstName || typeof firstName !== 'string' || firstName.trim() === '') {
         return res.status(400).json({
           success: false,
-          error: 'firstName must be a valid string'
+          error: 'firstName is required and must be a valid string'
         });
       }
 
-      if (lastName && typeof lastName !== 'string') {
+      if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
         return res.status(400).json({
           success: false,
-          error: 'lastName must be a valid string'
+          error: 'lastName is required and must be a valid string'
+        });
+      }
+
+      // phone is optional but must be string if provided
+      if (phone && typeof phone !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'phone must be a valid string'
         });
       }
     } else if (validRoleType === 'Company') {
@@ -52,7 +61,7 @@ module.exports.register = async (req, res) => {
     const result = await authService.registerUser(
       validEmail,
       validRoleType,
-      { firstName, lastName, name, companyDetails }
+      { firstName, lastName, name, companyDetails, phone }
     );
 
     res.status(201).json({
