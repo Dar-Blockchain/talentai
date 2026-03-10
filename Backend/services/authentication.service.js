@@ -232,7 +232,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     if (companyMembership) {
       token = generateToken(updatedUser._id, companyMembership.company._id, companyMembership.role);
     } else {
-      token = generateToken(updatedUser._id);
+      token = generateToken(updatedUser._id, null, updatedUser.role);
     }
     return { user: updatedUser, token, profile, companyMembership };
   } catch (error) {
@@ -327,6 +327,7 @@ module.exports.connectWithGmail = async (id_token) => {
       const newUser = new User({
         username,
         email,
+        role: 'Candidate', // Default role for Gmail signup
         isVerified: true,
         trafficCounter: 1,
         lastLogin: new Date()
@@ -347,12 +348,15 @@ module.exports.connectWithGmail = async (id_token) => {
       console.log('✅ User logged in via Gmail:', email);
     }
 
-    const token = generateToken(user._id);
+    // Get full user data including role
+    const fullUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    
+    const token = generateToken(fullUser._id, null, fullUser.role);
 
     return {
-      user,
+      user: fullUser,
       token,
-      message: user.isVerified ? 'Login successful' : 'Account created successfully'
+      message: fullUser.isVerified ? 'Login successful' : 'Account created successfully'
     };
   } catch (error) {
     error.status = error.status || 500;
