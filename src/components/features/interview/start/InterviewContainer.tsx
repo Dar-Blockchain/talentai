@@ -73,7 +73,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
       {/* ── Purple header stripe ── */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+          bgcolor: '#8310FF',
           px: 2.5,
           py: 1.75,
           display: 'flex',
@@ -128,9 +128,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           sx={{
             height: 3,
             bgcolor: 'rgba(131,16,255,0.12)',
-            '& .MuiLinearProgress-bar': {
-              background: 'linear-gradient(90deg, #8310FF, #a855f7)',
-            },
+            '& .MuiLinearProgress-bar': { bgcolor: '#8310FF' },
           }}
         />
       )}
@@ -147,7 +145,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 width: 72,
                 height: 72,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(131,16,255,0.12) 0%, rgba(168,85,247,0.08) 100%)',
+                bgcolor: 'rgba(131,16,255,0.08)',
                 border: '2px solid rgba(131,16,255,0.2)',
                 display: 'flex',
                 alignItems: 'center',
@@ -202,11 +200,11 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 fontSize: '0.92rem',
                 py: 1.5,
                 borderRadius: '12px',
-                background: allReady ? 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)' : undefined,
-                bgcolor: allReady ? undefined : '#e5e7eb',
+                bgcolor: allReady ? '#8310FF' : '#e5e7eb',
+                color: '#fff',
                 textTransform: 'none',
-                boxShadow: allReady ? '0 6px 20px rgba(131,16,255,0.4)' : 'none',
-                '&:hover': { background: 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)', boxShadow: '0 8px 24px rgba(131,16,255,0.5)' },
+                boxShadow: 'none',
+                '&:hover': { bgcolor: allReady ? '#6d0ee0' : '#e5e7eb', boxShadow: 'none' },
                 '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
               }}
             >
@@ -287,9 +285,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 py: 1.5,
                 borderRadius: '12px',
                 bgcolor: '#ef4444',
+                color: '#fff',
                 textTransform: 'none',
-                boxShadow: '0 6px 20px rgba(239,68,68,0.3)',
-                '&:hover': { bgcolor: '#dc2626', boxShadow: '0 8px 24px rgba(239,68,68,0.4)' },
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#dc2626', boxShadow: 'none' },
               }}
             >
               End Interview
@@ -333,10 +332,11 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 fontSize: '0.92rem',
                 py: 1.5,
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+                bgcolor: '#8310FF',
+                color: '#fff',
                 textTransform: 'none',
-                boxShadow: '0 6px 20px rgba(131,16,255,0.4)',
-                '&:hover': { background: 'linear-gradient(135deg, #6d0ee0 0%, #9333ea 100%)' },
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
               }}
             >
               View Results

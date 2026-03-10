@@ -69,7 +69,6 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   hasJobId,
   jobId,
   refParam,
-  totalSteps,
   onNext,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -126,46 +125,50 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
         <Header />
         <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
 
           {/* Step indicator */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', fontFamily: 'Poppins' }}>1</Typography>
-              </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', color: PURPLE }}>Introduction</Typography>
-            </Box>
-            <Box sx={{ flex: 1, height: 2, bgcolor: '#e8e2f5', borderRadius: 1 }} />
-            {hasJobId && (
-              <>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#e8e2f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography sx={{ color: '#9ca3af', fontWeight: 700, fontSize: '0.7rem', fontFamily: 'Poppins' }}>2</Typography>
-                  </Box>
-                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', color: '#9ca3af' }}>Job Overview</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+            {/* Step 1 — active */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>1</Typography>
                 </Box>
-                <Box sx={{ flex: 1, height: 2, bgcolor: '#e8e2f5', borderRadius: 1 }} />
-              </>
-            )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#e8e2f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ color: '#9ca3af', fontWeight: 700, fontSize: '0.7rem', fontFamily: 'Poppins' }}>{totalSteps}</Typography>
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: PURPLE, whiteSpace: 'nowrap' }}>Introduction</Typography>
               </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.8rem', color: '#9ca3af' }}>AI Interview</Typography>
+              <Box sx={{ flex: 1, height: 1, bgcolor: '#E5E7EB', mx: 2 }} />
+            </Box>
+            {hasJobId && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                  <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'transparent', border: '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography sx={{ color: '#9CA3AF', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>2</Typography>
+                  </Box>
+                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '0.78rem', color: '#9CA3AF', whiteSpace: 'nowrap' }}>Job Overview</Typography>
+                </Box>
+                <Box sx={{ flex: 1, height: 1, bgcolor: '#E5E7EB', mx: 2 }} />
+              </Box>
+            )}
+            {/* Last step — pending */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+              <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'transparent', border: '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography sx={{ color: '#9CA3AF', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>{hasJobId ? 3 : 2}</Typography>
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '0.78rem', color: '#9CA3AF', whiteSpace: 'nowrap' }}>AI Interview</Typography>
             </Box>
           </Box>
 
           {/* Main card */}
-          <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #e8e2f5', boxShadow: '0 8px 32px rgba(131,16,255,0.08)', overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: '#fff', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
 
             {/* Header */}
             <Box sx={{ px: { xs: 3, md: 4 }, pt: 3.5, pb: 2.5, borderBottom: '1px solid rgba(232,232,232,1)' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <VideocamOutlinedIcon sx={{ color: PURPLE, fontSize: 24 }} />
+                <Box sx={{ width: 44, height: 44, borderRadius: '10px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <VideocamOutlinedIcon sx={{ color: PURPLE_DARK, fontSize: 22 }} />
                 </Box>
                 <Box>
                   <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#000', lineHeight: 1.25 }}>
@@ -191,8 +194,8 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                 </Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5, mt: 0.5 }}>
                   {steps.map((s, i) => (
-                    <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 2, borderRadius: '12px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}` }}>
-                      <Box sx={{ width: 36, height: 36, borderRadius: '10px', flexShrink: 0, bgcolor: '#fff', border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 2, borderRadius: '10px', bgcolor: '#F9FAFB', border: '1px solid #F3F4F6' }}>
+                      <Box sx={{ width: 32, height: 32, borderRadius: '8px', flexShrink: 0, bgcolor: '#fff', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {s.icon}
                       </Box>
                       <Box>
@@ -205,7 +208,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
               </Box>
 
               {/* Tips */}
-              <Box sx={{ bgcolor: 'rgba(250,246,255,1)', border: '1px solid rgba(189,133,255,0.25)', borderRadius: '12px', p: 2.5 }}>
+              <Box sx={{ bgcolor: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '10px', p: 2.5 }}>
                 <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.85rem', color: '#000', mb: 1.5 }}>
                   Before you start
                 </Typography>
@@ -229,18 +232,19 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                   onClick={handleNext}
                   disabled={submitting}
                   sx={{
-                    background: PURPLE,
+                    bgcolor: PURPLE_DARK,
+                    color: '#fff',
                     fontFamily: 'Poppins',
                     fontWeight: 600,
-                    fontSize: '0.88rem',
+                    fontSize: '0.86rem',
                     px: 3.5,
-                    py: 1.2,
-                    borderRadius: '38px',
+                    py: 1.15,
+                    borderRadius: '8px',
                     textTransform: 'none',
-                    boxShadow: '0 4px 14px rgba(163,98,239,0.3)',
-                    minWidth: 180,
-                    '&:hover': { background: PURPLE_DARK, boxShadow: '0 6px 18px rgba(131,16,255,0.35)' },
-                    '&.Mui-disabled': { background: 'rgba(163,98,239,0.5)', color: '#fff' },
+                    boxShadow: 'none',
+                    minWidth: 160,
+                    '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
+                    '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
                   }}
                 >
                   {submitting ? (

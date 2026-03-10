@@ -1,11 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import { CameraStatus, InterviewStatus } from '@/types/interview';
 
-const PURPLE = '#8310FF';
 const BAR_COUNT = 24;
 
 interface CameraPreviewProps {
@@ -94,7 +93,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
       {/* ── Header stripe ── */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
+          bgcolor: '#8310FF',
           px: 2.5,
           py: 1.75,
           display: 'flex',
@@ -108,8 +107,8 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               width: 8,
               height: 8,
               borderRadius: '50%',
-              bgcolor: isActive ? '#4ade80' : cameraStatus === 'granted' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)',
-              boxShadow: isActive ? '0 0 0 3px rgba(74,222,128,0.4)' : 'none',
+              bgcolor: isActive ? '#4ade80' : 'rgba(255,255,255,0.4)',
+              boxShadow: isActive ? '0 0 0 3px rgba(74,222,128,0.3)' : 'none',
             }}
           />
           <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
@@ -157,20 +156,20 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
 
         {/* No-camera placeholder */}
         {cameraStatus !== 'granted' && (
-          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#f8f5ff' }}>
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#F9FAFB' }}>
             {cameraStatus === 'requesting' ? (
               <>
-                <CircularProgress size={32} sx={{ color: PURPLE }} />
-                <Typography sx={{ color: '#6b7280', fontSize: '0.8rem', fontFamily: 'Poppins' }}>
+                <CircularProgress size={32} sx={{ color: '#374151' }} />
+                <Typography sx={{ color: '#6B7280', fontSize: '0.8rem', fontFamily: 'Poppins' }}>
                   Requesting camera access…
                 </Typography>
               </>
             ) : (
               <>
-                <Box sx={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(131,16,255,0.1)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <VideocamOffIcon sx={{ color: PURPLE, fontSize: 28 }} />
+                <Box sx={{ width: 60, height: 60, borderRadius: '50%', bgcolor: '#F3F4F6', border: '2px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <VideocamOffIcon sx={{ color: '#9CA3AF', fontSize: 28 }} />
                 </Box>
-                <Typography sx={{ color: '#6b7280', fontSize: '0.82rem', fontFamily: 'Poppins', fontWeight: 500, textAlign: 'center', px: 3 }}>
+                <Typography sx={{ color: '#6B7280', fontSize: '0.82rem', fontFamily: 'Poppins', fontWeight: 500, textAlign: 'center', px: 3 }}>
                   {cameraStatus === 'denied' ? 'Camera access denied' : cameraError || 'Camera unavailable'}
                 </Typography>
                 {(cameraStatus === 'denied' || cameraStatus === 'error') && (
@@ -178,7 +177,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                     size="small"
                     variant="outlined"
                     onClick={() => window.location.reload()}
-                    sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none', color: PURPLE, borderColor: 'rgba(131,16,255,0.3)', borderRadius: '8px' }}
+                    sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none', color: '#374151', borderColor: '#E5E7EB', borderRadius: '8px' }}
                   >
                     Retry
                   </Button>
@@ -190,9 +189,9 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
 
         {/* Connecting badge */}
         {isConnecting && cameraStatus === 'granted' && (
-          <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', px: 1.5, py: 0.5, borderRadius: '8px', border: '1px solid rgba(131,16,255,0.2)' }}>
-            <CircularProgress size={11} sx={{ color: PURPLE }} />
-            <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: PURPLE, fontWeight: 700 }}>Connecting…</Typography>
+          <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', px: 1.5, py: 0.5, borderRadius: '8px', border: '1px solid #E5E7EB' }}>
+            <CircularProgress size={11} sx={{ color: '#374151' }} />
+            <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: '#374151', fontWeight: 700 }}>Connecting…</Typography>
           </Box>
         )}
 
@@ -214,14 +213,14 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                 width: 28,
                 height: 28,
                 borderRadius: '8px',
-                bgcolor: isActive ? 'rgba(131,16,255,0.1)' : 'rgba(156,163,175,0.12)',
+                bgcolor: isActive ? '#F3F4F6' : 'rgba(156,163,175,0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
               {isActive
-                ? <MicIcon sx={{ fontSize: 15, color: PURPLE }} />
+                ? <MicIcon sx={{ fontSize: 15, color: '#374151' }} />
                 : <MicOffIcon sx={{ fontSize: 15, color: '#9ca3af' }} />
               }
             </Box>
@@ -253,8 +252,8 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
             height: 36,
             borderRadius: '10px',
             px: 1.5,
-            bgcolor: isActive ? 'rgba(131,16,255,0.06)' : '#f9fafb',
-            border: `1px solid ${isActive ? 'rgba(131,16,255,0.18)' : '#f0f0f0'}`,
+            bgcolor: '#F9FAFB',
+            border: '1px solid #F3F4F6',
             transition: 'all 0.3s ease',
           }}
         >
@@ -265,9 +264,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                 flex: 1,
                 height: `${h}px`,
                 borderRadius: '3px',
-                background: isActive
-                  ? `linear-gradient(180deg, #a855f7 0%, #8310FF 100%)`
-                  : 'rgba(209,213,219,0.6)',
+                bgcolor: isActive ? '#374151' : 'rgba(209,213,219,0.6)',
                 transition: 'height 0.05s ease',
                 minWidth: 0,
               }}
