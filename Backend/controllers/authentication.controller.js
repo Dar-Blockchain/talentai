@@ -18,9 +18,10 @@ const handleError = (res, error, defaultStatus = 500) => {
 module.exports.register = async (req, res) => {
   try {
     const { email, roleType, firstName, lastName, name, companyDetails, phone } = req.body;
+    const resumeFile = req.file; // Get uploaded file if exists
 
     // Validate email
-    const validEmail = validateEmail(email);
+    const validEmail = email;
 
     // Validate roleType
     const validRoleType = roleType && ['Candidate', 'Company'].includes(roleType) ? roleType : 'Candidate';
@@ -61,7 +62,7 @@ module.exports.register = async (req, res) => {
     const result = await authService.registerUser(
       validEmail,
       validRoleType,
-      { firstName, lastName, name, companyDetails, phone }
+      { firstName, lastName, name, companyDetails, phone, resumeFile }
     );
 
     res.status(201).json({
