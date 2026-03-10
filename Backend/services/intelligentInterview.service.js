@@ -42,6 +42,38 @@ class AIUtils {
         // Return fallback structure based on method
         return AIUtils.getFallbackResponse(methodName, responseContent);
       } catch (fallbackError) {
+        // Try truncation repair: LLM output may be cut off mid-JSON
+        try {
+          const jsonStart = responseContent.indexOf('{');
+          if (jsonStart !== -1) {
+            let truncated = responseContent.substring(jsonStart);
+            // Remove any trailing incomplete string value (cut off mid-quote)
+            truncated = truncated.replace(/,?\s*"[^"]*$/, '');
+            // Count unmatched brackets and close them
+            let openBraces = 0, openBrackets = 0;
+            let inString = false;
+            for (let i = 0; i < truncated.length; i++) {
+              const ch = truncated[i];
+              if (ch === '"' && (i === 0 || truncated[i-1] !== '\\')) inString = !inString;
+              if (!inString) {
+                if (ch === '{') openBraces++;
+                else if (ch === '}') openBraces--;
+                else if (ch === '[') openBrackets++;
+                else if (ch === ']') openBrackets--;
+              }
+            }
+            // Remove trailing comma before closing
+            truncated = truncated.replace(/,\s*$/, '');
+            const closing = ']'.repeat(Math.max(0, openBrackets)) + '}'.repeat(Math.max(0, openBraces));
+            if (closing.length > 0) {
+              const repaired = truncated + closing;
+              console.warn(`🔧 [${methodName}] Attempting truncation repair (added ${closing.length} closing brackets)`);
+              return JSON.parse(repaired);
+            }
+          }
+        } catch (repairError) {
+          // Repair also failed — fall through to fallback
+        }
         console.error(`Fallback parsing also failed in ${methodName}:`, fallbackError.message);
         return AIUtils.getFallbackResponse(methodName, responseContent);
       }
@@ -514,6 +546,7 @@ RULES:
 - No multi-part questions
 - Target the specified coverage gap
 - Be natural and conversational
+- NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
 - NEVER ask a question similar to any in the "ALREADY ASKED" list
 - Each question must explore a NEW angle or sub-topic not yet covered
 
@@ -868,7 +901,7 @@ const UNIVERSAL_STYLES = {
 
 const FRAMEWORK_STYLE_INSTRUCTIONS = {
   'scenario-based':          'STYLE: SCENARIO-BASED — Ask a question grounded in a realistic work scenario specific to the domain.',
-  'code review':             'STYLE: CODE REVIEW — Describe a coding approach, design pattern, or architecture decision verbally and ask the candidate to critique it, identify potential issues, or suggest improvements.',
+  'code review':             'STYLE: CODE REVIEW — Describe a coding approach, design pattern, or architecture decision verbally and ask the candidate to critique it, identify potential issues, or suggest improvements. This is entirely verbal — do NOT present actual code.',
   'architecture discussion': 'STYLE: ARCHITECTURE DISCUSSION — Ask about system design, architectural trade-offs, or scaling decisions.',
   'debugging walkthrough':   'STYLE: DEBUGGING WALKTHROUGH — Describe a bug symptom and ask how they would diagnose and fix it.',
   'behavioral STAR':         'STYLE: BEHAVIORAL STAR — Ask for a specific past experience. Expect the candidate to describe the Situation, Task, Action, and Result.',
@@ -880,12 +913,12 @@ const FRAMEWORK_STYLE_INSTRUCTIONS = {
   'pipeline review':         'STYLE: PIPELINE REVIEW — Ask about pipeline management, forecasting, or deal qualification.',
   'portfolio review':        'STYLE: PORTFOLIO REVIEW — Ask the candidate to walk through a piece of their work or portfolio.',
   'design critique':         'STYLE: DESIGN CRITIQUE — Describe a design and ask for their critique of it.',
-  'whiteboard exercise':     'STYLE: WHITEBOARD — Ask the candidate to walk through their solution design step by step, explaining each component and how they connect.',
+  'whiteboard exercise':     'STYLE: WHITEBOARD — Ask the candidate to walk through their solution design step by step, explaining each component and how they connect. This is entirely verbal — do NOT present actual code or diagrams.',
   'case study':              'STYLE: CASE STUDY — Present a business case and ask for their analysis.',
   'prioritization exercise': 'STYLE: PRIORITIZATION — Present competing priorities and ask how they would decide.',
   'metrics discussion':      'STYLE: METRICS — Ask about KPIs, success metrics, or how they measure impact.',
   'roadmap review':          'STYLE: ROADMAP REVIEW — Ask about product roadmap decisions, sequencing, or trade-offs.',
-  'SQL challenge':           'STYLE: SQL CHALLENGE — Describe a data retrieval or transformation problem and ask the candidate to explain their query approach and reasoning step by step.',
+  'SQL challenge':           'STYLE: SQL CHALLENGE — Describe a data retrieval or transformation problem and ask the candidate to explain their query approach and reasoning step by step. This is entirely verbal — do NOT present actual code or SQL.',
   'analysis walkthrough':    'STYLE: ANALYSIS WALKTHROUGH — Ask the candidate to walk through an analytical approach step by step.',
   'reflective':              'STYLE: REFLECTIVE — Ask the candidate to reflect on a lesson learned or a growth experience.',
   'campaign analysis':       'STYLE: CAMPAIGN ANALYSIS — Ask the candidate to analyze a campaign\'s performance.',
@@ -1478,7 +1511,22 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
         };
       }
 
-      // Continue with standard evaluation if no early termination
+      // Coverage-based guard: skip LLM if insufficient evidence to assess the candidate
+      const currentOverallCoverage = session.coverage?.overall || 0;
+      const areasExplored = Object.values(session.coverage?.areas || {})
+        .filter(a => a.percentage > 0).length;
+      const totalAreas = Object.keys(session.coverage?.areas || {}).length;
+
+      if (currentOverallCoverage < 40 || areasExplored < Math.min(2, totalAreas)) {
+        console.log(`⏳ [shouldEndInterview] Coverage ${currentOverallCoverage}%, ${areasExplored}/${totalAreas} areas explored — insufficient data, continuing`);
+        return {
+          shouldEnd: false,
+          confidence: 0,
+          reasoning: `Coverage at ${currentOverallCoverage}% with ${areasExplored}/${totalAreas} areas explored — insufficient data to assess candidate`
+        };
+      }
+
+      // Continue with LLM evaluation now that we have enough evidence
       const systemPrompt = `Determine if an interview should end based on coverage completeness and interview objectives.
 
 EVALUATION CRITERIA:
@@ -1487,6 +1535,12 @@ EVALUATION CRITERIA:
 - Time constraints and efficiency
 - Diminishing returns from continued questioning
 - Interview objectives achievement
+
+CRITICAL RULES:
+- Do NOT recommend ending if overall coverage is below 50% — the agent needs more data to reliably score the candidate.
+- Do NOT recommend ending if fewer than half the focus areas have been explored.
+- Only recommend ending when there is SUFFICIENT evidence to evaluate the candidate's competency across the key areas.
+- The goal is to gather enough data for a reliable assessment, not to end quickly.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -3350,16 +3404,28 @@ RESPONSE FORMAT (JSON only):
   "trends": ["observed trends in performance"]
 }`;
 
-      const userPrompt = `CURRENT REPORT:
-${JSON.stringify(session.realTimeReport, null, 2)}
+      // Trim inputs to prevent token overflow → truncated JSON output
+      const trimmedReport = {
+        strengths: (session.realTimeReport?.strengths || []).slice(-5),
+        weaknesses: (session.realTimeReport?.weaknesses || []).slice(-5),
+        overallProgress: session.realTimeReport?.overallProgress || 0
+      };
+      const trimmedDecision = {
+        decision: decisionAnalysis?.decision,
+        reasoning: decisionAnalysis?.reasoning,
+        targetArea: decisionAnalysis?.targetArea
+      };
 
-LATEST RESPONSE: "${candidateResponse}"
+      const userPrompt = `CURRENT REPORT:
+${JSON.stringify(trimmedReport)}
+
+LATEST RESPONSE: "${candidateResponse.substring(0, 500)}"
 
 COVERAGE ANALYSIS:
-${JSON.stringify(coverageAnalysis.overallAssessment, null, 2)}
+${JSON.stringify(coverageAnalysis?.overallAssessment || {})}
 
 DECISION ANALYSIS:
-${JSON.stringify(decisionAnalysis, null, 2)}
+${JSON.stringify(trimmedDecision)}
 
 Update the real-time report with new AI-powered insights.`;
 
@@ -3367,7 +3433,7 @@ Update the real-time report with new AI-powered insights.`;
         systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.4,
-        maxTokens: 1000,
+        maxTokens: 1500,
         timeout: 30000,
         useFastModel: true
       });
