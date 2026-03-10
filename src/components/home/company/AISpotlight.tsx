@@ -17,13 +17,6 @@ const AISpotlight: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        {/* Green glow */}
-        <Box sx={{
-          position: "absolute", width: 360, height: 360,
-          borderRadius: "50%", bgcolor: "rgba(12,218,139,0.06)",
-          top: -100, right: 80, filter: "blur(80px)", pointerEvents: "none",
-        }} />
-
         {/* Left copy */}
         <Box sx={{ maxWidth: 580, position: "relative" }}>
           {/* Overline pill */}
