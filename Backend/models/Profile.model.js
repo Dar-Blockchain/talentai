@@ -41,7 +41,8 @@ const profileSchema = new mongoose.Schema(
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },
-
+    resume: { type: String, required: false },
+ 
     // ========== PERSONAL INFORMATION ==========
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
