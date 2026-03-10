@@ -44,7 +44,7 @@ const clients = [
 const partners = [
   { logo: "/images/partners/nivdia.png",                  alt: "NVIDIA Inception Program" },
   { logo: "/images/partners/F6s.png",                     alt: "F6S #22 Top AI Company" },
-  { logo: "/images/partners/Hedera-Logo-Lockup-Dark.png", alt: "Built on Hedera Hashgraph" },
+  { logo: "/images/partners/hedera.png", alt: "Built on Hedera Hashgraph" },
 ];
 
 const GlobalCompanies: React.FC = () => (
@@ -155,11 +155,6 @@ const GlobalCompanies: React.FC = () => (
               border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: "10px",
               boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-              transition: "box-shadow 0.2s, border-color 0.2s",
-              "&:hover": {
-                boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
-                borderColor: "rgba(12,218,139,0.30)",
-              },
             }}
           >
             <Box
@@ -168,9 +163,6 @@ const GlobalCompanies: React.FC = () => (
               alt={item.name}
               sx={{
                 height: { xs: 22, md: 28 }, width: "auto", objectFit: "contain",
-                opacity: 0.7,
-                transition: "opacity 0.2s",
-                "&:hover": { opacity: 1 },
               }}
             />
           </Box>
@@ -210,11 +202,6 @@ const GlobalCompanies: React.FC = () => (
               border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: "10px",
               boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-              transition: "box-shadow 0.2s, border-color 0.2s",
-              "&:hover": {
-                boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
-                borderColor: "rgba(12,218,139,0.30)",
-              },
             }}
           >
             <Box
@@ -223,9 +210,6 @@ const GlobalCompanies: React.FC = () => (
               alt={p.alt}
               sx={{
                 height: { xs: 28, md: 36 }, width: "auto", objectFit: "contain",
-                opacity: 0.65, filter: "grayscale(20%)",
-                transition: "opacity 0.2s, filter 0.2s",
-                "&:hover": { opacity: 1, filter: "grayscale(0%)" },
               }}
             />
           </Box>
