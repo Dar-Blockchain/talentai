@@ -407,8 +407,10 @@ export default function InterviewResults() {
     const role = urlParams.get('role') || localStorage.getItem('interview_role');
     const category = urlParams.get('category') || localStorage.getItem('interview_category');
 
-    let overallScore = 0;
-    if (coverage.areas && Object.keys(coverage.areas).length > 0) {
+    // Use the composite score from backend (quality 35% + skills 25% + coverage 15% + depth 15% + communication 10%)
+    let overallScore = scores.overall || 0;
+    if (!overallScore && coverage.areas && Object.keys(coverage.areas).length > 0) {
+      // Fallback: calculate from coverage only if no composite score exists
       let weightedSum = 0;
       let totalWeight = 0;
       Object.values(coverage.areas).forEach((area: any) => {
@@ -418,8 +420,6 @@ export default function InterviewResults() {
         totalWeight += weight;
       });
       overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
-    } else {
-      overallScore = scores.overall || coverage.overall || 0;
     }
 
     let primarySkillName = 'General Assessment';
@@ -440,9 +440,9 @@ export default function InterviewResults() {
       skill: primarySkillName,
       score: overallScore,
       level: determineLevel(overallScore),
-      strengths: finalReport.recommendations?.strengths ||
+      strengths: finalReport.strengths ||
         coverage.aiAnalysis?.strongestAreas?.map((a: string) => `Strong in ${a.replace('_', ' ')}`) || [],
-      improvements: finalReport.recommendations?.improvements ||
+      improvements: finalReport.weaknesses ||
         coverage.aiAnalysis?.weakestAreas?.map((a: string) => `Improve ${a.replace('_', ' ')}`) || []
     }];
 
@@ -453,9 +453,9 @@ export default function InterviewResults() {
       duration: analytics.duration || 0,
       completedAt: socketData.timestamp || new Date().toISOString(),
       skillScores: skillScores,
-      strengths: finalReport.recommendations?.strengths || extractStrengths(coverage),
-      weaknesses: finalReport.recommendations?.improvements || extractWeaknesses(coverage),
-      recommendations: finalReport.recommendations?.suggestions || generateRecommendations(coverage),
+      strengths: finalReport.strengths || extractStrengths(coverage),
+      weaknesses: finalReport.weaknesses || extractWeaknesses(coverage),
+      recommendations: finalReport.recommendations || generateRecommendations(coverage),
       feedback: finalReport.summary || 'Interview analysis in progress...',
       conversationQuality: {
         clarity: scores.clarity || 0,
