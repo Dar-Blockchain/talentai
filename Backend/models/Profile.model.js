@@ -55,11 +55,11 @@ const profileSchema = new mongoose.Schema(
     country: { type: String, required: false },
     language: { type: String, required: false },
     timeZone: { type: String, required: false },
+    phone: { type: String, required: false },
 
     // ========== CONTACT INFORMATION ==========
     contactInformation: {
       email: { type: String, required: false },
-      phone: { type: String, required: false },
       address: { type: String, required: false },
       linkedinUrl: { type: String, required: false },
       githubUrl: { type: String, required: false },
