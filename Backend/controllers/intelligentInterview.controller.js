@@ -500,7 +500,9 @@ class IntelligentInterviewController {
       }
 
       // Validate decision.content — fallback if undefined
-      const content = decision.content || "Can you tell me more about your experience?";
+      const content = decision.content || (decision.action === 'end_interview'
+        ? 'Thank you for your time. This concludes our interview.'
+        : "Can you tell me more about your experience?");
       if (!decision.content) {
         console.warn(`⚠️ [Controller] decision.content was undefined for action: ${decision.action}, using fallback`);
       }

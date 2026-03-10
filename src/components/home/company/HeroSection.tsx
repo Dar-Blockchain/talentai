@@ -1,7 +1,13 @@
 import React from "react";
 import { Box, Button, Typography, Stack } from "@mui/material";
 
-const CompanyHeroSection = () => {
+type HeroSectionProps = {
+  color?: string;
+  title?: string;
+  subtitle?: string;
+};
+
+const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
   return (
     <Box
       sx={{
