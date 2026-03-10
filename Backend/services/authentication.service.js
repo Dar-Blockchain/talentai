@@ -27,32 +27,10 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
       .select('_id username otp');
 
     if (existingUser) {
-      // Update existing user's OTP
-      await User.updateOne(
-        { _id: existingUser._id },
-        {
-          otp: {
-            code: otp,
-            expiresAt: otpExpiry
-          }
-        }
-      );
-
-      // Send OTP
-      const emailSent = await sendOTP(email, otp);
-      if (!emailSent) {
-        const err = new Error('Error sending OTP email');
-        err.status = 500;
-        throw err;
-      }
-
-      console.log('📧 OTP re-sent for existing user:', email);
-
-      return {
-        email,
-        username: existingUser.username,
-        message: 'New OTP code sent to your email'
-      };
+      // User already exists - refuse registration
+      const err = new Error('User already exists. Please use login instead.');
+      err.status = 409; // Conflict status code
+      throw err;
     }
 
     // Determine user role
@@ -253,6 +231,60 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
       token = generateToken(updatedUser._id);
     }
     return { user: updatedUser, token, profile, companyMembership };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// Service de connexion (login) pour utilisateurs existants
+module.exports.loginUser = async (email) => {
+  try {
+    if (!email || typeof email !== 'string') {
+      const err = new Error('Email is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const err = new Error('User not found. Please register first.');
+      err.status = 404;
+      throw err;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+
+    // Update user with new OTP
+    await User.updateOne(
+      { _id: user._id },
+      {
+        otp: {
+          code: otp,
+          expiresAt: otpExpiry
+        }
+      }
+    );
+
+    // Send OTP
+    const emailSent = await sendOTP(email, otp);
+    if (!emailSent) {
+      const err = new Error('Error sending OTP email');
+      err.status = 500;
+      throw err;
+    }
+
+    console.log('📧 Login OTP sent to:', email);
+
+    return {
+      email,
+      username: user.username,
+      message: 'OTP code sent to your email. Please verify to login.'
+    };
   } catch (error) {
     error.status = error.status || 500;
     throw error;

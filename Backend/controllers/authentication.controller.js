@@ -68,6 +68,27 @@ module.exports.register = async (req, res) => {
   }
 };
 
+// Route de connexion (login) pour utilisateurs existants
+module.exports.login = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    const validEmail = validateEmail(email);
+
+    const result = await authService.loginUser(validEmail);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      email: result.email,
+      username: result.username,
+    });
+  } catch (error) {
+    handleError(res, error, 400);
+  }
+};
+
 // Vérification OTP
 module.exports.verifyOTP = async (req, res) => {
   try {
