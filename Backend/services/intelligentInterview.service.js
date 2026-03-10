@@ -1352,7 +1352,8 @@ RESPONSE FORMAT (JSON only):
   "reasoning": "why end or continue",
   "completedObjectives": ["achieved objectives"],
   "remainingGaps": ["important gaps if continuing"],
-  "recommendedAction": "specific next steps"
+  "recommendedAction": "specific next steps",
+  "message": "a professional closing message to the candidate if shouldEnd is true, otherwise empty string"
 }`;
 
       const userPrompt = `INTERVIEW EVALUATION:
@@ -1788,7 +1789,7 @@ Determine if interview objectives have been sufficiently met to end the session.
                 name: `AI-detected: ${impact.area}`,
                 covered: true,
                 evidence: [impact.evidence],
-                quality: analysis.quality?.score || 50,
+                quality: Math.min(10, Math.round((analysis.quality?.score || 50) / 10)),
                 aiGenerated: true
               });
             }
@@ -1836,7 +1837,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         console.log(`🛑 [Pipeline] Ending interview: ${endCheck.terminationReason}`);
         return {
           action: 'end_interview',
-          content: endCheck.message,
+          content: endCheck.message || 'Thank you for your time. This concludes our interview.',
           reasoning: endCheck.reason || endCheck.reasoning,
           metadata: { terminationReason: endCheck.terminationReason, score: endCheck.score }
         };
@@ -2934,7 +2935,7 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
                     name: `AI-detected: ${update.indicators?.[0] || 'competency'}`,
                     covered: true,
                     evidence: [evidence],
-                    quality: update.qualityScore || 5,
+                    quality: Math.min(10, Math.round((update.qualityScore || 50) / 10)),
                     aiGenerated: true,
                     reasoning: update.reasoning
                   });
