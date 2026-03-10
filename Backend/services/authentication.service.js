@@ -68,7 +68,6 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
             location: profileDataOptions.companyDetails?.location || '',
             website: profileDataOptions.companyDetails?.website || '',
             linkedin: profileDataOptions.companyDetails?.linkedin || '',
-            employmentType: profileDataOptions.companyDetails?.employmentType || '',
           },
           requiredSkills: [],
           requiredExperienceLevel: 'Entry Level',
