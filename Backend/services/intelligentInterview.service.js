@@ -868,7 +868,7 @@ const UNIVERSAL_STYLES = {
 
 const FRAMEWORK_STYLE_INSTRUCTIONS = {
   'scenario-based':          'STYLE: SCENARIO-BASED — Ask a question grounded in a realistic work scenario specific to the domain.',
-  'code review':             'STYLE: CODE REVIEW — Describe a code snippet or approach and ask the candidate to review it for issues, improvements, or trade-offs.',
+  'code review':             'STYLE: CODE REVIEW — Describe a coding approach, design pattern, or architecture decision verbally and ask the candidate to critique it, identify potential issues, or suggest improvements.',
   'architecture discussion': 'STYLE: ARCHITECTURE DISCUSSION — Ask about system design, architectural trade-offs, or scaling decisions.',
   'debugging walkthrough':   'STYLE: DEBUGGING WALKTHROUGH — Describe a bug symptom and ask how they would diagnose and fix it.',
   'behavioral STAR':         'STYLE: BEHAVIORAL STAR — Ask for a specific past experience. Expect the candidate to describe the Situation, Task, Action, and Result.',
@@ -880,12 +880,12 @@ const FRAMEWORK_STYLE_INSTRUCTIONS = {
   'pipeline review':         'STYLE: PIPELINE REVIEW — Ask about pipeline management, forecasting, or deal qualification.',
   'portfolio review':        'STYLE: PORTFOLIO REVIEW — Ask the candidate to walk through a piece of their work or portfolio.',
   'design critique':         'STYLE: DESIGN CRITIQUE — Describe a design and ask for their critique of it.',
-  'whiteboard exercise':     'STYLE: WHITEBOARD — Ask the candidate to describe or sketch out a solution step by step.',
+  'whiteboard exercise':     'STYLE: WHITEBOARD — Ask the candidate to walk through their solution design step by step, explaining each component and how they connect.',
   'case study':              'STYLE: CASE STUDY — Present a business case and ask for their analysis.',
   'prioritization exercise': 'STYLE: PRIORITIZATION — Present competing priorities and ask how they would decide.',
   'metrics discussion':      'STYLE: METRICS — Ask about KPIs, success metrics, or how they measure impact.',
   'roadmap review':          'STYLE: ROADMAP REVIEW — Ask about product roadmap decisions, sequencing, or trade-offs.',
-  'SQL challenge':           'STYLE: SQL CHALLENGE — Present a data question and ask how they would query for it.',
+  'SQL challenge':           'STYLE: SQL CHALLENGE — Describe a data retrieval or transformation problem and ask the candidate to explain their query approach and reasoning step by step.',
   'analysis walkthrough':    'STYLE: ANALYSIS WALKTHROUGH — Ask the candidate to walk through an analytical approach step by step.',
   'reflective':              'STYLE: REFLECTIVE — Ask the candidate to reflect on a lesson learned or a growth experience.',
   'campaign analysis':       'STYLE: CAMPAIGN ANALYSIS — Ask the candidate to analyze a campaign\'s performance.',
@@ -1916,6 +1916,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         qualityScore: analysis.quality?.score,
         answeredQuestion: analysis.quality?.answeredQuestion,
         completeness: analysis.quality?.completeness,
+        depthLevel: analysis.quality?.depthLevel || 'moderate',
         targetArea
       };
 
@@ -3055,13 +3056,132 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
   }
 
   async generateFinalReport(session) {
-    // This would be implemented with comprehensive analysis
-    // For now, return basic structure
+    const persona = session.agentPersona || {};
+    const candidateProfile = session.candidateProfile || {};
+    const coverage = session.coverage || { overall: 0, areas: {} };
+    const conversation = session.conversation || [];
+
+    // ── 1. Quality score: average of per-response quality scores ──
+    const responseQualities = candidateProfile.responseQualities || [];
+    const qualityScore = responseQualities.length > 0
+      ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
+      : 50;
+
+    // ── 2. Coverage score: weighted area coverage ──
+    const coverageScore = coverage.overall || 0;
+
+    // ── 3. Skills score: must-have skills covered vs total ──
+    const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
+    const demonstrated = candidateProfile.revealedExpertise || [];
+    const gaps = candidateProfile.revealedGaps || [];
+    let skillsScore;
+    if (mustHaves.length > 0) {
+      const mustHavesCovered = mustHaves.filter(s =>
+        demonstrated.some(d => d.toLowerCase().includes(s.toLowerCase()))
+      );
+      skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+    } else {
+      skillsScore = qualityScore; // fallback if no must-haves defined
+    }
+
+    // ── 4. Depth score: from deep/moderate/surface per response ──
+    const depths = conversation
+      .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
+      .map(e => e.metadata.depthLevel);
+    const depthValues = { deep: 100, moderate: 65, surface: 25 };
+    const depthScore = depths.length > 0
+      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 50), 0) / depths.length)
+      : 50;
+
+    // ── 5. Communication score: from style analysis ──
+    const commStyle = candidateProfile.communicationStyle || {};
+    let communicationScore = 50;
+    if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
+    else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
+    if (commStyle.usesExamples) communicationScore += 15;
+    if (commStyle.verbosity === 'detailed') communicationScore += 10;
+    else if (commStyle.verbosity === 'concise') communicationScore += 5;
+    communicationScore = Math.min(100, communicationScore);
+
+    // ── 6. Composite final score ──
+    const finalScore = Math.round(
+      (qualityScore * 0.35) +
+      (coverageScore * 0.15) +
+      (skillsScore * 0.25) +
+      (depthScore * 0.15) +
+      (communicationScore * 0.10)
+    );
+
+    console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${skillsScore}, depth=${depthScore}, communication=${communicationScore} → overall=${finalScore}`);
+
+    // ── 7. LLM-generated intelligent summary ──
+    let aiSummary = { summary: '', strengths: [], weaknesses: [], recommendation: 'maybe', reasoning: '' };
+    try {
+      const areaScores = Object.entries(coverage.areas || {}).map(([a, d]) =>
+        `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage, quality: ${d.aiAnalysis?.qualityScore || 'N/A'}/100`
+      ).join('\n');
+
+      const summaryResponse = await bedrock.callLLM({
+        systemPrompt: `You are an expert recruiter writing a concise interview assessment. Return ONLY valid JSON.`,
+        messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
+Must-Have Skills: ${mustHaves.join(', ') || 'Not specified'}
+
+CANDIDATE DATA:
+- Overall Score: ${finalScore}/100
+- Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
+- Coverage: ${coverageScore}%
+- Skills Demonstrated: ${demonstrated.join(', ') || 'None identified'}
+- Skills Gaps: ${gaps.join(', ') || 'None identified'}
+- Communication: ${commStyle.verbosity || 'unknown'} speaker, ${commStyle.confidenceLevel || 'unknown'} confidence, ${commStyle.usesExamples ? 'uses examples' : 'rarely uses examples'}
+- Difficulty Level: ${candidateProfile.currentDifficulty || 'intermediate'}
+
+AREA SCORES:
+${areaScores}
+
+Write JSON:
+{
+  "summary": "2-3 sentence assessment of this candidate for this specific role",
+  "strengths": ["top 3 specific strengths based on the data above"],
+  "weaknesses": ["top 3 specific areas to improve"],
+  "recommendation": "strong_hire | hire | maybe | no_hire",
+  "reasoning": "1 sentence justification for the recommendation"
+}` }],
+        temperature: 0.3,
+        maxTokens: 500,
+        timeout: 15000,
+        useFastModel: true
+      });
+
+      aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
+    } catch (err) {
+      console.warn('⚠️ [FinalReport] LLM summary failed, using computed data only:', err.message);
+      aiSummary.summary = `Candidate scored ${finalScore}/100 overall. Quality: ${qualityScore}/100, Coverage: ${coverageScore}%, Depth: ${depthScore}/100.`;
+      aiSummary.recommendation = finalScore >= 75 ? 'hire' : finalScore >= 55 ? 'maybe' : 'no_hire';
+      aiSummary.reasoning = `Based on composite score of ${finalScore}/100.`;
+    }
+
     return {
-      summary: "Interview completed successfully",
-      coverage: session.coverage,
-      recommendations: session.realTimeReport.recommendations,
-      scores: session.realTimeReport.scores,
+      summary: aiSummary.summary,
+      coverage,
+      scores: {
+        overall: finalScore,
+        quality: qualityScore,
+        coverage: coverageScore,
+        skills: skillsScore,
+        depth: depthScore,
+        communication: communicationScore,
+      },
+      strengths: aiSummary.strengths || session.realTimeReport?.strengths || [],
+      weaknesses: aiSummary.weaknesses || session.realTimeReport?.weaknesses || [],
+      recommendation: aiSummary.recommendation,
+      reasoning: aiSummary.reasoning,
+      recommendations: session.realTimeReport?.recommendations || [],
+      candidateProfile: {
+        communicationStyle: commStyle,
+        revealedExpertise: demonstrated,
+        revealedGaps: gaps,
+        difficultyLevel: candidateProfile.currentDifficulty || 'intermediate',
+      },
       timestamp: new Date().toISOString()
     };
   }
