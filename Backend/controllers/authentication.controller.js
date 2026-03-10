@@ -29,39 +29,6 @@ module.exports.register = async (req, res) => {
     // Validate roleType
     const validRoleType = roleType && ['Candidate', 'Company'].includes(roleType) ? roleType : 'Candidate';
 
-    // Validate based on roleType BEFORE calling service
-    if (validRoleType === 'Candidate') {
-      // firstName and lastName are REQUIRED for Candidate
-      if (!firstName || typeof firstName !== 'string' || firstName.trim() === '') {
-        throw {
-          status: 400,
-          message: 'firstName is required and must be a valid string'
-        };
-      }
-
-      if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
-        throw {
-          status: 400,
-          message: 'lastName is required and must be a valid string'
-        };
-      }
-
-      // phone is optional but must be string if provided
-      if (phone && typeof phone !== 'string') {
-        throw {
-          status: 400,
-          message: 'phone must be a valid string'
-        };
-      }
-    } else if (validRoleType === 'Company') {
-      if (name && typeof name !== 'string') {
-        throw {
-          status: 400,
-          message: 'name must be a valid string for company profile'
-        };
-      }
-    }
-
     const result = await authService.registerUser(
       validEmail,
       validRoleType,
