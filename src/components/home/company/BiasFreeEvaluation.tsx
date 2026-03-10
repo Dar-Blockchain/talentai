@@ -4,7 +4,6 @@ import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 
 const ACCENT     = "rgba(12,218,139,1)";
 const ACCENT_BG  = "rgba(12,218,139,0.08)";
-const ACCENT_DIM = "rgba(12,218,139,0.7)";
 
 const BULLETS = [
   "AI Video Interviews — No Scheduling Needed",
@@ -33,7 +32,7 @@ const BiasFreeEvaluation: React.FC = () => (
         bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
         borderRadius: "24px", px: 2.5, py: 1, mb: 3,
       }}>
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#059669", letterSpacing: "0.6px" }}>
+        <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: "#0CDA8B", letterSpacing: "0.6px" }}>
           The Solution
         </Typography>
       </Box>
@@ -80,31 +79,26 @@ const BiasFreeEvaluation: React.FC = () => (
 
         {/* Promo banner */}
         <Box sx={{
-          background: "linear-gradient(135deg, #0E0F10 0%, #0d1f1a 100%)",
+          background: "#0E0F10",
           borderRadius: 3, p: 3,
           border: "1px solid rgba(12,218,139,0.15)",
           position: "relative", overflow: "hidden",
         }}>
-          <Box sx={{
-            position: "absolute", width: 200, height: 200, borderRadius: "50%",
-            bgcolor: "rgba(12,218,139,0.06)", top: -60, right: -60, filter: "blur(40px)",
-          }} />
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "18px", color: "#fff", mb: 1, lineHeight: 1.3, position: "relative" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "18px", color: "#fff", mb: 1, lineHeight: 1.3 }}>
             See How We Eliminate 75% of Your Hiring Workload
           </Typography>
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.50)", mb: 2.5, position: "relative" }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.50)", mb: 2.5 }}>
             Watch a real AI agent conduct a full technical + soft-skills interview in minutes.
           </Typography>
           <Button
             variant="contained"
             onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
             sx={{
-              bgcolor: ACCENT, color: "#0b1b1f",
+              bgcolor: ACCENT, color: "#fff",
               fontFamily: "Poppins", fontWeight: 600, fontSize: "13px",
-              textTransform: "none", borderRadius: 1,
-              boxShadow: "0 0 16px rgba(12,218,139,0.30)",
-              position: "relative",
-              "&:hover": { bgcolor: ACCENT_DIM },
+              textTransform: "none", borderRadius: 0,
+              boxShadow: "none",
+              "&:hover": { bgcolor: ACCENT },
             }}
           >
             Watch a 2-Min Demo
@@ -120,7 +114,8 @@ const BiasFreeEvaluation: React.FC = () => (
           lineHeight: 1.25, color: "#111827", mb: 1.5,
         }}>
           Every Candidate Evaluated<br />
-          <Box component="span" sx={{ color: "#059669" }}>on Merit. Nothing Else.</Box>
+          <Box component="span" sx={{ color: "#0CDA8B" }}>on Merit.</Box><br />
+          <Box component="span" sx={{ color: "#0CDA8B" }}>Nothing Else.</Box>
         </Typography>
         <Typography sx={{
           fontFamily: "Poppins", fontSize: "15px",
