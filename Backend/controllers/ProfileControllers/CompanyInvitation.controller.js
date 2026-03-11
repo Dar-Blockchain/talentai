@@ -45,19 +45,27 @@ module.exports.deleteInvitation = async (req, res) => {
 module.exports.respondInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
-    const { action } = req.body; // 'accept' or 'reject'
+    const { action, token } = req.body;
+    
     if (!action || !["accept", "reject"].includes(action))
       return res
         .status(400)
         .json({ success: false, message: "Invalid action" });
 
     if (action === "accept") {
+      if (!token) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Token is required for accepting invitation" });
+      }
+
       const userId = req.user._id;
       const userEmail = req.user.email;
       const accepted = await CompanyInvitationService.acceptInvitation(
         invitationId,
         userId,
         userEmail,
+        token
       );
       return res.json({ success: true, accepted });
     }
