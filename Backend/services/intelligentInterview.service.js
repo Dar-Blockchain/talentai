@@ -1472,10 +1472,10 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
 
   async shouldEndInterview(session, totalDuration) {
     try {
-      // 🕐 TIME LIMIT CHECK (20 minutes max by default)
+      // 🕐 TIME LIMIT CHECK (hard cap = target × 1.5, e.g., 45 min)
       if (session.interviewStartTime) {
         const elapsedMinutes = (Date.now() - session.interviewStartTime) / 60000;
-        const maxDuration = session.maxDurationMinutes || 20;
+        const maxDuration = session.maxDurationMinutes || 45;
 
         if (elapsedMinutes >= maxDuration) {
           console.log(`⏰ [Time Limit] ${elapsedMinutes.toFixed(1)} minutes elapsed (max: ${maxDuration}) - ending interview`);
@@ -1565,6 +1565,25 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
         };
       }
 
+      // EARLY EXCELLENCE: Consistently outstanding performance after 6+ responses (symmetric with poor exit)
+      if (candidateResponseCount >= 6 && overallQualityAverage >= 85) {
+        console.log(`🌟 [Early Excellence] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses — ending early`);
+        return {
+          shouldEnd: true,
+          confidence: 95,
+          reasoning: `Candidate consistently demonstrates excellent competency (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Clear signal of strong capability — further questioning provides diminishing returns.`,
+          completedObjectives: ['Technical competency validated', 'Consistently excellent responses'],
+          remainingGaps: [],
+          recommendedAction: 'End interview - candidate clearly qualified',
+          earlySuccess: true,
+          terminationReason: 'early_excellence',
+          message: 'Excellent! You\'ve demonstrated outstanding understanding across all topics. Thank you for your time.',
+          qualityScore: overallQualityAverage,
+          responseCount: candidateResponseCount,
+          score: 'excellent'
+        };
+      }
+
       // EARLY SUCCESS: Consistently excellent performance after 8+ responses — only if coverage adequate
       const overallCov = session.coverage?.overall || 0;
       if (candidateResponseCount >= 8 && overallQualityAverage >= 80 && overallCov >= 60) {
@@ -1628,8 +1647,9 @@ RESPONSE FORMAT (JSON only):
 }`;
 
       const userPrompt = `INTERVIEW EVALUATION:
-Total Duration: ${totalDuration} minutes
-Target Duration: ${session.config.sessionSettings.duration} minutes
+Elapsed: ${totalDuration} minutes
+Target Duration: ${session.targetDurationMinutes || session.config.sessionSettings.duration} minutes
+Maximum Duration: ${session.maxDurationMinutes || 45} minutes
 
 COVERAGE STATUS:
 ${JSON.stringify(session.coverage, null, 2)}
@@ -1782,14 +1802,16 @@ Determine if interview objectives have been sufficiently met to end the session.
       // Re-fetch session to get updated coverage (may have been overridden by persona)
       const updatedSessionForTiming = await this.sessionManager.getSession(sessionId);
       const coverageAreas = Object.keys(updatedSessionForTiming.coverage?.areas || {});
-      const totalMinutes = config.sessionSettings?.duration || 20;
+      const totalMinutes = config.sessionSettings?.duration || 30;
+      const maxDurationMinutes = Math.ceil(totalMinutes * 1.5); // 30 → 45
       const timeBudgetPerAreaMs = coverageAreas.length > 0
         ? (totalMinutes * 60 * 1000) / coverageAreas.length
         : totalMinutes * 60 * 1000;
 
       await this.sessionManager.updateSession(sessionId, {
         interviewStartTime: Date.now(),
-        maxDurationMinutes: totalMinutes,
+        targetDurationMinutes: totalMinutes,     // target duration (e.g., 30 min)
+        maxDurationMinutes: maxDurationMinutes,   // hard cap (e.g., 45 min)
         timeBudgetPerAreaMs,
         coverageAreaCount: coverageAreas.length,
         jobDescription,
@@ -1801,7 +1823,7 @@ Determine if interview objectives have been sufficiently met to end the session.
           lastQualityScore: null
         }
       });
-      console.log(`✅ [Service] Interview timing initialized: ${totalMinutes}min total, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
+      console.log(`✅ [Service] Interview timing: target ${totalMinutes}min, max ${maxDurationMinutes}min, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
 
       // Generate intelligent greeting with error handling
       let greeting;
