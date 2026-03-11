@@ -108,7 +108,7 @@ const ContactSection: React.FC = () => {
       }}
     >
       {/* ── Section header ── */}
-      <Box sx={{ textAlign: "center", mb: { xs: 5, md: 7 } }}>
+      <Box sx={{ textAlign: "left", mb: { xs: 5, md: 7 }, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
         {/* Overline pill */}
         <Box sx={{
           display: "inline-flex", alignItems: "center", gap: 1,
@@ -138,8 +138,7 @@ const ContactSection: React.FC = () => {
           fontSize: { xs: "15px", md: "17px" },
           lineHeight: 1.65,
           color: "#4B5563",
-          maxWidth: 540,
-          mx: "auto",
+          maxWidth: 840,
         }}>
           Every day without TalentAI is another $500 lost to an open role — and another great candidate hired by your competitor. Let's fix your pipeline today.
         </Typography>

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import {
   Box,
   Link,
@@ -49,8 +50,18 @@ const Footer: React.FC = () => {
       }}
     >
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>
-        {/* Top Section - Copyright and Disclaimer */}
+        {/* Top Section - Logo + Copyright and Disclaimer */}
         <Box sx={{ mb: 1 }}>
+          {/* Logo */}
+          <Box sx={{ mb: 1.5 }}>
+            <Image
+              src="/images/home/TalentAiLogo.png"
+              alt="TalentAI"
+              width={120}
+              height={32}
+              style={{ objectFit: "contain" }}
+            />
+          </Box>
           <Typography
             variant="body2"
             sx={{

@@ -44,7 +44,7 @@ const SuccessSection: React.FC = () => (
     }}
   >
     {/* ── Header ── */}
-    <Box sx={{ textAlign: "center", mb: { xs: 5, md: 7 } }}>
+    <Box sx={{ textAlign: "left", mb: { xs: 5, md: 7 } }}>
       <Box sx={{
         display: "inline-flex", alignItems: "center", gap: 1,
         bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
@@ -68,7 +68,7 @@ const SuccessSection: React.FC = () => (
 
       <Typography sx={{
         fontFamily: "Poppins", fontSize: { xs: "15px", md: "17px" },
-        color: "#6B7280", lineHeight: 1.65, maxWidth: 500, mx: "auto",
+        color: "#6B7280", lineHeight: 1.65, maxWidth: 700,
       }}>
         See the before-and-after difference TalentAI makes for every team that deploys it.
       </Typography>

@@ -21,23 +21,21 @@ const FinalCTA: React.FC = () => (
       mx: "auto",
       px: { xs: 3, md: 8 },
       py: { xs: 6, md: 8 },
-      textAlign: "center",
+      textAlign: "left",
       position: "relative",
       overflow: "hidden",
     }}
   >
-    {/* Overline */}
-    <Typography sx={{
-      fontFamily: "Poppins",
-      fontSize: "11px",
-      fontWeight: 700,
-      letterSpacing: "2px",
-      textTransform: "uppercase",
-      color: ACCENT,
-      mb: 2.5,
+    {/* Overline pill */}
+    <Box sx={{
+      display: "inline-flex", alignItems: "center",
+      bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
+      borderRadius: "24px", px: 2.5, py: 1, mb: 2.5,
     }}>
-      Don't Wait
-    </Typography>
+      <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
+        Don't Wait
+      </Typography>
+    </Box>
 
     {/* Headline */}
     <Typography sx={{
@@ -48,7 +46,6 @@ const FinalCTA: React.FC = () => (
       color: "#fff",
       mb: 3,
       maxWidth: 720,
-      mx: "auto",
     }}>
       Your Next Great Hire Is Waiting.{" "}
       <Box component="span" sx={{ color: ACCENT }}>
@@ -63,7 +60,6 @@ const FinalCTA: React.FC = () => (
       color: "rgba(255,255,255,0.60)",
       lineHeight: 1.7,
       maxWidth: 560,
-      mx: "auto",
       mb: 5,
     }}>
       While you're reading this, AI-powered companies are already interviewing your candidates.
@@ -74,8 +70,8 @@ const FinalCTA: React.FC = () => (
     <Stack
       direction={{ xs: "column", sm: "row" }}
       spacing={2}
-      justifyContent="center"
-      alignItems="center"
+      justifyContent="flex-start"
+      alignItems="flex-start"
       sx={{ mb: 4 }}
     >
       <Button
@@ -122,7 +118,7 @@ const FinalCTA: React.FC = () => (
     <Stack
       direction="row"
       spacing={{ xs: 2, md: 4 }}
-      justifyContent="center"
+      justifyContent="flex-start"
       flexWrap="wrap"
       useFlexGap
       sx={{ rowGap: 1.5 }}

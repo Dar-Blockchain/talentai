@@ -17,7 +17,7 @@ const SolutionsSection = () => {
         flexDirection: "column",
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: { xs: 3, md: 5 } }}>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", mb: { xs: 3, md: 5 } }}>
         {/* Overline pill */}
         <Box sx={{
           display: "inline-flex", alignItems: "center", gap: 1,
@@ -36,7 +36,7 @@ const SolutionsSection = () => {
             fontWeight: 700,
             fontSize: { xs: "28px", md: "44px" },
             lineHeight: 1.2,
-            textAlign: "center",
+            textAlign: "left",
             color: "#111827",
             mb: 1.5,
           }}
@@ -48,12 +48,11 @@ const SolutionsSection = () => {
           fontWeight: 400,
           fontSize: { xs: "15px", md: "17px" },
           lineHeight: 1.65,
-          textAlign: "center",
+          textAlign: "left",
           color: "#4B5563",
-          maxWidth: 540,
+          maxWidth: 750,
         }}>
-          No ramp-up time. No consultant fees. No process redesign.<br />
-          Build your pipeline today. Start interviewing candidates tonight.
+          No ramp-up time. No consultant fees. No process redesign. Build your pipeline today. Start interviewing candidates tonight.
         </Typography>
       </Box>
 

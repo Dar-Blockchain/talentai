@@ -137,7 +137,7 @@ const FAQSection: React.FC = () => (
       }}
     >
       {/* Header */}
-      <Box sx={{ textAlign: "center", mb: { xs: 4, md: 6 } }}>
+      <Box sx={{ textAlign: "left", mb: { xs: 4, md: 6 } }}>
         {/* Overline pill */}
         <Box sx={{
           display: "inline-flex", alignItems: "center", gap: 1,
@@ -166,9 +166,9 @@ const FAQSection: React.FC = () => (
             fontFamily: "Poppins",
             fontSize: "16px",
             color: "#6B7280",
-            maxWidth: 520,
-            mx: "auto",
+            maxWidth: 550,
             lineHeight: 1.6,
+            whiteSpace: "nowrap",
           }}
         >
           Everything you need to know about AI-powered hiring with TalentAI.
