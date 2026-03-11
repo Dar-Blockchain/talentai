@@ -284,8 +284,30 @@ module.exports.getInvitationStatsByCompany = async (companyId) => {
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
-    .populate("invitedBy", "email role username _id");
+    .populate({
+      path: "invitedBy",
+      select: "email role username profile",
+      populate: {
+        path: "profile",
+        select: "companyDetails.name"
+      }
+    });
 
   if (!invitation) throw new Error("Invitation not found");
-  return invitation;
+  
+  // Convert to plain object to ensure clean transformation
+  const invitationObj = invitation.toObject();
+  
+  // Transform invitedBy to keep only required fields
+  if (invitationObj.invitedBy) {
+    const companyName = invitationObj.invitedBy.profile?.companyDetails?.name || "";
+    invitationObj.invitedBy = {
+      username: invitationObj.invitedBy.username,
+      email: invitationObj.invitedBy.email,
+      role: invitationObj.invitedBy.role,
+      name: companyName
+    };
+  }
+
+  return invitationObj;
 };
