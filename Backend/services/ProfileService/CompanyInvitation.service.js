@@ -78,6 +78,23 @@ const _addDepartmentIfProvided = (data, departmentId) => {
 };
 
 /**
+ * Verify and decode a JWT invitation token
+ * @param {string} token - The JWT token
+ * @returns {Object} The decoded token payload
+ * @throws {Error} If token is invalid or expired
+ */
+const _verifyAndDecodeToken = (token) => {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      throw new Error("Invitation token has expired");
+    }
+    throw new Error("Invalid invitation token");
+  }
+};
+
+/**
  * Send an invitation to a user to join a company account
  * @param {string} company - Company ID
  * @param {string} userEmail - Email of the user to invite
@@ -175,20 +192,34 @@ module.exports.deleteInvitation = async (invitationId) => {
  * @param {string} invitationId - The invitation ID
  * @param {string} userId - The user ID accepting the invitation
  * @param {string} userEmail - The user's email
+ * @param {string} token - The JWT invitation token
  * @returns {Object} The created company membership
  */
-module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
+module.exports.acceptInvitation = async (invitationId, userId, userEmail, token) => {
   const invitation = await CompanyInvitationModel.findById(invitationId);
   if (!invitation) {
     throw new Error("Invitation not found");
   }
 
-  if (new Date() > invitation.expiresAt) {
-    throw new Error("Invitation has expired");
+  // Verify JWT token validity and expiration
+  let decodedToken;
+  try {
+    decodedToken = _verifyAndDecodeToken(token);
+  } catch (error) {
+    throw error;
   }
 
-  if (invitation.email !== userEmail) {
+  // Verify token payload matches invitation data
+  if (decodedToken.userEmail !== userEmail) {
     throw new Error("Invitation not for this user");
+  }
+
+  if (decodedToken.userEmail !== invitation.email) {
+    throw new Error("Token email does not match invitation email");
+  }
+
+  if (decodedToken.role !== invitation.role) {
+    throw new Error("Token role does not match invitation role");
   }
 
   const membershipData = {
