@@ -29,6 +29,7 @@ export const signinUser = createAsyncThunk(
   "auth/signin",
   async (email: string, { rejectWithValue }) => {
     try {
+      setAxiosLoggingOut(false);
       const response = await axiosInstance.post('auth', { email });
       return response.data;
     } catch (error: any) {
