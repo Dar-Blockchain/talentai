@@ -16,7 +16,7 @@ import InvitationCard from "@/components/features/invitation/InvitationCard";
 const InvitationAcceptationPage: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { invitationId } = router.query;
+  const { invitationId, token } = router.query;
 
   const {
     currentInvitation,
@@ -50,7 +50,7 @@ const InvitationAcceptationPage: React.FC = () => {
     if (!invitationId || typeof invitationId !== "string") return;
     try {
       await dispatch(
-        respondToInvitation({ invitationId, action: "accept" }),
+        respondToInvitation({ invitationId, action: "accept", token: typeof token === "string" ? token : undefined }),
       ).unwrap();
     } catch {
       /* handled by redux */
@@ -61,7 +61,7 @@ const InvitationAcceptationPage: React.FC = () => {
     if (!invitationId || typeof invitationId !== "string") return;
     try {
       await dispatch(
-        respondToInvitation({ invitationId, action: "reject" }),
+        respondToInvitation({ invitationId, action: "reject", token: typeof token === "string" ? token : undefined }),
       ).unwrap();
     } catch {
       /* handled by redux */
