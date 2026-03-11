@@ -5,7 +5,76 @@ const CompanyMembershipModel = require("../../models/CompanyMembership.model");
 const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
 const { sendCompanyInvitation } = require("../../utils/email-service");
 
-// Send an invitation to a user to join a company account
+// Constants
+const INVITATION_EXPIRATION_TIME = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+const FRONTEND_BASE_URL = process.env.FRONTEND_URL || "https://app.talentai.bid";
+
+/**
+ * Generate a random token and calculate expiration date
+ * @param {string} userEmail - The user's email
+ * @param {string} role - The role being offered
+ * @returns {Object} { token: string, expiresAt: Date }
+ */
+const _generateTokenAndExpiration = (userEmail, role) => {
+  const randomBytes = crypto.randomBytes(32).toString("hex");
+  const data = `${randomBytes}:${userEmail}:${role}:${Date.now()}`;
+  const token = crypto.createHash("sha256").update(data).digest("hex");
+  return {
+    token,
+    expiresAt: new Date(Date.now() + INVITATION_EXPIRATION_TIME),
+  };
+};
+
+/**
+ * Build the invitation acceptance link
+ * @param {string} token - The invitation token
+ * @param {string} invitationId - The invitation ID
+ * @param {string} company - The company ID
+ * @returns {string} The complete invitation URL
+ */
+const _buildInvitationLink = (token, invitationId, company) =>
+  `${FRONTEND_BASE_URL}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&company=${company}`;
+
+/**
+ * Send invitation email with error handling
+ * @param {string} email - Recipient email
+ * @param {string} senderName - Name of the person sending the invitation
+ * @param {string} role - Role being offered
+ * @param {string} invitationLink - The invitation link
+ * @param {boolean} isResend - Whether this is a resend
+ */
+const _sendInvitationEmail = async (email, senderName, role, invitationLink, isResend = false) => {
+  try {
+    await sendCompanyInvitation(email, senderName, role, senderName, invitationLink);
+    if (isResend) {
+      console.log(`✅ Invitation resent to ${email}`);
+    }
+  } catch (error) {
+    console.error(`Failed to send ${isResend ? "resend" : "company"} invitation email:`, error);
+  }
+};
+
+/**
+ * Add department to data object if provided
+ * @param {Object} data - The data object to update
+ * @param {string|null} departmentId - The department ID
+ */
+const _addDepartmentIfProvided = (data, departmentId) => {
+  if (departmentId) {
+    data.department = departmentId;
+  }
+};
+
+/**
+ * Send an invitation to a user to join a company account
+ * @param {string} company - Company ID
+ * @param {string} userEmail - Email of the user to invite
+ * @param {string} role - Role to assign
+ * @param {string} invitedBy - User ID of the person sending invitation
+ * @param {string} username - Username of the inviting person
+ * @param {string|null} departmentId - Optional department ID
+ * @returns {Object} The created invitation document
+ */
 module.exports.sentInvitation = async (
   company,
   userEmail,
@@ -19,12 +88,11 @@ module.exports.sentInvitation = async (
     company,
     status: "pending",
   });
-  if (existing)
+  if (existing) {
     throw new Error("User already has a pending invitation for this account");
+  }
 
-  // Generate a unique token and set expiration to 2 days
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
+  const { token, expiresAt } = _generateTokenAndExpiration(userEmail, role);
 
   const invitationData = {
     email: userEmail,
@@ -34,148 +102,139 @@ module.exports.sentInvitation = async (
     token,
     expiresAt,
   };
-  
-  // Add department if provided
-  if (departmentId) {
-    invitationData.department = departmentId;
-  }
+
+  _addDepartmentIfProvided(invitationData, departmentId);
 
   const member = await CompanyInvitationModel.create(invitationData);
+  const invitationLink = _buildInvitationLink(token, member._id, company);
 
-  // Build the acceptance link (frontend)
-  const frontendBase = process.env.FRONTEND_URL || "https://app.talentai.bid";
-  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${member._id}&company=${company}`;
-
-  // Send the invitation email
-  try {
-    await sendCompanyInvitation(
-      userEmail,
-      username,
-      role,
-      userEmail,
-      invitationLink,
-    );
-  } catch (e) {
-    console.error("Failed to send company invitation email:", e);
-  }
+  await _sendInvitationEmail(userEmail, username, role, invitationLink);
 
   return member;
 };
 
-// Resend an invitation (regenerate token and reset expiration)
+/**
+ * Resend an invitation with a new token and expiration
+ * @param {string} invitationId - The invitation ID to resend
+ * @param {string|null} departmentId - Optional updated department ID
+ * @returns {Object} The updated invitation document
+ */
 module.exports.resendInvitation = async (invitationId, departmentId = null) => {
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
-
-  const updateData = { token, expiresAt, status: "pending" };
-  
-  // Update department if provided
-  if (departmentId) {
-    updateData.department = departmentId;
+  const updated = await CompanyInvitationModel.findById(invitationId).populate("invitedBy");
+  if (!updated) {
+    throw new Error("Invitation not found");
   }
 
-  const updated = await CompanyInvitationModel.findByIdAndUpdate(
+  const { token, expiresAt } = _generateTokenAndExpiration(updated.email, updated.role);
+
+  const updateData = { token, expiresAt, status: "pending" };
+
+  _addDepartmentIfProvided(updateData, departmentId);
+
+  const updatedInvitation = await CompanyInvitationModel.findByIdAndUpdate(
     invitationId,
     updateData,
     { new: true },
   ).populate("invitedBy");
 
-  if (!updated) throw new Error("Invitation not found");
+  const invitationLink = _buildInvitationLink(token, invitationId, updatedInvitation.company);
+  const senderName = updatedInvitation.invitedBy?.username || "Admin";
 
-  // Build the acceptance link with the new token
-  const frontendBase = process.env.FRONTEND_URL || "https://app.talentai.bid";
-  const invitationLink = `${frontendBase}/invitation/joinTeam/?token=${token}&invitationId=${invitationId}&company=${updated.company}`;
+  await _sendInvitationEmail(updatedInvitation.email, senderName, updatedInvitation.role, invitationLink, true);
 
-  // Resend the invitation email with the new token
-  try {
-    const invitedByName = updated.invitedBy?.username || "Admin";
-    await sendCompanyInvitation(
-      updated.email,
-      invitedByName,
-      updated.role,
-      invitedByName,
-      invitationLink,
-    );
-    console.log(`✅ Invitation resent to ${updated.email}`);
-  } catch (e) {
-    console.error("Failed to resend company invitation email:", e);
-  }
-
-  return updated;
+  return updatedInvitation;
 };
 
-// Delete/revoke an invitation
+/**
+ * Delete/revoke an invitation
+ * @param {string} invitationId - The invitation ID to delete
+ * @returns {Object} The deleted invitation document
+ */
 module.exports.deleteInvitation = async (invitationId) => {
   const deleted = await CompanyInvitationModel.findByIdAndDelete(invitationId);
-  if (!deleted) throw new Error("Invitation not found");
+  if (!deleted) {
+    throw new Error("Invitation not found");
+  }
   return deleted;
 };
 
-// Accept an invitation and add the user to the company
+/**
+ * Accept an invitation and add the user to the company
+ * @param {string} invitationId - The invitation ID
+ * @param {string} userId - The user ID accepting the invitation
+ * @param {string} userEmail - The user's email
+ * @returns {Object} The created company membership
+ */
 module.exports.acceptInvitation = async (invitationId, userId, userEmail) => {
   const invitation = await CompanyInvitationModel.findById(invitationId);
-  if (!invitation) throw new Error("Invitation not found");
+  if (!invitation) {
+    throw new Error("Invitation not found");
+  }
 
-  // Verify that the invitation has not expired
-  if (new Date() > invitation.expiresAt)
+  if (new Date() > invitation.expiresAt) {
     throw new Error("Invitation has expired");
+  }
 
-  // Verify that the invitation email matches the user's email
-  if (invitation.email !== userEmail)
+  if (invitation.email !== userEmail) {
     throw new Error("Invitation not for this user");
+  }
 
-  // Create the CompanyMembership entry
   const membershipData = {
     user: userId,
     company: invitation.company,
     role: invitation.role,
   };
-  
-  // Add department if provided in invitation
-  if (invitation.department) {
-    membershipData.department = invitation.department;
-  }
+
+  _addDepartmentIfProvided(membershipData, invitation.department);
 
   const membership = await CompanyMembershipModel.create(membershipData);
 
-  // Delete the invitation after acceptance
   await CompanyInvitationModel.findByIdAndDelete(invitationId);
 
-  // Update the user with companyMembership relationship
   await User.findByIdAndUpdate(
     userId,
-    {
-      companyMembership: membership._id,
-    },
+    { companyMembership: membership._id },
     { new: true },
   );
 
   return membership;
 };
 
-// Reject an invitation
+/**
+ * Reject an invitation
+ * @param {string} invitationId - The invitation ID to reject
+ * @returns {Object} The updated invitation document
+ */
 module.exports.rejectInvitation = async (invitationId) => {
   const updated = await CompanyInvitationModel.findByIdAndUpdate(
     invitationId,
     { status: "revoked" },
     { new: true },
   );
-  if (!updated) throw new Error("Invitation not found");
+  if (!updated) {
+    throw new Error("Invitation not found");
+  }
   return updated;
 };
 
-// Get all invitations for companies owned by the current user
+/**
+ * Get all invitations for companies owned by the current user
+ * @param {Array} ownerId - Array of company IDs
+ * @returns {Array} Array of invitation documents
+ */
 module.exports.getCompanyInvitations = async (ownerId) => {
-  // Fetch all invitations for these companies
   return CompanyInvitationModel.find({ company: { $in: ownerId } })
     .populate("invitedBy")
     .sort({ createdAt: -1 });
 };
 
-// Compute simple statistics for a company's invitations (counts by role/status)
+/**
+ * Get invitation statistics for a company
+ * @param {string} companyId - The company ID
+ * @returns {Object} Statistics object with total count
+ */
 module.exports.getInvitationStatsByCompany = async (companyId) => {
   const total = await CompanyInvitationModel.countDocuments({ company: companyId });
-
   return { total };
 };
 
