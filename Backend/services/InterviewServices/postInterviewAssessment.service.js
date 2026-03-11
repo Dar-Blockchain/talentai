@@ -66,6 +66,43 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
   }
 };
 
+// ========== CHECK EXISTENCE ==========
+/**
+ * Check if an assessment already exists for a candidate and post
+ * Only returns true if:
+ * 1. The post has PostSteps
+ * 2. The assessment exists for the candidate and post
+ * @param {string} candidateId - The candidate ID
+ * @param {string} postId - The post ID
+ * @returns {Promise<boolean>} True if assessment exists, false otherwise
+ */
+module.exports.hasExistingAssessment = async (candidateId, postId) => {
+  try {
+    // First, check if the post exists and has PostSteps
+    const post = await Post.findById(postId).select('PostSteps');
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // If the post has no PostSteps, no assessment can exist
+    if (!post.PostSteps === 0) {
+      return false;
+    }
+
+    // If post has PostSteps, check for existing assessment
+    const assessment = await PostInterviewAssessment.findOne({
+      candidate: candidateId,
+      post: postId
+    });
+
+    return assessment !== null;
+  } catch (error) {
+    console.error('Error checking existing assessment:', error.message);
+    throw error;
+  }
+};
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
