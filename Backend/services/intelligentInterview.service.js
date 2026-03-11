@@ -473,7 +473,15 @@ Must-Have Skills: ${persona.idealCandidate?.mustHaveSkills?.join(", ") || "N/A"}
 Nice-to-Have: ${persona.idealCandidate?.niceToHaveSkills?.join(", ") || "N/A"}
 Red Flags: ${persona.idealCandidate?.redFlags?.join(", ") || "N/A"}
 Tone: ${persona.agentBehavior?.tone || "professional"}
-Domain Topics: ${persona.agentBehavior?.domainTopics?.join(", ") || "N/A"}`;
+Domain Topics: ${persona.agentBehavior?.domainTopics?.join(", ") || "N/A"}
+Experience Level: ${persona.job.experienceLevel || "mid"}
+Seniority Expectations: ${persona.idealCandidate?.seniorityExpectations || "N/A"}
+
+=== JOB REQUIREMENTS (questions MUST align with these) ===
+${(persona.job.requirements || []).slice(0, 10).join("\n") || "N/A"}
+
+=== JOB RESPONSIBILITIES ===
+${(persona.job.responsibilities || []).slice(0, 10).join("\n") || "N/A"}`;
       }
 
       // Build candidate profile context
@@ -501,17 +509,20 @@ Current Difficulty: ${candidateProfile.currentDifficulty || "intermediate"}`;
       }
 
       // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
+      const experienceLevel = session.agentPersona?.job?.experienceLevel || session.config.context?.experienceLevel || 'mid';
       let questionGuidelines = '';
       if (session.config.interviewType === 'TECHNICAL_SKILL') {
         const focusAreaNames = Object.keys(session.coverage?.areas || {});
         questionGuidelines = `
 TECHNICAL SKILL interview for "${session.config.context.targetRole}".
 Focus areas: ${focusAreaNames.join(', ')}
-Assess at ${session.config.context.experienceLevel} level.`;
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
       } else if (session.config.interviewType === 'HR_INTERVIEW') {
-        questionGuidelines = `HR/BEHAVIORAL interview — focus on soft skills, teamwork, cultural fit.`;
+        questionGuidelines = `HR/BEHAVIORAL interview — focus on soft skills, teamwork, cultural fit.
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
       } else if (session.config.interviewType === 'SOFT_SKILL') {
-        questionGuidelines = `SOFT SKILLS interview — focus on communication, EQ, collaboration.`;
+        questionGuidelines = `SOFT SKILLS interview — focus on communication, EQ, collaboration.
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
       }
 
       // Adapt style based on candidate profile
@@ -547,9 +558,16 @@ RULES:
 - Target the specified coverage gap
 - Be natural and conversational
 - NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
+- Questions MUST be directly relevant to the JOB REQUIREMENTS and RESPONSIBILITIES listed above. Do NOT ask about technologies, tools, or concepts not mentioned in the JD.
 - NEVER ask a question similar to any in the "ALREADY ASKED" list
 - Each question must explore a NEW angle or sub-topic not yet covered
 - Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
+- CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
+  * Junior/Entry: Basic concepts, "how would you" questions, guided scenarios, no system design
+  * Mid-Level: Practical experience questions, trade-off discussions, real project examples
+  * Senior: Architecture decisions, system design, leadership, cross-team impact, mentoring
+  * Lead/Principal: Strategic thinking, org-wide impact, technical vision, complex trade-offs
+  Do NOT ask senior-level architecture or system design questions for junior/mid roles.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -580,6 +598,27 @@ RESPONSE FORMAT (JSON only):
         .map(([area, d]) => `${area}: ${d.topicsExplored.join(', ')}`)
         .join('\n') || 'none yet';
 
+      // Detect overused themes: bigrams that appear 2+ times in questions
+      const allQuestionTexts = session.conversation
+        .filter(e => e.type === 'interviewer')
+        .map(e => e.content.toLowerCase());
+      const themeFrequency = {};
+      for (const q of allQuestionTexts) {
+        const words = q.split(/\s+/).filter(w => w.length > 3);
+        for (let i = 0; i < words.length - 1; i++) {
+          const bigram = `${words[i]} ${words[i+1]}`;
+          themeFrequency[bigram] = (themeFrequency[bigram] || 0) + 1;
+        }
+      }
+      const overusedThemes = Object.entries(themeFrequency)
+        .filter(([_, count]) => count >= 2)
+        .map(([theme]) => theme);
+
+      // RAG context from JD (if available)
+      const ragBlock = session.ragContext ? `
+RELEVANT JD CONTEXT (use this to align questions with job requirements):
+${session.ragContext}` : '';
+
       const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
 
 COVERAGE: ${JSON.stringify(coverageSummary)}
@@ -587,6 +626,8 @@ WEAKEST: ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || O
 
 TOPICS ALREADY EXPLORED (do NOT revisit these — pick a DIFFERENT sub-topic):
 ${exploredTopicsSummary}
+${overusedThemes.length > 0 ? `\nOVERUSED THEMES (AVOID these completely — pick a fresh topic):\n${overusedThemes.join(', ')}` : ''}
+${ragBlock}
 
 ALREADY ASKED (DO NOT repeat or rephrase these):
 ${allAskedQuestions || '(none yet)'}
@@ -1037,11 +1078,18 @@ Return ONLY valid JSON with ALL of these fields:
 {
   "quality": { "score": 0-100, "answeredQuestion": true/false, "depthLevel": "surface|moderate|deep", "isOffTopic": true/false, "completeness": "complete|partial|minimal|avoided" },
   "skills": { "demonstrated": ["skill1"], "hinted": ["skill2"], "gaps": ["skill3"] },
-  "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-15, "evidence": "brief evidence" }] },
+  "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-25, "evidence": "brief evidence" }] },
   "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
   "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
   "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." }
-}`;
+}
+
+COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
+- Deep answer with specific examples and technical detail: increase 18-25
+- Good answer showing solid understanding: increase 12-17
+- Surface-level or partial answer: increase 5-11
+- Off-topic, avoided, or no useful signal: increase 0
+The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).`;
 
     const coverageSummary = Object.fromEntries(
       Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, d.percentage + "%"])
@@ -1127,8 +1175,8 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
     const currentArea = session.currentFocusArea;
     const questionsInArea = areas[currentArea]?.questionsAsked || 0;
 
-    // HARD CAP: After 3 questions in current area, always transition to weakest area
-    if (questionsInArea >= 3 && currentArea) {
+    // HARD CAP: After 2 questions in current area, always transition to weakest area
+    if (questionsInArea >= 2 && currentArea) {
       const weakest = Object.entries(areas)
         .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
         .sort((a, b) => a[1].percentage - b[1].percentage)[0];
@@ -1990,7 +2038,12 @@ Determine if interview objectives have been sufficiently met to end the session.
         for (const impact of analysis.coverage.areasImpacted) {
           if (finalCoverage.areas[impact.area]) {
             const area = finalCoverage.areas[impact.area];
-            area.percentage = Math.min(100, (area.percentage || 0) + (impact.increase || 0));
+            // Floor: minimum 5% if candidate actually answered the question
+            let increase = impact.increase || 0;
+            if (increase > 0 && increase < 5 && analysis.quality?.answeredQuestion !== false) {
+              increase = 5;
+            }
+            area.percentage = Math.min(100, (area.percentage || 0) + increase);
             area.lastUpdated = new Date().toISOString();
             if (impact.evidence) {
               area.indicators = area.indicators || [];
@@ -2096,6 +2149,22 @@ Determine if interview objectives have been sufficiently met to end the session.
       // ── STEP 5.5: Select question style (pure logic, ~0ms) ──
       const questionStyle = this.selectQuestionStyle(finalSession, analysis, strategy);
       console.log(`🎨 [Step 5.5] Style: ${questionStyle.id} | Strategy: ${strategy.mode} → ${strategy.targetArea}`);
+
+      // ── STEP 5.7: Retrieve RAG context from JD (async, ~100ms) ──
+      let ragContext = '';
+      try {
+        const jobId = session.jobDescription?._id || session.config?.jobId;
+        if (jobId) {
+          const rag = await ragService.retrieveContext(jobId, sessionId, transcript);
+          ragContext = rag.jdContext || '';
+          if (ragContext) {
+            console.log(`📚 [Step 5.7] RAG context retrieved: ${ragContext.length} chars`);
+          }
+        }
+      } catch (ragErr) {
+        console.warn('⚠️ [Step 5.7] RAG context retrieval failed (non-blocking):', ragErr.message);
+      }
+      finalSession.ragContext = ragContext;
 
       // ── STEP 6: Generate question with strategy + style context (Nova Lite, ~2-3s) ──
       const step6Start = Date.now();
