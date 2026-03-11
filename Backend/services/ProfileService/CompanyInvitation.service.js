@@ -284,8 +284,7 @@ module.exports.getInvitationStatsByCompany = async (companyId) => {
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
-    .populate("company")
-    .populate("invitedBy");
+    .populate("invitedBy", "email role username _id");
 
   if (!invitation) throw new Error("Invitation not found");
   return invitation;
