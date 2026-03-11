@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../../models/User.model");
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
@@ -7,21 +8,32 @@ const { sendCompanyInvitation } = require("../../utils/email-service");
 
 // Constants
 const INVITATION_EXPIRATION_TIME = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+const INVITATION_EXPIRATION_SECONDS = 2 * 24 * 60 * 60; // 2 days in seconds for JWT
 const FRONTEND_BASE_URL = process.env.FRONTEND_URL || "https://app.talentai.bid";
+const JWT_SECRET = process.env.INVITATION_JWT_SECRET || "your-secret-key-change-in-production";
 
 /**
- * Generate a random token and calculate expiration date
+ * Generate a JWT token and calculate expiration date
  * @param {string} userEmail - The user's email
  * @param {string} role - The role being offered
  * @returns {Object} { token: string, expiresAt: Date }
  */
 const _generateTokenAndExpiration = (userEmail, role) => {
-  const randomBytes = crypto.randomBytes(32).toString("hex");
-  const data = `${randomBytes}:${userEmail}:${role}:${Date.now()}`;
-  const token = crypto.createHash("sha256").update(data).digest("hex");
+  const expiresAt = new Date(Date.now() + INVITATION_EXPIRATION_TIME);
+  const token = jwt.sign(
+    {
+      userEmail,
+      role,
+      type: "company-invitation",
+    },
+    JWT_SECRET,
+    {
+      expiresIn: INVITATION_EXPIRATION_SECONDS,
+    }
+  );
   return {
     token,
-    expiresAt: new Date(Date.now() + INVITATION_EXPIRATION_TIME),
+    expiresAt,
   };
 };
 
