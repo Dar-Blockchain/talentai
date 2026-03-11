@@ -86,7 +86,7 @@ module.exports.hasExistingAssessment = async (candidateId, postId) => {
     }
 
     // If the post has no PostSteps, no assessment can exist
-    if (!post.PostSteps || post.PostSteps.length === 0) {
+    if (!post.PostSteps === 0) {
       return false;
     }
 
