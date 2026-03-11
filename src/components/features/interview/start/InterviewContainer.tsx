@@ -20,6 +20,7 @@ interface InterviewContainerProps {
   onEndInterview: () => void;
   onViewResults: () => void;
   routerQuery: any;
+  jobData?: any;
 }
 
 const PURPLE = '#8310FF';
@@ -35,9 +36,13 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onEndInterview,
   onViewResults,
   routerQuery,
+  jobData,
 }) => {
-  const interviewLabel =
-    interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
+  const jobPostTitle = jobData?.jobDetails?.title || jobData?.title;
+
+  const interviewLabel = jobPostTitle
+    ? jobPostTitle
+    : interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
       ? `${interviewConfig.context.targetRole} Technical Interview`
       : interviewConfig.interviewType === 'ASSESSMENT'
       ? 'Soft Skills Assessment'
@@ -45,8 +50,9 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
       ? 'Psychotechnic Assessment'
       : 'HR Interview';
 
-  const interviewSub =
-    interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
+  const interviewSub = jobData?.companyName
+    ? `${jobData.companyName} · AI-powered interview`
+    : interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
       ? `${routerQuery.skill || 'Technical'} · ${interviewConfig.context.experienceLevel}`
       : interviewConfig.interviewType === 'ASSESSMENT'
       ? `${routerQuery.skill || 'Soft Skills'} · ${interviewConfig.context.experienceLevel}`

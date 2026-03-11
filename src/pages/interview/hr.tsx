@@ -273,8 +273,10 @@ const IntelligentInterviewTest = () => {
     router.push(jobId ? `/interview/results?jobId=${jobId}` : '/interview/results');
   }, [router]);
 
-  const interviewLabel =
-    interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+  const jobPostTitle = jobData?.jobDetails?.title || jobData?.title;
+  const interviewLabel = jobPostTitle
+    ? jobPostTitle
+    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
       ? `${interviewConfig.context?.targetRole || 'Technical'} Interview`
       : interviewConfig?.interviewType === 'ASSESSMENT'
         ? 'Soft Skills Assessment'
@@ -293,6 +295,7 @@ const IntelligentInterviewTest = () => {
         jobId={jobId}
         refParam={refParam}
         totalSteps={hasJobId ? 3 : 2}
+        jobData={jobData}
         onNext={(data) => {
           setApplicantData(data);
           setStep(hasJobId ? 'overview' : 'interview');
@@ -359,7 +362,9 @@ const IntelligentInterviewTest = () => {
                   {interviewLabel}
                 </Typography>
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: 'rgba(100,113,131,1)', mt: 0.25 }}>
-                  {interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+                  {jobData?.companyName
+                    ? `${jobData.companyName} · AI-powered interview`
+                    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
                     ? `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`
                     : 'AI-powered conversational interview'}
                 </Typography>
@@ -458,6 +463,7 @@ const IntelligentInterviewTest = () => {
                   onEndInterview={endInterview}
                   onViewResults={handleViewResults}
                   routerQuery={router.query}
+                  jobData={jobData}
                 />
 
                 <AgentStatusPanel

@@ -31,6 +31,7 @@ interface InterviewIntroProps {
   jobId?: string;
   refParam?: string;
   totalSteps: number;
+  jobData?: any;
   onNext: (applicantData: ApplicantData) => void;
 }
 
@@ -38,17 +39,17 @@ const steps = [
   {
     icon: <PsychologyOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
     title: 'AI-Powered Interview',
-    desc: 'Our AI interviewer will ask you questions adapted to your profile and the role. It listens, understands context, and follows up naturally.',
+    desc: 'Our AI interviewer will ask you questions about the position and your experience. It listens, understands context, and follows up naturally.',
   },
   {
     icon: <QuizOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
-    title: 'Adaptive Questions',
-    desc: 'Questions are tailored to your experience level. The AI adjusts difficulty and topics based on your answers in real-time.',
+    title: 'Role-Specific Questions',
+    desc: 'Questions are built around the job requirements. The AI focuses on skills, responsibilities, and competencies relevant to this position.',
   },
   {
     icon: <MicNoneOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
-    title: 'Voice-Based Answers',
-    desc: 'Speak your answers naturally — no typing needed. The AI transcribes and analyzes your responses automatically.',
+    title: 'Video & Voice-Based Answers',
+    desc: 'Speak your answers naturally on camera — no typing needed. The AI records your video, transcribes your voice, and analyzes your responses automatically.',
   },
   {
     icon: <TimerOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
@@ -70,6 +71,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   jobId,
   refParam,
   totalSteps,
+  jobData,
   onNext,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -114,14 +116,19 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   };
 
   const duration = interviewConfig?.sessionSettings?.duration || 20;
-  const interviewType =
-    interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
-      ? 'Technical Interview'
-      : interviewConfig?.interviewType === 'ASSESSMENT'
-      ? 'Soft Skills Assessment'
-      : interviewConfig?.interviewType === 'EVALUATION'
-      ? 'Psychotechnic Assessment'
-      : 'HR Interview';
+
+  // When there's a job post, show the actual job title instead of a generic type label
+  const jobTitle = jobData?.jobDetails?.title || jobData?.title;
+  const jobCompany = jobData?.companyName || '';
+  const interviewType = jobTitle
+    ? jobTitle
+    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+    ? 'Technical Interview'
+    : interviewConfig?.interviewType === 'ASSESSMENT'
+    ? 'Soft Skills Assessment'
+    : interviewConfig?.interviewType === 'EVALUATION'
+    ? 'Psychotechnic Assessment'
+    : 'HR Interview';
 
   return (
     <>
@@ -174,7 +181,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.3 }}>
                     <TimerOutlinedIcon sx={{ fontSize: 13, color: 'rgba(100,113,131,1)' }} />
                     <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: 'rgba(100,113,131,1)' }}>
-                      ~{duration} minutes · AI-powered · Voice-based
+                      {jobCompany ? `${jobCompany} · ` : ''}~{duration} minutes · AI-powered · Video & Voice
                     </Typography>
                   </Box>
                 </Box>
