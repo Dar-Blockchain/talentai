@@ -51,11 +51,20 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
   try {
     const { postId } = req.params;
     const candidateId = req.user._id;
+    const userRole = req.user.role;
 
     if (!postId) {
       return res.status(400).json({
         success: false,
         message: "Missing required parameter: postId",
+      });
+    }
+
+    // Check if user is a Company - Companies cannot take interviews
+    if (userRole === "Company") {
+      return res.status(403).json({
+        success: false,
+        message: "Company accounts cannot participate in interview assessments",
       });
     }
 

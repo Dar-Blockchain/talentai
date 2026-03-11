@@ -74,6 +74,7 @@ const IntelligentInterviewTest = () => {
   const [applicantData, setApplicantData] = useState<ApplicantData | null>(null);
   const [assessmentChecking, setAssessmentChecking] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+  const [companyBlocked, setCompanyBlocked] = useState(false);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
@@ -85,12 +86,14 @@ const IntelligentInterviewTest = () => {
     if (!router.query.jobId) { setStep('interview'); return; }
     setStep('intro');
 
-    // Check if candidate already completed an assessment for this post
     const postId = router.query.jobId as string;
     setAssessmentChecking(true);
     dispatch(checkPostInterviewAssessment(postId)).then((result) => {
-      if (checkPostInterviewAssessment.fulfilled.match(result) && result.payload.exists) {
-        setAlreadyCompleted(true);
+      if (checkPostInterviewAssessment.fulfilled.match(result)) {
+        if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
+        else if (result.payload.exists) setAlreadyCompleted(true);
+      } else if (checkPostInterviewAssessment.rejected.match(result)) {
+        // silently ignore — let them proceed
       }
     }).finally(() => setAssessmentChecking(false));
   }, [router.isReady, router.query.jobId]);
@@ -310,6 +313,38 @@ const IntelligentInterviewTest = () => {
           <Header />
           <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 }, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress sx={{ color: '#8310FF' }} />
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Company account blocked ── */
+  if (companyBlocked) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(131,16,255,0.08)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <CheckCircleIcon sx={{ fontSize: 36, color: '#8310FF' }} />
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                Company accounts cannot take interviews
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                This interview link is intended for candidates only. Share it with your applicants to let them complete their assessment.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/company/dashboard')}
+                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+              >
+                Back to Dashboard
+              </Button>
+            </Box>
           </Container>
         </Box>
       </>
