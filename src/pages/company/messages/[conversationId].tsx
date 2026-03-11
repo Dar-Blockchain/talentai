@@ -16,7 +16,6 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { useToast } from "@/hooks/useToast";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import {
@@ -211,7 +210,6 @@ const CompanyMessagesPage: React.FC = () => {
   const totalUnread  = conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
 
@@ -369,7 +367,6 @@ const CompanyMessagesPage: React.FC = () => {
           isDeleting={isDeleting}
         />
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

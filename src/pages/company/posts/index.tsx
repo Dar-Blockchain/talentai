@@ -1,4 +1,3 @@
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import React, { useState, useEffect, useCallback } from "react";
 import { Box } from "@mui/material";
@@ -86,7 +85,6 @@ const PostsPage: React.FC = () => {
   const handleCreateClick = () => router.push("/company/posts/create");
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {selectedJobId ? (
           <WorkplaceJobDetail
@@ -145,7 +143,6 @@ const PostsPage: React.FC = () => {
           </Box>
         )}
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

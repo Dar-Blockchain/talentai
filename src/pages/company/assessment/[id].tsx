@@ -7,7 +7,6 @@ import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import SectionCard from "@/components/ui/SectionCard";
@@ -89,7 +88,6 @@ const CompanyAssessmentPage: React.FC = () => {
     : "—";
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box>
           {loading && <LoadingOverlay height={400} message="Loading assessment…" color={TEAL} />}
@@ -225,7 +223,6 @@ const CompanyAssessmentPage: React.FC = () => {
           )}
         </Box>
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

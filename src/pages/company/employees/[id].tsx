@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
 import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
@@ -85,7 +84,6 @@ const EmployeeDetailPage: React.FC = () => {
   }, [router]);
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {loading && members.length === 0 ? (
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
@@ -126,7 +124,6 @@ const EmployeeDetailPage: React.FC = () => {
           onConfirm={handleConfirmDelete}
         />
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

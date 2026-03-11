@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
@@ -97,7 +96,6 @@ const CampaignDetailsPage: React.FC = () => {
       : campaign?.title ?? "";
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <PageHeader
           title=""
@@ -121,7 +119,6 @@ const CampaignDetailsPage: React.FC = () => {
           />
         ) : null}
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

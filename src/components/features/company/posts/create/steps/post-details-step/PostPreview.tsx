@@ -35,7 +35,7 @@ import { experienceLevels } from "@/constants/candidate";
 import {
   contractTypes,
   workModes,
-} from "@/components/features/preferences/data/candidateData";
+} from "@/constants/candidateData";
 import SalaryRange from "./SalaryRange";
 import SectionCard from "@/components/ui/SectionCard";
 

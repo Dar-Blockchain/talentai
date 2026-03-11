@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
@@ -159,7 +158,6 @@ const EmployeesPage: React.FC = () => {
   const owners = members.filter((m) => m.role === "Owner").length;
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {detailMember ? (
           <Box>
@@ -242,7 +240,6 @@ const EmployeesPage: React.FC = () => {
           onConfirm={handleConfirmDelete}
         />
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

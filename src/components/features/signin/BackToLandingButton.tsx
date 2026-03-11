@@ -1,9 +1,7 @@
 import React from "react";
-import { Box, Button } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Typography } from "@mui/material";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
 
 type Props = {
   themeColors: any;
@@ -11,27 +9,19 @@ type Props = {
 
 const BackToLandingButton: React.FC<Props> = ({ themeColors }) => {
   const router = useRouter();
-  const userType = useSelector((state: RootState) => state.user.userType);
+  const returnUrl = router.query.returnUrl as string | undefined;
+  const registerHref = returnUrl
+    ? `/register?returnUrl=${encodeURIComponent(returnUrl)}`
+    : "/register";
 
-  const onBackHandle = () =>
-    router.push(userType === "company" ? "/home/company" : "/home/candidate");
-  
   return (
     <Box sx={{ textAlign: "center" }}>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={onBackHandle}
-        sx={{
-          color: themeColors.primary,
-          textTransform: "none",
-          "&:hover": {
-            background: "transparent",
-            color: themeColors.primaryHover,
-          },
-        }}
-      >
-        Back To Landing
-      </Button>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        Don't have an account?{" "}
+        <Link href={registerHref} style={{ color: themeColors.primary, fontWeight: 600, textDecoration: "none" }}>
+          Register
+        </Link>
+      </Typography>
     </Box>
   );
 };
