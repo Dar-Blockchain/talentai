@@ -22,6 +22,9 @@ router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPo
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
 
+// GET /post-interview-assessments/check/:postId — Check if candidate has assessment for post
+router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAssessmentExists);
+
 // GET /post-interview-assessments — Get all assessments
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
 
