@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosInstance from "@/utils/axiosInstance";
+import axiosInstance, { setAxiosLoggingOut } from "@/utils/axiosInstance";
 import Cookies from "js-cookie";
 import { createNotification } from "./notificationSlice";
 import { clearConnectedUser, setConnectedUser } from "./userSlice";
@@ -9,6 +9,7 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  isLoggingOut: boolean;
 }
 
 const initialState: AuthState = {
@@ -16,20 +17,12 @@ const initialState: AuthState = {
   token: null,
   isLoading: false,
   error: null,
+  isLoggingOut: false,
 };
 
-// Global flag to skip interceptor checks during logout
-let isLoggingOut = false;
-
-// Export function to set logout flag
-export const setLoggingOut = (value: boolean) => {
-  isLoggingOut = value;
-};
-
-// Export function to check if logging out
-export const isLoggingOutCheck = (): boolean => {
-  return isLoggingOut;
-};
+// Selector for logout state
+export const isLoggingOutCheck = (state: { auth: AuthState }): boolean =>
+  state.auth.isLoggingOut;
 
 // Signin user thunk
 export const signinUser = createAsyncThunk(
@@ -152,18 +145,12 @@ export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      // Prevent interceptors from running
-      setLoggingOut(true);
-
+      setAxiosLoggingOut(true);
       dispatch(clearConnectedUser());
 
       // Clear storage
-      localStorage.removeItem("api_token");
-      localStorage.removeItem("token");
       const userType = localStorage.getItem("userType");
-
       localStorage.clear();
-
       if (userType) {
         localStorage.setItem("userType", userType);
       }
@@ -176,13 +163,11 @@ export const logout = createAsyncThunk(
       return true;
     } catch (error: any) {
       console.error("❌ Logout error:", error);
-      // Still redirect to signin even on error
+      setAxiosLoggingOut(false);
       if (typeof window !== 'undefined') {
         window.location.href = '/signin';
       }
       return rejectWithValue(error.message || "Logout failed");
-    } finally {
-      setLoggingOut(false);
     }
   }
 );
@@ -262,16 +247,16 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(logout.pending, (state) => {
-        state.isLoading = true;
+        state.isLoggingOut = true;
       })
       .addCase(logout.fulfilled, (state) => {
-        state.isLoading = false;
+        state.isLoggingOut = false;
         state.isAuthenticated = false;
         state.error = null;
         state.token = null;
       })
       .addCase(logout.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoggingOut = false;
         state.isAuthenticated = false;
         state.error = action.payload as string;
         state.token = null;

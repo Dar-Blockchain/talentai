@@ -13,7 +13,6 @@ import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { useAuthCheck } from "@/hooks/useAuthCheck";
 import { isTokenExpired } from "@/utils/tokenUtils";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
@@ -51,7 +50,6 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const userId = user?._id;
-  const { checkingAuth } = useAuthCheck();
   const isLoggingOut = useSelector(isLoggingOutCheck);
 
   // Force logout when middleware detected an invalid/role-less token
@@ -63,21 +61,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     });
   }, [router.query.force_logout]);
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem("api_token");
-  //   if (token && isTokenExpired(token)) {
-  //     localStorage.removeItem("api_token");
-  //     localStorage.removeItem("token");
-  //     Cookies.remove("api_token");
-  //     Cookies.remove("token");
-  //   }
-  // }, []);
-
   if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
-
-  if (checkingAuth) {
-    return <LoadingScreen />;
-  }
 
   return (
     <NotificationProvider userId={userId}>{children}</NotificationProvider>
