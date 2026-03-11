@@ -24,7 +24,7 @@ import {
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CloseIcon from "@mui/icons-material/Close";
 import { hardSkillLevels, softSkillLevels } from "@/constants/skills";
-import { ALL_SKILLS, SOFT_SKILLS } from "@/components/features/preferences/data/skillsData";
+import { ALL_SKILLS, SOFT_SKILLS } from "@/constants/skillsData";
 
 interface SkillEditorModalProps {
   open: boolean;

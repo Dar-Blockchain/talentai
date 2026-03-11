@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
@@ -104,7 +103,6 @@ const DepartmentsPage: React.FC = () => {
   };
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <PageHeader
           title="Departments"
@@ -165,7 +163,6 @@ const DepartmentsPage: React.FC = () => {
           error={updateError}
         />
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

@@ -11,6 +11,7 @@ module.exports.generateToken = (userId, companyId, role) => {
   if (role) {
     payload.role = role;
   }
+  console.log(payload, "payload");
   return jwt.sign(payload, process.env.Net_Secret, {
     expiresIn: "5y", // 5 ans
   });

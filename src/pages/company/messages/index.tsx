@@ -3,7 +3,6 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { fetchConversations, selectConversations, selectConversationsLoading } from "@/store/slices/chatSlice";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import ChatOutlined from "@mui/icons-material/ChatOutlined";
@@ -32,7 +31,6 @@ const CompanyMessagesIndexPage: React.FC = () => {
   }, [loading, conversations]);
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
           {/* Header */}
@@ -72,7 +70,6 @@ const CompanyMessagesIndexPage: React.FC = () => {
           )}
         </Box>
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

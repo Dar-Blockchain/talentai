@@ -68,3 +68,10 @@ export const fmtDate = (iso?: string) =>
         year: "numeric",
       })
     : "—";
+
+export const formatTimeLeft = (s: number) => {
+  if (s <= 0) return "0s";
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m > 0 ? `${m}m ${r}s` : `${r}s`;
+};

@@ -17,7 +17,7 @@ import { Close } from "@mui/icons-material";
 import { Add as AddIcon } from "@mui/icons-material";
 import { getLevelFromNumber, Skill } from "@/utils/postHelpers";
 import { experienceLevels } from "@/constants/candidate";
-import { contractTypes, workModes } from "@/components/features/preferences/data/candidateData";
+import { contractTypes, workModes } from "@/constants/candidateData";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";

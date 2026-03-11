@@ -21,7 +21,6 @@ import PostInterviewAssessments from '@/components/features/admin/PostInterviewA
 import SkillInterviewAssessments from '@/components/features/admin/SkillInterviewAssessments';
 import CompanyConfig from '@/components/features/admin/CompanyConfig';
 import CompanyPermissionsModal, { CompanyPermissions } from '@/components/features/admin/CompanyPermissionsModal';
-import RoleGuard from '@/components/guards/RoleGuard';
 import dynamic from 'next/dynamic';
 
 const PRIMARY = '#8310FF';
@@ -95,7 +94,6 @@ const DashboardAdmin = () => {
   };
 
   return (
-    <RoleGuard allowedRoles={['Admin']}>
       <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f3ff' }}>
         {/* Sidebar */}
         <Box sx={{ position: 'relative' }}>
@@ -203,7 +201,6 @@ const DashboardAdmin = () => {
           onSave={handleSavePermissions}
         />
       </Box>
-    </RoleGuard>
   );
 };
 

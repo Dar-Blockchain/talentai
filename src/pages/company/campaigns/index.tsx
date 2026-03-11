@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
@@ -11,7 +10,6 @@ import CampaignsGrid from "@/components/features/company/campaigns/list/Campaign
 const CampaignsPage: React.FC = () => {
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <PageHeader
           title="Campaigns"
@@ -35,7 +33,6 @@ const CampaignsPage: React.FC = () => {
         <CampaignsStats />
         <CampaignsGrid />
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

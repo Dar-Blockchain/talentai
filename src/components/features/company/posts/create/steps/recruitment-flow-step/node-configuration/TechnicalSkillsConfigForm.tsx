@@ -24,7 +24,7 @@ import StarIcon from "@mui/icons-material/Star";
 import {
   CATEGORIES,
   ALL_SKILLS,
-} from "@/components/features/preferences/data/skillsData";
+} from "@/constants/skillsData";
 import { experienceLevels } from "@/constants/profile";
 
 // Map assessment levels to default star ratings

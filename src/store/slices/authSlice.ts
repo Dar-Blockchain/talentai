@@ -31,12 +31,34 @@ export const isLoggingOutCheck = (): boolean => {
   return isLoggingOut;
 };
 
+// Signin user thunk
+export const signinUser = createAsyncThunk(
+  "auth/signin",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('auth', { email });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message || error.response.data?.error || `Server error: ${error.response.status}`
+        );
+      } else if (error.request) {
+        return rejectWithValue("Network error: Unable to connect to server");
+      } else {
+        return rejectWithValue(error.message || "Sign in failed. Please try again.");
+      }
+    }
+  }
+);
+
 // Register user thunk
 export const registerUser = createAsyncThunk(
   "auth/register",
-  async (email: string, { rejectWithValue }) => {
+  async (payload: FormData | Record<string, any>, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('auth/register', { email });
+      const headers = payload instanceof FormData ? { "Content-Type": "multipart/form-data" } : {};
+      const response = await axiosInstance.post('auth/register', payload, { headers });
       return response.data;
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -45,6 +67,7 @@ export const registerUser = createAsyncThunk(
         // Server responded with error status
         const message =
           error.response.data?.message ||
+          error.response.data?.error ||
           `Server error: ${error.response.status}`;
         return rejectWithValue(message);
       } else if (error.request) {
@@ -180,11 +203,23 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(signinUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(signinUser.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(signinUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
         state.isAuthenticated = false;
         state.error = null;
@@ -209,6 +244,13 @@ const authSlice = createSlice({
           Cookies.remove("api_token");
           localStorage.setItem("api_token", action.payload.token);
           Cookies.set("api_token", action.payload.token, {
+            expires: 30,
+            path: "/",
+            sameSite: "lax",
+          });
+        }
+        if (action.payload.user?.role) {
+          Cookies.set("user_role", action.payload.user.role, {
             expires: 30,
             path: "/",
             sameSite: "lax",

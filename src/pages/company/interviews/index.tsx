@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import InterviewsHeader from "@/components/features/company/interviews/list/InterviewsHeader";
@@ -85,7 +84,6 @@ const InterviewsPage: React.FC = () => {
   const handleBack        = useCallback(() => setDetail(null), []);
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {detail ? (
           <Box>
@@ -127,7 +125,6 @@ const InterviewsPage: React.FC = () => {
           </Box>
         )}
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -23,7 +23,7 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { fetchMembers, selectMembers } from "@/store/slices/memberSlice";
+import { fetchMembersPage, selectMembers } from "@/store/slices/memberSlice";
 import { Member } from "@/store/slices/memberSlice";
 import {
   fetchDepartments,
@@ -80,57 +80,51 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
   onChange,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { members, loading, error } = useSelector(selectMembers);
+  const { members, pageTotal, loading, error } = useSelector(selectMembers);
   const departments = useSelector(selectDepartments);
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fetch departments once for the filter dropdown
   useEffect(() => {
-    dispatch(fetchMembers());
     dispatch(fetchDepartments());
   }, [dispatch]);
 
+  // Re-fetch from backend whenever page or deptFilter changes immediately,
+  // but debounce search input by 300ms
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      dispatch(fetchMembersPage({
+        page,
+        limit: PAGE_SIZE,
+        search: search.trim() || undefined,
+        departmentIds: deptFilter.length > 0 ? deptFilter : undefined,
+      }));
+    }, search ? 300 : 0);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [dispatch, page, search, deptFilter]);
+
+  // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
   }, [search, deptFilter]);
 
-  const filtered = useMemo(() => {
-    let result = members;
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (m) =>
-          m.user?.username?.toLowerCase().includes(q) ||
-          m.user?.email?.toLowerCase().includes(q)
-      );
-    }
-
-    if (deptFilter.length > 0) {
-      result = result.filter((m) => {
-        const memberDept = (m as any).department?._id || (m as any).departmentId;
-        return memberDept && deptFilter.includes(memberDept);
-      });
-    }
-
-    return result;
-  }, [members, search, deptFilter]);
-
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const pageIds = paginated.map((m) => m._id);
+  const pageIds = members.map((m) => m._id);
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
   const somePageSelected =
     pageIds.some((id) => selected.includes(id)) && !allPageSelected;
 
   const toggleMember = (id: string) => {
-    if (selected.includes(id)) {
-      onChange(selected.filter((s) => s !== id));
-    } else {
-      onChange([...selected, id]);
-    }
+    onChange(
+      selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]
+    );
   };
 
   const toggleAllOnPage = () => {
@@ -273,7 +267,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
       {/* Results count */}
       {!loading && !error && (
         <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mb: 1.5 }}>
-          {filtered.length} employee{filtered.length !== 1 ? "s" : ""}
+          {pageTotal} employee{pageTotal !== 1 ? "s" : ""}
           {search || deptFilter.length > 0 ? " match your filters" : " total"}
         </Typography>
       )}
@@ -288,7 +282,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
         }}
       >
         {/* Select all header */}
-        {!loading && !error && paginated.length > 0 && (
+        {!loading && !error && members.length > 0 && (
           <Box
             sx={{
               display: "flex",
@@ -313,7 +307,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
               }}
             />
             <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
-              Select all on this page ({paginated.length})
+              Select all on this page ({members.length})
             </Typography>
           </Box>
         )}
@@ -328,7 +322,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
               <EmployeeRowSkeleton key={i} />
             ))}
           </Box>
-        ) : paginated.length === 0 ? (
+        ) : members.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 8 }}>
             <PeopleAltOutlined sx={{ fontSize: 40, color: "#D1D5DB", mb: 1.5 }} />
             <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
@@ -343,7 +337,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
             </Typography>
           </Box>
         ) : (
-          paginated.map((member, i) => {
+          members.map((member, i) => {
             const isSelected = selected.includes(member._id);
             const name = member.user?.username || "Pending";
             const email = member.user?.email || "";
@@ -363,7 +357,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
                   py: 1.5,
                   cursor: "pointer",
                   borderBottom:
-                    i < paginated.length - 1 ? "1px solid #F3F4F6" : "none",
+                    i < members.length - 1 ? "1px solid #F3F4F6" : "none",
                   bgcolor: isSelected ? "#F5F3FF" : "transparent",
                   "&:hover": {
                     bgcolor: isSelected ? "#EDE9FE" : "#F9FAFB",
@@ -441,11 +435,11 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
       </Box>
 
       {/* Pagination */}
-      {!loading && filtered.length > PAGE_SIZE && (
+      {!loading && pageTotal > PAGE_SIZE && (
         <Pagination
           page={page}
           limit={PAGE_SIZE}
-          total={filtered.length}
+          total={pageTotal}
           onPageChange={setPage}
         />
       )}

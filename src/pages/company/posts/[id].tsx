@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { Box, Alert, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tabs, Tab } from "@mui/material";
 import { useRouter } from "next/router";
@@ -189,7 +188,6 @@ const PostDetailsPage: React.FC = () => {
   ) : undefined;
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box>
           {loading && <LoadingOverlay height={400} message="Loading job details…" color={TEAL} />}
@@ -289,7 +287,6 @@ const PostDetailsPage: React.FC = () => {
           />
         </Box>
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

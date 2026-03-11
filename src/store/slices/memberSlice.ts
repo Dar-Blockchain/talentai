@@ -48,7 +48,7 @@ export interface DeleteMemberPayload {
 export interface Invitation {
   _id: string;
   email: string;
-  Company?: any;
+  company?: any;
   user?: {
     _id: string;
     username: string;
@@ -73,8 +73,16 @@ export interface MemberStats {
   invitations: { total: number };
 }
 
+export interface FetchMembersParams {
+  page: number;
+  limit: number;
+  search?: string;
+  departmentIds?: string[];
+}
+
 interface MemberState {
   members: Member[];
+  pageTotal: number;
   loading: boolean;
   error: string | null;
   addingMember: boolean;
@@ -98,6 +106,7 @@ interface MemberState {
 
 const initialState: MemberState = {
   members: [],
+  pageTotal: 0,
   loading: false,
   error: null,
   addingMember: false,
@@ -271,6 +280,29 @@ export const fetchMembers = createAsyncThunk<
       return rejectWithValue("Logout in progress");
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
+    return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
+  }
+});
+
+// Fetch members with backend filtering and pagination
+export const fetchMembersPage = createAsyncThunk<
+  { members: Member[]; total: number },
+  FetchMembersParams,
+  { rejectValue: string }
+>("member/fetchMembersPage", async (params, { rejectWithValue }) => {
+  try {
+    const query = new URLSearchParams();
+    query.set("page", String(params.page));
+    query.set("limit", String(params.limit));
+    if (params.search) query.set("search", params.search);
+    if (params.departmentIds?.length) query.set("departmentId", params.departmentIds.join(","));
+
+    const response = await axiosInstance.get(`CompanyMembership/memberships?${query.toString()}`);
+    return {
+      members: response.data.memberships || response.data.members || [],
+      total: response.data.total ?? response.data.pagination?.total ?? 0,
+    };
+  } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
 });
@@ -558,6 +590,20 @@ const memberSlice = createSlice({
           state.error = action.payload || "An error occurred";
         }
       )
+      // Handle fetchMembersPage
+      .addCase(fetchMembersPage.pending, (state: MemberState) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMembersPage.fulfilled, (state: MemberState, action) => {
+        state.loading = false;
+        state.members = action.payload.members;
+        state.pageTotal = action.payload.total;
+      })
+      .addCase(fetchMembersPage.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.loading = false;
+        state.error = action.payload || "An error occurred";
+      })
       // Handle fetchInvitations
       .addCase(fetchInvitations.pending, (state: MemberState) => {
         state.fetchingInvitations = true;
@@ -686,6 +732,7 @@ export const { clearMembers, clearError, clearAddMemberSuccess, clearUpdateRoleS
 
 export const selectMembers = (state: RootState) => ({
   members: state.member.members,
+  pageTotal: state.member.pageTotal,
   loading: state.member.loading,
   error: state.member.error,
   addingMember: state.member.addingMember,

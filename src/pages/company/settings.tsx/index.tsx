@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import SettingsProfileCard from "@/components/features/company/settings/SettingsProfileCard";
@@ -23,7 +22,6 @@ const SettingsPage: React.FC = () => {
   const saveEdit   = async () => { await handleSaveProfile(); setEditSection(null); };
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <PageHeader
           title="Settings"
@@ -72,7 +70,6 @@ const SettingsPage: React.FC = () => {
 
         </Box>
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 
