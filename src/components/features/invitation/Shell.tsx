@@ -5,7 +5,7 @@ import { Box, Container, Typography } from '@mui/material';
 const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Box sx={{
     minHeight: '100vh', bgcolor: '#F8FAFC',
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     pt: { xs: 4, sm: 7 }, pb: 6, px: 2,
   }}>
     <Container maxWidth="sm" sx={{ flex: 1 }}>{children}</Container>

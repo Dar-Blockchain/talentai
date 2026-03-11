@@ -326,6 +326,25 @@ export const fetchCompanyInterviewMetrics = createAsyncThunk<
 );
 
 /**
+ * Check if candidate already completed an assessment for a given post
+ */
+export const checkPostInterviewAssessment = createAsyncThunk<
+  { exists: boolean },
+  string,
+  { rejectValue: string }
+>(
+  'interview/checkPostAssessment',
+  async (postId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`post-interview-assessments/check/${postId}`);
+      return { exists: !!response.data?.exists };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error checking assessment');
+    }
+  }
+);
+
+/**
  * Fetch company post-interview assessments
  */
 export const fetchCompanyInterviews = createAsyncThunk<

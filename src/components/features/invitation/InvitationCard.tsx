@@ -20,10 +20,9 @@ const InvitationCard: React.FC<{
 }> = ({ invitation, respondingToInvitation, onAccept, onDecline }) => {
   const roleStyle    = ROLE_STYLES[invitation.role] ?? ROLE_STYLES.Manager;
   const roleLabel    = ROLE_LABELS[invitation.role] ?? invitation.role;
-  const companyName  = invitation.Company?.username || invitation.organization?.name || 'Company';
-  const invitedBy    = invitation.invitedBy?.username || invitation.invitedBy?.email || 'Team Admin';
+  const invitedBy    = invitation.invitedBy?.name || invitation.invitedBy?.username || invitation.invitedBy?.email;
   const inviteeEmail = invitation.email;
-  const companyLetter = companyName[0]?.toUpperCase() || 'C';
+  const companyLetter = invitedBy[0]?.toUpperCase() || 'C';
 
   return (
     <Shell>
@@ -55,14 +54,14 @@ const InvitationCard: React.FC<{
             You're Invited!
           </Typography>
           <Typography sx={{ color: '#64748B', fontSize: '0.825rem', lineHeight: 1.65 }}>
-            <Box component="span" sx={{ fontWeight: 700, color: PURPLE }}>{companyName}</Box>
+            <Box component="span" sx={{ fontWeight: 700, color: PURPLE }}>{invitedBy}</Box>
             {' '}has invited you to join their team.
           </Typography>
         </Box>
 
         {/* Info rows */}
         <Box sx={{ mx: 3, mb: 3, borderRadius: '12px', border: '1px solid #F1F5F9', overflow: 'hidden' }}>
-          <InfoRow icon={<BusinessOutlined />} label="Organization" value={companyName} iconColor={TEAL} />
+          <InfoRow icon={<BusinessOutlined />} label="Organization" value={invitedBy} iconColor={TEAL} />
           <InfoRow
             icon={<BadgeOutlined />} label="Role" iconColor={roleStyle.color}
             value={
@@ -72,7 +71,6 @@ const InvitationCard: React.FC<{
           {inviteeEmail && (
             <InfoRow icon={<EmailOutlined />} label="Email" value={inviteeEmail} iconColor="#0891B2" />
           )}
-          <InfoRow icon={<PersonOutlined />} label="Invited by" value={invitedBy} iconColor="#D97706" last={!invitation.expiresAt} />
           {invitation.expiresAt && (
             <InfoRow
               icon={<AccessTimeOutlined />} label="Expires"
