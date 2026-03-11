@@ -1175,6 +1175,22 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
     const currentArea = session.currentFocusArea;
     const questionsInArea = areas[currentArea]?.questionsAsked || 0;
 
+    // PASS/SKIP: If candidate just passed, immediately transition to different area
+    const lastCandidateEntry = session.conversation?.filter(e => e.type === 'candidate').slice(-1)[0];
+    const lastMeta = lastCandidateEntry?.metadata;
+    if (lastMeta?.answeredQuestion === false || lastMeta?.completeness === 'avoided') {
+      const weakest = Object.entries(areas)
+        .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+        .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+      if (weakest) {
+        return {
+          mode: "transition",
+          targetArea: weakest[0],
+          context: `Candidate passed on ${currentArea} — moving to ${weakest[0]}`
+        };
+      }
+    }
+
     // HARD CAP: After 2 questions in current area, always transition to weakest area
     if (questionsInArea >= 2 && currentArea) {
       const weakest = Object.entries(areas)
@@ -2038,11 +2054,40 @@ Determine if interview objectives have been sufficiently met to end the session.
         for (const impact of analysis.coverage.areasImpacted) {
           if (finalCoverage.areas[impact.area]) {
             const area = finalCoverage.areas[impact.area];
-            // Floor: minimum 5% if candidate actually answered the question
             let increase = impact.increase || 0;
-            if (increase > 0 && increase < 5 && analysis.quality?.answeredQuestion !== false) {
-              increase = 5;
+
+            // PASS/SKIP HANDLING: Candidate can't answer = gap recorded, coverage still increases
+            const isPassSkip = analysis.quality?.answeredQuestion === false ||
+              analysis.quality?.completeness === 'avoided';
+            if (isPassSkip && increase === 0) {
+              increase = 15;
+              console.log(`⏭️ [Coverage] Pass/skip detected for "${impact.area}" — forcing +15% coverage (gap recorded)`);
+              area.indicators = area.indicators || [];
+              area.indicators.push({
+                name: `Gap: candidate passed on ${impact.area}`,
+                covered: true,
+                evidence: ['Candidate could not answer / requested to skip'],
+                quality: 0,
+                aiGenerated: true,
+                reasoning: 'Candidate explicitly passed or could not answer'
+              });
             }
+
+            // CODE-LEVEL BOOST: LLM returns conservative values, amplify based on answer quality
+            const qualityScore = analysis.quality?.score || 50;
+            const depth = analysis.quality?.depthLevel || 'surface';
+            if (increase > 0 && !isPassSkip) {
+              if (depth === 'deep' && qualityScore >= 70) {
+                increase = Math.max(increase, 25);
+              } else if (depth === 'moderate' && qualityScore >= 50) {
+                increase = Math.max(increase, 18);
+              } else if (qualityScore >= 40) {
+                increase = Math.max(increase, 12);
+              } else {
+                increase = Math.max(increase, 5);
+              }
+            }
+
             area.percentage = Math.min(100, (area.percentage || 0) + increase);
             area.lastUpdated = new Date().toISOString();
             if (impact.evidence) {
@@ -2101,6 +2146,34 @@ Determine if interview objectives have been sufficiently met to end the session.
         finalCoverage.lastUpdated = new Date().toISOString();
 
         await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+      } else {
+        // No areasImpacted from LLM — but if it's a pass/skip, still record the gap
+        const isPassSkipNoAreas = analysis.quality?.answeredQuestion === false ||
+          analysis.quality?.completeness === 'avoided';
+        if (isPassSkipNoAreas && targetArea && finalCoverage.areas[targetArea]) {
+          const area = finalCoverage.areas[targetArea];
+          area.percentage = Math.min(100, (area.percentage || 0) + 15);
+          area.lastUpdated = new Date().toISOString();
+          area.indicators = area.indicators || [];
+          area.indicators.push({
+            name: `Gap: candidate passed on ${targetArea}`,
+            covered: true,
+            evidence: ['Candidate could not answer / requested to skip'],
+            quality: 0,
+            aiGenerated: true,
+            reasoning: 'Candidate explicitly passed or could not answer'
+          });
+          console.log(`⏭️ [Coverage] Pass/skip (no areas from LLM) for "${targetArea}" — forcing +15% coverage (gap recorded)`);
+
+          // Recalculate overall
+          const areaEntries = Object.values(finalCoverage.areas);
+          const totalWeight = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
+          finalCoverage.overall = totalWeight > 0
+            ? Math.round(areaEntries.reduce((sum, a) => sum + ((a.percentage / 100) * (a.weight || 25)), 0) / totalWeight * 100)
+            : 0;
+          finalCoverage.lastUpdated = new Date().toISOString();
+          await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+        }
       }
 
       // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
