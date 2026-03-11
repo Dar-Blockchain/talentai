@@ -66,6 +66,26 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
   }
 };
 
+// ========== CHECK EXISTENCE ==========
+/**
+ * Check if an assessment already exists for a candidate and post
+ * @param {string} candidateId - The candidate ID
+ * @param {string} postId - The post ID
+ * @returns {Promise<boolean>} True if assessment exists, false otherwise
+ */
+module.exports.hasExistingAssessment = async (candidateId, postId) => {
+  try {
+    const assessment = await PostInterviewAssessment.findOne({
+      candidate: candidateId,
+      post: postId
+    });
+    return assessment !== null;
+  } catch (error) {
+    console.error('Error checking existing assessment:', error.message);
+    throw error;
+  }
+};
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
