@@ -1,5 +1,4 @@
 const SkillInterviewAssessmentService = require("../../services/InterviewServices/SkillInterviewAssessment.service");
-const SkillInterviewAssessment = require("../../models/SkillInterviewAssessment.model");
 const Profile = require("../../models/Profile.model");
 
 // ========== POST - Create a new assessment ==========
@@ -7,6 +6,15 @@ const create = async (req, res) => {
   try {
     const data = req.body;
     const userId = req.user?._id;
+    const userRole = req.user?.role;
+
+    // Check if user is a Company - not allowed
+    if (userRole === 'Company') {
+      return res.status(403).json({
+        success: false,
+        message: "Company users do not have permission to create skill interview assessments",
+      });
+    }
 
     // Basic validation
     if (!data.interviewData?.sessionId) {
