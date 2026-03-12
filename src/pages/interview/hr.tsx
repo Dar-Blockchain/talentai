@@ -111,6 +111,7 @@ const IntelligentInterviewTest = () => {
     candidateProgress,
     currentPipelineStep,
     pipelineLoading,
+    configLoading,
     showBlockedModal,
     showFailedModal,
     blockMessage,
@@ -306,8 +307,8 @@ const IntelligentInterviewTest = () => {
 
   const isActive = socket.interviewStatus === 'active';
 
-  /* ── Checking assessment status ── */
-  if (assessmentChecking) {
+  /* ── Checking assessment status / loading config ── */
+  if (assessmentChecking || (hasJobId && configLoading)) {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
