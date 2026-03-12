@@ -3497,16 +3497,30 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
     else if (commStyle.verbosity === 'concise') communicationScore += 5;
     communicationScore = Math.min(100, communicationScore);
 
-    // ── 6. Composite final score ──
-    const finalScore = Math.round(
-      (qualityScore * 0.40) +      // primary signal — answer quality
-      (coverageScore * 0.10) +     // interview structure, not candidate quality
-      (skillsScore * 0.25) +       // must-have skills demonstrated
-      (depthScore * 0.15) +        // depth of technical detail
-      (communicationScore * 0.10)  // communication effectiveness
-    );
+    // ── Detect non-answering candidate ──
+    // If quality average is very low AND no skills demonstrated AND coverage is 0,
+    // the candidate effectively didn't answer — clamp all components to 0
+    const isNonAnswering = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
+    if (isNonAnswering) {
+      console.log(`⚠️ [FinalReport] Non-answering candidate detected (quality=${qualityScore}, coverage=${coverageScore}, skills=${demonstrated.length}) — clamping score to 0`);
+    }
 
-    console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${skillsScore}, depth=${depthScore}, communication=${communicationScore} → overall=${finalScore}`);
+    const effectiveDepthScore = isNonAnswering ? 0 : depthScore;
+    const effectiveCommunicationScore = isNonAnswering ? 0 : communicationScore;
+    const effectiveSkillsScore = isNonAnswering ? 0 : skillsScore;
+
+    // ── 6. Composite final score ──
+    const finalScore = isNonAnswering
+      ? Math.max(0, Math.round((qualityScore * 0.40) + (coverageScore * 0.10)))
+      : Math.round(
+          (qualityScore * 0.40) +      // primary signal — answer quality
+          (coverageScore * 0.10) +     // interview structure, not candidate quality
+          (skillsScore * 0.25) +       // must-have skills demonstrated
+          (depthScore * 0.15) +        // depth of technical detail
+          (communicationScore * 0.10)  // communication effectiveness
+        );
+
+    console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${effectiveSkillsScore}, depth=${effectiveDepthScore}, communication=${effectiveCommunicationScore} → overall=${finalScore}${isNonAnswering ? ' (NON-ANSWERING)' : ''}`);
 
     // ── 7. LLM-generated intelligent summary ──
     let aiSummary = { summary: '', strengths: [], weaknesses: [], recommendation: 'maybe', reasoning: '' };
@@ -3525,10 +3539,15 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
         systemPrompt: `You are an expert recruiter writing a concise interview assessment.
 Based on the actual conversation and scores, identify SPECIFIC strengths and weaknesses.
 Strengths/weaknesses MUST reference specific topics discussed, not generic traits like "good communication".
+CRITICAL: If the candidate did not provide substantive answers (score below 15, said "next" or "I don't know" on most questions), you MUST:
+- Set strengths to ["No technical strengths demonstrated during this interview"]
+- Set weaknesses to specific skills they failed to demonstrate
+- Do NOT fabricate positive attributes from non-answers (e.g., "concise communication" for someone who refused to answer is NOT a strength)
+- recommendation MUST be "no_hire"
 Return ONLY valid JSON.`,
         messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
 Must-Have Skills: ${mustHaves.join(', ') || 'Not specified'}
-
+${isNonAnswering ? '\nNON-ANSWERING CANDIDATE: This candidate did not provide substantive answers to any questions. They said "next", "pass", "I don\'t know", or gave non-answers throughout the interview. Do NOT list any positive strengths.\n' : ''}
 CANDIDATE DATA:
 - Overall Score: ${finalScore}/100
 - Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
@@ -3566,6 +3585,17 @@ Write JSON:
       aiSummary.reasoning = `Based on composite score of ${finalScore}/100.`;
     }
 
+    // Safety net: override LLM strengths for non-answering candidates
+    if (isNonAnswering) {
+      aiSummary.strengths = ['No technical strengths demonstrated during this interview'];
+      aiSummary.recommendation = 'no_hire';
+      if (!aiSummary.weaknesses || aiSummary.weaknesses.length === 0) {
+        aiSummary.weaknesses = mustHaves.length > 0
+          ? mustHaves.map(s => `Failed to demonstrate knowledge of ${s}`)
+          : ['Candidate did not provide substantive answers to interview questions'];
+      }
+    }
+
     return {
       summary: aiSummary.summary,
       coverage,
@@ -3573,9 +3603,9 @@ Write JSON:
         overall: finalScore,
         quality: qualityScore,
         coverage: coverageScore,
-        skills: skillsScore,
-        depth: depthScore,
-        communication: communicationScore,
+        skills: effectiveSkillsScore,
+        depth: effectiveDepthScore,
+        communication: effectiveCommunicationScore,
       },
       strengths: aiSummary.strengths || session.realTimeReport?.strengths || [],
       weaknesses: aiSummary.weaknesses || session.realTimeReport?.weaknesses || [],
