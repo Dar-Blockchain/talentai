@@ -70,6 +70,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   hasJobId,
   jobId,
   refParam,
+  jobData,
   onNext,
 }) => {
   const dispatch = useDispatch<AppDispatch>();

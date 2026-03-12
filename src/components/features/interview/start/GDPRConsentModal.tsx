@@ -1,8 +1,43 @@
+import React from 'react';
 import { Box, Typography, Button, Modal } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
+import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 
 const PURPLE = '#8310FF';
+
+const dataPoints = [
+  {
+    icon: <VideocamOutlinedIcon sx={{ fontSize: 15, color: '#374151' }} />,
+    label: 'Video',
+    text: 'Your camera feed is recorded during the session for analysis.',
+  },
+  {
+    icon: <MicNoneOutlinedIcon sx={{ fontSize: 15, color: '#374151' }} />,
+    label: 'Audio',
+    text: 'Your voice is captured and transcribed in real time.',
+  },
+  {
+    icon: <ArticleOutlinedIcon sx={{ fontSize: 15, color: '#374151' }} />,
+    label: 'Transcript',
+    text: 'A text transcript of your answers is generated automatically.',
+  },
+  {
+    icon: <SecurityOutlinedIcon sx={{ fontSize: 15, color: '#374151' }} />,
+    label: 'Secure Storage',
+    text: 'Data is stored only for the active campaign and then permanently deleted.',
+  },
+];
+
+const rights = [
+  'Right to access your personal data at any time',
+  'Right to request deletion after the campaign ends',
+  'Data is never sold or shared with third parties',
+  'Processed in full compliance with GDPR regulations',
+];
 
 interface GDPRConsentModalProps {
   open: boolean;
