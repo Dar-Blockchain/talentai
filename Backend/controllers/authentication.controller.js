@@ -1,5 +1,6 @@
 const authService = require("../services/authentication.service");
 const CVAnalysisService = require("../services/cvAnalysis.service");
+const Profile = require("../models/Profile.model");
 const {
   validateEmail,
   validateOTPInput,
@@ -7,6 +8,7 @@ const {
 } = require("../helpers/auth-validation.helpers");
 const fs = require('fs');
 const path = require('path');
+const { analyzeCV } = require("../services/bedrock.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -36,6 +38,85 @@ module.exports.register = async (req, res) => {
       { firstName, lastName, name, companyDetails, phone, resumeFile }
     );
 
+    // Analyze and save CV to CVAnalysis if resume file is provided and user is Candidate
+    let cvAnalysisData = null;
+    if (resumeFile && resumeFile.path && validRoleType === 'Candidate' && result.user) {
+      try {
+        // Check if file still exists
+        if (fs.existsSync(resumeFile.path)) {
+          console.log('📄 Analyzing CV from file:', resumeFile.path);
+          
+          // Analyze the CV
+          const analyzedCV = await analyzeCV(resumeFile.path);
+          const cvData = JSON.parse(analyzedCV);
+
+          // Prepare CV Analysis data
+          const cvAnalysisPayload = {
+            name: cvData.name || firstName + ' ' + lastName || 'Unknown',
+            email: validEmail,
+            phone: cvData.phone || phone || '',
+            location: cvData.location || '',
+            title: cvData.title || '',
+            summary: cvData.summary || '',
+            yearsOfExperience: cvData.yearsOfExperience || 0,
+            seniority: cvData.seniority || 'Entry-Level',
+            skills: cvData.skills || [],
+            spokenLanguages: cvData.spokenLanguages || [],
+            experience: cvData.experience || [],
+            education: cvData.education || [],
+            certifications: cvData.certifications || [],
+            projects: cvData.projects || [],
+            links: cvData.links || { linkedin: '', github: '', portfolio: '' },
+            User: result.user._id,
+            sourceUrl: resumeFile.path,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent'),
+          };
+
+          // Save to CVAnalysis
+          const saveCVResult = await CVAnalysisService.createCVAnalysis(cvAnalysisPayload);
+          cvAnalysisData = saveCVResult.data;
+
+          console.log('✅ CV Analysis saved during registration:', cvAnalysisData._id);
+
+          // Add skills from CV to Profile with Levelconfirmed = 0
+          if (result.profile && cvData.skills && cvData.skills.length > 0) {
+            try {
+              const skillsFromCV = cvData.skills.map((skillName) => ({
+                name: skillName,
+                proficiencyLevel: 0,
+                experienceLevel: '',
+                NumberTestPassed: 0,
+                ScoreTest: 0,
+                Levelconfirmed: 0,
+              }));
+
+              // Update profile with new skills
+              await Profile.findByIdAndUpdate(
+                result.profile._id,
+                {
+                  $push: {
+                    skills: {
+                      $each: skillsFromCV,
+                    },
+                  },
+                },
+                { new: true, runValidators: true }
+              );
+
+              console.log(`✅ ${skillsFromCV.length} skills from CV added to Profile`);
+            } catch (profileError) {
+              console.warn('⚠️ Failed to add skills to profile:', profileError.message);
+              // Continue even if skill adding fails
+            }
+          }
+        }
+      } catch (cvError) {
+        console.warn('⚠️ CV analysis during registration failed, but user was created:', cvError.message);
+        // Continue even if CV analysis fails - user is already created
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: result.message,
@@ -43,6 +124,13 @@ module.exports.register = async (req, res) => {
       username: result.username,
       user: result.user || null,
       profile: result.profile || null,
+      cvAnalysis: cvAnalysisData ? {
+        id: cvAnalysisData._id,
+        analysisScore: cvAnalysisData.analysisScore,
+        seniority: cvAnalysisData.seniority,
+        skillsCount: cvAnalysisData.skills.length,
+        createdAt: cvAnalysisData.createdAt,
+      } : null,
     });
   } catch (error) {
     // Delete the uploaded file if registration fails
@@ -180,8 +268,6 @@ module.exports.warnUser = async (req, res) => {
     handleError(res, error, 400);
   }
 };
-
-const { analyzeCV } = require("../services/bedrock.service");
 
 module.exports.parseCV = async (req, res) => {
   try {

@@ -71,15 +71,6 @@ const cvAnalysisSchema = new mongoose.Schema(
     },
     seniority: {
       type: String,
-      enum: [
-        "Student",
-        "Entry-Level",
-        "Mid-Level",
-        "Senior",
-        "Lead",
-        "Director",
-        "Executive",
-      ],
       default: "Entry-Level",
     },
 

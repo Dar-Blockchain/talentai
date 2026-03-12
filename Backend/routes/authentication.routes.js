@@ -23,7 +23,7 @@ router.use(authLogMiddleware("Auth"));
 // Accès: Public
 // Corps attendu pour Candidate: { email, roleType: "Candidate", firstName (REQUIRED), lastName (REQUIRED), phone (optional), resume (optional file) }
 // Corps attendu pour Company: { email, roleType: "Company", name (optional), companyDetails (optional) }
-// Description: Crée un nouvel utilisateur et son profil selon roleType, puis envoie un OTP. firstName et lastName sont obligatoires pour Candidate. Resume peut être téléchargé pour les Candidates.
+// Description: Crée un nouvel utilisateur et son profil selon roleType, puis envoie un OTP. Pour les Candidates, le CV est automatiquement analysé et enregistré dans le model CVAnalysis. FirstName et lastName sont obligatoires pour Candidate. Resume peut être téléchargé pour les Candidates.
 router.post("/register", uploadfile.single('resume'), authController.register);
 
 // POST /auth/login
