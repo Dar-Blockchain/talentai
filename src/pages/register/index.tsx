@@ -141,7 +141,7 @@ const Register = () => {
               cursor: "pointer",
               "&:hover": { textDecoration: "underline" },
             }}
-            onClick={() => router.push("/signin")}
+            onClick={() => router.push(returnUrl ? `/signin?returnUrl=${encodeURIComponent(returnUrl)}` : "/signin")}
           >
             Sign in
           </Typography>
