@@ -3522,8 +3522,8 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
 
     console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${effectiveSkillsScore}, depth=${effectiveDepthScore}, communication=${effectiveCommunicationScore} → overall=${finalScore}${isNonAnswering ? ' (NON-ANSWERING)' : ''}`);
 
-    // ── 7. LLM-generated intelligent summary ──
-    let aiSummary = { summary: '', strengths: [], weaknesses: [], recommendation: 'maybe', reasoning: '' };
+    // ── 7. LLM-generated summary + recommendation (strengths/weaknesses come from real-time report) ──
+    let aiSummary = { summary: '', recommendation: 'maybe', reasoning: '' };
     try {
       const areaScores = Object.entries(coverage.areas || {}).map(([a, d]) =>
         `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage, quality: ${d.aiAnalysis?.qualityScore || 'N/A'}/100`
@@ -3537,25 +3537,17 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
 
       const summaryResponse = await bedrock.callLLM({
         systemPrompt: `You are an expert recruiter writing a concise interview assessment.
-Based on the actual conversation and scores, identify SPECIFIC strengths and weaknesses.
-Strengths/weaknesses MUST reference specific topics discussed, not generic traits like "good communication".
-CRITICAL: If the candidate did not provide substantive answers (score below 15, said "next" or "I don't know" on most questions), you MUST:
-- Set strengths to ["No technical strengths demonstrated during this interview"]
-- Set weaknesses to specific skills they failed to demonstrate
-- Do NOT fabricate positive attributes from non-answers (e.g., "concise communication" for someone who refused to answer is NOT a strength)
-- recommendation MUST be "no_hire"
+Based on the scores and conversation, write a brief summary and hiring recommendation.
 Return ONLY valid JSON.`,
         messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
 Must-Have Skills: ${mustHaves.join(', ') || 'Not specified'}
-${isNonAnswering ? '\nNON-ANSWERING CANDIDATE: This candidate did not provide substantive answers to any questions. They said "next", "pass", "I don\'t know", or gave non-answers throughout the interview. Do NOT list any positive strengths.\n' : ''}
+
 CANDIDATE DATA:
 - Overall Score: ${finalScore}/100
 - Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
 - Coverage: ${coverageScore}%
 - Skills Demonstrated: ${demonstrated.join(', ') || 'None identified'}
 - Skills Gaps: ${gaps.join(', ') || 'None identified'}
-- Communication: ${commStyle.verbosity || 'unknown'} speaker, ${commStyle.confidenceLevel || 'unknown'} confidence, ${commStyle.usesExamples ? 'uses examples' : 'rarely uses examples'}
-- Difficulty Level: ${candidateProfile.currentDifficulty || 'intermediate'}
 
 AREA SCORES:
 ${areaScores}
@@ -3566,34 +3558,34 @@ ${conversationSummary}
 Write JSON:
 {
   "summary": "2-3 sentence assessment referencing specific topics discussed in the interview",
-  "strengths": ["top 3 SPECIFIC strengths based on actual answers given — reference topics/skills"],
-  "weaknesses": ["top 3 SPECIFIC areas to improve based on actual gaps observed — reference topics/skills"],
   "recommendation": "strong_hire | hire | maybe | no_hire",
   "reasoning": "1 sentence justification referencing specific evidence from the conversation"
 }` }],
         temperature: 0.3,
-        maxTokens: 700,
-        timeout: 25000,
-        useFastModel: false // gpt-oss — strong model for final report
+        maxTokens: 400,
+        timeout: 20000,
+        useFastModel: false // gpt-oss — strong model for final summary
       });
 
       aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
     } catch (err) {
-      console.warn('⚠️ [FinalReport] LLM summary failed, using computed data only:', err.message);
-      aiSummary.summary = `Candidate scored ${finalScore}/100 overall. Quality: ${qualityScore}/100, Coverage: ${coverageScore}%, Depth: ${depthScore}/100.`;
+      console.warn('⚠️ [FinalReport] LLM summary failed:', err.message);
+      aiSummary.summary = `Candidate scored ${finalScore}/100 overall. Quality: ${qualityScore}/100, Coverage: ${coverageScore}%.`;
       aiSummary.recommendation = finalScore >= 75 ? 'hire' : finalScore >= 55 ? 'maybe' : 'no_hire';
       aiSummary.reasoning = `Based on composite score of ${finalScore}/100.`;
     }
 
-    // Safety net: override LLM strengths for non-answering candidates
+    // ── 8. Strengths/weaknesses from real-time report (source of truth) ──
+    let finalStrengths = session.realTimeReport?.strengths || [];
+    let finalWeaknesses = session.realTimeReport?.weaknesses || [];
+
+    // Safety net: override for non-answering candidates
     if (isNonAnswering) {
-      aiSummary.strengths = ['No technical strengths demonstrated during this interview'];
+      finalStrengths = ['No technical strengths demonstrated during this interview'];
+      finalWeaknesses = mustHaves.length > 0
+        ? mustHaves.map(s => `Failed to demonstrate knowledge of ${s}`)
+        : ['Candidate did not provide substantive answers to interview questions'];
       aiSummary.recommendation = 'no_hire';
-      if (!aiSummary.weaknesses || aiSummary.weaknesses.length === 0) {
-        aiSummary.weaknesses = mustHaves.length > 0
-          ? mustHaves.map(s => `Failed to demonstrate knowledge of ${s}`)
-          : ['Candidate did not provide substantive answers to interview questions'];
-      }
     }
 
     return {
@@ -3607,8 +3599,8 @@ Write JSON:
         depth: effectiveDepthScore,
         communication: effectiveCommunicationScore,
       },
-      strengths: aiSummary.strengths || session.realTimeReport?.strengths || [],
-      weaknesses: aiSummary.weaknesses || session.realTimeReport?.weaknesses || [],
+      strengths: finalStrengths,
+      weaknesses: finalWeaknesses,
       recommendation: aiSummary.recommendation,
       reasoning: aiSummary.reasoning,
       recommendations: session.realTimeReport?.recommendations || [],
