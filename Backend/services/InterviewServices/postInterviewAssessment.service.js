@@ -139,15 +139,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     }
 
     // =======================
-    // INCREMENT CANDIDATE QUOTA
-    // =======================
-    await Profile.findOneAndUpdate(
-      { userId: assessmentData.candidate },
-      { $inc: { quota: 1 } },
-      { new: true }
-    );
-
-    // =======================
     // UPDATE PIPELINE
     // =======================
     const progress = await CandidatePostStepProgress.findOne({
