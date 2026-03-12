@@ -20,19 +20,17 @@ class AIUtils {
    */
   static parseJSONResponse(responseContent, methodName) {
     try {
-      // Try direct parsing first
-      return JSON.parse(responseContent);
+      // Pre-strip markdown code fences if present (Nova Lite often wraps JSON in ```json```)
+      let cleaned = responseContent;
+      if (cleaned.trimStart().startsWith('```')) {
+        const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (fenceMatch) cleaned = fenceMatch[1];
+      }
+      return JSON.parse(cleaned);
     } catch (error) {
-      console.error(`JSON parsing error in ${methodName}:`, error.message);
-      console.error('Response content (first 200 chars):', responseContent.substring(0, 200));
+      console.warn(`⚠️ JSON parse failed in ${methodName}, trying fallback extraction`);
 
       try {
-        // Extract JSON from markdown code blocks
-        const jsonMatch = responseContent.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[1]);
-        }
-
         // Extract JSON that might have text before/after
         const jsonStart = responseContent.indexOf('{');
         const jsonEnd = responseContent.lastIndexOf('}');
@@ -44,6 +42,38 @@ class AIUtils {
         // Return fallback structure based on method
         return AIUtils.getFallbackResponse(methodName, responseContent);
       } catch (fallbackError) {
+        // Try truncation repair: LLM output may be cut off mid-JSON
+        try {
+          const jsonStart = responseContent.indexOf('{');
+          if (jsonStart !== -1) {
+            let truncated = responseContent.substring(jsonStart);
+            // Remove any trailing incomplete string value (cut off mid-quote)
+            truncated = truncated.replace(/,?\s*"[^"]*$/, '');
+            // Count unmatched brackets and close them
+            let openBraces = 0, openBrackets = 0;
+            let inString = false;
+            for (let i = 0; i < truncated.length; i++) {
+              const ch = truncated[i];
+              if (ch === '"' && (i === 0 || truncated[i-1] !== '\\')) inString = !inString;
+              if (!inString) {
+                if (ch === '{') openBraces++;
+                else if (ch === '}') openBraces--;
+                else if (ch === '[') openBrackets++;
+                else if (ch === ']') openBrackets--;
+              }
+            }
+            // Remove trailing comma before closing
+            truncated = truncated.replace(/,\s*$/, '');
+            const closing = ']'.repeat(Math.max(0, openBrackets)) + '}'.repeat(Math.max(0, openBraces));
+            if (closing.length > 0) {
+              const repaired = truncated + closing;
+              console.warn(`🔧 [${methodName}] Attempting truncation repair (added ${closing.length} closing brackets)`);
+              return JSON.parse(repaired);
+            }
+          }
+        } catch (repairError) {
+          // Repair also failed — fall through to fallback
+        }
         console.error(`Fallback parsing also failed in ${methodName}:`, fallbackError.message);
         return AIUtils.getFallbackResponse(methodName, responseContent);
       }
@@ -427,7 +457,7 @@ class QuestionGeneratorAI {
     this.sessionManager = sessionManager;
   }
 
-  async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis, questionStrategy = null) {
+  async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis, questionStrategy = null, questionStyle = null) {
     try {
       const persona = session.agentPersona || {};
       const candidateProfile = session.candidateProfile || {};
@@ -443,7 +473,15 @@ Must-Have Skills: ${persona.idealCandidate?.mustHaveSkills?.join(", ") || "N/A"}
 Nice-to-Have: ${persona.idealCandidate?.niceToHaveSkills?.join(", ") || "N/A"}
 Red Flags: ${persona.idealCandidate?.redFlags?.join(", ") || "N/A"}
 Tone: ${persona.agentBehavior?.tone || "professional"}
-Domain Topics: ${persona.agentBehavior?.domainTopics?.join(", ") || "N/A"}`;
+Domain Topics: ${persona.agentBehavior?.domainTopics?.join(", ") || "N/A"}
+Experience Level: ${persona.job.experienceLevel || "mid"}
+Seniority Expectations: ${persona.idealCandidate?.seniorityExpectations || "N/A"}
+
+=== JOB REQUIREMENTS (questions MUST align with these) ===
+${(persona.job.requirements || []).slice(0, 10).join("\n") || "N/A"}
+
+=== JOB RESPONSIBILITIES ===
+${(persona.job.responsibilities || []).slice(0, 10).join("\n") || "N/A"}`;
       }
 
       // Build candidate profile context
@@ -471,17 +509,20 @@ Current Difficulty: ${candidateProfile.currentDifficulty || "intermediate"}`;
       }
 
       // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
+      const experienceLevel = session.agentPersona?.job?.experienceLevel || session.config.context?.experienceLevel || 'mid';
       let questionGuidelines = '';
       if (session.config.interviewType === 'TECHNICAL_SKILL') {
         const focusAreaNames = Object.keys(session.coverage?.areas || {});
         questionGuidelines = `
 TECHNICAL SKILL interview for "${session.config.context.targetRole}".
 Focus areas: ${focusAreaNames.join(', ')}
-Assess at ${session.config.context.experienceLevel} level.`;
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
       } else if (session.config.interviewType === 'HR_INTERVIEW') {
-        questionGuidelines = `HR/BEHAVIORAL interview — focus on soft skills, teamwork, cultural fit.`;
+        questionGuidelines = `HR/BEHAVIORAL interview — focus on soft skills, teamwork, cultural fit.
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
       } else if (session.config.interviewType === 'SOFT_SKILL') {
-        questionGuidelines = `SOFT SKILLS interview — focus on communication, EQ, collaboration.`;
+        questionGuidelines = `SOFT SKILLS interview — focus on communication, EQ, collaboration.
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
       }
 
       // Adapt style based on candidate profile
@@ -492,6 +533,15 @@ Assess at ${session.config.context.experienceLevel} level.`;
         styleInstruction = 'Candidate tends to ramble — ask focused, specific questions.';
       }
 
+      // Build question style block
+      let questionStyleBlock = '';
+      if (questionStyle && questionStyle.instruction) {
+        questionStyleBlock = `
+=== QUESTION STYLE ===
+${questionStyle.instruction}
+IMPORTANT: Follow this style while respecting the strategy mode above. The style dictates HOW to phrase the question; the strategy dictates WHAT area to target.`;
+      }
+
       const systemPrompt = `You are an expert interviewer. Generate ONE targeted question.
 ${personaBlock}
 ${profileBlock}
@@ -499,6 +549,7 @@ ${strategyBlock}
 
 ${questionGuidelines}
 ${styleInstruction}
+${questionStyleBlock}
 
 RULES:
 - ONE clear question, 1-2 sentences, max 40 words
@@ -506,6 +557,17 @@ RULES:
 - No multi-part questions
 - Target the specified coverage gap
 - Be natural and conversational
+- NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
+- Questions MUST be directly relevant to the JOB REQUIREMENTS and RESPONSIBILITIES listed above. Do NOT ask about technologies, tools, or concepts not mentioned in the JD.
+- NEVER ask a question similar to any in the "ALREADY ASKED" list
+- Each question must explore a NEW angle or sub-topic not yet covered
+- Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
+- CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
+  * Junior/Entry: Basic concepts, "how would you" questions, guided scenarios, no system design
+  * Mid-Level: Practical experience questions, trade-off discussions, real project examples
+  * Senior: Architecture decisions, system design, leadership, cross-team impact, mentoring
+  * Lead/Principal: Strategic thinking, org-wide impact, technical vision, complex trade-offs
+  Do NOT ask senior-level architecture or system design questions for junior/mid roles.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -513,21 +575,62 @@ RESPONSE FORMAT (JSON only):
   "targetAreas": ["area"],
   "reasoning": "why this question",
   "expectedOutcomes": ["what we learn"],
-  "followUpStrategy": "approach"
+  "followUpStrategy": "approach",
+  "questionStyle": "${questionStyle?.id || 'direct'}"
 }`;
 
-      const recentContext = session.conversation.slice(-10).map(entry =>
+      const recentContext = session.conversation.slice(-6).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
+
+      const allAskedQuestions = session.conversation
+        .filter(e => e.type === 'interviewer')
+        .map(e => `- ${e.content}`)
+        .join('\n');
 
       const coverageSummary = Object.fromEntries(
         Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, `${d.percentage}% (${d.questionsAsked || 0}q)`])
       );
 
+      // Build explored topics summary per area to prevent theme repetition
+      const exploredTopicsSummary = Object.entries(session.coverage?.areas || {})
+        .filter(([_, d]) => d.topicsExplored?.length > 0)
+        .map(([area, d]) => `${area}: ${d.topicsExplored.join(', ')}`)
+        .join('\n') || 'none yet';
+
+      // Detect overused themes: bigrams that appear 2+ times in questions
+      const allQuestionTexts = session.conversation
+        .filter(e => e.type === 'interviewer')
+        .map(e => e.content.toLowerCase());
+      const themeFrequency = {};
+      for (const q of allQuestionTexts) {
+        const words = q.split(/\s+/).filter(w => w.length > 3);
+        for (let i = 0; i < words.length - 1; i++) {
+          const bigram = `${words[i]} ${words[i+1]}`;
+          themeFrequency[bigram] = (themeFrequency[bigram] || 0) + 1;
+        }
+      }
+      const overusedThemes = Object.entries(themeFrequency)
+        .filter(([_, count]) => count >= 2)
+        .map(([theme]) => theme);
+
+      // RAG context from JD (if available)
+      const ragBlock = session.ragContext ? `
+RELEVANT JD CONTEXT (use this to align questions with job requirements):
+${session.ragContext}` : '';
+
       const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
 
 COVERAGE: ${JSON.stringify(coverageSummary)}
 WEAKEST: ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || Object.entries(session.coverage?.areas || {}).filter(([_,d]) => d.percentage < 50).map(([a]) => a))}
+
+TOPICS ALREADY EXPLORED (do NOT revisit these — pick a DIFFERENT sub-topic):
+${exploredTopicsSummary}
+${overusedThemes.length > 0 ? `\nOVERUSED THEMES (AVOID these completely — pick a fresh topic):\n${overusedThemes.join(', ')}` : ''}
+${ragBlock}
+
+ALREADY ASKED (DO NOT repeat or rephrase these):
+${allAskedQuestions || '(none yet)'}
 
 RECENT CONVERSATION:
 ${recentContext}
@@ -578,6 +681,11 @@ RESPONSE FORMAT (JSON only):
          entry.aiAnalysis?.topicsDiscussed?.includes(areaName))
       );
 
+      const askedQuestions = candidateHistory
+        .filter(e => e.type === 'interviewer')
+        .map(e => `- ${e.content}`)
+        .join('\n');
+
       const userPrompt = `TARGET COMPETENCY AREA: ${areaName}
 
 AREA COVERAGE DATA:
@@ -585,6 +693,9 @@ ${JSON.stringify(areaData, null, 2)}
 
 ROLE CONTEXT:
 ${JSON.stringify(roleContext, null, 2)}
+
+ALREADY ASKED (generate something COMPLETELY DIFFERENT):
+${askedQuestions || '(none yet)'}
 
 CANDIDATE'S PREVIOUS RESPONSES ABOUT THIS AREA:
 ${relevantHistory.map(entry => entry.content).join('\n---\n')}
@@ -814,6 +925,58 @@ Make the next intelligent decision for interview progression. Consider question 
 
 }
 
+// ═══════════════════════════════════════════════════════════
+// Question Style Definitions for Diverse Question Generation
+// ═══════════════════════════════════════════════════════════
+
+const UNIVERSAL_STYLES = {
+  situational: {
+    id: 'situational',
+    instruction: `STYLE: SITUATIONAL — Frame your question as a hypothetical scenario. Start with "Imagine..." or "Suppose you..." and place the candidate in a realistic work situation related to the target area. The scenario should require them to explain their approach, not just recall a past event.`,
+    minTurn: 0,
+    requiresContext: false
+  },
+  'problem-finding': {
+    id: 'problem-finding',
+    instruction: `STYLE: PROBLEM-FINDING — Present a flawed approach, design decision, or technical strategy related to the target area and ask the candidate to identify what's wrong with it. For example: "A developer proposes [X approach] for [Y problem]. What issues do you see?" The flaw should be realistic and calibrated to the candidate's assessed difficulty level.`,
+    minTurn: 2,
+    requiresContext: false
+  },
+  challenge: {
+    id: 'challenge',
+    instruction: `STYLE: CHALLENGE — Push back on something the candidate said in their last answer to test depth and conviction. Reference a specific claim they made and present a counterpoint or edge case. For example: "You mentioned X, but what about Y? How would you handle that?" Be respectful but probing.`,
+    minTurn: 1,
+    requiresContext: true
+  }
+};
+
+const FRAMEWORK_STYLE_INSTRUCTIONS = {
+  'scenario-based':          'STYLE: SCENARIO-BASED — Ask a question grounded in a realistic work scenario specific to the domain.',
+  'code review':             'STYLE: CODE REVIEW — Describe a coding approach, design pattern, or architecture decision verbally and ask the candidate to critique it, identify potential issues, or suggest improvements. This is entirely verbal — do NOT present actual code.',
+  'architecture discussion': 'STYLE: ARCHITECTURE DISCUSSION — Ask about system design, architectural trade-offs, or scaling decisions.',
+  'debugging walkthrough':   'STYLE: DEBUGGING WALKTHROUGH — Describe a bug symptom and ask how they would diagnose and fix it.',
+  'behavioral STAR':         'STYLE: BEHAVIORAL STAR — Ask for a specific past experience. Expect the candidate to describe the Situation, Task, Action, and Result.',
+  'values-based':            'STYLE: VALUES-BASED — Ask about personal values, ethics, or principles relevant to the role.',
+  'motivational':            'STYLE: MOTIVATIONAL — Ask what drives the candidate, their career goals, or what excites them about this role.',
+  'role-play':               'STYLE: ROLE-PLAY — Set up a brief role-play scenario (e.g., "I\'m a client who says X. How do you respond?").',
+  'deal walkthrough':        'STYLE: DEAL WALKTHROUGH — Ask the candidate to walk through a deal or project end-to-end.',
+  'objection handling':      'STYLE: OBJECTION HANDLING — Present an objection and ask how they would respond.',
+  'pipeline review':         'STYLE: PIPELINE REVIEW — Ask about pipeline management, forecasting, or deal qualification.',
+  'portfolio review':        'STYLE: PORTFOLIO REVIEW — Ask the candidate to walk through a piece of their work or portfolio.',
+  'design critique':         'STYLE: DESIGN CRITIQUE — Describe a design and ask for their critique of it.',
+  'whiteboard exercise':     'STYLE: WHITEBOARD — Ask the candidate to walk through their solution design step by step, explaining each component and how they connect. This is entirely verbal — do NOT present actual code or diagrams.',
+  'case study':              'STYLE: CASE STUDY — Present a business case and ask for their analysis.',
+  'prioritization exercise': 'STYLE: PRIORITIZATION — Present competing priorities and ask how they would decide.',
+  'metrics discussion':      'STYLE: METRICS — Ask about KPIs, success metrics, or how they measure impact.',
+  'roadmap review':          'STYLE: ROADMAP REVIEW — Ask about product roadmap decisions, sequencing, or trade-offs.',
+  'SQL challenge':           'STYLE: SQL CHALLENGE — Describe a data retrieval or transformation problem and ask the candidate to explain their query approach and reasoning step by step. This is entirely verbal — do NOT present actual code or SQL.',
+  'analysis walkthrough':    'STYLE: ANALYSIS WALKTHROUGH — Ask the candidate to walk through an analytical approach step by step.',
+  'reflective':              'STYLE: REFLECTIVE — Ask the candidate to reflect on a lesson learned or a growth experience.',
+  'campaign analysis':       'STYLE: CAMPAIGN ANALYSIS — Ask the candidate to analyze a campaign\'s performance.',
+  'deal storytelling':       'STYLE: DEAL STORYTELLING — Ask the candidate to tell the story of a specific deal or negotiation.',
+  'portfolio discussion':    'STYLE: PORTFOLIO DISCUSSION — Ask the candidate to discuss a specific piece from their portfolio.',
+};
+
 class IntelligentInterviewService {
   constructor() {
     this.sessionManager = redisSessionManager;
@@ -915,11 +1078,18 @@ Return ONLY valid JSON with ALL of these fields:
 {
   "quality": { "score": 0-100, "answeredQuestion": true/false, "depthLevel": "surface|moderate|deep", "isOffTopic": true/false, "completeness": "complete|partial|minimal|avoided" },
   "skills": { "demonstrated": ["skill1"], "hinted": ["skill2"], "gaps": ["skill3"] },
-  "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-15, "evidence": "brief evidence" }] },
+  "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-25, "evidence": "brief evidence" }] },
   "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
   "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
   "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." }
-}`;
+}
+
+COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
+- Deep answer with specific examples and technical detail: increase 18-25
+- Good answer showing solid understanding: increase 12-17
+- Surface-level or partial answer: increase 5-11
+- Off-topic, avoided, or no useful signal: increase 0
+The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).`;
 
     const coverageSummary = Object.fromEntries(
       Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, d.percentage + "%"])
@@ -1005,6 +1175,36 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
     const currentArea = session.currentFocusArea;
     const questionsInArea = areas[currentArea]?.questionsAsked || 0;
 
+    // PASS/SKIP: If candidate just passed, immediately transition to different area
+    const lastCandidateEntry = session.conversation?.filter(e => e.type === 'candidate').slice(-1)[0];
+    const lastMeta = lastCandidateEntry?.metadata;
+    if (lastMeta?.answeredQuestion === false || lastMeta?.completeness === 'avoided') {
+      const weakest = Object.entries(areas)
+        .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+        .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+      if (weakest) {
+        return {
+          mode: "transition",
+          targetArea: weakest[0],
+          context: `Candidate passed on ${currentArea} — moving to ${weakest[0]}`
+        };
+      }
+    }
+
+    // HARD CAP: After 2 questions in current area, always transition to weakest area
+    if (questionsInArea >= 2 && currentArea) {
+      const weakest = Object.entries(areas)
+        .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+        .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+      if (weakest) {
+        return {
+          mode: "transition",
+          targetArea: weakest[0],
+          context: `Forced transition after ${questionsInArea} questions in ${currentArea}`
+        };
+      }
+    }
+
     // Priority 1: BRIDGE — candidate mentioned something mapping to a gap
     for (const topic of (analysis.interestingTopics || [])) {
       if (topic.relevantArea && areas[topic.relevantArea] && areas[topic.relevantArea].percentage < 60) {
@@ -1017,8 +1217,8 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       }
     }
 
-    // Priority 2: PROBE — current area needs more depth
-    if (currentArea && questionsInArea < 3 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === "surface") {
+    // Priority 2: PROBE — only 1 follow-up before moving on
+    if (currentArea && questionsInArea < 2 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === "surface") {
       return {
         mode: "probe",
         targetArea: currentArea,
@@ -1026,9 +1226,9 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       };
     }
 
-    // Priority 3: TRANSITION — explore weakest uncovered area
+    // Priority 3: TRANSITION — explore weakest uncovered area (threshold raised to < 70%)
     const weakest = Object.entries(areas)
-      .filter(([_, d]) => d.percentage < 50 && !d.completed)
+      .filter(([_, d]) => d.percentage < 70 && !d.completed)
       .sort((a, b) => a[1].percentage - b[1].percentage)[0];
 
     if (weakest) {
@@ -1046,6 +1246,68 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       targetArea: currentArea || Object.keys(areas)[0],
       context: "Ask a final validation question"
     };
+  }
+
+  /**
+   * Select question style — pure logic, no LLM call (~0ms).
+   * Picks from universal styles + framework-defined styles + direct, with rotation to avoid repeats.
+   */
+  selectQuestionStyle(session, analysis, questionStrategy) {
+    const turnNumber = Math.floor((session.conversation?.length || 0) / 2);
+    const styleHistory = session.questionStyleHistory || [];
+    const lastStyle = styleHistory.length > 0 ? styleHistory[styleHistory.length - 1] : null;
+    const lastTwoStyles = new Set(styleHistory.slice(-2));
+
+    // Build available styles pool
+    const frameworkStyles = session.agentPersona?.evaluationFramework?.questionStyles || [];
+    const availableStyles = [];
+
+    // Universal: situational (always eligible)
+    availableStyles.push(UNIVERSAL_STYLES.situational);
+
+    // Universal: problem-finding (after turn 2 — need context about candidate level)
+    if (turnNumber >= 2) {
+      availableStyles.push(UNIVERSAL_STYLES['problem-finding']);
+    }
+
+    // Universal: challenge (only when there's something worth challenging)
+    const lastQuality = analysis?.quality?.score || 50;
+    const lastDepth = analysis?.quality?.depthLevel;
+    const lastConfidence = session.candidateProfile?.communicationStyle?.confidenceLevel;
+    if (turnNumber >= 1 &&
+        (lastQuality >= 55 || lastConfidence === 'confident') &&
+        lastDepth !== 'surface' &&
+        questionStrategy?.mode !== 'transition') {
+      availableStyles.push(UNIVERSAL_STYLES.challenge);
+    }
+
+    // Framework styles (from config-manager, category-specific)
+    for (const styleName of frameworkStyles) {
+      if (styleName === 'situational') continue; // already in universal
+      const instruction = FRAMEWORK_STYLE_INSTRUCTIONS[styleName];
+      if (instruction) {
+        availableStyles.push({ id: styleName, instruction, minTurn: 0, requiresContext: false });
+      }
+    }
+
+    // Direct style (preserves current default behavior)
+    availableStyles.push({ id: 'direct', instruction: null, minTurn: 0, requiresContext: false });
+
+    // Hard filter: no consecutive repeats
+    let eligible = availableStyles.filter(s => s.id !== lastStyle);
+
+    // Soft filter: deprioritize styles used in last 2 turns
+    const fresh = eligible.filter(s => !lastTwoStyles.has(s.id));
+    const pool = fresh.length > 0 ? fresh : eligible;
+
+    // Weighted random: universal=3, framework=2, direct=1
+    const weighted = [];
+    for (const style of pool) {
+      const weight = UNIVERSAL_STYLES[style.id] ? 3 : (style.id === 'direct' ? 1 : 2);
+      for (let i = 0; i < weight; i++) weighted.push(style);
+    }
+
+    return weighted[Math.floor(Math.random() * weighted.length)];
   }
 
   /**
@@ -1210,10 +1472,10 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
 
   async shouldEndInterview(session, totalDuration) {
     try {
-      // 🕐 TIME LIMIT CHECK (20 minutes max by default)
+      // 🕐 TIME LIMIT CHECK (hard cap = target × 1.5, e.g., 45 min)
       if (session.interviewStartTime) {
         const elapsedMinutes = (Date.now() - session.interviewStartTime) / 60000;
-        const maxDuration = session.maxDurationMinutes || 20;
+        const maxDuration = session.maxDurationMinutes || 45;
 
         if (elapsedMinutes >= maxDuration) {
           console.log(`⏰ [Time Limit] ${elapsedMinutes.toFixed(1)} minutes elapsed (max: ${maxDuration}) - ending interview`);
@@ -1253,9 +1515,10 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
           };
         }
 
-        // 8 CONSECUTIVE GOOD ANSWERS → End with excellent score
-        if (tracking.consecutiveGoodAnswers >= 8) {
-          console.log(`✅ [Excellent Quality Termination] 8 consecutive good answers - ending interview with good score`);
+        // 8 CONSECUTIVE GOOD ANSWERS → End only if coverage is also adequate
+        const overallCoverage = session.coverage?.overall || 0;
+        if (tracking.consecutiveGoodAnswers >= 8 && overallCoverage >= 60) {
+          console.log(`✅ [Excellent Quality Termination] 8 consecutive good answers + ${overallCoverage}% coverage - ending interview`);
           return {
             shouldEnd: true,
             confidence: 95,
@@ -1302,9 +1565,29 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
         };
       }
 
-      // EARLY SUCCESS: Consistently excellent performance after 8+ responses (10-12 minutes)
-      if (candidateResponseCount >= 8 && overallQualityAverage >= 80) {
-        console.log(`✅ [Early Success - Excellent Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses`);
+      // EARLY EXCELLENCE: Consistently outstanding performance after 6+ responses (symmetric with poor exit)
+      if (candidateResponseCount >= 6 && overallQualityAverage >= 85) {
+        console.log(`🌟 [Early Excellence] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses — ending early`);
+        return {
+          shouldEnd: true,
+          confidence: 95,
+          reasoning: `Candidate consistently demonstrates excellent competency (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Clear signal of strong capability — further questioning provides diminishing returns.`,
+          completedObjectives: ['Technical competency validated', 'Consistently excellent responses'],
+          remainingGaps: [],
+          recommendedAction: 'End interview - candidate clearly qualified',
+          earlySuccess: true,
+          terminationReason: 'early_excellence',
+          message: 'Excellent! You\'ve demonstrated outstanding understanding across all topics. Thank you for your time.',
+          qualityScore: overallQualityAverage,
+          responseCount: candidateResponseCount,
+          score: 'excellent'
+        };
+      }
+
+      // EARLY SUCCESS: Consistently excellent performance after 8+ responses — only if coverage adequate
+      const overallCov = session.coverage?.overall || 0;
+      if (candidateResponseCount >= 8 && overallQualityAverage >= 80 && overallCov >= 60) {
+        console.log(`✅ [Early Success - Excellent Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality, ${overallCov}% coverage over ${candidateResponseCount} responses`);
         return {
           shouldEnd: true,
           confidence: 90,
@@ -1321,7 +1604,22 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
         };
       }
 
-      // Continue with standard evaluation if no early termination
+      // Coverage-based guard: skip LLM if insufficient evidence to assess the candidate
+      const currentOverallCoverage = session.coverage?.overall || 0;
+      const areasExplored = Object.values(session.coverage?.areas || {})
+        .filter(a => a.percentage > 0).length;
+      const totalAreas = Object.keys(session.coverage?.areas || {}).length;
+
+      if (currentOverallCoverage < 40 || areasExplored < Math.min(2, totalAreas)) {
+        console.log(`⏳ [shouldEndInterview] Coverage ${currentOverallCoverage}%, ${areasExplored}/${totalAreas} areas explored — insufficient data, continuing`);
+        return {
+          shouldEnd: false,
+          confidence: 0,
+          reasoning: `Coverage at ${currentOverallCoverage}% with ${areasExplored}/${totalAreas} areas explored — insufficient data to assess candidate`
+        };
+      }
+
+      // Continue with LLM evaluation now that we have enough evidence
       const systemPrompt = `Determine if an interview should end based on coverage completeness and interview objectives.
 
 EVALUATION CRITERIA:
@@ -1331,6 +1629,12 @@ EVALUATION CRITERIA:
 - Diminishing returns from continued questioning
 - Interview objectives achievement
 
+CRITICAL RULES:
+- Do NOT recommend ending if overall coverage is below 50% — the agent needs more data to reliably score the candidate.
+- Do NOT recommend ending if fewer than half the focus areas have been explored.
+- Only recommend ending when there is SUFFICIENT evidence to evaluate the candidate's competency across the key areas.
+- The goal is to gather enough data for a reliable assessment, not to end quickly.
+
 RESPONSE FORMAT (JSON only):
 {
   "shouldEnd": boolean,
@@ -1338,12 +1642,14 @@ RESPONSE FORMAT (JSON only):
   "reasoning": "why end or continue",
   "completedObjectives": ["achieved objectives"],
   "remainingGaps": ["important gaps if continuing"],
-  "recommendedAction": "specific next steps"
+  "recommendedAction": "specific next steps",
+  "message": "a professional closing message to the candidate if shouldEnd is true, otherwise empty string"
 }`;
 
       const userPrompt = `INTERVIEW EVALUATION:
-Total Duration: ${totalDuration} minutes
-Target Duration: ${session.config.sessionSettings.duration} minutes
+Elapsed: ${totalDuration} minutes
+Target Duration: ${session.targetDurationMinutes || session.config.sessionSettings.duration} minutes
+Maximum Duration: ${session.maxDurationMinutes || 45} minutes
 
 COVERAGE STATUS:
 ${JSON.stringify(session.coverage, null, 2)}
@@ -1496,14 +1802,16 @@ Determine if interview objectives have been sufficiently met to end the session.
       // Re-fetch session to get updated coverage (may have been overridden by persona)
       const updatedSessionForTiming = await this.sessionManager.getSession(sessionId);
       const coverageAreas = Object.keys(updatedSessionForTiming.coverage?.areas || {});
-      const totalMinutes = config.sessionSettings?.duration || 20;
+      const totalMinutes = config.sessionSettings?.duration || 30;
+      const maxDurationMinutes = Math.ceil(totalMinutes * 1.5); // 30 → 45
       const timeBudgetPerAreaMs = coverageAreas.length > 0
         ? (totalMinutes * 60 * 1000) / coverageAreas.length
         : totalMinutes * 60 * 1000;
 
       await this.sessionManager.updateSession(sessionId, {
         interviewStartTime: Date.now(),
-        maxDurationMinutes: totalMinutes,
+        targetDurationMinutes: totalMinutes,     // target duration (e.g., 30 min)
+        maxDurationMinutes: maxDurationMinutes,   // hard cap (e.g., 45 min)
         timeBudgetPerAreaMs,
         coverageAreaCount: coverageAreas.length,
         jobDescription,
@@ -1515,7 +1823,7 @@ Determine if interview objectives have been sufficiently met to end the session.
           lastQualityScore: null
         }
       });
-      console.log(`✅ [Service] Interview timing initialized: ${totalMinutes}min total, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
+      console.log(`✅ [Service] Interview timing: target ${totalMinutes}min, max ${maxDurationMinutes}min, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
 
       // Generate intelligent greeting with error handling
       let greeting;
@@ -1707,6 +2015,7 @@ Determine if interview objectives have been sufficiently met to end the session.
    * Step 3: Apply coverage updates          — Pure logic (0ms)
    * Step 4: Quality filter + termination    — Pure logic (0ms)
    * Step 5: decideQuestionStrategy()        — Pure logic (0ms)
+   * Step 5.5: selectQuestionStyle()         — Pure logic (0ms)
    * Step 6: generateIntelligentQuestion()   — Nova Lite (~2-3s)
    * Step 7: Quick dedup (RAG vector)        — ~50ms
    * Step 8: Emit + background updates       — Immediate
@@ -1757,6 +2066,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         qualityScore: analysis.quality?.score,
         answeredQuestion: analysis.quality?.answeredQuestion,
         completeness: analysis.quality?.completeness,
+        depthLevel: analysis.quality?.depthLevel || 'moderate',
         targetArea
       };
 
@@ -1766,7 +2076,41 @@ Determine if interview objectives have been sufficiently met to end the session.
         for (const impact of analysis.coverage.areasImpacted) {
           if (finalCoverage.areas[impact.area]) {
             const area = finalCoverage.areas[impact.area];
-            area.percentage = Math.min(100, (area.percentage || 0) + (impact.increase || 0));
+            let increase = impact.increase || 0;
+
+            // PASS/SKIP HANDLING: Candidate can't answer = gap recorded, coverage still increases
+            const isPassSkip = analysis.quality?.answeredQuestion === false ||
+              analysis.quality?.completeness === 'avoided';
+            if (isPassSkip && increase === 0) {
+              increase = 15;
+              console.log(`⏭️ [Coverage] Pass/skip detected for "${impact.area}" — forcing +15% coverage (gap recorded)`);
+              area.indicators = area.indicators || [];
+              area.indicators.push({
+                name: `Gap: candidate passed on ${impact.area}`,
+                covered: true,
+                evidence: ['Candidate could not answer / requested to skip'],
+                quality: 0,
+                aiGenerated: true,
+                reasoning: 'Candidate explicitly passed or could not answer'
+              });
+            }
+
+            // CODE-LEVEL BOOST: LLM returns conservative values, amplify based on answer quality
+            const qualityScore = analysis.quality?.score || 50;
+            const depth = analysis.quality?.depthLevel || 'surface';
+            if (increase > 0 && !isPassSkip) {
+              if (depth === 'deep' && qualityScore >= 70) {
+                increase = Math.max(increase, 25);
+              } else if (depth === 'moderate' && qualityScore >= 50) {
+                increase = Math.max(increase, 18);
+              } else if (qualityScore >= 40) {
+                increase = Math.max(increase, 12);
+              } else {
+                increase = Math.max(increase, 5);
+              }
+            }
+
+            area.percentage = Math.min(100, (area.percentage || 0) + increase);
             area.lastUpdated = new Date().toISOString();
             if (impact.evidence) {
               area.indicators = area.indicators || [];
@@ -1774,9 +2118,27 @@ Determine if interview objectives have been sufficiently met to end the session.
                 name: `AI-detected: ${impact.area}`,
                 covered: true,
                 evidence: [impact.evidence],
-                quality: analysis.quality?.score || 50,
+                quality: Math.min(10, Math.round((analysis.quality?.score || 50) / 10)),
                 aiGenerated: true
               });
+            }
+
+            // Mark area completed when coverage is sufficient
+            if (area.percentage >= 80 && !area.completed) {
+              area.completed = true;
+              console.log(`✅ [Coverage] Area "${impact.area}" marked completed at ${area.percentage}%`);
+            }
+
+            // Track explored sub-topics to prevent theme repetition
+            const topicsFromResponse = (analysis.skills?.demonstrated || [])
+              .concat(analysis.interestingTopics?.map(t => t.topic) || []);
+            if (topicsFromResponse.length > 0) {
+              area.topicsExplored = area.topicsExplored || [];
+              for (const topic of topicsFromResponse) {
+                if (!area.topicsExplored.includes(topic)) {
+                  area.topicsExplored.push(topic);
+                }
+              }
             }
 
             // SCORE BONUS: Reward candidates who cover an area before time budget expires
@@ -1806,6 +2168,34 @@ Determine if interview objectives have been sufficiently met to end the session.
         finalCoverage.lastUpdated = new Date().toISOString();
 
         await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+      } else {
+        // No areasImpacted from LLM — but if it's a pass/skip, still record the gap
+        const isPassSkipNoAreas = analysis.quality?.answeredQuestion === false ||
+          analysis.quality?.completeness === 'avoided';
+        if (isPassSkipNoAreas && targetArea && finalCoverage.areas[targetArea]) {
+          const area = finalCoverage.areas[targetArea];
+          area.percentage = Math.min(100, (area.percentage || 0) + 15);
+          area.lastUpdated = new Date().toISOString();
+          area.indicators = area.indicators || [];
+          area.indicators.push({
+            name: `Gap: candidate passed on ${targetArea}`,
+            covered: true,
+            evidence: ['Candidate could not answer / requested to skip'],
+            quality: 0,
+            aiGenerated: true,
+            reasoning: 'Candidate explicitly passed or could not answer'
+          });
+          console.log(`⏭️ [Coverage] Pass/skip (no areas from LLM) for "${targetArea}" — forcing +15% coverage (gap recorded)`);
+
+          // Recalculate overall
+          const areaEntries = Object.values(finalCoverage.areas);
+          const totalWeight = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
+          finalCoverage.overall = totalWeight > 0
+            ? Math.round(areaEntries.reduce((sum, a) => sum + ((a.percentage / 100) * (a.weight || 25)), 0) / totalWeight * 100)
+            : 0;
+          finalCoverage.lastUpdated = new Date().toISOString();
+          await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+        }
       }
 
       // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
@@ -1822,7 +2212,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         console.log(`🛑 [Pipeline] Ending interview: ${endCheck.terminationReason}`);
         return {
           action: 'end_interview',
-          content: endCheck.message,
+          content: endCheck.message || 'Thank you for your time. This concludes our interview.',
           reasoning: endCheck.reason || endCheck.reasoning,
           metadata: { terminationReason: endCheck.terminationReason, score: endCheck.score }
         };
@@ -1851,7 +2241,27 @@ Determine if interview objectives have been sufficiently met to end the session.
       const strategy = this.decideQuestionStrategy(analysis, updatedProfile, finalCoverage, finalSession);
       console.log(`🎯 [Step 5] Strategy: ${strategy.mode} → ${strategy.targetArea} (${strategy.context})`);
 
-      // ── STEP 6: Generate question with strategy context (Nova Lite, ~2-3s) ──
+      // ── STEP 5.5: Select question style (pure logic, ~0ms) ──
+      const questionStyle = this.selectQuestionStyle(finalSession, analysis, strategy);
+      console.log(`🎨 [Step 5.5] Style: ${questionStyle.id} | Strategy: ${strategy.mode} → ${strategy.targetArea}`);
+
+      // ── STEP 5.7: Retrieve RAG context from JD (async, ~100ms) ──
+      let ragContext = '';
+      try {
+        const jobId = session.jobDescription?._id || session.config?.jobId;
+        if (jobId) {
+          const rag = await ragService.retrieveContext(jobId, sessionId, transcript);
+          ragContext = rag.jdContext || '';
+          if (ragContext) {
+            console.log(`📚 [Step 5.7] RAG context retrieved: ${ragContext.length} chars`);
+          }
+        }
+      } catch (ragErr) {
+        console.warn('⚠️ [Step 5.7] RAG context retrieval failed (non-blocking):', ragErr.message);
+      }
+      finalSession.ragContext = ragContext;
+
+      // ── STEP 6: Generate question with strategy + style context (Nova Lite, ~2-3s) ──
       const step6Start = Date.now();
 
       // Build a lightweight coverage analysis object for question generator
@@ -1872,14 +2282,22 @@ Determine if interview objectives have been sufficiently met to end the session.
           finalSession,
           coverageForQGen,
           { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer').slice(-5) },
-          strategy  // Pass strategy for adaptive prompting
+          strategy,       // Pass strategy for adaptive prompting
+          questionStyle   // Pass style for diverse question phrasing
         ),
-        30000,
+        15000,
         'generateIntelligentQuestion'
       ).catch(err => {
         console.warn('⚠️ Question generation failed, using fallback:', err.message);
+        const areaLabel = strategy.targetArea?.replace(/_/g, ' ') || 'your background';
+        const fallbackQuestions = {
+          bridge: `Can you tell me more about how your experience relates to ${areaLabel}?`,
+          probe: `Could you walk me through a specific example related to ${areaLabel}?`,
+          transition: `Let's shift gears — can you share your experience with ${areaLabel}?`,
+          validate: `How would you rate your confidence in ${areaLabel}?`
+        };
         return {
-          question: 'Can you elaborate on your most recent project experience?',
+          question: fallbackQuestions[strategy.mode] || 'Can you tell me about a challenging project you worked on recently?',
           targetAreas: [strategy.targetArea || 'General'],
           reasoning: 'Fallback question due to AI timeout',
           fallback: true
@@ -1928,8 +2346,16 @@ Determine if interview objectives have been sufficiently met to end the session.
           targetAreas: questionTargetAreas,
           reasoning: finalQuestion.reasoning,
           strategy: strategy.mode,
+          questionStyle: questionStyle.id,
           ignoredPreviousResponse: isLowQuality
         }
+      });
+
+      // Track question style history for rotation (capped at 10)
+      const currentStyleHistory = finalSession.questionStyleHistory || [];
+      currentStyleHistory.push(questionStyle.id);
+      await this.sessionManager.updateSession(sessionId, {
+        questionStyleHistory: currentStyleHistory.slice(-10)
       });
 
       // Track area and question count
@@ -1968,6 +2394,7 @@ Determine if interview objectives have been sufficiently met to end the session.
         coverageUpdate: coverageForQGen.overallAssessment,
         metadata: {
           strategy: strategy.mode,
+          questionStyle: questionStyle.id,
           pipelineTimeMs: totalTime,
           qualityScore,
           coverageAnalysis: coverageForQGen.overallAssessment,
@@ -2875,13 +3302,132 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
   }
 
   async generateFinalReport(session) {
-    // This would be implemented with comprehensive analysis
-    // For now, return basic structure
+    const persona = session.agentPersona || {};
+    const candidateProfile = session.candidateProfile || {};
+    const coverage = session.coverage || { overall: 0, areas: {} };
+    const conversation = session.conversation || [];
+
+    // ── 1. Quality score: average of per-response quality scores ──
+    const responseQualities = candidateProfile.responseQualities || [];
+    const qualityScore = responseQualities.length > 0
+      ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
+      : 50;
+
+    // ── 2. Coverage score: weighted area coverage ──
+    const coverageScore = coverage.overall || 0;
+
+    // ── 3. Skills score: must-have skills covered vs total ──
+    const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
+    const demonstrated = candidateProfile.revealedExpertise || [];
+    const gaps = candidateProfile.revealedGaps || [];
+    let skillsScore;
+    if (mustHaves.length > 0) {
+      const mustHavesCovered = mustHaves.filter(s =>
+        demonstrated.some(d => d.toLowerCase().includes(s.toLowerCase()))
+      );
+      skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+    } else {
+      skillsScore = qualityScore; // fallback if no must-haves defined
+    }
+
+    // ── 4. Depth score: from deep/moderate/surface per response ──
+    const depths = conversation
+      .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
+      .map(e => e.metadata.depthLevel);
+    const depthValues = { deep: 100, moderate: 65, surface: 25 };
+    const depthScore = depths.length > 0
+      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 50), 0) / depths.length)
+      : 50;
+
+    // ── 5. Communication score: from style analysis ──
+    const commStyle = candidateProfile.communicationStyle || {};
+    let communicationScore = 50;
+    if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
+    else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
+    if (commStyle.usesExamples) communicationScore += 15;
+    if (commStyle.verbosity === 'detailed') communicationScore += 10;
+    else if (commStyle.verbosity === 'concise') communicationScore += 5;
+    communicationScore = Math.min(100, communicationScore);
+
+    // ── 6. Composite final score ──
+    const finalScore = Math.round(
+      (qualityScore * 0.35) +
+      (coverageScore * 0.15) +
+      (skillsScore * 0.25) +
+      (depthScore * 0.15) +
+      (communicationScore * 0.10)
+    );
+
+    console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${skillsScore}, depth=${depthScore}, communication=${communicationScore} → overall=${finalScore}`);
+
+    // ── 7. LLM-generated intelligent summary ──
+    let aiSummary = { summary: '', strengths: [], weaknesses: [], recommendation: 'maybe', reasoning: '' };
+    try {
+      const areaScores = Object.entries(coverage.areas || {}).map(([a, d]) =>
+        `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage, quality: ${d.aiAnalysis?.qualityScore || 'N/A'}/100`
+      ).join('\n');
+
+      const summaryResponse = await bedrock.callLLM({
+        systemPrompt: `You are an expert recruiter writing a concise interview assessment. Return ONLY valid JSON.`,
+        messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
+Must-Have Skills: ${mustHaves.join(', ') || 'Not specified'}
+
+CANDIDATE DATA:
+- Overall Score: ${finalScore}/100
+- Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
+- Coverage: ${coverageScore}%
+- Skills Demonstrated: ${demonstrated.join(', ') || 'None identified'}
+- Skills Gaps: ${gaps.join(', ') || 'None identified'}
+- Communication: ${commStyle.verbosity || 'unknown'} speaker, ${commStyle.confidenceLevel || 'unknown'} confidence, ${commStyle.usesExamples ? 'uses examples' : 'rarely uses examples'}
+- Difficulty Level: ${candidateProfile.currentDifficulty || 'intermediate'}
+
+AREA SCORES:
+${areaScores}
+
+Write JSON:
+{
+  "summary": "2-3 sentence assessment of this candidate for this specific role",
+  "strengths": ["top 3 specific strengths based on the data above"],
+  "weaknesses": ["top 3 specific areas to improve"],
+  "recommendation": "strong_hire | hire | maybe | no_hire",
+  "reasoning": "1 sentence justification for the recommendation"
+}` }],
+        temperature: 0.3,
+        maxTokens: 500,
+        timeout: 15000,
+        useFastModel: true
+      });
+
+      aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
+    } catch (err) {
+      console.warn('⚠️ [FinalReport] LLM summary failed, using computed data only:', err.message);
+      aiSummary.summary = `Candidate scored ${finalScore}/100 overall. Quality: ${qualityScore}/100, Coverage: ${coverageScore}%, Depth: ${depthScore}/100.`;
+      aiSummary.recommendation = finalScore >= 75 ? 'hire' : finalScore >= 55 ? 'maybe' : 'no_hire';
+      aiSummary.reasoning = `Based on composite score of ${finalScore}/100.`;
+    }
+
     return {
-      summary: "Interview completed successfully",
-      coverage: session.coverage,
-      recommendations: session.realTimeReport.recommendations,
-      scores: session.realTimeReport.scores,
+      summary: aiSummary.summary,
+      coverage,
+      scores: {
+        overall: finalScore,
+        quality: qualityScore,
+        coverage: coverageScore,
+        skills: skillsScore,
+        depth: depthScore,
+        communication: communicationScore,
+      },
+      strengths: aiSummary.strengths || session.realTimeReport?.strengths || [],
+      weaknesses: aiSummary.weaknesses || session.realTimeReport?.weaknesses || [],
+      recommendation: aiSummary.recommendation,
+      reasoning: aiSummary.reasoning,
+      recommendations: session.realTimeReport?.recommendations || [],
+      candidateProfile: {
+        communicationStyle: commStyle,
+        revealedExpertise: demonstrated,
+        revealedGaps: gaps,
+        difficultyLevel: candidateProfile.currentDifficulty || 'intermediate',
+      },
       timestamp: new Date().toISOString()
     };
   }
@@ -2913,7 +3459,7 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
                     name: `AI-detected: ${update.indicators?.[0] || 'competency'}`,
                     covered: true,
                     evidence: [evidence],
-                    quality: update.qualityScore || 5,
+                    quality: Math.min(10, Math.round((update.qualityScore || 50) / 10)),
                     aiGenerated: true,
                     reasoning: update.reasoning
                   });
@@ -3050,16 +3596,28 @@ RESPONSE FORMAT (JSON only):
   "trends": ["observed trends in performance"]
 }`;
 
-      const userPrompt = `CURRENT REPORT:
-${JSON.stringify(session.realTimeReport, null, 2)}
+      // Trim inputs to prevent token overflow → truncated JSON output
+      const trimmedReport = {
+        strengths: (session.realTimeReport?.strengths || []).slice(-5),
+        weaknesses: (session.realTimeReport?.weaknesses || []).slice(-5),
+        overallProgress: session.realTimeReport?.overallProgress || 0
+      };
+      const trimmedDecision = {
+        decision: decisionAnalysis?.decision,
+        reasoning: decisionAnalysis?.reasoning,
+        targetArea: decisionAnalysis?.targetArea
+      };
 
-LATEST RESPONSE: "${candidateResponse}"
+      const userPrompt = `CURRENT REPORT:
+${JSON.stringify(trimmedReport)}
+
+LATEST RESPONSE: "${candidateResponse.substring(0, 500)}"
 
 COVERAGE ANALYSIS:
-${JSON.stringify(coverageAnalysis.overallAssessment, null, 2)}
+${JSON.stringify(coverageAnalysis?.overallAssessment || {})}
 
 DECISION ANALYSIS:
-${JSON.stringify(decisionAnalysis, null, 2)}
+${JSON.stringify(trimmedDecision)}
 
 Update the real-time report with new AI-powered insights.`;
 
@@ -3067,7 +3625,7 @@ Update the real-time report with new AI-powered insights.`;
         systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.4,
-        maxTokens: 1000,
+        maxTokens: 1500,
         timeout: 30000,
         useFastModel: true
       });

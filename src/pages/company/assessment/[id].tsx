@@ -38,10 +38,11 @@ const TEAL_BORDER = "#99F6E4";
 const scoreColor = (score: number) =>
   score >= 70 ? "#10B981" : score >= 50 ? "#F59E0B" : "#EF4444";
 
-const formatDuration = (seconds: number) => {
-  if (!seconds) return "N/A";
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+const formatDuration = (ms: number) => {
+  if (!ms) return "N/A";
+  const totalSeconds = Math.floor(ms / 1000);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 };
 

@@ -1,216 +1,180 @@
-import React, { useRef, useState, useEffect } from "react";
 import { Box, Button, Typography, Stack } from "@mui/material";
-import { useRouter } from "next/router";
-type HeroSectionProps = {
-  color?: string;
-  title?: string;
-  subtitle?: string;
-};
-const CompanyHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
-  const router = useRouter();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Job search states
-  const [jobTitle, setJobTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("");
+const ACCENT = "#0CDA8B";
 
-  // Statistics states
-  const [stats, setStats] = useState({
-    users: "100K+",
-    jobs: "20K+",
-    companies: "+500",
-  });
+const STATS = [
+  { value: "90%", label: "Less Screening Time", sub: "AI filters candidates automatically" },
+  { value: "10x", label: "Cheaper Than Traditional", sub: "vs. recruiters & agencies" },
+  { value: "24/7", label: "AI Interviews Available", sub: "No scheduling, no delays" },
+  { value: "0", label: "Bias in Evaluation", sub: "Standardized scoring, always" },
+];
 
-  const handlePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleVideoEnded = () => {
-    setIsPlaying(false);
-  };
-
-  // Fetch real statistics
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-        const response = await fetch(`${baseUrl}post/public-stats`);
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            const { users, posts, companies } = data.data;
-
-            // Format numbers to match the desired style
-            const formatNumber = (num: number, prefix: boolean = false) => {
-              if (num >= 1000) {
-                const formatted = Math.floor(num / 1000);
-                return `${formatted}K+`;
-              }
-              return prefix ? `+${num}` : `${num}+`;
-            };
-
-            setStats({
-              users: formatNumber(users, false), // e.g., "100K+" or "500+"
-              jobs: formatNumber(posts, false), // e.g., "20K+" or "150+"
-              companies: formatNumber(companies, true), // e.g., "+500" or "2K+"
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      }
-    };
-  }, []);
-
-  // Handle job search
-  const handleJobSearch = () => {
-    const params = new URLSearchParams();
-    if (jobTitle) params.append("search", jobTitle);
-    if (location) params.append("location", location);
-    if (category) params.append("category", category);
-
-    const queryString = params.toString();
-    router.push(`/posts${queryString ? `?${queryString}` : ""}`);
-  };
-
+const CompanyHeroSection = () => {
   return (
     <Box
       sx={{
-        px: 3,
-        pt: 4,
-        background:
-          "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%)",
+        px: { xs: 3, md: 6 },
+        pt: { xs: 6, md: 8 },
+        pb: { xs: 4, md: 6 },
         color: "#000000",
         position: "relative",
         overflow: "hidden",
-        maxWidth: "98%",
-        borderRadius: "10px",
-        mx: "auto",
         backgroundImage: `
-      linear-gradient(0deg, #F3F7FB, #F3F7FB),
-      linear-gradient(90deg, rgba(0, 255, 157, 0.15) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(0, 255, 157, 0.15) 1px, transparent 1px)
-    `,
-        backgroundSize: "80px 80px", // controls grid spacing
+          linear-gradient(0deg, #F2F3F4, #F2F3F4),
+          linear-gradient(90deg, rgba(0, 255, 157, 0.12) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(0, 255, 157, 0.12) 1px, transparent 1px)
+        `,
+        backgroundSize: "80px 80px",
         backgroundBlendMode: "overlay",
       }}
     >
-      <>
-        <Box sx={{ width: "100%", textAlign: "center" }}>
+      <Box sx={{
+        maxWidth: 1200,
+        mx: "auto",
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "3fr 2fr" },
+        gap: { xs: 5, md: 8 },
+        alignItems: "center",
+      }}>
+
+        {/* ── LEFT column ── */}
+        <Box>
+          {/* Headline */}
           <Typography
-            variant="h2"
+            variant="h1"
             sx={{
-              fontFamily:
-                'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-              fontWeight: 600,
-              fontStyle: "normal",
-              fontSize: { xs: "32px", sm: "40px", md: "48px" },
-              lineHeight: "104%",
-              letterSpacing: 0,
-              textAlign: "center",
-              verticalAlign: "middle",
-              mb: 3,
-            }}
-          >
-            Automate Hiring with AI Agents
-            <br /> & Blockchain Credentials
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              maxWidth: 720,
-              mx: "auto",
-              color: "text.secondary",
-              mb: 3,
               fontFamily: "Poppins, sans-serif",
-              fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "16px",
-              lineHeight: "24px",
-              letterSpacing: "0",
-              textAlign: "center",
-              verticalAlign: "middle",
+              fontWeight: 700,
+              fontSize: { xs: "36px", sm: "44px", md: "52px" },
+              lineHeight: 1.08,
+              color: "#111827",
+              mb: 2.5,
             }}
           >
-            Reduce hiring time by 75%. AI conducts natural video interviews.
-            Candidates earn blockchain-verified credentials they own forever.
+            Stop Losing Top Talent
+            <br />
+            to{" "}
+            <Box component="span" sx={{ color: ACCENT }}>
+              Slow Hiring
+            </Box>
           </Typography>
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            justifyContent="center"
-            sx={{ mb: { xs: 6, md: 10 } }}
+          {/* Body */}
+          <Typography
+            sx={{
+              fontFamily: "Poppins, sans-serif",
+              fontSize: { xs: "15px", md: "16px" },
+              color: "#4B5563",
+              lineHeight: 1.75,
+              mb: 3.5,
+              maxWidth: 520,
+            }}
           >
+            TalentAI's conversational AI agents{" "}
+            <Box component="span" sx={{ color: "#111827", fontWeight: 600 }}>
+              interview candidates through natural video dialogue
+            </Box>
+            , evaluate technical and soft skills in real time, and rank your applicants objectively.
+            <br />
+            <Box component="span" sx={{ color: ACCENT, fontWeight: 700 }}>
+              cutting your average 42-day hiring cycle by up to 75%
+            </Box>.
+          </Typography>
+
+          {/* Buttons */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mb: 1.5 }}>
             <Button
               variant="contained"
-              onClick={() =>
-                window.open("https://calendly.com/talent__ai/30min", "_blank")
-              }
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
-                backgroundColor: "rgba(12, 218, 139, 1)",
-                color: "#0b1b1f",
+                backgroundColor: ACCENT,
+                color: "#fff",
                 boxShadow: "none",
-                borderRadius: 0.5,
+                borderRadius: 0,
                 textTransform: "none",
-                px: 3,
-                "&:hover": { backgroundColor: "rgba(12, 218, 139, 0.7)" },
+                fontFamily: "Poppins",
+                fontWeight: 700,
+                fontSize: "15px",
+                px: 3.5, py: 1.25,
+                "&:hover": { backgroundColor: ACCENT },
               }}
             >
-              Request a Demo
+              Start Hiring Smarter
             </Button>
 
             <Button
               variant="outlined"
-              onClick={() => router.push("/signin")}
+              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
               sx={{
-                borderColor: "rgba(12, 218, 139, 1)",
-                color: "#0b1b1f",
-                borderRadius: 0.5,
+                border: `2px solid ${ACCENT}`,
+                color: "black",
+                borderRadius: 0,
                 textTransform: "none",
+                fontFamily: "Poppins",
                 fontWeight: 500,
-                px: 3,
+                fontSize: "15px",
+                px: 3.5, py: 1.25,
+                "&:hover": { border: `2px solid ${ACCENT}`, backgroundColor: ACCENT },
               }}
             >
-              Sign-in
+              Watch 2-Min Demo
             </Button>
           </Stack>
+
+          {/* Trust line */}
+          <Typography sx={{ fontFamily: "Poppins, sans-serif", fontSize: "13px", color: "#9CA3AF", mb: 5 }}>
+            No credit card required. Your first pipeline is live in under 30 minutes.
+          </Typography>
+
+          {/* Stats row */}
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 0,
+            borderTop: "1px solid #E5E7EB",
+            pt: 3,
+          }}>
+            {STATS.map((s, i) => (
+              <Box key={s.value} sx={{
+                borderRight: i < STATS.length - 1 ? "1px solid #E5E7EB" : "none",
+                px: 2,
+                pl: i === 0 ? 0 : 2,
+              }}>
+                <Typography sx={{
+                  fontFamily: "Poppins", fontWeight: 800,
+                  fontSize: { xs: "22px", md: "28px" },
+                  color: "#111827", lineHeight: 1,
+                }}>
+                  {s.value}
+                </Typography>
+                <Typography sx={{
+                  fontFamily: "Poppins", fontWeight: 700,
+                  fontSize: "11px", color: "#111827",
+                  lineHeight: 1.3, mt: 0.5,
+                }}>
+                  {s.label}
+                </Typography>
+                <Typography sx={{
+                  fontFamily: "Poppins", fontSize: "10px",
+                  color: "#9CA3AF", lineHeight: 1.4, mt: 0.25,
+                }}>
+                  {s.sub}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
         </Box>
 
-        {/* Showcase cards */}
-        <Box
-          sx={{
-            width: "95%",
-            position: "relative",
-            height: { xs: 150, sm: 200, md: 250 },
-            mb: { xs: 4, md: 0 },
-            maxWidth: "1300px",
-            margin: "20px auto",
-          }}
-        >
+        {/* ── RIGHT column — product screenshot ── */}
+        <Box sx={{ display: { xs: "none", md: "block" }, position: "relative" }}>
           <img
-            src="/images/home/heroSection.png"
-            alt="AI Insights Blur"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              borderRadius: "8px",
-            }}
+            src="/images/home/HeroSectionLanding.png"
+            alt="TalentAI Dashboard"
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }}
           />
         </Box>
-      </>
+
+      </Box>
     </Box>
   );
 };

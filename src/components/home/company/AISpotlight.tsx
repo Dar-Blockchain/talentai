@@ -1,87 +1,73 @@
-import React from "react";
-import { Box, Button, Stack, Typography } from "@mui/material";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { Box, Typography } from "@mui/material";
+
+const ACCENT    = "#0CDA8B";
+const ACCENT_BG = "rgba(12,218,139,0.10)";
 
 const AISpotlight: React.FC = () => {
   return (
-    <Box sx={{ px: 3, py: { xs: 3, md: 4 }, mb: { xs: 2, md: 3 } , maxWidth: 1100, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
       <Box
         sx={{
-          backgroundColor: "#121212",
-          color: "#fff",
-          borderRadius: 2,
-          px: { xs: 3, md: 5 },
-          py: { xs: 4, md: 5 },
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 4,
+          gap: 5,
+          position: "relative",
+          overflow: "hidden",
         }}
       >
         {/* Left copy */}
-        <Box sx={{ maxWidth: 560 }}>
-          <Typography
-            variant="overline"
-            sx={{ color: "#9CA3AF", letterSpacing: 1, fontWeight: 600 }}
-          >
-            AI SPOTLIGHT
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{
-              mt: 1,
-              fontFamily:
-                'Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-              fontWeight: 600,
-              lineHeight: 1.3,
-            }}
-          >
-            Intelligent Recruitment Workflows
+        <Box sx={{ maxWidth: 580, position: "relative" }}>
+          {/* Overline pill */}
+          <Box sx={{
+            display: "inline-flex", alignItems: "center", gap: 1,
+            bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
+            borderRadius: "24px", px: 2.5, py: 1, mb: 2.5,
+          }}>
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
+              The Hiring Crisis Is Real
+            </Typography>
+          </Box>
+
+          <Typography sx={{
+            fontFamily: "Poppins",
+            fontWeight: 700,
+            fontSize: { xs: "24px", sm: "30px", md: "38px" },
+            lineHeight: 1.2,
+            color: "#fff",
+            mb: 2.5,
+          }}>
+            You're Reviewing 200+ Resumes
             <br />
-            That Work Around the Clock
-          </Typography>
-          <Typography sx={{ mt: 1.5, color: "#D1D5DB" }}>
-            Deploy AI-powered automation across your entire hiring funnel - from initial
-            candidate outreach to final offer acceptance.
+            <Box component="span" sx={{ color: ACCENT }}>
+              While Your Best Candidates Accept Other Offers
+            </Box>
           </Typography>
 
-          {/* <Button
-            variant="contained"
-            sx={{
-              mt: 3,
-              backgroundColor: "#ffffff",
-              color: "#111827",
-              borderRadius: 2,
-              textTransform: "none",
-              px: 2.5,
-              '&:hover': { backgroundColor: '#f3f4f6' }
-            }}
-            endIcon={<ArrowForwardIcon />}
-            href="#features"
-          >
-            Explore the product
-          </Button> */}
+          <Typography sx={{
+            fontFamily: "Poppins",
+            fontSize: { xs: "15px", md: "16px" },
+            color: "rgba(255,255,255,0.55)",
+            lineHeight: 1.75,
+            maxWidth: 520,
+          }}>
+            The average hiring cycle runs 42+ days. Every open position costs $500/day in lost productivity.
+            Manual screening burns out your HR team. And a single bad hire? That's a $25,000 mistake.
+            Your competitors are already automating. The question is whether you'll catch up before the next great candidate walks out the door.
+          </Typography>
         </Box>
 
-        {/* Right AI Spotlight Image */}
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 160,
-            display: { xs: "none", md: "flex" },
-            alignItems: "center",
-            justifyContent: "flex-end",
-          }}
-        >
+        {/* Right image */}
+        <Box sx={{
+          flex: 1, minHeight: 180,
+          display: { xs: "none", md: "flex" },
+          alignItems: "center", justifyContent: "flex-end",
+          position: "relative",
+        }}>
           <img
             src="/images/home/AiSpotlight.png"
             alt="AI Spotlight Dashboard"
-            style={{
-              maxWidth: '100%',
-              height: 'auto',
-              maxHeight: 200,
-              borderRadius: '8px'
-            }}
+            style={{ maxWidth: "100%", height: "auto", maxHeight: 220, borderRadius: "12px", opacity: 0.9 }}
           />
         </Box>
       </Box>
@@ -90,5 +76,3 @@ const AISpotlight: React.FC = () => {
 };
 
 export default AISpotlight;
-
-

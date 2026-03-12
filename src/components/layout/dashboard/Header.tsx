@@ -47,7 +47,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
             <MenuOutlined />
           </IconButton>
         )}
-        <Box
+        {/* <Box
           sx={{
             display: { xs: "none", lg: "flex" },
             alignItems: "center",
@@ -62,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
         >
           <SearchOutlined sx={{ color: "#9CA3AF", fontSize: 18, mr: 1 }} />
           <InputBase placeholder="Search anything..." sx={{ fontSize: "13px", flex: 1 }} />
-        </Box>
+        </Box> */}
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
