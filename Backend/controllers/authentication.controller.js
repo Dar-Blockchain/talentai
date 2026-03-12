@@ -121,9 +121,16 @@ module.exports.register = async (req, res) => {
               profileUpdateData.$set = {
                 ...profileUpdateData.$set,
                 contactInformation: contactInfo,
+                // Add personal information from CV
+                phone: cvData.phone || phone || '',
+                educationLevel: cvData.educationLevel || '',
+                age: cvData.age || '',
+                country: cvData.country || '',
+                language: (cvData.spokenLanguages && cvData.spokenLanguages[0]) || '',
+                timeZone: cvData.timeZone || '',
               };
 
-              console.log('✅ Contact information from CV prepared for profile');
+              console.log('✅ Contact information and personal details from CV prepared for profile');
             } catch (contactError) {
               console.warn('⚠️ Error preparing contact information:', contactError.message);
             }
@@ -138,7 +145,7 @@ module.exports.register = async (req, res) => {
                 { new: true, runValidators: true }
               );
 
-              console.log('✅ Profile updated with CV data (skills and contact information)');
+              console.log('✅ Profile updated with CV data (skills, contact info, and personal details)');
             } catch (profileError) {
               console.warn('⚠️ Failed to update profile with CV data:', profileError.message);
               // Continue even if profile update fails
