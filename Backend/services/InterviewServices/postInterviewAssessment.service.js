@@ -78,6 +78,14 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
  */
 module.exports.hasExistingAssessment = async (candidateId, postId) => {
   try {
+    // Check candidate quota limit first
+    const candidateProfile = await Profile.findOne({ userId: candidateId });
+    if (candidateProfile && candidateProfile.quota === 5) {
+      const err = new Error('You have reached your assessment quota limit (5). Please upgrade to the next level to create more assessments.');
+      err.status = 403;
+      throw err;
+    }
+
     // Check if post exists
     const post = await Post.findById(postId).select("PostSteps");
 
