@@ -29,7 +29,6 @@ export const signinUser = createAsyncThunk(
   "auth/signin",
   async (email: string, { rejectWithValue }) => {
     try {
-      setAxiosLoggingOut(false);
       const response = await axiosInstance.post('auth', { email });
       return response.data;
     } catch (error: any) {
@@ -161,6 +160,8 @@ export const logout = createAsyncThunk(
         Cookies.remove(cookieName, { path: "/" });
       });
 
+      // Delay reset so in-flight responses (e.g. 401s) are still suppressed
+      setTimeout(() => setAxiosLoggingOut(false), 500);
       return true;
     } catch (error: any) {
       console.error("❌ Logout error:", error);
