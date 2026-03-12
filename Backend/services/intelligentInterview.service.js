@@ -2321,6 +2321,10 @@ Determine if interview objectives have been sufficiently met to end the session.
         await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: session.jdSkillsChecklist });
       }
 
+      // ── STEP 3.5: Compute running score (pure logic, ~0ms) ──
+      const runningScoreData = this.computeRunningScore(session, updatedProfile, finalCoverage, analysis);
+      await this.sessionManager.updateSession(sessionId, { runningScoreData });
+
       // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
       const qualityScore = analysis.quality?.score || 0;
       await this.updateQualityCounters(sessionId, qualityScore);
@@ -3445,126 +3449,128 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
     const candidateProfile = session.candidateProfile || {};
     const coverage = session.coverage || { overall: 0, areas: {} };
     const conversation = session.conversation || [];
+    const runningData = session.runningScoreData;
 
-    // ── 1. Quality score: average of per-response quality scores ──
-    const responseQualities = candidateProfile.responseQualities || [];
-    const qualityScore = responseQualities.length > 0
-      ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
-      : 0;
-
-    // ── 2. Coverage score: weighted area coverage ──
-    const coverageScore = coverage.overall || 0;
-
-    // ── 3. Skills score: must-have skills covered vs total (fuzzy matching) ──
     const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
     const demonstrated = candidateProfile.revealedExpertise || [];
     const gaps = candidateProfile.revealedGaps || [];
-    let skillsScore;
-    if (mustHaves.length > 0) {
-      const mustHavesCovered = mustHaves.filter(s => {
-        const skillLower = s.toLowerCase();
-        return demonstrated.some(d => {
-          const dLower = d.toLowerCase();
-          // Exact match or substring in either direction
-          return dLower.includes(skillLower) || skillLower.includes(dLower) ||
-            // Word-level overlap (e.g., "Android" matches "Android Studio")
-            skillLower.split(/[\s,/]+/).some(word => word.length > 2 && dLower.includes(word)) ||
-            dLower.split(/[\s,/]+/).some(word => word.length > 2 && skillLower.includes(word));
-        });
-      });
-      skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
-      console.log(`📊 [FinalReport] Skills: ${mustHavesCovered.length}/${mustHaves.length} must-haves covered (${mustHavesCovered.map(s => s).join(', ') || 'none'})`);
-    } else {
-      skillsScore = 50; // No must-haves specified → neutral (cannot assess)
-    }
-
-    // ── 4. Depth score: from deep/moderate/surface per response ──
-    const depths = conversation
-      .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
-      .map(e => e.metadata.depthLevel);
-    const depthValues = { deep: 100, moderate: 80, surface: 40 };
-    const depthScore = depths.length > 0
-      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 30), 0) / depths.length)
-      : 20;
-
-    // ── 5. Communication score: from style analysis ──
     const commStyle = candidateProfile.communicationStyle || {};
-    let communicationScore = 30;
-    if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
-    else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
-    if (commStyle.usesExamples) communicationScore += 15;
-    if (commStyle.verbosity === 'detailed') communicationScore += 10;
-    else if (commStyle.verbosity === 'concise') communicationScore += 5;
-    communicationScore = Math.min(100, communicationScore);
 
-    // ── Detect non-answering candidate ──
-    // If quality average is very low AND no skills demonstrated AND coverage is 0,
-    // the candidate effectively didn't answer — clamp all components to 0
-    const isNonAnswering = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
-    if (isNonAnswering) {
-      console.log(`⚠️ [FinalReport] Non-answering candidate detected (quality=${qualityScore}, coverage=${coverageScore}, skills=${demonstrated.length}) — clamping score to 0`);
+    // ── 1. Use pre-computed running score (source of truth) ──
+    let finalScore, qualityScore, coverageScore, effectiveSkillsScore, effectiveDepthScore, effectiveCommunicationScore;
+
+    if (runningData?.scores) {
+      finalScore = runningData.scores.overall;
+      qualityScore = runningData.scores.quality;
+      coverageScore = runningData.scores.coverage;
+      effectiveSkillsScore = runningData.scores.skills;
+      effectiveDepthScore = runningData.scores.depth;
+      effectiveCommunicationScore = runningData.scores.communication;
+      console.log(`📊 [FinalReport] Using running score: overall=${finalScore} (q=${qualityScore} c=${coverageScore} s=${effectiveSkillsScore} d=${effectiveDepthScore} comm=${effectiveCommunicationScore})`);
+    } else {
+      // Fallback: compute from scratch if no running score exists
+      console.warn('⚠️ [FinalReport] No running score found, computing from scratch');
+      const responseQualities = candidateProfile.responseQualities || [];
+      qualityScore = responseQualities.length > 0
+        ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
+        : 0;
+      coverageScore = coverage.overall || 0;
+      let skillsScore;
+      if (mustHaves.length > 0) {
+        const mustHavesCovered = mustHaves.filter(s => {
+          const skillLower = s.toLowerCase();
+          return demonstrated.some(d => {
+            const dLower = d.toLowerCase();
+            return dLower.includes(skillLower) || skillLower.includes(dLower) ||
+              skillLower.split(/[\s,/]+/).some(word => word.length > 2 && dLower.includes(word)) ||
+              dLower.split(/[\s,/]+/).some(word => word.length > 2 && skillLower.includes(word));
+          });
+        });
+        skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+      } else {
+        skillsScore = 50;
+      }
+      const depths = conversation
+        .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
+        .map(e => e.metadata.depthLevel);
+      const depthValues = { deep: 100, moderate: 80, surface: 40 };
+      const depthScore = depths.length > 0
+        ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 30), 0) / depths.length)
+        : 20;
+      let communicationScore = 30;
+      if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
+      else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
+      if (commStyle.usesExamples) communicationScore += 15;
+      if (commStyle.verbosity === 'detailed') communicationScore += 10;
+      else if (commStyle.verbosity === 'concise') communicationScore += 5;
+      communicationScore = Math.min(100, communicationScore);
+
+      const isNonAnsweringFallback = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
+      effectiveSkillsScore = isNonAnsweringFallback ? 0 : skillsScore;
+      effectiveDepthScore = isNonAnsweringFallback ? 0 : depthScore;
+      effectiveCommunicationScore = isNonAnsweringFallback ? 0 : communicationScore;
+      finalScore = isNonAnsweringFallback
+        ? Math.max(0, Math.round((qualityScore * 0.40) + (coverageScore * 0.10)))
+        : Math.round((qualityScore * 0.40) + (coverageScore * 0.10) + (skillsScore * 0.25) + (depthScore * 0.15) + (communicationScore * 0.10));
     }
 
-    const effectiveDepthScore = isNonAnswering ? 0 : depthScore;
-    const effectiveCommunicationScore = isNonAnswering ? 0 : communicationScore;
-    const effectiveSkillsScore = isNonAnswering ? 0 : skillsScore;
+    // ── 2. Non-answering detection ──
+    const isNonAnswering = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
 
-    // ── 6. Composite final score ──
-    const finalScore = isNonAnswering
-      ? Math.max(0, Math.round((qualityScore * 0.40) + (coverageScore * 0.10)))
-      : Math.round(
-          (qualityScore * 0.40) +      // primary signal — answer quality
-          (coverageScore * 0.10) +     // interview structure, not candidate quality
-          (skillsScore * 0.25) +       // must-have skills demonstrated
-          (depthScore * 0.15) +        // depth of technical detail
-          (communicationScore * 0.10)  // communication effectiveness
-        );
+    // ── 3. Strengths/weaknesses from running score data (deterministic, not LLM) ──
+    let finalStrengths = runningData?.strengths || [];
+    let finalWeaknesses = runningData?.weaknesses || [];
 
-    console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${effectiveSkillsScore}, depth=${effectiveDepthScore}, communication=${effectiveCommunicationScore} → overall=${finalScore}${isNonAnswering ? ' (NON-ANSWERING)' : ''}`);
+    if (isNonAnswering) {
+      finalStrengths = [];
+      finalWeaknesses = mustHaves.length > 0
+        ? mustHaves.map(s => `Failed to demonstrate knowledge of ${s}`)
+        : ['Candidate did not provide substantive answers to interview questions'];
+    }
 
-    // ── 7. LLM-generated summary + recommendation (strengths/weaknesses come from real-time report) ──
+    // ── 4. LLM summary only — no evaluation, just summarize what happened ──
     let aiSummary = { summary: '', recommendation: 'maybe', reasoning: '' };
     try {
+      const responseQualities = candidateProfile.responseQualities || [];
       const areaScores = Object.entries(coverage.areas || {}).map(([a, d]) =>
-        `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage, quality: ${d.aiAnalysis?.qualityScore || 'N/A'}/100`
+        `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage`
       ).join('\n');
 
-      // Build conversation summary for the LLM (last 10 Q&A pairs)
       const conversationSummary = conversation
         .slice(-20)
         .map(e => `${e.type === 'interviewer' ? 'Q' : 'A'}: ${e.content.substring(0, 200)}`)
         .join('\n');
 
       const summaryResponse = await bedrock.callLLM({
-        systemPrompt: `You are an expert recruiter writing a concise interview assessment.
-Based on the scores and conversation, write a brief summary and hiring recommendation.
+        systemPrompt: `You are an expert recruiter writing a concise interview summary.
+Your job is ONLY to summarize what happened in the interview. Do NOT evaluate, give feedback, or generate strengths/weaknesses — those are already pre-computed.
+Just describe what topics were discussed and give a hiring recommendation based on the pre-computed score.
 Return ONLY valid JSON.`,
         messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
-Must-Have Skills: ${mustHaves.join(', ') || 'Not specified'}
 
-CANDIDATE DATA:
+PRE-COMPUTED DATA (use these directly, do not re-evaluate):
 - Overall Score: ${finalScore}/100
 - Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
 - Coverage: ${coverageScore}%
 - Skills Demonstrated: ${demonstrated.join(', ') || 'None identified'}
 - Skills Gaps: ${gaps.join(', ') || 'None identified'}
 
-AREA SCORES:
+AREA COVERAGE:
 ${areaScores}
 
-CONVERSATION HIGHLIGHTS:
+CONVERSATION:
 ${conversationSummary}
 
 Write JSON:
 {
-  "summary": "2-3 sentence assessment referencing specific topics discussed in the interview",
+  "summary": "2-3 sentence summary of what was discussed in the interview, referencing specific topics. Do NOT give feedback or evaluate — just summarize.",
   "recommendation": "strong_hire | hire | maybe | no_hire",
-  "reasoning": "1 sentence justification referencing specific evidence from the conversation"
+  "reasoning": "1 sentence justification based on the pre-computed score and what was observed"
 }` }],
         temperature: 0.3,
         maxTokens: 400,
         timeout: 20000,
-        useFastModel: false // gpt-oss — strong model for final summary
+        useFastModel: false
       });
 
       aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
@@ -3575,16 +3581,7 @@ Write JSON:
       aiSummary.reasoning = `Based on composite score of ${finalScore}/100.`;
     }
 
-    // ── 8. Strengths/weaknesses from real-time report (source of truth) ──
-    let finalStrengths = session.realTimeReport?.strengths || [];
-    let finalWeaknesses = session.realTimeReport?.weaknesses || [];
-
-    // Safety net: override for non-answering candidates
     if (isNonAnswering) {
-      finalStrengths = ['No technical strengths demonstrated during this interview'];
-      finalWeaknesses = mustHaves.length > 0
-        ? mustHaves.map(s => `Failed to demonstrate knowledge of ${s}`)
-        : ['Candidate did not provide substantive answers to interview questions'];
       aiSummary.recommendation = 'no_hire';
     }
 
@@ -3603,7 +3600,7 @@ Write JSON:
       weaknesses: finalWeaknesses,
       recommendation: aiSummary.recommendation,
       reasoning: aiSummary.reasoning,
-      recommendations: session.realTimeReport?.recommendations || [],
+      recommendations: runningData?.weaknesses || [],
       candidateProfile: {
         communicationStyle: commStyle,
         revealedExpertise: demonstrated,
@@ -3829,6 +3826,120 @@ Update the real-time report with new AI-powered insights.`;
       console.error('Error updating real-time report intelligently:', error);
       return session.realTimeReport;
     }
+  }
+
+  /**
+   * Compute running score deterministically after each candidate response.
+   * Pure logic — no LLM call (~0ms). Same formula as generateFinalReport().
+   */
+  computeRunningScore(session, updatedProfile, finalCoverage, analysis) {
+    const persona = session.agentPersona || {};
+    const conversation = session.conversation || [];
+    const existing = session.runningScoreData || { strengths: [], weaknesses: [] };
+
+    // 1. Quality score: average of per-response quality scores
+    const responseQualities = updatedProfile.responseQualities || [];
+    const qualityScore = responseQualities.length > 0
+      ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
+      : 0;
+
+    // 2. Coverage score
+    const coverageScore = finalCoverage.overall || 0;
+
+    // 3. Skills score: fuzzy match demonstrated vs must-haves
+    const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
+    const demonstrated = updatedProfile.revealedExpertise || [];
+    let skillsScore;
+    if (mustHaves.length > 0) {
+      const mustHavesCovered = mustHaves.filter(s => {
+        const skillLower = s.toLowerCase();
+        return demonstrated.some(d => {
+          const dLower = d.toLowerCase();
+          return dLower.includes(skillLower) || skillLower.includes(dLower) ||
+            skillLower.split(/[\s,/]+/).some(word => word.length > 2 && dLower.includes(word)) ||
+            dLower.split(/[\s,/]+/).some(word => word.length > 2 && skillLower.includes(word));
+        });
+      });
+      skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+    } else {
+      skillsScore = 50;
+    }
+
+    // 4. Depth score
+    const depths = conversation
+      .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
+      .map(e => e.metadata.depthLevel);
+    const depthValues = { deep: 100, moderate: 80, surface: 40 };
+    const depthScore = depths.length > 0
+      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 30), 0) / depths.length)
+      : 20;
+
+    // 5. Communication score
+    const commStyle = updatedProfile.communicationStyle || {};
+    let communicationScore = 30;
+    if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
+    else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
+    if (commStyle.usesExamples) communicationScore += 15;
+    if (commStyle.verbosity === 'detailed') communicationScore += 10;
+    else if (commStyle.verbosity === 'concise') communicationScore += 5;
+    communicationScore = Math.min(100, communicationScore);
+
+    // Non-answering detection
+    const isNonAnswering = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
+    const effectiveSkills = isNonAnswering ? 0 : skillsScore;
+    const effectiveDepth = isNonAnswering ? 0 : depthScore;
+    const effectiveComm = isNonAnswering ? 0 : communicationScore;
+
+    // Composite score
+    const overall = isNonAnswering
+      ? Math.max(0, Math.round((qualityScore * 0.40) + (coverageScore * 0.10)))
+      : Math.round(
+          (qualityScore * 0.40) +
+          (coverageScore * 0.10) +
+          (skillsScore * 0.25) +
+          (depthScore * 0.15) +
+          (communicationScore * 0.10)
+        );
+
+    // Accumulate strengths deterministically
+    const strengths = [...(existing.strengths || [])];
+    for (const skill of (analysis.skills?.demonstrated || [])) {
+      const entry = `Demonstrated knowledge of ${skill}`;
+      if (!strengths.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
+        strengths.push(entry);
+      }
+    }
+    if ((analysis.quality?.score || 0) >= 70 && analysis.quality?.depthLevel === 'deep') {
+      const areaName = (analysis.coverage?.areasImpacted?.[0]?.area || '').replace(/_/g, ' ');
+      if (areaName && !strengths.some(s => s.toLowerCase().includes(areaName.toLowerCase()))) {
+        strengths.push(`Strong depth of knowledge in ${areaName}`);
+      }
+    }
+
+    // Accumulate weaknesses deterministically
+    const weaknesses = [...(existing.weaknesses || [])];
+    for (const gap of (analysis.skills?.gaps || [])) {
+      const entry = `Gap identified in ${gap}`;
+      if (!weaknesses.some(w => w.toLowerCase().includes(gap.toLowerCase()))) {
+        weaknesses.push(entry);
+      }
+    }
+    if ((analysis.quality?.score || 0) < 40 || analysis.quality?.completeness === 'avoided') {
+      const areaName = (analysis.coverage?.areasImpacted?.[0]?.area || '').replace(/_/g, ' ');
+      if (areaName && !weaknesses.some(w => w.toLowerCase().includes(areaName.toLowerCase()))) {
+        weaknesses.push(`Needs improvement in ${areaName}`);
+      }
+    }
+
+    const result = {
+      scores: { overall, quality: qualityScore, coverage: coverageScore, skills: effectiveSkills, depth: effectiveDepth, communication: effectiveComm },
+      strengths: strengths.slice(0, 10),
+      weaknesses: weaknesses.slice(0, 10),
+      lastUpdated: new Date().toISOString()
+    };
+
+    console.log(`📊 [RunningScore] overall=${overall} (q=${qualityScore} c=${coverageScore} s=${effectiveSkills} d=${effectiveDepth} comm=${effectiveComm})${isNonAnswering ? ' NON-ANSWERING' : ''}`);
+    return result;
   }
 
   // REMOVED: shouldDoFullAnalysis — every response now gets full AI analysis
