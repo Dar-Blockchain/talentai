@@ -7,7 +7,7 @@ yarn.lock
 .env.local
 .env.*.local
 
-
+public/resume
 
 # Runtime data
 pids
