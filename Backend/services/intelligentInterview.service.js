@@ -142,7 +142,7 @@ class AIUtils {
         fallback: true
       },
       'combinedAnalysis': {
-        quality: { score: 50, answeredQuestion: true, depthLevel: "moderate", isOffTopic: false, completeness: "partial" },
+        quality: { score: 10, answeredQuestion: false, depthLevel: "surface", isOffTopic: false, completeness: "avoided" },
         skills: { demonstrated: [], hinted: [], gaps: [] },
         coverage: { areasImpacted: [] },
         style: { verbosity: "detailed", confidence: "moderate", usesExamples: false },
@@ -1240,7 +1240,7 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       profile.anchors = profile.anchors.slice(-10);
     }
 
-    profile.responseQualities.push(analysis.quality?.score || 50);
+    profile.responseQualities.push(analysis.quality?.score ?? 0);
     const avg = profile.responseQualities.reduce((a, b) => a + b, 0) / profile.responseQualities.length;
     profile.currentDifficulty = avg >= 75 ? "advanced" : avg >= 50 ? "intermediate" : "foundational";
 
@@ -2181,12 +2181,12 @@ Determine if interview objectives have been sufficiently met to end the session.
             const area = finalCoverage.areas[impact.area];
             let increase = impact.increase || 0;
 
-            // PASS/SKIP HANDLING: Candidate can't answer = gap recorded, coverage still increases
+            // PASS/SKIP HANDLING: Candidate can't answer = gap recorded, NO coverage credit
             const isPassSkip = analysis.quality?.answeredQuestion === false ||
               analysis.quality?.completeness === 'avoided';
             if (isPassSkip && increase === 0) {
-              increase = 15;
-              console.log(`⏭️ [Coverage] Pass/skip detected for "${impact.area}" — forcing +15% coverage (gap recorded)`);
+              // increase stays 0 — no coverage credit for not answering
+              console.log(`⏭️ [Coverage] Pass/skip detected for "${impact.area}" — gap recorded, no coverage credit`);
               area.indicators = area.indicators || [];
               area.indicators.push({
                 name: `Gap: candidate passed on ${impact.area}`,
@@ -2199,7 +2199,7 @@ Determine if interview objectives have been sufficiently met to end the session.
             }
 
             // CODE-LEVEL BOOST: LLM returns conservative values, amplify based on answer quality
-            const qualityScore = analysis.quality?.score || 50;
+            const qualityScore = analysis.quality?.score || 0;
             const depth = analysis.quality?.depthLevel || 'surface';
             if (increase > 0 && !isPassSkip) {
               if (depth === 'deep' && qualityScore >= 70) {
@@ -2221,7 +2221,7 @@ Determine if interview objectives have been sufficiently met to end the session.
                 name: `AI-detected: ${impact.area}`,
                 covered: true,
                 evidence: [impact.evidence],
-                quality: Math.min(10, Math.round((analysis.quality?.score || 50) / 10)),
+                quality: Math.min(10, Math.round((analysis.quality?.score || 0) / 10)),
                 aiGenerated: true
               });
             }
@@ -2292,7 +2292,7 @@ Determine if interview objectives have been sufficiently met to end the session.
           analysis.quality?.completeness === 'avoided';
         if (isPassSkipNoAreas && targetArea && finalCoverage.areas[targetArea]) {
           const area = finalCoverage.areas[targetArea];
-          area.percentage = Math.min(100, (area.percentage || 0) + 15);
+          // No coverage credit for not answering — gap recorded only
           area.lastUpdated = new Date().toISOString();
           area.indicators = area.indicators || [];
           area.indicators.push({
@@ -2303,7 +2303,7 @@ Determine if interview objectives have been sufficiently met to end the session.
             aiGenerated: true,
             reasoning: 'Candidate explicitly passed or could not answer'
           });
-          console.log(`⏭️ [Coverage] Pass/skip (no areas from LLM) for "${targetArea}" — forcing +15% coverage (gap recorded)`);
+          console.log(`⏭️ [Coverage] Pass/skip (no areas from LLM) for "${targetArea}" — gap recorded, no coverage credit`);
 
           // Recalculate overall
           const areaEntries = Object.values(finalCoverage.areas);
@@ -2322,7 +2322,7 @@ Determine if interview objectives have been sufficiently met to end the session.
       }
 
       // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
-      const qualityScore = analysis.quality?.score || 50;
+      const qualityScore = analysis.quality?.score || 0;
       await this.updateQualityCounters(sessionId, qualityScore);
 
       // LOW QUALITY FILTER: If off-topic/garbage, generate from gaps only
@@ -3450,7 +3450,7 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
     const responseQualities = candidateProfile.responseQualities || [];
     const qualityScore = responseQualities.length > 0
       ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
-      : 50;
+      : 0;
 
     // ── 2. Coverage score: weighted area coverage ──
     const coverageScore = coverage.overall || 0;
@@ -3475,7 +3475,7 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
       skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
       console.log(`📊 [FinalReport] Skills: ${mustHavesCovered.length}/${mustHaves.length} must-haves covered (${mustHavesCovered.map(s => s).join(', ') || 'none'})`);
     } else {
-      skillsScore = qualityScore;
+      skillsScore = 50; // No must-haves specified → neutral (cannot assess)
     }
 
     // ── 4. Depth score: from deep/moderate/surface per response ──
@@ -3484,12 +3484,12 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
       .map(e => e.metadata.depthLevel);
     const depthValues = { deep: 100, moderate: 80, surface: 40 };
     const depthScore = depths.length > 0
-      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 50), 0) / depths.length)
-      : 50;
+      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 30), 0) / depths.length)
+      : 20;
 
     // ── 5. Communication score: from style analysis ──
     const commStyle = candidateProfile.communicationStyle || {};
-    let communicationScore = 50;
+    let communicationScore = 30;
     if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
     else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
     if (commStyle.usesExamples) communicationScore += 15;
