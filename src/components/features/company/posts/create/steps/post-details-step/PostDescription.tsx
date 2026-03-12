@@ -13,7 +13,7 @@ import { useState } from "react";
 import {
   contractTypes,
   workModes,
-} from "@/constants/candidate
+} from "@/constants/candidate";
 import SalaryRange from "./SalaryRange";
 import {
   generatePost,
