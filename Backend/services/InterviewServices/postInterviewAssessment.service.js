@@ -121,6 +121,14 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     // Check monthly interview limit before creating assessment
     await checkMonthlyInterviewLimit(companyId);
 
+    // Check candidate quota limit
+    const candidateProfile = await Profile.findOne({ userId: assessmentData.candidate });
+    if (candidateProfile && candidateProfile.quota === 5) {
+      const err = new Error('You have reached your assessment quota limit (5). Please upgrade to the next level to create more assessments.');
+      err.status = 403;
+      throw err;
+    }
+
     // =======================
     // CREATE ASSESSMENT
     // =======================
