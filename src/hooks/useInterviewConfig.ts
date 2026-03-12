@@ -19,6 +19,8 @@ export interface UseInterviewConfigReturn {
   setShowBlockedModal: (show: boolean) => void;
   setShowFailedModal: (show: boolean) => void;
   jobData: any | null;
+  limitReached: boolean;
+  limitMessage: string;
 }
 
 export interface UseInterviewConfigOptions {
@@ -70,6 +72,8 @@ export const useInterviewConfig = ({
   const [showFailedModal, setShowFailedModal] = useState(false);
   const [blockMessage, setBlockMessage] = useState('');
   const [jobData, setJobData] = useState<any | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+  const [limitMessage, setLimitMessage] = useState('');
 
   const fetchJobInterviewConfig = async (jobId: string) => {
     try {
@@ -236,6 +240,13 @@ export const useInterviewConfig = ({
           const errorData = await response.json().catch(() => ({}));
           console.error('❌ Error from interview-config endpoint:', errorData);
 
+          if (response.status === 429) {
+            setLimitReached(true);
+            setLimitMessage(errorData.message || 'Your company has reached the monthly interview limit.');
+            setPipelineLoading(false);
+            return;
+          }
+
           if (errorData.isPipeline) {
             throw new Error('This is a pipeline job - please refresh the page. The interview configuration is being loaded from the pipeline steps.');
           }
@@ -340,5 +351,7 @@ export const useInterviewConfig = ({
     setShowBlockedModal,
     setShowFailedModal,
     jobData,
+    limitReached,
+    limitMessage,
   };
 };

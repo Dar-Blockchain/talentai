@@ -115,6 +115,8 @@ const IntelligentInterviewTest = () => {
     showFailedModal,
     blockMessage,
     jobData,
+    limitReached,
+    limitMessage,
   } = useInterviewConfig({ showNotification: notify });
 
   const endInterviewRef = useRef<() => void>(() => { });
@@ -384,6 +386,31 @@ const IntelligentInterviewTest = () => {
               >
                 Back to Dashboard
               </Button>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Interview limit reached ── */
+  if (limitReached) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(255,87,51,0.08)', border: '2px solid rgba(255,87,51,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <Typography sx={{ fontSize: '2rem' }}>🚫</Typography>
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                Interview limit reached
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                {limitMessage}
+              </Typography>
             </Box>
           </Container>
         </Box>

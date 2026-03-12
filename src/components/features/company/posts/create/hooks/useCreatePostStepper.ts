@@ -190,26 +190,14 @@ export const useCreatePostStepper = (
         const result = await saveOrUpdatePost();
 
         if (creationType === "ai") {
-          // --- Matching modal flow commented out ---
-          // setModalMode("matching");
-          // await dispatch(
-          //   fetchJobMatches({
-          //     selectedJobId: result.jobData._id,
-          //     page: 1,
-          //     limit: 10,
-          //   })
-          // ).unwrap();
-          // setModalMode("done");
-
-          // Directly finalize and redirect to dashboard
           await finalizeCreation(result.jobData._id);
           return;
         }
 
-        // setModalOpen(false);
         setActiveStep(1);
-      } catch {
-        // setModalOpen(false);
+      } catch (err: any) {
+        const message = typeof err === "string" ? err : err?.message || "Failed to save job post.";
+        showToast({ message, severity: "error" });
       } finally {
         setIsFinishing(false);
       }
