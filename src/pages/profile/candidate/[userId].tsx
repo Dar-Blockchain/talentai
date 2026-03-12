@@ -35,7 +35,6 @@ import Header from "@/components/layout/Header";
 import PageContainer from "@/components/layout/PageContainer";
 import SkillsSection from "@/components/features/profile/SkillsSection";
 import { getProfileById, clearTargetUser } from "@/store/slices/userSlice";
-import { generateBadgesFromProfile } from "@/utils/generateProfileBadges";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Tokens                                   */
@@ -213,14 +212,6 @@ const CandidateProfile: React.FC = () => {
       }),
     };
   }, [profile, user]);
-
-  const { technicalBadges, softBadges } = useMemo(() => {
-    if (!profile) return { technicalBadges: [], softBadges: [] };
-    return generateBadgesFromProfile(
-      profile.skills || [],
-      profile.softSkills || []
-    );
-  }, [profile]);
 
   const verifiedCount =
     (profile?.skills?.filter((s: any) => s.ScoreTest > 0) || []).length +

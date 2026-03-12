@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Box, Typography, LinearProgress } from '@mui/material';
 import { Verified as VerifiedIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
-import { formatTimeAgo } from '@/utils/timeAgo';
+import { formatTimeAgo } from '@/utils/functions';
 
 interface SkillCardProps {
   skill: {

@@ -11,7 +11,6 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from './slices/authSlice';
-import bidReducer from './slices/bidSlice';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
 import tokenReducer from './slices/tokenSlice';
@@ -36,7 +35,6 @@ import { socketMiddleware } from './middleware/socketMiddleware';
 const rootReducer = combineReducers({
   user: userReducer,
   auth: authReducer,
-  bid: bidReducer,
   post: postReducer,
   token: tokenReducer,
   tokenPurchase: tokenPurchaseReducer,

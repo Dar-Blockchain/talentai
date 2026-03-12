@@ -63,7 +63,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  }, [dispatch]);
+    router.push("/signin");
+  }, [dispatch, router]);
 
   const goToDashboard = useCallback(() => {
     if (isAdmin) router.push("/dashboard/admin");
