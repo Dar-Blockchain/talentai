@@ -29,12 +29,9 @@ import { RootState } from "@/store/store";
 import {
   skillCategories,
   softSkills,
-  technicalSkillsList,
 } from "@/constants/skills";
 
 const languages = [{ value: "English", label: "English" }];
-
-type Step = 1 | 2 | 3;
 
 const AssessmentModal = ({ type, open, onClose }: any) => {
   const router = useRouter();

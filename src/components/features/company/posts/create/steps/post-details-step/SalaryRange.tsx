@@ -1,6 +1,7 @@
 import React from "react";
 import { Stack, TextField, MenuItem, Typography, Box } from "@mui/material";
 import Image from "next/image";
+import { defaultCurrencies } from "@/constants/candidate";
 
 interface SalaryRangeProps {
   salaryRange: {
@@ -19,12 +20,6 @@ interface SalaryRangeProps {
   };
   currencies?: { value: string; label: string }[];
 }
-
-const defaultCurrencies = [
-  { value: "USD", label: "$" },
-  { value: "EUR", label: "€" },
-  { value: "GBP", label: "£" },
-];
 
 const SalaryRange: React.FC<SalaryRangeProps> = ({
   salaryRange,
