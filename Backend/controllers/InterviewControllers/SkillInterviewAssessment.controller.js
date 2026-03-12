@@ -16,6 +16,15 @@ const create = async (req, res) => {
       });
     }
 
+    // Check if user quota has reached limit
+    const userProfile = await Profile.findOne({ userId });
+    if (userProfile && userProfile.quota === 5) {
+      return res.status(403).json({
+        success: false,
+        message: "You have reached your assessment quota limit. Please upgrade to the next level to create more assessments.",
+      });
+    }
+
     // Basic validation
     if (!data.interviewData?.sessionId) {
       return res.status(400).json({
