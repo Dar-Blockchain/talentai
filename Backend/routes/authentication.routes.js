@@ -34,8 +34,8 @@ router.post("/", authController.login);
 
 // POST /auth/analyze
 // Accès: Public
-// Corps attendu: { filePath: "public/images/Users/resume.pdf" }
-// Description: Analyse un CV stocké et extrait les informations via Bedrock
+// Corps attendu: { filePath: "public/images/Users/resume.pdf", saveToDatabase?: true }
+// Description: Analyse un CV stocké, extrait les informations via Bedrock et les enregistre dans CVAnalysis model
 router.post("/analyze", authController.parseCV);
 
 // POST /auth/verify-otp

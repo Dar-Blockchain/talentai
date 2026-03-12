@@ -45,6 +45,7 @@ const campaignParticipantRoutes = require('../routes/campaignParticipant.routes'
 const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
 const interviewApplicantRouter = require('../routes/interviewApplicant.routes');
+const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
 
 // const backupRouter = require('../routes/backupRouter');
 
@@ -136,6 +137,9 @@ function registerRoutes(app) {
   // app.use('/departments', departmentRoutes);
   app.use('/contact', contactRouter);
   app.use('/interview-applicants', interviewApplicantRouter);
+
+  // CV Analysis Routes
+  app.use('/cv-analysis', cvAnalysisRouter); //✅ CV Analysis Management -> cv-analysis
 
   app.get("/some-route", (req, res) => {
     res.json("Route accessible");

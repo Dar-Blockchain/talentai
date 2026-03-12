@@ -1,4 +1,5 @@
 const authService = require("../services/authentication.service");
+const CVAnalysisService = require("../services/cvAnalysis.service");
 const {
   validateEmail,
   validateOTPInput,
@@ -185,7 +186,7 @@ const { analyzeCV } = require("../services/bedrock.service");
 module.exports.parseCV = async (req, res) => {
   try {
     // Get the file path from request body or query parameter
-    const { filePath } = req.body || req.query;
+    const { filePath, saveToDatabase = true } = req.body || req.query;
 
     // Validate that filePath is provided
     if (!filePath) {
@@ -205,11 +206,57 @@ module.exports.parseCV = async (req, res) => {
 
     // Analyze the CV
     const result = await analyzeCV(filePath);
-    const data = JSON.parse(result);
+    const cvData = JSON.parse(result);
+
+    // Save to CVAnalysis database if needed
+    let dbRecord = null;
+    if (saveToDatabase) {
+      try {
+        const cvAnalysisData = {
+          name: cvData.name || 'Unknown',
+          email: cvData.email || '',
+          phone: cvData.phone || '',
+          location: cvData.location || '',
+          title: cvData.title || '',
+          summary: cvData.summary || '',
+          yearsOfExperience: cvData.yearsOfExperience || 0,
+          seniority: cvData.seniority || 'Entry-Level',
+          skills: cvData.skills || [],
+          spokenLanguages: cvData.spokenLanguages || [],
+          experience: cvData.experience || [],
+          education: cvData.education || [],
+          certifications: cvData.certifications || [],
+          projects: cvData.projects || [],
+          links: cvData.links || { linkedin: '', github: '', portfolio: '' },
+          sourceUrl: filePath,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+        };
+
+        // Add user reference if authenticated
+        if (req.user) {
+          cvAnalysisData.User = req.user._id;
+        }
+
+        const saveResult = await CVAnalysisService.createCVAnalysis(cvAnalysisData);
+        dbRecord = saveResult.data;
+
+        console.log('✅ CV Analysis saved to database:', dbRecord._id);
+      } catch (dbError) {
+        console.warn('⚠️ CV analysis saved but database storage failed:', dbError.message);
+        // Continue even if saving to database fails
+      }
+    }
 
     res.status(200).json({
       success: true,
-      data: data
+      data: cvData,
+      databaseRecord: dbRecord ? {
+        id: dbRecord._id,
+        analysisScore: dbRecord.analysisScore,
+        createdAt: dbRecord.createdAt
+      } : null,
+      message: dbRecord ? 'CV analyzed and saved to database successfully' : 'CV analyzed successfully'
     });
   } catch (error) {
     console.error('Error parsing CV:', error);
