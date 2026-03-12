@@ -85,7 +85,7 @@ const InvitationAcceptationPage: React.FC = () => {
       <InvalidInvitationView
         isWarning={isWarning}
         message={message}
-        onAction={() => router.push(isWarning ? "/dashboard/member" : "/")}
+        onAction={() => router.push(isWarning ? "/workspaces" : "/")}
       />
     );
   }
@@ -99,7 +99,7 @@ const InvitationAcceptationPage: React.FC = () => {
       <InvitationResponseView
         accepted={accepted}
         companyName={companyName}
-        onDashboard={() => router.push("/dashboard/member")}
+        onDashboard={() => router.push("/workspaces")}
       />
     );
   }

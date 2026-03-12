@@ -12,7 +12,7 @@ import { AppDispatch } from "@/store/store";
 import {
   contractTypes,
   workModes,
-} from "@/constants/candidateData";
+} from "@/constants/candidate";
 import SalaryRange from "./SalaryRange";
 import {
   updateJobDetails,

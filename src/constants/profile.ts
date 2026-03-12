@@ -1,8 +1,3 @@
-/**
- * Profile Settings Constants
- * Centralized constants for profile settings functionality
- */
-
 export const experienceLevels = [
   'Entry Level',
   'Junior',

@@ -559,6 +559,7 @@ RULES:
 - Be natural and conversational
 - NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
 - Questions MUST be directly relevant to the JOB REQUIREMENTS and RESPONSIBILITIES listed above. Do NOT ask about technologies, tools, or concepts not mentioned in the JD.
+- PRIORITIZE asking about skills from the "JD SKILLS NOT YET ASKED ABOUT" list. Each question should target a DIFFERENT uncovered skill.
 - NEVER ask a question similar to any in the "ALREADY ASKED" list
 - Each question must explore a NEW angle or sub-topic not yet covered
 - Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
@@ -619,10 +620,24 @@ RESPONSE FORMAT (JSON only):
 RELEVANT JD CONTEXT (use this to align questions with job requirements):
 ${session.ragContext}` : '';
 
+      // JD skills tracking — show which skills are uncovered vs covered
+      const checklist = session.jdSkillsChecklist || [];
+      const uncoveredSkills = checklist.filter(s => !s.asked).map(s => s.skill);
+      const coveredSkills = checklist.filter(s => s.asked).map(s =>
+        `${s.skill} ${s.covered ? '(demonstrated)' : '(asked, not demonstrated)'}`
+      );
+      const skillTrackingBlock = checklist.length > 0 ? `
+JD SKILLS NOT YET ASKED ABOUT (PRIORITIZE these — ask about a different skill each question):
+${uncoveredSkills.join(', ') || 'all skills covered'}
+
+JD SKILLS ALREADY EXPLORED:
+${coveredSkills.join(', ') || 'none yet'}` : '';
+
       const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
 
 COVERAGE: ${JSON.stringify(coverageSummary)}
 WEAKEST: ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || Object.entries(session.coverage?.areas || {}).filter(([_,d]) => d.percentage < 50).map(([a]) => a))}
+${skillTrackingBlock}
 
 TOPICS ALREADY EXPLORED (do NOT revisit these — pick a DIFFERENT sub-topic):
 ${exploredTopicsSummary}
@@ -1011,16 +1026,32 @@ Interview Type: ${interviewConfig.interviewType}
 
 Return JSON:
 {
-  "mustHaveSkills": ["3-5 critical skills"],
-  "niceToHaveSkills": ["3-5 bonus skills"],
+  "mustHaveSkills": ["3-5 critical skills from JD"],
+  "niceToHaveSkills": ["3-5 bonus skills from JD"],
   "keyBehaviors": ["3-5 needed behaviors"],
   "redFlags": ["3-5 disqualifying signs"],
   "seniorityExpectations": "one sentence",
   "domainSpecificTopics": ["3-5 industry topics to explore"],
-  "agentTone": "description of interviewer tone for this role"
-}` }],
+  "agentTone": "description of interviewer tone for this role",
+  "focusAreas": {
+    "area_key_1": { "weight": 30, "description": "What this area evaluates — specific to JD", "indicators": ["3-4 specific indicators from JD"] },
+    "area_key_2": { "weight": 25, "description": "...", "indicators": ["..."] },
+    "area_key_3": { "weight": 25, "description": "...", "indicators": ["..."] },
+    "area_key_4": { "weight": 20, "description": "...", "indicators": ["..."] }
+  },
+  "questionStyles": ["4 interview styles suited for this role"]
+}
+
+RULES for focusAreas:
+- Generate 4 areas SPECIFIC to this JD — NOT generic areas like "technical_depth" or "problem_solving"
+- Each area should map to a cluster of related skills/responsibilities from the JD
+- Weights must sum to 100
+- Example for Android Developer JD: "kotlin_java" (30%), "android_platform" (25%), "architecture_patterns" (25%), "testing_devops" (20%)
+- Example for Solidity Developer JD: "smart_contracts" (30%), "security_auditing" (25%), "defi_protocols" (25%), "blockchain_fundamentals" (20%)
+- area_key must be lowercase with underscores, max 25 chars
+- questionStyles: pick 4 from: scenario-based, code review, architecture discussion, debugging walkthrough, behavioral STAR, situational, values-based, role-play, case study, portfolio review, whiteboard exercise, prioritization exercise, metrics discussion, analysis walkthrough, reflective` }],
         temperature: 0.2,
-        maxTokens: 600,
+        maxTokens: 800,
         timeout: 30000,
         useFastModel: true
       });
@@ -1031,7 +1062,40 @@ Return JSON:
       var parsed = AIUtils.getFallbackResponse('buildAgentPersona', '');
     }
 
-    console.log(`🎭 [Persona] Built for ${jobCategory}/${interviewConfig.interviewType}: ${parsed.mustHaveSkills?.length || 0} must-haves, ${parsed.redFlags?.length || 0} red flags`);
+    // Use LLM-generated focus areas if valid, otherwise fall back to static framework
+    const llmFocusAreas = parsed.focusAreas;
+    const llmQuestionStyles = parsed.questionStyles;
+    let finalEvaluationFramework;
+
+    if (llmFocusAreas && typeof llmFocusAreas === 'object' && Object.keys(llmFocusAreas).length >= 3) {
+      const totalWeight = Object.values(llmFocusAreas).reduce((sum, a) => sum + (a?.weight || 0), 0);
+      if (totalWeight >= 80 && totalWeight <= 120) {
+        // Normalize weights to sum to exactly 100
+        const normFactor = 100 / totalWeight;
+        for (const key of Object.keys(llmFocusAreas)) {
+          llmFocusAreas[key].weight = Math.round(llmFocusAreas[key].weight * normFactor);
+          // Ensure indicators is an array
+          if (!Array.isArray(llmFocusAreas[key].indicators)) {
+            llmFocusAreas[key].indicators = [];
+          }
+        }
+        finalEvaluationFramework = {
+          focusAreas: llmFocusAreas,
+          questionStyles: Array.isArray(llmQuestionStyles) && llmQuestionStyles.length > 0
+            ? llmQuestionStyles
+            : evaluationFramework.questionStyles
+        };
+        console.log(`🎯 [Persona] LLM-generated focus areas: ${Object.keys(llmFocusAreas).join(', ')}`);
+      } else {
+        finalEvaluationFramework = evaluationFramework;
+        console.log(`⚠️ [Persona] LLM focus areas invalid weights (${totalWeight}), using static framework`);
+      }
+    } else {
+      finalEvaluationFramework = evaluationFramework;
+      console.log(`⚠️ [Persona] No LLM focus areas returned, using static framework: ${Object.keys(evaluationFramework.focusAreas).join(', ')}`);
+    }
+
+    console.log(`🎭 [Persona] Built for ${jobCategory}/${interviewConfig.interviewType}: ${parsed.mustHaveSkills?.length || 0} must-haves, ${parsed.redFlags?.length || 0} red flags, ${Object.keys(finalEvaluationFramework.focusAreas).length} focus areas`);
 
     return {
       job: {
@@ -1045,7 +1109,7 @@ Return JSON:
       interviewType: interviewConfig.interviewType,
       jobCategory,
       idealCandidate: parsed,
-      evaluationFramework,
+      evaluationFramework: finalEvaluationFramework,
       agentBehavior: {
         tone: parsed.agentTone || "professional and conversational",
         domainTopics: parsed.domainSpecificTopics || [],
@@ -1089,7 +1153,24 @@ COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
 - Good answer showing solid understanding: increase 12-17
 - Surface-level or partial answer: increase 5-11
 - Off-topic, avoided, or no useful signal: increase 0
-The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).`;
+The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).
+
+QUALITY SCORE CALIBRATION (score MUST reflect actual answer quality — do NOT default to 50-60):
+- 80-100: Excellent — deep technical detail, specific examples, demonstrates mastery
+- 60-79: Good — solid understanding, some examples, shows competence
+- 40-59: Fair — basic understanding, vague or generic, lacks depth
+- 20-39: Weak — significant gaps, confusion, wrong information
+- 0-19: No answer / completely off-topic / "I don't know"
+A good answer with real examples MUST score 70+. Only score below 50 if the answer is truly weak.
+
+DEPTH LEVEL CALIBRATION:
+- "deep": Specific technical details, real examples, trade-offs, or internals explained
+- "moderate": Shows understanding with some specifics but stays conceptual
+- "surface": Vague or generic response without specifics
+Default to "moderate" if the answer shows any real understanding. Only use "surface" for truly vague responses.
+
+SKILL DETECTION: Extract ALL specific technologies, tools, frameworks, and concepts the candidate mentions.
+Map them to the JD Must-Have Skills listed above. If JD says "Kotlin" and candidate discusses Kotlin features, list "Kotlin" in demonstrated.`;
 
     const coverageSummary = Object.fromEntries(
       Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, d.percentage + "%"])
@@ -1107,8 +1188,8 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.2,
         maxTokens: 800,
-        timeout: 15000,
-        useFastModel: true
+        timeout: 25000,
+        useFastModel: false // gpt-oss — strong model for critical analysis
       });
 
       return AIUtils.parseJSONResponse(response.content, 'combinedAnalysis');
@@ -1780,6 +1861,28 @@ Determine if interview objectives have been sufficiently met to end the session.
             lastUpdated: new Date().toISOString()
           });
           console.log(`✅ [Service] Persona-driven coverage initialized: ${Object.keys(frameworkAreas).length} areas from ${agentPersona.jobCategory} framework`);
+
+          // Sync intelligenceContext.focusAreas with persona-driven areas (so analysis prompts use JD-specific areas)
+          const syncedFocusAreas = Object.entries(agentPersona.evaluationFramework.focusAreas).map(
+            ([area, cfg]) => ({
+              area,
+              weight: (cfg.weight || 25) / 100,
+              indicators: cfg.indicators || [],
+              depth: cfg.description || ""
+            })
+          );
+          config.intelligenceContext.focusAreas = syncedFocusAreas;
+          await this.sessionManager.updateSession(sessionId, { config });
+          console.log(`🔄 [Service] intelligenceContext.focusAreas synced: ${syncedFocusAreas.map(a => a.area).join(', ')}`);
+
+          // Build JD skills checklist for tracking question coverage
+          const jdSkillsChecklist = [
+            ...(agentPersona.idealCandidate?.mustHaveSkills || []),
+            ...(agentPersona.idealCandidate?.niceToHaveSkills || [])
+          ].map(skill => ({ skill, asked: false, covered: false }));
+          await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist });
+          console.log(`📋 [Service] JD skills checklist initialized: ${jdSkillsChecklist.length} skills to track`);
+
         } catch (personaError) {
           console.warn('⚠️ [Service] Persona building failed (non-blocking):', personaError.message);
         }
@@ -2141,6 +2244,21 @@ Determine if interview objectives have been sufficiently met to end the session.
               }
             }
 
+            // Update JD skills checklist — mark covered skills based on demonstrated
+            const checklist = session.jdSkillsChecklist || [];
+            const demonstratedSkills = analysis.skills?.demonstrated || [];
+            for (const item of checklist) {
+              if (!item.covered && demonstratedSkills.some(d => {
+                const dLower = d.toLowerCase();
+                const sLower = item.skill.toLowerCase();
+                return dLower.includes(sLower) || sLower.includes(dLower) ||
+                  sLower.split(/[\s,/]+/).some(w => w.length > 2 && dLower.includes(w)) ||
+                  dLower.split(/[\s,/]+/).some(w => w.length > 2 && sLower.includes(w));
+              })) {
+                item.covered = true;
+              }
+            }
+
             // SCORE BONUS: Reward candidates who cover an area before time budget expires
             if (session.timeBudgetPerAreaMs && area.percentage >= 60 && !area.earlyCompletionBonus) {
               const areaStartTime = area.startTime;
@@ -2196,6 +2314,11 @@ Determine if interview objectives have been sufficiently met to end the session.
           finalCoverage.lastUpdated = new Date().toISOString();
           await this.sessionManager.updateCoverage(sessionId, finalCoverage);
         }
+      }
+
+      // Save updated JD skills checklist
+      if (session.jdSkillsChecklist?.length > 0) {
+        await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: session.jdSkillsChecklist });
       }
 
       // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
@@ -2363,6 +2486,22 @@ Determine if interview objectives have been sufficiently met to end the session.
         await this.incrementAreaQuestionCount(sessionId, strategy.targetArea);
         await this.sessionManager.setAreaStartTime(sessionId, strategy.targetArea);
         await this.sessionManager.updateSession(sessionId, { currentFocusArea: strategy.targetArea });
+      }
+
+      // Mark JD skills as "asked" based on question content
+      const skillChecklist = finalSession.jdSkillsChecklist || [];
+      if (skillChecklist.length > 0) {
+        const questionLower = questionContent.toLowerCase();
+        for (const item of skillChecklist) {
+          if (!item.asked) {
+            const sLower = item.skill.toLowerCase();
+            if (questionLower.includes(sLower) ||
+              sLower.split(/[\s,/]+/).some(w => w.length > 2 && questionLower.includes(w))) {
+              item.asked = true;
+            }
+          }
+        }
+        await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: skillChecklist });
       }
 
       // Detect complexity for silence handling
@@ -3316,25 +3455,34 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
     // ── 2. Coverage score: weighted area coverage ──
     const coverageScore = coverage.overall || 0;
 
-    // ── 3. Skills score: must-have skills covered vs total ──
+    // ── 3. Skills score: must-have skills covered vs total (fuzzy matching) ──
     const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
     const demonstrated = candidateProfile.revealedExpertise || [];
     const gaps = candidateProfile.revealedGaps || [];
     let skillsScore;
     if (mustHaves.length > 0) {
-      const mustHavesCovered = mustHaves.filter(s =>
-        demonstrated.some(d => d.toLowerCase().includes(s.toLowerCase()))
-      );
+      const mustHavesCovered = mustHaves.filter(s => {
+        const skillLower = s.toLowerCase();
+        return demonstrated.some(d => {
+          const dLower = d.toLowerCase();
+          // Exact match or substring in either direction
+          return dLower.includes(skillLower) || skillLower.includes(dLower) ||
+            // Word-level overlap (e.g., "Android" matches "Android Studio")
+            skillLower.split(/[\s,/]+/).some(word => word.length > 2 && dLower.includes(word)) ||
+            dLower.split(/[\s,/]+/).some(word => word.length > 2 && skillLower.includes(word));
+        });
+      });
       skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+      console.log(`📊 [FinalReport] Skills: ${mustHavesCovered.length}/${mustHaves.length} must-haves covered (${mustHavesCovered.map(s => s).join(', ') || 'none'})`);
     } else {
-      skillsScore = qualityScore; // fallback if no must-haves defined
+      skillsScore = qualityScore;
     }
 
     // ── 4. Depth score: from deep/moderate/surface per response ──
     const depths = conversation
       .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
       .map(e => e.metadata.depthLevel);
-    const depthValues = { deep: 100, moderate: 65, surface: 25 };
+    const depthValues = { deep: 100, moderate: 80, surface: 40 };
     const depthScore = depths.length > 0
       ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 50), 0) / depths.length)
       : 50;
@@ -3351,11 +3499,11 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
 
     // ── 6. Composite final score ──
     const finalScore = Math.round(
-      (qualityScore * 0.35) +
-      (coverageScore * 0.15) +
-      (skillsScore * 0.25) +
-      (depthScore * 0.15) +
-      (communicationScore * 0.10)
+      (qualityScore * 0.40) +      // primary signal — answer quality
+      (coverageScore * 0.10) +     // interview structure, not candidate quality
+      (skillsScore * 0.25) +       // must-have skills demonstrated
+      (depthScore * 0.15) +        // depth of technical detail
+      (communicationScore * 0.10)  // communication effectiveness
     );
 
     console.log(`📊 [FinalReport] Score breakdown: quality=${qualityScore}, coverage=${coverageScore}, skills=${skillsScore}, depth=${depthScore}, communication=${communicationScore} → overall=${finalScore}`);
@@ -3367,8 +3515,17 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
         `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage, quality: ${d.aiAnalysis?.qualityScore || 'N/A'}/100`
       ).join('\n');
 
+      // Build conversation summary for the LLM (last 10 Q&A pairs)
+      const conversationSummary = conversation
+        .slice(-20)
+        .map(e => `${e.type === 'interviewer' ? 'Q' : 'A'}: ${e.content.substring(0, 200)}`)
+        .join('\n');
+
       const summaryResponse = await bedrock.callLLM({
-        systemPrompt: `You are an expert recruiter writing a concise interview assessment. Return ONLY valid JSON.`,
+        systemPrompt: `You are an expert recruiter writing a concise interview assessment.
+Based on the actual conversation and scores, identify SPECIFIC strengths and weaknesses.
+Strengths/weaknesses MUST reference specific topics discussed, not generic traits like "good communication".
+Return ONLY valid JSON.`,
         messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
 Must-Have Skills: ${mustHaves.join(', ') || 'Not specified'}
 
@@ -3384,18 +3541,21 @@ CANDIDATE DATA:
 AREA SCORES:
 ${areaScores}
 
+CONVERSATION HIGHLIGHTS:
+${conversationSummary}
+
 Write JSON:
 {
-  "summary": "2-3 sentence assessment of this candidate for this specific role",
-  "strengths": ["top 3 specific strengths based on the data above"],
-  "weaknesses": ["top 3 specific areas to improve"],
+  "summary": "2-3 sentence assessment referencing specific topics discussed in the interview",
+  "strengths": ["top 3 SPECIFIC strengths based on actual answers given — reference topics/skills"],
+  "weaknesses": ["top 3 SPECIFIC areas to improve based on actual gaps observed — reference topics/skills"],
   "recommendation": "strong_hire | hire | maybe | no_hire",
-  "reasoning": "1 sentence justification for the recommendation"
+  "reasoning": "1 sentence justification referencing specific evidence from the conversation"
 }` }],
         temperature: 0.3,
-        maxTokens: 500,
-        timeout: 15000,
-        useFastModel: true
+        maxTokens: 700,
+        timeout: 25000,
+        useFastModel: false // gpt-oss — strong model for final report
       });
 
       aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
@@ -3627,7 +3787,7 @@ Update the real-time report with new AI-powered insights.`;
         temperature: 0.4,
         maxTokens: 1500,
         timeout: 30000,
-        useFastModel: true
+        useFastModel: false // gpt-oss — strong model for report insights
       });
 
       const reportUpdate = AIUtils.parseJSONResponse(response.content, 'updateRealTimeReport');
