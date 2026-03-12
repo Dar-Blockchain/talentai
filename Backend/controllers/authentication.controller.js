@@ -79,8 +79,11 @@ module.exports.register = async (req, res) => {
 
           console.log('✅ CV Analysis saved during registration:', cvAnalysisData._id);
 
+          // Prepare data to update in Profile
+          const profileUpdateData = {};
+
           // Add skills from CV to Profile with Levelconfirmed = 0
-          if (result.profile && cvData.skills && cvData.skills.length > 0) {
+          if (cvData.skills && cvData.skills.length > 0) {
             try {
               const skillsFromCV = cvData.skills.map((skillName) => ({
                 name: skillName,
@@ -91,23 +94,54 @@ module.exports.register = async (req, res) => {
                 Levelconfirmed: 0,
               }));
 
-              // Update profile with new skills
+              profileUpdateData.$push = {
+                skills: {
+                  $each: skillsFromCV,
+                },
+              };
+
+              console.log(`✅ ${skillsFromCV.length} skills from CV prepared for profile`);
+            } catch (skillError) {
+              console.warn('⚠️ Error preparing skills:', skillError.message);
+            }
+          }
+
+          // Add contact information from CV to Profile
+          if (cvData.email || cvData.links || cvData.location) {
+            try {
+              const contactInfo = {
+                email: cvData.email || '',
+                address: '',
+                linkedinUrl: cvData.links?.linkedin || '',
+                githubUrl: cvData.links?.github || '',
+                personalWebsite: cvData.links?.portfolio || '',
+                location: cvData.location || '',
+              };
+
+              profileUpdateData.$set = {
+                ...profileUpdateData.$set,
+                contactInformation: contactInfo,
+              };
+
+              console.log('✅ Contact information from CV prepared for profile');
+            } catch (contactError) {
+              console.warn('⚠️ Error preparing contact information:', contactError.message);
+            }
+          }
+
+          // Update profile with skills and contact information
+          if (result.profile && (profileUpdateData.$push || profileUpdateData.$set)) {
+            try {
               await Profile.findByIdAndUpdate(
                 result.profile._id,
-                {
-                  $push: {
-                    skills: {
-                      $each: skillsFromCV,
-                    },
-                  },
-                },
+                profileUpdateData,
                 { new: true, runValidators: true }
               );
 
-              console.log(`✅ ${skillsFromCV.length} skills from CV added to Profile`);
+              console.log('✅ Profile updated with CV data (skills and contact information)');
             } catch (profileError) {
-              console.warn('⚠️ Failed to add skills to profile:', profileError.message);
-              // Continue even if skill adding fails
+              console.warn('⚠️ Failed to update profile with CV data:', profileError.message);
+              // Continue even if profile update fails
             }
           }
         }
