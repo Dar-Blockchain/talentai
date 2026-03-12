@@ -146,11 +146,10 @@ const invitationEmail = useMemo(() => {
     }
 
     if (!hasProfile) {
-      const setupPath = hasMembership ? "/employee-setup" : "/register";
       router.replace(
         returnUrl
-          ? `${setupPath}?returnUrl=${encodeURIComponent(returnUrl)}`
-          : setupPath
+          ? `/register?returnUrl=${encodeURIComponent(returnUrl)}`
+          : "/register"
       );
       return;
     }
