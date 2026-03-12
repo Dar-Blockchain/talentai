@@ -63,7 +63,7 @@ interface PostMetrics {
   total: number;
   active: number;
   draft: number;
-  expired: number;
+  closed: number;
 }
 
 interface PostMetricsState {

@@ -49,45 +49,45 @@ import {
 const TEAL = "#0D9488";
 
 const STAT_CONFIG = [
-  { key: "totalEmployees",    label: "Total Employees",      icon: PeopleOutlined,             color: "#0D9488", format: (v: number) => String(v) },
-  { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined,         color: "#3B82F6", format: (v: number) => `${v}%` },
-  { key: "activeJobPosts",    label: "Active Job Posts",     icon: WorkOutlined,               color: "#F59E0B", format: (v: number) => String(v) },
-  { key: "activeCampaigns",   label: "Active Campaigns",     icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
+  // { key: "totalEmployees",    label: "Total Employees",      icon: PeopleOutlined,             color: "#0D9488", format: (v: number) => String(v) },
+  { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined, color: "#3B82F6", format: (v: number) => `${v}%` },
+  { key: "activeJobPosts", label: "Active Job Posts", icon: WorkOutlined, color: "#F59E0B", format: (v: number) => String(v) },
+  // { key: "activeCampaigns",   label: "Active Campaigns",     icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
 ];
 
 const GAP_DATA = [
-  { name: "React.js",      current: 85, required: 90 },
-  { name: "Python",        current: 72, required: 85, alert: true },
+  { name: "React.js", current: 85, required: 90 },
+  { name: "Python", current: 72, required: 85, alert: true },
   { name: "System Design", current: 45, required: 80, critical: true },
-  { name: "AWS",           current: 68, required: 75 },
-  { name: "TypeScript",    current: 78, required: 85 },
-  { name: "Docker",        current: 55, required: 70, alert: true },
-  { name: "Leadership",    current: 62, required: 80, critical: true },
+  { name: "AWS", current: 68, required: 75 },
+  { name: "TypeScript", current: 78, required: 85 },
+  { name: "Docker", current: 55, required: 70, alert: true },
+  { name: "Leadership", current: 62, required: 80, critical: true },
   { name: "Communication", current: 88, required: 85, success: true },
 ];
 
 const GAP_LEGEND = [
-  { color: TEAL,      label: "On Track" },
+  { color: TEAL, label: "On Track" },
   { color: "#F59E0B", label: "Minor Gap" },
   { color: "#EF4444", label: "Critical Gap" },
 ];
 
 const VERDICT_STYLE: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
-  Excellent:    { bg: "#F0FDFA", color: "#0D9488", icon: CheckCircleOutlined },
-  Good:         { bg: "#EFF6FF", color: "#2563EB", icon: CheckCircleOutlined },
+  Excellent: { bg: "#F0FDFA", color: "#0D9488", icon: CheckCircleOutlined },
+  Good: { bg: "#EFF6FF", color: "#2563EB", icon: CheckCircleOutlined },
   "Needs Work": { bg: "#FEF2F2", color: "#DC2626", icon: CancelOutlined },
-  Pending:      { bg: "#FFFBEB", color: "#D97706", icon: HourglassEmptyOutlined },
+  Pending: { bg: "#FFFBEB", color: "#D97706", icon: HourglassEmptyOutlined },
 };
 
 const CAMPAIGN_TYPE_COLOR: Record<string, { bg: string; fg: string }> = {
   PRODUCTIVITY_DIAGNOSTIC: { bg: "#FFF7ED", fg: "#C2410C" },
-  SKILLS_MAPPING:          { bg: "#EFF6FF", fg: "#2563EB" },
-  ENABLEMENT:              { bg: "#F5F3FF", fg: "#7C3AED" },
-  CUSTOM:                  { bg: "#F0FDFA", fg: "#0D9488" },
+  SKILLS_MAPPING: { bg: "#EFF6FF", fg: "#2563EB" },
+  ENABLEMENT: { bg: "#F5F3FF", fg: "#7C3AED" },
+  CUSTOM: { bg: "#F0FDFA", fg: "#0D9488" },
 };
 
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
-const SKELETON_ROWS  = [0, 1, 2, 3, 4];
+const SKELETON_ROWS = [0, 1, 2, 3, 4];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -157,16 +157,16 @@ const GapTooltip = ({ active, payload }: any) => {
 
 const DashboardOverview: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const router   = useRouter();
+  const router = useRouter();
 
-  const rawInterviews    = useSelector(selectCompanyInterviews);
+  const rawInterviews = useSelector(selectCompanyInterviews);
   const interviewsLoading = useSelector(selectCompanyInterviewsLoading);
-  const rawPosts         = useSelector(selectMyPosts);
-  const postsLoading     = useSelector(selectMyPostsLoading);
-  const rawCampaigns     = useSelector(selectCampaigns);
+  const rawPosts = useSelector(selectMyPosts);
+  const postsLoading = useSelector(selectMyPostsLoading);
+  const rawCampaigns = useSelector(selectCampaigns);
   const campaignsLoading = useSelector(selectCampaignLoading);
-  const dashboardStats   = useSelector(selectDashboardStats);
-  const statsLoading     = useSelector(selectDashboardStatsLoading);
+  const dashboardStats = useSelector(selectDashboardStats);
+  const statsLoading = useSelector(selectDashboardStatsLoading);
 
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ limit: 5 }));
@@ -178,22 +178,22 @@ const DashboardOverview: React.FC = () => {
   const recentInterviews = useMemo(() =>
     rawInterviews.slice(0, 5).map((iv: any) => {
       const score = Math.round(iv.interviewData?.finalReport?.coverage?.overall ?? iv.score ?? 0);
-      const name  = iv.candidate?.username ||
+      const name = iv.candidate?.username ||
         (iv.candidate?.firstName ? `${iv.candidate.firstName} ${iv.candidate.lastName ?? ""}`.trim() : "Candidate");
       return {
-        id:      iv._id as string,
+        id: iv._id as string,
         name,
-        job:     iv.post?.jobDetails?.title || iv.post?.title || "—",
+        job: iv.post?.jobDetails?.title || iv.post?.title || "—",
         score,
         verdict: getVerdict(score),
-        avatar:  getInitials(name),
-        time:    fmtTime(iv.createdAt),
+        avatar: getInitials(name),
+        time: fmtTime(iv.createdAt),
       };
     }),
-  [rawInterviews]);
+    [rawInterviews]);
 
-  const recentPosts      = useMemo(() => rawPosts.slice(0, 5),     [rawPosts]);
-  const recentCampaigns  = useMemo(() => rawCampaigns.slice(0, 5), [rawCampaigns]);
+  const recentPosts = useMemo(() => rawPosts.slice(0, 5), [rawPosts]);
+  const recentCampaigns = useMemo(() => rawCampaigns.slice(0, 5), [rawCampaigns]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -201,7 +201,7 @@ const DashboardOverview: React.FC = () => {
       {/* ── Row 1: Stat Cards ─────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 3 }}>
         {STAT_CONFIG.map((stat, idx) => {
-          const raw          = dashboardStats ? (dashboardStats as any)[stat.key] : null;
+          const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
           const displayValue = statsLoading ? null : raw != null ? stat.format(raw) : "—";
           return (
             <motion.div key={stat.key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
@@ -231,8 +231,7 @@ const DashboardOverview: React.FC = () => {
       {/* ── Row 2: Skills Gap + Recent Interviews ─────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "6fr 5fr" }, gap: 3 }}>
 
-        {/* Skills Gap Chart */}
-        <SectionBox>
+        {/* <SectionBox>
           <SectionTitle
             title="Skills Gap Analysis"
             subtitle="Current vs. required proficiency levels"
@@ -266,133 +265,75 @@ const DashboardOverview: React.FC = () => {
               </Box>
             ))}
           </Box>
-        </SectionBox>
+        </SectionBox> */}
 
-        {/* Recent Interviews */}
-        <SectionBox>
-          <SectionTitle
-            title="Recent Interviews"
-            subtitle={interviewsLoading ? "Loading..." : `${recentInterviews.length} latest results`}
-            action={<ViewAllLink onClick={() => router.push("/company/interviews")} />}
-          />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {interviewsLoading ? (
-              SKELETON_ROWS.map((i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Skeleton variant="circular" width={36} height={36} />
-                    <Box>
-                      <Skeleton variant="text" width={120} height={16} />
-                      <Skeleton variant="text" width={80} height={12} />
-                    </Box>
-                  </Box>
-                  <Skeleton variant="rounded" width={70} height={22} />
-                </Box>
-              ))
-            ) : recentInterviews.length === 0 ? (
-              <Box sx={{ py: 5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No interviews yet</Typography>
-              </Box>
-            ) : (
-              recentInterviews.map((iv, i) => {
-                const vs    = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
-                const VIcon = vs.icon;
-                return (
-                  <Box key={iv.id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
-                        {iv.avatar}
-                      </Avatar>
-                      <Box>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
-                        <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
-                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
-                      </Box>
-                      <Chip
-                        icon={<VIcon sx={{ fontSize: "12px !important" }} />}
-                        label={iv.verdict}
-                        size="small"
-                        sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
-                      />
-                    </Box>
-                  </Box>
-                );
-              })
-            )}
-          </Box>
-        </SectionBox>
+
       </Box>
-
+      <SectionBox>
+        <SectionTitle
+          title="Recent Interviews"
+          subtitle={interviewsLoading ? "Loading..." : `${recentInterviews.length} latest results`}
+          action={<ViewAllLink onClick={() => router.push("/company/interviews")} />}
+        />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {interviewsLoading ? (
+            SKELETON_ROWS.map((i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Skeleton variant="circular" width={36} height={36} />
+                  <Box>
+                    <Skeleton variant="text" width={120} height={16} />
+                    <Skeleton variant="text" width={80} height={12} />
+                  </Box>
+                </Box>
+                <Skeleton variant="rounded" width={70} height={22} />
+              </Box>
+            ))
+          ) : recentInterviews.length === 0 ? (
+            <Box sx={{ py: 5, textAlign: "center" }}>
+              <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No interviews yet</Typography>
+            </Box>
+          ) : (
+            recentInterviews.map((iv, i) => {
+              const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
+              const VIcon = vs.icon;
+              return (
+                <Box key={iv.id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
+                      {iv.avatar}
+                    </Avatar>
+                    <Box>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
+                      <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
+                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
+                    </Box>
+                    <Chip
+                      icon={<VIcon sx={{ fontSize: "12px !important" }} />}
+                      label={iv.verdict}
+                      size="small"
+                      sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
+                    />
+                  </Box>
+                </Box>
+              );
+            })
+          )}
+        </Box>
+      </SectionBox>
       {/* ── Row 3: Active Job Posts + Active Campaigns ────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
 
         {/* Active Job Posts */}
-        <SectionBox>
-          <SectionTitle
-            title="Job Posts"
-            subtitle={postsLoading ? "Loading..." : `${recentPosts.length} recent posts`}
-            action={<ViewAllLink onClick={() => router.push("/company/posts")} />}
-          />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {postsLoading ? (
-              SKELETON_ROWS.map((i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Skeleton variant="rounded" width={38} height={38} />
-                    <Box>
-                      <Skeleton variant="text" width={150} height={16} />
-                      <Skeleton variant="text" width={100} height={12} />
-                    </Box>
-                  </Box>
-                  <Skeleton variant="rounded" width={60} height={20} />
-                </Box>
-              ))
-            ) : recentPosts.length === 0 ? (
-              <Box sx={{ py: 5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No job posts yet</Typography>
-              </Box>
-            ) : (
-              recentPosts.map((post: any, i: number) => {
-                const status   = post.status || "draft";
-                const isActive = status.toLowerCase() === "active";
-                return (
-                  <Box key={post._id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
-                      </Box>
-                      <Box>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{post.jobDetails?.title || "—"}</Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
-                          {post.jobDetails?.workMode      && <Chip label={post.jobDetails.workMode}      size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
-                          {post.jobDetails?.employmentType && <Chip label={post.jobDetails.employmentType} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box sx={{ textAlign: "right" }}>
-                      <Chip
-                        label={status.charAt(0).toUpperCase() + status.slice(1)}
-                        size="small"
-                        sx={{ fontSize: "10px", height: 20, fontWeight: 600, bgcolor: isActive ? "#F0FDFA" : "#F3F4F6", color: isActive ? TEAL : "#6B7280" }}
-                      />
-                      {post.expirationDate && (
-                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>Expires {fmtDate(post.expirationDate)}</Typography>
-                      )}
-                    </Box>
-                  </Box>
-                );
-              })
-            )}
-          </Box>
-        </SectionBox>
+
 
         {/* Active Campaigns */}
-        <SectionBox>
+        {/* <SectionBox>
           <SectionTitle
             title="Active Campaigns"
             subtitle={campaignsLoading ? "Loading..." : `${recentCampaigns.length} recent campaigns`}
@@ -451,9 +392,66 @@ const DashboardOverview: React.FC = () => {
               })
             )}
           </Box>
-        </SectionBox>
+        </SectionBox> */}
       </Box>
-
+      <SectionBox>
+        <SectionTitle
+          title="Job Posts"
+          subtitle={postsLoading ? "Loading..." : `${recentPosts.length} recent posts`}
+          action={<ViewAllLink onClick={() => router.push("/company/posts")} />}
+        />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {postsLoading ? (
+            SKELETON_ROWS.map((i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Skeleton variant="rounded" width={38} height={38} />
+                  <Box>
+                    <Skeleton variant="text" width={150} height={16} />
+                    <Skeleton variant="text" width={100} height={12} />
+                  </Box>
+                </Box>
+                <Skeleton variant="rounded" width={60} height={20} />
+              </Box>
+            ))
+          ) : recentPosts.length === 0 ? (
+            <Box sx={{ py: 5, textAlign: "center" }}>
+              <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No job posts yet</Typography>
+            </Box>
+          ) : (
+            recentPosts.map((post: any, i: number) => {
+              const status = post.status || "draft";
+              const isActive = status.toLowerCase() === "active";
+              return (
+                <Box key={post._id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{post.jobDetails?.title || "—"}</Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
+                        {post.jobDetails?.workMode && <Chip label={post.jobDetails.workMode} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
+                        {post.jobDetails?.employmentType && <Chip label={post.jobDetails.employmentType} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Chip
+                      label={status.charAt(0).toUpperCase() + status.slice(1)}
+                      size="small"
+                      sx={{ fontSize: "10px", height: 20, fontWeight: 600, bgcolor: isActive ? "#F0FDFA" : "#F3F4F6", color: isActive ? TEAL : "#6B7280" }}
+                    />
+                    {post.expirationDate && (
+                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>Expires {fmtDate(post.expirationDate)}</Typography>
+                    )}
+                  </Box>
+                </Box>
+              );
+            })
+          )}
+        </Box>
+      </SectionBox>
     </Box>
   );
 };

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Box, Typography, InputAdornment, TextField, Skeleton, Chip, Menu, MenuItem } from "@mui/material";
+import { Box, Typography, InputAdornment, TextField, Skeleton, Chip, Menu, MenuItem, Autocomplete } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
@@ -37,6 +37,7 @@ interface InterviewsListProps {
   onSearchEmailChange: (v: string) => void;
   searchTitle: string;
   onSearchTitleChange: (v: string) => void;
+  jobTitleOptions?: string[];
   scoreFilter: ScoreFilter;
   onScoreFilterChange: (f: ScoreFilter) => void;
   sortBy: SortOption;
@@ -123,6 +124,7 @@ const InterviewsList: React.FC<InterviewsListProps> = memo(({
   searchName, onSearchNameChange,
   searchEmail, onSearchEmailChange,
   searchTitle, onSearchTitleChange,
+  jobTitleOptions = [],
   scoreFilter, onScoreFilterChange, sortBy, onSortChange,
   onSelect, hasMore, onLoadMore,
 }) => (
@@ -145,13 +147,29 @@ const InterviewsList: React.FC<InterviewsListProps> = memo(({
         InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
         sx={{ flex: 1, minWidth: 160, "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px", bgcolor: "#fff" } }}
       />
-      <TextField
+      <Autocomplete
+        freeSolo
+        options={jobTitleOptions}
+        inputValue={searchTitle}
+        onInputChange={(_, v) => onSearchTitleChange(v)}
         size="small"
-        placeholder="Job title…"
-        value={searchTitle}
-        onChange={(e) => onSearchTitleChange(e.target.value)}
-        InputProps={{ startAdornment: <InputAdornment position="start"><WorkOutlineOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
-        sx={{ flex: 1, minWidth: 160, "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px", bgcolor: "#fff" } }}
+        sx={{ flex: 1, minWidth: 160 }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder="Job title…"
+            InputProps={{
+              ...params.InputProps,
+              startAdornment: (
+                <>
+                  <InputAdornment position="start"><WorkOutlineOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment>
+                  {params.InputProps.startAdornment}
+                </>
+              ),
+            }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "13px", bgcolor: "#fff" } }}
+          />
+        )}
       />
     </Box>
 

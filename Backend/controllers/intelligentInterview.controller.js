@@ -500,7 +500,9 @@ class IntelligentInterviewController {
       }
 
       // Validate decision.content — fallback if undefined
-      const content = decision.content || "Can you tell me more about your experience?";
+      const content = decision.content || (decision.action === 'end_interview'
+        ? 'Thank you for your time. This concludes our interview.'
+        : "Can you tell me more about your experience?");
       if (!decision.content) {
         console.warn(`⚠️ [Controller] decision.content was undefined for action: ${decision.action}, using fallback`);
       }
@@ -589,6 +591,17 @@ class IntelligentInterviewController {
             timestamp,
             sessionId,
           });
+          // Auto-generate final report and properly close the session
+          try {
+            const result = await this.service.endInterview(sessionId);
+            this.safeEmit(socket, "interview_ended", {
+              finalReport: result.finalReport,
+              analytics: result.analytics,
+              sessionId,
+            });
+          } catch (endErr) {
+            console.warn('⚠️ Auto-end report generation failed:', endErr.message);
+          }
           break;
 
         default:

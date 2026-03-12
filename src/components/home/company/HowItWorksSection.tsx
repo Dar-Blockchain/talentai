@@ -1,83 +1,62 @@
-import React from "react";
-import { Box, Typography, Stack, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import GradientStepper from "./Stepper";
 
-type SolutionsSectionProps = {
-  color?: string;
-  type?: string;
-  title?: string;
-  subtitle?: string;
-};
-const SolutionsSection = ({
-  type,
-  color,
-  title,
-  subtitle,
-}: SolutionsSectionProps) => {
-  const theme = useTheme();
-  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
+const ACCENT    = "#0CDA8B";
+const ACCENT_BG = "rgba(12,218,139,0.10)";
+
+const SolutionsSection = () => {
   return (
     <Box
       id="howitworks"
       sx={{
-        px: 3,
-        py: { xs: 3, sm: 4, md: 5 },
-        color: "#000000",
+        maxWidth: 1200,
+        mx: "auto",
+        px: { xs: 2, md: 4 },
+        py: { xs: 2, md: 3 },
         display: "flex",
         flexDirection: "column",
-        mb: 4,
       }}
     >
-      {" "}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", mb: { xs: 3, md: 5 } }}>
+        {/* Overline pill */}
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 1,
+          bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
+          borderRadius: "24px", px: 2.5, py: 1, mb: 2,
+        }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
+            The Plan
+          </Typography>
+        </Box>
+
         <Typography
           variant="h3"
-          gutterBottom
           sx={{
-            mb: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
             fontFamily: "Poppins",
-            fontWeight: 600,
-            fontStyle: "normal",
-            fontSize: "36px",
-            lineHeight: "43.2px",
-            letterSpacing: "0%",
-            textAlign: "center",
-            verticalAlign: "middle",
+            fontWeight: 700,
+            fontSize: { xs: "28px", md: "44px" },
+            lineHeight: 1.2,
+            textAlign: "left",
+            color: "#111827",
+            mb: 1.5,
           }}
         >
-          Hire Better, Faster, Fairer
+          Three Steps From Open Role to Hired
         </Typography>
-        <Typography
-          sx={{
-            fontFamily: "Poppins",
-            fontWeight: 400,
-            fontStyle: "normal",
-            fontSize: "20px",
-            lineHeight: 1.6,
-            letterSpacing: 0,
-            textAlign: "center",
-            mt: 2,
-          }}
-        >
-          From Guesswork to Precision <br />
-          Redefine How You Hire
+        <Typography sx={{
+          fontFamily: "Poppins",
+          fontWeight: 400,
+          fontSize: { xs: "15px", md: "17px" },
+          lineHeight: 1.65,
+          textAlign: "left",
+          color: "#4B5563",
+          maxWidth: 750,
+        }}>
+          No ramp-up time. No consultant fees. No process redesign. Build your pipeline today. Start interviewing candidates tonight.
         </Typography>
       </Box>
-      <Box
-        sx={{
-          flexGrow: 1,
-        }}
-      >
+
+      <Box sx={{ flexGrow: 1 }}>
         <GradientStepper />
       </Box>
     </Box>

@@ -23,7 +23,7 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { fetchMembersPage, selectMembers } from "@/store/slices/memberSlice";
+import { fetchMembers, fetchMembersPage, selectMembers } from "@/store/slices/memberSlice";
 import { Member } from "@/store/slices/memberSlice";
 import {
   fetchDepartments,
@@ -90,7 +90,8 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
 
   // Fetch departments once for the filter dropdown
   useEffect(() => {
-    dispatch(fetchDepartments());
+    dispatch(fetchMembers());
+    dispatch(fetchDepartments(undefined));
   }, [dispatch]);
 
   // Re-fetch from backend whenever page or deptFilter changes immediately,
