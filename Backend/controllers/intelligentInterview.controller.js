@@ -596,7 +596,7 @@ class IntelligentInterviewController {
             const result = await this.service.endInterview(sessionId);
             this.safeEmit(socket, "interview_ended", {
               finalReport: result.finalReport,
-              analytics: result.analytics,
+              analytics: result.sessionAnalytics,
               sessionId,
             });
           } catch (endErr) {

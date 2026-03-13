@@ -40,31 +40,37 @@ export default function KeyStrengths({ strengths }: KeyStrengthsProps) {
         Key Strengths
       </Typography>
 
-      <Stack spacing={2}>
-        {strengths.slice(0, 5).map((strength, index) => (
-          <Box
-            key={index}
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              bgcolor: '#f8f9fa',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 2,
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateX(4px)',
-                boxShadow: '0 4px 12px rgba(67, 233, 123, 0.15)',
-              },
-            }}
-          >
-            <CheckCircleIcon sx={{ color: '#43e97b', fontSize: 20, mt: 0.5 }} />
-            <Typography variant="body2" sx={{ color: '#424242', lineHeight: 1.6 }}>
-              {strength}
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
+      {strengths.length === 0 ? (
+        <Typography variant="body2" sx={{ color: '#9e9e9e', fontStyle: 'italic', py: 2 }}>
+          No specific strengths were identified during this interview.
+        </Typography>
+      ) : (
+        <Stack spacing={2}>
+          {strengths.slice(0, 5).map((strength, index) => (
+            <Box
+              key={index}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: '#f8f9fa',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 2,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'translateX(4px)',
+                  boxShadow: '0 4px 12px rgba(67, 233, 123, 0.15)',
+                },
+              }}
+            >
+              <CheckCircleIcon sx={{ color: '#43e97b', fontSize: 20, mt: 0.5 }} />
+              <Typography variant="body2" sx={{ color: '#424242', lineHeight: 1.6 }}>
+                {strength}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
+      )}
     </Box>
   );
 }
