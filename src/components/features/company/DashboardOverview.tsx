@@ -298,7 +298,7 @@ const DashboardOverview: React.FC = () => {
                 const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
                 const VIcon = vs.icon;
                 return (
-                  <Box key={iv.id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
+                  <Box key={iv.id || i} onClick={() => iv.id && router.push(`/company/interviews/${iv.id}`)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                       <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
                         {iv.avatar}
@@ -357,7 +357,7 @@ const DashboardOverview: React.FC = () => {
                 const status = post.status || "draft";
                 const isActive = status.toLowerCase() === "active";
                 return (
-                  <Box key={post._id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                  <Box key={post._id || i} onClick={() => post._id && router.push(`/company/posts/${post._id}`)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                       <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
