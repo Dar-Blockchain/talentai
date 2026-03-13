@@ -1162,6 +1162,7 @@ QUALITY SCORE CALIBRATION (score MUST reflect actual answer quality — do NOT d
 - 20-39: Weak — significant gaps, confusion, wrong information
 - 0-19: No answer / completely off-topic / "I don't know"
 A good answer with real examples MUST score 70+. Only score below 50 if the answer is truly weak.
+- KEYWORD DROPPING: If the response is mostly buzzwords/tool names strung together without real explanation (e.g. "Android Studio build last version Kotlin"), score 15-30 max with depthLevel "surface". Do NOT reward keyword repetition as knowledge.
 
 DEPTH LEVEL CALIBRATION:
 - "deep": Specific technical details, real examples, trade-offs, or internals explained
@@ -1169,8 +1170,11 @@ DEPTH LEVEL CALIBRATION:
 - "surface": Vague or generic response without specifics
 Default to "moderate" if the answer shows any real understanding. Only use "surface" for truly vague responses.
 
-SKILL DETECTION: Extract ALL specific technologies, tools, frameworks, and concepts the candidate mentions.
-Map them to the JD Must-Have Skills listed above. If JD says "Kotlin" and candidate discusses Kotlin features, list "Kotlin" in demonstrated.`;
+SKILL DETECTION (CRITICAL — anti-gaming rules):
+- "demonstrated" = candidate EXPLAINED or APPLIED the skill with real understanding (specific details, how/why, trade-offs, real examples). Simply NAMING a technology without explaining it is NOT "demonstrated" — put it in "hinted" instead.
+- "hinted" = candidate mentioned the skill name or used keywords but did NOT show real understanding. This includes keyword dropping, name-dropping without context, or vague references.
+- "gaps" = candidate was asked about this skill but showed confusion, wrong info, or couldn't answer.
+- ANTI-GAMING: If the candidate strings together buzzwords/keywords without forming coherent explanations (e.g. "Android Studio build last version"), score quality 15-25 and put ALL mentioned skills in "hinted", NOT "demonstrated". This is keyword dropping, not knowledge.`;
 
     const coverageSummary = Object.fromEntries(
       Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, d.percentage + "%"])
@@ -1217,7 +1221,7 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
       profile.communicationStyle.usesExamples = analysis.style.usesExamples;
     }
 
-    if (analysis.skills?.demonstrated) {
+    if (analysis.skills?.demonstrated && (analysis.quality?.score || 0) >= 50) {
       for (const s of analysis.skills.demonstrated) {
         if (!profile.revealedExpertise.includes(s)) profile.revealedExpertise.push(s);
       }
@@ -2206,10 +2210,12 @@ Determine if interview objectives have been sufficiently met to end the session.
                 increase = Math.max(increase, 25);
               } else if (depth === 'moderate' && qualityScore >= 50) {
                 increase = Math.max(increase, 18);
-              } else if (qualityScore >= 40) {
+              } else if (qualityScore >= 50) {
                 increase = Math.max(increase, 12);
-              } else {
+              } else if (qualityScore >= 30) {
                 increase = Math.max(increase, 5);
+              } else {
+                increase = 0; // quality < 30 = no coverage credit (keyword dropping / off-topic)
               }
             }
 
@@ -3901,12 +3907,14 @@ Update the real-time report with new AI-powered insights.`;
           (communicationScore * 0.10)
         );
 
-    // Accumulate strengths deterministically
+    // Accumulate strengths deterministically — only when quality backs it up
     const strengths = [...(existing.strengths || [])];
-    for (const skill of (analysis.skills?.demonstrated || [])) {
-      const entry = `Demonstrated knowledge of ${skill}`;
-      if (!strengths.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
-        strengths.push(entry);
+    if ((analysis.quality?.score || 0) >= 60) {
+      for (const skill of (analysis.skills?.demonstrated || [])) {
+        const entry = `Demonstrated knowledge of ${skill}`;
+        if (!strengths.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
+          strengths.push(entry);
+        }
       }
     }
     if ((analysis.quality?.score || 0) >= 70 && analysis.quality?.depthLevel === 'deep') {
