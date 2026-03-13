@@ -478,3 +478,43 @@ module.exports.warnUser = async (email) => {
     throw error;
   }
 };
+
+/**
+ * Delete a user and associated profile
+ * @param {string} userId - User ID to delete
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+module.exports.deleteUser = async (userId) => {
+  try {
+    if (!userId) {
+      const err = new Error('User ID is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Find and delete the user
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
+    }
+
+    // Delete associated profile
+    if (deletedUser.profile) {
+      await Profile.findByIdAndDelete(deletedUser.profile);
+    }
+
+    console.log(`🗑️ User ${userId} and associated profile deleted`);
+
+    return {
+      success: true,
+      message: 'User and profile deleted successfully',
+      userId: deletedUser._id
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};

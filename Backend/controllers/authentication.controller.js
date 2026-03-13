@@ -173,8 +173,18 @@ module.exports.register = async (req, res) => {
           }
         }
       } catch (cvError) {
+        // If CV is not in English, reject the entire registration
+        if (cvError.code === 'CV_NOT_IN_ENGLISH') {
+          // Delete the user that was just created
+          if (result.user) {
+            await authService.deleteUser(result.user._id);
+            console.log('🗑️ User deleted due to invalid CV language');
+          }
+          // Re-throw the error to block registration
+          throw cvError;
+        }
         console.warn('⚠️ CV analysis during registration failed, but user was created:', cvError.message);
-        // Continue even if CV analysis fails - user is already created
+        // Continue for other CV analysis errors - user is already created
       }
     }
 
