@@ -140,6 +140,26 @@ export const verifyOTP = createAsyncThunk(
   }
 );
 
+export const resendOTP = createAsyncThunk(
+  "auth/resendOTP",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("auth/resend-otp", { email });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message || error.response.data?.error || `Server error: ${error.response.status}`
+        );
+      } else if (error.request) {
+        return rejectWithValue("Network error: Unable to connect to server");
+      } else {
+        return rejectWithValue(error.message || "Failed to resend code. Please try again.");
+      }
+    }
+  }
+);
+
 // Async thunk for logout - handles all cleanup centrally
 export const logout = createAsyncThunk(
   "auth/logout",
@@ -245,6 +265,18 @@ const authSlice = createSlice({
         }
       })
       .addCase(verifyOTP.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(resendOTP.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(resendOTP.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(resendOTP.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

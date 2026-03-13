@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Dialog,
   DialogContent,
+  LinearProgress,
 } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonIcon from "@mui/icons-material/Person";
@@ -17,7 +18,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { registerUser, verifyOTP } from "@/store/slices/authSlice";
+import { registerUser, verifyOTP, resendOTP } from "@/store/slices/authSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
@@ -86,7 +87,9 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
 
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [analyzingCv, setAnalyzingCv] = useState(false);
+  const [cvProgress, setCvProgress] = useState(0);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvError, setCvError] = useState(false);
   const [savedEmail, setSavedEmail] = useState("");
@@ -107,6 +110,19 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
       setValue("email", invitationEmail);
     }
   }, [invitationEmail]);
+
+  useEffect(() => {
+    if (!analyzingCv) { setCvProgress(0); return; }
+    setCvProgress(0);
+    // Simulate progress: fast to ~70%, then slow until the API resolves
+    const timer = setInterval(() => {
+      setCvProgress((prev) => {
+        if (prev >= 90) { clearInterval(timer); return 90; }
+        return prev + (prev < 60 ? 4 : 1);
+      });
+    }, 300);
+    return () => clearInterval(timer);
+  }, [analyzingCv]);
 
   const { secondsLeft, isExpired, isRunning, start: startTimer, clear: clearTimer } =
     usePersistentCountdown({ ttl: CODE_TTL, storageKey: CODE_EXPIRY_KEY });
@@ -166,6 +182,21 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
     } catch {
       showToast({ message: "Invalid code. Please try again.", severity: "error" });
       setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setResendLoading(true);
+    try {
+      await dispatch(resendOTP(savedEmail)).unwrap();
+      clearTimer();
+      startTimer();
+      setOtpCode(Array(CODE_LENGTH).fill(""));
+      showToast({ message: "A new verification code has been sent to your email.", severity: "success" });
+    } catch (err: any) {
+      showToast({ message: err || "Failed to resend code. Please try again.", severity: "error" });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -284,7 +315,12 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
                 ),
               }}
               sx={fieldSx}
-              {...register("phone", { required: "Phone number is required" })}
+              {...register("phone", {
+                required: "Phone number is required",
+                validate: (v) =>
+                  /^\+?[1-9]\d{6,14}$/.test(v.replace(/[\s\-().]/g, "")) ||
+                  "Enter a valid international phone number (e.g. +1 234 567 890)",
+              })}
             />
           </Box>
 
@@ -344,9 +380,33 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
                   >
                     {cvFile ? cvFile.name : "Upload your CV"}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: cvError ? "error.main" : "#999" }}>
-                    {cvError ? "CV is required" : "PDF, DOC or DOCX"}
-                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                    <Typography variant="caption" sx={{ color: cvError ? "error.main" : "#999" }}>
+                      {cvError ? "CV is required" : "PDF, DOC or DOCX"}
+                    </Typography>
+                    {!cvError && (
+                      <Box
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 0.4,
+                          px: 0.7,
+                          py: 0.1,
+                          borderRadius: "4px",
+                          background: "rgba(131,16,255,0.08)",
+                          border: "1px solid rgba(131,16,255,0.2)",
+                          fontSize: "0.6rem",
+                          fontWeight: 600,
+                          color: themeColors.primary,
+                          letterSpacing: 0.4,
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        🇬🇧 English only
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
               </Box>
             </Box>
@@ -390,22 +450,101 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
         disableEscapeKeyDown
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            px: 4,
-            py: 3,
-            textAlign: "center",
-            minWidth: 300,
-            background: "#fff",
+            borderRadius: 4,
+            p: 0,
+            minWidth: 340,
+            maxWidth: 380,
+            overflow: "hidden",
+            boxShadow: "0 24px 60px rgba(131,16,255,0.15)",
           },
         }}
       >
-        <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 0 }}>
-          <CircularProgress size={48} sx={{ color: themeColors.primary }} />
-          <Typography variant="h6" fontWeight={700} sx={{ color: "#1a1a1a" }}>
-            Analyzing your CV
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#666", lineHeight: 1.7, maxWidth: 260 }}>
-            Our AI is extracting your skills and experience. This may take a few seconds — please don&apos;t close this page.
+        {/* Purple gradient top bar */}
+        <Box sx={{ height: 4, background: `linear-gradient(90deg, ${themeColors.primary} ${cvProgress}%, rgba(131,16,255,0.15) ${cvProgress}%)`, transition: "background 0.4s ease" }} />
+
+        <DialogContent sx={{ px: 4, py: 3.5, display: "flex", flexDirection: "column", gap: 2.5 }}>
+          {/* Icon + title */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 44, height: 44, borderRadius: "12px",
+                background: "rgba(131,16,255,0.08)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <CircularProgress size={22} thickness={5} sx={{ color: themeColors.primary }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#111", lineHeight: 1.3 }}>
+                Analyzing your CV
+              </Typography>
+              <Typography variant="caption" sx={{ color: "#888" }}>
+                AI-powered extraction in progress
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Steps */}
+          {[
+            { label: "Reading document", threshold: 0 },
+            { label: "Extracting skills & experience", threshold: 30 },
+            { label: "Building your profile", threshold: 65 },
+          ].map(({ label, threshold }) => (
+            <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <Box
+                sx={{
+                  width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: cvProgress > threshold ? "rgba(131,16,255,0.1)" : "rgba(0,0,0,0.04)",
+                  transition: "background 0.4s",
+                }}
+              >
+                {cvProgress > threshold
+                  ? <CheckCircleOutlineIcon sx={{ fontSize: 13, color: themeColors.primary }} />
+                  : <CircularProgress size={10} thickness={5} sx={{ color: cvProgress >= threshold ? themeColors.primary : "#ccc" }} />
+                }
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: cvProgress > threshold ? "#333" : "#aaa",
+                  fontWeight: cvProgress > threshold ? 600 : 400,
+                  transition: "color 0.4s",
+                }}
+              >
+                {label}
+              </Typography>
+            </Box>
+          ))}
+
+          {/* Progress bar */}
+          <Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+              <Typography variant="caption" sx={{ color: "#999", fontSize: "0.65rem" }}>
+                Processing...
+              </Typography>
+              <Typography variant="caption" sx={{ color: themeColors.primary, fontWeight: 700, fontSize: "0.65rem" }}>
+                {cvProgress}%
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={cvProgress}
+              sx={{
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: "rgba(131,16,255,0.1)",
+                "& .MuiLinearProgress-bar": {
+                  borderRadius: 3,
+                  background: `linear-gradient(90deg, ${themeColors.primary}, rgba(131,16,255,0.6))`,
+                },
+              }}
+            />
+          </Box>
+
+          <Typography variant="caption" sx={{ color: "#bbb", textAlign: "center", mt: -1 }}>
+            Please don&apos;t close this page
           </Typography>
         </DialogContent>
       </Dialog>
@@ -467,15 +606,9 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
           <Button
             fullWidth
             variant="contained"
-            onClick={
-              isExpired
-                ? () => handleSendCode(getValues())
-                : handleVerifyAndRegister
-            }
-            disabled={loading || (!isExpired && otpCode.join("").length < CODE_LENGTH)}
-            startIcon={
-              loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : undefined
-            }
+            onClick={handleVerifyAndRegister}
+            disabled={loading || isExpired || otpCode.join("").length < CODE_LENGTH}
+            startIcon={loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : undefined}
             sx={{
               mt: 3,
               textTransform: "none",
@@ -486,19 +619,32 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               color: "#fff",
               letterSpacing: 0.3,
               "&:hover": { background: themeColors.primaryLight },
-              "&.Mui-disabled": {
-                background: "rgba(0,0,0,0.12)",
-                color: "rgba(0,0,0,0.26)",
-              },
+              "&.Mui-disabled": { background: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)" },
             }}
           >
-            {loading
-              ? isExpired
-                ? "Resending..."
-                : "Creating account..."
-              : isExpired
-              ? "Resend Code"
-              : "Verify & Create Account"}
+            {loading ? "Creating account..." : "Verify & Create Account"}
+          </Button>
+
+          <Button
+            fullWidth
+            variant="text"
+            onClick={handleResendCode}
+            disabled={resendLoading || (!isExpired && isRunning)}
+            startIcon={resendLoading ? <CircularProgress size={14} sx={{ color: themeColors.primary }} /> : undefined}
+            sx={{
+              mt: 1.5,
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "13px",
+              borderRadius: "38px",
+              color: isExpired ? themeColors.primary : "#9CA3AF",
+            }}
+          >
+            {resendLoading
+              ? "Sending..."
+              : isRunning && !isExpired
+              ? `Resend code in ${formatTimeLeft(secondsLeft)}`
+              : "Resend Code"}
           </Button>
 
           {/* <Button
