@@ -61,6 +61,7 @@ module.exports.register = async (req, res) => {
             yearsOfExperience: cvData.yearsOfExperience || 0,
             seniority: cvData.seniority || 'Entry-Level',
             skills: cvData.skills || [],
+            softSkills: cvData.softSkills || [],
             spokenLanguages: cvData.spokenLanguages || [],
             experience: cvData.experience || [],
             education: cvData.education || [],
@@ -170,6 +171,7 @@ module.exports.register = async (req, res) => {
         analysisScore: cvAnalysisData.analysisScore,
         seniority: cvAnalysisData.seniority,
         skillsCount: cvAnalysisData.skills.length,
+        softSkillsCount: cvAnalysisData.softSkills.length,
         createdAt: cvAnalysisData.createdAt,
       } : null,
     });
@@ -349,6 +351,7 @@ module.exports.parseCV = async (req, res) => {
           yearsOfExperience: cvData.yearsOfExperience || 0,
           seniority: cvData.seniority || 'Entry-Level',
           skills: cvData.skills || [],
+          softSkills: cvData.softSkills || [],
           spokenLanguages: cvData.spokenLanguages || [],
           experience: cvData.experience || [],
           education: cvData.education || [],

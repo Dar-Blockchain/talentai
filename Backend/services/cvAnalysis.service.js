@@ -54,10 +54,16 @@ class CVAnalysisService {
     if (data.yearsOfExperience >= 0) score += 10;
     if (data.seniority && data.seniority !== "Entry-Level") score += 5;
 
-    // Skills (15 points)
+    // Technical Skills (15 points)
     totalPoints += 15;
     if (data.skills && data.skills.length > 0) {
       score += Math.min(15, data.skills.length * 1.5);
+    }
+
+    // Soft Skills (10 points)
+    totalPoints += 10;
+    if (data.softSkills && data.softSkills.length > 0) {
+      score += Math.min(10, data.softSkills.length * 2);
     }
 
     // Education (15 points)
