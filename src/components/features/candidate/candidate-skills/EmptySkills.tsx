@@ -70,7 +70,7 @@ const EmptySkills: React.FC<EmptySkillsProps> = ({ type }) => {
       </Typography>
       <Button
                 onClick={() => setOpenModal(true)}
-
+        disabled
         variant="outlined"
         startIcon={<AddIcon sx={{ color: buttonColor }} />}
         sx={{

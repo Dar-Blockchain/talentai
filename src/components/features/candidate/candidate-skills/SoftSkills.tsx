@@ -48,6 +48,7 @@ function SoftSkills() {
         <Button
           onClick={() => setOpenModal(true)}
           variant="outlined"
+          disabled
           startIcon={<AddIcon sx={{ color: "rgba(250, 180, 70, 1)" }} />}
           sx={{
             background: "rgba(250, 180, 70, 0.08)",

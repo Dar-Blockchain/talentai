@@ -54,6 +54,7 @@ function TechnicalSkills() {
         <Button
           variant="outlined"
           startIcon={<AddIcon sx={{ color: "rgba(11, 82, 198, 1)" }} />}
+          disabled
           onClick={() => setOpenModal(true)}
           sx={{
             background: "rgba(11, 82, 198, 0.08)",

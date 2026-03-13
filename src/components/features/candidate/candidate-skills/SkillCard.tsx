@@ -165,7 +165,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
       onClick={handleStartTest}
       variant="outlined"
       endIcon={<ChevronRightIcon />}
-      disabled={profile.quota >= 5}
+      disabled
       sx={{
         border: "none",
         background: "none",

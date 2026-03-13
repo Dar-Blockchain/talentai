@@ -171,7 +171,8 @@ const WelcomeHeader = () => {
             variant="contained"
             startIcon={<PlayArrowIcon />}
             onClick={onStartTest}
-            disabled={quota >= 5}
+            disabled
+            // disabled={quota >= 5}
             sx={{
               background: "rgba(163, 98, 239, 1)",
               color: "#ffffff",
@@ -203,7 +204,7 @@ const WelcomeHeader = () => {
               <Image src="/icons/cv.svg" alt="cv" width={16} height={16} />
             }
             onClick={onHrInterview}
-            disabled={quota >= 5}
+            disabled
             sx={{
               border: "0.76px solid rgba(25, 25, 25, 1)",
               color: "#000000",
@@ -263,7 +264,7 @@ const WelcomeHeader = () => {
                 lineHeight: "18px",
               }}
             >
-              
+
               {`${quota || 0}/5`}
             </Typography>
           </Tooltip>
