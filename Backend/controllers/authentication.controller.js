@@ -8,7 +8,7 @@ const {
 } = require("../helpers/auth-validation.helpers");
 const fs = require('fs');
 const path = require('path');
-const { analyzeCV } = require("../services/bedrock.service");
+const { analyzeCV } = require("../services/analyseResume.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
