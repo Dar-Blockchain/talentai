@@ -172,7 +172,7 @@ class CVAnalysisService {
 
       await cvAnalysis.save();
 
-      // Add CV analysis to Profile's cvAnalyses array and soft skills if profileId is provided
+      // Add CV analysis to Profile's cvAnalyses array, soft skills, and spoken languages if profileId is provided
       if (profileId) {
         const updateObject = {
           $push: { cvAnalyses: cvAnalysis._id },
@@ -184,10 +184,33 @@ class CVAnalysisService {
           Array.isArray(normalizedData.softSkills) &&
           normalizedData.softSkills.length > 0
         ) {
+          if (!updateObject.$push) {
+            updateObject.$push = {};
+          }
           updateObject.$push.softSkills = { $each: normalizedData.softSkills };
+          console.log(`✅ Adding ${normalizedData.softSkills.length} soft skills to profile`);
         }
 
-        await Profile.findByIdAndUpdate(profileId, updateObject, { new: true });
+        // Add spoken languages to profile if they exist in normalized data
+        if (
+          normalizedData.spokenLanguages &&
+          Array.isArray(normalizedData.spokenLanguages) &&
+          normalizedData.spokenLanguages.length > 0
+        ) {
+          if (!updateObject.$push) {
+            updateObject.$push = {};
+          }
+          updateObject.$push.spokenLanguages = { $each: normalizedData.spokenLanguages };
+          console.log(`✅ Adding ${normalizedData.spokenLanguages.length} languages to profile`);
+        }
+
+        const updatedProfile = await Profile.findByIdAndUpdate(profileId, updateObject, { new: true });
+        
+        if (!updatedProfile) {
+          console.warn(`⚠️ Profile not found for ID: ${profileId}`);
+        } else {
+          console.log(`✅ Profile updated successfully with CV analysis data`);
+        }
       }
 
       return {
@@ -697,6 +720,51 @@ class CVAnalysisService {
       return {
         success: true,
         message: "Soft skills added to profile successfully.",
+        data: updatedProfile,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Add spoken languages from CV analysis to Profile
+   * @param {string} profileId - Profile ID
+   * @param {Array} spokenLanguages - Array of languages to add
+   * @returns {Promise<Object>} Updated profile
+   */
+  static async addSpokenLanguagesToProfile(profileId, spokenLanguages) {
+    try {
+      if (!profileId) {
+        throw {
+          status: 400,
+          message: "Profile ID is required.",
+        };
+      }
+
+      if (!Array.isArray(spokenLanguages) || spokenLanguages.length === 0) {
+        throw {
+          status: 400,
+          message: "Spoken languages array is required and must not be empty.",
+        };
+      }
+
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        profileId,
+        { $push: { spokenLanguages: { $each: spokenLanguages } } },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        throw {
+          status: 404,
+          message: "Profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Spoken languages added to profile successfully.",
         data: updatedProfile,
       };
     } catch (error) {

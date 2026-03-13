@@ -74,8 +74,11 @@ module.exports.register = async (req, res) => {
             userAgent: req.get('user-agent'),
           };
 
-          // Save to CVAnalysis
-          const saveCVResult = await CVAnalysisService.createCVAnalysis(cvAnalysisPayload);
+          // Save to CVAnalysis with profileId to ensure soft skills and languages are added to profile
+          const saveCVResult = await CVAnalysisService.createCVAnalysis(
+            cvAnalysisPayload,
+            result.profile ? result.profile._id : null
+          );
           cvAnalysisData = saveCVResult.data;
 
           console.log('✅ CV Analysis saved during registration:', cvAnalysisData._id);
@@ -384,7 +387,21 @@ module.exports.parseCV = async (req, res) => {
           cvAnalysisData.User = req.user._id;
         }
 
-        const saveResult = await CVAnalysisService.createCVAnalysis(cvAnalysisData);
+        // Try to get profile ID if user is authenticated and has profile
+        let profileIdForUpdate = null;
+        if (req.user && req.user._id) {
+          try {
+            const userProfile = await Profile.findOne({ userId: req.user._id });
+            profileIdForUpdate = userProfile ? userProfile._id : null;
+          } catch (profileFetchError) {
+            console.warn('⚠️ Could not fetch user profile:', profileFetchError.message);
+          }
+        }
+
+        const saveResult = await CVAnalysisService.createCVAnalysis(
+          cvAnalysisData,
+          profileIdForUpdate
+        );
         dbRecord = saveResult.data;
 
         console.log('✅ CV Analysis saved to database:', dbRecord._id);
