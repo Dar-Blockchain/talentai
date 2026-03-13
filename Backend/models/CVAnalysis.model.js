@@ -29,6 +29,18 @@ const linksSchema = new mongoose.Schema({
   portfolio: { type: String, default: "" },
 });
 
+const softSkillSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  category: { type: String },
+  proficiencyLevel: { type: Number, default: 0 }, // 0-5
+  experienceLevel: { type: String }, // NoLevel, Entry Level, etc.
+}, { timestamps: true });
+
+const languageSchema = new mongoose.Schema({
+  language: { type: String, required: true },
+  proficiency: { type: String }, // Native, B2, B1, A2, A1, etc.
+}, { timestamps: true });
+
 const cvAnalysisSchema = new mongoose.Schema(
   {
     // Personal Information
@@ -82,13 +94,11 @@ const cvAnalysisSchema = new mongoose.Schema(
       },
     ],
 
+    // Soft Skills
+    softSkills: [softSkillSchema],
+
     // Languages
-    spokenLanguages: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    spokenLanguages: [languageSchema],
 
     // Experience
     experience: [experienceSchema],
@@ -167,8 +177,10 @@ cvAnalysisSchema.index({ email: 1 });
 cvAnalysisSchema.index({ name: 1 });
 cvAnalysisSchema.index({ User: 1 });
 cvAnalysisSchema.index({ Company: 1 });
+cvAnalysisSchema.index({ profile: 1 });
 cvAnalysisSchema.index({ createdAt: -1 });
 cvAnalysisSchema.index({ seniority: 1 });
 cvAnalysisSchema.index({ skills: 1 });
+cvAnalysisSchema.index({ softSkills: 1 });
 
 module.exports = mongoose.model("CVAnalysis", cvAnalysisSchema);

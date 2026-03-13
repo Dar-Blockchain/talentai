@@ -61,6 +61,7 @@ module.exports.register = async (req, res) => {
             yearsOfExperience: cvData.yearsOfExperience || 0,
             seniority: cvData.seniority || 'Entry-Level',
             skills: cvData.skills || [],
+            softSkills: cvData.softSkills || [],
             spokenLanguages: cvData.spokenLanguages || [],
             experience: cvData.experience || [],
             education: cvData.education || [],
@@ -73,8 +74,11 @@ module.exports.register = async (req, res) => {
             userAgent: req.get('user-agent'),
           };
 
-          // Save to CVAnalysis
-          const saveCVResult = await CVAnalysisService.createCVAnalysis(cvAnalysisPayload);
+          // Save to CVAnalysis with profileId to ensure soft skills and languages are added to profile
+          const saveCVResult = await CVAnalysisService.createCVAnalysis(
+            cvAnalysisPayload,
+            result.profile ? result.profile._id : null
+          );
           cvAnalysisData = saveCVResult.data;
 
           console.log('✅ CV Analysis saved during registration:', cvAnalysisData._id);
@@ -106,6 +110,23 @@ module.exports.register = async (req, res) => {
             }
           }
 
+          // Add spoken languages from CV to Profile
+          if (cvData.spokenLanguages && cvData.spokenLanguages.length > 0) {
+            try {
+              if (!profileUpdateData.$push) {
+                profileUpdateData.$push = {};
+              }
+              
+              profileUpdateData.$push.spokenLanguages = {
+                $each: cvData.spokenLanguages,
+              };
+
+              console.log(`✅ ${cvData.spokenLanguages.length} languages from CV prepared for profile`);
+            } catch (languageError) {
+              console.warn('⚠️ Error preparing languages:', languageError.message);
+            }
+          }
+
           // Add contact information from CV to Profile
           if (cvData.email || cvData.links || cvData.location) {
             try {
@@ -126,7 +147,6 @@ module.exports.register = async (req, res) => {
                 educationLevel: cvData.educationLevel || '',
                 age: cvData.age || '',
                 country: cvData.country || '',
-                language: (cvData.spokenLanguages && cvData.spokenLanguages[0]) || '',
                 timeZone: cvData.timeZone || '',
               };
 
@@ -170,6 +190,7 @@ module.exports.register = async (req, res) => {
         analysisScore: cvAnalysisData.analysisScore,
         seniority: cvAnalysisData.seniority,
         skillsCount: cvAnalysisData.skills.length,
+        softSkillsCount: cvAnalysisData.softSkills.length,
         createdAt: cvAnalysisData.createdAt,
       } : null,
     });
@@ -235,6 +256,27 @@ module.exports.verifyOTP = async (req, res) => {
       token: result.token,
       profile: result.profile || null,
       companyMembership: result.companyMembership || null,
+    });
+  } catch (error) {
+    handleError(res, error, 400);
+  }
+};
+
+// Renvoi d'OTP
+module.exports.resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    const validEmail = validateEmail(email);
+
+    const result = await authService.resendOTP(validEmail);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      email: result.email,
+      username: result.username,
     });
   } catch (error) {
     handleError(res, error, 400);
@@ -349,6 +391,7 @@ module.exports.parseCV = async (req, res) => {
           yearsOfExperience: cvData.yearsOfExperience || 0,
           seniority: cvData.seniority || 'Entry-Level',
           skills: cvData.skills || [],
+          softSkills: cvData.softSkills || [],
           spokenLanguages: cvData.spokenLanguages || [],
           experience: cvData.experience || [],
           education: cvData.education || [],
@@ -365,7 +408,21 @@ module.exports.parseCV = async (req, res) => {
           cvAnalysisData.User = req.user._id;
         }
 
-        const saveResult = await CVAnalysisService.createCVAnalysis(cvAnalysisData);
+        // Try to get profile ID if user is authenticated and has profile
+        let profileIdForUpdate = null;
+        if (req.user && req.user._id) {
+          try {
+            const userProfile = await Profile.findOne({ userId: req.user._id });
+            profileIdForUpdate = userProfile ? userProfile._id : null;
+          } catch (profileFetchError) {
+            console.warn('⚠️ Could not fetch user profile:', profileFetchError.message);
+          }
+        }
+
+        const saveResult = await CVAnalysisService.createCVAnalysis(
+          cvAnalysisData,
+          profileIdForUpdate
+        );
         dbRecord = saveResult.data;
 
         console.log('✅ CV Analysis saved to database:', dbRecord._id);

@@ -43,7 +43,12 @@ Always return ONLY a raw JSON object — no markdown, no explanation.`
   "yearsOfExperience": 0,
   "seniority": "",
   "skills": [],
-  "spokenLanguages": [],
+  "softSkills": [
+    { "name": "", "category": "", "proficiencyLevel": 0 }
+  ],
+  "spokenLanguages": [
+    { "language": "", "proficiency": "" }
+  ],
   "experience": [
     { "company": "", "role": "", "startDate": "", "endDate": "", "duration": "", "description": "" }
   ],

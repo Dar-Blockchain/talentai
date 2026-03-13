@@ -8,6 +8,70 @@ const Profile = require("../models/Profile.model");
 
 class CVAnalysisService {
   /**
+   * Normalize and validate spokenLanguages data
+   * Handles both string arrays and language objects
+   */
+  static normalizeSpokenLanguages(languages) {
+    if (!languages) return [];
+    
+    if (!Array.isArray(languages)) {
+      return [];
+    }
+
+    return languages.map(lang => {
+      // If it's already an object with language and proficiency
+      if (typeof lang === 'object' && lang.language) {
+        return {
+          language: lang.language || '',
+          proficiency: lang.proficiency || '',
+        };
+      }
+      // If it's just a string, convert to object
+      if (typeof lang === 'string') {
+        return {
+          language: lang,
+          proficiency: '',
+        };
+      }
+      return null;
+    }).filter(lang => lang !== null);
+  }
+
+  /**
+   * Normalize and validate soft skills data
+   */
+  static normalizeSoftSkills(softSkills) {
+    if (!softSkills) return [];
+    
+    if (!Array.isArray(softSkills)) {
+      return [];
+    }
+
+    return softSkills.map(skill => {
+      if (typeof skill === 'object' && skill.name) {
+        return {
+          name: skill.name || '',
+          category: skill.category || '',
+          proficiencyLevel: skill.proficiencyLevel || 0,
+          experienceLevel: skill.experienceLevel || '',
+        };
+      }
+      return null;
+    }).filter(skill => skill !== null);
+  }
+
+  /**
+   * Normalize CV data
+   */
+  static normalizeCVData(cvData) {
+    return {
+      ...cvData,
+      spokenLanguages: this.normalizeSpokenLanguages(cvData.spokenLanguages),
+      softSkills: this.normalizeSoftSkills(cvData.softSkills),
+    };
+  }
+
+  /**
    * Validate CV analysis data
    */
   static validateCVData(data) {
@@ -54,10 +118,16 @@ class CVAnalysisService {
     if (data.yearsOfExperience >= 0) score += 10;
     if (data.seniority && data.seniority !== "Entry-Level") score += 5;
 
-    // Skills (15 points)
+    // Technical Skills (15 points)
     totalPoints += 15;
     if (data.skills && data.skills.length > 0) {
       score += Math.min(15, data.skills.length * 1.5);
+    }
+
+    // Soft Skills (10 points)
+    totalPoints += 10;
+    if (data.softSkills && data.softSkills.length > 0) {
+      score += Math.min(10, data.softSkills.length * 2);
     }
 
     // Education (15 points)
@@ -83,15 +153,18 @@ class CVAnalysisService {
    */
   static async createCVAnalysis(cvData, profileId = null) {
     try {
+      // Normalize CV data first
+      const normalizedData = this.normalizeCVData(cvData);
+
       // Validate input
-      this.validateCVData(cvData);
+      this.validateCVData(normalizedData);
 
       // Calculate analysis score
-      const analysisScore = this.calculateAnalysisScore(cvData);
+      const analysisScore = this.calculateAnalysisScore(normalizedData);
 
       // Create new record
       const cvAnalysis = new CVAnalysis({
-        ...cvData,
+        ...normalizedData,
         analysisScore,
         analysisStatus: "completed",
         profile: profileId,
@@ -99,13 +172,45 @@ class CVAnalysisService {
 
       await cvAnalysis.save();
 
-      // Add CV analysis to Profile's cvAnalyses array if profileId is provided
+      // Add CV analysis to Profile's cvAnalyses array, soft skills, and spoken languages if profileId is provided
       if (profileId) {
-        await Profile.findByIdAndUpdate(
-          profileId,
-          { $push: { cvAnalyses: cvAnalysis._id } },
-          { new: true }
-        );
+        const updateObject = {
+          $push: { cvAnalyses: cvAnalysis._id },
+        };
+
+        // Add soft skills to profile if they exist in normalized data
+        if (
+          normalizedData.softSkills &&
+          Array.isArray(normalizedData.softSkills) &&
+          normalizedData.softSkills.length > 0
+        ) {
+          if (!updateObject.$push) {
+            updateObject.$push = {};
+          }
+          updateObject.$push.softSkills = { $each: normalizedData.softSkills };
+          console.log(`✅ Adding ${normalizedData.softSkills.length} soft skills to profile`);
+        }
+
+        // Add spoken languages to profile if they exist in normalized data
+        if (
+          normalizedData.spokenLanguages &&
+          Array.isArray(normalizedData.spokenLanguages) &&
+          normalizedData.spokenLanguages.length > 0
+        ) {
+          if (!updateObject.$push) {
+            updateObject.$push = {};
+          }
+          updateObject.$push.spokenLanguages = { $each: normalizedData.spokenLanguages };
+          console.log(`✅ Adding ${normalizedData.spokenLanguages.length} languages to profile`);
+        }
+
+        const updatedProfile = await Profile.findByIdAndUpdate(profileId, updateObject, { new: true });
+        
+        if (!updatedProfile) {
+          console.warn(`⚠️ Profile not found for ID: ${profileId}`);
+        } else {
+          console.log(`✅ Profile updated successfully with CV analysis data`);
+        }
       }
 
       return {
@@ -198,10 +303,13 @@ class CVAnalysisService {
    */
   static async updateCVAnalysis(id, updateData) {
     try {
+      // Normalize update data
+      const normalizedData = this.normalizeCVData(updateData);
+
       // Validate email if being updated
-      if (updateData.email) {
+      if (normalizedData.email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(updateData.email)) {
+        if (!emailRegex.test(normalizedData.email)) {
           throw {
             status: 400,
             message: "Invalid email format.",
@@ -210,7 +318,7 @@ class CVAnalysisService {
       }
 
       // Recalculate score if relevant data changed
-      let updateObject = { ...updateData };
+      let updateObject = { ...normalizedData };
       const original = await CVAnalysis.findById(id);
       if (!original) {
         throw {
@@ -219,7 +327,7 @@ class CVAnalysisService {
         };
       }
 
-      const mergedData = { ...original.toObject(), ...updateData };
+      const mergedData = { ...original.toObject(), ...normalizedData };
       updateObject.analysisScore = this.calculateAnalysisScore(mergedData);
       updateObject.updatedAt = Date.now();
 
@@ -568,6 +676,96 @@ class CVAnalysisService {
         success: true,
         message: "CV analysis disassociated from profile successfully.",
         data: updatedCVAnalysis,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Add soft skills from CV analysis to Profile
+   * @param {string} profileId - Profile ID
+   * @param {Array} softSkills - Array of soft skills to add
+   * @returns {Promise<Object>} Updated profile
+   */
+  static async addSoftSkillsToProfile(profileId, softSkills) {
+    try {
+      if (!profileId) {
+        throw {
+          status: 400,
+          message: "Profile ID is required.",
+        };
+      }
+
+      if (!Array.isArray(softSkills) || softSkills.length === 0) {
+        throw {
+          status: 400,
+          message: "Soft skills array is required and must not be empty.",
+        };
+      }
+
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        profileId,
+        { $push: { softSkills: { $each: softSkills } } },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        throw {
+          status: 404,
+          message: "Profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Soft skills added to profile successfully.",
+        data: updatedProfile,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Add spoken languages from CV analysis to Profile
+   * @param {string} profileId - Profile ID
+   * @param {Array} spokenLanguages - Array of languages to add
+   * @returns {Promise<Object>} Updated profile
+   */
+  static async addSpokenLanguagesToProfile(profileId, spokenLanguages) {
+    try {
+      if (!profileId) {
+        throw {
+          status: 400,
+          message: "Profile ID is required.",
+        };
+      }
+
+      if (!Array.isArray(spokenLanguages) || spokenLanguages.length === 0) {
+        throw {
+          status: 400,
+          message: "Spoken languages array is required and must not be empty.",
+        };
+      }
+
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        profileId,
+        { $push: { spokenLanguages: { $each: spokenLanguages } } },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        throw {
+          status: 404,
+          message: "Profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Spoken languages added to profile successfully.",
+        data: updatedProfile,
       };
     } catch (error) {
       throw error;

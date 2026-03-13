@@ -44,6 +44,12 @@ router.post("/analyze", authController.parseCV);
 // Description: Vérifie le code OTP pour activer/valider le compte
 router.post("/verify-otp", authController.verifyOTP);
 
+// POST /auth/resend-otp
+// Accès: Public
+// Corps attendu: { email }
+// Description: Renvoie un nouveau code OTP à l'utilisateur par email (valide 5 minutes)
+router.post("/resend-otp", authController.resendOTP);
+
 // POST /auth/connect-gmail
 // Accès: Public
 // Corps attendu: { tokenGoogle | codeOAuth }
