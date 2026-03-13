@@ -4,7 +4,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -13,16 +12,12 @@ import {
   FormControlLabel,
   FormLabel,
   IconButton,
-  Paper,
   Radio,
   RadioGroup,
   TextField,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import VerifiedIcon from "@mui/icons-material/Verified";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -83,8 +78,8 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
             proficiency: "3",
           };
 
-    router.push(`/interview/hr?${new URLSearchParams(query)}`);
     handleClose();
+    router.push(`/interview/hr?${new URLSearchParams(query)}`);
   };
 
   const handleClose = () => {
@@ -294,77 +289,6 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
           </>
         )}
 
-        {/* STEP 3 — ORIGINAL REWARD CARD */}
-        {step === 3 && (
-          <Box
-            sx={{
-              p: 3,
-              mb: 3,
-              background: "rgba(255, 251, 244, 1)",
-              borderRadius: "12px",
-              border: "1px solid rgba(222, 147, 0, 1)",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <EmojiEventsIcon
-                sx={{
-                  fontSize: 28,
-                  mr: 1,
-                  color: "rgba(222, 147, 0, 1)",
-                }}
-              />
-              <Typography fontWeight={600}>
-                Your Rewards for This Test
-              </Typography>
-            </Box>
-
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              Complete this interview to unlock:
-            </Typography>
-
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-              <Chip
-                icon={<AccountBalanceWalletIcon />}
-                label="Up to 33.33 TAI tokens"
-                sx={{
-                  bgcolor: "rgba(222, 147, 0, 0.05)",
-                  border: "1.5px solid rgba(222, 147, 0, 0.5)",
-                  "& .MuiChip-icon": {
-                    color: "rgba(222, 147, 0, 1)", // <- icon color here
-                  },
-                }}
-              />
-              <Chip
-                icon={<VerifiedIcon />}
-                label={`Verified ${
-                  skillType === "technical" ? selectedSkill : softSkillType
-                } Badge`}
-                sx={{
-                  bgcolor: "rgba(222, 147, 0, 0.05)",
-                  border: "1.5px solid rgba(222, 147, 0, 0.5)",
-                  "& .MuiChip-icon": {
-                    color: "rgba(222, 147, 0, 1)", // <- icon color here
-                  },
-                }}
-              />
-              <Chip
-                icon={<EmojiEventsIcon />}
-                label="Ranking points"
-                sx={{
-                  bgcolor: "rgba(222, 147, 0, 0.05)",
-                  border: "1.5px solid rgba(222, 147, 0, 0.5)",
-                  "& .MuiChip-icon": {
-                    color: "rgba(222, 147, 0, 1)", // <- icon color here
-                  },
-                }}
-              />
-            </Box>
-
-            <Typography variant="caption" sx={{ mt: 2, display: "block" }}>
-              💡 Rewards depend on your score — higher score means more rewards
-            </Typography>
-          </Box>
-        )}
       </DialogContent>
 
       <DialogActions sx={{ p: 3 }}>
@@ -387,11 +311,11 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
             Back
           </Button>
         )}
-        {step < 3 && (
+        {step === 1 && (
           <Button
             variant="contained"
-            disabled={step === 1 ? isStep1Invalid : isStep2Invalid}
-            onClick={() => setStep(step + 1)}
+            disabled={isStep1Invalid}
+            onClick={() => setStep(2)}
             sx={{
               height: 42,
               backgroundColor: "rgba(131, 16, 255, 1)",
@@ -413,9 +337,11 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
             Next
           </Button>
         )}
-        {step === 3 && (
+        {step === 2 && (
           <Button
             variant="contained"
+            disabled={isStep2Invalid}
+            onClick={handleSubmit}
             sx={{
               height: 42,
               backgroundColor: "rgba(131, 16, 255, 1)",
@@ -433,7 +359,6 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
                 border: "none",
               },
             }}
-            onClick={handleSubmit}
           >
             Start Test
           </Button>
