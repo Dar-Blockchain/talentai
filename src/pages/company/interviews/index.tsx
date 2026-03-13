@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import InterviewsHeader from "@/components/features/company/interviews/list/InterviewsHeader";
 import InterviewsList, { ScoreFilter, SortOption } from "@/components/features/company/interviews/list/InterviewsList";
-import InterviewDetail from "@/components/features/company/interviews/details/InterviewDetail";
 import { getScore } from "@/components/features/company/interviews/list/InterviewCard";
 import type { InterviewAssessment } from "@/components/features/company/interviews/list/InterviewCard";
 import { AppDispatch } from "@/store/store";
@@ -21,6 +21,7 @@ const ROW = 12;
 
 const InterviewsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const router   = useRouter();
   const results  = useSelector(selectCompanyInterviews) as InterviewAssessment[];
   const loading  = useSelector(selectCompanyInterviewsLoading);
   const total    = useSelector(selectCompanyInterviewsTotal) as number;
@@ -31,7 +32,6 @@ const InterviewsPage: React.FC = () => {
   const [searchTitle, setSearchTitle] = useState("");
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
   const [sortBy,      setSortBy]      = useState<SortOption>("newest");
-  const [detail,      setDetail]      = useState<InterviewAssessment | null>(null);
   const [page,        setPage]        = useState(0);
 
   // Fetch only on page change — all filtering is client-side
@@ -94,50 +94,44 @@ const InterviewsPage: React.FC = () => {
 
   const handleScoreFilter = useCallback((f: ScoreFilter) => { setScoreFilter(f); setPage(0); }, []);
   const handleLoadMore    = useCallback(() => setPage((p) => p + 1), []);
-  const handleBack        = useCallback(() => setDetail(null), []);
+  const handleSelect      = useCallback((a: InterviewAssessment) => router.push(`/company/interviews/${a._id}`), [router]);
 
   return (
       <DashboardLayout>
-        {detail ? (
-          <Box>
-            <InterviewDetail assessment={detail} onBack={handleBack} />
-          </Box>
-        ) : (
-          <Box>
-            <PageHeader
-              title="Interviews"
-              subtitle="Track all candidate interview assessments for your company."
-              breadcrumbs={[
-                { label: "Dashboard", href: "/company/dashboard" },
-                { label: "Interviews" },
-              ]}
-            />
+        <Box>
+          <PageHeader
+            title="Interviews"
+            subtitle="Track all candidate interview assessments for your company."
+            breadcrumbs={[
+              { label: "Dashboard", href: "/company/dashboard" },
+              { label: "Interviews" },
+            ]}
+          />
 
-            <InterviewsHeader
-              stats={{ total, excellent: excellentCount, avgScore, needsWork: needsWorkCount }}
-              loading={loading && page === 0}
-            />
+          <InterviewsHeader
+            stats={{ total, excellent: excellentCount, avgScore, needsWork: needsWorkCount }}
+            loading={loading && page === 0}
+          />
 
-            <InterviewsList
-              assessments={filtered}
-              loading={loading && page === 0}
-              searchName={searchName}
-              onSearchNameChange={setSearchName}
-              searchEmail={searchEmail}
-              onSearchEmailChange={setSearchEmail}
-              searchTitle={searchTitle}
-              onSearchTitleChange={setSearchTitle}
-              jobTitleOptions={jobTitleOptions}
-              scoreFilter={scoreFilter}
-              onScoreFilterChange={handleScoreFilter}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              onSelect={setDetail}
-              hasMore={results.length < total}
-              onLoadMore={handleLoadMore}
-            />
-          </Box>
-        )}
+          <InterviewsList
+            assessments={filtered}
+            loading={loading && page === 0}
+            searchName={searchName}
+            onSearchNameChange={setSearchName}
+            searchEmail={searchEmail}
+            onSearchEmailChange={setSearchEmail}
+            searchTitle={searchTitle}
+            onSearchTitleChange={setSearchTitle}
+            jobTitleOptions={jobTitleOptions}
+            scoreFilter={scoreFilter}
+            onScoreFilterChange={handleScoreFilter}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            onSelect={handleSelect}
+            hasMore={results.length < total}
+            onLoadMore={handleLoadMore}
+          />
+        </Box>
       </DashboardLayout>
   );
 };
