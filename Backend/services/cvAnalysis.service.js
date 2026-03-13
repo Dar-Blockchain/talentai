@@ -8,6 +8,70 @@ const Profile = require("../models/Profile.model");
 
 class CVAnalysisService {
   /**
+   * Normalize and validate spokenLanguages data
+   * Handles both string arrays and language objects
+   */
+  static normalizeSpokenLanguages(languages) {
+    if (!languages) return [];
+    
+    if (!Array.isArray(languages)) {
+      return [];
+    }
+
+    return languages.map(lang => {
+      // If it's already an object with language and proficiency
+      if (typeof lang === 'object' && lang.language) {
+        return {
+          language: lang.language || '',
+          proficiency: lang.proficiency || '',
+        };
+      }
+      // If it's just a string, convert to object
+      if (typeof lang === 'string') {
+        return {
+          language: lang,
+          proficiency: '',
+        };
+      }
+      return null;
+    }).filter(lang => lang !== null);
+  }
+
+  /**
+   * Normalize and validate soft skills data
+   */
+  static normalizeSoftSkills(softSkills) {
+    if (!softSkills) return [];
+    
+    if (!Array.isArray(softSkills)) {
+      return [];
+    }
+
+    return softSkills.map(skill => {
+      if (typeof skill === 'object' && skill.name) {
+        return {
+          name: skill.name || '',
+          category: skill.category || '',
+          proficiencyLevel: skill.proficiencyLevel || 0,
+          experienceLevel: skill.experienceLevel || '',
+        };
+      }
+      return null;
+    }).filter(skill => skill !== null);
+  }
+
+  /**
+   * Normalize CV data
+   */
+  static normalizeCVData(cvData) {
+    return {
+      ...cvData,
+      spokenLanguages: this.normalizeSpokenLanguages(cvData.spokenLanguages),
+      softSkills: this.normalizeSoftSkills(cvData.softSkills),
+    };
+  }
+
+  /**
    * Validate CV analysis data
    */
   static validateCVData(data) {
@@ -89,15 +153,18 @@ class CVAnalysisService {
    */
   static async createCVAnalysis(cvData, profileId = null) {
     try {
+      // Normalize CV data first
+      const normalizedData = this.normalizeCVData(cvData);
+
       // Validate input
-      this.validateCVData(cvData);
+      this.validateCVData(normalizedData);
 
       // Calculate analysis score
-      const analysisScore = this.calculateAnalysisScore(cvData);
+      const analysisScore = this.calculateAnalysisScore(normalizedData);
 
       // Create new record
       const cvAnalysis = new CVAnalysis({
-        ...cvData,
+        ...normalizedData,
         analysisScore,
         analysisStatus: "completed",
         profile: profileId,
@@ -111,9 +178,13 @@ class CVAnalysisService {
           $push: { cvAnalyses: cvAnalysis._id },
         };
 
-        // Add soft skills to profile if they exist in cvData
-        if (cvData.softSkills && Array.isArray(cvData.softSkills) && cvData.softSkills.length > 0) {
-          updateObject.$push.softSkills = { $each: cvData.softSkills };
+        // Add soft skills to profile if they exist in normalized data
+        if (
+          normalizedData.softSkills &&
+          Array.isArray(normalizedData.softSkills) &&
+          normalizedData.softSkills.length > 0
+        ) {
+          updateObject.$push.softSkills = { $each: normalizedData.softSkills };
         }
 
         await Profile.findByIdAndUpdate(profileId, updateObject, { new: true });
@@ -209,10 +280,13 @@ class CVAnalysisService {
    */
   static async updateCVAnalysis(id, updateData) {
     try {
+      // Normalize update data
+      const normalizedData = this.normalizeCVData(updateData);
+
       // Validate email if being updated
-      if (updateData.email) {
+      if (normalizedData.email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(updateData.email)) {
+        if (!emailRegex.test(normalizedData.email)) {
           throw {
             status: 400,
             message: "Invalid email format.",
@@ -221,7 +295,7 @@ class CVAnalysisService {
       }
 
       // Recalculate score if relevant data changed
-      let updateObject = { ...updateData };
+      let updateObject = { ...normalizedData };
       const original = await CVAnalysis.findById(id);
       if (!original) {
         throw {
@@ -230,7 +304,7 @@ class CVAnalysisService {
         };
       }
 
-      const mergedData = { ...original.toObject(), ...updateData };
+      const mergedData = { ...original.toObject(), ...normalizedData };
       updateObject.analysisScore = this.calculateAnalysisScore(mergedData);
       updateObject.updatedAt = Date.now();
 

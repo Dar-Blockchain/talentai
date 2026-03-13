@@ -36,6 +36,11 @@ const softSkillSchema = new mongoose.Schema({
   experienceLevel: { type: String }, // NoLevel, Entry Level, etc.
 }, { timestamps: true });
 
+const languageSchema = new mongoose.Schema({
+  language: { type: String, required: true },
+  proficiency: { type: String }, // Native, B2, B1, A2, A1, etc.
+}, { timestamps: true });
+
 const cvAnalysisSchema = new mongoose.Schema(
   {
     // Personal Information
@@ -93,12 +98,7 @@ const cvAnalysisSchema = new mongoose.Schema(
     softSkills: [softSkillSchema],
 
     // Languages
-    spokenLanguages: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    spokenLanguages: [languageSchema],
 
     // Experience
     experience: [experienceSchema],

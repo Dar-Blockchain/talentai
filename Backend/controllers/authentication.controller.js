@@ -107,6 +107,23 @@ module.exports.register = async (req, res) => {
             }
           }
 
+          // Add spoken languages from CV to Profile
+          if (cvData.spokenLanguages && cvData.spokenLanguages.length > 0) {
+            try {
+              if (!profileUpdateData.$push) {
+                profileUpdateData.$push = {};
+              }
+              
+              profileUpdateData.$push.spokenLanguages = {
+                $each: cvData.spokenLanguages,
+              };
+
+              console.log(`✅ ${cvData.spokenLanguages.length} languages from CV prepared for profile`);
+            } catch (languageError) {
+              console.warn('⚠️ Error preparing languages:', languageError.message);
+            }
+          }
+
           // Add contact information from CV to Profile
           if (cvData.email || cvData.links || cvData.location) {
             try {
@@ -127,7 +144,6 @@ module.exports.register = async (req, res) => {
                 educationLevel: cvData.educationLevel || '',
                 age: cvData.age || '',
                 country: cvData.country || '',
-                language: (cvData.spokenLanguages && cvData.spokenLanguages[0]) || '',
                 timeZone: cvData.timeZone || '',
               };
 

@@ -27,6 +27,14 @@ const softSkillSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const languageSchema = new mongoose.Schema(
+  {
+    language: String,
+    proficiency: String, // Native, B2, B1, A2, A1, etc.
+  },
+  { timestamps: true }
+);
+
 const profileSchema = new mongoose.Schema(
   {
     // ========== IDENTIFICATION & BASIC INFO ==========
@@ -54,7 +62,7 @@ const profileSchema = new mongoose.Schema(
     },
     educationLevel: { type: String, required: false },
     country: { type: String, required: false },
-    language: { type: String, required: false },
+    spokenLanguages: [languageSchema],
     timeZone: { type: String, required: false },
     phone: { type: String, required: false },
 
