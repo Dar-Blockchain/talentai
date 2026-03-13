@@ -136,6 +136,11 @@ const cvAnalysisSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
     },
+    profile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Profile",
+      required: false,
+    },
 
     // Tracking
     ipAddress: { type: String },

@@ -4,6 +4,7 @@
  */
 
 const CVAnalysis = require("../models/CVAnalysis.model");
+const Profile = require("../models/Profile.model");
 
 class CVAnalysisService {
   /**
@@ -77,9 +78,10 @@ class CVAnalysisService {
   /**
    * Create a new CV analysis record
    * @param {Object} cvData - CV analysis data
+   * @param {string} profileId - Profile ID to associate with CV analysis
    * @returns {Promise<Object>} Created CV analysis record
    */
-  static async createCVAnalysis(cvData) {
+  static async createCVAnalysis(cvData, profileId = null) {
     try {
       // Validate input
       this.validateCVData(cvData);
@@ -92,9 +94,19 @@ class CVAnalysisService {
         ...cvData,
         analysisScore,
         analysisStatus: "completed",
+        profile: profileId,
       });
 
       await cvAnalysis.save();
+
+      // Add CV analysis to Profile's cvAnalyses array if profileId is provided
+      if (profileId) {
+        await Profile.findByIdAndUpdate(
+          profileId,
+          { $push: { cvAnalyses: cvAnalysis._id } },
+          { new: true }
+        );
+      }
 
       return {
         success: true,
@@ -112,7 +124,9 @@ class CVAnalysisService {
    */
   static async getCVAnalysisById(id) {
     try {
-      const cvAnalysis = await CVAnalysis.findById(id).exec();
+      const cvAnalysis = await CVAnalysis.findById(id)
+        .populate("profile")
+        .exec();
 
       if (!cvAnalysis) {
         throw {
@@ -237,6 +251,15 @@ class CVAnalysisService {
           status: 404,
           message: "CV analysis not found.",
         };
+      }
+
+      // Remove CV analysis from Profile's cvAnalyses array if associated
+      if (cvAnalysis.profile) {
+        await Profile.findByIdAndUpdate(
+          cvAnalysis.profile,
+          { $pull: { cvAnalyses: id } },
+          { new: true }
+        );
       }
 
       return {
@@ -375,6 +398,7 @@ class CVAnalysisService {
 
       const total = await CVAnalysis.countDocuments({ seniority });
       const cvAnalyses = await CVAnalysis.find({ seniority })
+        .populate("profile")
         .sort({ analysisScore: -1 })
         .skip(skip)
         .limit(limit)
@@ -426,6 +450,124 @@ class CVAnalysisService {
           seniorityDistribution,
           topSkills,
         },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get CV analyses by Profile ID
+   * @param {string} profileId - Profile ID
+   * @param {Object} options - Query options (page, limit)
+   * @returns {Promise<Object>} Profile's CV analyses
+   */
+  static async getCVAnalysesByProfileId(profileId, options = {}) {
+    try {
+      const page = Math.max(0, options.page || 0);
+      const limit = Math.min(options.limit || 10, 100);
+      const skip = page * limit;
+
+      const total = await CVAnalysis.countDocuments({ profile: profileId });
+      const cvAnalyses = await CVAnalysis.find({ profile: profileId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec();
+
+      return {
+        success: true,
+        data: cvAnalyses,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Associate CV analysis with a Profile
+   * @param {string} cvAnalysisId - CV Analysis ID
+   * @param {string} profileId - Profile ID to associate
+   * @returns {Promise<Object>} Updated CV analysis
+   */
+  static async associateCVAnalysisWithProfile(cvAnalysisId, profileId) {
+    try {
+      // Update CV analysis to add profile reference
+      const cvAnalysis = await CVAnalysis.findByIdAndUpdate(
+        cvAnalysisId,
+        { profile: profileId },
+        { new: true }
+      );
+
+      if (!cvAnalysis) {
+        throw {
+          status: 404,
+          message: "CV analysis not found.",
+        };
+      }
+
+      // Add CV analysis to Profile's cvAnalyses array
+      await Profile.findByIdAndUpdate(
+        profileId,
+        { $addToSet: { cvAnalyses: cvAnalysisId } },
+        { new: true }
+      );
+
+      return {
+        success: true,
+        message: "CV analysis associated with profile successfully.",
+        data: cvAnalysis,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Disassociate CV analysis from a Profile
+   * @param {string} cvAnalysisId - CV Analysis ID
+   * @returns {Promise<Object>} Updated CV analysis
+   */
+  static async disassociateCVAnalysisFromProfile(cvAnalysisId) {
+    try {
+      // Get CV analysis to find profile
+      const cvAnalysis = await CVAnalysis.findById(cvAnalysisId);
+
+      if (!cvAnalysis) {
+        throw {
+          status: 404,
+          message: "CV analysis not found.",
+        };
+      }
+
+      const profileId = cvAnalysis.profile;
+
+      // Update CV analysis to remove profile reference
+      const updatedCVAnalysis = await CVAnalysis.findByIdAndUpdate(
+        cvAnalysisId,
+        { $unset: { profile: 1 } },
+        { new: true }
+      );
+
+      // Remove CV analysis from Profile's cvAnalyses array
+      if (profileId) {
+        await Profile.findByIdAndUpdate(
+          profileId,
+          { $pull: { cvAnalyses: cvAnalysisId } },
+          { new: true }
+        );
+      }
+
+      return {
+        success: true,
+        message: "CV analysis disassociated from profile successfully.",
+        data: updatedCVAnalysis,
       };
     } catch (error) {
       throw error;
