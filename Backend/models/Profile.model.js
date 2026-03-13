@@ -101,6 +101,9 @@ const profileSchema = new mongoose.Schema(
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "SkillInterviewAssessment" },
     ],
+    cvAnalyses: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "CVAnalysis" },
+    ],
 
     // ========== COMPANY SPECIFIC FIELDS ==========
     companyDetails: {
