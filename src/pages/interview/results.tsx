@@ -433,10 +433,8 @@ export default function InterviewResults() {
       skill: primarySkillName,
       score: overallScore,
       level: determineLevel(overallScore),
-      strengths: finalReport.strengths ||
-        coverage.aiAnalysis?.strongestAreas?.map((a: string) => `Strong in ${a.replace('_', ' ')}`) || [],
-      improvements: finalReport.weaknesses ||
-        coverage.aiAnalysis?.weakestAreas?.map((a: string) => `Improve ${a.replace('_', ' ')}`) || []
+      strengths: finalReport.strengths || [],
+      improvements: finalReport.weaknesses || []
     }];
 
     return {
@@ -446,9 +444,9 @@ export default function InterviewResults() {
       duration: analytics.duration || 0,
       completedAt: socketData.timestamp || new Date().toISOString(),
       skillScores: skillScores,
-      strengths: finalReport.strengths || extractStrengths(coverage),
-      weaknesses: finalReport.weaknesses || extractWeaknesses(coverage),
-      recommendations: finalReport.recommendations || generateRecommendations(coverage),
+      strengths: finalReport.strengths || [],
+      weaknesses: finalReport.weaknesses || [],
+      recommendations: finalReport.recommendations || [],
       feedback: finalReport.summary || 'Interview analysis in progress...',
       conversationQuality: {
         clarity: scores.clarity || 0,
@@ -514,7 +512,7 @@ export default function InterviewResults() {
         }
       });
     }
-    return strengths.length > 0 ? strengths : ['No strengths data available'];
+    return strengths;
   };
 
   const extractWeaknesses = (coverage: any): string[] => {
@@ -533,7 +531,7 @@ export default function InterviewResults() {
         }
       });
     }
-    return weaknesses.length > 0 ? weaknesses : ['No weaknesses data available'];
+    return weaknesses;
   };
 
   const generateRecommendations = (coverage: any): string[] => {
@@ -566,7 +564,7 @@ export default function InterviewResults() {
       });
     }
 
-    return recommendations.length > 0 ? recommendations.slice(0, 10) : ['No recommendations available'];
+    return recommendations.slice(0, 10);
   };
 
   if (loading) {

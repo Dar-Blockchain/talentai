@@ -39,47 +39,53 @@ export default function AreasForImprovement({ weaknesses }: AreasForImprovementP
         Areas for Improvement
       </Typography>
 
-      <Stack spacing={2}>
-        {weaknesses.slice(0, 5).map((weakness, index) => (
-          <Box
-            key={index}
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              bgcolor: '#f8f9fa',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 2,
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateX(4px)',
-                boxShadow: '0 4px 12px rgba(250, 112, 154, 0.15)',
-              },
-            }}
-          >
+      {weaknesses.length === 0 ? (
+        <Typography variant="body2" sx={{ color: '#9e9e9e', fontStyle: 'italic', py: 2 }}>
+          No specific areas for improvement were identified.
+        </Typography>
+      ) : (
+        <Stack spacing={2}>
+          {weaknesses.slice(0, 5).map((weakness, index) => (
             <Box
+              key={index}
               sx={{
-                minWidth: 20,
-                height: 20,
-                borderRadius: '50%',
-                bgcolor: 'rgba(250, 112, 154, 0.15)',
+                p: 2,
+                borderRadius: 2,
+                bgcolor: '#f8f9fa',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-                color: '#fa709a',
-                mt: 0.5,
+                alignItems: 'flex-start',
+                gap: 2,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'translateX(4px)',
+                  boxShadow: '0 4px 12px rgba(250, 112, 154, 0.15)',
+                },
               }}
             >
-              {index + 1}
+              <Box
+                sx={{
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(250, 112, 154, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  color: '#fa709a',
+                  mt: 0.5,
+                }}
+              >
+                {index + 1}
+              </Box>
+              <Typography variant="body2" sx={{ color: '#424242', lineHeight: 1.6 }}>
+                {weakness}
+              </Typography>
             </Box>
-            <Typography variant="body2" sx={{ color: '#424242', lineHeight: 1.6 }}>
-              {weakness}
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
+          ))}
+        </Stack>
+      )}
     </Box>
   );
 }
