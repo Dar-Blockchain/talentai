@@ -25,6 +25,13 @@ class InterviewApplicantController {
       const normalizedEmail = email.trim().toLowerCase();
 
       // Upsert: create if not exists, return existing if already registered (jobId + email unique)
+      // Delete any extra duplicates first, keep only the oldest
+      const existing = await InterviewApplicant.find({ jobId, email: normalizedEmail }).sort({ createdAt: 1 });
+      if (existing.length > 1) {
+        const idsToDelete = existing.slice(1).map(d => d._id);
+        await InterviewApplicant.deleteMany({ _id: { $in: idsToDelete } });
+      }
+
       const applicant = await InterviewApplicant.findOneAndUpdate(
         { jobId, email: normalizedEmail },
         {
@@ -46,6 +53,11 @@ class InterviewApplicantController {
         data: applicant,
       });
     } catch (error) {
+      // Handle duplicate key race condition gracefully
+      if (error.code === 11000) {
+        const applicant = await InterviewApplicant.findOne({ jobId: req.body.jobId, email: req.body.email?.trim().toLowerCase() });
+        return res.status(200).json({ success: true, message: 'Already registered', data: applicant });
+      }
       console.error('InterviewApplicant register error:', error.message);
       return res.status(500).json({ success: false, message: error.message });
     }
