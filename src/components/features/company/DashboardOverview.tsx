@@ -51,7 +51,7 @@ const TEAL = "#0D9488";
 const STAT_CONFIG = [
   // { key: "totalEmployees", label: "Total Employees", icon: PeopleOutlined, color: "#0D9488", format: (v: number) => String(v) },
   { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined, color: "#3B82F6", format: (v: number) => `${v}%` },
-  { key: "activeJobPosts", label: "Active Job Posts", icon: WorkOutlined, color: "#F59E0B", format: (v: number) => String(v) },
+  { key: "activeJobPosts", label: "Job Posts", icon: WorkOutlined, color: "#F59E0B", format: (v: number) => String(v) },
   // { key: "activeCampaigns", label: "Active Campaigns", icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
 ];
 
