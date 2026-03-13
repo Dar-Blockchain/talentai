@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -28,12 +27,10 @@ const CreatePostPage: React.FC = () => {
   if (!mounted) return null;
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         {!creationType && <CreateMethodSelector />}
         {creationType && <CreateStepper />}
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

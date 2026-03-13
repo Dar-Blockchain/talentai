@@ -1,15 +1,17 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Box, TextField, Button, Typography, Stack, CircularProgress } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { registerUser, verifyOTP } from "@/store/slices/authSlice";
+import { signinUser, verifyOTP } from "@/store/slices/authSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
+import { isInvitationUrl } from "@/utils/memberInvitation";
+import { formatTimeLeft } from "@/utils/functions";
 
 type FormValues = {
   email: string;
@@ -30,17 +32,6 @@ const codeSchema = Yup.object({
 
 const CODE_LENGTH = 6;
 
-// Helper function to format time
-const formatTimeLeft = (seconds: number): string => {
-  if (seconds <= 0) return '0s';
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes > 0) {
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-  return `${remainingSeconds}s`;
-};
-
 interface Props {
   themeColors: any;
 }
@@ -50,6 +41,31 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const router = useRouter();
   const { showToast } = useToast();
   const returnUrl = router.query.returnUrl as string | undefined;
+      console.log(returnUrl, "returnUrl.....")
+
+const invitationEmail = useMemo(() => {
+  if (!returnUrl) return "";
+
+  try {
+    // Provide a base URL so relative paths work
+    const url = new URL(decodeURIComponent(returnUrl), window.location.origin);
+
+    const token = url.searchParams.get("token");
+    if (!token) return "";
+
+    // Handle URL-safe Base64
+    const base64 = token.split(".")[1]?.replace(/-/g, "+").replace(/_/g, "/");
+    if (!base64) return "";
+
+    const payload = JSON.parse(atob(base64));
+    // Some JWTs use different keys for email
+    return payload.userEmail ?? payload.email ?? payload.inviteeEmail ?? "";
+  } catch (err) {
+    console.log("Error parsing invitation URL:", err);
+    return "";
+  }
+}, [returnUrl]);
+
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -72,10 +88,14 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
     setLoading(true);
 
     try {
-      await dispatch(registerUser(emailToSend)).unwrap();
+      await dispatch(signinUser(emailToSend)).unwrap();
       startTimer();
       setStep(2);
-    } catch (err) {
+    } catch (err: any) {
+      showToast({
+        message: err || "Sign in failed. Please try again.",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -117,31 +137,34 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const handleRedirectTo = (user: any, profile: any, companyMembership: any) => {
     const userRole = user?.role;
     const hasProfile = !!profile?._id;
-    const hasMembership = !!companyMembership?._id;
+    const hasMembership = !!companyMembership?._id || isInvitationUrl(returnUrl);
+    const isCompany = userRole === "Company";
+
     if (userRole === "Admin") {
       router.replace("/dashboard/admin");
       return;
-    }else
-    if (returnUrl) {
-      const redirectTo = hasProfile
-        ? decodeURIComponent(returnUrl)
-        : `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`;
-      router.replace(redirectTo);
-      return;
-    }else
-    if (!hasProfile) {
-      router.replace("/preferences");
-      return;
-    }else
-    if(hasMembership){
-      router.replace("/workspaces");
-      return;
-    }else{
-    const redirctTo =
-      userRole === "Company" ? "/company/dashboard" : "/dashboard/candidate";
-    router.replace(redirctTo);
     }
 
+    if (!hasProfile) {
+      router.replace(
+        returnUrl
+          ? `/register?returnUrl=${encodeURIComponent(returnUrl)}`
+          : "/register"
+      );
+      return;
+    }
+
+    if (returnUrl) {
+      router.replace(decodeURIComponent(returnUrl));
+      return;
+    }
+
+    if (hasMembership) {
+      router.replace("/workspaces");
+      return;
+    }
+
+    router.replace(isCompany ? "/company/dashboard" : "/dashboard/candidate");
   };
 
   useEffect(() => {
@@ -152,7 +175,8 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
 
   return (
     <Formik<FormValues>
-      initialValues={{ email: "", code: "" }}
+      enableReinitialize
+      initialValues={{ email: invitationEmail, code: "" }}
       validationSchema={step === 1 ? emailSchema : codeSchema}
       onSubmit={(values) => {
         if (step === 1) {
@@ -178,10 +202,14 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
               value={values.email}
               onChange={handleChange}
               error={touched.email && Boolean(errors.email)}
-              helperText={touched.email && errors.email}
+              helperText={
+                invitationEmail
+                  ? "Email pre-filled from your invitation"
+                  : touched.email && errors.email
+              }
               fullWidth
               label="Email Address"
-              disabled={loading}
+              disabled={loading || !!invitationEmail}
               InputProps={{
                 startAdornment: (
                   <EmailIcon sx={{ mr: 1, color: "rgba(0,0,0,0.6)" }} />

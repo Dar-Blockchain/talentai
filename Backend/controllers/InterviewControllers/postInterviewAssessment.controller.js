@@ -46,6 +46,49 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
   }
 };
 
+// ========== CHECK EXISTENCE ==========
+module.exports.checkCandidateAssessmentExists = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const candidateId = req.user._id;
+    const userRole = req.user.role;
+
+    if (!postId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required parameter: postId",
+      });
+    }
+
+    // Check if user is a Company - Companies cannot take interviews
+    if (userRole === "Company") {
+      return res.status(403).json({
+        success: false,
+        message: "Company accounts cannot participate in interview assessments",
+      });
+    }
+
+    const exists = await postInterviewAssessmentService.hasExistingAssessment(
+      candidateId,
+      postId
+    );
+
+    return res.status(200).json({
+      success: true,
+      exists,
+      message: exists
+        ? "Candidate already has an assessment for this post"
+        : "No assessment found for this candidate and post",
+    });
+  } catch (error) {
+    console.error("❌ Controller error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Error checking assessment existence",
+    });
+  }
+};
+
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (req, res) => {
   try {

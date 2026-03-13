@@ -29,7 +29,6 @@ import {
 } from "@mui/icons-material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
-import RoleGuard from "@/components/guards/RoleGuard";
 import AppInput from "@/components/ui/AppInput";
 import AppButton from "@/components/ui/AppButton";
 import AppSelect from "@/components/ui/AppSelect";
@@ -171,7 +170,6 @@ const NewCampaignPage: React.FC = () => {
   };
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <PageHeader
           title="Create New Campaign"
@@ -210,7 +208,7 @@ const NewCampaignPage: React.FC = () => {
                     borderRadius: 99,
                     transition: "all 0.25s ease",
                     ...(isActive && {
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      bgcolor: alpha("#0D9488", 0.08),
                     }),
                   }}
                 >
@@ -226,10 +224,10 @@ const NewCampaignPage: React.FC = () => {
                       flexShrink: 0,
                       transition: "all 0.25s ease",
                       ...(isCompleted && {
-                        bgcolor: "#10B981",
+                        bgcolor: "#0D9488",
                       }),
                       ...(isActive && {
-                        bgcolor: theme.palette.primary.main,
+                        bgcolor: "#0D9488",
                       }),
                       ...(!isActive && !isCompleted && {
                         bgcolor: "#E5E7EB",
@@ -258,9 +256,9 @@ const NewCampaignPage: React.FC = () => {
                       fontSize: "13px",
                       fontWeight: isActive ? 700 : 500,
                       color: isActive
-                        ? theme.palette.primary.main
+                        ? "#0D9488"
                         : isCompleted
-                        ? "#10B981"
+                        ? "#0D9488"
                         : "#9CA3AF",
                       transition: "color 0.25s",
                       whiteSpace: "nowrap",
@@ -288,7 +286,7 @@ const NewCampaignPage: React.FC = () => {
                         position: "absolute",
                         inset: 0,
                         borderRadius: 99,
-                        bgcolor: "#10B981",
+                        bgcolor: "#0D9488",
                         transform: isCompleted ? "scaleX(1)" : "scaleX(0)",
                         transformOrigin: "left",
                         transition: "transform 0.4s ease",
@@ -387,7 +385,6 @@ const NewCampaignPage: React.FC = () => {
                         }}
                         render={({ field }) => (
                           <AppDatePicker
-                            label="Application Deadline"
                             value={field.value}
                             onChange={field.onChange}
                             error={errors.deadline?.message}
@@ -810,7 +807,7 @@ const NewCampaignPage: React.FC = () => {
                     onClick={handleNext}
                     sx={{
                       px: 4,
-                      background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+                      background: "linear-gradient(45deg, #0D9488 30%, #14B8A6 90%)",
                     }}
                   />
                 </Stack>
@@ -836,8 +833,8 @@ const NewCampaignPage: React.FC = () => {
                       width: 36,
                       height: 36,
                       borderRadius: 2,
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
-                      color: theme.palette.primary.main,
+                      bgcolor: alpha("#0D9488", 0.08),
+                      color: "#0D9488",
                     }}
                   >
                     <PeopleAltIcon sx={{ fontSize: 20 }} />
@@ -880,7 +877,7 @@ const NewCampaignPage: React.FC = () => {
                     onClick={handleSubmit(onSubmit)}
                     sx={{
                       px: 4,
-                      background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+                      background: "linear-gradient(45deg, #0D9488 30%, #14B8A6 90%)",
                     }}
                   />
                 </Stack>
@@ -889,7 +886,6 @@ const NewCampaignPage: React.FC = () => {
           </Paper>
         </Box>
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

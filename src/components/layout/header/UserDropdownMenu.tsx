@@ -62,7 +62,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
 
   const handleSettingsClick = () => {
     if (isCompany) {
-      router.push("/profile/company/settings");
+      router.push("/company/settings");
     } else {
       router.push("/profile/candidate/settings");
     }

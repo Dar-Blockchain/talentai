@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import { isLoggingOutCheck } from "./authSlice";
 import axiosInstance from "@/utils/axiosInstance";
 
 // Type definitions based on your API response
@@ -48,7 +47,7 @@ export interface DeleteMemberPayload {
 export interface Invitation {
   _id: string;
   email: string;
-  Company?: any;
+  company?: any;
   user?: {
     _id: string;
     username: string;
@@ -73,8 +72,16 @@ export interface MemberStats {
   invitations: { total: number };
 }
 
+export interface FetchMembersParams {
+  page: number;
+  limit: number;
+  search?: string;
+  departmentIds?: string[];
+}
+
 interface MemberState {
   members: Member[];
+  pageTotal: number;
   loading: boolean;
   error: string | null;
   addingMember: boolean;
@@ -98,6 +105,7 @@ interface MemberState {
 
 const initialState: MemberState = {
   members: [],
+  pageTotal: 0,
   loading: false,
   error: null,
   addingMember: false,
@@ -127,12 +135,6 @@ export const addEmployee = createAsyncThunk<
 >("member/addEmployee", async (payload, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] addEmployee CALLED with payload:`, payload);
 
-  // Check if logging out
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
-
   try {
     console.log(`📡 [MemberSlice] Sending invitation via API...`);
 
@@ -146,18 +148,10 @@ export const addEmployee = createAsyncThunk<
 
     const response = await axiosInstance.post("CompanyInvitation/sentInvitation", apiPayload);
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
-
     console.log(`✅ [MemberSlice] Employee added successfully`, response.data);
     return response.data;
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while adding employee");
   }
@@ -171,11 +165,7 @@ export const updateMemberRole = createAsyncThunk<
 >("member/updateMemberRole", async (payload, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] updateMemberRole CALLED with payload:`, payload);
 
-  // Check if logging out
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
+
 
   try {
     console.log(`📡 [MemberSlice] Updating member role via API...`);
@@ -187,18 +177,11 @@ export const updateMemberRole = createAsyncThunk<
 
     const response = await axiosInstance.patch(`CompanyMembership/${payload.membershipId}/role`, apiPayload);
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
 
     console.log(`✅ [MemberSlice] Role updated successfully`, response.data);
     return response.data.updated || response.data;
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while updating role");
   }
@@ -212,11 +195,7 @@ export const deleteMember = createAsyncThunk<
 >("member/deleteMember", async (payload, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] deleteMember CALLED with payload:`, payload);
 
-  // Check if logging out
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
+
 
   try {
     console.log(`📡 [MemberSlice] Deleting member via API...`);
@@ -224,18 +203,11 @@ export const deleteMember = createAsyncThunk<
 
     const response = await axiosInstance.delete(`CompanyMembership/${payload.membershipId}`);
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
 
     console.log(`✅ [MemberSlice] Member deleted successfully`, response.data);
     return { membershipId: payload.membershipId };
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while deleting member");
   }
@@ -249,28 +221,41 @@ export const fetchMembers = createAsyncThunk<
 >("member/fetchMembers", async (_, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] fetchMembers CALLED`);
 
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
 
   try {
     console.log(`📡 [MemberSlice] Fetching members from API...`);
     const response = await axiosInstance.get("CompanyMembership/memberships");
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
+
 
     console.log(`✅ [MemberSlice] Members fetched successfully`, response.data);
     return response.data.memberships || response.data.members || [];
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+
     console.error(`❌ [MemberSlice] Exception:`, error);
+    return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
+  }
+});
+
+// Fetch members with backend filtering and pagination
+export const fetchMembersPage = createAsyncThunk<
+  { members: Member[]; total: number },
+  FetchMembersParams,
+  { rejectValue: string }
+>("member/fetchMembersPage", async (params, { rejectWithValue }) => {
+  try {
+    const query = new URLSearchParams();
+    query.set("page", String(params.page));
+    query.set("limit", String(params.limit));
+    if (params.search) query.set("search", params.search);
+    if (params.departmentIds?.length) query.set("departmentId", params.departmentIds.join(","));
+
+    const response = await axiosInstance.get(`CompanyMembership/memberships?${query.toString()}`);
+    return {
+      members: response.data.memberships || response.data.members || [],
+      total: response.data.total ?? response.data.pagination?.total ?? 0,
+    };
+  } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
 });
@@ -283,27 +268,17 @@ export const fetchInvitations = createAsyncThunk<
 >("member/fetchInvitations", async (_, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] fetchInvitations CALLED`);
 
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
 
   try {
     console.log(`📡 [MemberSlice] Fetching invitations from API...`);
     const response = await axiosInstance.get("CompanyInvitation/myInvitations");
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
+
 
     console.log(`✅ [MemberSlice] Invitations fetched successfully`, response.data);
     return response.data.invitations || [];
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitations");
   }
@@ -317,27 +292,18 @@ export const resendInvitation = createAsyncThunk<
 >("member/resendInvitation", async (invitationId, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] resendInvitation CALLED with id:`, invitationId);
 
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
+
 
   try {
     console.log(`📡 [MemberSlice] Resending invitation via API...`);
     const response = await axiosInstance.post(`CompanyInvitation/resendInvitation/${invitationId}`);
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
+
 
     console.log(`✅ [MemberSlice] Invitation resent successfully`, response.data);
     return response.data.updated;
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+ 
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while resending invitation");
   }
@@ -351,27 +317,18 @@ export const cancelInvitation = createAsyncThunk<
 >("member/cancelInvitation", async (invitationId, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] cancelInvitation CALLED with id:`, invitationId);
 
-  if (isLoggingOutCheck()) {
-    console.log(`🚫 [MemberSlice] Logout in progress - aborting API call`);
-    return rejectWithValue("Logout in progress");
-  }
+
 
   try {
     console.log(`📡 [MemberSlice] Deleting invitation via API...`);
     const response = await axiosInstance.delete(`CompanyInvitation/deleteInvitation/${invitationId}`);
 
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Logout detected after fetch - aborting`);
-      return rejectWithValue("Logout in progress");
-    }
+
 
     console.log(`✅ [MemberSlice] Invitation deleted successfully`, response.data);
     return invitationId;
   } catch (error: any) {
-    if (isLoggingOutCheck()) {
-      console.log(`🚫 [MemberSlice] Request aborted due to logout`);
-      return rejectWithValue("Logout in progress");
-    }
+
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while deleting invitation");
   }
@@ -380,13 +337,13 @@ export const cancelInvitation = createAsyncThunk<
 // Respond to invitation (accept or reject)
 export const respondToInvitation = createAsyncThunk<
   { success: boolean; message: string },
-  { invitationId: string; action: 'accept' | 'reject' },
+  { invitationId: string; action: 'accept' | 'reject'; token?: string },
   { rejectValue: string }
->("member/respondToInvitation", async ({ invitationId, action }, { rejectWithValue }) => {
+>("member/respondToInvitation", async ({ invitationId, action, token }, { rejectWithValue }) => {
   console.log(`🔑 [MemberSlice] respondToInvitation CALLED with id: ${invitationId}, action: ${action}`);
   try {
     console.log(`📡 [MemberSlice] Responding to invitation via API...`);
-    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, { action });
+    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, { action, ...(token && { token }) });
     console.log(`✅ [MemberSlice] Invitation ${action}ed successfully`, response.data);
     return response.data;
   } catch (error: any) {
@@ -404,7 +361,6 @@ export const fetchMemberStats = createAsyncThunk<
   void,
   { rejectValue: string }
 >("member/fetchMemberStats", async (_, { rejectWithValue }) => {
-  if (isLoggingOutCheck()) return rejectWithValue("Logout in progress");
   try {
     const response = await axiosInstance.get("CompanyMembership/memberships/stats");
     return response.data.stats as MemberStats;
@@ -558,6 +514,20 @@ const memberSlice = createSlice({
           state.error = action.payload || "An error occurred";
         }
       )
+      // Handle fetchMembersPage
+      .addCase(fetchMembersPage.pending, (state: MemberState) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMembersPage.fulfilled, (state: MemberState, action) => {
+        state.loading = false;
+        state.members = action.payload.members;
+        state.pageTotal = action.payload.total;
+      })
+      .addCase(fetchMembersPage.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.loading = false;
+        state.error = action.payload || "An error occurred";
+      })
       // Handle fetchInvitations
       .addCase(fetchInvitations.pending, (state: MemberState) => {
         state.fetchingInvitations = true;
@@ -686,6 +656,7 @@ export const { clearMembers, clearError, clearAddMemberSuccess, clearUpdateRoleS
 
 export const selectMembers = (state: RootState) => ({
   members: state.member.members,
+  pageTotal: state.member.pageTotal,
   loading: state.member.loading,
   error: state.member.error,
   addingMember: state.member.addingMember,

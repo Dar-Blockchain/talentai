@@ -27,32 +27,10 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
       .select('_id username otp');
 
     if (existingUser) {
-      // Update existing user's OTP
-      await User.updateOne(
-        { _id: existingUser._id },
-        {
-          otp: {
-            code: otp,
-            expiresAt: otpExpiry
-          }
-        }
-      );
-
-      // Send OTP
-      const emailSent = await sendOTP(email, otp);
-      if (!emailSent) {
-        const err = new Error('Error sending OTP email');
-        err.status = 500;
-        throw err;
-      }
-
-      console.log('📧 OTP re-sent for existing user:', email);
-
-      return {
-        email,
-        username: existingUser.username,
-        message: 'New OTP code sent to your email'
-      };
+      // User already exists - refuse registration
+      const err = new Error('User already exists. Please use login instead.');
+      err.status = 409; // Conflict status code
+      throw err;
     }
 
     // Determine user role
@@ -90,7 +68,6 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
             location: profileDataOptions.companyDetails?.location || '',
             website: profileDataOptions.companyDetails?.website || '',
             linkedin: profileDataOptions.companyDetails?.linkedin || '',
-            employmentType: profileDataOptions.companyDetails?.employmentType || '',
           },
           requiredSkills: [],
           requiredExperienceLevel: 'Entry Level',
@@ -103,23 +80,28 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
         console.log('🔗 Company profile linked to user - user.profile:', profile._id);
       }
     } else {
-      // For Candidate: create profile if both firstName and lastName are provided
-      if (profileDataOptions.firstName && profileDataOptions.lastName) {
-        profile = await Profile.create({
-          userId: user._id,
-          type: 'Candidate',
-          firstName: profileDataOptions.firstName,
-          lastName: profileDataOptions.lastName,
-          skills: [],
-          overallScore: 0,
-        });
-        console.log('✅ Candidate profile created during registration for userId:', user._id);
-
-        // Link profile to user as ObjectID
-        user.profile = profile._id;
-        await user.save();
-        console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
+      // For Candidate: create profile with firstName and lastName (now required)
+      const resumePath = profileDataOptions.resumeFile ? profileDataOptions.resumeFile.filename : '';
+      
+      profile = await Profile.create({
+        userId: user._id,
+        type: 'Candidate',
+        firstName: profileDataOptions.firstName,
+        lastName: profileDataOptions.lastName,
+        phone: profileDataOptions.phone || '',
+        resume: resumePath,
+        skills: [],
+        overallScore: 0,
+      });
+      console.log('✅ Candidate profile created during registration for userId:', user._id);
+      if (resumePath) {
+        console.log('📄 Resume uploaded:', resumePath);
       }
+
+      // Link profile to user as ObjectID
+      user.profile = profile._id;
+      await user.save();
+      console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
     }
 
     // Send OTP
@@ -250,9 +232,124 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     if (companyMembership) {
       token = generateToken(updatedUser._id, companyMembership.company._id, companyMembership.role);
     } else {
-      token = generateToken(updatedUser._id);
+      token = generateToken(updatedUser._id, null, updatedUser.role);
     }
     return { user: updatedUser, token, profile, companyMembership };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// Service de connexion (login) pour utilisateurs existants
+module.exports.loginUser = async (email) => {
+  try {
+    if (!email || typeof email !== 'string') {
+      const err = new Error('Email is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const err = new Error('User not found. Please register first.');
+      err.status = 404;
+      throw err;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+
+    // Update user with new OTP
+    await User.updateOne(
+      { _id: user._id },
+      {
+        otp: {
+          code: otp,
+          expiresAt: otpExpiry
+        }
+      }
+    );
+
+    // Send OTP
+    const emailSent = await sendOTP(email, otp);
+    if (!emailSent) {
+      const err = new Error('Error sending OTP email');
+      err.status = 500;
+      throw err;
+    }
+
+    console.log('📧 Login OTP sent to:', email);
+
+    return {
+      email,
+      username: user.username,
+      message: 'OTP code sent to your email. Please verify to login.'
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// Service de renvoi d'OTP
+module.exports.resendOTP = async (email) => {
+  try {
+    if (!email || typeof email !== 'string') {
+      const err = new Error('Email is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const err = new Error('User not found. Please register first.');
+      err.status = 404;
+      throw err;
+    }
+
+    // Check if user is banned
+    if (user.isBanned) {
+      const err = new Error('User is banned. Please contact support.');
+      err.status = 403;
+      throw err;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+
+    // Update user with new OTP
+    await User.updateOne(
+      { _id: user._id },
+      {
+        otp: {
+          code: otp,
+          expiresAt: otpExpiry
+        }
+      }
+    );
+
+    // Send OTP
+    const emailSent = await sendOTP(email, otp);
+    if (!emailSent) {
+      const err = new Error('Error sending OTP email');
+      err.status = 500;
+      throw err;
+    }
+
+    console.log('📧 OTP resent to:', email);
+
+    return {
+      email,
+      username: user.username,
+      message: 'New OTP code has been sent to your email. OTP expires in 5 minutes.'
+    };
   } catch (error) {
     error.status = error.status || 500;
     throw error;
@@ -291,6 +388,7 @@ module.exports.connectWithGmail = async (id_token) => {
       const newUser = new User({
         username,
         email,
+        role: 'Candidate', // Default role for Gmail signup
         isVerified: true,
         trafficCounter: 1,
         lastLogin: new Date()
@@ -311,12 +409,15 @@ module.exports.connectWithGmail = async (id_token) => {
       console.log('✅ User logged in via Gmail:', email);
     }
 
-    const token = generateToken(user._id);
+    // Get full user data including role
+    const fullUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    
+    const token = generateToken(fullUser._id, null, fullUser.role);
 
     return {
-      user,
+      user: fullUser,
       token,
-      message: user.isVerified ? 'Login successful' : 'Account created successfully'
+      message: fullUser.isVerified ? 'Login successful' : 'Account created successfully'
     };
   } catch (error) {
     error.status = error.status || 500;

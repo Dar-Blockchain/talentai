@@ -66,6 +66,44 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
   }
 };
 
+// ========== CHECK EXISTENCE ==========
+/**
+ * Check if an assessment already exists for a candidate and post
+ * Only returns true if:
+ * 1. The post has PostSteps
+ * 2. The assessment exists for the candidate and post
+ * @param {string} candidateId - The candidate ID
+ * @param {string} postId - The post ID
+ * @returns {Promise<boolean>} True if assessment exists, false otherwise
+ */
+module.exports.hasExistingAssessment = async (candidateId, postId) => {
+  try {
+    // Check if post exists
+    const post = await Post.findById(postId).select("PostSteps");
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // If post HAS PostSteps → return false
+    if (post.PostSteps && post.PostSteps.length > 0) {
+      return false;
+    }
+
+    // If post has NO PostSteps → check assessment
+    const assessment = await PostInterviewAssessment.findOne({
+      candidate: candidateId,
+      post: postId
+    });
+
+    return assessment !== null;
+
+  } catch (error) {
+    console.error("Error checking existing assessment:", error.message);
+    throw error;
+  }
+};
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
@@ -99,15 +137,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       console.error('⚠️ Warning: failed to increment monthly interviews usage:', incErr.message || incErr);
       // Do not fail assessment creation if increment fails
     }
-
-    // =======================
-    // INCREMENT CANDIDATE QUOTA
-    // =======================
-    await Profile.findOneAndUpdate(
-      { userId: assessmentData.candidate },
-      { $inc: { quota: 1 } },
-      { new: true }
-    );
 
     // =======================
     // UPDATE PIPELINE

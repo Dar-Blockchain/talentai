@@ -49,10 +49,10 @@ import {
 const TEAL = "#0D9488";
 
 const STAT_CONFIG = [
-  // { key: "totalEmployees",    label: "Total Employees",      icon: PeopleOutlined,             color: "#0D9488", format: (v: number) => String(v) },
+  // { key: "totalEmployees", label: "Total Employees", icon: PeopleOutlined, color: "#0D9488", format: (v: number) => String(v) },
   { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined, color: "#3B82F6", format: (v: number) => `${v}%` },
-  { key: "activeJobPosts", label: "Active Job Posts", icon: WorkOutlined, color: "#F59E0B", format: (v: number) => String(v) },
-  // { key: "activeCampaigns",   label: "Active Campaigns",     icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
+  { key: "activeJobPosts", label: "Job Posts", icon: WorkOutlined, color: "#F59E0B", format: (v: number) => String(v) },
+  // { key: "activeCampaigns", label: "Active Campaigns", icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
 ];
 
 const GAP_DATA = [
@@ -228,10 +228,11 @@ const DashboardOverview: React.FC = () => {
         })}
       </Box>
 
-      {/* ── Row 2: Skills Gap + Recent Interviews ─────────────────────────── */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "6fr 5fr" }, gap: 3 }}>
+      {/* ── Row 2: Recent Interviews + Job Posts ──────────────────────────── */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
 
-        {/* <SectionBox>
+        {/* Skills Gap Analysis – commented out
+        <SectionBox>
           <SectionTitle
             title="Skills Gap Analysis"
             subtitle="Current vs. required proficiency levels"
@@ -249,7 +250,7 @@ const DashboardOverview: React.FC = () => {
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 500, fill: "#374151" }} width={105} />
                 <Tooltip content={<GapTooltip />} />
                 <Bar dataKey="required" fill="#E5E7EB" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="current"  fill={TEAL}    radius={[0, 4, 4, 0]}>
+                <Bar dataKey="current" fill={TEAL} radius={[0, 4, 4, 0]}>
                   {GAP_DATA.map((entry, i) => (
                     <Cell key={i} fill={entry.critical ? "#EF4444" : entry.alert ? "#F59E0B" : entry.success ? "#10B981" : TEAL} />
                   ))}
@@ -265,126 +266,118 @@ const DashboardOverview: React.FC = () => {
               </Box>
             ))}
           </Box>
-        </SectionBox> */}
+        </SectionBox>
+        */}
 
-
-      </Box>
-      <SectionBox>
-        <SectionTitle
-          title="Recent Interviews"
-          subtitle={interviewsLoading ? "Loading..." : `${recentInterviews.length} latest results`}
-          action={<ViewAllLink onClick={() => router.push("/company/interviews")} />}
-        />
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {interviewsLoading ? (
-            SKELETON_ROWS.map((i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Skeleton variant="circular" width={36} height={36} />
-                  <Box>
-                    <Skeleton variant="text" width={120} height={16} />
-                    <Skeleton variant="text" width={80} height={12} />
-                  </Box>
-                </Box>
-                <Skeleton variant="rounded" width={70} height={22} />
-              </Box>
-            ))
-          ) : recentInterviews.length === 0 ? (
-            <Box sx={{ py: 5, textAlign: "center" }}>
-              <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No interviews yet</Typography>
-            </Box>
-          ) : (
-            recentInterviews.map((iv, i) => {
-              const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
-              const VIcon = vs.icon;
-              return (
-                <Box key={iv.id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
-                      {iv.avatar}
-                    </Avatar>
-                    <Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
-                      <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box sx={{ textAlign: "right" }}>
-                      <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
-                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
-                    </Box>
-                    <Chip
-                      icon={<VIcon sx={{ fontSize: "12px !important" }} />}
-                      label={iv.verdict}
-                      size="small"
-                      sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
-                    />
-                  </Box>
-                </Box>
-              );
-            })
-          )}
-        </Box>
-      </SectionBox>
-      {/* ── Row 3: Active Job Posts + Active Campaigns ────────────────────── */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
-
-        {/* Active Job Posts */}
-
-
-        {/* Active Campaigns */}
-        {/* <SectionBox>
+        <SectionBox>
           <SectionTitle
-            title="Active Campaigns"
-            subtitle={campaignsLoading ? "Loading..." : `${recentCampaigns.length} recent campaigns`}
-            action={<ViewAllLink color="#8B5CF6" onClick={() => router.push("/company/campaigns")} />}
+            title="Recent Interviews"
+            subtitle={interviewsLoading ? "Loading..." : `${recentInterviews.length} latest results`}
+            action={<ViewAllLink onClick={() => router.push("/company/interviews")} />}
           />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {campaignsLoading ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {interviewsLoading ? (
               SKELETON_ROWS.map((i) => (
-                <Box key={i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                      <Skeleton variant="rounded" width={80} height={20} />
-                      <Skeleton variant="text" width={130} height={16} />
+                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Skeleton variant="circular" width={36} height={36} />
+                    <Box>
+                      <Skeleton variant="text" width={120} height={16} />
+                      <Skeleton variant="text" width={80} height={12} />
                     </Box>
-                    <Skeleton variant="text" width={30} height={16} />
                   </Box>
-                  <Skeleton variant="rounded" width="100%" height={6} />
+                  <Skeleton variant="rounded" width={70} height={22} />
                 </Box>
               ))
-            ) : recentCampaigns.length === 0 ? (
+            ) : recentInterviews.length === 0 ? (
               <Box sx={{ py: 5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No campaigns yet</Typography>
+                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No interviews yet</Typography>
               </Box>
             ) : (
-              recentCampaigns.map((camp: any, i: number) => {
-                const colors      = CAMPAIGN_TYPE_COLOR[camp.type] ?? CAMPAIGN_TYPE_COLOR.CUSTOM;
-                const isActive    = camp.status === "ACTIVE";
-                const statusColor = isActive ? "#10B981" : camp.status === "PAUSED" ? "#F59E0B" : "#6B7280";
+              recentInterviews.map((iv, i) => {
+                const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
+                const VIcon = vs.icon;
                 return (
-                  <Box key={camp._id || i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#8B5CF6" }, transition: "border-color 0.2s", cursor: "pointer" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                        <Box sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: colors.bg }}>
-                          <Typography sx={{ fontSize: "9px", fontWeight: 700, color: colors.fg, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                            {fmtType(camp.type)}
-                          </Typography>
-                        </Box>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {camp.title}
-                        </Typography>
+                  <Box key={iv.id || i} onClick={() => iv.id && router.push(`/company/interviews/${iv.id}`)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #F3F4F6", "&:hover": { borderColor: "#D1FAE5", bgcolor: "#F9FAFB" }, transition: "all 0.15s", cursor: "pointer" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: 12, fontWeight: 700 }}>
+                        {iv.avatar}
+                      </Avatar>
+                      <Box>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{iv.name}</Typography>
+                        <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{iv.job}</Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography sx={{ fontSize: "14px", fontWeight: 800, color: "#111827" }}>{iv.score}%</Typography>
+                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{iv.time}</Typography>
                       </Box>
                       <Chip
-                        label={camp.status}
+                        icon={<VIcon sx={{ fontSize: "12px !important" }} />}
+                        label={iv.verdict}
                         size="small"
-                        sx={{ fontSize: "9px", height: 18, fontWeight: 700, bgcolor: isActive ? "#D1FAE5" : "#F3F4F6", color: statusColor }}
+                        sx={{ fontSize: "10px", height: 22, bgcolor: vs.bg, color: vs.color, fontWeight: 600, border: "none", "& .MuiChip-icon": { color: vs.color } }}
                       />
                     </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
-                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtType(camp.module?.type)}</Typography>
-                      {camp.deadline && (
-                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {fmtDate(camp.deadline)}</Typography>
+                  </Box>
+                );
+              })
+            )}
+          </Box>
+        </SectionBox>
+
+        {/* Active Job Posts */}
+        <SectionBox>
+          <SectionTitle
+            title="Job Posts"
+            subtitle={postsLoading ? "Loading..." : `${recentPosts.length} recent posts`}
+            action={<ViewAllLink onClick={() => router.push("/company/posts")} />}
+          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {postsLoading ? (
+              SKELETON_ROWS.map((i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Skeleton variant="rounded" width={38} height={38} />
+                    <Box>
+                      <Skeleton variant="text" width={150} height={16} />
+                      <Skeleton variant="text" width={100} height={12} />
+                    </Box>
+                  </Box>
+                  <Skeleton variant="rounded" width={60} height={20} />
+                </Box>
+              ))
+            ) : recentPosts.length === 0 ? (
+              <Box sx={{ py: 5, textAlign: "center" }}>
+                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No job posts yet</Typography>
+              </Box>
+            ) : (
+              recentPosts.map((post: any, i: number) => {
+                const status = post.status || "draft";
+                const isActive = status.toLowerCase() === "active";
+                return (
+                  <Box key={post._id || i} onClick={() => post._id && router.push(`/company/posts/${post._id}`)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{post.jobDetails?.title || "—"}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
+                          {post.jobDetails?.workMode && <Chip label={post.jobDetails.workMode} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
+                          {post.jobDetails?.employmentType && <Chip label={post.jobDetails.employmentType} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Chip
+                        label={status.charAt(0).toUpperCase() + status.slice(1)}
+                        size="small"
+                        sx={{ fontSize: "10px", height: 20, fontWeight: 600, bgcolor: isActive ? "#F0FDFA" : "#F3F4F6", color: isActive ? TEAL : "#6B7280" }}
+                      />
+                      {post.expirationDate && (
+                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>Expires {fmtDate(post.expirationDate)}</Typography>
                       )}
                     </Box>
                   </Box>
@@ -392,66 +385,23 @@ const DashboardOverview: React.FC = () => {
               })
             )}
           </Box>
-        </SectionBox> */}
+        </SectionBox>
+
+        {/* Active Campaigns – commented out
+        <SectionBox>
+          <SectionTitle
+            title="Active Campaigns"
+            subtitle={campaignsLoading ? "Loading..." : `${recentCampaigns.length} recent campaigns`}
+            action={<ViewAllLink color="#8B5CF6" onClick={() => router.push("/company/campaigns")} />}
+          />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            ...
+          </Box>
+        </SectionBox>
+        */}
+
       </Box>
-      <SectionBox>
-        <SectionTitle
-          title="Job Posts"
-          subtitle={postsLoading ? "Loading..." : `${recentPosts.length} recent posts`}
-          action={<ViewAllLink onClick={() => router.push("/company/posts")} />}
-        />
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {postsLoading ? (
-            SKELETON_ROWS.map((i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Skeleton variant="rounded" width={38} height={38} />
-                  <Box>
-                    <Skeleton variant="text" width={150} height={16} />
-                    <Skeleton variant="text" width={100} height={12} />
-                  </Box>
-                </Box>
-                <Skeleton variant="rounded" width={60} height={20} />
-              </Box>
-            ))
-          ) : recentPosts.length === 0 ? (
-            <Box sx={{ py: 5, textAlign: "center" }}>
-              <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No job posts yet</Typography>
-            </Box>
-          ) : (
-            recentPosts.map((post: any, i: number) => {
-              const status = post.status || "draft";
-              const isActive = status.toLowerCase() === "active";
-              return (
-                <Box key={post._id || i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: TEAL }, transition: "border-color 0.2s", cursor: "pointer" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <WorkOutlined sx={{ fontSize: 18, color: TEAL }} />
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{post.jobDetails?.title || "—"}</Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mt: 0.3 }}>
-                        {post.jobDetails?.workMode && <Chip label={post.jobDetails.workMode} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
-                        {post.jobDetails?.employmentType && <Chip label={post.jobDetails.employmentType} size="small" sx={{ fontSize: "9px", height: 18, bgcolor: "#F3F4F6", color: "#6B7280" }} />}
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Chip
-                      label={status.charAt(0).toUpperCase() + status.slice(1)}
-                      size="small"
-                      sx={{ fontSize: "10px", height: 20, fontWeight: 600, bgcolor: isActive ? "#F0FDFA" : "#F3F4F6", color: isActive ? TEAL : "#6B7280" }}
-                    />
-                    {post.expirationDate && (
-                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.5 }}>Expires {fmtDate(post.expirationDate)}</Typography>
-                    )}
-                  </Box>
-                </Box>
-              );
-            })
-          )}
-        </Box>
-      </SectionBox>
+
     </Box>
   );
 };

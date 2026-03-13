@@ -129,10 +129,8 @@ export default function InterviewResults() {
             return;
           }
 
-          if (showStatus) {
-            showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
-          }
-          throw new Error(errorMsg);
+          showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          return;
         }
 
         result = actionResult.payload;
@@ -154,7 +152,7 @@ export default function InterviewResults() {
             if (showStatus) {
               showToast({ message: 'This interview has already been saved.', severity: 'info' });
             }
-            return; // Don't throw, just return - the results are still valid
+            return;
           }
 
           // Always show plan limit errors as a toast
@@ -163,10 +161,8 @@ export default function InterviewResults() {
             return;
           }
 
-          if (showStatus) {
-            showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
-          }
-          throw new Error(errorMsg);
+          showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          return;
         }
 
         result = actionResult.payload;
@@ -267,9 +263,6 @@ export default function InterviewResults() {
       return result;
     } catch (error) {
       console.error('❌ [Save] Error saving interview:', error);
-      if (showStatus) {
-        showToast({ message: 'Error saving interview', severity: 'error' });
-      }
     }
   };
 

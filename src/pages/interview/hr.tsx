@@ -10,11 +10,15 @@ import {
   Snackbar,
   Alert,
   Container,
+  Button,
+  CircularProgress,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Cookies from 'js-cookie';
-import { RootState } from '@/store/store';
-import { useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/store/store';
+import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
+import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
 
 // Types
 import {
@@ -59,6 +63,7 @@ const PURPLE = '#8310FF';
 
 const IntelligentInterviewTest = () => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
@@ -67,6 +72,9 @@ const IntelligentInterviewTest = () => {
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [realTimeReport, setRealTimeReport] = useState<RealTimeReport | null>(null);
   const [applicantData, setApplicantData] = useState<ApplicantData | null>(null);
+  const [assessmentChecking, setAssessmentChecking] = useState(false);
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+  const [companyBlocked, setCompanyBlocked] = useState(false);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
@@ -75,9 +83,19 @@ const IntelligentInterviewTest = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-    // Only show intro/overview when jobId is present
-    if (!router.query.jobId) setStep('interview');
-    else setStep('intro');
+    if (!router.query.jobId) { setStep('interview'); return; }
+    setStep('intro');
+
+    const postId = router.query.jobId as string;
+    setAssessmentChecking(true);
+    dispatch(checkPostInterviewAssessment(postId)).then((result) => {
+      if (checkPostInterviewAssessment.fulfilled.match(result)) {
+        if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
+        else if (result.payload.exists) setAlreadyCompleted(true);
+      } else if (checkPostInterviewAssessment.rejected.match(result)) {
+        // silently ignore — let them proceed
+      }
+    }).finally(() => setAssessmentChecking(false));
   }, [router.isReady, router.query.jobId]);
 
   const { notification, showNotification, hideNotification } = useNotification();
@@ -93,10 +111,13 @@ const IntelligentInterviewTest = () => {
     candidateProgress,
     currentPipelineStep,
     pipelineLoading,
+    configLoading,
     showBlockedModal,
     showFailedModal,
     blockMessage,
     jobData,
+    limitReached,
+    limitMessage,
   } = useInterviewConfig({ showNotification: notify });
 
   const endInterviewRef = useRef<() => void>(() => { });
@@ -273,8 +294,10 @@ const IntelligentInterviewTest = () => {
     router.push(jobId ? `/interview/results?jobId=${jobId}` : '/interview/results');
   }, [router]);
 
-  const interviewLabel =
-    interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+  const jobPostTitle = jobData?.jobDetails?.title || jobData?.title;
+  const interviewLabel = jobPostTitle
+    ? jobPostTitle
+    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
       ? `${interviewConfig.context?.targetRole || 'Technical'} Interview`
       : interviewConfig?.interviewType === 'ASSESSMENT'
         ? 'Soft Skills Assessment'
@@ -283,6 +306,118 @@ const IntelligentInterviewTest = () => {
           : 'HR Interview';
 
   const isActive = socket.interviewStatus === 'active';
+
+  /* ── Checking assessment status / loading config ── */
+  if (assessmentChecking || (hasJobId && configLoading)) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 }, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress sx={{ color: '#8310FF' }} />
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Company account blocked ── */
+  if (companyBlocked) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(131,16,255,0.08)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <CheckCircleIcon sx={{ fontSize: 36, color: '#8310FF' }} />
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                Company accounts cannot take interviews
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                This interview link is intended for candidates only. Share it with your applicants to let them complete their assessment.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/company/dashboard')}
+                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+              >
+                Back to Dashboard
+              </Button>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Already completed ── */
+  if (alreadyCompleted) {
+    const jobTitle = jobData?.jobDetails?.title || jobData?.title || 'this position';
+    const company = jobData?.companyName || '';
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(131,16,255,0.08)', border: '2px solid rgba(131,16,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <CheckCircleIcon sx={{ fontSize: 36, color: '#8310FF' }} />
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                You've already completed this interview
+              </Typography>
+              {company && (
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#8310FF', fontWeight: 600, mb: 1 }}>
+                  {company}
+                </Typography>
+              )}
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                Your assessment for <strong style={{ color: '#111827' }}>{jobTitle}</strong> has already been submitted.
+                The hiring team will review your results and get back to you.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/dashboard/candidate')}
+                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+              >
+                Back to Dashboard
+              </Button>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Interview limit reached ── */
+  if (limitReached) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(255,87,51,0.08)', border: '2px solid rgba(255,87,51,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <Typography sx={{ fontSize: '2rem' }}>🚫</Typography>
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                Interview limit reached
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                {limitMessage}
+              </Typography>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
 
   /* ── Step 1: Introduction ── */
   if (step === 'intro') {
@@ -293,6 +428,7 @@ const IntelligentInterviewTest = () => {
         jobId={jobId}
         refParam={refParam}
         totalSteps={hasJobId ? 3 : 2}
+        jobData={jobData}
         onNext={(data) => {
           setApplicantData(data);
           setStep(hasJobId ? 'overview' : 'interview');
@@ -359,7 +495,9 @@ const IntelligentInterviewTest = () => {
                   {interviewLabel}
                 </Typography>
                 <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: 'rgba(100,113,131,1)', mt: 0.25 }}>
-                  {interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
+                  {jobData?.companyName
+                    ? `${jobData.companyName} · AI-powered interview`
+                    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
                     ? `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`
                     : 'AI-powered conversational interview'}
                 </Typography>
@@ -458,6 +596,7 @@ const IntelligentInterviewTest = () => {
                   onEndInterview={endInterview}
                   onViewResults={handleViewResults}
                   routerQuery={router.query}
+                  jobData={jobData}
                 />
 
                 <AgentStatusPanel

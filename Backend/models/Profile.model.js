@@ -27,6 +27,14 @@ const softSkillSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const languageSchema = new mongoose.Schema(
+  {
+    language: String,
+    proficiency: String, // Native, B2, B1, A2, A1, etc.
+  },
+  { timestamps: true }
+);
+
 const profileSchema = new mongoose.Schema(
   {
     // ========== IDENTIFICATION & BASIC INFO ==========
@@ -41,7 +49,8 @@ const profileSchema = new mongoose.Schema(
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },
-
+    resume: { type: String, required: false },
+ 
     // ========== PERSONAL INFORMATION ==========
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
@@ -53,13 +62,13 @@ const profileSchema = new mongoose.Schema(
     },
     educationLevel: { type: String, required: false },
     country: { type: String, required: false },
-    language: { type: String, required: false },
+    spokenLanguages: [languageSchema],
     timeZone: { type: String, required: false },
+    phone: { type: String, required: false },
 
     // ========== CONTACT INFORMATION ==========
     contactInformation: {
       email: { type: String, required: false },
-      phone: { type: String, required: false },
       address: { type: String, required: false },
       linkedinUrl: { type: String, required: false },
       githubUrl: { type: String, required: false },
@@ -99,6 +108,9 @@ const profileSchema = new mongoose.Schema(
     planLimits: { type: mongoose.Schema.Types.ObjectId, ref: "PlanLimits" },
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "SkillInterviewAssessment" },
+    ],
+    cvAnalyses: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "CVAnalysis" },
     ],
 
     // ========== COMPANY SPECIFIC FIELDS ==========

@@ -81,6 +81,22 @@ const initializeApp = async () => {
     logger.section("Connecting to database...");
     await connectDB();
 
+    // Step 1.2: Deduplicate InterviewApplicant records (one-time fix)
+    try {
+      const InterviewApplicant = require('./models/InterviewApplicant.model');
+      const dupes = await InterviewApplicant.aggregate([
+        { $group: { _id: { jobId: '$jobId', email: '$email' }, ids: { $push: '$_id' }, count: { $sum: 1 } } },
+        { $match: { count: { $gt: 1 } } },
+      ]);
+      for (const { ids } of dupes) {
+        const [, ...toDelete] = ids; // keep oldest, delete the rest
+        await InterviewApplicant.deleteMany({ _id: { $in: toDelete } });
+      }
+      if (dupes.length > 0) logger.success(`Removed ${dupes.reduce((s, d) => s + d.ids.length - 1, 0)} duplicate InterviewApplicant records`);
+    } catch (e) {
+      logger.warn('InterviewApplicant dedup failed: ' + e.message);
+    }
+
     // Step 1.5: Seed PlanLimits if table is empty
     logger.section("Initializing default plans...");
     await initializePlanLimits();

@@ -13,12 +13,15 @@ export interface UseInterviewConfigReturn {
   candidateProgress: any;
   currentPipelineStep: number | null;
   pipelineLoading: boolean;
+  configLoading: boolean;
   showBlockedModal: boolean;
   showFailedModal: boolean;
   blockMessage: string;
   setShowBlockedModal: (show: boolean) => void;
   setShowFailedModal: (show: boolean) => void;
   jobData: any | null;
+  limitReached: boolean;
+  limitMessage: string;
 }
 
 export interface UseInterviewConfigOptions {
@@ -70,14 +73,19 @@ export const useInterviewConfig = ({
   const [showFailedModal, setShowFailedModal] = useState(false);
   const [blockMessage, setBlockMessage] = useState('');
   const [jobData, setJobData] = useState<any | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+  const [limitMessage, setLimitMessage] = useState('');
+  const [configLoading, setConfigLoading] = useState(false);
 
   const fetchJobInterviewConfig = async (jobId: string) => {
+    setConfigLoading(true);
     try {
       const token = Cookies.get('api_token');
 
       if (!token) {
         const returnUrl = window.location.pathname + window.location.search;
         router.push(`/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
+        setConfigLoading(false);
         return;
       }
 
@@ -236,6 +244,13 @@ export const useInterviewConfig = ({
           const errorData = await response.json().catch(() => ({}));
           console.error('❌ Error from interview-config endpoint:', errorData);
 
+          if (response.status === 429) {
+            setLimitReached(true);
+            setLimitMessage(errorData.message || 'Your company has reached the monthly interview limit.');
+            setPipelineLoading(false);
+            return;
+          }
+
           if (errorData.isPipeline) {
             throw new Error('This is a pipeline job - please refresh the page. The interview configuration is being loaded from the pipeline steps.');
           }
@@ -253,10 +268,12 @@ export const useInterviewConfig = ({
       }
 
       setPipelineLoading(false);
+      setConfigLoading(false);
 
     } catch (error) {
       console.error('❌ Error fetching job interview config:', error);
       setPipelineLoading(false);
+      setConfigLoading(false);
       showNotification('Failed to load interview configuration', 'error');
 
       const defaultConfig = buildInterviewConfigFromURL({ type: 'hr' });
@@ -334,11 +351,14 @@ export const useInterviewConfig = ({
     candidateProgress,
     currentPipelineStep,
     pipelineLoading,
+    configLoading,
     showBlockedModal,
     showFailedModal,
     blockMessage,
     setShowBlockedModal,
     setShowFailedModal,
     jobData,
+    limitReached,
+    limitMessage,
   };
 };

@@ -1,22 +1,19 @@
 import "@/styles/globals.css";
-import "@/styles/walletconnect-override.css";
 import type { AppProps } from "next/app";
-import { Provider, useSelector } from "react-redux";
+import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { useAuthCheck } from "@/hooks/useAuthCheck";
-import { isTokenExpired } from "@/utils/tokenUtils";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { isLoggingOutCheck, clearAuth } from "@/store/slices/authSlice";
+import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
 import { clearConnectedUser } from "@/store/slices/userSlice";
 import { setToastHandler } from "@/utils/toastEmitter";
 import { setSessionExpiredHandler } from "@/utils/storeEmitter";
@@ -47,26 +44,22 @@ const theme = createTheme({
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
+  const dispatch = useDispatch<typeof store.dispatch>();
+  const router = useRouter();
 
   const userId = user?._id;
-  const { checkingAuth } = useAuthCheck();
   const isLoggingOut = useSelector(isLoggingOutCheck);
 
+  // Force logout when middleware detected an invalid/role-less token
   useEffect(() => {
-    const token = localStorage.getItem("api_token");
-    if (token && isTokenExpired(token)) {
-      localStorage.removeItem("api_token");
-      localStorage.removeItem("token");
-      Cookies.remove("api_token");
-      Cookies.remove("token");
-    }
-  }, []);
+    if (router.query.force_logout !== "1") return;
+    dispatch(logout()).finally(() => {
+      persistor.purge();
+      router.replace("/signin");
+    });
+  }, [router.query.force_logout]);
 
   if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
-
-  if (checkingAuth) {
-    return <LoadingScreen />;
-  }
 
   return (
     <NotificationProvider userId={userId}>{children}</NotificationProvider>

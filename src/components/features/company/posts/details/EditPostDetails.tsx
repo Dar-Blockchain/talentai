@@ -16,13 +16,12 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Close } from "@mui/icons-material";
 import { Add as AddIcon } from "@mui/icons-material";
 import { getLevelFromNumber, Skill } from "@/utils/postHelpers";
-import { experienceLevels } from "@/constants/candidate";
-import { contractTypes, workModes } from "@/components/features/preferences/data/candidateData";
 import { selectCurrentJob, updatePost } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
 import SalaryRange from "../create/steps/post-details-step/SalaryRange";
 import SkillEditorModal from "../create/steps/post-details-step/SkillEditorModal";
+import { contractTypes, experienceLevels, workModes } from "@/constants/candidate";
 
 const inputStyle = {
   height: 40,

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import RoleGuard from "@/components/guards/RoleGuard";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { Box, Alert, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tabs, Tab } from "@mui/material";
 import { useRouter } from "next/router";
@@ -23,6 +22,7 @@ import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
 import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
 import PassedInterviewView from "@/components/features/company/posts/details/PassedInterviewView";
+import LinkVisitorsView from "@/components/features/company/posts/details/LinkVisitorsView";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import PublishOutlined from "@mui/icons-material/PublishOutlined";
@@ -32,6 +32,7 @@ import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import EmojiEventsOutlined from "@mui/icons-material/EmojiEventsOutlined";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 
 const TEAL = "#0D9488";
 
@@ -51,7 +52,7 @@ const PostDetailsPage: React.FC = () => {
 
   const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "candidates">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "candidates" | "visitors">("details");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   const paymentSucceeded = !!paymentData;
@@ -189,7 +190,6 @@ const PostDetailsPage: React.FC = () => {
   ) : undefined;
 
   return (
-    <RoleGuard allowedRoles={["Company"]}>
       <DashboardLayout>
         <Box>
           {loading && <LoadingOverlay height={400} message="Loading job details…" color={TEAL} />}
@@ -244,6 +244,12 @@ const PostDetailsPage: React.FC = () => {
                       icon={<EmojiEventsOutlined sx={{ fontSize: 16 }} />}
                       iconPosition="start"
                     />
+                    <Tab
+                      value="visitors"
+                      label="Link Visitors"
+                      icon={<VisibilityOutlined sx={{ fontSize: 16 }} />}
+                      iconPosition="start"
+                    />
                   </Tabs>
                 </Box>
               )}
@@ -268,6 +274,10 @@ const PostDetailsPage: React.FC = () => {
                   onBack={() => setActiveTab("details")}
                 />
               )}
+
+              {activeTab === "visitors" && !isDraft && (
+                <LinkVisitorsView jobId={job._id} />
+              )}
             </>
           )}
 
@@ -289,7 +299,6 @@ const PostDetailsPage: React.FC = () => {
           />
         </Box>
       </DashboardLayout>
-    </RoleGuard>
   );
 };
 

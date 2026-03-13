@@ -1,47 +1,11 @@
 import { useRouter } from "next/router";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Alert,
-  Paper,
-} from "@mui/material";
-import { styled } from "@mui/material/styles";
-import {
-  Security as SecurityIcon,
-  ArrowBack as ArrowBackIcon,
-  Home as HomeIcon,
-} from "@mui/icons-material";
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(6),
-  textAlign: "center",
-  borderRadius: "16px",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-  border: "1px solid rgba(0,0,0,0.05)",
-}));
-
-const IconWrapper = styled(Box)(({ theme }) => ({
-  display: "flex",
-  justifyContent: "center",
-  marginBottom: theme.spacing(3),
-  "& .MuiSvgIcon-root": {
-    fontSize: "4rem",
-    color: theme.palette.error.main,
-  },
-}));
+import { Box, Container, Typography, Button } from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import HomeIcon from "@mui/icons-material/Home";
 
 export default function Unauthorized() {
   const router = useRouter();
-
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  const handleGoHome = () => {
-    router.push("/");
-  };
 
   return (
     <Box
@@ -50,92 +14,111 @@ export default function Unauthorized() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "#f9f9fb",
         p: 2,
       }}
     >
-      <Container maxWidth="sm">
-        <StyledPaper>
-          <IconWrapper>
-            <SecurityIcon />
-          </IconWrapper>
-
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
+      <Container maxWidth="xs">
+        <Box
+          sx={{
+            textAlign: "center",
+            background: "#fff",
+            borderRadius: "20px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
+            border: "1px solid rgba(0,0,0,0.06)",
+            p: { xs: 4, sm: 6 },
+          }}
+        >
+          {/* Icon */}
+          <Box
             sx={{
-              fontWeight: 700,
-              color: "error.main",
-              mb: 2,
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              background: "rgba(220, 53, 69, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 3,
             }}
+          >
+            <LockOutlinedIcon sx={{ fontSize: 36, color: "#dc3545" }} />
+          </Box>
+
+          {/* Code */}
+          <Typography
+            sx={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: "#dc3545",
+              mb: 1,
+            }}
+          >
+            403 — Forbidden
+          </Typography>
+
+          {/* Title */}
+          <Typography
+            variant="h5"
+            fontWeight={700}
+            sx={{ color: "#111", mb: 1.5, letterSpacing: "-0.02em" }}
           >
             Access Denied
           </Typography>
 
-          <Alert
-            severity="error"
-            sx={{
-              mb: 3,
-              textAlign: "left",
-              "& .MuiAlert-message": {
-                fontSize: "1rem",
-              },
-            }}
-          >
-            You do not have permission to access this page. This area is
-            restricted to administrators only.
-          </Alert>
-
+          {/* Description */}
           <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ mb: 4, lineHeight: 1.6 }}
+            variant="body2"
+            sx={{ color: "#666", lineHeight: 1.7, mb: 4, maxWidth: 300, mx: "auto" }}
           >
-            If you believe this is an error, please contact your system
-            administrator or return to the previous page.
+            You don't have permission to view this page. If you think this is a
+            mistake, please contact your administrator.
           </Typography>
 
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              justifyContent: "center",
-              flexWrap: "wrap",
-            }}
-          >
+          {/* Actions */}
+          <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
             <Button
               variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={handleGoBack}
+              startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
+              onClick={() => router.back()}
+              size="small"
               sx={{
-                borderRadius: "8px",
+                borderRadius: "38px",
                 textTransform: "none",
                 fontWeight: 600,
+                fontSize: "0.82rem",
+                px: 2.5,
+                borderColor: "rgba(0,0,0,0.18)",
+                color: "#444",
+                "&:hover": { borderColor: "#999", background: "rgba(0,0,0,0.03)" },
               }}
             >
               Go Back
             </Button>
-
             <Button
               variant="contained"
-              startIcon={<HomeIcon />}
-              onClick={handleGoHome}
+              startIcon={<HomeIcon sx={{ fontSize: 16 }} />}
+              onClick={() => router.push("/")}
+              size="small"
               sx={{
-                borderRadius: "8px",
+                borderRadius: "38px",
                 textTransform: "none",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)",
-                },
+                fontSize: "0.82rem",
+                px: 2.5,
+                background: "#111",
+                color: "#fff",
+                boxShadow: "none",
+                "&:hover": { background: "#333", boxShadow: "none" },
               }}
             >
               Go Home
             </Button>
           </Box>
-        </StyledPaper>
+        </Box>
       </Container>
     </Box>
   );

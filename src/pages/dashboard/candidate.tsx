@@ -4,7 +4,6 @@ import Header from "@/components/layout/Header";
 import RecommendedOpportunities from "@/components/features/candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/features/candidate/WelcomeHeader";
 import CandidateEngagementTasks from "@/components/features/candidate/CandidateEngagementTasks";
-import RoleGuard from "@/components/guards/RoleGuard";
 import CandidateSkills from "@/components/features/candidate/candidate-skills/CandidateSkills";
 import dynamic from 'next/dynamic';
 import CandidateInterviews from "@/components/features/candidate/candidate-interviews/CandidateInterviews";
@@ -13,7 +12,6 @@ const DashboardCandidate: React.FC = () => {
   const [activeSection, setActiveSection] = useState<"interviews" | "opportunities" | "all">("all");
 
   return (
-    <RoleGuard allowedRoles={["Candidate"]}>
       <PageContainer>
         <Header />
         {/* WelcomeHeader is always visible */}
@@ -42,7 +40,6 @@ const DashboardCandidate: React.FC = () => {
           />
         )}
       </PageContainer>
-    </RoleGuard>
   );
 };
 
