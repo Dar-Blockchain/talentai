@@ -49,10 +49,10 @@ import {
 const TEAL = "#0D9488";
 
 const STAT_CONFIG = [
-  { key: "totalEmployees", label: "Total Employees", icon: PeopleOutlined, color: "#0D9488", format: (v: number) => String(v) },
+  // { key: "totalEmployees", label: "Total Employees", icon: PeopleOutlined, color: "#0D9488", format: (v: number) => String(v) },
   { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined, color: "#3B82F6", format: (v: number) => `${v}%` },
   { key: "activeJobPosts", label: "Active Job Posts", icon: WorkOutlined, color: "#F59E0B", format: (v: number) => String(v) },
-  { key: "activeCampaigns", label: "Active Campaigns", icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
+  // { key: "activeCampaigns", label: "Active Campaigns", icon: AssignmentTurnedInOutlined, color: "#8B5CF6", format: (v: number) => String(v) },
 ];
 
 const GAP_DATA = [
@@ -228,9 +228,10 @@ const DashboardOverview: React.FC = () => {
         })}
       </Box>
 
-      {/* ── Row 2: Skills Gap + Recent Interviews ─────────────────────────── */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "6fr 5fr" }, gap: 3 }}>
+      {/* ── Row 2: Recent Interviews + Job Posts ──────────────────────────── */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
 
+        {/* Skills Gap Analysis – commented out
         <SectionBox>
           <SectionTitle
             title="Skills Gap Analysis"
@@ -266,6 +267,7 @@ const DashboardOverview: React.FC = () => {
             ))}
           </Box>
         </SectionBox>
+        */}
 
         <SectionBox>
           <SectionTitle
@@ -324,10 +326,6 @@ const DashboardOverview: React.FC = () => {
             )}
           </Box>
         </SectionBox>
-      </Box>
-
-      {/* ── Row 3: Active Job Posts + Active Campaigns ────────────────────── */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 3 }}>
 
         {/* Active Job Posts */}
         <SectionBox>
@@ -389,7 +387,7 @@ const DashboardOverview: React.FC = () => {
           </Box>
         </SectionBox>
 
-        {/* Active Campaigns */}
+        {/* Active Campaigns – commented out
         <SectionBox>
           <SectionTitle
             title="Active Campaigns"
@@ -397,59 +395,11 @@ const DashboardOverview: React.FC = () => {
             action={<ViewAllLink color="#8B5CF6" onClick={() => router.push("/company/campaigns")} />}
           />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-            {campaignsLoading ? (
-              SKELETON_ROWS.map((i) => (
-                <Box key={i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                      <Skeleton variant="rounded" width={80} height={20} />
-                      <Skeleton variant="text" width={130} height={16} />
-                    </Box>
-                    <Skeleton variant="text" width={30} height={16} />
-                  </Box>
-                  <Skeleton variant="rounded" width="100%" height={6} />
-                </Box>
-              ))
-            ) : recentCampaigns.length === 0 ? (
-              <Box sx={{ py: 5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>No campaigns yet</Typography>
-              </Box>
-            ) : (
-              recentCampaigns.map((camp: any, i: number) => {
-                const colors = CAMPAIGN_TYPE_COLOR[camp.type] ?? CAMPAIGN_TYPE_COLOR.CUSTOM;
-                const isActive = camp.status === "ACTIVE";
-                const statusColor = isActive ? "#10B981" : camp.status === "PAUSED" ? "#F59E0B" : "#6B7280";
-                return (
-                  <Box key={camp._id || i} sx={{ p: 2, borderRadius: 2, border: "1px solid #E5E7EB", "&:hover": { borderColor: "#8B5CF6" }, transition: "border-color 0.2s", cursor: "pointer" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                        <Box sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: colors.bg }}>
-                          <Typography sx={{ fontSize: "9px", fontWeight: 700, color: colors.fg, textTransform: "uppercase", letterSpacing: 0.8 }}>
-                            {fmtType(camp.type)}
-                          </Typography>
-                        </Box>
-                        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {camp.title}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={camp.status}
-                        size="small"
-                        sx={{ fontSize: "9px", height: 18, fontWeight: 700, bgcolor: isActive ? "#D1FAE5" : "#F3F4F6", color: statusColor }}
-                      />
-                    </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
-                      <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtType(camp.module?.type)}</Typography>
-                      {camp.deadline && (
-                        <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>Due {fmtDate(camp.deadline)}</Typography>
-                      )}
-                    </Box>
-                  </Box>
-                );
-              })
-            )}
+            ...
           </Box>
         </SectionBox>
+        */}
+
       </Box>
 
     </Box>
