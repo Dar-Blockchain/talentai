@@ -295,6 +295,67 @@ module.exports.loginUser = async (email) => {
   }
 };
 
+// Service de renvoi d'OTP
+module.exports.resendOTP = async (email) => {
+  try {
+    if (!email || typeof email !== 'string') {
+      const err = new Error('Email is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const err = new Error('User not found. Please register first.');
+      err.status = 404;
+      throw err;
+    }
+
+    // Check if user is banned
+    if (user.isBanned) {
+      const err = new Error('User is banned. Please contact support.');
+      err.status = 403;
+      throw err;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+
+    // Update user with new OTP
+    await User.updateOne(
+      { _id: user._id },
+      {
+        otp: {
+          code: otp,
+          expiresAt: otpExpiry
+        }
+      }
+    );
+
+    // Send OTP
+    const emailSent = await sendOTP(email, otp);
+    if (!emailSent) {
+      const err = new Error('Error sending OTP email');
+      err.status = 500;
+      throw err;
+    }
+
+    console.log('📧 OTP resent to:', email);
+
+    return {
+      email,
+      username: user.username,
+      message: 'New OTP code has been sent to your email. OTP expires in 5 minutes.'
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
 // Service de connexion avec Gmail
 module.exports.connectWithGmail = async (id_token) => {
   try {

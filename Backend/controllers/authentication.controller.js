@@ -262,6 +262,27 @@ module.exports.verifyOTP = async (req, res) => {
   }
 };
 
+// Renvoi d'OTP
+module.exports.resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    const validEmail = validateEmail(email);
+
+    const result = await authService.resendOTP(validEmail);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      email: result.email,
+      username: result.username,
+    });
+  } catch (error) {
+    handleError(res, error, 400);
+  }
+};
+
 // Connexion avec Gmail
 module.exports.connectWithGmail = async (req, res) => {
   try {
