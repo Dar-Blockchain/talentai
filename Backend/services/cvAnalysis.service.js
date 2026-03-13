@@ -105,13 +105,18 @@ class CVAnalysisService {
 
       await cvAnalysis.save();
 
-      // Add CV analysis to Profile's cvAnalyses array if profileId is provided
+      // Add CV analysis to Profile's cvAnalyses array and soft skills if profileId is provided
       if (profileId) {
-        await Profile.findByIdAndUpdate(
-          profileId,
-          { $push: { cvAnalyses: cvAnalysis._id } },
-          { new: true }
-        );
+        const updateObject = {
+          $push: { cvAnalyses: cvAnalysis._id },
+        };
+
+        // Add soft skills to profile if they exist in cvData
+        if (cvData.softSkills && Array.isArray(cvData.softSkills) && cvData.softSkills.length > 0) {
+          updateObject.$push.softSkills = { $each: cvData.softSkills };
+        }
+
+        await Profile.findByIdAndUpdate(profileId, updateObject, { new: true });
       }
 
       return {
@@ -574,6 +579,51 @@ class CVAnalysisService {
         success: true,
         message: "CV analysis disassociated from profile successfully.",
         data: updatedCVAnalysis,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Add soft skills from CV analysis to Profile
+   * @param {string} profileId - Profile ID
+   * @param {Array} softSkills - Array of soft skills to add
+   * @returns {Promise<Object>} Updated profile
+   */
+  static async addSoftSkillsToProfile(profileId, softSkills) {
+    try {
+      if (!profileId) {
+        throw {
+          status: 400,
+          message: "Profile ID is required.",
+        };
+      }
+
+      if (!Array.isArray(softSkills) || softSkills.length === 0) {
+        throw {
+          status: 400,
+          message: "Soft skills array is required and must not be empty.",
+        };
+      }
+
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        profileId,
+        { $push: { softSkills: { $each: softSkills } } },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        throw {
+          status: 404,
+          message: "Profile not found.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Soft skills added to profile successfully.",
+        data: updatedProfile,
       };
     } catch (error) {
       throw error;
