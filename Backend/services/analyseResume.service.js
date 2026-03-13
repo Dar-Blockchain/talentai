@@ -33,9 +33,7 @@ Always return ONLY a raw JSON object — no markdown, no explanation.`
         {
           role: "user",
           content: `Parse this CV completely and return ONLY a JSON object with this structure:
-IMPORTANT: The CV MUST be in English. Please detect and include the document language in the response.
 {
-  "documentLanguage": "detect the language of the CV document (e.g., 'English', 'French', 'Spanish')",
   "name": "",
   "email": "",
   "phone": "",
@@ -88,24 +86,6 @@ IMPORTANT: The CV MUST be in English. Please detect and include the document lan
       .replace(/^```\s*/i, "")
       .replace(/\s*```$/, "")
       .trim();
-
-    // Parse and validate language
-    let parsedCV;
-    try {
-      parsedCV = JSON.parse(cleaned);
-    } catch (error) {
-      throw new Error(`Failed to parse CV data: ${error.message}`);
-    }
-
-    // Check if CV is in English
-    const detectedLanguage = parsedCV.documentLanguage || "";
-    if (detectedLanguage.toLowerCase() !== "english") {
-      throw {
-        status: 400,
-        code: "CV_NOT_IN_ENGLISH",
-        message: `❌ CV Language Error: The CV must be strictly in English. Detected language: "${detectedLanguage}". Please upload a CV written in English.`
-      };
-    }
 
     return cleaned;
 
