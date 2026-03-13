@@ -6,6 +6,8 @@ import {
   Typography,
   Stack,
   CircularProgress,
+  Dialog,
+  DialogContent,
 } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonIcon from "@mui/icons-material/Person";
@@ -84,6 +86,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
 
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
+  const [analyzingCv, setAnalyzingCv] = useState(false);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvError, setCvError] = useState(false);
   const [savedEmail, setSavedEmail] = useState("");
@@ -114,6 +117,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
       return;
     }
     setLoading(true);
+    if (!isJoinTeam && cvFile) setAnalyzingCv(true);
     try {
       const payload = new FormData();
       payload.append("roleType", "Candidate");
@@ -137,6 +141,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
       });
     } finally {
       setLoading(false);
+      setAnalyzingCv(false);
     }
   };
 
@@ -378,6 +383,32 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
           </Box>
         </Box>
       )}
+
+      {/* AI CV Analysis Modal */}
+      <Dialog
+        open={analyzingCv}
+        disableEscapeKeyDown
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            px: 4,
+            py: 3,
+            textAlign: "center",
+            minWidth: 300,
+            background: "#fff",
+          },
+        }}
+      >
+        <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 0 }}>
+          <CircularProgress size={48} sx={{ color: themeColors.primary }} />
+          <Typography variant="h6" fontWeight={700} sx={{ color: "#1a1a1a" }}>
+            Analyzing your CV
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#666", lineHeight: 1.7, maxWidth: 260 }}>
+            Our AI is extracting your skills and experience. This may take a few seconds — please don&apos;t close this page.
+          </Typography>
+        </DialogContent>
+      </Dialog>
 
       {/* STEP 2 – OTP */}
       {step === 2 && (
