@@ -219,8 +219,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
                   {companyName}
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: "#6B7280" }}>
-                  HR Director
+                <Typography sx={{ fontSize: 9, color: "#6B7280" }}>
+                  {profile?.companyDetails?.email}
                 </Typography>
               </Box>
             )}
