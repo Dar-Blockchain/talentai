@@ -1,11 +1,9 @@
-const { Together } = require("together-ai");
+const bedrock = require("../../helpers/bedrock.helpers");
 require("dotenv").config();
 const Company = require("../../models/Profile.model");
 const {
   getDetailedPrompt,
 } = require("../../prompts/generate-job-post-prompts");
-
-const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 async function generateJobPost(description, user, overrides = {}) {
   // Configurable retry parameters via env
@@ -29,30 +27,16 @@ async function generateJobPost(description, user, overrides = {}) {
     const companyLocation = company?.companyDetails?.location || "";
 
     const prompt = getDetailedPrompt(description, companyLocation);
-    const config = {
-      max_tokens: 2500,
-      temperature: 0.7,
-    };
 
-    const stream = await together.chat.completions.create({
-      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert technical recruiter and AI assistant specializing in job analysis, skill assessment, and creating engaging job posts. Provide comprehensive analysis while maintaining professional formatting.",
-        },
-        { role: "user", content: prompt },
-      ],
-      ...config,
-      stream: true,
+    const response = await bedrock.callLLM({
+      systemPrompt: "You are an expert technical recruiter and AI assistant specializing in job analysis, skill assessment, and creating engaging job posts. Provide comprehensive analysis while maintaining professional formatting.",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      maxTokens: 2500,
+      timeout: 30000,
     });
 
-    let raw = "";
-    for await (const chunk of stream) {
-      const content = chunk.choices?.[0]?.delta?.content;
-      if (content) raw += content;
-    }
+    const raw = response.content;
 
     // Clean and parse the response
     let result;
@@ -103,32 +87,32 @@ async function generateJobPost(description, user, overrides = {}) {
           result.linkedinPost.finalPost = `${
             result.linkedinPost.formattedContent.headline
           }
-  
+
 ${format.company} ${result.linkedinPost.formattedContent.introduction}
-  
+
 ${result.linkedinPost.formattedContent.companyPitch}
-  
+
 ${format.requirements} Role Overview:
 ${result.linkedinPost.formattedContent.roleOverview}
-  
+
 ${format.requirements} Key Points:
 ${result.linkedinPost.formattedContent.keyPoints
   .map((point) => `• ${point}`)
   .join("\n")}
-  
+
 ${format.skills} Required Skills:
 ${result.linkedinPost.formattedContent.skillsRequired}
-  
+
 ${format.benefits} What We Offer:
 ${result.linkedinPost.formattedContent.benefitsSection}
-  
+
 ${format.location} Location: ${result.jobDetails.location}
 ${format.salary} Salary: ${result.jobDetails.salary.currency}${
             result.jobDetails.salary.min
           }-${result.jobDetails.salary.max}
-  
+
 ${format.apply} ${result.linkedinPost.formattedContent.callToAction}
-  
+
 ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
         } catch (inner) {
           // If building finalPost fails, ignore and return whatever parsed result we have

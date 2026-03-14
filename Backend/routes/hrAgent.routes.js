@@ -79,14 +79,14 @@ router.get("/:agentId/matches", requireAuthUser, hrAgentController.getAgentMatch
 
 /**
  * @route POST /hr-agents/send-validation-message
- * @desc Envoie un message de validation (Sinda → Coordinateur) via LangChain TogetherAI
+ * @desc Envoie un message de validation (Sinda → Coordinateur) via Bedrock AI
  * @access Privé
  */
 router.post("/send-validation-message", hrAgentController.sendValidationMessage);
 
 /**
  * @route POST /hr-agents/submit-evaluation-message
- * @desc Déclenche une conversation automatisée entre deux agents (LangChain TogetherAI)
+ * @desc Déclenche une conversation automatisée entre deux agents (Bedrock AI)
  * @access Privé
  */
 router.post("/submit-evaluation-message", hrAgentController.submitEvaluationMessage);
@@ -156,7 +156,7 @@ router.post("/update-all-memos",requireAuthUser, hrAgentController.updateAllAgen
 
 /**
  * @route GET /hr-agents/test-langchain
- * @desc Teste la fonctionnalité de l'agent LangChain TogetherAI
+ * @desc Teste la fonctionnalité de l'agent Bedrock AI
  * @access Privé
  */
 router.get("/test-langchain",requireAuthUser, hrAgentController.testLangChainAgent);

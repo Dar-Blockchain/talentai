@@ -1,4 +1,4 @@
-const { LangChainTogetherAIAgent } = require('../helpers/langchain-togetherai-agent.helpers');
+const bedrock = require('../helpers/bedrock.helpers');
 require('dotenv').config();
 
 /**
@@ -6,7 +6,6 @@ require('dotenv').config();
  */
 class AIService {
   constructor() {
-    this.agent = null;
     this.initialized = false;
   }
 
@@ -19,28 +18,11 @@ class AIService {
         return { success: true, message: 'AI Service already initialized' };
       }
 
-      // Check if TogetherAI API key is available
-      if (!process.env.TOGETHER_API_KEY) {
-        console.warn('⚠️  TOGETHER_API_KEY not found. Using mock content generation.');
-        this.initialized = true;
-        return { success: true, message: 'AI Service initialized with mock mode' };
-      }
-
-      // Initialize the LangChain TogetherAI agent
-      this.agent = new LangChainTogetherAIAgent({
-        accountId: 'mock-account-id', // Not needed for TogetherAI
-        privateKey: 'mock-private-key', // Not needed for TogetherAI
-        verbose: true
-      });
-
-      await this.agent.initialize();
       this.initialized = true;
-
-      console.log('✅ AI Service initialized successfully');
+      console.log('✅ AI Service initialized successfully (Bedrock)');
       return { success: true, message: 'AI Service initialized successfully' };
     } catch (error) {
       console.error('❌ Error initializing AI Service:', error);
-      // Fallback to mock mode
       this.initialized = true;
       return { success: false, message: `AI Service initialized with mock mode: ${error.message}` };
     }
@@ -57,25 +39,21 @@ class AIService {
         await this.initialize();
       }
 
-      // If no TogetherAI agent or API key, use mock content
-      if (!this.agent || !process.env.TOGETHER_API_KEY) {
-        return this.generateMockContent(prompt);
-      }
-
-      // Use the AI agent to generate content
-      const systemPrompt = `You are an expert technical interviewer and coding assessment creator. 
+      const systemPrompt = `You are an expert technical interviewer and coding assessment creator.
       Generate comprehensive, practical coding tests that evaluate real-world programming skills.
       Focus on practical coding challenges, algorithms, data structures, and system design.
       Make the tests challenging but fair, with clear instructions and examples.`;
 
-      const result = await this.agent.processMessage(prompt, systemPrompt);
-      
-      if (result.success) {
-        console.log('✅ AI-generated technical test content created');
-        return result.response;
-      } else {
-        throw new Error('AI generation failed');
-      }
+      const result = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        maxTokens: 2000,
+        timeout: 20000
+      });
+
+      console.log('✅ AI-generated technical test content created (Bedrock)');
+      return result.content;
     } catch (error) {
       console.error('❌ Error generating AI content:', error);
       console.log('🔄 Falling back to mock content generation');
@@ -91,7 +69,7 @@ class AIService {
   generateMockContent(prompt) {
     console.log('🤖 Generating mock technical test content...');
     console.log('📝 Prompt context:', prompt.substring(0, 200) + '...');
-    
+
     // Extract technologies from prompt if possible
     const technologies = this.extractTechnologiesFromPrompt(prompt);
     const jobTitle = this.extractJobTitleFromPrompt(prompt);
@@ -105,7 +83,7 @@ class AIService {
    */
   extractTechnologiesFromPrompt(prompt) {
     const commonTechs = ['React', 'Node.js', 'JavaScript', 'Python', 'Java', 'C++', 'SQL', 'MongoDB', 'PostgreSQL', 'AWS', 'Docker', 'Git'];
-    const foundTechs = commonTechs.filter(tech => 
+    const foundTechs = commonTechs.filter(tech =>
       prompt.toLowerCase().includes(tech.toLowerCase())
     );
     return foundTechs.length > 0 ? foundTechs : ['JavaScript', 'Node.js', 'React'];
@@ -134,7 +112,7 @@ class AIService {
    */
   createMockTechnicalTest(technologies, jobTitle, experienceLevel) {
     const techList = technologies.join(', ');
-    
+
     return `# CODING TECHNICAL ASSESSMENT
 ## ${jobTitle} Position - ${experienceLevel} Level
 
@@ -269,4 +247,3 @@ module.exports = {
   generateContent: (prompt) => aiService.generateContent(prompt),
   initialize: () => aiService.initialize()
 };
-

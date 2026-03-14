@@ -14,8 +14,6 @@
     "@hashgraph/sdk": "^2.63.0",
     "@hashgraphonline/conversational-agent": "0.2.220",
     "@hashgraphonline/standards-sdk": "^0.1.165",
-    "@langchain/community": "^0.3.49",
-    "@langchain/core": "^0.3.66",
     "agenda": "^5.0.0",
     "axios": "^1.11.0",
     "cookie-parser": "^1.4.7",
@@ -39,7 +37,6 @@
     "socket.io": "^4.8.1",
     "stripe": "^20.0.0",
     "swagger-ui-express": "^5.0.1",
-    "together-ai": "^0.16.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

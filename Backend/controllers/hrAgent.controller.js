@@ -1,8 +1,6 @@
 const AgentModel = require("../models/Agent.model");
 const { createHederaWallet } = require("../services/hedera.service");
-const {
-  LangChainTogetherAIAgent,
-} = require("../helpers/langchain-togetherai-agent.helpers");
+const bedrock = require("../helpers/bedrock.helpers");
 const {
   HederaLangchainToolkit,
   AgentMode,
@@ -447,7 +445,7 @@ const hrAgentController = {
             : []),
         ])
         .setType("autonomous")
-        .setModel("LangChain-TogetherAI")
+        .setModel("Bedrock-gpt-oss")
         .setNetwork("testnet")
         .setInboundTopicType(InboundTopicType.PUBLIC)
         .setExistingAccount(agent.hederaAccountId, agent.hederaPrivateKey);
@@ -1253,55 +1251,51 @@ ${interviewNotes}
       // Initialize LangChain agents for AI-powered responses
       let agentALangChain, agentBLangChain;
 
-      try {
-        agentALangChain = new LangChainTogetherAIAgent({
-          accountId: agentA.hederaAccountId,
-          privateKey: agentA.hederaPrivateKey,
-          network: "testnet",
-          operationalMode: "standard",
-          verbose: false,
-          skipProfileValidation: true,
-        });
-        await agentALangChain.initialize();
-        console.log(`✅ Agent A (${agentA.name}) LangChain initialized`);
-      } catch (error) {
-        console.log(
-          `⚠️  Agent A LangChain failed, using fallback: ${error.message}`,
-        );
-        agentALangChain = {
-          processMessage: async (prompt) => ({
-            response: `Bidding amount ${finalBidAmount} for candidate ${candidateId} of the post ${
-              postId || "N/A"
-            }`,
-            success: true,
-            metadata: { provider: "fallback-mode" },
-          }),
-        };
-      }
+      agentALangChain = {
+        processMessage: async (prompt, systemPrompt) => {
+          try {
+            const result = await bedrock.callLLM({
+              systemPrompt: systemPrompt || "You are an HR assistant agent.",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+              maxTokens: 2000,
+              timeout: 15000,
+            });
+            return { response: result.content, success: true, metadata: { provider: "bedrock" } };
+          } catch (error) {
+            console.warn(`⚠️  Agent A Bedrock call failed: ${error.message}`);
+            return {
+              response: `Bidding amount ${finalBidAmount} for candidate ${candidateId} of the post ${postId || "N/A"}`,
+              success: true,
+              metadata: { provider: "fallback-mode" },
+            };
+          }
+        },
+      };
+      console.log(`✅ Agent A (${agentA.name}) Bedrock agent ready`);
 
-      try {
-        agentBLangChain = new LangChainTogetherAIAgent({
-          accountId: agentB.hederaAccountId,
-          privateKey: agentB.hederaPrivateKey,
-          network: "testnet",
-          operationalMode: "standard",
-          verbose: false,
-          skipProfileValidation: true,
-        });
-        await agentBLangChain.initialize();
-        console.log(`✅ Agent B (${agentB.name}) LangChain initialized`);
-      } catch (error) {
-        console.log(
-          `⚠️  Agent B LangChain failed, using fallback: ${error.message}`,
-        );
-        agentBLangChain = {
-          processMessage: async (prompt) => ({
-            response: `Your bid is stored`,
-            success: true,
-            metadata: { provider: "fallback-mode" },
-          }),
-        };
-      }
+      agentBLangChain = {
+        processMessage: async (prompt, systemPrompt) => {
+          try {
+            const result = await bedrock.callLLM({
+              systemPrompt: systemPrompt || "You are an HR assistant agent.",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+              maxTokens: 2000,
+              timeout: 15000,
+            });
+            return { response: result.content, success: true, metadata: { provider: "bedrock" } };
+          } catch (error) {
+            console.warn(`⚠️  Agent B Bedrock call failed: ${error.message}`);
+            return {
+              response: `Your bid is stored`,
+              success: true,
+              metadata: { provider: "fallback-mode" },
+            };
+          }
+        },
+      };
+      console.log(`✅ Agent B (${agentB.name}) Bedrock agent ready`);
 
       // Display conversation header
       const finalBidAmount =
@@ -2369,7 +2363,7 @@ ${interviewNotes}
             ? [AIAgentCapability.SUMMARIZATION_EXTRACTION]
             : []),
         ],
-        "LangChain-TogetherAI", // Model
+        "Bedrock-gpt-oss", // Model
         profileOptions,
       );
 
@@ -2817,35 +2811,28 @@ ${interviewNotes}
           coordinatorAgent.hederaPrivateKey = "mock-key-for-langchain-only";
         }
 
-        // Simulate intelligent coordinator response
-        let coordinatorConversationalAgent;
-        try {
-          coordinatorConversationalAgent = new LangChainTogetherAIAgent({
-            accountId: coordinatorAgent.hederaAccountId,
-            privateKey: coordinatorAgent.hederaPrivateKey,
-            network: "testnet",
-            operationalMode: "standard",
-            verbose: false,
-            skipProfileValidation: true, // Skip HCS-11 profile validation
-          });
-          await coordinatorConversationalAgent.initialize();
-        } catch (error) {
-          console.error(
-            `❌ Coordinator agent initialization failed, using fallback:`,
-            error.message,
-          );
-          // Create fallback coordinator
-          coordinatorConversationalAgent = {
-            processMessage: async (prompt) => ({
-              response: `As HR Coordinator, I've received the evaluation for candidate ${candidateId}. Thank you for the assessment. I'll review this and provide feedback on next steps.`,
-              success: true,
-              metadata: {
-                provider: "fallback-mode",
-                timestamp: new Date().toISOString(),
-              },
-            }),
-          };
-        }
+        // Intelligent coordinator response via Bedrock
+        const coordinatorConversationalAgent = {
+          processMessage: async (prompt, systemPrompt) => {
+            try {
+              const result = await bedrock.callLLM({
+                systemPrompt: systemPrompt || "You are an HR Coordinator assistant.",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.7,
+                maxTokens: 2000,
+                timeout: 15000,
+              });
+              return { response: result.content, success: true, metadata: { provider: "bedrock" } };
+            } catch (error) {
+              console.warn(`⚠️ Coordinator Bedrock call failed: ${error.message}`);
+              return {
+                response: `As HR Coordinator, I've received the evaluation for candidate ${candidateId}. Thank you for the assessment. I'll review this and provide feedback on next steps.`,
+                success: true,
+                metadata: { provider: "fallback-mode", timestamp: new Date().toISOString() },
+              };
+            }
+          },
+        };
 
         // Generate intelligent response based on the evaluation
         const contextualPrompt = `As the HR Coordinator, provide a thoughtful response to Sinda's soft skills evaluation for candidate ${candidateId}. Consider the evaluation results and provide next steps.`;
@@ -2898,35 +2885,28 @@ ${interviewNotes}
         coordinatorAgent.hederaPrivateKey = "mock-key-for-langchain-only";
       }
 
-      // Initialize LangChain TogetherAI Agent for intelligent responses
-      let coordinatorConversationalAgent;
-      try {
-        coordinatorConversationalAgent = new LangChainTogetherAIAgent({
-          accountId: coordinatorAgent.hederaAccountId,
-          privateKey: coordinatorAgent.hederaPrivateKey,
-          network: "testnet",
-          operationalMode: "standard",
-          verbose: true,
-          skipProfileValidation: true, // Skip HCS-11 profile validation
-        });
-        await coordinatorConversationalAgent.initialize();
-      } catch (error) {
-        console.error(
-          `❌ Coordinator agent initialization failed, using fallback:`,
-          error.message,
-        );
-        // Create fallback coordinator
-        coordinatorConversationalAgent = {
-          processMessage: async (prompt) => ({
-            response: `As HR Coordinator, I'm monitoring the evaluation process for candidate ${candidateId}. I'll provide appropriate responses based on agent evaluations.`,
-            success: true,
-            metadata: {
-              provider: "fallback-mode",
-              timestamp: new Date().toISOString(),
-            },
-          }),
-        };
-      }
+      // Bedrock-powered coordinator for intelligent responses
+      const coordinatorConversationalAgent = {
+        processMessage: async (prompt, systemPrompt) => {
+          try {
+            const result = await bedrock.callLLM({
+              systemPrompt: systemPrompt || "You are an HR Coordinator assistant.",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+              maxTokens: 2000,
+              timeout: 15000,
+            });
+            return { response: result.content, success: true, metadata: { provider: "bedrock" } };
+          } catch (error) {
+            console.warn(`⚠️ Coordinator Bedrock call failed: ${error.message}`);
+            return {
+              response: `As HR Coordinator, I'm monitoring the evaluation process for candidate ${candidateId}. I'll provide appropriate responses based on agent evaluations.`,
+              success: true,
+              metadata: { provider: "fallback-mode", timestamp: new Date().toISOString() },
+            };
+          }
+        },
+      };
 
       // Monitor topic for new messages (simplified polling approach)
       const monitorInterval = setInterval(async () => {
@@ -3886,51 +3866,41 @@ Message verified and stored on Hedera Consensus Service.`,
   },
 
   /**
-   * Test LangChain TogetherAI Agent functionality
+   * Test Bedrock Agent functionality
    */
   async testLangChainAgent(req, res) {
     try {
-      console.log(`🧪 Testing LangChain TogetherAI Agent functionality...`);
+      console.log(`🧪 Testing Bedrock Agent functionality...`);
 
-      // Create a test agent instance
-      const testAgent = new LangChainTogetherAIAgent({
-        accountId: "0.0.000000",
-        privateKey: "test-key",
-        network: "testnet",
-        operationalMode: "standard",
-        verbose: true,
-        skipProfileValidation: true,
-      });
-
-      // Test initialization
-      const initResult = await testAgent.initialize();
-      console.log(`✅ Initialization result:`, initResult);
-
-      // Test message processing
       const testPrompt =
         "As an HR agent, provide a brief evaluation of a software developer candidate.";
-      const response = await testAgent.processMessage(testPrompt);
+      const result = await bedrock.callLLM({
+        systemPrompt: "You are an HR assistant agent.",
+        messages: [{ role: "user", content: testPrompt }],
+        temperature: 0.7,
+        maxTokens: 2000,
+        timeout: 15000,
+      });
 
       console.log(`✅ Test message processed successfully`);
 
       res.json({
         success: true,
-        message: "LangChain TogetherAI Agent test completed successfully",
+        message: "Bedrock Agent test completed successfully",
         results: {
-          initialization: initResult,
           messageProcessing: {
             prompt: testPrompt,
-            response: response.response,
-            metadata: response.metadata,
+            response: result.content,
+            metadata: { provider: "bedrock" },
           },
         },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("❌ LangChain TogetherAI Agent test failed:", error);
+      console.error("❌ Bedrock Agent test failed:", error);
       res.status(500).json({
         success: false,
-        error: "LangChain TogetherAI Agent test failed",
+        error: "Bedrock Agent test failed",
         details: error.message,
         timestamp: new Date().toISOString(),
       });
@@ -4020,7 +3990,7 @@ Message verified and stored on Hedera Consensus Service.`,
         agents: [],
         migration: {
           langchainEnabled: true,
-          togetherAIEnabled: !!process.env.TOGETHER_API_KEY,
+          bedrockEnabled: true,
           hederaEnabled: !!(
             process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY
           ),
@@ -4029,7 +3999,7 @@ Message verified and stored on Hedera Consensus Service.`,
         },
         environment: {
           nodeEnv: process.env.NODE_ENV,
-          hasTogetherKey: !!process.env.TOGETHER_API_KEY,
+          hasBedrockCredentials: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
           hasHederaKeys: !!(
             process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY
           ),

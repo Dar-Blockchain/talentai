@@ -1,5 +1,5 @@
-const { Together } = require("together-ai");
-const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+const bedrock = require("../helpers/bedrock.helpers");
+
 const generateNewTodosForProfile = async (todo, profile) => {
   // Format skills into prompt
   const formattedSkills = profile.skills
@@ -24,7 +24,7 @@ You are a career development AI assistant.
 Given:
 - A candidate with the following skills:
 ${formattedSkills}
-- A condidate that has a list of todos for each skill: 
+- A condidate that has a list of todos for each skill:
 ${existingSkillTodoList}
 
 
@@ -36,7 +36,7 @@ Generate a JSON array where each item is an object with:
   - "type": STRICTLY one of **"Course", "Certification", "Project", "Article"** (No other values allowed).
   - "description": a brief description of the task
   - "url" (optional)
-  - "priority": **STRICTLY one of "low", "medium", or "high"** 
+  - "priority": **STRICTLY one of "low", "medium", or "high"**
   - "dueDate": A recommended completion deadline in **timestamp format**
 
 STRICT REQUIREMENTS:
@@ -55,7 +55,7 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
         "title": "Take the JavaScript Algorithms course on freeCodeCamp",
         "type": "Course",
         "description": "Covers fundamental JS algorithms with interactive coding exercises",
-        "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures", 
+        "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures",
         "priority": "medium",
         "dueDate": 1748531525930
       },
@@ -72,19 +72,15 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 ]
 `.trim();
 
-  const stream = await together.chat.completions.create({
-    model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-    messages: [{ role: "system", content: prompt }],
-    max_tokens: 1000,
+  const response = await bedrock.callLLM({
+    systemPrompt: prompt,
+    messages: [{ role: "user", content: "Generate the skill recommendations as specified." }],
     temperature: 0.7,
-    stream: true,
+    maxTokens: 1000,
+    timeout: 20000,
   });
 
-  let raw = "";
-  for await (const chunk of stream) {
-    const content = chunk.choices?.[0]?.delta?.content;
-    if (content) raw += content;
-  }
+  const raw = response.content;
 
   // Parse JSON output
   const jsonMatch = raw.match(/\[([\s\S]*)\]/);
@@ -96,7 +92,7 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
       newTodos = JSON.parse(jsonText);
     } catch (err) {
       console.warn("Parsing failed:", err);
-      return res.status(500).json({ error: "Failed to parse AI output." });
+      return [];
     }
   }
 
