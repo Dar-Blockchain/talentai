@@ -7,6 +7,7 @@ module.exports = {
       "https://backend.staging.talentai.bid",
       "http://localhost:3000",
       "http://localhost:5173",
+      "https://api.talentai.bid"
     ];
     if (process.env.FRONTEND_URL && !corsOrigins.includes(process.env.FRONTEND_URL)) {
       corsOrigins.push(process.env.FRONTEND_URL);

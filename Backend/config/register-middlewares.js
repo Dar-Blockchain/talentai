@@ -26,6 +26,7 @@ function registerMiddlewares(app) {
         "https://backend.staging.talentai.bid",
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://api.talentai.bid"
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: [
