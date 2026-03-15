@@ -32,7 +32,7 @@ async function generateJobPost(description, user, overrides = {}) {
       systemPrompt: "You are an expert technical recruiter and AI assistant specializing in job analysis, skill assessment, and creating engaging job posts. Provide comprehensive analysis while maintaining professional formatting.",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      maxTokens: 2500,
+      maxTokens: 4096,
       timeout: 30000,
     });
 
