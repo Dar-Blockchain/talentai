@@ -191,7 +191,7 @@ const getDetailedPrompt = (description, companyLocation) =>
 
     The "exchangeRates" values must reflect today's real exchange rates.
 
-
+    CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
 `.trim();
 
 module.exports = {

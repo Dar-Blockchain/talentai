@@ -82,12 +82,13 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
   const raw = response.content;
 
-  // Parse JSON output
-  const jsonMatch = raw.match(/\[([\s\S]*)\]/);
+  // Parse JSON output (handle thinking/reasoning text before JSON array)
   let newTodos = [];
+  const firstBracket = raw.indexOf('[');
+  const lastBracket = raw.lastIndexOf(']');
 
-  if (jsonMatch) {
-    const jsonText = "[" + jsonMatch[1] + "]";
+  if (firstBracket !== -1 && lastBracket !== -1) {
+    const jsonText = raw.substring(firstBracket, lastBracket + 1);
     try {
       newTodos = JSON.parse(jsonText);
     } catch (err) {

@@ -38,12 +38,15 @@ async function generateJobPost(description, user, overrides = {}) {
 
     const raw = response.content;
 
-    // Clean and parse the response
+    // Clean and parse the response (handle thinking/reasoning text before JSON)
     let result;
     try {
-      let jsonStr = raw
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?/g, "")
+      const firstBrace = raw.indexOf('{');
+      const lastBrace = raw.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1) {
+        throw new Error("No JSON object found in LLM response");
+      }
+      let jsonStr = raw.substring(firstBrace, lastBrace + 1)
         .replace(/\n/g, " ")
         .replace(/\s+/g, " ")
         .trim();
