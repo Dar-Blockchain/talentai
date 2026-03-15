@@ -564,11 +564,11 @@ RULES:
 - Each question must explore a NEW angle or sub-topic not yet covered
 - Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
 - CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
-  * Junior/Entry: Basic concepts, "how would you" questions, guided scenarios, no system design
+  * Junior/Entry: ONLY basic concepts, "what is", "how would you", simple practical scenarios. NO system design, NO advanced patterns, NO questions about tools/technologies NOT listed in the JD (e.g., do NOT ask about GraphQL if the JD only mentions REST APIs). Keep questions SIMPLE and FOUNDATIONAL.
   * Mid-Level: Practical experience questions, trade-off discussions, real project examples
-  * Senior: Architecture decisions, system design, leadership, cross-team impact, mentoring
-  * Lead/Principal: Strategic thinking, org-wide impact, technical vision, complex trade-offs
-  Do NOT ask senior-level architecture or system design questions for junior/mid roles.
+  * Senior: Architecture decisions, system design, leadership, cross-team impact
+  * Lead/Principal: Strategic thinking, org-wide impact, technical vision
+  HARD RULE: For Junior/Entry level, NEVER ask about: system design, microservices, GraphQL (unless in JD), distributed systems, architecture patterns, caching strategies, or any advanced topic. Stick to BASICS of the required skills.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -1027,7 +1027,7 @@ Interview Type: ${interviewConfig.interviewType}
 
 Return JSON:
 {
-  "mustHaveSkills": ["3-5 critical skills from Required Skills and Requirements — these are the technologies the candidate MUST know"],
+  "mustHaveSkills": ["3-5 SHORT skill/technology NAMES only (e.g., 'Next.js', 'Express.js', 'TypeScript') — extract ONLY the skill name, NOT the full requirement sentence"],
   "niceToHaveSkills": ["3-5 bonus skills inferred from the JD"],
   "keyBehaviors": ["3-5 needed behaviors"],
   "redFlags": ["3-5 disqualifying signs"],
@@ -2193,8 +2193,21 @@ Determine if interview objectives have been sufficiently met to end the session.
       if (analysis.coverage?.areasImpacted?.length > 0) {
         console.log(`📊 [Coverage] LLM areasImpacted: ${analysis.coverage.areasImpacted.map(a => `${a.area}(+${a.increase})`).join(', ')} | Session areas: ${Object.keys(finalCoverage.areas).join(', ')} | Quality: ${analysis.quality?.score}`);
         for (const impact of analysis.coverage.areasImpacted) {
-          if (finalCoverage.areas[impact.area]) {
-            const area = finalCoverage.areas[impact.area];
+          let matchedAreaKey = impact.area;
+          if (!finalCoverage.areas[matchedAreaKey]) {
+            // Fuzzy match: find closest session area key
+            const impactLower = matchedAreaKey.toLowerCase().replace(/[_\s-]/g, '');
+            matchedAreaKey = Object.keys(finalCoverage.areas).find(key => {
+              const keyLower = key.toLowerCase().replace(/[_\s-]/g, '');
+              return keyLower.includes(impactLower) || impactLower.includes(keyLower) ||
+                keyLower.split('_').some(w => w.length > 2 && impactLower.includes(w));
+            }) || null;
+            if (matchedAreaKey) {
+              console.log(`🔄 [Coverage] Fuzzy matched "${impact.area}" → "${matchedAreaKey}"`);
+            }
+          }
+          if (matchedAreaKey && finalCoverage.areas[matchedAreaKey]) {
+            const area = finalCoverage.areas[matchedAreaKey];
             let increase = impact.increase || 0;
 
             // PASS/SKIP HANDLING: Candidate can't answer = gap recorded, NO coverage credit
@@ -2295,7 +2308,7 @@ Determine if interview objectives have been sufficiently met to end the session.
               }
             }
           } else {
-            console.warn(`⚠️ [Coverage] Area mismatch: LLM returned "${impact.area}" but session only has [${Object.keys(finalCoverage.areas).join(', ')}]`);
+            console.warn(`⚠️ [Coverage] Area mismatch (no fuzzy match found): LLM returned "${impact.area}" but session only has [${Object.keys(finalCoverage.areas).join(', ')}]`);
           }
         }
 
