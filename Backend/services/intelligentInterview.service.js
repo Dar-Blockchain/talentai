@@ -1013,7 +1013,7 @@ class IntelligentInterviewService {
 
     try {
       const analysis = await bedrock.callLLM({
-        systemPrompt: "You are an expert recruiter. Analyze this job and return JSON only.",
+        systemPrompt: "You are an expert recruiter. Analyze this job and return ONLY a valid JSON object. No explanation, no reasoning, no text before or after the JSON.",
         messages: [{ role: "user", content: `
 Title: ${jobData.title}
 Company: ${jobData.company || jobData.companyName || ""}
@@ -1140,17 +1140,21 @@ ${Object.entries(session.coverage?.areas || {}).map(([a, d]) => `${a} (${d.weigh
 ${Object.entries(session.coverage?.areas || {}).map(([a, d]) => `${a}: ${d.percentage || 0}%`).join("\n")}
 `;
 
+    const areaKeys = Object.keys(session.coverage?.areas || {});
     const systemPrompt = `You are an expert interview analyst. Analyze this candidate response comprehensively in ONE pass.
 ${personaContext}
 Return ONLY valid JSON with ALL of these fields:
 {
   "quality": { "score": 0-100, "answeredQuestion": true/false, "depthLevel": "surface|moderate|deep", "isOffTopic": true/false, "completeness": "complete|partial|minimal|avoided" },
   "skills": { "demonstrated": ["skill1"], "hinted": ["skill2"], "gaps": ["skill3"] },
-  "coverage": { "areasImpacted": [{ "area": "focus_area_name", "increase": 5-25, "evidence": "brief evidence" }] },
+  "coverage": { "areasImpacted": [{ "area": "MUST be one of: ${areaKeys.join(', ')}", "increase": 5-25, "evidence": "brief evidence" }] },
   "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
   "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
   "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." }
 }
+
+CRITICAL AREA NAME RULE: In "areasImpacted", the "area" value MUST be exactly one of: ${areaKeys.join(', ')}
+Do NOT invent new area names. Every on-topic answer should impact at least one area.
 
 COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
 - Deep answer with specific examples and technical detail: increase 18-25
@@ -1159,20 +1163,22 @@ COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
 - Off-topic, avoided, or no useful signal: increase 0
 The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).
 
-QUALITY SCORE CALIBRATION (score MUST reflect actual answer quality — do NOT default to 50-60):
+QUALITY SCORE CALIBRATION (be FAIR — give credit where it's due):
 - 80-100: Excellent — deep technical detail, specific examples, demonstrates mastery
-- 60-79: Good — solid understanding, some examples, shows competence
-- 40-59: Fair — basic understanding, vague or generic, lacks depth
-- 20-39: Weak — significant gaps, confusion, wrong information
+- 60-79: Good — solid understanding, some specifics, shows competence
+- 40-59: Fair — shows basic understanding, somewhat vague but on-topic
+- 20-39: Weak — major gaps, confused, or mostly wrong
 - 0-19: No answer / completely off-topic / "I don't know"
-A good answer with real examples MUST score 70+. Only score below 50 if the answer is truly weak.
+A candidate who answers the question on-topic with some understanding should score AT LEAST 50.
+A good answer with real examples MUST score 70+. Only score below 40 if the answer is genuinely weak.
+DEFAULT to 55-65 if the answer is reasonable but not exceptional.
 - KEYWORD DROPPING: If the response is mostly buzzwords/tool names strung together without real explanation (e.g. "Android Studio build last version Kotlin"), score 15-30 max with depthLevel "surface". Do NOT reward keyword repetition as knowledge.
 
 DEPTH LEVEL CALIBRATION:
 - "deep": Specific technical details, real examples, trade-offs, or internals explained
 - "moderate": Shows understanding with some specifics but stays conceptual
 - "surface": Vague or generic response without specifics
-Default to "moderate" if the answer shows any real understanding. Only use "surface" for truly vague responses.
+Default to "moderate" for any answer that shows understanding. Use "surface" ONLY for one-word or truly empty responses.
 
 SKILL DETECTION (CRITICAL — anti-gaming rules):
 - "demonstrated" = candidate EXPLAINED or APPLIED the skill with real understanding (specific details, how/why, trade-offs, real examples). Simply NAMING a technology without explaining it is NOT "demonstrated" — put it in "hinted" instead.
@@ -2185,6 +2191,7 @@ Determine if interview objectives have been sufficiently met to end the session.
       // ── STEP 3: Apply coverage updates from analysis (pure logic, ~0ms) ──
       let finalCoverage = { ...session.coverage };
       if (analysis.coverage?.areasImpacted?.length > 0) {
+        console.log(`📊 [Coverage] LLM areasImpacted: ${analysis.coverage.areasImpacted.map(a => `${a.area}(+${a.increase})`).join(', ')} | Session areas: ${Object.keys(finalCoverage.areas).join(', ')} | Quality: ${analysis.quality?.score}`);
         for (const impact of analysis.coverage.areasImpacted) {
           if (finalCoverage.areas[impact.area]) {
             const area = finalCoverage.areas[impact.area];
@@ -2218,9 +2225,11 @@ Determine if interview objectives have been sufficiently met to end the session.
               } else if (qualityScore >= 50) {
                 increase = Math.max(increase, 12);
               } else if (qualityScore >= 30) {
-                increase = Math.max(increase, 5);
+                increase = Math.max(increase, 8);
+              } else if (qualityScore >= 15) {
+                increase = Math.max(increase, 3); // minimal credit for weak but on-topic answers
               } else {
-                increase = 0; // quality < 30 = no coverage credit (keyword dropping / off-topic)
+                increase = 0; // quality < 15 = no coverage credit (truly garbage / off-topic)
               }
             }
 
@@ -2285,6 +2294,8 @@ Determine if interview objectives have been sufficiently met to end the session.
                 }
               }
             }
+          } else {
+            console.warn(`⚠️ [Coverage] Area mismatch: LLM returned "${impact.area}" but session only has [${Object.keys(finalCoverage.areas).join(', ')}]`);
           }
         }
 
