@@ -1018,6 +1018,7 @@ class IntelligentInterviewService {
 Title: ${jobData.title}
 Company: ${jobData.company || jobData.companyName || ""}
 Description: ${jobData.description || ""}
+Required Skills: ${JSON.stringify(jobData.skills || [])}
 Requirements: ${JSON.stringify(jobData.requirements || [])}
 Responsibilities: ${JSON.stringify(jobData.responsibilities || [])}
 Experience Level: ${jobData.experienceLevel || interviewConfig.context?.experienceLevel || "mid"}
@@ -1026,8 +1027,8 @@ Interview Type: ${interviewConfig.interviewType}
 
 Return JSON:
 {
-  "mustHaveSkills": ["3-5 critical skills from JD"],
-  "niceToHaveSkills": ["3-5 bonus skills from JD"],
+  "mustHaveSkills": ["3-5 critical skills from Required Skills and Requirements — these are the technologies the candidate MUST know"],
+  "niceToHaveSkills": ["3-5 bonus skills inferred from the JD"],
   "keyBehaviors": ["3-5 needed behaviors"],
   "redFlags": ["3-5 disqualifying signs"],
   "seniorityExpectations": "one sentence",
@@ -1043,11 +1044,14 @@ Return JSON:
 }
 
 RULES for focusAreas:
+- Focus areas MUST be derived from the REQUIRED SKILLS and REQUIREMENTS — NOT from responsibilities
+- Required Skills are the PRIMARY driver: each focus area should cluster around 1-2 required skills/technologies
+- Responsibilities are SECONDARY context — they show HOW skills are applied, not WHAT to test
+- Do NOT create a separate focus area for something that is only a sub-task in one responsibility (e.g., "SEO" mentioned once in "optimizing for SEO and performance" should NOT become its own area — it belongs as a minor indicator under the relevant skill area)
 - Generate 4 areas SPECIFIC to this JD — NOT generic areas like "technical_depth" or "problem_solving"
-- Each area should map to a cluster of related skills/responsibilities from the JD
 - Weights must sum to 100
+- Example for JD with Required Skills [Next.js, Express.js, Node.js]: "nextjs_frontend" (30%), "expressjs_backend" (25%), "javascript_typescript" (25%), "testing_quality" (20%)
 - Example for Android Developer JD: "kotlin_java" (30%), "android_platform" (25%), "architecture_patterns" (25%), "testing_devops" (20%)
-- Example for Solidity Developer JD: "smart_contracts" (30%), "security_auditing" (25%), "defi_protocols" (25%), "blockchain_fundamentals" (20%)
 - area_key must be lowercase with underscores, max 25 chars
 - questionStyles: pick 4 from: scenario-based, code review, architecture discussion, debugging walkthrough, behavioral STAR, situational, values-based, role-play, case study, portfolio review, whiteboard exercise, prioritization exercise, metrics discussion, analysis walkthrough, reflective` }],
         temperature: 0.2,
@@ -1807,7 +1811,8 @@ Determine if interview objectives have been sufficiently met to end the session.
               companyName: companyName,
               description: post.jobDetails.description,
               requirements: post.jobDetails.requirements || [],
-              responsibilities: post.jobDetails.responsibilities || []
+              responsibilities: post.jobDetails.responsibilities || [],
+              skills: (post.skillAnalysis?.requiredSkills || []).map(s => s.name).filter(Boolean)
             };
             // Propagate real company name to all downstream uses (greeting, prompts, result)
             config.context.targetCompany = companyName;
