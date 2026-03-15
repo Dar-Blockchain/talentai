@@ -1201,9 +1201,9 @@ CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
         systemPrompt,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.2,
-        maxTokens: 800,
+        maxTokens: 2048,
         timeout: 25000,
-        useFastModel: false // gpt-oss — strong model for critical analysis
+        useFastModel: false // gpt-oss — strong model for critical analysis (needs high maxTokens for reasoning + JSON)
       });
 
       return AIUtils.parseJSONResponse(response.content, 'combinedAnalysis');
@@ -3603,9 +3603,9 @@ Write JSON:
   "reasoning": "1 sentence justification based on the pre-computed score and what was observed"
 }` }],
         temperature: 0.3,
-        maxTokens: 400,
+        maxTokens: 1500,
         timeout: 20000,
-        useFastModel: false
+        useFastModel: false // gpt-oss needs higher maxTokens for reasoning + JSON
       });
 
       aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
