@@ -261,10 +261,11 @@ module.exports.getAssessmentsByCandidate = async (req, res) => {
 
 // ========== READ - Get all for authenticated company ==========
 // supports query parameters jobTitle and candidateUsername for filtering
+// NEW: supports generic search parameter that searches candidate name, email, and job title
 module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { jobTitle, postTitle, candidateUsername, candidateName, candidateEmail, page = 1, limit = 10 } = req.query;
+    const { jobTitle, postTitle, candidateUsername, candidateName, candidateEmail, search, page = 1, limit = 10 } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -279,6 +280,8 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
     if (candidateUsername) filters.candidateUsername = candidateUsername;
     if (candidateName) filters.candidateName = candidateName;
     if (candidateEmail) filters.candidateEmail = candidateEmail;
+    // NEW: generic search parameter searches candidate name, email, and job title
+    if (search) filters.search = search;
 
     const assessmentsResult =
       await postInterviewAssessmentService.getAssessmentsByCompany(

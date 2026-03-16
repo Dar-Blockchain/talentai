@@ -458,6 +458,24 @@ module.exports.getAssessmentsByCompany = async (
       });
     }
 
+    // NEW: Generic search that searches across candidate name, email, and job title
+    if (filters.search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            // Search in candidate email
+            { 'candidate.email': { $regex: filters.search, $options: 'i' } },
+            // Search in candidate name (firstName, lastName, username)
+            { 'candidate.profile.firstName': { $regex: filters.search, $options: 'i' } },
+            { 'candidate.profile.lastName': { $regex: filters.search, $options: 'i' } },
+            { 'candidate.username': { $regex: filters.search, $options: 'i' } },
+            // Search in job title
+            { 'post.jobDetails.title': { $regex: filters.search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
     // project out sensitive or unnecessary fields before pagination
     pipeline.push({
       $project: {
