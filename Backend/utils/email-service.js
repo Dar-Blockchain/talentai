@@ -516,5 +516,179 @@ const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postT
   }
 };
 
+// Template pour notifier la compagnie quand un candidat complète une interview
+const getInterviewCompletionNotificationTemplate = (companyName, candidateName, postTitle, candidateEmail) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candidate Interview Completed</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #2D3748;
+      margin: 0;
+      padding: 0;
+      background-color: #F7FAFC;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0;
+      background-color: #FFFFFF;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    .header {
+      background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .header p {
+      margin: 10px 0 0;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 30px;
+      background-color: #FFFFFF;
+    }
+    .alert-badge {
+      background-color: #FEF5E7;
+      border: 2px solid #F8D7A1;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      color: #7D6608;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .info-box {
+      background-color: #EBF8FF;
+      border-left: 4px solid #2B6CB0;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+    .info-box strong {
+      color: #2B6CB0;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .info-box p {
+      margin: 5px 0;
+      color: #2D3748;
+    }
+    .candidate-details {
+      background-color: #F7FAFC;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 15px 0;
+    }
+    .candidate-details p {
+      margin: 8px 0;
+    }
+    .cta-button {
+      text-align: center;
+      margin: 25px 0;
+    }
+    .cta-button a {
+      display: inline-block;
+      background-color: #2B6CB0;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .cta-button a:hover {
+      background-color: #1A365D;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #F7FAFC;
+      border-radius: 0 0 8px 8px;
+      font-size: 13px;
+      color: #718096;
+    }
+    a {
+      color: #2B6CB0;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>TalenIA</h1>
+      <p>Interview Assessment Completed</p>
+    </div>
+    <div class="content">
+      <p>Hello ${companyName},</p>
+      
+      <div class="alert-badge">
+        ⚡ Candidate has completed interview assessment
+      </div>
+      
+      <div class="info-box">
+        <strong>📋 Position:</strong>
+        <p>${postTitle || 'New Opportunity'}</p>
+      </div>
+      
+      <div class="candidate-details">
+        <strong style="color: #2B6CB0;">Candidate Details:</strong>
+        <p><strong>Name:</strong> ${candidateName}</p>
+        <p><strong>Email:</strong> ${candidateEmail}</p>
+      </div>
+      
+      <p>The candidate has successfully completed the interview assessment for the position above. You can now review their responses and evaluation scores in the TalenIA dashboard.</p>
+      
+      <div class="cta-button">
+        <a href="https://talentai.bid/dashboard/interviews" target="_blank">View Assessment Results</a>
+      </div>
+      
+      <p>If you have any questions, please contact our support team at <a href="mailto:support@talentai.bid">support@talentai.bid</a></p>
+    </div>
+    <div class="footer">
+      <p>This email was sent automatically, please do not reply.</p>
+      <p>&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+// Fonction pour envoyer une notification à la compagnie quand un candidat complète une interview
+const sendInterviewCompletionNotificationToCompany = async (companyEmail, companyName, candidateName, postTitle, candidateEmail) => {
+  const html = getInterviewCompletionNotificationTemplate(companyName, candidateName, postTitle, candidateEmail);
+  const mailOptions = {
+    from: '"TalenAI" <contact@talentai.bid>',
+    to: companyEmail,
+    subject: `Interview Completed - ${candidateName} for ${postTitle || 'Position'}`,
+    html,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Interview completion notification sent to company: ${companyEmail}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send interview completion notification to company:', error.message);
+    return false;
+  }
+};
+
 // Exporter les fonctions
-module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, sendInterviewAssessmentEmail, transporter };
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany, transporter };

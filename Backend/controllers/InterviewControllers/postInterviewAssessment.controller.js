@@ -1,7 +1,9 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
 const PostSteps = require("../../models/postSteps.model");
-const { sendInterviewAssessmentEmail } = require("../../utils/email-service");
+const User = require("../../models/User.model");
+const Profile = require("../../models/Profile.model");
+const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
@@ -38,10 +40,40 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
 
       console.log(`📧 Sending interview assessment email to: ${candidateEmail}`);
       
-      // Send email asynchronously (don't block response)
+      // Send email to candidate asynchronously (don't block response)
       sendInterviewAssessmentEmail(candidateEmail, candidateName, postTitle).catch(err => {
-        console.error('⚠️ Warning: Failed to send email, but assessment was created:', err.message);
+        console.error('⚠️ Warning: Failed to send candidate email, but assessment was created:', err.message);
       });
+
+      // 🏢 SEND NOTIFICATION TO COMPANY AFTER CANDIDATE COMPLETES INTERVIEW
+      try {
+        // Get company details from assessment
+        const companyId = assessment.company;
+        if (companyId) {
+          const companyUser = await User.findById(companyId).select('email');
+          const companyProfile = await Profile.findOne({ userId: companyId }).select('firstName lastName');
+          
+          if (companyUser && companyUser.email) {
+            const companyName = companyProfile?.firstName || 'Company';
+            
+            console.log(`📧 Sending interview completion notification to company: ${companyUser.email}`);
+            
+            // Send email to company asynchronously
+            sendInterviewCompletionNotificationToCompany(
+              companyUser.email,
+              companyName,
+              candidateName,
+              postTitle,
+              candidateEmail
+            ).catch(err => {
+              console.error('⚠️ Warning: Failed to send company notification Email:', err.message);
+            });
+          }
+        }
+      } catch (companyEmailError) {
+        console.error('⚠️ Company notification email error (non-critical):', companyEmailError.message);
+        // Don't throw - company email is non-critical
+      }
     } catch (emailError) {
       console.error('⚠️ Email sending error (non-critical):', emailError.message);
       // Don't throw - email is non-critical
