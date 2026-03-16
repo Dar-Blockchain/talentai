@@ -84,7 +84,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           bgcolor: "#fff",
           border: "1px solid #E5E7EB",
           borderRadius: 3,
-          p: 3,
+          p: { xs: 2, sm: 3 },
           display: "flex",
           flexDirection: "column",
           gap: 2,
@@ -101,11 +101,11 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
         onClick={() => onViewDetails(job._id)}
       >
         {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
           {/* Icon */}
           <Box
             sx={{
-              width: 42, height: 42, borderRadius: 2,
+              width: 40, height: 40, borderRadius: 2,
               bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
@@ -117,21 +117,29 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           {/* Title + creation type */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
-              sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.5 }}
+              sx={{ fontSize: { xs: "13px", sm: "15px" }, fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.5 }}
               noWrap
             >
               {jd.title || "Untitled Position"}
             </Typography>
-            <Chip
-              icon={<CtIcon sx={{ fontSize: 11 }} />}
-              label={ctInfo.label}
-              size="small"
-              sx={{
-                fontSize: "10px", fontWeight: 600, height: 20,
-                color: ctInfo.color, bgcolor: ctInfo.bg,
-                border: `1px solid ${ctInfo.color}30`,
-              }}
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+              <Chip
+                icon={<CtIcon sx={{ fontSize: 11 }} />}
+                label={ctInfo.label}
+                size="small"
+                sx={{
+                  fontSize: "10px", fontWeight: 600, height: 20,
+                  color: ctInfo.color, bgcolor: ctInfo.bg,
+                  border: `1px solid ${ctInfo.color}30`,
+                }}
+              />
+              {jd.workMode && (
+                <Chip label={jd.workMode} size="small" sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+              )}
+              {jd.employmentType && (
+                <Chip label={jd.employmentType} size="small" sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+              )}
+            </Box>
           </Box>
 
           {/* 3-dot menu */}
@@ -189,25 +197,21 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
         {/* Footer */}
         <Box
           sx={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            pt: 1.5, borderTop: "1px solid #F3F4F6",
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", flexWrap: "wrap",
+            gap: 1, pt: 1.5, borderTop: "1px solid #F3F4F6",
           }}
         >
           {/* Status */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-            <Box
-              sx={{
-                width: 7, height: 7, borderRadius: "50%",
-                bgcolor: statusStyle.dot,
-              }}
-            />
+            <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: statusStyle.dot }} />
             <Typography sx={{ fontSize: "12px", fontWeight: 600, color: statusStyle.color }}>
               {statusStyle.label}
             </Typography>
           </Box>
 
           {/* Date / days left */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
             {daysLeft !== null && !isExpired && (
               <Chip
                 label={`${daysLeft}d left`}
@@ -219,10 +223,12 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                 }}
               />
             )}
-            {job.createdAt && (
+            {job.expirationDate && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{fmtDate(job.createdAt)}</Typography>
+                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", whiteSpace: "nowrap" }}>
+                  Exp. {fmtDate(job.expirationDate)}
+                </Typography>
               </Box>
             )}
           </Box>
