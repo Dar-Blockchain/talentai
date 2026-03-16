@@ -363,18 +363,17 @@ export const checkPostInterviewAssessment = createAsyncThunk<
  */
 export const fetchCompanyInterviews = createAsyncThunk<
   { items: any[]; total: number; totalPages: number },
-  { postTitle?: string; candidateUsername?: string; page?: number; limit?: number },
+  { search?: string; page?: number; limit?: number },
   { rejectValue: string }
 >(
   'interview/fetchCompanyInterviews',
-  async ({ postTitle, candidateUsername, page = 1, limit = 12 }, { rejectWithValue }) => {
+  async ({ search, page = 1, limit = 12 }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('post-interview-assessments/company/mine', {
         params: {
           page,
           limit,
-          ...(postTitle ? { postTitle } : {}),
-          ...(candidateUsername ? { candidateUsername } : {}),
+          ...(search ? { search } : {}),
         },
       });
 
