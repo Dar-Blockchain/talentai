@@ -155,59 +155,53 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
   return (
     <Box>
       {/* ── Toolbar ── */}
-      <Box
-        sx={{
-          display: "flex", alignItems: "center", gap: 1.5,
-          flexWrap: "wrap", mb: 2,
-        }}
-      >
-        {/* Search */}
-        <TextField
-          size="small"
-          placeholder="Search by title, type…"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            maxWidth: 380, flexGrow: 1,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2, bgcolor: "#fff",
-              "&.Mui-focused fieldset": { borderColor: TEAL },
-            },
-          }}
-        />
-
-        {/* Filter icon */}
-        <FilterListOutlined sx={{ fontSize: 20, color: "#9CA3AF", flexShrink: 0 }} />
-
-        {/* Status filter chips */}
-        {STATUS_FILTERS.map((f) => {
-          const active = statusFilter === f.id;
-          return (
-            <Chip
-              key={f.id}
-              label={f.label}
-              size="small"
-              onClick={() => onStatusFilterChange(f.id)}
-              sx={{
-                fontWeight: 600, fontSize: "12px", cursor: "pointer",
-                bgcolor:     active ? f.bg    : "#F3F4F6",
-                color:       active ? f.color : "#6B7280",
-                border:      active ? `1px solid ${f.color}40` : "1px solid transparent",
-                "&:hover":   { bgcolor: f.bg, color: f.color },
-              }}
-            />
-          );
-        })}
-
-        <Box sx={{ ml: "auto", flexShrink: 0 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
+        {/* Row 1: search + sort */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <TextField
+            size="small"
+            placeholder="Search by title, type…"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              flex: 1,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2, bgcolor: "#fff",
+                "&.Mui-focused fieldset": { borderColor: TEAL },
+              },
+            }}
+          />
           <SortButton value={sortBy} onChange={onSortChange} />
+        </Box>
+
+        {/* Row 2: filter chips */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <FilterListOutlined sx={{ fontSize: 18, color: "#9CA3AF", flexShrink: 0 }} />
+          {STATUS_FILTERS.map((f) => {
+            const active = statusFilter === f.id;
+            return (
+              <Chip
+                key={f.id}
+                label={f.label}
+                size="small"
+                onClick={() => onStatusFilterChange(f.id)}
+                sx={{
+                  fontWeight: 600, fontSize: "12px", cursor: "pointer",
+                  bgcolor:   active ? f.bg    : "#F3F4F6",
+                  color:     active ? f.color : "#6B7280",
+                  border:    active ? `1px solid ${f.color}40` : "1px solid transparent",
+                  "&:hover": { bgcolor: f.bg, color: f.color },
+                }}
+              />
+            );
+          })}
         </Box>
       </Box>
 
@@ -217,15 +211,15 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
           bgcolor: "#fff",
           border: "1px solid #E5E7EB",
           borderRadius: 3,
-          p: 3,
+          p: { xs: 1.5, sm: 2.5, md: 3 },
         }}
       >
         {loading ? (
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)" },
-              gap: 2,
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
+              gap: { xs: 1.5, md: 2 },
             }}
           >
             {Array.from({ length: 6 }).map((_, i) => <JobPostSkeletonCard key={i} />)}
@@ -281,8 +275,8 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)" },
-                gap: 2,
+                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
+                gap: { xs: 1.5, md: 2 },
                 mb: pagination.totalPages > 1 ? 3 : 0,
               }}
             >

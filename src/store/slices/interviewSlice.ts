@@ -80,6 +80,7 @@ interface InterviewReportState {
 interface CompanyInterviewsState {
   items: any[];
   total: number;
+  totalPages: number;
   loading: boolean;
   error: string | null;
 }
@@ -126,7 +127,7 @@ const initialState: InterviewState = {
   technicalAssessments: { data: [], loading: false, error: null, total: 0 },
   softAssessments: { data: [], loading: false, error: null, total: 0 },
   report: { data: null, loading: false, error: null },
-  companyInterviews: { items: [], total: 0, loading: false, error: null },
+  companyInterviews: { items: [], total: 0, totalPages: 1, loading: false, error: null },
   companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
   interviewDetail: { data: null, loading: false, error: null },
 };
@@ -361,7 +362,7 @@ export const checkPostInterviewAssessment = createAsyncThunk<
  * Fetch company post-interview assessments
  */
 export const fetchCompanyInterviews = createAsyncThunk<
-  { items: any[]; total: number },
+  { items: any[]; total: number; totalPages: number },
   { postTitle?: string; candidateUsername?: string; page?: number; limit?: number },
   { rejectValue: string }
 >(
@@ -397,7 +398,9 @@ export const fetchCompanyInterviews = createAsyncThunk<
         : typeof json.total === 'number' ? json.total
         : items.length;
 
-      return { items, total };
+      const totalPages = json.pagination?.totalPages ?? (Math.ceil(total / limit) || 1);
+
+      return { items, total, totalPages };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching company interviews');
     }
@@ -507,10 +510,11 @@ const interviewSlice = createSlice({
         state.companyInterviews.loading = false;
         state.companyInterviews.items = action.payload.items;
         state.companyInterviews.total = action.payload.total;
+        state.companyInterviews.totalPages = action.payload.totalPages ?? 1;
       })
       .addCase(fetchCompanyInterviews.rejected, (state, action) => {
         state.companyInterviews.loading = false;
-        state.companyInterviews.error = action.payload || 'An error occurred';
+        state.companyInterviews.error = (action.payload as string) || 'An error occurred';
       })
       // ---- COMPANY METRICS ----
       .addCase(fetchCompanyInterviewMetrics.pending, (state) => {
@@ -563,6 +567,7 @@ export const selectInterviewReportError = (state: RootState) => state.interview.
 export const selectCompanyInterviews = (state: RootState) => state.interview.companyInterviews.items;
 export const selectCompanyInterviewsLoading = (state: RootState) => state.interview.companyInterviews.loading;
 export const selectCompanyInterviewsTotal = (state: RootState) => state.interview.companyInterviews.total;
+export const selectCompanyInterviewsTotalPages = (state: RootState) => state.interview.companyInterviews.totalPages;
 export const selectCompanyMetrics = (state: RootState) => state.interview.companyMetrics;
 
 export default interviewSlice.reducer;

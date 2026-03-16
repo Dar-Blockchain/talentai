@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Box, Typography, InputAdornment, TextField, Skeleton, Chip, Menu, MenuItem, Autocomplete } from "@mui/material";
+import { Box, Typography, InputAdornment, TextField, Skeleton, Chip, Menu, MenuItem, Autocomplete, Pagination } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
@@ -43,8 +43,9 @@ interface InterviewsListProps {
   sortBy: SortOption;
   onSortChange: (s: SortOption) => void;
   onSelect: (assessment: InterviewAssessment) => void;
-  hasMore: boolean;
-  onLoadMore: () => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 const GRID = {
@@ -126,7 +127,7 @@ const InterviewsList: React.FC<InterviewsListProps> = memo(({
   searchTitle, onSearchTitleChange,
   jobTitleOptions = [],
   scoreFilter, onScoreFilterChange, sortBy, onSortChange,
-  onSelect, hasMore, onLoadMore,
+  onSelect, page, totalPages, onPageChange,
 }) => (
   <Box>
     {/* Search inputs row */}
@@ -230,20 +231,21 @@ const InterviewsList: React.FC<InterviewsListProps> = memo(({
             ))}
           </Box>
 
-          {hasMore && (
+          {totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-              <Box
-                onClick={onLoadMore}
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, v) => onPageChange(v)}
+                shape="rounded"
                 sx={{
-                  px: 3, py: 1, borderRadius: "10px", cursor: "pointer",
-                  border: `1px solid ${PURPLE}30`, color: PURPLE,
-                  fontWeight: 600, fontSize: "13px",
-                  "&:hover": { bgcolor: `${PURPLE}08` },
-                  transition: "all 0.15s",
+                  "& .MuiPaginationItem-root": {
+                    fontWeight: 500,
+                    "&.Mui-selected": { bgcolor: "#F0FDFA", color: "#0D9488", fontWeight: 700 },
+                    "&:hover": { bgcolor: "#F3F4F6" },
+                  },
                 }}
-              >
-                Load more
-              </Box>
+              />
             </Box>
           )}
         </>
