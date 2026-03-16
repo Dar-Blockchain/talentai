@@ -67,6 +67,7 @@ export interface UseAudioTranscriptionOptions {
   interviewConfig: InterviewConfig;
   interviewStatus: string;
   showNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
+  jobData?: any;
 }
 
 export const useAudioTranscription = ({
@@ -75,6 +76,7 @@ export const useAudioTranscription = ({
   interviewConfig,
   interviewStatus,
   showNotification,
+  jobData,
 }: UseAudioTranscriptionOptions): UseAudioTranscriptionReturn => {
   // Audio and Recording States
   const [isRecording, setIsRecording] = useState(false);
@@ -215,37 +217,48 @@ export const useAudioTranscription = ({
     }
   };
 
-  // Extract technical keywords for word boost
-  const extractTechnicalKeywords = (config: InterviewConfig): string[] => {
-    const baseKeywords = [
-      'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift',
-      'React', 'Angular', 'Vue', 'Node', 'Express', 'Next', 'Django', 'Flask', 'Spring',
-      'API', 'REST', 'GraphQL', 'WebSocket', 'microservices', 'monolith',
-      'Docker', 'Kubernetes', 'CI/CD', 'Jenkins', 'GitHub Actions',
-      'AWS', 'Azure', 'GCP', 'cloud', 'serverless', 'Lambda',
-      'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Elasticsearch', 'DynamoDB',
-      'algorithm', 'data structure', 'design pattern', 'SOLID', 'DRY',
-      'frontend', 'backend', 'fullstack', 'DevOps', 'SRE',
-      'authentication', 'authorization', 'OAuth', 'JWT', 'session',
-      'testing', 'unit test', 'integration test', 'TDD', 'BDD',
-      'Agile', 'Scrum', 'Kanban', 'sprint', 'standup'
-    ];
-
-    const contextText = [
-      config.testReason,
-      config.context.targetRole,
-      config.context.targetCompany
-    ].filter(Boolean).join(' ');
-
-    if (contextText) {
-      const customKeywords = contextText
-        .split(/\s+/)
-        .filter((word: string) => word.length > 4 && word.length < 20)
-        .slice(0, 20);
-      return [...baseKeywords, ...customKeywords].slice(0, 100);
+  // Extract technical keywords for AssemblyAI word boost — JD skills first, then generic fallback
+  const extractTechnicalKeywords = (_config: InterviewConfig, jd?: any): string[] => {
+    // Priority 1: JD-specific skills (most important for word boost)
+    const jdKeywords: string[] = [];
+    if (jd) {
+      const skills = jd.skillAnalysis?.requiredSkills || [];
+      skills.forEach((s: any) => {
+        if (s.name) jdKeywords.push(s.name);
+      });
+      const softSkills = jd.skillAnalysis?.softSkills || [];
+      softSkills.forEach((s: any) => {
+        if (s.name) jdKeywords.push(s.name);
+      });
+      // Extract tech terms from requirements text
+      const reqs = jd.jobDetails?.requirements || [];
+      reqs.forEach((r: string) => {
+        const techTerms = r.match(/[A-Z][a-zA-Z]*(?:\.[a-z]+)?/g) || [];
+        techTerms.forEach((t: string) => {
+          if (t.length >= 2 && !jdKeywords.includes(t)) jdKeywords.push(t);
+        });
+      });
     }
 
-    return baseKeywords.slice(0, 100);
+    // Priority 2: Generic tech vocabulary (no word.length filter — short terms like API, Git, JWT matter)
+    const baseKeywords = [
+      'JavaScript', 'TypeScript', 'Python', 'Java', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift',
+      'React', 'Angular', 'Vue', 'Node', 'Express', 'Next', 'Next.js', 'Node.js',
+      'Django', 'Flask', 'Spring', 'NestJS', 'Fastify',
+      'API', 'REST', 'GraphQL', 'WebSocket', 'microservices',
+      'Docker', 'Kubernetes', 'CI/CD', 'Jenkins', 'GitHub Actions',
+      'AWS', 'Azure', 'GCP', 'Lambda', 'serverless',
+      'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'DynamoDB',
+      'Git', 'JWT', 'OAuth', 'SSH', 'SSL', 'DNS',
+      'HTML', 'CSS', 'SASS', 'SCSS', 'Tailwind',
+      'frontend', 'backend', 'fullstack', 'DevOps',
+      'testing', 'Jest', 'Mocha', 'Cypress', 'TDD',
+      'Agile', 'Scrum', 'Kanban'
+    ];
+
+    // JD skills first (highest priority), then generic — deduplicated, max 100
+    const combined = [...new Set([...jdKeywords, ...baseKeywords])];
+    return combined.slice(0, 100);
   };
 
   // Get optimal turn detection config
@@ -430,7 +443,7 @@ export const useAudioTranscription = ({
         token: tempToken,
         sampleRate: actualSampleRate,
         encoding: 'pcm_s16le',
-        keytermsPrompt: extractTechnicalKeywords(interviewConfig),
+        keytermsPrompt: extractTechnicalKeywords(interviewConfig, jobData),
         endOfTurnConfidenceThreshold: turnDetectionConfig.end_of_turn_confidence_threshold,
         minEndOfTurnSilenceWhenConfident: turnDetectionConfig.min_end_of_turn_silence_when_confident,
         maxTurnSilence: turnDetectionConfig.max_turn_silence,

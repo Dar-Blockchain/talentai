@@ -1180,6 +1180,9 @@ DEPTH LEVEL CALIBRATION:
 - "surface": Vague or generic response without specifics
 Default to "moderate" for any answer that shows understanding. Use "surface" ONLY for one-word or truly empty responses.
 
+TRANSCRIPTION TOLERANCE (CRITICAL):
+The candidate response is from SPEECH-TO-TEXT transcription and may contain misspelled technical terms (e.g., "nexus" = "Next.js", "express us" = "Express", "type strip" = "TypeScript", "no JS" = "Node.js"). ALWAYS infer the intended meaning from context. If a candidate clearly describes using a technology/framework for its known purpose, credit them even if the exact name is garbled by transcription. Judge the SUBSTANCE and technical understanding, not the exact transcribed words.
+
 SKILL DETECTION (CRITICAL — anti-gaming rules):
 - "demonstrated" = candidate EXPLAINED or APPLIED the skill with real understanding (specific details, how/why, trade-offs, real examples). Simply NAMING a technology without explaining it is NOT "demonstrated" — put it in "hinted" instead.
 - "hinted" = candidate mentioned the skill name or used keywords but did NOT show real understanding. This includes keyword dropping, name-dropping without context, or vague references.

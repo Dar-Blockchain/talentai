@@ -249,6 +249,7 @@ const IntelligentInterviewTest = () => {
     interviewConfig,
     interviewStatus: socket.interviewStatus,
     showNotification: notify,
+    jobData,
   });
 
   const lastInterviewerMessage = audio.conversationHistory.filter(m => m.type !== 'system').slice(-1)[0] || null;
