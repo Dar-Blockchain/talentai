@@ -428,37 +428,7 @@ module.exports.getAssessmentsByCompany = async (
       { $unwind: { path: '$post', preserveNullAndEmptyArrays: true } },
     ];
 
-    if (filters.jobTitle) {
-      pipeline.push({
-        $match: { 'post.jobDetails.title': { $regex: filters.jobTitle, $options: 'i' } },
-      });
-    }
-
-    if (filters.candidateUsername) {
-      pipeline.push({
-        $match: { 'candidate.username': { $regex: filters.candidateUsername, $options: 'i' } },
-      });
-    }
-
-    if (filters.candidateName) {
-      pipeline.push({
-        $match: {
-          $or: [
-            { 'candidate.username': { $regex: filters.candidateName, $options: 'i' } },
-            { 'candidate.profile.firstName': { $regex: filters.candidateName, $options: 'i' } },
-            { 'candidate.profile.lastName': { $regex: filters.candidateName, $options: 'i' } },
-          ],
-        },
-      });
-    }
-
-    if (filters.candidateEmail) {
-      pipeline.push({
-        $match: { 'candidate.email': { $regex: filters.candidateEmail, $options: 'i' } },
-      });
-    }
-
-    // NEW: Generic search that searches across candidate name, email, and job title
+    // Generic search that searches across candidate name, email, and job title
     if (filters.search) {
       pipeline.push({
         $match: {
