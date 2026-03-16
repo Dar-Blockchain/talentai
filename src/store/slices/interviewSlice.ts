@@ -93,6 +93,12 @@ interface CompanyInterviewMetrics {
   error: string | null;
 }
 
+interface InterviewDetailState {
+  data: any | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -106,6 +112,7 @@ interface InterviewState {
   report: InterviewReportState;
   companyInterviews: CompanyInterviewsState;
   companyMetrics: CompanyInterviewMetrics;
+  interviewDetail: InterviewDetailState;
 }
 
 const initialState: InterviewState = {
@@ -121,6 +128,7 @@ const initialState: InterviewState = {
   report: { data: null, loading: false, error: null },
   companyInterviews: { items: [], total: 0, loading: false, error: null },
   companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
+  interviewDetail: { data: null, loading: false, error: null },
 };
 
 /**
@@ -396,6 +404,26 @@ export const fetchCompanyInterviews = createAsyncThunk<
   }
 );
 
+/**
+ * Fetch a single post-interview assessment by ID
+ */
+export const fetchInterviewById = createAsyncThunk<
+  any,
+  string,
+  { rejectValue: string }
+>(
+  'interview/fetchInterviewById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`post-interview-assessments/${id}`);
+      // API returns { success, data: { assessment, stepsData, hasSteps } }
+      return response.data?.data?.assessment || response.data?.data || response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Error fetching interview');
+    }
+  }
+);
+
 const interviewSlice = createSlice({
   name: 'interview',
   initialState,
@@ -499,6 +527,20 @@ const interviewSlice = createSlice({
       .addCase(fetchCompanyInterviewMetrics.rejected, (state, action) => {
         state.companyMetrics.loading = false;
         state.companyMetrics.error = action.payload || 'An error occurred';
+      })
+      // ---- INTERVIEW DETAIL ----
+      .addCase(fetchInterviewById.pending, (state) => {
+        state.interviewDetail.loading = true;
+        state.interviewDetail.error = null;
+        state.interviewDetail.data = null;
+      })
+      .addCase(fetchInterviewById.fulfilled, (state, action) => {
+        state.interviewDetail.loading = false;
+        state.interviewDetail.data = action.payload;
+      })
+      .addCase(fetchInterviewById.rejected, (state, action) => {
+        state.interviewDetail.loading = false;
+        state.interviewDetail.error = action.payload || 'An error occurred';
       });
   },
 });

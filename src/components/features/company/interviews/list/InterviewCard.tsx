@@ -22,8 +22,8 @@ function pickGradient(str: string) {
 export function getScore(a: any): number {
   return (
     a.overallScore ??
-    a.interviewData?.finalReport?.coverage?.overall ??
     a.interviewData?.finalReport?.scores?.overall ??
+    a.interviewData?.finalReport?.coverage?.overall ??
     0
   );
 }

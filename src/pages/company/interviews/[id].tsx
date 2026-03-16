@@ -5,29 +5,25 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import InterviewDetail from "@/components/features/company/interviews/details/InterviewDetail";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchCompanyInterviews, selectCompanyInterviews } from "@/store/slices/interviewSlice";
-import type { InterviewAssessment } from "@/components/features/company/interviews/list/InterviewCard";
+import { fetchInterviewById } from "@/store/slices/interviewSlice";
 
 const InterviewDetailPage: React.FC = () => {
   const router   = useRouter();
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
 
-  const interviews = useSelector(selectCompanyInterviews) as InterviewAssessment[];
-  const loading    = useSelector((s: RootState) => s.interview.companyInterviews.loading);
+  const { data: assessment, loading, error } = useSelector(
+    (s: RootState) => s.interview.interviewDetail
+  );
 
-  // If store is empty (direct URL access), fetch a batch large enough to find the record
   useEffect(() => {
-    if (interviews.length === 0) {
-      dispatch(fetchCompanyInterviews({ page: 1, limit: 100 }));
-    }
-  }, [dispatch, interviews.length]);
-
-  const assessment = interviews.find((a) => a._id === id);
+    if (!router.isReady || !id) return;
+    dispatch(fetchInterviewById(id as string));
+  }, [router.isReady, id, dispatch]);
 
   const handleBack = () => router.push("/company/interviews");
 
-  if (loading && !assessment) {
+  if (loading) {
     return (
       <DashboardLayout>
         <Box sx={{ display: "flex", justifyContent: "center", pt: 10 }}>
@@ -37,11 +33,13 @@ const InterviewDetailPage: React.FC = () => {
     );
   }
 
-  if (!assessment) {
+  if (error || !assessment) {
     return (
       <DashboardLayout>
         <Box sx={{ display: "flex", justifyContent: "center", pt: 10 }}>
-          <Typography color="text.secondary">Interview not found.</Typography>
+          <Typography color="text.secondary">
+            {error || "Interview not found."}
+          </Typography>
         </Box>
       </DashboardLayout>
     );
