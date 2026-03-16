@@ -11,36 +11,40 @@ import type { InterviewAssessment } from "@/components/features/company/intervie
 import { AppDispatch } from "@/store/store";
 import {
   fetchCompanyInterviews,
+  fetchCompanyInterviewMetrics,
   selectCompanyInterviews,
   selectCompanyInterviewsLoading,
   selectCompanyInterviewsTotal,
+  selectCompanyInterviewsTotalPages,
+  selectCompanyMetrics,
 } from "@/store/slices/interviewSlice";
 import { fetchMyPosts, selectMyPosts } from "@/store/slices/postSlice";
 
 const ROW = 12;
 
 const InterviewsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const router   = useRouter();
-  const results  = useSelector(selectCompanyInterviews) as InterviewAssessment[];
-  const loading  = useSelector(selectCompanyInterviewsLoading);
-  const total    = useSelector(selectCompanyInterviewsTotal) as number;
-  const myPosts  = useSelector(selectMyPosts) as any[];
+  const dispatch    = useDispatch<AppDispatch>();
+  const router      = useRouter();
+  const results     = useSelector(selectCompanyInterviews) as InterviewAssessment[];
+  const loading     = useSelector(selectCompanyInterviewsLoading);
+  const total       = useSelector(selectCompanyInterviewsTotal) as number;
+  const totalPages  = useSelector(selectCompanyInterviewsTotalPages) as number;
+  const metrics     = useSelector(selectCompanyMetrics);
+  const myPosts     = useSelector(selectMyPosts) as any[];
 
   const [searchName,  setSearchName]  = useState("");
   const [searchEmail, setSearchEmail] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
   const [sortBy,      setSortBy]      = useState<SortOption>("newest");
-  const [page,        setPage]        = useState(0);
+  const [page,        setPage]        = useState(1);
 
-  // Fetch only on page change — all filtering is client-side
   useEffect(() => {
-    dispatch(fetchCompanyInterviews({ page: page + 1, limit: ROW }));
+    dispatch(fetchCompanyInterviews({ page, limit: ROW }));
   }, [dispatch, page]);
 
-  // Fetch all job titles for autocomplete (once)
   useEffect(() => {
+    dispatch(fetchCompanyInterviewMetrics());
     dispatch(fetchMyPosts({ limit: 100 }));
   }, [dispatch]);
 
@@ -50,20 +54,6 @@ const InterviewsPage: React.FC = () => {
     )) as string[],
   [myPosts]);
 
-  const { excellentCount, needsWorkCount, avgScore } = useMemo(() => {
-    let excellent = 0, needsWork = 0, scoreSum = 0;
-    for (const a of results) {
-      const s = getScore(a);
-      scoreSum += s;
-      if (s >= 70) excellent++;
-      else if (s < 50) needsWork++;
-    }
-    return {
-      excellentCount: excellent,
-      needsWorkCount: needsWork,
-      avgScore:       results.length > 0 ? Math.round(scoreSum / results.length) : 0,
-    };
-  }, [results]);
 
   // Client-side filtering by name, email, job title
   const filtered = useMemo(() => {
@@ -92,8 +82,8 @@ const InterviewsPage: React.FC = () => {
     return list;
   }, [results, searchName, searchEmail, searchTitle, scoreFilter, sortBy]);
 
-  const handleScoreFilter = useCallback((f: ScoreFilter) => { setScoreFilter(f); setPage(0); }, []);
-  const handleLoadMore    = useCallback(() => setPage((p) => p + 1), []);
+  const handleScoreFilter = useCallback((f: ScoreFilter) => { setScoreFilter(f); setPage(1); }, []);
+  const handlePageChange  = useCallback((p: number) => setPage(p), []);
   const handleSelect      = useCallback((a: InterviewAssessment) => router.push(`/company/interviews/${a._id}`), [router]);
 
   return (
@@ -109,13 +99,13 @@ const InterviewsPage: React.FC = () => {
           />
 
           <InterviewsHeader
-            stats={{ total, excellent: excellentCount, avgScore, needsWork: needsWorkCount }}
-            loading={loading && page === 0}
+            stats={{ total: metrics.total || total, excellent: metrics.excellent, avgScore: Math.round(metrics.avgScore), needsWork: metrics.needWork }}
+            loading={metrics.loading}
           />
 
           <InterviewsList
             assessments={filtered}
-            loading={loading && page === 0}
+            loading={loading && page === 1}
             searchName={searchName}
             onSearchNameChange={setSearchName}
             searchEmail={searchEmail}
@@ -128,8 +118,9 @@ const InterviewsPage: React.FC = () => {
             sortBy={sortBy}
             onSortChange={setSortBy}
             onSelect={handleSelect}
-            hasMore={results.length < total}
-            onLoadMore={handleLoadMore}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
           />
         </Box>
       </DashboardLayout>
