@@ -383,5 +383,138 @@ const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitation
   }
 };
 
+// Template pour l'email après évaluation d'interview
+const getInterviewAssessmentTemplate = (candidateName, postTitle) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Assessment Confirmation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #2D3748;
+      margin: 0;
+      padding: 0;
+      background-color: #F7FAFC;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0;
+      background-color: #FFFFFF;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    .header {
+      background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .content {
+      padding: 30px;
+      background-color: #FFFFFF;
+    }
+    .success-badge {
+      background-color: #C6F6D5;
+      border: 2px solid #9AE6B4;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      color: #22543D;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .info-box {
+      background-color: #EBF8FF;
+      border-left: 4px solid #2B6CB0;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+    .info-box strong {
+      color: #2B6CB0;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #F7FAFC;
+      border-radius: 0 0 8px 8px;
+      font-size: 13px;
+      color: #718096;
+    }
+    a {
+      color: #2B6CB0;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>TalenAI</h1>
+      <p>Interview Assessment Completed</p>
+    </div>
+    <div class="content">
+      <p>Hello ${candidateName},</p>
+      
+      <div class="success-badge">
+        ✓ Your interview assessment has been successfully completed!
+      </div>
+      
+      <p>Thank you for completing the interview assessment for the position:</p>
+      
+      <div class="info-box">
+        <strong>📋 Position:</strong>
+        ${postTitle || 'Position Title'}
+      </div>
+      
+      <p>Your assessment has been recorded and the hiring team will review your responses. You will be notified about the next steps in the hiring process.</p>
+      
+      <p>If you have any questions or concerns, please don't hesitate to contact us at <a href="mailto:support@talentai.bid">support@talentai.bid</a></p>
+    </div>
+    <div class="footer">
+      <p>This email was sent automatically, please do not reply.</p>
+      <p>&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+// Fonction pour envoyer un email après une évaluation d'interview
+const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postTitle) => {
+  const html = getInterviewAssessmentTemplate(candidateName, postTitle);
+  const mailOptions = {
+    from: '"TalenAI" <contact@talentai.bid>',
+    to: candidateEmail,
+    subject: `Interview Assessment Completed - ${postTitle || 'New Opportunity'}`,
+    html,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Interview assessment email sent to ${candidateEmail}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send interview assessment email:', error.message);
+    return false;
+  }
+};
+
 // Exporter les fonctions
-module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, transporter };
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, sendInterviewAssessmentEmail, transporter };

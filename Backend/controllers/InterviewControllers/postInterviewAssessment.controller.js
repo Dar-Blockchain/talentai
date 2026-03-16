@@ -1,6 +1,7 @@
 const postInterviewAssessmentService = require("../../services/InterviewServices/postInterviewAssessment.service");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
 const PostSteps = require("../../models/postSteps.model");
+const { sendInterviewAssessmentEmail } = require("../../utils/email-service");
 
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
@@ -22,6 +23,29 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
       await postInterviewAssessmentService.createPostInterviewAssessment(
         assessmentData,
       );
+
+    // 📧 SEND EMAIL TO CANDIDATE AFTER SUCCESSFUL CREATION
+    try {
+      // Get candidate email and name
+      const candidateEmail = req.user.email;
+      const candidateName = req.user.profile?.firstName || req.user.username || 'Candidate';
+      
+      // Get post title if available
+      let postTitle = 'New Opportunity';
+      if (assessment.post && assessment.post.jobDetails) {
+        postTitle = assessment.post.jobDetails.title || 'New Opportunity';
+      }
+
+      console.log(`📧 Sending interview assessment email to: ${candidateEmail}`);
+      
+      // Send email asynchronously (don't block response)
+      sendInterviewAssessmentEmail(candidateEmail, candidateName, postTitle).catch(err => {
+        console.error('⚠️ Warning: Failed to send email, but assessment was created:', err.message);
+      });
+    } catch (emailError) {
+      console.error('⚠️ Email sending error (non-critical):', emailError.message);
+      // Don't throw - email is non-critical
+    }
 
     return res.status(201).json({
       success: true,
