@@ -89,7 +89,20 @@ const ContactSection: React.FC = () => {
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setSendError("Something went wrong. Please try again or email us directly.");
+        const json = await res.json().catch(() => null);
+        const msg: string = json?.message || "Something went wrong. Please try again or email us directly.";
+        // Route field-specific errors to the inline field helper instead of the banner
+        if (/message/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, message: msg }));
+        } else if (/email/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, email: msg }));
+        } else if (/name/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, name: msg }));
+        } else if (/company/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, company: msg }));
+        } else {
+          setSendError(msg);
+        }
       }
     } catch {
       setSendError("Network error. Please check your connection and try again.");
