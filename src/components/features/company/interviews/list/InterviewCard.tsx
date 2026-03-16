@@ -154,11 +154,11 @@ const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick
             </Box>
           </Box>
 
-          <Box sx={{ px: 1.25, py: 0.5, borderRadius: "8px", bgcolor: sc.bg, border: `1px solid ${sc.color}30`, flexShrink: 0 }}>
+          {/* <Box sx={{ px: 1.25, py: 0.5, borderRadius: "8px", bgcolor: sc.bg, border: `1px solid ${sc.color}30`, flexShrink: 0 }}>
             <Typography sx={{ fontSize: "13px", fontWeight: 800, color: sc.color, lineHeight: 1 }}>
               {score.toFixed(0)}%
             </Typography>
-          </Box>
+          </Box> */}
         </Box>
 
         {/* Score bar */}
