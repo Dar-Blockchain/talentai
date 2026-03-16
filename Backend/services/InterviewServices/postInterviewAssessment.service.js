@@ -562,11 +562,11 @@ module.exports.getInterviewMetricsForCompany = async (companyId, filters = {}) =
       $group: {
         _id: null,
         total: { $sum: 1 },
-        sumScore: { $sum: '$interviewData.finalReport.scores.overall' },
+        sumScore: { $sum: '$interviewData.finalReport.coverage.overall' },
         needWork: {
           $sum: {
             $cond: [
-              { $lt: ['$interviewData.finalReport.scores.overall', 20] },
+              { $lt: ['$interviewData.finalReport.coverage.overall', 20] },
               1,
               0,
             ],
@@ -575,7 +575,7 @@ module.exports.getInterviewMetricsForCompany = async (companyId, filters = {}) =
         excellent: {
           $sum: {
             $cond: [
-              { $gt: ['$interviewData.finalReport.scores.overall', 70] },
+              { $gt: ['$interviewData.finalReport.coverage.overall', 70] },
               1,
               0,
             ],
