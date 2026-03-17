@@ -37,7 +37,8 @@ const createPostTool = {
     // Simuler la requête pour le contrôleur
     const req = {
       body: params,
-      user: user
+      user: user,
+      headers: { authorization: user?.authToken ? `Bearer ${user.authToken}` : "" }
     };
     const res = {
       status: (code) => ({
@@ -435,7 +436,7 @@ const sendTechnicalTestTool = {
     required: ['postId', 'candidateEmail']
   },
   execute: async (params, user) => {
-    const req = { body: { ...params }, user, headers: { authorization: '' } };
+    const req = { body: { ...params }, user, headers: { authorization: user?.authToken ? `Bearer ${user.authToken}` : "" } };
     const res = {
       status: (code) => ({
         json: (data) => ({ status: code, data })
@@ -463,7 +464,7 @@ const processPostPaymentTool = {
     required: ['postId']
   },
   execute: async (params, user) => {
-    const req = { body: { ...params }, user };
+    const req = { body: { ...params }, user, headers: { authorization: user?.authToken ? `Bearer ${user.authToken}` : "" } };
     const res = {
       status: (code) => ({
         json: (data) => ({ status: code, data })
@@ -534,6 +535,38 @@ const getPostPaymentDetailsTool = {
   }
 };
 
+const getInterviewConfigTool = {
+  name: 'getInterviewConfig',
+  description: 'Obtenir la configuration d\'entretien pour un poste donné',
+  parameters: {
+    type: 'object',
+    properties: {
+      jobId: { type: 'string', description: 'ID du poste' },
+      candidateId: { type: 'string', description: 'ID du candidat (optionnel pour remplacer l\'utilisateur connecté)' }
+    },
+    required: ['jobId']
+  },
+  execute: async (params, user) => {
+    const req = {
+      params: { jobId: params.jobId },
+      user,
+      query: params.candidateId ? { candidateId: params.candidateId } : {}
+    };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.getJobInterviewConfig(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de la config d'entretien: ${error.message}`);
+    }
+  }
+};
+
 /**
  * Liste de tous les outils disponibles
  */
@@ -554,6 +587,7 @@ const availableTools = [
   processPostPaymentTool,
   getPostPaymentHistoryTool,
   getPostPaymentDetailsTool,
+  getInterviewConfigTool,
   getPublicStatsTool
 ];
 
