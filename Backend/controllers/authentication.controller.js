@@ -30,7 +30,7 @@ module.exports.register = async (req, res) => {
     const validEmail = validateEmail(email);
 
     // Validate roleType
-    const validRoleType = roleType && ['Candidate', 'Company'].includes(roleType) ? roleType : 'Candidate';
+    const validRoleType = roleType && ['Candidate', 'Company', 'Member'].includes(roleType) ? roleType : 'Candidate';
 
     const result = await authService.registerUser(
       validEmail,

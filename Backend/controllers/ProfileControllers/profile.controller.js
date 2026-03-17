@@ -498,7 +498,7 @@ module.exports.updateProfileComplete = async (req, res) => {
     if (existing && existing.profile && existing.profile.type) {
       accountType = existing.profile.type;
     } else if (existing && existing.user && existing.user.role) {
-      accountType = existing.user.role === "Company" ? "Company" : "Candidate";
+      accountType = existing.user.role === "Company" ? "Company" : existing.user.role === "Member" ? "Member" : "Candidate";
     }
     console.log(
       "👤 [updateProfileComplete] Account type determined:",
@@ -550,9 +550,9 @@ module.exports.updateProfileComplete = async (req, res) => {
         console.log(
           "✅ [updateProfileComplete] Company profile updated successfully",
         );
-      } else {
+      } else if (accountType === "Candidate" || accountType === "Member") {
         console.log(
-          "👥 [updateProfileComplete] Processing CANDIDATE profile update",
+          `👥 [updateProfileComplete] Processing ${accountType.toUpperCase()} profile update`,
         );
         // Candidate validations - Allow single field updates (no requirement for both first+last)
         const firstName = profileData.firstName || profileData.FirstName;

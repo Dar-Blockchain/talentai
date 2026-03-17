@@ -45,7 +45,7 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company"],
+      enum: ["Candidate", "Company", "Member"],
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },
@@ -173,7 +173,7 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    if (doc.type === "Company" && !doc.planLimits) {
+    if ((doc.type === "Company" || doc.type === "Member") && !doc.planLimits) {
       // Get the Trial plan
       const trialPlan = await PlanLimits.findOne({ name: "Trial" });
 
@@ -181,9 +181,9 @@ profileSchema.post("save", async function (doc) {
         await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
           planLimits: trialPlan._id,
         });
-        console.log(`✅ Trial plan assigned to company profile: ${doc._id}`);
+        console.log(`✅ Trial plan assigned to ${doc.type.toLowerCase()} profile: ${doc._id}`);
       } else {
-        console.warn(`⚠️  Trial plan not found. Company profile ${doc._id} was not assigned a plan.`);
+        console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
       }
     }
   } catch (error) {
