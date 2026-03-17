@@ -5,8 +5,6 @@
 
 const postController = require('../controllers/PostControllers/post.controller');
 const postPaymentController = require('../controllers/postPayment.controller');
-const userService = require('../services/authentication.service');
-const profileService = require('../services/ProfileService/profile.service');
 
 /**
  * Outil pour créer un post
