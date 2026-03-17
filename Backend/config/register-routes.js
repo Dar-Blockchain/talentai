@@ -34,6 +34,7 @@ const stripRouter = require("../routes/Strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
 const matchingConfigRoutes = require("../routes/matchingConfig.routes");
 const paymentRouter = require("../routes/payment.routes");
+const unlockCandidateRouter = require("../routes/unlockCandidate.routes");
 const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
@@ -100,6 +101,7 @@ function registerRoutes(app) {
 
   // Candidate Management
   app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
+  app.use("/unlock-candidate", unlockCandidateRouter); //✅ Unlock Candidate -> unlock-candidates
 
   // Blockchain & Web3
   app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools

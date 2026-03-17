@@ -150,7 +150,8 @@
 /hr-agents/all                     [DELETE] - Delete all (admin)
 
 ├─ MESSAGING & COMMUNICATION
-├─ /hr-agents/submit-evaluation-message    ├─ /hr-agents/diagnose/{id}                [GET]    - Diagnose issues
+├─ /hr-agents/submit-evaluation-message    [POST]   - HCS-10 messaging
+├─ /hr-agents/diagnose/{id}                [GET]    - Diagnose issues
 ├─ /hr-agents/fix-proof-of-reception       [POST]   - Fix reception
 ├─ /hr-agents/fix-memo/{id}                [POST]   - Fix HCS-11 memo
 ├─ /hr-agents/check-all                    [GET]    - Check all config

@@ -23,6 +23,7 @@ const permissionSchema = new mongoose.Schema(
     canCreateJobPosts: { type: Boolean, default: true },
     
     // Candidate Permissions
+    canUnlockCandidates: { type: Boolean, default: true },
     canViewCandidateProfiles: { type: Boolean, default: true },
     canContactCandidates: { type: Boolean, default: true },
 

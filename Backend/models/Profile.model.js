@@ -159,6 +159,26 @@ const profileSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // ========== BIDDING INFORMATION ==========
+    companyBid: {
+      finalBid: Number,
+      dateBid: Date,
+      company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      post: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    },
+    usersBidedByCompany: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

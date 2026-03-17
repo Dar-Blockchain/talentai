@@ -31,7 +31,38 @@ const agentConfigSchema = new mongoose.Schema({
     description: "Seuil en pourcentage pour valider un candidat",
   },
 
+  // Budget pour les bids
+  bidBudgetMin: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 10,
+    description: "Montant minimum de bid autorisé",
+  },
+  bidBudgetMax: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 1000,
+    description: "Montant maximum total que l'agent peut dépenser en bids",
+  },
 
+  // Pas d'augmentation de bid (par step)
+  bidStep: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 5,
+    description: "Incrément appliqué lors d'une augmentation de bid",
+  },
+
+  // Nombre maximum de candidats sur lesquels l'agent peut placer des bids simultanément
+  maxCandidatesToBid: {
+    type: Number,
+    min: 0,
+    default: 1,
+    description: "Nombre max de candidats que l'agent peut bidder",
+  },
 
   // Durée de vie en jours de l'agent (après création) avant expiration automatique
   agentLifetimeDays: {
@@ -41,7 +72,13 @@ const agentConfigSchema = new mongoose.Schema({
     description: "Nombre de jours de vie de l'agent",
   },
 
-
+  // Durée de vie en jours d'un bid (après placement)
+  bidLifetimeDays: {
+    type: Number,
+    min: 0,
+    default: 7,
+    description: "Nombre de jours durant lesquels un bid reste valable",
+  },
 
   // Options supplémentaires utiles
   autoSubmitTopMatch: {
