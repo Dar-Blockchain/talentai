@@ -160,6 +160,12 @@ module.exports.resendInvitation = async (invitationId, departmentId = null) => {
     throw new Error("Invitation not found");
   }
 
+  // Check if user already has an account
+  const existingUser = await User.findOne({ email: updated.email });
+  if (existingUser) {
+    throw new Error("An account with this email already exists");
+  }
+
   const { token, expiresAt } = _generateTokenAndExpiration(updated.email, updated.role);
 
   const updateData = { token, expiresAt, status: "pending" };
