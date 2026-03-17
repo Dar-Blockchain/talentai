@@ -112,6 +112,12 @@ module.exports.sentInvitation = async (
   username,
   departmentId = null,
 ) => {
+  // Check if user already has an account
+  const existingUser = await User.findOne({ email: userEmail });
+  if (existingUser) {
+    throw new Error("An account with this email already exists");
+  }
+
   const existing = await CompanyInvitationModel.findOne({
     email: userEmail,
     company,
