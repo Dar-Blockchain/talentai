@@ -13,6 +13,42 @@ This project is the backend for TalentAI, a talent and skills management platfor
 - Token-based auction system (HIP-991)
 - Event logging on HCS-10
 
+## 🤖 AI Agent Integration
+
+TalentAI provides a structured API system for AI agents to interact with the platform through "tools". This allows AI agents to perform actions like creating posts, searching candidates, and managing recruitment workflows.
+
+### Available Endpoints
+
+- `GET /ai/health` - Health check for AI services
+- `GET /ai/tools` - List available tools with descriptions
+- `POST /ai/execute-tool` - Execute a specific tool (requires authentication)
+
+### Example Usage
+
+```javascript
+// Discover available tools
+const tools = await fetch('/ai/tools');
+
+// Execute a tool
+const result = await fetch('/ai/execute-tool', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <token>',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    toolName: 'createPost',
+    parameters: {
+      title: 'Software Engineer',
+      description: 'Join our team...',
+      skills: ['JavaScript', 'React']
+    }
+  })
+});
+```
+
+For detailed documentation, see [`docs/AI_TOOLS_README.md`](docs/AI_TOOLS_README.md).
+
 ## 📋 Prerequisites
 
 - Node.js (version 14 or higher)

@@ -46,6 +46,7 @@ const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
 const interviewApplicantRouter = require('../routes/interviewApplicant.routes');
 const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
+const aiRouter = require('../routes/ai.routes');
 
 // const backupRouter = require('../routes/backupRouter');
 
@@ -110,6 +111,7 @@ function registerRoutes(app) {
   // AI & Agents
   app.use("/hr-agents", hrAgentRouter); //✅ HR Agents Management -> hr-agents
   app.use("/agent-config", agentConfigRouter); //✅ Agent Configuration -> agent-configs
+  app.use("/ai", aiRouter); //✅ AI Tools for Agent Interaction -> ai
 
   // Utility & Management
   app.use("/todo", todoRouter); //✅ To-Do Management -> todos
