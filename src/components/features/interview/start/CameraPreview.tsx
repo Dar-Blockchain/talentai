@@ -5,7 +5,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import { CameraStatus, InterviewStatus } from '@/types/interview';
 
-const BAR_COUNT = 24;
+const BAR_COUNT = 28;
 
 interface CameraPreviewProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -28,10 +28,10 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
 }) => {
   const isActive = interviewStatus === 'active';
 
-  // Re-attach stream once on mount (e.g. after the overview step transition)
   useEffect(() => {
     attachStream?.();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [bars, setBars] = useState<number[]>(Array(BAR_COUNT).fill(3));
   const animFrameRef = useRef<number | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -49,10 +49,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   }, [audioContextRef, isActive]);
 
   useEffect(() => {
-    if (!isActive) {
-      setBars(Array(BAR_COUNT).fill(3));
-      return;
-    }
+    if (!isActive) { setBars(Array(BAR_COUNT).fill(3)); return; }
     let frame = 0;
     const tick = () => {
       if (analyserRef.current) {
@@ -62,7 +59,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
         setBars(Array.from({ length: BAR_COUNT }, (_, i) => {
           const slice = data.slice(i * binSize, (i + 1) * binSize);
           const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
-          return Math.max(3, Math.round((avg / 255) * 36));
+          return Math.max(3, Math.round((avg / 255) * 40));
         }));
       } else {
         frame++;
@@ -79,67 +76,19 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   }, [isActive]);
 
   return (
-    <Box
-      sx={{
-        borderRadius: '16px',
-        overflow: 'hidden',
-        bgcolor: 'transparent',
-        border: '1px solid #ede9f8',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-      }}
-    >
-      {/* ── Header stripe ── */}
-      <Box
-        sx={{
-          bgcolor: '#8310FF',
-          px: 2.5,
-          py: 1.75,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Box display="flex" alignItems="center" gap={1}>
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              bgcolor: isActive ? '#4ade80' : 'rgba(255,255,255,0.4)',
-              boxShadow: isActive ? '0 0 0 3px rgba(74,222,128,0.3)' : 'none',
-            }}
-          />
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
-            {isActive ? 'Live Camera' : 'Camera Preview'}
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            bgcolor: 'rgba(255,255,255,0.18)',
-            border: '1px solid rgba(255,255,255,0.3)',
-            borderRadius: '20px',
-            px: 1.25,
-            py: 0.4,
-          }}
-        >
-          {isActive
-            ? <MicIcon sx={{ fontSize: 12, color: '#fff' }} />
-            : <MicOffIcon sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }} />
-          }
-          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.68rem', fontWeight: 600, color: isActive ? '#fff' : 'rgba(255,255,255,0.6)' }}>
-            {isActive ? 'Mic On' : 'Mic Off'}
-          </Typography>
-        </Box>
-      </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
 
       {/* ── Video area ── */}
-      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '21/9', bgcolor: '#1a1a2e', flexShrink: 0, overflow: 'hidden' }}>
+      <Box sx={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '16/9',
+        bgcolor: '#1a1040',
+        borderRadius: '14px',
+        overflow: 'hidden',
+        flexShrink: 0,
+        border: '1px solid #e8e2f5',
+      }}>
         <video
           ref={videoRef}
           autoPlay
@@ -156,20 +105,36 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
 
         {/* No-camera placeholder */}
         {cameraStatus !== 'granted' && (
-          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#F9FAFB' }}>
+          <Box sx={{
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 2,
+            background: 'linear-gradient(135deg,#1a1040,#2d1b69)',
+          }}>
             {cameraStatus === 'requesting' ? (
               <>
-                <CircularProgress size={32} sx={{ color: '#374151' }} />
-                <Typography sx={{ color: '#6B7280', fontSize: '0.8rem', fontFamily: 'Poppins' }}>
+                <CircularProgress size={32} sx={{ color: '#8310FF' }} />
+                <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', fontFamily: 'Poppins' }}>
                   Requesting camera access…
                 </Typography>
               </>
             ) : (
               <>
-                <Box sx={{ width: 60, height: 60, borderRadius: '50%', bgcolor: '#F3F4F6', border: '2px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <VideocamOffIcon sx={{ color: '#9CA3AF', fontSize: 28 }} />
+                <Box sx={{
+                  width: 64, height: 64, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1.5px solid rgba(255,255,255,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <VideocamOffIcon sx={{ color: 'rgba(255,255,255,0.4)', fontSize: 28 }} />
                 </Box>
-                <Typography sx={{ color: '#6B7280', fontSize: '0.82rem', fontFamily: 'Poppins', fontWeight: 500, textAlign: 'center', px: 3 }}>
+                <Typography sx={{
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: '0.82rem',
+                  fontFamily: 'Poppins',
+                  textAlign: 'center',
+                  px: 3,
+                }}>
                   {cameraStatus === 'denied' ? 'Camera access denied' : cameraError || 'Camera unavailable'}
                 </Typography>
                 {(cameraStatus === 'denied' || cameraStatus === 'error') && (
@@ -177,7 +142,12 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                     size="small"
                     variant="outlined"
                     onClick={() => window.location.reload()}
-                    sx={{ fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none', color: '#374151', borderColor: '#E5E7EB', borderRadius: '8px' }}
+                    sx={{
+                      fontFamily: 'Poppins', fontSize: '0.75rem', textTransform: 'none',
+                      color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.2)',
+                      borderRadius: '8px',
+                      '&:hover': { borderColor: '#8310FF', color: '#c084fc' },
+                    }}
                   >
                     Retry
                   </Button>
@@ -189,90 +159,99 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
 
         {/* Connecting badge */}
         {isConnecting && cameraStatus === 'granted' && (
-          <Box sx={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0.75, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', px: 1.5, py: 0.5, borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-            <CircularProgress size={11} sx={{ color: '#374151' }} />
-            <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: '#374151', fontWeight: 700 }}>Connecting…</Typography>
+          <Box sx={{
+            position: 'absolute', top: 12, right: 12,
+            display: 'flex', alignItems: 'center', gap: 0.75,
+            bgcolor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
+            px: 1.5, py: 0.5, borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.12)',
+          }}>
+            <CircularProgress size={11} sx={{ color: '#8310FF' }} />
+            <Typography sx={{ fontSize: '0.68rem', fontFamily: 'Poppins', color: '#fff', fontWeight: 700 }}>
+              Connecting…
+            </Typography>
           </Box>
         )}
 
         {/* REC badge */}
         {isActive && cameraStatus === 'granted' && (
-          <Box sx={{ position: 'absolute', top: 10, left: 10, display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: 'rgba(239,68,68,0.88)', px: 1.25, py: 0.4, borderRadius: '6px' }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#fff', animation: 'recPulse 1.2s infinite', '@keyframes recPulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.3 } } }} />
-            <Typography sx={{ color: '#fff', fontSize: '0.66rem', fontWeight: 800, fontFamily: 'Poppins', letterSpacing: '0.08em' }}>REC</Typography>
+          <Box sx={{
+            position: 'absolute', top: 12, left: 12,
+            display: 'flex', alignItems: 'center', gap: 0.6,
+            bgcolor: 'rgba(239,68,68,0.85)', backdropFilter: 'blur(4px)',
+            px: 1.25, py: 0.4, borderRadius: '6px',
+          }}>
+            <Box sx={{
+              width: 6, height: 6, borderRadius: '50%', bgcolor: '#fff',
+              animation: 'recPulse 1.2s infinite',
+              '@keyframes recPulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.25 } },
+            }} />
+            <Typography sx={{ color: '#fff', fontSize: '0.65rem', fontWeight: 800, fontFamily: 'Poppins', letterSpacing: '0.1em' }}>
+              REC
+            </Typography>
           </Box>
         )}
       </Box>
 
-      {/* ── Mic / waveform section ── */}
-      <Box sx={{ px: 2, pt: 1.5, pb: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {/* ── Waveform bar ── */}
+      <Box sx={{ mt: 2.5, px: 0.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {/* Mic label row */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={0.75}>
-            <Box
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '8px',
-                bgcolor: isActive ? '#F3F4F6' : 'rgba(156,163,175,0.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <Box sx={{
+              width: 26, height: 26, borderRadius: '7px',
+              bgcolor: '#f3f4f6',
+              border: '1px solid #e5e7eb',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               {isActive
-                ? <MicIcon sx={{ fontSize: 15, color: '#374151' }} />
-                : <MicOffIcon sx={{ fontSize: 15, color: '#9ca3af' }} />
+                ? <MicIcon sx={{ fontSize: 14, color: '#374151' }} />
+                : <MicOffIcon sx={{ fontSize: 14, color: '#9ca3af' }} />
               }
             </Box>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: '#374151' }}>
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.75rem', color: '#374151' }}>
               Microphone
             </Typography>
           </Box>
-          <Box
-            sx={{
-              px: 1,
-              py: 0.3,
-              borderRadius: '20px',
-              bgcolor: isActive ? 'rgba(34,197,94,0.1)' : 'rgba(156,163,175,0.1)',
-              border: `1px solid ${isActive ? 'rgba(34,197,94,0.25)' : 'rgba(156,163,175,0.2)'}`,
-            }}
-          >
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.65rem', fontWeight: 700, color: isActive ? '#16a34a' : '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <Box sx={{
+            px: 1, py: 0.3, borderRadius: '20px',
+            bgcolor: isActive ? 'rgba(34,197,94,0.08)' : '#f3f4f6',
+            border: `1px solid ${isActive ? 'rgba(34,197,94,0.2)' : '#e5e7eb'}`,
+          }}>
+            <Typography sx={{
+              fontFamily: 'Poppins', fontSize: '0.62rem', fontWeight: 700,
+              color: isActive ? '#16a34a' : '#9ca3af',
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+            }}>
               {isActive ? 'Active' : 'Inactive'}
             </Typography>
           </Box>
         </Box>
 
-        {/* Waveform bars */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2.5px',
-            height: 36,
-            borderRadius: '10px',
-            px: 1.5,
-            bgcolor: '#F9FAFB',
-            border: '1px solid #F3F4F6',
-            transition: 'all 0.3s ease',
-          }}
-        >
+        {/* Waveform */}
+        <Box sx={{
+          display: 'flex', alignItems: 'center', gap: '2px',
+          height: 40, borderRadius: '10px', px: 1.5,
+          bgcolor: '#f9fafb',
+          border: '1px solid #e5e7eb',
+        }}>
           {bars.map((h, i) => (
-            <Box
-              key={i}
-              sx={{
-                flex: 1,
-                height: `${h}px`,
-                borderRadius: '3px',
-                bgcolor: isActive ? '#374151' : 'rgba(209,213,219,0.6)',
-                transition: 'height 0.05s ease',
-                minWidth: 0,
-              }}
-            />
+            <Box key={i} sx={{
+              flex: 1,
+              height: `${h}px`,
+              borderRadius: '3px',
+              background: isActive ? '#374151' : '#d1d5db',
+              transition: 'height 0.05s ease',
+              minWidth: 0,
+            }} />
           ))}
         </Box>
 
-        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', textAlign: 'center', lineHeight: 1.4 }}>
+        <Typography sx={{
+          fontFamily: 'Poppins', fontSize: '0.7rem',
+          color: '#9ca3af',
+          textAlign: 'center', lineHeight: 1.4,
+        }}>
           {isActive
             ? 'Speak clearly — your voice is being captured'
             : cameraStatus === 'granted'

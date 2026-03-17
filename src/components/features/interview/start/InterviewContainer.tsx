@@ -1,64 +1,38 @@
 import React from 'react';
-import { Box, Typography, Button, LinearProgress, Chip, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import StopIcon from '@mui/icons-material/Stop';
+import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import { InterviewStatus, InterviewConfig, ConnectionStatus, CameraStatus, AgentState } from '@/types/interview';
+import { InterviewStatus, ConnectionStatus, CameraStatus, AgentState } from '@/types/interview';
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
-  interviewConfig: InterviewConfig;
   isHydrated: boolean;
   connectionStatus: ConnectionStatus;
   cameraStatus: CameraStatus;
   agentState: AgentState;
+  currentTranscript?: string;
   onStartInterview: () => void;
-  onEndInterview: () => void;
+  onEndInterview?: () => void;
   onViewResults: () => void;
-  routerQuery: any;
-  jobData?: any;
 }
-
-const PURPLE = '#8310FF';
 
 const InterviewContainer: React.FC<InterviewContainerProps> = ({
   interviewStatus,
-  interviewConfig,
   isHydrated,
   connectionStatus,
   cameraStatus,
   agentState,
+  currentTranscript,
   onStartInterview,
-  onEndInterview,
   onViewResults,
-  routerQuery,
-  jobData,
 }) => {
-  const jobPostTitle = jobData?.jobDetails?.title || jobData?.title;
 
-  const interviewLabel = jobPostTitle
-    ? jobPostTitle
-    : interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
-      ? `${interviewConfig.context.targetRole} Technical Interview`
-      : interviewConfig.interviewType === 'ASSESSMENT'
-      ? 'Soft Skills Assessment'
-      : interviewConfig.interviewType === 'EVALUATION'
-      ? 'Psychotechnic Assessment'
-      : 'HR Interview';
-
-  const interviewSub = jobData?.companyName
-    ? `${jobData.companyName} · AI-powered interview`
-    : interviewConfig.interviewType === 'TECHNICAL_INTERVIEW'
-      ? `${routerQuery.skill || 'Technical'} · ${interviewConfig.context.experienceLevel}`
-      : interviewConfig.interviewType === 'ASSESSMENT'
-      ? `${routerQuery.skill || 'Soft Skills'} · ${interviewConfig.context.experienceLevel}`
-      : 'AI-powered conversational interview';
-
-  const isActive = interviewStatus === 'active';
   const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
 
   const checks = [
@@ -76,67 +50,45 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* ── Purple header stripe ── */}
-      <Box
-        sx={{
-          bgcolor: '#8310FF',
-          px: 2.5,
-          py: 1.75,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Box>
-          <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', fontFamily: 'Poppins', lineHeight: 1.2 }}>
-            {interviewLabel}
-          </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.72rem', fontFamily: 'Poppins', mt: 0.2 }}>
-            {interviewSub}
-          </Typography>
-        </Box>
 
-        {/* Status pill */}
-        <Box
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.75,
-            bgcolor: 'rgba(255,255,255,0.18)',
-            border: '1px solid rgba(255,255,255,0.3)',
-            borderRadius: '20px',
-            px: 1.5,
-            py: 0.5,
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <Box
-            sx={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              bgcolor: isActive ? '#4ade80' : interviewStatus === 'ended' ? '#e9d5ff' : '#fff',
-              boxShadow: isActive ? '0 0 0 3px rgba(74,222,128,0.4)' : 'none',
-            }}
-          />
-          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', color: '#fff' }}>
-            {interviewStatus === 'idle' ? 'Ready' : interviewStatus === 'connecting' ? 'Connecting…' : isActive ? 'Live' : 'Completed'}
-          </Typography>
+      {/* ── Active header strip ── */}
+      {interviewStatus === 'active' && (
+        <Box sx={{
+          bgcolor: '#fff',
+          borderBottom: '1px solid #ede9f8',
+          px: 2.5, py: 1.75,
+          display: 'flex', alignItems: 'center', gap: 1.5,
+        }}>
+          <Box sx={{
+            width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+            bgcolor: agentState === 'thinking' || agentState === 'processing'
+              ? 'rgba(245,158,11,0.1)' : 'rgba(131,16,255,0.08)',
+            border: `1px solid ${agentState === 'thinking' || agentState === 'processing'
+              ? 'rgba(245,158,11,0.2)' : 'rgba(131,16,255,0.15)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {agentState === 'thinking' || agentState === 'processing' ? (
+              <AutorenewIcon sx={{
+                fontSize: 20, color: '#d97706',
+                animation: 'spin 1.2s linear infinite',
+                '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+              }} />
+            ) : (
+              <KeyboardVoiceIcon sx={{ fontSize: 20, color: '#8310FF' }} />
+            )}
+          </Box>
+          <Box>
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#111827', lineHeight: 1.2 }}>
+              {agentState === 'thinking' ? 'AI is thinking…'
+                : agentState === 'processing' ? 'Processing your answer…'
+                : 'Recording your response'}
+            </Typography>
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#9ca3af', mt: 0.2 }}>
+              {agentState === 'thinking' || agentState === 'processing'
+                ? 'Please wait…' : 'Listening to your answer…'}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
-
-      {/* ── Progress bar (active only) ── */}
-      {isActive && (
-        <LinearProgress
-          variant="indeterminate"
-          sx={{
-            height: 3,
-            bgcolor: 'rgba(131,16,255,0.12)',
-            '& .MuiLinearProgress-bar': { bgcolor: '#8310FF' },
-          }}
-        />
       )}
 
       {/* ── Body ── */}
@@ -160,7 +112,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
                 mb: 2,
               }}
             >
-              <PlayArrowIcon sx={{ fontSize: 36, color: PURPLE }} />
+              <PlayArrowIcon sx={{ fontSize: 36, color: '#8310FF' }} />
             </Box>
 
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>
@@ -170,7 +122,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
               Your AI interviewer is ready and waiting.
             </Typography>
 
-            {/* Pre-flight checks — inline, no box wrapper */}
+            {/* Pre-flight checks */}
             <Box sx={{ mb: 3 }}>
               {checks.map(({ label, ok }) => (
                 <Box
@@ -231,7 +183,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
         {/* ── CONNECTING ── */}
         {interviewStatus === 'connecting' && (
           <Box sx={{ textAlign: 'center', py: 2 }}>
-            <CircularProgress size={48} sx={{ color: PURPLE, mb: 2 }} />
+            <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
               Starting interview…
             </Typography>
@@ -243,62 +195,22 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
 
         {/* ── ACTIVE ── */}
         {interviewStatus === 'active' && (
-          <Box sx={{ textAlign: 'center', py: 1 }}>
-            <Chip
-              label={
-                agentState === 'thinking' ? 'AI is thinking…'
-                : agentState === 'processing' ? 'Processing your answer…'
-                : agentState === 'waiting' ? 'Listening to you…'
-                : 'Ready'
-              }
-              sx={{
-                fontFamily: 'Poppins',
-                fontWeight: 600,
-                fontSize: '0.8rem',
-                mb: 3,
-                height: 32,
-                bgcolor:
-                  agentState === 'thinking' || agentState === 'processing'
-                    ? 'rgba(245,158,11,0.1)'
-                    : agentState === 'waiting'
-                    ? 'rgba(34,197,94,0.1)'
-                    : 'rgba(131,16,255,0.08)',
-                color:
-                  agentState === 'thinking' || agentState === 'processing'
-                    ? '#d97706'
-                    : agentState === 'waiting'
-                    ? '#16a34a'
-                    : PURPLE,
-                border: '1px solid',
-                borderColor:
-                  agentState === 'thinking' || agentState === 'processing'
-                    ? 'rgba(245,158,11,0.25)'
-                    : agentState === 'waiting'
-                    ? 'rgba(34,197,94,0.25)'
-                    : 'rgba(131,16,255,0.2)',
-              }}
-            />
+          <Box sx={{ py: 1 }}>
 
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={onEndInterview}
-              startIcon={<StopIcon />}
-              sx={{
-                fontFamily: 'Poppins',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                py: 1.5,
-                borderRadius: '12px',
-                bgcolor: '#ef4444',
-                color: '#fff',
-                textTransform: 'none',
-                boxShadow: 'none',
-                '&:hover': { bgcolor: '#dc2626', boxShadow: 'none' },
-              }}
-            >
-              End Interview
-            </Button>
+            {/* Live transcript */}
+            <Typography sx={{
+              fontFamily: 'Poppins', fontSize: '0.82rem',
+              color: currentTranscript ? '#374151' : '#9ca3af',
+              fontStyle: currentTranscript ? 'normal' : 'italic',
+              lineHeight: 1.7,
+              mb: 2,
+              minHeight: 80,
+            }}>
+              {currentTranscript
+                ? currentTranscript.slice(-400) + (currentTranscript.length > 400 ? '…' : '')
+                : 'Waiting for speech…'}
+            </Typography>
+
           </Box>
         )}
 

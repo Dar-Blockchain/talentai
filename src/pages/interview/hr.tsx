@@ -24,7 +24,6 @@ import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
 import {
   InterviewMessage,
   Coverage,
-  RealTimeReport,
 } from '@/types/interview';
 
 // Hooks
@@ -47,13 +46,12 @@ import {
   CameraPreview,
   AgentStatusPanel,
   InterviewContainer,
-  CoverageDashboard,
   PipelineModals,
   SecurityModals,
   InterviewTimer,
 } from '@/components/features/interview/start';
 import JobOverview from '@/components/features/interview/start/JobOverview';
-import InterviewIntro, { ApplicantData } from '@/components/features/interview/start/InterviewIntro';
+import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
 
 // Styles
@@ -68,10 +66,7 @@ const IntelligentInterviewTest = () => {
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
   const [step, setStep] = useState<'intro' | 'overview' | 'interview'>('intro');
-  const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [coverage, setCoverage] = useState<Coverage | null>(null);
-  const [realTimeReport, setRealTimeReport] = useState<RealTimeReport | null>(null);
-  const [applicantData, setApplicantData] = useState<ApplicantData | null>(null);
   const [assessmentChecking, setAssessmentChecking] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
@@ -155,7 +150,6 @@ const IntelligentInterviewTest = () => {
   }, []);
 
   const handleCoverageUpdate = useCallback((newCoverage: Coverage) => { setCoverage(newCoverage); }, []);
-  const handleReportUpdate = useCallback((report: RealTimeReport) => { setRealTimeReport(report); }, []);
 
   const handleSilenceResponse = useCallback((data: SilenceResponseData) => {
     audio.setSilenceCount(data.silenceCount);
@@ -236,7 +230,6 @@ const IntelligentInterviewTest = () => {
     onInterviewStarted: handleInterviewStarted,
     onInterviewMessage: handleInterviewMessage,
     onCoverageUpdate: handleCoverageUpdate,
-    onReportUpdate: handleReportUpdate,
     onSilenceResponse: handleSilenceResponse,
     onVoiceActivity: handleVoiceActivity,
     onInterviewEnded: handleInterviewEnded,
@@ -430,8 +423,7 @@ const IntelligentInterviewTest = () => {
         refParam={refParam}
         totalSteps={hasJobId ? 3 : 2}
         jobData={jobData}
-        onNext={(data) => {
-          setApplicantData(data);
+        onNext={() => {
           setStep(hasJobId ? 'overview' : 'interview');
         }}
       />
@@ -456,8 +448,6 @@ const IntelligentInterviewTest = () => {
       <style jsx global>{GlobalStyles}</style>
       <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
 
-        {/* ── Shared Header (same as dashboard/candidate) ── */}
-        <Header />
 
         {/* ── Connection warning banner ── */}
         {socket.isHydrated && socket.connectionStatus !== 'connected' && (
@@ -478,78 +468,101 @@ const IntelligentInterviewTest = () => {
               bgcolor: '#fff',
               borderRadius: '20px',
               border: '1px solid #e8e2f5',
-              boxShadow: '0 8px 32px rgba(131,16,255,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+              boxShadow: 'none',
               px: { xs: 2.5, md: 3.5 },
               py: { xs: 2, md: 2.5 },
               mb: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 1.5,
             }}
           >
-            <Box display="flex" alignItems="center" gap={1.5}>
-
-              <Box>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#000', lineHeight: 1.2 }}>
-                  {interviewLabel}
-                </Typography>
-                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: 'rgba(100,113,131,1)', mt: 0.25 }}>
-                  {jobData?.companyName
-                    ? `${jobData.companyName} · AI-powered interview`
-                    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
-                    ? `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`
-                    : 'AI-powered conversational interview'}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-              {/* Pipeline step chip */}
-              {isPipelineJob && currentPipelineStep && candidateProgress && (
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Chip
-                    label={`Step ${currentPipelineStep} / ${candidateProgress.steps.length}`}
-                    size="small"
-                    sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
-                  />
-                  <LinearProgress
-                    variant="determinate"
-                    value={(candidateProgress.steps.filter((s: any) => s.status === 'done').length / candidateProgress.steps.length) * 100}
-                    sx={{ width: 64, borderRadius: 4, bgcolor: 'rgba(131,16,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: PURPLE } }}
-                  />
+            {/* Top row */}
+            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
+              <Box display="flex" alignItems="center" gap={1.5}>
+                <Box>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', lineHeight: 1.2 }}>
+                      {interviewLabel}
+                    </Typography>
+                  </Box>
+                  {(jobData?.companyName || interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW') && (
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.78rem', color: '#6B7280', mt: 0.25 }}>
+                      {jobData?.companyName
+                        ? `${jobData.companyName} · AI-powered interview`
+                        : `${router.query.skill || 'Technical'} · ${interviewConfig.context?.experienceLevel || ''}`}
+                    </Typography>
+                  )}
                 </Box>
-              )}
+              </Box>
 
-              {/* Status pill */}
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.75,
-                  bgcolor: isActive ? 'rgba(34,197,94,0.08)' : socket.interviewStatus === 'ended' ? 'rgba(139,92,246,0.08)' : 'rgba(100,113,131,0.08)',
-                  border: `1px solid ${isActive ? 'rgba(34,197,94,0.25)' : socket.interviewStatus === 'ended' ? 'rgba(139,92,246,0.25)' : 'rgba(100,113,131,0.15)'}`,
-                  borderRadius: '20px',
-                  px: 1.5,
-                  py: 0.5,
-                }}
-              >
-                <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: isActive ? '#22c55e' : socket.interviewStatus === 'ended' ? '#8b5cf6' : '#6b7280', boxShadow: isActive ? '0 0 0 3px rgba(34,197,94,0.25)' : 'none' }} />
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.75rem', color: isActive ? '#16a34a' : socket.interviewStatus === 'ended' ? '#7c3aed' : 'rgba(100,113,131,1)' }}>
-                  {isActive ? 'Live' : socket.interviewStatus === 'ended' ? 'Completed' : 'Ready'}
-                </Typography>
+              <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+                {/* Pipeline step chip */}
+                {isPipelineJob && currentPipelineStep && candidateProgress && (
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Chip
+                      label={`Step ${currentPipelineStep} / ${candidateProgress.steps.length}`}
+                      size="small"
+                      sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', bgcolor: 'rgba(131,16,255,0.08)', color: PURPLE, border: '1px solid rgba(131,16,255,0.2)', height: 24 }}
+                    />
+                  </Box>
+                )}
+
+                {/* End button — active only */}
+                {isActive && (
+                  <Button
+                    variant="contained"
+                    onClick={endInterview}
+                    sx={{
+                      fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.92rem', textTransform: 'none',
+                      bgcolor: '#fef2f2', color: '#ef4444', borderRadius: '12px', px: 3, py: 1.25,
+                      boxShadow: 'none', border: '1px solid rgba(239,68,68,0.2)',
+                      '&:hover': { bgcolor: '#fee2e2', boxShadow: 'none' },
+                    }}
+                  >
+                    End Interview
+                  </Button>
+                )}
               </Box>
             </Box>
+
           </Box>
 
-          {/* ── Main white card wrapping everything ── */}
+          {/* ── Interview completion block ── */}
+          {isActive && (
+            <Box sx={{
+              bgcolor: '#fff',
+              borderRadius: '16px',
+              border: '1px solid #e8e2f5',
+              boxShadow: 'none',
+              px: { xs: 2.5, md: 3.5 },
+              py: 2,
+              mb: 3,
+            }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
+                  Interview completion
+                </Typography>
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: PURPLE }}>
+                  {Math.round(coverage?.overall ?? 0)}%
+                </Typography>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(coverage?.overall ?? 0, 100)}
+                sx={{
+                  height: 6, borderRadius: 4,
+                  bgcolor: 'rgba(131,16,255,0.08)',
+                  '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg,#8310FF,#a855f7)', borderRadius: 4 },
+                }}
+              />
+            </Box>
+          )}
+
+          {/* ── Main card wrapping everything ── */}
           <Box
             sx={{
               bgcolor: '#fff',
               borderRadius: '20px',
               border: '1px solid #e8e2f5',
-              boxShadow: '0 8px 32px rgba(131,16,255,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+              boxShadow: 'none',
               overflow: 'hidden',
             }}
           >
@@ -588,48 +601,25 @@ const IntelligentInterviewTest = () => {
               <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <InterviewContainer
                   interviewStatus={socket.interviewStatus}
-                  interviewConfig={interviewConfig}
                   isHydrated={socket.isHydrated}
                   connectionStatus={socket.connectionStatus}
                   cameraStatus={camera.cameraStatus}
                   agentState={audio.agentState}
+                  currentTranscript={audio.currentTranscript}
                   onStartInterview={startInterview}
                   onEndInterview={endInterview}
                   onViewResults={handleViewResults}
-                  routerQuery={router.query}
-                  jobData={jobData}
                 />
 
                 <AgentStatusPanel
                   interviewStatus={socket.interviewStatus}
                   agentState={audio.agentState}
-                  agentMessage={audio.agentMessage}
-                  isInReadingTime={audio.isInReadingTime}
-                  readingTimeLeft={audio.readingTimeLeft}
-                  accumulatedTurns={audio.accumulatedTurns}
-                  isVoiceActive={audio.isVoiceActive}
-                  currentTranscript={audio.currentTranscript}
-                  debugMode={audio.debugMode}
-                  setDebugMode={audio.setDebugMode}
-                  silenceDebugLog={audio.silenceDebugLog}
-                  transcriptDebugLog={audio.transcriptDebugLog}
                   onSubmitAnswer={audio.sendAccumulatedAnswer}
                 />
               </Box>
             </Box>
           </Box>
 
-          {/* ── Coverage Dashboard (full width, below camera+controls) ── */}
-          <Box sx={{ mt: 3 }}>
-            <CoverageDashboard
-              interviewStatus={socket.interviewStatus}
-              coverage={coverage}
-              realTimeReport={realTimeReport}
-              agentMessage={audio.agentMessage}
-              coverageDashboardExpanded={coverageDashboardExpanded}
-              onToggleExpand={() => setCoverageDashboardExpanded(prev => !prev)}
-            />
-          </Box>
         </Container>
 
         {/* ── GDPR Consent Modal ── */}
