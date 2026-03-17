@@ -32,6 +32,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/chat",                roles: ["Candidate", "Company"] },
   { prefix: "/workspaces",          roles: ["Candidate"] },
   { prefix: "/assessment",          roles: ["Candidate"] },
+  { prefix: "/employee",            roles: ["Employee"] },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -95,6 +96,8 @@ export function middleware(request: NextRequest) {
       ? "/dashboard/admin"
       : role === "Company"
       ? "/company/dashboard"
+      : role === "Employee"
+      ? "/employee/dashboard"
       : "/dashboard/candidate";
     return NextResponse.redirect(new URL(destination, request.url));
   }

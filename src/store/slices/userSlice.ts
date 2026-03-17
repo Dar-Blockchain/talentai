@@ -19,7 +19,7 @@ interface UserState {
     loading: boolean;
     error: string | null;
   };
-  userType: "company" | "candidate" | null;
+  userType: "company" | "candidate" | "employee" | null;
   currentSpace?: "personal" | "membership" | null;
 }
 
@@ -153,7 +153,7 @@ const userSlice = createSlice({
       state.targetUser.user = null;
       state.targetUser.profile = null;
     },
-    setUserType(state, action: PayloadAction<"company" | "candidate">) {
+    setUserType(state, action: PayloadAction<"company" | "candidate" | "employee">) {
       state.userType = action.payload;
     },
     setCurrentSpace(state, action: PayloadAction<"personal" | "membership">) {

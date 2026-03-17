@@ -36,6 +36,7 @@ const roleMapping: Record<string, MemberRole> = {
   technical_leader: "TechLead",
   supervisor: "Supervisor",
   manager: "Manager",
+  owner: "Owner",
 };
 
 const EmployeesPage: React.FC = () => {
@@ -154,6 +155,11 @@ const EmployeesPage: React.FC = () => {
     return list;
   }, [members, search, roleFilter, sortBy]);
 
+  const filteredInvitations = useMemo(() => {
+    if (roleFilter === "all") return invitations;
+    return invitations.filter((inv) => inv.role === roleFilter);
+  }, [invitations, roleFilter]);
+
   const active = members.filter((m) => m.status === "active").length;
   const owners = members.filter((m) => m.role === "Owner").length;
 
@@ -209,7 +215,7 @@ const EmployeesPage: React.FC = () => {
               onSelect={setDetailMember}
               onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
               onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
-              invitations={invitations}
+              invitations={filteredInvitations}
               fetchingInvitations={fetchingInvitations}
               onResend={handleResendInvitation}
               onCancel={handleCancelInvitation}

@@ -16,30 +16,30 @@ export const navigation = [
     label: "Dashboard",
     href: "/company/dashboard",
   },
-  // {
-  //   id: "campaigns",
-  //   icon: CampaignOutlined,
-  //   label: "Campaigns",
-  //   href: "/company/campaigns",
-  // },
+  {
+    id: "campaigns",
+    icon: CampaignOutlined,
+    label: "Campaigns",
+    href: "/company/campaigns",
+  },
   {
     id: "posts",
     icon: ArticleOutlined,
     label: "Posts",
     href: "/company/posts",
   },
-  // {
-  //   id: "employees",
-  //   icon: GroupsOutlined,
-  //   label: "Employees",
-  //   href: "/company/employees",
-  // },
-  // {
-  //   id: "departments",
-  //   icon: CorporateFareOutlined,
-  //   label: "Departments",
-  //   href: "/company/departments",
-  // },
+  {
+    id: "employees",
+    icon: GroupsOutlined,
+    label: "Employees",
+    href: "/company/employees",
+  },
+  {
+    id: "departments",
+    icon: CorporateFareOutlined,
+    label: "Departments",
+    href: "/company/departments",
+  },
   {
     id: "interviews",
     icon: HowToRegOutlined,

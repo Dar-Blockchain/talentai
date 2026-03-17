@@ -10,6 +10,7 @@ import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
 import CodeOutlined from '@mui/icons-material/CodeOutlined';
 import SupervisorAccountOutlined from '@mui/icons-material/SupervisorAccountOutlined';
 import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
+import AdminPanelSettingsOutlined from '@mui/icons-material/AdminPanelSettingsOutlined';
 import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
@@ -26,10 +27,11 @@ interface AddEmployeeModalProps {
 }
 
 const ROLES = [
-  { value: 'hr',               label: 'HR',             description: 'Recruitment & team ops',   icon: PeopleOutlined,              color: '#16A34A' },
-  { value: 'technical_leader', label: 'Tech Lead',      description: 'Technical assessments',    icon: CodeOutlined,                color: '#0891B2' },
-  { value: 'supervisor',       label: 'Supervisor',     description: 'Team operations',          icon: SupervisorAccountOutlined,   color: '#D97706' },
-  { value: 'manager',          label: 'Manager',        description: 'Department strategy',      icon: ManageAccountsOutlined,      color: '#8310FF' },
+  { value: 'hr',               label: 'HR',             description: 'Recruitment & team ops',            icon: PeopleOutlined,              color: '#16A34A' },
+  { value: 'technical_leader', label: 'Tech Lead',      description: 'Technical assessments',             icon: CodeOutlined,                color: '#0891B2' },
+  { value: 'supervisor',       label: 'Supervisor',     description: 'Team operations',                   icon: SupervisorAccountOutlined,   color: '#D97706' },
+  { value: 'manager',          label: 'Manager',        description: 'Department strategy',               icon: ManageAccountsOutlined,      color: '#8310FF' },
+  { value: 'owner',            label: 'Owner',          description: 'Full workspace ownership & control', icon: AdminPanelSettingsOutlined,  color: '#DC2626' },
 ] as const;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

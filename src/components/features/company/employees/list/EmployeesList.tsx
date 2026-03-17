@@ -240,32 +240,42 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
   return (
     <Box>
       {/* Toolbar */}
-      <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
-        <TextField
-          size="small"
-          placeholder="Search by name or email…"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            flexGrow: 1, maxWidth: 380,
-            "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "14px", bgcolor: "#fff" },
-          }}
-        />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 3 }}>
+        {/* Row 1: search + sort */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <TextField
+            size="small"
+            placeholder="Search by name or email…"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              flexGrow: 1, maxWidth: 420,
+              "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "14px", bgcolor: "#fff" },
+            }}
+          />
+          <SortButton sortBy={sortBy} onChange={onSortChange} />
+        </Box>
 
+        {/* Row 2: role filter chips */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-          <FilterListOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mr: 0.5 }}>
+            <FilterListOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#9CA3AF", whiteSpace: "nowrap" }}>
+              Role:
+            </Typography>
+          </Box>
           {ROLE_FILTERS.map((f) => {
-            const active   = roleFilter === f.id;
-            const rs       = f.id !== "all" ? ROLE_STYLES[f.id] : null;
-            const color    = rs?.color ?? "#374151";
-            const bg       = rs?.bg    ?? "#F3F4F6";
+            const active = roleFilter === f.id;
+            const rs     = f.id !== "all" ? ROLE_STYLES[f.id] : null;
+            const color  = rs?.color ?? "#374151";
+            const bg     = rs?.bg    ?? "#F3F4F6";
             return (
               <Chip
                 key={f.id}
@@ -284,8 +294,6 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
             );
           })}
         </Box>
-
-        <SortButton sortBy={sortBy} onChange={onSortChange} />
       </Box>
 
       {/* White container */}
