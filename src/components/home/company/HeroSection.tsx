@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Box, Button, Typography, Stack } from "@mui/material";
+import CaptchaModal from "./CaptchaModal";
 
 const ACCENT = "#0CDA8B";
+const CALENDLY = "https://calendly.com/talent__ai/30min";
 
 const STATS = [
   { value: "90%", label: "Less Screening Time", sub: "AI filters candidates automatically" },
@@ -10,6 +13,11 @@ const STATS = [
 ];
 
 const CompanyHeroSection = () => {
+  const [captchaOpen, setCaptchaOpen] = useState(false);
+
+  const openDemo = () => setCaptchaOpen(true);
+  const handleVerified = () => window.open(CALENDLY, "_blank");
+
   return (
     <Box
       sx={{
@@ -85,7 +93,7 @@ const CompanyHeroSection = () => {
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mb: 1.5 }}>
             <Button
               variant="contained"
-              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
+              onClick={openDemo}
               sx={{
                 backgroundColor: ACCENT,
                 color: "#fff",
@@ -104,7 +112,7 @@ const CompanyHeroSection = () => {
 
             <Button
               variant="outlined"
-              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
+              onClick={openDemo}
               sx={{
                 border: `2px solid ${ACCENT}`,
                 color: "black",
@@ -175,6 +183,8 @@ const CompanyHeroSection = () => {
         </Box>
 
       </Box>
+
+      <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
     </Box>
   );
 };

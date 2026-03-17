@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
+import CaptchaModal from "./CaptchaModal";
 
 const RED        = "#EF4444";
 const RED_BG     = "rgba(239,68,68,0.08)";
 const ACCENT     = "#0CDA8B";
-
+const CALENDLY   = "https://calendly.com/talent__ai/30min";
 
 const PAIN_POINTS = [
   {
@@ -38,127 +40,135 @@ const TRUST = [
   { icon: <CancelOutlined sx={{ fontSize: 13 }} />,      label: "Cancel anytime" },
 ];
 
-const StakesSection: React.FC = () => (
-  <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
+const StakesSection: React.FC = () => {
+  const [captchaOpen, setCaptchaOpen] = useState(false);
 
-    {/* ── Two-col layout: left copy / right stat cards ── */}
-    <Box sx={{
-      display: "grid",
-      gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
-      gap: { xs: 6, lg: 8 },
-      alignItems: "center",
-    }}>
+  const openDemo = () => setCaptchaOpen(true);
+  const handleVerified = () => window.open(CALENDLY, "_blank");
 
-      {/* LEFT — copy */}
-      <Box>
-        {/* Overline */}
-        <Box sx={{
-          display: "inline-flex", alignItems: "center", gap: 1,
-          bgcolor: RED_BG, border: "1.5px solid rgba(239,68,68,0.40)",
-          borderRadius: "24px", px: 2.5, py: 1, mb: 3,
-        }}>
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: RED, letterSpacing: "0.6px" }}>
-            The Cost of Inaction
-          </Typography>
-        </Box>
+  return (
+    <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
 
-        {/* Headline */}
-        <Typography sx={{
-          fontFamily: "Poppins", fontWeight: 700,
-          fontSize: { xs: "26px", sm: "32px", md: "42px" },
-          lineHeight: 1.15, color: "#fff", mb: 3, maxWidth: 560,
-        }}>
-          What Happens When You{" "}
-          <Box component="span" sx={{
-            color: RED,
-            textShadow: "0 0 40px rgba(239,68,68,0.4)",
-          }}>
-            Don't Fix
-          </Box>{" "}
-          Your Hiring Process?
-        </Typography>
-
-        {/* Body */}
-        <Typography sx={{
-          fontFamily: "Poppins", fontSize: { xs: "15px", md: "16px" },
-          color: "rgba(255,255,255,0.50)", lineHeight: 1.8,
-          maxWidth: 520, mb: 5,
-        }}>
-          Every open role, every gut-feel decision, every 6-week hiring cycle has a
-          price tag. The companies automating now will own the talent market.
-          The ones that don't will keep losing their best candidates to faster competitors.
-        </Typography>
-
-        {/* CTA */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-start" }}>
-          <Button
-            variant="contained"
-            endIcon={<ArrowForwardOutlined />}
-            onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
-            sx={{
-              bgcolor: ACCENT, color: "#fff",
-              fontFamily: "Poppins", fontWeight: 700, fontSize: "15px",
-              textTransform: "none", borderRadius: 0,
-              px: 4, py: 1.75,
-              boxShadow: "none",
-              "&:hover": { bgcolor: ACCENT, boxShadow: "none" },
-            }}
-          >
-            Start Hiring Smarter Today
-          </Button>
-
-          {/* Trust row */}
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2.5 }}>
-            {TRUST.map((t) => (
-              <Box key={t.label} sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "rgba(255,255,255,0.30)" }}>
-                {t.icon}
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
-                  {t.label}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      </Box>
-
-      {/* RIGHT — stat cards 2×2 grid */}
+      {/* ── Two-col layout: left copy / right stat cards ── */}
       <Box sx={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 2,
+        gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+        gap: { xs: 6, lg: 8 },
+        alignItems: "center",
       }}>
-        {PAIN_POINTS.map((p, i) => (
-          <Box key={i} sx={{
-            p: { xs: 2.5, md: 3 },
-          }}>
 
-            <Typography sx={{
-              fontFamily: "Poppins", fontWeight: 900,
-              fontSize: { xs: "30px", md: "38px" },
-              color: RED, lineHeight: 1, mb: 0.5,
-              letterSpacing: "-1px",
-            }}>
-              {p.stat}
-            </Typography>
-            <Typography sx={{
-              fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
-              color: "rgba(239,68,68,0.70)", letterSpacing: "0.5px",
-              textTransform: "uppercase", mb: 1.5,
-            }}>
-              {p.label}
-            </Typography>
-            <Typography sx={{
-              fontFamily: "Poppins", fontSize: "12px",
-              color: "rgba(255,255,255,0.40)", lineHeight: 1.55,
-            }}>
-              {p.desc}
+        {/* LEFT — copy */}
+        <Box>
+          {/* Overline */}
+          <Box sx={{
+            display: "inline-flex", alignItems: "center", gap: 1,
+            bgcolor: RED_BG, border: "1.5px solid rgba(239,68,68,0.40)",
+            borderRadius: "24px", px: 2.5, py: 1, mb: 3,
+          }}>
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: RED, letterSpacing: "0.6px" }}>
+              The Cost of Inaction
             </Typography>
           </Box>
-        ))}
+
+          {/* Headline */}
+          <Typography sx={{
+            fontFamily: "Poppins", fontWeight: 700,
+            fontSize: { xs: "26px", sm: "32px", md: "42px" },
+            lineHeight: 1.15, color: "#fff", mb: 3, maxWidth: 560,
+          }}>
+            What Happens When You{" "}
+            <Box component="span" sx={{
+              color: RED,
+              textShadow: "0 0 40px rgba(239,68,68,0.4)",
+            }}>
+              Don't Fix
+            </Box>{" "}
+            Your Hiring Process?
+          </Typography>
+
+          {/* Body */}
+          <Typography sx={{
+            fontFamily: "Poppins", fontSize: { xs: "15px", md: "16px" },
+            color: "rgba(255,255,255,0.50)", lineHeight: 1.8,
+            maxWidth: 520, mb: 5,
+          }}>
+            Every open role, every gut-feel decision, every 6-week hiring cycle has a
+            price tag. The companies automating now will own the talent market.
+            The ones that don't will keep losing their best candidates to faster competitors.
+          </Typography>
+
+          {/* CTA */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "flex-start" }}>
+            <Button
+              variant="contained"
+              endIcon={<ArrowForwardOutlined />}
+              onClick={openDemo}
+              sx={{
+                bgcolor: ACCENT, color: "#fff",
+                fontFamily: "Poppins", fontWeight: 700, fontSize: "15px",
+                textTransform: "none", borderRadius: 0,
+                px: 4, py: 1.75,
+                boxShadow: "none",
+                "&:hover": { bgcolor: ACCENT, boxShadow: "none" },
+              }}
+            >
+              Start Hiring Smarter Today
+            </Button>
+
+            {/* Trust row */}
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2.5 }}>
+              {TRUST.map((t) => (
+                <Box key={t.label} sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "rgba(255,255,255,0.30)" }}>
+                  {t.icon}
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
+                    {t.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* RIGHT — stat cards 2×2 grid */}
+        <Box sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 2,
+        }}>
+          {PAIN_POINTS.map((p, i) => (
+            <Box key={i} sx={{
+              p: { xs: 2.5, md: 3 },
+            }}>
+              <Typography sx={{
+                fontFamily: "Poppins", fontWeight: 900,
+                fontSize: { xs: "30px", md: "38px" },
+                color: RED, lineHeight: 1, mb: 0.5,
+                letterSpacing: "-1px",
+              }}>
+                {p.stat}
+              </Typography>
+              <Typography sx={{
+                fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
+                color: "rgba(239,68,68,0.70)", letterSpacing: "0.5px",
+                textTransform: "uppercase", mb: 1.5,
+              }}>
+                {p.label}
+              </Typography>
+              <Typography sx={{
+                fontFamily: "Poppins", fontSize: "12px",
+                color: "rgba(255,255,255,0.40)", lineHeight: 1.55,
+              }}>
+                {p.desc}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+
       </Box>
 
+      <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
     </Box>
-  </Box>
-);
+  );
+};
 
 export default StakesSection;
