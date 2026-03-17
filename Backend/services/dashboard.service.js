@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const User = require("../models/User.model");
 const Post = require('../models/Post.model');
 const Feedback = require('../models/feedback.model');
+const Bid = require('../models/Bid.model');
 const Profile = require('../models/Profile.model');
 
 module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
@@ -269,15 +270,13 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
 module.exports.getCounts = async () => {
   try {
     // Run independent counts in parallel
-    const [userCount, postCount, jobAssessmentCount, feedbackCount] = await Promise.all([
+    const [userCount, postCount, jobAssessmentCount, feedbackCount, bidCount] = await Promise.all([
       User.countDocuments(),
       Post.countDocuments(),
       JobAssessmentResult.countDocuments(),
-      Feedback.countDocuments()
+      Feedback.countDocuments(),
+      Bid.countDocuments()
     ]);
-    
-    // Bid system disabled - bidding functionality has been removed
-    const bidCount = 0;
 
     // Prepare aggregate promises
     const totalSkillsPromise = Profile.aggregate([

@@ -3,9 +3,13 @@
  * Handles company permissions management operations (Admin only)
  *
  * Uses the new PermissionModel with 7 granular permissions:
+ * Uses the new PermissionModel with 9 granular permissions:
+ * Uses the new PermissionModel with 8 granular permissions:
  * - canCreateJobPosts
+ * - canUnlockCandidates
  * - canViewCandidateProfiles
  * - canContactCandidates
+ * - canAccessMatching
  * - canUseHRAgents
  * - canManageTeam
  * - canInviteMembers
@@ -69,8 +73,10 @@ module.exports.getCompanyPermissions = async (req, res) => {
         success: true,
         permissions: {
           canCreateJobPosts: true,
+          canUnlockCandidates: true,
           canViewCandidateProfiles: true,
           canContactCandidates: true,
+          canAccessMatching: true,
           canUseHRAgents: true,
           canManageTeam: true,
           canInviteMembers: true,
@@ -82,10 +88,14 @@ module.exports.getCompanyPermissions = async (req, res) => {
     console.log("✅ [Permissions] Found permission document:", permission._id);
 
     // Return the 7 permissions from PermissionModel
+    // Return the 9 permissions from PermissionModel
+    // Return the 8 permissions from PermissionModel
     const permissions = {
       canCreateJobPosts: permission.canCreateJobPosts,
+      canUnlockCandidates: permission.canUnlockCandidates,
       canViewCandidateProfiles: permission.canViewCandidateProfiles,
       canContactCandidates: permission.canContactCandidates,
+      canAccessMatching: permission.canAccessMatching,
       canUseHRAgents: permission.canUseHRAgents,
       canManageTeam: permission.canManageTeam,
       canInviteMembers: permission.canInviteMembers,
@@ -131,8 +141,10 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     // Validate all required permission fields
     const requiredFields = [
       "canCreateJobPosts",
+      "canUnlockCandidates",
       "canViewCandidateProfiles",
       "canContactCandidates",
+      "canAccessMatching",
       "canUseHRAgents",
       "canManageTeam",
       "canInviteMembers",
@@ -186,8 +198,10 @@ module.exports.updateCompanyPermissions = async (req, res) => {
       {
         $set: {
           canCreateJobPosts: permissions.canCreateJobPosts,
+          canUnlockCandidates: permissions.canUnlockCandidates,
           canViewCandidateProfiles: permissions.canViewCandidateProfiles,
           canContactCandidates: permissions.canContactCandidates,
+          canAccessMatching: permissions.canAccessMatching,
           canUseHRAgents: permissions.canUseHRAgents,
           canManageTeam: permissions.canManageTeam,
           canInviteMembers: permissions.canInviteMembers,
@@ -210,8 +224,10 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     // Return the updated permissions
     const resultPermissions = {
       canCreateJobPosts: updatedPermission.canCreateJobPosts,
+      canUnlockCandidates: updatedPermission.canUnlockCandidates,
       canViewCandidateProfiles: updatedPermission.canViewCandidateProfiles,
       canContactCandidates: updatedPermission.canContactCandidates,
+      canAccessMatching: updatedPermission.canAccessMatching,
       canUseHRAgents: updatedPermission.canUseHRAgents,
       canManageTeam: updatedPermission.canManageTeam,
       canInviteMembers: updatedPermission.canInviteMembers,
@@ -292,8 +308,10 @@ module.exports.getMyPermissions = async (req, res) => {
         success: true,
         permissions: {
           canCreateJobPosts: true,
+          canUnlockCandidates: true,
           canViewCandidateProfiles: true,
           canContactCandidates: true,
+          canAccessMatching: true,
           canUseHRAgents: true,
           canManageTeam: true,
           canInviteMembers: true,
@@ -305,10 +323,14 @@ module.exports.getMyPermissions = async (req, res) => {
     console.log("✅ [Permissions] Found permission document:", permission._id);
 
     // Return the 7 permissions from PermissionModel
+    // Return the 9 permissions from PermissionModel
+    // Return the 8 permissions from PermissionModel
     const permissions = {
       canCreateJobPosts: permission.canCreateJobPosts,
+      canUnlockCandidates: permission.canUnlockCandidates,
       canViewCandidateProfiles: permission.canViewCandidateProfiles,
       canContactCandidates: permission.canContactCandidates,
+      canAccessMatching: permission.canAccessMatching,
       canUseHRAgents: permission.canUseHRAgents,
       canManageTeam: permission.canManageTeam,
       canInviteMembers: permission.canInviteMembers,

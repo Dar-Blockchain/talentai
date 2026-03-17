@@ -45,7 +45,7 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company", "Member"],
+      enum: ["Candidate", "Company", "Employee"],
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },
@@ -159,6 +159,26 @@ const profileSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // ========== BIDDING INFORMATION ==========
+    companyBid: {
+      finalBid: Number,
+      dateBid: Date,
+      company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      post: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    },
+    usersBidedByCompany: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

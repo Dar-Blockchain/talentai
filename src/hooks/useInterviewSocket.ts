@@ -38,7 +38,7 @@ export interface UseInterviewSocketCallbacks {
   onInterviewStarted: (data: InterviewStartedData) => void;
   onInterviewMessage: (message: InterviewMessage) => void;
   onCoverageUpdate: (coverage: Coverage) => void;
-  onReportUpdate: (report: RealTimeReport) => void;
+  onReportUpdate?: (report: RealTimeReport) => void;
   onSilenceResponse: (data: SilenceResponseData) => void;
   onVoiceActivity: (data: { isActive: boolean }) => void;
   onInterviewEnded: (data: InterviewEndedData) => void;
@@ -172,7 +172,7 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     socket.on('report_update', (data: any) => {
       console.log('📋 Report update:', data);
-      callbacksRef.current.onReportUpdate(data.report);
+      callbacksRef.current.onReportUpdate?.(data.report);
     });
 
     socket.on('silence_response', (data: any) => {

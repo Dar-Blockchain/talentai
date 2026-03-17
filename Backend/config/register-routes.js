@@ -16,6 +16,7 @@ const dashboardRouter = require("../routes/dashboard.routes");
 const profileRouter = require("../routes/profile.routes");
 const linkedinPostRouter = require("../routes/generateJobPost.routes");
 const postRouter = require("../routes/post.routes");
+const matchingRoutes = require("../routes/matching.routes");
 const todoRouter = require("../routes/todo.routes");
 const feedbackRouter = require("../routes/feedback.routes");
 const logRoutes = require("../routes/log.routes");
@@ -31,7 +32,9 @@ const agentConfigRouter = require("../routes/agentConfig.routes");
 const tokenRouter = require("../routes/token.routes");
 const stripRouter = require("../routes/Strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
+const matchingConfigRoutes = require("../routes/matchingConfig.routes");
 const paymentRouter = require("../routes/payment.routes");
+const unlockCandidateRouter = require("../routes/unlockCandidate.routes");
 const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
@@ -87,12 +90,18 @@ function registerRoutes(app) {
   // Chat & Messaging
   app.use("/chat", chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
 
+  // Matching & Recruitment Engine
+  app.use("/matching", matchingRoutes); //✅ Matching Engine matching -> matchings
+  app.use("/matchingConfig", matchingConfigRoutes); // Matching Configuration -> matching-configs
+  //app.use('/matching-configs', matchingConfigRoutes); // Matching Configuration -> matching-configs
+
   // Notifications
   app.use("/notification-system", notificationSystemRouter); // Notification System -> notifications
   //app.use('/notifications', notificationSystemRouter); //✅ Notification System -> notifications
 
   // Candidate Management
   app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
+  app.use("/unlock-candidate", unlockCandidateRouter); //✅ Unlock Candidate -> unlock-candidates
 
   // Blockchain & Web3
   app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools
@@ -125,7 +134,7 @@ function registerRoutes(app) {
   // Register internal campaign routes
   app.use('/internal-campaigns', internalCampaignRoutes);
   app.use('/campaign-participants', campaignParticipantRoutes);
-  // app.use('/departments', departmentRoutes);
+  app.use('/departments', departmentRoutes);
   app.use('/contact', contactRouter);
   app.use('/interview-applicants', interviewApplicantRouter);
 

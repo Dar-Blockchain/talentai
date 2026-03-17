@@ -507,6 +507,12 @@ GET /candidate-progress
 
 #### Unlock Candidate
 ```
+POST /unlock-candidate
+```
+**Protected**
+
+---
+
 ### 🧠 EVALUATION (AI-Powered)
 
 #### Generate Interview Questions

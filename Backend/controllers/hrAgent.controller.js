@@ -23,7 +23,89 @@ const {
 const JobPost = require("../models/Post.model");
 const Profile = require("../models/Profile.model");
 
-// NOTE: Matching functionality removed - computeMatches function deleted
+// services/MatchingService/computeMatches.js
+
+const {
+  calculateMatchScore,
+  normalizeSkillName,
+} = require("../services/MatchingService/matching.service");
+
+async function computeMatches(jobPostId, companyId) {
+  // Charger les candidats
+  const candidates = await Profile.find({ type: "Candidate" })
+    .populate("userId", "username email")
+    .populate("companyBid.company", "username email")
+    .lean();
+
+  // Charger le job
+  const jobPost = await JobPost.findById(jobPostId)
+    .select("skillAnalysis.requiredSkills skillAnalysis.softSkills jobDetails")
+    .lean();
+
+  if (!jobPost || !jobPost.skillAnalysis) {
+    return { jobTitle: "Unknown", matches: [] };
+  }
+
+  /** ------------------------
+   * Préparation des skills
+   * ------------------------- */
+  const requiredHardSkills = (jobPost.skillAnalysis.requiredSkills || [])
+    .filter((s) => s && s.name)
+    .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+  const requiredSoftSkills = jobPost.skillAnalysis.softSkills || [];
+
+  /** ------------------------
+   * Matching
+   * ------------------------- */
+  const matches = [];
+
+  for (const candidate of candidates) {
+    if (!candidate.userId) continue;
+
+    const candidateSkills = (candidate.skills || [])
+      .filter((s) => s && s.name)
+      .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+    /** ------------------------
+     * APPEL DE LA NOUVELLE LOGIQUE
+     * calculateMatchScore()
+     * ------------------------- */
+    const { score, unlocked } = await calculateMatchScore(
+      requiredHardSkills,
+      candidateSkills,
+      jobPost.jobDetails,
+      candidate,
+      companyId,
+      jobPostId,
+    );
+
+    if (score <= 0) continue;
+
+    const matchedSkills = candidateSkills.filter((cs) =>
+      requiredHardSkills.some((rs) => rs.name === cs.name),
+    );
+
+    matches.push({
+      candidateId: candidate.userId._id,
+      name: candidate.userId.username || "Anonymous",
+      score,
+      unlocked,
+      finalBid: candidate.companyBid?.finalBid || null,
+      biddingCompany: candidate.companyBid?.company?.username || null,
+      matchedSkills,
+      requiredSkills: requiredHardSkills,
+    });
+  }
+
+  // Trier par score décroissant
+  matches.sort((a, b) => b.score - a.score);
+
+  return {
+    jobTitle: jobPost.jobDetails?.title || "Unknown",
+    matches,
+  };
+}
 
 // Coordinator diagnostic functions integrated into controller
 
@@ -694,16 +776,18 @@ const hrAgentController = {
         });
       }
 
-      console.log(`🔍 Matching functionality has been removed`);
+      console.log(`🔍 Calculating matches for agent ${agent.name}...`);
       const startTime = Date.now();
 
-      // Matching functionality removed
-      const jobTitle = agent.postId?.title || "Unknown";
-      const matches = [];
+      // Calculate matches
+      const { jobTitle, matches } = await computeMatches(
+        agent.postId._id,
+        companyId,
+      );
 
       const duration = Date.now() - startTime;
       console.log(
-        `ℹ️ Matching feature disabled - returning empty matches`,
+        `✅ Matches calculated in ${duration}ms: ${matches.length} candidates matched`,
       );
 
       return res.status(200).json({
@@ -712,9 +796,8 @@ const hrAgentController = {
         agentName: agent.name,
         jobTitle,
         matches,
-        matchCount: 0,
+        matchCount: matches.length,
         calculationTime: duration,
-        note: "Matching feature has been disabled",
       });
     } catch (error) {
       console.error("Error fetching agent matches:", error);
@@ -958,15 +1041,786 @@ ${interviewNotes}
   },
 
   /**
-   * submitEvaluationMessage - DISABLED
-   * Bidding system has been removed from this version
+   * Agent-to-Agent bidding system with HCS-10/HCS-11 messaging
+   * Agent A sends bid message to Agent B via Hedera blockchain, Agent B responds and stores in database
    */
   async submitEvaluationMessage(req, res) {
-    return res.status(410).json({
-      error: "Feature disabled",
-      message: "Agent-to-agent bidding system has been removed"
-    });
+    try {
+      const {
+        agentAId,
+        agentBId,
+        candidateId,
+        postId,
+        message,
+        bidAmount,
+        bidMessage,
+      } = req.body;
+
+      if (!agentAId || !agentBId || !candidateId) {
+        return res.status(400).json({
+          error: "agentAId, agentBId, and candidateId are required",
+        });
+      }
+
+      // Get both agents with their HCS-11 profiles
+      const agentA = await AgentModel.findById(agentAId);
+      const agentB = await AgentModel.findById(agentBId);
+
+      if (!agentA || !agentB) {
+        return res.status(404).json({ error: "One or both agents not found" });
+      }
+
+      // Fetch HCS-11 profiles from Hedera network to get latest topic information
+      console.log(
+        `🔍 Fetching HCS-11 profiles from network to ensure topic availability...`,
+      );
+
+      // Function to fetch and update agent profile with topic IDs
+      const fetchAndUpdateAgentProfile = async (agent) => {
+        try {
+          console.log(
+            `📡 Fetching HCS-11 profile for ${agent.name} (${agent.hederaAccountId})`,
+          );
+
+          const client = new HCS11Client({
+            network:
+              process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
+            auth: {
+              operatorId: agent.hederaAccountId,
+              privateKey: agent.hederaPrivateKey,
+            },
+            logLevel: "info",
+          });
+
+          // Fetch profile from network
+          const profileResult = await client.fetchProfileByAccountId(
+            agent.hederaAccountId,
+            process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
+          );
+
+          if (profileResult.success && profileResult.profile) {
+            console.log(`✅ Profile retrieved for ${agent.name}`);
+
+            // Parse profile to extract topic information
+            let parsedProfile = profileResult.profile;
+            if (typeof profileResult.profile === "string") {
+              try {
+                parsedProfile = client.parseProfileFromString(
+                  profileResult.profile,
+                );
+              } catch (parseError) {
+                console.log(
+                  `⚠️ Could not parse profile: ${parseError.message}`,
+                );
+              }
+            }
+
+            // Extract topic IDs from profile
+            let inboundTopicId = agent.inboundTopicId;
+            let outboundTopicId = agent.outboundTopicId;
+
+            if (parsedProfile && typeof parsedProfile === "object") {
+              // Try to extract from parsed profile
+              if (parsedProfile.inboundTopicId) {
+                inboundTopicId = parsedProfile.inboundTopicId;
+                console.log(
+                  `📥 Found inbound topic in profile: ${inboundTopicId}`,
+                );
+              }
+              if (parsedProfile.outboundTopicId) {
+                outboundTopicId = parsedProfile.outboundTopicId;
+                console.log(
+                  `📤 Found outbound topic in profile: ${outboundTopicId}`,
+                );
+              }
+            }
+
+            // Update agent in database if we have new topic information
+            if (
+              (inboundTopicId && inboundTopicId !== agent.inboundTopicId) ||
+              (outboundTopicId && outboundTopicId !== agent.outboundTopicId)
+            ) {
+              console.log(
+                `📝 Updating ${agent.name} with topic IDs from profile`,
+              );
+              await AgentModel.findByIdAndUpdate(agent._id, {
+                inboundTopicId: inboundTopicId || agent.inboundTopicId,
+                outboundTopicId: outboundTopicId || agent.outboundTopicId,
+                hcs11ProfileTopicId:
+                  profileResult.profileTopicId || agent.hcs11ProfileTopicId,
+                lastProfileFetch: new Date(),
+              });
+
+              // Update local agent object
+              agent.inboundTopicId = inboundTopicId || agent.inboundTopicId;
+              agent.outboundTopicId = outboundTopicId || agent.outboundTopicId;
+              agent.hcs11ProfileTopicId =
+                profileResult.profileTopicId || agent.hcs11ProfileTopicId;
+            }
+
+            return {
+              success: true,
+              inboundTopicId: inboundTopicId,
+              outboundTopicId: outboundTopicId,
+              profileTopicId: profileResult.profileTopicId,
+            };
+          } else {
+            console.log(
+              `❌ No profile found for ${agent.name}: ${
+                profileResult.error || "Profile not found"
+              }`,
+            );
+            return {
+              success: false,
+              error: profileResult.error || "Profile not found on network",
+            };
+          }
+        } catch (error) {
+          console.error(
+            `❌ Error fetching profile for ${agent.name}: ${error.message}`,
+          );
+          return {
+            success: false,
+            error: error.message,
+          };
+        }
+      };
+
+      // Fetch profiles for both agents
+      const [agentAProfile, agentBProfile] = await Promise.all([
+        fetchAndUpdateAgentProfile(agentA),
+        fetchAndUpdateAgentProfile(agentB),
+      ]);
+
+      // Validate agents have HCS-10 topics after profile fetch
+      if (!agentA.inboundTopicId || !agentA.outboundTopicId) {
+        return res.status(400).json({
+          error: `Agent A (${agentA.name}) missing HCS-10 topics even after profile fetch.`,
+          profileFetchResult: agentAProfile,
+          solution:
+            "Please run POST /hr-agents/initialize to create proper agent profiles with topics",
+        });
+      }
+
+      if (!agentB.inboundTopicId || !agentB.outboundTopicId) {
+        return res.status(400).json({
+          error: `Agent B (${agentB.name}) missing HCS-10 topics even after profile fetch.`,
+          profileFetchResult: agentBProfile,
+          solution:
+            "Please run POST /hr-agents/initialize to create proper agent profiles with topics",
+        });
+      }
+
+      console.log(`✅ Both agents have required HCS-10 topics:`);
+
+      console.log(
+        `🤖 Starting HCS-10/HCS-11 agent messaging between ${agentA.name} and ${agentB.name}`,
+      );
+      console.log(`📡 Using Hedera network profiles for communication`);
+      console.log(
+        `📥 Agent A Inbound: ${agentA.inboundTopicId} | 📤 Outbound: ${agentA.outboundTopicId}`,
+      );
+      console.log(
+        `📥 Agent B Inbound: ${agentB.inboundTopicId} | 📤 Outbound: ${agentB.outboundTopicId}`,
+      );
+
+      // Start timing the conversation
+      const conversationStartTime = Date.now();
+
+      // Initialize HCS10 clients for both agents
+      const agentAHCS10 = new HCS10Client({
+        network: "testnet",
+        operatorId: agentA.hederaAccountId,
+        operatorPrivateKey: agentA.hederaPrivateKey,
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
+        prettyPrint: false,
+        logLevel: "info",
+      });
+
+      const agentBHCS10 = new HCS10Client({
+        network: "testnet",
+        operatorId: agentB.hederaAccountId,
+        operatorPrivateKey: agentB.hederaPrivateKey,
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
+        prettyPrint: false,
+        logLevel: "info",
+      });
+
+      // Initialize LangChain agents for AI-powered responses
+      let agentALangChain, agentBLangChain;
+
+      agentALangChain = {
+        processMessage: async (prompt, systemPrompt) => {
+          try {
+            const result = await bedrock.callLLM({
+              systemPrompt: systemPrompt || "You are an HR assistant agent.",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+              maxTokens: 2000,
+              timeout: 15000,
+            });
+            return { response: result.content, success: true, metadata: { provider: "bedrock" } };
+          } catch (error) {
+            console.warn(`⚠️  Agent A Bedrock call failed: ${error.message}`);
+            return {
+              response: `Bidding amount ${finalBidAmount} for candidate ${candidateId} of the post ${postId || "N/A"}`,
+              success: true,
+              metadata: { provider: "fallback-mode" },
+            };
+          }
+        },
+      };
+      console.log(`✅ Agent A (${agentA.name}) Bedrock agent ready`);
+
+      agentBLangChain = {
+        processMessage: async (prompt, systemPrompt) => {
+          try {
+            const result = await bedrock.callLLM({
+              systemPrompt: systemPrompt || "You are an HR assistant agent.",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.7,
+              maxTokens: 2000,
+              timeout: 15000,
+            });
+            return { response: result.content, success: true, metadata: { provider: "bedrock" } };
+          } catch (error) {
+            console.warn(`⚠️  Agent B Bedrock call failed: ${error.message}`);
+            return {
+              response: `Your bid is stored`,
+              success: true,
+              metadata: { provider: "fallback-mode" },
+            };
+          }
+        },
+      };
+      console.log(`✅ Agent B (${agentB.name}) Bedrock agent ready`);
+
+      // Display conversation header
+      const finalBidAmount =
+        bidAmount && !isNaN(bidAmount) ? parseFloat(bidAmount) : 1000.0;
+      console.log("\n" + "=".repeat(80));
+      console.log(`🗣️  HCS-10/HCS-11 BIDDING SIMULATION STARTING`);
+      console.log(`👥 Participants: ${agentA.name} → ${agentB.name}`);
+      console.log(`🎯 Topic: Candidate ${candidateId} Evaluation`);
+      console.log(`💰 Bid Amount: $${finalBidAmount}`);
+      console.log(`📅 Started: ${new Date().toLocaleString()}`);
+      console.log("=".repeat(80));
+
+      // STEP 1: Agent A generates and sends bid message to Agent B's inbound topic
+      console.log(`\n💬 STEP 1: ${agentA.name} composing bid message...`);
+
+      // Agent A (Company Agent) sends exact bid message
+      const exactBidMessage = `Bid amount ${finalBidAmount} for candidate ${candidateId} for post ${
+        postId || "N/A"
+      }`;
+      const agentAResponse = { response: exactBidMessage }; // Direct message, no AI processing needed
+
+      // Create HCS-11 compliant message structure
+      const hcs11MessageFromA = {
+        standard: "HCS-11",
+        version: "1.0.0",
+        type: "agent_evaluation_message",
+        timestamp: new Date().toISOString(),
+        messageId: `msg_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
+
+        // Sender profile information
+        from: {
+          agentId: agentA._id.toString(),
+          name: agentA.name,
+          avatarName: agentA.avatarName,
+          role: agentA.role,
+          hederaAccountId: agentA.hederaAccountId,
+          profileTopicId: agentA.hcs11ProfileTopicId,
+          outboundTopicId: agentA.outboundTopicId,
+        },
+
+        // Recipient profile information
+        to: {
+          agentId: agentB._id.toString(),
+          name: agentB.name,
+          avatarName: agentB.avatarName,
+          role: agentB.role,
+          hederaAccountId: agentB.hederaAccountId,
+          profileTopicId: agentB.hcs11ProfileTopicId,
+          inboundTopicId: agentB.inboundTopicId,
+        },
+
+        // Message content
+        content: {
+          subject: `Candidate ${candidateId} Bid Submission`,
+          message: agentAResponse.response,
+          candidateId: candidateId,
+          postId: postId,
+          evaluationType: agentA.role,
+          bidAmount: finalBidAmount,
+          currency: "USD",
+          bidType: "candidate_evaluation",
+          priority: "normal",
+          requiresResponse: true,
+        },
+
+        // Metadata
+        metadata: {
+          conversationId: `bid_conv_${Date.now()}`,
+          protocol: "hcs-10",
+          messageFormat: "agent_bid_message",
+          platform: "talentai_bidding",
+        },
+      };
+
+      // Send message from Agent A to Agent B's inbound topic
+      console.log(
+        `📤 Sending message to ${agentB.name}'s inbound topic: ${agentB.inboundTopicId}`,
+      );
+      const messageToB = await agentAHCS10.sendMessage(
+        agentB.inboundTopicId,
+        JSON.stringify(hcs11MessageFromA),
+      );
+
+      console.log(`✅ Message sent! Message ID: ${messageToB.toString()}`);
+      console.log(`💭 "${agentAResponse.response}"`);
+
+      // Wait a moment for message propagation
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // STEP 2: Agent B (Master Agent) receives bid message and stores in database FIRST
+      console.log(
+        `\n💬 STEP 2: ${agentB.name} (Master Agent) storing bid in database...`,
+      );
+
+      // Store bid in database BEFORE responding
+      let agentBResponse;
+
+      try {
+        // Find or create evaluation topic for this bid
+        let evaluationTopic = await EvaluationTopicModel.findOne({
+          candidateId: candidateId,
+          postId: postId,
+        });
+
+        if (!evaluationTopic) {
+          // Create new evaluation topic with all required fields
+          evaluationTopic = new EvaluationTopicModel({
+            topicId: `bid_topic_${candidateId}_${Date.now()}`,
+            company: "TalentAI Bidding System",
+            postId: postId || `bid_post_${candidateId}`,
+            candidateName: `Candidate_${candidateId}`,
+            candidateId: candidateId,
+            topicMemo: `Bidding topic for candidate ${candidateId} on post ${
+              postId || "N/A"
+            }`,
+            status: "active",
+            createdBy: agentB.name,
+            evaluations: [],
+            createdAt: new Date(),
+          });
+        }
+
+        // Store the bid as an evaluation record
+        evaluationTopic.evaluations.push({
+          agentId: agentA._id,
+          agentName: agentA.name,
+          agentRole: agentA.role,
+          messageId: hcs11MessageFromA.messageId,
+          hederaMessageId: messageToB.toString(),
+          evaluation: {
+            passed: null,
+            score: finalBidAmount, // Store bid amount as score
+            feedback: agentAResponse.response,
+            interviewNotes: `Bid received: ${finalBidAmount} for candidate ${candidateId} on post ${
+              postId || "N/A"
+            }`,
+            messageType: "bid_message",
+            bidAmount: finalBidAmount,
+            currency: "USD",
+            postId: postId,
+            storedByMasterAgent: agentB.name,
+          },
+          timestamp: new Date(),
+        });
+
+        await evaluationTopic.save();
+        console.log(
+          `✅ Bid stored successfully in database by ${agentB.name} (Master Agent)`,
+        );
+
+        // STEP 3: Now Master Agent responds with exact message
+        agentBResponse = { response: "Bid successfully stored" }; // Exact response message
+      } catch (dbError) {
+        console.error(`❌ Database storage error: ${dbError.message}`);
+        agentBResponse = { response: "Bid storage failed" };
+      }
+
+      // Create response message from Agent B to Agent A
+      const hcs11ResponseFromB = {
+        standard: "HCS-11",
+        version: "1.0.0",
+        type: "agent_response_message",
+        timestamp: new Date().toISOString(),
+        messageId: `msg_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
+        inReplyTo: hcs11MessageFromA.messageId,
+
+        // Sender (Agent B)
+        from: {
+          agentId: agentB._id.toString(),
+          name: agentB.name,
+          avatarName: agentB.avatarName,
+          role: agentB.role,
+          hederaAccountId: agentB.hederaAccountId,
+          profileTopicId: agentB.hcs11ProfileTopicId,
+          outboundTopicId: agentB.outboundTopicId,
+        },
+
+        // Recipient (Agent A)
+        to: {
+          agentId: agentA._id.toString(),
+          name: agentA.name,
+          avatarName: agentA.avatarName,
+          role: agentA.role,
+          hederaAccountId: agentA.hederaAccountId,
+          profileTopicId: agentA.hcs11ProfileTopicId,
+          inboundTopicId: agentA.inboundTopicId,
+        },
+
+        // Response content
+        content: {
+          subject: `Re: Candidate ${candidateId} Evaluation`,
+          message: agentBResponse.response,
+          candidateId: candidateId,
+          responseType: agentB.role,
+          originalMessage: hcs11MessageFromA.content.message,
+        },
+
+        // Metadata
+        metadata: {
+          conversationId: hcs11MessageFromA.metadata.conversationId,
+          protocol: "hcs-10",
+          messageFormat: "agent_response",
+          platform: "talentai",
+        },
+      };
+
+      // Send response from Agent B to Agent A's inbound topic
+      console.log(
+        `📤 Sending response to ${agentA.name}'s inbound topic: ${agentA.inboundTopicId}`,
+      );
+      const responseToA = await agentBHCS10.sendMessage(
+        agentA.inboundTopicId,
+        JSON.stringify(hcs11ResponseFromB),
+      );
+
+      console.log(`✅ Response sent! Message ID: ${responseToA.toString()}`);
+      console.log(`💭 "${agentBResponse.response}"`);
+
+      // Display conversation summary
+      console.log(
+        "\n" +
+          "🔄 HCS-10/HCS-11 CONVERSATION SUMMARY "
+            .padStart(50, "=")
+            .padEnd(80, "="),
+      );
+      console.log(
+        `1️⃣  ${agentA.name} → ${agentB.name}: "${agentAResponse.response}"`,
+      );
+      console.log(
+        `   📡 Sent to: ${
+          agentB.inboundTopicId
+        } | Message ID: ${messageToB.toString()}`,
+      );
+      console.log(
+        `2️⃣  ${agentB.name} → ${agentA.name}: "${agentBResponse.response}"`,
+      );
+      console.log(
+        `   📡 Sent to: ${
+          agentA.inboundTopicId
+        } | Message ID: ${responseToA.toString()}`,
+      );
+      console.log("=".repeat(80));
+
+      // Create conversation record
+      const conversationRecord = {
+        conversationId: hcs11MessageFromA.metadata.conversationId,
+        type: "hcs-10-messaging",
+        participants: [
+          {
+            agentId: agentA._id,
+            name: agentA.name,
+            role: agentA.role,
+            hederaAccountId: agentA.hederaAccountId,
+            profileTopicId: agentA.hcs11ProfileTopicId,
+            inboundTopicId: agentA.inboundTopicId,
+            outboundTopicId: agentA.outboundTopicId,
+          },
+          {
+            agentId: agentB._id,
+            name: agentB.name,
+            role: agentB.role,
+            hederaAccountId: agentB.hederaAccountId,
+            profileTopicId: agentB.hcs11ProfileTopicId,
+            inboundTopicId: agentB.inboundTopicId,
+            outboundTopicId: agentB.outboundTopicId,
+          },
+        ],
+        messages: [
+          {
+            messageId: hcs11MessageFromA.messageId,
+            from: agentA.name,
+            to: agentB.name,
+            message: agentAResponse.response,
+            timestamp: new Date(),
+            role: agentA.role,
+            topicId: agentB.inboundTopicId,
+            hederaMessageId: messageToB.toString(),
+            type: "evaluation",
+          },
+          {
+            messageId: hcs11ResponseFromB.messageId,
+            from: agentB.name,
+            to: agentA.name,
+            message: agentBResponse.response,
+            timestamp: new Date(),
+            role: agentB.role,
+            topicId: agentA.inboundTopicId,
+            hederaMessageId: responseToA.toString(),
+            type: "response",
+            inReplyTo: hcs11MessageFromA.messageId,
+          },
+        ],
+        candidateId: candidateId,
+        protocol: "hcs-10/hcs-11",
+        completed: true,
+        createdAt: new Date(),
+      };
+
+      // Update evaluation topic with HCS-10 message records
+      const evaluationTopic = await EvaluationTopicModel.findOne({
+        $or: [
+          { topicId: agentA.inboundTopicId },
+          { topicId: agentB.inboundTopicId },
+          { candidateId: candidateId },
+        ],
+      });
+
+      if (evaluationTopic) {
+        // Add HCS-10 bid message records
+        evaluationTopic.evaluations.push({
+          agentId: agentA._id,
+          agentName: agentA.name,
+          agentRole: agentA.role,
+          messageId: hcs11MessageFromA.messageId,
+          hederaMessageId: messageToB.toString(),
+          evaluation: {
+            passed: null,
+            score: finalBidAmount, // Using bid amount as score for reference
+            feedback: agentAResponse.response,
+            interviewNotes: `Bid submitted via HCS-10: $${finalBidAmount} for candidate ${candidateId}`,
+            messageType: "agent_bid_message",
+            bidAmount: finalBidAmount,
+            currency: "USD",
+            sentToTopic: agentB.inboundTopicId,
+          },
+          timestamp: new Date(),
+        });
+
+        evaluationTopic.evaluations.push({
+          agentId: agentB._id,
+          agentName: agentB.name,
+          agentRole: agentB.role,
+          messageId: hcs11ResponseFromB.messageId,
+          hederaMessageId: responseToA.toString(),
+          evaluation: {
+            passed: null,
+            score: null,
+            feedback: agentBResponse.response,
+            interviewNotes: `Bid acknowledgment via HCS-10: Received $${finalBidAmount} bid from ${agentA.name}`,
+            messageType: "agent_bid_acknowledgment",
+            receivedBidAmount: finalBidAmount,
+            currency: "USD",
+            sentToTopic: agentA.inboundTopicId,
+            inReplyTo: hcs11MessageFromA.messageId,
+          },
+          timestamp: new Date(),
+        });
+
+        evaluationTopic.status = "active"; // Keep as active for bidding process
+        await evaluationTopic.save();
+
+        // Log successful database storage
+        console.log(`💾 Bid information stored in database successfully`);
+        console.log(`📊 Evaluation Topic ID: ${evaluationTopic._id}`);
+        console.log(
+          `💰 Bid Amount: $${finalBidAmount} recorded in evaluation records`,
+        );
+      } else {
+        // Create new evaluation topic if none exists
+        const newEvaluationTopic = new EvaluationTopicModel({
+          topicId: `bid_topic_${candidateId}_${Date.now()}`,
+          company: "TalentAI Bidding System",
+          postId: `bid_post_${candidateId}`,
+          candidateName: `Candidate_${candidateId}`,
+          candidateId: candidateId,
+          topicMemo: `Bidding topic for candidate ${candidateId} via HCS-10/HCS-11 messaging`,
+          status: "active",
+          createdBy: agentA.name,
+          evaluations: [
+            {
+              agentId: agentA._id,
+              agentName: agentA.name,
+              agentRole: agentA.role,
+              messageId: hcs11MessageFromA.messageId,
+              hederaMessageId: messageToB.toString(),
+              evaluation: {
+                passed: null,
+                score: finalBidAmount,
+                feedback: agentAResponse.response,
+                interviewNotes: `Bid submitted via HCS-10: $${finalBidAmount}`,
+                messageType: "agent_bid_message",
+                bidAmount: finalBidAmount,
+                currency: "USD",
+              },
+              timestamp: new Date(),
+            },
+          ],
+          createdAt: new Date(),
+        });
+
+        await newEvaluationTopic.save();
+        console.log(
+          `💾 New evaluation topic created and bid stored: ${newEvaluationTopic._id}`,
+        );
+      }
+
+      // Display completion status
+      console.log(
+        "\n" +
+          "✅ HCS-10/HCS-11 BIDDING COMPLETED "
+            .padStart(50, "=")
+            .padEnd(80, "="),
+      );
+      console.log(`🎉 Agent-to-agent bidding completed successfully!`);
+      console.log(
+        `   💰 ${agentA.name} → ${agentB.name}: Bid of $${finalBidAmount} sent to ${agentB.inboundTopicId}`,
+      );
+      console.log(
+        `   💾 ${agentB.name} → ${agentA.name}: Acknowledgment sent to ${agentA.inboundTopicId} & stored in database`,
+      );
+      console.log(`📊 Messages exchanged: 2 (via Hedera network)`);
+      console.log(`🎯 Candidate: ${candidateId}`);
+      console.log(`💰 Bid Amount: $${finalBidAmount}`);
+      console.log(
+        `⏱️  Duration: ${((Date.now() - conversationStartTime) / 1000).toFixed(
+          1,
+        )}s`,
+      );
+      console.log(
+        `🔗 Protocol: HCS-10 messaging with HCS-11 profiles + Database Storage`,
+      );
+      console.log(`💾 Conversation ID: ${conversationRecord.conversationId}`);
+      console.log("=".repeat(80) + "\n");
+
+      res.json({
+        success: true,
+        message: "HCS-10/HCS-11 bidding simulation completed successfully",
+        protocol: "hcs-10/hcs-11-bidding",
+        conversation: conversationRecord,
+        messaging: {
+          agentA: {
+            id: agentA._id,
+            name: agentA.name,
+            role: agentA.role,
+            hederaAccountId: agentA.hederaAccountId,
+            profileTopicId: agentA.hcs11ProfileTopicId,
+            message: agentAResponse.response,
+            sentTo: agentB.inboundTopicId,
+            hederaMessageId: messageToB.toString(),
+          },
+          agentB: {
+            id: agentB._id,
+            name: agentB.name,
+            role: agentB.role,
+            hederaAccountId: agentB.hederaAccountId,
+            profileTopicId: agentB.hcs11ProfileTopicId,
+            message: agentBResponse.response,
+            sentTo: agentA.inboundTopicId,
+            hederaMessageId: responseToA.toString(),
+          },
+        },
+        candidateId: candidateId,
+        biddingDetails: {
+          bidAmount: finalBidAmount,
+          currency: "USD",
+          bidderAgent: agentA.name,
+          receiverAgent: agentB.name,
+          storedInDatabase: true,
+        },
+        networkMessages: {
+          bidMessageFromA: hcs11MessageFromA,
+          acknowledgmentFromB: hcs11ResponseFromB,
+        },
+        conversationCompleted: true,
+        biddingCompleted: true,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      // Display error in chat format
+      console.log(
+        "\n" +
+          "❌ HCS-10/HCS-11 MESSAGING FAILED "
+            .padStart(40, "=")
+            .padEnd(80, "="),
+      );
+      console.error(`💥 Error during agent messaging:`);
+      console.error(`🔍 Error Type: ${error.name}`);
+      console.error(`📝 Error Message: ${error.message}`);
+      console.error(`🎯 Candidate: ${req.body.candidateId || "Unknown"}`);
+      console.error(
+        `👥 Agents: ${req.body.agentAId || "Unknown"} ↔️ ${
+          req.body.agentBId || "Unknown"
+        }`,
+      );
+      console.error(`⏰ Failed at: ${new Date().toLocaleString()}`);
+
+      if (error.message.includes("missing HCS-10 topics")) {
+        console.error(
+          `🔧 Solution: Run POST /hr-agents/initialize to create agent profiles and topics`,
+        );
+      }
+
+      console.log("=".repeat(80) + "\n");
+
+      res.status(500).json({
+        success: false,
+        error: "Failed to complete HCS-10/HCS-11 agent messaging",
+        details: error.message,
+        protocol: "hcs-10/hcs-11",
+        troubleshooting: {
+          commonIssues: [
+            "Agents missing HCS-10 inbound/outbound topics",
+            "Invalid Hedera credentials",
+            "Network connectivity issues",
+            "HCS-11 profile not properly inscribed",
+          ],
+          solutions: [
+            "Run POST /hr-agents/initialize to create topics",
+            "Use POST /hr-agents/debug-memo/:agentId to fix profiles",
+            "Check Hedera network connectivity",
+            "Verify agent credentials",
+          ],
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
   },
+
+  /**
+   * Fix HCS-11 memo for agents to resolve profile validation issues
+   */
   async fixAgentMemo(req, res) {
     try {
       const { agentId } = req.params;

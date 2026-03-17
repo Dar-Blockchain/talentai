@@ -1,6 +1,7 @@
 const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
 const { sendPostEmail } = require("../../utils/email-service");
+const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
 const {
   parseJsonFields,
   validateTechnicalTestInput,
@@ -89,12 +90,14 @@ exports.createPost = async (req, res) => {
       postData,
       token,
       userProfile,
+      parsedData.matchingConfig,
     );
 
     // ========== 5. RETURN RESPONSE ==========
     res.status(201).json({
       success: true,
       data: result.post,
+      matchingConfig: result.matchingConfig,
       planLimits: userProfile.planLimits,
     });
   } catch (error) {

@@ -3,6 +3,9 @@ const Agent = require("../../models/Agent.model");
 const JobPost = require("../../models/Post.model");
 const Profile = require("../../models/Profile.model");
 const AgentConfig = require("../../models/AgentConfig.model");
+const {
+  calculateMatchScore,
+} = require("../MatchingService/matchingForBid.service");
 const profileService = require("../ProfileService/profile.service");
 const {
   submitEvaluationMessage,
@@ -59,14 +62,24 @@ async function computeMatches(jobPostId, idCompany) {
       .filter((s) => s && s.name)
       .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-    // NOTE: Matching functionality removed
-    // const score = await calculateMatchScore(...);
-    
-    // Return candidates without score (matching disabled)
+    const score = await calculateMatchScore(
+      requiredSkills,
+      candidateSkills,
+      { ...jobPost.jobDetails, skillAnalysis: jobPost.skillAnalysis },
+      candidate,
+      idCompany,
+      jobPostId
+    );
+
+    if (score && score > 0)
+      console.log(` - ${candidate.userId.username}: ${score}`);
+
+    if (!score || score === 0) return null;
+
     return {
       candidateId: candidate.userId._id,
       name: candidate.userId.username || "Anonymous",
-      score: 0,
+      score,
       finalBid: candidate.companyBid?.finalBid || null,
       biddingCompany: candidate.companyBid?.company?.username || null,
       matchedSkills: candidateSkills.filter((cs) =>
@@ -148,10 +161,10 @@ async function initializeAgenda() {
 
           // Configuration values (require explicit values in agentConfig — no defaults)
           const thresholdPercent = agentConfig.thresholdPercent;
-          // const bidBudgetMin = agentConfig.bidBudgetMin; // [REMOVED: Bidding disabled]
-          // const bidBudgetMax = agentConfig.bidBudgetMax; // [REMOVED: Bidding disabled]
-          // const bidStep = agentConfig.bidStep; // [REMOVED: Bidding disabled]
-          // const maxCandidatesToBid = agentConfig.maxCandidatesToBid; // [REMOVED: Bidding disabled]
+          const bidBudgetMin = agentConfig.bidBudgetMin;
+          const bidBudgetMax = agentConfig.bidBudgetMax;
+          const bidStep = agentConfig.bidStep;
+          const maxCandidatesToBid = agentConfig.maxCandidatesToBid;
           const autoSubmitTopMatch = agentConfig.autoSubmitTopMatch;
           const maxDailySpending = agentConfig.maxDailySpending;
 
@@ -173,7 +186,7 @@ async function initializeAgenda() {
             // --- Send POST and bid for top matches respecting threshold ---
             const topMatches = matches
               .filter((m) => m.score >= thresholdPercent)
-              .slice(0, 1);  // [REMOVED: Bidding disabled - using 1 candidate]
+              .slice(0, maxCandidatesToBid);
 
             if (topMatches.length === 0) {
               console.log(
@@ -188,18 +201,38 @@ async function initializeAgenda() {
                   ? Number(topMatch.finalBid)
                   : 0;
                 // If bid exists, add bidStep; otherwise, start with bidBudgetMin
-                const nextBid = 100; // [REMOVED: Bidding disabled - using default value]
+                const nextBid =
+                  currentFinalBid > 0
+                    ? currentFinalBid + bidStep
+                    : bidBudgetMin;
                 // Respect [min, max] limits
-                const bidAmount = nextBid; // [REMOVED: Bidding disabled]
+                const bidAmount = Math.max(
+                  bidBudgetMin,
+                  Math.min(bidBudgetMax, nextBid)
+                );
 
                 // 💰 Check if spending ceiling is reached
-                // Bidding disabled - no ceiling check
+                if (bidAmount >= bidBudgetMax && nextBid > bidBudgetMax) {
+                  console.warn(
+                    `⚠️  [Agenda] Spending ceiling reached for agent ${agentLabel} (calculated bid: ${nextBid}, ceiling: ${bidBudgetMax}). Candidate ${topMatch.name} cannot be bid on.`
+                  );
+                  continue; // Move to next candidate
+                }
 
                 try {
                   // Submit evaluation message if autoSubmitTopMatch is enabled
                   if (autoSubmitTopMatch) {
                     try {
-                      // await submitEvaluationMessage(...); // [REMOVED: Bidding disabled]
+                      await submitEvaluationMessage({
+                        body: {
+                          agentAId: agent._id,
+                          agentBId: "68c2e127bf5357b2404443c2",
+                          candidateId: topMatch.candidateId,
+                          postId: agent.postId._id,
+                          message: `Candidate review request (Score: ${topMatch.score}%, Bid: $${bidAmount})`,
+                          bidAmount: bidAmount,
+                        },
+                      });
                       console.log(
                         `📤 [Agenda] Message sent for candidate ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount})`
                       );
