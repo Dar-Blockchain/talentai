@@ -1,14 +1,9 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogContent,
-  Typography,
-} from "@mui/material";
+import React, { useRef, useState, useCallback } from "react";
+import { Box, Button, Dialog, DialogContent, Typography } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckIcon from "@mui/icons-material/Check";
 
 interface CaptchaModalProps {
   open: boolean;
@@ -16,23 +11,61 @@ interface CaptchaModalProps {
   onClose: () => void;
 }
 
-const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }) => {
-  const [checked, setChecked] = useState(false);
+const TRACK_WIDTH = 320;
+const THUMB_SIZE = 52;
+const SNAP_THRESHOLD = 20; // px from end to snap
 
-  const handleCheck = () => {
-    if (checked) return;
-    setChecked(true);
-    setTimeout(() => {
-      onVerified();
-      onClose();
-      setTimeout(() => setChecked(false), 400);
-    }, 800);
-  };
+const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }) => {
+  const [x, setX] = useState(0);
+  const [verified, setVerified] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
+  const maxX = TRACK_WIDTH - THUMB_SIZE;
+
+  const reset = useCallback(() => {
+    setX(0);
+    setVerified(false);
+    setDragging(false);
+  }, []);
 
   const handleClose = () => {
-    setChecked(false);
+    reset();
     onClose();
   };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (verified) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragging(true);
+    startXRef.current = e.clientX - x;
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging || verified) return;
+    const newX = Math.min(Math.max(e.clientX - startXRef.current, 0), maxX);
+    setX(newX);
+
+    if (newX >= maxX - SNAP_THRESHOLD) {
+      setX(maxX);
+      setVerified(true);
+      setDragging(false);
+      setTimeout(() => {
+        onVerified();
+        onClose();
+        setTimeout(reset, 300);
+      }, 700);
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!dragging || verified) return;
+    setDragging(false);
+    // Snap back if not reached
+    setX(0);
+  };
+
+  const progress = Math.min(x / maxX, 1);
 
   return (
     <Dialog
@@ -44,106 +77,174 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }
         sx: {
           borderRadius: "20px",
           overflow: "hidden",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.22)",
-          maxWidth: 360,
+          boxShadow: "0 32px 80px rgba(0,0,0,0.2)",
+          maxWidth: 400,
         },
       }}
     >
       <DialogContent sx={{ p: 0 }}>
-        {/* Top close */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", px: 2, pt: 2 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            pb: 2,
+            borderBottom: "1px solid #f0f0f0",
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+          }}
+        >
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: "11px",
+              background: "linear-gradient(135deg,#e6fff4,#ccfce8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <ShieldIcon sx={{ color: "#0CDA8B", fontSize: 20 }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#111827", lineHeight: 1.2 }}>
+              Human Verification
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "#9ca3af" }}>
+              Slide to confirm you&apos;re not a robot
+            </Typography>
+          </Box>
           <Box
             onClick={handleClose}
-            sx={{ cursor: "pointer", color: "#d1d5db", "&:hover": { color: "#6b7280" }, transition: "color .2s" }}
+            sx={{ cursor: "pointer", color: "#d1d5db", "&:hover": { color: "#6b7280" } }}
           >
             <CloseIcon fontSize="small" />
           </Box>
         </Box>
 
-        {/* Body */}
-        <Box sx={{ px: 3.5, pb: 3.5, pt: 0.5, textAlign: "center" }}>
-          {/* Icon */}
-          <Box
+        {/* Slider body */}
+        <Box sx={{ px: 3, py: 4, background: "#fafafa", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+
+          {/* Status text */}
+          <Typography
             sx={{
-              width: 64,
-              height: 64,
-              borderRadius: "18px",
-              background: "linear-gradient(135deg, #e6fff4, #ccfce8)",
-              border: "1.5px solid rgba(12,218,139,0.25)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2,
+              fontSize: 13,
+              color: verified ? "#059669" : "#6b7280",
+              fontWeight: verified ? 700 : 400,
+              transition: "color .3s",
             }}
           >
-            <ShieldIcon sx={{ color: "#0CDA8B", fontSize: 32 }} />
-          </Box>
-
-          <Typography sx={{ fontWeight: 700, fontSize: 18, color: "#111827", mb: 0.75 }}>
-            One quick check
-          </Typography>
-          <Typography sx={{ fontSize: 13, color: "#6b7280", mb: 3, lineHeight: 1.6 }}>
-            Confirm you&apos;re human before we open the booking page.
+            {verified ? "✓ Verified! Opening booking page…" : "Drag the arrow all the way to the right"}
           </Typography>
 
-          {/* Checkbox row */}
+          {/* Track */}
           <Box
-            onClick={handleCheck}
+            ref={trackRef}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              border: checked ? "1.5px solid #0CDA8B" : "1.5px solid #e5e7eb",
-              borderRadius: "14px",
-              px: 2.5,
-              py: 1.75,
-              cursor: checked ? "default" : "pointer",
-              background: checked ? "linear-gradient(135deg,#f0fdf8,#e6fff4)" : "#fafafa",
-              transition: "all .25s ease",
+              width: TRACK_WIDTH,
+              height: THUMB_SIZE,
+              borderRadius: `${THUMB_SIZE / 2}px`,
+              background: "#f3f4f6",
+              border: `1.5px solid ${verified ? "#0CDA8B" : "#e5e7eb"}`,
+              position: "relative",
+              overflow: "hidden",
               userSelect: "none",
-              "&:hover": !checked
-                ? { borderColor: "#0CDA8B", background: "#f0fdf8" }
-                : {},
+              transition: "border-color .3s",
             }}
           >
-            {/* Custom checkbox */}
+            {/* Fill */}
             <Box
               sx={{
-                width: 26,
-                height: 26,
-                borderRadius: "8px",
-                border: checked ? "none" : "2px solid #d1d5db",
-                background: checked ? "#0CDA8B" : "#fff",
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: x + THUMB_SIZE,
+                background: verified
+                  ? "linear-gradient(90deg,#0CDA8B,#09c47c)"
+                  : `linear-gradient(90deg, rgba(12,218,139,${0.15 + progress * 0.25}), rgba(12,218,139,${0.05 + progress * 0.15}))`,
+                transition: dragging ? "none" : "width .4s ease, background .3s",
+                borderRadius: `${THUMB_SIZE / 2}px`,
+              }}
+            />
+
+            {/* Track label */}
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                flexShrink: 0,
-                transition: "all .25s ease",
-                boxShadow: checked ? "0 4px 12px rgba(12,218,139,0.4)" : "none",
+                pointerEvents: "none",
               }}
             >
-              {checked && (
-                <CheckCircleIcon sx={{ color: "#fff", fontSize: 18 }} />
-              )}
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: verified ? "rgba(255,255,255,0.0)" : `rgba(156,163,175,${1 - progress * 1.5})`,
+                  letterSpacing: "0.5px",
+                  transition: "color .2s",
+                  userSelect: "none",
+                }}
+              >
+                {verified ? "" : "slide  ›  ›  ›"}
+              </Typography>
             </Box>
 
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: checked ? "#059669" : "#374151" }}>
-              {checked ? "Verified ✓" : "I'm not a robot"}
-            </Typography>
-
-            {/* reCAPTCHA-style branding */}
-            <Box sx={{ ml: "auto", textAlign: "center", opacity: 0.4 }}>
-              <ShieldIcon sx={{ fontSize: 20, color: "#9ca3af", display: "block", mx: "auto" }} />
-              <Typography sx={{ fontSize: 8, color: "#9ca3af", lineHeight: 1.2 }}>
-                TalentAI<br />Protect
-              </Typography>
+            {/* Thumb */}
+            <Box
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: x,
+                width: THUMB_SIZE,
+                height: THUMB_SIZE,
+                borderRadius: "50%",
+                background: verified
+                  ? "linear-gradient(135deg,#0CDA8B,#09c47c)"
+                  : "#fff",
+                boxShadow: verified
+                  ? "0 4px 20px rgba(12,218,139,0.5)"
+                  : "0 2px 12px rgba(0,0,0,0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: verified ? "default" : dragging ? "grabbing" : "grab",
+                transition: dragging ? "none" : "left .4s ease, background .3s, box-shadow .3s",
+                zIndex: 2,
+                touchAction: "none",
+              }}
+            >
+              {verified ? (
+                <CheckIcon sx={{ color: "#fff", fontSize: 24 }} />
+              ) : (
+                <ArrowForwardIcon
+                  sx={{
+                    color: "#0CDA8B",
+                    fontSize: 22,
+                    transform: `translateX(${progress * 3}px)`,
+                    transition: "transform .1s",
+                  }}
+                />
+              )}
             </Box>
           </Box>
 
-          <Typography sx={{ fontSize: 11, color: "#d1d5db", mt: 2 }}>
-            Protected by TalentAI · Privacy · Terms
-          </Typography>
+          {/* Branding */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, opacity: 0.35 }}>
+            <ShieldIcon sx={{ fontSize: 13, color: "#9ca3af" }} />
+            <Typography sx={{ fontSize: 10, color: "#9ca3af", letterSpacing: "0.3px" }}>
+              Protected by TalentAI
+            </Typography>
+          </Box>
         </Box>
       </DialogContent>
     </Dialog>
