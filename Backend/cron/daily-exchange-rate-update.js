@@ -1,7 +1,7 @@
 // cron/daily-exchange-rate-update.js
-// NOTE: This cron job has been disabled as MatchingConfig model was removed
 const cron = require('node-cron');
-// const MatchingConfig = require('../models/MatchingConfig.model');  // REMOVED
+const axios = require('axios');
+const MatchingConfig = require('../models/MatchingConfig.model');
 
 async function fetchLiveExchangeRates() {
   try {

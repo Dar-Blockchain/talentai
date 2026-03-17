@@ -16,6 +16,7 @@ const dashboardRouter = require("../routes/dashboard.routes");
 const profileRouter = require("../routes/profile.routes");
 const linkedinPostRouter = require("../routes/generateJobPost.routes");
 const postRouter = require("../routes/post.routes");
+const matchingRoutes = require("../routes/matching.routes");
 const todoRouter = require("../routes/todo.routes");
 const feedbackRouter = require("../routes/feedback.routes");
 const logRoutes = require("../routes/log.routes");
@@ -31,6 +32,7 @@ const agentConfigRouter = require("../routes/agentConfig.routes");
 const tokenRouter = require("../routes/token.routes");
 const stripRouter = require("../routes/Strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
+const matchingConfigRoutes = require("../routes/matchingConfig.routes");
 const paymentRouter = require("../routes/payment.routes");
 const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
@@ -86,6 +88,11 @@ function registerRoutes(app) {
 
   // Chat & Messaging
   app.use("/chat", chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
+
+  // Matching & Recruitment Engine
+  app.use("/matching", matchingRoutes); //✅ Matching Engine matching -> matchings
+  app.use("/matchingConfig", matchingConfigRoutes); // Matching Configuration -> matching-configs
+  //app.use('/matching-configs', matchingConfigRoutes); // Matching Configuration -> matching-configs
 
   // Notifications
   app.use("/notification-system", notificationSystemRouter); // Notification System -> notifications

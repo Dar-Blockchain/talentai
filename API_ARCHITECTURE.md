@@ -125,7 +125,14 @@
 └─ /candidate-progress       [GET]    - Candidate progress
 ```
 
-### 4. **INTERVIEWS & ASSESSMENTS**
+### 4. **MATCHING ENGINE** (`/matching`)
+```
+/matching/jobs/{jobPostId}/matches    [GET] - Candidates for job
+/matchingConfig             [POST]   - Create config
+/matchingConfig             [GET]    - Get configs
+```
+
+### 5. **INTERVIEWS & ASSESSMENTS**
 ```
 /api/generate-questions                     [POST]   - Generate questions
 /skill-interview-assessments   [POST/GET]            - Skill tests
@@ -133,7 +140,7 @@
 /api/pipeline-interview                     [GET]    - Pipeline details
 ```
 
-### 5. **HR AGENTS (HCS-11)** (`/hr-agents`)
+### 6. **HR AGENTS (HCS-11)** (`/hr-agents`)
 ```
 /hr-agents/initialize              [POST]   - Init all agents (admin)
 /hr-agents/initialize-single       [POST]   - Init one agent (admin)
@@ -151,7 +158,7 @@
 └─ /hr-agents/hcs11-profile/{id}           [GET]    - Get network profile
 ```
 
-### 6. **HEDERA BLOCKCHAIN TOOLS** (`/hedera-tools` & `/api`)
+### 7. **HEDERA BLOCKCHAIN TOOLS** (`/hedera-tools` & `/api`)
 ```
 /api/create-agent                           [POST]   - Create agent
 /api/create-token                           [POST]   - Create token
@@ -168,7 +175,7 @@
 /hedera-tools/tools                         [GET]    - List tools
 ```
 
-### 7. **HCS-11 STANDARDS** (`/api/hcs11`)
+### 8. **HCS-11 STANDARDS** (`/api/hcs11`)
 ```
 /api/hcs11/status                    [GET]    - Service status
 /api/hcs11/validate                  [POST]   - Validate profile
@@ -177,7 +184,7 @@
 /api/hcs11/create-company-agent      [POST]   - Create company agent
 ```
 
-### 8. **NOTIFICATION SYSTEM** (`/notification-system`)
+### 9. **NOTIFICATION SYSTEM** (`/notification-system`)
 ```
 /notification-system                [POST]   - Create notification
 /notification-system                [GET]    - Get notifications
@@ -186,7 +193,7 @@
 /notification-system/{id}/read      [PATCH]  - Mark as read
 ```
 
-### 9. **INTERNAL CAMPAIGNS**
+### 10. **INTERNAL CAMPAIGNS**
 ```
 /internal-campaigns                 [POST]   - Create campaign
 /internal-campaigns                 [GET]    - Get campaigns
@@ -199,7 +206,7 @@
 /campaign-participants              [GET]    - Get participants
 ```
 
-### 10. **COMPANY MANAGEMENT**
+### 11. **COMPANY MANAGEMENT**
 ```
 /permissions                        [GET]    - Get permissions
 /admin                              [GET]    - Admin permissions
@@ -209,14 +216,14 @@
 /dashboard                          [GET]    - Dashboard
 ```
 
-### 11. **PAYMENT PROCESSING**
+### 12. **PAYMENT PROCESSING**
 ```
 /payment                            [POST]   - Process payment
 /payment                            [GET]    - Get payments
 /api/stripe                         [POST]   - Stripe integration
 ```
 
-### 12. **UTILITIES**
+### 13. **UTILITIES**
 ```
 /todo                               [POST/GET]   - To-do items
 /feedback                           [POST/GET]   - Feedback
@@ -228,7 +235,7 @@
 /unlock-candidate                   [POST]       - Unlock candidate
 ```
 
-### 13. **DOCUMENTATION**
+### 14. **DOCUMENTATION**
 ```
 /api/docs                           [GET]    - Main Swagger docs
 /api/docs/campaigns                 [GET]    - Campaign docs
