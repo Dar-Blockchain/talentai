@@ -27,11 +27,6 @@ const permissionSchema = new mongoose.Schema(
     canViewCandidateProfiles: { type: Boolean, default: true },
     canContactCandidates: { type: Boolean, default: true },
 
-    
-
-    // Matching Permissions
-    canAccessMatching: { type: Boolean, default: true },
-
     // HR Agent Permissions
     canUseHRAgents: { type: Boolean, default: true },
 

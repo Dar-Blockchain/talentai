@@ -3,9 +3,6 @@ const Agent = require("../../models/Agent.model");
 const JobPost = require("../../models/Post.model");
 const Profile = require("../../models/Profile.model");
 const AgentConfig = require("../../models/AgentConfig.model");
-const {
-  calculateMatchScore,
-} = require("../MatchingService/matchingForBid.service");
 const profileService = require("../ProfileService/profile.service");
 const {
   submitEvaluationMessage,
@@ -62,24 +59,14 @@ async function computeMatches(jobPostId, idCompany) {
       .filter((s) => s && s.name)
       .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-    const score = await calculateMatchScore(
-      requiredSkills,
-      candidateSkills,
-      { ...jobPost.jobDetails, skillAnalysis: jobPost.skillAnalysis },
-      candidate,
-      idCompany,
-      jobPostId
-    );
-
-    if (score && score > 0)
-      console.log(` - ${candidate.userId.username}: ${score}`);
-
-    if (!score || score === 0) return null;
-
+    // NOTE: Matching functionality removed
+    // const score = await calculateMatchScore(...);
+    
+    // Return candidates without score (matching disabled)
     return {
       candidateId: candidate.userId._id,
       name: candidate.userId.username || "Anonymous",
-      score,
+      score: 0,
       finalBid: candidate.companyBid?.finalBid || null,
       biddingCompany: candidate.companyBid?.company?.username || null,
       matchedSkills: candidateSkills.filter((cs) =>

@@ -23,89 +23,7 @@ const {
 const JobPost = require("../models/Post.model");
 const Profile = require("../models/Profile.model");
 
-// services/MatchingService/computeMatches.js
-
-const {
-  calculateMatchScore,
-  normalizeSkillName,
-} = require("../services/MatchingService/matching.service");
-
-async function computeMatches(jobPostId, companyId) {
-  // Charger les candidats
-  const candidates = await Profile.find({ type: "Candidate" })
-    .populate("userId", "username email")
-    .populate("companyBid.company", "username email")
-    .lean();
-
-  // Charger le job
-  const jobPost = await JobPost.findById(jobPostId)
-    .select("skillAnalysis.requiredSkills skillAnalysis.softSkills jobDetails")
-    .lean();
-
-  if (!jobPost || !jobPost.skillAnalysis) {
-    return { jobTitle: "Unknown", matches: [] };
-  }
-
-  /** ------------------------
-   * Préparation des skills
-   * ------------------------- */
-  const requiredHardSkills = (jobPost.skillAnalysis.requiredSkills || [])
-    .filter((s) => s && s.name)
-    .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
-
-  const requiredSoftSkills = jobPost.skillAnalysis.softSkills || [];
-
-  /** ------------------------
-   * Matching
-   * ------------------------- */
-  const matches = [];
-
-  for (const candidate of candidates) {
-    if (!candidate.userId) continue;
-
-    const candidateSkills = (candidate.skills || [])
-      .filter((s) => s && s.name)
-      .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
-
-    /** ------------------------
-     * APPEL DE LA NOUVELLE LOGIQUE
-     * calculateMatchScore()
-     * ------------------------- */
-    const { score, unlocked } = await calculateMatchScore(
-      requiredHardSkills,
-      candidateSkills,
-      jobPost.jobDetails,
-      candidate,
-      companyId,
-      jobPostId,
-    );
-
-    if (score <= 0) continue;
-
-    const matchedSkills = candidateSkills.filter((cs) =>
-      requiredHardSkills.some((rs) => rs.name === cs.name),
-    );
-
-    matches.push({
-      candidateId: candidate.userId._id,
-      name: candidate.userId.username || "Anonymous",
-      score,
-      unlocked,
-      finalBid: candidate.companyBid?.finalBid || null,
-      biddingCompany: candidate.companyBid?.company?.username || null,
-      matchedSkills,
-      requiredSkills: requiredHardSkills,
-    });
-  }
-
-  // Trier par score décroissant
-  matches.sort((a, b) => b.score - a.score);
-
-  return {
-    jobTitle: jobPost.jobDetails?.title || "Unknown",
-    matches,
-  };
-}
+// NOTE: Matching functionality removed - computeMatches function deleted
 
 // Coordinator diagnostic functions integrated into controller
 
@@ -776,18 +694,16 @@ const hrAgentController = {
         });
       }
 
-      console.log(`🔍 Calculating matches for agent ${agent.name}...`);
+      console.log(`🔍 Matching functionality has been removed`);
       const startTime = Date.now();
 
-      // Calculate matches
-      const { jobTitle, matches } = await computeMatches(
-        agent.postId._id,
-        companyId,
-      );
+      // Matching functionality removed
+      const jobTitle = agent.postId?.title || "Unknown";
+      const matches = [];
 
       const duration = Date.now() - startTime;
       console.log(
-        `✅ Matches calculated in ${duration}ms: ${matches.length} candidates matched`,
+        `ℹ️ Matching feature disabled - returning empty matches`,
       );
 
       return res.status(200).json({
@@ -796,8 +712,9 @@ const hrAgentController = {
         agentName: agent.name,
         jobTitle,
         matches,
-        matchCount: matches.length,
+        matchCount: 0,
         calculationTime: duration,
+        note: "Matching feature has been disabled",
       });
     } catch (error) {
       console.error("Error fetching agent matches:", error);

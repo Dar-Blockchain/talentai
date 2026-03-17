@@ -187,7 +187,6 @@ const postSchema = new mongoose.Schema({
     type: String,
     description: 'Error message if payment failed'
   },
-  MatchingConfig: { type: mongoose.Schema.Types.ObjectId, ref: 'MatchingConfig' },
 
   // Post creation type
   creationType: {

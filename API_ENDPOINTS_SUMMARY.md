@@ -129,11 +129,6 @@ This complete documentation package includes everything you need to understand, 
 - **All post endpoints?** → SWAGGER_API_DOCUMENTATION.md (Posts)
 - **Post structure?** → API_ARCHITECTURE.md (Post Model)
 
-#### 🔍 Matching Engine
-- **How matching works?** → API_ARCHITECTURE.md
-- **Get matches?** → QUICK_START_GUIDE.md + SWAGGER_API_DOCUMENTATION.md
-- **API endpoint?** → `/matching/...` in SWAGGER_API_DOCUMENTATION.md
-
 #### 🤖 HR Agents (HCS-11)
 - **Initialize agents?** → SWIFT_START_GUIDE.md (Hedera section)
 - **Agent messaging?** → SWAGGER_API_DOCUMENTATION.md (HR Agents)
@@ -185,9 +180,6 @@ This complete documentation package includes everything you need to understand, 
 - Update: `PUT /post/updatePost/{id}`
 - Delete: `DELETE /post/deletePost/{id}`
 - By Skills: `GET /post/adsPost`
-
-### Matching (`/matching`)
-- Get Matches: `GET /matching/jobs/{jobPostId}/matches`
 
 ### Interviews
 - Skills Test: `POST/GET /skill-interview-assessments`
@@ -249,8 +241,7 @@ This complete documentation package includes everything you need to understand, 
 - 👤 Profiles: 6 endpoints
 - 📝 Posts: 15+ endpoints
 - 💰 Payment: 4 endpoints
-- 🔍 Matching: 2 endpoints
-- 📊 Interviews: 3 endpoints
+-  Interviews: 3 endpoints
 - 🤖 HR Agents: 12+ endpoints
 - ⛓️ Hedera: 10+ endpoints
 - 🆔 HCS-11: 5 endpoints
@@ -350,14 +341,13 @@ Root Directory
 │   ├── docs/
 │   │   └── swagger-campaigns.json (← Campaign docs)
 │   │
-│   ├── routes/ (← 36 route files)
+│   ├── routes/ (← 35 route files)
 │   │   ├── authentication.routes.js
 │   │   ├── post.routes.js
-│   │   ├── matching.routes.js
 │   │   ├── hrAgent.routes.js
 │   │   ├── notification.routes.js
 │   │   ├── internalCampaign.routes.js
-│   │   └── ... (30+ more)
+│   │   └── ... (29+ more)
 │   │
 │   ├── controllers/ (← 35+ controller files)
 │   └── config/

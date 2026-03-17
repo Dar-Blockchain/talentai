@@ -77,17 +77,15 @@ module.exports.createPost = async (postData, token) => {
 };
 
 /**
- * Create post with all side effects (matching config, notifications, usage increment)
+ * Create post with all side effects (notifications, usage increment)
  * @param {Object} postData - Post data to create
  * @param {String} token - Auth token for technical test
  * @param {Object} userProfile - User profile with plan limits
- * @param {Object} matchingConfigData - Matching config data if provided
- * @returns {Promise<{post, matchingConfig}>}
+ * @returns {Promise<{post}>}
  */
-module.exports.createPostWithSideEffects = async (postData, token, userProfile, matchingConfigData) => {
+module.exports.createPostWithSideEffects = async (postData, token, userProfile) => {
   try {
     const profileService = require("../../services/ProfileService/profile.service");
-    const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
 
     // ========== 1. MAP workMode FROM employmentType ==========
     if (postData.jobDetails && !postData.jobDetails.workMode) {
@@ -112,27 +110,13 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile, 
       }
     }
 
-    // ========== 4. CREATE MATCHING CONFIG (non-blocking) ==========
-    let createdMatchingConfig = null;
-    if (matchingConfigData) {
-      matchingConfigService.addConfig(postData.user, {
-        ...matchingConfigData,
-        jobId: post._id
-      }).then(cfg => {
-        createdMatchingConfig = cfg;
-      }).catch(cfgErr => {
-        console.error('Error creating matching config:', cfgErr.message);
-      });
-    }
-
-    // ========== 5. NOTIFY MATCHING CANDIDATES (async, non-blocking) ==========
+    // ========== 4. NOTIFY MATCHING CANDIDATES (async, non-blocking) ==========
     module.exports.notifyMatchingCandidates(post).catch(notifErr => {
       console.error('❌ [createPostWithSideEffects] Failed to send notifications:', notifErr?.message || notifErr);
     });
 
     return {
-      post,
-      matchingConfig: createdMatchingConfig
+      post
     };
   } catch (error) {
     console.error('Error in createPostWithSideEffects:', error.message);
@@ -684,22 +668,15 @@ module.exports.deletePost = async (postId, userId) => {
       console.log(`🗑️ Deleted agent: ${post.agentId}`);
     }
 
-    // 4. Delete MatchingConfig if exists
-    if (post.MatchingConfig) {
-      const MatchingConfig = require('../../models/MatchingConfig.model');
-      await MatchingConfig.findByIdAndDelete(post.MatchingConfig);
-      console.log(`🗑️ Deleted MatchingConfig: ${post.MatchingConfig}`);
-    }
-
-    // 5. Delete associated job assessments
+    // 4. Delete associated job assessments
     const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
     await PostInterviewAssessment.deleteMany({ post: postId });
     console.log(`🗑️ Deleted job assessment results for post`);
 
-    // 6. Delete the post itself
+    // 5. Delete the post itself
     const deletedPost = await Post.findByIdAndDelete(postId);
 
-    // 7. Update the user by removing the post reference
+    // 6. Update the user by removing the post reference
     await User.updateOne(
       { _id: userId },
       { $pull: { post: postId } }
