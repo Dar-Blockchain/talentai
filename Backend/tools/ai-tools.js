@@ -257,15 +257,303 @@ const getPublicStatsTool = {
 };
 
 /**
+ * Outils supplémentaires pour gérer tous les endpoints de post.routes.js
+ */
+
+const getAllPostsTool = {
+  name: 'getAllPosts',
+  description: 'Récupérer tous les posts (optionnellement filtrés par statut)',
+  parameters: {
+    type: 'object',
+    properties: {
+      status: { type: 'string', description: 'Statut des posts (active, draft, expired, closed, cancelled)' }
+    }
+  },
+  execute: async (params) => {
+    const req = { query: params || {} };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.getAllPosts(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des posts: ${error.message}`);
+    }
+  }
+};
+
+const getMyPostsTool = {
+  name: 'getMyPosts',
+  description: 'Récupérer les posts de l\'utilisateur authentifié',
+  parameters: {
+    type: 'object',
+    properties: {
+      page: { type: 'number', description: 'Page de résultats' },
+      limit: { type: 'number', description: 'Nombre de résultats par page' },
+      search: { type: 'string', description: 'Terme de recherche dans les posts' },
+      sort: { type: 'string', description: 'Ordre de tri (newest, oldest, title_asc, title_desc)' },
+      status: { type: 'string', description: 'Statut des posts' }
+    }
+  },
+  execute: async (params, user) => {
+    const req = { query: params || {}, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.getUserPosts(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des posts de l\'utilisateur: ${error.message}`);
+    }
+  }
+};
+
+const getPostByIdTool = {
+  name: 'getPostById',
+  description: 'Récupérer un post par son ID (authentifié)',
+  parameters: {
+    type: 'object',
+    properties: {
+      postId: { type: 'string', description: 'ID du post' }
+    },
+    required: ['postId']
+  },
+  execute: async (params, user) => {
+    const req = { params: { id: params.postId }, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.getPostById(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération du post: ${error.message}`);
+    }
+  }
+};
+
+const updatePostStatusTool = {
+  name: 'updatePostStatus',
+  description: 'Mettre à jour le statut d\'un post (active, draft, expired, closed, cancelled)',
+  parameters: {
+    type: 'object',
+    properties: {
+      postId: { type: 'string', description: 'ID du post' },
+      status: { type: 'string', description: 'Nouveau statut', enum: ['active', 'draft', 'expired', 'closed', 'cancelled'] }
+    },
+    required: ['postId', 'status']
+  },
+  execute: async (params, user) => {
+    const req = { params: { id: params.postId }, body: { status: params.status }, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.updatePostStatus(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour du statut: ${error.message}`);
+    }
+  }
+};
+
+const getPostMetricsTool = {
+  name: 'getPostMetrics',
+  description: 'Obtenir les métriques de posts de l\'utilisateur (totals par statut)',
+  parameters: {
+    type: 'object',
+    properties: {}
+  },
+  execute: async (params, user) => {
+    const req = { user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.getPostMetrics(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des métriques: ${error.message}`);
+    }
+  }
+};
+
+const getPostsByUserTopSkillsTool = {
+  name: 'getPostsByUserTopSkills',
+  description: 'Obtenir des posts recommandés en fonction des compétences principales de l\'utilisateur',
+  parameters: {
+    type: 'object',
+    properties: {
+      page: { type: 'number', description: 'Page de résultats' },
+      limit: { type: 'number', description: 'Nombre de résultats par page' }
+    }
+  },
+  execute: async (params, user) => {
+    const req = { query: params || {}, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.getPostsByUserTopSkills(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des posts recommandés: ${error.message}`);
+    }
+  }
+};
+
+const sendTechnicalTestTool = {
+  name: 'sendTechnicalTest',
+  description: 'Envoyer un test technique par email pour un candidat',
+  parameters: {
+    type: 'object',
+    properties: {
+      postId: { type: 'string', description: 'ID du post' },
+      candidateEmail: { type: 'string', description: 'Email du candidat' },
+      candidateName: { type: 'string', description: 'Nom du candidat (optionnel)' }
+    },
+    required: ['postId', 'candidateEmail']
+  },
+  execute: async (params, user) => {
+    const req = { body: { ...params }, user, headers: { authorization: '' } };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postController.sendTechnicalTest(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de l'envoi du test technique: ${error.message}`);
+    }
+  }
+};
+
+const processPostPaymentTool = {
+  name: 'processPostPayment',
+  description: 'Traiter le paiement pour un post (beta gratuite)',
+  parameters: {
+    type: 'object',
+    properties: {
+      postId: { type: 'string', description: 'ID du post' },
+      agentId: { type: 'string', description: 'ID de l\'agent (optionnel)' }
+    },
+    required: ['postId']
+  },
+  execute: async (params, user) => {
+    const req = { body: { ...params }, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postPaymentController.processPostPayment(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors du traitement du paiement: ${error.message}`);
+    }
+  }
+};
+
+const getPostPaymentHistoryTool = {
+  name: 'getPostPaymentHistory',
+  description: 'Obtenir l\'historique des paiements pour les posts de l\'utilisateur',
+  parameters: {
+    type: 'object',
+    properties: {
+      page: { type: 'number', description: 'Page de résultats' },
+      limit: { type: 'number', description: 'Nombre de résultats par page' },
+      postId: { type: 'string', description: 'ID du post (optionnel)' }
+    }
+  },
+  execute: async (params, user) => {
+    const req = { query: { ...params }, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postPaymentController.getPostPaymentHistory(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de l'historique des paiements: ${error.message}`);
+    }
+  }
+};
+
+const getPostPaymentDetailsTool = {
+  name: 'getPostPaymentDetails',
+  description: 'Obtenir les détails de paiement pour un post spécifique',
+  parameters: {
+    type: 'object',
+    properties: {
+      postId: { type: 'string', description: 'ID du post' }
+    },
+    required: ['postId']
+  },
+  execute: async (params, user) => {
+    const req = { params: { postId: params.postId }, user };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
+    try {
+      const result = await postPaymentController.getPostPaymentDetails(req, res);
+      return result;
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des détails de paiement: ${error.message}`);
+    }
+  }
+};
+
+/**
  * Liste de tous les outils disponibles
  */
 const availableTools = [
   createPostTool,
   searchPostsTool,
   getPostDetailsTool,
+  getPostByIdTool,
+  getAllPostsTool,
+  getMyPostsTool,
   updatePostTool,
+  updatePostStatusTool,
   deletePostTool,
   calculatePostPriceTool,
+  getPostMetricsTool,
+  getPostsByUserTopSkillsTool,
+  sendTechnicalTestTool,
+  processPostPaymentTool,
+  getPostPaymentHistoryTool,
+  getPostPaymentDetailsTool,
   getPublicStatsTool
 ];
 
