@@ -92,6 +92,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
   const [cvProgress, setCvProgress] = useState(0);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvError, setCvError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [savedEmail, setSavedEmail] = useState("");
   const [otpCode, setOtpCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -340,74 +341,103 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               />
               <Box
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files?.[0] ?? null;
+                  if (file && /\.(pdf|doc|docx)$/i.test(file.name)) {
+                    setCvFile(file);
+                    setCvError(false);
+                  }
+                }}
                 sx={{
-                  border: "1px dashed",
+                  border: "1.5px dashed",
                   borderColor: cvError
                     ? "error.main"
+                    : isDragging
+                    ? themeColors.primaryLight
                     : cvFile
                     ? themeColors.primary
                     : "rgb(203 203 203)",
                   borderRadius: 2,
-                  py: 1.5,
+                  py: isDragging ? 3 : 1.5,
                   px: 2,
                   cursor: "pointer",
                   display: "flex",
+                  flexDirection: isDragging ? "column" : "row",
                   alignItems: "center",
-                  gap: 1,
+                  justifyContent: isDragging ? "center" : "flex-start",
+                  gap: isDragging ? 0.5 : 1,
                   transition: "all 0.2s",
-                  background: cvFile ? "rgba(131,16,255,0.04)" : "transparent",
+                  background: isDragging
+                    ? "rgba(131,16,255,0.06)"
+                    : cvFile
+                    ? "rgba(131,16,255,0.04)"
+                    : "transparent",
                   "&:hover": {
                     borderColor: themeColors.primary,
                     background: "rgba(131,16,255,0.04)",
                   },
                 }}
               >
-                {cvFile ? (
-                  <CheckCircleOutlineIcon sx={{ color: themeColors.primary, fontSize: 20 }} />
-                ) : (
-                  <UploadFileIcon
-                    sx={{ color: "rgba(0,0,0,0.4)", fontSize: 20 }}
-                  />
-                )}
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: cvFile ? themeColors.primary : "#444",
-                      fontWeight: cvFile ? 500 : 400,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {cvFile ? cvFile.name : "Upload your CV"}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-                    <Typography variant="caption" sx={{ color: cvError ? "error.main" : "#999" }}>
-                      {cvError ? "CV is required" : "PDF, DOC or DOCX"}
+                {isDragging ? (
+                  <>
+                    <UploadFileIcon sx={{ color: themeColors.primary, fontSize: 28 }} />
+                    <Typography variant="body2" sx={{ color: themeColors.primary, fontWeight: 600 }}>
+                      Drop your CV here
                     </Typography>
-                    {!cvError && (
-                      <Box
-                        component="span"
+                    <Typography variant="caption" sx={{ color: "#999" }}>PDF, DOC or DOCX</Typography>
+                  </>
+                ) : (
+                  <>
+                    {cvFile ? (
+                      <CheckCircleOutlineIcon sx={{ color: themeColors.primary, fontSize: 20 }} />
+                    ) : (
+                      <UploadFileIcon sx={{ color: "rgba(0,0,0,0.4)", fontSize: 20 }} />
+                    )}
+                    <Box>
+                      <Typography
+                        variant="body2"
                         sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 0.4,
-                          px: 0.7,
-                          py: 0.1,
-                          borderRadius: "4px",
-                          background: "rgba(131,16,255,0.08)",
-                          border: "1px solid rgba(131,16,255,0.2)",
-                          fontSize: "0.6rem",
-                          fontWeight: 600,
-                          color: themeColors.primary,
-                          letterSpacing: 0.4,
-                          lineHeight: 1.6,
+                          color: cvFile ? themeColors.primary : "#444",
+                          fontWeight: cvFile ? 500 : 400,
+                          lineHeight: 1.4,
                         }}
                       >
-                        🇬🇧 English only
+                        {cvFile ? cvFile.name : "Drag & drop your CV or click to browse"}
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                        <Typography variant="caption" sx={{ color: cvError ? "error.main" : "#999" }}>
+                          {cvError ? "CV is required" : "PDF, DOC or DOCX"}
+                        </Typography>
+                        {!cvError && (
+                          <Box
+                            component="span"
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.4,
+                              px: 0.7,
+                              py: 0.1,
+                              borderRadius: "4px",
+                              background: "rgba(131,16,255,0.08)",
+                              border: "1px solid rgba(131,16,255,0.2)",
+                              fontSize: "0.6rem",
+                              fontWeight: 600,
+                              color: themeColors.primary,
+                              letterSpacing: 0.4,
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            🇬🇧 English only
+                          </Box>
+                        )}
                       </Box>
-                    )}
-                  </Box>
-                </Box>
+                    </Box>
+                  </>
+                )}
               </Box>
             </Box>
           )}
