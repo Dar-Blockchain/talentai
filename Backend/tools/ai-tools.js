@@ -5,7 +5,6 @@
 
 const postController = require('../controllers/PostControllers/post.controller');
 const postPaymentController = require('../controllers/postPayment.controller');
-const postService = require('../services/PosteServices/post.service');
 
 /**
  * Outil pour créer un post
@@ -74,21 +73,19 @@ const searchPostsTool = {
       limit: { type: 'number', default: 10, description: 'Nombre de résultats par page' }
     }
   },
-  execute: async (params, user) => {
+  execute: async (params) => {
+    const req = {
+      query: params
+    };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
     try {
-      const { page = 1, limit = 10, ...filters } = params || {};
-      const result = await postService.getAllPostsWithSearch(filters, page, limit);
-      return {
-        success: true,
-        results: result.posts,
-        total: result.pagination.total,
-        page: result.pagination.page,
-        limit: result.pagination.limit,
-        totalPages: result.pagination.totalPages,
-        hasNextPage: result.pagination.hasNextPage,
-        hasPrevPage: result.pagination.hasPrevPage,
-        filters
-      };
+      const result = await postController.getAllPostsWithSearch(req, res);
+      return result;
     } catch (error) {
       throw new Error(`Erreur lors de la recherche: ${error.message}`);
     }
@@ -108,13 +105,19 @@ const getPostDetailsTool = {
     },
     required: ['postId']
   },
-  execute: async (params, user) => {
+  execute: async (params) => {
+    const req = {
+      params: { id: params.postId }
+    };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
     try {
-      const result = await postService.getPostById(params.postId);
-      return {
-        success: true,
-        data: result
-      };
+      const result = await postController.getPostDetailsPublic(req, res);
+      return result;
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des détails: ${error.message}`);
     }
@@ -267,13 +270,17 @@ const getAllPostsTool = {
       status: { type: 'string', description: 'Statut des posts (active, draft, expired, closed, cancelled)' }
     }
   },
-  execute: async (params, user) => {
+  execute: async (params) => {
+    const req = { query: params || {} };
+    const res = {
+      status: (code) => ({
+        json: (data) => ({ status: code, data })
+      })
+    };
+
     try {
-      const result = await postService.getAllPosts(params || {});
-      return {
-        success: true,
-        data: result
-      };
+      const result = await postController.getAllPosts(req, res);
+      return result;
     } catch (error) {
       throw new Error(`Erreur lors de la récupération des posts: ${error.message}`);
     }
