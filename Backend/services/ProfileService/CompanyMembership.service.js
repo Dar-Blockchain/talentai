@@ -181,6 +181,47 @@ module.exports.updateMembershipDepartment = async (membershipId, departmentId) =
   return updated;
 };
 
+// Update both role and department of a membership
+module.exports.updateMembership = async (membershipId, { role, departmentId }) => {
+  // Build the update object
+  const updateData = {};
+
+  // Validate and add role if provided
+  if (role) {
+    const validRoles = ["Owner", "RH", "TechLead", "Supervisor", "Manager"];
+    if (!validRoles.includes(role)) {
+      throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
+    }
+    updateData.role = role;
+  }
+
+  // Add department if provided
+  if (departmentId !== undefined) {
+    updateData.department = departmentId || null;
+  }
+
+  // If nothing to update, throw error
+  if (Object.keys(updateData).length === 0) {
+    throw new Error("At least one field (role or departmentId) must be provided for update");
+  }
+
+  const updated = await CompanyMembershipModel.findByIdAndUpdate(
+    membershipId,
+    updateData,
+    { new: true }
+  )
+    .populate({
+      path: "user",
+      select: "username email profile",
+      populate: { path: "profile", select: "firstName lastName" },
+    })
+    .populate("department", "name description")
+    .populate("invitedBy", "username email");
+
+  if (!updated) throw new Error("Membership not found");
+  return updated;
+};
+
 // Compute simple statistics for a company's memberships (counts by role/status)
 module.exports.getMembershipStatsByCompany = async (companyId) => {
 

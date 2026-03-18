@@ -135,6 +135,30 @@ module.exports.updateMembershipDepartment = async (req, res) => {
   }
 };
 
+// Update membership (role and/or department)
+module.exports.updateMembership = async (req, res) => {
+  try {
+    const { membershipId } = req.params;
+    const { role, departmentId } = req.body;
+
+    // Validate that at least one field is provided
+    if (!role && departmentId === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field (role or departmentId) must be provided",
+      });
+    }
+
+    const updated = await CompanyMembershipService.updateMembership(
+      membershipId,
+      { role, departmentId },
+    );
+    res.json({ success: true, updated: flattenMembership(updated) });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 // Get simple statistics for memberships and invitations belonging to a company
 module.exports.getMembershipStats = async (req, res) => {
   try {

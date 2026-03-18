@@ -29,7 +29,8 @@ router.get(
 
 // Delete a membership
 router.delete("/:membershipId", resolveCompanyActor, CompanyMembershipController.deleteMembership);
-
+// Update membership (role and/or department)
+router.patch("/:membershipId", resolveCompanyActor, CompanyMembershipController.updateMembership);
 // Update membership role
 router.patch("/:membershipId/role", CompanyMembershipController.updateMembershipRole);
 // Update membership department (assign or unassign)
