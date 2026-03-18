@@ -7,6 +7,16 @@ interface AgentStatusPanelProps {
   interviewStatus: InterviewStatus;
   agentState: AgentState;
   onSubmitAnswer: () => void;
+  agentMessage?: string;
+  isInReadingTime?: boolean;
+  readingTimeLeft?: number;
+  accumulatedTurns?: string[];
+  isVoiceActive?: boolean;
+  currentTranscript?: string;
+  debugMode?: boolean;
+  setDebugMode?: (v: boolean) => void;
+  silenceDebugLog?: string[];
+  transcriptDebugLog?: string[];
 }
 
 const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
