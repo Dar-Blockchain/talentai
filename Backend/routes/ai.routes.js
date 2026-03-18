@@ -11,6 +11,7 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 
 const aiController = require("../controllers/ai.controller");
+const aiAgentController = require("../controllers/ai.agent.controller");
 
 // Routes publiques pour la découverte
 router.get("/health", aiController.healthCheck);
@@ -23,5 +24,13 @@ router.use(requireAuthUser, authLogMiddleware("AI"));
 // Description: Exécuter un outil IA spécifique
 // Body: { toolName: string, parameters: object }
 router.post("/execute-tool", aiController.executeTool);
+
+// POST /ai/agent
+// Description: Run autonomous AI agent
+// Body: { message: string, conversationId?: string }
+router.post("/agent", aiAgentController.runAgent);
+
+// GET /ai/agent/capabilities
+router.get("/agent/capabilities", aiAgentController.getCapabilities);
 
 module.exports = router;
