@@ -35,3 +35,4 @@ router.patch("/:membershipId/role", CompanyMembershipController.updateMembership
 // Update membership department (assign or unassign)
 router.patch("/:membershipId/department", resolveCompanyActor, CompanyMembershipController.updateMembershipDepartment);
 module.exports = router;
+
