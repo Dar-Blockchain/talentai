@@ -34,6 +34,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 interface PipelineWarningDialogProps {
   open: boolean;
   nodes: any[];
+  totalNodes?: number;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -41,9 +42,14 @@ interface PipelineWarningDialogProps {
 const PipelineWarningDialog: React.FC<PipelineWarningDialogProps> = ({
   open,
   nodes,
+  totalNodes,
   onCancel,
   onConfirm,
 }) => {
+  const allUnconfigured = totalNodes !== undefined
+    ? nodes.length >= totalNodes
+    : nodes.length > 0 && totalNodes === undefined;
+
   return (
     <StyledDialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
       {/* ===== Title ===== */}
@@ -153,33 +159,27 @@ const PipelineWarningDialog: React.FC<PipelineWarningDialogProps> = ({
           </Box>
         </Box>
 
-        {/* ===== Warning Note ===== */}
-        <Box
-          sx={{
-            mt: 1.5,
-            display: "flex",
-            gap: 1.5,
-            alignItems: "flex-start",
-            background: "rgba(222, 147, 0, 0.07)",
-            borderRadius: "8px",
-            px: 2,
-            py: 1,
-          }}
-        >
-          <WarningAmberIcon
-            sx={{ fontSize: 20, color: "rgba(222, 147, 0, 1)", mt: "2px" }}
-          />
-          <Typography
+        {/* ===== Blocker message when nothing configured ===== */}
+        {allUnconfigured && (
+          <Box
             sx={{
-              fontSize: "13px",
-              lineHeight: "20px",
-              color: "rgba(120, 83, 0, 1)",
+              mt: 1.5,
+              display: "flex",
+              gap: 1.5,
+              alignItems: "flex-start",
+              background: "rgba(239,68,68,0.06)",
+              border: "1px solid rgba(239,68,68,0.2)",
+              borderRadius: "8px",
+              px: 2,
+              py: 1.25,
             }}
           >
-            These steps will use default configuration values. You can update
-            them later from the pipeline editor.
-          </Typography>
-        </Box>
+            <WarningAmberIcon sx={{ fontSize: 20, color: "rgba(239,68,68,1)", mt: "2px", flexShrink: 0 }} />
+            <Typography sx={{ fontSize: "13px", lineHeight: "20px", color: "rgba(185,28,28,1)", fontWeight: 500 }}>
+              You must configure at least one step before continuing.
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
 
       <Divider />
@@ -205,16 +205,21 @@ const PipelineWarningDialog: React.FC<PipelineWarningDialogProps> = ({
         <Button
           variant="outlined"
           onClick={onConfirm}
+          disabled={allUnconfigured}
           sx={{
-            borderColor: "rgba(222, 147, 0, 1)",
-            color: "rgba(222, 147, 0, 1)",
+            borderColor: allUnconfigured ? "rgba(209,213,219,1)" : "rgba(222, 147, 0, 1)",
+            color: allUnconfigured ? "rgba(156,163,175,1)" : "rgba(222, 147, 0, 1)",
             fontWeight: 600,
             borderRadius: "38px",
             px: 3,
             py: 1.2,
             textTransform: "none",
             "&:hover": {
-              backgroundColor: "rgba(222, 147, 0, 0.08)",
+              backgroundColor: allUnconfigured ? "transparent" : "rgba(222, 147, 0, 0.08)",
+            },
+            "&.Mui-disabled": {
+              borderColor: "rgba(209,213,219,1)",
+              color: "rgba(156,163,175,1)",
             },
           }}
         >

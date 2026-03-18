@@ -196,6 +196,7 @@ const CreateStepper: React.FC = () => {
       <PipelineWarningDialog
         open={pipelineWarningOpen}
         nodes={unconfiguredNodes}
+        totalNodes={recruitmentFlow.nodes.length}
         onCancel={() => setPipelineWarningOpen(false)}
         onConfirm={async () => {
           setPipelineWarningOpen(false);

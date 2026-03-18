@@ -2,21 +2,31 @@ import React, { useState } from "react";
 import {
   Box,
   Typography,
-  FormControl,
   FormControlLabel,
   Checkbox,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Chip,
   Button,
   Select,
   MenuItem,
   Slider,
+  Collapse,
 } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { softSkills } from "@/constants/skills";
 import { experienceLevels } from "@/constants/profile";
+
+const TEAL = "#0D9488";
+const TEAL_BG = "#F0FDFA";
+const TEAL_BORDER = "#99F6E4";
+
+const STEPS = ["Select Skills", "Settings"];
+
+const labelSx = {
+  fontFamily: "Poppins", fontWeight: 700, fontSize: "0.82rem", color: "#111827", mb: 1,
+};
 
 interface SoftSkillsConfig {
   softSkills: string[];
@@ -26,380 +36,280 @@ interface SoftSkillsConfig {
   configured: boolean;
 }
 
-interface SoftSkillsConfigFormProps {
+interface Props {
   initialConfig?: SoftSkillsConfig;
   onSave: (config: SoftSkillsConfig) => void;
   onCancel: () => void;
 }
 
-const SoftSkillsConfigForm: React.FC<SoftSkillsConfigFormProps> = ({
-  initialConfig,
-  onSave,
-  onCancel,
-}) => {
-  const [selectedSoftSkills, setSelectedSoftSkills] = useState<string[]>(
-    initialConfig?.softSkills || []
-  );
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(
-    initialConfig?.subcategories || []
-  );
-  const [assessmentLevel, setAssessmentLevel] = useState<string>(
-    initialConfig?.assessmentLevel || "Mid Level"
-  );
-  const [passThreshold, setPassThreshold] = useState<number>(
-    initialConfig?.passThreshold || 70
-  );
+const SoftSkillsConfigForm: React.FC<Props> = ({ initialConfig, onSave, onCancel }) => {
+  const [step, setStep] = useState(0);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(initialConfig?.softSkills || []);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(initialConfig?.subcategories || []);
+  const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
+  const [assessmentLevel, setAssessmentLevel] = useState(initialConfig?.assessmentLevel || "Mid Level");
+  const [passThreshold, setPassThreshold] = useState(initialConfig?.passThreshold || 70);
 
-  const handleSoftSkillToggle = (
-    skillName: string,
-    hasSubcategories: boolean
-  ) => {
-    if (selectedSoftSkills.includes(skillName)) {
-      // Remove skill and all its subcategories
-      setSelectedSoftSkills((prev) => prev.filter((s) => s !== skillName));
-
-      if (hasSubcategories) {
-        const skill = softSkills.find((s) => s.name === skillName);
-        const subcatValues =
-          skill?.subcategories?.map((sub) => sub.value) || [];
-        setSelectedSubcategories((prev) =>
-          prev.filter((sub) => !subcatValues.includes(sub))
-        );
+  const handleSkillToggle = (name: string, hasSubcats: boolean) => {
+    if (selectedSkills.includes(name)) {
+      setSelectedSkills((prev) => prev.filter((s) => s !== name));
+      if (hasSubcats) {
+        const skill = softSkills.find((s) => s.name === name);
+        const vals = skill?.subcategories?.map((s) => s.value) || [];
+        setSelectedSubcategories((prev) => prev.filter((s) => !vals.includes(s)));
       }
+      if (expandedSkill === name) setExpandedSkill(null);
     } else {
-      // Add skill
-      setSelectedSoftSkills((prev) => [...prev, skillName]);
+      setSelectedSkills((prev) => [...prev, name]);
+      if (hasSubcats) setExpandedSkill(name);
     }
   };
 
-  const handleSubcategoryToggle = (skillName: string, subcatValue: string) => {
-    // Ensure parent skill is selected
-    if (!selectedSoftSkills.includes(skillName)) {
-      setSelectedSoftSkills((prev) => [...prev, skillName]);
-    }
-
+  const handleSubcatToggle = (skillName: string, val: string) => {
+    if (!selectedSkills.includes(skillName)) setSelectedSkills((prev) => [...prev, skillName]);
     setSelectedSubcategories((prev) =>
-      prev.includes(subcatValue)
-        ? prev.filter((s) => s !== subcatValue)
-        : [...prev, subcatValue]
+      prev.includes(val) ? prev.filter((s) => s !== val) : [...prev, val]
     );
   };
 
   const handleSave = () => {
-    const config: SoftSkillsConfig = {
-      softSkills: selectedSoftSkills,
+    onSave({
+      softSkills: selectedSkills,
       subcategories: selectedSubcategories,
       assessmentLevel,
       passThreshold,
-      configured: selectedSoftSkills.length > 0,
-    };
-    onSave(config);
+      configured: selectedSkills.length > 0,
+    });
   };
 
-  const isValid = selectedSoftSkills.length > 0;
+  const canNext = selectedSkills.length > 0;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {/* Header */}
-      <Box>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Configure Soft Skills Assessment
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Select soft skills and subcategories to evaluate candidates
-        </Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+
+      {/* ── Step indicator ── */}
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2.5 }}>
+        {STEPS.map((label, i) => (
+          <React.Fragment key={label}>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.4 }}>
+              <Box sx={{
+                width: 28, height: 28, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: i < step ? TEAL : i === step ? TEAL_BG : "#F3F4F6",
+                border: `2px solid ${i <= step ? TEAL : "#E5E7EB"}`,
+                transition: "all 0.2s",
+              }}>
+                {i < step
+                  ? <CheckCircleIcon sx={{ fontSize: 16, color: "#fff" }} />
+                  : <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "11px", color: i === step ? TEAL : "#9CA3AF" }}>{i + 1}</Typography>
+                }
+              </Box>
+              <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", fontWeight: i === step ? 700 : 500, color: i === step ? TEAL : "#9CA3AF", whiteSpace: "nowrap" }}>
+                {label}
+              </Typography>
+            </Box>
+            {i < STEPS.length - 1 && (
+              <Box sx={{ flex: 1, height: 2, bgcolor: i < step ? TEAL : "#E5E7EB", mx: 0.5, mb: 2.2, transition: "all 0.2s" }} />
+            )}
+          </React.Fragment>
+        ))}
       </Box>
 
-      {/* Soft Skills Selection with Subcategories */}
-      <FormControl fullWidth>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-          Soft Skills
-        </Typography>
+      {/* ── Step 0: Skill selection ── */}
+      {step === 0 && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography sx={labelSx}>Soft Skills</Typography>
           {softSkills.map((skill) => {
-            const isSkillSelected = selectedSoftSkills.includes(skill.name);
-            const skillSubcategories = skill.subcategories || [];
-            const hasSubcategories = skillSubcategories.length > 0;
+            const isSelected = selectedSkills.includes(skill.name);
+            const hasSubcats = (skill.subcategories || []).length > 0;
+            const isExpanded = expandedSkill === skill.name && isSelected && hasSubcats;
 
             return (
-              <Accordion
+              <Box
                 key={skill.name}
-                expanded={isSkillSelected && hasSubcategories}
-                onChange={() => {}}
                 sx={{
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "8px !important",
-                  "&:before": { display: "none" },
-                  boxShadow: isSkillSelected
-                    ? "0 2px 8px rgba(0,0,0,0.1)"
-                    : "none",
+                  border: `1px solid ${isSelected ? TEAL : "#E5E7EB"}`,
+                  borderRadius: "10px",
+                  overflow: "hidden",
+                  bgcolor: isSelected ? TEAL_BG : "#fff",
+                  transition: "all 0.15s",
                 }}
               >
-                <AccordionSummary
-                  expandIcon={hasSubcategories ? <ExpandMoreIcon /> : null}
-                  sx={{
-                    backgroundColor: isSkillSelected ? "#f0f7ff" : "white",
-                    borderRadius: "8px",
-                    "&:hover": {
-                      backgroundColor: isSkillSelected ? "#e3f2fd" : "#f5f5f5",
-                    },
-                  }}
+                <Box
+                  display="flex" alignItems="center" justifyContent="space-between"
+                  sx={{ px: 1.5, py: 1, cursor: "pointer" }}
+                  onClick={() => handleSkillToggle(skill.name, hasSubcats)}
                 >
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={isSkillSelected}
-                        onChange={() =>
-                          handleSoftSkillToggle(skill.name, hasSubcategories)
-                        }
+                        checked={isSelected}
+                        onChange={() => handleSkillToggle(skill.name, hasSubcats)}
                         onClick={(e) => e.stopPropagation()}
+                        size="small"
+                        sx={{ color: TEAL, "&.Mui-checked": { color: TEAL } }}
                       />
                     }
                     label={
-                      <Typography
-                        variant="body1"
-                        fontWeight={isSkillSelected ? 600 : 400}
-                      >
+                      <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", fontWeight: isSelected ? 600 : 400, color: isSelected ? TEAL : "#374151" }}>
                         {skill.name}
                       </Typography>
                     }
                     onClick={(e) => e.stopPropagation()}
                   />
-                </AccordionSummary>
-
-                {hasSubcategories && (
-                  <AccordionDetails sx={{ backgroundColor: "#fafafa", pt: 2 }}>
-                    <Typography
-                      variant="caption"
-                      color="textSecondary"
-                      sx={{ mb: 1, display: "block" }}
-                    >
-                      Select specific aspects to assess:
-                    </Typography>
+                  {isSelected && hasSubcats && (
                     <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
-                        pl: 2,
-                      }}
+                      onClick={(e) => { e.stopPropagation(); setExpandedSkill(isExpanded ? null : skill.name); }}
+                      sx={{ display: "flex", alignItems: "center", cursor: "pointer", p: 0.5 }}
                     >
-                      {skillSubcategories.map((subcat) => (
-                        <FormControlLabel
-                          key={subcat.value}
-                          control={
-                            <Checkbox
-                              checked={selectedSubcategories.includes(
-                                subcat.value
-                              )}
-                              onChange={() =>
-                                handleSubcategoryToggle(
-                                  skill.name,
-                                  subcat.value
-                                )
-                              }
-                              size="small"
-                            />
-                          }
-                          label={
-                            <Typography variant="body2" color="textSecondary">
-                              {subcat.label}
-                            </Typography>
-                          }
-                        />
-                      ))}
+                      <ExpandMoreIcon sx={{ fontSize: 18, color: TEAL, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
                     </Box>
-                  </AccordionDetails>
+                  )}
+                </Box>
+
+                {hasSubcats && (
+                  <Collapse in={isExpanded}>
+                    <Box sx={{ px: 2, pb: 1.5, borderTop: `1px solid ${TEAL_BORDER}`, bgcolor: "#fff" }}>
+                      <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#9CA3AF", mt: 1, mb: 0.75 }}>
+                        Select specific aspects:
+                      </Typography>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                        {skill.subcategories!.map((sub) => {
+                          const active = selectedSubcategories.includes(sub.value);
+                          return (
+                            <Chip
+                              key={sub.value}
+                              label={sub.label}
+                              size="small"
+                              onClick={() => handleSubcatToggle(skill.name, sub.value)}
+                              sx={{
+                                fontFamily: "Poppins", fontSize: "11px", cursor: "pointer",
+                                bgcolor: active ? TEAL_BG : "#F9FAFB",
+                                border: `1px solid ${active ? TEAL : "#E5E7EB"}`,
+                                color: active ? TEAL : "#6B7280",
+                                transition: "all 0.15s",
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                  </Collapse>
                 )}
-              </Accordion>
+              </Box>
             );
           })}
-        </Box>
-        {selectedSoftSkills.length === 0 && (
-          <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-            Please select at least one soft skill
-          </Typography>
-        )}
-      </FormControl>
 
-      {/* Assessment Level */}
-      {selectedSoftSkills.length > 0 && (
-        <FormControl fullWidth>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-            Assessment Difficulty Level
-          </Typography>
-          <Select
-            value={assessmentLevel}
-            onChange={(e) => setAssessmentLevel(e.target.value)}
-            variant="outlined"
-          >
-            {experienceLevels.map((level) => (
-              <MenuItem key={level} value={level}>
-                {level}
-              </MenuItem>
-            ))}
-          </Select>
-          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-            Determines the complexity of scenarios and evaluation criteria
-          </Typography>
-        </FormControl>
+          {selectedSkills.length === 0 && (
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#EF4444", mt: 0.5 }}>
+              Select at least one soft skill
+            </Typography>
+          )}
+        </Box>
       )}
 
-      {/* Pass Threshold */}
-      {selectedSoftSkills.length > 0 && (
-        <FormControl fullWidth>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-            Pass Threshold
-          </Typography>
-          <Box sx={{ px: 2 }}>
+      {/* ── Step 1: Difficulty + Threshold + Summary ── */}
+      {step === 1 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+          <Box>
+            <Typography sx={labelSx}>Assessment Difficulty</Typography>
+            <Select
+              fullWidth
+              value={assessmentLevel}
+              onChange={(e) => setAssessmentLevel(e.target.value)}
+              sx={{ borderRadius: "10px", fontSize: "13px", "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" } }}
+            >
+              {experienceLevels.map((l) => (
+                <MenuItem key={l} value={l} sx={{ fontFamily: "Poppins", fontSize: "13px" }}>{l}</MenuItem>
+              ))}
+            </Select>
+          </Box>
+
+          <Box>
+            <Box display="flex" justifyContent="space-between" mb={1}>
+              <Typography sx={labelSx}>Pass Threshold</Typography>
+              <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.9rem", color: passThreshold >= 80 ? "#22c55e" : passThreshold >= 60 ? "#f59e0b" : "#ef4444" }}>
+                {passThreshold}%
+              </Typography>
+            </Box>
             <Slider
               value={passThreshold}
-              onChange={(_, newValue) => setPassThreshold(newValue as number)}
-              valueLabelDisplay="on"
-              valueLabelFormat={(value) => `${value}%`}
-              step={5}
-              marks
-              min={0}
-              max={100}
-              sx={{
-                "& .MuiSlider-valueLabel": {
-                  backgroundColor: "#9c27b0",
-                },
-              }}
+              onChange={(_, v) => setPassThreshold(v as number)}
+              step={5} min={0} max={100}
+              sx={{ color: TEAL, "& .MuiSlider-thumb": { width: 20, height: 20 } }}
             />
           </Box>
-          <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
-            Minimum score percentage required to pass this evaluation
-            (Currently: {passThreshold}%)
-          </Typography>
-        </FormControl>
-      )}
 
-      {/* Configuration Summary */}
-      {selectedSoftSkills.length > 0 && (
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: "#f3e5f5",
-            borderRadius: "8px",
-            border: "1px solid #9c27b0",
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ mb: 1.5, fontWeight: 600, color: "#7b1fa2" }}
-          >
-            📋 Configuration Summary
-          </Typography>
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Box>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: "block" }}
-              >
-                Assessment Level:
-              </Typography>
-              <Chip
-                label={assessmentLevel}
-                size="small"
-                color="secondary"
-                sx={{ mt: 0.5 }}
-              />
-            </Box>
-
-            <Box>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: "block" }}
-              >
-                Soft Skills ({selectedSoftSkills.length}):
-              </Typography>
-              <Box
-                sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}
-              >
-                {selectedSoftSkills.map((skill) => (
-                  <Chip
-                    key={skill}
-                    label={skill}
-                    size="small"
-                    color="secondary"
-                    variant="outlined"
-                  />
+          {/* Summary */}
+          <Box sx={{ bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, borderRadius: "12px", p: 2 }}>
+            <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.72rem", color: TEAL, mb: 1.25, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Summary
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#6B7280" }}>Skills</Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#111827" }}>{selectedSkills.length} selected</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#6B7280" }}>Level</Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#111827" }}>{assessmentLevel}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#6B7280" }}>Pass threshold</Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#111827" }}>{passThreshold}%</Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                {selectedSkills.map((s) => (
+                  <Chip key={s} label={s} size="small" sx={{ fontFamily: "Poppins", fontSize: "11px", bgcolor: "#fff", border: `1px solid ${TEAL_BORDER}`, color: TEAL }} />
                 ))}
               </Box>
             </Box>
-
-            {selectedSubcategories.length > 0 && (
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="textSecondary"
-                  sx={{ display: "block" }}
-                >
-                  Subcategories ({selectedSubcategories.length}):
-                </Typography>
-                <Box
-                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}
-                >
-                  {selectedSubcategories.map((subcat) => {
-                    const skill = softSkills.find((s) =>
-                      s.subcategories?.some((sub) => sub.value === subcat)
-                    );
-                    const subcatLabel = skill?.subcategories?.find(
-                      (s) => s.value === subcat
-                    )?.label;
-                    return (
-                      <Chip
-                        key={subcat}
-                        label={subcatLabel}
-                        size="small"
-                        variant="outlined"
-                        color="secondary"
-                      />
-                    );
-                  })}
-                </Box>
-              </Box>
-            )}
-
-            <Box>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: "block" }}
-              >
-                Pass Threshold:
-              </Typography>
-              <Chip
-                label={`${passThreshold}% minimum`}
-                size="small"
-                color={
-                  passThreshold >= 80
-                    ? "success"
-                    : passThreshold >= 60
-                    ? "warning"
-                    : "default"
-                }
-                sx={{ mt: 0.5 }}
-              />
-            </Box>
           </Box>
         </Box>
       )}
 
-      {/* Action Buttons */}
-      <Box
-        sx={{ display: "flex", justifyContent: "space-between", gap: 2, mt: 2 }}
-      >
-        <Button variant="outlined" onClick={onCancel}>
-          Cancel
+      {/* ── Footer ── */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3, pt: 2, borderTop: "1px solid #F3F4F6" }}>
+        <Button
+          onClick={step === 0 ? onCancel : () => setStep(0)}
+          startIcon={step > 0 ? <ArrowBackIcon sx={{ fontSize: 15 }} /> : undefined}
+          sx={{
+            fontFamily: "Poppins", fontWeight: 600, fontSize: "13px", textTransform: "none",
+            color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "10px", px: 2.5,
+            "&:hover": { bgcolor: "#F9FAFB" },
+          }}
+        >
+          {step === 0 ? "Cancel" : "Back"}
         </Button>
-        <Button variant="contained" onClick={handleSave} disabled={!isValid}>
-          Save Configuration
-        </Button>
+
+        {step === 0 ? (
+          <Button
+            variant="contained"
+            onClick={() => setStep(1)}
+            disabled={!canNext}
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 15 }} />}
+            sx={{
+              fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
+              bgcolor: TEAL, borderRadius: "10px", px: 3, boxShadow: "none",
+              "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
+              "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
+            }}
+          >
+            Next
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            sx={{
+              fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
+              bgcolor: TEAL, borderRadius: "10px", px: 3, boxShadow: "none",
+              "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
+            }}
+          >
+            Save Configuration
+          </Button>
+        )}
       </Box>
     </Box>
   );

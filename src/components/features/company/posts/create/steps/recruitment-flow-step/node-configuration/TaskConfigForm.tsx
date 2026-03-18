@@ -254,14 +254,29 @@ const TaskConfigForm: React.FC<TaskConfigFormProps> = ({
         </Box>
       )}
 
-      {/* Action Buttons */}
-      <Box
-        sx={{ display: "flex", justifyContent: "space-between", gap: 2, mt: 2 }}
-      >
-        <Button variant="outlined" onClick={onCancel}>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mt: 1, pt: 2, borderTop: "1px solid #F3F4F6" }}>
+        <Button
+          onClick={onCancel}
+          sx={{
+            fontFamily: "Poppins", fontWeight: 600, fontSize: "13px", textTransform: "none",
+            color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "10px", px: 2.5,
+            "&:hover": { bgcolor: "#F9FAFB" },
+          }}
+        >
           Cancel
         </Button>
-        <Button variant="contained" onClick={handleSave} disabled={!isValid}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={!isValid}
+          sx={{
+            fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
+            bgcolor: "#0D9488", borderRadius: "10px", px: 3, boxShadow: "none",
+            "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
+            "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
+          }}
+        >
           Save Configuration
         </Button>
       </Box>

@@ -2,449 +2,332 @@ import React, { useState } from "react";
 import {
   Box,
   Typography,
-  FormControl,
   FormControlLabel,
   Checkbox,
-  RadioGroup,
-  Radio,
   Button,
   Chip,
 } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import VideoCallIcon from "@mui/icons-material/VideoCall";
 import PhoneIcon from "@mui/icons-material/Phone";
 import BusinessIcon from "@mui/icons-material/Business";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import PersonIcon from "@mui/icons-material/Person";
 
+const TEAL = "#0D9488";
+const TEAL_BG = "#F0FDFA";
+const TEAL_BORDER = "#99F6E4";
+
+const STEPS = ["Interview Mode", "Focus Areas"];
+
+const labelSx = { fontFamily: "Poppins", fontWeight: 700, fontSize: "0.82rem", color: "#111827", mb: 1 };
+
+const INTERVIEW_MODES = [
+  {
+    value: "ai",
+    label: "AI-Powered Interview",
+    description: "Automated interview conducted by AI agent based on focus areas",
+    icon: <SmartToyIcon sx={{ fontSize: 20 }} />,
+  },
+  {
+    value: "human",
+    label: "Human Interview",
+    description: "Traditional interview conducted by your HR team",
+    icon: <PersonIcon sx={{ fontSize: 20 }} />,
+  },
+];
+
+const INTERVIEW_TYPES = [
+  { value: "video", label: "Video Call", icon: <VideoCallIcon sx={{ fontSize: 18 }} /> },
+  { value: "phone", label: "Phone Call", icon: <PhoneIcon sx={{ fontSize: 18 }} /> },
+  { value: "in-person", label: "In-Person", icon: <BusinessIcon sx={{ fontSize: 18 }} /> },
+];
+
+const FOCUS_AREAS = [
+  { value: "culture_fit", label: "Culture Fit", description: "Company values and team dynamics" },
+  { value: "work_experience", label: "Work Experience", description: "Previous roles and achievements" },
+  { value: "motivation", label: "Motivation & Goals", description: "Career aspirations and drive" },
+  { value: "technical_background", label: "Technical Background", description: "Overview of technical skills" },
+  { value: "salary", label: "Salary Discussion", description: "Compensation expectations" },
+];
+
 interface HRInterviewConfig {
   interviewMode: "ai" | "human";
-  interviewType?: string; // Only used when interviewMode === 'human'
+  interviewType?: string;
   focusAreas: string[];
   configured: boolean;
 }
 
-interface HRInterviewConfigFormProps {
+interface Props {
   initialConfig?: HRInterviewConfig;
   onSave: (config: HRInterviewConfig) => void;
   onCancel: () => void;
 }
 
-const INTERVIEW_TYPES = [
-  { value: "video", label: "Video Call", icon: <VideoCallIcon /> },
-  { value: "phone", label: "Phone Call", icon: <PhoneIcon /> },
-  { value: "in-person", label: "In-Person", icon: <BusinessIcon /> },
-];
+const HRInterviewConfigForm: React.FC<Props> = ({ initialConfig, onSave, onCancel }) => {
+  const [step, setStep] = useState(0);
+  const [interviewMode, setInterviewMode] = useState<"ai" | "human">(initialConfig?.interviewMode || "ai");
+  const [interviewType, setInterviewType] = useState(initialConfig?.interviewType || "video");
+  const [focusAreas, setFocusAreas] = useState<string[]>(initialConfig?.focusAreas || []);
 
-const FOCUS_AREAS = [
-  {
-    value: "culture_fit",
-    label: "Culture Fit",
-    description: "Company values and team dynamics",
-  },
-  {
-    value: "work_experience",
-    label: "Work Experience",
-    description: "Previous roles and achievements",
-  },
-  {
-    value: "motivation",
-    label: "Motivation & Goals",
-    description: "Career aspirations and drive",
-  },
-  {
-    value: "technical_background",
-    label: "Technical Background Review",
-    description: "Overview of technical skills",
-  },
-  {
-    value: "salary",
-    label: "Salary Discussion",
-    description: "Compensation expectations",
-  },
-];
+  const toggleFocusArea = (val: string) =>
+    setFocusAreas((prev) => prev.includes(val) ? prev.filter((a) => a !== val) : [...prev, val]);
 
-const HRInterviewConfigForm: React.FC<HRInterviewConfigFormProps> = ({
-  initialConfig,
-  onSave,
-  onCancel,
-}) => {
-  const [interviewMode, setInterviewMode] = useState<"ai" | "human">(
-    initialConfig?.interviewMode || "human"
-  );
-  const [interviewType, setInterviewType] = useState<string>(
-    initialConfig?.interviewType || "video"
-  );
-  const [focusAreas, setFocusAreas] = useState<string[]>(
-    initialConfig?.focusAreas || []
-  );
-
-  const handleFocusAreaToggle = (value: string) => {
-    setFocusAreas((prev) =>
-      prev.includes(value)
-        ? prev.filter((area) => area !== value)
-        : [...prev, value]
-    );
-  };
-
-  const handleSave = () => {
-    const config: HRInterviewConfig = {
+  const handleSave = () =>
+    onSave({
       interviewMode,
       interviewType: interviewMode === "human" ? interviewType : undefined,
       focusAreas,
-      configured: true, // Always configured once mode is selected
-    };
-    onSave(config);
-  };
+      configured: true,
+    });
 
-  // AI mode requires focus areas, Human mode is always valid
   const isValid = interviewMode === "ai" ? focusAreas.length > 0 : true;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {/* Header */}
-      <Box>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Configure HR Interview
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Set up interview format and key focus areas for candidate evaluation
-        </Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
+
+      {/* ── Step indicator ── */}
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2.5 }}>
+        {STEPS.map((label, i) => (
+          <React.Fragment key={label}>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.4 }}>
+              <Box sx={{
+                width: 28, height: 28, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                bgcolor: i < step ? TEAL : i === step ? TEAL_BG : "#F3F4F6",
+                border: `2px solid ${i <= step ? TEAL : "#E5E7EB"}`,
+                transition: "all 0.2s",
+              }}>
+                {i < step
+                  ? <CheckCircleIcon sx={{ fontSize: 16, color: "#fff" }} />
+                  : <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "11px", color: i === step ? TEAL : "#9CA3AF" }}>{i + 1}</Typography>
+                }
+              </Box>
+              <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", fontWeight: i === step ? 700 : 500, color: i === step ? TEAL : "#9CA3AF", whiteSpace: "nowrap" }}>
+                {label}
+              </Typography>
+            </Box>
+            {i < STEPS.length - 1 && (
+              <Box sx={{ flex: 1, height: 2, bgcolor: i < step ? TEAL : "#E5E7EB", mx: 0.5, mb: 2.2, transition: "all 0.2s" }} />
+            )}
+          </React.Fragment>
+        ))}
       </Box>
 
-      {/* Interview Mode Selection */}
-      <FormControl fullWidth>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-          Interview Mode
-        </Typography>
-        <RadioGroup
-          value={interviewMode}
-          onChange={(e) => setInterviewMode(e.target.value as "ai" | "human")}
-        >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {/* AI Interview Option */}
-            <Box
-              sx={{
-                border: "2px solid",
-                borderColor: interviewMode === "ai" ? "#1976d2" : "#e0e0e0",
-                borderRadius: "12px",
-                p: 2,
-                backgroundColor: interviewMode === "ai" ? "#e3f2fd" : "white",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                "&:hover": {
-                  backgroundColor:
-                    interviewMode === "ai" ? "#bbdefb" : "#f5f5f5",
-                  transform: "translateX(4px)",
-                },
-              }}
-              onClick={() => setInterviewMode("ai")}
-            >
-              <FormControlLabel
-                value="ai"
-                control={<Radio />}
-                label={
-                  <Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 0.5,
-                      }}
-                    >
-                      <SmartToyIcon
-                        color={interviewMode === "ai" ? "primary" : "disabled"}
-                      />
-                      <Typography
-                        variant="body1"
-                        fontWeight={interviewMode === "ai" ? 600 : 400}
-                      >
-                        🤖 AI-Powered Interview
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="caption"
-                      color="textSecondary"
-                      sx={{ pl: 4 }}
-                    >
-                      Automated interview conducted by AI agent based on focus
-                      areas
-                    </Typography>
-                  </Box>
-                }
-              />
-            </Box>
-
-            {/* Human Interview Option */}
-            <Box
-              sx={{
-                border: "2px solid",
-                borderColor: interviewMode === "human" ? "#1976d2" : "#e0e0e0",
-                borderRadius: "12px",
-                p: 2,
-                backgroundColor:
-                  interviewMode === "human" ? "#e3f2fd" : "white",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                "&:hover": {
-                  backgroundColor:
-                    interviewMode === "human" ? "#bbdefb" : "#f5f5f5",
-                  transform: "translateX(4px)",
-                },
-              }}
-              onClick={() => setInterviewMode("human")}
-            >
-              <FormControlLabel
-                value="human"
-                control={<Radio />}
-                label={
-                  <Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 0.5,
-                      }}
-                    >
-                      <PersonIcon
-                        color={
-                          interviewMode === "human" ? "primary" : "disabled"
-                        }
-                      />
-                      <Typography
-                        variant="body1"
-                        fontWeight={interviewMode === "human" ? 600 : 400}
-                      >
-                        👤 Human Interview
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="caption"
-                      color="textSecondary"
-                      sx={{ pl: 4 }}
-                    >
-                      Traditional interview conducted by your HR team
-                    </Typography>
-                  </Box>
-                }
-              />
-            </Box>
-          </Box>
-        </RadioGroup>
-      </FormControl>
-
-      {/* Interview Type (Only for Human Mode) */}
-      {interviewMode === "human" && (
-        <FormControl fullWidth>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-            Interview Type
-          </Typography>
-          <RadioGroup
-            value={interviewType}
-            onChange={(e) => setInterviewType(e.target.value)}
-          >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {INTERVIEW_TYPES.map((type) => (
-                <Box
-                  key={type.value}
-                  sx={{
-                    border: "1px solid",
-                    borderColor:
-                      interviewType === type.value ? "primary.main" : "#e0e0e0",
-                    borderRadius: "8px",
-                    p: 1.5,
-                    backgroundColor:
-                      interviewType === type.value ? "#f0f7ff" : "white",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      backgroundColor:
-                        interviewType === type.value ? "#e3f2fd" : "#f5f5f5",
-                      transform: "translateX(4px)",
-                    },
-                  }}
-                  onClick={() => setInterviewType(type.value)}
-                >
-                  <FormControlLabel
-                    value={type.value}
-                    control={<Radio />}
-                    label={
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        {type.icon}
-                        <Typography variant="body1">{type.label}</Typography>
-                      </Box>
-                    }
-                  />
-                </Box>
-              ))}
-            </Box>
-          </RadioGroup>
-        </FormControl>
-      )}
-
-      {/* Focus Areas */}
-      <FormControl fullWidth>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-          Focus Areas
-        </Typography>
-        <Typography
-          variant="caption"
-          color="textSecondary"
-          sx={{ mb: 1.5, display: "block" }}
-        >
-          Select the key areas to cover during the interview
-        </Typography>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {FOCUS_AREAS.map((area) => {
-            const isSelected = focusAreas.includes(area.value);
+      {/* ── Step 0: Mode + Type ── */}
+      {step === 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Typography sx={labelSx}>Interview Mode</Typography>
+          {INTERVIEW_MODES.map((mode) => {
+            const active = interviewMode === mode.value;
             return (
               <Box
-                key={area.value}
+                key={mode.value}
+                onClick={() => setInterviewMode(mode.value as "ai" | "human")}
                 sx={{
-                  border: "1px solid",
-                  borderColor: isSelected ? "primary.main" : "#e0e0e0",
-                  borderRadius: "8px",
-                  p: 1.5,
-                  backgroundColor: isSelected ? "#f0f7ff" : "white",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  "&:hover": {
-                    backgroundColor: isSelected ? "#e3f2fd" : "#f5f5f5",
-                    borderColor: isSelected ? "primary.main" : "#bdbdbd",
-                  },
+                  border: `2px solid ${active ? TEAL : "#E5E7EB"}`,
+                  borderRadius: "12px", p: 2,
+                  bgcolor: active ? TEAL_BG : "#fff",
+                  cursor: "pointer", transition: "all 0.15s",
+                  "&:hover": { borderColor: TEAL, bgcolor: TEAL_BG },
+                  display: "flex", alignItems: "flex-start", gap: 1.5,
                 }}
-                onClick={() => handleFocusAreaToggle(area.value)}
               >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={() => handleFocusAreaToggle(area.value)}
-                    />
-                  }
-                  label={
-                    <Box>
-                      <Typography
-                        variant="body1"
-                        fontWeight={isSelected ? 600 : 400}
-                      >
-                        {area.label}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {area.description}
-                      </Typography>
-                    </Box>
-                  }
-                />
+                <Box sx={{
+                  width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
+                  bgcolor: active ? "rgba(13,148,136,0.15)" : "#F3F4F6",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: active ? TEAL : "#9CA3AF",
+                }}>
+                  {mode.icon}
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "13px", color: active ? TEAL : "#111827" }}>
+                    {mode.label}
+                  </Typography>
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#9CA3AF", mt: 0.25 }}>
+                    {mode.description}
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  width: 18, height: 18, borderRadius: "50%", flexShrink: 0, mt: 0.25,
+                  border: `2px solid ${active ? TEAL : "#D1D5DB"}`,
+                  bgcolor: active ? TEAL : "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {active && <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#fff" }} />}
+                </Box>
               </Box>
             );
           })}
-        </Box>
-        {focusAreas.length === 0 && interviewMode === "ai" && (
-          <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-            Please select at least one focus area for AI interview
-          </Typography>
-        )}
-        {focusAreas.length === 0 && interviewMode === "human" && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-            Focus areas are optional for human interviews
-          </Typography>
-        )}
-      </FormControl>
 
-      {/* Selected Configuration Preview */}
-      {focusAreas.length > 0 && (
-        <Box
-          sx={{
-            p: 2,
-            backgroundColor: "#f5f5f5",
-            borderRadius: "8px",
-            border: "1px solid #e0e0e0",
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-            📋 Interview Configuration
-          </Typography>
-
-          <Box sx={{ mb: 1.5 }}>
-            <Typography
-              variant="caption"
-              color="textSecondary"
-              sx={{ display: "block", mb: 0.5 }}
-            >
-              Interview Mode:
-            </Typography>
-            <Chip
-              label={
-                interviewMode === "ai"
-                  ? "🤖 AI-Powered Interview"
-                  : "👤 Human Interview"
-              }
-              color={interviewMode === "ai" ? "info" : "primary"}
-              size="small"
-            />
-          </Box>
-
+          {/* Interview type — only for human */}
           {interviewMode === "human" && (
-            <Box sx={{ mb: 1.5 }}>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: "block", mb: 0.5 }}
-              >
-                Interview Type:
-              </Typography>
-              <Chip
-                label={
-                  INTERVIEW_TYPES.find((t) => t.value === interviewType)?.label
-                }
-                icon={
-                  INTERVIEW_TYPES.find((t) => t.value === interviewType)?.icon
-                }
-                color="primary"
-                size="small"
-              />
+            <Box sx={{ mt: 0.5 }}>
+              <Typography sx={{ ...labelSx, mt: 1 }}>Interview Format</Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                {INTERVIEW_TYPES.map((type) => {
+                  const active = interviewType === type.value;
+                  return (
+                    <Box
+                      key={type.value}
+                      onClick={() => setInterviewType(type.value)}
+                      sx={{
+                        flex: 1, border: `1px solid ${active ? TEAL : "#E5E7EB"}`,
+                        borderRadius: "10px", p: 1.5, cursor: "pointer",
+                        bgcolor: active ? TEAL_BG : "#fff", transition: "all 0.15s",
+                        display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5,
+                        "&:hover": { borderColor: TEAL, bgcolor: TEAL_BG },
+                      }}
+                    >
+                      <Box sx={{ color: active ? TEAL : "#9CA3AF" }}>{type.icon}</Box>
+                      <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: active ? 700 : 500, color: active ? TEAL : "#6B7280" }}>
+                        {type.label}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
             </Box>
           )}
+        </Box>
+      )}
 
-          <Box>
-            <Typography
-              variant="caption"
-              color="textSecondary"
-              sx={{ display: "block", mb: 0.5 }}
-            >
-              Focus Areas ({focusAreas.length}):
+      {/* ── Step 1: Focus areas + summary ── */}
+      {step === 1 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Typography sx={labelSx}>
+            Focus Areas
+            {interviewMode === "human" && (
+              <Typography component="span" sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 400, color: "#9CA3AF", ml: 1 }}>
+                (optional)
+              </Typography>
+            )}
+          </Typography>
+
+          {FOCUS_AREAS.map((area) => {
+            const active = focusAreas.includes(area.value);
+            return (
+              <Box
+                key={area.value}
+                onClick={() => toggleFocusArea(area.value)}
+                sx={{
+                  border: `1px solid ${active ? TEAL : "#E5E7EB"}`,
+                  borderRadius: "10px", px: 1.5, py: 1.25,
+                  bgcolor: active ? TEAL_BG : "#fff",
+                  cursor: "pointer", transition: "all 0.15s",
+                  display: "flex", alignItems: "center", gap: 1.25,
+                  "&:hover": { borderColor: TEAL, bgcolor: TEAL_BG },
+                }}
+              >
+                <Checkbox
+                  checked={active}
+                  onChange={() => toggleFocusArea(area.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  size="small"
+                  sx={{ p: 0, color: "#D1D5DB", "&.Mui-checked": { color: TEAL } }}
+                />
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", fontWeight: active ? 600 : 400, color: active ? TEAL : "#374151" }}>
+                    {area.label}
+                  </Typography>
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#9CA3AF" }}>
+                    {area.description}
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })}
+
+          {focusAreas.length === 0 && interviewMode === "ai" && (
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#EF4444" }}>
+              Select at least one focus area for AI interview
             </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {focusAreas.map((areaValue) => {
-                const area = FOCUS_AREAS.find((a) => a.value === areaValue);
-                return (
-                  <Chip
-                    key={areaValue}
-                    label={area?.label}
-                    size="small"
-                    color="secondary"
-                  />
-                );
-              })}
+          )}
+
+          {/* Summary */}
+          <Box sx={{ bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, borderRadius: "12px", p: 2, mt: 0.5 }}>
+            <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "0.72rem", color: TEAL, mb: 1, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Summary
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#6B7280" }}>Mode</Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#111827" }}>
+                  {interviewMode === "ai" ? "AI-Powered" : "Human"}
+                </Typography>
+              </Box>
+              {interviewMode === "human" && (
+                <Box display="flex" justifyContent="space-between">
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#6B7280" }}>Format</Typography>
+                  <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#111827" }}>
+                    {INTERVIEW_TYPES.find((t) => t.value === interviewType)?.label}
+                  </Typography>
+                </Box>
+              )}
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "#6B7280" }}>Focus areas</Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 600, color: "#111827" }}>
+                  {focusAreas.length > 0 ? focusAreas.length + " selected" : "None"}
+                </Typography>
+              </Box>
+              {focusAreas.length > 0 && (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {focusAreas.map((v) => (
+                    <Chip key={v} label={FOCUS_AREAS.find((a) => a.value === v)?.label} size="small"
+                      sx={{ fontFamily: "Poppins", fontSize: "11px", bgcolor: "#fff", border: `1px solid ${TEAL_BORDER}`, color: TEAL }} />
+                  ))}
+                </Box>
+              )}
             </Box>
           </Box>
         </Box>
       )}
 
-      {/* Action Buttons */}
-      <Box
-        sx={{ display: "flex", justifyContent: "space-between", gap: 2, mt: 2 }}
-      >
-        <Button variant="outlined" onClick={onCancel}>
-          Cancel
+      {/* ── Footer ── */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3, pt: 2, borderTop: "1px solid #F3F4F6" }}>
+        <Button
+          onClick={step === 0 ? onCancel : () => setStep(0)}
+          startIcon={step > 0 ? <ArrowBackIcon sx={{ fontSize: 15 }} /> : undefined}
+          sx={{
+            fontFamily: "Poppins", fontWeight: 600, fontSize: "13px", textTransform: "none",
+            color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "10px", px: 2.5,
+            "&:hover": { bgcolor: "#F9FAFB" },
+          }}
+        >
+          {step === 0 ? "Cancel" : "Back"}
         </Button>
-        <Button variant="contained" onClick={handleSave} disabled={!isValid}>
-          Save Configuration
-        </Button>
+
+        {step === 0 ? (
+          <Button
+            variant="contained"
+            onClick={() => setStep(1)}
+            endIcon={<ArrowForwardIcon sx={{ fontSize: 15 }} />}
+            sx={{
+              fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
+              bgcolor: TEAL, borderRadius: "10px", px: 3, boxShadow: "none",
+              "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
+            }}
+          >
+            Next
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={!isValid}
+            sx={{
+              fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", textTransform: "none",
+              bgcolor: TEAL, borderRadius: "10px", px: 3, boxShadow: "none",
+              "&:hover": { bgcolor: "#0F766E", boxShadow: "none" },
+              "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
+            }}
+          >
+            Save Configuration
+          </Button>
+        )}
       </Box>
     </Box>
   );
