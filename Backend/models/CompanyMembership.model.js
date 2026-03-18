@@ -5,7 +5,6 @@ const CompanyMembershipSchema = new mongoose.Schema({
   company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   role: {
     type: String,
-    enum: ["Owner", "RH", "TechLead", "Supervisor", "Manager"],
     default: "Manager",
   },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
