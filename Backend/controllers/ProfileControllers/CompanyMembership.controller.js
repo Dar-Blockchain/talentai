@@ -5,18 +5,23 @@ const flattenMembership = (membership) => {
   const m = membership?.toObject ? membership.toObject() : membership;
   const user = m?.user || {};
   const profile = user?.profile || {};
-  const department = m?.department || {};
 
-  const { user: _user, ...rest } = m;
+  const { user: _user, department: _department, ...rest } = m;
 
-  return {
+  const result = {
     ...rest,
     username: user.username || null,
     email: user.email || null,
     firstName: profile.firstName || null,
     lastName: profile.lastName || null,
-    department: department,
   };
+
+  // Inclure le département seulement s'il existe
+  if (m?.department) {
+    result.department = m.department;
+  }
+
+  return result;
 };
 
 // Get all memberships for a company
