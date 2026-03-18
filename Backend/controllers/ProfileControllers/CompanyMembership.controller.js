@@ -21,7 +21,15 @@ const flattenMembership = (membership) => {
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { search, status, department, page = 1, limit = 10 } = req.query;
+    const { search, status, department, page = 1, limit = 10, sortBy, order, role, departmentId } = req.query;
+
+    // Build filters object
+    const filters = {};
+    if (role) filters.role = role;
+    if (sortBy) filters.sortBy = sortBy;
+    if (order) filters.order = order;
+    if (departmentId) filters.departmentId = departmentId;
+    if (search) filters.search = search;
 
     const result = await CompanyMembershipService.getMembershipsByCompany(
       companyId,
@@ -30,6 +38,7 @@ module.exports.getMembershipsByCompany = async (req, res) => {
       department,
       parseInt(page),
       parseInt(limit),
+      filters,
     );
 
     const memberships = (result.memberships || []).map(flattenMembership);
@@ -45,7 +54,14 @@ module.exports.getMembershipsByDepartment = async (req, res) => {
   try {
     const companyId = req.user._id;
     const { departmentId } = req.params;
-    const { search, status, page = 1, limit = 10 } = req.query;
+    const { search, status, page = 1, limit = 10, sortBy, order, role } = req.query;
+
+    // Build filters object
+    const filters = {};
+    if (role) filters.role = role;
+    if (sortBy) filters.sortBy = sortBy;
+    if (order) filters.order = order;
+    if (search) filters.search = search;
 
     const result = await CompanyMembershipService.getMembershipsByCompany(
       companyId,
@@ -54,6 +70,7 @@ module.exports.getMembershipsByDepartment = async (req, res) => {
       departmentId,
       parseInt(page),
       parseInt(limit),
+      filters,
     );
 
     const memberships = (result.memberships || []).map(flattenMembership);
@@ -111,6 +128,30 @@ module.exports.updateMembershipDepartment = async (req, res) => {
     const updated = await CompanyMembershipService.updateMembershipDepartment(
       membershipId,
       departmentId,
+    );
+    res.json({ success: true, updated: flattenMembership(updated) });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Update membership (role and/or department)
+module.exports.updateMembership = async (req, res) => {
+  try {
+    const { membershipId } = req.params;
+    const { role, departmentId } = req.body;
+
+    // Validate that at least one field is provided
+    if (!role && departmentId === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field (role or departmentId) must be provided",
+      });
+    }
+
+    const updated = await CompanyMembershipService.updateMembership(
+      membershipId,
+      { role, departmentId },
     );
     res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {

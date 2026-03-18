@@ -1,8 +1,16 @@
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
 const User = require("../../models/User.model");
 
-// Get all memberships for a company owned by the current user (with optional search, status filter, department filter and pagination)
-module.exports.getMembershipsByCompany = async (companyId, search = "", status = "", department = "", page = 1, limit = 10) => {
+// Get all memberships for a company owned by the current user (with optional search, role, department filter, sorting and pagination)
+module.exports.getMembershipsByCompany = async (
+  companyId,
+  search = "",
+  status = "",
+  department = "",
+  page = 1,
+  limit = 10,
+  filters = {}
+) => {
   const query = { company: companyId };
 
   // Apply status filter if provided
@@ -10,21 +18,30 @@ module.exports.getMembershipsByCompany = async (companyId, search = "", status =
     query.status = status;
   }
 
-  // Apply department filter if provided (support multiple departments)
-  if (department) {
-    const departments = Array.isArray(department) ? department : [department];
+  // Apply department filter from parameter or filters object
+  const departmentId = filters.departmentId || department;
+  if (departmentId) {
+    const departments = Array.isArray(departmentId) ? departmentId : [departmentId];
     if (departments.length > 0) {
       query.department = { $in: departments };
     }
   }
 
-  // If search is provided, search across username, email, role
-  if (search) {
-    // First, try to find users by username or email
+  // Apply role filter if provided
+  if (filters.role) {
+    query.role = filters.role;
+  }
+
+  // If search is provided, search across username, email, firstName, lastName, role
+  const searchTerm = filters.search || search;
+  if (searchTerm) {
+    // Find users by username, email, firstName, or lastName
     const users = await User.find({
       $or: [
-        { username: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+        { username: { $regex: searchTerm, $options: "i" } },
+        { email: { $regex: searchTerm, $options: "i" } },
+        { "profile.firstName": { $regex: searchTerm, $options: "i" } },
+        { "profile.lastName": { $regex: searchTerm, $options: "i" } },
       ],
     });
 
@@ -33,7 +50,7 @@ module.exports.getMembershipsByCompany = async (companyId, search = "", status =
     // Build an OR query for search across multiple fields
     query.$or = [
       ...(userIds.length > 0 ? [{ user: { $in: userIds } }] : []),
-      { role: { $regex: search, $options: "i" } },
+      { role: { $regex: searchTerm, $options: "i" } },
     ];
   }
 
@@ -43,16 +60,45 @@ module.exports.getMembershipsByCompany = async (companyId, search = "", status =
   // Get total count for pagination
   const total = await CompanyMembershipModel.countDocuments(query);
 
+  // Determine sort order (default: descending by date)
+  const sortOrder = filters.order === "asc" ? 1 : -1;
+  let sortQuery = { createdAt: sortOrder };
+
+  if (filters.sortBy === "name") {
+    // Sort by user name (requires sorting after population)
+    sortQuery = { "user.profile.firstName": sortOrder };
+  } else if (filters.sortBy === "date") {
+    sortQuery = { createdAt: sortOrder };
+  }
+
   // Fetch paginated memberships (include user profile for firstName/lastName)
-  const memberships = await CompanyMembershipModel.find(query)
+  let query_builder = CompanyMembershipModel.find(query)
     .populate({
       path: "user",
       select: "username email profile",
       populate: { path: "profile", select: "firstName lastName" },
     })
     .populate("department", "name")
-    .populate("invitedBy", "username email")
-    .sort({ createdAt: -1 })
+    .populate("invitedBy", "username email");
+
+  // Apply sort - note: sorting by name requires sorting after population due to nested field
+  if (filters.sortBy === "name") {
+    const allMemberships = await query_builder.sort(sortQuery);
+    const sortedAndPaginated = allMemberships.slice(skip, skip + limit);
+    return {
+      memberships: sortedAndPaginated,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // For date sorting, sort before pagination
+  const memberships = await query_builder
+    .sort(sortQuery)
     .skip(skip)
     .limit(limit);
 
@@ -121,6 +167,47 @@ module.exports.updateMembershipDepartment = async (membershipId, departmentId) =
   const updated = await CompanyMembershipModel.findByIdAndUpdate(
     membershipId,
     { department: departmentId || null },
+    { new: true }
+  )
+    .populate({
+      path: "user",
+      select: "username email profile",
+      populate: { path: "profile", select: "firstName lastName" },
+    })
+    .populate("department", "name description")
+    .populate("invitedBy", "username email");
+
+  if (!updated) throw new Error("Membership not found");
+  return updated;
+};
+
+// Update both role and department of a membership
+module.exports.updateMembership = async (membershipId, { role, departmentId }) => {
+  // Build the update object
+  const updateData = {};
+
+  // Validate and add role if provided
+  if (role) {
+    const validRoles = ["Owner", "RH", "TechLead", "Supervisor", "Manager"];
+    if (!validRoles.includes(role)) {
+      throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
+    }
+    updateData.role = role;
+  }
+
+  // Add department if provided
+  if (departmentId !== undefined) {
+    updateData.department = departmentId || null;
+  }
+
+  // If nothing to update, throw error
+  if (Object.keys(updateData).length === 0) {
+    throw new Error("At least one field (role or departmentId) must be provided for update");
+  }
+
+  const updated = await CompanyMembershipModel.findByIdAndUpdate(
+    membershipId,
+    updateData,
     { new: true }
   )
     .populate({
