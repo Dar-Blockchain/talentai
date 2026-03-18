@@ -5,8 +5,9 @@ const flattenMembership = (membership) => {
   const m = membership?.toObject ? membership.toObject() : membership;
   const user = m?.user || {};
   const profile = user?.profile || {};
+  const department = m?.department || {};
 
-  const { user: _user, department: _department, ...rest } = m;
+  const { user: _user, ...rest } = m;
 
   return {
     ...rest,
@@ -14,6 +15,7 @@ const flattenMembership = (membership) => {
     email: user.email || null,
     firstName: profile.firstName || null,
     lastName: profile.lastName || null,
+    department: department,
   };
 };
 
