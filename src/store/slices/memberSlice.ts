@@ -79,6 +79,16 @@ export interface FetchMembersParams {
   departmentIds?: string[];
 }
 
+export interface FetchMembersFilters {
+  search?: string;
+  departmentId?: string;
+  role?: string;
+  sortBy?: "name" | "date";
+  order?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
 interface MemberState {
   members: Member[];
   pageTotal: number;
@@ -213,26 +223,29 @@ export const deleteMember = createAsyncThunk<
   }
 });
 
-// Fetch active members
+// Fetch active members (with optional backend filters)
 export const fetchMembers = createAsyncThunk<
-  Member[],
-  void,
+  { members: Member[]; total: number },
+  FetchMembersFilters | void,
   { rejectValue: string }
->("member/fetchMembers", async (_, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] fetchMembers CALLED`);
-
-
+>("member/fetchMembers", async (params, { rejectWithValue }) => {
   try {
-    console.log(`📡 [MemberSlice] Fetching members from API...`);
-    const response = await axiosInstance.get("CompanyMembership/memberships");
+    const query = new URLSearchParams();
+    if (params?.search)       query.set("search",      params.search);
+    if (params?.departmentId) query.set("departmentId", params.departmentId);
+    if (params?.role)         query.set("role",         params.role);
+    if (params?.sortBy)       query.set("sortBy",       params.sortBy);
+    if (params?.order)        query.set("order",        params.order);
+    if (params?.page)         query.set("page",         String(params.page));
+    if (params?.limit)        query.set("limit",        String(params.limit));
 
-
-
-    console.log(`✅ [MemberSlice] Members fetched successfully`, response.data);
-    return response.data.memberships || response.data.members || [];
+    const qs = query.toString();
+    const response = await axiosInstance.get(`CompanyMembership/memberships${qs ? `?${qs}` : ""}`);
+    return {
+      members: response.data.memberships || response.data.members || [],
+      total: response.data.total ?? response.data.pagination?.total ?? 0,
+    };
   } catch (error: any) {
-
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
 });
@@ -499,14 +512,11 @@ const memberSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        fetchMembers.fulfilled,
-        (state: MemberState, action: PayloadAction<Member[]>) => {
-          state.loading = false;
-          state.members = action.payload;
-          console.log('✅ [MemberSlice] Members fetched successfully');
-        }
-      )
+      .addCase(fetchMembers.fulfilled, (state: MemberState, action) => {
+        state.loading = false;
+        state.members = action.payload.members;
+        state.pageTotal = action.payload.total;
+      })
       .addCase(
         fetchMembers.rejected,
         (state: MemberState, action: PayloadAction<string | undefined>) => {

@@ -100,7 +100,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827', lineHeight: 1.2 }}>
-                Invite Team Member
+                Add Employee
               </Typography>
               <Typography sx={{ fontSize: '0.775rem', color: '#9CA3AF', mt: 0.25 }}>
                 Send an invitation to your workspace

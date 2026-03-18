@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
@@ -30,6 +30,18 @@ import {
   MemberRole,
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
+import {
+  fetchDepartments,
+  selectDepartments,
+} from "@/store/slices/departmentSlice";
+
+const PAGE_SIZE = 9;
+
+const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "desc" }> = {
+  newest:      { sortBy: "date", order: "desc" },
+  "name-asc":  { sortBy: "name", order: "asc"  },
+  "name-desc": { sortBy: "name", order: "desc" },
+};
 
 const roleMapping: Record<string, MemberRole> = {
   hr: "RH",
@@ -44,24 +56,55 @@ const EmployeesPage: React.FC = () => {
   const { showToast } = useToast();
 
   const {
-    members, loading, error,
+    members, pageTotal, loading, error,
     addMemberSuccess, updateRoleSuccess, deleteMemberSuccess,
     invitations, fetchingInvitations, stats, fetchingStats,
   } = useSelector(selectMembers);
+  const departments = useSelector(selectDepartments);
 
-  const [addModalOpen,    setAddModalOpen]    = useState(false);
-  const [editModalOpen,   setEditModalOpen]   = useState(false);
-  const [deleteDialogOpen,setDeleteDialogOpen]= useState(false);
-  const [selectedMember,  setSelectedMember]  = useState<Member | null>(null);
-  const [detailMember,    setDetailMember]    = useState<Member | null>(null);
-  const [search,          setSearch]          = useState("");
-  const [roleFilter,      setRoleFilter]      = useState<RoleFilter>("all");
-  const [sortBy,          setSortBy]          = useState<SortOption>("newest");
+  const [addModalOpen,     setAddModalOpen]     = useState(false);
+  const [editModalOpen,    setEditModalOpen]     = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen]  = useState(false);
+  const [selectedMember,   setSelectedMember]   = useState<Member | null>(null);
+  const [detailMember,     setDetailMember]     = useState<Member | null>(null);
 
+  const [search,           setSearch]           = useState("");
+  const [roleFilter,       setRoleFilter]       = useState<RoleFilter>("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [sortBy,           setSortBy]           = useState<SortOption>("newest");
+  const [page,             setPage]             = useState(1);
+
+  // Debounced search value
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
+  }, []);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setPage(1); }, [debouncedSearch, roleFilter, departmentFilter, sortBy]);
+
+  // Build params and dispatch fetchMembers
+  const doFetch = useCallback((overridePage?: number) => {
+    dispatch(fetchMembers({
+      search:       debouncedSearch || undefined,
+      departmentId: departmentFilter !== "all" ? departmentFilter : undefined,
+      role:         roleFilter !== "all" ? roleFilter : undefined,
+      ...SORT_MAP[sortBy],
+      page:         overridePage ?? page,
+      limit:        PAGE_SIZE,
+    }));
+  }, [dispatch, debouncedSearch, roleFilter, departmentFilter, sortBy, page]);
+
+  useEffect(() => { doFetch(); }, [doFetch]);
+
+  // Initial data
   useEffect(() => {
-    dispatch(fetchMembers());
     dispatch(fetchInvitations());
     dispatch(fetchMemberStats());
+    dispatch(fetchDepartments({}));
   }, [dispatch]);
 
   useEffect(() => {
@@ -70,10 +113,10 @@ const EmployeesPage: React.FC = () => {
       dispatch(clearAddMemberSuccess());
       showToast({ message: "Team member invited successfully!", severity: "success" });
       dispatch(fetchInvitations());
-      dispatch(fetchMembers());
       dispatch(fetchMemberStats());
+      doFetch();
     }
-  }, [addMemberSuccess, dispatch, showToast]);
+  }, [addMemberSuccess, dispatch, showToast, doFetch]);
 
   useEffect(() => {
     if (updateRoleSuccess) {
@@ -81,9 +124,9 @@ const EmployeesPage: React.FC = () => {
       setSelectedMember(null);
       dispatch(clearUpdateRoleSuccess());
       showToast({ message: "Member role updated successfully!", severity: "success" });
-      dispatch(fetchMembers());
+      doFetch();
     }
-  }, [updateRoleSuccess, dispatch, showToast]);
+  }, [updateRoleSuccess, dispatch, showToast, doFetch]);
 
   useEffect(() => {
     if (deleteMemberSuccess) {
@@ -92,10 +135,10 @@ const EmployeesPage: React.FC = () => {
       setDetailMember(null);
       dispatch(clearDeleteMemberSuccess());
       showToast({ message: "Team member removed successfully!", severity: "success" });
-      dispatch(fetchMembers());
       dispatch(fetchMemberStats());
+      doFetch();
     }
-  }, [deleteMemberSuccess, dispatch, showToast]);
+  }, [deleteMemberSuccess, dispatch, showToast, doFetch]);
 
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
     const apiRole = roleMapping[role] || "RH";
@@ -137,115 +180,99 @@ const EmployeesPage: React.FC = () => {
     }
   }, [dispatch, showToast]);
 
-  const filteredMembers = useMemo(() => {
-    let list = [...members];
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((m) =>
-        m.user?.username?.toLowerCase().includes(q) ||
-        m.user?.email?.toLowerCase().includes(q)
-      );
-    }
-
-    if (roleFilter !== "all") list = list.filter((m) => m.role === roleFilter);
-
-    if (sortBy === "name-asc")  return list.sort((a, b) => (a.user?.username || "").localeCompare(b.user?.username || ""));
-    if (sortBy === "name-desc") return list.sort((a, b) => (b.user?.username || "").localeCompare(a.user?.username || ""));
-    return list;
-  }, [members, search, roleFilter, sortBy]);
-
-  const filteredInvitations = useMemo(() => {
-    if (roleFilter === "all") return invitations;
-    return invitations.filter((inv) => inv.role === roleFilter);
-  }, [invitations, roleFilter]);
-
   const active = members.filter((m) => m.status === "active").length;
   const owners = members.filter((m) => m.role === "Owner").length;
 
   return (
-      <DashboardLayout>
-        {detailMember ? (
-          <Box>
-            <EmployeeDetail
-              member={detailMember}
-              onBack={() => setDetailMember(null)}
-              onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
-              onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
-            />
-          </Box>
-        ) : (
-          <Box>
-            <PageHeader
-              title="Employees"
-              subtitle="Manage your team members, roles, and invitations."
-              breadcrumbs={[
-                { label: "Dashboard", href: "/company/dashboard" },
-                { label: "Employees" },
-              ]}
-              actions={[
-                <AppButton
-                  key="add"
-                  label="Add Member"
-                  variant="contained"
-                  startIcon={<PersonAddOutlined />}
-                  size="medium"
-                  onClick={() => setAddModalOpen(true)}
-                />,
-              ]}
-            />
-
-            <EmployeesHeader
-              stats={stats}
-              loading={fetchingStats}
-              active={active}
-              owners={owners}
-            />
-
-            <EmployeesList
-              members={filteredMembers}
-              loading={loading}
-              error={error}
-              search={search}
-              onSearchChange={setSearch}
-              roleFilter={roleFilter}
-              onRoleFilterChange={setRoleFilter}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              onSelect={setDetailMember}
-              onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
-              onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
-              invitations={filteredInvitations}
-              fetchingInvitations={fetchingInvitations}
-              onResend={handleResendInvitation}
-              onCancel={handleCancelInvitation}
-            />
-          </Box>
-        )}
-
-        <AddEmployeeModal
-          open={addModalOpen}
-          onClose={() => setAddModalOpen(false)}
-          onSave={handleAddMember}
-        />
-
-        {selectedMember && (
-          <EditRoleModal
-            open={editModalOpen}
-            onClose={() => { setEditModalOpen(false); setSelectedMember(null); }}
-            onSave={handleUpdateRole}
-            currentRole={selectedMember.role}
-            memberName={selectedMember.user?.username || selectedMember.user?.email || "Member"}
+    <DashboardLayout>
+      {detailMember ? (
+        <Box>
+          <EmployeeDetail
+            member={detailMember}
+            onBack={() => setDetailMember(null)}
+            onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
+            onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
           />
-        )}
+        </Box>
+      ) : (
+        <Box>
+          <PageHeader
+            title="Employees"
+            subtitle="Manage your team members, roles, and invitations."
+            breadcrumbs={[
+              { label: "Dashboard", href: "/company/dashboard" },
+              { label: "Employees" },
+            ]}
+            actions={[
+              <AppButton
+                key="add"
+                label="Add Employee"
+                variant="contained"
+                startIcon={<PersonAddOutlined />}
+                size="medium"
+                onClick={() => setAddModalOpen(true)}
+              />,
+            ]}
+          />
 
-        <DeleteMemberDialog
-          open={deleteDialogOpen}
-          memberName={selectedMember?.user?.username || selectedMember?.user?.email || "this member"}
-          onCancel={() => { setDeleteDialogOpen(false); setSelectedMember(null); }}
-          onConfirm={handleConfirmDelete}
+          <EmployeesHeader
+            stats={stats}
+            loading={fetchingStats}
+            active={active}
+            owners={owners}
+          />
+
+          <EmployeesList
+            members={members}
+            loading={loading}
+            error={error}
+            search={search}
+            onSearchChange={handleSearchChange}
+            roleFilter={roleFilter}
+            onRoleFilterChange={setRoleFilter}
+            departmentFilter={departmentFilter}
+            onDepartmentFilterChange={setDepartmentFilter}
+            departments={departments}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            onSelect={setDetailMember}
+            onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
+            onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
+            invitations={invitations}
+            fetchingInvitations={fetchingInvitations}
+            onResend={handleResendInvitation}
+            onCancel={handleCancelInvitation}
+            total={pageTotal}
+            page={page}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        </Box>
+      )}
+
+      <AddEmployeeModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSave={handleAddMember}
+      />
+
+      {selectedMember && (
+        <EditRoleModal
+          open={editModalOpen}
+          onClose={() => { setEditModalOpen(false); setSelectedMember(null); }}
+          onSave={handleUpdateRole}
+          currentRole={selectedMember.role}
+          memberName={selectedMember.user?.username || selectedMember.user?.email || "Member"}
         />
-      </DashboardLayout>
+      )}
+
+      <DeleteMemberDialog
+        open={deleteDialogOpen}
+        memberName={selectedMember?.user?.username || selectedMember?.user?.email || "this member"}
+        onCancel={() => { setDeleteDialogOpen(false); setSelectedMember(null); }}
+        onConfirm={handleConfirmDelete}
+      />
+    </DashboardLayout>
   );
 };
 
