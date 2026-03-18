@@ -6,7 +6,7 @@ const flattenMembership = (membership) => {
   const user = m?.user || {};
   const profile = user?.profile || {};
 
-  const { user: _user, department: _department, ...rest } = m;
+  const { user: _user, department: _department, company: _company, ...rest } = m;
 
   const result = {
     ...rest,
