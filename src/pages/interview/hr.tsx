@@ -53,6 +53,7 @@ import {
 import JobOverview from '@/components/features/interview/start/JobOverview';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
+import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
 
 // Styles
 import { GlobalStyles } from '@/components/features/interview/start/styles';
@@ -67,6 +68,7 @@ const IntelligentInterviewTest = () => {
 
   const [step, setStep] = useState<'intro' | 'overview' | 'interview'>('intro');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
+  const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
@@ -447,7 +449,7 @@ const IntelligentInterviewTest = () => {
     <>
       <style jsx global>{GlobalStyles}</style>
       <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
-
+        <Header />
 
         {/* ── Connection warning banner ── */}
         {socket.isHydrated && socket.connectionStatus !== 'connected' && (
@@ -619,6 +621,18 @@ const IntelligentInterviewTest = () => {
               </Box>
             </Box>
           </Box>
+
+          {/* ── Coverage Dashboard (shown after interview ends) ── */}
+          {coverage && (
+            <CoverageDashboard
+              interviewStatus={socket.interviewStatus}
+              coverage={coverage}
+              realTimeReport={null}
+              agentMessage=""
+              coverageDashboardExpanded={coverageDashboardExpanded}
+              onToggleExpand={() => setCoverageDashboardExpanded(p => !p)}
+            />
+          )}
 
         </Container>
 
