@@ -22,9 +22,6 @@ const requireAuthUser = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid or expired token" });
     }
 
-    // Attach decoded token and raw token to user context so tools/controllers can reuse it
-    user.authToken = token;
-    user.authDecoded = decodedToken;
     req.user = user; // ✅ TOUJOURS l’utilisateur
 
     // CONTEXTE COMPANY (optionnel)
