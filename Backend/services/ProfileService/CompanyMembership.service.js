@@ -140,11 +140,6 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
 
 // Update the role of a membership
 module.exports.updateMembershipRole = async (membershipId, newRole) => {
-  // Validate the role
-  const validRoles = ["Owner", "RH", "TechLead", "Supervisor", "Manager"];
-  if (!validRoles.includes(newRole)) {
-    throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
-  }
 
   const updated = await CompanyMembershipModel.findByIdAndUpdate(
     membershipId,
@@ -186,12 +181,8 @@ module.exports.updateMembership = async (membershipId, { role, departmentId }) =
   // Build the update object
   const updateData = {};
 
-  // Validate and add role if provided
+  // Add role if provided
   if (role) {
-    const validRoles = ["Owner", "RH", "TechLead", "Supervisor", "Manager"];
-    if (!validRoles.includes(role)) {
-      throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
-    }
     updateData.role = role;
   }
 
