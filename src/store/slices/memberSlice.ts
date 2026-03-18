@@ -38,6 +38,7 @@ export interface AddMemberPayload {
 export interface UpdateRolePayload {
   membershipId: string; // CompanyMembership ID
   role: MemberRole;
+  departmentId?: string;
 }
 
 export interface DeleteMemberPayload {
@@ -180,7 +181,8 @@ export const updateMemberRole = createAsyncThunk<
   try {
     console.log(`📡 [MemberSlice] Updating member role via API...`);
 
-    const apiPayload = { role: payload.role };
+    const apiPayload: { role: MemberRole; departmentId?: string } = { role: payload.role };
+    if (payload.departmentId !== undefined) apiPayload.departmentId = payload.departmentId || undefined;
 
     console.log(`📡 [MemberSlice] Sending payload:`, apiPayload);
     console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}/role`);
@@ -226,7 +228,7 @@ export const deleteMember = createAsyncThunk<
 // Fetch active members (with optional backend filters)
 export const fetchMembers = createAsyncThunk<
   { members: Member[]; total: number },
-  FetchMembersFilters | void,
+  FetchMembersFilters | undefined,
   { rejectValue: string }
 >("member/fetchMembers", async (params, { rejectWithValue }) => {
   try {

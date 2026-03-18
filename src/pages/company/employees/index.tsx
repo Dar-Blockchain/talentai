@@ -150,9 +150,9 @@ const EmployeesPage: React.FC = () => {
     }
   }, [dispatch, showToast]);
 
-  const handleUpdateRole = useCallback(async (role: string) => {
+  const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");
-    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role: role as MemberRole })).unwrap();
+    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role: role as MemberRole, departmentId })).unwrap();
   }, [dispatch, selectedMember]);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -262,6 +262,7 @@ const EmployeesPage: React.FC = () => {
           onClose={() => { setEditModalOpen(false); setSelectedMember(null); }}
           onSave={handleUpdateRole}
           currentRole={selectedMember.role}
+          currentDepartmentId={(selectedMember as any).department?._id ?? (selectedMember as any).departmentId ?? ""}
           memberName={selectedMember.user?.username || selectedMember.user?.email || "Member"}
         />
       )}

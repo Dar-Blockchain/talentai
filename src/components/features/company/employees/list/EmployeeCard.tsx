@@ -1,10 +1,9 @@
-import React, { memo, useState } from "react";
+import React, { memo } from "react";
 import {
-  Box, Typography, Avatar, IconButton,
-  Menu, MenuItem, ListItemIcon, ListItemText,
+  Box, Typography, Avatar, Tooltip,
 } from "@mui/material";
 import { motion } from "framer-motion";
-import MoreVertOutlined from "@mui/icons-material/MoreVert";
+import { useRouter } from "next/router";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
@@ -28,19 +27,18 @@ export const ROLE_STYLES: Record<string, { color: string; bg: string }> = {
   Owner:      { color: "#DC2626", bg: "#FEF2F2" },
 };
 
-const STATUS_STYLES: Record<string, { color: string; dot: string; label: string }> = {
-  active:   { color: "#16A34A", dot: "#22C55E", label: "Active"   },
-  pending:  { color: "#D97706", dot: "#F59E0B", label: "Pending"  },
-  inactive: { color: "#9CA3AF", dot: "#D1D5DB", label: "Inactive" },
+const STATUS_STYLES: Record<string, { color: string; dot: string; label: string; bg: string }> = {
+  active:   { color: "#16A34A", dot: "#22C55E", label: "Active",   bg: "#DCFCE7" },
+  pending:  { color: "#D97706", dot: "#F59E0B", label: "Pending",  bg: "#FEF9C3" },
+  inactive: { color: "#6B7280", dot: "#D1D5DB", label: "Inactive", bg: "#F3F4F6" },
 };
 
-// Soft muted avatar palettes — no harsh saturation
 const AVATAR_PALETTES = [
-  { from: "#A78BFA", to: "#7C3AED" }, // soft violet
-  { from: "#6EE7B7", to: "#059669" }, // soft emerald
-  { from: "#7DD3FC", to: "#0369A1" }, // soft sky
-  { from: "#FCA5A5", to: "#DC2626" }, // soft rose
-  { from: "#FCD34D", to: "#B45309" }, // soft amber
+  { from: "#A78BFA", to: "#6D28D9" },
+  { from: "#34D399", to: "#059669" },
+  { from: "#38BDF8", to: "#0284C7" },
+  { from: "#F87171", to: "#DC2626" },
+  { from: "#FCD34D", to: "#B45309" },
 ];
 
 function pickPalette(str: string) {
@@ -63,8 +61,7 @@ interface EmployeeCardProps {
 }
 
 const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect }) => {
-  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
-
+  const router = useRouter();
   const name    = member.user?.username || "Unnamed";
   const email   = member.user?.email    || "";
   const letter  = name[0]?.toUpperCase() || "U";
@@ -82,9 +79,9 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.26, ease: "easeOut" }}
+      transition={{ delay: index * 0.04, duration: 0.28, ease: "easeOut" }}
       style={{ height: "100%" }}
     >
       <Box
@@ -93,196 +90,210 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          borderRadius: "18px",
+          borderRadius: "20px",
           cursor: "pointer",
           bgcolor: "#fff",
-          border: "1px solid #EBEBEB",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-          transition: "all 0.22s ease",
+          border: "1px solid #E8EAED",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          overflow: "hidden",
+          transition: "all 0.24s cubic-bezier(.4,0,.2,1)",
           "&:hover": {
-            borderColor: "#D8D8DC",
-            boxShadow: "0 8px 28px rgba(0,0,0,0.08)",
-            transform: "translateY(-3px)",
-            "& .menu-btn": { opacity: 1 },
+            borderColor: `${palette.to}50`,
+            boxShadow: `0 16px 40px rgba(0,0,0,0.10), 0 0 0 1px ${palette.to}20`,
+            transform: "translateY(-5px)",
+            "& .card-actions": { opacity: 1, transform: "translateY(0px)" },
+            "& .top-strip": { opacity: 1 },
           },
         }}
       >
+        {/* ── Top gradient strip ───────────────────────────────── */}
+        <Box
+          className="top-strip"
+          sx={{
+            height: 4,
+            background: `linear-gradient(90deg, ${palette.from}, ${palette.to})`,
+            opacity: 0.6,
+            transition: "opacity 0.24s",
+          }}
+        />
+
         {/* ── Header ───────────────────────────────────────────── */}
         <Box sx={{
-          bgcolor: "#F7F7F8",
-          borderRadius: "18px 18px 0 0",
-          pt: 3.5, pb: 3, px: 2.5,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1.5,
+          px: 2.5, pt: 2.5, pb: 2,
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5,
           position: "relative",
-          borderBottom: "1px solid #EBEBEB",
+          background: `radial-gradient(ellipse 160% 100% at 50% 0%, ${palette.from}0A 0%, transparent 65%)`,
         }}>
 
-          {/* Menu */}
-          <IconButton
-            size="small"
-            className="menu-btn"
-            onClick={(e) => { e.stopPropagation(); setAnchor(e.currentTarget); }}
-            sx={{
-              position: "absolute", top: 10, right: 10,
-              opacity: 0, transition: "opacity 0.18s",
-              color: "#9CA3AF", p: "5px", borderRadius: "9px",
-              "&:hover": { bgcolor: "#EBEBEB", color: "#374151" },
-            }}
-          >
-            <MoreVertOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-
-          <Menu
-            anchorEl={anchor}
-            open={Boolean(anchor)}
-            onClose={() => setAnchor(null)}
-            onClick={(e) => e.stopPropagation()}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-            slotProps={{ paper: { elevation: 0, sx: {
-              borderRadius: "14px",
-              border: "1px solid #EBEBEB",
-              boxShadow: "0 12px 36px rgba(0,0,0,0.09)",
-              minWidth: 168, mt: 0.5,
-            }}}}
-          >
-            <MenuItem onClick={() => { setAnchor(null); onSelect(member); }}
-              sx={{ py: 1.125, px: 1.75, gap: 1.25, "&:hover": { bgcolor: "#F7F7F8" } }}>
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: "8px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <OpenInNewOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
-                </Box>
-              </ListItemIcon>
-              <ListItemText slotProps={{ primary: { style: { fontSize: "13px", fontWeight: 600, color: "#374151" } } }}>View Profile</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={() => { setAnchor(null); onEdit(member); }}
-              sx={{ py: 1.125, px: 1.75, gap: 1.25, "&:hover": { bgcolor: "#F5F3FF" } }}>
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: "8px", bgcolor: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <EditOutlined sx={{ fontSize: 13, color: PURPLE }} />
-                </Box>
-              </ListItemIcon>
-              <ListItemText slotProps={{ primary: { style: { fontSize: "13px", fontWeight: 600, color: "#374151" } } }}>Edit Role</ListItemText>
-            </MenuItem>
-            <Box sx={{ mx: 1.25, my: 0.5, height: "1px", bgcolor: "#F3F4F6" }} />
-            <MenuItem onClick={() => { setAnchor(null); onDelete(member); }}
-              sx={{ py: 1.125, px: 1.75, gap: 1.25, "&:hover": { bgcolor: "#FEF2F2" } }}>
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: "8px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#EF4444" }} />
-                </Box>
-              </ListItemIcon>
-              <ListItemText slotProps={{ primary: { style: { fontSize: "13px", fontWeight: 600, color: "#EF4444" } } }}>Remove</ListItemText>
-            </MenuItem>
-          </Menu>
-
-          {/* Avatar */}
-          <Box sx={{ position: "relative" }}>
-            <Avatar sx={{
-              width: 64, height: 64,
-              fontSize: "1.35rem", fontWeight: 800, color: "#fff",
-              background: `linear-gradient(145deg, ${palette.from}, ${palette.to})`,
-              boxShadow: "0 4px 14px rgba(0,0,0,0.10)",
-            }}>
-              {letter}
-            </Avatar>
+          {/* Avatar with gradient ring */}
+          <Box sx={{ position: "relative", mt: 0.5 }}>
             <Box sx={{
-              position: "absolute", bottom: 2, right: 2,
-              width: 12, height: 12, borderRadius: "50%",
-              bgcolor: status.dot,
-              border: "2.5px solid #F7F7F8",
+              width: 76, height: 76, borderRadius: "50%",
+              background: `linear-gradient(145deg, ${palette.from}, ${palette.to})`,
+              p: "2.5px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: `0 6px 20px ${palette.to}40`,
+            }}>
+              <Avatar sx={{
+                width: 71, height: 71,
+                fontSize: "1.55rem", fontWeight: 800, color: "#fff",
+                background: `linear-gradient(145deg, ${palette.from}CC, ${palette.to})`,
+              }}>
+                {letter}
+              </Avatar>
+            </Box>
+            {/* Status dot */}
+            <Box sx={{
+              position: "absolute", bottom: 3, right: 3,
+              width: 14, height: 14, borderRadius: "50%",
+              bgcolor: status.dot, border: "2.5px solid #fff",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
             }} />
           </Box>
 
           {/* Name + email */}
           <Box sx={{ textAlign: "center", width: "100%", px: 0.5 }}>
             <Typography sx={{
-              fontSize: "14.5px", fontWeight: 700, color: "#1A1A2E",
-              lineHeight: 1.35,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              fontSize: "15px", fontWeight: 700, color: "#0F172A",
+              lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               {name}
             </Typography>
             <Typography sx={{
-              fontSize: "12px", color: "#B0B7C3", mt: 0.4,
+              fontSize: "11.5px", color: "#94A3B8", mt: 0.4,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               letterSpacing: "0.01em",
             }}>
               {email}
             </Typography>
           </Box>
-        </Box>
 
-        {/* ── Body ─────────────────────────────────────────────── */}
-        <Box sx={{ px: 2.5, pt: 2, pb: 2.5, display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-
-          {/* Role + Department — 2-column info grid */}
+          {/* Role pill */}
           <Box sx={{
-            display: "grid",
-            gridTemplateColumns: dept ? "1fr 1px 1fr" : "1fr",
-            bgcolor: "#F7F7F8",
-            borderRadius: "12px",
-            border: "1px solid #EBEBEB",
-            overflow: "hidden",
+            display: "inline-flex", alignItems: "center", gap: 0.6,
+            px: 1.5, py: "5px", borderRadius: "999px",
+            bgcolor: `${roleColor}10`, border: `1.5px solid ${roleColor}25`,
           }}>
-            {/* Role cell */}
-            <Box sx={{ px: 1.5, py: 1.25, display: "flex", flexDirection: "column", gap: 0.4 }}>
-              <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#B0B7C3", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                Role
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                {RoleIcon && (
-                  <Box sx={{ display: "flex", alignItems: "center", color: roleColor, flexShrink: 0, "& svg": { fontSize: 12 } }}>
-                    <RoleIcon />
-                  </Box>
-                )}
-                <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {roleLabel}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Vertical divider */}
-            {dept && <Box sx={{ bgcolor: "#EBEBEB", width: "1px" }} />}
-
-            {/* Department cell */}
-            {dept && (
-              <Box sx={{ px: 1.5, py: 1.25, display: "flex", flexDirection: "column", gap: 0.4 }}>
-                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#B0B7C3", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Dept
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <BusinessOutlined sx={{ fontSize: 12, color: "#9CA3AF", flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {dept}
-                  </Typography>
-                </Box>
+            {RoleIcon && (
+              <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 12 } }}>
+                <RoleIcon />
               </Box>
             )}
+            <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: roleColor, letterSpacing: "0.01em" }}>
+              {roleLabel}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* ── Divider ───────────────────────────────────────────── */}
+        <Box sx={{ mx: 2.5, height: "1px", bgcolor: "#F1F5F9" }} />
+
+        {/* ── Body ─────────────────────────────────────────────── */}
+        <Box sx={{ px: 2.5, pt: 1.75, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1 }}>
+
+          {/* Department */}
+          <Box sx={{
+            display: "flex", alignItems: "center", gap: 0.75,
+            px: 1.25, py: 0.875, borderRadius: "10px",
+            bgcolor: dept ? "#F8FAFC" : "transparent",
+            border: `1px solid ${dept ? "#E8EAED" : "#F1F5F9"}`,
+          }}>
+            <BusinessOutlined sx={{ fontSize: 13, color: dept ? "#94A3B8" : "#CBD5E1", flexShrink: 0 }} />
+            <Typography sx={{
+              fontSize: "12px", fontWeight: 600,
+              color: dept ? "#475569" : "#CBD5E1",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              fontStyle: dept ? "normal" : "italic",
+            }}>
+              {dept ?? "No department assigned"}
+            </Typography>
           </Box>
 
-          {/* Footer */}
+          {/* Footer: status pill + date */}
           <Box sx={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            pt: 1.75, mt: "auto", borderTop: "1px solid #F3F4F6",
+            mt: "auto", pt: dept ? 0 : 0.5,
           }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
-              <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: status.dot }} />
-              <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: status.color }}>
+            <Box sx={{
+              display: "inline-flex", alignItems: "center", gap: 0.5,
+              px: 1, py: "3px", borderRadius: "999px",
+              bgcolor: status.bg,
+            }}>
+              <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: status.dot }} />
+              <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: status.color }}>
                 {status.label}
               </Typography>
             </Box>
             {joinedDate && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <CalendarTodayOutlined sx={{ fontSize: 10, color: "#D1D5DB" }} />
-                <Typography sx={{ fontSize: "11px", color: "#C4C9D4" }}>
+                <CalendarTodayOutlined sx={{ fontSize: 10, color: "#CBD5E1" }} />
+                <Typography sx={{ fontSize: "10.5px", color: "#CBD5E1", fontWeight: 500 }}>
                   {joinedDate}
                 </Typography>
               </Box>
             )}
+          </Box>
+
+          {/* ── Action buttons (revealed on hover) ─────────────── */}
+          <Box
+            className="card-actions"
+            onClick={(e) => e.stopPropagation()}
+            sx={{
+              display: "flex", gap: 0.75,
+              opacity: 0,
+              transform: "translateY(6px)",
+              transition: "all 0.22s cubic-bezier(.4,0,.2,1)",
+            }}
+          >
+            {/* View */}
+            <Tooltip title="View profile" placement="top" arrow>
+              <Box
+                onClick={() => router.push(`/company/employees/${member._id}`)}
+                sx={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
+                  py: 0.875, borderRadius: "10px",
+                  bgcolor: "#F8FAFC", border: "1px solid #E8EAED",
+                  cursor: "pointer", transition: "all 0.15s",
+                  "&:hover": { bgcolor: "#F1F5F9", borderColor: "#CBD5E1" },
+                }}
+              >
+                <OpenInNewOutlined sx={{ fontSize: 13, color: "#64748B" }} />
+                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#475569" }}>View</Typography>
+              </Box>
+            </Tooltip>
+
+            {/* Edit */}
+            <Tooltip title="Edit role" placement="top" arrow>
+              <Box
+                onClick={() => onEdit(member)}
+                sx={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
+                  py: 0.875, borderRadius: "10px",
+                  bgcolor: `${PURPLE}08`, border: `1px solid ${PURPLE}20`,
+                  cursor: "pointer", transition: "all 0.15s",
+                  "&:hover": { bgcolor: `${PURPLE}15`, borderColor: `${PURPLE}40` },
+                }}
+              >
+                <EditOutlined sx={{ fontSize: 13, color: PURPLE }} />
+                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: PURPLE }}>Edit</Typography>
+              </Box>
+            </Tooltip>
+
+            {/* Delete */}
+            <Tooltip title="Remove member" placement="top" arrow>
+              <Box
+                onClick={() => onDelete(member)}
+                sx={{
+                  width: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                  py: 0.875, borderRadius: "10px",
+                  bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+                  cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
+                  "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
+                }}
+              >
+                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
+              </Box>
+            </Tooltip>
           </Box>
         </Box>
       </Box>
