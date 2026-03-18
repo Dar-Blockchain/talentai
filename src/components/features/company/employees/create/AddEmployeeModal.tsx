@@ -2,15 +2,11 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, IconButton,
-  CircularProgress, Select, MenuItem, FormControl,
+  CircularProgress, Select, MenuItem, FormControl, InputAdornment,
 } from '@mui/material';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
-import CodeOutlined from '@mui/icons-material/CodeOutlined';
-import SupervisorAccountOutlined from '@mui/icons-material/SupervisorAccountOutlined';
-import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
-import AdminPanelSettingsOutlined from '@mui/icons-material/AdminPanelSettingsOutlined';
 import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
@@ -19,6 +15,7 @@ import {
   selectDepartments,
   selectDepartmentsLoading,
 } from '@/store/slices/departmentSlice';
+import { ROLES } from '@/constants/employee';
 
 interface AddEmployeeModalProps {
   open: boolean;
@@ -26,13 +23,7 @@ interface AddEmployeeModalProps {
   onSave: (email: string, role: string, departmentId?: string) => Promise<void>;
 }
 
-const ROLES = [
-  { value: 'hr',               label: 'HR',             description: 'Recruitment & team ops',            icon: PeopleOutlined,              color: '#16A34A' },
-  { value: 'technical_leader', label: 'Tech Lead',      description: 'Technical assessments',             icon: CodeOutlined,                color: '#0891B2' },
-  { value: 'supervisor',       label: 'Supervisor',     description: 'Team operations',                   icon: SupervisorAccountOutlined,   color: '#D97706' },
-  { value: 'manager',          label: 'Manager',        description: 'Department strategy',               icon: ManageAccountsOutlined,      color: '#8310FF' },
-  { value: 'owner',            label: 'Owner',          description: 'Full workspace ownership & control', icon: AdminPanelSettingsOutlined,  color: '#DC2626' },
-] as const;
+
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PURPLE = '#8310FF';
@@ -46,12 +37,14 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
   const [role, setRole]               = useState('hr');
   const [departmentId, setDepartmentId] = useState('');
   const [loading, setLoading]         = useState(false);
+  const [roleSearch, setRoleSearch]   = useState('');
 
   useEffect(() => {
     if (open) {
       setEmail('');
       setRole('hr');
       setDepartmentId('');
+      setRoleSearch('');
       if (departments.length === 0) dispatch(fetchDepartments({}));
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -121,8 +114,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <DialogContent sx={{ px: 3, pt: 4, pb: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 2 }}>
 
           {/* Email */}
           <Box>
@@ -183,68 +176,133 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
             </FormControl>
           </Box>
 
-          {/* Role — StatCard style list */}
+          {/* Role — searchable Select */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
               Select Role
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {ROLES.map((r) => {
-                const selected = role === r.value;
-                const Icon = r.icon;
-                const iconBg = `${r.color}18`;
-                return (
-                  <Box
-                    key={r.value}
-                    onClick={() => !loading && setRole(r.value)}
-                    sx={{
-                      display: 'flex', alignItems: 'center', gap: 1.5,
-                      px: 2, py: 1.5,
-                      borderRadius: 2.5,
-                      border: `1px solid ${selected ? r.color + '40' : '#f3f4f6'}`,
-                      bgcolor: selected ? `${r.color}08` : '#fff',
-                      boxShadow: selected ? `0 2px 8px ${r.color}18` : '0 2px 8px rgba(0,0,0,0.06)',
-                      cursor: loading ? 'default' : 'pointer',
-                      transition: 'all 0.15s ease',
-                      '&:hover': !loading ? {
-                        border: `1px solid ${r.color}40`,
-                        bgcolor: `${r.color}08`,
-                        boxShadow: `0 2px 8px ${r.color}18`,
-                      } : {},
-                    }}
-                  >
-                    {/* Icon box — same as StatCard */}
-                    <Box sx={{
-                      width: 40, height: 40, borderRadius: 2,
-                      backgroundColor: iconBg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: r.color, flexShrink: 0,
-                      '& svg': { fontSize: 20 },
-                    }}>
-                      <Icon />
-                    </Box>
-
-                    {/* Text */}
-                    <Box sx={{ flex: 1 }}>
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#111827', lineHeight: 1.2 }}>
+            <FormControl fullWidth size="small">
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={loading}
+                onClose={() => setRoleSearch('')}
+                MenuProps={{
+                  PaperProps: {
+                    sx: { maxHeight: 360, borderRadius: 2, mt: 0.5, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' },
+                  },
+                  autoFocus: false,
+                }}
+                renderValue={(val) => {
+                  const r = ROLES.find((r) => r.value === val);
+                  if (!r) return null;
+                  const Icon = r.icon;
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{
+                        width: 28, height: 28, borderRadius: 1.5,
+                        bgcolor: `${r.color}18`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: r.color, flexShrink: 0,
+                        '& svg': { fontSize: 16 },
+                      }}>
+                        <Icon />
+                      </Box>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
                         {r.label}
                       </Typography>
-                      <Typography sx={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500 }}>
-                        {r.description}
+                      <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        — {r.description}
                       </Typography>
                     </Box>
+                  );
+                }}
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: '#F8FAFC',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: PURPLE, borderWidth: 2 },
+                }}
+              >
+                {/* Sticky search box */}
+                <MenuItem
+                  disableRipple
+                  onKeyDown={(e) => e.stopPropagation()}
+                  sx={{
+                    position: 'sticky', top: 0, zIndex: 1,
+                    bgcolor: '#fff', p: 1.25,
+                    borderBottom: '1px solid #f3f4f6',
+                    '&:hover': { bgcolor: '#fff' },
+                    '&.Mui-focusVisible': { bgcolor: '#fff' },
+                  }}
+                >
+                  <TextField
+                    size="small" fullWidth autoFocus
+                    placeholder="Search roles…"
+                    value={roleSearch}
+                    onChange={(e) => setRoleSearch(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchOutlined sx={{ fontSize: 18, color: '#9CA3AF' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1.5, bgcolor: '#F8FAFC',
+                        '& fieldset': { borderColor: '#E2E8F0' },
+                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                        '&.Mui-focused fieldset': { borderColor: PURPLE, borderWidth: 2 },
+                      },
+                    }}
+                  />
+                </MenuItem>
 
-                    {/* Selected dot */}
-                    {selected && (
-                      <Box sx={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        bgcolor: r.color, flexShrink: 0,
-                      }} />
-                    )}
-                  </Box>
-                );
-              })}
-            </Box>
+                {/* Filtered role list */}
+                {ROLES.filter((r) => {
+                  const q = roleSearch.trim().toLowerCase();
+                  return !q || r.label.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
+                }).map((r) => {
+                  const Icon = r.icon;
+                  return (
+                    <MenuItem key={r.value} value={r.value} sx={{ py: 1.25, px: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{
+                          width: 34, height: 34, borderRadius: 1.5,
+                          bgcolor: `${r.color}18`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: r.color, flexShrink: 0,
+                          '& svg': { fontSize: 18 },
+                        }}>
+                          <Icon />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#111827', lineHeight: 1.2 }}>
+                            {r.label}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.72rem', color: '#6b7280' }}>
+                            {r.description}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
+
+                {/* Empty state */}
+                {ROLES.filter((r) => {
+                  const q = roleSearch.trim().toLowerCase();
+                  return !q || r.label.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
+                }).length === 0 && (
+                  <MenuItem disabled sx={{ py: 2, justifyContent: 'center' }}>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#9CA3AF' }}>No roles match "{roleSearch}"</Typography>
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
           </Box>
         </Box>
       </DialogContent>
@@ -261,6 +319,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
           sx={{
             textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 3,
             bgcolor: PURPLE,
+            color: '#fff',
             boxShadow: '0 2px 8px rgba(131,16,255,0.3)',
             '&:hover': { bgcolor: '#7209E6', boxShadow: '0 4px 14px rgba(131,16,255,0.4)' },
             '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF', boxShadow: 'none' },
