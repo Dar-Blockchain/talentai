@@ -21,6 +21,27 @@ module.exports.getMembershipsByCompany = async (req, res) => {
   }
 };
 
+// Get all memberships for a specific department in the current company
+module.exports.getMembershipsByDepartment = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { departmentId } = req.params;
+    const { search, status, page = 1, limit = 10 } = req.query;
+
+    const result = await CompanyMembershipService.getMembershipsByCompany(
+      companyId,
+      search,
+      status,
+      departmentId,
+      parseInt(page),
+      parseInt(limit),
+    );
+    res.json({ success: true, ...result });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 // Delete a membership
 module.exports.deleteMembership = async (req, res) => {
   try {
