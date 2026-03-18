@@ -94,7 +94,7 @@ const RecruitmentFlowStep = () => {
   }, [edges]);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", pt: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "flex-start", pt: 2, gap: { xs: 1, md: 2 } }}>
       <SidebarMenu
         flowWrapper={flowWrapper}
         nodes={nodes}
@@ -102,12 +102,9 @@ const RecruitmentFlowStep = () => {
       />
       <Box
         sx={{
-          display: "flex",
-          jutifyContent: "center",
           flex: 1,
-          height: "600px",
-          width: "900px",
-          mx: "auto",
+          minWidth: 0,
+          height: { xs: '420px', sm: '520px', md: '620px' },
         }}
         ref={flowWrapper}
       >

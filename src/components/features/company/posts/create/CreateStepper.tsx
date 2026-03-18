@@ -92,7 +92,7 @@ const CreateStepper: React.FC = () => {
     <Box>
       {/* ── Stepper header ───────────────────────────────────────────────────── */}
       <SectionCard sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 3 } }}>
           {/* Back button */}
           <Button
             startIcon={<ArrowBackOutlined sx={{ fontSize: 15 }} />}
@@ -108,11 +108,11 @@ const CreateStepper: React.FC = () => {
           </Button>
 
           {/* Stepper */}
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <Stepper
               activeStep={activeStep}
               connector={<TealConnector />}
-              sx={{ maxWidth: 480 }}
+              sx={{ maxWidth: 480, width: '100%' }}
             >
               {steps.map((label, i) => (
                 <Step key={label} completed={i < activeStep}>
