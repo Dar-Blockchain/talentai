@@ -1,6 +1,22 @@
 const CompanyMembershipService = require("../../services/ProfileService/CompanyMembership.service");
 const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
 
+const flattenMembership = (membership) => {
+  const m = membership?.toObject ? membership.toObject() : membership;
+  const user = m?.user || {};
+  const profile = user?.profile || {};
+
+  const { user: _user, department: _department, ...rest } = m;
+
+  return {
+    ...rest,
+    username: user.username || null,
+    email: user.email || null,
+    firstName: profile.firstName || null,
+    lastName: profile.lastName || null,
+  };
+};
+
 // Get all memberships for a company
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
@@ -15,7 +31,34 @@ module.exports.getMembershipsByCompany = async (req, res) => {
       parseInt(page),
       parseInt(limit),
     );
-    res.json({ success: true, ...result });
+
+    const memberships = (result.memberships || []).map(flattenMembership);
+
+    res.json({ success: true, ...result, memberships });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Get all memberships for a specific department in the current company
+module.exports.getMembershipsByDepartment = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { departmentId } = req.params;
+    const { search, status, page = 1, limit = 10 } = req.query;
+
+    const result = await CompanyMembershipService.getMembershipsByCompany(
+      companyId,
+      search,
+      status,
+      departmentId,
+      parseInt(page),
+      parseInt(limit),
+    );
+
+    const memberships = (result.memberships || []).map(flattenMembership);
+
+    res.json({ success: true, ...result, memberships });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -53,7 +96,7 @@ module.exports.updateMembershipRole = async (req, res) => {
       membershipId,
       role,
     );
-    res.json({ success: true, updated });
+    res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -69,7 +112,7 @@ module.exports.updateMembershipDepartment = async (req, res) => {
       membershipId,
       departmentId,
     );
-    res.json({ success: true, updated });
+    res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

@@ -43,9 +43,13 @@ module.exports.getMembershipsByCompany = async (companyId, search = "", status =
   // Get total count for pagination
   const total = await CompanyMembershipModel.countDocuments(query);
 
-  // Fetch paginated memberships
+  // Fetch paginated memberships (include user profile for firstName/lastName)
   const memberships = await CompanyMembershipModel.find(query)
-    .populate("user", "username email")
+    .populate({
+      path: "user",
+      select: "username email profile",
+      populate: { path: "profile", select: "firstName lastName" },
+    })
     .populate("department", "name")
     .populate("invitedBy", "username email")
     .sort({ createdAt: -1 })
@@ -101,7 +105,11 @@ module.exports.updateMembershipRole = async (membershipId, newRole) => {
     { role: newRole },
     { new: true }
   )
-    .populate("user", "username email")
+    .populate({
+      path: "user",
+      select: "username email profile",
+      populate: { path: "profile", select: "firstName lastName" },
+    })
     .populate("invitedBy", "username email");
 
   if (!updated) throw new Error("Membership not found");
@@ -115,7 +123,11 @@ module.exports.updateMembershipDepartment = async (membershipId, departmentId) =
     { department: departmentId || null },
     { new: true }
   )
-    .populate("user", "username email")
+    .populate({
+      path: "user",
+      select: "username email profile",
+      populate: { path: "profile", select: "firstName lastName" },
+    })
     .populate("department", "name description")
     .populate("invitedBy", "username email");
 
