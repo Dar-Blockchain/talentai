@@ -1,6 +1,20 @@
 const CompanyMembershipService = require("../../services/ProfileService/CompanyMembership.service");
 const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
 
+const flattenMembership = (membership) => {
+  const m = membership?.toObject ? membership.toObject() : membership;
+  const user = m?.user || {};
+  const profile = user?.profile || {};
+
+  return {
+    ...m,
+    username: user.username || null,
+    email: user.email || null,
+    firstName: profile.firstName || null,
+    lastName: profile.lastName || null,
+  };
+};
+
 // Get all memberships for a company
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
@@ -15,7 +29,10 @@ module.exports.getMembershipsByCompany = async (req, res) => {
       parseInt(page),
       parseInt(limit),
     );
-    res.json({ success: true, ...result });
+
+    const memberships = (result.memberships || []).map(flattenMembership);
+
+    res.json({ success: true, ...result, memberships });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -36,7 +53,10 @@ module.exports.getMembershipsByDepartment = async (req, res) => {
       parseInt(page),
       parseInt(limit),
     );
-    res.json({ success: true, ...result });
+
+    const memberships = (result.memberships || []).map(flattenMembership);
+
+    res.json({ success: true, ...result, memberships });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -74,7 +94,7 @@ module.exports.updateMembershipRole = async (req, res) => {
       membershipId,
       role,
     );
-    res.json({ success: true, updated });
+    res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -90,7 +110,7 @@ module.exports.updateMembershipDepartment = async (req, res) => {
       membershipId,
       departmentId,
     );
-    res.json({ success: true, updated });
+    res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
