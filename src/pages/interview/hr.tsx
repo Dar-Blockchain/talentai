@@ -246,8 +246,6 @@ const IntelligentInterviewTest = () => {
     jobData,
   });
 
-  const lastInterviewerMessage = audio.conversationHistory.filter(m => m.type !== 'system').slice(-1)[0] || null;
-
   const timer = useInterviewTimer({
     interviewStatus: socket.interviewStatus,
     onTimeUp: useCallback(() => { endInterviewRef.current(); }, []),
@@ -552,14 +550,22 @@ const IntelligentInterviewTest = () => {
             }}
           >
             {/* Question panel (full-width, active only) */}
-            {isActive && lastInterviewerMessage && (
-              <QuestionPanel
-                currentMessage={lastInterviewerMessage}
-                isInReadingTime={audio.isInReadingTime}
-                readingTimeLeft={audio.readingTimeLeft}
-                questionHighlight={audio.questionHighlight}
-              />
-            )}
+            {isActive && (() => {
+              const allMsgs = audio.conversationHistory.filter(m => m.type !== 'system');
+              const lastMsg = allMsgs.slice(-1)[0];
+              if (!lastMsg) return null;
+              const qCount = audio.conversationHistory.filter(m => m.type === 'question' || m.type === 'follow_up').length;
+              const isQuestion = lastMsg.type === 'question' || lastMsg.type === 'follow_up';
+              return (
+                <QuestionPanel
+                  currentMessage={lastMsg}
+                  isInReadingTime={audio.isInReadingTime}
+                  readingTimeLeft={audio.readingTimeLeft}
+                  questionHighlight={audio.questionHighlight}
+                  questionNumber={isQuestion ? qCount : 0}
+                />
+              );
+            })()}
 
             {/* Two-column grid: camera LEFT · controls RIGHT */}
             <Box

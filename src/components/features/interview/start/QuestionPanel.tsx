@@ -9,6 +9,7 @@ interface QuestionPanelProps {
   isInReadingTime: boolean;
   readingTimeLeft: number;
   questionHighlight: boolean;
+  questionNumber?: number;
 }
 
 const QuestionPanel: React.FC<QuestionPanelProps> = ({
@@ -16,6 +17,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
   isInReadingTime,
   readingTimeLeft,
   questionHighlight,
+  questionNumber,
 }) => {
   return (
     <Box
@@ -57,7 +59,7 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
             }}>
-              Question
+              {questionNumber ? `Question ${questionNumber}` : 'Question'}
             </Typography>
           </Box>
 
