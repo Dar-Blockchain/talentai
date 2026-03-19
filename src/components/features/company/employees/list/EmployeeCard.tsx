@@ -250,7 +250,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             {/* View */}
             <Tooltip title="View profile" placement="top" arrow>
               <Box
-                onClick={() => router.push(`/company/employees/${member._id}`)}
+                onClick={() => router.push(`/company/employees/${member.userId}`)}
                 sx={{
                   flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
                   py: 0.875, borderRadius: "10px",

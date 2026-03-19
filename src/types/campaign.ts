@@ -137,3 +137,41 @@ export type CampaignModule =
   | AIInterviewModule
   | SkillTestModule
   | TrainingPathModule;
+
+// ─── Participants ─────────────────────────────────────────────────────────────
+
+export type ParticipantStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
+
+export interface CampaignParticipant {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+  department?: string | { _id?: string; name: string };
+  status: ParticipantStatus;
+  startedAt?: string;
+  completedAt?: string;
+  score?: number;
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+export type SessionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";
+
+export interface CampaignSession {
+  _id: string;
+  participant?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email?: string;
+  };
+  status: SessionStatus;
+  startedAt?: string;
+  completedAt?: string;
+  score?: number;
+  durationMinutes?: number;
+}
