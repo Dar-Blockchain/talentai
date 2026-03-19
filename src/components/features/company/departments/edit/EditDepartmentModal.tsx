@@ -9,24 +9,26 @@ import {
   DialogActions,
 } from "@mui/material";
 import AppButton from "@/components/ui/AppButton";
-import DeptFormFields from "./DeptFormFields";
-import CorporateFareOutlined from "@mui/icons-material/CorporateFareOutlined";
-import AddOutlined from "@mui/icons-material/AddOutlined";
+import DeptFormFields from "../shared/DeptFormFields";
+import { Department } from "@/store/slices/departmentSlice";
+import EditOutlined from "@mui/icons-material/EditOutlined";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 
 const TEAL = "#0D9488";
 const TEAL_LIGHT = "#F0FDFA";
 
-export interface CreateDepartmentModalProps {
+export interface EditDepartmentModalProps {
   open: boolean;
+  department: Department | null;
   onClose: () => void;
   onSave: (name: string, description: string) => void;
   saving: boolean;
   error: string | null;
 }
 
-const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
+const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
   open,
+  department,
   onClose,
   onSave,
   saving,
@@ -36,14 +38,14 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
   const [description, setDescription] = useState("");
   const [nameError, setNameError] = useState("");
 
-  // Reset form whenever the modal opens
+  // Populate fields when a department is passed in
   useEffect(() => {
-    if (open) {
-      setName("");
-      setDescription("");
+    if (department) {
+      setName(department.name);
+      setDescription(department.description);
       setNameError("");
     }
-  }, [open]);
+  }, [department]);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -75,10 +77,10 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
               justifyContent: "center",
             }}
           >
-            <CorporateFareOutlined sx={{ fontSize: 17, color: TEAL }} />
+            <EditOutlined sx={{ fontSize: 16, color: TEAL }} />
           </Box>
           <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
-            New Department
+            Edit Department
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose} disabled={saving}>
@@ -109,10 +111,9 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
           disabled={saving}
         />
         <AppButton
-          label="Create Department"
+          label="Save Changes"
           variant="contained"
           size="medium"
-          startIcon={<AddOutlined />}
           loading={saving}
           disabled={!name.trim()}
           onClick={handleSave}
@@ -122,4 +123,4 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
   );
 };
 
-export default CreateDepartmentModal;
+export default EditDepartmentModal;

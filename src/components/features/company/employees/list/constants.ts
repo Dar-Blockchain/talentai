@@ -11,8 +11,8 @@ export const SORT_OPTIONS: { id: SortOption; label: string }[] = [
 
 export const GRID = {
   display: "grid",
-  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-  gap: 1.5,
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(4, 1fr)", xl: "repeat(5, 1fr)" },
+  gap: 1,
 } as const;
 
 export const INLINE_SELECT_SX = {
