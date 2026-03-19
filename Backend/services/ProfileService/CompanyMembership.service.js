@@ -141,7 +141,7 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
     console.log(`✅ Deleted all memberships for user ${userId}`);
 
     // 3. Delete user's profile
-    const userProfile = await ProfileModel.findOne({ user: userId });
+    const userProfile = await ProfileModel.findOne({ userId });
     if (userProfile) {
       await ProfileModel.findByIdAndDelete(userProfile._id);
       console.log(`✅ Deleted profile for user ${userId}`);
