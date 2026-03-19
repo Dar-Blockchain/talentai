@@ -26,6 +26,8 @@ export interface EmployeesFilterBarProps {
   onSortChange: (s: SortOption) => void;
   /** Total filtered result count — shown in drawer footer */
   resultCount: number;
+  /** Hide the department filter (e.g. when already scoped to a department) */
+  hideDepartmentFilter?: boolean;
 }
 
 const DIVIDER = <Box sx={{ width: "1px", height: 20, bgcolor: "#E5E7EB", flexShrink: 0 }} />;
@@ -84,6 +86,7 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
   departmentFilter, onDepartmentFilterChange, departments,
   sortBy, onSortChange,
   resultCount,
+  hideDepartmentFilter = false,
 }) => {
   const isMobile  = useMediaQuery("(max-width:650px)");
   const isDesktop = useMediaQuery("(min-width:1101px)");
@@ -108,8 +111,8 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
             <SearchInput value={search} onChange={onSearchChange} />
             {DIVIDER}
             <RoleFilterSelect value={roleFilter} onChange={onRoleFilterChange} />
-            {DIVIDER}
-            <DeptFilterSelect value={departmentFilter} onChange={onDepartmentFilterChange} departments={departments} />
+            {!hideDepartmentFilter && DIVIDER}
+            {!hideDepartmentFilter && <DeptFilterSelect value={departmentFilter} onChange={onDepartmentFilterChange} departments={departments} />}
             {DIVIDER}
             <SortSelect value={sortBy} onChange={onSortChange} />
           </Box>
@@ -204,7 +207,7 @@ const EmployeesFilterBar: React.FC<EmployeesFilterBarProps> = ({
               </Box>
             )},
             { label: "Role",       content: <RoleFilterSelect value={roleFilter} onChange={onRoleFilterChange} /> },
-            { label: "Department", content: <DeptFilterSelect value={departmentFilter} onChange={onDepartmentFilterChange} departments={departments} /> },
+            ...(!hideDepartmentFilter ? [{ label: "Department", content: <DeptFilterSelect value={departmentFilter} onChange={onDepartmentFilterChange} departments={departments} /> }] : []),
             { label: "Sort by",    content: <SortSelect value={sortBy} onChange={onSortChange} /> },
           ] as { label: string; content: React.ReactNode }[]).map(({ label, content }) => (
             <Box key={label}>

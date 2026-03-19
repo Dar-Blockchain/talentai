@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Box, Typography, Avatar, Button, CircularProgress } from "@mui/material";
+import { Box, Typography, Avatar, Button, CircularProgress, Chip } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
@@ -9,7 +9,10 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import BadgeOutlined from "@mui/icons-material/BadgeOutlined";
 import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
+import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
+import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
+import WorkHistoryOutlined from "@mui/icons-material/WorkHistoryOutlined";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
@@ -81,6 +84,35 @@ const StatCard: React.FC<{
   </Box>
 );
 
+/* ── Metric card (big number) ─────────────────────────── */
+const MetricCard: React.FC<{
+  icon: React.ReactNode; iconColor: string; label: string; value: number | string; sub?: string;
+}> = ({ icon, iconColor, label, value, sub }) => (
+  <Box sx={{
+    p: 2.25, borderRadius: "16px",
+    bgcolor: "#fff", border: "1px solid #E8EAED",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+  }}>
+    <Box sx={{
+      width: 40, height: 40, borderRadius: "11px", mb: 1.75,
+      bgcolor: `${iconColor}10`, border: `1px solid ${iconColor}18`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: iconColor,
+    }}>
+      {icon}
+    </Box>
+    <Typography sx={{ fontSize: "1.625rem", fontWeight: 800, color: "#0F172A", lineHeight: 1 }}>
+      {value}
+    </Typography>
+    <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151", mt: 0.5 }}>
+      {label}
+    </Typography>
+    {sub && (
+      <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.25 }}>{sub}</Typography>
+    )}
+  </Box>
+);
+
 /* ── Tab pill ─────────────────────────────────────────── */
 const Tab: React.FC<{
   active: boolean; label: string; icon: React.ReactNode; onClick: () => void;
@@ -121,7 +153,9 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
 
-  const name    = member.username || "Unnamed";
+  const name    = (member.firstName && member.lastName)
+    ? `${member.firstName} ${member.lastName}`
+    : member.firstName || member.lastName || member.username || "Unnamed";
   const email   = member.email   || "—";
   const letter  = name[0]?.toUpperCase() || "U";
   const palette = pickPalette(email || name);
@@ -299,17 +333,70 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
           >
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 1.5 }}>
-              <StatCard icon={<EmailOutlined sx={{ fontSize: 18 }} />}           iconColor="#0891B2" label="Email"         value={email} />
-              <StatCard icon={<BadgeOutlined sx={{ fontSize: 18 }} />}            iconColor={roleColor} label="Role"       value={roleLabel} />
-              <StatCard
-                icon={<Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: status.dot }} />}
-                iconColor={status.color} label="Status" value={status.label}
+            {/* ── Activity metrics ── */}
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 1.5, mb: 2 }}>
+              <MetricCard
+                icon={<CampaignOutlined sx={{ fontSize: 20 }} />}
+                iconColor="#8310FF"
+                label="Campaigns"
+                value={(member as any).campaignsCount ?? (member as any).campaigns?.length ?? "—"}
+                sub="participated in"
               />
-              <StatCard icon={<BusinessOutlined sx={{ fontSize: 18 }} />}        iconColor="#8B5CF6"  label="Department"  value={dept ?? "No department"} />
-              <StatCard icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />}   iconColor="#16A34A"  label="Joined"      value={fmtDate(member.createdAt)} />
-              <StatCard icon={<UpdateOutlined sx={{ fontSize: 18 }} />}          iconColor="#D97706"  label="Last Updated" value={fmtDate(member.updatedAt)} />
-              <StatCard icon={<WorkOutlined sx={{ fontSize: 18 }} />}            iconColor={PURPLE}   label="Organization" value={member.company || "—"} />
+              <MetricCard
+                icon={<CheckCircleOutlined sx={{ fontSize: 20 }} />}
+                iconColor="#16A34A"
+                label="Interviews"
+                value={(member as any).interviewsPassed ?? "—"}
+                sub="passed"
+              />
+              <MetricCard
+                icon={<PsychologyOutlined sx={{ fontSize: 20 }} />}
+                iconColor="#0891B2"
+                label="Skills"
+                value={((member as any).skills as string[] | undefined)?.length ?? "—"}
+                sub="listed"
+              />
+              <MetricCard
+                icon={<WorkHistoryOutlined sx={{ fontSize: 20 }} />}
+                iconColor="#D97706"
+                label="Job Posts"
+                value={(member as any).jobPostsCount ?? "—"}
+                sub="created"
+              />
+            </Box>
+
+            {/* ── Skills chips ── */}
+            {Array.isArray((member as any).skills) && (member as any).skills.length > 0 && (
+              <Box sx={{ bgcolor: "#fff", border: "1px solid #E8EAED", borderRadius: "16px", p: 2.25, mb: 2 }}>
+                <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.05em", mb: 1.25 }}>
+                  Skills
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                  {((member as any).skills as string[]).map((skill) => (
+                    <Chip
+                      key={skill}
+                      label={skill}
+                      size="small"
+                      sx={{
+                        fontSize: "12px", fontWeight: 600,
+                        bgcolor: `${PURPLE}0C`, color: PURPLE,
+                        border: `1px solid ${PURPLE}20`,
+                        borderRadius: "8px",
+                        height: 26,
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* ── Member info ── */}
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 1.5 }}>
+              <StatCard icon={<EmailOutlined sx={{ fontSize: 18 }} />}          iconColor="#0891B2" label="Email"        value={email} />
+              <StatCard icon={<BadgeOutlined sx={{ fontSize: 18 }} />}           iconColor={roleColor} label="Role"      value={roleLabel} />
+              <StatCard icon={<BusinessOutlined sx={{ fontSize: 18 }} />}       iconColor="#8B5CF6" label="Department"   value={dept ?? "No department"} />
+              <StatCard icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />}  iconColor="#16A34A" label="Joined"       value={fmtDate(member.createdAt)} />
+              <StatCard icon={<UpdateOutlined sx={{ fontSize: 18 }} />}         iconColor="#D97706" label="Last Updated" value={fmtDate(member.updatedAt)} />
             </Box>
           </motion.div>
         )}
