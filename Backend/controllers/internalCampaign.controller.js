@@ -197,6 +197,73 @@ exports.getCampaign = async (req, res) => {
 };
 
 /**
+ * Get participants for a specific campaign (filtered and paginated)
+ */
+exports.getCampaignParticipants = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { status, email, page = 1, limit = 10 } = req.query;
+
+    // Verify campaign exists
+    const campaign = await getCampaignById(campaignId);
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        error: "Campaign not found",
+      });
+    }
+
+    // Build filter for participants
+    const participantFilter = { campaign: campaignId };
+
+    if (status) {
+      participantFilter.status = status;
+    }
+
+    if (email) {
+      participantFilter.email = { $regex: email, $options: "i" }; // Case-insensitive regex search
+    }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count of matching participants
+    const totalParticipants = await CampaignParticipant.countDocuments(participantFilter);
+
+    // Get paginated participants
+    const participants = await CampaignParticipant.find(participantFilter)
+      .populate("employee", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        campaign: {
+          id: campaign._id,
+          title: campaign.title,
+        },
+        participants: {
+          total: totalParticipants,
+          page: pageNum,
+          limit: limitNum,
+          pages: Math.ceil(totalParticipants / limitNum),
+          data: participants,
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Update a campaign
  */
 exports.updateInternalCampaign = async (req, res) => {

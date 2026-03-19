@@ -52,6 +52,11 @@ router.get("/metrics", internalCampaignController.getCampaignMetrics);
 router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
 
 /**
+ * GET /campaigns/:campaignId/participants — Obtenir les participants d'une campagne (avec filtres et pagination)
+ */
+router.get("/:campaignId/participants", internalCampaignController.getCampaignParticipants);
+
+/**
  * PATCH /campaigns/:campaignId/status — Changer le statut d'une campagne
  */
 router.patch("/:campaignId/status", internalCampaignController.updateCampaignStatus);
