@@ -115,27 +115,59 @@ module.exports.getMembershipsByCompany = async (
   };
 };
 
-// Delete a membership (remove a member from a company)
+// Delete a membership and completely remove the user from the system
 module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
-  // First, fetch the membership to verify it belongs to a company owned by the requester
+  // First, fetch the membership to verify it exists
   const membership = await CompanyMembershipModel.findById(membershipId)
     .populate("company");
 
   if (!membership) throw new Error("Membership not found");
 
-  // Verify that the company is owned by the requester (optional but recommended for security)
-  // You could add an ownership check here if needed
-  
-  // Delete the membership
-  const deleted = await CompanyMembershipModel.findByIdAndDelete(membershipId);
-  
-  // If this was the last membership for the user, optionally clear their companyMembership field
-  const remaining = await CompanyMembershipModel.findOne({ user: membership.user });
-  if (!remaining) {
-    await User.findByIdAndUpdate(membership.user, { companyMembership: null }, { new: true });
-  }
+  const userId = membership.user;
 
-  return deleted;
+  try {
+    // Get all models that might reference this user
+    const EmployeePermissionsModel = require("../../models/EmployeePermissions.model");
+    const ProfileModel = require("../../models/Profile.model");
+    const CVAnalysisModel = require("../../models/CVAnalysis.model");
+    const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
+
+    // 1. Delete all employee permissions for this user
+    await EmployeePermissionsModel.deleteMany({ userId });
+    console.log(`✅ Deleted employee permissions for user ${userId}`);
+
+    // 2. Delete all company memberships for this user
+    await CompanyMembershipModel.deleteMany({ user: userId });
+    console.log(`✅ Deleted all memberships for user ${userId}`);
+
+    // 3. Delete user's profile
+    const userProfile = await ProfileModel.findOne({ user: userId });
+    if (userProfile) {
+      await ProfileModel.findByIdAndDelete(userProfile._id);
+      console.log(`✅ Deleted profile for user ${userId}`);
+    }
+
+    // 4. Delete all CV analyses for this user
+    await CVAnalysisModel.deleteMany({ user: userId });
+    console.log(`✅ Deleted all CV analyses for user ${userId}`);
+
+    // 5. Delete all company invitations where this user was invitedBy
+    await CompanyInvitationModel.deleteMany({ invitedBy: userId });
+    console.log(`✅ Deleted invitations sent by user ${userId}`);
+
+    // 6. Finally, delete the user from the User table
+    const deletedUser = await User.findByIdAndDelete(userId);
+    console.log(`✅ Deleted user account ${userId}`);
+
+    return {
+      success: true,
+      message: "User and all related data has been completely removed from the system",
+      deletedUser: deletedUser,
+    };
+  } catch (error) {
+    console.error("Error during user deletion cascade:", error);
+    throw new Error(`Failed to delete user and related data: ${error.message}`);
+  }
 };
 
 // Update the role of a membership

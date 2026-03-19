@@ -56,18 +56,27 @@ module.exports.getMembershipsByCompany = async (req, res) => {
   }
 };
 
-// Delete a membership
+// Delete a membership and completely remove the user from the system
 module.exports.deleteMembership = async (req, res) => {
   try {
     const { membershipId } = req.params;
     const companyOwnerId = req.user._id;
-    const deleted = await CompanyMembershipService.deleteMembership(
+    
+    const result = await CompanyMembershipService.deleteMembership(
       membershipId,
       companyOwnerId,
     );
-    res.json({ success: true, deleted });
+    
+    res.json({ 
+      success: true, 
+      message: result.message,
+      deleted: result 
+    });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ 
+      success: false, 
+      message: error.message 
+    });
   }
 };
 
