@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
-import LockOutlined from "@mui/icons-material/LockOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import CaptchaModal from "./CaptchaModal";
@@ -35,7 +34,6 @@ const PAIN_POINTS = [
 ];
 
 const TRUST = [
-  { icon: <LockOutlined sx={{ fontSize: 13 }} />,        label: "No credit card" },
   { icon: <AccessTimeOutlined sx={{ fontSize: 13 }} />,  label: "Live in 30 min" },
   { icon: <CancelOutlined sx={{ fontSize: 13 }} />,      label: "Cancel anytime" },
 ];

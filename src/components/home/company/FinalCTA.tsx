@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Box, Typography, Button, Stack } from "@mui/material";
-import LockOutlined from "@mui/icons-material/LockOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
-import VerifiedUserOutlined from "@mui/icons-material/VerifiedUserOutlined";
 import CaptchaModal from "./CaptchaModal";
 
 const ACCENT     = "#0CDA8B";
@@ -11,10 +9,8 @@ const ACCENT_BG  = "rgba(12,218,139,0.12)";
 const CALENDLY   = "https://calendly.com/talent__ai/30min";
 
 const TRUST_BADGES = [
-  { icon: <LockOutlined sx={{ fontSize: 13 }} />,          label: "No credit card required" },
   { icon: <AccessTimeOutlined sx={{ fontSize: 13 }} />,    label: "30-minute setup" },
   { icon: <CancelOutlined sx={{ fontSize: 13 }} />,        label: "Cancel anytime" },
-  { icon: <VerifiedUserOutlined sx={{ fontSize: 13 }} />,  label: "GDPR compliant" },
 ];
 
 const FinalCTA: React.FC = () => {
