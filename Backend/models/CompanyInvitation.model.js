@@ -3,10 +3,7 @@ const mongoose = require("mongoose");
 const CompanyInvitationSchema = new mongoose.Schema({
   email: { type: String, required: true },
   company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  role: {
-    type: String,
-    default: "Manager",
-  },
+  role: { type: String, default: "Manager" },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   status: { type: String, enum: ["active", "pending", "revoked"], default: "pending" },
   invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
