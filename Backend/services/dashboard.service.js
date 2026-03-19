@@ -702,3 +702,67 @@ module.exports.getStatsCards = async (userId) => {
     throw new Error('Error fetching statsCards: ' + error.message);
   }
 };
+
+module.exports.getRichStats = async (userId) => {
+  try {
+    const oid = new mongoose.Types.ObjectId(userId);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [scoreDistAgg, trendAgg, topJobsAgg, passRateAgg] = await Promise.all([
+      // Score distribution buckets: 0-20, 20-40, 40-60, 60-80, 80-100
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, "interviewData.finalReport.scores.overall": { $exists: true } } },
+        { $bucket: {
+          groupBy: "$interviewData.finalReport.scores.overall",
+          boundaries: [0, 20, 40, 60, 80, 101],
+          default: "other",
+          output: { count: { $sum: 1 } }
+        }}
+      ]),
+      // 30-day daily interview count
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, createdAt: { $gte: thirtyDaysAgo } } },
+        { $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+          avgScore: { $avg: "$interviewData.finalReport.scores.overall" }
+        }},
+        { $sort: { _id: 1 } }
+      ]),
+      // Top 5 job posts by interview count
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid } },
+        { $group: { _id: "$post", count: { $sum: 1 }, avgScore: { $avg: "$interviewData.finalReport.scores.overall" } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: "posts", localField: "_id", foreignField: "_id", as: "postDoc" } },
+        { $unwind: { path: "$postDoc", preserveNullAndEmptyArrays: true } },
+        { $project: { title: { $ifNull: ["$postDoc.jobDetails.title", "Unknown"] }, count: 1, avgScore: { $round: ["$avgScore", 0] } } }
+      ]),
+      // Pass rate (score >= 60)
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, "interviewData.finalReport.scores.overall": { $exists: true } } },
+        { $group: {
+          _id: null,
+          total: { $sum: 1 },
+          passed: { $sum: { $cond: [{ $gte: ["$interviewData.finalReport.scores.overall", 60] }, 1, 0] } }
+        }}
+      ])
+    ]);
+
+    const bucketMap = { 0: "0–20", 20: "20–40", 40: "40–60", 60: "60–80", 80: "80–100" };
+    const allBuckets = [0, 20, 40, 60, 80];
+    const scoreDistribution = allBuckets.map(id => ({
+      range: bucketMap[id],
+      count: scoreDistAgg.find(b => b._id === id)?.count || 0
+    }));
+
+    const passRateData = passRateAgg[0] || { total: 0, passed: 0 };
+    const passRate = passRateData.total > 0 ? Math.round((passRateData.passed / passRateData.total) * 100) : 0;
+    const totalInterviews = await PostInterviewAssessment.countDocuments({ company: oid });
+
+    return { scoreDistribution, trend: trendAgg, topJobs: topJobsAgg, passRate, totalInterviews };
+  } catch (error) {
+    throw new Error('Error fetching rich stats: ' + error.message);
+  }
+};

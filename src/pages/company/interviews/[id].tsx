@@ -12,7 +12,7 @@ const InterviewDetailPage: React.FC = () => {
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
 
-  const { data: assessment, loading, error } = useSelector(
+  const { data: assessment, stepsData, hasSteps, loading, error } = useSelector(
     (s: RootState) => s.interview.interviewDetail
   );
 
@@ -47,7 +47,7 @@ const InterviewDetailPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <InterviewDetail assessment={assessment} onBack={handleBack} />
+      <InterviewDetail assessment={assessment} stepsData={stepsData} hasSteps={hasSteps} onBack={handleBack} />
     </DashboardLayout>
   );
 };

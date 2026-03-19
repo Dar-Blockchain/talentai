@@ -96,6 +96,8 @@ interface CompanyInterviewMetrics {
 
 interface InterviewDetailState {
   data: any | null;
+  stepsData: any | null;
+  hasSteps: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -129,7 +131,7 @@ const initialState: InterviewState = {
   report: { data: null, loading: false, error: null },
   companyInterviews: { items: [], total: 0, totalPages: 1, loading: false, error: null },
   companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
-  interviewDetail: { data: null, loading: false, error: null },
+  interviewDetail: { data: null, stepsData: null, hasSteps: false, loading: false, error: null },
 };
 
 /**
@@ -419,7 +421,8 @@ export const fetchInterviewById = createAsyncThunk<
     try {
       const response = await axiosInstance.get(`post-interview-assessments/${id}`);
       // API returns { success, data: { assessment, stepsData, hasSteps } }
-      return response.data?.data?.assessment || response.data?.data || response.data;
+      const d = response.data?.data;
+      return { assessment: d?.assessment || d, stepsData: d?.stepsData || null, hasSteps: d?.hasSteps || false };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || 'Error fetching interview');
     }
@@ -536,10 +539,14 @@ const interviewSlice = createSlice({
         state.interviewDetail.loading = true;
         state.interviewDetail.error = null;
         state.interviewDetail.data = null;
+        state.interviewDetail.stepsData = null;
+        state.interviewDetail.hasSteps = false;
       })
       .addCase(fetchInterviewById.fulfilled, (state, action) => {
         state.interviewDetail.loading = false;
-        state.interviewDetail.data = action.payload;
+        state.interviewDetail.data = action.payload.assessment;
+        state.interviewDetail.stepsData = action.payload.stepsData;
+        state.interviewDetail.hasSteps = action.payload.hasSteps;
       })
       .addCase(fetchInterviewById.rejected, (state, action) => {
         state.interviewDetail.loading = false;
