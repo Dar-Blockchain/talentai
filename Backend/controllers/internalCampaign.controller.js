@@ -40,15 +40,16 @@ exports.createInternalCampaign = async (req, res) => {
   try {
     const {
       title,
-        type,
-        description,
-        anonymityMode,
-        module,
-        accessMethod,
-        targetDepartment,
-        targetEmployeeCount,
-        deadline,
-        skill,
+      type,
+      description,
+      anonymityMode,
+      module,
+      accessMethod,
+      targetDepartment,
+      targetEmployeeCount,
+      deadline,
+      skill,
+      participants, // Array of user IDs
     } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
 
@@ -83,6 +84,23 @@ exports.createInternalCampaign = async (req, res) => {
       skill: skill || "",
       createdBy: req.user._id,
     });
+
+    // Create campaign participants if provided
+    if (Array.isArray(participants) && participants.length > 0) {
+      const campaignParticipantData = participants.map((employeeId) => ({
+        campaign: campaign._id,
+        employee: employeeId,
+        status: "NOT_STARTED",
+      }));
+
+      try {
+        await CampaignParticipant.insertMany(campaignParticipantData);
+        console.log(`✅ Created ${participants.length} campaign participants`);
+      } catch (participantError) {
+        console.warn(`⚠️ Warning: Failed to create some participants: ${participantError.message}`);
+        // Don't throw - campaign was created successfully, continue
+      }
+    }
 
     res.status(201).json({
       success: true,
