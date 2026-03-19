@@ -31,6 +31,52 @@ function extractJson(text) {
   return cleaned;
 }
 
+function cleanAnalyzedData(data) {
+  // Filter out education entries with empty institution or degree
+  if (Array.isArray(data.education)) {
+    data.education = data.education.filter(
+      (edu) => edu.institution && edu.institution.trim() !== ""
+    );
+  }
+
+  // Filter out project entries with empty name
+  if (Array.isArray(data.projects)) {
+    data.projects = data.projects.filter(
+      (proj) => proj.name && proj.name.trim() !== ""
+    );
+  }
+
+  // Filter out soft skills with empty name
+  if (Array.isArray(data.softSkills)) {
+    data.softSkills = data.softSkills.filter(
+      (skill) => skill.name && skill.name.trim() !== ""
+    );
+  }
+
+  // Filter out languages with empty language field
+  if (Array.isArray(data.spokenLanguages)) {
+    data.spokenLanguages = data.spokenLanguages.filter(
+      (lang) => lang.language && lang.language.trim() !== ""
+    );
+  }
+
+  // Filter out certifications that are empty strings
+  if (Array.isArray(data.certifications)) {
+    data.certifications = data.certifications.filter(
+      (cert) => typeof cert === "string" && cert.trim() !== ""
+    );
+  }
+
+  // Filter out skills that are empty strings
+  if (Array.isArray(data.skills)) {
+    data.skills = data.skills.filter(
+      (skill) => typeof skill === "string" && skill.trim() !== ""
+    );
+  }
+
+  return data;
+}
+
 async function uploadPdfToOpenAI(pdfPath) {
   const uploadedFile = await openai.files.create({
     file: fs.createReadStream(pdfPath),
@@ -152,9 +198,13 @@ Return this exact structure:
         const rawText = response.output_text || "{}";
         const jsonText = extractJson(rawText);
 
-        JSON.parse(jsonText);
+        // Parse and validate
+        const parsedData = JSON.parse(jsonText);
+        
+        // Clean the data to remove empty required fields
+        const cleanedData = cleanAnalyzedData(parsedData);
 
-        return jsonText;
+        return JSON.stringify(cleanedData);
       } catch (error) {
         lastError = error;
 
