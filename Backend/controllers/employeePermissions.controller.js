@@ -121,14 +121,14 @@ exports.getPermissionsByCompany = async (req, res) => {
 
 
 /**
- * Update current user's permissions
- * PUT /api/employee-permissions
+ * Update user's permissions
+ * PUT /api/employee-permissions/:userId
  */
 exports.updatePermissions = async (req, res) => {
   if (!checkAuthentication(req, res)) return;
   
   try {
-    const userId = req.user._id;
+    const userId = req.params.userId;
     const { ...permissionsData } = req.body;
     const modifiedBy = req.user._id;
 

@@ -25,10 +25,10 @@ router.get("/:userId", requireAuthUser, employeePermissionsController.getPermiss
 router.get("/summary", requireAuthUser, employeePermissionsController.getPermissionSummary);
 
 /**
- * @route   PUT /api/employee-permissions
- * @desc    Update current user's permissions
+ * @route   PUT /api/employee-permissions/:userId
+ * @desc    Update user's permissions
  * @access  Private/Admin
  */
-router.put("/", requireAuthUser, employeePermissionsController.updatePermissions);
+router.put("/:userId", requireAuthUser, employeePermissionsController.updatePermissions);
 
 module.exports = router;
