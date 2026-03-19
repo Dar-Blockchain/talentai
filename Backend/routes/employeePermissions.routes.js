@@ -18,13 +18,6 @@ router.get("/available", requireAuthUser, employeePermissionsController.getAvail
 router.get("/:userId", requireAuthUser, employeePermissionsController.getPermissions);
 
 /**
- * @route   GET /api/employee-permissions/summary
- * @desc    Get permission summary for current user
- * @access  Private
- */
-router.get("/summary", requireAuthUser, employeePermissionsController.getPermissionSummary);
-
-/**
  * @route   PUT /api/employee-permissions/:userId
  * @desc    Update user's permissions
  * @access  Private/Admin

@@ -203,45 +203,6 @@ exports.revokePermissions = async (userId, permissionsToRevoke, modifiedBy) => {
 };
 
 /**
- * Get permission summary (count of true permissions)
- */
-exports.getPermissionSummary = async (userId) => {
-  try {
-    const permissions = await EmployeePermissions.findOne({
-      userId,
-    });
-
-    if (!permissions) {
-      throw new Error("Permissions not found");
-    }
-
-    const permissionKeys = Object.keys(permissions.toObject())
-      .filter((key) => key.startsWith("can"))
-      .sort();
-
-    const summary = {
-      totalPermissions: permissionKeys.length,
-      grantedPermissions: 0,
-      permissions: {},
-    };
-
-    permissionKeys.forEach((key) => {
-      const isGranted = permissions[key] === true;
-      summary.permissions[key] = isGranted;
-      if (isGranted) {
-        summary.grantedPermissions++;
-      }
-    });
-
-    return summary;
-  } catch (error) {
-    throw new Error(
-      `Failed to get permission summary: ${error.message}`
-    );
-  }
-};
-
-/**
  * Get all available permissions
  */
 exports.getAvailablePermissions = async () => {

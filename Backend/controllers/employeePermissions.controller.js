@@ -277,29 +277,6 @@ exports.revokePermissions = async (req, res) => {
 };
 
 /**
- * Get permission summary for current user
- * GET /api/employee-permissions/summary
- */
-exports.getPermissionSummary = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const userId = req.user._id;
-
-    const summary = await employeePermissionsService.getPermissionSummary(
-      userId
-    );
-
-    res.status(200).json({
-      success: true,
-      data: summary,
-    });
-  } catch (error) {
-    handleError(res, error, 404);
-  }
-};
-
-/**
  * Get all available permissions
  * GET /api/employee-permissions/available
  */
