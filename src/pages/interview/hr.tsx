@@ -50,7 +50,6 @@ import {
   SecurityModals,
   InterviewTimer,
 } from '@/components/features/interview/start';
-import JobOverview from '@/components/features/interview/start/JobOverview';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
 import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
@@ -66,7 +65,7 @@ const IntelligentInterviewTest = () => {
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  const [step, setStep] = useState<'intro' | 'overview' | 'interview'>('intro');
+  const [step, setStep] = useState<'intro' | 'interview'>('intro');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(false);
@@ -423,24 +422,8 @@ const IntelligentInterviewTest = () => {
         hasJobId={hasJobId}
         jobId={jobId}
         refParam={refParam}
-        totalSteps={hasJobId ? 3 : 2}
         jobData={jobData}
-        onNext={() => {
-          setStep(hasJobId ? 'overview' : 'interview');
-        }}
-      />
-    );
-  }
-
-  /* ── Step 2: Job Overview (only when jobId present) ── */
-  if (step === 'overview') {
-    return (
-      <JobOverview
-        jobData={jobData}
-        interviewConfig={interviewConfig}
-        pipelineLoading={pipelineLoading}
-        hasJobId={hasJobId}
-        onStart={() => setStep('interview')}
+        onNext={(_) => setStep('interview')}
       />
     );
   }
