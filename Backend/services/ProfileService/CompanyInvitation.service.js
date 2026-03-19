@@ -2,8 +2,11 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../../models/User.model");
+const Profile = require("../../models/Profile.model");
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
 const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
+const EmployeePermissionsModel = require("../../models/EmployeePermissions.model");
+const employeePermissionsService = require("../employeePermissions.service");
 const { sendCompanyInvitation } = require("../../utils/email-service");
 
 // Constants
@@ -244,6 +247,28 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
 
   const membership = await CompanyMembershipModel.create(membershipData);
 
+  // Create default employee permissions based on role
+  const defaultPermissions = _getDefaultPermissionsByRole(invitation.role);
+  
+  // Get user's company profile (assuming company field refers to a User with isCompany flag)
+  const userProfile = await Profile.findOne({ Company: invitation.company });
+  const profileId = userProfile ? userProfile._id : invitation.company;
+
+  const employeePermissions = await EmployeePermissionsModel.create({
+    userId,
+    profileId,
+    membershipId: membership._id,
+    ...defaultPermissions,
+    lastModifiedBy: invitation.invitedBy,
+  });
+
+  // Link membership to permissions
+  await CompanyMembershipModel.findByIdAndUpdate(
+    membership._id,
+    { permissions: employeePermissions._id },
+    { new: true }
+  );
+
   await CompanyInvitationModel.findByIdAndDelete(invitationId);
 
   await User.findByIdAndUpdate(
@@ -252,7 +277,109 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
     { new: true },
   );
 
-  return membership;
+  return {
+    membership,
+    permissions: employeePermissions,
+  };
+};
+
+/**
+ * Get default permissions based on user role
+ * @param {string} role - The user's role in the company
+ * @returns {Object} Default permissions object
+ */
+const _getDefaultPermissionsByRole = (role) => {
+  const basePermissions = {
+    canViewJobPosts: false,
+    canCreateJobPosts: false,
+    canViewCandidates: false,
+    canViewInterviewResults: false,
+    canContactCandidates: false,
+    canAccessMatching: false,
+    canUseHRAgents: false,
+    canManageTeam: false,
+    canInviteMembers: false,
+    canAssignRoles: false,
+    canRemoveEmployee: false,
+    canUpdateEmployeeDepartment: false,
+    canViewCampaigns: false,
+    canCreateCampaign: false,
+    canEditCampaign: false,
+    canDeleteCampaign: false,
+    canPublishCampaign: false,
+    canViewCampaignAnalytics: false,
+    canViewDepartments: false,
+    canCreateDepartment: false,
+    canEditDepartment: false,
+    canDeleteDepartment: false,
+    canViewCompanyProfile: false,
+    canEditCompanyProfile: false,
+    canManageSettings: false,
+    canManageBilling: false,
+    canManageIntegrations: false,
+  };
+
+  // Role-based default permissions
+  switch (role?.toLowerCase()) {
+    case "admin":
+      // Admin has full permissions
+      return Object.keys(basePermissions).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {});
+
+    case "manager":
+      // Manager has some permissions
+      return {
+        ...basePermissions,
+        canViewJobPosts: true,
+        canCreateJobPosts: true,
+        canViewCandidates: true,
+        canViewInterviewResults: true,
+        canContactCandidates: true,
+        canViewCampaigns: true,
+        canViewDepartments: true,
+        canViewCompanyProfile: true,
+      };
+
+    case "recruiter":
+      // Recruiter has limited permissions focused on recruitment
+      return {
+        ...basePermissions,
+        canViewJobPosts: true,
+        canCreateJobPosts: true,
+        canViewCandidates: true,
+        canContactCandidates: true,
+        canAccessMatching: true,
+        canViewCampaigns: true,
+      };
+
+    case "hr":
+    case "human resources":
+      // HR has permissions for team and candidates
+      return {
+        ...basePermissions,
+        canViewCandidates: true,
+        canViewInterviewResults: true,
+        canContactCandidates: true,
+        canManageTeam: true,
+        canViewDepartments: true,
+        canViewCompanyProfile: true,
+      };
+
+    case "employee":
+    case "staff":
+      // Employee has minimal read permissions
+      return {
+        ...basePermissions,
+        canViewJobPosts: true,
+        canViewCampaigns: true,
+      };
+
+    default:
+      // Default: minimal permissions for unknown roles
+      return basePermissions;
+  }
 };
 
 /**

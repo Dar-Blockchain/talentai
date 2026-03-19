@@ -13,6 +13,10 @@ const employeePermissionsSchema = new mongoose.Schema(
       ref: "Profile",
       required: true,
     },
+    membershipId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CompanyMembership",
+    },
 
     // Job Posts
     canViewJobPosts: {
@@ -160,6 +164,7 @@ const employeePermissionsSchema = new mongoose.Schema(
 // Create index for userId and profileId for faster queries
 employeePermissionsSchema.index({ userId: 1 });
 employeePermissionsSchema.index({ profileId: 1 });
+employeePermissionsSchema.index({ membershipId: 1 });
 employeePermissionsSchema.index({ userId: 1, profileId: 1 }, { unique: true });
 
 // Update the updatedAt timestamp before saving
