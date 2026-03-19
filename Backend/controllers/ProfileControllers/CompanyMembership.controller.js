@@ -171,3 +171,17 @@ module.exports.getMembershipStats = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+// Get membership by userId
+module.exports.getMembershipByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const membership = await CompanyMembershipService.getMembershipByUserId(userId);
+    const flattenedMembership = flattenMembership(membership);
+
+    res.json({ success: true, membership: flattenedMembership });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+};

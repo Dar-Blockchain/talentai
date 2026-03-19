@@ -252,3 +252,22 @@ module.exports.getMembershipStatsByCompany = async (companyId) => {
 
   return { total };
 };
+
+// Get membership by userId
+module.exports.getMembershipByUserId = async (userId) => {
+  const membership = await CompanyMembershipModel.findOne({ user: userId })
+    .populate({
+      path: "user",
+      select: "username email profile",
+      populate: { path: "profile", select: "firstName lastName" },
+    })
+    .populate("department", "name")
+    .populate("company", "name")
+    .populate("invitedBy", "username email");
+
+  if (!membership) {
+    throw new Error("User has no company membership");
+  }
+
+  return membership;
+};

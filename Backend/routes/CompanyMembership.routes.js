@@ -20,6 +20,9 @@ router.get(
 // Get all memberships for a company owned by the user
 router.get("/memberships", resolveCompanyActor, CompanyMembershipController.getMembershipsByCompany);
 
+// Get membership by userId
+router.get("/user/:userId", CompanyMembershipController.getMembershipByUserId);
+
 // Delete a membership
 router.delete("/:membershipId", resolveCompanyActor, CompanyMembershipController.deleteMembership);
 // Update membership (role and/or department)
