@@ -1,89 +1,69 @@
 const express = require("express");
 const router = express.Router();
 const employeePermissionsController = require("../controllers/employeePermissions.controller");
+const { requireAuthUser } = require("../middleware/auth.middleware");
 
 /**
  * @route   POST /api/employee-permissions
  * @desc    Create new employee permissions
  * @access  Private/Admin
  */
-router.post("/", employeePermissionsController.createPermissions);
+router.post("/", requireAuthUser, employeePermissionsController.createPermissions);
 
 /**
  * @route   GET /api/employee-permissions/available
  * @desc    Get all available permissions
  * @access  Private
  */
-router.get("/available", employeePermissionsController.getAvailablePermissions);
+router.get("/available", requireAuthUser, employeePermissionsController.getAvailablePermissions);
 
 /**
- * @route   GET /api/employee-permissions/:userId/:profileId
- * @desc    Get permissions for a user and profile
+ * @route   GET /api/employee-permissions
+ * @desc    Get permissions for current user
  * @access  Private
  */
-router.get("/:userId/:profileId", employeePermissionsController.getPermissions);
+router.get("/", requireAuthUser, employeePermissionsController.getPermissions);
 
 /**
- * @route   GET /api/employee-permissions/:userId/:profileId/summary
- * @desc    Get permission summary for user
+ * @route   GET /api/employee-permissions/summary
+ * @desc    Get permission summary for current user
  * @access  Private
  */
-router.get("/:userId/:profileId/summary", employeePermissionsController.getPermissionSummary);
+router.get("/summary", requireAuthUser, employeePermissionsController.getPermissionSummary);
 
 /**
- * @route   GET /api/employee-permissions/:userId/:profileId/check/:permissionKey
- * @desc    Check if user has a specific permission
+ * @route   GET /api/employee-permissions/check/:permissionKey
+ * @desc    Check if current user has a specific permission
  * @access  Private
  */
-router.get("/:userId/:profileId/check/:permissionKey", employeePermissionsController.checkPermission);
+router.get("/check/:permissionKey", requireAuthUser, employeePermissionsController.checkPermission);
 
 /**
- * @route   GET /api/employee-permissions/profile/:profileId
- * @desc    Get all permissions by profile
+ * @route   PUT /api/employee-permissions
+ * @desc    Update current user's permissions
  * @access  Private/Admin
  */
-router.get("/profile/:profileId", employeePermissionsController.getPermissionsByProfile);
+router.put("/", requireAuthUser, employeePermissionsController.updatePermissions);
 
 /**
- * @route   GET /api/employee-permissions/user/:userId
- * @desc    Get all permissions by user
+ * @route   POST /api/employee-permissions/grant
+ * @desc    Grant permissions to current user
  * @access  Private/Admin
  */
-router.get("/user/:userId", employeePermissionsController.getPermissionsByUser);
+router.post("/grant", requireAuthUser, employeePermissionsController.grantPermissions);
 
 /**
- * @route   PUT /api/employee-permissions/:userId/:profileId
- * @desc    Update permissions
+ * @route   POST /api/employee-permissions/revoke
+ * @desc    Revoke permissions from current user
  * @access  Private/Admin
  */
-router.put("/:userId/:profileId", employeePermissionsController.updatePermissions);
+router.post("/revoke", requireAuthUser, employeePermissionsController.revokePermissions);
 
 /**
- * @route   POST /api/employee-permissions/:userId/:profileId/grant
- * @desc    Grant permissions to user
+ * @route   DELETE /api/employee-permissions
+ * @desc    Delete current user's permissions
  * @access  Private/Admin
  */
-router.post("/:userId/:profileId/grant", employeePermissionsController.grantPermissions);
-
-/**
- * @route   POST /api/employee-permissions/:userId/:profileId/revoke
- * @desc    Revoke permissions from user
- * @access  Private/Admin
- */
-router.post("/:userId/:profileId/revoke", employeePermissionsController.revokePermissions);
-
-/**
- * @route   POST /api/employee-permissions/clone
- * @desc    Clone permissions from one user to another
- * @access  Private/Admin
- */
-router.post("/clone", employeePermissionsController.clonePermissions);
-
-/**
- * @route   DELETE /api/employee-permissions/:userId/:profileId
- * @desc    Delete permissions
- * @access  Private/Admin
- */
-router.delete("/:userId/:profileId", employeePermissionsController.deletePermissions);
+router.delete("/", requireAuthUser, employeePermissionsController.deletePermissions);
 
 module.exports = router;
