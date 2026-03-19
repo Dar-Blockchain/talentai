@@ -46,6 +46,7 @@ const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
 const interviewApplicantRouter = require('../routes/interviewApplicant.routes');
 const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
+const employeePermissionsRouter = require('../routes/employeePermissions.routes');
 
 // const backupRouter = require('../routes/backupRouter');
 
@@ -67,6 +68,7 @@ function registerRoutes(app) {
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
   app.use("/permissions", permissionsRouter); //✅ (general permissions management) -> permissions (to be checked)
+  app.use("/employee-permissions", employeePermissionsRouter); //✅ Employee Permissions Management
   app.use("/dashboard", dashboardRouter); //✅ dashboard
   app.use("/profiles", profileRouter); //✅ profile management
 
