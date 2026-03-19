@@ -11,11 +11,11 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 router.get("/available", requireAuthUser, employeePermissionsController.getAvailablePermissions);
 
 /**
- * @route   GET /api/employee-permissions
- * @desc    Get permissions for current user
+ * @route   GET /api/employee-permissions/:userId
+ * @desc    Get permissions for a user
  * @access  Private
  */
-router.get("/", requireAuthUser, employeePermissionsController.getPermissions);
+router.get("/:userId", requireAuthUser, employeePermissionsController.getPermissions);
 
 /**
  * @route   GET /api/employee-permissions/summary

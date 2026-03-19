@@ -66,14 +66,14 @@ exports.createPermissions = async (req, res) => {
 };
 
 /**
- * Get permissions for current user
- * GET /api/employee-permissions
+ * Get permissions for a user
+ * GET /api/employee-permissions/:userId
  */
 exports.getPermissions = async (req, res) => {
   if (!checkAuthentication(req, res)) return;
   
   try {
-    const userId = req.user._id;
+    const userId = req.params.userId;
 
     const permissions = await employeePermissionsService.getPermissions(
       userId
