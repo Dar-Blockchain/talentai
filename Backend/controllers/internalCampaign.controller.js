@@ -1,6 +1,7 @@
 require("dotenv").config();
 const InternalCampaign = require("../models/internalCampaign.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
+const User = require("../models/User.model");
 const {
   createCampaign,
   getCampaignById,
@@ -87,15 +88,24 @@ exports.createInternalCampaign = async (req, res) => {
 
     // Create campaign participants if provided
     if (Array.isArray(participants) && participants.length > 0) {
-      const campaignParticipantData = participants.map((employeeId) => ({
-        campaign: campaign._id,
-        employee: employeeId,
-        status: "NOT_STARTED",
-      }));
-
       try {
+        // Fetch all users to get their emails
+        const users = await User.find({ _id: { $in: participants } }).select("_id email");
+        const userEmailMap = users.reduce((acc, user) => {
+          acc[user._id.toString()] = user.email;
+          return acc;
+        }, {});
+
+        // Create campaign participant data with emails
+        const campaignParticipantData = participants.map((employeeId) => ({
+          campaign: campaign._id,
+          employee: employeeId,
+          email: userEmailMap[employeeId.toString()] || null, // Add email from user
+          status: "NOT_STARTED",
+        }));
+
         await CampaignParticipant.insertMany(campaignParticipantData);
-        console.log(`✅ Created ${participants.length} campaign participants`);
+        console.log(`✅ Created ${participants.length} campaign participants with emails`);
       } catch (participantError) {
         console.warn(`⚠️ Warning: Failed to create some participants: ${participantError.message}`);
         // Don't throw - campaign was created successfully, continue
