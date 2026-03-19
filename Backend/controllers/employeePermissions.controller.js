@@ -37,35 +37,6 @@ const getMembershipForUser = async (userId) => {
 };
 
 /**
- * Create new employee permissions
- * POST /api/employee-permissions
- */
-exports.createPermissions = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const userId = req.user._id;
-    const { ...permissionsData } = req.body;
-
-    const membership = await getMembershipForUser(userId);
-
-    const permissions = await employeePermissionsService.createPermissions(
-      userId,
-      membership._id,
-      permissionsData
-    );
-
-    res.status(201).json({
-      success: true,
-      message: "Permissions created successfully",
-      data: permissions,
-    });
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
-/**
  * Get permissions for a user
  * GET /api/employee-permissions/:userId
  */
@@ -87,38 +58,6 @@ exports.getPermissions = async (req, res) => {
     handleError(res, error, 404);
   }
 };
-
-/**
- * Get all permissions by company
- * GET /api/employee-permissions/company/:companyId
- */
-exports.getPermissionsByCompany = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const { companyId } = req.params;
-
-    if (!companyId) {
-      return res.status(400).json({
-        success: false,
-        error: "companyId is required",
-      });
-    }
-
-    const permissions =
-      await employeePermissionsService.getPermissionsByCompany(companyId);
-
-    res.status(200).json({
-      success: true,
-      count: permissions.length,
-      data: permissions,
-    });
-  } catch (error) {
-    handleError(res, error, 500);
-  }
-};
-
-
 
 /**
  * Update user's permissions
@@ -149,134 +88,6 @@ exports.updatePermissions = async (req, res) => {
 };
 
 /**
- * Delete current user's permissions
- * DELETE /api/employee-permissions
- */
-exports.deletePermissions = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const userId = req.user._id;
-
-    const result = await employeePermissionsService.deletePermissions(
-      userId
-    );
-
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    handleError(res, error, 404);
-  }
-};
-
-/**
- * Check if current user has a specific permission
- * GET /api/employee-permissions/check/:permissionKey
- */
-exports.checkPermission = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const userId = req.user._id;
-    const { permissionKey } = req.params;
-
-    if (!permissionKey) {
-      return res.status(400).json({
-        success: false,
-        error: "permissionKey is required",
-      });
-    }
-
-    const hasPermission = await employeePermissionsService.hasPermission(
-      userId,
-      permissionKey
-    );
-
-    res.status(200).json({
-      success: true,
-      permission: permissionKey,
-      granted: hasPermission,
-    });
-  } catch (error) {
-    handleError(res, error, 500);
-  }
-};
-
-/**
- * Grant permissions to current user
- * POST /api/employee-permissions/grant
- */
-exports.grantPermissions = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const userId = req.user._id;
-    const { permissionsToGrant } = req.body;
-
-    if (!Array.isArray(permissionsToGrant) || permissionsToGrant.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "permissionsToGrant must be an array with at least one permission",
-      });
-    }
-
-    const modifiedBy = req.user._id;
-
-    const permissions = await employeePermissionsService.grantPermissions(
-      userId,
-      permissionsToGrant,
-      modifiedBy
-    );
-
-    res.status(200).json({
-      success: true,
-      message: `${permissionsToGrant.length} permission(s) granted successfully`,
-      data: permissions,
-    });
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
-/**
- * Revoke permissions from current user
- * POST /api/employee-permissions/revoke
- */
-exports.revokePermissions = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const userId = req.user._id;
-    const { permissionsToRevoke } = req.body;
-
-    if (!Array.isArray(permissionsToRevoke) || permissionsToRevoke.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "permissionsToRevoke must be an array with at least one permission",
-      });
-    }
-
-    const modifiedBy = req.user._id;
-
-    const permissions = await employeePermissionsService.revokePermissions(
-      userId,
-      permissionsToRevoke,
-      modifiedBy
-    );
-
-    res.status(200).json({
-      success: true,
-      message: `${permissionsToRevoke.length} permission(s) revoked successfully`,
-      data: permissions,
-    });
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
-
-/**
  * Get all available permissions
  * GET /api/employee-permissions/available
  */
@@ -294,47 +105,4 @@ exports.getAvailablePermissions = async (req, res) => {
   }
 };
 
-/**
- * Clone permissions from one user to another
- * POST /api/employee-permissions/clone
- */
-exports.clonePermissions = async (req, res) => {
-  if (!checkAuthentication(req, res)) return;
-  
-  try {
-    const {
-      sourceUserId,
-      targetUserId,
-      targetMembershipId,
-    } = req.body;
 
-    if (
-      !sourceUserId ||
-      !targetUserId ||
-      !targetMembershipId
-    ) {
-      return res.status(400).json({
-        success: false,
-        error:
-          "sourceUserId, targetUserId, and targetMembershipId are required",
-      });
-    }
-
-    const modifiedBy = req.user._id;
-
-    const permissions = await employeePermissionsService.clonePermissions(
-      sourceUserId,
-      targetUserId,
-      targetMembershipId,
-      modifiedBy
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Permissions cloned successfully",
-      data: permissions,
-    });
-  } catch (error) {
-    handleError(res, error, 400);
-  }
-};
