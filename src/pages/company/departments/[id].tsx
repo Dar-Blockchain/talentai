@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Typography } from "@mui/material";
@@ -11,7 +11,6 @@ import DeleteDepartmentDialog from "@/components/features/company/departments/de
 import { AppDispatch } from "@/store/store";
 import {
   fetchDepartmentById,
-  fetchDepartmentMembers,
   updateDepartment,
   deleteDepartment,
   clearUpdateStatus,
@@ -19,10 +18,6 @@ import {
   selectCurrentDepartment,
   selectCurrentDepartmentLoading,
   selectCurrentDepartmentError,
-  selectDepartmentMembers,
-  selectDepartmentMembersTotal,
-  selectDepartmentMembersLoading,
-  selectDepartmentMembersError,
   selectDepartmentUpdating,
   selectDepartmentUpdateSuccess,
   selectDepartmentUpdateError,
@@ -30,57 +25,30 @@ import {
   selectDepartmentDeleteSuccess,
   selectDepartmentDeleteError,
 } from "@/store/slices/departmentSlice";
-
-const PAGE_SIZE = 9;
+import { selectMembers } from "@/store/slices/memberSlice";
 
 const DepartmentDetailPage: React.FC = () => {
   const router   = useRouter();
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
 
-  const department     = useSelector(selectCurrentDepartment);
-  const loadingDept    = useSelector(selectCurrentDepartmentLoading);
-  const deptError      = useSelector(selectCurrentDepartmentError);
-  const members        = useSelector(selectDepartmentMembers);
-  const membersTotal   = useSelector(selectDepartmentMembersTotal);
-  const loadingMembers = useSelector(selectDepartmentMembersLoading);
-  const membersError   = useSelector(selectDepartmentMembersError);
-  const updating       = useSelector(selectDepartmentUpdating);
-  const updateSuccess  = useSelector(selectDepartmentUpdateSuccess);
-  const updateError    = useSelector(selectDepartmentUpdateError);
-  const deleting       = useSelector(selectDepartmentDeleting);
-  const deleteSuccess  = useSelector(selectDepartmentDeleteSuccess);
-  const deleteError    = useSelector(selectDepartmentDeleteError);
+  const department    = useSelector(selectCurrentDepartment);
+  const loadingDept   = useSelector(selectCurrentDepartmentLoading);
+  const deptError     = useSelector(selectCurrentDepartmentError);
+  const { pageTotal } = useSelector(selectMembers);
+  const updating      = useSelector(selectDepartmentUpdating);
+  const updateSuccess = useSelector(selectDepartmentUpdateSuccess);
+  const updateError   = useSelector(selectDepartmentUpdateError);
+  const deleting      = useSelector(selectDepartmentDeleting);
+  const deleteSuccess = useSelector(selectDepartmentDeleteSuccess);
+  const deleteError   = useSelector(selectDepartmentDeleteError);
 
-  const [editOpen,        setEditOpen]        = useState(false);
-  const [deleteOpen,      setDeleteOpen]      = useState(false);
-  const [search,          setSearch]          = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page,            setPage]            = useState(1);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [editOpen,   setEditOpen]   = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (id && typeof id === "string") dispatch(fetchDepartmentById(id));
   }, [dispatch, id]);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(value);
-      setPage(1);
-    }, 300);
-  };
-
-  useEffect(() => {
-    if (!id || typeof id !== "string") return;
-    dispatch(fetchDepartmentMembers({
-      departmentId: id,
-      search: debouncedSearch || undefined,
-      page,
-      limit: PAGE_SIZE,
-    }));
-  }, [dispatch, id, debouncedSearch, page]);
 
   useEffect(() => {
     if (updateSuccess) { setEditOpen(false); dispatch(clearUpdateStatus()); }
@@ -120,22 +88,15 @@ const DepartmentDetailPage: React.FC = () => {
         <DepartmentDetailHeader
           department={department}
           loading={loadingDept}
-          membersTotal={membersTotal}
-          loadingMembers={loadingMembers}
+          membersTotal={pageTotal}
+          loadingMembers={false}
           onEdit={() => setEditOpen(true)}
           onDelete={() => setDeleteOpen(true)}
         />
 
-        <DepartmentMembersSection
-          members={members}
-          total={membersTotal}
-          loading={loadingMembers}
-          error={membersError}
-          search={search}
-          onSearchChange={handleSearchChange}
-          page={page}
-          onPageChange={setPage}
-        />
+        {id && typeof id === "string" && (
+          <DepartmentMembersSection departmentId={id} />
+        )}
       </Box>
 
       {department && (
