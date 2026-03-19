@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import axiosInstance from "@/utils/axiosInstance";
+import { EmployeePermission } from "@/types/employeePermissions";
 
 // Type definitions based on your API response
 export type MemberRole = "RH" | "TechLead" | "Supervisor" | "Manager" | "Owner";
@@ -8,6 +9,7 @@ export type MemberStatus = "active" | "pending" | "inactive";
 
 export interface Member {
   _id: string;
+  userId: string;
   company: string;
   username: string;
   email: string;
@@ -109,6 +111,13 @@ interface MemberState {
   invitationResponse: { success: boolean; action: 'accept' | 'reject' } | null;
   stats: MemberStats | null;
   fetchingStats: boolean;
+  currentMember: Member | null;
+  fetchingMember: boolean;
+  fetchMemberError: string | null;
+  employeePermissions: EmployeePermission | null;
+  fetchingPermissions: boolean;
+  updatingPermissions: boolean;
+  permissionsError: string | null;
 }
 
 const initialState: MemberState = {
@@ -133,6 +142,13 @@ const initialState: MemberState = {
   invitationResponse: null,
   stats: null,
   fetchingStats: false,
+  currentMember: null,
+  fetchingMember: false,
+  fetchMemberError: null,
+  employeePermissions: null,
+  fetchingPermissions: false,
+  updatingPermissions: false,
+  permissionsError: null,
 };
 
 // Add a new member (employee)
@@ -219,6 +235,20 @@ export const deleteMember = createAsyncThunk<
 
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while deleting member");
+  }
+});
+
+// Fetch a single member by user ID
+export const fetchMemberById = createAsyncThunk<
+  Member,
+  string,
+  { rejectValue: string }
+>("member/fetchMemberById", async (userId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`CompanyMembership/user/${userId}`);
+    return response.data.membership || response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch member");
   }
 });
 
@@ -399,6 +429,34 @@ export const fetchInvitationDetails = createAsyncThunk<
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitation details");
+  }
+});
+
+// Fetch employee permissions
+export const fetchEmployeePermissions = createAsyncThunk<
+  EmployeePermission,
+  string,
+  { rejectValue: string }
+>("member/fetchEmployeePermissions", async (memberId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`employee-permissions/${memberId}`);
+    return response.data.data || response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch permissions");
+  }
+});
+
+// Update employee permissions
+export const updateEmployeePermissions = createAsyncThunk<
+  EmployeePermission,
+  { memberId: string; permissions: Partial<EmployeePermission> },
+  { rejectValue: string }
+>("member/updateEmployeePermissions", async ({ memberId, permissions }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.put(`employee-permissions/${memberId}`, permissions);
+    return response.data.data || response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to update permissions");
   }
 });
 
@@ -657,7 +715,47 @@ const memberSlice = createSlice({
           state.fetchingInvitationDetails = false;
           state.error = action.payload || "An error occurred";
         }
-      );
+      )
+      // Handle fetchMemberById
+      .addCase(fetchMemberById.pending, (state: MemberState) => {
+        state.fetchingMember = true;
+        state.fetchMemberError = null;
+        state.currentMember = null;
+      })
+      .addCase(fetchMemberById.fulfilled, (state: MemberState, action: PayloadAction<Member>) => {
+        state.fetchingMember = false;
+        state.currentMember = action.payload;
+      })
+      .addCase(fetchMemberById.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.fetchingMember = false;
+        state.fetchMemberError = action.payload || "An error occurred";
+      })
+      // Handle fetchEmployeePermissions
+      .addCase(fetchEmployeePermissions.pending, (state: MemberState) => {
+        state.fetchingPermissions = true;
+        state.permissionsError = null;
+      })
+      .addCase(fetchEmployeePermissions.fulfilled, (state: MemberState, action: PayloadAction<EmployeePermission>) => {
+        state.fetchingPermissions = false;
+        state.employeePermissions = action.payload;
+      })
+      .addCase(fetchEmployeePermissions.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.fetchingPermissions = false;
+        state.permissionsError = action.payload || "An error occurred";
+      })
+      // Handle updateEmployeePermissions
+      .addCase(updateEmployeePermissions.pending, (state: MemberState) => {
+        state.updatingPermissions = true;
+        state.permissionsError = null;
+      })
+      .addCase(updateEmployeePermissions.fulfilled, (state: MemberState, action: PayloadAction<EmployeePermission>) => {
+        state.updatingPermissions = false;
+        state.employeePermissions = action.payload;
+      })
+      .addCase(updateEmployeePermissions.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.updatingPermissions = false;
+        state.permissionsError = action.payload || "An error occurred";
+      });
   },
 });
 
@@ -686,5 +784,14 @@ export const selectMembers = (state: RootState) => ({
   stats: state.member.stats,
   fetchingStats: state.member.fetchingStats,
 });
+
+export const selectCurrentMember       = (state: RootState) => state.member.currentMember;
+export const selectFetchingMember      = (state: RootState) => state.member.fetchingMember;
+export const selectFetchMemberError    = (state: RootState) => state.member.fetchMemberError;
+
+export const selectEmployeePermissions      = (state: RootState) => state.member.employeePermissions;
+export const selectFetchingPermissions      = (state: RootState) => state.member.fetchingPermissions;
+export const selectUpdatingPermissions      = (state: RootState) => state.member.updatingPermissions;
+export const selectPermissionsError         = (state: RootState) => state.member.permissionsError;
 
 export default memberSlice.reducer;

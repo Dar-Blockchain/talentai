@@ -1,4 +1,6 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/store/store";
 import { Box, Typography, Avatar, Button, CircularProgress, Chip } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
@@ -16,7 +18,14 @@ import WorkHistoryOutlined from "@mui/icons-material/WorkHistoryOutlined";
 import TuneOutlined from "@mui/icons-material/TuneOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import { Member } from "@/store/slices/memberSlice";
+import {
+  Member,
+  fetchEmployeePermissions,
+  updateEmployeePermissions,
+  selectEmployeePermissions,
+  selectFetchingPermissions,
+  selectUpdatingPermissions,
+} from "@/store/slices/memberSlice";
 import { ROLES } from "@/constants/employee";
 import { EmployeePermission, DEFAULT_EMPLOYEE_PERMISSIONS } from "@/types/employeePermissions";
 import PermissionsPanel from "../permissions/PermissionsPanel";
@@ -146,12 +155,30 @@ interface EmployeeDetailProps {
 
 /* ── Component ────────────────────────────────────────── */
 const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const storedPermissions  = useSelector(selectEmployeePermissions);
+  const fetchingPerms      = useSelector(selectFetchingPermissions);
+  const updatingPerms      = useSelector(selectUpdatingPermissions);
+
+  const userId = member.userId;
+
   const [tab, setTab]               = useState<"overview" | "permissions">("overview");
-  const [permissions, setPermissions] = useState<Partial<EmployeePermission>>(
-    (member as any).permissions ?? DEFAULT_EMPLOYEE_PERMISSIONS,
-  );
-  const [saving,  setSaving]  = useState(false);
+  const [permissions, setPermissions] = useState<Partial<EmployeePermission>>(DEFAULT_EMPLOYEE_PERMISSIONS);
   const [saved,   setSaved]   = useState(false);
+
+  // Fetch permissions when tab is first opened
+  useEffect(() => {
+    if (tab === "permissions") {
+      dispatch(fetchEmployeePermissions(userId));
+    }
+  }, [tab, userId, dispatch]);
+
+  // Sync local state when permissions arrive from API
+  useEffect(() => {
+    if (storedPermissions) {
+      setPermissions(storedPermissions);
+    }
+  }, [storedPermissions]);
 
   const name    = (member.firstName && member.lastName)
     ? `${member.firstName} ${member.lastName}`
@@ -168,16 +195,12 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
   const dept       = (member as any).department?.name ?? (member as any).departmentName ?? null;
 
   const handleSavePermissions = useCallback(async () => {
-    setSaving(true);
-    try {
-      // TODO: dispatch updatePermissions({ memberId: member._id, permissions })
-      await new Promise((r) => setTimeout(r, 800)); // placeholder
+    const result = await dispatch(updateEmployeePermissions({ memberId: userId, permissions }));
+    if (updateEmployeePermissions.fulfilled.match(result)) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } finally {
-      setSaving(false);
     }
-  }, [permissions, member._id]);
+  }, [dispatch, permissions, userId]);
 
   return (
     <Box>
@@ -425,11 +448,11 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
 
               <Button
                 onClick={handleSavePermissions}
-                disabled={saving}
+                disabled={updatingPerms || fetchingPerms}
                 variant="contained"
                 startIcon={
-                  saving ? <CircularProgress size={14} sx={{ color: "#fff" }} />
-                  : saved  ? <CheckOutlined sx={{ fontSize: 16 }} />
+                  updatingPerms ? <CircularProgress size={14} sx={{ color: "#fff" }} />
+                  : saved        ? <CheckOutlined sx={{ fontSize: 16 }} />
                   : undefined
                 }
                 sx={{
@@ -444,15 +467,21 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
                   minWidth: 140,
                 }}
               >
-                {saving ? "Saving…" : saved ? "Saved!" : "Save Permissions"}
+                {updatingPerms ? "Saving…" : saved ? "Saved!" : "Save Permissions"}
               </Button>
             </Box>
 
-            <PermissionsPanel
-              value={permissions}
-              onChange={setPermissions}
-              disabled={saving}
-            />
+            {fetchingPerms ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                <CircularProgress size={32} sx={{ color: PURPLE }} />
+              </Box>
+            ) : (
+              <PermissionsPanel
+                value={permissions}
+                onChange={setPermissions}
+                disabled={updatingPerms}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

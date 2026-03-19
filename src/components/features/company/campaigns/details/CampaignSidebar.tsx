@@ -1,26 +1,38 @@
 import React, { useState, useCallback } from "react";
-import { Box, Button, Divider, Tooltip, Typography } from "@mui/material";
-import { ContentCopyOutlined, LinkOutlined } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
+import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import LinkOutlined from "@mui/icons-material/LinkOutlined";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
+import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import UpdateOutlined from "@mui/icons-material/UpdateOutlined";
+import SecurityOutlined from "@mui/icons-material/SecurityOutlined";
+import GroupOutlined from "@mui/icons-material/GroupOutlined";
 import { Campaign } from "@/types/campaign";
-import { STATUS_COLORS, TYPE_LABELS } from "@/constants/campaign";
+import { STATUS_COLORS, TYPE_LABELS, MODULE_CONFIG } from "@/constants/campaign";
 import { fmtDate } from "@/utils/functions";
 
-const CARD = { bgcolor: "#fff", borderRadius: 3, border: "1px solid #E5E7EB", p: 2.5 } as const;
+const TEAL  = "#0D9488";
+const CARD  = {
+  bgcolor: "#fff",
+  border: "1px solid #EDEEF0",
+  borderRadius: "18px",
+  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+} as const;
 
 interface Props {
   campaign: Campaign;
 }
 
 const CampaignSidebar: React.FC<Props> = ({ campaign }) => {
-  const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const showLink =
-    campaign.linkToken &&
+    !!campaign.linkToken &&
     (campaign.accessMethod === "LINK" || campaign.accessMethod === "BOTH");
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       {showLink && <CampaignLinkCard linkToken={campaign.linkToken!} />}
-      <CampaignOverviewCard campaign={campaign} statusColor={sc.fg} />
+      <CampaignInfoCard campaign={campaign} />
     </Box>
   );
 };
@@ -29,127 +41,178 @@ const CampaignSidebar: React.FC<Props> = ({ campaign }) => {
 
 const CampaignLinkCard: React.FC<{ linkToken: string }> = ({ linkToken }) => {
   const [copied, setCopied] = useState(false);
+  const url = typeof window !== "undefined"
+    ? `${window.location.origin}/campaign/${linkToken}`
+    : `/campaign/${linkToken}`;
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(`${window.location.origin}/campaign/${linkToken}`);
+    navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [linkToken]);
+  }, [url]);
 
   return (
-    <Box sx={CARD}>
-      <Typography sx={{ fontWeight: 700, fontSize: "13px", color: "#111827", mb: 1.5 }}>
-        Campaign Link
-      </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 0.5,
-          bgcolor: "#F9FAFB",
-          border: "1px solid #E5E7EB",
-          borderRadius: 2,
-          pl: 1.5,
-          pr: 0.75,
-          py: 0.75,
-        }}
-      >
-        <LinkOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />
-        <Typography
-          sx={{
-            fontSize: "11px",
-            color: "#6B7280",
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {`/campaign/${linkToken}`}
+    <Box sx={{
+      ...CARD, p: 0, overflow: "hidden",
+      background: `linear-gradient(135deg, ${TEAL}06 0%, transparent 60%)`,
+    }}>
+      {/* Header */}
+      <Box sx={{ px: 2.25, pt: 2, pb: 1.5, borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: `${TEAL}10`, border: `1px solid ${TEAL}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <LinkOutlined sx={{ fontSize: 14, color: TEAL }} />
+        </Box>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "#0F172A" }}>
+          Campaign Link
         </Typography>
-        <Tooltip title={copied ? "Copied!" : "Copy link"}>
-          <Button
-            size="small"
+      </Box>
+
+      <Box sx={{ p: 2.25 }}>
+        {/* URL display */}
+        <Box sx={{
+          bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px",
+          px: 1.5, py: 1, mb: 1.25,
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
+          <Typography sx={{ fontSize: "11px", color: "#64748B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {url}
+          </Typography>
+        </Box>
+
+        {/* Action buttons */}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Box
             onClick={handleCopy}
-            startIcon={<ContentCopyOutlined sx={{ fontSize: "12px !important" }} />}
             sx={{
-              minWidth: 0,
-              fontSize: "11px",
-              fontWeight: 600,
-              color: copied ? "#16A34A" : "#0D9488",
-              bgcolor: copied ? "#F0FDF4" : "#F0FDFA",
-              borderRadius: 1.5,
-              px: 1.25,
-              py: 0.4,
-              textTransform: "none",
-              flexShrink: 0,
-              "&:hover": { bgcolor: copied ? "#DCFCE7" : "#CCFBF1" },
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.625,
+              py: 0.875, borderRadius: "9px", cursor: "pointer",
+              bgcolor: copied ? "#F0FDF4" : `${TEAL}10`,
+              border: `1px solid ${copied ? "#86EFAC" : `${TEAL}25`}`,
+              transition: "all 0.15s", "&:hover": { opacity: 0.85 },
             }}
           >
-            {copied ? "Copied" : "Copy"}
-          </Button>
-        </Tooltip>
+            {copied
+              ? <CheckOutlined sx={{ fontSize: 13, color: "#16A34A" }} />
+              : <ContentCopyOutlined sx={{ fontSize: 13, color: TEAL }} />}
+            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: copied ? "#16A34A" : TEAL }}>
+              {copied ? "Copied!" : "Copy"}
+            </Typography>
+          </Box>
+          <Box
+            component="a"
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 0.625,
+              px: 1.5, py: 0.875, borderRadius: "9px", cursor: "pointer", textDecoration: "none",
+              bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
+              transition: "all 0.15s", "&:hover": { bgcolor: "#F1F5F9", borderColor: "#CBD5E1" },
+            }}
+          >
+            <OpenInNewOutlined sx={{ fontSize: 13, color: "#64748B" }} />
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#475569" }}>Open</Typography>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
 };
 
-// ─── Overview card ────────────────────────────────────────────────────────────
+// ─── Info card ────────────────────────────────────────────────────────────────
 
-const CampaignOverviewCard: React.FC<{ campaign: Campaign; statusColor: string }> = ({
-  campaign,
-  statusColor,
-}) => (
-  <Box sx={CARD}>
-    <Typography sx={{ fontWeight: 700, fontSize: "13px", color: "#111827", mb: 1.5 }}>
-      Overview
-    </Typography>
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <SidebarRow label="Status" value={campaign.status} color={statusColor} dot={statusColor} />
-      <Divider sx={{ my: 1.25 }} />
-      <SidebarRow label="Type" value={TYPE_LABELS[campaign.type]} />
-      <Divider sx={{ my: 1.25 }} />
-      <SidebarRow
-        label="Module"
-        value={`${campaign.module.type}`}
-      />
-      {campaign.targetDepartment && (
-        <>
-          <Divider sx={{ my: 1.25 }} />
-          <SidebarRow label="Department" value={campaign.targetDepartment} />
-        </>
-      )}
-      {campaign.deadline && (
-        <>
-          <Divider sx={{ my: 1.25 }} />
-          <SidebarRow label="Deadline" value={fmtDate(campaign.deadline)} />
-        </>
-      )}
-      <Divider sx={{ my: 1.25 }} />
-      <SidebarRow label="Created" value={fmtDate(campaign.createdAt)} />
-      <Divider sx={{ my: 1.25 }} />
-      <SidebarRow label="Updated" value={fmtDate(campaign.updatedAt)} />
-    </Box>
-  </Box>
-);
-
-// ─── SidebarRow ───────────────────────────────────────────────────────────────
-
-const SidebarRow: React.FC<{
+const InfoRow: React.FC<{
+  icon: React.ReactNode;
+  iconColor: string;
   label: string;
-  value: string;
-  color?: string;
-  dot?: string;
-}> = ({ label, value, color, dot }) => (
-  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-    <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>{label}</Typography>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-      {dot && <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: dot, flexShrink: 0 }} />}
-      <Typography sx={{ fontSize: "12px", fontWeight: 600, color: color || "#111827" }}>
+  value: React.ReactNode;
+}> = ({ icon, iconColor, label, value }) => (
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, py: 1.25, borderBottom: "1px solid #F8FAFC", "&:last-child": { borderBottom: "none", pb: 0 } }}>
+    <Box sx={{
+      width: 30, height: 30, borderRadius: "8px", flexShrink: 0,
+      bgcolor: `${iconColor}10`, border: `1px solid ${iconColor}15`,
+      display: "flex", alignItems: "center", justifyContent: "center", color: iconColor,
+    }}>
+      {icon}
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+        {label}
+      </Typography>
+      <Typography component="div" sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A", mt: 0.1 }}>
         {value}
       </Typography>
     </Box>
   </Box>
 );
+
+const CampaignInfoCard: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
+  const sc       = STATUS_COLORS[campaign.status] ?? STATUS_COLORS.DRAFT;
+  const modLabel = MODULE_CONFIG[campaign.module?.type]?.label ?? campaign.module?.type;
+
+  return (
+    <Box sx={{ ...CARD, p: 0, overflow: "hidden" }}>
+      <Box sx={{ px: 2.25, pt: 2, pb: 1.5, borderBottom: "1px solid #F3F4F6" }}>
+        <Typography sx={{ fontWeight: 700, fontSize: "0.8125rem", color: "#0F172A" }}>Quick Info</Typography>
+      </Box>
+      <Box sx={{ px: 2.25, pt: 0.5, pb: 1.75 }}>
+
+        {/* Status */}
+        <InfoRow
+          icon={<Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: sc.fg }} />}
+          iconColor={sc.fg}
+          label="Status"
+          value={
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: 0.2, borderRadius: "999px", bgcolor: sc.bg }}>
+              <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>{campaign.status}</Typography>
+            </Box>
+          }
+        />
+
+        {/* Type */}
+        <InfoRow
+          icon={<GroupOutlined sx={{ fontSize: 14 }} />}
+          iconColor="#6B7280"
+          label="Type"
+          value={TYPE_LABELS[campaign.type]}
+        />
+
+        {/* Module */}
+        <InfoRow
+          icon={<SecurityOutlined sx={{ fontSize: 14 }} />}
+          iconColor="#8310FF"
+          label="Module"
+          value={modLabel}
+        />
+
+        {/* Target department */}
+        {campaign.targetDepartment && (
+          <InfoRow
+            icon={<GroupOutlined sx={{ fontSize: 14 }} />}
+            iconColor="#F59E0B"
+            label="Department"
+            value={campaign.targetDepartment}
+          />
+        )}
+
+        {/* Created */}
+        <InfoRow
+          icon={<CalendarTodayOutlined sx={{ fontSize: 14 }} />}
+          iconColor="#64748B"
+          label="Created"
+          value={fmtDate(campaign.createdAt)}
+        />
+
+        {/* Updated */}
+        <InfoRow
+          icon={<UpdateOutlined sx={{ fontSize: 14 }} />}
+          iconColor="#94A3B8"
+          label="Updated"
+          value={fmtDate(campaign.updatedAt)}
+        />
+
+      </Box>
+    </Box>
+  );
+};
 
 export default CampaignSidebar;

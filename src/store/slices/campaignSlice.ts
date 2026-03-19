@@ -1,6 +1,8 @@
 import {
   Campaign,
   CampaignMetrics,
+  CampaignParticipant,
+  CampaignSession,
   CampaignStatus,
   CreateCampaignPayload,
   CampaignsResponse,
@@ -113,6 +115,32 @@ export const fetchCampaignMetrics = createAsyncThunk<
   }
 });
 
+export const fetchCampaignParticipants = createAsyncThunk<
+  { data: CampaignParticipant[]; total: number },
+  { campaignId: string; search?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>("campaign/fetchParticipants", async ({ campaignId, ...params }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/participants`, { params });
+    return { data: response.data.data as CampaignParticipant[], total: response.data.total ?? response.data.data?.length ?? 0 };
+  } catch (err: any) {
+    return rejectWithValue(err.message);
+  }
+});
+
+export const fetchCampaignSessions = createAsyncThunk<
+  { data: CampaignSession[]; total: number },
+  { campaignId: string; search?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>("campaign/fetchSessions", async ({ campaignId, ...params }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/sessions`, { params });
+    return { data: response.data.data as CampaignSession[], total: response.data.total ?? response.data.data?.length ?? 0 };
+  } catch (err: any) {
+    return rejectWithValue(err.message);
+  }
+});
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 interface CampaignState {
@@ -136,6 +164,16 @@ interface CampaignState {
   page: number;
   limit: number;
   count: number;
+
+  participants: CampaignParticipant[];
+  participantsLoading: boolean;
+  participantsError: string | null;
+  participantsTotal: number;
+
+  sessions: CampaignSession[];
+  sessionsLoading: boolean;
+  sessionsError: string | null;
+  sessionsTotal: number;
 }
 
 const initialState: CampaignState = {
@@ -159,6 +197,16 @@ const initialState: CampaignState = {
   page: 1,
   limit: 6,
   count: 0,
+
+  participants: [],
+  participantsLoading: false,
+  participantsError: null,
+  participantsTotal: 0,
+
+  sessions: [],
+  sessionsLoading: false,
+  sessionsError: null,
+  sessionsTotal: 0,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -304,6 +352,38 @@ const campaignSlice = createSlice({
         state.metricsLoading = false;
         state.metricsError = action.payload || "Failed to load metrics";
       });
+
+    // fetchCampaignParticipants
+    builder
+      .addCase(fetchCampaignParticipants.pending, (state) => {
+        state.participantsLoading = true;
+        state.participantsError = null;
+      })
+      .addCase(fetchCampaignParticipants.fulfilled, (state, action) => {
+        state.participantsLoading = false;
+        state.participants = action.payload.data;
+        state.participantsTotal = action.payload.total;
+      })
+      .addCase(fetchCampaignParticipants.rejected, (state, action) => {
+        state.participantsLoading = false;
+        state.participantsError = action.payload || "Failed to load participants";
+      });
+
+    // fetchCampaignSessions
+    builder
+      .addCase(fetchCampaignSessions.pending, (state) => {
+        state.sessionsLoading = true;
+        state.sessionsError = null;
+      })
+      .addCase(fetchCampaignSessions.fulfilled, (state, action) => {
+        state.sessionsLoading = false;
+        state.sessions = action.payload.data;
+        state.sessionsTotal = action.payload.total;
+      })
+      .addCase(fetchCampaignSessions.rejected, (state, action) => {
+        state.sessionsLoading = false;
+        state.sessionsError = action.payload || "Failed to load sessions";
+      });
   },
 });
 
@@ -349,5 +429,23 @@ export const selectSavingLoading = (state: any) =>
 
 export const selectSaveError = (state: any) =>
   state.campaign.saveError as string | null;
+
+export const selectCampaignParticipants = (state: any) =>
+  state.campaign.participants as CampaignParticipant[];
+export const selectCampaignParticipantsLoading = (state: any) =>
+  state.campaign.participantsLoading as boolean;
+export const selectCampaignParticipantsError = (state: any) =>
+  state.campaign.participantsError as string | null;
+export const selectCampaignParticipantsTotal = (state: any) =>
+  state.campaign.participantsTotal as number;
+
+export const selectCampaignSessions = (state: any) =>
+  state.campaign.sessions as CampaignSession[];
+export const selectCampaignSessionsLoading = (state: any) =>
+  state.campaign.sessionsLoading as boolean;
+export const selectCampaignSessionsError = (state: any) =>
+  state.campaign.sessionsError as string | null;
+export const selectCampaignSessionsTotal = (state: any) =>
+  state.campaign.sessionsTotal as number;
 
 export default campaignSlice.reducer;

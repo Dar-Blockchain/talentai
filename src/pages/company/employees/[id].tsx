@@ -8,9 +8,11 @@ import DeleteMemberDialog from "@/components/features/company/employees/delete/D
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";
 import { AppDispatch } from "@/store/store";
 import {
-  fetchMembers,
+  fetchMemberById,
   updateMemberRole,
   deleteMember,
+  selectCurrentMember,
+  selectFetchingMember,
   selectMembers,
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
@@ -24,18 +26,18 @@ const EmployeeDetailPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
 
-  const { members, loading, updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
+  const member       = useSelector(selectCurrentMember);
+  const loading      = useSelector(selectFetchingMember);
+  const { updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
 
   const [editModalOpen, setEditModalOpen]       = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember]     = useState<Member | null>(null);
 
-  // Load members if not yet loaded
+  // Load member by user ID
   useEffect(() => {
-    if (members.length === 0) dispatch(fetchMembers());
-  }, [dispatch, members.length]);
-
-  const member = members.find((m) => m._id === id) ?? null;
+    if (id) dispatch(fetchMemberById(id as string));
+  }, [dispatch, id]);
 
   // Role update success
   useEffect(() => {
@@ -44,9 +46,9 @@ const EmployeeDetailPage: React.FC = () => {
       setSelectedMember(null);
       dispatch(clearUpdateRoleSuccess());
       showToast({ message: "Member role updated successfully!", severity: "success" });
-      dispatch(fetchMembers());
+      if (id) dispatch(fetchMemberById(id as string));
     }
-  }, [updateRoleSuccess, dispatch, showToast]);
+  }, [updateRoleSuccess, dispatch, showToast, id]);
 
   // Delete success → go back to list
   useEffect(() => {
@@ -84,7 +86,7 @@ const EmployeeDetailPage: React.FC = () => {
 
   return (
       <DashboardLayout>
-        {loading && members.length === 0 ? (
+        {loading && !member ? (
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
             <CircularProgress sx={{ color: "#8310FF" }} />
           </Box>
