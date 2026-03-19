@@ -340,8 +340,8 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({
         ) : (
           members.map((member, i) => {
             const isSelected = selected.includes(member._id);
-            const name = member.user?.username || "Pending";
-            const email = member.user?.email || "";
+            const name = member.username || "Pending";
+            const email = member.email || "";
             const letter = name[0]?.toUpperCase() || "U";
             const roleStyle = ROLE_STYLES[member.role] ?? ROLE_STYLES.Manager;
             const roleLabel = ROLE_LABELS[member.role] ?? member.role;

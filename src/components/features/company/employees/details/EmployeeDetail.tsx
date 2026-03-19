@@ -121,8 +121,8 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
 
-  const name    = member.user?.username || "Unnamed";
-  const email   = member.user?.email    || "—";
+  const name    = member.username || "Unnamed";
+  const email   = member.email   || "—";
   const letter  = name[0]?.toUpperCase() || "U";
   const palette = pickPalette(email || name);
 
@@ -309,7 +309,7 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
               <StatCard icon={<BusinessOutlined sx={{ fontSize: 18 }} />}        iconColor="#8B5CF6"  label="Department"  value={dept ?? "No department"} />
               <StatCard icon={<CalendarTodayOutlined sx={{ fontSize: 18 }} />}   iconColor="#16A34A"  label="Joined"      value={fmtDate(member.createdAt)} />
               <StatCard icon={<UpdateOutlined sx={{ fontSize: 18 }} />}          iconColor="#D97706"  label="Last Updated" value={fmtDate(member.updatedAt)} />
-              <StatCard icon={<WorkOutlined sx={{ fontSize: 18 }} />}            iconColor={PURPLE}   label="Organization" value={member.Organization || "—"} />
+              <StatCard icon={<WorkOutlined sx={{ fontSize: 18 }} />}            iconColor={PURPLE}   label="Organization" value={member.company || "—"} />
             </Box>
           </motion.div>
         )}

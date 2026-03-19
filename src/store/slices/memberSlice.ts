@@ -6,16 +6,13 @@ import axiosInstance from "@/utils/axiosInstance";
 export type MemberRole = "RH" | "TechLead" | "Supervisor" | "Manager" | "Owner";
 export type MemberStatus = "active" | "pending" | "inactive";
 
-export interface User {
-  _id: string;
-  username: string;
-  email: string;
-}
-
 export interface Member {
   _id: string;
-  user: User;
-  Organization: string;
+  company: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
   role: MemberRole;
   status: MemberStatus;
   createdAt: string;
@@ -37,7 +34,7 @@ export interface AddMemberPayload {
 
 export interface UpdateRolePayload {
   membershipId: string; // CompanyMembership ID
-  role: MemberRole;
+  role: string;
   departmentId?: string;
 }
 
@@ -181,13 +178,13 @@ export const updateMemberRole = createAsyncThunk<
   try {
     console.log(`📡 [MemberSlice] Updating member role via API...`);
 
-    const apiPayload: { role: MemberRole; departmentId?: string } = { role: payload.role };
+    const apiPayload: { role: string; departmentId?: string } = { role: payload.role };
     if (payload.departmentId !== undefined) apiPayload.departmentId = payload.departmentId || undefined;
 
     console.log(`📡 [MemberSlice] Sending payload:`, apiPayload);
-    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}/role`);
+    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
 
-    const response = await axiosInstance.patch(`CompanyMembership/${payload.membershipId}/role`, apiPayload);
+    const response = await axiosInstance.patch(`CompanyMembership/${payload.membershipId}`, apiPayload);
 
 
     console.log(`✅ [MemberSlice] Role updated successfully`, response.data);

@@ -15,7 +15,6 @@ import {
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
   Member,
-  MemberRole,
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
 
@@ -60,7 +59,7 @@ const EmployeeDetailPage: React.FC = () => {
 
   const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");
-    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role: role as MemberRole, departmentId })).unwrap();
+    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role, departmentId })).unwrap();
   }, [dispatch, selectedMember]);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -114,13 +113,13 @@ const EmployeeDetailPage: React.FC = () => {
             onSave={handleUpdateRole}
             currentRole={selectedMember.role}
             currentDepartmentId={(selectedMember as any).department?._id ?? (selectedMember as any).departmentId ?? ""}
-            memberName={selectedMember.user?.username || selectedMember.user?.email || "Member"}
+            memberName={selectedMember.username || selectedMember.email || "Member"}
           />
         )}
 
         <DeleteMemberDialog
           open={deleteDialogOpen}
-          memberName={selectedMember?.user?.username || selectedMember?.user?.email || "this member"}
+          memberName={selectedMember?.username || selectedMember?.email || "this member"}
           onCancel={() => { setDeleteDialogOpen(false); setSelectedMember(null); }}
           onConfirm={handleConfirmDelete}
         />

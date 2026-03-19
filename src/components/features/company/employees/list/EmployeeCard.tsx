@@ -62,8 +62,8 @@ interface EmployeeCardProps {
 
 const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect }) => {
   const router = useRouter();
-  const name    = member.user?.username || "Unnamed";
-  const email   = member.user?.email    || "";
+  const name    = member.username || "Unnamed";
+  const email   = member.email   || "";
   const letter  = name[0]?.toUpperCase() || "U";
   const palette = pickPalette(email || name);
 
