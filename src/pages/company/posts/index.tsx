@@ -62,7 +62,7 @@ const PostsPage: React.FC = () => {
     : sortBy; // "newest" | "oldest" pass through
 
   const load = useCallback(() => {
-    dispatch(fetchMyPosts({ page, limit: 9, search, sort: apiSort, status: apiStatus }));
+    dispatch(fetchMyPosts({ page, limit: 8, search, sort: apiSort, status: apiStatus }));
   }, [dispatch, page, search, apiSort, apiStatus]);
 
   useEffect(() => { load(); }, [load]);
