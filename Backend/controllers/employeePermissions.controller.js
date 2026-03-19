@@ -71,11 +71,30 @@ exports.updatePermissions = async (req, res) => {
     const { ...permissionsData } = req.body;
     const modifiedBy = req.user._id;
 
-    const permissions = await employeePermissionsService.updatePermissions(
-      userId,
-      permissionsData,
-      modifiedBy
-    );
+    // Get membership for the target user
+    const membership = await getMembershipForUser(userId);
+
+    let permissions = await employeePermissionsService.getPermissions(
+      userId
+    ).catch(() => null);
+
+    // If permissions don't exist, create them first
+    if (!permissions) {
+      const EmployeePermissionsModel = require("../models/EmployeePermissions.model");
+      permissions = await EmployeePermissionsModel.create({
+        userId,
+        membershipId: membership._id,
+        ...permissionsData,
+        lastModifiedBy: modifiedBy,
+      });
+    } else {
+      // Update existing permissions
+      permissions = await employeePermissionsService.updatePermissions(
+        userId,
+        permissionsData,
+        modifiedBy
+      );
+    }
 
     res.status(200).json({
       success: true,

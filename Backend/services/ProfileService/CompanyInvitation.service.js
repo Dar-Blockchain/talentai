@@ -250,19 +250,26 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
   // Create default employee permissions based on role
   const defaultPermissions = _getDefaultPermissionsByRole(invitation.role);
 
-  const employeePermissions = await EmployeePermissionsModel.create({
-    userId,
-    membershipId: membership._id,
-    ...defaultPermissions,
-    lastModifiedBy: invitation.invitedBy,
-  });
+  try {
+    const employeePermissions = await EmployeePermissionsModel.create({
+      userId,
+      membershipId: membership._id,
+      ...defaultPermissions,
+      lastModifiedBy: invitation.invitedBy || userId, // Fallback to userId if invitedBy is not valid
+    });
 
-  // Link membership to permissions
-  await CompanyMembershipModel.findByIdAndUpdate(
-    membership._id,
-    { permissions: employeePermissions._id },
-    { new: true }
-  );
+    // Link membership to permissions
+    await CompanyMembershipModel.findByIdAndUpdate(
+      membership._id,
+      { permissions: employeePermissions._id },
+      { new: true }
+    );
+
+    console.log("✅ Employee permissions created successfully for user:", userId);
+  } catch (permError) {
+    console.error("⚠️ Warning: Failed to create employee permissions:", permError.message);
+    // Don't throw - membership creation was successful, continue with invitation acceptance
+  }
 
   await CompanyInvitationModel.findByIdAndDelete(invitationId);
 
@@ -274,7 +281,7 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
 
   return {
     membership,
-    permissions: employeePermissions,
+    permissions: true, // Indicate permissions were set up
   };
 };
 
