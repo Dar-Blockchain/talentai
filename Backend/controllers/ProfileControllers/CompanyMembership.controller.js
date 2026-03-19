@@ -10,6 +10,7 @@ const flattenMembership = (membership) => {
 
   const result = {
     ...rest,
+    userId: user._id || null,
     username: user.username || null,
     email: user.email || null,
     firstName: profile.firstName || null,
