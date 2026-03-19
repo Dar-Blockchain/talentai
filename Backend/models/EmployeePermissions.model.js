@@ -8,14 +8,10 @@ const employeePermissionsSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    profileId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Profile",
-      required: true,
-    },
     membershipId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CompanyMembership",
+      required: true,
     },
 
     // Job Posts
@@ -161,11 +157,9 @@ const employeePermissionsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create index for userId and profileId for faster queries
+// Create index for userId and membershipId for faster queries
 employeePermissionsSchema.index({ userId: 1 });
-employeePermissionsSchema.index({ profileId: 1 });
-employeePermissionsSchema.index({ membershipId: 1 });
-employeePermissionsSchema.index({ userId: 1, profileId: 1 }, { unique: true });
+employeePermissionsSchema.index({ membershipId: 1 }, { unique: true });
 
 // Update the updatedAt timestamp before saving
 employeePermissionsSchema.pre("save", function (next) {

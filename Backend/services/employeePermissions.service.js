@@ -5,32 +5,29 @@ const Profile = require("../models/Profile.model");
 /**
  * Create new employee permissions
  */
-exports.createPermissions = async (userId, profileId, permissionsData) => {
+exports.createPermissions = async (userId, membershipId, permissionsData) => {
   try {
-    // Verify user and profile exist
+    // Verify user exists
     const user = await User.findById(userId);
-    const profile = await Profile.findById(profileId);
-
-    if (!user || !profile) {
-      throw new Error("User or Profile not found");
+    if (!user) {
+      throw new Error("User not found");
     }
 
-    // Check if permissions already exist for this user/profile combination
+    // Check if permissions already exist for this membership
     const existingPermissions = await EmployeePermissions.findOne({
-      userId,
-      profileId,
+      membershipId,
     });
 
     if (existingPermissions) {
       throw new Error(
-        "Permissions already exist for this user and profile"
+        "Permissions already exist for this membership"
       );
     }
 
     // Create new permissions
     const permissions = new EmployeePermissions({
       userId,
-      profileId,
+      membershipId,
       ...permissionsData,
     });
 
@@ -41,16 +38,14 @@ exports.createPermissions = async (userId, profileId, permissionsData) => {
 };
 
 /**
- * Get permissions by userId and profileId
+ * Get permissions by userId
  */
-exports.getPermissions = async (userId, profileId) => {
+exports.getPermissions = async (userId) => {
   try {
     const permissions = await EmployeePermissions.findOne({
       userId,
-      profileId,
     })
       .populate("userId", "email firstName lastName")
-      .populate("profileId", "name")
       .populate("lastModifiedBy", "email firstName lastName");
 
     if (!permissions) {
@@ -64,18 +59,24 @@ exports.getPermissions = async (userId, profileId) => {
 };
 
 /**
- * Get all permissions for a profile
+ * Get all permissions for a company (by company ID from membership)
  */
-exports.getPermissionsByProfile = async (profileId) => {
+exports.getPermissionsByCompany = async (companyId) => {
   try {
-    const permissions = await EmployeePermissions.find({ profileId })
+    const CompanyMembership = require("../models/CompanyMembership.model");
+    const memberships = await CompanyMembership.find({ company: companyId });
+    const membershipIds = memberships.map(m => m._id);
+    
+    const permissions = await EmployeePermissions.find({ 
+      membershipId: { $in: membershipIds }
+    })
       .populate("userId", "email firstName lastName")
-      .populate("profileId", "name")
+      .populate("membershipId")
       .populate("lastModifiedBy", "email firstName lastName");
 
     return permissions;
   } catch (error) {
-    throw new Error(`Failed to fetch profile permissions: ${error.message}`);
+    throw new Error(`Failed to fetch company permissions: ${error.message}`);
   }
 };
 
@@ -86,7 +87,7 @@ exports.getPermissionsByUser = async (userId) => {
   try {
     const permissions = await EmployeePermissions.find({ userId })
       .populate("userId", "email firstName lastName")
-      .populate("profileId", "name")
+      .populate("membershipId")
       .populate("lastModifiedBy", "email firstName lastName");
 
     return permissions;
@@ -98,10 +99,10 @@ exports.getPermissionsByUser = async (userId) => {
 /**
  * Update permissions
  */
-exports.updatePermissions = async (userId, profileId, updatesData, modifiedBy) => {
+exports.updatePermissions = async (userId, updatesData, modifiedBy) => {
   try {
     const permissions = await EmployeePermissions.findOneAndUpdate(
-      { userId, profileId },
+      { userId },
       {
         ...updatesData,
         lastModifiedBy: modifiedBy,
@@ -110,7 +111,7 @@ exports.updatePermissions = async (userId, profileId, updatesData, modifiedBy) =
       { new: true, runValidators: true }
     )
       .populate("userId", "email firstName lastName")
-      .populate("profileId", "name")
+      .populate("membershipId")
       .populate("lastModifiedBy", "email firstName lastName");
 
     if (!permissions) {
@@ -126,11 +127,10 @@ exports.updatePermissions = async (userId, profileId, updatesData, modifiedBy) =
 /**
  * Delete permissions
  */
-exports.deletePermissions = async (userId, profileId) => {
+exports.deletePermissions = async (userId) => {
   try {
     const permissions = await EmployeePermissions.findOneAndDelete({
       userId,
-      profileId,
     });
 
     if (!permissions) {
@@ -146,11 +146,10 @@ exports.deletePermissions = async (userId, profileId) => {
 /**
  * Check if user has a specific permission
  */
-exports.hasPermission = async (userId, profileId, permissionKey) => {
+exports.hasPermission = async (userId, permissionKey) => {
   try {
     const permissions = await EmployeePermissions.findOne({
       userId,
-      profileId,
     });
 
     if (!permissions) {
@@ -166,7 +165,7 @@ exports.hasPermission = async (userId, profileId, permissionKey) => {
 /**
  * Grant multiple permissions to user
  */
-exports.grantPermissions = async (userId, profileId, permissionsToGrant, modifiedBy) => {
+exports.grantPermissions = async (userId, permissionsToGrant, modifiedBy) => {
   try {
     const permissionObject = {};
     permissionsToGrant.forEach((perm) => {
@@ -175,7 +174,6 @@ exports.grantPermissions = async (userId, profileId, permissionsToGrant, modifie
 
     return await exports.updatePermissions(
       userId,
-      profileId,
       permissionObject,
       modifiedBy
     );
@@ -187,7 +185,7 @@ exports.grantPermissions = async (userId, profileId, permissionsToGrant, modifie
 /**
  * Revoke multiple permissions from user
  */
-exports.revokePermissions = async (userId, profileId, permissionsToRevoke, modifiedBy) => {
+exports.revokePermissions = async (userId, permissionsToRevoke, modifiedBy) => {
   try {
     const permissionObject = {};
     permissionsToRevoke.forEach((perm) => {
@@ -196,7 +194,6 @@ exports.revokePermissions = async (userId, profileId, permissionsToRevoke, modif
 
     return await exports.updatePermissions(
       userId,
-      profileId,
       permissionObject,
       modifiedBy
     );
@@ -208,11 +205,10 @@ exports.revokePermissions = async (userId, profileId, permissionsToRevoke, modif
 /**
  * Get permission summary (count of true permissions)
  */
-exports.getPermissionSummary = async (userId, profileId) => {
+exports.getPermissionSummary = async (userId) => {
   try {
     const permissions = await EmployeePermissions.findOne({
       userId,
-      profileId,
     });
 
     if (!permissions) {
@@ -276,11 +272,10 @@ exports.getAvailablePermissions = async () => {
 /**
  * Clone permissions from one user to another
  */
-exports.clonePermissions = async (sourceUserId, sourceProfileId, targetUserId, targetProfileId, modifiedBy) => {
+exports.clonePermissions = async (sourceUserId, targetUserId, targetMembershipId, modifiedBy) => {
   try {
     const sourcePermissions = await EmployeePermissions.findOne({
       userId: sourceUserId,
-      profileId: sourceProfileId,
     });
 
     if (!sourcePermissions) {
@@ -292,18 +287,18 @@ exports.clonePermissions = async (sourceUserId, sourceProfileId, targetUserId, t
     delete permissionsCopy._id;
     delete permissionsCopy.createdAt;
     delete permissionsCopy.updatedAt;
+    delete permissionsCopy.membershipId;
+    delete permissionsCopy.userId;
 
     // Check if target already has permissions
     const existingTarget = await EmployeePermissions.findOne({
       userId: targetUserId,
-      profileId: targetProfileId,
     });
 
     if (existingTarget) {
       // Update existing permissions
       return await exports.updatePermissions(
         targetUserId,
-        targetProfileId,
         permissionsCopy,
         modifiedBy
       );
@@ -311,7 +306,7 @@ exports.clonePermissions = async (sourceUserId, sourceProfileId, targetUserId, t
       // Create new permissions
       return await exports.createPermissions(
         targetUserId,
-        targetProfileId,
+        targetMembershipId,
         { ...permissionsCopy, lastModifiedBy: modifiedBy }
       );
     }

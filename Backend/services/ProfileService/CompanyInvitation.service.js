@@ -249,14 +249,9 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
 
   // Create default employee permissions based on role
   const defaultPermissions = _getDefaultPermissionsByRole(invitation.role);
-  
-  // Get user's company profile (assuming company field refers to a User with isCompany flag)
-  const userProfile = await Profile.findOne({ Company: invitation.company });
-  const profileId = userProfile ? userProfile._id : invitation.company;
 
   const employeePermissions = await EmployeePermissionsModel.create({
     userId,
-    profileId,
     membershipId: membership._id,
     ...defaultPermissions,
     lastModifiedBy: invitation.invitedBy,

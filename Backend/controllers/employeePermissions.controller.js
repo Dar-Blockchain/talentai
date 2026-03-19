@@ -26,16 +26,14 @@ const checkAuthentication = (req, res) => {
 };
 
 /**
- * Get profileId from user's company membership
- * @param {string} userId - The user's ID
- * @returns {Promise<string>} The profileId
+ * Get membership for authenticated user
  */
-const getProfileIdFromMembership = async (userId) => {
+const getMembershipForUser = async (userId) => {
   const membership = await CompanyMembershipModel.findOne({ user: userId });
   if (!membership) {
     throw new Error("User has no company membership");
   }
-  return membership.company;
+  return membership;
 };
 
 /**
@@ -49,11 +47,11 @@ exports.createPermissions = async (req, res) => {
     const userId = req.user._id;
     const { ...permissionsData } = req.body;
 
-    const profileId = await getProfileIdFromMembership(userId);
+    const membership = await getMembershipForUser(userId);
 
     const permissions = await employeePermissionsService.createPermissions(
       userId,
-      profileId,
+      membership._id,
       permissionsData
     );
 
@@ -76,11 +74,9 @@ exports.getPermissions = async (req, res) => {
   
   try {
     const userId = req.user._id;
-    const profileId = await getProfileIdFromMembership(userId);
 
     const permissions = await employeePermissionsService.getPermissions(
-      userId,
-      profileId
+      userId
     );
 
     res.status(200).json({
@@ -93,22 +89,24 @@ exports.getPermissions = async (req, res) => {
 };
 
 /**
- * Get all permissions by profile
- * GET /api/employee-permissions/profile/:profileId
+ * Get all permissions by company
+ * GET /api/employee-permissions/company/:companyId
  */
-exports.getPermissionsByProfile = async (req, res) => {
+exports.getPermissionsByCompany = async (req, res) => {
+  if (!checkAuthentication(req, res)) return;
+  
   try {
-    const { profileId } = req.params;
+    const { companyId } = req.params;
 
-    if (!profileId) {
+    if (!companyId) {
       return res.status(400).json({
         success: false,
-        error: "profileId is required",
+        error: "companyId is required",
       });
     }
 
     const permissions =
-      await employeePermissionsService.getPermissionsByProfile(profileId);
+      await employeePermissionsService.getPermissionsByCompany(companyId);
 
     res.status(200).json({
       success: true,
@@ -120,33 +118,7 @@ exports.getPermissionsByProfile = async (req, res) => {
   }
 };
 
-/**
- * Get all permissions by user
- * GET /api/employee-permissions/user/:userId
- */
-exports.getPermissionsByUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: "userId is required",
-      });
-    }
-
-    const permissions =
-      await employeePermissionsService.getPermissionsByUser(userId);
-
-    res.status(200).json({
-      success: true,
-      count: permissions.length,
-      data: permissions,
-    });
-  } catch (error) {
-    handleError(res, error, 500);
-  }
-};
 
 /**
  * Update current user's permissions
@@ -158,12 +130,10 @@ exports.updatePermissions = async (req, res) => {
   try {
     const userId = req.user._id;
     const { ...permissionsData } = req.body;
-    const profileId = await getProfileIdFromMembership(userId);
     const modifiedBy = req.user._id;
 
     const permissions = await employeePermissionsService.updatePermissions(
       userId,
-      profileId,
       permissionsData,
       modifiedBy
     );
@@ -187,11 +157,9 @@ exports.deletePermissions = async (req, res) => {
   
   try {
     const userId = req.user._id;
-    const profileId = await getProfileIdFromMembership(userId);
 
     const result = await employeePermissionsService.deletePermissions(
-      userId,
-      profileId
+      userId
     );
 
     res.status(200).json({
@@ -213,7 +181,6 @@ exports.checkPermission = async (req, res) => {
   try {
     const userId = req.user._id;
     const { permissionKey } = req.params;
-    const profileId = await getProfileIdFromMembership(userId);
 
     if (!permissionKey) {
       return res.status(400).json({
@@ -224,7 +191,6 @@ exports.checkPermission = async (req, res) => {
 
     const hasPermission = await employeePermissionsService.hasPermission(
       userId,
-      profileId,
       permissionKey
     );
 
@@ -248,7 +214,6 @@ exports.grantPermissions = async (req, res) => {
   try {
     const userId = req.user._id;
     const { permissionsToGrant } = req.body;
-    const profileId = await getProfileIdFromMembership(userId);
 
     if (!Array.isArray(permissionsToGrant) || permissionsToGrant.length === 0) {
       return res.status(400).json({
@@ -261,7 +226,6 @@ exports.grantPermissions = async (req, res) => {
 
     const permissions = await employeePermissionsService.grantPermissions(
       userId,
-      profileId,
       permissionsToGrant,
       modifiedBy
     );
@@ -286,7 +250,6 @@ exports.revokePermissions = async (req, res) => {
   try {
     const userId = req.user._id;
     const { permissionsToRevoke } = req.body;
-    const profileId = await getProfileIdFromMembership(userId);
 
     if (!Array.isArray(permissionsToRevoke) || permissionsToRevoke.length === 0) {
       return res.status(400).json({
@@ -299,7 +262,6 @@ exports.revokePermissions = async (req, res) => {
 
     const permissions = await employeePermissionsService.revokePermissions(
       userId,
-      profileId,
       permissionsToRevoke,
       modifiedBy
     );
@@ -323,11 +285,9 @@ exports.getPermissionSummary = async (req, res) => {
   
   try {
     const userId = req.user._id;
-    const profileId = await getProfileIdFromMembership(userId);
 
     const summary = await employeePermissionsService.getPermissionSummary(
-      userId,
-      profileId
+      userId
     );
 
     res.status(200).json({
@@ -362,34 +322,33 @@ exports.getAvailablePermissions = async (req, res) => {
  * POST /api/employee-permissions/clone
  */
 exports.clonePermissions = async (req, res) => {
+  if (!checkAuthentication(req, res)) return;
+  
   try {
     const {
       sourceUserId,
-      sourceProfileId,
       targetUserId,
-      targetProfileId,
-      modifiedBy,
+      targetMembershipId,
     } = req.body;
 
     if (
       !sourceUserId ||
-      !sourceProfileId ||
       !targetUserId ||
-      !targetProfileId ||
-      !modifiedBy
+      !targetMembershipId
     ) {
       return res.status(400).json({
         success: false,
         error:
-          "sourceUserId, sourceProfileId, targetUserId, targetProfileId, and modifiedBy are required",
+          "sourceUserId, targetUserId, and targetMembershipId are required",
       });
     }
 
+    const modifiedBy = req.user._id;
+
     const permissions = await employeePermissionsService.clonePermissions(
       sourceUserId,
-      sourceProfileId,
       targetUserId,
-      targetProfileId,
+      targetMembershipId,
       modifiedBy
     );
 
