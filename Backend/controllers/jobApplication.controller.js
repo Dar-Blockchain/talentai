@@ -25,7 +25,7 @@ module.exports.createJobApplication = async (req, res) => {
     }
 
     // Get candidate profile from current user
-    const Profile = require("../../models/Profile.model");
+    const Profile = require("../models/Profile.model");
     const profile = await Profile.findOne({ userId }).populate("cvAnalyses");
     if (!profile) {
       return res.status(404).json({
@@ -40,7 +40,7 @@ module.exports.createJobApplication = async (req, res) => {
       : null;
 
     // Get post and extract company from it
-    const Post = require("../../models/Post.model");
+    const Post = require("../models/Post.model");
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({
@@ -152,7 +152,7 @@ module.exports.getApplicationsByCandidate = async (req, res) => {
     if (isArchived !== undefined) filters.isArchived = isArchived === "true";
 
     // Find profile for this user
-    const Profile = require("../../models/Profile.model");
+    const Profile = require("../models/Profile.model");
     const profile = await Profile.findOne({ userId: candidateId });
 
     if (!profile) {
