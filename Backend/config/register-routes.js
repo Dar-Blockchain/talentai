@@ -7,6 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("../swagger.json");
 const campaignSwagger = require("../docs/swagger-campaigns.json");
 const departmentSwagger = require("../docs/swagger-departments.json");
+const jobApplicationSwagger = require("../routes/swagger/jobApplication.swagger");
 
 // Import all route modules
 const authRouter = require("../routes/authentication.routes");
@@ -46,7 +47,7 @@ const departmentRoutes = require('../routes/department.routes');
 const contactRouter = require('../routes/contact.routes');
 const interviewApplicantRouter = require('../routes/interviewApplicant.routes');
 const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
-
+const jobApplicationRouter = require("../routes/jobApplication.routes");
 // const backupRouter = require('../routes/backupRouter');
 
 /**
@@ -62,6 +63,9 @@ function registerRoutes(app) {
   
   // Department API Documentation (Swagger)
   app.use("/api/docs/departments", swaggerUi.serve, swaggerUi.setup(departmentSwagger));
+
+  // Job Applications API Documentation (Swagger)
+  app.use("/api/docs/job-applications", swaggerUi.serve, swaggerUi.setup(jobApplicationSwagger));
 
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
@@ -102,6 +106,7 @@ function registerRoutes(app) {
   // Candidate Management
   app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
   app.use("/unlock-candidate", unlockCandidateRouter); //✅ Unlock Candidate -> unlock-candidates
+  app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
 
   // Blockchain & Web3
   app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools

@@ -1,4 +1,4 @@
-const jobApplicationService = require("../../services/jobApplication.service");
+const jobApplicationService = require("../services/jobApplication.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
