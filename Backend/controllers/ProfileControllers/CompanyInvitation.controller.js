@@ -124,17 +124,23 @@ module.exports.respondInvitation = async (req, res) => {
         token
       );
 
+      // Get full user data and profile
+      const fullUser = await User.findById(userId);
+      const Profile = require("../../models/Profile.model");
+      const userProfile = await Profile.findOne({ userId });
+
+      res.cookie("jwt_token", jwtToken, {
+        httpOnly: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
       return res.status(200).json({ 
         success: true, 
         message: "Invitation accepted successfully",
-        accepted,
+        user: fullUser,
         token: jwtToken,
-        user: {
-          _id: userId,
-          email: userEmail,
-          firstName: firstName || existingUser?.FirstName,
-          lastName: lastName || existingUser?.LastName,
-        }
+        profile: userProfile || null,
+        companyMembership: accepted || null
       });
     }
 
