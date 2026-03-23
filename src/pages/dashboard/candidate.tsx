@@ -24,13 +24,13 @@ const DashboardCandidate: React.FC = () => {
           </>
         )}
         {/* Show RecommendedOpportunities in "all" and "opportunities" views */}
-        {(activeSection === "all" || activeSection === "opportunities") && (
+        {/* {(activeSection === "all" || activeSection === "opportunities") && (
           <RecommendedOpportunities
             onViewAll={() => setActiveSection("opportunities")}
             onBackToAll={() => setActiveSection("all")}
             showViewAll={activeSection === "all"}
           />
-        )}
+        )} */}
         {/* Show CandidateInterviews in "all" and "interviews" views */}
         {(activeSection === "all" || activeSection === "interviews") && (
           <CandidateInterviews
