@@ -14,12 +14,12 @@ async function sendTask({ postId, token, candidateEmail, candidateName, stepId, 
 
 async function testEmailConfig() {
   const transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
+    host: process.env.Email_host,
     port: 465,
     secure: true,
     auth: {
-      user: "contact@talentai.bid",
-      pass: "87h0u74H",
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
 
