@@ -13,11 +13,19 @@ const handleError = (res, error, defaultStatus = 500) => {
 // ========== CREATE ==========
 module.exports.createJobApplication = async (req, res) => {
   try {
+    console.log("\n" + "=".repeat(80));
+    console.log("🚀 [JOB APPLICATION] - STARTING CREATE JOB APPLICATION PROCESS");
+    console.log("=".repeat(80));
+
     const userId = req.user._id;
     const { post: postId } = req.body;
 
+    console.log(`📝 Request received from user: ${userId}`);
+    console.log(`📋 Post ID: ${postId}`);
+
     // Validation: only post is required
     if (!postId) {
+      console.error("❌ Validation failed: Missing postId");
       return res.status(400).json({
         success: false,
         error: "Missing required field: post (postId)",
@@ -26,28 +34,41 @@ module.exports.createJobApplication = async (req, res) => {
 
     // Get candidate profile from current user
     const Profile = require("../models/Profile.model");
+    console.log(`🔍 Fetching candidate profile for user: ${userId}`);
     const profile = await Profile.findOne({ userId }).populate("cvAnalyses");
     if (!profile) {
+      console.error(`❌ Candidate profile not found for user: ${userId}`);
       return res.status(404).json({
         success: false,
         error: "Candidate profile not found for current user",
       });
     }
+    console.log(`✅ Candidate profile found: ${profile.firstName} ${profile.lastName}`);
+    console.log(`   - Profile ID: ${profile._id}`);
+    console.log(`   - Technical Skills: ${profile.skills?.length || 0} skills`);
+    console.log(`   - Soft Skills: ${profile.softSkills?.length || 0} skills`);
 
     // Extract cvAnalysis from profile (use the most recent one)
     const cvAnalysis = profile.cvAnalyses && profile.cvAnalyses.length > 0 
       ? profile.cvAnalyses[profile.cvAnalyses.length - 1]._id 
       : null;
+    console.log(`📄 CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`);
 
     // Get post and extract company from it
     const Post = require("../models/Post.model");
+    console.log(`\n🔍 Fetching job post: ${postId}`);
     const post = await Post.findById(postId);
     if (!post) {
+      console.error(`❌ Job post not found: ${postId}`);
       return res.status(404).json({
         success: false,
         error: "Post not found",
       });
     }
+    console.log(`✅ Job post found: "${post.jobDetails?.title || 'Untitled'}"`);
+    console.log(`   - Company ID: ${post.user}`);
+    console.log(`   - Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} skills`);
+    console.log(`   - Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0} skills`);
 
     const company = post.user; // Company is the user who created the post
 
@@ -59,9 +80,32 @@ module.exports.createJobApplication = async (req, res) => {
       // matchScore will be calculated automatically - DO NOT SET IT HERE
     };
 
+    console.log(`\n📊 [MATCH SCORE CALCULATION]`);
+    console.log(`   This will use an AI-powered matching algorithm that considers:`);
+    console.log(`   1️⃣  HARD SKILLS (50%) - Technical skills match`);
+    console.log(`        └─ Comparing: ${profile.skills?.length || 0} candidate skills vs ${post.skillAnalysis?.requiredSkills?.length || 0} required skills`);
+    console.log(`   2️⃣  SOFT SKILLS (10%) - Behavioral skills match`);
+    console.log(`        └─ Comparing: ${profile.softSkills?.length || 0} candidate soft skills vs ${post.skillAnalysis?.softSkills?.length || 0} required soft skills`);
+    console.log(`   3️⃣  EXPERIENCE (10%) - Professional experience alignment`);
+    console.log(`        └─ Based on skill levels and years of experience`);
+    console.log(`   4️⃣  SALARY (10%) - Compensation alignment`);
+    console.log(`        └─ Job range: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`);
+    console.log(`        └─ Candidate expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`);
+    console.log(`   5️⃣  WORK MODE (10%) - Work location/mode match`);
+    console.log(`        └─ Job: ${post.jobDetails?.workMode || "Not specified"} | Candidate preference: ${profile.workModePreference || "Not specified"}`);
+    console.log(`   6️⃣  CONTRACT TYPE (10%) - Employment type match`);
+    console.log(`        └─ Job: ${post.jobDetails?.employmentType || "Not specified"} | Candidate preference: ${profile.preferredContractType || "Not specified"}`);
+    console.log(`\n   ⚙️  Processing with jobApplicationService.createJobApplication()...`);
+
     const application = await jobApplicationService.createJobApplication(
       applicationData
     );
+
+    console.log(`\n✅ [SUCCESS] Job application created!`);
+    console.log(`   - Application ID: ${application._id}`);
+    console.log(`   - Match Score: ${application.matchScore}/100`);
+    console.log(`   - Status: ${application.status}`);
+    console.log("=".repeat(80) + "\n");
 
     res.status(201).json({
       success: true,
@@ -69,6 +113,9 @@ module.exports.createJobApplication = async (req, res) => {
       data: application,
     });
   } catch (error) {
+    console.error(`\n❌ [ERROR] Error in createJobApplication: ${error.message}`);
+    console.error("Stack trace:", error.stack);
+    console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
   }
 };

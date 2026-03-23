@@ -7,35 +7,61 @@ const { calculateMatchScore } = require("./MatchingService/matching.service");
 // ========== CALCULATE MATCH SCORE (via AI Agent) ==========
 const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
   try {
+    console.log("\n" + "=".repeat(80));
+    console.log("📊 [MATCH SCORE ENGINE] - CALCULATING MATCH SCORE");
+    console.log("=".repeat(80));
+    console.log(`Profile ID: ${profileId}`);
+    console.log(`Post ID: ${postId}`);
+    console.log(`Company ID: ${companyId}`);
+
     // Fetch candidate profile with all skills data
+    console.log(`\n🔍 Step 1: Fetching candidate profile...`);
     const profile = await Profile.findById(profileId).populate("userId", "firstName lastName email");
     if (!profile) {
-      console.warn(`Profile not found: ${profileId}`);
+      console.warn(`❌ Profile not found: ${profileId}`);
       return 0;
     }
+    console.log(`✅ Profile loaded: ${profile.firstName || "Unknown"} ${profile.lastName || ""}`);
+    console.log(`   └─ Technical Skills: ${profile.skills?.length || 0} found`);
+    if (profile.skills && profile.skills.length > 0) {
+      console.log(`      Skills: ${profile.skills.map(s => `${s.name} (Lvl: ${s.Levelconfirmed})`).join(", ")}`);
+    }
+    console.log(`   └─ Soft Skills: ${profile.softSkills?.length || 0} found`);
+    console.log(`   └─ Salary Expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`);
+    console.log(`   └─ Work Mode Preference: ${profile.workModePreference || "Not specified"}`);
+    console.log(`   └─ Contract Type: ${profile.preferredContractType || "Not specified"}`);
 
     // Fetch job post with skill requirements
+    console.log(`\n🔍 Step 2: Fetching job post...`);
     const post = await Post.findById(postId).populate("skillAnalysis");
     if (!post) {
-      console.warn(`Post not found: ${postId}`);
+      console.warn(`❌ Post not found: ${postId}`);
       return 0;
     }
+    console.log(`✅ Job post loaded: "${post.jobDetails?.title || "Untitled"}"`);
+    console.log(`   └─ Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} found`);
+    if (post.skillAnalysis && post.skillAnalysis.requiredSkills) {
+      console.log(`      Skills: ${post.skillAnalysis.requiredSkills.map(s => `${s.name} (Lvl: ${s.level}, Weight: ${s.percentage}%)`).join(", ")}`);
+    }
+    console.log(`   └─ Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0}`);
+    console.log(`   └─ Salary Offered: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`);
+    console.log(`   └─ Work Mode: ${post.jobDetails?.workMode || "Not specified"}`);
+    console.log(`   └─ Employment Type: ${post.jobDetails?.employmentType || "Not specified"}`);
 
     // Extract job skills from post skillAnalysis
-    const jobSkills = post.skillAnalysis?.skills || [];
+    const jobSkills = post.skillAnalysis?.requiredSkills || [];
     const jobDetails = {
-      title: post.title,
-      description: post.description,
+      title: post.jobDetails?.title,
+      description: post.jobDetails?.description,
       skillAnalysis: post.skillAnalysis,
-      salaryMin: post.salaryMin,
-      salaryMax: post.salaryMax,
-      currency: post.currency,
-      workMode: post.workMode,
-      contractType: post.contractType,
+      salary: post.jobDetails?.salary,
+      location: post.jobDetails?.location,
+      workMode: post.jobDetails?.workMode,
+      employmentType: post.jobDetails?.employmentType,
     };
 
     // Extract candidate skills from profile
-    const candidateSkills = profile.techSkills || [];
+    const candidateSkills = profile.skills || [];
     const candidateProfile = {
       _id: profile._id,
       userId: profile.userId,
@@ -43,20 +69,35 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       lastName: profile.lastName,
       email: profile.email,
       softSkills: profile.softSkills || [],
-      expectedSalaryMin: profile.expectedSalaryMin,
-      expectedSalaryMax: profile.expectedSalaryMax,
-      currency: profile.currency,
-      workMode: profile.workMode,
-      contractType: profile.contractType,
-      experience: profile.experience,
+      expectedSalary: profile.expectedSalary,
+      workModePreference: profile.workModePreference,
+      preferredContractType: profile.preferredContractType,
     };
 
     // Get matching configuration (if exists)
+    console.log(`\n🔍 Step 3: Loading matching configuration...`);
     const MatchingConfig = require("../models/MatchingConfig.model");
     const matchingConfig = await MatchingConfig.findOne({ company: companyId });
     const configData = matchingConfig || { weights: {} };
+    console.log(`✅ Matching config loaded${matchingConfig ? " (custom weights)" : " (default weights)"}`);
+    const weights = configData.weights || {};
+    console.log(`   └─ Hard Skills Weight: ${weights.hardSkill || 50}%`);
+    console.log(`   └─ Soft Skills Weight: ${weights.SoftSkill || 10}%`);
+    console.log(`   └─ Experience Weight: ${weights.experience || 10}%`);
+    console.log(`   └─ Salary Weight: ${weights.salary || 10}%`);
+    console.log(`   └─ Work Mode Weight: ${weights.workMode || 10}%`);
+    console.log(`   └─ Contract Weight: ${weights.contract || 10}%`);
 
     // Calculate match score using AI matching algorithm
+    console.log(`\n🔍 Step 4: Running AI matching algorithm...`);
+    console.log(`   This algorithm will:`);
+    console.log(`   1. Compare technical skills (levels and weights)`);
+    console.log(`   2. Match soft skills presence`);
+    console.log(`   3. Assess experience alignment`);
+    console.log(`   4. Evaluate salary compatibility`);
+    console.log(`   5. Check work mode preferences`);
+    console.log(`   6. Verify contract type match`);
+
     const matchResult = await calculateMatchScore(
       jobSkills,
       candidateSkills,
@@ -67,13 +108,19 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     );
 
     const score = matchResult?.score || 0;
-    console.log(
-      `✅ Match Score calculated for ${candidateProfile.firstName} ${candidateProfile.lastName} on post "${post.title}": ${score}`
-    );
+    console.log(`\n✅ [MATCH SCORE CALCULATED]`);
+    console.log(`   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
+    console.log(`   Job: "${post.title}"`);
+    console.log(`   Final Match Score: ${score}/100`);
+    if (matchResult?.unlocked) {
+      console.log(`   Status: 🔓 UNLOCKED CANDIDATE`);
+    }
+    console.log("=".repeat(80) + "\n");
 
     return score;
   } catch (error) {
-    console.error("Error calculating match score:", error);
+    console.error(`❌ [MATCH SCORE ERROR] Error calculating match score:`, error);
+    console.error("Stack trace:", error.stack);
     return 0; // Return 0 if calculation fails
   }
 };
