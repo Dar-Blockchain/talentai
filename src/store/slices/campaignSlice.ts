@@ -122,7 +122,7 @@ export const fetchCampaignParticipants = createAsyncThunk<
 >("campaign/fetchParticipants", async ({ campaignId, ...params }, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.get(`internal-campaigns/${campaignId}/participants`, { params });
-    return { data: response.data.data as CampaignParticipant[], total: response.data.total ?? response.data.data?.length ?? 0 };
+    return { data: response.data.data as CampaignParticipant[], total: response.data.count ?? response.data.total ?? response.data.data?.length ?? 0 };
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
