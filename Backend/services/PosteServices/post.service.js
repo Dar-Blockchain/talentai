@@ -1303,12 +1303,12 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
   try {
     // Use the same email configuration as sendOTP
     const transporter = nodemailer.createTransport({
-      host: "mail.privateemail.com",
-      port: 465, // SSL/TLS port for outgoing mail
-      secure: true, // Use SSL
+      host: process.env.Email_host,
+      port: 465,
+      secure: true,
       auth: {
-        user: "contact@talentai.bid",
-        pass: "87h0u74H",
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 
