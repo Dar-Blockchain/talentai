@@ -12,7 +12,18 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
-// ========== MIDDLEWARE: Authentication + Logging ==========
+// ========== PUBLIC ROUTES (NO AUTHENTICATION REQUIRED) ==========
+/**
+ * POST /respondInvitation/:invitationId
+ * Accept or reject an invitation (body: { action: 'accept'|'reject', firstName, lastName })
+ * No authentication required - creates account for invited user
+ */
+router.post(
+  "/respondInvitation/:invitationId",
+  CompanyInvitationController.respondInvitation,
+);
+
+// ========== PROTECTED ROUTES (AUTHENTICATION REQUIRED) ==========
 // All routes below require an authenticated user and are logged
 router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
 
@@ -42,15 +53,6 @@ router.post(
 router.delete(
   "/deleteInvitation/:invitationId",
   CompanyInvitationController.deleteInvitation,
-);
-
-/**
- * POST /respondInvitation/:invitationId
- * Accept or reject an invitation (body: { action: 'accept'|'reject' })
- */
-router.post(
-  "/respondInvitation/:invitationId",
-  CompanyInvitationController.respondInvitation,
 );
 
 /**

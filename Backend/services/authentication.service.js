@@ -34,7 +34,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
     }
 
     // Determine user role
-    const userRole = roleType === 'Company' ? 'Company' : roleType === 'Member' ? 'Member' : 'Candidate';
+    const userRole = roleType === 'Company' ? 'Company' : roleType === 'Member' || roleType === 'Employee' ? roleType : 'Candidate';
 
     // Create new user
     const user = new User({
@@ -79,23 +79,23 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
         await user.save();
         console.log('🔗 Company profile linked to user - user.profile:', profile._id);
       }
-    } else if (roleType === 'Member') {
-      // For Member: create profile similar to Candidate
+    } else if (roleType === 'Member' || roleType === 'Employee') {
+      // For Member and Employee: create profile similar to Candidate
       profile = await Profile.create({
         userId: user._id,
-        type: 'Member',
+        type: roleType === 'Employee' ? 'Employee' : 'Member',
         firstName: profileDataOptions.firstName,
         lastName: profileDataOptions.lastName,
         phone: profileDataOptions.phone || '',
         skills: [],
         overallScore: 0,
       });
-      console.log('✅ Member profile created during registration for userId:', user._id);
+      console.log(`✅ ${roleType} profile created during registration for userId:`, user._id);
 
       // Link profile to user as ObjectID
       user.profile = profile._id;
       await user.save();
-      console.log('🔗 Member profile linked to user - user.profile:', profile._id);
+      console.log(`🔗 ${roleType} profile linked to user - user.profile:`, profile._id);
     } else {
       // For Candidate: create profile with firstName and lastName (now required)
       const resumePath = profileDataOptions.resumeFile ? profileDataOptions.resumeFile.filename : '';

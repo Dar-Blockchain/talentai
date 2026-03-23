@@ -1,4 +1,6 @@
 const CompanyInvitationService = require("../../services/ProfileService/CompanyInvitation.service");
+const authService = require("../../services/authentication.service");
+const { generateToken } = require("../../utils/generate-token");
 
 module.exports.sentInvitation = async (req, res) => {
   try {
@@ -45,7 +47,7 @@ module.exports.deleteInvitation = async (req, res) => {
 module.exports.respondInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
-    const { action, token } = req.body;
+    const { action, token, firstName, lastName } = req.body;
     
     if (!action || !["accept", "reject"].includes(action))
       return res
@@ -59,15 +61,81 @@ module.exports.respondInvitation = async (req, res) => {
           .json({ success: false, message: "Token is required for accepting invitation" });
       }
 
-      const userId = req.user._id;
-      const userEmail = req.user.email;
+      // Get invitation details to retrieve email
+      const invitation = await CompanyInvitationService.getInvitationDetails(invitationId);
+      if (!invitation) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Invitation not found" });
+      }
+
+      const invitationEmail = invitation.email;
+      let userId;
+      let userEmail;
+      let jwtToken;
+
+      // Check if user already exists
+      const User = require("../../models/User.model");
+      const existingUser = await User.findOne({ email: invitationEmail });
+
+      if (existingUser) {
+        // User already exists - use their credentials
+        userId = existingUser._id;
+        userEmail = existingUser.email;
+        // Generate token for existing user
+        jwtToken = generateToken(existingUser);
+      } else {
+        // User doesn't exist - create new account with roleType 'Employee'
+        if (!firstName || !lastName) {
+          return res
+            .status(400)
+            .json({ success: false, message: "firstName and lastName are required for new user accounts" });
+        }
+
+        try {
+          const newUserData = await authService.registerUser(
+            invitationEmail,
+            'Employee',
+            { firstName, lastName }
+          );
+
+          userId = newUserData.user._id;
+          userEmail = newUserData.user.email;
+
+          // Generate JWT token for new user after account creation
+          jwtToken = generateToken(newUserData.user);
+
+          console.log(`✅ New employee account created for ${invitationEmail} (${firstName} ${lastName})`);
+        } catch (registrationError) {
+          return res
+            .status(400)
+            .json({ 
+              success: false, 
+              message: `Failed to create user account: ${registrationError.message}` 
+            });
+        }
+      }
+
+      // Accept invitation and create company membership
       const accepted = await CompanyInvitationService.acceptInvitation(
         invitationId,
         userId,
         userEmail,
         token
       );
-      return res.json({ success: true, accepted });
+
+      return res.status(200).json({ 
+        success: true, 
+        message: "Invitation accepted successfully",
+        accepted,
+        token: jwtToken,
+        user: {
+          _id: userId,
+          email: userEmail,
+          firstName: firstName || existingUser?.FirstName,
+          lastName: lastName || existingUser?.LastName,
+        }
+      });
     }
 
     const rejected =
