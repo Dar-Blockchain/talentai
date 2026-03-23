@@ -13,9 +13,9 @@ const handleError = (res, error, defaultStatus = 500) => {
 // ========== CREATE ==========
 module.exports.createJobApplication = async (req, res) => {
   try {
-    // Only accept: profile, post, company, applicationMessage, cvAnalysis
+    // Only accept: profile, post, company, cvAnalysis
     // matchScore is NOT accepted and will be calculated automatically
-    const { profile, post, company, applicationMessage, cvAnalysis } = req.body;
+    const { profile, post, company, cvAnalysis } = req.body;
 
     // Validation
     if (!profile || !post || !company) {
@@ -29,7 +29,6 @@ module.exports.createJobApplication = async (req, res) => {
       profile,
       post,
       company,
-      applicationMessage: applicationMessage || "",
       cvAnalysis: cvAnalysis || null,
       // matchScore will be calculated automatically - DO NOT SET IT HERE
     };

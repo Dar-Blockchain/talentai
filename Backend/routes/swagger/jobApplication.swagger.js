@@ -455,10 +455,6 @@ module.exports = {
           default: "applied",
           description: "Current application status"
         },
-        applicationMessage: {
-          type: "string",
-          description: "Candidate's message when applying"
-        },
         matchScore: {
           type: "number",
           minimum: 0,
@@ -542,10 +538,6 @@ module.exports = {
         cvAnalysis: {
           type: "string",
           description: "CV analysis ID (optional)"
-        },
-        applicationMessage: {
-          type: "string",
-          description: "Optional message from candidate"
         }
       }
     },

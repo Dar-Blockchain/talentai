@@ -39,11 +39,6 @@ const jobApplicationSchema = new mongoose.Schema(
       index: true,
       description: "Current status of the application"
     },
-    applicationMessage: {
-      type: String,
-      required: false,
-      description: "Optional message from candidate when applying"
-    },
     matchScore: {
       type: Number,
       min: 0,
