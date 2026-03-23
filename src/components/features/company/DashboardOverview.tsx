@@ -70,8 +70,8 @@ const fmtDay = (d: string) => {
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-const Card: React.FC<{ children: React.ReactNode; sx?: object }> = ({ children, sx }) => (
-  <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", ...sx }}>
+const Card: React.FC<{ children: React.ReactNode; sx?: object; [key: string]: any }> = ({ children, sx, ...rest }) => (
+  <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", ...sx }} {...rest}>
     {children}
   </Box>
 );
@@ -163,7 +163,7 @@ const DashboardOverview: React.FC = () => {
           const value = raw != null ? `${raw}${stat.suffix || ""}` : "—";
           return (
             <motion.div key={stat.key} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
-              <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }}>
+              <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : stat.key === "activeCampaigns" ? "campaigns" : ""}`}>
                 <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
                   <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: stat.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <stat.icon sx={{ fontSize: 20, color: stat.color }} />
@@ -191,7 +191,7 @@ const DashboardOverview: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 2fr" }, gap: 2.5 }}>
 
         {/* Interview Trend — 30 days */}
-        <Card>
+        <Card data-tour="chart-trend">
           <CardHeader title="Interview Activity" subtitle="Interviews conducted over the last 30 days" />
           <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
             {richLoading ? (
@@ -277,7 +277,7 @@ const DashboardOverview: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
 
         {/* Top Jobs */}
-        <Card>
+        <Card data-tour="top-jobs">
           <CardHeader title="Top Job Posts" subtitle="By number of interviews conducted" action={<ViewAll onClick={() => router.push("/company/posts")} />} />
           <Box sx={{ px: 3, py: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
             {richLoading ? (
@@ -352,7 +352,7 @@ const DashboardOverview: React.FC = () => {
       </Box>
 
       {/* ══ Row 4: Job Posts ════════════════════════════════════════════════ */}
-      <Card>
+      <Card data-tour="job-posts">
         <CardHeader
           title="Job Posts"
           subtitle={postsLoading ? "Loading..." : `${recentPosts.length} recent posts`}

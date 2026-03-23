@@ -66,8 +66,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <HeaderChat />
-        <HeaderNotification />
+        <Box data-tour="header-chat"><HeaderChat /></Box>
+        <Box data-tour="header-notif"><HeaderNotification /></Box>
         <UserHeader companyName={companyName} companyInitial={companyInitial} />
       </Box>
     </Box>
