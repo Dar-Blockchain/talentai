@@ -123,6 +123,17 @@ module.exports.getJobAssessmentsBySkill = async (req, res) => {
   }
 };
 
+module.exports.getRichStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    if (!userId) return res.status(400).json({ success: false, message: 'User ID missing' });
+    const data = await dashboardService.getRichStats(userId);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports.downloadUserExcel = async (req, res) => {
   try {
     // Appeler le service pour générer le fichier Excel

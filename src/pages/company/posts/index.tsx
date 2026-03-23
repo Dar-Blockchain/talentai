@@ -62,7 +62,7 @@ const PostsPage: React.FC = () => {
     : sortBy; // "newest" | "oldest" pass through
 
   const load = useCallback(() => {
-    dispatch(fetchMyPosts({ page, limit: 9, search, sort: apiSort, status: apiStatus }));
+    dispatch(fetchMyPosts({ page, limit: 8, search, sort: apiSort, status: apiStatus }));
   }, [dispatch, page, search, apiSort, apiStatus]);
 
   useEffect(() => { load(); }, [load]);
@@ -70,9 +70,9 @@ const PostsPage: React.FC = () => {
   // API handles all filtering + sorting server-side
   const filteredPosts = posts as any[];
 
-  const handleCopyLink = (id: string) => {
+  const handleCopyLink = (id: string, companyId?: string) => {
     navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${id}&ref=link`)
+      .writeText(`${window.location.origin}/interview/hr?jobId=${id}&companyId=${companyId}&ref=link`)
       .then(() => showToast({ message: "Interview link copied!", severity: "success" }))
       .catch(() => showToast({ message: "Failed to copy link", severity: "error" }));
   };

@@ -218,7 +218,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
               gap: { xs: 1.5, md: 2 },
             }}
           >
@@ -275,7 +275,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
+                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
                 gap: { xs: 1.5, md: 2 },
                 mb: pagination.totalPages > 1 ? 3 : 0,
               }}

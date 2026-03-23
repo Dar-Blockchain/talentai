@@ -30,6 +30,7 @@ router.get("/getCounts", dashboardController.getCounts);
 // GET /dashboard/statsCards
 // Description: Récupère les statistiques affichées sous forme de cartes sur le dashboard
 router.get("/statsCards", dashboardController.getStatsCards);
+router.get("/richStats", dashboardController.getRichStats);
 
 // GET /dashboard/getUserCountsByDay
 // Description: Récupère l'évolution journalière du nombre d'utilisateurs

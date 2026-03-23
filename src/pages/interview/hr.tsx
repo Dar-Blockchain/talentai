@@ -50,7 +50,6 @@ import {
   SecurityModals,
   InterviewTimer,
 } from '@/components/features/interview/start';
-import JobOverview from '@/components/features/interview/start/JobOverview';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
 import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
@@ -66,7 +65,7 @@ const IntelligentInterviewTest = () => {
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  const [step, setStep] = useState<'intro' | 'overview' | 'interview'>('intro');
+  const [step, setStep] = useState<'intro' | 'interview'>('intro');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(false);
@@ -247,8 +246,6 @@ const IntelligentInterviewTest = () => {
     jobData,
   });
 
-  const lastInterviewerMessage = audio.conversationHistory.filter(m => m.type !== 'system').slice(-1)[0] || null;
-
   const timer = useInterviewTimer({
     interviewStatus: socket.interviewStatus,
     onTimeUp: useCallback(() => { endInterviewRef.current(); }, []),
@@ -423,24 +420,8 @@ const IntelligentInterviewTest = () => {
         hasJobId={hasJobId}
         jobId={jobId}
         refParam={refParam}
-        totalSteps={hasJobId ? 3 : 2}
         jobData={jobData}
-        onNext={() => {
-          setStep(hasJobId ? 'overview' : 'interview');
-        }}
-      />
-    );
-  }
-
-  /* ── Step 2: Job Overview (only when jobId present) ── */
-  if (step === 'overview') {
-    return (
-      <JobOverview
-        jobData={jobData}
-        interviewConfig={interviewConfig}
-        pipelineLoading={pipelineLoading}
-        hasJobId={hasJobId}
-        onStart={() => setStep('interview')}
+        onNext={(_) => setStep('interview')}
       />
     );
   }
@@ -569,14 +550,22 @@ const IntelligentInterviewTest = () => {
             }}
           >
             {/* Question panel (full-width, active only) */}
-            {isActive && lastInterviewerMessage && (
-              <QuestionPanel
-                currentMessage={lastInterviewerMessage}
-                isInReadingTime={audio.isInReadingTime}
-                readingTimeLeft={audio.readingTimeLeft}
-                questionHighlight={audio.questionHighlight}
-              />
-            )}
+            {isActive && (() => {
+              const allMsgs = audio.conversationHistory.filter(m => m.type !== 'system');
+              const lastMsg = allMsgs.slice(-1)[0];
+              if (!lastMsg) return null;
+              const qCount = audio.conversationHistory.filter(m => m.type === 'question' || m.type === 'follow_up').length;
+              const isQuestion = lastMsg.type === 'question' || lastMsg.type === 'follow_up';
+              return (
+                <QuestionPanel
+                  currentMessage={lastMsg}
+                  isInReadingTime={audio.isInReadingTime}
+                  readingTimeLeft={audio.readingTimeLeft}
+                  questionHighlight={audio.questionHighlight}
+                  questionNumber={isQuestion ? qCount : 0}
+                />
+              );
+            })()}
 
             {/* Two-column grid: camera LEFT · controls RIGHT */}
             <Box

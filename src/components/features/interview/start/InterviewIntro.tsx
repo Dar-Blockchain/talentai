@@ -1,20 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Typography, Container, Button, Divider, CircularProgress } from '@mui/material';
+import { Box, Typography, Container, Button, Chip, CircularProgress } from '@mui/material';
 import { AppDispatch, RootState } from '@/store/store';
 import { registerApplicant, selectRegisterLoading } from '@/store/slices/interviewApplicantSlice';
 import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
-import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
-import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Header from '@/components/layout/Header';
 import { GlobalStyles } from './styles';
 
-const PURPLE = 'rgba(163,98,239,1)';
-const PURPLE_DARK = '#8310FF';
+const PURPLE = '#8310FF';
 const PURPLE_BG = 'rgba(244,235,255,1)';
 const PURPLE_BORDER = 'rgba(189,133,255,0.35)';
 
@@ -30,39 +29,16 @@ interface InterviewIntroProps {
   hasJobId: boolean;
   jobId?: string;
   refParam?: string;
-  totalSteps: number;
+  totalSteps?: number;
   jobData?: any;
   onNext: (applicantData: ApplicantData) => void;
 }
 
-const steps = [
-  {
-    icon: <PsychologyOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
-    title: 'AI-Powered Interview',
-    desc: 'Our AI interviewer will ask you questions about the position and your experience. It listens, understands context, and follows up naturally.',
-  },
-  {
-    icon: <QuizOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
-    title: 'Role-Specific Questions',
-    desc: 'Questions are built around the job requirements. The AI focuses on skills, responsibilities, and competencies relevant to this position.',
-  },
-  {
-    icon: <MicNoneOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
-    title: 'Video & Voice-Based Answers',
-    desc: 'Speak your answers naturally on camera — no typing needed. The AI records your video, transcribes your voice, and analyzes your responses automatically.',
-  },
-  {
-    icon: <TimerOutlinedIcon sx={{ fontSize: 20, color: PURPLE_DARK }} />,
-    title: 'Timed Session',
-    desc: 'The interview has a set duration. A timer will be visible so you can pace yourself. Try to answer each question within 2–3 minutes.',
-  },
-];
-
 const tips = [
   'Find a quiet place with good lighting',
-  'Make sure your microphone and camera are working',
-  'Speak clearly and take your time to think before answering',
-  'You can ask the AI to repeat or clarify a question',
+  'Ensure mic & camera are working',
+  'Speak clearly — take time to think',
+  'You can ask the AI to repeat a question',
 ];
 
 const InterviewIntro: React.FC<InterviewIntroProps> = ({
@@ -78,30 +54,22 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  // Auto-register applicant on mount (no form needed — use logged-in user data)
   const registered = useRef(false);
   useEffect(() => {
     if (!jobId || registered.current) return;
     registered.current = true;
-
     const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
     const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
     const email = authUser?.email || profile?.email || '';
-
     const payload: Parameters<typeof registerApplicant>[0] = { jobId, firstName, lastName, email };
     if (refParam) payload.ref = refParam;
-
     dispatch(registerApplicant(payload));
-    // We intentionally don't await here — registration is fire-and-forget at mount
-    // The applicantId is picked up in handleNext via the store
   }, [jobId]);
 
   const handleNext = async () => {
     const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
     const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
     const email = authUser?.email || profile?.email || '';
-
-    // If not yet registered (e.g. dispatch still in flight), dispatch now and wait
     if (!registered.current) {
       registered.current = true;
       const payload: Parameters<typeof registerApplicant>[0] = { jobId: jobId!, firstName, lastName, email };
@@ -116,53 +84,40 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
 
   const duration = interviewConfig?.sessionSettings?.duration || 20;
 
-  // When there's a job post, show the actual job title instead of a generic type label
-  const jobTitle = jobData?.jobDetails?.title || jobData?.title;
-  const jobCompany = jobData?.companyName || '';
-  const interviewType = jobTitle
-    ? jobTitle
-    : interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW'
-    ? 'Technical Interview'
-    : interviewConfig?.interviewType === 'ASSESSMENT'
-    ? 'Soft Skills Assessment'
-    : interviewConfig?.interviewType === 'EVALUATION'
-    ? 'Psychotechnic Assessment'
-    : 'HR Interview';
+  // Job data
+  const jd = jobData?.jobDetails;
+  const jobTitle = jd?.title || jobData?.title || interviewConfig?.context?.targetRole
+    || (interviewConfig?.interviewType === 'TECHNICAL_INTERVIEW' ? 'Technical Interview'
+      : interviewConfig?.interviewType === 'ASSESSMENT' ? 'Soft Skills Assessment'
+      : interviewConfig?.interviewType === 'EVALUATION' ? 'Psychotechnic Assessment'
+      : 'HR Interview');
+  const company = jobData?.companyName || interviewConfig?.context?.targetCompany || '';
+  const location = jd?.location || '';
+  const contractType = jd?.employmentType || '';
+  const workMode = jd?.workMode || '';
+  const experienceLevel = jd?.experienceLevel || interviewConfig?.context?.experienceLevel || '';
+  const skills: string[] = (jobData?.skillAnalysis?.requiredSkills || []).map((s: any) => s.name).filter(Boolean).slice(0, 6);
+  const description = jd?.description || '';
 
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
       <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
         <Header />
-        <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
+        <Container maxWidth="md" sx={{ py: { xs: 3, md: 4 } }}>
 
-          {/* Step indicator */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-            {/* Step 1 — active */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>1</Typography>
-                </Box>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: PURPLE, whiteSpace: 'nowrap' }}>Introduction</Typography>
+          {/* Step indicator — 2 steps */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+              <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: PURPLE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>1</Typography>
               </Box>
-              <Box sx={{ flex: 1, height: 1, bgcolor: '#E5E7EB', mx: 2 }} />
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.78rem', color: PURPLE, whiteSpace: 'nowrap' }}>Overview</Typography>
             </Box>
-            {hasJobId && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                  <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'transparent', border: '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography sx={{ color: '#9CA3AF', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>2</Typography>
-                  </Box>
-                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '0.78rem', color: '#9CA3AF', whiteSpace: 'nowrap' }}>Job Overview</Typography>
-                </Box>
-                <Box sx={{ flex: 1, height: 1, bgcolor: '#E5E7EB', mx: 2 }} />
-              </Box>
-            )}
-            {/* Last step — pending */}
+            <Box sx={{ flex: 1, height: 1, bgcolor: '#E5E7EB', mx: 2 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
               <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'transparent', border: '2px solid #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ color: '#9CA3AF', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>{hasJobId ? 3 : 2}</Typography>
+                <Typography sx={{ color: '#9CA3AF', fontWeight: 700, fontSize: '0.68rem', fontFamily: 'Poppins' }}>2</Typography>
               </Box>
               <Typography sx={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '0.78rem', color: '#9CA3AF', whiteSpace: 'nowrap' }}>AI Interview</Typography>
             </Box>
@@ -172,96 +127,139 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
           <Box sx={{ bgcolor: '#fff', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
 
             {/* Header */}
-            <Box sx={{ px: { xs: 3, md: 4 }, pt: 3.5, pb: 2.5, borderBottom: '1px solid rgba(232,232,232,1)' }}>
+            <Box sx={{ px: { xs: 3, md: 4 }, pt: 3, pb: 2.5, borderBottom: '1px solid #F3F4F6' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: '10px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <VideocamOutlinedIcon sx={{ color: PURPLE_DARK, fontSize: 22 }} />
+                <Box sx={{ width: 42, height: 42, borderRadius: '10px', bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <VideocamOutlinedIcon sx={{ color: PURPLE, fontSize: 20 }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#000', lineHeight: 1.25 }}>
-                    {interviewType}
+                  <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', lineHeight: 1.25 }}>
+                    {jobTitle}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.3 }}>
-                    <TimerOutlinedIcon sx={{ fontSize: 13, color: 'rgba(100,113,131,1)' }} />
-                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: 'rgba(100,113,131,1)' }}>
-                      {jobCompany ? `${jobCompany} · ` : ''}~{duration} minutes · AI-powered · Video & Voice
+                    <TimerOutlinedIcon sx={{ fontSize: 13, color: '#6B7280' }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.79rem', color: '#6B7280' }}>
+                      {company ? `${company} · ` : ''}~{duration} min · AI-powered · Video & Voice
                     </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Meta chips */}
+              {(location || contractType || workMode || experienceLevel) && (
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
+                  {location && (
+                    <Chip icon={<LocationOnOutlinedIcon />} label={location} size="small"
+                      sx={{ bgcolor: '#F9FAFB', color: '#374151', fontFamily: 'Poppins', fontSize: '0.72rem', border: '1px solid #E5E7EB', '& .MuiChip-icon': { color: '#6B7280 !important', fontSize: '14px !important' } }} />
+                  )}
+                  {contractType && (
+                    <Chip icon={<BusinessCenterOutlinedIcon />} label={contractType} size="small"
+                      sx={{ bgcolor: '#F9FAFB', color: '#374151', fontFamily: 'Poppins', fontSize: '0.72rem', border: '1px solid #E5E7EB', '& .MuiChip-icon': { color: '#6B7280 !important', fontSize: '14px !important' } }} />
+                  )}
+                  {workMode && (
+                    <Chip label={workMode} size="small"
+                      sx={{ bgcolor: '#F9FAFB', color: '#374151', fontFamily: 'Poppins', fontSize: '0.72rem', border: '1px solid #E5E7EB' }} />
+                  )}
+                  {experienceLevel && (
+                    <Chip label={experienceLevel} size="small"
+                      sx={{ bgcolor: PURPLE_BG, color: PURPLE, fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem', border: `1px solid ${PURPLE_BORDER}` }} />
+                  )}
+                </Box>
+              )}
+            </Box>
+
+            {/* Body — two columns on md+ */}
+            <Box sx={{ px: { xs: 3, md: 4 }, py: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 3, md: 4 } }}>
+
+              {/* LEFT: About the role / skills */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {description && (
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1 }}>
+                      About the role
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#4B5563', lineHeight: 1.65 }}>
+                      {description.length > 280 ? description.slice(0, 280) + '…' : description}
+                    </Typography>
+                  </Box>
+                )}
+                {skills.length > 0 && (
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1 }}>
+                      Key skills
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                      {skills.map((s, i) => (
+                        <Chip key={i} label={s} size="small"
+                          sx={{ bgcolor: PURPLE_BG, color: PURPLE, border: `1px solid ${PURPLE_BORDER}`, fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.72rem' }} />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+                {!description && !skills.length && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, bgcolor: '#F9FAFB', borderRadius: '10px', border: '1px solid #F3F4F6' }}>
+                    <MicNoneOutlinedIcon sx={{ color: PURPLE, fontSize: 20, flexShrink: 0 }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#4B5563', lineHeight: 1.6 }}>
+                      Answer questions via voice & video. The AI will adapt based on your responses.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* RIGHT: Before you start */}
+              <Box>
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.83rem', color: '#111827', mb: 1.25 }}>
+                  Before you start
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {tips.map((tip, i) => (
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CheckCircleOutlineIcon sx={{ fontSize: 16, color: PURPLE, flexShrink: 0 }} />
+                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.79rem', color: '#4B5563' }}>{tip}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Interview format pills */}
+                <Box sx={{ mt: 2.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, px: 1.25, py: 0.5, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+                    <VideocamOutlinedIcon sx={{ fontSize: 14, color: '#6B7280' }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#374151' }}>Video</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, px: 1.25, py: 0.5, bgcolor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+                    <MicNoneOutlinedIcon sx={{ fontSize: 14, color: '#6B7280' }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: '#374151' }}>Voice</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, px: 1.25, py: 0.5, bgcolor: PURPLE_BG, border: `1px solid ${PURPLE_BORDER}`, borderRadius: '8px' }}>
+                    <TimerOutlinedIcon sx={{ fontSize: 14, color: PURPLE }} />
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.72rem', color: PURPLE, fontWeight: 600 }}>{duration} min</Typography>
                   </Box>
                 </Box>
               </Box>
             </Box>
 
-            {/* Body */}
-            <Box sx={{ px: { xs: 3, md: 4 }, py: 3.5, display: 'flex', flexDirection: 'column', gap: 3.5 }}>
-
-              {/* How it works */}
-              <Box>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.95rem', color: '#000', mb: 2, position: 'relative', display: 'inline-block', '&::after': { content: '""', position: 'absolute', bottom: -4, left: 0, width: 28, height: 3, bgcolor: PURPLE_DARK, borderRadius: 1 } }}>
-                  How it works
-                </Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5, mt: 0.5 }}>
-                  {steps.map((s, i) => (
-                    <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 2, borderRadius: '10px', bgcolor: '#F9FAFB', border: '1px solid #F3F4F6' }}>
-                      <Box sx={{ width: 32, height: 32, borderRadius: '8px', flexShrink: 0, bgcolor: '#fff', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {s.icon}
-                      </Box>
-                      <Box>
-                        <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: '#111827', mb: 0.3 }}>{s.title}</Typography>
-                        <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.76rem', color: '#6b7280', lineHeight: 1.55 }}>{s.desc}</Typography>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-
-              {/* Tips */}
-              <Box sx={{ bgcolor: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '10px', p: 2.5 }}>
-                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.85rem', color: '#000', mb: 1.5 }}>
-                  Before you start
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.9 }}>
-                  {tips.map((tip, i) => (
-                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CheckCircleOutlineIcon sx={{ fontSize: 16, color: PURPLE_DARK, flexShrink: 0 }} />
-                      <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: 'rgba(84,98,116,1)' }}>{tip}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-
-              <Divider sx={{ borderColor: 'rgba(232,232,232,1)' }} />
-
-              {/* CTA */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  endIcon={submitting ? undefined : <ArrowForwardIcon />}
-                  onClick={handleNext}
-                  disabled={submitting}
-                  sx={{
-                    bgcolor: PURPLE_DARK,
-                    color: '#fff',
-                    fontFamily: 'Poppins',
-                    fontWeight: 600,
-                    fontSize: '0.86rem',
-                    px: 3.5,
-                    py: 1.15,
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    boxShadow: 'none',
-                    minWidth: 160,
-                    '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
-                    '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
-                  }}
-                >
-                  {submitting ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CircularProgress size={16} sx={{ color: '#fff' }} />
-                      <span>Please wait…</span>
-                    </Box>
-                  ) : hasJobId ? 'Next: Job Overview' : 'Start Interview'}
-                </Button>
-              </Box>
+            {/* Footer CTA */}
+            <Box sx={{ px: { xs: 3, md: 4 }, pb: 3, pt: 0.5, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #F3F4F6' }}>
+              <Button
+                variant="contained"
+                endIcon={submitting ? undefined : <ArrowForwardIcon />}
+                onClick={handleNext}
+                disabled={submitting}
+                sx={{
+                  bgcolor: PURPLE, color: '#fff', fontFamily: 'Poppins', fontWeight: 600,
+                  fontSize: '0.86rem', px: 3.5, py: 1.15, borderRadius: '8px',
+                  textTransform: 'none', boxShadow: 'none', minWidth: 160,
+                  '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
+                  '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
+                }}
+              >
+                {submitting ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={16} sx={{ color: '#fff' }} />
+                    <span>Please wait…</span>
+                  </Box>
+                ) : 'Start Interview'}
+              </Button>
             </Box>
           </Box>
         </Container>

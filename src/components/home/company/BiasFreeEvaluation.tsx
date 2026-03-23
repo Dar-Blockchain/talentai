@@ -9,7 +9,6 @@ const CALENDLY = "https://calendly.com/talent__ai/30min";
 
 const BULLETS = [
   "AI Video Interviews — No Scheduling Needed",
-  "Blockchain-Verified Credentials, Owned by Candidates",
   "Drag-&-Drop Pipeline, Live in 30 Minutes",
   "Auto-Ranked Shortlists — You Just Approve",
   "Pay-Per-Hire Credits, No Bloated Contracts",

@@ -25,10 +25,6 @@ const ROWS = [
     after:  "Smart matching surfaces best-fit candidates first",
   },
   {
-    before: "No verifiable candidate history",
-    after:  "Blockchain-verified credentials, fraud-proof",
-  },
-  {
     before: "Interviewer bias and inconsistency",
     after:  "Standardized AI evaluation — fair for every candidate",
   },

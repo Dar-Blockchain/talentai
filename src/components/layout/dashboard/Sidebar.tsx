@@ -140,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
             return (
               <Link key={item.id} href={item.href} passHref>
-                <ListItemButton
+                <ListItemButton data-tour={`nav-${item.id}`}
                   sx={{
                     borderRadius: 2,
                     mb: 0.5,
