@@ -70,9 +70,9 @@ const PostsPage: React.FC = () => {
   // API handles all filtering + sorting server-side
   const filteredPosts = posts as any[];
 
-  const handleCopyLink = (id: string) => {
+  const handleCopyLink = (id: string, companyId?: string) => {
     navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${id}&ref=link`)
+      .writeText(`${window.location.origin}/interview/hr?jobId=${id}&companyId=${companyId}&ref=link`)
       .then(() => showToast({ message: "Interview link copied!", severity: "success" }))
       .catch(() => showToast({ message: "Failed to copy link", severity: "error" }));
   };
