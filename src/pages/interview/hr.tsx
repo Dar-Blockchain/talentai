@@ -83,6 +83,19 @@ const IntelligentInterviewTest = () => {
     setStep('intro');
 
     const postId = router.query.jobId as string;
+
+    // Auto-create job application when candidate lands on the interview page
+    if (authUser) {
+      const token = Cookies.get('api_token');
+      if (token) {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ post: postId }),
+        }).catch(() => { /* non-blocking */ });
+      }
+    }
+
     setAssessmentChecking(true);
     dispatch(checkPostInterviewAssessment(postId)).then((result) => {
       if (checkPostInterviewAssessment.fulfilled.match(result)) {
