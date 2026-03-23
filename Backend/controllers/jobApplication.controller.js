@@ -13,23 +13,49 @@ const handleError = (res, error, defaultStatus = 500) => {
 // ========== CREATE ==========
 module.exports.createJobApplication = async (req, res) => {
   try {
-    // Only accept: profile, post, company, cvAnalysis
-    // matchScore is NOT accepted and will be calculated automatically
-    const { profile, post, company, cvAnalysis } = req.body;
+    const userId = req.user._id;
+    const { post: postId } = req.body;
 
-    // Validation
-    if (!profile || !post || !company) {
+    // Validation: only post is required
+    if (!postId) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: profile, post, company",
+        error: "Missing required field: post (postId)",
       });
     }
 
+    // Get candidate profile from current user
+    const Profile = require("../../models/Profile.model");
+    const profile = await Profile.findOne({ userId }).populate("cvAnalyses");
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        error: "Candidate profile not found for current user",
+      });
+    }
+
+    // Extract cvAnalysis from profile (use the most recent one)
+    const cvAnalysis = profile.cvAnalyses && profile.cvAnalyses.length > 0 
+      ? profile.cvAnalyses[profile.cvAnalyses.length - 1]._id 
+      : null;
+
+    // Get post and extract company from it
+    const Post = require("../../models/Post.model");
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: "Post not found",
+      });
+    }
+
+    const company = post.user; // Company is the user who created the post
+
     const applicationData = {
-      profile,
-      post,
+      profile: profile._id,
+      post: postId,
       company,
-      cvAnalysis: cvAnalysis || null,
+      cvAnalysis: cvAnalysis,
       // matchScore will be calculated automatically - DO NOT SET IT HERE
     };
 

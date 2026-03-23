@@ -26,13 +26,13 @@ module.exports = {
       post: {
         tags: ["Job Applications"],
         summary: "Create a new job application",
-        description: "Submit a new job application for a candidate. The matchScore will be calculated automatically by AI agent based on CV analysis and job requirements.",
+        description: "Submit a new job application. Profile is automatically extracted from authenticated user, company is automatically extracted from the job post. The matchScore will be calculated automatically by AI agent based on CV analysis and job requirements.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
             in: "body",
             name: "body",
-            description: "Job application data. Note: matchScore is calculated automatically and should NOT be provided.",
+            description: "Job application data. Only 'post' (job post ID) is required. Profile and cvAnalysis are extracted automatically from authenticated user, company is extracted from the job post. matchScore is calculated automatically.",
             required: true,
             schema: {
               $ref: "#/definitions/JobApplicationCreate"
@@ -521,23 +521,12 @@ module.exports = {
     },
     JobApplicationCreate: {
       type: "object",
-      required: ["profile", "post", "company"],
+      required: ["post"],
+      description: "Create job application - profile and cvAnalysis are extracted from authenticated user, company is extracted from the job post",
       properties: {
-        profile: {
-          type: "string",
-          description: "Candidate profile ID"
-        },
         post: {
           type: "string",
           description: "Job post ID"
-        },
-        company: {
-          type: "string",
-          description: "Company user ID"
-        },
-        cvAnalysis: {
-          type: "string",
-          description: "CV analysis ID (optional)"
         }
       }
     },
