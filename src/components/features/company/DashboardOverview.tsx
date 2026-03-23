@@ -8,7 +8,6 @@ import { fetchMyPosts, selectMyPosts, selectMyPostsLoading } from "@/store/slice
 import { fetchDashboardStats, selectDashboardStats, selectDashboardStatsLoading, fetchRichStats, selectRichStats, selectRichStatsLoading } from "@/store/slices/companySlice";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
@@ -26,10 +25,10 @@ const TEAL_BG     = "#F0FDFA";
 const TEAL_BORDER = "#99F6E4";
 
 const STAT_CONFIG = [
-  { key: "totalEmployees",   label: "Team Members",       icon: PeopleOutlined,           color: "#8B5CF6", bg: "#F5F3FF" },
+  // { key: "totalEmployees",   label: "Team Members",       icon: PeopleOutlined,           color: "#8B5CF6", bg: "#F5F3FF" },
   { key: "avgInterviewScore",label: "Avg. Interview Score",icon: PsychologyOutlined,       color: "#3B82F6", bg: "#EFF6FF", suffix: "%" },
   { key: "activeJobPosts",   label: "Active Job Posts",   icon: WorkOutlined,             color: TEAL,      bg: TEAL_BG },
-  { key: "activeCampaigns",  label: "Active Campaigns",   icon: TrendingUpOutlined,        color: "#F59E0B", bg: "#FFFBEB" },
+  // { key: "activeCampaigns",  label: "Active Campaigns",   icon: TrendingUpOutlined,        color: "#F59E0B", bg: "#FFFBEB" },
 ];
 
 const VERDICT_STYLE: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
