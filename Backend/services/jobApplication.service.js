@@ -1,14 +1,93 @@
 const JobApplication = require("../models/JobApplication.model");
 const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
+const CVAnalysis = require("../models/CVAnalysis.model");
+const { calculateMatchScore } = require("./MatchingService/matching.service");
+
+// ========== CALCULATE MATCH SCORE (via AI Agent) ==========
+const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
+  try {
+    // Fetch candidate profile with all skills data
+    const profile = await Profile.findById(profileId).populate("userId", "firstName lastName email");
+    if (!profile) {
+      console.warn(`Profile not found: ${profileId}`);
+      return 0;
+    }
+
+    // Fetch job post with skill requirements
+    const post = await Post.findById(postId).populate("skillAnalysis");
+    if (!post) {
+      console.warn(`Post not found: ${postId}`);
+      return 0;
+    }
+
+    // Extract job skills from post skillAnalysis
+    const jobSkills = post.skillAnalysis?.skills || [];
+    const jobDetails = {
+      title: post.title,
+      description: post.description,
+      skillAnalysis: post.skillAnalysis,
+      salaryMin: post.salaryMin,
+      salaryMax: post.salaryMax,
+      currency: post.currency,
+      workMode: post.workMode,
+      contractType: post.contractType,
+    };
+
+    // Extract candidate skills from profile
+    const candidateSkills = profile.techSkills || [];
+    const candidateProfile = {
+      _id: profile._id,
+      userId: profile.userId,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      email: profile.email,
+      softSkills: profile.softSkills || [],
+      expectedSalaryMin: profile.expectedSalaryMin,
+      expectedSalaryMax: profile.expectedSalaryMax,
+      currency: profile.currency,
+      workMode: profile.workMode,
+      contractType: profile.contractType,
+      experience: profile.experience,
+    };
+
+    // Get matching configuration (if exists)
+    const MatchingConfig = require("../models/MatchingConfig.model");
+    const matchingConfig = await MatchingConfig.findOne({ company: companyId });
+    const configData = matchingConfig || { weights: {} };
+
+    // Calculate match score using AI matching algorithm
+    const matchResult = await calculateMatchScore(
+      jobSkills,
+      candidateSkills,
+      jobDetails,
+      candidateProfile,
+      companyId,
+      configData
+    );
+
+    const score = matchResult?.score || 0;
+    console.log(
+      `✅ Match Score calculated for ${candidateProfile.firstName} ${candidateProfile.lastName} on post "${post.title}": ${score}`
+    );
+
+    return score;
+  } catch (error) {
+    console.error("Error calculating match score:", error);
+    return 0; // Return 0 if calculation fails
+  }
+};
 
 // ========== CREATE ==========
 module.exports.createJobApplication = async (applicationData) => {
   try {
+    // Remove matchScore from applicationData if provided (it will be calculated)
+    const { matchScore: _, ...cleanData } = applicationData;
+
     // Check if application already exists
     const existing = await JobApplication.findOne({
-      profile: applicationData.profile,
-      post: applicationData.post,
+      profile: cleanData.profile,
+      post: cleanData.post,
       isWithdrawn: false,
     });
 
@@ -18,7 +97,18 @@ module.exports.createJobApplication = async (applicationData) => {
       throw error;
     }
 
-    const application = await JobApplication.create(applicationData);
+    // Calculate match score automatically using AI matching
+    const calculatedMatchScore = await calculateApplicationMatchScore(
+      cleanData.profile,
+      cleanData.post,
+      cleanData.company
+    );
+
+    // Add calculated match score to application data
+    cleanData.matchScore = calculatedMatchScore;
+    cleanData.status = "applied";
+
+    const application = await JobApplication.create(cleanData);
 
     // Populate references
     const populatedApplication = await JobApplication.findById(application._id)

@@ -26,13 +26,13 @@ module.exports = {
       post: {
         tags: ["Job Applications"],
         summary: "Create a new job application",
-        description: "Submit a new job application for a candidate",
+        description: "Submit a new job application for a candidate. The matchScore will be calculated automatically by AI agent based on CV analysis and job requirements.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
             in: "body",
             name: "body",
-            description: "Job application data",
+            description: "Job application data. Note: matchScore is calculated automatically and should NOT be provided.",
             required: true,
             schema: {
               $ref: "#/definitions/JobApplicationCreate"
@@ -41,12 +41,12 @@ module.exports = {
         ],
         responses: {
           201: {
-            description: "Job application created successfully",
+            description: "Job application created successfully. matchScore has been calculated by AI matching algorithm",
             schema: {
               type: "object",
               properties: {
                 success: { type: "boolean", example: true },
-                message: { type: "string", example: "Job application created successfully" },
+                message: { type: "string", example: "Job application created successfully (match score calculated by AI)" },
                 data: { $ref: "#/definitions/JobApplication" }
               }
             }
@@ -546,12 +546,6 @@ module.exports = {
         applicationMessage: {
           type: "string",
           description: "Optional message from candidate"
-        },
-        matchScore: {
-          type: "number",
-          minimum: 0,
-          maximum: 100,
-          description: "Match score (optional)"
         }
       }
     },

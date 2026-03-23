@@ -13,6 +13,8 @@ const handleError = (res, error, defaultStatus = 500) => {
 // ========== CREATE ==========
 module.exports.createJobApplication = async (req, res) => {
   try {
+    // Only accept: profile, post, company, applicationMessage, cvAnalysis
+    // matchScore is NOT accepted and will be calculated automatically
     const { profile, post, company, applicationMessage, cvAnalysis } = req.body;
 
     // Validation
@@ -29,7 +31,7 @@ module.exports.createJobApplication = async (req, res) => {
       company,
       applicationMessage: applicationMessage || "",
       cvAnalysis: cvAnalysis || null,
-      status: "applied",
+      // matchScore will be calculated automatically - DO NOT SET IT HERE
     };
 
     const application = await jobApplicationService.createJobApplication(
@@ -38,7 +40,7 @@ module.exports.createJobApplication = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Job application created successfully",
+      message: "Job application created successfully (match score calculated by AI)",
       data: application,
     });
   } catch (error) {
