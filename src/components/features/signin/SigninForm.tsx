@@ -6,6 +6,7 @@ import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { signinUser, verifyOTP } from "@/store/slices/authSlice";
+import { fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
@@ -120,6 +121,10 @@ const invitationEmail = useMemo(() => {
         });
         setLoading(false);
         return;
+      }
+      // Fetch permissions for employees before redirecting
+      if (response.user?.role === "Employee" && response.user?._id) {
+        await dispatch(fetchEmployeePermissions(response.user._id));
       }
       // Keep loading state active during redirect
       handleRedirectTo(response.user, response.profile);

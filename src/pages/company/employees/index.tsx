@@ -27,7 +27,7 @@ import {
   clearDeleteMemberSuccess,
   clearError,
   Member,
-  MemberRole,
+
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -43,13 +43,6 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
   "name-desc": { sortBy: "name", order: "desc" },
 };
 
-const roleMapping: Record<string, MemberRole> = {
-  hr: "RH",
-  technical_leader: "TechLead",
-  supervisor: "Supervisor",
-  manager: "Manager",
-  owner: "Owner",
-};
 
 const EmployeesPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -141,8 +134,7 @@ const EmployeesPage: React.FC = () => {
   }, [deleteMemberSuccess, dispatch, showToast, doFetch]);
 
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
-    const apiRole = roleMapping[role] || "RH";
-    const result = await dispatch(addEmployee({ email, role: apiRole, departmentId }));
+    const result = await dispatch(addEmployee({ email, role, departmentId }));
     if (addEmployee.rejected.match(result)) {
       const msg = (result.payload as string) || "Failed to send invitation";
       showToast({ message: msg, severity: "error" });

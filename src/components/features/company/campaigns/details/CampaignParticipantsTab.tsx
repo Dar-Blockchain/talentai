@@ -39,7 +39,7 @@ function pickGradient(str: string) {
 }
 
 const STATUS_CONFIG: Record<ParticipantStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  PENDING:     { label: "Pending",     color: "#6B7280", bg: "#F3F4F6", icon: RadioButtonUncheckedOutlined },
+  NOT_STARTED: { label: "Not Started", color: "#6B7280", bg: "#F3F4F6", icon: RadioButtonUncheckedOutlined },
   IN_PROGRESS: { label: "In Progress", color: "#D97706", bg: "#FFFBEB", icon: AccessTimeOutlined },
   COMPLETED:   { label: "Completed",   color: "#16A34A", bg: "#F0FDF4", icon: CheckCircleOutlined },
 };
@@ -85,7 +85,7 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId }) => {
   }, [dispatch, campaignId, debouncedSearch, page]);
 
   // status summary counts
-  const pendingCount     = participants.filter(p => p.status === "PENDING").length;
+  const notStartedCount  = participants.filter(p => p.status === "NOT_STARTED").length;
   const inProgressCount  = participants.filter(p => p.status === "IN_PROGRESS").length;
   const completedCount   = participants.filter(p => p.status === "COMPLETED").length;
 
@@ -94,9 +94,9 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId }) => {
       {/* Summary pills */}
       {!loading && !error && total > 0 && (
         <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-          {(["PENDING", "IN_PROGRESS", "COMPLETED"] as ParticipantStatus[]).map((s) => {
+          {(["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] as ParticipantStatus[]).map((s) => {
             const cfg = STATUS_CONFIG[s];
-            const count = s === "PENDING" ? pendingCount : s === "IN_PROGRESS" ? inProgressCount : completedCount;
+            const count = s === "NOT_STARTED" ? notStartedCount : s === "IN_PROGRESS" ? inProgressCount : completedCount;
             const Icon = cfg.icon;
             return (
               <Box key={s} sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.6, borderRadius: "999px", bgcolor: cfg.bg, border: `1px solid ${cfg.color}25` }}>
@@ -156,18 +156,19 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId }) => {
           </Box>
         ) : (
           participants.map((p, i) => {
-            const name = (p.firstName && p.lastName)
-              ? `${p.firstName} ${p.lastName}`
-              : p.firstName || p.lastName || p.username || "Unknown";
-            const email  = p.email ?? "";
+            const emp    = p.employee;
+            const name   = (emp?.firstName && emp?.lastName)
+              ? `${emp.firstName} ${emp.lastName}`
+              : emp?.firstName || emp?.lastName || emp?.username || "Unknown";
+            const email  = emp?.email ?? p.email ?? "";
             const letter = name[0]?.toUpperCase() || "U";
-            const dept   = typeof p.department === "object" ? p.department?.name : (p.department ?? null);
-            const roleStr    = (p.role ?? "") as string;
+            const dept   = typeof emp?.department === "object" ? emp?.department?.name : (emp?.department ?? null);
+            const roleStr    = (emp?.role ?? "") as string;
             const roleEntry  = ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase());
             const roleColor  = roleEntry?.color ?? "#6B7280";
             const roleLabel  = (roleEntry?.label ?? roleStr) || "—";
             const RoleIcon   = roleEntry?.icon ?? null;
-            const statusCfg  = STATUS_CONFIG[p.status] ?? STATUS_CONFIG.PENDING;
+            const statusCfg  = STATUS_CONFIG[p.status] ?? STATUS_CONFIG.NOT_STARTED;
             const StatusIcon = statusCfg.icon;
 
             return (

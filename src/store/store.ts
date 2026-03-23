@@ -26,7 +26,6 @@ import chatReducer from './slices/chatSlice';
 import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
 import campaignReducer from './slices/campaignSlice';
-import participantReducer from './slices/participantSlice';
 import companyReducer from './slices/companySlice';
 import departmentReducer from './slices/departmentSlice';
 import interviewApplicantReducer from './slices/interviewApplicantSlice';
@@ -49,7 +48,6 @@ const rootReducer = combineReducers({
   admin: adminReducer,
   planLimits: planLimitsReducer,
   campaign: campaignReducer,
-  participant: participantReducer,
   company: companyReducer,
   department: departmentReducer,
   interviewApplicant: interviewApplicantReducer,

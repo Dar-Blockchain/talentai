@@ -30,7 +30,7 @@ export interface MemberResponse {
 export interface AddMemberPayload {
   accountId?: string; // Optional - kept for backwards compatibility but not used in new invitation API
   email: string;
-  role: MemberRole;
+  role: string;
   departmentId?: string;
 }
 
@@ -105,7 +105,7 @@ interface MemberState {
   resendingInvitation: boolean;
   cancellingInvitation: boolean;
   sharedAccountId: string | null;
-  currentInvitation: (Invitation & { organization?: { _id: string; name: string } }) | null;
+  currentInvitation: (Invitation & { emailExists?: boolean; organization?: { _id: string; name: string } }) | null;
   fetchingInvitationDetails: boolean;
   respondingToInvitation: boolean;
   invitationResponse: { success: boolean; action: 'accept' | 'reject' } | null;
@@ -118,6 +118,8 @@ interface MemberState {
   fetchingPermissions: boolean;
   updatingPermissions: boolean;
   permissionsError: string | null;
+  registeringWithInvitation: boolean;
+  registrationError: string | null;
 }
 
 const initialState: MemberState = {
@@ -149,6 +151,8 @@ const initialState: MemberState = {
   fetchingPermissions: false,
   updatingPermissions: false,
   permissionsError: null,
+  registeringWithInvitation: false,
+  registrationError: null,
 };
 
 // Add a new member (employee)
@@ -162,7 +166,7 @@ export const addEmployee = createAsyncThunk<
   try {
     console.log(`📡 [MemberSlice] Sending invitation via API...`);
 
-    const apiPayload: { email: string; role: MemberRole; departmentId?: string } = {
+    const apiPayload: { email: string; role: string; departmentId?: string } = {
       email: payload.email,
       role: payload.role,
       ...(payload.departmentId && { departmentId: payload.departmentId }),
@@ -377,22 +381,24 @@ export const cancelInvitation = createAsyncThunk<
 });
 
 // Respond to invitation (accept or reject)
+// For new users (no account): pass firstName + lastName → backend registers + accepts in one step
 export const respondToInvitation = createAsyncThunk<
-  { success: boolean; message: string },
-  { invitationId: string; action: 'accept' | 'reject'; token?: string },
+  { success: boolean; action: string; token?: string; user?: any },
+  { invitationId: string; action: 'accept' | 'reject'; token?: string; firstName?: string; lastName?: string },
   { rejectValue: string }
->("member/respondToInvitation", async ({ invitationId, action, token }, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] respondToInvitation CALLED with id: ${invitationId}, action: ${action}`);
+>("member/respondToInvitation", async ({ invitationId, action, token, firstName, lastName }, { rejectWithValue }) => {
   try {
-    console.log(`📡 [MemberSlice] Responding to invitation via API...`);
-    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, { action, ...(token && { token }) });
-    console.log(`✅ [MemberSlice] Invitation ${action}ed successfully`, response.data);
+    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, {
+      action,
+      ...(token && { token }),
+      ...(firstName && { firstName }),
+      ...(lastName && { lastName }),
+    });
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 404) {
       return rejectWithValue("Invitation not found or has expired");
     }
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || `An error occurred while ${action}ing invitation`);
   }
 });
@@ -457,6 +463,20 @@ export const updateEmployeePermissions = createAsyncThunk<
     return response.data.data || response.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to update permissions");
+  }
+});
+
+// Register as new user and accept invitation in one step
+export const acceptInvitationAsNewUser = createAsyncThunk<
+  { token: string; user: any },
+  { invitationId: string; token: string; firstName: string; lastName: string },
+  { rejectValue: string }
+>("member/acceptInvitationAsNewUser", async ({ invitationId, token, firstName, lastName }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post(`CompanyInvitation/registerAndAccept/${invitationId}`, { token, firstName, lastName });
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to accept invitation");
   }
 });
 
@@ -755,6 +775,18 @@ const memberSlice = createSlice({
       .addCase(updateEmployeePermissions.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
         state.updatingPermissions = false;
         state.permissionsError = action.payload || "An error occurred";
+      })
+      // Handle acceptInvitationAsNewUser
+      .addCase(acceptInvitationAsNewUser.pending, (state: MemberState) => {
+        state.registeringWithInvitation = true;
+        state.registrationError = null;
+      })
+      .addCase(acceptInvitationAsNewUser.fulfilled, (state: MemberState) => {
+        state.registeringWithInvitation = false;
+      })
+      .addCase(acceptInvitationAsNewUser.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.registeringWithInvitation = false;
+        state.registrationError = action.payload || "An error occurred";
       });
   },
 });
@@ -783,6 +815,8 @@ export const selectMembers = (state: RootState) => ({
   invitationResponse: state.member.invitationResponse,
   stats: state.member.stats,
   fetchingStats: state.member.fetchingStats,
+  registeringWithInvitation: state.member.registeringWithInvitation,
+  registrationError: state.member.registrationError,
 });
 
 export const selectCurrentMember       = (state: RootState) => state.member.currentMember;

@@ -140,18 +140,22 @@ export type CampaignModule =
 
 // ─── Participants ─────────────────────────────────────────────────────────────
 
-export type ParticipantStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
+export type ParticipantStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 
 export interface CampaignParticipant {
   _id: string;
-  firstName?: string;
-  lastName?: string;
-  username?: string;
-  email?: string;
-  role?: string;
-  department?: string | { _id?: string; name: string };
+  employee?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email?: string;
+    role?: string;
+    department?: string | { _id?: string; name: string };
+  };
+  email?: string; // for anonymous participants
   status: ParticipantStatus;
-  startedAt?: string;
+  accessedAt?: string;
   completedAt?: string;
   score?: number;
 }
