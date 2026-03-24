@@ -391,19 +391,14 @@ exports.updateCampaignStatus = async (req, res) => {
 };
 
 /**
- * Get all campaigns for the authenticated user (as a participant)
+ * Get all campaigns for a specific user (as a participant)
+ * userId can be passed as a URL parameter
  */
 exports.getUserCampaigns = async (req, res) => {
   try {
-    // Verify user is authenticated
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({
-        success: false,
-        error: "Unauthorized: User not authenticated",
-      });
-    }
 
-    const userId = req.user._id;
+    // Get userId from URL parameter, fallback to authenticated user's ID
+    const userId = req.params.userId 
     console.log(`🔍 Fetching campaigns for user ${userId}`);
     
     // Find all campaign participations for this user
