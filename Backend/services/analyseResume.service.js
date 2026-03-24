@@ -110,11 +110,14 @@ You are an expert CV/resume parser with deep knowledge of recruitment, ATS syste
 
 Read the attached CV carefully and extract all relevant information.
 
+IMPORTANT: All output values MUST be in English. If the CV is in another language, translate all text content to English.
+
 Rules:
 - Return ONLY one valid raw JSON object
 - No markdown
 - No explanation
 - No extra text
+- ALL VALUES MUST BE IN ENGLISH (translate if necessary)
 - If a value is missing, use:
   - "" for strings
   - [] for arrays
