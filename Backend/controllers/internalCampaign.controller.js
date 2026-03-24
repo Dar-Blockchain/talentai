@@ -25,7 +25,9 @@ const verifyOwnership = async (campaignId, companyId) => {
     throw error;
   }
   if (campaign.company._id.toString() !== companyId.toString()) {
-    const error = new Error("Unauthorized: You can only manage your own campaigns");
+    const error = new Error(
+      "Unauthorized: You can only manage your own campaigns",
+    );
     error.status = 403;
     throw error;
   }
@@ -53,8 +55,12 @@ exports.createInternalCampaign = async (req, res) => {
       participants, // Array of user IDs
     } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
-console.log(`📢 Creating campaign for company ${companyId} with title "${title}" and module type "${module?.type}"`);
-console.log(`📋 Received participant IDs: ${Array.isArray(participants) ? participants.join(", ") : "None"}`);
+    console.log(
+      `📢 Creating campaign for company ${companyId} with title "${title}" and module type "${module?.type}"`,
+    );
+    console.log(
+      `📋 Received participant IDs: ${Array.isArray(participants) ? participants.join(", ") : "None"}`,
+    );
     // `module` should be a single object describing the assessment module
     if (
       !title ||
@@ -91,7 +97,9 @@ console.log(`📋 Received participant IDs: ${Array.isArray(participants) ? part
     if (Array.isArray(participants) && participants.length > 0) {
       try {
         // Fetch all users to get their emails
-        const users = await User.find({ _id: { $in: participants } }).select("_id email");
+        const users = await User.find({ _id: { $in: participants } }).select(
+          "_id email",
+        );
         const userEmailMap = users.reduce((acc, user) => {
           acc[user._id.toString()] = user.email;
           return acc;
@@ -105,17 +113,24 @@ console.log(`📋 Received participant IDs: ${Array.isArray(participants) ? part
           status: "NOT_STARTED",
         }));
 
-        const createdParticipants = await CampaignParticipant.insertMany(campaignParticipantData);
-        console.log(`✅ Created ${participants.length} campaign participants with emails`);
+        const createdParticipants = await CampaignParticipant.insertMany(
+          campaignParticipantData,
+        );
+        console.log(
+          `✅ Created ${participants.length} campaign participants with emails`,
+        );
 
         // Add participant IDs to campaign
-        const participantIds = createdParticipants.map(p => p._id);
+        const participantIds = createdParticipants.map((p) => p._id);
         campaign.participants = participantIds;
         await campaign.save();
-        console.log(`✅ Updated campaign with ${participantIds.length} participant IDs`);
-
+        console.log(
+          `✅ Updated campaign with ${participantIds.length} participant IDs`,
+        );
       } catch (participantError) {
-        console.warn(`⚠️ Warning: Failed to create some participants: ${participantError.message}`);
+        console.warn(
+          `⚠️ Warning: Failed to create some participants: ${participantError.message}`,
+        );
         // Don't throw - campaign was created successfully, continue
       }
     }
@@ -139,7 +154,14 @@ console.log(`📋 Received participant IDs: ${Array.isArray(participants) ? part
 exports.getCompanyCampaigns = async (req, res) => {
   try {
     const companyId = req.user.profile;
-    const { status, type, targetDepartment, title, page = 1, limit = 10 } = req.query;
+    const {
+      status,
+      type,
+      targetDepartment,
+      title,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
     // Validate pagination parameters
     const pageNum = Math.max(1, parseInt(page) || 1);
@@ -160,7 +182,7 @@ exports.getCompanyCampaigns = async (req, res) => {
       companyId,
       pageNum,
       limitNum,
-      filters
+      filters,
     );
 
     res.status(200).json({
@@ -238,7 +260,8 @@ exports.getCampaignParticipants = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     // Get total count of matching participants
-    const totalParticipants = await CampaignParticipant.countDocuments(participantFilter);
+    const totalParticipants =
+      await CampaignParticipant.countDocuments(participantFilter);
 
     // Get paginated participants
     const participants = await CampaignParticipant.find(participantFilter)
@@ -420,7 +443,8 @@ exports.getUserCampaigns = async (req, res) => {
     const participations = await CampaignParticipant.find(participationFilter)
       .populate({
         path: "campaign",
-        select: "title description type status anonymityMode module deadline company",
+        select:
+          "title description type status anonymityMode module deadline company",
         populate: {
           path: "company",
           select: "name",
@@ -428,32 +452,42 @@ exports.getUserCampaigns = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    console.log(`📊 Found ${participations.length} total participations before filtering`);
+    console.log(
+      `📊 Found ${participations.length} total participations before filtering`,
+    );
 
     // Filter out participations where campaign is null (deleted campaign)
     // and apply campaign filters if specified
-    let filteredParticipations = participations
-      .filter((participation) => participation.campaign !== null);
+    let filteredParticipations = participations.filter(
+      (participation) => participation.campaign !== null,
+    );
 
     // Apply campaign filters
     if (Object.keys(campaignFilter).length > 0) {
-      filteredParticipations = filteredParticipations.filter((participation) => {
-        for (const [key, value] of Object.entries(campaignFilter)) {
-          if (participation.campaign[key] !== value) {
-            return false;
+      filteredParticipations = filteredParticipations.filter(
+        (participation) => {
+          for (const [key, value] of Object.entries(campaignFilter)) {
+            if (participation.campaign[key] !== value) {
+              return false;
+            }
           }
-        }
-        return true;
-      });
+          return true;
+        },
+      );
     }
 
-    console.log(`📋 After filtering: ${filteredParticipations.length} participations`);
+    console.log(
+      `📋 After filtering: ${filteredParticipations.length} participations`,
+    );
 
     // Get total count after filtering
     const totalParticipations = filteredParticipations.length;
 
     // Apply pagination
-    const paginatedParticipations = filteredParticipations.slice(skip, skip + limitNum);
+    const paginatedParticipations = filteredParticipations.slice(
+      skip,
+      skip + limitNum,
+    );
 
     // Extract campaigns and add participant status
     const campaigns = paginatedParticipations.map((participation) => ({
@@ -472,7 +506,9 @@ exports.getUserCampaigns = async (req, res) => {
       joinedAt: participation.createdAt,
     }));
 
-    console.log(`✅ Returning ${campaigns.length} valid campaigns (page ${pageNum})`);
+    console.log(
+      `✅ Returning ${campaigns.length} valid campaigns (page ${pageNum})`,
+    );
 
     res.status(200).json({
       success: true,
@@ -492,4 +528,3 @@ exports.getUserCampaigns = async (req, res) => {
     });
   }
 };
-
