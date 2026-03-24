@@ -203,7 +203,7 @@ const ApplicationsPage: React.FC = () => {
               const email = profile.contactInformation?.email || cv.email || "";
               const title = cv.title || "";
               const skills: string[] = cv.skills || profile.skills?.map((s: any) => s.name) || [];
-              const cvScore = cv.analysisScore ?? null;
+              const cvScore = app.matchScore ?? cv.analysisScore ?? null;
               const postTitle = app.post?.jobDetails?.title || "—";
               const status = (app.status || "applied").toLowerCase();
               const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;

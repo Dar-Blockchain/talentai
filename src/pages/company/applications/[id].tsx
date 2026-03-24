@@ -80,7 +80,7 @@ const ApplicationDetailPage: React.FC = () => {
   const skills: string[] = cv.skills || profile.skills?.map((s: any) => s.name) || [];
   const experience = cv.experience || [];
   const education = cv.education || [];
-  const cvScore = cv.analysisScore ?? null;
+  const cvScore = app?.matchScore ?? cv.analysisScore ?? null;
   const postTitle = app?.post?.jobDetails?.title || "—";
   const status = (app?.status || "applied").toLowerCase();
   const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;
