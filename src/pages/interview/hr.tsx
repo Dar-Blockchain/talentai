@@ -609,7 +609,7 @@ const IntelligentInterviewTest = () => {
                   connectionStatus={socket.connectionStatus}
                   cameraStatus={camera.cameraStatus}
                   agentState={audio.agentState}
-                  currentTranscript={audio.currentTranscript}
+                  currentTranscript={audio.accumulatedTranscript || audio.currentTranscript}
                   onStartInterview={startInterview}
                   onEndInterview={endInterview}
                   onViewResults={handleViewResults}
@@ -618,6 +618,7 @@ const IntelligentInterviewTest = () => {
                 <AgentStatusPanel
                   interviewStatus={socket.interviewStatus}
                   agentState={audio.agentState}
+                  isVoiceActive={audio.speechPhase === 'speaking'}
                   onSubmitAnswer={audio.sendAccumulatedAnswer}
                 />
               </Box>
