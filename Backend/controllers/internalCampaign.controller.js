@@ -457,9 +457,9 @@ exports.getUserCampaigns = async (req, res) => {
     );
 
     // Filter out participations where campaign is null (deleted campaign)
-    // and apply campaign filters if specified
+    // Exclude campaigns with DRAFT status by default
     let filteredParticipations = participations.filter(
-      (participation) => participation.campaign !== null,
+      (participation) => participation.campaign !== null && participation.campaign.status !== "DRAFT",
     );
 
     // Apply campaign filters
