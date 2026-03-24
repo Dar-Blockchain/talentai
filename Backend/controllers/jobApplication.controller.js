@@ -280,7 +280,7 @@ module.exports.getApplicationsByPost = async (req, res) => {
 module.exports.getApplicationsByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { page = 1, limit = 10, post, status, search } = req.query;
+    const { page = 1, limit = 10, post, status, search, candidateName, skills } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -293,6 +293,8 @@ module.exports.getApplicationsByCompany = async (req, res) => {
     if (post) filters.post = post;
     if (status) filters.status = status;
     if (search) filters.search = search;
+    if (candidateName) filters.candidateName = candidateName;
+    if (skills) filters.skills = Array.isArray(skills) ? skills : [skills];
 
     const result = await jobApplicationService.getApplicationsByCompany(
       companyId,

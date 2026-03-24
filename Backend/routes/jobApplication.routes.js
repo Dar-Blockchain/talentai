@@ -32,6 +32,7 @@ router.get("/", jobApplicationController.getAllJobApplications);
 router.get("/candidate/my", jobApplicationController.getApplicationsByCandidate);
 
 // GET /job-applications/company/my — Get all applications for authenticated company
+// Query params: page, limit, post (filter by post), status, search/candidateName (search by candidate name), skills (filter by skills)
 router.get("/company/my", jobApplicationController.getApplicationsByCompany);
 
 // GET /job-applications/company/my/stats — Get application statistics for authenticated company
