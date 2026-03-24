@@ -350,7 +350,7 @@ const DashboardOverview: React.FC = () => {
         </Card>
       </Box>
 
-      {/* ══ Row 4: Job Posts ════════════════════════════════════════════════ */}
+      {/* ══ Row 4: Job Posts ═══════════════════════════════════════════════ */}
       <Card data-tour="job-posts">
         <CardHeader
           title="Job Posts"

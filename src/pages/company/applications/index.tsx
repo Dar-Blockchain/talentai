@@ -1,0 +1,409 @@
+import React, { useEffect, useMemo, useState } from "react";
+import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
+import {
+  Box, Typography, Avatar, Chip, Skeleton, Pagination, Divider,
+  TextField, InputAdornment, MenuItem, Select, Button,
+} from "@mui/material";
+import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
+import EmailOutlined from "@mui/icons-material/EmailOutlined";
+import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
+import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
+import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
+import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import SearchOutlined from "@mui/icons-material/SearchOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import StarOutlined from "@mui/icons-material/StarOutlined";
+import TrendingUpOutlined from "@mui/icons-material/TrendingUp";
+import AssignmentIndOutlined from "@mui/icons-material/AssignmentIndOutlined";
+import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import Cookies from "js-cookie";
+
+const PAGE_SIZE = 8;
+const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
+
+const getInitials = (name: string) =>
+  name.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+
+const getCvUrl = (app: any): string | null => {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  // Try profile.resume first (e.g. "CvTalbiJassem_6.pdf")
+  if (app.profile?.resume) return `${base}images/Users/${app.profile.resume}`;
+  // Fallback to cvAnalysis.sourceUrl (e.g. "public/resume/cv.pdf")
+  if (app.cvAnalysis?.sourceUrl) {
+    const src = app.cvAnalysis.sourceUrl as string;
+    if (src.startsWith("http")) return src;
+    return `${base}${src.replace(/^public\//, "")}`;
+  }
+  return null;
+};
+
+const fmtDate = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  applied:     { bg: "#EFF6FF", color: "#2563EB" },
+  pending:     { bg: "#FFFBEB", color: "#D97706" },
+  shortlisted: { bg: "#F0FDF4", color: "#16A34A" },
+  accepted:    { bg: "#F0FDFA", color: "#0D9488" },
+  rejected:    { bg: "#FEF2F2", color: "#DC2626" },
+  withdrawn:   { bg: "#F3F4F6", color: "#6B7280" },
+};
+
+const ApplicationsPage: React.FC = () => {
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [postFilter, setPostFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+
+  useEffect(() => {
+    const token = Cookies.get("api_token");
+    if (!token) { setLoading(false); return; }
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/company/my`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        const list = Array.isArray(res) ? res : Array.isArray(res.data) ? res.data : [];
+        setApplications(list);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ── Derived metrics ────────────────────────────────────────────────────────
+  const metrics = useMemo(() => {
+    const total = applications.length;
+    const scores = applications.map((a) => a.cvAnalysis?.analysisScore).filter((s) => s != null) as number[];
+    const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+    const topScore = scores.length ? Math.max(...scores) : null;
+    const uniquePosts = new Set(applications.map((a) => a.post?._id)).size;
+    return { total, avgScore, topScore, uniquePosts };
+  }, [applications]);
+
+  // ── Unique post titles for filter ──────────────────────────────────────────
+  const postOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    applications.forEach((a) => {
+      if (a.post?._id) seen.set(a.post._id, a.post.jobDetails?.title || a.post.title || a.post._id);
+    });
+    return Array.from(seen.entries()).map(([id, title]) => ({ id, title }));
+  }, [applications]);
+
+  // ── Filter + sort ──────────────────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    let list = [...applications];
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((a) => {
+        const p = a.profile || {};
+        const cv = a.cvAnalysis || {};
+        const name = `${p.firstName || ""} ${p.lastName || ""} ${cv.name || ""}`.toLowerCase();
+        const skills = (cv.skills || []).join(" ").toLowerCase();
+        return name.includes(q) || skills.includes(q) || (cv.title || "").toLowerCase().includes(q);
+      });
+    }
+
+    if (statusFilter !== "all") {
+      list = list.filter((a) => (a.status || "applied").toLowerCase() === statusFilter);
+    }
+
+    if (postFilter !== "all") {
+      list = list.filter((a) => a.post?._id === postFilter);
+    }
+
+    if (sortBy === "newest") list.sort((a, b) => new Date(b.appliedAt || b.createdAt).getTime() - new Date(a.appliedAt || a.createdAt).getTime());
+    else if (sortBy === "oldest") list.sort((a, b) => new Date(a.appliedAt || a.createdAt).getTime() - new Date(b.appliedAt || b.createdAt).getTime());
+    else if (sortBy === "score-desc") list.sort((a, b) => (b.cvAnalysis?.analysisScore ?? 0) - (a.cvAnalysis?.analysisScore ?? 0));
+    else if (sortBy === "score-asc") list.sort((a, b) => (a.cvAnalysis?.analysisScore ?? 0) - (b.cvAnalysis?.analysisScore ?? 0));
+
+    return list;
+  }, [applications, search, statusFilter, postFilter, sortBy]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleFilterChange = (fn: () => void) => { fn(); setPage(1); };
+
+  const selectSx = {
+    fontSize: "0.82rem", height: 38, borderRadius: "10px",
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
+    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#D1D5DB" },
+  };
+
+  return (
+    <DashboardLayout>
+      <PageHeader
+        title="Applications"
+        subtitle={loading ? "Loading..." : `${applications.length} applicant${applications.length !== 1 ? "s" : ""}`}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/company/dashboard" },
+          { label: "Applications" },
+        ]}
+      />
+
+      {/* ── Metrics ── */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+        {[
+          { icon: PeopleOutlined, label: "Total Applicants", value: loading ? null : metrics.total, color: "#8310FF", bg: "rgba(131,16,255,0.08)" },
+          { icon: AssignmentIndOutlined, label: "Job Posts", value: loading ? null : metrics.uniquePosts, color: "#0D9488", bg: "#F0FDFA" },
+          { icon: StarOutlined, label: "Avg CV Score", value: loading ? null : metrics.avgScore != null ? `${metrics.avgScore}%` : "—", color: "#F59E0B", bg: "#FFFBEB" },
+          { icon: TrendingUpOutlined, label: "Top CV Score", value: loading ? null : metrics.topScore != null ? `${metrics.topScore}%` : "—", color: "#3B82F6", bg: "#EFF6FF" },
+        ].map(({ icon: Icon, label, value, color, bg }) => (
+          <Box key={label} sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2.5, display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ width: 42, height: 42, borderRadius: "10px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon sx={{ fontSize: 20, color }} />
+            </Box>
+            <Box>
+              {value === null ? <Skeleton variant="text" width={50} height={28} /> : (
+                <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{value}</Typography>
+              )}
+              <Typography sx={{ fontSize: "0.68rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.4 }}>{label}</Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      {/* ── Filters ── */}
+      <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", p: 2, mb: 2.5, display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
+        <TextField
+          placeholder="Search name, title, skills…"
+          size="small"
+          value={search}
+          onChange={(e) => handleFilterChange(() => setSearch(e.target.value))}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} /></InputAdornment>,
+            sx: { fontSize: "0.82rem", borderRadius: "10px", height: 38 },
+          }}
+          sx={{ flex: "1 1 220px", minWidth: 180, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" } }}
+        />
+
+        <Select value={statusFilter} onChange={(e) => handleFilterChange(() => setStatusFilter(e.target.value))} sx={{ ...selectSx, minWidth: 140 }}>
+          <MenuItem value="all" sx={{ fontSize: "0.82rem" }}>All Status</MenuItem>
+          {["applied", "shortlisted", "accepted", "rejected", "withdrawn"].map((s) => (
+            <MenuItem key={s} value={s} sx={{ fontSize: "0.82rem" }}>{s.charAt(0).toUpperCase() + s.slice(1)}</MenuItem>
+          ))}
+        </Select>
+
+        {postOptions.length > 0 && (
+          <Select value={postFilter} onChange={(e) => handleFilterChange(() => setPostFilter(e.target.value))} sx={{ ...selectSx, minWidth: 180, maxWidth: 240 }}>
+            <MenuItem value="all" sx={{ fontSize: "0.82rem" }}>All Job Posts</MenuItem>
+            {postOptions.map(({ id, title }) => (
+              <MenuItem key={id} value={id} sx={{ fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 240 }}>{title}</MenuItem>
+            ))}
+          </Select>
+        )}
+
+        <Select value={sortBy} onChange={(e) => handleFilterChange(() => setSortBy(e.target.value))} sx={{ ...selectSx, minWidth: 150 }}>
+          <MenuItem value="newest" sx={{ fontSize: "0.82rem" }}>Newest first</MenuItem>
+          <MenuItem value="oldest" sx={{ fontSize: "0.82rem" }}>Oldest first</MenuItem>
+          <MenuItem value="score-desc" sx={{ fontSize: "0.82rem" }}>Score: High → Low</MenuItem>
+          <MenuItem value="score-asc" sx={{ fontSize: "0.82rem" }}>Score: Low → High</MenuItem>
+        </Select>
+
+        {(search || statusFilter !== "all" || postFilter !== "all") && (
+          <Chip
+            label={`${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
+            size="small"
+            onDelete={() => { setSearch(""); setStatusFilter("all"); setPostFilter("all"); setPage(1); }}
+            sx={{ height: 28, fontSize: "0.75rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }}
+          />
+        )}
+      </Box>
+
+      {/* ── Cards ── */}
+      {loading ? (
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2.5 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Box key={i} sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                <Skeleton variant="circular" width={52} height={52} />
+                <Box><Skeleton variant="text" width={130} height={18} /><Skeleton variant="text" width={90} height={13} /></Box>
+              </Box>
+              <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 1.5 }} />
+              <Skeleton variant="rectangular" height={36} sx={{ borderRadius: 2 }} />
+            </Box>
+          ))}
+        </Box>
+      ) : paged.length === 0 ? (
+        <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", py: 12, textAlign: "center" }}>
+          <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
+            <WorkOutlineOutlined sx={{ fontSize: 32, color: "#9CA3AF" }} />
+          </Box>
+          <Typography sx={{ fontWeight: 600, color: "#374151", mb: 0.5 }}>No applications found</Typography>
+          <Typography variant="body2" sx={{ color: "#9CA3AF" }}>Try adjusting your filters</Typography>
+        </Box>
+      ) : (
+        <>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2.5 }}>
+            {paged.map((app: any, i: number) => {
+              const profile = app.profile || {};
+              const cv = app.cvAnalysis || {};
+              const name = profile.firstName && profile.lastName
+                ? `${profile.firstName} ${profile.lastName}`.trim()
+                : cv.name || "Candidate";
+              const email = profile.contactInformation?.email || cv.email || "";
+              const phone = profile.phone || cv.phone || "";
+              const location = profile.contactInformation?.location || cv.location || "";
+              const title = cv.title || "";
+              const summary = cv.summary || "";
+              const skills: string[] = cv.skills || profile.skills?.map((s: any) => s.name) || [];
+              const experience = cv.experience || [];
+              const education = cv.education || [];
+              const cvScore = cv.analysisScore ?? null;
+              const postTitle = app.post?.jobDetails?.title || "—";
+              const status = (app.status || "applied").toLowerCase();
+              const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;
+              const cvUrl = getCvUrl(app);
+
+              return (
+                <Box key={app._id || i} sx={{
+                  bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
+                  overflow: "hidden", display: "flex", flexDirection: "column",
+                  transition: "box-shadow 0.2s", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" },
+                }}>
+                  {/* Header */}
+                  <Box sx={{ p: 2.5, display: "flex", alignItems: "flex-start", gap: 2 }}>
+                    <Avatar sx={{ width: 52, height: 52, bgcolor: AVATAR_COLORS[((page - 1) * PAGE_SIZE + i) % AVATAR_COLORS.length], fontSize: "16px", fontWeight: 700, flexShrink: 0 }}>
+                      {getInitials(name)}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                        <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>{name}</Typography>
+                        <Chip label={status.charAt(0).toUpperCase() + status.slice(1)} size="small"
+                          sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color }} />
+                      </Box>
+                      {title && <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</Typography>}
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}>
+                        {email && <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}><EmailOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{email}</Typography></Box>}
+                        {phone && <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}><PhoneOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{phone}</Typography></Box>}
+                        {location && <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}><LocationOnOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{location}</Typography></Box>}
+                      </Box>
+                    </Box>
+                    {cvScore != null && (
+                      <Box sx={{ flexShrink: 0, textAlign: "center", bgcolor: cvScore >= 70 ? "rgba(5,150,105,0.08)" : cvScore >= 50 ? "rgba(217,119,6,0.08)" : "rgba(220,38,38,0.08)", borderRadius: "10px", px: 1.5, py: 0.75 }}>
+                        <Typography sx={{ fontSize: "1.2rem", fontWeight: 800, color: cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626", lineHeight: 1 }}>{cvScore}%</Typography>
+                        <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF", fontWeight: 600 }}>CV Score</Typography>
+                      </Box>
+                    )}
+                  </Box>
+
+                  <Divider />
+
+                  {summary && (
+                    <Box sx={{ px: 2.5, py: 1.75 }}>
+                      <Typography sx={{ fontSize: "0.78rem", color: "#4B5563", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {summary}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {experience.length > 0 && (
+                    <Box sx={{ px: 2.5, pb: 1.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
+                        <WorkOutlineOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>Experience</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
+                        {experience.slice(0, 2).map((exp: any, j: number) => (
+                          <Box key={j} sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                            <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65%" }}>{exp.company}</Typography>
+                            <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF", flexShrink: 0 }}>{exp.startDate}{exp.endDate ? ` – ${exp.endDate}` : ""}</Typography>
+                          </Box>
+                        ))}
+                        {experience.length > 2 && <Typography sx={{ fontSize: "0.68rem", color: "#8310FF" }}>+{experience.length - 2} more</Typography>}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {education.length > 0 && (
+                    <Box sx={{ px: 2.5, pb: 1.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
+                        <SchoolOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>Education</Typography>
+                      </Box>
+                      <Typography sx={{ fontSize: "0.78rem", color: "#374151", fontWeight: 500 }}>{education[0].degree}</Typography>
+                      <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>{education[0].institution}{education[0].year ? ` · ${education[0].year}` : ""}</Typography>
+                    </Box>
+                  )}
+
+                  {skills.length > 0 && (
+                    <Box sx={{ px: 2.5, pb: 1.75 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
+                        <CodeOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>Skills</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.6 }}>
+                        {skills.slice(0, 8).map((s: string) => (
+                          <Chip key={s} label={s} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 500, bgcolor: "#F3F4F6", color: "#374151" }} />
+                        ))}
+                        {skills.length > 8 && <Chip label={`+${skills.length - 8}`} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }} />}
+                      </Box>
+                    </Box>
+                  )}
+
+                  <Divider />
+
+                  <Box sx={{ px: 2.5, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#FAFAFA", gap: 1, flexWrap: "wrap" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+                        <WorkOutlineOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />
+                        <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{postTitle}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <CalendarTodayOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+                        <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>{fmtDate(app.appliedAt || app.createdAt)}</Typography>
+                      </Box>
+                    </Box>
+                    {cvUrl && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<DescriptionOutlined sx={{ fontSize: 15 }} />}
+                        onClick={() => window.open(cvUrl, "_blank")}
+                        sx={{
+                          textTransform: "none", fontWeight: 600, fontSize: "0.75rem",
+                          borderRadius: "8px", height: 30, px: 1.5, flexShrink: 0,
+                          color: "#8310FF", borderColor: "rgba(131,16,255,0.3)",
+                          bgcolor: "rgba(131,16,255,0.04)",
+                          "&:hover": { bgcolor: "rgba(131,16,255,0.1)", borderColor: "#8310FF" },
+                        }}
+                      >
+                        View CV
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, v) => { setPage(v); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                shape="rounded"
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    fontWeight: 500,
+                    "&.Mui-selected": { bgcolor: "rgba(131,16,255,0.1)", color: "#8310FF", fontWeight: 700 },
+                    "&:hover": { bgcolor: "#F3F4F6" },
+                  },
+                }}
+              />
+            </Box>
+          )}
+        </>
+      )}
+    </DashboardLayout>
+  );
+};
+
+export default ApplicationsPage;
