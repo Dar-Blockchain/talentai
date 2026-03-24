@@ -454,3 +454,27 @@ module.exports.getApplicationStats = async (req, res) => {
     handleError(res, error);
   }
 };
+
+// ========== GET METRICS ==========
+module.exports.getApplicationMetrics = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Company ID is required",
+      });
+    }
+
+    const metrics = await jobApplicationService.getApplicationMetrics(companyId);
+
+    res.status(200).json({
+      success: true,
+      message: "Application metrics retrieved successfully",
+      data: metrics,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};

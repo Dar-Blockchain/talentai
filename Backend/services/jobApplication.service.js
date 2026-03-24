@@ -622,3 +622,44 @@ module.exports.getApplicationStats = async (companyId, postId = null) => {
     throw error;
   }
 };
+
+module.exports.getApplicationMetrics = async (companyId) => {
+  try {
+    if (!companyId) {
+      const error = new Error("Company ID is required");
+      error.status = 400;
+      throw error;
+    }
+
+    const ObjectId = require("mongoose").Types.ObjectId;
+
+    // Get total applicants
+    const applicantsMetrics = await JobApplication.aggregate([
+      { $match: { company: new ObjectId(companyId) } },
+      {
+        $group: {
+          _id: null,
+          totalApplicants: { $sum: 1 },
+          avgCVScore: { $avg: "$matchScore" },
+          topCVScore: { $max: "$matchScore" },
+        },
+      },
+    ]);
+
+    // Get total job posts for this company
+    const Post = require("../models/Post.model");
+    const totalJobPosts = await Post.countDocuments({ user: new ObjectId(companyId) });
+
+    const metrics = applicantsMetrics[0] || {};
+
+    return {
+      totalApplicants: metrics.totalApplicants || 0,
+      totalJobPosts: totalJobPosts || 0,
+      avgCVScore: metrics.avgCVScore ? Math.round(metrics.avgCVScore) : 0,
+      topCVScore: metrics.topCVScore ? Math.round(metrics.topCVScore) : 0,
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
