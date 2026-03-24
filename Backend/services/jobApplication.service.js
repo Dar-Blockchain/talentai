@@ -633,30 +633,39 @@ module.exports.getApplicationMetrics = async (companyId) => {
 
     const ObjectId = require("mongoose").Types.ObjectId;
 
-    // Get total applicants
-    const applicantsMetrics = await JobApplication.aggregate([
+    // Get count of unique posts that have received applications
+    const postsWithApplications = await JobApplication.aggregate([
+      { $match: { company: new ObjectId(companyId) } },
+      {
+        $group: {
+          _id: "$post",
+        },
+      },
+      {
+        $count: "totalPosts",
+      },
+    ]);
+
+    // Get metrics for all applications
+    const applicationsMetrics = await JobApplication.aggregate([
       { $match: { company: new ObjectId(companyId) } },
       {
         $group: {
           _id: null,
-          totalApplicants: { $sum: 1 },
           avgCVScore: { $avg: "$matchScore" },
           topCVScore: { $max: "$matchScore" },
         },
       },
     ]);
 
-    // Get total job posts for this company
-    const Post = require("../models/Post.model");
-    const totalJobPosts = await Post.countDocuments({ user: new ObjectId(companyId) });
-
-    const metrics = applicantsMetrics[0] || {};
+    const totalPostsWithApplications = postsWithApplications.length > 0 ? postsWithApplications[0].totalPosts : 0;
+    const appMetrics = applicationsMetrics[0] || {};
 
     return {
-      totalApplicants: metrics.totalApplicants || 0,
-      totalJobPosts: totalJobPosts || 0,
-      avgCVScore: metrics.avgCVScore ? Math.round(metrics.avgCVScore) : 0,
-      topCVScore: metrics.topCVScore ? Math.round(metrics.topCVScore) : 0,
+      totalApplicants: totalPostsWithApplications,
+      totalJobPosts: totalPostsWithApplications,
+      avgCVScore: appMetrics.avgCVScore ? Math.round(appMetrics.avgCVScore) : 0,
+      topCVScore: appMetrics.topCVScore ? Math.round(appMetrics.topCVScore) : 0,
     };
   } catch (error) {
     error.status = error.status || 500;
