@@ -18,7 +18,9 @@ import StarOutlined from "@mui/icons-material/StarOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUp";
 import AssignmentIndOutlined from "@mui/icons-material/AssignmentIndOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
-import Cookies from "js-cookie";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store/store";
+import { fetchCompanyApplications, fetchCompanyApplicationMetrics } from "@/store/slices/jobApplicationSlice";
 
 const PAGE_SIZE = 8;
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
@@ -52,81 +54,48 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 const ApplicationsPage: React.FC = () => {
-  const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { applications, allApplications, metrics: fetchedMetrics, loading } = useSelector(
+    (state: RootState) => state.jobApplications
+  );
+
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [nameSearch, setNameSearch] = useState("");
+  const [skillSearch, setSkillSearch] = useState("");
   const [postFilter, setPostFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
 
+  // On mount: fetch metrics + initial applications
   useEffect(() => {
-    const token = Cookies.get("api_token");
-    if (!token) { setLoading(false); return; }
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/company/my`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        const list = Array.isArray(res) ? res : Array.isArray(res.data) ? res.data : [];
-        setApplications(list);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    dispatch(fetchCompanyApplicationMetrics());
+    dispatch(fetchCompanyApplications({}));
+  }, [dispatch]);
 
-  // ── Derived metrics ────────────────────────────────────────────────────────
-  const metrics = useMemo(() => {
-    const total = applications.length;
-    const scores = applications.map((a) => a.cvAnalysis?.analysisScore).filter((s) => s != null) as number[];
-    const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
-    const topScore = scores.length ? Math.max(...scores) : null;
-    const uniquePosts = new Set(applications.map((a) => a.post?._id)).size;
-    return { total, avgScore, topScore, uniquePosts };
-  }, [applications]);
+  // Re-fetch with API params on filter change (debounced 400ms for text, immediate for post)
+  useEffect(() => {
+    const params: { candidateName?: string; skill?: string; postId?: string } = {};
+    if (nameSearch.trim()) params.candidateName = nameSearch.trim();
+    if (skillSearch.trim()) params.skill = skillSearch.trim();
+    if (postFilter !== "all") params.postId = postFilter;
 
-  // ── Unique post titles for filter ──────────────────────────────────────────
+    const timer = setTimeout(() => {
+      dispatch(fetchCompanyApplications(params));
+      setPage(1);
+    }, nameSearch || skillSearch ? 400 : 0);
+
+    return () => clearTimeout(timer);
+  }, [nameSearch, skillSearch, postFilter, dispatch]);
+
+  // ── Unique post titles for filter (from full list) ─────────────────────────
   const postOptions = useMemo(() => {
     const seen = new Map<string, string>();
-    applications.forEach((a) => {
+    allApplications.forEach((a) => {
       if (a.post?._id) seen.set(a.post._id, a.post.jobDetails?.title || a.post.title || a.post._id);
     });
     return Array.from(seen.entries()).map(([id, title]) => ({ id, title }));
-  }, [applications]);
+  }, [allApplications]);
 
-  // ── Filter + sort ──────────────────────────────────────────────────────────
-  const filtered = useMemo(() => {
-    let list = [...applications];
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((a) => {
-        const p = a.profile || {};
-        const cv = a.cvAnalysis || {};
-        const name = `${p.firstName || ""} ${p.lastName || ""} ${cv.name || ""}`.toLowerCase();
-        const skills = (cv.skills || []).join(" ").toLowerCase();
-        return name.includes(q) || skills.includes(q) || (cv.title || "").toLowerCase().includes(q);
-      });
-    }
-
-    if (statusFilter !== "all") {
-      list = list.filter((a) => (a.status || "applied").toLowerCase() === statusFilter);
-    }
-
-    if (postFilter !== "all") {
-      list = list.filter((a) => a.post?._id === postFilter);
-    }
-
-    if (sortBy === "newest") list.sort((a, b) => new Date(b.appliedAt || b.createdAt).getTime() - new Date(a.appliedAt || a.createdAt).getTime());
-    else if (sortBy === "oldest") list.sort((a, b) => new Date(a.appliedAt || a.createdAt).getTime() - new Date(b.appliedAt || b.createdAt).getTime());
-    else if (sortBy === "score-desc") list.sort((a, b) => (b.cvAnalysis?.analysisScore ?? 0) - (a.cvAnalysis?.analysisScore ?? 0));
-    else if (sortBy === "score-asc") list.sort((a, b) => (a.cvAnalysis?.analysisScore ?? 0) - (b.cvAnalysis?.analysisScore ?? 0));
-
-    return list;
-  }, [applications, search, statusFilter, postFilter, sortBy]);
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(applications.length / PAGE_SIZE);
+  const paged = applications.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleFilterChange = (fn: () => void) => { fn(); setPage(1); };
 
@@ -150,10 +119,10 @@ const ApplicationsPage: React.FC = () => {
       {/* ── Metrics ── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
         {[
-          { icon: PeopleOutlined, label: "Total Applicants", value: loading ? null : metrics.total, color: "#8310FF", bg: "rgba(131,16,255,0.08)" },
-          { icon: AssignmentIndOutlined, label: "Job Posts", value: loading ? null : metrics.uniquePosts, color: "#0D9488", bg: "#F0FDFA" },
-          { icon: StarOutlined, label: "Avg CV Score", value: loading ? null : metrics.avgScore != null ? `${metrics.avgScore}%` : "—", color: "#F59E0B", bg: "#FFFBEB" },
-          { icon: TrendingUpOutlined, label: "Top CV Score", value: loading ? null : metrics.topScore != null ? `${metrics.topScore}%` : "—", color: "#3B82F6", bg: "#EFF6FF" },
+          { icon: PeopleOutlined, label: "Total Applicants", value: !fetchedMetrics ? null : fetchedMetrics.totalApplicants, color: "#8310FF", bg: "rgba(131,16,255,0.08)" },
+          { icon: AssignmentIndOutlined, label: "Job Posts", value: !fetchedMetrics ? null : fetchedMetrics.totalJobPosts, color: "#0D9488", bg: "#F0FDFA" },
+          { icon: StarOutlined, label: "Avg CV Score", value: !fetchedMetrics ? null : fetchedMetrics.avgCVScore ? `${fetchedMetrics.avgCVScore}%` : "—", color: "#F59E0B", bg: "#FFFBEB" },
+          { icon: TrendingUpOutlined, label: "Top CV Score", value: !fetchedMetrics ? null : fetchedMetrics.topCVScore ? `${fetchedMetrics.topCVScore}%` : "—", color: "#3B82F6", bg: "#EFF6FF" },
         ].map(({ icon: Icon, label, value, color, bg }) => (
           <Box key={label} sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2.5, display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ width: 42, height: 42, borderRadius: "10px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -172,23 +141,27 @@ const ApplicationsPage: React.FC = () => {
       {/* ── Filters ── */}
       <Box sx={{ bgcolor: "#fff", borderRadius: "14px", border: "1px solid #E5E7EB", p: 2, mb: 2.5, display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
         <TextField
-          placeholder="Search name, title, skills…"
+          placeholder="Search by candidate name…"
           size="small"
-          value={search}
-          onChange={(e) => handleFilterChange(() => setSearch(e.target.value))}
+          value={nameSearch}
+          onChange={(e) => handleFilterChange(() => setNameSearch(e.target.value))}
           InputProps={{
             startAdornment: <InputAdornment position="start"><SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} /></InputAdornment>,
             sx: { fontSize: "0.82rem", borderRadius: "10px", height: 38 },
           }}
-          sx={{ flex: "1 1 220px", minWidth: 180, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" } }}
+          sx={{ flex: "1 1 180px", minWidth: 160, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" } }}
         />
-
-        <Select value={statusFilter} onChange={(e) => handleFilterChange(() => setStatusFilter(e.target.value))} sx={{ ...selectSx, minWidth: 140 }}>
-          <MenuItem value="all" sx={{ fontSize: "0.82rem" }}>All Status</MenuItem>
-          {["applied", "shortlisted", "accepted", "rejected", "withdrawn"].map((s) => (
-            <MenuItem key={s} value={s} sx={{ fontSize: "0.82rem" }}>{s.charAt(0).toUpperCase() + s.slice(1)}</MenuItem>
-          ))}
-        </Select>
+        <TextField
+          placeholder="Filter by skill…"
+          size="small"
+          value={skillSearch}
+          onChange={(e) => handleFilterChange(() => setSkillSearch(e.target.value))}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><CodeOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} /></InputAdornment>,
+            sx: { fontSize: "0.82rem", borderRadius: "10px", height: 38 },
+          }}
+          sx={{ flex: "1 1 160px", minWidth: 140, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" } }}
+        />
 
         {postOptions.length > 0 && (
           <Select value={postFilter} onChange={(e) => handleFilterChange(() => setPostFilter(e.target.value))} sx={{ ...selectSx, minWidth: 180, maxWidth: 240 }}>
@@ -199,18 +172,11 @@ const ApplicationsPage: React.FC = () => {
           </Select>
         )}
 
-        <Select value={sortBy} onChange={(e) => handleFilterChange(() => setSortBy(e.target.value))} sx={{ ...selectSx, minWidth: 150 }}>
-          <MenuItem value="newest" sx={{ fontSize: "0.82rem" }}>Newest first</MenuItem>
-          <MenuItem value="oldest" sx={{ fontSize: "0.82rem" }}>Oldest first</MenuItem>
-          <MenuItem value="score-desc" sx={{ fontSize: "0.82rem" }}>Score: High → Low</MenuItem>
-          <MenuItem value="score-asc" sx={{ fontSize: "0.82rem" }}>Score: Low → High</MenuItem>
-        </Select>
-
-        {(search || statusFilter !== "all" || postFilter !== "all") && (
+        {(nameSearch || skillSearch || postFilter !== "all") && (
           <Chip
-            label={`${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
+            label={`${applications.length} result${applications.length !== 1 ? "s" : ""}`}
             size="small"
-            onDelete={() => { setSearch(""); setStatusFilter("all"); setPostFilter("all"); setPage(1); }}
+            onDelete={() => { setNameSearch(""); setSkillSearch(""); setPostFilter("all"); setPage(1); }}
             sx={{ height: 28, fontSize: "0.75rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }}
           />
         )}
