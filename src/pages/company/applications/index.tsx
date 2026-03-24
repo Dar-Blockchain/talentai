@@ -7,17 +7,15 @@ import {
 } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
-import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
-import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import StarOutlined from "@mui/icons-material/StarOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUp";
 import AssignmentIndOutlined from "@mui/icons-material/AssignmentIndOutlined";
-import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import CodeOutlined from "@mui/icons-material/CodeOutlined";
+import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardIos";
+import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store/store";
 import { fetchCompanyApplications, fetchCompanyApplicationMetrics } from "@/store/slices/jobApplicationSlice";
@@ -28,18 +26,6 @@ const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
 const getInitials = (name: string) =>
   name.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
-const getCvUrl = (app: any): string | null => {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  // Try profile.resume first (e.g. "CvTalbiJassem_6.pdf")
-  if (app.profile?.resume) return `${base}images/Users/${app.profile.resume}`;
-  // Fallback to cvAnalysis.sourceUrl (e.g. "public/resume/cv.pdf")
-  if (app.cvAnalysis?.sourceUrl) {
-    const src = app.cvAnalysis.sourceUrl as string;
-    if (src.startsWith("http")) return src;
-    return `${base}${src.replace(/^public\//, "")}`;
-  }
-  return null;
-};
 
 const fmtDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
@@ -54,6 +40,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 };
 
 const ApplicationsPage: React.FC = () => {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { applications, allApplications, metrics: fetchedMetrics, loading } = useSelector(
     (state: RootState) => state.jobApplications
@@ -214,135 +201,82 @@ const ApplicationsPage: React.FC = () => {
                 ? `${profile.firstName} ${profile.lastName}`.trim()
                 : cv.name || "Candidate";
               const email = profile.contactInformation?.email || cv.email || "";
-              const phone = profile.phone || cv.phone || "";
-              const location = profile.contactInformation?.location || cv.location || "";
               const title = cv.title || "";
-              const summary = cv.summary || "";
               const skills: string[] = cv.skills || profile.skills?.map((s: any) => s.name) || [];
-              const experience = cv.experience || [];
-              const education = cv.education || [];
               const cvScore = cv.analysisScore ?? null;
               const postTitle = app.post?.jobDetails?.title || "—";
               const status = (app.status || "applied").toLowerCase();
               const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;
-              const cvUrl = getCvUrl(app);
 
               return (
-                <Box key={app._id || i} sx={{
-                  bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
-                  overflow: "hidden", display: "flex", flexDirection: "column",
-                  transition: "box-shadow 0.2s", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" },
-                }}>
+                <Box
+                  key={app._id || i}
+                  onClick={() => router.push(`/company/applications/${app._id}`)}
+                  sx={{
+                    bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
+                    overflow: "hidden", display: "flex", flexDirection: "column",
+                    cursor: "pointer",
+                    transition: "box-shadow 0.2s, border-color 0.2s",
+                    "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.06)" },
+                  }}
+                >
                   {/* Header */}
-                  <Box sx={{ p: 2.5, display: "flex", alignItems: "flex-start", gap: 2 }}>
-                    <Avatar sx={{ width: 52, height: 52, bgcolor: AVATAR_COLORS[((page - 1) * PAGE_SIZE + i) % AVATAR_COLORS.length], fontSize: "16px", fontWeight: 700, flexShrink: 0 }}>
+                  <Box sx={{ p: 2.5, display: "flex", alignItems: "center", gap: 2 }}>
+                    <Avatar sx={{ width: 48, height: 48, bgcolor: AVATAR_COLORS[((page - 1) * PAGE_SIZE + i) % AVATAR_COLORS.length], fontSize: "15px", fontWeight: 700, flexShrink: 0 }}>
                       {getInitials(name)}
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                        <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>{name}</Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</Typography>
                         <Chip label={status.charAt(0).toUpperCase() + status.slice(1)} size="small"
-                          sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color }} />
+                          sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color, flexShrink: 0 }} />
                       </Box>
-                      {title && <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</Typography>}
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}>
-                        {email && <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}><EmailOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{email}</Typography></Box>}
-                        {phone && <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}><PhoneOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{phone}</Typography></Box>}
-                        {location && <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}><LocationOnOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.72rem", color: "#6B7280" }}>{location}</Typography></Box>}
-                      </Box>
+                      {title && <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</Typography>}
+                      {email && (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, mt: 0.3 }}>
+                          <EmailOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+                          <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{email}</Typography>
+                        </Box>
+                      )}
                     </Box>
                     {cvScore != null && (
                       <Box sx={{ flexShrink: 0, textAlign: "center", bgcolor: cvScore >= 70 ? "rgba(5,150,105,0.08)" : cvScore >= 50 ? "rgba(217,119,6,0.08)" : "rgba(220,38,38,0.08)", borderRadius: "10px", px: 1.5, py: 0.75 }}>
-                        <Typography sx={{ fontSize: "1.2rem", fontWeight: 800, color: cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626", lineHeight: 1 }}>{cvScore}%</Typography>
-                        <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF", fontWeight: 600 }}>CV Score</Typography>
+                        <Typography sx={{ fontSize: "1.1rem", fontWeight: 800, color: cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626", lineHeight: 1 }}>{cvScore}%</Typography>
+                        <Typography sx={{ fontSize: "0.6rem", color: "#9CA3AF", fontWeight: 600 }}>CV Score</Typography>
                       </Box>
                     )}
                   </Box>
 
                   <Divider />
 
-                  {summary && (
-                    <Box sx={{ px: 2.5, py: 1.75 }}>
-                      <Typography sx={{ fontSize: "0.78rem", color: "#4B5563", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                        {summary}
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {experience.length > 0 && (
-                    <Box sx={{ px: 2.5, pb: 1.5 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
-                        <WorkOutlineOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
-                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>Experience</Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
-                        {experience.slice(0, 2).map((exp: any, j: number) => (
-                          <Box key={j} sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                            <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65%" }}>{exp.company}</Typography>
-                            <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF", flexShrink: 0 }}>{exp.startDate}{exp.endDate ? ` – ${exp.endDate}` : ""}</Typography>
-                          </Box>
-                        ))}
-                        {experience.length > 2 && <Typography sx={{ fontSize: "0.68rem", color: "#8310FF" }}>+{experience.length - 2} more</Typography>}
-                      </Box>
-                    </Box>
-                  )}
-
-                  {education.length > 0 && (
-                    <Box sx={{ px: 2.5, pb: 1.5 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
-                        <SchoolOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
-                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>Education</Typography>
-                      </Box>
-                      <Typography sx={{ fontSize: "0.78rem", color: "#374151", fontWeight: 500 }}>{education[0].degree}</Typography>
-                      <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>{education[0].institution}{education[0].year ? ` · ${education[0].year}` : ""}</Typography>
-                    </Box>
-                  )}
-
+                  {/* Skills preview */}
                   {skills.length > 0 && (
-                    <Box sx={{ px: 2.5, pb: 1.75 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.75 }}>
-                        <CodeOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
-                        <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>Skills</Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.6 }}>
-                        {skills.slice(0, 8).map((s: string) => (
-                          <Chip key={s} label={s} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 500, bgcolor: "#F3F4F6", color: "#374151" }} />
-                        ))}
-                        {skills.length > 8 && <Chip label={`+${skills.length - 8}`} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }} />}
-                      </Box>
+                    <Box sx={{ px: 2.5, py: 1.25, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {skills.slice(0, 5).map((s: string) => (
+                        <Chip key={s} label={s} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 500, bgcolor: "#F3F4F6", color: "#374151" }} />
+                      ))}
+                      {skills.length > 5 && <Chip label={`+${skills.length - 5}`} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }} />}
                     </Box>
                   )}
 
                   <Divider />
 
-                  <Box sx={{ px: 2.5, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#FAFAFA", gap: 1, flexWrap: "wrap" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
-                        <WorkOutlineOutlined sx={{ fontSize: 13, color: "#9CA3AF", flexShrink: 0 }} />
-                        <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{postTitle}</Typography>
+                  {/* Footer */}
+                  <Box sx={{ px: 2.5, py: 1.25, display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#FAFAFA" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                        <WorkOutlineOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+                        <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{postTitle}</Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <CalendarTodayOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                        <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>{fmtDate(app.appliedAt || app.createdAt)}</Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                        <CalendarTodayOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                        <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{fmtDate(app.appliedAt || app.createdAt)}</Typography>
                       </Box>
                     </Box>
-                    {cvUrl && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<DescriptionOutlined sx={{ fontSize: 15 }} />}
-                        onClick={() => window.open(cvUrl, "_blank")}
-                        sx={{
-                          textTransform: "none", fontWeight: 600, fontSize: "0.75rem",
-                          borderRadius: "8px", height: 30, px: 1.5, flexShrink: 0,
-                          color: "#8310FF", borderColor: "rgba(131,16,255,0.3)",
-                          bgcolor: "rgba(131,16,255,0.04)",
-                          "&:hover": { bgcolor: "rgba(131,16,255,0.1)", borderColor: "#8310FF" },
-                        }}
-                      >
-                        View CV
-                      </Button>
-                    )}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.3, color: "#8310FF" }}>
+                      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600 }}>Details</Typography>
+                      <ArrowForwardOutlined sx={{ fontSize: 11 }} />
+                    </Box>
                   </Box>
                 </Box>
               );
