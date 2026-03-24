@@ -220,7 +220,7 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle }) => {
                       <Button
                         size="small"
                         startIcon={<AssessmentOutlined sx={{ fontSize: 15 }} />}
-                        onClick={() => router.push(`/company/assessment/${candidate.assessmentId}`)}
+                        onClick={() => router.push(`/company/interviews/${candidate.assessmentId}`)}
                         sx={{
                           textTransform: "none", fontWeight: 600, fontSize: "12px",
                           borderRadius: 2, height: 34, px: 2,
