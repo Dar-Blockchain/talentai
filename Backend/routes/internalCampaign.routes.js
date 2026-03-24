@@ -27,7 +27,7 @@ router.get(
 // user-specific endpoint to get campaigns they participate in
 // returns all campaigns where this user is a participant
 router.get(
-  "/user/my-campaigns",
+  "/employee/my",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.getUserCampaigns
