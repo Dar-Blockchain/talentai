@@ -6,17 +6,20 @@ import { InterviewStatus, AgentState } from '@/types/interview';
 interface AgentStatusPanelProps {
   interviewStatus: InterviewStatus;
   agentState: AgentState;
+  isVoiceActive?: boolean;
   onSubmitAnswer: () => void;
 }
 
 const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   interviewStatus,
   agentState,
+  isVoiceActive,
   onSubmitAnswer,
 }) => {
   if (interviewStatus !== 'active') return null;
 
   const isProcessing = agentState === 'thinking' || agentState === 'processing';
+  const isSpeaking = !!isVoiceActive;
 
   return (
     <Box sx={{ p: { xs: 1, md: 1.5 } }}>
@@ -24,8 +27,8 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
         variant="contained"
         fullWidth
         onClick={onSubmitAnswer}
-        disabled={isProcessing}
-        endIcon={!isProcessing && <SendIcon sx={{ fontSize: '16px !important' }} />}
+        disabled={isProcessing || isSpeaking}
+        endIcon={!isProcessing && !isSpeaking && <SendIcon sx={{ fontSize: '16px !important' }} />}
         sx={{
           fontFamily: 'Poppins',
           fontWeight: 700,
@@ -33,14 +36,14 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
           py: 1.4,
           borderRadius: '12px',
           textTransform: 'none',
-          bgcolor: isProcessing ? '#f3f4f6' : '#8310FF',
-          color: isProcessing ? '#9ca3af' : '#fff',
+          bgcolor: isProcessing || isSpeaking ? '#f3f4f6' : '#8310FF',
+          color: isProcessing || isSpeaking ? '#9ca3af' : '#fff',
           boxShadow: 'none',
-          '&:hover': { bgcolor: isProcessing ? '#f3f4f6' : '#6d0ee0', boxShadow: 'none' },
+          '&:hover': { bgcolor: isProcessing || isSpeaking ? '#f3f4f6' : '#6d0ee0', boxShadow: 'none' },
           '&.Mui-disabled': { bgcolor: '#f3f4f6', color: '#9ca3af', boxShadow: 'none' },
         }}
       >
-        {isProcessing ? 'Processing…' : 'Submit & Continue'}
+        {isProcessing ? 'Processing…' : isSpeaking ? 'Listening…' : 'Submit & Continue'}
       </Button>
     </Box>
   );
