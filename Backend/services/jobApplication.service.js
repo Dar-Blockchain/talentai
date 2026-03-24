@@ -16,20 +16,33 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
 
     // Fetch candidate profile with all skills data
     console.log(`\n🔍 Step 1: Fetching candidate profile...`);
-    const profile = await Profile.findById(profileId).populate("userId", "firstName lastName email");
+    const profile = await Profile.findById(profileId).populate(
+      "userId",
+      "firstName lastName email",
+    );
     if (!profile) {
       console.warn(`❌ Profile not found: ${profileId}`);
       return 0;
     }
-    console.log(`✅ Profile loaded: ${profile.firstName || "Unknown"} ${profile.lastName || ""}`);
+    console.log(
+      `✅ Profile loaded: ${profile.firstName || "Unknown"} ${profile.lastName || ""}`,
+    );
     console.log(`   └─ Technical Skills: ${profile.skills?.length || 0} found`);
     if (profile.skills && profile.skills.length > 0) {
-      console.log(`      Skills: ${profile.skills.map(s => `${s.name} (Lvl: ${s.Levelconfirmed})`).join(", ")}`);
+      console.log(
+        `      Skills: ${profile.skills.map((s) => `${s.name} (Lvl: ${s.Levelconfirmed})`).join(", ")}`,
+      );
     }
     console.log(`   └─ Soft Skills: ${profile.softSkills?.length || 0} found`);
-    console.log(`   └─ Salary Expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`);
-    console.log(`   └─ Work Mode Preference: ${profile.workModePreference || "Not specified"}`);
-    console.log(`   └─ Contract Type: ${profile.preferredContractType || "Not specified"}`);
+    console.log(
+      `   └─ Salary Expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`,
+    );
+    console.log(
+      `   └─ Work Mode Preference: ${profile.workModePreference || "Not specified"}`,
+    );
+    console.log(
+      `   └─ Contract Type: ${profile.preferredContractType || "Not specified"}`,
+    );
 
     // Fetch job post with skill requirements
     console.log(`\n🔍 Step 2: Fetching job post...`);
@@ -38,15 +51,29 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       console.warn(`❌ Post not found: ${postId}`);
       return 0;
     }
-    console.log(`✅ Job post loaded: "${post.jobDetails?.title || "Untitled"}"`);
-    console.log(`   └─ Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} found`);
+    console.log(
+      `✅ Job post loaded: "${post.jobDetails?.title || "Untitled"}"`,
+    );
+    console.log(
+      `   └─ Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} found`,
+    );
     if (post.skillAnalysis && post.skillAnalysis.requiredSkills) {
-      console.log(`      Skills: ${post.skillAnalysis.requiredSkills.map(s => `${s.name} (Lvl: ${s.level}, Weight: ${s.percentage}%)`).join(", ")}`);
+      console.log(
+        `      Skills: ${post.skillAnalysis.requiredSkills.map((s) => `${s.name} (Lvl: ${s.level}, Weight: ${s.percentage}%)`).join(", ")}`,
+      );
     }
-    console.log(`   └─ Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0}`);
-    console.log(`   └─ Salary Offered: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`);
-    console.log(`   └─ Work Mode: ${post.jobDetails?.workMode || "Not specified"}`);
-    console.log(`   └─ Employment Type: ${post.jobDetails?.employmentType || "Not specified"}`);
+    console.log(
+      `   └─ Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0}`,
+    );
+    console.log(
+      `   └─ Salary Offered: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`,
+    );
+    console.log(
+      `   └─ Work Mode: ${post.jobDetails?.workMode || "Not specified"}`,
+    );
+    console.log(
+      `   └─ Employment Type: ${post.jobDetails?.employmentType || "Not specified"}`,
+    );
 
     // Extract job skills from post skillAnalysis
     const jobSkills = post.skillAnalysis?.requiredSkills || [];
@@ -79,7 +106,9 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     const MatchingConfig = require("../models/MatchingConfig.model");
     const matchingConfig = await MatchingConfig.findOne({ company: companyId });
     const configData = matchingConfig || { weights: {} };
-    console.log(`✅ Matching config loaded${matchingConfig ? " (custom weights)" : " (default weights)"}`);
+    console.log(
+      `✅ Matching config loaded${matchingConfig ? " (custom weights)" : " (default weights)"}`,
+    );
     const weights = configData.weights || {};
     console.log(`   └─ Hard Skills Weight: ${weights.hardSkill || 50}%`);
     console.log(`   └─ Soft Skills Weight: ${weights.SoftSkill || 10}%`);
@@ -104,12 +133,14 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       jobDetails,
       candidateProfile,
       companyId,
-      configData
+      configData,
     );
 
     const score = matchResult?.score || 0;
     console.log(`\n✅ [MATCH SCORE CALCULATED]`);
-    console.log(`   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
+    console.log(
+      `   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`,
+    );
     console.log(`   Job: "${post.title}"`);
     console.log(`   Final Match Score: ${score}/100`);
     if (matchResult?.unlocked) {
@@ -119,7 +150,10 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
 
     return score;
   } catch (error) {
-    console.error(`❌ [MATCH SCORE ERROR] Error calculating match score:`, error);
+    console.error(
+      `❌ [MATCH SCORE ERROR] Error calculating match score:`,
+      error,
+    );
     console.error("Stack trace:", error.stack);
     return 0; // Return 0 if calculation fails
   }
@@ -139,7 +173,9 @@ module.exports.createJobApplication = async (applicationData) => {
     });
 
     if (existing) {
-      const error = new Error("Application already exists for this candidate and post");
+      const error = new Error(
+        "Application already exists for this candidate and post",
+      );
       error.status = 409;
       throw error;
     }
@@ -148,7 +184,7 @@ module.exports.createJobApplication = async (applicationData) => {
     const calculatedMatchScore = await calculateApplicationMatchScore(
       cleanData.profile,
       cleanData.post,
-      cleanData.company
+      cleanData.company,
     );
 
     // Add calculated match score to application data
@@ -161,7 +197,10 @@ module.exports.createJobApplication = async (applicationData) => {
     const populatedApplication = await JobApplication.findById(application._id)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      )
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -173,7 +212,11 @@ module.exports.createJobApplication = async (applicationData) => {
 };
 
 // ========== READ - Get all applications ==========
-module.exports.getAllJobApplications = async (filters = {}, page = 1, limit = 10) => {
+module.exports.getAllJobApplications = async (
+  filters = {},
+  page = 1,
+  limit = 10,
+) => {
   try {
     const query = {};
 
@@ -183,7 +226,8 @@ module.exports.getAllJobApplications = async (filters = {}, page = 1, limit = 10
     if (filters.company) query.company = filters.company;
     if (filters.status) query.status = filters.status;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
-    if (filters.isWithdrawn !== undefined) query.isWithdrawn = filters.isWithdrawn;
+    if (filters.isWithdrawn !== undefined)
+      query.isWithdrawn = filters.isWithdrawn;
 
     // Search filter for candidate name or email
     if (filters.search) {
@@ -204,7 +248,10 @@ module.exports.getAllJobApplications = async (filters = {}, page = 1, limit = 10
     const applications = await JobApplication.find(query)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      )
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -238,7 +285,10 @@ module.exports.getJobApplicationById = async (applicationId) => {
     const application = await JobApplication.findById(applicationId)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      )
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -256,7 +306,12 @@ module.exports.getJobApplicationById = async (applicationId) => {
 };
 
 // ========== READ - Get applications by candidate ==========
-module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page = 1, limit = 10) => {
+module.exports.getApplicationsByCandidate = async (
+  profileId,
+  filters = {},
+  page = 1,
+  limit = 10,
+) => {
   try {
     if (!profileId) {
       const error = new Error("Profile ID is required");
@@ -275,7 +330,10 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
 
     const applications = await JobApplication.find(query)
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      )
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -298,7 +356,12 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
 };
 
 // ========== READ - Get applications by company and post ==========
-module.exports.getApplicationsByPost = async (postId, filters = {}, page = 1, limit = 10) => {
+module.exports.getApplicationsByPost = async (
+  postId,
+  filters = {},
+  page = 1,
+  limit = 10,
+) => {
   try {
     if (!postId) {
       const error = new Error("Post ID is required");
@@ -351,7 +414,12 @@ module.exports.getApplicationsByPost = async (postId, filters = {}, page = 1, li
 };
 
 // ========== READ - Get applications by company ==========
-module.exports.getApplicationsByCompany = async (companyId, filters = {}, page = 1, limit = 10) => {
+module.exports.getApplicationsByCompany = async (
+  companyId,
+  filters = {},
+  page = 1,
+  limit = 10,
+) => {
   try {
     if (!companyId) {
       const error = new Error("Company ID is required");
@@ -433,11 +501,14 @@ module.exports.updateJobApplication = async (applicationId, updateData) => {
     const application = await JobApplication.findByIdAndUpdate(
       applicationId,
       updateData,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      )
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -470,11 +541,14 @@ module.exports.withdrawJobApplication = async (applicationId) => {
         withdrawnAt: new Date(),
         updatedAt: new Date(),
       },
-      { new: true }
+      { new: true },
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      );
 
     if (!application) {
       const error = new Error("Application not found");
@@ -504,11 +578,14 @@ module.exports.archiveJobApplication = async (applicationId) => {
         isArchived: true,
         updatedAt: new Date(),
       },
-      { new: true }
+      { new: true },
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+      .populate(
+        "company",
+        "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+      );
 
     if (!application) {
       const error = new Error("Application not found");
@@ -556,7 +633,9 @@ module.exports.getApplicationStats = async (companyId, postId = null) => {
       throw error;
     }
 
-    const matchStage = { company: require("mongoose").Types.ObjectId(companyId) };
+    const matchStage = {
+      company: require("mongoose").Types.ObjectId(companyId),
+    };
     if (postId) matchStage.post = require("mongoose").Types.ObjectId(postId);
 
     const stats = await JobApplication.aggregate([
