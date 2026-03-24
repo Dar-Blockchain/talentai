@@ -104,8 +104,15 @@ exports.createInternalCampaign = async (req, res) => {
           status: "NOT_STARTED",
         }));
 
-        await CampaignParticipant.insertMany(campaignParticipantData);
+        const createdParticipants = await CampaignParticipant.insertMany(campaignParticipantData);
         console.log(`✅ Created ${participants.length} campaign participants with emails`);
+
+        // Add participant IDs to campaign
+        const participantIds = createdParticipants.map(p => p._id);
+        campaign.participants = participantIds;
+        await campaign.save();
+        console.log(`✅ Updated campaign with ${participantIds.length} participant IDs`);
+
       } catch (participantError) {
         console.warn(`⚠️ Warning: Failed to create some participants: ${participantError.message}`);
         // Don't throw - campaign was created successfully, continue

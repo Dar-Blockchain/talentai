@@ -97,6 +97,12 @@ const internalCampaignSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    participants: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "CampaignParticipant",
+      default: [],
+    },
   },
   { timestamps: true }
 );
