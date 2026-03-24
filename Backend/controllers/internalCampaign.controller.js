@@ -393,16 +393,31 @@ exports.updateCampaignStatus = async (req, res) => {
 /**
  * Get all campaigns for a specific user (as a participant)
  * userId can be passed as a URL parameter
+ * Supports pagination and filtering by status, type
  */
 exports.getUserCampaigns = async (req, res) => {
   try {
+    // Get userId from URL parameter
+    const userId = req.params.userId;
+    const { status, type, page = 1, limit = 10 } = req.query;
 
-    // Get userId from URL parameter, fallback to authenticated user's ID
-    const userId = req.params.userId 
     console.log(`🔍 Fetching campaigns for user ${userId}`);
-    
+
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build filter for campaign participations
+    const participationFilter = { employee: userId };
+
+    // Build filter for campaigns (to apply after populate)
+    const campaignFilter = {};
+    if (status) campaignFilter.status = status;
+    if (type) campaignFilter.type = type;
+
     // Find all campaign participations for this user
-    const participations = await CampaignParticipant.find({ employee: userId })
+    const participations = await CampaignParticipant.find(participationFilter)
       .populate({
         path: "campaign",
         select: "title description type status anonymityMode module deadline company",
@@ -413,34 +428,61 @@ exports.getUserCampaigns = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    console.log(`📊 Found ${participations.length} participations`);
+    console.log(`📊 Found ${participations.length} total participations before filtering`);
+
+    // Filter out participations where campaign is null (deleted campaign)
+    // and apply campaign filters if specified
+    let filteredParticipations = participations
+      .filter((participation) => participation.campaign !== null);
+
+    // Apply campaign filters
+    if (Object.keys(campaignFilter).length > 0) {
+      filteredParticipations = filteredParticipations.filter((participation) => {
+        for (const [key, value] of Object.entries(campaignFilter)) {
+          if (participation.campaign[key] !== value) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    console.log(`📋 After filtering: ${filteredParticipations.length} participations`);
+
+    // Get total count after filtering
+    const totalParticipations = filteredParticipations.length;
+
+    // Apply pagination
+    const paginatedParticipations = filteredParticipations.slice(skip, skip + limitNum);
 
     // Extract campaigns and add participant status
-    // Filter out participations where campaign is null (deleted campaign)
-    const campaigns = participations
-      .filter((participation) => participation.campaign !== null)
-      .map((participation) => ({
-        campaignId: participation.campaign._id,
-        title: participation.campaign.title,
-        description: participation.campaign.description,
-        type: participation.campaign.type,
-        status: participation.campaign.status,
-        anonymityMode: participation.campaign.anonymityMode,
-        module: participation.campaign.module,
-        deadline: participation.campaign.deadline,
-        company: participation.campaign.company,
-        participantStatus: participation.status,
-        accessedAt: participation.accessedAt,
-        completedAt: participation.completedAt,
-        joinedAt: participation.createdAt,
-      }));
+    const campaigns = paginatedParticipations.map((participation) => ({
+      campaignId: participation.campaign._id,
+      title: participation.campaign.title,
+      description: participation.campaign.description,
+      type: participation.campaign.type,
+      status: participation.campaign.status,
+      anonymityMode: participation.campaign.anonymityMode,
+      module: participation.campaign.module,
+      deadline: participation.campaign.deadline,
+      company: participation.campaign.company,
+      participantStatus: participation.status,
+      accessedAt: participation.accessedAt,
+      completedAt: participation.completedAt,
+      joinedAt: participation.createdAt,
+    }));
 
-    console.log(`✅ Returning ${campaigns.length} valid campaigns`);
+    console.log(`✅ Returning ${campaigns.length} valid campaigns (page ${pageNum})`);
 
     res.status(200).json({
       success: true,
       data: campaigns,
-      count: campaigns.length,
+      pagination: {
+        total: totalParticipations,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(totalParticipations / limitNum),
+      },
     });
   } catch (error) {
     console.error(`❌ Error in getUserCampaigns: ${error.message}`);
