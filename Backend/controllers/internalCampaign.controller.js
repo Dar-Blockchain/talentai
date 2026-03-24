@@ -431,23 +431,20 @@ exports.getUserCampaigns = async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const skip = (pageNum - 1) * limitNum;
 
-    // Build filter for campaign participations
-    const participationFilter = { employee: userId };
+    // Convert userId to ObjectId
+    const ObjectId = require("mongoose").Types.ObjectId;
+    const userObjectId = new ObjectId(userId);
 
-    // Build filter for campaigns (to apply after populate)
-    const campaignFilter = {};
-    if (status) campaignFilter.status = status;
-    if (type) campaignFilter.type = type;
+    // Build filter for campaign participations
+    const participationFilter = { employee: userObjectId };
 
     // Find all campaign participations for this user
     const participations = await CampaignParticipant.find(participationFilter)
       .populate({
         path: "campaign",
-        select:
-          "title description type status anonymityMode module deadline company",
         populate: {
-          path: "company",
-          select: "name",
+          path: "company createdBy",
+          select: "name _id email",
         },
       })
       .sort({ createdAt: -1 });
@@ -462,15 +459,12 @@ exports.getUserCampaigns = async (req, res) => {
       (participation) => participation.campaign !== null && participation.campaign.status !== "DRAFT",
     );
 
-    // Apply campaign filters
-    if (Object.keys(campaignFilter).length > 0) {
+    // Apply campaign filters (status, type)
+    if (status || type) {
       filteredParticipations = filteredParticipations.filter(
         (participation) => {
-          for (const [key, value] of Object.entries(campaignFilter)) {
-            if (participation.campaign[key] !== value) {
-              return false;
-            }
-          }
+          if (status && participation.campaign.status !== status) return false;
+          if (type && participation.campaign.type !== type) return false;
           return true;
         },
       );
@@ -489,22 +483,8 @@ exports.getUserCampaigns = async (req, res) => {
       skip + limitNum,
     );
 
-    // Extract campaigns and add participant status
-    const campaigns = paginatedParticipations.map((participation) => ({
-      campaignId: participation.campaign._id,
-      title: participation.campaign.title,
-      description: participation.campaign.description,
-      type: participation.campaign.type,
-      status: participation.campaign.status,
-      anonymityMode: participation.campaign.anonymityMode,
-      module: participation.campaign.module,
-      deadline: participation.campaign.deadline,
-      company: participation.campaign.company,
-      participantStatus: participation.status,
-      accessedAt: participation.accessedAt,
-      completedAt: participation.completedAt,
-      joinedAt: participation.createdAt,
-    }));
+    // Extract full campaign objects
+    const campaigns = paginatedParticipations.map((participation) => participation.campaign);
 
     console.log(
       `✅ Returning ${campaigns.length} valid campaigns (page ${pageNum})`,
@@ -514,9 +494,9 @@ exports.getUserCampaigns = async (req, res) => {
       success: true,
       data: campaigns,
       pagination: {
-        total: totalParticipations,
         page: pageNum,
         limit: limitNum,
+        total: totalParticipations,
         pages: Math.ceil(totalParticipations / limitNum),
       },
     });
