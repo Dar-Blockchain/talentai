@@ -14,9 +14,7 @@ const handleError = (res, error, defaultStatus = 500) => {
 module.exports.createJobApplication = async (req, res) => {
   try {
     console.log("\n" + "=".repeat(80));
-    console.log(
-      "🚀 [JOB APPLICATION] - STARTING CREATE JOB APPLICATION PROCESS",
-    );
+    console.log("🚀 [JOB APPLICATION] - STARTING CREATE JOB APPLICATION PROCESS");
     console.log("=".repeat(80));
 
     const userId = req.user._id;
@@ -45,21 +43,16 @@ module.exports.createJobApplication = async (req, res) => {
         error: "Candidate profile not found for current user",
       });
     }
-    console.log(
-      `✅ Candidate profile found: ${profile.firstName} ${profile.lastName}`,
-    );
+    console.log(`✅ Candidate profile found: ${profile.firstName} ${profile.lastName}`);
     console.log(`   - Profile ID: ${profile._id}`);
     console.log(`   - Technical Skills: ${profile.skills?.length || 0} skills`);
     console.log(`   - Soft Skills: ${profile.softSkills?.length || 0} skills`);
 
     // Extract cvAnalysis from profile (use the most recent one)
-    const cvAnalysis =
-      profile.cvAnalyses && profile.cvAnalyses.length > 0
-        ? profile.cvAnalyses[profile.cvAnalyses.length - 1]._id
-        : null;
-    console.log(
-      `📄 CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`,
-    );
+    const cvAnalysis = profile.cvAnalyses && profile.cvAnalyses.length > 0 
+      ? profile.cvAnalyses[profile.cvAnalyses.length - 1]._id 
+      : null;
+    console.log(`📄 CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`);
 
     // Get post and extract company from it
     const Post = require("../models/Post.model");
@@ -72,14 +65,10 @@ module.exports.createJobApplication = async (req, res) => {
         error: "Post not found",
       });
     }
-    console.log(`✅ Job post found: "${post.jobDetails?.title || "Untitled"}"`);
+    console.log(`✅ Job post found: "${post.jobDetails?.title || 'Untitled'}"`);
     console.log(`   - Company ID: ${post.user}`);
-    console.log(
-      `   - Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} skills`,
-    );
-    console.log(
-      `   - Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0} skills`,
-    );
+    console.log(`   - Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} skills`);
+    console.log(`   - Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0} skills`);
 
     const company = post.user; // Company is the user who created the post
 
@@ -92,40 +81,25 @@ module.exports.createJobApplication = async (req, res) => {
     };
 
     console.log(`\n📊 [MATCH SCORE CALCULATION]`);
-    console.log(
-      `   This will use an AI-powered matching algorithm that considers:`,
-    );
+    console.log(`   This will use an AI-powered matching algorithm that considers:`);
     console.log(`   1️⃣  HARD SKILLS (50%) - Technical skills match`);
-    console.log(
-      `        └─ Comparing: ${profile.skills?.length || 0} candidate skills vs ${post.skillAnalysis?.requiredSkills?.length || 0} required skills`,
-    );
+    console.log(`        └─ Comparing: ${profile.skills?.length || 0} candidate skills vs ${post.skillAnalysis?.requiredSkills?.length || 0} required skills`);
     console.log(`   2️⃣  SOFT SKILLS (10%) - Behavioral skills match`);
-    console.log(
-      `        └─ Comparing: ${profile.softSkills?.length || 0} candidate soft skills vs ${post.skillAnalysis?.softSkills?.length || 0} required soft skills`,
-    );
+    console.log(`        └─ Comparing: ${profile.softSkills?.length || 0} candidate soft skills vs ${post.skillAnalysis?.softSkills?.length || 0} required soft skills`);
     console.log(`   3️⃣  EXPERIENCE (10%) - Professional experience alignment`);
     console.log(`        └─ Based on skill levels and years of experience`);
     console.log(`   4️⃣  SALARY (10%) - Compensation alignment`);
-    console.log(
-      `        └─ Job range: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`,
-    );
-    console.log(
-      `        └─ Candidate expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`,
-    );
+    console.log(`        └─ Job range: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`);
+    console.log(`        └─ Candidate expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`);
     console.log(`   5️⃣  WORK MODE (10%) - Work location/mode match`);
-    console.log(
-      `        └─ Job: ${post.jobDetails?.workMode || "Not specified"} | Candidate preference: ${profile.workModePreference || "Not specified"}`,
-    );
+    console.log(`        └─ Job: ${post.jobDetails?.workMode || "Not specified"} | Candidate preference: ${profile.workModePreference || "Not specified"}`);
     console.log(`   6️⃣  CONTRACT TYPE (10%) - Employment type match`);
-    console.log(
-      `        └─ Job: ${post.jobDetails?.employmentType || "Not specified"} | Candidate preference: ${profile.preferredContractType || "Not specified"}`,
-    );
-    console.log(
-      `\n   ⚙️  Processing with jobApplicationService.createJobApplication()...`,
-    );
+    console.log(`        └─ Job: ${post.jobDetails?.employmentType || "Not specified"} | Candidate preference: ${profile.preferredContractType || "Not specified"}`);
+    console.log(`\n   ⚙️  Processing with jobApplicationService.createJobApplication()...`);
 
-    const application =
-      await jobApplicationService.createJobApplication(applicationData);
+    const application = await jobApplicationService.createJobApplication(
+      applicationData
+    );
 
     console.log(`\n✅ [SUCCESS] Job application created!`);
     console.log(`   - Application ID: ${application._id}`);
@@ -135,14 +109,11 @@ module.exports.createJobApplication = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message:
-        "Job application created successfully (match score calculated by AI)",
+      message: "Job application created successfully (match score calculated by AI)",
       data: application,
     });
   } catch (error) {
-    console.error(
-      `\n❌ [ERROR] Error in createJobApplication: ${error.message}`,
-    );
+    console.error(`\n❌ [ERROR] Error in createJobApplication: ${error.message}`);
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
@@ -163,7 +134,7 @@ module.exports.getAllJobApplications = async (req, res) => {
     const result = await jobApplicationService.getAllJobApplications(
       filters,
       parseInt(page),
-      parseInt(limit),
+      parseInt(limit)
     );
 
     res.status(200).json({
@@ -196,8 +167,9 @@ module.exports.getJobApplicationById = async (req, res) => {
       });
     }
 
-    const application =
-      await jobApplicationService.getJobApplicationById(applicationId);
+    const application = await jobApplicationService.getJobApplicationById(
+      applicationId
+    );
 
     res.status(200).json({
       success: true,
@@ -241,7 +213,7 @@ module.exports.getApplicationsByCandidate = async (req, res) => {
       profile._id,
       filters,
       parseInt(page),
-      parseInt(limit),
+      parseInt(limit)
     );
 
     res.status(200).json({
@@ -283,7 +255,7 @@ module.exports.getApplicationsByPost = async (req, res) => {
       postId,
       filters,
       parseInt(page),
-      parseInt(limit),
+      parseInt(limit)
     );
 
     res.status(200).json({
@@ -326,7 +298,7 @@ module.exports.getApplicationsByCompany = async (req, res) => {
       companyId,
       filters,
       parseInt(page),
-      parseInt(limit),
+      parseInt(limit)
     );
 
     res.status(200).json({
@@ -362,7 +334,7 @@ module.exports.updateJobApplication = async (req, res) => {
 
     const application = await jobApplicationService.updateJobApplication(
       applicationId,
-      updateData,
+      updateData
     );
 
     res.status(200).json({
@@ -387,8 +359,9 @@ module.exports.withdrawJobApplication = async (req, res) => {
       });
     }
 
-    const application =
-      await jobApplicationService.withdrawJobApplication(applicationId);
+    const application = await jobApplicationService.withdrawJobApplication(
+      applicationId
+    );
 
     res.status(200).json({
       success: true,
@@ -412,8 +385,9 @@ module.exports.archiveJobApplication = async (req, res) => {
       });
     }
 
-    const application =
-      await jobApplicationService.archiveJobApplication(applicationId);
+    const application = await jobApplicationService.archiveJobApplication(
+      applicationId
+    );
 
     res.status(200).json({
       success: true,
@@ -437,8 +411,9 @@ module.exports.deleteJobApplication = async (req, res) => {
       });
     }
 
-    const application =
-      await jobApplicationService.deleteJobApplication(applicationId);
+    const application = await jobApplicationService.deleteJobApplication(
+      applicationId
+    );
 
     res.status(200).json({
       success: true,
@@ -465,7 +440,7 @@ module.exports.getApplicationStats = async (req, res) => {
 
     const stats = await jobApplicationService.getApplicationStats(
       companyId,
-      postId || null,
+      postId || null
     );
 
     res.status(200).json({

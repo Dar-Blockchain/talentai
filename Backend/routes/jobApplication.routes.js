@@ -1,6 +1,6 @@
 /**
  * Job Application Routes
- *
+ * 
  * Middlewares applied:
  * - requireAuthUser: requires authenticated user for protected routes
  * - LogMiddleware("JobApplication"): logs application requests
@@ -29,10 +29,7 @@ router.post("/", jobApplicationController.createJobApplication);
 router.get("/", jobApplicationController.getAllJobApplications);
 
 // GET /job-applications/candidate/my — Get all applications for authenticated candidate
-router.get(
-  "/candidate/my",
-  jobApplicationController.getApplicationsByCandidate,
-);
+router.get("/candidate/my", jobApplicationController.getApplicationsByCandidate);
 
 // GET /job-applications/company/my — Get all applications for authenticated company
 router.get("/company/my", jobApplicationController.getApplicationsByCompany);
@@ -47,16 +44,10 @@ router.get("/:applicationId", jobApplicationController.getJobApplicationById);
 router.patch("/:applicationId", jobApplicationController.updateJobApplication);
 
 // POST /job-applications/:applicationId/withdraw — Withdraw application
-router.post(
-  "/:applicationId/withdraw",
-  jobApplicationController.withdrawJobApplication,
-);
+router.post("/:applicationId/withdraw", jobApplicationController.withdrawJobApplication);
 
 // POST /job-applications/:applicationId/archive — Archive application
-router.post(
-  "/:applicationId/archive",
-  jobApplicationController.archiveJobApplication,
-);
+router.post("/:applicationId/archive", jobApplicationController.archiveJobApplication);
 
 // DELETE /job-applications/:applicationId — Delete application
 router.delete("/:applicationId", jobApplicationController.deleteJobApplication);
