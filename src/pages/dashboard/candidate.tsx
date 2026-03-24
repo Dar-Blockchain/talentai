@@ -23,10 +23,6 @@ const DashboardCandidate: React.FC = () => {
             {/* <CandidateEngagementTasks /> */}
           </>
         )}
-<<<<<<< HEAD
-        {/* Show RecommendedOpportunities in "all" and "opportunities" views */}
-=======
->>>>>>> 45cb3f6476390aef2ce796ea69fe1e906544a857
         {/* {(activeSection === "all" || activeSection === "opportunities") && (
           <RecommendedOpportunities
             onViewAll={() => setActiveSection("opportunities")}
