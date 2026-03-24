@@ -185,9 +185,22 @@ exports.getCompanyCampaigns = async (req, res) => {
       filters,
     );
 
+    // Add participant count for each campaign
+    const campaignsWithCount = await Promise.all(
+      result.data.map(async (campaign) => {
+        const participantCount = await CampaignParticipant.countDocuments({
+          campaign: campaign._id,
+        });
+        return {
+          ...campaign.toObject(),
+          targetEmployeeCount: participantCount,
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      data: result.data,
+      data: campaignsWithCount,
       pagination: result.pagination,
     });
   } catch (error) {
@@ -483,8 +496,18 @@ exports.getUserCampaigns = async (req, res) => {
       skip + limitNum,
     );
 
-    // Extract full campaign objects
-    const campaigns = paginatedParticipations.map((participation) => participation.campaign);
+    // Extract full campaign objects and add participant count
+    const campaigns = await Promise.all(
+      paginatedParticipations.map(async (participation) => {
+        const participantCount = await CampaignParticipant.countDocuments({
+          campaign: participation.campaign._id,
+        });
+        return {
+          ...participation.campaign.toObject(),
+          targetEmployeeCount: participantCount,
+        };
+      })
+    );
 
     console.log(
       `✅ Returning ${campaigns.length} valid campaigns (page ${pageNum})`,
