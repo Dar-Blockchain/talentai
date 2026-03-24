@@ -496,7 +496,7 @@ exports.getUserCampaigns = async (req, res) => {
       skip + limitNum,
     );
 
-    // Extract full campaign objects and add participant count
+    // Extract full campaign objects and add participant count and status
     const campaigns = await Promise.all(
       paginatedParticipations.map(async (participation) => {
         const participantCount = await CampaignParticipant.countDocuments({
@@ -505,6 +505,7 @@ exports.getUserCampaigns = async (req, res) => {
         return {
           ...participation.campaign.toObject(),
           targetEmployeeCount: participantCount,
+          participantStatus: participation.status,
         };
       })
     );
