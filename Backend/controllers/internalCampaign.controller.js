@@ -53,7 +53,8 @@ exports.createInternalCampaign = async (req, res) => {
       participants, // Array of user IDs
     } = req.body;
     const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
-
+console.log(`📢 Creating campaign for company ${companyId} with title "${title}" and module type "${module?.type}"`);
+console.log(`📋 Received participant IDs: ${Array.isArray(participants) ? participants.join(", ") : "None"}`);
     // `module` should be a single object describing the assessment module
     if (
       !title ||
@@ -383,6 +384,72 @@ exports.updateCampaignStatus = async (req, res) => {
     });
   } catch (error) {
     res.status(error.status || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get all campaigns for the authenticated user (as a participant)
+ */
+exports.getUserCampaigns = async (req, res) => {
+  try {
+    // Verify user is authenticated
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: User not authenticated",
+      });
+    }
+
+    const userId = req.user._id;
+    console.log(`🔍 Fetching campaigns for user ${userId}`);
+    
+    // Find all campaign participations for this user
+    const participations = await CampaignParticipant.find({ employee: userId })
+      .populate({
+        path: "campaign",
+        select: "title description type status anonymityMode module deadline company",
+        populate: {
+          path: "company",
+          select: "name",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    console.log(`📊 Found ${participations.length} participations`);
+
+    // Extract campaigns and add participant status
+    // Filter out participations where campaign is null (deleted campaign)
+    const campaigns = participations
+      .filter((participation) => participation.campaign !== null)
+      .map((participation) => ({
+        campaignId: participation.campaign._id,
+        title: participation.campaign.title,
+        description: participation.campaign.description,
+        type: participation.campaign.type,
+        status: participation.campaign.status,
+        anonymityMode: participation.campaign.anonymityMode,
+        module: participation.campaign.module,
+        deadline: participation.campaign.deadline,
+        company: participation.campaign.company,
+        participantStatus: participation.status,
+        accessedAt: participation.accessedAt,
+        completedAt: participation.completedAt,
+        joinedAt: participation.createdAt,
+      }));
+
+    console.log(`✅ Returning ${campaigns.length} valid campaigns`);
+
+    res.status(200).json({
+      success: true,
+      data: campaigns,
+      count: campaigns.length,
+    });
+  } catch (error) {
+    console.error(`❌ Error in getUserCampaigns: ${error.message}`);
+    res.status(500).json({
       success: false,
       error: error.message,
     });
