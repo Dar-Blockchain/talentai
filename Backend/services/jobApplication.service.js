@@ -366,15 +366,36 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
 
     // Search filter for candidate name
-    if (filters.search) {
+    if (filters.search || filters.candidateName) {
+      const searchTerm = filters.search || filters.candidateName;
       const profileMatches = await Profile.find({
         $or: [
-          { firstName: { $regex: filters.search, $options: "i" } },
-          { lastName: { $regex: filters.search, $options: "i" } },
+          { firstName: { $regex: searchTerm, $options: "i" } },
+          { lastName: { $regex: searchTerm, $options: "i" } },
         ],
       }).select("_id");
 
       query.profile = { $in: profileMatches.map((p) => p._id) };
+    }
+
+    // Filter by skills
+    if (filters.skills && filters.skills.length > 0) {
+      const skillsArray = Array.isArray(filters.skills) ? filters.skills : [filters.skills];
+      const profilesWithSkills = await Profile.find({
+        skills: {
+          $elemMatch: {
+            name: { $in: skillsArray },
+          },
+        },
+      }).select("_id");
+
+      const profileIds = profilesWithSkills.map((p) => p._id);
+      if (query.profile) {
+        // If already filtered by name, intersect with skills filter
+        query.profile = { $in: profileIds.filter((id) => query.profile.$in.includes(id)) };
+      } else {
+        query.profile = { $in: profileIds };
+      }
     }
 
     const skip = (page - 1) * limit;
