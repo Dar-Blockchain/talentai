@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/interview/expired",
   "/interview/limit-reached",
   "/interview/results",
+  "/invitation",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -52,13 +53,22 @@ function isAuthOnly(pathname: string): boolean {
   return AUTH_ONLY_PATHS.some((pub) => p === pub || p.startsWith(pub + "/"));
 }
 
+// Only these values are valid auth roles
+const KNOWN_ROLES = ["Admin", "Company", "Employee", "Candidate"];
+
+// Company membership roles — users with these are treated as Employee
+const MEMBER_ROLES = ["RH", "TechLead", "Supervisor", "Manager", "Owner"];
+
 /** Decode JWT payload without verification (Edge runtime safe) */
 function getRoleFromToken(token: string): string | null {
   try {
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     const payload = JSON.parse(atob(base64));
-    // Try common field names used by backends
-    return payload.role ?? payload.userRole ?? payload.roleType ?? payload.type ?? null;
+    const role = payload.role ?? payload.userRole ?? payload.roleType ?? payload.type ?? null;
+    if (!role) return null;
+    if (KNOWN_ROLES.includes(role)) return role;
+    if (MEMBER_ROLES.includes(role)) return "Employee";
+    return null;
   } catch {
     return null;
   }
@@ -84,7 +94,7 @@ export function middleware(request: NextRequest) {
   const role = token ? getRoleFromToken(token) : null;
 
   // Token exists but role cannot be decoded → corrupted/invalid token → force logout
-  if (isAuthenticated && !role && !isAuthOnly(pathname)) {
+  if (isAuthenticated && !role) {
     const res = NextResponse.redirect(new URL("/signin?force_logout=1", request.url));
     res.cookies.delete("api_token");
     return res;

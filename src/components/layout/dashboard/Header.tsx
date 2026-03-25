@@ -26,8 +26,17 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const companyName = profile?.companyDetails?.name || "Company";
-  const companyInitial = companyName[0] || "C";
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const userType = useSelector((state: RootState) => state.user.userType);
+
+  const displayName = (() => {
+    if (user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate" ) {
+      const full = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
+      return full || user?.username;
+    }
+    return profile?.companyDetails?.name || "Company";
+  })();
+  const displayInitial = displayName[0]?.toUpperCase() || "E";
 
   return (
     <Box
@@ -68,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <HeaderChat />
         <HeaderNotification />
-        <UserHeader companyName={companyName} companyInitial={companyInitial} />
+        <UserHeader companyName={displayName} companyInitial={displayInitial} />
       </Box>
     </Box>
     

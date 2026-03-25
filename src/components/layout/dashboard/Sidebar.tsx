@@ -19,7 +19,8 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
-import { navigation } from "@/constants/navigation";
+import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
@@ -51,11 +52,31 @@ const Sidebar: React.FC<SidebarProps> = ({
     router.push("/signin");
   }, [dispatch, router]);
 
-  const profile = useSelector(
-    (state: RootState) => state.user.connectedUser.profile,
-  );
-  const companyName = profile?.companyDetails?.name || "Company";
-  const companyInitial = companyName[0] || "C";
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const employeePermissions = useSelector(selectEmployeePermissions);
+
+  const isEmployee = user?.role === "Employee";
+
+  // Build filtered groups for employees
+  const activeEmployeeGroups = employeeNavGroups.map((group) => ({
+    ...group,
+    items: group.items.filter(
+      (item) => !item.permission || !!employeePermissions?.[item.permission]
+    ),
+  })).filter((group) => group.items.length > 0);
+
+  const displayName = (() => {
+    if (user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate") {
+      const full = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
+      return full || user?.username || "Employee";
+    }
+    return profile?.companyDetails?.name || "Company";
+  })();
+  const displayInitial = displayName[0]?.toUpperCase() || "E";
+  const displayEmail = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate"
+    ? user?.email
+    : profile?.companyDetails?.email;
 
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -63,6 +84,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     () => setCollapsed((c) => !c),
     [setCollapsed],
   );
+
+  const navItemSx = (isActive: boolean, isCollapsed: boolean, isMobileView: boolean) => ({
+    borderRadius: 2,
+    mb: 0.5,
+    py: isCollapsed && !isMobileView ? 0.8 : 1,
+    px: isCollapsed && !isMobileView ? 1.2 : 2,
+    color: isActive ? "#0D9488" : "#4B5563",
+    bgcolor: isActive ? "rgba(243, 244, 246, 0.6)" : "transparent",
+    justifyContent: isCollapsed && !isMobileView ? "center" : "flex-start",
+    transition: "all 0.2s ease",
+    minHeight: isCollapsed && !isMobileView ? 40 : "auto",
+    borderLeft: isActive ? "4px solid #0D9488" : "4px solid transparent",
+    "&:hover": {
+      bgcolor: "rgba(243, 244, 246, 0.6)",
+      color: "#111827",
+      borderLeft: "4px solid #0D9488",
+      "& .MuiListItemIcon-root": { color: "#0D9488" },
+    },
+  });
 
   const content = (mobile = false) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -135,68 +175,68 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <Box sx={{ flex: 1, overflowY: "auto" }} className="custom-scrollbar">
-        <List sx={{ px: 1.5 }}>
-          {navigation.map((item) => {
-            const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
-            return (
-              <Link key={item.id} href={item.href} passHref>
-                <ListItemButton
-                  sx={{
-                    borderRadius: 2,
-                    mb: 0.5,
-                    py: collapsed && !mobile ? 0.8 : 1,
-                    px: collapsed && !mobile ? 1.2 : 2,
-                    position: "relative",
-                    color: isActive ? "#0D9488" : "#4B5563",
-                    bgcolor: isActive
-                      ? "rgba(243, 244, 246, 0.6)"
-                      : "transparent",
-                    justifyContent:
-                      collapsed && !mobile ? "center" : "flex-start",
-                    transition: "all 0.2s ease",
-                    minHeight: collapsed && !mobile ? 40 : "auto",
+        {user?.role === "Employee" ? (
+          /* ── Employee: grouped sections ── */
+          <Box sx={{ px: 1.5, py: 1 }}>
+            {activeEmployeeGroups.map((group, groupIdx) => (
+              <Box key={group.group}>
+                {/* Divider between groups */}
+                {groupIdx > 0 && (
+                  <Box sx={{ mx: 1, my: 1.5, height: "1px", bgcolor: "#E5E7EB" }} />
+                )}
 
-                    // Left border
-                    borderLeft: isActive
-                      ? "4px solid #0D9488"
-                      : "4px solid transparent",
-                    "&:hover": {
-                      bgcolor: "rgba(243, 244, 246, 0.6)",
-                      color: "#111827",
-                      borderLeft: "4px solid #0D9488",
-                      "& .MuiListItemIcon-root": { color: "#0D9488" },
-                    },
-                    "&:focus": {
-                      "& .MuiListItemIcon-root": { color: "#0D9488" },
-                    },
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: collapsed && !mobile ? 0 : 40,
-                      color: isActive ? "#0D9488" : "#6B7280",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <item.icon
-                      sx={{ fontSize: collapsed && !mobile ? 20 : 24 }}
-                    />
-                  </ListItemIcon>
+                {/* Group label */}
+                {(!collapsed || mobile) && (
+                  <Typography sx={{
+                    fontSize: "10px", fontWeight: 700, color: "#9CA3AF",
+                    textTransform: "uppercase", letterSpacing: "0.08em",
+                    px: 2, py: 0.75,
+                  }}>
+                    {group.group}
+                  </Typography>
+                )}
 
-                  {(!collapsed || mobile) && (
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: "14px",
-                        fontWeight: 500,
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </Link>
-            );
-          })}
-        </List>
+                {/* Group items */}
+                <List disablePadding>
+                  {group.items.map((item: EmployeeNavItem) => {
+                    const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+                    return (
+                      <Link key={item.id} href={item.href} passHref>
+                        <ListItemButton sx={navItemSx(isActive, collapsed, mobile)}>
+                          <ListItemIcon sx={{ minWidth: collapsed && !mobile ? 0 : 40, color: isActive ? "#0D9488" : "#6B7280", justifyContent: "center" }}>
+                            <item.icon sx={{ fontSize: collapsed && !mobile ? 20 : 24 }} />
+                          </ListItemIcon>
+                          {(!collapsed || mobile) && (
+                            <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "14px", fontWeight: 500 }} />
+                          )}
+                        </ListItemButton>
+                      </Link>
+                    );
+                  })}
+                </List>
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          /* ── Company: flat list ── */
+          <List sx={{ px: 1.5 }}>
+            {navigation.map((item) => {
+              const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+              return (
+                <Link key={item.id} href={item.href} passHref>
+                  <ListItemButton sx={navItemSx(isActive, collapsed, mobile)}>
+                    <ListItemIcon sx={{ minWidth: collapsed && !mobile ? 0 : 40, color: isActive ? "#0D9488" : "#6B7280", justifyContent: "center" }}>
+                      <item.icon sx={{ fontSize: collapsed && !mobile ? 20 : 24 }} />
+                    </ListItemIcon>
+                    {(!collapsed || mobile) && (
+                      <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "14px", fontWeight: 500 }} />
+                    )}
+                  </ListItemButton>
+                </Link>
+              );
+            })}
+          </List>
+        )}
       </Box>
 
       {/* Footer */}
@@ -211,16 +251,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Avatar sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}>
-              {companyInitial}
+              {displayInitial}
             </Avatar>
 
             {(!collapsed || mobile) && (
-              <Box>
-                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-                  {companyName}
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {displayName}
                 </Typography>
-                <Typography sx={{ fontSize: 9, color: "#6B7280" }}>
-                  {profile?.companyDetails?.email}
+                <Typography sx={{ fontSize: 9, color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {displayEmail}
                 </Typography>
               </Box>
             )}

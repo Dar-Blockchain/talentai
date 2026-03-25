@@ -85,9 +85,9 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId }) => {
   }, [dispatch, campaignId, debouncedSearch, page]);
 
   // status summary counts
-  const notStartedCount  = participants.filter(p => p.status === "NOT_STARTED").length;
-  const inProgressCount  = participants.filter(p => p.status === "IN_PROGRESS").length;
-  const completedCount   = participants.filter(p => p.status === "COMPLETED").length;
+  const notStartedCount  = 0;
+  const inProgressCount  = 0;
+  const completedCount   = 0;
 
   return (
     <Box>

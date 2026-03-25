@@ -1,12 +1,37 @@
 import {
   Campaign,
   CampaignMetrics,
+  CampaignModule,
   CampaignParticipant,
   CampaignSession,
   CampaignStatus,
+  CampaignType,
+  AnonymityMode,
   CreateCampaignPayload,
   CampaignsResponse,
+  ParticipantStatus,
 } from "@/types/campaign";
+
+// ─── Employee campaign entry (campaign + participant context) ─────────────────
+
+export interface EmployeeCampaignEntry {
+  campaignId: string;
+  title: string;
+  description?: string;
+  type: CampaignType;
+  status: CampaignStatus;
+  anonymityMode: AnonymityMode;
+  module: CampaignModule;
+  deadline?: string;
+  company: string | { _id: string; name: string };
+  participantStatus: ParticipantStatus;
+  accessedAt?: string;
+  completedAt?: string;
+  joinedAt?: string;
+  score?: number;
+  progress?: number;
+  totalParticipants?: number;
+}
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 
@@ -141,6 +166,19 @@ export const fetchCampaignSessions = createAsyncThunk<
   }
 });
 
+export const fetchEmployeeCampaigns = createAsyncThunk<
+  EmployeeCampaignEntry[],
+  string,
+  { rejectValue: string }
+>("campaign/fetchEmployeeCampaigns", async (userId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`internal-campaigns/employee/${userId}`);
+    return response.data.data as EmployeeCampaignEntry[];
+  } catch (err: any) {
+    return rejectWithValue(err.message);
+  }
+});
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 interface CampaignState {
@@ -174,6 +212,10 @@ interface CampaignState {
   sessionsLoading: boolean;
   sessionsError: string | null;
   sessionsTotal: number;
+
+  employeeCampaigns: EmployeeCampaignEntry[];
+  employeeCampaignsLoading: boolean;
+  employeeCampaignsError: string | null;
 }
 
 const initialState: CampaignState = {
@@ -207,6 +249,10 @@ const initialState: CampaignState = {
   sessionsLoading: false,
   sessionsError: null,
   sessionsTotal: 0,
+
+  employeeCampaigns: [],
+  employeeCampaignsLoading: false,
+  employeeCampaignsError: null,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -384,6 +430,21 @@ const campaignSlice = createSlice({
         state.sessionsLoading = false;
         state.sessionsError = action.payload || "Failed to load sessions";
       });
+
+    // fetchEmployeeCampaigns
+    builder
+      .addCase(fetchEmployeeCampaigns.pending, (state) => {
+        state.employeeCampaignsLoading = true;
+        state.employeeCampaignsError = null;
+      })
+      .addCase(fetchEmployeeCampaigns.fulfilled, (state, action) => {
+        state.employeeCampaignsLoading = false;
+        state.employeeCampaigns = action.payload;
+      })
+      .addCase(fetchEmployeeCampaigns.rejected, (state, action) => {
+        state.employeeCampaignsLoading = false;
+        state.employeeCampaignsError = action.payload || "Failed to load employee campaigns";
+      });
   },
 });
 
@@ -447,5 +508,12 @@ export const selectCampaignSessionsError = (state: any) =>
   state.campaign.sessionsError as string | null;
 export const selectCampaignSessionsTotal = (state: any) =>
   state.campaign.sessionsTotal as number;
+
+export const selectEmployeeCampaigns = (state: any) =>
+  state.campaign.employeeCampaigns as Campaign[];
+export const selectEmployeeCampaignsLoading = (state: any) =>
+  state.campaign.employeeCampaignsLoading as boolean;
+export const selectEmployeeCampaignsError = (state: any) =>
+  state.campaign.employeeCampaignsError as string | null;
 
 export default campaignSlice.reducer;

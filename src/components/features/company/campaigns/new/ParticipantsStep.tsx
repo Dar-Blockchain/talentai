@@ -99,7 +99,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
     }));
   }, [dispatch, debouncedSearch, roleFilter, deptFilter, sortBy, page]);
 
-  const pageIds         = members.map((m) => m._id);
+  const pageIds         = members.map((m) => m.userId ?? m._id);
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
   const somePageSelected = pageIds.some((id) => selected.includes(id)) && !allPageSelected;
 
@@ -198,7 +198,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
           </Box>
         ) : (
           members.map((member, i) => {
-            const isSelected = selected.includes(member._id);
+            const isSelected = selected.includes(member.userId);
             const name = (member.firstName && member.lastName)
               ? `${member.firstName} ${member.lastName}`
               : member.firstName || member.lastName || member.username || "Pending";
@@ -213,8 +213,8 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
 
             return (
               <Box
-                key={member._id}
-                onClick={() => toggleMember(member._id)}
+                key={member.userId}
+                onClick={() => toggleMember(member.userId)}
                 sx={{
                   display: "flex", alignItems: "center", gap: 2,
                   px: 2, py: 1.5, cursor: "pointer",
@@ -226,7 +226,7 @@ const ParticipantsStep: React.FC<ParticipantsStepProps> = ({ selected, onChange 
               >
                 <Checkbox
                   size="small" checked={isSelected}
-                  onChange={() => toggleMember(member._id)}
+                  onChange={() => toggleMember(member.userId)}
                   onClick={(e) => e.stopPropagation()}
                   sx={{ color: "#D1D5DB", "&.Mui-checked": { color: PURPLE }, p: 0, flexShrink: 0 }}
                 />

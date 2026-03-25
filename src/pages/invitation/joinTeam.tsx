@@ -23,6 +23,7 @@ import InfoRow from "@/components/features/invitation/InfoRow";
 import AppButton from "@/components/ui/AppButton";
 import { PURPLE, TEAL } from "@/components/features/invitation/constants";
 import { ROLES } from "@/constants/employee";
+import Cookies from "js-cookie";
 
 // Map legacy backend role strings → ROLES array lookup key
 const ROLE_VALUE_MAP: Record<string, string> = {
@@ -170,8 +171,10 @@ const JoinTeamPage: React.FC = () => {
       ).unwrap();
 
       if (result.token) {
-        localStorage.setItem("token", result.token);
+        Cookies.remove("api_token");
+        localStorage.removeItem("api_token");
         localStorage.setItem("api_token", result.token);
+        Cookies.set("api_token", result.token, { expires: 30, path: "/", sameSite: "lax" });
       }
       if (result.user) dispatch(setConnectedUser(result));
       localStorage.setItem("userType", "Employee");

@@ -78,12 +78,13 @@ module.exports.respondInvitation = async (req, res) => {
       const User = require("../../models/User.model");
       const existingUser = await User.findOne({ email: invitationEmail });
 
+      let userRole = 'Employee';
+
       if (existingUser) {
         // User already exists - use their credentials
         userId = existingUser._id;
         userEmail = existingUser.email;
-        // Generate token for existing user
-        jwtToken = generateToken(existingUser);
+        userRole = existingUser.role || 'Employee';
       } else {
         // User doesn't exist - create new account with roleType 'Employee'
         if (!firstName || !lastName) {
@@ -102,16 +103,13 @@ module.exports.respondInvitation = async (req, res) => {
           userId = newUserData.user._id;
           userEmail = newUserData.user.email;
 
-          // Generate JWT token for new user after account creation
-          jwtToken = generateToken(newUserData.user);
-
           console.log(`✅ New employee account created for ${invitationEmail} (${firstName} ${lastName})`);
         } catch (registrationError) {
           return res
             .status(400)
-            .json({ 
-              success: false, 
-              message: `Failed to create user account: ${registrationError.message}` 
+            .json({
+              success: false,
+              message: `Failed to create user account: ${registrationError.message}`
             });
         }
       }
@@ -124,14 +122,19 @@ module.exports.respondInvitation = async (req, res) => {
         token
       );
 
+      // Generate token after membership is created so we have the company ID
+      jwtToken = generateToken(userId, invitation.company, userRole);
+
       // Get full user data and profile
       const fullUser = await User.findById(userId);
       const Profile = require("../../models/Profile.model");
       const userProfile = await Profile.findOne({ userId });
 
-      res.cookie("jwt_token", jwtToken, {
+      res.cookie("api_token", jwtToken, {
         httpOnly: false,
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        sameSite: "lax",
+        path: "/",
       });
 
       return res.status(200).json({ 

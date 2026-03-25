@@ -247,7 +247,7 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     // Generate token with company info if companyMembership exists
     let token;
     if (companyMembership) {
-      token = generateToken(updatedUser._id, companyMembership.company._id, companyMembership.role);
+      token = generateToken(updatedUser._id, companyMembership.company._id, updatedUser.role);
     } else {
       token = generateToken(updatedUser._id, null, updatedUser.role);
     }
