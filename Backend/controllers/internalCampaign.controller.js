@@ -276,27 +276,60 @@ exports.getCampaignParticipants = async (req, res) => {
     const totalParticipants =
       await CampaignParticipant.countDocuments(participantFilter);
 
-    // Get paginated participants
+    // Get paginated participants with full employee details
     const participants = await CampaignParticipant.find(participantFilter)
-      .populate("employee", "firstName lastName email")
+      .populate({
+        path: "employee",
+        select: "email role companyMembership username",
+        populate: [
+          {
+            path: "profile",
+            select: "firstName lastName"
+          },
+          {
+            path: "companyMembership",
+            select: "department",
+            populate: {
+              path: "department",
+              select: "_id name"
+            }
+          }
+        ]
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
 
+    // Transform participants data to include all required fields
+    const formattedParticipants = participants.map(participant => {
+      const firstName = participant.employee?.profile?.firstName || participant.employee?.username || "Unknown";
+      const lastName = participant.employee?.profile?.lastName || "";
+      const department = participant.employee?.companyMembership?.department ? {
+        id: participant.employee.companyMembership.department._id,
+        name: participant.employee.companyMembership.department.name
+      } : null;
+      
+      return {
+        _id: participant._id,
+        firstName: firstName,
+        lastName: lastName,
+        email: participant.email || participant.employee?.email || null,
+        role: participant.employee?.role || null,
+        department: department,
+        status: participant.status,
+        createdAt: participant.createdAt,
+        updatedAt: participant.updatedAt
+      };
+    });
+
     res.status(200).json({
       success: true,
       data: {
-        campaign: {
-          id: campaign._id,
-          title: campaign.title,
-        },
-        participants: {
-          total: totalParticipants,
-          page: pageNum,
-          limit: limitNum,
-          pages: Math.ceil(totalParticipants / limitNum),
-          data: participants,
-        },
+        total: totalParticipants,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(totalParticipants / limitNum),
+        data: formattedParticipants,
       },
     });
   } catch (error) {
