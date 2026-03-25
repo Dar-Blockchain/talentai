@@ -1,4 +1,5 @@
 const jobApplicationService = require("../services/jobApplication.service");
+const { sendInterviewInvitation } = require("../utils/email-service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -477,5 +478,149 @@ module.exports.getApplicationMetrics = async (req, res) => {
     });
   } catch (error) {
     handleError(res, error);
+  }
+};
+
+// ========== SEND INTERVIEW INVITATION EMAIL ==========
+module.exports.inviteToInterview = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { interviewDate, interviewTime, interviewLink } = req.body;
+    const companyId = req.user._id;
+
+    console.log("\n" + "=".repeat(80));
+    console.log("🚀 [JOB APPLICATION] - STARTING INTERVIEW INVITATION PROCESS");
+    console.log("=".repeat(80));
+
+    // Validation
+    if (!applicationId) {
+      console.error("❌ Validation failed: Missing applicationId");
+      return res.status(400).json({
+        success: false,
+        error: "Application ID is required",
+      });
+    }
+
+    console.log(`📝 Request from company: ${companyId}`);
+    console.log(`📋 Application ID: ${applicationId}`);
+
+    // Fetch the job application
+    console.log(`🔍 Fetching job application: ${applicationId}`);
+    const application = await jobApplicationService.getJobApplicationById(applicationId);
+
+    if (!application) {
+      console.error(`❌ Job application not found: ${applicationId}`);
+      return res.status(404).json({
+        success: false,
+        error: "Job application not found",
+      });
+    }
+
+    console.log(`✅ Job application found`);
+    console.log(`   - Candidate Profile ID: ${application.profile._id}`);
+    console.log(`   - Post ID: ${application.post._id}`);
+    console.log(`   - Status: ${application.status}`);
+
+    // Verify that the current user is the company that owns this post
+    if (application.company._id.toString() !== companyId.toString()) {
+      console.error(`❌ Unauthorized: User ${application.company._id} is not the  owner of this application`);
+      console.error(`❌ Unauthorized: User ${companyId} is not the owner of this post`);
+      return res.status(403).json({
+        success: false,
+        error: "You are not authorized to send interview invitations for this application",
+      });
+    }
+
+    // Fetch candidate profile to get email
+    const Profile = require("../models/Profile.model");
+    console.log(`🔍 Fetching candidate profile: ${application.profile._id}`);
+    const candidateProfile = await Profile.findById(application.profile._id).populate("userId");
+
+    if (!candidateProfile) {
+      console.error(`❌ Candidate profile not found: ${application.profile._id}`);
+      return res.status(404).json({
+        success: false,
+        error: "Candidate profile not found",
+      });
+    }
+
+    const candidateEmail = candidateProfile.userId.email;
+    const candidateName = `${candidateProfile.firstName} ${candidateProfile.lastName}`;
+
+    console.log(`✅ Candidate profile found`);
+    console.log(`   - Email: ${candidateEmail}`);
+    console.log(`   - Name: ${candidateName}`);
+
+    // Fetch post details
+    const Post = require("../models/Post.model");
+    console.log(`🔍 Fetching job post: ${application.post._id}`);
+    const post = await Post.findById(application.post._id).populate("user");
+
+    if (!post) {
+      console.error(`❌ Job post not found: ${application.post._id}`);
+      return res.status(404).json({
+        success: false,
+        error: "Job post not found",
+      });
+    }
+
+    const jobTitle = post.jobDetails?.title || "Position";
+    const companyName = post.user?.username || "Our Company";
+
+    console.log(`✅ Job post found`);
+    console.log(`   - Title: ${jobTitle}`);
+    console.log(`   - Company: ${companyName}`);
+
+    // Send interview invitation email
+    console.log(`📧 Sending interview invitation email...`);
+    const emailSent = await sendInterviewInvitation(
+      candidateEmail,
+      candidateName,
+      jobTitle,
+      companyName,
+      interviewDate || null,
+      interviewTime || null,
+      interviewLink || null
+    );
+
+    if (!emailSent) {
+      console.error(`❌ Failed to send interview invitation email`);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to send interview invitation email",
+      });
+    }
+
+    console.log(`✅ Interview invitation email sent successfully`);
+
+    // Update application status to "interview_scheduled" if interview date is provided
+    if (interviewDate) {
+      console.log(`📝 Updating application status to interview_scheduled`);
+      application.status = "interview_scheduled";
+      application.updatedAt = new Date();
+      await application.save();
+      console.log(`✅ Application status updated`);
+    }
+
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Interview invitation sent successfully",
+      data: {
+        applicationId: application._id,
+        candidateEmail,
+        candidateName,
+        jobTitle,
+        interviewDate: interviewDate || null,
+        interviewTime: interviewTime || null,
+        interviewLink: interviewLink || null,
+      },
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in inviteToInterview: ${error.message}`);
+    console.error("Stack trace:", error.stack);
+    console.log("=".repeat(80) + "\n");
+    handleError(res, error, 400);
   }
 };

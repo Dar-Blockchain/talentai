@@ -50,6 +50,9 @@ router.post("/:applicationId/withdraw", jobApplicationController.withdrawJobAppl
 // POST /job-applications/:applicationId/archive — Archive application
 router.post("/:applicationId/archive", jobApplicationController.archiveJobApplication);
 
+// POST /job-applications/:applicationId/invite-to-interview — Send interview invitation email
+router.post("/:applicationId/invite-to-interview", jobApplicationController.inviteToInterview);
+
 // DELETE /job-applications/:applicationId — Delete application
 router.delete("/:applicationId", jobApplicationController.deleteJobApplication);
 
