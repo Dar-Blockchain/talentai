@@ -29,8 +29,8 @@ const campaignParticipantSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
-      default: "NOT_STARTED",
+      enum: ["INVITED", "IN_PROGRESS", "COMPLETED"],
+      default: "INVITED",
       index: true,
     },
 
