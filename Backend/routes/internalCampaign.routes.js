@@ -34,6 +34,12 @@ router.get(
   internalCampaignController.getUserCampaigns
 );
 
+/**
+ * GET /campaigns/:campaignId — Récupérer une campagne spécifique
+ */
+router.get("/:campaignId", authLogMiddleware("InternalCampaign"), internalCampaignController.getCampaign);
+
+
 // apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuthUser,
@@ -71,10 +77,6 @@ router.get("/:campaignId/participants", internalCampaignController.getCampaignPa
  */
 router.patch("/:campaignId/status", internalCampaignController.updateCampaignStatus);
 
-/**
- * GET /campaigns/:campaignId — Récupérer une campagne spécifique
- */
-router.get("/:campaignId", internalCampaignController.getCampaign);
 
 /**
  * PUT /campaigns/:campaignId — Mettre à jour une campagne
