@@ -37,6 +37,7 @@
     "axios": "^1.8.4",
     "cookies-next": "^5.1.0",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.20",
     "formidable": "^3.5.2",
     "formik": "^2.4.9",
     "framer-motion": "^12.6.5",

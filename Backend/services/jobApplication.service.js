@@ -236,7 +236,7 @@ module.exports.getJobApplicationById = async (applicationId) => {
     }
 
     const application = await JobApplication.findById(applicationId)
-      .populate("profile")
+      .populate({ path: "profile", populate: { path: "userId", select: "email" } })
       .populate("post")
       .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
       .populate("cvAnalysis")
@@ -403,7 +403,7 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     const totalPages = Math.ceil(totalCount / limit);
 
     const applications = await JobApplication.find(query)
-      .populate("profile")
+      .populate({ path: "profile", populate: { path: "userId", select: "email" } })
       .populate("post")
       .populate("cvAnalysis")
       .populate("interviewAssessment")

@@ -4,7 +4,11 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import {
   Box, Typography, Avatar, Chip, Divider, Skeleton, Button,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, CircularProgress,
 } from "@mui/material";
+import { LocalizationProvider, DatePicker, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
@@ -13,6 +17,7 @@ import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import CodeOutlined from "@mui/icons-material/CodeOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
 import axiosInstance from "@/utils/axiosInstance";
 
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
@@ -58,6 +63,30 @@ const ApplicationDetailPage: React.FC = () => {
   const { id } = router.query;
   const [app, setApp] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteDate, setInviteDate] = useState<Dayjs | null>(null);
+  const [inviteTime, setInviteTime] = useState<Dayjs | null>(null);
+  const [inviteLink, setInviteLink] = useState("");
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteDone, setInviteDone] = useState(false);
+
+  const handleInvite = async () => {
+    if (!id || !inviteDate || !inviteTime || !inviteLink) return;
+    setInviteSending(true);
+    try {
+      await axiosInstance.post(`job-applications/${id}/invite-to-interview`, {
+        interviewDate: dayjs(inviteDate).format("YYYY-MM-DD"),
+        interviewTime: dayjs(inviteTime).format("HH:mm"),
+        interviewLink: inviteLink,
+      });
+      setInviteDone(true);
+      setTimeout(() => { setInviteOpen(false); setInviteDone(false); }, 1500);
+    } catch {
+      // ignore
+    } finally {
+      setInviteSending(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -72,7 +101,7 @@ const ApplicationDetailPage: React.FC = () => {
   const name = profile.firstName && profile.lastName
     ? `${profile.firstName} ${profile.lastName}`.trim()
     : cv.name || "Candidate";
-  const email = profile.contactInformation?.email || cv.email || "";
+  const email = (profile.userId as any)?.email || profile.contactInformation?.email || "";
   const phone = profile.phone || cv.phone || "";
   const location = profile.contactInformation?.location || cv.location || "";
   const title = cv.title || "";
@@ -136,30 +165,70 @@ const ApplicationDetailPage: React.FC = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><CalendarTodayOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} /><Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF" }}>Applied {fmtDate(app.appliedAt || app.createdAt)}</Typography></Box>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
-              {cvScore != null && (
-                <Box sx={{ textAlign: "center", bgcolor: cvScore >= 70 ? "rgba(5,150,105,0.08)" : cvScore >= 50 ? "rgba(217,119,6,0.08)" : "rgba(220,38,38,0.08)", borderRadius: "12px", px: 2, py: 1 }}>
-                  <Typography sx={{ fontSize: "1.6rem", fontWeight: 800, color: cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626", lineHeight: 1 }}>{cvScore}%</Typography>
-                  <Typography sx={{ fontSize: "0.65rem", color: "#9CA3AF", fontWeight: 600 }}>CV Score</Typography>
-                </Box>
-              )}
-              {cvUrl && (
+            {/* Right panel: score + actions */}
+            <Box sx={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, bgcolor: "#FAFAFA", border: "1px solid #F3F4F6", borderRadius: "14px", px: 3, py: 2.5, minWidth: 160 }}>
+              {cvScore != null && (() => {
+                const scoreColor = cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626";
+                const r = 34; const circ = 2 * Math.PI * r;
+                const filled = (Math.min(cvScore, 100) / 100) * circ;
+                return (
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ position: "relative", width: 80, height: 80 }}>
+                      <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>
+                        <circle cx={40} cy={40} r={r} fill="none" stroke={`${scoreColor}18`} strokeWidth={7} />
+                        <circle cx={40} cy={40} r={r} fill="none" stroke={scoreColor} strokeWidth={7}
+                          strokeDasharray={`${filled} ${circ}`} strokeLinecap="round" />
+                      </svg>
+                      <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{cvScore}%</Typography>
+                      </Box>
+                    </Box>
+                    <Typography sx={{ fontSize: "0.68rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>CV Score</Typography>
+                  </Box>
+                );
+              })()}
+              <Divider sx={{ width: "100%", borderColor: "#E5E7EB" }} />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
+                {cvUrl && (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<DescriptionOutlined sx={{ fontSize: 15 }} />}
+                    onClick={() => window.open(cvUrl, "_blank")}
+                    sx={{
+                      textTransform: "none", fontWeight: 600, fontSize: "0.78rem",
+                      borderRadius: "10px", height: 36,
+                      color: "#374151", borderColor: "#E5E7EB", bgcolor: "#fff",
+                      "&:hover": { bgcolor: "#F3F4F6", borderColor: "#D1D5DB" },
+                      boxShadow: "none",
+                    }}
+                  >
+                    View CV
+                  </Button>
+                )}
                 <Button
-                  variant="outlined"
-                  startIcon={<DescriptionOutlined sx={{ fontSize: 16, color: "#8310FF" }} />}
-                  onClick={() => window.open(cvUrl, "_blank")}
+                  fullWidth
+                  variant="contained"
+                  startIcon={<VideoCallOutlined sx={{ fontSize: 15 }} />}
+                  onClick={() => {
+                    setInviteDate(null);
+                    setInviteTime(null);
+                    const postId = app?.post?._id || "";
+                    const companyId = app?.company?._id || app?.post?.user || "";
+                    const base = typeof window !== "undefined" ? window.location.origin : "";
+                    setInviteLink(postId ? `${base}/interview/hr/?jobId=${postId}&companyId=${companyId}&ref=link` : "");
+                    setInviteOpen(true);
+                  }}
                   sx={{
-                    textTransform: "none", fontWeight: 600, fontSize: "0.82rem",
-                    borderRadius: "10px", height: 38, px: 2,
-                    color: "#8310FF", borderColor: "rgba(131,16,255,0.3)",
-                    bgcolor: "rgba(131,16,255,0.04)",
-                    "&:hover": { bgcolor: "rgba(131,16,255,0.1)", borderColor: "#8310FF" },
-                    boxShadow: "none",
+                    textTransform: "none", fontWeight: 600, fontSize: "0.78rem",
+                    borderRadius: "10px", height: 36,
+                    bgcolor: "#8310FF", boxShadow: "none", color: "#fff",
+                    "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none", color: "#fff" },
                   }}
                 >
-                  View CV
+                  Invite to Interview
                 </Button>
-              )}
+              </Box>
             </Box>
           </Box>
 
@@ -227,6 +296,66 @@ const ApplicationDetailPage: React.FC = () => {
           )}
         </>
       )}
+      {/* ── Invite to Interview Modal ── */}
+      <Dialog open={inviteOpen} onClose={() => setInviteOpen(false)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: "16px", p: 0.5 } }}>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827", pb: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <VideoCallOutlined sx={{ color: "#8310FF", fontSize: 22 }} />
+            Invite to Interview
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "12px !important" }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <DatePicker
+                label="Date"
+                value={inviteDate}
+                onChange={(v) => setInviteDate(v as Dayjs | null)}
+                disablePast
+                slotProps={{ textField: { size: "small", sx: { flex: 1, "& .MuiOutlinedInput-root": { borderRadius: "10px" } } } }}
+              />
+              <TimePicker
+                label="Time"
+                value={inviteTime}
+                onChange={(v) => setInviteTime(v as Dayjs | null)}
+                slotProps={{ textField: { size: "small", sx: { flex: 1, "& .MuiOutlinedInput-root": { borderRadius: "10px" } } } }}
+              />
+            </Box>
+          </LocalizationProvider>
+          <TextField
+            label="Interview Link"
+            fullWidth
+            size="small"
+            value={inviteLink}
+            disabled
+            helperText="Auto-generated from the job post"
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
+          />
+          {inviteDone && (
+            <Typography sx={{ fontSize: "0.82rem", color: "#059669", fontWeight: 600, textAlign: "center" }}>
+              ✓ Invitation sent successfully!
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setInviteOpen(false)} sx={{ textTransform: "none", color: "#6B7280", borderRadius: "10px" }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleInvite}
+            disabled={inviteSending || !inviteDate || !inviteTime || !inviteLink}
+            sx={{
+              textTransform: "none", fontWeight: 600, borderRadius: "10px",
+              bgcolor: "#8310FF", boxShadow: "none",
+              "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none" },
+            }}
+          >
+            {inviteSending ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Send Invitation"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DashboardLayout>
   );
 };

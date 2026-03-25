@@ -6,7 +6,6 @@ import {
   TextField, InputAdornment, MenuItem, Select, Button,
 } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
-import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
@@ -200,7 +199,6 @@ const ApplicationsPage: React.FC = () => {
               const name = profile.firstName && profile.lastName
                 ? `${profile.firstName} ${profile.lastName}`.trim()
                 : cv.name || "Candidate";
-              const email = profile.contactInformation?.email || cv.email || "";
               const title = cv.title || "";
               const skills: string[] = cv.skills || profile.skills?.map((s: any) => s.name) || [];
               const cvScore = app.matchScore ?? cv.analysisScore ?? null;
@@ -232,12 +230,6 @@ const ApplicationsPage: React.FC = () => {
                           sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color, flexShrink: 0 }} />
                       </Box>
                       {title && <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</Typography>}
-                      {email && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, mt: 0.3 }}>
-                          <EmailOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                          <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{email}</Typography>
-                        </Box>
-                      )}
                     </Box>
                     {cvScore != null && (
                       <Box sx={{ flexShrink: 0, textAlign: "center", bgcolor: cvScore >= 70 ? "rgba(5,150,105,0.08)" : cvScore >= 50 ? "rgba(217,119,6,0.08)" : "rgba(220,38,38,0.08)", borderRadius: "10px", px: 1.5, py: 0.75 }}>
