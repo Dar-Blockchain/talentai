@@ -280,7 +280,7 @@ exports.getCampaignParticipants = async (req, res) => {
     const participants = await CampaignParticipant.find(participantFilter)
       .populate({
         path: "employee",
-        select: "email role companyMembership username",
+        select: "email companyMembership username",
         populate: [
           {
             path: "profile",
@@ -288,7 +288,7 @@ exports.getCampaignParticipants = async (req, res) => {
           },
           {
             path: "companyMembership",
-            select: "department",
+            select: "department role",
             populate: {
               path: "department",
               select: "_id name"
@@ -314,7 +314,7 @@ exports.getCampaignParticipants = async (req, res) => {
         firstName: firstName,
         lastName: lastName,
         email: participant.email || participant.employee?.email || null,
-        role: participant.employee?.role || null,
+        role: participant.employee?.companyMembership?.role || null,
         department: department,
         status: participant.status,
         createdAt: participant.createdAt,
