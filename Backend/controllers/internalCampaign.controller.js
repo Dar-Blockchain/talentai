@@ -1,4 +1,5 @@
 require("dotenv").config();
+const mongoose = require("mongoose");
 const InternalCampaign = require("../models/internalCampaign.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
 const User = require("../models/User.model");
@@ -245,7 +246,7 @@ exports.getCampaign = async (req, res) => {
 exports.getCampaignParticipants = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    const { status, email, page = 1, limit = 10 } = req.query;
+    const { status, search, page = 1, limit = 10 } = req.query;
 
     // Verify campaign exists
     const campaign = await getCampaignById(campaignId);
@@ -256,49 +257,120 @@ exports.getCampaignParticipants = async (req, res) => {
       });
     }
 
-    // Build filter for participants
-    const participantFilter = { campaign: campaignId };
-
-    if (status) {
-      participantFilter.status = status;
-    }
-
-    if (email) {
-      participantFilter.email = { $regex: email, $options: "i" }; // Case-insensitive regex search
-    }
-
     // Pagination
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const skip = (pageNum - 1) * limitNum;
 
-    // Get total count of matching participants
-    const totalParticipants =
-      await CampaignParticipant.countDocuments(participantFilter);
+    // Convert campaignId to ObjectId
+    const campaignObjectId = new mongoose.Types.ObjectId(campaignId);
 
-    // Get paginated participants with full employee details
-    const participants = await CampaignParticipant.find(participantFilter)
-      .populate({
-        path: "employee",
-        select: "email companyMembership username",
-        populate: [
-          {
-            path: "profile",
-            select: "firstName lastName"
-          },
-          {
-            path: "companyMembership",
-            select: "department role",
-            populate: {
-              path: "department",
-              select: "_id name"
-            }
+    // Build aggregation pipeline
+    const pipeline = [
+      // Stage 1: Match campaign and status
+      {
+        $match: {
+          campaign: campaignObjectId,
+          ...(status && { status })
+        }
+      },
+      // Stage 2: Populate employee data
+      {
+        $lookup: {
+          from: "users",
+          localField: "employee",
+          foreignField: "_id",
+          as: "employee"
+        }
+      },
+      {
+        $unwind: { path: "$employee", preserveNullAndEmptyArrays: true }
+      },
+      // Stage 3: Populate employee profile
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "employee._id",
+          foreignField: "userId",
+          as: "employee.profile"
+        }
+      },
+      {
+        $unwind: { path: "$employee.profile", preserveNullAndEmptyArrays: true }
+      },
+      // Stage 4: Populate company membership
+      {
+        $lookup: {
+          from: "companymemberships",
+          localField: "employee._id",
+          foreignField: "user",
+          as: "employee.companyMembership"
+        }
+      },
+      {
+        $unwind: { path: "$employee.companyMembership", preserveNullAndEmptyArrays: true }
+      },
+      // Stage 5: Populate department
+      {
+        $lookup: {
+          from: "departments",
+          localField: "employee.companyMembership.department",
+          foreignField: "_id",
+          as: "employee.companyMembership.department"
+        }
+      },
+      {
+        $unwind: { path: "$employee.companyMembership.department", preserveNullAndEmptyArrays: true }
+      },
+      // Stage 6: Apply search filter on firstName, lastName, email
+      ...(search ? [
+        {
+          $match: {
+            $or: [
+              { "employee.profile.firstName": { $regex: search, $options: "i" } },
+              { "employee.profile.lastName": { $regex: search, $options: "i" } },
+              { email: { $regex: search, $options: "i" } },
+              { "employee.email": { $regex: search, $options: "i" } }
+            ]
           }
-        ]
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum);
+        }
+      ] : []),
+      // Stage 7: Sort by creation date
+      { $sort: { createdAt: -1 } },
+      // Stage 8: Get total count before pagination
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [
+            { $skip: skip },
+            { $limit: limitNum },
+            // Project only required fields
+            {
+              $project: {
+                _id: 1,
+                status: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                email: 1,
+                "employee.email": 1,
+                "employee.username": 1,
+                "employee.profile.firstName": 1,
+                "employee.profile.lastName": 1,
+                "employee.companyMembership.role": 1,
+                "employee.companyMembership.department._id": 1,
+                "employee.companyMembership.department.name": 1
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    // Execute aggregation pipeline
+    const result = await CampaignParticipant.aggregate(pipeline);
+    
+    const totalParticipants = result[0]?.metadata[0]?.total || 0;
+    const participants = result[0]?.data || [];
 
     // Transform participants data to include all required fields
     const formattedParticipants = participants.map(participant => {
