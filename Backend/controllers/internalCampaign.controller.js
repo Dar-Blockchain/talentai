@@ -637,3 +637,178 @@ exports.getUserCampaigns = async (req, res) => {
     });
   }
 };
+
+/**
+ * Participate in a campaign - Employee joins a campaign
+ * Can be called with userId as parameter to add another user to the campaign
+ */
+exports.participateInCampaign = async (req, res) => {
+  try {
+    const { campaignId, userId } = req.params;
+
+    console.log("\n" + "=".repeat(80));
+    console.log("🚀 [CAMPAIGN PARTICIPANT] - STARTING PARTICIPATION PROCESS");
+    console.log("=".repeat(80));
+
+    // Verify campaign exists
+    const campaign = await getCampaignById(campaignId);
+    if (!campaign) {
+      console.error(`❌ Campaign not found: ${campaignId}`);
+      return res.status(404).json({
+        success: false,
+        error: "Campaign not found",
+      });
+    }
+
+    console.log(`✅ Campaign found: ${campaign.title}`);
+    console.log(`   - Campaign ID: ${campaign._id}`);
+    console.log(`   - Status: ${campaign.status}`);
+
+    // Get user email
+    const user = await User.findById(userId).select("email username");
+    if (!user) {
+      console.error(`❌ User not found: ${userId}`);
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    console.log(`✅ User found: ${user.username}`);
+    console.log(`   - Email: ${user.email}`);
+
+    // Check if user is already a participant
+    let participant = await CampaignParticipant.findOne({
+      campaign: campaignId,
+      employee: userId,
+    });
+
+    if (participant) {
+      console.log(`ℹ️ Participant already exists, updating status to IN_PROGRESS`);
+      // Update status to IN_PROGRESS if not already
+      participant.status = "IN_PROGRESS";
+      participant.accessedAt = new Date();
+      await participant.save();
+      console.log(`✅ Participant status updated`);
+    } else {
+      console.log(`📝 Creating new campaign participant`);
+      // Create new participant
+      participant = new CampaignParticipant({
+        campaign: campaignId,
+        employee: userId,
+        email: user.email,
+        status: "IN_PROGRESS",
+        accessedAt: new Date(),
+      });
+      await participant.save();
+      console.log(`✅ New participant created`);
+    }
+
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully joined the campaign",
+      data: {
+        participantId: participant._id,
+        campaignId: campaign._id,
+        campaignTitle: campaign.title,
+        email: user.email,
+        status: participant.status,
+        accessedAt: participant.accessedAt,
+      },
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in participateInCampaign: ${error.message}`);
+    console.error("Stack trace:", error.stack);
+    console.log("=".repeat(80) + "\n");
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Remove an employee from a campaign
+ * Deletes the CampaignParticipant record
+ */
+exports.removeEmployeeFromCampaign = async (req, res) => {
+  try {
+    const { campaignId, userId } = req.params;
+
+    console.log("\n" + "=".repeat(80));
+    console.log("🚀 [CAMPAIGN PARTICIPANT] - STARTING REMOVAL PROCESS");
+    console.log("=".repeat(80));
+
+    // Verify campaign exists
+    const campaign = await getCampaignById(campaignId);
+    if (!campaign) {
+      console.error(`❌ Campaign not found: ${campaignId}`);
+      return res.status(404).json({
+        success: false,
+        error: "Campaign not found",
+      });
+    }
+
+    console.log(`✅ Campaign found: ${campaign.title}`);
+    console.log(`   - Campaign ID: ${campaign._id}`);
+
+    // Verify user exists
+    const user = await User.findById(userId).select("email username");
+    if (!user) {
+      console.error(`❌ User not found: ${userId}`);
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    console.log(`✅ User found: ${user.username}`);
+    console.log(`   - Email: ${user.email}`);
+
+    // Find and delete the participant record
+    const participant = await CampaignParticipant.findOneAndDelete({
+      campaign: campaignId,
+      employee: userId,
+    });
+
+    if (!participant) {
+      console.log(`ℹ️ Participant not found for removal`);
+      return res.status(404).json({
+        success: false,
+        error: "Participant not found in this campaign",
+      });
+    }
+
+    console.log(`✅ Participant removed successfully`);
+    console.log(`   - Participant ID: ${participant._id}`);
+    console.log(`   - Previous Status: ${participant.status}`);
+
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Employee successfully removed from campaign",
+      data: {
+        participantId: participant._id,
+        campaignId: campaign._id,
+        campaignTitle: campaign.title,
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        removedStatus: participant.status,
+      },
+    });
+  } catch (error) {
+    console.error(
+      `\n❌ [ERROR] Error in removeEmployeeFromCampaign: ${error.message}`
+    );
+    console.error("Stack trace:", error.stack);
+    console.log("=".repeat(80) + "\n");
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};

@@ -35,6 +35,26 @@ router.get(
 );
 
 /**
+ * POST /campaigns/:campaignId/participate/:userId — Employee joins/participates in a campaign
+ */
+router.post(
+  "/:campaignId/participate/:userId",
+  requireAuthUser,
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.participateInCampaign
+);
+
+/**
+ * DELETE /campaigns/:campaignId/participate/:userId — Remove an employee from a campaign
+ */
+router.delete(
+  "/:campaignId/participate/:userId",
+  requireAuthUser,
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.removeEmployeeFromCampaign
+);
+
+/**
  * GET /campaigns/:campaignId — Récupérer une campagne spécifique
  */
 router.get("/:campaignId", authLogMiddleware("InternalCampaign"), internalCampaignController.getCampaign);
