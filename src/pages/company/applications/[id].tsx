@@ -348,8 +348,9 @@ const ApplicationDetailPage: React.FC = () => {
             disabled={inviteSending || !inviteDate || !inviteTime || !inviteLink}
             sx={{
               textTransform: "none", fontWeight: 600, borderRadius: "10px",
-              bgcolor: "#8310FF", boxShadow: "none",
-              "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none" },
+              bgcolor: "#8310FF", boxShadow: "none", color: "#fff",
+              "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none", color: "#fff" },
+              "&.Mui-disabled": { bgcolor: "rgba(131,16,255,0.4)", color: "#fff" },
             }}
           >
             {inviteSending ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Send Invitation"}
