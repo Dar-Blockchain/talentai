@@ -106,11 +106,25 @@ async function analyzeCV(pdfPath, maxRetries = 3) {
     fileId = await uploadPdfToOpenAI(pdfPath);
 
     const prompt = `
-You are an expert CV/resume parser with deep knowledge of recruitment, ATS systems, and HR.
+You are an expert CV/resume parser with deep knowledge of software engineering, recruitment, ATS systems, and HR.
 
 Read the attached CV carefully and extract all relevant information.
 
-Rules:
+CRITICAL RULES FOR SKILLS EXTRACTION:
+- "skills" must be an array of INDIVIDUAL, ATOMIC skill names only — one technology or tool per entry
+- NEVER group multiple skills into one string. For example:
+  BAD: "Framework (Angular, Spring Boot, Symphony)"
+  BAD: "Languages (Python, JAVA, SQL, PHP, JS)"
+  BAD: "CI/CD (Ansible, Jenkins)"
+  GOOD: ["Angular", "Spring Boot", "Symfony", "Python", "Java", "SQL", "PHP", "JavaScript", "Ansible", "Jenkins"]
+- If the CV lists skills in a grouped format like "Frameworks: Angular, Spring Boot", split them into separate individual entries
+- Each skill must be a clean, standard technology name (e.g. "React.js" not "Reactjs", "Node.js" not "NodeJS")
+- "skills" should contain ONLY technical skills: programming languages, frameworks, libraries, tools, platforms, databases, DevOps, cloud services
+- NEVER put soft skills (communication, teamwork, leadership, etc.) in the "skills" array — those go in "softSkills"
+- Remove any duplicates
+- Aim to extract 10–40 individual skills from a typical CV
+
+GENERAL RULES:
 - Return ONLY one valid raw JSON object
 - No markdown
 - No explanation
