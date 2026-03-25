@@ -69,7 +69,7 @@ function SoftSkills() {
         </Button>
       </Box>
       {skills?.length === 0 && <EmptySkills type="soft" />}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)" }, gap: 2 }}>
         {skills?.length > 0 &&
           skills.map((item: any, index: number) => (
             <SkillCard key={index} skill={item} type={"soft"} />
