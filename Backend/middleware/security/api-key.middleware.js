@@ -4,6 +4,9 @@ const { createClient } = require("redis");
 // Initialiser le client Redis
 let redisClient = null;
 
+/**
+ * Get or create Redis client
+ */
 async function getRedisClient() {
   if (!redisClient) {
     redisClient = createClient({
@@ -16,6 +19,42 @@ async function getRedisClient() {
     }
   }
   return redisClient;
+}
+
+/**
+ * Get the real client IP address (handles proxies)
+ */
+function getClientIp(req) {
+  // Check for IP from proxy headers
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    // x-forwarded-for can contain multiple IPs, get the first one
+    return forwarded.split(",")[0].trim();
+  }
+
+  // Check other proxy headers
+  if (req.headers["x-real-ip"]) {
+    return req.headers["x-real-ip"];
+  }
+
+  // Check CF-Connecting-IP (Cloudflare)
+  if (req.headers["cf-connecting-ip"]) {
+    return req.headers["cf-connecting-ip"];
+  }
+
+  // Fallback to req.ip or connection.remoteAddress
+  return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "unknown";
+}
+
+/**
+ * Normalize IP address (handle IPv6-mapped IPv4)
+ */
+function normalizeIp(ip) {
+  // Handle IPv6-mapped IPv4 addresses like ::ffff:192.168.1.1
+  if (ip && ip.startsWith("::ffff:")) {
+    return ip.substring(7);
+  }
+  return ip;
 }
 
 /**
@@ -80,11 +119,17 @@ const verifyApiKey = async (req, res, next) => {
 
     // Check IP whitelist (optional)
     if (apiKeyDoc.ipWhitelist && apiKeyDoc.ipWhitelist.length > 0) {
-      const clientIp = req.ip || req.connection.remoteAddress;
-      if (!apiKeyDoc.ipWhitelist.includes(clientIp)) {
+      const clientIp = normalizeIp(getClientIp(req));
+      const isIpAllowed = apiKeyDoc.ipWhitelist.some(whitelistedIp => {
+        return normalizeIp(whitelistedIp) === clientIp;
+      });
+
+      if (!isIpAllowed) {
         return res.status(403).json({
           success: false,
           message: "IP not whitelisted",
+          clientIp: clientIp,
+          allowedIps: apiKeyDoc.ipWhitelist,
         });
       }
     }
