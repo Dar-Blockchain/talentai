@@ -2,7 +2,7 @@ const ApiKey = require("../models/ApiKey.model");
 const User = require("../models/User.model");
 
 /**
- * Créer une nouvelle clé API
+ * Create a new API key
  * POST /api/api-keys
  * Body: { name, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist? }
  */
@@ -16,10 +16,10 @@ const createApiKey = async (req, res) => {
     if (!name) {
       return res
         .status(400)
-        .json({ success: false, message: "Le nom est requis" });
+        .json({ success: false, message: "Name is required" });
     }
 
-    // Générer une nouvelle clé uniquement
+    // Generate a new key only
     const plainKey = ApiKey.generateKey();
     const keyHash = ApiKey.hashKey(plainKey);
 
@@ -40,12 +40,12 @@ const createApiKey = async (req, res) => {
     // Retourner la clé (complète) une seule fois à la création
     res.status(201).json({
       success: true,
-      message: "Clé API créée avec succès",
+      message: "API key created successfully",
       data: {
         id: newApiKey._id,
         name: newApiKey.name,
         serviceName: newApiKey.serviceName,
-        key: plainKey, // Afficher la clé une seule fois
+        key: plainKey, // Show the key only once
         scopes: newApiKey.scopes,
         rateLimit: newApiKey.rateLimit,
         isActive: newApiKey.isActive,
@@ -54,17 +54,17 @@ const createApiKey = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la création de la clé API:", error);
+    console.error("Error creating API key:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors de la création de la clé API",
+      message: "Error creating API key",
       error: error.message,
     });
   }
 };
 
 /**
- * Lister toutes les clés API de l'utilisateur
+ * List all API keys for the user
  * GET /api/api-keys
  */
 const listApiKeys = async (req, res) => {
@@ -81,7 +81,7 @@ const listApiKeys = async (req, res) => {
         serviceName: key.serviceName,
         keyPreview: `${key.keyHash.substring(0, 7)}...${key.keyHash.substring(
           key.keyHash.length - 7
-        )}`, // Afficher seulement les 7 premiers et derniers caractères
+        )}`, // Show only first 7 and last 7 characters
         scopes: key.scopes,
         rateLimit: key.rateLimit,
         isActive: key.isActive,
@@ -91,17 +91,17 @@ const listApiKeys = async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des clés API:", error);
+    console.error("Error retrieving API keys:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors de la récupération des clés API",
+      message: "Error retrieving API keys",
       error: error.message,
     });
   }
 };
 
 /**
- * Obtenir les détails d'une clé API spécifique
+ * Get details of a specific API key
  * GET /api/api-keys/:id
  */
 const getApiKeyDetails = async (req, res) => {
@@ -116,7 +116,7 @@ const getApiKeyDetails = async (req, res) => {
     if (!apiKey) {
       return res.status(404).json({
         success: false,
-        message: "Clé API non trouvée",
+        message: "API key not found",
       });
     }
 
@@ -125,17 +125,17 @@ const getApiKeyDetails = async (req, res) => {
       data: apiKey,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la clé API:", error);
+    console.error("Error retrieving API key:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors de la récupération de la clé API",
+      message: "Error retrieving API key",
       error: error.message,
     });
   }
 };
 
 /**
- * Mettre à jour une clé API
+ * Update an API key
  * PUT /api/api-keys/:id
  * Body: { name?, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist?, isActive? }
  */
@@ -151,11 +151,11 @@ const updateApiKey = async (req, res) => {
     if (!apiKey) {
       return res.status(404).json({
         success: false,
-        message: "Clé API non trouvée",
+        message: "API key not found",
       });
     }
 
-    // Mettre à jour les champs
+    // Update fields
     if (name) apiKey.name = name;
     if (serviceName) apiKey.serviceName = serviceName;
     if (scopes) apiKey.scopes = scopes;
@@ -168,21 +168,21 @@ const updateApiKey = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Clé API mise à jour avec succès",
+      message: "API key updated successfully",
       data: apiKey,
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la clé API:", error);
+    console.error("Error updating API key:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors de la mise à jour de la clé API",
+      message: "Error updating API key",
       error: error.message,
     });
   }
 };
 
 /**
- * Désactiver/réactiver une clé API
+ * Disable/re-enable an API key
  * PATCH /api/api-keys/:id/toggle
  */
 const toggleApiKey = async (req, res) => {
@@ -195,7 +195,7 @@ const toggleApiKey = async (req, res) => {
     if (!apiKey) {
       return res.status(404).json({
         success: false,
-        message: "Clé API non trouvée",
+        message: "API key not found",
       });
     }
 
@@ -204,21 +204,21 @@ const toggleApiKey = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Clé API ${apiKey.isActive ? "activée" : "désactivée"}`,
+      message: `API key ${apiKey.isActive ? "enabled" : "disabled"}`,
       data: { id: apiKey._id, isActive: apiKey.isActive },
     });
   } catch (error) {
-    console.error("Erreur lors du basculement de la clé API:", error);
+    console.error("Error toggling API key:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors du basculement de la clé API",
+      message: "Error toggling API key",
       error: error.message,
     });
   }
 };
 
 /**
- * Régénérer une clé API (créer une nouvelle)
+ * Regenerate an API key (create a new one)
  * POST /api/api-keys/:id/regenerate
  */
 const regenerateApiKey = async (req, res) => {
@@ -231,41 +231,41 @@ const regenerateApiKey = async (req, res) => {
     if (!apiKey) {
       return res.status(404).json({
         success: false,
-        message: "Clé API non trouvée",
+        message: "API key not found",
       });
     }
 
-    // Générer une nouvelle clé
+    // Generate a new key
     const newPlainKey = ApiKey.generateKey();
     const newKeyHash = ApiKey.hashKey(newPlainKey);
 
     apiKey.key = newPlainKey;
     apiKey.keyHash = newKeyHash;
-    apiKey.lastUsed = null; // Réinitialiser la dernière utilisation
+    apiKey.lastUsed = null; // Reset last usage
     await apiKey.save();
 
     res.status(200).json({
       success: true,
-      message: "Clé API régénérée avec succès",
+      message: "API key regenerated successfully",
       data: {
         id: apiKey._id,
         name: apiKey.name,
-        key: newPlainKey, // Afficher la nouvelle clé
+        key: newPlainKey, // Display new key
         createdAt: apiKey.createdAt,
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la régénération de la clé API:", error);
+    console.error("Error retrieving API key:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors de la régénération de la clé API",
+      message: "Error retrieving API key",
       error: error.message,
     });
   }
 };
 
 /**
- * Supprimer une clé API
+ * Delete an API key
  * DELETE /api/api-keys/:id
  */
 const deleteApiKey = async (req, res) => {
@@ -278,19 +278,19 @@ const deleteApiKey = async (req, res) => {
     if (!apiKey) {
       return res.status(404).json({
         success: false,
-        message: "Clé API non trouvée",
+        message: "API key not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "Clé API supprimée avec succès",
+      message: "API key deleted successfully",
     });
   } catch (error) {
-    console.error("Erreur lors de la suppression de la clé API:", error);
+    console.error("Error deleting API key:", error);
     res.status(500).json({
       success: false,
-      message: "Erreur lors de la suppression de la clé API",
+      message: "Error creating API key",
       error: error.message,
     });
   }
