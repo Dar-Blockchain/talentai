@@ -303,7 +303,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                   sx={{
                     "& .MuiPaginationItem-root": {
                       fontWeight: 500,
-                      "&.Mui-selected": { bgcolor: TEAL_BG, color: TEAL, fontWeight: 700 },
+                      "&.Mui-selected": { bgcolor: "rgba(131,16,255,0.1)", color: "#8310FF", fontWeight: 700 },
                       "&:hover":        { bgcolor: "#F3F4F6" },
                     },
                   }}

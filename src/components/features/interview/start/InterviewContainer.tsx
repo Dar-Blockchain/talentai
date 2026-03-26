@@ -198,18 +198,29 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           <Box sx={{ py: 1 }}>
 
             {/* Live transcript */}
-            <Typography sx={{
-              fontFamily: 'Poppins', fontSize: '0.82rem',
-              color: currentTranscript ? '#374151' : '#9ca3af',
-              fontStyle: currentTranscript ? 'normal' : 'italic',
-              lineHeight: 1.7,
-              mb: 2,
-              minHeight: 80,
-            }}>
-              {currentTranscript
-                ? currentTranscript.slice(-400) + (currentTranscript.length > 400 ? '…' : '')
-                : 'Waiting for speech…'}
-            </Typography>
+            <Box
+              id="transcript-scroll"
+              sx={{
+                maxHeight: 200,
+                overflowY: 'auto',
+                mb: 2,
+                pr: 0.5,
+                '&::-webkit-scrollbar': { width: 4 },
+                '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+                '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(131,16,255,0.2)', borderRadius: 2 },
+              }}
+              ref={(el: HTMLDivElement | null) => { if (el) el.scrollTop = el.scrollHeight; }}
+            >
+              <Typography sx={{
+                fontFamily: 'Poppins', fontSize: '0.82rem',
+                color: currentTranscript ? '#374151' : '#9ca3af',
+                fontStyle: currentTranscript ? 'normal' : 'italic',
+                lineHeight: 1.7,
+                minHeight: 80,
+              }}>
+                {currentTranscript || 'Waiting for speech…'}
+              </Typography>
+            </Box>
 
           </Box>
         )}

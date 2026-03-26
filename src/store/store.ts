@@ -30,6 +30,7 @@ import participantReducer from './slices/participantSlice';
 import companyReducer from './slices/companySlice';
 import departmentReducer from './slices/departmentSlice';
 import interviewApplicantReducer from './slices/interviewApplicantSlice';
+import jobApplicationReducer from './slices/jobApplicationSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
@@ -53,6 +54,7 @@ const rootReducer = combineReducers({
   company: companyReducer,
   department: departmentReducer,
   interviewApplicant: interviewApplicantReducer,
+  jobApplications: jobApplicationReducer,
 });
 
 const persistConfig = {

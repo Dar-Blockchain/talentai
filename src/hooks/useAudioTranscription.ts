@@ -497,7 +497,7 @@ export const useAudioTranscription = ({
           }
         }
 
-        setCurrentTranscript(text.slice(-200));
+        setCurrentTranscript(text);
         setSpeechPhase('speaking');
         setAgentState('waiting');
         setAgentMessage('Listening to your answer...');
@@ -547,7 +547,7 @@ export const useAudioTranscription = ({
           if (isInReadingTimeNow) {
             console.log('📖 Still in reading time, transcript saved but not sent');
             setAccumulatedTranscript(finalText);
-            setCurrentTranscript(finalText.slice(-200));
+            setCurrentTranscript(finalText);
             setAgentState('waiting');
             setAgentMessage(`Reading time: ${Math.ceil((readingTimeBuffer - (now - questionReadingTime!)) / 1000)}s remaining`);
             setSpeechPhase('reading');
@@ -562,8 +562,9 @@ export const useAudioTranscription = ({
           setAccumulatedTurns(newTurns);
           accumulatedTurnsRef.current = newTurns;
           setLastTurnTime(now);
-          setAccumulatedTranscript(finalText);
-          setCurrentTranscript(finalText.slice(-200));
+          const fullTranscript = newTurns.join(' ');
+          setAccumulatedTranscript(fullTranscript);
+          setCurrentTranscript(fullTranscript);
 
           setAgentState('waiting');
           setAgentMessage('Listening to your answer...');

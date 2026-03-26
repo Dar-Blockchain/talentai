@@ -687,5 +687,234 @@ const sendInterviewCompletionNotificationToCompany = async (companyEmail, compan
   }
 };
 
+// Template pour invitation à un entretien
+const getInterviewInvitationTemplate = (candidateName, jobTitle, companyName, interviewDate, interviewTime, interviewLink = null) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Invitation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #2D3748;
+      margin: 0;
+      padding: 0;
+      background-color: #F7FAFC;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0;
+      background-color: #FFFFFF;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .header p {
+      margin: 10px 0 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    .content {
+      padding: 30px;
+      background-color: #FFFFFF;
+    }
+    .greeting {
+      font-size: 16px;
+      margin: 0 0 20px 0;
+    }
+    .success-badge {
+      background-color: #C6F6D5;
+      border: 2px solid #9AE6B4;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      color: #22543D;
+      font-weight: bold;
+      margin: 20px 0;
+      font-size: 16px;
+    }
+    .info-section {
+      background-color: #EBF8FF;
+      border-left: 4px solid #2B6CB0;
+      padding: 20px;
+      border-radius: 4px;
+      margin: 25px 0;
+    }
+    .info-item {
+      margin: 12px 0;
+      display: flex;
+      align-items: flex-start;
+    }
+    .info-item strong {
+      color: #1A365D;
+      min-width: 100px;
+      margin-right: 10px;
+    }
+    .info-item span {
+      color: #2D3748;
+    }
+    .cta-button {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .cta-button a {
+      background-color: #2B6CB0;
+      color: white;
+      padding: 14px 30px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+    .cta-button a:hover {
+      background-color: #1A365D;
+    }
+    .instructions {
+      background-color: #FFFAF0;
+      border-left: 4px solid #D69E2E;
+      padding: 20px;
+      border-radius: 4px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+    .instructions p {
+      margin: 8px 0;
+    }
+    .instructions strong {
+      color: #7C2D12;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #F7FAFC;
+      border-radius: 0 0 8px 8px;
+      border-top: 1px solid #E2E8F0;
+      font-size: 13px;
+      color: #718096;
+    }
+    a {
+      color: #2B6CB0;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .logo {
+      display: block;
+      margin: 0 auto 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Interview Invitation</h1>
+      <p>You've been invited to an interview</p>
+    </div>
+    <div class="content">
+      <p class="greeting">Hello <strong>${candidateName}</strong>,</p>
+      
+      <div class="success-badge">
+        🎉 Congratulations! You have been invited to an interview
+      </div>
+      
+      <p>We are pleased to inform you that your application has impressed us! We would like to invite you for an interview with <strong>${companyName}</strong>.</p>
+      
+      <div class="info-section">
+        <div class="info-item">
+          <strong>Position:</strong>
+          <span>${jobTitle}</span>
+        </div>
+        ${interviewDate ? `
+        <div class="info-item">
+          <strong>Date:</strong>
+          <span>${interviewDate}</span>
+        </div>
+        ` : ''}
+        ${interviewTime ? `
+        <div class="info-item">
+          <strong>Time:</strong>
+          <span>${interviewTime}</span>
+        </div>
+        ` : ''}
+        ${interviewLink ? `
+        <div class="info-item">
+          <strong>Meeting Link:</strong>
+          <span><a href="${interviewLink}" target="_blank">${interviewLink}</a></span>
+        </div>
+        ` : ''}
+      </div>
+
+      ${interviewLink ? `
+      <div class="cta-button">
+        <a href="${interviewLink}" target="_blank">Join Interview</a>
+      </div>
+      ` : ''}
+
+      <div class="instructions">
+        <strong>📋 How to prepare:</strong>
+        <p>• Review the job description and responsibilities</p>
+        <p>• Prepare to discuss your experience and qualifications</p>
+        <p>• Test your internet connection and device's camera and microphone</p>
+        <p>• Find a quiet environment for the interview</p>
+      </div>
+
+      <p>If you have any questions or need to reschedule, please don't hesitate to contact us at <a href="mailto:support@talentai.bid">support@talentai.bid</a></p>
+
+      <p>We look forward to speaking with you soon!</p>
+
+      <p>Best regards,<br><strong>${companyName}</strong> Recruitment Team</p>
+    </div>
+    <div class="footer">
+      <p>This email was sent to you because you have a pending job application on TalenIA platform.</p>
+      <p>If you did not apply for this job, please ignore this email.</p>
+      <p>&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</p>
+      <p>For support, contact <a href="mailto:support@talentai.bid">support@talentai.bid</a></p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+// Fonction d'envoi email d'invitation à l'entretien
+const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, companyName, interviewDate = null, interviewTime = null, interviewLink = null) => {
+  try {
+    const subject = `Interview Invitation - ${jobTitle} at ${companyName}`;
+    const html = getInterviewInvitationTemplate(candidateName, jobTitle, companyName, interviewDate, interviewTime, interviewLink);
+    
+    const mailOptions = {
+      from: '"TalenIA" <contact@talentai.bid>',
+      to: candidateEmail,
+      subject,
+      html,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Interview invitation email sent to ${candidateEmail} for position: ${jobTitle}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send interview invitation email:', error.message);
+    return false;
+  }
+};
+
 // Exporter les fonctions
-module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany, transporter };
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail, sendCompanyInvitation, sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany, sendInterviewInvitation, transporter };

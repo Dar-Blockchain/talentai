@@ -7,6 +7,7 @@ import {
   PsychologyOutlined,
   SettingsOutlined,
   CorporateFareOutlined,
+  AssignmentIndOutlined,
 } from "@mui/icons-material";
 
 export const navigation = [
@@ -45,6 +46,12 @@ export const navigation = [
     icon: HowToRegOutlined,
     label: "Interviews",
     href: "/company/interviews",
+  },
+  {
+    id: "applications",
+    icon: AssignmentIndOutlined,
+    label: "Applications",
+    href: "/company/applications",
   },
   // {
   //   id: "skills",
