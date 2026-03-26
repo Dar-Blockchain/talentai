@@ -19,11 +19,18 @@ import { daysLeft } from "@/utils/functions";
 
 interface Props {
   campaign: Campaign;
-  onChangeStatus: (id: string, status: CampaignStatus) => void;
-  onDeleteClick: () => void;
+  onChangeStatus?: (id: string, status: CampaignStatus) => void;
+  onDeleteClick?: () => void;
+  backLabel?: string;
+  backUrl?: string;
+  actionsNode?: React.ReactNode;
 }
 
-const CampaignHeader: React.FC<Props> = ({ campaign, onChangeStatus, onDeleteClick }) => {
+const CampaignHeader: React.FC<Props> = ({
+  campaign, onChangeStatus, onDeleteClick,
+  backLabel = "Campaigns", backUrl = "/company/campaigns",
+  actionsNode,
+}) => {
   const router = useRouter();
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
 
@@ -50,7 +57,7 @@ const CampaignHeader: React.FC<Props> = ({ campaign, onChangeStatus, onDeleteCli
         {/* ── Nav row: back + actions ── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Box
-            onClick={() => router.push("/company/campaigns")}
+            onClick={() => router.push(backUrl)}
             sx={{
               display: "inline-flex", alignItems: "center", gap: 0.75,
               cursor: "pointer", color: "#94A3B8",
@@ -59,60 +66,62 @@ const CampaignHeader: React.FC<Props> = ({ campaign, onChangeStatus, onDeleteCli
           >
             <ArrowBackOutlined sx={{ fontSize: 15 }} />
             <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>
-              Campaigns
+              {backLabel}
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 0.875 }}>
-            {transitions.length > 0 && (
-              <>
-                <Box
-                  onClick={(e) => setAnchor(e.currentTarget)}
-                  sx={{
-                    display: "flex", alignItems: "center", gap: 0.625,
-                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                    border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
-                    transition: "all 0.15s",
-                    "&:hover": { bgcolor: `${typeColor}08`, borderColor: `${typeColor}30`, "& *": { color: typeColor } },
-                  }}
-                >
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>
-                    Change Status
-                  </Typography>
-                  <KeyboardArrowDownOutlined sx={{ fontSize: 14, color: "#64748B" }} />
-                </Box>
-                <Menu
-                  anchorEl={anchor}
-                  open={Boolean(anchor)}
-                  onClose={() => setAnchor(null)}
-                  slotProps={{ paper: { sx: { borderRadius: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 160, border: "1px solid #F3F4F6", mt: 0.5 } } }}
-                >
-                  {transitions.map((s) => (
-                    <MenuItem
-                      key={s}
-                      onClick={() => { setAnchor(null); onChangeStatus(campaign._id, s); }}
-                      sx={{ fontSize: "13px", fontWeight: 600, color: STATUS_COLORS[s]?.fg }}
-                    >
-                      {STATUS_TRANSITION_LABELS[s]}
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </>
-            )}
-            <Box
-              onClick={onDeleteClick}
-              sx={{
-                display: "flex", alignItems: "center", gap: 0.625,
-                px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                border: "1px solid #FECACA", bgcolor: "#FEF7F7",
-                transition: "all 0.15s",
-                "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
-              }}
-            >
-              <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-              <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+          {actionsNode ?? (
+            <Box sx={{ display: "flex", gap: 0.875 }}>
+              {transitions.length > 0 && (
+                <>
+                  <Box
+                    onClick={(e) => setAnchor(e.currentTarget)}
+                    sx={{
+                      display: "flex", alignItems: "center", gap: 0.625,
+                      px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                      border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
+                      transition: "all 0.15s",
+                      "&:hover": { bgcolor: `${typeColor}08`, borderColor: `${typeColor}30`, "& *": { color: typeColor } },
+                    }}
+                  >
+                    <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>
+                      Change Status
+                    </Typography>
+                    <KeyboardArrowDownOutlined sx={{ fontSize: 14, color: "#64748B" }} />
+                  </Box>
+                  <Menu
+                    anchorEl={anchor}
+                    open={Boolean(anchor)}
+                    onClose={() => setAnchor(null)}
+                    slotProps={{ paper: { sx: { borderRadius: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 160, border: "1px solid #F3F4F6", mt: 0.5 } } }}
+                  >
+                    {transitions.map((s) => (
+                      <MenuItem
+                        key={s}
+                        onClick={() => { setAnchor(null); onChangeStatus?.(campaign._id, s); }}
+                        sx={{ fontSize: "13px", fontWeight: 600, color: STATUS_COLORS[s]?.fg }}
+                      >
+                        {STATUS_TRANSITION_LABELS[s]}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </>
+              )}
+              <Box
+                onClick={onDeleteClick}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 0.625,
+                  px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                  border: "1px solid #FECACA", bgcolor: "#FEF7F7",
+                  transition: "all 0.15s",
+                  "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
+                }}
+              >
+                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
+                <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
 
         {/* ── Identity row ── */}

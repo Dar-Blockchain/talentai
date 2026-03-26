@@ -150,7 +150,7 @@ const CampaignsStats: React.FC = () => {
       {count > 0 && (
         <Pagination
           page={page}
-          limit={limit}
+          pageSize={limit}
           total={count}
           onPageChange={handlePageChange}
         />

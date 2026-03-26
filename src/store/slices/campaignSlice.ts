@@ -10,6 +10,7 @@ import {
   CreateCampaignPayload,
   CampaignsResponse,
   ParticipantStatus,
+  NonParticipant,
 } from "@/types/campaign";
 
 // ─── Employee campaign entry (campaign + participant context) ─────────────────
@@ -147,7 +148,8 @@ export const fetchCampaignParticipants = createAsyncThunk<
 >("campaign/fetchParticipants", async ({ campaignId, ...params }, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.get(`internal-campaigns/${campaignId}/participants`, { params });
-    return { data: response.data.data as CampaignParticipant[], total: response.data.count ?? response.data.total ?? response.data.data?.length ?? 0 };
+    const payload = response.data.data; // { total, page, limit, pages, data: [...] }
+    return { data: payload.data as CampaignParticipant[], total: payload.total ?? payload.data?.length ?? 0 };
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -176,6 +178,55 @@ export const fetchEmployeeCampaigns = createAsyncThunk<
     return response.data.data as EmployeeCampaignEntry[];
   } catch (err: any) {
     return rejectWithValue(err.message);
+  }
+});
+
+export const fetchNonParticipants = createAsyncThunk<
+  { data: NonParticipant[]; total: number },
+  {
+    campaignId: string;
+    search?: string;
+    department?: string;
+    role?: string;
+    sortBy?: string;
+    order?: string;
+    page?: number;
+    limit?: number;
+  },
+  { rejectValue: string }
+>("campaign/fetchNonParticipants", async ({ campaignId, ...params }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`internal-campaigns/${campaignId}/non-participants`, { params });
+    const payload = response.data.data;
+    return { data: payload.data as NonParticipant[], total: payload.total ?? 0 };
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message ?? err.message);
+  }
+});
+
+export const addCampaignParticipant = createAsyncThunk<
+  CampaignParticipant,
+  { campaignId: string; employeeId: string },
+  { rejectValue: string }
+>("campaign/addParticipant", async ({ campaignId, employeeId }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post(`internal-campaigns/${campaignId}/participate/${employeeId}`);
+    return response.data.data as CampaignParticipant;
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message ?? err.message);
+  }
+});
+
+export const removeCampaignParticipant = createAsyncThunk<
+  string,
+  { campaignId: string; participantId: string },
+  { rejectValue: string }
+>("campaign/removeParticipant", async ({ campaignId, participantId }, { rejectWithValue }) => {
+  try {
+    await axiosInstance.delete(`internal-campaigns/${campaignId}/participate/${participantId}`);
+    return participantId;
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message ?? err.message);
   }
 });
 
@@ -216,6 +267,14 @@ interface CampaignState {
   employeeCampaigns: EmployeeCampaignEntry[];
   employeeCampaignsLoading: boolean;
   employeeCampaignsError: string | null;
+
+  participantActionLoading: boolean;
+  participantActionError: string | null;
+
+  nonParticipants: NonParticipant[];
+  nonParticipantsLoading: boolean;
+  nonParticipantsError: string | null;
+  nonParticipantsTotal: number;
 }
 
 const initialState: CampaignState = {
@@ -253,6 +312,14 @@ const initialState: CampaignState = {
   employeeCampaigns: [],
   employeeCampaignsLoading: false,
   employeeCampaignsError: null,
+
+  participantActionLoading: false,
+  participantActionError: null,
+
+  nonParticipants: [],
+  nonParticipantsLoading: false,
+  nonParticipantsError: null,
+  nonParticipantsTotal: 0,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -445,6 +512,59 @@ const campaignSlice = createSlice({
         state.employeeCampaignsLoading = false;
         state.employeeCampaignsError = action.payload || "Failed to load employee campaigns";
       });
+
+    // fetchNonParticipants
+    builder
+      .addCase(fetchNonParticipants.pending, (state) => {
+        state.nonParticipantsLoading = true;
+        state.nonParticipantsError = null;
+      })
+      .addCase(fetchNonParticipants.fulfilled, (state, action) => {
+        state.nonParticipantsLoading = false;
+        state.nonParticipants = action.payload.data;
+        state.nonParticipantsTotal = action.payload.total;
+      })
+      .addCase(fetchNonParticipants.rejected, (state, action) => {
+        state.nonParticipantsLoading = false;
+        state.nonParticipantsError = action.payload || "Failed to load employees";
+      });
+
+    // addCampaignParticipant
+    builder
+      .addCase(addCampaignParticipant.pending, (state) => {
+        state.participantActionLoading = true;
+        state.participantActionError = null;
+      })
+      .addCase(addCampaignParticipant.fulfilled, (state, action) => {
+        state.participantActionLoading = false;
+        state.participants.unshift(action.payload);
+        state.participantsTotal += 1;
+        // action.meta.arg carries the original { campaignId, employeeId } — use employeeId (User _id)
+        // to remove the employee from the non-participants list immediately
+        const addedUserId = action.meta.arg.employeeId;
+        state.nonParticipants = state.nonParticipants.filter((e) => e._id !== addedUserId);
+        state.nonParticipantsTotal = Math.max(0, state.nonParticipantsTotal - 1);
+      })
+      .addCase(addCampaignParticipant.rejected, (state, action) => {
+        state.participantActionLoading = false;
+        state.participantActionError = action.payload || "Failed to add participant";
+      });
+
+    // removeCampaignParticipant
+    builder
+      .addCase(removeCampaignParticipant.pending, (state) => {
+        state.participantActionLoading = true;
+        state.participantActionError = null;
+      })
+      .addCase(removeCampaignParticipant.fulfilled, (state, action) => {
+        state.participantActionLoading = false;
+        state.participants = state.participants.filter((p) => p._id !== action.payload);
+        state.participantsTotal = Math.max(0, state.participantsTotal - 1);
+      })
+      .addCase(removeCampaignParticipant.rejected, (state, action) => {
+        state.participantActionLoading = false;
+        state.participantActionError = action.payload || "Failed to remove participant";
+      });
   },
 });
 
@@ -515,5 +635,19 @@ export const selectEmployeeCampaignsLoading = (state: any) =>
   state.campaign.employeeCampaignsLoading as boolean;
 export const selectEmployeeCampaignsError = (state: any) =>
   state.campaign.employeeCampaignsError as string | null;
+
+export const selectParticipantActionLoading = (state: any) =>
+  state.campaign.participantActionLoading as boolean;
+export const selectParticipantActionError = (state: any) =>
+  state.campaign.participantActionError as string | null;
+
+export const selectNonParticipants = (state: any) =>
+  state.campaign.nonParticipants as NonParticipant[];
+export const selectNonParticipantsLoading = (state: any) =>
+  state.campaign.nonParticipantsLoading as boolean;
+export const selectNonParticipantsError = (state: any) =>
+  state.campaign.nonParticipantsError as string | null;
+export const selectNonParticipantsTotal = (state: any) =>
+  state.campaign.nonParticipantsTotal as number;
 
 export default campaignSlice.reducer;

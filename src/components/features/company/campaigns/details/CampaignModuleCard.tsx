@@ -16,9 +16,10 @@ const CARD = {
 interface Props {
   module: Campaign["module"];
   onConfigureModule?: (moduleType: ModuleType) => void;
+  showConfigure?: boolean;
 }
 
-const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule }) => {
+const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule, showConfigure = true }) => {
   if (!mod) return null;
 
   const cfg      = MODULE_CONFIG[mod.type];
@@ -59,22 +60,24 @@ const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule })
               <Typography sx={{ fontWeight: 700, fontSize: "0.9375rem", color: "#0F172A" }}>
                 {cfg.label}
               </Typography>
-              <Box
-                onClick={() => onConfigureModule?.(mod.type)}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 0.5,
-                  px: 1.375, py: 0.625, borderRadius: "8px", cursor: "pointer", flexShrink: 0,
-                  bgcolor: hasConfig ? `${color}10` : color,
-                  border: `1px solid ${hasConfig ? `${color}25` : color}`,
-                  transition: "all 0.15s",
-                  "&:hover": { opacity: 0.85 },
-                }}
-              >
-                <SettingsOutlined sx={{ fontSize: 12, color: hasConfig ? color : "#fff" }} />
-                <Typography sx={{ fontSize: "11px", fontWeight: 700, color: hasConfig ? color : "#fff" }}>
-                  {hasConfig ? "Edit" : "Configure"}
-                </Typography>
-              </Box>
+              {showConfigure && (
+                <Box
+                  onClick={() => onConfigureModule?.(mod.type)}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.5,
+                    px: 1.375, py: 0.625, borderRadius: "8px", cursor: "pointer", flexShrink: 0,
+                    bgcolor: hasConfig ? `${color}10` : color,
+                    border: `1px solid ${hasConfig ? `${color}25` : color}`,
+                    transition: "all 0.15s",
+                    "&:hover": { opacity: 0.85 },
+                  }}
+                >
+                  <SettingsOutlined sx={{ fontSize: 12, color: hasConfig ? color : "#fff" }} />
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: hasConfig ? color : "#fff" }}>
+                    {hasConfig ? "Edit" : "Configure"}
+                  </Typography>
+                </Box>
+              )}
             </Box>
             <Typography sx={{ fontSize: "0.8rem", color: "#64748B", lineHeight: 1.4 }}>
               {cfg.description}

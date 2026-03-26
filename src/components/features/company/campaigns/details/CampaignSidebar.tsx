@@ -22,9 +22,10 @@ const CARD  = {
 
 interface Props {
   campaign: Campaign;
+  showLastUpdated?: boolean;
 }
 
-const CampaignSidebar: React.FC<Props> = ({ campaign }) => {
+const CampaignSidebar: React.FC<Props> = ({ campaign, showLastUpdated = true }) => {
   const showLink =
     !!campaign.linkToken &&
     (campaign.accessMethod === "LINK" || campaign.accessMethod === "BOTH");
@@ -32,7 +33,7 @@ const CampaignSidebar: React.FC<Props> = ({ campaign }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       {showLink && <CampaignLinkCard linkToken={campaign.linkToken!} />}
-      <CampaignInfoCard campaign={campaign} />
+      <CampaignInfoCard campaign={campaign} showLastUpdated={showLastUpdated} />
     </Box>
   );
 };
@@ -145,7 +146,7 @@ const InfoRow: React.FC<{
   </Box>
 );
 
-const CampaignInfoCard: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
+const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean }> = ({ campaign, showLastUpdated = true }) => {
   const sc       = STATUS_COLORS[campaign.status] ?? STATUS_COLORS.DRAFT;
   const modLabel = MODULE_CONFIG[campaign.module?.type]?.label ?? campaign.module?.type;
 
@@ -203,12 +204,14 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
         />
 
         {/* Updated */}
-        <InfoRow
-          icon={<UpdateOutlined sx={{ fontSize: 14 }} />}
-          iconColor="#94A3B8"
-          label="Updated"
-          value={fmtDate(campaign.updatedAt)}
-        />
+        {showLastUpdated && (
+          <InfoRow
+            icon={<UpdateOutlined sx={{ fontSize: 14 }} />}
+            iconColor="#94A3B8"
+            label="Updated"
+            value={fmtDate(campaign.updatedAt)}
+          />
+        )}
 
       </Box>
     </Box>

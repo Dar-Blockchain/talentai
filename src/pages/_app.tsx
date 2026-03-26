@@ -3,7 +3,7 @@ import type { AppProps } from "next/app";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline, Dialog, DialogContent, Box, Typography, CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
@@ -59,10 +59,35 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     });
   }, [router.query.force_logout]);
 
-  if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
-
   return (
-    <NotificationProvider userId={userId}>{children}</NotificationProvider>
+    <NotificationProvider userId={userId}>
+      {children}
+      <Dialog
+        open={isLoggingOut}
+        disableEscapeKeyDown
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            px: 4,
+            py: 3.5,
+            minWidth: 260,
+            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          },
+        }}
+      >
+        <DialogContent sx={{ p: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2.5 }}>
+          <CircularProgress size={36} thickness={4} sx={{ color: "#0D9488" }} />
+          <Box sx={{ textAlign: "center" }}>
+            <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>
+              Déconnexion en cours
+            </Typography>
+            <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
+              Veuillez patienter…
+            </Typography>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </NotificationProvider>
   );
 }
 

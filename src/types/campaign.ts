@@ -33,6 +33,9 @@ export interface Campaign {
   targetEmployeeCount?: number;
   deadline?: string;
   participantStatus?: ParticipantStatus;
+  progress?: number;
+  score?: number;
+  completedAt?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -139,24 +142,35 @@ export type CampaignModule =
 
 // ─── Participants ─────────────────────────────────────────────────────────────
 
-export type ParticipantStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+export type ParticipantStatus = "INVITED" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
 
 export interface CampaignParticipant {
   _id: string;
-  employee?: {
-    _id?: string;
-    firstName?: string;
-    lastName?: string;
-    username?: string;
-    email?: string;
-    role?: string;
-    department?: string | { _id?: string; name: string };
-  };
-  email?: string; // for anonymous participants
+  employeeId?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+  department?: { id: string; name: string };
   status: ParticipantStatus;
   accessedAt?: string;
   completedAt?: string;
   score?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Non-participants (employees not yet in a campaign) ───────────────────────
+
+export interface NonParticipant {
+  _id: string;
+  membershipId: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  username: string | null;
+  role: string | null;
+  department: { id: string; name: string } | null;
 }
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────

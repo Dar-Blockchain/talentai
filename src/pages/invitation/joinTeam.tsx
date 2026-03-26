@@ -186,8 +186,8 @@ const JoinTeamPage: React.FC = () => {
     }
   };
 
-  // ── Loading ──
-  if (fetchingInvitationDetails) {
+  // ── Loading ── (also covers the window before router.isReady triggers the fetch)
+  if (!router.isReady || fetchingInvitationDetails) {
     return (
       <Shell>
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 8 }}>

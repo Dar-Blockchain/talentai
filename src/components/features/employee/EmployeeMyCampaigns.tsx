@@ -10,14 +10,14 @@ import {
   EmployeeCampaignEntry,
 } from "@/store/slices/campaignSlice";
 import {
-  Box, Typography, Chip, Button, LinearProgress, Skeleton, Alert,
+  Box, Typography, Chip, Button, LinearProgress, Skeleton, Alert, IconButton, Tooltip,
 } from "@mui/material";
 import {
   InsightsOutlined, AccountTreeOutlined, SchoolOutlined, TuneOutlined,
   DescriptionOutlined, PsychologyOutlined, AssignmentTurnedInOutlined, PeopleOutlined,
   AccessTimeOutlined, CheckCircleOutlined, RadioButtonUncheckedOutlined,
   PlayArrowOutlined, VisibilityOutlined, ArrowForwardOutlined, FilterListOutlined,
-  EmojiEventsOutlined,
+  EmojiEventsOutlined, InfoOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
@@ -50,9 +50,10 @@ const MODULE_META: Record<ModuleType, { label: string; icon: React.ElementType; 
 };
 
 const PARTICIPANT_STATUS_META: Record<ParticipantStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  NOT_STARTED: { label: "Not Started", color: "#9CA3AF", bg: "#F9FAFB",   icon: RadioButtonUncheckedOutlined },
+  INVITED:     { label: "Invited",     color: "#0891B2", bg: "#ECFDF5",   icon: RadioButtonUncheckedOutlined },
   IN_PROGRESS: { label: "In Progress", color: AMBER,    bg: "#FFFBEB",   icon: PlayArrowOutlined },
   COMPLETED:   { label: "Completed",   color: GREEN,    bg: "#F0FDF4",   icon: CheckCircleOutlined },
+  DROPPED:     { label: "Dropped",     color: ROSE,     bg: "#FEF2F2",   icon: RadioButtonUncheckedOutlined },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -70,35 +71,13 @@ const daysLeft = (iso?: string) => {
 
 const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? AMBER : ROSE;
 
-// ─── Score Ring ───────────────────────────────────────────────────────────────
-
-const ScoreRing: React.FC<{ score: number }> = ({ score }) => {
-  const size = 56;
-  const r = (size - 8) / 2;
-  const circ = 2 * Math.PI * r;
-  const color = scoreColor(score);
-  return (
-    <Box sx={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F3F4F6" strokeWidth={5} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={5}
-          strokeLinecap="round"
-          strokeDasharray={`${(score / 100) * circ} ${circ}`} />
-      </svg>
-      <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Typography sx={{ fontSize: "13px", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{score}%</Typography>
-      </Box>
-    </Box>
-  );
-};
-
 // ─── Campaign Card ────────────────────────────────────────────────────────────
 
-const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void }> = memo(
-  ({ campaign, index, onStart }) => {
+const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
+  ({ campaign, index, onStart, onDetails }) => {
     const tm = TYPE_META[campaign.type];
     const mm = MODULE_META[campaign.module.type];
-    const ps = PARTICIPANT_STATUS_META[campaign?.participantStatus || "NOT_STARTED"];
+    const ps = PARTICIPANT_STATUS_META[campaign?.participantStatus || "INVITED"];
     const TypeIcon = tm.icon;
     const ModIcon  = mm.icon;
     const StatIcon = ps.icon;
@@ -176,8 +155,8 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
           </Box>
 
           {/* Footer CTA */}
-          <Box sx={{ px: 2.5, py: 2, borderTop: "1px solid #F3F4F6", bgcolor: "#FAFAFA" }}>
-            {campaign.participantStatus === "NOT_STARTED" && (
+          <Box sx={{ px: 2.5, py: 2, borderTop: "1px solid #F3F4F6", bgcolor: "#FAFAFA", display: "flex", gap: 1, alignItems: "center" }}>
+            {campaign.participantStatus === "INVITED" && (
               <Button
                 fullWidth
                 startIcon={<PlayArrowOutlined />}
@@ -190,7 +169,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               >
                 Start Campaign
               </Button>
-            )} 
+            )}
             {campaign.participantStatus === "IN_PROGRESS" && (
               <Button
                 fullWidth
@@ -217,9 +196,22 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                   "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: "#F0FDFA" },
                 }}
               >
-                View Results
+                View Details
               </Button>
             )}
+            <Tooltip title="Campaign details" arrow>
+              <IconButton
+                onClick={() => onDetails(campaign._id)}
+                size="small"
+                sx={{
+                  flexShrink: 0, border: "1px solid #E5E7EB", borderRadius: 2,
+                  color: "#6B7280", bgcolor: "#fff", p: 0.9,
+                  "&:hover": { borderColor: PURPLE, color: PURPLE, bgcolor: "#F5F3FF" },
+                }}
+              >
+                <InfoOutlined sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
       </motion.div>
@@ -274,6 +266,10 @@ const EmployeeMyCampaigns: React.FC = () => {
     router.push(`/employee/campaigns/${id}`);
   };
 
+  const handleDetails = (id: string) => {
+    router.push(`/employee/campaigns/${id}`);
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
@@ -299,7 +295,7 @@ const EmployeeMyCampaigns: React.FC = () => {
       {/* ── Summary Pills ─────────────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 2 }}>
         <SummaryPill icon={FilterListOutlined}               label="Total"       value={0}         color={TEAL}   bg="#F0FDFA" active={activeFilter === "ALL"}         onClick={() => setActiveFilter("ALL")} />
-        <SummaryPill icon={RadioButtonUncheckedOutlined}     label="Not Started" value={0}  color="#9CA3AF" bg="#F9FAFB" active={activeFilter === "NOT_STARTED"} onClick={() => setActiveFilter("NOT_STARTED")} />
+        <SummaryPill icon={RadioButtonUncheckedOutlined}     label="Invited"     value={0}  color="#0891B2" bg="#ECFDF5" active={activeFilter === "INVITED"}  onClick={() => setActiveFilter("INVITED")} />
         <SummaryPill icon={PlayArrowOutlined}                label="In Progress" value={0}  color={AMBER}  bg="#FFFBEB" active={activeFilter === "IN_PROGRESS"} onClick={() => setActiveFilter("IN_PROGRESS")} />
         <SummaryPill icon={CheckCircleOutlined}              label="Completed"   value={0}   color={GREEN}  bg="#F0FDF4" active={activeFilter === "COMPLETED"}   onClick={() => setActiveFilter("COMPLETED")} />
       </Box>
@@ -350,19 +346,18 @@ const EmployeeMyCampaigns: React.FC = () => {
           <CheckCircleOutlined sx={{ fontSize: 40, color: "#E5E7EB", mb: 1.5 }} />
           <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#374151" }}>No campaigns here</Typography>
           <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mt: 0.5 }}>
-            {activeFilter === "NOT_STARTED" ? "All campaigns have been started." : activeFilter === "IN_PROGRESS" ? "No campaigns in progress right now." : "You haven't completed any campaigns yet."}
+            {activeFilter === "INVITED" ? "You have been invited to join campaigns." : activeFilter === "IN_PROGRESS" ? "No campaigns in progress right now." : "You haven't completed any campaigns yet."}
           </Typography>
         </Box>
       ) : !loading && !error ? (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
           <AnimatePresence mode="popLayout">
             {campaigns.map((campaign, i) => (
-              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} />
+              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
             ))}
           </AnimatePresence>
         </Box>
       ) : null}
-
     </Box>
   );
 };

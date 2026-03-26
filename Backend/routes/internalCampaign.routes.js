@@ -45,10 +45,10 @@ router.post(
 );
 
 /**
- * DELETE /campaigns/:campaignId/participate/:userId — Remove an employee from a campaign
+ * DELETE /campaigns/:campaignId/participate/:participantId — Remove a participant by CampaignParticipant _id
  */
 router.delete(
-  "/:campaignId/participate/:userId",
+  "/:campaignId/participate/:participantId",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.removeEmployeeFromCampaign
@@ -91,6 +91,12 @@ router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
  * GET /campaigns/:campaignId/participants — Obtenir les participants d'une campagne (avec filtres et pagination)
  */
 router.get("/:campaignId/participants", internalCampaignController.getCampaignParticipants);
+
+/**
+ * GET /campaigns/:campaignId/non-participants — Employees of the company not yet in this campaign
+ * Supports: search, department, role, sortBy, order, page, limit
+ */
+router.get("/:campaignId/non-participants", internalCampaignController.getNonParticipants);
 
 /**
  * PATCH /campaigns/:campaignId/status — Changer le statut d'une campagne
