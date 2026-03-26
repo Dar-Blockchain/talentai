@@ -7,6 +7,15 @@ interface AgentStatusPanelProps {
   interviewStatus: InterviewStatus;
   agentState: AgentState;
   isVoiceActive?: boolean;
+  agentMessage?: string;
+  isInReadingTime?: boolean;
+  readingTimeLeft?: number;
+  accumulatedTurns?: string[];
+  currentTranscript?: string;
+  debugMode?: boolean;
+  setDebugMode?: (v: boolean) => void;
+  silenceDebugLog?: string[];
+  transcriptDebugLog?: string[];
   onSubmitAnswer: () => void;
 }
 

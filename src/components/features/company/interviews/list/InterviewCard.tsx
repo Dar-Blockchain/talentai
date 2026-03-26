@@ -68,7 +68,7 @@ export interface InterviewAssessment {
   _id: string;
   post: {
     _id: string;
-    jobDetails?: { title?: string; location?: string; employmentType?: string };
+    jobDetails?: { title?: string; location?: string; employmentType?: string; experienceLevel?: string };
     skillAnalysis?: {
       requiredSkills?: Array<{ _id?: string; name?: string; percentage?: number; level?: string | number; category?: string }>;
       softSkills?: Array<{ _id?: string; name?: string; percentage?: number; level?: string | number }>;
