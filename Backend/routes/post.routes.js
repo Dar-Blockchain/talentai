@@ -3,12 +3,14 @@
  *
  * Middlewares globaux appliqués:
  * - requireAuthUser: nécessite un utilisateur authentifié
+ * - verifyApiKey: alternative pour l'authentification par clé API
  * - LogMiddleware("Post"): journalise les requêtes liées aux posts
  * - controledAcces: certaines routes peuvent nécessiter un rôle spécifique côté contrôleur
  */
 const express = require("express");
 const router = express.Router();
 const { requireAuthUser } = require("../middleware/auth.middleware");
+const { verifyApiKey } = require("../middleware/security/api-key.middleware");
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
@@ -32,7 +34,20 @@ router.get("/details/:id", postController.getPostDetailsPublic);
 router.get("/public-stats", postController.getPublicStats);
 
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser, authLogMiddleware("Post"));
+// Accepte soit JWT (requireAuthUser) soit clé API (verifyApiKey)
+router.use((req, res, next) => {
+  // Essayer d'abord la vérification par API Key
+  verifyApiKey(req, res, (err) => {
+    // Si API Key réussit, continuer
+    if (req.isApiKeyAuth) {
+      return next();
+    }
+    // Sinon, exiger une authentification JWT
+    return requireAuthUser(req, res, next);
+  });
+});
+
+router.use(authLogMiddleware("Post"));
 
 // POST /post/save-post
 // Description: Crée un post

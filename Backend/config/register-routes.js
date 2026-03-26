@@ -48,6 +48,8 @@ const contactRouter = require('../routes/contact.routes');
 const interviewApplicantRouter = require('../routes/interviewApplicant.routes');
 const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
 const jobApplicationRouter = require("../routes/jobApplication.routes");
+const apiKeyRouter = require('../routes/apiKey.routes');
+
 // const backupRouter = require('../routes/backupRouter');
 
 /**
@@ -145,6 +147,9 @@ function registerRoutes(app) {
 
   // CV Analysis Routes
   app.use('/cv-analysis', cvAnalysisRouter); //✅ CV Analysis Management -> cv-analysis
+
+  // API Key Management
+  app.use('/api/api-keys', apiKeyRouter); //✅ API Key Management -> api-keys
 
   app.get("/some-route", (req, res) => {
     res.json("Route accessible");
