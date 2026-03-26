@@ -16,9 +16,9 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
 import { getAllCountryNames } from "@/utils/countryMappings";
 
-const TEAL        = "#0D9488";
-const TEAL_BG     = "#F0FDFA";
-const TEAL_BORDER = "#99F6E4";
+const TEAL        = "#8310FF";
+const TEAL_BG     = "#F5F0FF";
+const TEAL_BORDER = "#DDD6FE";
 
 const COMPANY_SIZES     = ["1-10", "11-50", "51-200", "201-500", "500+"];
 const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead", "Executive"];
@@ -85,138 +85,110 @@ const SettingsPage: React.FC = () => {
         <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF", mt: 0.25 }}>Manage your company profile and contact details</Typography>
       </Box>
 
-      <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start", flexDirection: { xs: "column", lg: "row" } }}>
+      <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>
 
-        {/* ══════════════ LEFT — Profile card ══════════════ */}
-        <Box sx={{ width: { xs: "100%", lg: 260 }, flexShrink: 0, position: { lg: "sticky" }, top: 24 }}>
-          <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>
-
-            {/* Cover gradient */}
-            <Box sx={{ height: 72, background: `linear-gradient(135deg, ${TEAL} 0%, #0891B2 100%)`, position: "relative" }} />
-
-            {/* Avatar — overlaps cover */}
-            <Box sx={{ px: 3, pb: 3 }}>
-              <Box
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                sx={{
-                  position: "relative", cursor: "pointer",
-                  width: 72, height: 72, borderRadius: "50%",
-                  mt: "-36px", mb: 1.5,
-                  border: `3px solid #fff`,
-                  boxShadow: dragOver ? `0 0 0 3px ${TEAL}` : "0 2px 8px rgba(0,0,0,0.12)",
-                  transition: "box-shadow 0.2s",
-                  "&:hover .upload-overlay": { opacity: 1 },
-                }}
-              >
-                {uploadingImage ? (
-                  <Box sx={{ width: "100%", height: "100%", borderRadius: "50%", bgcolor: TEAL_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <CircularProgress size={22} sx={{ color: TEAL }} />
-                  </Box>
-                ) : (
-                  <Avatar src={profile.avatar} sx={{ width: "100%", height: "100%", bgcolor: TEAL, fontSize: "26px", fontWeight: 800 }}>
-                    {initials}
-                  </Avatar>
-                )}
-                <Box className="upload-overlay" sx={{ position: "absolute", inset: 0, borderRadius: "50%", bgcolor: "rgba(13,148,136,0.75)", opacity: 0, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <CloudUploadOutlined sx={{ fontSize: 20, color: "#fff" }} />
+        {/* ══════ Profile banner ══════ */}
+        <Box sx={{ bgcolor: "#FAFAFA", borderBottom: "1px solid #E5E7EB", px: { xs: 3, md: 5 }, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
+            {/* Avatar */}
+            <Box
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              sx={{
+                position: "relative", cursor: "pointer", flexShrink: 0,
+                width: 72, height: 72, borderRadius: "16px",
+                border: "3px solid #fff",
+                boxShadow: dragOver ? "0 0 0 3px #8310FF" : "0 2px 8px rgba(0,0,0,0.1)",
+                transition: "box-shadow 0.2s",
+                "&:hover .upload-overlay": { opacity: 1 },
+              }}
+            >
+              {uploadingImage ? (
+                <Box sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: "#F5F0FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CircularProgress size={22} sx={{ color: "#8310FF" }} />
                 </Box>
+              ) : (
+                <Avatar src={profile.avatar} variant="rounded" sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: "#8310FF", fontSize: "28px", fontWeight: 800, color: "#fff" }}>
+                  {initials}
+                </Avatar>
+              )}
+              <Box className="upload-overlay" sx={{ position: "absolute", inset: 0, borderRadius: "13px", bgcolor: "rgba(131,16,255,0.6)", opacity: 0, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <CloudUploadOutlined sx={{ fontSize: 20, color: "#fff" }} />
               </Box>
-              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
+            </Box>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
 
-              <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>{displayName}</Typography>
-              <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.25 }}>{profile.email}</Typography>
-
-              {/* Quick chips */}
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
-                {profile.location && (
-                  <Chip icon={<LocationOnOutlined sx={{ fontSize: "11px !important" }} />} label={profile.location} size="small"
-                    sx={{ fontSize: "0.68rem", height: 22, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}`, "& .MuiChip-icon": { color: `${TEAL} !important` } }} />
+            {/* Name + meta */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontSize: "1.15rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>{displayName}</Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 0.5 }}>
+                {profile.email && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <LanguageIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{profile.email}</Typography>
+                  </Box>
                 )}
-                {(profile.size || profile.companySize) && (
-                  <Chip icon={<GroupsOutlined sx={{ fontSize: "11px !important" }} />} label={profile.size || profile.companySize} size="small"
-                    sx={{ fontSize: "0.68rem", height: 22, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+                {profile.location && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <LocationOnOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{profile.location}</Typography>
+                  </Box>
                 )}
                 {profile.industry && (
-                  <Chip label={profile.industry} size="small"
-                    sx={{ fontSize: "0.68rem", height: 22, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+                  <Chip label={profile.industry} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }} />
+                )}
+                {(profile.size || profile.companySize) && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <GroupsOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{profile.size || profile.companySize} employees</Typography>
+                  </Box>
                 )}
               </Box>
+            </Box>
 
-              <Divider sx={{ my: 2, borderColor: "#F3F4F6" }} />
-
-              {/* Links */}
-              {(profile.linkedin || profile.website) && (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {profile.linkedin && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <LinkedInIcon sx={{ fontSize: 15, color: "#0A66C2" }} />
-                      <Typography component="a" href={profile.linkedin} target="_blank" rel="noreferrer"
-                        sx={{ fontSize: "0.72rem", color: "#0A66C2", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", "&:hover": { textDecoration: "underline" } }}>
-                        LinkedIn
-                      </Typography>
-                    </Box>
-                  )}
-                  {profile.website && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <LanguageIcon sx={{ fontSize: 15, color: TEAL }} />
-                      <Typography component="a" href={profile.website} target="_blank" rel="noreferrer"
-                        sx={{ fontSize: "0.72rem", color: TEAL, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", "&:hover": { textDecoration: "underline" } }}>
-                        Website
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
+            {/* Edit / Save / Cancel */}
+            <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
+              {!isEditing ? (
+                <Button size="small" startIcon={<EditOutlined sx={{ fontSize: 14 }} />} onClick={startEdit}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#8310FF", border: "1px solid #DDD6FE", borderRadius: "9px", px: 2, bgcolor: "#F5F0FF", "&:hover": { bgcolor: "#EDE9FE" } }}>
+                  Edit Profile
+                </Button>
+              ) : (
+                <>
+                  <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: 14 }} />} onClick={cancelEdit}
+                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "9px", px: 1.5 }}>
+                    Cancel
+                  </Button>
+                  <Button size="small" variant="contained" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
+                    onClick={saveEdit} disabled={loading}
+                    sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: "#8310FF", color: "#fff", borderRadius: "9px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none" } }}>
+                    {loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : "Save"}
+                  </Button>
+                </>
               )}
-
-              <Typography sx={{ fontSize: "0.68rem", color: "#D1D5DB", mt: 2 }}>
-                Click avatar to upload · drag & drop supported
-              </Typography>
             </Box>
           </Box>
         </Box>
 
-        {/* ══════════════ RIGHT — Tabs + forms ══════════════ */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>
-
+        {/* ══════ Tabs + forms ══════ */}
+        <Box>
             {/* Tab bar */}
-            <Box sx={{ borderBottom: "1px solid #F3F4F6", px: 3, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ borderBottom: "1px solid #F3F4F6", px: 3, display: "flex", alignItems: "center" }}>
               <Tabs
                 value={tab}
                 onChange={(_, v) => setTab(v)}
                 sx={{
                   minHeight: 48,
-                  "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 48, color: "#9CA3AF", px: 0, mr: 3 },
-                  "& .Mui-selected": { color: TEAL },
-                  "& .MuiTabs-indicator": { bgcolor: TEAL, height: 2 },
+                  "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 48, color: "#374151", px: 0, mr: 3 },
+                  "& .Mui-selected": { color: "#8310FF" },
+                  "& .MuiTabs-indicator": { bgcolor: "#8310FF", height: 2 },
                 }}
               >
                 <Tab label="Company Info" />
                 <Tab label="Contact & Presence" />
               </Tabs>
-
-              {/* Edit / Save / Cancel */}
-              {!isEditing ? (
-                <Button size="small" startIcon={<EditOutlined sx={{ fontSize: 14 }} />} onClick={startEdit}
-                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: TEAL, border: `1px solid ${TEAL_BORDER}`, borderRadius: "8px", px: 1.5, "&:hover": { bgcolor: TEAL_BG } }}>
-                  Edit
-                </Button>
-              ) : (
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: 14 }} />} onClick={cancelEdit}
-                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.5 }}>
-                    Cancel
-                  </Button>
-                  <Button size="small" variant="contained" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
-                    onClick={saveEdit} disabled={loading}
-                    sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", bgcolor: TEAL, color: "#fff", borderRadius: "8px", px: 1.5, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
-                    {loading ? <CircularProgress size={14} color="inherit" /> : "Save changes"}
-                  </Button>
-                </Box>
-              )}
             </Box>
 
             {/* ── Tab 0: Company Info ── */}
@@ -253,7 +225,7 @@ const SettingsPage: React.FC = () => {
                       value={profile.industry || ""}
                       onChange={(e) => handleInputChange("industry", e.target.value)}
                       disabled={!isEditing} fullWidth
-                      placeholder="e.g. Technology, Finance…"
+                      placeholder="e.g. Technology, Finance..."
                       error={!!fieldErrors.industry}
                       helperText={fieldErrors.industry || ""}
                       sx={fieldSx}
@@ -366,7 +338,6 @@ const SettingsPage: React.FC = () => {
               </Box>
             )}
 
-          </Box>
         </Box>
 
       </Box>
