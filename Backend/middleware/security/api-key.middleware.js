@@ -10,27 +10,30 @@ const ApiKey = require("../../models/ApiKey.model");
 const verifyApiKey = async (req, res, next) => {
   try {
     let apiKey = null;
+    let isApiKeyFormat = false;
 
     // Vérifier les différentes sources de clé API
     if (req.headers.authorization) {
       const parts = req.headers.authorization.split(" ");
       if (parts.length === 2 && parts[0] === "Bearer") {
         apiKey = parts[1];
+        // Vérifier si c'est une clé API (commence par sk_)
+        isApiKeyFormat = apiKey.startsWith("sk_");
       }
     } else if (req.headers["x-api-key"]) {
       apiKey = req.headers["x-api-key"];
+      isApiKeyFormat = true;
     } else if (req.query.apiKey) {
       apiKey = req.query.apiKey;
+      isApiKeyFormat = true;
     }
 
-    if (!apiKey) {
-      return res.status(401).json({
-        success: false,
-        message: "API key manquante. Utilisez: Authorization: Bearer sk_xxxxx ou X-API-Key: sk_xxxxx",
-      });
+    // Si pas de clé ou ce n'est pas une clé API, laisser passer
+    if (!apiKey || !isApiKeyFormat) {
+      return next();
     }
 
-    // Hasher la clé et vérifier en base de données
+    // C'est une clé API, la valider
     const keyHash = ApiKey.hashKey(apiKey);
     const apiKeyDoc = await ApiKey.findOne({ keyHash });
 
