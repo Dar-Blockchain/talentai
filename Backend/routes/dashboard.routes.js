@@ -12,13 +12,27 @@ const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
 const { requireAuthUser } = require("../middleware/auth.middleware");
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
+
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 
 
 // Toutes les routes ci-dessous nécessitent un admin authentifié
-router.use(requireAuthUser, authLogMiddleware("Dashboard"));
-
+//router.use(requireAuthUser, authLogMiddleware("Dashboard"));
+// Auth obligatoire + logs pour toutes les routes
+// Accepte soit JWT (requireAuthUser) soit clé API (verifyApiKey)
+router.use((req, res, next) => {
+  // Essayer d'abord la vérification par API Key
+  verifyApiKey(req, res, (err) => {
+    // Si API Key réussit, continuer
+    if (req.isApiKeyAuth) {
+      return next();
+    }
+    // Sinon, exiger une authentification JWT
+    return requireAuthUser(req, res, next);
+  });
+});
 // GET /dashboard/getAllUsers
 // Description: Récupère la liste de tous les utilisateurs
 router.get("/getAllUsers", dashboardController.getAllUsers);
