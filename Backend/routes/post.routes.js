@@ -10,7 +10,7 @@
 const express = require("express");
 const router = express.Router();
 const { requireAuthUser } = require("../middleware/auth.middleware");
-const { verifyApiKey } = require("../middleware/security/api-key.middleware");
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
@@ -51,15 +51,18 @@ router.use(authLogMiddleware("Post"));
 
 // POST /post/save-post
 // Description: Crée un post
-router.post("/save-post",resolveCompanyActor, postController.createPost);
+// Scopes requis: write:posts
+router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, postController.createPost);
 
 // GET /post/get-all-posts
 // Description: Retourne tous les posts
-router.get("/get-all-posts", postController.getAllPosts);
+// Scopes requis: read:posts
+router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPosts);
 
 // GET /post/my-posts
 // Description: Posts de l'utilisateur courant
-router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
+// Scopes requis: read:posts
+router.get("/my-posts", checkScope(['read:posts']), resolveCompanyActor, postController.getUserPosts);
 
 // GET /post/metrics
 // Description: Rétrourne les métriques des posts (total, active, draft, expired, closed, cancelled)
@@ -67,19 +70,23 @@ router.get("/metrics", postController.getPostMetrics);
 
 // GET /post/getPostById/:id
 // Description: Détails d'un post
-router.get("/getPostById/:id", postController.getPostById);
+// Scopes requis: read:posts
+router.get("/getPostById/:id", checkScope(['read:posts']), postController.getPostById);
 
 // PUT /post/updatePost/:id
 // Description: Met à jour un post
-router.put("/updatePost/:id", resolveCompanyActor,postController.updatePost);
+// Scopes requis: write:posts
+router.put("/updatePost/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePost);
 
 // PATCH /post/updatePostStatus/:id
 // Description: Modifie le statut d'un post (actif/brouillon, etc.)
-router.patch("/updatePostStatus/:id", resolveCompanyActor,postController.updatePostStatus);
+// Scopes requis: write:posts
+router.patch("/updatePostStatus/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePostStatus);
 
 // DELETE /post/deletePost/:id
 // Description: Supprime un post
-router.delete("/deletePost/:id", resolveCompanyActor,postController.deletePost);
+// Scopes requis: delete:posts
+router.delete("/deletePost/:id", checkScope(['delete:posts']), resolveCompanyActor,postController.deletePost);
 
 // GET /post/adsPost
 // Description: 3 posts proposés à partir des 3 premières compétences du profil + pagination
@@ -104,7 +111,8 @@ router.get("/payment/calculate-price/:postId", resolveCompanyActor,postPaymentCo
 // POST /post/payment/process
 // Description: Process payment for agent creation after post and agent are created
 // Body: { postId, agentId }
-router.post("/payment/process", resolveCompanyActor,postPaymentController.processPostPayment);
+// Scopes requis: write:posts
+router.post("/payment/process", checkScope(['write:posts']), resolveCompanyActor,postPaymentController.processPostPayment);
 
 // GET /post/payment/history
 // Description: Get payment history for user's posts
