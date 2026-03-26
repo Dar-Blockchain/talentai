@@ -10,7 +10,7 @@ const createApiKey = async (req, res) => {
   try {
     const { name, serviceName, scopes, rateLimit, expiresAt, ipWhitelist } =
       req.body;
-    const userId = req.userId;
+    const userId = req.user._id;
 
     // Validation
     if (!name) {
