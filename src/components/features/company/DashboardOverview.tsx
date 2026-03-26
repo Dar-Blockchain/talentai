@@ -6,9 +6,10 @@ import { AppDispatch } from "@/store/store";
 import { fetchCompanyInterviews, selectCompanyInterviews, selectCompanyInterviewsLoading } from "@/store/slices/interviewSlice";
 import { fetchMyPosts, selectMyPosts, selectMyPostsLoading } from "@/store/slices/postSlice";
 import { fetchDashboardStats, selectDashboardStats, selectDashboardStatsLoading, fetchRichStats, selectRichStats, selectRichStatsLoading } from "@/store/slices/companySlice";
+import { fetchCompanyApplicationMetrics, fetchCompanyApplications, selectApplicationMetrics, selectApplicationMetricsLoading, selectAllApplications, selectApplicationsLoading } from "@/store/slices/jobApplicationSlice";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
@@ -118,12 +119,18 @@ const DashboardOverview: React.FC = () => {
   const statsLoading    = useSelector(selectDashboardStatsLoading);
   const richStats       = useSelector(selectRichStats);
   const richLoading     = useSelector(selectRichStatsLoading);
+  const appMetrics        = useSelector(selectApplicationMetrics);
+  const appMetricsLoading = useSelector(selectApplicationMetricsLoading);
+  const allApplications   = useSelector(selectAllApplications);
+  const appsLoading       = useSelector(selectApplicationsLoading);
 
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ limit: 5 }));
     dispatch(fetchMyPosts({ limit: 5 }));
     dispatch(fetchDashboardStats());
     dispatch(fetchRichStats());
+    dispatch(fetchCompanyApplicationMetrics());
+    dispatch(fetchCompanyApplications({}));
   }, [dispatch]);
 
   const recentInterviews = useMemo(() =>
@@ -136,6 +143,35 @@ const DashboardOverview: React.FC = () => {
     [rawInterviews]);
 
   const recentPosts = useMemo(() => rawPosts.slice(0, 5), [rawPosts]);
+
+  // Applications over time — last 30 days
+  const appTrendData = useMemo(() => {
+    const map = new Map<string, number>();
+    allApplications.forEach((app: any) => {
+      const key = new Date(app.createdAt).toISOString().slice(0, 10);
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ label: i % 5 === 0 ? fmtDay(key) : "", count: map.get(key) || 0 });
+    }
+    return days;
+  }, [allApplications]);
+
+  // Applications per job post — top 6
+  const appPerJobData = useMemo(() => {
+    const map = new Map<string, number>();
+    allApplications.forEach((app: any) => {
+      const title = app.post?.jobDetails?.title || app.jobPost?.jobDetails?.title || "Unknown";
+      map.set(title, (map.get(title) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([title, count]) => ({ title: title.length > 18 ? title.slice(0, 18) + "…" : title, count }));
+  }, [allApplications]);
 
   // Build 30-day trend — fill missing days with 0
   const trendData = useMemo(() => {
@@ -155,8 +191,8 @@ const DashboardOverview: React.FC = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
-      {/* ══ Row 1: 4 Stat Cards ══════════════════════════════════════════════ */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 2.5 }}>
+      {/* ══ Row 1: Stat Cards ════════════════════════════════════════════════ */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2.5 }}>
         {STAT_CONFIG.map((stat, idx) => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
           const value = raw != null ? `${raw}${stat.suffix || ""}` : "—";
@@ -167,7 +203,6 @@ const DashboardOverview: React.FC = () => {
                   <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: stat.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <stat.icon sx={{ fontSize: 20, color: stat.color }} />
                   </Box>
-                  {/* Sparkline dots */}
                   <Box sx={{ display: "flex", alignItems: "flex-end", gap: "2px", height: 24 }}>
                     {[3, 5, 4, 7, 5, 8, 6].map((h, i) => (
                       <Box key={i} sx={{ width: 3, borderRadius: "2px 2px 0 0", height: `${h * 12}%`, bgcolor: stat.color, opacity: 0.2 + i * 0.1 }} />
@@ -184,9 +219,33 @@ const DashboardOverview: React.FC = () => {
             </motion.div>
           );
         })}
+
+        {/* Total Applicants */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: STAT_CONFIG.length * 0.07 }}>
+          <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s", cursor: "pointer" }} onClick={() => router.push("/company/applications")}>
+            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
+              <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PeopleOutlined sx={{ fontSize: 20, color: "#8B5CF6" }} />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "flex-end", gap: "2px", height: 24 }}>
+                {[3, 5, 4, 7, 5, 8, 6].map((h, i) => (
+                  <Box key={i} sx={{ width: 3, borderRadius: "2px 2px 0 0", height: `${h * 12}%`, bgcolor: "#8B5CF6", opacity: 0.2 + i * 0.1 }} />
+                ))}
+              </Box>
+            </Box>
+            {appMetricsLoading ? (
+              <Skeleton variant="text" width={70} height={38} />
+            ) : (
+              <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>
+                {appMetrics?.totalApplicants ?? "—"}
+              </Typography>
+            )}
+            <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: "#9CA3AF", mt: 0.75, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Applicants</Typography>
+          </Card>
+        </motion.div>
       </Box>
 
-      {/* ══ Row 2: Interview Trend + Score Distribution ══════════════════════ */}
+      {/* ══ Row 3: Interview Trend + Score Distribution ══════════════════════ */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 2fr" }, gap: 2.5 }}>
 
         {/* Interview Trend — 30 days */}
@@ -348,6 +407,69 @@ const DashboardOverview: React.FC = () => {
             })}
           </Box>
         </Card>
+      </Box>
+
+      {/* ══ Application Charts ══════════════════════════════════════════════ */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
+
+        {/* Applications Over Time */}
+        <Card>
+          <CardHeader title="Applications Over Time" subtitle="Daily applications in the last 30 days" />
+          <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
+            {appsLoading ? (
+              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
+            ) : appTrendData.every(d => d.count === 0) ? (
+              <Box sx={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No application data yet</Typography>
+              </Box>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={appTrendData} margin={{ left: -20, right: 4, top: 4, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="purpleGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<ScoreTooltip />} />
+                  <Area type="monotone" dataKey="count" name="Applications" stroke="#8B5CF6" strokeWidth={2} fill="url(#purpleGrad)" dot={false} activeDot={{ r: 4, fill: "#8B5CF6" }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </Box>
+        </Card>
+
+        {/* Applications per Job Post */}
+        <Card>
+          <CardHeader title="Applications per Job Post" subtitle="Top job posts by number of applicants" />
+          <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
+            {appsLoading ? (
+              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
+            ) : appPerJobData.length === 0 ? (
+              <Box sx={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No application data yet</Typography>
+              </Box>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={appPerJobData} layout="vertical" margin={{ left: 4, right: 24, top: 4, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="title" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} width={90} />
+                  <Tooltip content={<ScoreTooltip />} />
+                  <Bar dataKey="count" name="Applications" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                    {appPerJobData.map((_, i) => (
+                      <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} fillOpacity={0.85} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Box>
+        </Card>
+
       </Box>
 
       {/* ══ Row 4: Job Posts ═══════════════════════════════════════════════ */}
