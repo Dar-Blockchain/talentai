@@ -36,12 +36,15 @@ router.get("/public-stats", postController.getPublicStats);
 // Auth obligatoire + logs pour toutes les routes
 // Accepte soit JWT (requireAuthUser) soit clé API (verifyApiKey)
 router.use((req, res, next) => {
-  // Si déjà authentifié par clé API, continuer
-  if (req.isApiKeyAuth) {
-    return next();
-  }
-  // Sinon, exiger une authentification JWT
-  requireAuthUser(req, res, next);
+  // Essayer d'abord la vérification par API Key
+  verifyApiKey(req, res, (err) => {
+    // Si API Key réussit, continuer
+    if (req.isApiKeyAuth) {
+      return next();
+    }
+    // Sinon, exiger une authentification JWT
+    return requireAuthUser(req, res, next);
+  });
 });
 
 router.use(authLogMiddleware("Post"));

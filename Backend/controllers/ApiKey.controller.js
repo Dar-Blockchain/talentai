@@ -71,7 +71,7 @@ const listApiKeys = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const apiKeys = await ApiKey.find({ userId }).select("-key -keyHash");
+    const apiKeys = await ApiKey.find({ userId });
 
     res.status(200).json({
       success: true,
@@ -79,8 +79,8 @@ const listApiKeys = async (req, res) => {
         id: key._id,
         name: key.name,
         serviceName: key.serviceName,
-        keyPreview: `${key.key.substring(0, 7)}...${key.key.substring(
-          key.key.length - 7
+        keyPreview: `${key.keyHash.substring(0, 7)}...${key.keyHash.substring(
+          key.keyHash.length - 7
         )}`, // Afficher seulement les 7 premiers et derniers caractères
         scopes: key.scopes,
         rateLimit: key.rateLimit,

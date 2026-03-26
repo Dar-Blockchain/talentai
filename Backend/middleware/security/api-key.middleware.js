@@ -30,8 +30,9 @@ const verifyApiKey = async (req, res, next) => {
       });
     }
 
-    // Vérifier si la clé existe
-    const apiKeyDoc = await ApiKey.findOne({ key: apiKey });
+    // Hasher la clé et vérifier en base de données
+    const keyHash = ApiKey.hashKey(apiKey);
+    const apiKeyDoc = await ApiKey.findOne({ keyHash });
 
     if (!apiKeyDoc) {
       return res.status(401).json({
