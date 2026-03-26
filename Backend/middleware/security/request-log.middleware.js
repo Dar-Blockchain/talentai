@@ -25,17 +25,25 @@ function authLogMiddleware(logType) {
 
       // Proceed with JWT authentication and logging
       if (token) {
-        jwt.verify(token, process.env.Net_Secret, async (err, decodedToken) => {
-          if (err) {
-            console.log(err);
-            req.user = null;
-          } else {
-            let user = await userModel.findById(decodedToken.id);
-            req.user = user;
-          }
+        // Si c'est une clé API (commence par sk_), ne pas vérifier comme JWT
+        if (token.startsWith("sk_")) {
+          req.user = null;
           appendLog(req, res, startTime, logType); // Pass logType as parameter
           next();
-        });
+        } else {
+          // Sinon, vérifier comme JWT
+          jwt.verify(token, process.env.Net_Secret, async (err, decodedToken) => {
+            if (err) {
+              console.log(err);
+              req.user = null;
+            } else {
+              let user = await userModel.findById(decodedToken.id);
+              req.user = user;
+            }
+            appendLog(req, res, startTime, logType); // Pass logType as parameter
+            next();
+          });
+        }
       } else {
         req.user = null;
         appendLog(req, res, startTime, logType); // Pass logType as parameter
