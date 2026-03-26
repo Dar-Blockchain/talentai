@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { Box, Alert, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tabs, Tab } from "@mui/material";
+import { Box, Alert, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tabs, Tab, Tooltip } from "@mui/material";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchJobById,
+  fetchJobMatches,
   selectCurrentJob,
   selectCurrentJobLoading,
   selectCurrentJobError,
+  selectJobMatches,
   setSavedPost,
   resetFlow,
 } from "@/store/slices/postSlice";
@@ -43,13 +45,18 @@ const PostDetailsPage: React.FC = () => {
   const loading = useSelector(selectCurrentJobLoading);
   const error = useSelector(selectCurrentJobError);
   const connectedUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const jobMatches = useSelector(selectJobMatches);
+  const hasPassedCandidates = jobMatches.length > 0;
 
   const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
   const [activeTab, setActiveTab] = useState<"details" | "candidates" | "visitors">("details");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
-    if (id) dispatch(fetchJobById(id as string));
+    if (id) {
+      dispatch(fetchJobById(id as string));
+      dispatch(fetchJobMatches({ selectedJobId: id as string, page: 1, limit: 1, passedInterview: true }));
+    }
   }, [id, dispatch]);
 
   // Reset edit mode when switching tabs
@@ -109,13 +116,23 @@ const PostDetailsPage: React.FC = () => {
         />
       )}
       {isOwner && !activeEdit && activeTab === "details" && (
-        <AppButton
-          label="Edit"
-          size="small"
-          variant="outlined"
-          startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
-          onClick={() => setActiveEdit("post")}
-        />
+        <Tooltip
+          title={hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
+          arrow
+          disableHoverListener={!hasPassedCandidates}
+        >
+          <span>
+            <AppButton
+              label="Edit"
+              size="small"
+              variant="outlined"
+              startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
+              onClick={() => setActiveEdit("post")}
+              disabled={hasPassedCandidates}
+              sx={hasPassedCandidates ? { opacity: 0.4 } : {}}
+            />
+          </span>
+        </Tooltip>
       )}
       {!isDraft && (
         <AppButton

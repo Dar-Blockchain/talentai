@@ -228,7 +228,7 @@ const PostDescription = () => {
         sx={{
           textTransform: "none", fontWeight: 700, fontSize: "14px",
           borderRadius: "38px", height: 44,
-          bgcolor: TEAL, boxShadow: "none",
+          bgcolor: TEAL, color: "#fff", boxShadow: "none",
           "&:hover": { bgcolor: "#0F766E" },
           "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.7, color: "#fff" },
         }}
