@@ -25,6 +25,8 @@ const socket = require("./socket");
 //const { initializeAgenda } = require("./services/Agent&AgendaServices/agenda.service");
 const intelligentInterviewService = require("./services/intelligentInterview.service");
 const intelligentInterviewController = require("./controllers/intelligentInterview.controller");
+const campaignInterviewService = require("./services/campaignInterview.service");
+const campaignInterviewController = require("./controllers/campaignInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
 //const backupService = require('./services/backupService');
@@ -135,7 +137,12 @@ const initializeApp = async () => {
       );
     }
 
-    // Step 6.5: Initialize backup service
+    // Step 6.5: Initialize campaign interview service
+    logger.section("Initializing campaign interview service...");
+    await campaignInterviewService.initialize();
+    logger.success("Campaign interview service initialization completed");
+
+    // Step 6.6: Initialize backup service
     // logger.section('Initializing database backup service...');
     // await backupService.initializeDailyBackup();
     // logger.success('Database backup service initialized');
@@ -163,6 +170,10 @@ const initializeApp = async () => {
       // Initialize interview namespace
       intelligentInterviewController.initializeHandlers(io);
       logger.success("Interview namespace /interview initialized and ready");
+
+      // Initialize campaign interview namespace
+      campaignInterviewController.initializeHandlers(io);
+      logger.success("Campaign interview namespace /campaign-interview initialized and ready");
       logger.info(
         "💡 Hedera clients will initialize on first use (lazy loading)",
       );
