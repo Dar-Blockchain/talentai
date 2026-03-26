@@ -110,7 +110,6 @@ You are an expert CV/resume parser with deep knowledge of software engineering, 
 
 Read the attached CV carefully and extract all relevant information.
 
-<<<<<<< HEAD
 CRITICAL RULES FOR SKILLS EXTRACTION:
 - "skills" must be an array of INDIVIDUAL, ATOMIC skill names only — one technology or tool per entry
 - NEVER group multiple skills into one string. For example:
@@ -126,11 +125,9 @@ CRITICAL RULES FOR SKILLS EXTRACTION:
 - Aim to extract 10–40 individual skills from a typical CV
 
 GENERAL RULES:
-=======
 IMPORTANT: All output values MUST be in English. If the CV is in another language, translate all text content to English.
 
 Rules:
->>>>>>> f5182ff939022d7dc6cc852aac3bf0bb63aa88b7
 - Return ONLY one valid raw JSON object
 - No markdown
 - No explanation
