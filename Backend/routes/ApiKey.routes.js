@@ -3,50 +3,50 @@ const router = express.Router();
 const { requireAuthUser } = require("../middleware/auth.middleware");
 const apiKeyController = require("../controllers/ApiKey.controller");
 
-// Toutes les routes API Key nécessitent une authentification utilisateur
+// All API Key routes require user authentication
 router.use(requireAuthUser);
 
 /**
  * POST /api/api-keys
- * Créer une nouvelle clé API
+ * Create a new API key
  * Body: { name, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist? }
  */
 router.post("/", apiKeyController.createApiKey);
 
 /**
  * GET /api/api-keys
- * Lister toutes les clés API de l'utilisateur
+ * List all API keys for the user
  */
 router.get("/", apiKeyController.listApiKeys);
 
 /**
  * GET /api/api-keys/:id
- * Obtenir les détails d'une clé API
+ * Get details of an API key
  */
 router.get("/:id", apiKeyController.getApiKeyDetails);
 
 /**
  * PUT /api/api-keys/:id
- * Mettre à jour une clé API
+ * Update an API key
  * Body: { name?, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist?, isActive? }
  */
 router.put("/:id", apiKeyController.updateApiKey);
 
 /**
  * PATCH /api/api-keys/:id/toggle
- * Désactiver/réactiver une clé API
+ * Disable/re-enable an API key
  */
 router.patch("/:id/toggle", apiKeyController.toggleApiKey);
 
 /**
  * POST /api/api-keys/:id/regenerate
- * Régénérer une clé API (créer une nouvelle)
+ * Regenerate an API key (create a new one)
  */
 router.post("/:id/regenerate", apiKeyController.regenerateApiKey);
 
 /**
  * DELETE /api/api-keys/:id
- * Supprimer une clé API
+ * Delete an API key
  */
 router.delete("/:id", apiKeyController.deleteApiKey);
 

@@ -9,7 +9,7 @@ const apiKeySchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    // Stocker uniquement le hash de la clé pour la sécurité
+    // Store only the hash of the key for security
     keyHash: {
       type: String,
       required: true,
@@ -19,29 +19,29 @@ const apiKeySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      description: "Nom/description de la clé API",
+      description: "API key name/description",
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    // Pour les services externes
+    // For external services
     serviceName: {
       type: String,
-      description: "Nom du service externe (ex: 'frontend', 'mobile-app', 'third-party-service')",
+      description: "External service name (ex: 'frontend', 'mobile-app', 'third-party-service')",
     },
     // Permissions/scopes
     scopes: {
       type: [String],
       default: ["read:posts", "write:posts"],
-      description: "Permissions accordées à cette clé",
+      description: "Permissions granted to this key",
     },
     // Rate limiting
     rateLimit: {
       type: Number,
       default: 1000,
-      description: "Nombre de requêtes autorisées par heure",
+      description: "Number of requests allowed per hour",
     },
     isActive: {
       type: Boolean,
@@ -49,37 +49,37 @@ const apiKeySchema = new mongoose.Schema(
     },
     lastUsed: {
       type: Date,
-      description: "Dernière utilisation de la clé",
+      description: "Last time this key was used",
     },
     expiresAt: {
       type: Date,
-      description: "Date d'expiration de la clé (optionnel)",
+      description: "Key expiration date (optional)",
     },
     ipWhitelist: {
       type: [String],
-      description: "Liste des IPs autorisées (optionnel)",
+      description: "List of allowed IPs (optional)",
     },
   },
   { timestamps: true }
 );
 
-// Générer une clé API sécurisée
+// Generate a secure API key
 apiKeySchema.statics.generateKey = function () {
   return "sk_" + crypto.randomBytes(32).toString("hex");
 };
 
-// Méthode pour hasher la clé
+// Hash the key
 apiKeySchema.statics.hashKey = function (key) {
   return crypto.createHash("sha256").update(key).digest("hex");
 };
 
-// Vérifier une clé
+// Verify a key
 apiKeySchema.statics.verifyKey = function (plainKey, Hash) {
   const hashedKey = crypto.createHash("sha256").update(plainKey).digest("hex");
   return hashedKey === Hash;
 };
 
-// Index composé pour optimiser les requêtes
+// Composite indexes for optimization
 apiKeySchema.index({ userId: 1, isActive: 1 });
 apiKeySchema.index({ serviceName: 1, isActive: 1 });
 
