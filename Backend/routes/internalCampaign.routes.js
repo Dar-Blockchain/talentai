@@ -55,6 +55,18 @@ router.delete(
 );
 
 /**
+ * GET /campaigns/metrics — Obtenir les métriques des campagnes
+ * Must be defined BEFORE /:campaignId to avoid being swallowed by the param route
+ */
+router.get(
+  "/metrics",
+  requireAuthUser,
+  controledAcces("Company"),
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getCampaignMetrics
+);
+
+/**
  * GET /campaigns/:campaignId — Récupérer une campagne spécifique
  */
 router.get("/:campaignId", authLogMiddleware("InternalCampaign"), internalCampaignController.getCampaign);
@@ -76,11 +88,6 @@ router.post("/", internalCampaignController.createInternalCampaign);
  * GET /campaigns — Récupérer toutes les campagnes de l'entreprise
  */
 router.get("/", internalCampaignController.getCompanyCampaigns);
-
-/**
- * GET /campaigns/metrics — Obtenir les métriques des campagnes
- */
-router.get("/metrics", internalCampaignController.getCampaignMetrics);
 
 /**
  * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne

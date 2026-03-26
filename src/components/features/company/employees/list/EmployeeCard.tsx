@@ -194,12 +194,23 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
         <Box sx={{ px: 2.5, pt: 1.75, pb: 2, display: "flex", flexDirection: "column", gap: 1.5, flex: 1 }}>
 
           {/* Department */}
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 0.75,
-            px: 1.25, py: 0.875, borderRadius: "10px",
-            bgcolor: dept ? "#F8FAFC" : "transparent",
-            border: `1px solid ${dept ? "#E8EAED" : "#F1F5F9"}`,
-          }}>
+          <Box
+            onClick={(e) => {
+              const deptId = (member as any).department?._id;
+              if (deptId) { e.stopPropagation(); router.push(`/company/departments/${deptId}`); }
+            }}
+            sx={{
+              display: "flex", alignItems: "center", gap: 0.75,
+              px: 1.25, py: 0.875, borderRadius: "10px",
+              bgcolor: dept ? "#F8FAFC" : "transparent",
+              border: `1px solid ${dept ? "#E8EAED" : "#F1F5F9"}`,
+              cursor: (member as any).department?._id ? "pointer" : "default",
+              transition: "all 0.15s",
+              ...((member as any).department?._id && {
+                "&:hover": { bgcolor: "#EEF2FF", borderColor: "#C7D2FE" },
+              }),
+            }}
+          >
             <BusinessOutlined sx={{ fontSize: 13, color: dept ? "#94A3B8" : "#CBD5E1", flexShrink: 0 }} />
             <Typography sx={{
               fontSize: "12px", fontWeight: 600,

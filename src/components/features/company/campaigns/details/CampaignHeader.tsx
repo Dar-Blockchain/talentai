@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Box, Typography, Menu, MenuItem } from "@mui/material";
+import { Box, Typography, Menu, MenuItem, Tooltip } from "@mui/material";
 import { useRouter } from "next/router";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlined from "@mui/icons-material/EditOutlined";
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
 import { Campaign, CampaignStatus } from "@/types/campaign";
 import {
   STATUS_COLORS,
@@ -21,13 +23,14 @@ interface Props {
   campaign: Campaign;
   onChangeStatus?: (id: string, status: CampaignStatus) => void;
   onDeleteClick?: () => void;
+  onEditClick?: () => void;
   backLabel?: string;
   backUrl?: string;
   actionsNode?: React.ReactNode;
 }
 
 const CampaignHeader: React.FC<Props> = ({
-  campaign, onChangeStatus, onDeleteClick,
+  campaign, onChangeStatus, onDeleteClick, onEditClick,
   backLabel = "Campaigns", backUrl = "/company/campaigns",
   actionsNode,
 }) => {
@@ -39,9 +42,10 @@ const CampaignHeader: React.FC<Props> = ({
   const typeEntry   = CAMPAIGN_TYPES.find((t) => t.value === campaign.type);
   const TypeIcon    = typeEntry?.icon;
   const typeColor   = typeEntry?.color ?? "#6B7280";
-  const modLabel    = MODULE_CONFIG[campaign.module?.type]?.label ?? campaign.module?.type;
-  const transitions = STATUS_TRANSITIONS[campaign.status] ?? [];
-  const remaining   = daysLeft(campaign.deadline);
+  const modLabel       = MODULE_CONFIG[campaign.module?.type]?.label ?? campaign.module?.type;
+  const transitions    = STATUS_TRANSITIONS[campaign.status] ?? [];
+  const remaining      = daysLeft(campaign.deadline);
+  const moduleConfigured = campaign.module?.config != null;
 
   return (
     <Box sx={{
@@ -72,6 +76,21 @@ const CampaignHeader: React.FC<Props> = ({
 
           {actionsNode ?? (
             <Box sx={{ display: "flex", gap: 0.875 }}>
+              {campaign.status === "DRAFT" && onEditClick && (
+                <Box
+                  onClick={onEditClick}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: "#EEF2FF", borderColor: "#C7D2FE", "& *": { color: "#6366F1" } },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
+                </Box>
+              )}
               {transitions.length > 0 && (
                 <>
                   <Box
@@ -95,15 +114,27 @@ const CampaignHeader: React.FC<Props> = ({
                     onClose={() => setAnchor(null)}
                     slotProps={{ paper: { sx: { borderRadius: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 160, border: "1px solid #F3F4F6", mt: 0.5 } } }}
                   >
-                    {transitions.map((s) => (
-                      <MenuItem
-                        key={s}
-                        onClick={() => { setAnchor(null); onChangeStatus?.(campaign._id, s); }}
-                        sx={{ fontSize: "13px", fontWeight: 600, color: STATUS_COLORS[s]?.fg }}
-                      >
-                        {STATUS_TRANSITION_LABELS[s]}
-                      </MenuItem>
-                    ))}
+                    {transitions.map((s) => {
+                      const blocked = s === "ACTIVE" && !moduleConfigured;
+                      return (
+                        <Tooltip
+                          key={s}
+                          title={blocked ? "Configure the module before activating this campaign." : ""}
+                          placement="left"
+                          arrow
+                        >
+                          <span>
+                            <MenuItem
+                              disabled={blocked}
+                              onClick={() => { setAnchor(null); onChangeStatus?.(campaign._id, s); }}
+                              sx={{ fontSize: "13px", fontWeight: 600, color: STATUS_COLORS[s]?.fg }}
+                            >
+                              {STATUS_TRANSITION_LABELS[s]}
+                            </MenuItem>
+                          </span>
+                        </Tooltip>
+                      );
+                    })}
                   </Menu>
                 </>
               )}
@@ -182,6 +213,22 @@ const CampaignHeader: React.FC<Props> = ({
                     {modLabel}
                   </Typography>
                 </Box>
+              )}
+
+              {/* Not-configured warning (DRAFT only) */}
+              {campaign.status === "DRAFT" && !moduleConfigured && (
+                <Tooltip title="Module not configured — required before activating." placement="top" arrow>
+                  <Box sx={{
+                    display: "inline-flex", alignItems: "center", gap: 0.4,
+                    px: 1, py: "3px", borderRadius: "999px",
+                    bgcolor: "#FFFBEB", border: "1px solid #FDE68A", cursor: "default",
+                  }}>
+                    <WarningAmberOutlined sx={{ fontSize: 11, color: "#D97706" }} />
+                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#D97706" }}>
+                      Not configured
+                    </Typography>
+                  </Box>
+                </Tooltip>
               )}
 
               {/* Deadline */}

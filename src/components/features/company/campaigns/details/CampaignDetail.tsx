@@ -10,6 +10,7 @@ import CampaignParticipantsTab from "./CampaignParticipantsTab";
 import CampaignSessionsTab from "./CampaignSessionsTab";
 import DeleteCampaignDialog from "./DeleteCampaignDialog";
 import ConfigureModuleModal from "./configure/ConfigureModuleModal";
+import EditCampaignModal from "./EditCampaignModal";
 import { useSelector } from "react-redux";
 import {
   selectCampaignParticipantsTotal,
@@ -62,6 +63,7 @@ const CampaignDetail: React.FC<Props> = ({
 
   const [tab,                 setTab]                 = useState<TabKey>("overview");
   const [deleteOpen,          setDeleteOpen]          = useState(false);
+  const [editOpen,            setEditOpen]            = useState(false);
   const [configureModuleType, setConfigureModuleType] = useState<ModuleType | null>(null);
 
   const participantsTotal = useSelector(selectCampaignParticipantsTotal);
@@ -249,6 +251,7 @@ const CampaignDetail: React.FC<Props> = ({
         campaign={campaign}
         onChangeStatus={onChangeStatus}
         onDeleteClick={() => setDeleteOpen(true)}
+        onEditClick={!isEmployee ? () => setEditOpen(true) : undefined}
         backLabel={isEmployee ? "My Campaigns" : "Campaigns"}
         backUrl={isEmployee ? "/employee/campaigns" : "/company/campaigns"}
         actionsNode={employeeActionsNode}
@@ -317,6 +320,12 @@ const CampaignDetail: React.FC<Props> = ({
       {/* Dialogs (company only) */}
       {!isEmployee && (
         <>
+          <EditCampaignModal
+            open={editOpen}
+            campaign={campaign}
+            onClose={() => setEditOpen(false)}
+            onSaved={() => setEditOpen(false)}
+          />
           <DeleteCampaignDialog
             open={deleteOpen}
             campaignTitle={campaign.title}

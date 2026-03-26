@@ -170,9 +170,20 @@ const ParticipantRow: React.FC<{
             {dept && (
               <>
                 <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "#D1D5DB", flexShrink: 0 }} />
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.35, flexShrink: 0, px: 0.75, py: "2px", borderRadius: "6px", bgcolor: "#F1F5F9" }}>
+                <Box
+                  onClick={(e) => {
+                    if (p.department?.id) { e.stopPropagation(); router.push(`/company/departments/${p.department.id}`); }
+                  }}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.35, flexShrink: 0,
+                    px: 0.75, py: "2px", borderRadius: "6px", bgcolor: "#F1F5F9",
+                    cursor: p.department?.id ? "pointer" : "default",
+                    transition: "all 0.15s",
+                    ...(p.department?.id && { "&:hover": { bgcolor: "#EEF2FF", "& .dept-text": { color: PURPLE } } }),
+                  }}
+                >
                   <BusinessOutlined sx={{ fontSize: 9, color: "#64748B" }} />
-                  <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#64748B", whiteSpace: "nowrap" }}>{dept}</Typography>
+                  <Typography className="dept-text" sx={{ fontSize: "10px", fontWeight: 600, color: "#64748B", whiteSpace: "nowrap", transition: "color 0.15s" }}>{dept}</Typography>
                 </Box>
               </>
             )}
