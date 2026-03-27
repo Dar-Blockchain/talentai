@@ -5,7 +5,7 @@ const ApiKeyService = require("../services/ApiKey.service");
  * POST /api/api-keys
  * Body: { name, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist? }
  */
-const createApiKey = async (req, res) => {
+module.exports.createApiKey = async (req, res) => {
   try {
     const userId = req.user._id;
     const result = await ApiKeyService.createApiKey(userId, req.body);
@@ -28,7 +28,7 @@ const createApiKey = async (req, res) => {
  * List all API keys for the user
  * GET /api/api-keys
  */
-const listApiKeys = async (req, res) => {
+module.exports.listApiKeys = async (req, res) => {
   try {
     const userId = req.user._id
     const result = await ApiKeyService.listApiKeys(userId);
@@ -50,7 +50,7 @@ const listApiKeys = async (req, res) => {
  * Get details of a specific API key
  * GET /api/api-keys/:id
  */
-const getApiKeyDetails = async (req, res) => {
+module.exports.getApiKeyDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -74,7 +74,7 @@ const getApiKeyDetails = async (req, res) => {
  * PUT /api/api-keys/:id
  * Body: { name?, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist?, isActive? }
  */
-const updateApiKey = async (req, res) => {
+module.exports.updateApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -98,7 +98,7 @@ const updateApiKey = async (req, res) => {
  * Disable/re-enable an API key
  * PATCH /api/api-keys/:id/toggle
  */
-const toggleApiKey = async (req, res) => {
+module.exports.toggleApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -122,7 +122,7 @@ const toggleApiKey = async (req, res) => {
  * Regenerate an API key (create a new one)
  * POST /api/api-keys/:id/regenerate
  */
-const regenerateApiKey = async (req, res) => {
+module.exports.regenerateApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -151,7 +151,7 @@ const regenerateApiKey = async (req, res) => {
  * Delete an API key
  * DELETE /api/api-keys/:id
  */
-const deleteApiKey = async (req, res) => {
+module.exports.deleteApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -170,12 +170,3 @@ const deleteApiKey = async (req, res) => {
   }
 };
 
-module.exports = {
-  createApiKey,
-  listApiKeys,
-  getApiKeyDetails,
-  updateApiKey,
-  toggleApiKey,
-  regenerateApiKey,
-  deleteApiKey,
-};
