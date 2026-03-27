@@ -30,7 +30,7 @@ const createApiKey = async (req, res) => {
  */
 const listApiKeys = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user._id
     const result = await ApiKeyService.listApiKeys(userId);
 
     res.status(200).json({
