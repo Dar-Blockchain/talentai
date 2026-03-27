@@ -157,28 +157,25 @@ exports.createInternalCampaign = async (req, res) => {
 exports.getCompanyCampaigns = async (req, res) => {
   try {
     const companyId = req.user.profile;
-    const {
-      status,
-      type,
-      targetDepartment,
-      title,
-      page = 1,
-      limit = 10,
-    } = req.query;
+    const { status, type, targetDepartment, title, search, period, page = 1, limit = 10 } = req.query;
 
-    // Validate pagination parameters
-    const pageNum = Math.max(1, parseInt(page) || 1);
+    const pageNum  = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
 
-    // Build filters supporting search on title (partial, case-insensitive),
-    // and exact filters for type, status and targetDepartment.
     const filters = {};
-    if (status) filters.status = status;
-    if (type) filters.type = type;
+    if (status)           filters.status           = status;
+    if (type)             filters.type             = type;
     if (targetDepartment) filters.targetDepartment = targetDepartment;
-    if (title && typeof title === "string" && title.trim().length > 0) {
-      const search = title.trim();
-      filters.title = { $regex: search, $options: "i" };
+
+    // title search (support both ?title= and ?search=)
+    const searchTerm = (search || title || "").trim();
+    if (searchTerm) filters.title = { $regex: searchTerm, $options: "i" };
+
+    // period filter on createdAt
+    const periodMap = { "7d": 7, "30d": 30, "3m": 90, "6m": 180, "1y": 365 };
+    if (period && periodMap[period]) {
+      const from = new Date(Date.now() - periodMap[period] * 86_400_000);
+      filters.createdAt = { $gte: from };
     }
 
     const result = await getCampaignsByCompanyPaginated(

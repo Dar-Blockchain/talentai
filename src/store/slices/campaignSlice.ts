@@ -40,17 +40,17 @@ import axiosInstance from "@/utils/axiosInstance";
 
 export const fetchCampaigns = createAsyncThunk<
   CampaignsResponse,
-  { status?: CampaignStatus; page?: number; limit?: number },
+  { status?: CampaignStatus; page?: number; limit?: number; search?: string; period?: string },
   { rejectValue: string }
 >("campaign/fetchCampaigns", async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("internal-campaigns", {
-      params: {
-        ...(params?.status ? { status: params.status } : {}),
-        ...(params?.page ? { page: params.page } : {}),
-        ...(params?.limit ? { limit: params.limit } : {}),
-      },
-    });
+    const p: Record<string, any> = {};
+    if (params?.status) p.status = params.status;
+    if (params?.page)   p.page   = params.page;
+    if (params?.limit)  p.limit  = params.limit;
+    if (params?.search) p.search = params.search;
+    if (params?.period) p.period = params.period;
+    const response = await axiosInstance.get("internal-campaigns", { params: p });
     return response.data as CampaignsResponse;
   } catch (err: any) {
     return rejectWithValue(err.message);
