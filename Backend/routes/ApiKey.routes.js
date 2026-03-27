@@ -23,7 +23,7 @@ router.get("/", apiKeyController.listApiKeys);
  * GET /api/api-keys/:id
  * Get details of an API key
  */
-//router.get("/:id", apiKeyController.getApiKeyDetails);
+router.get("/:id", apiKeyController.getApiKeyDetails);
 
 /**
  * PUT /api/api-keys/:id
