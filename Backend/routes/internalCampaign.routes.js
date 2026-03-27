@@ -34,6 +34,15 @@ router.get(
   internalCampaignController.getUserCampaigns
 );
 
+// employee campaign metrics: total, invited, inProgress, completed
+// Example: GET /internal-campaigns/employee/:userId/metrics
+router.get(
+  "/employee/:userId/metrics",
+  requireAuthUser,
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getEmployeeCampaignMetrics
+);
+
 /**
  * POST /campaigns/:campaignId/participate/:userId — Employee joins/participates in a campaign
  */

@@ -643,6 +643,55 @@ exports.getUserCampaigns = async (req, res) => {
 };
 
 /**
+ * GET /internal-campaigns/employee/:userId/metrics
+ * Returns campaign participation metrics for a specific employee:
+ * total, invited, inProgress, completed
+ */
+exports.getEmployeeCampaignMetrics = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const ObjectId = require("mongoose").Types.ObjectId;
+
+    if (!ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, error: "Invalid userId" });
+    }
+
+    const counts = await CampaignParticipant.aggregate([
+      { $match: { employee: new ObjectId(userId) } },
+      {
+        $lookup: {
+          from: "internalcampaigns",
+          localField: "campaign",
+          foreignField: "_id",
+          as: "campaign",
+        },
+      },
+      { $unwind: "$campaign" },
+      { $match: { "campaign.status": { $ne: "DRAFT" } } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const metrics = { total: 0, invited: 0, inProgress: 0, completed: 0 };
+    for (const { _id, count } of counts) {
+      metrics.total += count;
+      if (_id === "INVITED")     metrics.invited    = count;
+      if (_id === "IN_PROGRESS") metrics.inProgress = count;
+      if (_id === "COMPLETED")   metrics.completed  = count;
+    }
+
+    res.status(200).json({ success: true, data: metrics });
+  } catch (error) {
+    console.error(`❌ Error in getEmployeeCampaignMetrics: ${error.message}`);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
  * Participate in a campaign - Employee joins a campaign
  * Can be called with userId as parameter to add another user to the campaign
  */
