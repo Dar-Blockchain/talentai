@@ -1,5 +1,4 @@
-const ApiKey = require("../models/ApiKey.model");
-const User = require("../models/User.model");
+const ApiKeyService = require("../services/ApiKey.service");
 
 /**
  * Create a new API key
@@ -8,57 +7,19 @@ const User = require("../models/User.model");
  */
 const createApiKey = async (req, res) => {
   try {
-    const { name, serviceName, scopes, rateLimit, expiresAt, ipWhitelist } =
-      req.body;
     const userId = req.user._id;
+    const result = await ApiKeyService.createApiKey(userId, req.body);
 
-    // Validation
-    if (!name) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Name is required" });
-    }
-
-    // Generate a new key only
-    const plainKey = ApiKey.generateKey();
-    const keyHash = ApiKey.hashKey(plainKey);
-
-    const newApiKey = new ApiKey({
-      key: plainKey,
-      keyHash,
-      name,
-      userId,
-      serviceName: serviceName || "custom-service",
-      scopes: scopes || ["read:posts", "write:posts"],
-      rateLimit: rateLimit || 1000,
-      expiresAt,
-      ipWhitelist: ipWhitelist || [],
-    });
-
-    await newApiKey.save();
-
-    // Return the (complete) key only once at creation
     res.status(201).json({
       success: true,
       message: "API key created successfully",
-      data: {
-        id: newApiKey._id,
-        name: newApiKey.name,
-        serviceName: newApiKey.serviceName,
-        key: plainKey, // Show the key only once
-        scopes: newApiKey.scopes,
-        rateLimit: newApiKey.rateLimit,
-        isActive: newApiKey.isActive,
-        expiresAt: newApiKey.expiresAt,
-        createdAt: newApiKey.createdAt,
-      },
+      data: result,
     });
   } catch (error) {
     console.error("Error creating API key:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error creating API key",
-      error: error.message,
+      message: error.message,
     });
   }
 };
@@ -70,32 +31,17 @@ const createApiKey = async (req, res) => {
 const listApiKeys = async (req, res) => {
   try {
     const userId = req.userId;
-
-    const apiKeys = await ApiKey.find({ userId });
+    const result = await ApiKeyService.listApiKeys(userId);
 
     res.status(200).json({
       success: true,
-      data: apiKeys.map((key) => ({
-        id: key._id,
-        name: key.name,
-        serviceName: key.serviceName,
-        keyPreview: `${key.keyHash.substring(0, 7)}...${key.keyHash.substring(
-          key.keyHash.length - 7
-        )}`, // Show only first 7 and last 7 characters
-        scopes: key.scopes,
-        rateLimit: key.rateLimit,
-        isActive: key.isActive,
-        lastUsed: key.lastUsed,
-        expiresAt: key.expiresAt,
-        createdAt: key.createdAt,
-      })),
+      data: result,
     });
   } catch (error) {
     console.error("Error retrieving API keys:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error retrieving API keys",
-      error: error.message,
+      message: error.message,
     });
   }
 };
@@ -108,28 +54,17 @@ const getApiKeyDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-
-    const apiKey = await ApiKey.findOne({ _id: id, userId }).select(
-      "-key -keyHash"
-    );
-
-    if (!apiKey) {
-      return res.status(404).json({
-        success: false,
-        message: "API key not found",
-      });
-    }
+    const result = await ApiKeyService.getApiKeyDetails(id, userId);
 
     res.status(200).json({
       success: true,
-      data: apiKey,
+      data: result,
     });
   } catch (error) {
     console.error("Error retrieving API key:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error retrieving API key",
-      error: error.message,
+      message: error.message,
     });
   }
 };
@@ -143,40 +78,18 @@ const updateApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { name, serviceName, scopes, rateLimit, expiresAt, ipWhitelist, isActive } =
-      req.body;
-
-    let apiKey = await ApiKey.findOne({ _id: id, userId });
-
-    if (!apiKey) {
-      return res.status(404).json({
-        success: false,
-        message: "API key not found",
-      });
-    }
-
-    // Update fields
-    if (name) apiKey.name = name;
-    if (serviceName) apiKey.serviceName = serviceName;
-    if (scopes) apiKey.scopes = scopes;
-    if (rateLimit) apiKey.rateLimit = rateLimit;
-    if (expiresAt) apiKey.expiresAt = expiresAt;
-    if (ipWhitelist) apiKey.ipWhitelist = ipWhitelist;
-    if (isActive !== undefined) apiKey.isActive = isActive;
-
-    await apiKey.save();
+    const result = await ApiKeyService.updateApiKey(id, userId, req.body);
 
     res.status(200).json({
       success: true,
       message: "API key updated successfully",
-      data: apiKey,
+      data: result,
     });
   } catch (error) {
     console.error("Error updating API key:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error updating API key",
-      error: error.message,
+      message: error.message,
     });
   }
 };
@@ -189,30 +102,18 @@ const toggleApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-
-    const apiKey = await ApiKey.findOne({ _id: id, userId });
-
-    if (!apiKey) {
-      return res.status(404).json({
-        success: false,
-        message: "API key not found",
-      });
-    }
-
-    apiKey.isActive = !apiKey.isActive;
-    await apiKey.save();
+    const result = await ApiKeyService.toggleApiKey(id, userId);
 
     res.status(200).json({
       success: true,
-      message: `API key ${apiKey.isActive ? "enabled" : "disabled"}`,
-      data: { id: apiKey._id, isActive: apiKey.isActive },
+      message: result.message,
+      data: { id: result.id, isActive: result.isActive },
     });
   } catch (error) {
     console.error("Error toggling API key:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error toggling API key",
-      error: error.message,
+      message: error.message,
     });
   }
 };
@@ -225,41 +126,23 @@ const regenerateApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-
-    const apiKey = await ApiKey.findOne({ _id: id, userId });
-
-    if (!apiKey) {
-      return res.status(404).json({
-        success: false,
-        message: "API key not found",
-      });
-    }
-
-    // Generate a new key
-    const newPlainKey = ApiKey.generateKey();
-    const newKeyHash = ApiKey.hashKey(newPlainKey);
-
-    apiKey.key = newPlainKey;
-    apiKey.keyHash = newKeyHash;
-    apiKey.lastUsed = null; // Reset last usage
-    await apiKey.save();
+    const result = await ApiKeyService.regenerateApiKey(id, userId);
 
     res.status(200).json({
       success: true,
-      message: "API key regenerated successfully",
+      message: result.message,
       data: {
-        id: apiKey._id,
-        name: apiKey.name,
-        key: newPlainKey, // Display new key
-        createdAt: apiKey.createdAt,
+        id: result.id,
+        name: result.name,
+        key: result.key,
+        createdAt: result.createdAt,
       },
     });
   } catch (error) {
-    console.error("Error retrieving API key:", error);
-    res.status(500).json({
+    console.error("Error regenerating API key:", error);
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error retrieving API key",
-      error: error.message,
+      message: error.message,
     });
   }
 };
@@ -272,26 +155,17 @@ const deleteApiKey = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-
-    const apiKey = await ApiKey.findOneAndDelete({ _id: id, userId });
-
-    if (!apiKey) {
-      return res.status(404).json({
-        success: false,
-        message: "API key not found",
-      });
-    }
+    const result = await ApiKeyService.deleteApiKey(id, userId);
 
     res.status(200).json({
       success: true,
-      message: "API key deleted successfully",
+      message: result.message,
     });
   } catch (error) {
     console.error("Error deleting API key:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
-      message: "Error creating API key",
-      error: error.message,
+      message: error.message,
     });
   }
 };
