@@ -30,13 +30,13 @@ router.get("/:id", apiKeyController.getApiKeyDetails);
  * Update an API key
  * Body: { name?, serviceName?, scopes?, rateLimit?, expiresAt?, ipWhitelist?, isActive? }
  */
-//router.put("/:id", apiKeyController.updateApiKey);
+router.put("/:id", apiKeyController.updateApiKey);
 
 /**
  * PATCH /api/api-keys/:id/toggle
  * Disable/re-enable an API key
  */
-//router.patch("/:id/toggle", apiKeyController.toggleApiKey);
+router.patch("/:id/toggle", apiKeyController.toggleApiKey);
 
 /**
  * POST /api/api-keys/:id/regenerate
