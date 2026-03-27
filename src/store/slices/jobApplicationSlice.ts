@@ -84,6 +84,7 @@ const jobApplicationSlice = createSlice({
 export default jobApplicationSlice.reducer;
 
 // Selectors
+export const selectApplications = (state: { jobApplications: JobApplicationState }) => state.jobApplications.applications;
 export const selectApplicationMetrics = (state: { jobApplications: JobApplicationState }) => state.jobApplications.metrics;
 export const selectApplicationMetricsLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.metricsLoading;
 export const selectAllApplications = (state: { jobApplications: JobApplicationState }) => state.jobApplications.allApplications;
