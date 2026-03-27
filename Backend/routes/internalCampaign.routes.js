@@ -71,6 +71,15 @@ router.get(
  */
 router.get("/:campaignId", authLogMiddleware("InternalCampaign"), internalCampaignController.getCampaign);
 
+/**
+ * GET /campaigns/:campaignId/participants — accessible to authenticated employees who participate
+ */
+router.get(
+  "/:campaignId/participants",
+  requireAuthUser,
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getCampaignParticipants
+);
 
 // apply generic middlewares for company users on all remaining routes
 router.use(
@@ -93,11 +102,6 @@ router.get("/", internalCampaignController.getCompanyCampaigns);
  * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
  */
 router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
-
-/**
- * GET /campaigns/:campaignId/participants — Obtenir les participants d'une campagne (avec filtres et pagination)
- */
-router.get("/:campaignId/participants", internalCampaignController.getCampaignParticipants);
 
 /**
  * GET /campaigns/:campaignId/non-participants — Employees of the company not yet in this campaign
