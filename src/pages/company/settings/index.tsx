@@ -16,9 +16,9 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
 import { getAllCountryNames } from "@/utils/countryMappings";
 
-const TEAL        = "#8310FF";
-const TEAL_BG     = "#F5F0FF";
-const TEAL_BORDER = "#DDD6FE";
+const TEAL        = "#0D9488";
+const TEAL_BG     = "#F0FDFA";
+const TEAL_BORDER = "#99F6E4";
 
 const COMPANY_SIZES     = ["1-10", "11-50", "51-200", "201-500", "500+"];
 const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead", "Executive"];
@@ -107,14 +107,14 @@ const SettingsPage: React.FC = () => {
             >
               {uploadingImage ? (
                 <Box sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: "#F5F0FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <CircularProgress size={22} sx={{ color: "#8310FF" }} />
+                  <CircularProgress size={22} sx={{ color: "#0D9488" }} />
                 </Box>
               ) : (
-                <Avatar src={profile.avatar} variant="rounded" sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: "#8310FF", fontSize: "28px", fontWeight: 800, color: "#fff" }}>
+                <Avatar src={profile.avatar} variant="rounded" sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: "#0D9488", fontSize: "28px", fontWeight: 800, color: "#fff" }}>
                   {initials}
                 </Avatar>
               )}
-              <Box className="upload-overlay" sx={{ position: "absolute", inset: 0, borderRadius: "13px", bgcolor: "rgba(131,16,255,0.6)", opacity: 0, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box className="upload-overlay" sx={{ position: "absolute", inset: 0, borderRadius: "13px", bgcolor: "rgba(13,148,136,0.6)", opacity: 0, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <CloudUploadOutlined sx={{ fontSize: 20, color: "#fff" }} />
               </Box>
             </Box>
@@ -137,7 +137,7 @@ const SettingsPage: React.FC = () => {
                   </Box>
                 )}
                 {profile.industry && (
-                  <Chip label={profile.industry} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 600, bgcolor: "rgba(131,16,255,0.08)", color: "#8310FF" }} />
+                  <Chip label={profile.industry} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 600, bgcolor: "rgba(13,148,136,0.08)", color: "#0D9488" }} />
                 )}
                 {(profile.size || profile.companySize) && (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -152,7 +152,7 @@ const SettingsPage: React.FC = () => {
             <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
               {!isEditing ? (
                 <Button size="small" startIcon={<EditOutlined sx={{ fontSize: 14 }} />} onClick={startEdit}
-                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#8310FF", border: "1px solid #DDD6FE", borderRadius: "9px", px: 2, bgcolor: "#F5F0FF", "&:hover": { bgcolor: "#EDE9FE" } }}>
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#0D9488", border: "1px solid #99F6E4", borderRadius: "9px", px: 2, bgcolor: "#F0FDFA", "&:hover": { bgcolor: "#CCFBF1" } }}>
                   Edit Profile
                 </Button>
               ) : (
@@ -163,7 +163,7 @@ const SettingsPage: React.FC = () => {
                   </Button>
                   <Button size="small" variant="contained" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
                     onClick={saveEdit} disabled={loading}
-                    sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: "#8310FF", color: "#fff", borderRadius: "9px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none" } }}>
+                    sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: "#0D9488", color: "#fff", borderRadius: "9px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
                     {loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : "Save"}
                   </Button>
                 </>
@@ -181,9 +181,13 @@ const SettingsPage: React.FC = () => {
                 onChange={(_, v) => setTab(v)}
                 sx={{
                   minHeight: 48,
-                  "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 48, color: "#111827", px: 0, mr: 3 },
-                  "& .Mui-selected": { color: "#8310FF" },
-                  "& .MuiTabs-indicator": { bgcolor: "#8310FF", height: 2 },
+                  "& .MuiTab-root": {
+                    textTransform: "none", fontWeight: 600, fontSize: "0.82rem",
+                    minHeight: 48, color: "#374151", px: 1.5, mr: 1,
+                    borderRadius: "8px",
+                  },
+                  "& .Mui-selected": { color: "#0D9488" },
+                  "& .MuiTabs-indicator": { bgcolor: "#0D9488", height: 2 },
                 }}
               >
                 <Tab label="Company Info" />
