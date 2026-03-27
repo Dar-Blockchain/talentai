@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchEmployeeCampaigns,
+  fetchEmployeeCampaignMetrics,
   selectEmployeeCampaigns,
   selectEmployeeCampaignsLoading,
   selectEmployeeCampaignsError,
@@ -255,9 +256,13 @@ const EmployeeMyCampaigns: React.FC = () => {
   const campaigns = useSelector(selectEmployeeCampaigns);
   const loading = useSelector(selectEmployeeCampaignsLoading);
   const error = useSelector(selectEmployeeCampaignsError);
+  const metrics = useSelector((state: RootState) => state.campaign.employeeMetrics);
 
   useEffect(() => {
-    if (userId) dispatch(fetchEmployeeCampaigns(userId));
+    if (userId) {
+      dispatch(fetchEmployeeCampaigns(userId));
+      dispatch(fetchEmployeeCampaignMetrics(userId));
+    }
   }, [dispatch, userId]);
 
   const avgScore = 10;
@@ -294,10 +299,10 @@ const EmployeeMyCampaigns: React.FC = () => {
 
       {/* ── Summary Pills ─────────────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 2 }}>
-        <SummaryPill icon={FilterListOutlined}               label="Total"       value={0}         color={TEAL}   bg="#F0FDFA" active={activeFilter === "ALL"}         onClick={() => setActiveFilter("ALL")} />
-        <SummaryPill icon={RadioButtonUncheckedOutlined}     label="Invited"     value={0}  color="#0891B2" bg="#ECFDF5" active={activeFilter === "INVITED"}  onClick={() => setActiveFilter("INVITED")} />
-        <SummaryPill icon={PlayArrowOutlined}                label="In Progress" value={0}  color={AMBER}  bg="#FFFBEB" active={activeFilter === "IN_PROGRESS"} onClick={() => setActiveFilter("IN_PROGRESS")} />
-        <SummaryPill icon={CheckCircleOutlined}              label="Completed"   value={0}   color={GREEN}  bg="#F0FDF4" active={activeFilter === "COMPLETED"}   onClick={() => setActiveFilter("COMPLETED")} />
+        <SummaryPill icon={FilterListOutlined}               label="Total"       value={metrics?.total      ?? 0} color={TEAL}   bg="#F0FDFA" active={activeFilter === "ALL"}          onClick={() => setActiveFilter("ALL")} />
+        <SummaryPill icon={RadioButtonUncheckedOutlined}     label="Invited"     value={metrics?.invited    ?? 0} color="#0891B2" bg="#ECFDF5" active={activeFilter === "INVITED"}   onClick={() => setActiveFilter("INVITED")} />
+        <SummaryPill icon={PlayArrowOutlined}                label="In Progress" value={metrics?.inProgress ?? 0} color={AMBER}  bg="#FFFBEB" active={activeFilter === "IN_PROGRESS"} onClick={() => setActiveFilter("IN_PROGRESS")} />
+        <SummaryPill icon={CheckCircleOutlined}              label="Completed"   value={metrics?.completed  ?? 0} color={GREEN}  bg="#F0FDF4" active={activeFilter === "COMPLETED"}  onClick={() => setActiveFilter("COMPLETED")} />
       </Box>
 
       {/* ── Loading skeletons ─────────────────────────────────────────────────── */}

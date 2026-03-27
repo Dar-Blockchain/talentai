@@ -181,6 +181,19 @@ export const fetchEmployeeCampaigns = createAsyncThunk<
   }
 });
 
+export const fetchEmployeeCampaignMetrics = createAsyncThunk<
+  { total: number; invited: number; inProgress: number; completed: number },
+  string,
+  { rejectValue: string }
+>("campaign/fetchEmployeeCampaignMetrics", async (userId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`internal-campaigns/employee/${userId}/metrics`);
+    return response.data.data;
+  } catch (err: any) {
+    return rejectWithValue(err.message);
+  }
+});
+
 export const fetchNonParticipants = createAsyncThunk<
   { data: NonParticipant[]; total: number },
   {
@@ -268,6 +281,9 @@ interface CampaignState {
   employeeCampaignsLoading: boolean;
   employeeCampaignsError: string | null;
 
+  employeeMetrics: { total: number; invited: number; inProgress: number; completed: number } | null;
+  employeeMetricsLoading: boolean;
+
   participantActionLoading: boolean;
   participantActionError: string | null;
 
@@ -312,6 +328,9 @@ const initialState: CampaignState = {
   employeeCampaigns: [],
   employeeCampaignsLoading: false,
   employeeCampaignsError: null,
+
+  employeeMetrics: null,
+  employeeMetricsLoading: false,
 
   participantActionLoading: false,
   participantActionError: null,
@@ -511,6 +530,19 @@ const campaignSlice = createSlice({
       .addCase(fetchEmployeeCampaigns.rejected, (state, action) => {
         state.employeeCampaignsLoading = false;
         state.employeeCampaignsError = action.payload || "Failed to load employee campaigns";
+      });
+
+    // fetchEmployeeCampaignMetrics
+    builder
+      .addCase(fetchEmployeeCampaignMetrics.pending, (state) => {
+        state.employeeMetricsLoading = true;
+      })
+      .addCase(fetchEmployeeCampaignMetrics.fulfilled, (state, action) => {
+        state.employeeMetricsLoading = false;
+        state.employeeMetrics = action.payload;
+      })
+      .addCase(fetchEmployeeCampaignMetrics.rejected, (state) => {
+        state.employeeMetricsLoading = false;
       });
 
     // fetchNonParticipants
