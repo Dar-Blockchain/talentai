@@ -181,7 +181,7 @@ const SettingsPage: React.FC = () => {
                 onChange={(_, v) => setTab(v)}
                 sx={{
                   minHeight: 48,
-                  "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 48, color: "#374151", px: 0, mr: 3 },
+                  "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.82rem", minHeight: 48, color: "#111827", px: 0, mr: 3 },
                   "& .Mui-selected": { color: "#8310FF" },
                   "& .MuiTabs-indicator": { bgcolor: "#8310FF", height: 2 },
                 }}
