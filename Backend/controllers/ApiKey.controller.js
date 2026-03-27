@@ -53,7 +53,7 @@ module.exports.listApiKeys = async (req, res) => {
 module.exports.getApiKeyDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.userId;
+    const userId = req.user._id;
     const result = await ApiKeyService.getApiKeyDetails(id, userId);
 
     res.status(200).json({
@@ -77,7 +77,7 @@ module.exports.getApiKeyDetails = async (req, res) => {
 module.exports.updateApiKey = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.userId;
+    const userId = req.user._id;
     const result = await ApiKeyService.updateApiKey(id, userId, req.body);
 
     res.status(200).json({
@@ -101,7 +101,7 @@ module.exports.updateApiKey = async (req, res) => {
 module.exports.toggleApiKey = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.userId;
+    const userId = req.user._id;
     const result = await ApiKeyService.toggleApiKey(id, userId);
 
     res.status(200).json({
@@ -125,7 +125,7 @@ module.exports.toggleApiKey = async (req, res) => {
 module.exports.regenerateApiKey = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.userId;
+    const userId = req.user._id;
     const result = await ApiKeyService.regenerateApiKey(id, userId);
 
     res.status(200).json({
