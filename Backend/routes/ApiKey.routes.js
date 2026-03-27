@@ -42,7 +42,7 @@ router.patch("/:id/toggle", apiKeyController.toggleApiKey);
  * POST /api/api-keys/:id/regenerate
  * Regenerate an API key (create a new one)
  */
-//router.post("/:id/regenerate", apiKeyController.regenerateApiKey);
+router.post("/:id/regenerate", apiKeyController.regenerateApiKey);
 
 /**
  * DELETE /api/api-keys/:id
