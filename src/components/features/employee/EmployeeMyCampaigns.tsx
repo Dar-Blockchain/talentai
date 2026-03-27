@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -9,16 +9,18 @@ import {
   selectEmployeeCampaignsLoading,
   selectEmployeeCampaignsError,
   EmployeeCampaignEntry,
+  EmployeeCampaignFilters,
 } from "@/store/slices/campaignSlice";
 import {
   Box, Typography, Chip, Button, LinearProgress, Skeleton, Alert, IconButton, Tooltip,
+  TextField, InputAdornment, MenuItem, Select, FormControl,
 } from "@mui/material";
 import {
   InsightsOutlined, AccountTreeOutlined, SchoolOutlined, TuneOutlined,
   DescriptionOutlined, PsychologyOutlined, AssignmentTurnedInOutlined, PeopleOutlined,
   AccessTimeOutlined, CheckCircleOutlined, RadioButtonUncheckedOutlined,
   PlayArrowOutlined, VisibilityOutlined, ArrowForwardOutlined, FilterListOutlined,
-  EmojiEventsOutlined, InfoOutlined,
+  EmojiEventsOutlined, InfoOutlined, SearchOutlined, CalendarTodayOutlined, CloseOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
@@ -245,25 +247,90 @@ const SummaryPill: React.FC<{ icon: React.ElementType; label: string; value: num
   </Box>
 );
 
+const PERIOD_OPTIONS = [
+  { value: "",    label: "All time"      },
+  { value: "7d",  label: "Last 7 days"  },
+  { value: "30d", label: "Last 30 days" },
+  { value: "3m",  label: "Last 3 months"},
+  { value: "6m",  label: "Last 6 months"},
+  { value: "1y",  label: "Last year"    },
+];
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const EmployeeMyCampaigns: React.FC = () => {
-  const router = useRouter();
+  const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+
   const [activeFilter, setActiveFilter] = useState<FilterTab>("ALL");
+  const [search,  setSearch]  = useState("");
+  const [period,  setPeriod]  = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
-  const userId = useSelector((state: RootState) => state.user.connectedUser.user?._id);
+  const userId   = useSelector((state: RootState) => state.user.connectedUser.user?._id);
   const campaigns = useSelector(selectEmployeeCampaigns);
-  const loading = useSelector(selectEmployeeCampaignsLoading);
-  const error = useSelector(selectEmployeeCampaignsError);
-  const metrics = useSelector((state: RootState) => state.campaign.employeeMetrics);
+  const loading   = useSelector(selectEmployeeCampaignsLoading);
+  const error     = useSelector(selectEmployeeCampaignsError);
+  const metrics   = useSelector((state: RootState) => state.campaign.employeeMetrics);
 
+  const doFetch = useCallback((filters: Partial<EmployeeCampaignFilters> = {}) => {
+    if (!userId) return;
+    dispatch(fetchEmployeeCampaigns({
+      userId,
+      search:            filters.search            ?? search,
+      participantStatus: filters.participantStatus ?? (activeFilter !== "ALL" ? activeFilter : undefined),
+      period:            filters.period            ?? period,
+    }));
+  }, [dispatch, userId, search, activeFilter, period]);
+
+  // initial load + metrics
   useEffect(() => {
     if (userId) {
-      dispatch(fetchEmployeeCampaigns(userId));
+      doFetch();
       dispatch(fetchEmployeeCampaignMetrics(userId));
     }
-  }, [dispatch, userId]);
+  }, [userId]);
+
+  // debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      if (userId) dispatch(fetchEmployeeCampaigns({
+        userId,
+        search: searchInput,
+        participantStatus: activeFilter !== "ALL" ? activeFilter : undefined,
+        period,
+      }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const handleFilterChange = (tab: FilterTab) => {
+    setActiveFilter(tab);
+    if (!userId) return;
+    dispatch(fetchEmployeeCampaigns({
+      userId, search,
+      participantStatus: tab !== "ALL" ? tab : undefined,
+      period,
+    }));
+  };
+
+  const handlePeriodChange = (val: string) => {
+    setPeriod(val);
+    if (!userId) return;
+    dispatch(fetchEmployeeCampaigns({
+      userId, search,
+      participantStatus: activeFilter !== "ALL" ? activeFilter : undefined,
+      period: val,
+    }));
+  };
+
+  const clearFilters = () => {
+    setSearchInput(""); setSearch(""); setPeriod(""); setActiveFilter("ALL");
+    if (userId) dispatch(fetchEmployeeCampaigns({ userId }));
+  };
+
+  const hasActiveFilters = search || period || activeFilter !== "ALL";
 
   const avgScore = 10;
 
@@ -299,10 +366,66 @@ const EmployeeMyCampaigns: React.FC = () => {
 
       {/* ── Summary Pills ─────────────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 2 }}>
-        <SummaryPill icon={FilterListOutlined}               label="Total"       value={metrics?.total      ?? 0} color={TEAL}   bg="#F0FDFA" active={activeFilter === "ALL"}          onClick={() => setActiveFilter("ALL")} />
-        <SummaryPill icon={RadioButtonUncheckedOutlined}     label="Invited"     value={metrics?.invited    ?? 0} color="#0891B2" bg="#ECFDF5" active={activeFilter === "INVITED"}   onClick={() => setActiveFilter("INVITED")} />
-        <SummaryPill icon={PlayArrowOutlined}                label="In Progress" value={metrics?.inProgress ?? 0} color={AMBER}  bg="#FFFBEB" active={activeFilter === "IN_PROGRESS"} onClick={() => setActiveFilter("IN_PROGRESS")} />
-        <SummaryPill icon={CheckCircleOutlined}              label="Completed"   value={metrics?.completed  ?? 0} color={GREEN}  bg="#F0FDF4" active={activeFilter === "COMPLETED"}  onClick={() => setActiveFilter("COMPLETED")} />
+        <SummaryPill icon={FilterListOutlined}               label="Total"       value={metrics?.total      ?? 0} color={TEAL}    bg="#F0FDFA" active={activeFilter === "ALL"}          onClick={() => handleFilterChange("ALL")} />
+        <SummaryPill icon={RadioButtonUncheckedOutlined}     label="Invited"     value={metrics?.invited    ?? 0} color="#0891B2" bg="#ECFDF5" active={activeFilter === "INVITED"}      onClick={() => handleFilterChange("INVITED")} />
+        <SummaryPill icon={PlayArrowOutlined}                label="In Progress" value={metrics?.inProgress ?? 0} color={AMBER}   bg="#FFFBEB" active={activeFilter === "IN_PROGRESS"} onClick={() => handleFilterChange("IN_PROGRESS")} />
+        <SummaryPill icon={CheckCircleOutlined}              label="Completed"   value={metrics?.completed  ?? 0} color={GREEN}   bg="#F0FDF4" active={activeFilter === "COMPLETED"}   onClick={() => handleFilterChange("COMPLETED")} />
+      </Box>
+
+      {/* ── Filters bar ───────────────────────────────────────────────────────── */}
+      <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+        {/* Search */}
+        <TextField
+          size="small"
+          placeholder="Search campaigns…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchOutlined sx={{ fontSize: 16, color: "#9CA3AF" }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            flex: 1, minWidth: 200,
+            "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#fff", fontSize: 13 },
+          }}
+        />
+
+        {/* Period */}
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <Select
+            value={period}
+            onChange={(e) => handlePeriodChange(e.target.value)}
+            displayEmpty
+            renderValue={(v) => (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CalendarTodayOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+                <Typography sx={{ fontSize: 13, color: v ? "#111827" : "#9CA3AF" }}>
+                  {PERIOD_OPTIONS.find(o => o.value === v)?.label ?? "Period"}
+                </Typography>
+              </Box>
+            )}
+            sx={{ borderRadius: 2, bgcolor: "#fff", fontSize: 13 }}
+          >
+            {PERIOD_OPTIONS.map(o => (
+              <MenuItem key={o.value} value={o.value} sx={{ fontSize: 13 }}>{o.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Clear filters */}
+        {hasActiveFilters && (
+          <Button
+            size="small"
+            startIcon={<CloseOutlined sx={{ fontSize: 14 }} />}
+            onClick={clearFilters}
+            sx={{ textTransform: "none", fontSize: 12, color: "#6B7280", borderRadius: 2, border: "1px solid #E5E7EB", bgcolor: "#fff", px: 1.5, whiteSpace: "nowrap" }}
+          >
+            Clear
+          </Button>
+        )}
       </Box>
 
       {/* ── Loading skeletons ─────────────────────────────────────────────────── */}

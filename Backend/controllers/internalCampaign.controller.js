@@ -542,103 +542,72 @@ exports.updateCampaignStatus = async (req, res) => {
  */
 exports.getUserCampaigns = async (req, res) => {
   try {
-    // Get userId from URL parameter
     const userId = req.params.userId;
-    const { status, type, page = 1, limit = 10 } = req.query;
+    const { status, type, participantStatus, search, period, page = 1, limit = 10 } = req.query;
 
-    console.log(`🔍 Fetching campaigns for user ${userId}`);
-
-    // Validate pagination parameters
-    const pageNum = Math.max(1, parseInt(page) || 1);
+    const pageNum  = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
-    const skip = (pageNum - 1) * limitNum;
+    const skip     = (pageNum - 1) * limitNum;
 
-    // Convert userId to ObjectId
-    const ObjectId = require("mongoose").Types.ObjectId;
+    const ObjectId    = require("mongoose").Types.ObjectId;
     const userObjectId = new ObjectId(userId);
 
-    // Build filter for campaign participations
-    const participationFilter = { employee: userObjectId };
+    // Resolve period → date threshold
+    let periodFrom = null;
+    if (period) {
+      const now = new Date();
+      const map = { "7d": 7, "30d": 30, "3m": 90, "6m": 180, "1y": 365 };
+      const days = map[period];
+      if (days) {
+        periodFrom = new Date(now.getTime() - days * 86_400_000);
+      }
+    }
 
-    // Find all campaign participations for this user
-    const participations = await CampaignParticipant.find(participationFilter)
+    const participations = await CampaignParticipant.find({ employee: userObjectId })
       .populate({
         path: "campaign",
-        populate: {
-          path: "company createdBy",
-          select: "name _id email",
-        },
+        populate: { path: "company createdBy", select: "name _id email" },
       })
       .sort({ createdAt: -1 });
 
-    console.log(
-      `📊 Found ${participations.length} total participations before filtering`,
+    let filtered = participations.filter(
+      (p) => p.campaign !== null && p.campaign.status !== "DRAFT",
     );
 
-    // Filter out participations where campaign is null (deleted campaign)
-    // Exclude campaigns with DRAFT status by default
-    let filteredParticipations = participations.filter(
-      (participation) => participation.campaign !== null && participation.campaign.status !== "DRAFT",
-    );
-
-    // Apply campaign filters (status, type)
-    if (status || type) {
-      filteredParticipations = filteredParticipations.filter(
-        (participation) => {
-          if (status && participation.campaign.status !== status) return false;
-          if (type && participation.campaign.type !== type) return false;
-          return true;
-        },
-      );
+    // campaign status filter
+    if (status)           filtered = filtered.filter((p) => p.campaign.status === status);
+    // campaign type filter
+    if (type)             filtered = filtered.filter((p) => p.campaign.type === type);
+    // participant status filter
+    if (participantStatus) filtered = filtered.filter((p) => p.status === participantStatus);
+    // search filter (campaign title)
+    if (search) {
+      const re = new RegExp(search.trim(), "i");
+      filtered = filtered.filter((p) => re.test(p.campaign.title));
+    }
+    // period filter (participation created within range)
+    if (periodFrom) {
+      filtered = filtered.filter((p) => new Date(p.createdAt) >= periodFrom);
     }
 
-    console.log(
-      `📋 After filtering: ${filteredParticipations.length} participations`,
-    );
+    const total    = filtered.length;
+    const paginated = filtered.slice(skip, skip + limitNum);
 
-    // Get total count after filtering
-    const totalParticipations = filteredParticipations.length;
-
-    // Apply pagination
-    const paginatedParticipations = filteredParticipations.slice(
-      skip,
-      skip + limitNum,
-    );
-
-    // Extract full campaign objects and add participant count and status
     const campaigns = await Promise.all(
-      paginatedParticipations.map(async (participation) => {
-        const participantCount = await CampaignParticipant.countDocuments({
-          campaign: participation.campaign._id,
-        });
-        return {
-          ...participation.campaign.toObject(),
-          targetEmployeeCount: participantCount,
-          participantStatus: participation.status,
-        };
+      paginated.map(async (p) => {
+        const targetEmployeeCount = await CampaignParticipant.countDocuments({ campaign: p.campaign._id });
+        return { ...p.campaign.toObject(), targetEmployeeCount, participantStatus: p.status };
       })
-    );
-
-    console.log(
-      `✅ Returning ${campaigns.length} valid campaigns (page ${pageNum})`,
     );
 
     res.status(200).json({
       success: true,
       data: campaigns,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total: totalParticipations,
-        pages: Math.ceil(totalParticipations / limitNum),
-      },
+      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
     });
   } catch (error) {
     console.error(`❌ Error in getUserCampaigns: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 

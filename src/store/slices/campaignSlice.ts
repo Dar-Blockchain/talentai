@@ -168,13 +168,24 @@ export const fetchCampaignSessions = createAsyncThunk<
   }
 });
 
+export interface EmployeeCampaignFilters {
+  userId: string;
+  search?: string;
+  participantStatus?: string;
+  period?: string;
+}
+
 export const fetchEmployeeCampaigns = createAsyncThunk<
   EmployeeCampaignEntry[],
-  string,
+  EmployeeCampaignFilters,
   { rejectValue: string }
->("campaign/fetchEmployeeCampaigns", async (userId, { rejectWithValue }) => {
+>("campaign/fetchEmployeeCampaigns", async ({ userId, search, participantStatus, period }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/employee/${userId}`);
+    const params: Record<string, string> = {};
+    if (search)            params.search            = search;
+    if (participantStatus) params.participantStatus = participantStatus;
+    if (period)            params.period            = period;
+    const response = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params });
     return response.data.data as EmployeeCampaignEntry[];
   } catch (err: any) {
     return rejectWithValue(err.message);
