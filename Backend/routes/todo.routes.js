@@ -1,10 +1,10 @@
 /**
- * Routes de listes de tâches (todo) liées au profil
+ * Todo task lists routes linked to profile
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Candidate'): réservé aux candidats
- * - LogMiddleware("Todo"): journalise les requêtes todo
+ * Global applied middlewares:
+ * - requireAuthUser: requires an authenticated user
+ * - controledAcces('Candidate'): reserved for candidates
+ * - LogMiddleware("Todo"): logs todo requests
  */
 const express = require("express");
 const router = express.Router();
@@ -20,9 +20,9 @@ const { controledAcces } = require('../middleware/authorize.middleware.js');
 router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("Todo"));
 
 
-// POST /todo/profile — génère une todo list pour le profil de l'utilisateur
+// POST /todo/profile — generates a todo list for user profile
 router.post("/profile", todoController.generateTodoListForProfile);
-// GET /todo/profile — récupère la todo list du profil de l'utilisateur
+// GET /todo/profile — retrieves the user profile todo list
 router.get("/profile", todoController.getTodoListOfProfile);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 /**
  * Routes pour la gestion des limites de plan
  *
- * Chaque endpoint de gestion des plans (POST, PUT, DELETE) nécessite une authentification.
+ * Each plan management endpoint (POST, PUT, DELETE) requires authentication.
  * Les endpoints de consultation (GET) sont publics.
  */
 const express = require("express");

@@ -4,7 +4,7 @@ exports.create = async (req, res) => {
   try {
     const feedback = await feedbackService.createFeedback({
       ...req.body,
-      userId: req.user._id, // Si l'utilisateur est authentifié
+      userId: req.user._id, // If user is authenticated
     });
     res.status(201).json(feedback);
   } catch (err) {

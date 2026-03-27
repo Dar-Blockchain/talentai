@@ -25,13 +25,13 @@ function authLogMiddleware(logType) {
 
       // Proceed with JWT authentication and logging
       if (token) {
-        // Si c'est une clé API (commence par sk_), ne pas vérifier comme JWT
+        // If it's an API key (starts with sk_), don't verify as JWT
         if (token.startsWith("sk_")) {
           req.user = null;
           appendLog(req, res, startTime, logType); // Pass logType as parameter
           next();
         } else {
-          // Sinon, vérifier comme JWT
+          // Otherwise, verify as JWT
           jwt.verify(token, process.env.Net_Secret, async (err, decodedToken) => {
             if (err) {
               console.log(err);

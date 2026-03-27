@@ -43,7 +43,7 @@ export const fetchCandidateProgress = async (token: string): Promise<CandidatePr
       return progressData;
     } else {
       // Check if it's a "no progress found" error (which is not a real error)
-      if (result.message && result.message.includes('Progrès non trouvé')) {
+      if (result.message && result.message.includes('Progress not found')) {
         return [];
       }
       throw new Error(result.message || 'Failed to fetch progress data');

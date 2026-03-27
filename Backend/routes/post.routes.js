@@ -1,11 +1,11 @@
 /**
- * Routes des offres (posts)
+ * Post (job offers) routes
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - verifyApiKey: alternative pour l'authentification par clé API
- * - LogMiddleware("Post"): journalise les requêtes liées aux posts
- * - controledAcces: certaines routes peuvent nécessiter un rôle spécifique côté contrôleur
+ * Global middlewares applied:
+ * - requireAuthUser: requires an authenticated user
+ * - verifyApiKey: alternative for API key authentication
+ * - LogMiddleware("Post"): logs post-related requests
+ * - controledAcces: some routes may require a specific role on the controller side
  */
 const express = require("express");
 const router = express.Router();
@@ -22,27 +22,27 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 // Public routes - no authentication required
 
 // GET /post/search
-// Description: Retourne tous les posts avec recherche, filtres et pagination (public)
+// Description: Returns all posts with search, filters and pagination (public)
 router.get("/search", postController.getAllPostsWithSearch);
 
 // GET /post/details/:id
-// Description: Retourne les détails d'un post par son ID (public)
+// Description: Returns post details by ID (public)
 router.get("/details/:id", postController.getPostDetailsPublic);
 
 // GET /post/public-stats
-// Description: Retourne les statistiques publiques (nombre d'utilisateurs, posts, entreprises)
+// Description: Returns public statistics (number of users, posts, companies)
 router.get("/public-stats", postController.getPublicStats);
 
-// Auth obligatoire + logs pour toutes les routes
-// Accepte soit JWT (requireAuthUser) soit clé API (verifyApiKey)
+// Auth required + logs for all routes
+// Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
 router.use((req, res, next) => {
-  // Essayer d'abord la vérification par API Key
+  // First try API Key verification
   verifyApiKey(req, res, (err) => {
-    // Si API Key réussit, continuer
+    // If API Key succeeds, continue
     if (req.isApiKeyAuth) {
       return next();
     }
-    // Sinon, exiger une authentification JWT
+    // Otherwise, require JWT authentication
     return requireAuthUser(req, res, next);
   });
 });
@@ -50,50 +50,50 @@ router.use((req, res, next) => {
 router.use(authLogMiddleware("Post"));
 
 // POST /post/save-post
-// Description: Crée un post
-// Scopes requis: write:posts
+// Description: Creates a post
+// Required scopes: write:posts
 router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, postController.createPost);
 
 // GET /post/get-all-posts
-// Description: Retourne tous les posts
-// Scopes requis: read:posts
+// Description: Returns all posts
+// Required scopes: read:posts
 router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPosts);
 
 // GET /post/my-posts
-// Description: Posts de l'utilisateur courant
-// Scopes requis: read:posts
+// Description: Posts of current user
+// Required scopes: read:posts
 router.get("/my-posts", checkScope(['read:posts']), resolveCompanyActor, postController.getUserPosts);
 
 // GET /post/metrics
-// Description: Rétrourne les métriques des posts (total, active, draft, expired, closed, cancelled)
+// Description: Returns post metrics (total, active, draft, expired, closed, cancelled)
 router.get("/metrics", postController.getPostMetrics);
 
 // GET /post/getPostById/:id
-// Description: Détails d'un post
-// Scopes requis: read:posts
+// Description: Post details
+// Required scopes: read:posts
 router.get("/getPostById/:id", checkScope(['read:posts']), postController.getPostById);
 
 // PUT /post/updatePost/:id
-// Description: Met à jour un post
-// Scopes requis: write:posts
+// Description: Updates a post
+// Required scopes: write:posts
 router.put("/updatePost/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePost);
 
 // PATCH /post/updatePostStatus/:id
-// Description: Modifie le statut d'un post (actif/brouillon, etc.)
-// Scopes requis: write:posts
+// Description: Changes post status (active/draft, etc.)
+// Required scopes: write:posts
 router.patch("/updatePostStatus/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePostStatus);
 
 // DELETE /post/deletePost/:id
-// Description: Supprime un post
-// Scopes requis: delete:posts
+// Description: Deletes a post
+// Required scopes: delete:posts
 router.delete("/deletePost/:id", checkScope(['delete:posts']), resolveCompanyActor,postController.deletePost);
 
 // GET /post/adsPost
-// Description: 3 posts proposés à partir des 3 premières compétences du profil + pagination
+// Description: 3 posts suggested from top 3 profile skills + pagination
 router.get("/adsPost", postController.getPostsByUserTopSkills);
 
 // GET /post/DetailsPost/:id
-// Description: Alias de détail de post
+// Description: Post detail alias
 router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 
 // POST /post/send-technical-test
@@ -111,7 +111,7 @@ router.get("/payment/calculate-price/:postId", resolveCompanyActor,postPaymentCo
 // POST /post/payment/process
 // Description: Process payment for agent creation after post and agent are created
 // Body: { postId, agentId }
-// Scopes requis: write:posts
+// Required scopes: write:posts
 router.post("/payment/process", checkScope(['write:posts']), resolveCompanyActor,postPaymentController.processPostPayment);
 
 // GET /post/payment/history

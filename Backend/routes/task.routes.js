@@ -1,9 +1,9 @@
 /**
  * Routes for task management
  * 
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - LogMiddleware("Task"): journalise les requêtes liées aux tâches
+ * Global applied middleware:
+ * - requireAuthUser: requires an authenticated user
+ * - LogMiddleware("Task"): logs task-related requests
  */
 const express = require("express");
 const router = express.Router();

@@ -212,7 +212,7 @@ module.exports.notifyMatchingCandidates = async (post) => {
 
     // ========== 5. SEND NOTIFICATIONS ==========
     const title = (post.jobDetails?.title) || post.title || 'Nouvelle offre';
-    const content = `Nouvelle offre: ${title} — correspond à vos compétences techniques.`;
+    const content = `New offer: ${title} — matches your technical skills.`;
 
     console.log('📤 Sending notifications to', recipientIds.length, 'candidates');
     await notificationService.broadcastSystemNotification(content, recipientIds);
@@ -754,7 +754,7 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     };
   }
 
-  // Extraire les noms des compétences
+  // Extract skill names
   const skillNames = user.profile.skills
     .map((s) => (typeof s === "string" ? s : s?.name))
     .filter(Boolean);
@@ -766,12 +766,12 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     };
   }
 
-  // IDs de postes déjà testés
+  // Already tested post IDs
   const testedPosts = await PostInterviewAssessmentModel.find({
     candidate: user._id,
   }).distinct("jobId");
 
-  // Tous les postes correspondants aux skills, en excluant ceux déjà testés et avec status "open"
+  // All posts matching skills, excluding already tested ones and with status "open"
   let candidatePosts = await Post.find({
     "skillAnalysis.requiredSkills.name": { $in: skillNames },
     _id: { $nin: testedPosts },

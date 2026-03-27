@@ -1,10 +1,10 @@
 /**
  * Routes pour les participants aux campagnes
  *
- * Middlewares appliqués:
+ * Applied middlewares:
  * - requireAuthUser: authentification requise
- * - controledAcces('Company') ou pas de contrôle pour les anonymes
- * - authLogMiddleware: journalisation des requêtes
+ * - controledAcces('Company') or no control for anonymous
+ * - authLogMiddleware: request logging
  */
 
 const express = require("express");
@@ -29,7 +29,7 @@ router.post(
 );
 
 /**
- * GET /campaigns/:campaignId/participants — Récupérer tous les participants d'une campagne
+ * GET /campaigns/:campaignId/participants — Retrieve all participants in a campaign
  * Query: ?status=INVITED|IN_PROGRESS|COMPLETED|DROPPED
  * Middleware: authentification requise + access company
  */
@@ -42,7 +42,7 @@ router.get(
 );
 
 /**
- * GET /participants/:participantId — Récupérer un participant spécifique
+ * GET /participants/:participantId — Retrieve a specific participant
  * Middleware: authentification requise + access company
  */
 router.get(
@@ -54,8 +54,8 @@ router.get(
 );
 
 /**
- * GET /participants/token/:token — Récupérer un participant par son token anonyme
- * Note: Peut être appelé sans authentification pour les campagnes anonymes
+ * GET /participants/token/:token — Retrieve participant by anonymous token
+ * Note: Can be called without authentication for anonymous campaigns
  */
 router.get(
   "/token/:token",
@@ -64,7 +64,7 @@ router.get(
 );
 
 /**
- * PUT /participants/:participantId — Mettre à jour un participant
+ * PUT /participants/:participantId - Update a participant
  * Body: { status, accessedAt, completedAt }
  * Middleware: authentification requise + access company
  */
@@ -77,7 +77,7 @@ router.put(
 );
 
 /**
- * DELETE /participants/:participantId — Supprimer un participant
+ * DELETE /participants/:participantId - Delete a participant
  * Middleware: authentification requise + access company
  */
 router.delete(
@@ -91,7 +91,7 @@ router.delete(
 // Routes additionnelles (optionnelles)
 
 /**
- * PATCH /participants/:participantId/drop — Marquer un participant comme abandonné
+ * PATCH /participants/:participantId/drop — Mark participant as dropped
  * Body: { reason (optionnel) }
  */
 router.patch(

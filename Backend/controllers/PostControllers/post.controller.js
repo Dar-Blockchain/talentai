@@ -19,7 +19,7 @@ const handleError = (res, error, defaultStatus = 500) => {
     .json({ success: false, error: error?.message || "Internal error" });
 };
 
-// Créer un nouveau post
+// Create a new post
 exports.createPost = async (req, res) => {
   try {
     // ========== 1. VALIDATE & PREPARE INPUT ==========
@@ -105,7 +105,7 @@ exports.createPost = async (req, res) => {
   }
 };
 
-// Récupérer tous les posts
+// Retrieve all posts
 exports.getAllPosts = async (req, res) => {
   try {
     const filters = {};
@@ -123,7 +123,7 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
-// Récupérer tous les posts avec recherche, filtres et pagination
+// Retrieve all posts with search, filters and pagination
 exports.getAllPostsWithSearch = async (req, res) => {
   try {
     const {
@@ -177,7 +177,7 @@ exports.getAllPostsWithSearch = async (req, res) => {
   }
 };
 
-// Récupérer les détails d'un post par son ID (public)
+// Retrieve post details by ID (public)
 exports.getPostDetailsPublic = async (req, res) => {
   try {
     if (!req.params.id) {
@@ -266,7 +266,7 @@ exports.getPostDetailsPublic = async (req, res) => {
   }
 };
 
-// Récupérer un post par son ID
+// Retrieve post by ID
 exports.getPostById = async (req, res) => {
   try {
     if (!req.params.id) {
@@ -298,7 +298,7 @@ exports.getPipelineJobDetails = async (req, res) => {
   }
 };
 
-// Récupérer les posts d'un utilisateur
+// Retrieve user posts
 exports.getUserPosts = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -341,7 +341,7 @@ exports.getUserPosts = async (req, res) => {
   }
 };
 
-// Mettre à jour un post
+// Update a post
 exports.updatePost = async (req, res) => {
   try {
     if (!req.params.id) {
@@ -361,7 +361,7 @@ exports.updatePost = async (req, res) => {
   }
 };
 
-// Supprimer un post
+// Delete a post
 exports.deletePost = async (req, res) => {
   try {
     if (!req.params.id) {

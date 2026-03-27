@@ -54,7 +54,7 @@ exports.matchCandidatesToJob = async (req, res) => {
     if (!jobPost) return res.status(404).json({ error: "Job post not found" });
 
     /* -----------------------------------------
-       2️⃣ Préparer les skills du job une seule fois
+       2️⃣ Prepare job skills only once
     ----------------------------------------- */
     const requiredSkills = prepareSkills(
       jobPost.skillAnalysis?.requiredSkills || [],
@@ -67,20 +67,20 @@ exports.matchCandidatesToJob = async (req, res) => {
     };
 
     /* -----------------------------------------
-       2️⃣b Charger tous les unlocked en une seule requête
+       2️⃣b Load all unlocked in single query
     ----------------------------------------- */
-    // Extraire tous les ids de candidats présents
+    // Extract all candidate IDs present
     const candidateIds = candidates
       .filter((c) => c.userId?._id)
       .map((c) => c.userId._id);
 
-    // Requête Mongo pour récupérer tous les unlocks
+    // Mongo query to retrieve all unlocks
     const unlockedRecords = await UnlockCandidate.find(
       { idCompany, idCandidate: { $in: candidateIds } },
       { idCandidate: 1, _id: 0 },
     ).lean();
 
-    // Créer un Set pour lookup rapide
+    // Create Set for fast lookup
     const unlockedSet = new Set(
       unlockedRecords.map((u) => String(u.idCandidate)),
     );
@@ -135,7 +135,7 @@ exports.matchCandidatesToJob = async (req, res) => {
     }
 
     /* -----------------------------------------
-       3️⃣ Traitement en parallèle
+       3️⃣ Parallel processing
     ----------------------------------------- */
     const matchPromises = candidates.map(async (candidate) => {
       if (!candidate.userId) return null;
@@ -153,8 +153,8 @@ exports.matchCandidatesToJob = async (req, res) => {
 
       const candidateSkills = prepareSkills(candidate.skills);
 
-      // calcul du score avec protection individuelle : si une erreur survient
-      // pour un candidat, on loggue et on continue (ne casse pas tout)
+      // Calculate score with individual protection: if an error occurs
+      // for a candidate, we log and continue (doesn't break everything)
       let score;
       try {
         score = await calculateMatchScore(

@@ -6,13 +6,13 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 module.exports.GetGmailByToken = async (id_token) => {
 
-    // Vérifier le token avec l'API Google
+    // Verify token with Google API
     const ticket = await client.verifyIdToken({
-      idToken: id_token, // Vérifier le token reçu
+      idToken: id_token, // Verify received token
       audience: process.env.GOOGLE_CLIENT_ID, // Ton Client ID Google
     });
   
-    // Extraire les informations de l'utilisateur depuis le token validé
+    // Extract user information from the validated token
     const payload = ticket.getPayload();
     const email = payload.email;
   

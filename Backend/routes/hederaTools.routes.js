@@ -1,8 +1,8 @@
 /**
- * Routes d'outils Hedera (création de token, topics, messages, soldes, etc.)
+ * Hedera tools routes (token creation, topics, messages, balances, etc.)
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
+ * Global middlewares applied:
+ * - requireAuthUser: requires an authenticated user
  * - LogMiddleware("HederaTools"): journalise l'utilisation des outils
  */
 const express = require("express");
@@ -17,82 +17,82 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 router.use(requireAuthUser, authLogMiddleware("HederaTools"));
 //router.use(requireAuthUser, authLogMiddleware("HederaTools"));
 
-// Routes Hedera Tools - Appels directs sans LLM
+// Hedera Tools Routes - Direct calls without LLM
 
 /**
  * @route POST /hedera-tools/create-token
- * @desc Crée un token fongible via Hedera Agent Kit
- * @access Privé
+ * @desc Creates a fungible token via Hedera Agent Kit
+ * @access Private
  */
 router.post("/create-token", hederaToolsController.createFungibleToken);
 
 /**
  * @route POST /hedera-tools/create-topic
- * @desc Crée un topic de consensus via Hedera Agent Kit
- * @access Privé
+ * @desc Creates a consensus topic via Hedera Agent Kit
+ * @access Private
  */
 router.post("/create-topic", hederaToolsController.createTopic);
 
 /**
  * @route POST /hedera-tools/submit-message
- * @desc Envoie un message sur un topic de consensus
- * @access Privé
+ * @desc Sends a message to a consensus topic
+ * @access Private
  */
 router.post("/submit-message", hederaToolsController.submitTopicMessage);
 
 /**
  * @route GET /hedera-tools/balance
- * @desc Récupère le solde HBAR pour un compte donné
- * @access Privé
+ * @desc Retrieves HBAR balance for a given account
+ * @access Private
  */
 router.get("/balance", hederaToolsController.getHbarBalance);
 
 /**
  * @route GET /hedera-tools/my-balance
- * @desc Récupère le solde HBAR du compte configuré courant
- * @access Privé
+ * @desc Retrieves HBAR balance of current configured account
+ * @access Private
  */
 router.get("/my-balance", hederaToolsController.getMyBalance);
 
 /**
  * @route GET /hedera-tools/tools
- * @desc Informations sur les outils disponibles Hedera Agent Kit
- * @access Privé
+ * @desc Information about available Hedera Agent Kit tools
+ * @access Private
  */
 router.get("/tools", hederaToolsController.getAvailableTools);
 
 /**
  * @route POST /hedera-tools/create-evaluation-topic
- * @desc Crée un topic d'évaluation pour le pipeline candidat (via credentials d'agent)
- * @access Privé
+ * @desc Creates an evaluation topic for candidate pipeline (via agent credentials)
+ * @access Private
  */
 router.post("/create-evaluation-topic", hederaToolsController.createEvaluationTopic);
 
 /**
  * @route POST /hedera-tools/submit-evaluation-message
- * @desc Soumet un message d'évaluation HCS-11 à un topic existant
- * @access Privé
+ * @desc Submits an HCS-11 evaluation message to an existing topic
+ * @access Private
  */
 router.post("/submit-evaluation-message", hederaToolsController.submitEvaluationMessage);
 
 /**
  * @route POST /hedera-tools/send-validation-message
- * @desc Envoie un message de validation HCS-11 vers un topic d'évaluation
- * @access Privé
+ * @desc Sends HCS-11 validation message to an evaluation topic
+ * @access Private
  */
 router.post("/send-validation-message", hederaToolsController.sendValidationMessage);
 
 /**
  * @route GET /hedera-tools/evaluation-topic/:topicId
- * @desc Détails et messages d'un topic d'évaluation
- * @access Privé
+ * @desc Details and messages of an evaluation topic
+ * @access Private
  */
 router.get("/evaluation-topic/:topicId", hederaToolsController.getEvaluationTopic);
 
 /**
  * @route GET /hedera-tools/evaluation-topics
- * @desc Liste tous les topics d'évaluation (filtres: company, postId, status)
- * @access Privé
+ * @desc Lists all evaluation topics (filters: company, postId, status)
+ * @access Private
  */
 router.get("/evaluation-topics", hederaToolsController.getEvaluationTopics);
 

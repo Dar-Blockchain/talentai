@@ -7,10 +7,10 @@ const FeedbackSchema = new mongoose.Schema({
     required: true,
   },
   feedback: {
-    type: [String], // Tableau de 5 chaînes de caractères
+    type: [String], // Array of 5 strings
     required: true,
     validate: [arrayLimit, "{PATH} exceeds the limit of 5"],
-    default: ["", "", "", "", ""], // Initialisation vide des 5 cases
+    default: ["", "", "", "", ""], // Initialize empty 5 slots
   },
   comment: {
     type: String,
@@ -23,7 +23,7 @@ const FeedbackSchema = new mongoose.Schema({
   },
 });
 
-// Validation de la longueur du tableau feedback (5 éléments maximum)
+// Validation of feedback array length (5 elements maximum)
 function arrayLimit(val) {
   return val.length === 5;
 }

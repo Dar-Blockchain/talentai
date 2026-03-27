@@ -135,7 +135,7 @@ function registerRoutes(app) {
 
   // Health check routes
   app.get("/", (req, res) => {
-    res.json({ message: "Bienvenue sur l'API Express!" });
+    res.json({ message: "Welcome to Express API!" });
   });
 
   // Register internal campaign routes

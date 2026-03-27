@@ -37,7 +37,7 @@ const createApiKey = async (req, res) => {
 
     await newApiKey.save();
 
-    // Retourner la clé (complète) une seule fois à la création
+    // Return the (complete) key only once at creation
     res.status(201).json({
       success: true,
       message: "API key created successfully",

@@ -1,8 +1,8 @@
 /**
- * Routes des étapes d'un post (workflow et nœuds)
+ * Post steps routes (workflow and nodes)
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
+ * Global applied middlewares:
+ * - requireAuthUser: requires an authenticated user
  */
 const express = require('express');
 const router = express.Router();
@@ -10,7 +10,7 @@ const postStepsController = require('../controllers/PostControllers/postSteps.co
 const {requireAuthUser} = require('../middleware/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
-// Routes publiques (si nécessaire)
+// Public routes (if needed)
 // router.get('/public', postStepsController.getAllPostSteps);
 
 // Auth obligatoire pour toutes les routes ci-dessous
@@ -24,13 +24,13 @@ router.use(requireAuthUser, authLogMiddleware("PostSteps"));
 //router.put('/:id', postStepsController.updatePostStep);
 //router.delete('/:id', postStepsController.deletePostStep);
 
-// Routes spécialisées
+// Specialized routes
 // GET /post-steps/post/:postId et /post-steps/type/:type
 //router.get('/post/:postId', postStepsController.getPostStepsByPostId);
 //router.get('/type/:type', postStepsController.getPostStepsByType);
 
-// Routes pour les nœuds d'évaluation
-// Création/mise à jour/suppression et consultation par nodeId
+// Routes for evaluation nodes
+// Create/update/delete and fetch by nodeId
 //router.post('/post/:postId/node', postStepsController.createNode);
 //router.post('/post/:postId/nodes', postStepsController.saveMultipleNodes);
 router.post('/post/:postId/steps', postStepsController.addStepsToPost);
@@ -48,7 +48,7 @@ router.post('/post/:postId/steps', postStepsController.addStepsToPost);
 // Body: { githubLink: string }
 router.put('/node/:nodeId/submit-task', postStepsController.submitTask);
 
-// Routes pour récupérer par type spécifique
+// Routes to retrieve by specific type
 // GET /post-steps/post/:postId/type/:nodeType
 //router.get('/post/:postId/type/:nodeType', postStepsController.getNodesBySpecificType);
 

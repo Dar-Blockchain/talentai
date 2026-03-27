@@ -1,9 +1,9 @@
 /**
  * Routes de profil utilisateur et d'entreprise
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - LogMiddleware("Profile"): journalise les requêtes de profil
+ * Global applied middlewares:
+ * - requireAuthUser: requires an authenticated user
+ * - LogMiddleware("Profile"): logs profile requests
  */
 const express = require('express');
 const router = express.Router();
@@ -22,19 +22,19 @@ router.use(requireAuthUser,authLogMiddleware("Profile"));
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/me', profileController.getMyProfile);
 
-// POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
+// POST /profile/createOrUpdateProfile — creates/updates user profile
 router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
 
-// PUT /profile/updateProfileVisibility — met à jour la visibilité du profil (public/private)
+// PUT /profile/updateProfileVisibility - Update profile visibility (public/private)
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);
 
 // PUT /profile/updateProfileComplete — unified API for all profile updates (fields + image + type)
 router.put('/', uploadfile.single("user_image"), profileController.updateProfileComplete);
 
-// POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
+// POST /profile/createOrUpdateCompanyProfile — creates/updates company profile
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
-// GET /profile/search/skills — recherche par compétences
+// GET /profile/search/skills — search by skills
 router.get('/search/skills', profileController.searchProfilesBySkills);
 
 // POST /profile/addSoftSkills — ajoute des soft skills

@@ -1,10 +1,10 @@
 /**
- * Routes liées à la génération de posts LinkedIn pour les entreprises
+ * Routes for generating LinkedIn posts for companies
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Company'): réservé aux comptes Company
- * - LogMiddleware("LinkedinPost"): journalise les requêtes LinkedIn
+ * Global middlewares applied:
+ * - requireAuthUser: requires an authenticated user
+ * - controledAcces('Company'): reserved for Company accounts
+ * - LogMiddleware("LinkedinPost"): logs LinkedIn requests
  */
 const express = require("express");
 const router = express.Router();
@@ -18,13 +18,13 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 
-// Toutes les routes ci-dessous nécessitent un compte Company authentifié
+// All routes below require an authenticated Company account
 router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("LinkedinPost"));
 
 
 // POST /linkedin/generate-job-post
 // Body: { title, description, skills, ... }
-// Description: Génère un post LinkedIn attractif pour une offre d'emploi
+// Description: Generates an attractive LinkedIn post for a job offer
 router.post("/generate-job-post", resolveCompanyActor,generateJobPostController.generateJobPost);
 
 module.exports = router;

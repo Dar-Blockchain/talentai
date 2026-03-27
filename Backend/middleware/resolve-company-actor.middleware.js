@@ -4,7 +4,7 @@ const resolveCompanyActor = (req, res, next) => {
     req.user = req.company; // overwrite volontaire
   }
 
-  // Sécurité minimale
+  // Minimal security
   if (!req.user || !req.user._id) {
     return res.status(401).json({
       success: false,

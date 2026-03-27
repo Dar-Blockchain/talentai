@@ -1,7 +1,7 @@
 const CandidatePostStepProgress = require("../models/CandidatePostStepProgress.model");
 
 class CandidatePostStepProgressService {
-  // Créer un nouveau progrès de candidat
+  // Create new candidate progress
   async createProgress(progressData) {
     try {
       const progress = new CandidatePostStepProgress(progressData);
@@ -61,7 +61,7 @@ class CandidatePostStepProgressService {
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
-        return { success: false, error: "Progrès non trouvé pour ce candidat" };
+        return { success: false, error: "Progress not found for this candidate" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -69,7 +69,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer le progrès d'un candidat pour un post spécifique
+  // Retrieve candidate progress for a specific post
   async getProgressByCandidateAndPost(candidateId, postId) {
     try {
       const progress = await CandidatePostStepProgress.findOne({
@@ -83,7 +83,7 @@ class CandidatePostStepProgressService {
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -91,7 +91,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer tous les progrès d'un candidat
+  // Retrieve all candidate progress
   async getProgressByCandidate(candidateId) {
     try {
       const progress = await CandidatePostStepProgress.find({
@@ -111,7 +111,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer tous les progrès pour un post spécifique
+  // Retrieve all progress for a specific post
   async getProgressByPost(postId) {
     try {
       const progress = await CandidatePostStepProgress.find({ idPost: postId })
@@ -127,7 +127,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer les progrès par statut
+  // Retrieve progress by status
   async getProgressByStatus(status) {
     try {
       const progress = await CandidatePostStepProgress.find({ status })
@@ -143,7 +143,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Mettre à jour un progrès
+  // Update a progress
   async updateProgress(id, updateData) {
     try {
       const updatedProgress = await CandidatePostStepProgress.findByIdAndUpdate(
@@ -158,7 +158,7 @@ class CandidatePostStepProgressService {
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!updatedProgress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: updatedProgress };
     } catch (error) {
@@ -166,7 +166,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Mettre à jour le progrès d'un candidat pour un post spécifique
+  // Update progress for a specific candidate and post
   async updateProgressByCandidateAndPost(candidateId, postId, updateData) {
     try {
       const updatedProgress = await CandidatePostStepProgress.findOneAndUpdate(
@@ -181,7 +181,7 @@ class CandidatePostStepProgressService {
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!updatedProgress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: updatedProgress };
     } catch (error) {
@@ -189,14 +189,14 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Supprimer un progrès
+  // Delete progress
   async deleteProgress(id) {
     try {
       const deletedProgress = await CandidatePostStepProgress.findByIdAndDelete(
         id
       );
       if (!deletedProgress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: deletedProgress };
     } catch (error) {
@@ -204,7 +204,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Supprimer le progrès d'un candidat pour un post spécifique
+  // Delete candidate progress for a specific post
   async deleteProgressByCandidateAndPost(candidateId, postId) {
     try {
       const deletedProgress = await CandidatePostStepProgress.findOneAndDelete({
@@ -212,7 +212,7 @@ class CandidatePostStepProgressService {
         idPost: postId,
       });
       if (!deletedProgress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: deletedProgress };
     } catch (error) {
@@ -220,7 +220,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Créer ou mettre à jour un progrès (upsert)
+  // Create or update progress (upsert)
   async upsertProgress(candidateId, postId, progressData) {
     try {
       const progress = await CandidatePostStepProgress.findOneAndUpdate(
@@ -249,7 +249,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer les statistiques de progrès pour un post
+  // Retrieve progress statistics for a post
   async getProgressStatsByPost(postId) {
     try {
       const stats = await CandidatePostStepProgress.aggregate([
@@ -280,7 +280,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer les candidats qui ont terminé un post
+  // Retrieve candidates who completed a post
   async getCompletedCandidatesByPost(postId) {
     try {
       const completedCandidates = await CandidatePostStepProgress.find({
@@ -299,7 +299,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer les candidats en cours pour un post
+  // Retrieve candidates in progress for a post
   async getInProgressCandidatesByPost(postId) {
     try {
       const inProgressCandidates = await CandidatePostStepProgress.find({
@@ -318,34 +318,34 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Mettre à jour le statut d'une étape spécifique
+  // Update status of a specific step
   async updateStepStatus(progressId, stepId, newStatus) {
     try {
       const progress = await CandidatePostStepProgress.findById(progressId);
       if (!progress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
 
-      // Trouver l'étape dans le tableau steps
+      // Find the step in the steps array
       const stepIndex = progress.steps.findIndex(
         (step) => step.stepId.toString() === stepId.toString()
       );
 
       if (stepIndex === -1) {
-        return { success: false, error: "Étape non trouvée dans ce progrès" };
+        return { success: false, error: "Step not found in this progress" };
       }
 
-      // Mettre à jour le statut de l'étape
+      // Update step status
       progress.steps[stepIndex].status = newStatus;
 
-      // Si l'étape est terminée, ajouter la date de completion
+      // If step is done, add completion date
       if (newStatus === "done") {
         progress.steps[stepIndex].completedAt = new Date();
       } else {
         progress.steps[stepIndex].completedAt = null;
       }
 
-      // Mettre à jour le statut global si nécessaire
+      // Update global status if necessary
       const allStepsDone = progress.steps.every(
         (step) => step.status === "done"
       );
@@ -364,7 +364,7 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Récupérer le progrès d'un candidat avec les détails des étapes
+  // Retrieve candidate progress with step details
   async getProgressWithStepDetails(candidateId, postId) {
     try {
       const progress = await CandidatePostStepProgress.findOne({
@@ -378,7 +378,7 @@ class CandidatePostStepProgressService {
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
-        return { success: false, error: "Progrès non trouvé" };
+        return { success: false, error: "Progress not found" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -386,17 +386,17 @@ class CandidatePostStepProgressService {
     }
   }
 
-  // Marquer une étape comme en cours
+  // Mark step as in progress
   async startStep(progressId, stepId) {
     return this.updateStepStatus(progressId, stepId, "inProgress");
   }
 
-  // Marquer une étape comme terminée
+  // Mark step as completed
   async completeStep(progressId, stepId) {
     return this.updateStepStatus(progressId, stepId, "done");
   }
 
-  // Réinitialiser une étape
+  // Reset step
   async resetStep(progressId, stepId) {
     return this.updateStepStatus(progressId, stepId, "pending");
   }

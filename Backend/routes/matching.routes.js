@@ -1,7 +1,7 @@
 /**
  * Routes de matching candidats ↔ offres
  *
- * Remarque: ce routeur ne force pas l'authentification ici. Si nécessaire,
+ * Note: this router doesn't force authentication here. If needed,
  * ajouter `requireAuthUser` et une journalisation.
  */
 const express = require("express");
