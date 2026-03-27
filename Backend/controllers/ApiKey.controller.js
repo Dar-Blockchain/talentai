@@ -154,7 +154,7 @@ module.exports.regenerateApiKey = async (req, res) => {
 module.exports.deleteApiKey = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.userId;
+    const userId = req.user._id;
     const result = await ApiKeyService.deleteApiKey(id, userId);
 
     res.status(200).json({
