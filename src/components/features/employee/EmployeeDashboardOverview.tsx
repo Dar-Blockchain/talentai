@@ -325,14 +325,6 @@ const EmployeeDashboardOverview: React.FC = () => {
           sub={interviews.length > 0 ? `of ${interviews.length} total` : undefined}
           delay={0.15}
         />
-        <StatCard
-          label="Tasks Completed"
-          value={completedCampaigns.length}
-          icon={AssignmentTurnedInOutlined}
-          color={AMBER}
-          sub={activeCampaigns.length > 0 ? `${activeCampaigns.length} in progress` : undefined}
-          delay={0.2}
-        />
       </Box>
 
       {/* ── Row 2: Upcoming Interviews + Campaign Invitations ──────────────── */}
