@@ -9,7 +9,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuthUser } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // Import des middlewares

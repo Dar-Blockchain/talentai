@@ -11,7 +11,7 @@ const router = express.Router();
 const logController = require('../controllers/log.controller');  
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/auth.middleware');
+const { requireAuthUser } = require('../middleware/security/auth.middleware');
 const { controledAcces } = require('../middleware/authorize.middleware.js'); 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 
