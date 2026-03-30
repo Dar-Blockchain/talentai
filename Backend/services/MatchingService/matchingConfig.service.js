@@ -3,7 +3,7 @@ const MatchingConfig = require('../../models/MatchingConfig.model');
 async function getMatchingConfig(updatedBy, jobId) {
   try {
     let doc = null;
-    // 1. Chercher config spécifique au job (et user si fourni)
+    // 1. Search for job-specific config (and user if provided)
     if (jobId && updatedBy) {
       doc = await MatchingConfig.findOne({ job: jobId, updatedBy }).lean();
     }

@@ -47,7 +47,7 @@ async function computeMatches(jobPostId, companyId) {
   }
 
   /** ------------------------
-   * Préparation des skills
+   * Preparation of skills
    * ------------------------- */
   const requiredHardSkills = (jobPost.skillAnalysis.requiredSkills || [])
     .filter((s) => s && s.name)
@@ -98,7 +98,7 @@ async function computeMatches(jobPostId, companyId) {
     });
   }
 
-  // Trier par score décroissant
+  // Sort by descending score
   matches.sort((a, b) => b.score - a.score);
 
   return {
@@ -691,7 +691,7 @@ const hrAgentController = {
           totalPages: Math.ceil(total / limitNum),
           hasNextPage: pageNum < Math.ceil(total / limitNum),
           hasPrevPage: pageNum > 1,
-          message: "Aucun agent trouvé pour cette société",
+          message: "No agent found for this company",
         });
       }
 
@@ -720,7 +720,7 @@ const hrAgentController = {
       const hasNextPage = pageNum < totalPages;
       const hasPrevPage = pageNum > 1;
 
-      // Réponse JSON complète avec pagination
+      // Full JSON response with pagination
       return res.status(200).json({
         success: true,
         companyId,

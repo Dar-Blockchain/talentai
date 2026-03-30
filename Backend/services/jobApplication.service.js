@@ -381,10 +381,11 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     // Filter by skills
     if (filters.skills && filters.skills.length > 0) {
       const skillsArray = Array.isArray(filters.skills) ? filters.skills : [filters.skills];
+      const skillRegexes = skillsArray.map((s) => new RegExp(s, "i"));
       const profilesWithSkills = await Profile.find({
         skills: {
           $elemMatch: {
-            name: { $in: skillsArray },
+            name: { $in: skillRegexes },
           },
         },
       }).select("_id");

@@ -1,7 +1,7 @@
 const candidatePostStepProgressService = require("../services/candidatePostStepProgress.service");
 
 class CandidatePostStepProgressController {
-  // Créer un nouveau progrès de candidat
+  // Create new candidate progress
   async createProgress(req, res) {
     try {
       const result = await candidatePostStepProgressService.createProgress(
@@ -11,26 +11,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(201).json({
           success: true,
-          message: "Progrès de candidat créé avec succès",
+          message: "Candidate progress created successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la création du progrès",
+          message: "Error creating progress",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer tous les progrès
+  // Retrieve all progress
   async getAllProgress(req, res) {
     try {
       const result = await candidatePostStepProgressService.getAllProgress();
@@ -38,26 +38,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès récupérés avec succès",
+          message: "Progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des progrès",
+          message: "Error retrieving progress",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer un progrès par ID
+  // Retrieve progress by candidate ID
   async getProgressById(req, res) {
     try {
       const { id } = req.params;
@@ -66,26 +66,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès récupéré avec succès",
+          message: "Progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer un progrès par idCandidate
+  // Retrieve progress by candidate ID
   async findByIdCandidate(req, res) {
     try {
       const candidateId = req.user._id;
@@ -99,26 +99,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès récupéré avec succès",
+          message: "Progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer le progrès d'un candidat pour un post spécifique
+  // Retrieve candidate progress for a specific post
   async getProgressByCandidateAndPost(req, res) {
     try {
       const { candidateId, postId } = req.params;
@@ -131,26 +131,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès récupéré avec succès",
+          message: "Progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer tous les progrès d'un candidat
+  // Retrieve all progress for a candidate
   async getProgressByCandidate(req, res) {
     try {
       const { candidateId } = req.params;
@@ -162,26 +162,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès du candidat récupérés avec succès",
+          message: "Candidate progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des progrès",
+          message: "Error retrieving progress",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer tous les progrès pour un post spécifique
+  // Retrieve all progress for a specific post
   async getProgressByPost(req, res) {
     try {
       const { postId } = req.params;
@@ -191,26 +191,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès du post récupérés avec succès",
+          message: "Post progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des progrès",
+          message: "Error retrieving progress",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer les progrès par statut
+  // Retrieve progress by status
   async getProgressByStatus(req, res) {
     try {
       const { status } = req.params;
@@ -220,26 +220,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès récupérés avec succès",
+          message: "Progress retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des progrès",
+          message: "Error retrieving progress",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Mettre à jour un progrès
+  // Update progress
   async updateProgress(req, res) {
     try {
       const { id } = req.params;
@@ -251,26 +251,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès mis à jour avec succès",
+          message: "Progress updated successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Mettre à jour le progrès d'un candidat pour un post spécifique
+  // Update candidate progress for a specific post
   async updateProgressByCandidateAndPost(req, res) {
     try {
       const { candidateId, postId } = req.params;
@@ -284,26 +284,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès mis à jour avec succès",
+          message: "Progress updated successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Supprimer un progrès
+  // Delete progress
   async deleteProgress(req, res) {
     try {
       const { id } = req.params;
@@ -312,26 +312,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès supprimé avec succès",
+          message: "Progress deleted successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Supprimer le progrès d'un candidat pour un post spécifique
+  // Delete candidate progress for a specific post
   async deleteProgressByCandidateAndPost(req, res) {
     try {
       const { candidateId, postId } = req.params;
@@ -344,26 +344,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès supprimé avec succès",
+          message: "Progress deleted successfully",
           data: result.data,
         });
       } else {
         return res.status(404).json({
           success: false,
-          message: "Progrès non trouvé",
+          message: "Progress not found",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Créer ou mettre à jour un progrès (upsert)
+  // Create or update progress (upsert)
   async upsertProgress(req, res) {
     try {
       const { candidateId, postId } = req.params;
@@ -376,26 +376,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Progrès créé ou mis à jour avec succès",
+          message: "Progress created or updated successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la création/mise à jour du progrès",
+          message: "Error creating/updating progress",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer les statistiques de progrès pour un post
+  // Retrieve progress statistics for a post
   async getProgressStatsByPost(req, res) {
     try {
       const { postId } = req.params;
@@ -405,26 +405,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Statistiques récupérées avec succès",
+          message: "Statistics retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des statistiques",
+          message: "Error retrieving statistics",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer les candidats qui ont terminé un post
+  // Retrieve candidates who completed a post
   async getCompletedCandidatesByPost(req, res) {
     try {
       const { postId } = req.params;
@@ -436,26 +436,26 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Candidats terminés récupérés avec succès",
+          message: "Completed candidates retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des candidats terminés",
+          message: "Error retrieving completed candidates",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }
   }
 
-  // Récupérer les candidats en cours pour un post
+  // Retrieve in-progress candidates for a post
   async getInProgressCandidatesByPost(req, res) {
     try {
       const { postId } = req.params;
@@ -467,20 +467,20 @@ class CandidatePostStepProgressController {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Candidats en cours récupérés avec succès",
+          message: "In-progress candidates retrieved successfully",
           data: result.data,
         });
       } else {
         return res.status(400).json({
           success: false,
-          message: "Erreur lors de la récupération des candidats en cours",
+          message: "Error retrieving in-progress candidates",
           error: result.error,
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: "Server error",
         error: error.message,
       });
     }

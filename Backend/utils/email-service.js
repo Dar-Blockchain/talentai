@@ -140,16 +140,16 @@ const sendOTP = async (email, otp) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to: email,
-    subject: "Code de vérification - TalenIA",
+    subject: "Verification Code - TalenIA",
     html: getEmailTemplate(otp),
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email envoyé avec succès à", email);
+    console.log("✅ Email sent successfully to", email);
     return true;
   } catch (error) {
-    console.error("❌ Échec d’envoi:", error.message);
+    console.error("❌ Send failed:", error.message);
     return false;
   }
 };
@@ -227,10 +227,10 @@ const sendActivationEmail = async (to, activationLink, project) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Email d'activation envoyé à ${to}`);
+    console.log(`✅ Activation email sent to ${to}`);
     return true;
   } catch (error) {
-    console.error("❌ Échec d'envoi:", error.message);
+    console.error("❌ Send failed:", error.message);
     return false;
   }
 };
@@ -294,20 +294,20 @@ const getPostEmailTemplate = (post) => {
         </div>` : ''}
         ${responsibilities.length ? `
         <div class="section">
-          <h2>Responsabilités</h2>
+          <h2>Responsibilities</h2>
           <ul>
             ${responsibilities.map(r => `<li>${r}</li>`).join('')}
           </ul>
         </div>` : ''}
         <div class="footer">
-          Cet email a été envoyé automatiquement par TalenIA.
+          This email was sent automatically by TalenIA.
         </div>
       </div>
     </body>
   </html>`;
 };
 
-// Envoi d'un email contenant les détails d'un Post
+// Send email containing details of a Post
 const sendPostEmail = async (to, post) => {
   const subject = post?.jobDetails?.title || 'Job Post';
   const html = getPostEmailTemplate(post);
@@ -319,15 +319,15 @@ const sendPostEmail = async (to, post) => {
   };
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Email de post envoyé à ${to} (sujet: ${subject})`);
+    console.log(`✅ Post email sent to ${to} (subject: ${subject})`);
     return true;
   } catch (error) {
-    console.error('❌ Échec d’envoi email post:', error.message);
+    console.error('❌ Post email send failed:', error.message);
     return false;
   }
 };
 
-// Modèle d'email d'invitation à rejoindre une organisation
+// Email invitation template to join an organization
 const getOrganizationInviteTemplate = (orgName, role, inviter, invitationLink = '#') => `
 <!DOCTYPE html>
 <html>
@@ -361,7 +361,7 @@ const getOrganizationInviteTemplate = (orgName, role, inviter, invitationLink = 
 </html>
 `;
 
-// Envoi d'un email d'invitation à rejoindre une organisation
+// Email sending to invite join an organization
 const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitationLink = '#') => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
@@ -380,7 +380,7 @@ const sendCompanyInvitation = async (to, orgName, role, inviterEmail, invitation
   }
 };
 
-// Template pour l'email après évaluation d'interview
+// Template for email after interview evaluation
 const getInterviewAssessmentTemplate = (candidateName, postTitle) => `
 <!DOCTYPE html>
 <html>
@@ -493,7 +493,7 @@ const getInterviewAssessmentTemplate = (candidateName, postTitle) => `
 </html>
 `;
 
-// Fonction pour envoyer un email après une évaluation d'interview
+// Function to send email after interview evaluation
 const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postTitle) => {
   const html = getInterviewAssessmentTemplate(candidateName, postTitle);
   const mailOptions = {
@@ -513,7 +513,7 @@ const sendInterviewAssessmentEmail = async (candidateEmail, candidateName, postT
   }
 };
 
-// Template pour notifier la compagnie quand un candidat complète une interview
+// Template to notify company when candidate completes interview
 const getInterviewCompletionNotificationTemplate = (companyName, candidateName, postTitle, candidateEmail) => `
 <!DOCTYPE html>
 <html>
@@ -667,7 +667,7 @@ const getInterviewCompletionNotificationTemplate = (companyName, candidateName, 
 </html>
 `;
 
-// Fonction pour envoyer une notification à la compagnie quand un candidat complète une interview
+// Function to send notification to company when candidate completes interview
 const sendInterviewCompletionNotificationToCompany = async (companyEmail, companyName, candidateName, postTitle, candidateEmail) => {
   const html = getInterviewCompletionNotificationTemplate(companyName, candidateName, postTitle, candidateEmail);
   const mailOptions = {
@@ -687,7 +687,7 @@ const sendInterviewCompletionNotificationToCompany = async (companyEmail, compan
   }
 };
 
-// Template pour invitation à un entretien
+// Template for interview invitation
 const getInterviewInvitationTemplate = (candidateName, jobTitle, companyName, interviewDate, interviewTime, interviewLink = null) => `
 <!DOCTYPE html>
 <html>
@@ -894,7 +894,7 @@ const getInterviewInvitationTemplate = (candidateName, jobTitle, companyName, in
 </html>
 `;
 
-// Fonction d'envoi email d'invitation à l'entretien
+// Function to send email invitation for interview
 const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, companyName, interviewDate = null, interviewTime = null, interviewLink = null) => {
   try {
     const subject = `Interview Invitation - ${jobTitle} at ${companyName}`;

@@ -149,7 +149,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
   }
 };
 
-// Service de vérification OTP
+// OTP verification service
 exports.verifyUserOTP = async (email, otp, location = null) => {
   try {
     if (!email || !otp) {

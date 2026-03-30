@@ -331,7 +331,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             onClick={onViewAll}
             sx={{
               textTransform: 'none',
-              color: '#8310FF',
+              color: '#0D9488',
               fontWeight: 600,
               fontSize: '0.875rem',
               '&:hover': {

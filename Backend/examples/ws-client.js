@@ -39,17 +39,17 @@ socket.on('connect_error', (err) => {
 });
 
 socket.on('notification', (notif) => {
-  console.log('\n⬇️  Notification reçue:');
+  console.log('\n⬇️  Notification received:');
   console.log(JSON.stringify(notif, null, 2));
 });
 
 socket.on('notificationCreated', (notif) => {
-  console.log('\n✅ Notification créée (ack):');
+  console.log('\n✅ Notification created (ack):');
   console.log(JSON.stringify(notif, null, 2));
 });
 
 socket.on('broadcastCreated', (info) => {
-  console.log('\n📣 Broadcast créé:', info);
+  console.log('\n📣 Broadcast created:', info);
 });
 
 socket.on('notificationError', (err) => {

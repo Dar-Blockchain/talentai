@@ -1,14 +1,14 @@
-{
+﻿{
   "openapi": "3.0.0",
   "info": {
     "title": "TalenIA API",
     "version": "1.0.0",
-    "description": "API pour la plateforme TalenIA - Plateforme de recrutement et d'évaluation des talents"
+    "description": "API for the TalenIA Platform - Recruitment and talent evaluation platform"
   },
   "servers": [
     {
       "url": "http://localhost:5001",
-      "description": "Serveur de développement"
+      "description": "Development server"
     }
   ],
   "security": [
@@ -68,7 +68,7 @@
         },
         "responses": {
           "201": {
-            "description": "Inscription réussie",
+            "description": "Registration successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -76,7 +76,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Inscription réussie. Veuillez vérifier votre email pour le code OTP."
+                      "example": "Registration successful. Please check your email for the OTP code."
                     },
                     "email": {
                       "type": "string",
@@ -92,7 +92,7 @@
             }
           },
           "400": {
-            "description": "Données invalides"
+            "description": "Invalid data"
           }
         }
       }
@@ -100,8 +100,8 @@
     "/auth/verify-otp": {
       "post": {
         "tags": ["Authentication"],
-        "summary": "Vérification OTP",
-        "description": "Vérification du code OTP reçu par email",
+        "summary": "OTP Verification",
+        "description": "OTP code verification received by email",
         "security": [],
         "requestBody": {
           "required": true,
@@ -156,7 +156,7 @@
         },
         "responses": {
           "200": {
-            "description": "Vérification réussie",
+            "description": "Verification successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -164,7 +164,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Email vérifié avec succès"
+                      "example": "Email verified successfully"
                     },
                     "user": {
                       "type": "object",
@@ -223,7 +223,7 @@
         },
         "responses": {
           "200": {
-            "description": "Connexion réussie",
+            "description": "Login successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -231,7 +231,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Connexion réussie"
+                      "example": "Login successful"
                     },
                     "user": {
                       "type": "object"
@@ -245,7 +245,7 @@
             }
           },
           "400": {
-            "description": "Données invalides"
+            "description": "Invalid data"
           }
         }
       }
@@ -258,7 +258,7 @@
         "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
-            "description": "Déconnexion réussie",
+            "description": "DéLogin successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -266,7 +266,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Déconnexion réussie"
+                      "example": "DéLogin successful"
                     }
                   }
                 }
@@ -274,7 +274,7 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           }
         }
       }
@@ -282,8 +282,8 @@
     "/auth/users": {
       "get": {
         "tags": ["Authentication"],
-        "summary": "Récupérer tous les utilisateurs",
-        "description": "Récupération de la liste de tous les utilisateurs enregistrés",
+        "summary": "Retrieve all users",
+        "description": "Retrieve list of all registered users",
         "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
@@ -318,10 +318,10 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           },
           "403": {
-            "description": "Accès non autorisé"
+            "description": "Access forbidden"
           }
         }
       }
@@ -329,8 +329,8 @@
     "/profiles": {
       "post": {
         "tags": ["Profiles"],
-        "summary": "Créer ou mettre à jour un profil",
-        "description": "Création ou mise à jour du profil de l'utilisateur connecté",
+        "summary": "Create or update a profile",
+        "description": "Create or update the logged-in user's profile",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -369,7 +369,7 @@
                   },
                   "bio": {
                     "type": "string",
-                    "example": "Développeur full-stack passionné par les technologies web modernes"
+                    "example": "Full-stack developer passionate about modern web technologies"
                   },
                   "experience": {
                     "type": "number",
@@ -382,7 +382,7 @@
                       "properties": {
                         "institution": {
                           "type": "string",
-                          "example": "Université de Paris"
+                          "example": "University of Paris"
                         },
                         "degree": {
                           "type": "string",
@@ -404,7 +404,7 @@
                         },
                         "description": {
                           "type": "string",
-                          "example": "Spécialisation en développement web"
+                          "example": "Specialization in web development"
                         }
                       }
                     }
@@ -416,11 +416,11 @@
                       "properties": {
                         "title": {
                           "type": "string",
-                          "example": "Application de gestion de tâches"
+                          "example": "Task management application"
                         },
                         "description": {
                           "type": "string",
-                          "example": "Application web de gestion de tâches avec React et Node.js"
+                          "example": "Web task management application with React and Node.js"
                         },
                         "technologies": {
                           "type": "array",
@@ -516,7 +516,7 @@
                       "properties": {
                         "name": {
                           "type": "string",
-                          "example": "Français"
+                          "example": "French"
                         },
                         "proficiency": {
                           "type": "string",
@@ -550,7 +550,7 @@
         },
         "responses": {
           "200": {
-            "description": "Profil créé/mis à jour avec succès",
+            "description": "Profile created/updated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -558,7 +558,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Profil créé/mis à jour avec succès"
+                      "example": "Profile created/updated successfully"
                     },
                     "profile": {
                       "type": "object"
@@ -569,17 +569,17 @@
             }
           },
           "400": {
-            "description": "Données invalides"
+            "description": "Invalid data"
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           }
         }
       },
       "get": {
         "tags": ["Profiles"],
-        "summary": "Récupérer tous les profils",
-        "description": "Récupération de la liste de tous les profils",
+        "summary": "Retrieve all profiles",
+        "description": "Retrieve all profiles list",
         "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
@@ -610,18 +610,18 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           }
         }
       },
       "delete": {
         "tags": ["Profiles"],
-        "summary": "Supprimer son profil",
-        "description": "Suppression du profil de l'utilisateur connecté",
+        "summary": "Delete your profile",
+        "description": "Delete the logged-in user's profile",
         "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
-            "description": "Profil supprimé avec succès",
+            "description": "Profile deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -629,7 +629,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Profil supprimé avec succès"
+                      "example": "Profile deleted successfully"
                     }
                   }
                 }
@@ -637,7 +637,7 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           }
         }
       }
@@ -645,8 +645,8 @@
     "/profiles/me": {
       "get": {
         "tags": ["Profiles"],
-        "summary": "Récupérer son propre profil",
-        "description": "Récupération du profil de l'utilisateur connecté",
+        "summary": "Retrieve your own profile",
+        "description": "Retrieve the logged-in user's profile",
         "security": [{ "bearerAuth": [] }],
         "responses": {
           "200": {
@@ -674,7 +674,7 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           }
         }
       }
@@ -682,8 +682,8 @@
     "/profiles/{userId}": {
       "get": {
         "tags": ["Profiles"],
-        "summary": "Récupérer un profil par ID",
-        "description": "Récupération d'un profil utilisateur par son ID",
+        "summary": "Retrieve a profile by ID",
+        "description": "Retrieve a user profile by ID",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -698,7 +698,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Profil trouvé",
+            "description": "Profile found",
             "content": {
               "application/json": {
                 "schema": {
@@ -722,10 +722,10 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           },
           "404": {
-            "description": "Profil non trouvé"
+            "description": "Profile not found"
           }
         }
       }
@@ -733,8 +733,8 @@
     "/profiles/search/skills": {
       "get": {
         "tags": ["Profiles"],
-        "summary": "Rechercher des profils par compétences",
-        "description": "Recherche de profils utilisateurs par compétences",
+        "summary": "Search profiles by skills",
+        "description": "Search user profiles by skills",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -744,7 +744,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Liste des compétences séparées par des virgules",
+            "description": "List of skills separated by commas",
             "example": "TypeScript,React,Node.js"
           }
         ],
@@ -777,7 +777,7 @@
             }
           },
           "401": {
-            "description": "Non authentifié"
+            "description": "Not authenticated"
           }
         }
       }
@@ -797,7 +797,7 @@
                   "skills": {
                     "type": "string",
                     "example": "TypeScript, React, Node.js",
-                    "description": "Liste des compétences séparées par des virgules"
+                    "description": "List of skills separated by commas"
                   },
                   "experience": {
                     "type": "string",

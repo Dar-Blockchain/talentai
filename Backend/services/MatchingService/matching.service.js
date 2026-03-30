@@ -11,8 +11,8 @@ const convertLevelToNumber = (level) => {
 };
 
 /**
- * Retourne une version normalisée pour affichage (First letter uppercase)
- * Préservée pour compatibilité publique.
+ * Returns a normalized version for display (First letter uppercase)
+ * Preserved for public compatibility.
  */
 const normalizeSkillName = (name) =>
   name
@@ -23,12 +23,12 @@ const normalizeSkillName = (name) =>
     : "";
 
 /**
- * Clef interne utilisée pour lookup/comparaisons (lowercase, trimmed)
+ * Internal key used for lookup/comparisons (lowercase, trimmed)
  */
 const normalizeSkillKey = (name) => (name ? name.split(".")[0].trim().toLowerCase() : "");
 
 /* ------------------------------------------------
-   0️⃣ HARD SKILLS (Optimisé)
+   0️⃣ HARD SKILLS (Optimized)
 ------------------------------------------------ */
 function calculateHardSkillsScore(jobSkills, candidateSkills, MAX, candidateProfile) {
   if (VERBOSE) {
@@ -76,7 +76,7 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX, candidateProf
 }
 
 /* ------------------------------------------------
-   1️⃣ SOFT SKILLS (Optimisé)
+   1️⃣ SOFT SKILLS (Optimized)
 ------------------------------------------------ */
 function calculateSoftSkillsScore(jobSoft, candSoft, MAX, candidateProfile) {
   if (VERBOSE) console.log(`\n--- Soft Skills Calculation ${candidateProfile.firstName} ${candidateProfile.lastName} --- `);
@@ -100,7 +100,7 @@ function calculateSoftSkillsScore(jobSoft, candSoft, MAX, candidateProfile) {
 }
 
 /* ------------------------------------------------
-   2️⃣ EXPERIENCE (Optimisé)
+   2️⃣ EXPERIENCE (Optimized)
 ------------------------------------------------ */
 function calculateExperienceScore(jobSkills, candidateSkills, MAX, candidateProfile) {
   if (VERBOSE) console.log(`\n--- Experience Score Calculation ${candidateProfile.firstName} ${candidateProfile.lastName} --- `);
@@ -132,7 +132,7 @@ function calculateExperienceScore(jobSkills, candidateSkills, MAX, candidateProf
 }
 
 /* ------------------------------------------------
-   3️⃣ SALARY (Optimisé)
+   3️⃣ SALARY (Optimized)
 ------------------------------------------------ */
 function calculateSalaryScore(jobDetails, candProf, RATES, MAX, perUSD = true) {
   if (VERBOSE) console.log(`\n--- Salary Score Calculation ${candProf.firstName} ${candProf.lastName} --- `);
@@ -193,7 +193,7 @@ const calculateContractScore = (job, cand, MAX) => {
 };
 
 /* ------------------------------------------------
-   🚀 MAIN FUNCTION (Optimisée)
+   🚀 MAIN FUNCTION (Optimized)
 ------------------------------------------------ */
 async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, candidateProfile = {}, idCompany, matchingConfig = {}, unlockedSet = new Set()) {
   if (VERBOSE) console.log("\n========== MATCHING START ==========");

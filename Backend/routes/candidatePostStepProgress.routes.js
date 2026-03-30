@@ -1,13 +1,13 @@
 /**
- * Routes de progression d'étapes par candidat et par post
+ * Candidate progress routes for post steps
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
+ * Global applied middlewares:
+ * - requireAuthUser: requires an authenticated user
  */
 const express = require('express');
 const router = express.Router();
 const candidatePostStepProgressController = require('../controllers/candidatePostStepProgress.controller');
-const {requireAuthUser} = require('../middleware/auth.middleware');
+const {requireAuthUser} = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
 // Auth obligatoire pour toutes les routes
@@ -22,21 +22,21 @@ router.get('/:id', candidatePostStepProgressController.getProgressById);
 router.put('/:id', candidatePostStepProgressController.updateProgress);
 router.delete('/:id', candidatePostStepProgressController.deleteProgress);
 
-// Routes spécialisées par candidat
+// Candidate-specific specialized routes
 router.get('/candidate/:candidateId', candidatePostStepProgressController.getProgressByCandidate);
 
-// Routes spécialisées par post
+// Post-specific specialized routes
 router.get('/post/:postId', candidatePostStepProgressController.getProgressByPost);
 
-// Routes spécialisées par statut
+// Status-specific specialized routes
 router.get('/status/:status', candidatePostStepProgressController.getProgressByStatus);
 
-// Routes pour candidat et post spécifiques
+// Routes for specific candidate and post
 router.get('/candidate/:candidateId/post/:postId', candidatePostStepProgressController.getProgressByCandidateAndPost);
 router.put('/candidate/:candidateId/post/:postId', candidatePostStepProgressController.updateProgressByCandidateAndPost);
 router.delete('/candidate/:candidateId/post/:postId', candidatePostStepProgressController.deleteProgressByCandidateAndPost);
 
-// Route upsert (créer ou mettre à jour)
+// Upsert route (create or update)
 router.post('/candidate/:candidateId/post/:postId/upsert', candidatePostStepProgressController.upsertProgress);
 
 module.exports = router; 

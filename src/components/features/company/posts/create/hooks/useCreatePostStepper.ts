@@ -39,7 +39,7 @@ export const useCreatePostStepper = (
 
   const { nodes, edges } = recruitmentFlow;
 
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(() => (savedPost?.jobData?._id ? 1 : 0));
   // const [modalOpen, setModalOpen] = useState(false);
   // const [agentLoadingOpen, setAgentLoadingOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);

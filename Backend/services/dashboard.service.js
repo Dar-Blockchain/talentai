@@ -52,7 +52,7 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 
 // jobAssessmentService.js
 const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
-const JobAssessmentResult = PostInterviewAssessment; // alias pour compatibilité
+const JobAssessmentResult = PostInterviewAssessment; // alias for compatibility
 const { POST_STATUS } = require("../constants/posts.constants");
 const InternalCampaign = require("../models/internalCampaign.model");
 const CompanyMembership = require("../models/CompanyMembership.model");

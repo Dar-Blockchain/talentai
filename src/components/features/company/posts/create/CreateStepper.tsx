@@ -112,7 +112,7 @@ const CreateStepper: React.FC = () => {
             <Stepper
               activeStep={activeStep}
               connector={<TealConnector />}
-              sx={{ maxWidth: 480, width: '100%' }}
+              sx={{ maxWidth: 480, width: '100%', justifyContent: 'center' }}
             >
               {steps.map((label, i) => (
                 <Step key={label} completed={i < activeStep}>
@@ -181,6 +181,7 @@ const CreateStepper: React.FC = () => {
             textTransform: "none", fontWeight: 700, fontSize: "13px",
             borderRadius: "38px", height: 42, minWidth: 160,
             bgcolor: TEAL,
+            color: "#fff",
             "&:hover": { bgcolor: "#0F766E" },
             "&:disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
           }}

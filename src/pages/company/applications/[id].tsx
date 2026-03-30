@@ -4,11 +4,8 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import {
   Box, Typography, Avatar, Chip, Divider, Skeleton, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
 } from "@mui/material";
-import { LocalizationProvider, DatePicker, TimePicker } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
 import EmailOutlined from "@mui/icons-material/EmailOutlined";
 import PhoneOutlined from "@mui/icons-material/PhoneOutlined";
@@ -19,6 +16,7 @@ import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
 import axiosInstance from "@/utils/axiosInstance";
+import { emitToast } from "@/utils/toastEmitter";
 
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
 
@@ -26,8 +24,9 @@ const getInitials = (name: string) =>
   name.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
 const getCvUrl = (app: any): string | null => {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  if (app.profile?.resume) return `${base}images/Users/${app.profile.resume}`;
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const base = raw.endsWith("/") ? raw : `${raw}/`;
+  if (app.profile?.resume) return `${base}resume/${app.profile.resume}`;
   if (app.cvAnalysis?.sourceUrl) {
     const src = app.cvAnalysis.sourceUrl as string;
     if (src.startsWith("http")) return src;
@@ -64,25 +63,22 @@ const ApplicationDetailPage: React.FC = () => {
   const [app, setApp] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteDate, setInviteDate] = useState<Dayjs | null>(null);
-  const [inviteTime, setInviteTime] = useState<Dayjs | null>(null);
   const [inviteLink, setInviteLink] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteDone, setInviteDone] = useState(false);
 
   const handleInvite = async () => {
-    if (!id || !inviteDate || !inviteTime || !inviteLink) return;
+    if (!id || !inviteLink) return;
     setInviteSending(true);
     try {
       await axiosInstance.post(`job-applications/${id}/invite-to-interview`, {
-        interviewDate: dayjs(inviteDate).format("YYYY-MM-DD"),
-        interviewTime: dayjs(inviteTime).format("HH:mm"),
         interviewLink: inviteLink,
       });
+      emitToast({ message: "Invitation sent successfully!", severity: "success" });
       setInviteDone(true);
       setTimeout(() => { setInviteOpen(false); setInviteDone(false); }, 1500);
     } catch {
-      // ignore
+      emitToast({ message: "Failed to send invitation. Please try again.", severity: "error" });
     } finally {
       setInviteSending(false);
     }
@@ -211,8 +207,6 @@ const ApplicationDetailPage: React.FC = () => {
                   variant="contained"
                   startIcon={<VideoCallOutlined sx={{ fontSize: 15 }} />}
                   onClick={() => {
-                    setInviteDate(null);
-                    setInviteTime(null);
                     const postId = app?.post?._id || "";
                     const companyId = app?.company?._id || app?.post?.user || "";
                     const base = typeof window !== "undefined" ? window.location.origin : "";
@@ -305,36 +299,15 @@ const ApplicationDetailPage: React.FC = () => {
             Invite to Interview
           </Box>
         </DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "12px !important" }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <DatePicker
-                label="Date"
-                value={inviteDate}
-                onChange={(v) => setInviteDate(v as Dayjs | null)}
-                disablePast
-                slotProps={{ textField: { size: "small", sx: { flex: 1, "& .MuiOutlinedInput-root": { borderRadius: "10px" } } } }}
-              />
-              <TimePicker
-                label="Time"
-                value={inviteTime}
-                onChange={(v) => setInviteTime(v as Dayjs | null)}
-                slotProps={{ textField: { size: "small", sx: { flex: 1, "& .MuiOutlinedInput-root": { borderRadius: "10px" } } } }}
-              />
-            </Box>
-          </LocalizationProvider>
-          <TextField
-            label="Interview Link"
-            fullWidth
-            size="small"
-            value={inviteLink}
-            disabled
-            helperText="Auto-generated from the job post"
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
-          />
-          {inviteDone && (
-            <Typography sx={{ fontSize: "0.82rem", color: "#059669", fontWeight: 600, textAlign: "center" }}>
+        <DialogContent sx={{ pt: "12px !important" }}>
+          {inviteDone ? (
+            <Typography sx={{ fontSize: "0.88rem", color: "#059669", fontWeight: 600, textAlign: "center", py: 1 }}>
               ✓ Invitation sent successfully!
+            </Typography>
+          ) : (
+            <Typography sx={{ fontSize: "0.88rem", color: "#4B5563", lineHeight: 1.7 }}>
+              Are you sure you want to send an interview invitation to{" "}
+              <strong>{name}</strong> for the <strong>{postTitle}</strong> position?
             </Typography>
           )}
         </DialogContent>
@@ -345,7 +318,7 @@ const ApplicationDetailPage: React.FC = () => {
           <Button
             variant="contained"
             onClick={handleInvite}
-            disabled={inviteSending || !inviteDate || !inviteTime || !inviteLink}
+            disabled={inviteSending || !inviteLink || inviteDone}
             sx={{
               textTransform: "none", fontWeight: 600, borderRadius: "10px",
               bgcolor: "#8310FF", boxShadow: "none", color: "#fff",

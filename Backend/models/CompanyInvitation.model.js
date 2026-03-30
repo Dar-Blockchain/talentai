@@ -17,6 +17,6 @@ const CompanyInvitationSchema = new mongoose.Schema({
 
 // Un email ne peut avoir qu'une invitation pending par company
 CompanyInvitationSchema.index({ email: 1, company: 1 }, { unique: true, sparse: true, partialFilterExpression: { status: "pending" } });
-// TTL index: les invitations expirent automatiquement après 2 jours
+// TTL index: invitations automatically expire after 2 days
 CompanyInvitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 module.exports = mongoose.model("CompanyInvitation", CompanyInvitationSchema);

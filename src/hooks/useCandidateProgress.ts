@@ -43,7 +43,7 @@ export const useCandidateProgress = () => {
 
       if (error instanceof Error) {
         // Handle specific error cases
-        if (error.message.includes('Progrès non trouvé')) {
+        if (error.message.includes('Progress not found')) {
           // This is not a real error - just no data
           setProgressError(null);
           setCandidateProgress([]);

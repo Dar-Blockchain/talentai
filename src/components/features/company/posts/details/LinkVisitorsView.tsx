@@ -44,7 +44,7 @@ const LinkVisitorsView: React.FC<Props> = ({ jobId }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-        <VisibilityOutlined sx={{ fontSize: 20, color: "#8310FF" }} />
+        <VisibilityOutlined sx={{ fontSize: 20, color: "#0D9488" }} />
         <Typography sx={{ fontWeight: 700, fontSize: "16px", color: "#111827" }}>
           Link Visitors
         </Typography>
@@ -59,7 +59,7 @@ const LinkVisitorsView: React.FC<Props> = ({ jobId }) => {
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress sx={{ color: "#8310FF" }} size={32} />
+          <CircularProgress sx={{ color: "#0D9488" }} size={32} />
         </Box>
       ) : visitors.length === 0 ? (
         <Box sx={{ py: 8, textAlign: "center" }}>
@@ -91,7 +91,7 @@ const LinkVisitorsView: React.FC<Props> = ({ jobId }) => {
                   <TableRow key={v._id} sx={{ "&:hover": { bgcolor: "#F9FAFB" } }}>
                     <TableCell sx={{ py: 1.5 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: "#8310FF", fontSize: 11, fontWeight: 700 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: "#0D9488", fontSize: 11, fontWeight: 700 }}>
                           {getInitials(v.firstName, v.lastName)}
                         </Avatar>
                         <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>

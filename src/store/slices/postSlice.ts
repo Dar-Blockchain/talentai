@@ -747,6 +747,9 @@ const postSlice = createSlice({
       state.savePost.error = null;
       state.savePost.savedPost = null;
     },
+    setSavedPost: (state, action: PayloadAction<any>) => {
+      state.savePost.savedPost = action.payload;
+    },
     clearError: (state) => {
       state.error = null;
       state.postStepsError = null;
@@ -1002,6 +1005,7 @@ const postSlice = createSlice({
 // Export actions
 export const {
   resetSavePost,
+  setSavedPost,
   clearError,
   setSteps,
   addStep,

@@ -1,12 +1,12 @@
 /**
  * Routes de matching candidats ↔ offres
  *
- * Remarque: ce routeur ne force pas l'authentification ici. Si nécessaire,
+ * Note: this router doesn't force authentication here. If needed,
  * ajouter `requireAuthUser` et une journalisation.
  */
 const express = require("express");
 const { matchCandidatesToJob } = require("../controllers/MatchingController/matching.controller");
-const { requireAuthUser } = require('../middleware/auth.middleware');
+const { requireAuthUser } = require('../middleware/security/auth.middleware');
 const { controledAcces } = require('../middleware/authorize.middleware.js'); 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");

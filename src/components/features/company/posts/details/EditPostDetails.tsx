@@ -116,11 +116,11 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
           <>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", background: "rgba(234, 255, 247, 1)", width: 45, height: 45, borderRadius: "5px" }}>
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", background: "rgba(13,148,136,0.1)", width: 45, height: 45, borderRadius: "5px" }}>
                   <Image src="/icons/edit.svg" alt="file" width={25} height={25} />
                 </Box>
                 <Box>
-                  <Typography sx={{ color: "rgba(41, 210, 145, 1)", fontWeight: 600, fontSize: "20px" }}>Edit Job Post</Typography>
+                  <Typography sx={{ color: "#0D9488", fontWeight: 600, fontSize: "20px" }}>Edit Job Post</Typography>
                   <Typography sx={{ fontSize: "12px", color: "#546274" }}>Update the job details for this position</Typography>
                 </Box>
               </Box>
@@ -130,7 +130,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
                   Cancel
                 </Button>
                 <Button variant="contained" onClick={() => handleSubmit()}
-                  sx={{ textTransform: "none", height: "42px", width: "120px", borderRadius: "38px", background: "rgba(0, 234, 144, 1)", color: "white" }}>
+                  sx={{ textTransform: "none", height: "42px", width: "120px", borderRadius: "38px", background: "#0D9488", color: "white" }}>
                   Save
                 </Button>
               </Box>

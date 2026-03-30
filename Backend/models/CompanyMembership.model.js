@@ -13,7 +13,7 @@ const CompanyMembershipSchema = new mongoose.Schema({
   invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 
-// Un user ne peut avoir qu’un rôle unique par account
+// A user can have only one role unique per account
 CompanyMembershipSchema.index({ user: 1, company: 1 }, { unique: true });
 
 module.exports = mongoose.model("CompanyMembership", CompanyMembershipSchema);

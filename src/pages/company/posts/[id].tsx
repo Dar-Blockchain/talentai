@@ -1,32 +1,31 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { Box, Alert, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tabs, Tab } from "@mui/material";
+import { Box, Alert, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Tabs, Tab, Tooltip } from "@mui/material";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchJobById,
+  fetchJobMatches,
   selectCurrentJob,
   selectCurrentJobLoading,
   selectCurrentJobError,
-  processPostPayment,
-  updatePostStatus,
-  resetPostPayment,
-  selectPostPayment,
+  selectJobMatches,
+  setSavedPost,
+  resetFlow,
 } from "@/store/slices/postSlice";
-import { selectTokenBalance, fetchTokenBalance } from "@/store/slices/tokenSlice";
+import { setCreationType } from "@/store/slices/postGenerationSlice";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import JobDetailContent from "@/components/features/company/posts/details/JobDetailContent";
-import JobPublishModal from "@/components/features/company/posts/details/JobPublishModal";
 import PassedInterviewView from "@/components/features/company/posts/details/PassedInterviewView";
 import LinkVisitorsView from "@/components/features/company/posts/details/LinkVisitorsView";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
-import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
+import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
@@ -46,19 +45,18 @@ const PostDetailsPage: React.FC = () => {
   const loading = useSelector(selectCurrentJobLoading);
   const error = useSelector(selectCurrentJobError);
   const connectedUser = useSelector((state: RootState) => state.user.connectedUser.user);
-
-  const tokenBalance = useSelector(selectTokenBalance);
-  const { data: paymentData, loading: isProcessingPayment, error: paymentError } = useSelector(selectPostPayment);
+  const jobMatches = useSelector(selectJobMatches);
+  const hasPassedCandidates = jobMatches.length > 0;
 
   const [activeEdit, setActiveEdit] = useState<"post" | "recruitment" | null>(null);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "candidates" | "visitors">("details");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const paymentSucceeded = !!paymentData;
-
   useEffect(() => {
-    if (id) dispatch(fetchJobById(id as string));
+    if (id) {
+      dispatch(fetchJobById(id as string));
+      dispatch(fetchJobMatches({ selectedJobId: id as string, page: 1, limit: 1, passedInterview: true }));
+    }
   }, [id, dispatch]);
 
   // Reset edit mode when switching tabs
@@ -81,35 +79,14 @@ const PostDetailsPage: React.FC = () => {
     onError: () => showToast({ message: "Failed to delete post", severity: "error" }),
   });
 
-  const handleSaveSuccess = () => {
-    if (job?.status === "open") return;
-    setPaymentModalOpen(true);
-  };
+  const handleSaveSuccess = () => {};
 
-  const handlePaymentConfirm = async () => {
-    if (!paymentData && Number(tokenBalance) < 1000) {
-      setPaymentModalOpen(false);
-      dispatch(resetPostPayment());
-      return;
-    }
-    if (paymentSucceeded) {
-      setPaymentModalOpen(false);
-      dispatch(resetPostPayment());
-      return;
-    }
-    try {
-      await dispatch(processPostPayment({ postId: job?._id, agentId: job?.agentId })).unwrap();
-      await dispatch(updatePostStatus({ postId: job?._id, status: "open" })).unwrap();
-      await dispatch(fetchTokenBalance()).unwrap();
-    } catch {
-      showToast({ message: "Payment failed. Please try again.", severity: "error" });
-    }
-  };
-
-  const handlePaymentClose = () => {
-    if (isProcessingPayment) return;
-    setPaymentModalOpen(false);
-    dispatch(resetPostPayment());
+  const handleContinueSetup = () => {
+    if (!job) return;
+    dispatch(resetFlow());
+    dispatch(setSavedPost({ jobData: job }));
+    dispatch(setCreationType("manual"));
+    router.push("/company/posts/create");
   };
 
   const handleCopyLink = () => {
@@ -130,22 +107,32 @@ const PostDetailsPage: React.FC = () => {
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       {isDraft && isOwner && (
         <AppButton
-          label="Publish (1,000 TAI)"
+          label="Continue Setup"
           size="small"
-          variant="outlined"
-          startIcon={<PublishOutlined sx={{ fontSize: 15 }} />}
-          onClick={() => setPaymentModalOpen(true)}
-          sx={{ color: "#D97706", borderColor: "#FDE68A", bgcolor: "#FFFBEB", "&:hover": { bgcolor: "#FEF3C7" } }}
+          variant="contained"
+          startIcon={<PlayArrowOutlined sx={{ fontSize: 15 }} />}
+          onClick={handleContinueSetup}
+          sx={{ bgcolor: TEAL, color: "#fff", "&:hover": { bgcolor: "#0F766E" } }}
         />
       )}
       {isOwner && !activeEdit && activeTab === "details" && (
-        <AppButton
-          label="Edit"
-          size="small"
-          variant="outlined"
-          startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
-          onClick={() => setActiveEdit("post")}
-        />
+        <Tooltip
+          title={hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
+          arrow
+          disableHoverListener={!hasPassedCandidates}
+        >
+          <span>
+            <AppButton
+              label="Edit"
+              size="small"
+              variant="outlined"
+              startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
+              onClick={() => setActiveEdit("post")}
+              disabled={hasPassedCandidates}
+              sx={hasPassedCandidates ? { opacity: 0.4 } : {}}
+            />
+          </span>
+        </Tooltip>
       )}
       {!isDraft && (
         <AppButton
@@ -286,16 +273,6 @@ const PostDetailsPage: React.FC = () => {
             onClose={deletePost.handleClose}
             onDelete={deletePost.handleDelete}
             isDeleting={deletePost.isDeleting}
-          />
-
-          <JobPublishModal
-            open={paymentModalOpen}
-            onClose={handlePaymentClose}
-            onConfirm={handlePaymentConfirm}
-            tokenBalance={tokenBalance}
-            isProcessing={isProcessingPayment}
-            succeeded={paymentSucceeded}
-            error={paymentError}
           />
         </Box>
       </DashboardLayout>

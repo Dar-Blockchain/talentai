@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 /**
  * AgentConfig
- * Ce modèle stocke les paramètres de configuration d'un agent pour le bidding automatique.
- * - Relation one-to-one avec Agent et Post
- * - Champs principaux : seuil de validation, budget min/max, pas d'augmentation, limites, durées
+ * This model stores configuration parameters for an agent for automatic bidding.
+ * - One-to-one relationship with Agent and Post
+ * - Main fields: validation threshold, min/max budget, increment step, limits, durations
  */
 
 const agentConfigSchema = new mongoose.Schema({
@@ -12,106 +12,106 @@ const agentConfigSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Agent",
     required: true,
-    description: "Agent lié (one-to-one)",
+    description: "Linked Agent (one-to-one)",
   },
   postId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post",
     required: true,
-    description: "Post lié (one-to-one)",
+    description: "Linked Post (one-to-one)",
   },
 
-  // Seuil (%) minimum pour considérer un candidat comme valable (0-100)
+  // Threshold (%) minimum to consider a candidate as valid (0-100)
   thresholdPercent: {
     type: Number,
     required: true,
     min: 0,
     max: 100,
     default: 70,
-    description: "Seuil en pourcentage pour valider un candidat",
+    description: "Percentage threshold to validate a candidate",
   },
 
-  // Budget pour les bids
+  // Budget for bids
   bidBudgetMin: {
     type: Number,
     required: true,
     min: 0,
     default: 10,
-    description: "Montant minimum de bid autorisé",
+    description: "Minimum bid amount allowed",
   },
   bidBudgetMax: {
     type: Number,
     required: true,
     min: 0,
     default: 1000,
-    description: "Montant maximum total que l'agent peut dépenser en bids",
+    description: "Maximum total amount the agent can spend on bids",
   },
 
-  // Pas d'augmentation de bid (par step)
+  // Bid increment step
   bidStep: {
     type: Number,
     required: true,
     min: 0,
     default: 5,
-    description: "Incrément appliqué lors d'une augmentation de bid",
+    description: "Increment applied when increasing a bid",
   },
 
-  // Nombre maximum de candidats sur lesquels l'agent peut placer des bids simultanément
+  // Maximum number of candidates the agent can place bids on simultaneously
   maxCandidatesToBid: {
     type: Number,
     min: 0,
     default: 1,
-    description: "Nombre max de candidats que l'agent peut bidder",
+    description: "Maximum number of candidates the agent can bid on",
   },
 
-  // Durée de vie en jours de l'agent (après création) avant expiration automatique
+  // Agent lifetime in days (after creation) before automatic expiration
   agentLifetimeDays: {
     type: Number,
     min: 0,
     default: 30,
-    description: "Nombre de jours de vie de l'agent",
+    description: "Number of days of agent lifetime",
   },
 
-  // Durée de vie en jours d'un bid (après placement)
+  // Bid lifetime in days (after placement)
   bidLifetimeDays: {
     type: Number,
     min: 0,
     default: 7,
-    description: "Nombre de jours durant lesquels un bid reste valable",
+    description: "Number of days a bid remains valid",
   },
 
-  // Options supplémentaires utiles
+  // Additional useful options
   autoSubmitTopMatch: {
     type: Boolean,
     default: true,
     description:
-      "Si vrai, soumet automatiquement un message d'évaluation pour le top match dépassant le threshold",
+      "If true, automatically submits an evaluation message for the top match exceeding threshold",
   },
   maxDailySpending: {
     type: Number,
     min: 0,
     default: 200,
     description:
-      "Plafond de dépense journalier pour cet agent (peut limiter bidBudgetMax)",
+      "Daily spending cap for this agent (may limit bidBudgetMax)",
   },
 
-  // Historique / statut
+  // History / status
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Mise à jour du timestamp updatedAt
+// Update the updatedAt timestamp
 agentConfigSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Indexs complémentaires pour garantir la contrainte one-to-one et faciliter les requêtes
+// Additional indexes to guarantee one-to-one constraint and facilitate queries
 agentConfigSchema.index({ agentId: 1 }, { unique: true, sparse: true });
 agentConfigSchema.index({ postId: 1 }, { unique: true, sparse: true });
 
-// Virtuals pour faciliter le populate réciproque
+// Virtuals to facilitate reciprocal population
 agentConfigSchema.virtual("agent", {
   ref: "Agent",
   localField: "agentId",
@@ -126,7 +126,7 @@ agentConfigSchema.virtual("post", {
   justOne: true,
 });
 
-// Inclure les virtuals lors de la sérialisation
+// Include virtuals during serialization
 agentConfigSchema.set("toObject", { virtuals: true });
 agentConfigSchema.set("toJSON", { virtuals: true });
 
