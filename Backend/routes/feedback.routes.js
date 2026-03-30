@@ -14,7 +14,7 @@ const router = express.Router();
 const feedbackController = require('../controllers/feedback.controller');
 
 // Auth obligatoire + logs
-const {requireAuthUser} = require('../middleware/auth.middleware');
+const {requireAuthUser} = require('../middleware/security/auth.middleware');
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 

@@ -5,7 +5,7 @@
 const express = require("express");
 const router = express.Router();
 const tokenController = require("../controllers/token.controller");
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuthUser } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 
 // Apply logging middleware to all token routes

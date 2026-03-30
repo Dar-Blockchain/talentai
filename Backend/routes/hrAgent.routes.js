@@ -14,7 +14,7 @@ const router = express.Router();
 const hrAgentController = require("../controllers/hrAgent.controller");
 
 // Import middlewares
-const { requireAuthUser } = require('../middleware/auth.middleware');
+const { requireAuthUser } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 

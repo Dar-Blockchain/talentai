@@ -11,7 +11,7 @@ const router = express.Router();
 const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuthUser } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
