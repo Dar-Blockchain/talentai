@@ -24,8 +24,9 @@ const getInitials = (name: string) =>
   name.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
 const getCvUrl = (app: any): string | null => {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  if (app.profile?.resume) return `${base}images/Users/${app.profile.resume}`;
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const base = raw.endsWith("/") ? raw : `${raw}/`;
+  if (app.profile?.resume) return `${base}resume/${app.profile.resume}`;
   if (app.cvAnalysis?.sourceUrl) {
     const src = app.cvAnalysis.sourceUrl as string;
     if (src.startsWith("http")) return src;
@@ -73,11 +74,11 @@ const ApplicationDetailPage: React.FC = () => {
       await axiosInstance.post(`job-applications/${id}/invite-to-interview`, {
         interviewLink: inviteLink,
       });
-      emitToast("Invitation sent successfully!", "success");
+      emitToast({ message: "Invitation sent successfully!", severity: "success" });
       setInviteDone(true);
       setTimeout(() => { setInviteOpen(false); setInviteDone(false); }, 1500);
     } catch {
-      emitToast("Failed to send invitation. Please try again.", "error");
+      emitToast({ message: "Failed to send invitation. Please try again.", severity: "error" });
     } finally {
       setInviteSending(false);
     }
