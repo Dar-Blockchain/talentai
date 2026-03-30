@@ -267,8 +267,8 @@ const SettingsPage: React.FC = () => {
               }}
             >
               <Tab label="Company Info" />
-              <Tab label="Contact & Presence" />
-              <Tab label="API Keys" />
+              <Tab label="Contact & Presence" data-tour="settings-tab-contact" />
+              <Tab label="API Keys" data-tour="settings-tab-apikeys" />
             </Tabs>
           </Box>
 
