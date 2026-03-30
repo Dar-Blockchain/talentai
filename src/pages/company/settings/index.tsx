@@ -18,11 +18,13 @@ import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import KeyOutlined from "@mui/icons-material/KeyOutlined";
 import RefreshOutlined from "@mui/icons-material/RefreshOutlined";
+import HelpOutlineOutlined from "@mui/icons-material/HelpOutlineOutlined";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { type Dayjs } from "dayjs";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import OnboardingTour, { STORAGE_KEY as TOUR_KEY } from "@/components/features/company/OnboardingTour";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
 import { getAllCountryNames } from "@/utils/countryMappings";
 import { useDispatch, useSelector } from "react-redux";
@@ -104,6 +106,7 @@ const SettingsPage: React.FC = () => {
   });
   const [copied, setCopied] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", serviceName: "", scopes: [] as string[], rateLimit: 5, expiresAt: "" });
 
   useEffect(() => {
@@ -164,9 +167,21 @@ const SettingsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: "1.25rem", fontWeight: 700, color: "#111827" }}>Settings</Typography>
-        <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF", mt: 0.25 }}>Manage your company profile and API keys</Typography>
+      <Box sx={{ mb: 3, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+        <Box>
+          <Typography sx={{ fontSize: "1.25rem", fontWeight: 700, color: "#111827" }}>Settings</Typography>
+          <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF", mt: 0.25 }}>Manage your company profile and API keys</Typography>
+        </Box>
+        <Tooltip title="Replay the platform tour">
+          <Button
+            size="small"
+            startIcon={<HelpOutlineOutlined sx={{ fontSize: 16 }} />}
+            onClick={() => { localStorage.removeItem(TOUR_KEY); setTourOpen(true); }}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: TEAL, border: `1px solid ${TEAL_BORDER}`, borderRadius: "9px", px: 2, bgcolor: TEAL_BG, "&:hover": { bgcolor: "#CCFBF1" } }}
+          >
+            Help & Tour
+          </Button>
+        </Tooltip>
       </Box>
 
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>
@@ -267,8 +282,8 @@ const SettingsPage: React.FC = () => {
               }}
             >
               <Tab label="Company Info" />
-              <Tab label="Contact & Presence" />
-              <Tab label="API Keys" />
+              <Tab label="Contact & Presence" data-tour="settings-tab-contact" />
+              <Tab label="API Keys" data-tour="settings-tab-apikeys" />
             </Tabs>
           </Box>
 
@@ -680,6 +695,7 @@ const SettingsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <OnboardingTour forceOpen={tourOpen} onClose={() => setTourOpen(false)} />
     </DashboardLayout>
   );
 };
