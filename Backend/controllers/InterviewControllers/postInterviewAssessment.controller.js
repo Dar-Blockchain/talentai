@@ -3,6 +3,7 @@ const CandidatePostStepProgress = require("../../models/CandidatePostStepProgres
 const PostSteps = require("../../models/postSteps.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
+const JobApplication = require("../../models/JobApplication.model");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========
@@ -26,7 +27,30 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         assessmentData,
       );
 
-    // 📧 SEND EMAIL TO CANDIDATE AFTER SUCCESSFUL CREATION
+    // � UPDATE JOB APPLICATION STATUS TO interview_completed
+    try {
+      const candidateProfile = await Profile.findOne({ userId: req.user._id }).select('_id');
+      if (candidateProfile) {
+        await JobApplication.findOneAndUpdate(
+          {
+            profile: candidateProfile._id,
+            post: assessmentData.post,
+            status: "interview_scheduled"
+          },
+          {
+            status: "interview_completed",
+            updatedAt: new Date()
+          },
+          { new: true }
+        );
+        console.log(`✅ Updated JobApplication status to interview_completed for candidate ${req.user._id} and post ${assessmentData.post}`);
+      }
+    } catch (statusUpdateError) {
+      console.error('⚠️ Warning: Failed to update JobApplication status:', statusUpdateError.message);
+      // Don't throw - status update is non-critical
+    }
+
+    // �📧 SEND EMAIL TO CANDIDATE AFTER SUCCESSFUL CREATION
     try {
       // Get candidate email and name
       const candidateEmail = req.user.email;
