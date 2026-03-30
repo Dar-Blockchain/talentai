@@ -9,6 +9,8 @@ const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompa
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (req, res) => {
   try {
+    console.log('\n========== API: POST /post-interview-assessments ==========');
+    
     const assessmentData = {
       ...req.body,
       candidate: req.user._id,
@@ -27,15 +29,37 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         assessmentData,
       );
 
-    // � UPDATE JOB APPLICATION STATUS TO interview_completed
+    // 📊 UPDATE JOB APPLICATION STATUS TO interview_completed
     try {
+      console.log('\n=== 📊 STARTING JOB APPLICATION STATUS UPDATE ===');
+      console.log(`👤 candidateId: ${req.user._id}`);
+      console.log(`📄 postId: ${assessmentData.post}`);
+      
       const candidateProfile = await Profile.findOne({ userId: req.user._id }).select('_id');
+      console.log(`📌 candidateProfile found:`, candidateProfile ? candidateProfile._id : 'NOT FOUND');
+      
       if (candidateProfile) {
-        await JobApplication.findOneAndUpdate(
+        console.log(`\n🔍 Searching existing JobApplication...`);
+        console.log(`  - profile: ${candidateProfile._id}`);
+        console.log(`  - post: ${assessmentData.post}`);
+        console.log(`  - status: interview_scheduled`);
+        
+        // First, let's check what exists in the DB
+        const existingApp = await JobApplication.findOne({
+          profile: candidateProfile._id,
+          post: assessmentData.post
+        });
+        
+        console.log(`✓ Found existing JobApplication:`, existingApp ? 'YES' : 'NO');
+        if (existingApp) {
+          console.log(`  Current status: "${existingApp.status}"`);
+          console.log(`  _id: ${existingApp._id}`);
+        }
+        
+        const updatedApp = await JobApplication.findOneAndUpdate(
           {
             profile: candidateProfile._id,
-            post: assessmentData.post,
-            status: "interview_scheduled"
+            post: assessmentData.post
           },
           {
             status: "interview_completed",
@@ -43,14 +67,29 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
           },
           { new: true }
         );
-        console.log(`✅ Updated JobApplication status to interview_completed for candidate ${req.user._id} and post ${assessmentData.post}`);
+        
+        if (updatedApp) {
+          console.log(`✅ SUCCESS! Updated JobApplication:`);
+          console.log(`  - _id: ${updatedApp._id}`);
+          console.log(`  - new status: "${updatedApp.status}"`);
+          console.log(`  - candidate: ${req.user._id}`);
+          console.log(`  - post: ${assessmentData.post}`);
+        } else {
+          console.log(`⚠️ NOT UPDATED - No JobApplication found with:`);
+          console.log(`  - profile: ${candidateProfile._id}`);
+          console.log(`  - post: ${assessmentData.post}`);
+          console.log(`  - status: "interview_scheduled"`);
+        }
+      } else {
+        console.log(`❌ ERROR: candidateProfile not found for userId: ${req.user._id}`);
       }
     } catch (statusUpdateError) {
-      console.error('⚠️ Warning: Failed to update JobApplication status:', statusUpdateError.message);
-      // Don't throw - status update is non-critical
+      console.error('\n❌ ERROR in JobApplication update:');
+      console.error(`Message: ${statusUpdateError.message}`);
+      console.error(`Stack:`, statusUpdateError.stack);
     }
 
-    // �📧 SEND EMAIL TO CANDIDATE AFTER SUCCESSFUL CREATION
+    // 📧 SEND EMAIL TO CANDIDATE AFTER SUCCESSFUL CREATION
     try {
       // Get candidate email and name
       const candidateEmail = req.user.email;
