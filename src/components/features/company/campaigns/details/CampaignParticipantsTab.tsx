@@ -16,6 +16,7 @@ import AccessTimeOutlined          from "@mui/icons-material/AccessTimeOutlined"
 import EmailOutlined               from "@mui/icons-material/EmailOutlined";
 import PersonAddOutlined           from "@mui/icons-material/PersonAddOutlined";
 import DeleteOutlineOutlined       from "@mui/icons-material/DeleteOutlineOutlined";
+import AssessmentOutlined          from "@mui/icons-material/AssessmentOutlined";
 import AddOutlined                 from "@mui/icons-material/AddOutlined";
 import FilterListOutlined          from "@mui/icons-material/FilterListOutlined";
 import { useDispatch, useSelector } from "react-redux";
@@ -77,7 +78,7 @@ function scoreBg(s: number)    { return s >= 70 ? "#F0FDF4" : s >= 40 ? "#FFFBEB
 
 const RowSkeleton: React.FC<{ showActions?: boolean }> = ({ showActions }) => (
   <Box sx={{
-    display: "grid", gridTemplateColumns: showActions ? "1fr 130px 140px 80px 40px" : "1fr 130px 140px 80px",
+    display: "grid", gridTemplateColumns: showActions ? "1fr 130px 140px 80px 80px" : "1fr 130px 140px 80px",
     alignItems: "center", gap: 2, px: 3, py: 2, borderBottom: "1px solid #F3F4F6",
   }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -112,9 +113,10 @@ const ParticipantRow: React.FC<{
   participant: CampaignParticipant;
   index: number;
   total: number;
+  campaignId: string;
   onRemove?: (id: string) => void;
   removing?: boolean;
-}> = ({ participant: p, index, total, onRemove, removing }) => {
+}> = ({ participant: p, index, total, campaignId, onRemove, removing }) => {
   const router = useRouter();
   const name       = (p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || "Unknown";
   const email      = p.email ?? "";
@@ -131,7 +133,7 @@ const ParticipantRow: React.FC<{
   return (
     <Box sx={{
       display: "grid",
-      gridTemplateColumns: onRemove ? "1fr 130px 140px 80px 40px" : "1fr 130px 140px 80px",
+      gridTemplateColumns: onRemove ? "1fr 130px 140px 80px 80px" : "1fr 130px 140px 80px",
       alignItems: "center", gap: 2, px: 3, py: 1.75,
       borderBottom: index < total - 1 ? "1px solid #F3F4F6" : "none",
       transition: "background-color 0.15s",
@@ -206,7 +208,7 @@ const ParticipantRow: React.FC<{
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        {p.score !== undefined ? (
+        {p.score !== null && p.score !== undefined ? (
           <Box sx={{ px: 1.25, py: "4px", borderRadius: 1.5, minWidth: 46, textAlign: "center", bgcolor: scoreBg(p.score), border: `1px solid ${scoreColor(p.score)}28` }}>
             <Typography sx={{ fontSize: "12px", fontWeight: 800, color: scoreColor(p.score), lineHeight: 1 }}>{p.score}%</Typography>
           </Box>
@@ -216,7 +218,18 @@ const ParticipantRow: React.FC<{
       </Box>
 
       {onRemove && (
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.5 }}>
+          {p.status === "COMPLETED" && p.employeeId && (
+            <Tooltip title="View Results" placement="top" arrow>
+              <IconButton
+                size="small"
+                onClick={() => router.push(`/company/campaigns/${campaignId}/results?userId=${p.employeeId}`)}
+                sx={{ width: 28, height: 28, color: "#7C3AED", bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", "&:hover": { bgcolor: "#EDE9FE" } }}
+              >
+                <AssessmentOutlined sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title="Remove participant" placement="top" arrow>
             <IconButton
               size="small" onClick={() => onRemove(p._id)} disabled={removing}
@@ -796,11 +809,11 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
         {loading && <LinearProgress sx={{ height: 2, "& .MuiLinearProgress-bar": { bgcolor: PURPLE } }} />}
 
         <Box sx={{
-          display: "grid", gridTemplateColumns: isCompany ? "1fr 130px 140px 80px 40px" : "1fr 130px 140px 80px",
+          display: "grid", gridTemplateColumns: isCompany ? "1fr 130px 140px 80px 80px" : "1fr 130px 140px 80px",
           alignItems: "center", gap: 2, px: 3, py: 1.4,
           bgcolor: "#F8F9FB", borderBottom: "1px solid #E5E7EB",
         }}>
-          {[...["Participant", "Role", "Status", "Score"], ...(isCompany ? [""] : [])].map((col, i) => (
+          {[...["Participant", "Role", "Status", "Score"], ...(isCompany ? ["Actions"] : [])].map((col, i) => (
             <Typography key={col || `col-${i}`} sx={{ fontSize: "10px", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: i === 3 ? "right" : "left" }}>
               {col}
             </Typography>
@@ -827,6 +840,7 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
           participants.map((p, i) => (
             <ParticipantRow
               key={p._id} participant={p} index={i} total={participants.length}
+              campaignId={campaignId}
               onRemove={isCompany ? handleRemoveParticipant : undefined}
               removing={removingId === p._id}
             />

@@ -90,6 +90,36 @@ router.get(
   internalCampaignController.getCampaignParticipants
 );
 
+/**
+ * PATCH /internal-campaigns/:campaignId/start/:userId
+ * Mark participant IN_PROGRESS when they open the assessment
+ */
+router.patch(
+  "/:campaignId/start/:userId",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.startAssessment
+);
+
+/**
+ * POST /internal-campaigns/:campaignId/questionnaire/submit
+ * Submit questionnaire answers — public, validated via participantId + campaignId
+ */
+router.post(
+  "/:campaignId/questionnaire/submit",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.submitQuestionnaire
+);
+
+/**
+ * GET /internal-campaigns/:campaignId/results/:participantId
+ * Fetch assessment results for a specific participant — public, scoped by participantId
+ */
+router.get(
+  "/:campaignId/results/:participantId",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getParticipantResults
+);
+
 // apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuthUser,

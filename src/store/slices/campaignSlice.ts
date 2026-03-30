@@ -101,11 +101,16 @@ export const deleteCampaign = createAsyncThunk<
 
 export const fetchCampaignById = createAsyncThunk<
   Campaign,
-  string,
+  { campaignId: string; userId?: string } | string,
   { rejectValue: string }
->("campaign/fetchCampaignById", async (campaignId, { rejectWithValue }) => {
+>("campaign/fetchCampaignById", async (arg, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`internal-campaigns/${campaignId}`);
+    const campaignId = typeof arg === 'string' ? arg : arg.campaignId;
+    const userId     = typeof arg === 'string' ? undefined : arg.userId;
+    const url        = userId
+      ? `internal-campaigns/${campaignId}?userId=${userId}`
+      : `internal-campaigns/${campaignId}`;
+    const response = await axiosInstance.get(url);
     return response.data.data as Campaign;
   } catch (err: any) {
     return rejectWithValue(err.message);

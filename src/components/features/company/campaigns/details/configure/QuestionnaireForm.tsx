@@ -20,6 +20,7 @@ interface Props {
 
 const TYPE_OPTIONS = [
   { label: "Text", value: "TEXT" },
+  { label: "Single Choice", value: "SINGLE_CHOICE" },
   { label: "Multiple Choice", value: "MULTIPLE_CHOICE" },
   { label: "Rating", value: "RATING" },
 ];
@@ -103,13 +104,13 @@ const QuestionnaireForm: React.FC<Props> = ({ config, onChange }) => {
                 onChange={(val) =>
                   updateQuestion(i, {
                     type: val as QuestionType,
-                    options: val === "MULTIPLE_CHOICE" ? [""] : undefined,
+                    options: val === "SINGLE_CHOICE" || val === "MULTIPLE_CHOICE" ? [""] : undefined,
                   })
                 }
               />
 
-              {/* Options (multiple choice only) */}
-              {q.type === "MULTIPLE_CHOICE" && (
+              {/* Options (single choice or multiple choice) */}
+              {(q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 0.5 }}>
                   {(q.options ?? []).map((opt, oi) => (
                     <Box key={oi} sx={{ display: "flex", gap: 1, alignItems: "center" }}>

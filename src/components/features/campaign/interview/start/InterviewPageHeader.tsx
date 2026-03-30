@@ -87,8 +87,8 @@ const InterviewPageHeader: React.FC<Props> = ({
         </Box>
       </Box>
 
-      {/* Center — status */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      {/* Center — status (hidden for questionnaire) */}
+      <Box sx={{ display: moduleType === 'QUESTIONNAIRE' ? 'none' : 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
           <Box sx={{
             width: 6, height: 6, borderRadius: '50%', bgcolor: statusDot,

@@ -2,9 +2,11 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const InternalCampaign = require("../models/internalCampaign.model");
 const CampaignParticipant = require("../models/campaignParticipant.model");
+const CampaignResponse = require("../models/campaignResponse.model");
 const CompanyMembership = require("../models/CompanyMembership.model");
 const Profile = require("../models/Profile.model");
 const User = require("../models/User.model");
+const bedrock = require("../helpers/bedrock.helpers");
 const {
   createCampaign,
   getCampaignById,
@@ -217,6 +219,7 @@ exports.getCompanyCampaigns = async (req, res) => {
 exports.getCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
+    const { userId }     = req.query;
 
     const campaign = await getCampaignById(campaignId);
 
@@ -227,10 +230,18 @@ exports.getCampaign = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      data: campaign,
-    });
+    let data = campaign.toObject ? campaign.toObject() : { ...campaign };
+
+    if (userId) {
+      const participant = await CampaignParticipant.findOne(
+        { campaign: campaignId, employee: userId },
+        { status: 1, completedAt: 1 }
+      ).lean();
+      data.participantStatus = participant?.status ?? null;
+      data.completedAt       = participant?.completedAt ?? null;
+    }
+
+    res.status(200).json({ success: true, data });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -380,7 +391,7 @@ exports.getCampaignParticipants = async (req, res) => {
         id: participant.employee.companyMembership.department._id,
         name: participant.employee.companyMembership.department.name
       } : null;
-      
+
       return {
         _id: participant._id,
         employeeId: participant.employee?._id || null,
@@ -395,6 +406,25 @@ exports.getCampaignParticipants = async (req, res) => {
       };
     });
 
+    // Fetch aiScore for COMPLETED participants
+    const completedIds = formattedParticipants
+      .filter(p => p.status === "COMPLETED")
+      .map(p => p._id);
+
+    const scoreMap = {};
+    if (completedIds.length > 0) {
+      const responses = await CampaignResponse.find(
+        { campaign: campaignObjectId, participant: { $in: completedIds } },
+        { participant: 1, aiScore: 1 }
+      ).lean();
+      responses.forEach(r => { scoreMap[r.participant.toString()] = r.aiScore ?? null; });
+    }
+
+    const formattedWithScores = formattedParticipants.map(p => ({
+      ...p,
+      score: p.status === "COMPLETED" ? (scoreMap[p._id.toString()] ?? null) : undefined,
+    }));
+
     res.status(200).json({
       success: true,
       data: {
@@ -402,7 +432,7 @@ exports.getCampaignParticipants = async (req, res) => {
         page: pageNum,
         limit: limitNum,
         pages: Math.ceil(totalParticipants / limitNum),
-        data: formattedParticipants,
+        data: formattedWithScores,
       },
     });
   } catch (error) {
@@ -653,6 +683,202 @@ exports.getEmployeeCampaignMetrics = async (req, res) => {
     res.status(200).json({ success: true, data: metrics });
   } catch (error) {
     console.error(`❌ Error in getEmployeeCampaignMetrics: ${error.message}`);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * POST /internal-campaigns/:campaignId/questionnaire/submit
+ * Submit all answers for a QUESTIONNAIRE module in one call.
+ * Body: { participantId, answers: [{ questionId, answer }] }
+ * - Saves a CampaignResponse document
+ * - Marks the CampaignParticipant status as COMPLETED
+ */
+/**
+ * Async AI scoring — fires after the HTTP response is sent.
+ * Scores each answer individually, computes aiScore (0-100), generates aiSummary.
+ */
+async function scoreQuestionnaireAsync(responseId, campaign, answers) {
+  try {
+    const questions = campaign.module?.config?.questions ?? [];
+
+    // Build Q&A pairs — include all available options for choice questions
+    const qaPairs = questions.map((q, i) => {
+      const raw        = answers[i]?.answer;
+      const selected   = Array.isArray(raw) ? raw : (raw !== undefined && raw !== "" ? [String(raw)] : []);
+      const answerText = selected.join(", ") || "(no answer)";
+
+      if ((q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && Array.isArray(q.options) && q.options.length > 0) {
+        const optionLines = q.options.map(opt => {
+          const picked = selected.includes(opt);
+          return `  ${picked ? "✓" : "✗"} ${opt}`;
+        }).join("\n");
+        return `Q${i + 1} [${q.type}]: ${q.question}\nAvailable options (✓ = selected by respondent):\n${optionLines}`;
+      }
+
+      if (q.type === "RATING") {
+        return `Q${i + 1} [RATING]: ${q.question}\nRating given: ${raw ?? 0}/5`;
+      }
+
+      return `Q${i + 1} [TEXT]: ${q.question}\nAnswer: ${answerText}`;
+    }).join("\n\n");
+
+    const systemPrompt = `You are an objective assessor evaluating questionnaire responses for a campaign titled "${campaign.title}".
+
+Scoring rules:
+- RATING: score = (stars / 5) * 100. E.g. 4/5 = 80.
+- SINGLE_CHOICE: 100 if the selected option is correct/relevant, 0 if clearly wrong, 50 if partially relevant.
+- MULTIPLE_CHOICE: use this formula — score = max(0, (correct_selected - wrong_selected) / total_correct_options) * 100.
+  "correct_selected" = options chosen that are actually correct.
+  "wrong_selected"   = options chosen that are incorrect (penalise these).
+  If the respondent selects a wrong option, the score MUST be reduced accordingly.
+- TEXT: judge depth, clarity, and relevance to the campaign context (0–100).
+
+Be strict with MULTIPLE_CHOICE: selecting even one wrong option significantly reduces the score.
+Respond ONLY with valid JSON — no markdown, no extra text.`;
+
+    const userMessage = `Campaign context: ${campaign.description ?? campaign.title}
+
+Questionnaire responses:
+${qaPairs}
+
+Return JSON exactly:
+{
+  "scores": [<score_q1>, <score_q2>, ...],
+  "aiScore": <overall_0_to_100>,
+  "aiSummary": "<2-3 sentence summary of the respondent's overall performance>"
+}`;
+
+    const result = await bedrock.callLLM({
+      systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+      temperature: 0.3,
+      maxTokens: 512,
+      timeout: 20000,
+    });
+
+    // Parse JSON — strip possible markdown fences
+    const raw = result.content.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(raw);
+
+    const scoredAnswers = answers.map((a, i) => ({
+      ...a,
+      score: typeof parsed.scores?.[i] === "number" ? Math.round(parsed.scores[i]) : null,
+    }));
+
+    await CampaignResponse.findByIdAndUpdate(responseId, {
+      answers:    scoredAnswers,
+      aiScore:    typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null,
+      aiSummary:  parsed.aiSummary ?? null,
+    });
+  } catch (err) {
+    console.error(`❌ scoreQuestionnaireAsync failed for response ${responseId}: ${err.message}`);
+  }
+}
+
+exports.submitQuestionnaire = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { participantId, answers } = req.body;
+
+    if (!participantId || !Array.isArray(answers)) {
+      return res.status(400).json({ success: false, error: "participantId and answers[] are required" });
+    }
+
+    const campaign = await InternalCampaign.findById(campaignId);
+    if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
+    if (campaign.module?.type !== "QUESTIONNAIRE") {
+      return res.status(400).json({ success: false, error: "Campaign module is not QUESTIONNAIRE" });
+    }
+
+    // participantId is the User _id — look up the CampaignParticipant by employee + campaign
+    const participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: participantId });
+    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+
+    // Upsert response (allow re-submission)
+    const response = await CampaignResponse.findOneAndUpdate(
+      { campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" },
+      { answers, moduleType: "QUESTIONNAIRE", campaign: campaignId, participant: participant._id },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // Mark participant as completed
+    participant.status = "COMPLETED";
+    participant.completedAt = new Date();
+    await participant.save();
+
+    // Trigger AI scoring asynchronously — does not block the response
+    scoreQuestionnaireAsync(response._id, campaign, answers);
+
+    res.status(200).json({ success: true, data: { responseId: response._id } });
+  } catch (error) {
+    console.error(`❌ Error in submitQuestionnaire: ${error.message}`);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * PATCH /internal-campaigns/:campaignId/start/:userId
+ * Mark participant as IN_PROGRESS when they open the assessment.
+ */
+exports.startAssessment = async (req, res) => {
+  try {
+    const { campaignId, userId } = req.params;
+
+    const participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: userId });
+    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+
+    // Only move forward — don't overwrite COMPLETED
+    if (participant.status === "INVITED") {
+      participant.status = "IN_PROGRESS";
+      participant.accessedAt = new Date();
+      await participant.save();
+    }
+
+    res.status(200).json({ success: true, data: { status: participant.status } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * GET /internal-campaigns/:campaignId/results/:participantId
+ * Returns the campaign, participant record, and response for a single participant.
+ */
+exports.getParticipantResults = async (req, res) => {
+  try {
+    const { campaignId, participantId } = req.params;
+
+    // participantId is the User _id — resolve the CampaignParticipant first
+    const [campaign, participant] = await Promise.all([
+      InternalCampaign.findById(campaignId).lean(),
+      CampaignParticipant.findOne({ campaign: campaignId, employee: participantId }).lean(),
+    ]);
+
+    if (!campaign)    return res.status(404).json({ success: false, error: "Campaign not found" });
+    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+
+    const response = await CampaignResponse.findOne({ campaign: campaignId, participant: participant._id }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        campaign: {
+          _id:    campaign._id,
+          title:  campaign.title,
+          type:   campaign.type,
+          module: campaign.module,
+        },
+        participant: {
+          _id:         participant._id,
+          status:      participant.status,
+          completedAt: participant.completedAt,
+          score:       participant.score ?? null,
+        },
+        response: response ?? null,
+      },
+    });
+  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };

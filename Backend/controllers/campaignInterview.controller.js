@@ -112,7 +112,16 @@ class CampaignInterviewController {
           }
 
           if (decision.type === 'end_interview') {
-            // Generate and send final report
+            // Store closing statement in conversation before persisting
+            if (decision.content) {
+              await this.service.sessionManager.addConversationEntry(sessionId, {
+                type:    'interviewer',
+                content: decision.content,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
+            // Generate final report and persist to DB
             const endResult = await this.service.endInterview(sessionId);
             this.activeSessions.delete(sessionId);
 
@@ -132,6 +141,15 @@ class CampaignInterviewController {
               });
             }, 1500);
           } else {
+            // Store interviewer question in session so transcript is complete
+            if (decision.content) {
+              await this.service.sessionManager.addConversationEntry(sessionId, {
+                type:    'interviewer',
+                content: decision.content,
+                timestamp: new Date().toISOString(),
+              });
+            }
+
             // next_question or follow_up
             const messageType = decision.type === 'follow_up' ? 'follow_up' : 'question';
             this.safeEmit(socket, 'interviewer_message', {

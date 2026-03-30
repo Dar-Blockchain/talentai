@@ -6,7 +6,7 @@ import PageHeader from "@/components/layout/dashboard/PageHeader";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
 import CampaignDetailSkeleton from "@/components/features/company/campaigns/details/CampaignDetailSkeleton";
 import CampaignDetailError from "@/components/features/company/campaigns/details/CampaignDetailError";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchCampaignById,
   selectSelectedCampaign,
@@ -20,15 +20,18 @@ const EmployeeCampaignDetailsPage: React.FC = () => {
   const router   = useRouter();
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
+  const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
 
   const campaign = useSelector(selectSelectedCampaign);
   const loading  = useSelector(selectDetailLoading);
   const error    = useSelector(selectDetailError);
 
   useEffect(() => {
-    if (id && typeof id === "string") dispatch(fetchCampaignById(id));
+    if (id && typeof id === "string" && authUser?._id) {
+      dispatch(fetchCampaignById({ campaignId: id, userId: authUser._id }));
+    }
     return () => { dispatch(clearSelectedCampaign()); };
-  }, [dispatch, id]);
+  }, [dispatch, id, authUser?._id]);
 
   const breadcrumbTitle = loading ? "Loading…" : error ? "Not found" : campaign?.title ?? "";
 

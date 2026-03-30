@@ -83,7 +83,7 @@ export interface CampaignMetrics {
   expired: number;
 }
 
-export type QuestionType = "TEXT" | "MULTIPLE_CHOICE" | "RATING";
+export type QuestionType = "TEXT" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "RATING";
 
 export interface Question {
   question: string;

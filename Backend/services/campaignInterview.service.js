@@ -11,25 +11,72 @@
  *   • Lightweight coverage tracking
  */
 
-const bedrock       = require('../helpers/bedrock.helpers');
-const sessionMgr    = require('../utils/redis-session-manager');
-const Campaign      = require('../models/internalCampaign.model');
-require('dotenv').config();
+const bedrock = require("../helpers/bedrock.helpers");
+const sessionMgr = require("../utils/redis-session-manager");
+const Campaign = require("../models/internalCampaign.model");
+const CampaignResponse = require("../models/campaignResponse.model");
+const CampaignParticipant = require("../models/campaignParticipant.model");
+require("dotenv").config();
+// ── Helper to build mixed-question prompt ──────────────────────────────────────
+function buildMixedQuestionPrompt({
+  transcript,
+  conversationSummary,
+  coverage,
+  shouldEnd,
+}) {
+  const remainingTopics = Object.entries(coverage.areas)
+    .filter(([_, v]) => v.percentage < 75)
+    .map(([k]) => k);
 
+  const areasNeedingFollowup = Object.entries(coverage.areas)
+    .filter(([_, v]) => v.questionsAsked > 0 && v.percentage < 50)
+    .map(([k]) => k);
+
+  const previouslyAsked = Object.entries(coverage.areas)
+    .filter(([_, v]) => v.questionsAsked > 0)
+    .map(([k]) => k);
+
+  return `
+Candidate answered the last question: "${transcript}"
+
+Previously covered areas: ${previouslyAsked.join(", ") || "none"}
+Areas needing follow-up due to partial/incomplete answers: ${areasNeedingFollowup.join(", ") || "none"}
+Remaining areas not yet covered: ${remainingTopics.join(", ") || "none"}
+
+Instructions:
+- Decide whether to ask a follow-up or move to a new topic.
+- If follow-up is needed, base it on the candidate's last answer.
+- If moving to a new topic, pick one from remaining areas.
+- Ensure overall coverage is balanced across all areas.
+- Respond with a single clear question, not a list.
+- Return JSON in this format:
+{
+  "decision": "next_question|follow_up|end_interview",
+  "nextQuestion": "<question text>",
+  "coverageUpdates": [
+    { "area": "<area_key>", "increase": <0-25> }
+  ]
+}
+- If SHOULD_END is true or all areas >= 75%, decision must be "end_interview" with a professional closing statement.
+`;
+}
 // ─── JSON helpers ─────────────────────────────────────────────────────────────
 
 function parseJSON(raw, fallback) {
   try {
     let s = raw.trim();
-    if (s.startsWith('```')) {
+    if (s.startsWith("```")) {
       const m = s.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (m) s = m[1];
     }
     return JSON.parse(s);
   } catch (_) {
-    const a = raw.indexOf('{'), b = raw.lastIndexOf('}');
+    const a = raw.indexOf("{"),
+      b = raw.lastIndexOf("}");
     if (a !== -1 && b > a) {
-      try { return JSON.parse(raw.slice(a, b + 1)); } catch (_2) {}
+      try {
+        return JSON.parse(raw.slice(a, b + 1));
+      } catch (_2) {}
     }
     return fallback;
   }
@@ -38,17 +85,57 @@ function parseJSON(raw, fallback) {
 // ─── Coverage area defaults ────────────────────────────────────────────────────
 
 const SKILL_TEST_AREAS = (skill) => ({
-  fundamentals:    { label: `${skill} Fundamentals`,    percentage: 0, questionsAsked: 0, weight: 30 },
-  practical_usage: { label: `Practical ${skill} Usage`, percentage: 0, questionsAsked: 0, weight: 25 },
-  advanced_topics: { label: `Advanced ${skill} Topics`, percentage: 0, questionsAsked: 0, weight: 25 },
-  best_practices:  { label: 'Best Practices & Patterns', percentage: 0, questionsAsked: 0, weight: 20 },
+  fundamentals: {
+    label: `${skill} Fundamentals`,
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 30,
+  },
+  practical_usage: {
+    label: `Practical ${skill} Usage`,
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 25,
+  },
+  advanced_topics: {
+    label: `Advanced ${skill} Topics`,
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 25,
+  },
+  best_practices: {
+    label: "Best Practices & Patterns",
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 20,
+  },
 });
 
 const AI_INTERVIEW_DEFAULT_AREAS = () => ({
-  experience:    { label: 'Experience & Background',   percentage: 0, questionsAsked: 0, weight: 30 },
-  competencies:  { label: 'Core Competencies',         percentage: 0, questionsAsked: 0, weight: 30 },
-  motivation:    { label: 'Motivation & Culture Fit',  percentage: 0, questionsAsked: 0, weight: 20 },
-  situational:   { label: 'Situational Judgment',      percentage: 0, questionsAsked: 0, weight: 20 },
+  experience: {
+    label: "Experience & Background",
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 30,
+  },
+  competencies: {
+    label: "Core Competencies",
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 30,
+  },
+  motivation: {
+    label: "Motivation & Culture Fit",
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 20,
+  },
+  situational: {
+    label: "Situational Judgment",
+    percentage: 0,
+    questionsAsked: 0,
+    weight: 20,
+  },
 });
 
 // ─── Service class ─────────────────────────────────────────────────────────────
@@ -64,22 +151,28 @@ class CampaignInterviewService {
     try {
       // The Redis session manager is a shared singleton — skip re-initialization if already connected
       if (this.sessionManager.isConnected && this.sessionManager.client) {
-        console.log('✅ [CampaignInterview] Service initialized (Redis already connected)');
+        console.log(
+          "✅ [CampaignInterview] Service initialized (Redis already connected)",
+        );
         return true;
       }
       const ok = await Promise.race([
         this.sessionManager.initialize(),
-        new Promise((_, r) => setTimeout(() => r(new Error('Redis timeout')), 5000)),
-      ]).catch(err => {
-        console.warn('⚠️ [CampaignInterview] Redis init failed:', err.message);
+        new Promise((_, r) =>
+          setTimeout(() => r(new Error("Redis timeout")), 5000),
+        ),
+      ]).catch((err) => {
+        console.warn("⚠️ [CampaignInterview] Redis init failed:", err.message);
         return false;
       });
-      console.log(ok
-        ? '✅ [CampaignInterview] Service initialized with Redis'
-        : '⚠️ [CampaignInterview] Service initialized WITHOUT Redis (degraded mode)');
+      console.log(
+        ok
+          ? "✅ [CampaignInterview] Service initialized with Redis"
+          : "⚠️ [CampaignInterview] Service initialized WITHOUT Redis (degraded mode)",
+      );
       return true;
     } catch (e) {
-      console.error('❌ [CampaignInterview] Init error:', e.message);
+      console.error("❌ [CampaignInterview] Init error:", e.message);
       return true; // don't block server startup
     }
   }
@@ -94,18 +187,20 @@ class CampaignInterviewService {
     if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
 
     const moduleConfig = campaign.module?.config || {};
-    const agentPrompt  = moduleConfig.agentPrompt || null;
-    const skill        = moduleConfig.skill        || null;
+    const agentPrompt = moduleConfig.agentPrompt || null;
+    const skill = moduleConfig.skill || null;
 
     // 2. Build context for this interview type
-    const context = moduleType === 'SKILL_TEST'
-      ? this._buildSkillContext(skill)
-      : this._buildAgentContext(agentPrompt, campaign);
+    const context =
+      moduleType === "SKILL_TEST"
+        ? this._buildSkillContext(skill)
+        : this._buildAgentContext(agentPrompt, campaign);
 
     // 3. Determine coverage areas
-    const coverageAreas = moduleType === 'SKILL_TEST'
-      ? SKILL_TEST_AREAS(skill || 'the requested skill')
-      : AI_INTERVIEW_DEFAULT_AREAS();
+    const coverageAreas =
+      moduleType === "SKILL_TEST"
+        ? SKILL_TEST_AREAS(skill || "the requested skill")
+        : AI_INTERVIEW_DEFAULT_AREAS();
 
     // 4. Create Redis session
     const sessionData = {
@@ -113,31 +208,42 @@ class CampaignInterviewService {
       campaignId,
       moduleType,
       context,
-      conversation:   [],
-      coverage:       { overall: 0, areas: coverageAreas },
+      conversation: [],
+      coverage: { overall: 0, areas: coverageAreas },
       questionsAsked: 0,
-      maxQuestions:   Math.max(5, Math.round(duration * 0.6)),
-      config:         { duration, interviewType: moduleType },
-      startedAt:      new Date().toISOString(),
+      maxQuestions: Math.max(5, Math.round(duration * 0.6)),
+      config: { duration, interviewType: moduleType },
+      startedAt: new Date().toISOString(),
       candidateId,
     };
 
     await this._saveSession(sessionId, sessionData);
 
     // 5. Generate greeting
-    const greeting = await this._generateGreeting(context, moduleType, skill, onGreetingChunk);
+    const greeting = await this._generateGreeting(
+      context,
+      moduleType,
+      skill,
+      onGreetingChunk,
+    );
 
     // Store greeting in conversation
     await this.sessionManager.addConversationEntry(sessionId, {
-      type: 'interviewer', content: greeting, timestamp: new Date().toISOString(),
+      type: "interviewer",
+      content: greeting,
+      timestamp: new Date().toISOString(),
       metadata: { targetAreas: [Object.keys(coverageAreas)[0]] },
     });
 
     return {
-      success:    true,
+      success: true,
       sessionId,
       greeting,
-      config: { duration, interviewType: moduleType, silenceIntelligence: null },
+      config: {
+        duration,
+        interviewType: moduleType,
+        silenceIntelligence: null,
+      },
     };
   }
 
@@ -149,39 +255,60 @@ class CampaignInterviewService {
 
     // Store candidate turn
     await this.sessionManager.addConversationEntry(sessionId, {
-      type: 'candidate', content: transcript, timestamp: new Date().toISOString(),
+      type: "candidate",
+      content: transcript,
+      timestamp: new Date().toISOString(),
     });
 
-    const { context, moduleType, coverage, questionsAsked, maxQuestions, conversation } = session;
+    const {
+      context,
+      moduleType,
+      coverage,
+      questionsAsked,
+      maxQuestions,
+      conversation,
+    } = session;
 
     // Last interviewer question
-    const lastQuestion = [...(conversation || [])]
-      .reverse()
-      .find(e => e.type === 'interviewer')?.content || null;
+    const lastQuestion =
+      [...(conversation || [])].reverse().find((e) => e.type === "interviewer")
+        ?.content || null;
 
     // Increment question counter
     const newCount = (questionsAsked || 0) + 1;
-    await this.sessionManager.updateSession(sessionId, { questionsAsked: newCount });
+    await this.sessionManager.updateSession(sessionId, {
+      questionsAsked: newCount,
+    });
 
     // Should we end?
     const shouldEnd = newCount >= maxQuestions;
 
     // Combined LLM call: analyse + decide + generate next
     const result = await this._combinedTurn(
-      context, moduleType, conversation || [], transcript, lastQuestion,
-      coverage, shouldEnd,
+      context,
+      moduleType,
+      conversation || [],
+      transcript,
+      lastQuestion,
+      coverage,
+      shouldEnd,
     );
 
     // Update coverage
-    const updatedCoverage = this._applyCoverageUpdates(coverage, result.coverageUpdates);
-    await this.sessionManager.updateSession(sessionId, { coverage: updatedCoverage });
+    const updatedCoverage = this._applyCoverageUpdates(
+      coverage,
+      result.coverageUpdates,
+    );
+    await this.sessionManager.updateSession(sessionId, {
+      coverage: updatedCoverage,
+    });
 
     return {
-      type:     result.decision,       // 'next_question' | 'follow_up' | 'end_interview'
-      content:  result.nextQuestion,
+      type: result.decision, // 'next_question' | 'follow_up' | 'end_interview'
+      content: result.nextQuestion,
       analysis: result.analysis,
       coverage: updatedCoverage,
-      report:   result.report,
+      report: result.report,
     };
   }
 
@@ -189,15 +316,123 @@ class CampaignInterviewService {
 
   async endInterview(sessionId) {
     const session = await this.sessionManager.getSession(sessionId);
-    if (!session) return { success: true, sessionId };
+    if (!session) {
+      console.warn(`⚠️ [CampaignInterview] endInterview: session ${sessionId} not found in Redis — skipping persist`);
+      return { success: true, sessionId };
+    }
 
     const finalReport = await this._generateFinalReport(session);
+
+    // Persist results to MongoDB
+    try {
+      await this._persistResults(session, finalReport);
+    } catch (err) {
+      console.error(`❌ [CampaignInterview] persistResults failed for ${sessionId}: ${err.message}`, err);
+    }
+
     return {
-      success:     true,
+      success: true,
       sessionId,
       finalReport,
-      analytics:   { questionsAsked: session.questionsAsked, duration: session.config?.duration },
+      analytics: {
+        questionsAsked: session.questionsAsked,
+        duration: session.config?.duration,
+      },
     };
+  }
+
+  // ── Persist interview results to MongoDB ─────────────────────────────────────
+
+  async _persistResults(session, finalReport) {
+    const { campaignId, candidateId, moduleType, conversation = [], coverage } = session;
+
+    console.log(`📝 [CampaignInterview] _persistResults start — campaign=${campaignId} candidate=${candidateId} moduleType=${moduleType} turns=${conversation.length}`);
+
+    if (!campaignId || !candidateId) {
+      console.warn("⚠️ [CampaignInterview] Missing campaignId or candidateId — skipping persist");
+      return;
+    }
+
+    // Look up the CampaignParticipant by (campaign, employee user _id)
+    const participant = await CampaignParticipant.findOne({
+      campaign: campaignId,
+      employee: candidateId,
+    });
+
+    if (!participant) {
+      console.warn(`⚠️ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId}`);
+      return;
+    }
+
+    console.log(`📝 [CampaignInterview] Found participant ${participant._id}, building response...`);
+
+    const aiScore   = typeof finalReport.overallScore === "number" ? Math.round(finalReport.overallScore) : null;
+    const aiSummary = finalReport.summary ?? null;
+
+    // Build interviewTranscript — filter out system messages, keep interviewer + candidate turns
+    const interviewTranscript = conversation
+      .filter(e => e.type === "interviewer" || e.type === "candidate")
+      .map(e => ({
+        role:      e.type === "interviewer" ? "agent" : "candidate",
+        message:   e.content || "",
+        timestamp: e.timestamp ? new Date(e.timestamp) : new Date(),
+      }));
+
+    // Build $set payload — fields differ per module type
+    const $setData = {
+      campaign:            campaignId,
+      participant:         participant._id,
+      moduleType,
+      aiScore,
+      aiSummary,
+      interviewTranscript,
+    };
+
+    if (moduleType === "SKILL_TEST") {
+      // breakdown as array: [{ area, label, score }] — one entry per coverage area
+      const coverageAreas = coverage?.areas ?? {};
+      const breakdown = Object.entries(finalReport.coverageSummary ?? {}).map(([area, score]) => ({
+        area,
+        label: coverageAreas[area]?.label ?? area,
+        score: Math.round(Number(score) || 0),
+      }));
+
+      $setData.testResults = {
+        score:    aiScore,
+        maxScore: 100,
+        breakdown,
+      };
+    } else {
+      // AI_INTERVIEW — store soft-skill sub-scores in testResults.breakdown as array
+      const breakdown = [
+        { area: "communication", label: "Communication", score: finalReport.communicationScore ?? null },
+        { area: "confidence",    label: "Confidence",    score: finalReport.confidenceScore    ?? null },
+        { area: "clarity",       label: "Clarity",       score: finalReport.clarityScore       ?? null },
+        { area: "engagement",    label: "Engagement",    score: finalReport.engagementScore    ?? null },
+      ].filter(b => b.score !== null);
+
+      $setData.testResults = {
+        score:    aiScore,
+        maxScore: 100,
+        breakdown,
+      };
+    }
+
+    // Upsert CampaignResponse
+    await CampaignResponse.findOneAndUpdate(
+      { campaign: campaignId, participant: participant._id, moduleType },
+      { $set: $setData },
+      { upsert: true, new: true }
+    );
+
+    // Mark participant COMPLETED
+    if (participant.status !== "COMPLETED") {
+      participant.status      = "COMPLETED";
+      participant.completedAt = new Date();
+      await participant.save();
+    }
+
+    console.log(`✅ [CampaignInterview] Saved — participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} transcript=${interviewTranscript.length} turns`);
   }
 
   // ── Session storage ─────────────────────────────────────────────────────────
@@ -209,7 +444,9 @@ class CampaignInterviewService {
   async _saveSession(sessionId, sessionData) {
     const mgr = this.sessionManager;
     if (!mgr.client || !mgr.isConnected) {
-      throw new Error('Redis not connected — cannot create campaign interview session');
+      throw new Error(
+        "Redis not connected — cannot create campaign interview session",
+      );
     }
     const key = mgr.sessionPrefix + sessionId;
     await mgr.client.setEx(key, mgr.sessionTTL, JSON.stringify(sessionData));
@@ -221,12 +458,19 @@ class CampaignInterviewService {
 
   _buildSkillContext(skill) {
     return {
-      type:        'SKILL_TEST',
-      skill:       skill || 'General Programming',
-      systemPrompt: `You are a senior technical interviewer conducting a ${skill || 'technical'} skill assessment.
-Your goal is to evaluate the candidate's proficiency in ${skill || 'the relevant technology'} through targeted technical questions.
-Focus on: fundamentals, practical knowledge, advanced patterns, and best practices.
-Be concise, professional, and adapt question difficulty based on the candidate's answers.`,
+      type: "SKILL_TEST",
+      skill: skill || "General Programming",
+      systemPrompt: `You are a senior interviewer conducting a ${skill || "technical"} skill assessment. 
+Your goal is to evaluate the candidate's overall proficiency in ${skill || "the relevant skill"} across multiple dimensions, including fundamentals, practical usage, advanced patterns, and best practices. 
+
+For example:
+- For technical skills (React, Node.js, Python), include questions on core concepts, practical implementation, best practices, performance, and common pitfalls. 
+- For soft skills (communication, leadership, marketing, HR), include questions on theory, scenario-based problem solving, interpersonal strategies, and situational judgment. 
+- For business skills, include questions on strategy, analysis, decision making, and process optimization.
+
+Do not focus solely on one topic or example. Rotate questions across **different areas** relevant to the skill. 
+Be concise, professional, and adapt question difficulty based on the candidate’s answers. 
+Ensure variety in question topics to cover a well-rounded assessment.`,
     };
   }
 
@@ -235,7 +479,7 @@ Be concise, professional, and adapt question difficulty based on the candidate's
 Evaluate the candidate across experience, competencies, motivation, and situational judgment.
 Keep questions focused, professional, and relevant to the campaign objectives.`;
     return {
-      type:        'AI_INTERVIEW',
+      type: "AI_INTERVIEW",
       systemPrompt: agentPrompt || defaultPrompt,
       campaignTitle: campaign.title,
     };
@@ -243,18 +487,19 @@ Keep questions focused, professional, and relevant to the campaign objectives.`;
 
   async _generateGreeting(context, moduleType, skill, onChunk) {
     const systemPrompt = context.systemPrompt;
-    const userMsg = moduleType === 'SKILL_TEST'
-      ? `Generate a warm, professional greeting to start a ${skill} technical assessment.
+    const userMsg =
+      moduleType === "SKILL_TEST"
+        ? `Generate a warm, professional greeting to start a ${skill} technical assessment.
          Introduce yourself briefly, explain what you'll cover, and ask the candidate to introduce themselves or confirm they're ready.
          Keep it under 3 sentences.`
-      : `Generate a warm, professional greeting to start this interview session.
+        : `Generate a warm, professional greeting to start this interview session.
          Introduce yourself briefly, mention you'll have a conversation to get to know them better, and ask them to start with a brief self-introduction.
          Keep it under 3 sentences.`;
 
     try {
       const res = await bedrock.callLLM({
         systemPrompt,
-        messages: [{ role: 'user', content: userMsg }],
+        messages: [{ role: "user", content: userMsg }],
         temperature: 0.7,
         maxTokens: 200,
         timeout: 20000,
@@ -263,32 +508,46 @@ Keep questions focused, professional, and relevant to the campaign objectives.`;
       });
       return res.content || this._fallbackGreeting(moduleType, skill);
     } catch (e) {
-      console.warn('⚠️ [CampaignInterview] Greeting generation failed:', e.message);
+      console.warn(
+        "⚠️ [CampaignInterview] Greeting generation failed:",
+        e.message,
+      );
       return this._fallbackGreeting(moduleType, skill);
     }
   }
 
   _fallbackGreeting(moduleType, skill) {
-    return moduleType === 'SKILL_TEST'
-      ? `Welcome! I'm here to conduct your ${skill || 'technical'} assessment today. We'll go through a series of questions covering fundamentals and practical usage. Please go ahead and introduce yourself when you're ready.`
+    return moduleType === "SKILL_TEST"
+      ? `Welcome! I'm here to conduct your ${skill || "technical"} assessment today. We'll go through a series of questions covering fundamentals and practical usage. Please go ahead and introduce yourself when you're ready.`
       : `Welcome! I'm glad you're here for this interview session. We'll have a conversation to learn more about your background and experience. Please start by telling me a bit about yourself.`;
   }
 
-  async _combinedTurn(context, moduleType, conversation, transcript, lastQuestion, coverage, shouldEnd) {
+  async _combinedTurn1(
+    context,
+    moduleType,
+    conversation,
+    transcript,
+    lastQuestion,
+    coverage,
+    shouldEnd,
+  ) {
     const coverageAreas = Object.entries(coverage.areas)
       .map(([k, v]) => `${k}: ${Math.round(v.percentage || 0)}%`)
-      .join(', ');
+      .join(", ");
 
     const conversationSummary = conversation
       .slice(-6)
-      .map(e => `${e.type === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${e.content}`)
-      .join('\n');
+      .map(
+        (e) =>
+          `${e.type === "interviewer" ? "Interviewer" : "Candidate"}: ${e.content}`,
+      )
+      .join("\n");
 
     const systemPrompt = context.systemPrompt;
 
     const userMsg = `
 CONVERSATION HISTORY (last 6 turns):
-${conversationSummary || '(interview just started)'}
+${conversationSummary || "(interview just started)"}
 
 CANDIDATE'S LATEST RESPONSE:
 "${transcript}"
@@ -325,19 +584,24 @@ RULES:
 `;
 
     const fallback = {
-      analysis:        { quality: 'fair', score: 50, completeness: 'partial', keyPoints: [] },
+      analysis: {
+        quality: "fair",
+        score: 50,
+        completeness: "partial",
+        keyPoints: [],
+      },
       coverageUpdates: [],
-      decision:        shouldEnd ? 'end_interview' : 'next_question',
-      nextQuestion:    shouldEnd
-        ? 'Thank you for your time today. That concludes our session!'
-        : 'Can you tell me more about your experience in this area?',
+      decision: shouldEnd ? "end_interview" : "next_question",
+      nextQuestion: shouldEnd
+        ? "Thank you for your time today. That concludes our session!"
+        : "Can you tell me more about your experience in this area?",
       report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
     };
 
     try {
       const res = await bedrock.callLLM({
         systemPrompt,
-        messages: [{ role: 'user', content: userMsg }],
+        messages: [{ role: "user", content: userMsg }],
         temperature: 0.5,
         maxTokens: 600,
         timeout: 30000,
@@ -345,7 +609,7 @@ RULES:
       });
       return parseJSON(res.content, fallback);
     } catch (e) {
-      console.warn('⚠️ [CampaignInterview] Combined turn failed:', e.message);
+      console.warn("⚠️ [CampaignInterview] Combined turn failed:", e.message);
       return fallback;
     }
   }
@@ -353,18 +617,27 @@ RULES:
   _applyCoverageUpdates(coverage, updates = []) {
     const areas = { ...coverage.areas };
     for (const u of updates) {
-      if (areas[u.area] && typeof u.increase === 'number') {
+      if (areas[u.area] && typeof u.increase === "number") {
         areas[u.area] = {
           ...areas[u.area],
-          percentage:     Math.min(100, (areas[u.area].percentage || 0) + u.increase),
+          percentage: Math.min(
+            100,
+            (areas[u.area].percentage || 0) + u.increase,
+          ),
           questionsAsked: (areas[u.area].questionsAsked || 0) + 1,
-          lastUpdated:    new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
         };
       }
     }
-    const totalWeight = Object.values(areas).reduce((s, a) => s + (a.weight || 25), 0);
+    const totalWeight = Object.values(areas).reduce(
+      (s, a) => s + (a.weight || 25),
+      0,
+    );
     const overall = Math.round(
-      Object.values(areas).reduce((s, a) => s + (a.percentage || 0) * (a.weight || 25), 0) / totalWeight
+      Object.values(areas).reduce(
+        (s, a) => s + (a.percentage || 0) * (a.weight || 25),
+        0,
+      ) / totalWeight,
     );
     return { ...coverage, areas, overall };
   }
@@ -374,14 +647,19 @@ RULES:
     const systemPrompt = context.systemPrompt;
 
     const conversationText = (conversation || [])
-      .map(e => `${e.type === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${e.content}`)
-      .join('\n');
+      .map(
+        (e) =>
+          `${e.type === "interviewer" ? "Interviewer" : "Candidate"}: ${e.content}`,
+      )
+      .join("\n");
 
     const userMsg = `
 Based on this interview conversation, generate a concise final assessment report.
 
 INTERVIEW TYPE: ${moduleType}
-COVERAGE: ${Object.entries(coverage.areas).map(([k, v]) => `${k}: ${Math.round(v.percentage || 0)}%`).join(', ')}
+COVERAGE: ${Object.entries(coverage.areas)
+      .map(([k, v]) => `${k}: ${Math.round(v.percentage || 0)}%`)
+      .join(", ")}
 
 CONVERSATION:
 ${conversationText.slice(0, 4000)}
@@ -409,24 +687,27 @@ Score guidelines:
 
     const base = Math.round(coverage.overall || 50);
     const fallback = {
-      overallScore:       base,
-      summary:            'Interview completed. Detailed analysis is being processed.',
-      strengths:          ['Completed the full interview session'],
+      overallScore: base,
+      summary: "Interview completed. Detailed analysis is being processed.",
+      strengths: ["Completed the full interview session"],
       areasForImprovement: [],
-      recommendation:     'consider',
-      coverageSummary:    Object.fromEntries(
-        Object.entries(coverage.areas).map(([k, v]) => [k, Math.round(v.percentage || 0)])
+      recommendation: "consider",
+      coverageSummary: Object.fromEntries(
+        Object.entries(coverage.areas).map(([k, v]) => [
+          k,
+          Math.round(v.percentage || 0),
+        ]),
       ),
       communicationScore: base,
-      confidenceScore:    Math.round(base * 0.92),
-      clarityScore:       Math.round(base * 1.05 > 100 ? 100 : base * 1.05),
-      engagementScore:    Math.round(base * 0.94),
+      confidenceScore: Math.round(base * 0.92),
+      clarityScore: Math.round(base * 1.05 > 100 ? 100 : base * 1.05),
+      engagementScore: Math.round(base * 0.94),
     };
 
     try {
       const res = await bedrock.callLLM({
         systemPrompt,
-        messages: [{ role: 'user', content: userMsg }],
+        messages: [{ role: "user", content: userMsg }],
         temperature: 0.3,
         maxTokens: 600,
         timeout: 30000,
@@ -434,7 +715,63 @@ Score guidelines:
       });
       return parseJSON(res.content, fallback);
     } catch (e) {
-      console.warn('⚠️ [CampaignInterview] Final report failed:', e.message);
+      console.warn("⚠️ [CampaignInterview] Final report failed:", e.message);
+      return fallback;
+    }
+  }
+  async _combinedTurn(
+    context,
+    moduleType,
+    conversation,
+    transcript,
+    lastQuestion,
+    coverage,
+    shouldEnd,
+  ) {
+    // Short conversation summary to avoid topic anchoring
+    const conversationSummary = conversation
+      .slice(-4)
+      .map(
+        (e) =>
+          `${e.type === "interviewer" ? "Interviewer" : "Candidate"}: ${e.content}`,
+      )
+      .join("\n");
+
+    const systemPrompt = context.systemPrompt;
+    const userMsg = buildMixedQuestionPrompt({
+      transcript,
+      conversationSummary,
+      coverage,
+      shouldEnd,
+    });
+
+    const fallback = {
+      analysis: {
+        quality: "fair",
+        score: 50,
+        completeness: "partial",
+        keyPoints: [],
+      },
+      coverageUpdates: [],
+      decision: shouldEnd ? "end_interview" : "next_question",
+      nextQuestion: shouldEnd
+        ? "Thank you for your time today. That concludes our session!"
+        : "Can you elaborate on another aspect of your experience?",
+      report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
+    };
+
+    try {
+      const res = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userMsg }],
+        temperature: 0.6,
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: false,
+      });
+      return parseJSON(res.content, fallback);
+    } catch (e) {
+      console.warn("⚠️ [CampaignInterview] Combined turn failed:", e.message);
       return fallback;
     }
   }

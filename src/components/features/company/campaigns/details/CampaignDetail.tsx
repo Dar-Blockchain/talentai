@@ -90,14 +90,16 @@ const CampaignDetail: React.FC<Props> = ({
   const typeEntry = (isEmployee ? require("@/constants/campaign").CAMPAIGN_TYPES.find((t: any) => t.value === campaign.type) : null);
   const typeColor = typeEntry?.color ?? "#6B7280";
   const canStart  = pStatus === "INVITED" || pStatus === "IN_PROGRESS";
-  const supportsAction = campaign.module?.type === "AI_INTERVIEW" || campaign.module?.type === "SKILL_TEST";
+  const moduleType = campaign.module?.type;
+  const supportsAction = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
+  const supportsResults = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
 
   const handleAssessmentAction = () => {
-    if (pStatus === "COMPLETED") {
-      router.push(`/interview/results?campaignId=${campaign._id}`);
-    } else {
-      router.push(`/employee/campaigns/${campaign._id}/interview`);
-    }
+    router.push(`/employee/campaigns/${campaign._id}/assessment`);
+  };
+
+  const handleViewResults = () => {
+    router.push(`/employee/campaigns/${campaign._id}/results`);
   };
 
   // Header actions slot (employee mode)
@@ -123,13 +125,17 @@ const CampaignDetail: React.FC<Props> = ({
             ? <ArrowForwardOutlined sx={{ fontSize: 14, color: "#D97706" }} />
             : <PlayArrowOutlined    sx={{ fontSize: 14, color: typeColor }} />}
           <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: pStatus === "IN_PROGRESS" ? "#D97706" : typeColor }}>
-            {pStatus === "IN_PROGRESS" ? "Continue" : "Start Assessment"}
+            {pStatus === "IN_PROGRESS"
+              ? "Continue"
+              : moduleType === "QUESTIONNAIRE"
+              ? "Start Questionnaire"
+              : "Start Assessment"}
           </Typography>
         </Box>
       )}
 
-      {supportsAction && pStatus === "COMPLETED" && (
-        <Box onClick={handleAssessmentAction} sx={{
+      {supportsResults && pStatus === "COMPLETED" && (
+        <Box onClick={handleViewResults} sx={{
           display: "flex", alignItems: "center", gap: 0.625,
           px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
           bgcolor: "#F0FDF4", border: "1px solid #BBF7D0",

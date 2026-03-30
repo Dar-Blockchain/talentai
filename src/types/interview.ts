@@ -3,9 +3,9 @@ export interface InterviewConfig {
   interviewType: 'HR_INTERVIEW' | 'TECHNICAL_INTERVIEW' | 'ASSESSMENT' | 'EVALUATION' | 'TECHNICAL_SKILL' | 'SOFT_SKILL' | 'SALARY_INTERVIEW' | 'PSYCHOTECHNIC';
   testReason: string;
   context: {
-    targetCompany: string;
-    targetRole: string;
-    experienceLevel: string;
+    targetCompany?: string;
+    targetRole?: string;
+    experienceLevel?: string;
     interviewGoal: string;
   };
   models?: {
