@@ -1,5 +1,3 @@
-export const STORAGE_KEY = "talentai_onboarding_done";
-
 export interface Step {
   target: string;
   title: string;

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Backdrop } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 import TourCard from "./tour/TourCard";
-import { STEPS, TOTAL, STORAGE_KEY } from "./tour/tourSteps";
+import { STEPS, TOTAL } from "./tour/tourSteps";
 import { resolveRect, popoverStyle } from "./tour/tourUtils";
-
-export { STORAGE_KEY };
 
 const TEAL = "#0D9488";
 
@@ -13,15 +13,18 @@ const OnboardingTour: React.FC = () => {
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
 
+  const trafficCounter = useSelector(
+    (state: RootState) => state.user.connectedUser.user?.trafficCounter ?? 0
+  );
+
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
+    if (trafficCounter === 1) {
       const t = setTimeout(() => setActive(true), 600);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [trafficCounter]);
 
   const finish = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, "1");
     setActive(false);
   }, []);
 
