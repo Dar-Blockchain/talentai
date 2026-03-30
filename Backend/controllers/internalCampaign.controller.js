@@ -239,6 +239,14 @@ exports.getCampaign = async (req, res) => {
       ).lean();
       data.participantStatus = participant?.status ?? null;
       data.completedAt       = participant?.completedAt ?? null;
+
+      if (participant?.status === 'COMPLETED') {
+        const response = await CampaignResponse.findOne(
+          { campaign: campaignId, participant: participant._id },
+          { aiScore: 1 }
+        ).lean();
+        data.score = response?.aiScore ?? null;
+      }
     }
 
     res.status(200).json({ success: true, data });
@@ -620,10 +628,20 @@ exports.getUserCampaigns = async (req, res) => {
     const total    = filtered.length;
     const paginated = filtered.slice(skip, skip + limitNum);
 
+    // Bulk-fetch scores for paginated participants
+    const participantIds = paginated.map((p) => p._id);
+    const responses = await CampaignResponse.find(
+      { participant: { $in: participantIds } },
+      { participant: 1, aiScore: 1 }
+    ).lean();
+    const scoreMap = {};
+    responses.forEach((r) => { scoreMap[r.participant.toString()] = r.aiScore ?? null; });
+
     const campaigns = await Promise.all(
       paginated.map(async (p) => {
         const targetEmployeeCount = await CampaignParticipant.countDocuments({ campaign: p.campaign._id });
-        return { ...p.campaign.toObject(), targetEmployeeCount, participantStatus: p.status };
+        const score = p.status === 'COMPLETED' ? (scoreMap[p._id.toString()] ?? null) : null;
+        return { ...p.campaign.toObject(), targetEmployeeCount, participantStatus: p.status, score };
       })
     );
 

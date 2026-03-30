@@ -138,15 +138,20 @@ const CampaignDetail: React.FC<Props> = ({
         <Box onClick={handleViewResults} sx={{
           display: "flex", alignItems: "center", gap: 0.625,
           px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-          bgcolor: "#F0FDF4", border: "1px solid #BBF7D0",
-          transition: "all 0.15s", "&:hover": { opacity: 0.85 },
+          background: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)",
+          boxShadow: "0 3px 10px rgba(139,92,246,0.35)",
+          transition: "all 0.15s",
+          "&:hover": { boxShadow: "0 5px 16px rgba(139,92,246,0.45)", transform: "translateY(-1px)" },
         }}>
-          <VisibilityOutlined sx={{ fontSize: 14, color: "#16A34A" }} />
-          <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: "#16A34A" }}>View Results</Typography>
+          <VisibilityOutlined sx={{ fontSize: 14, color: "#fff" }} />
+          <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: "#fff" }}>View Results</Typography>
         </Box>
       )}
     </Box>
   ) : undefined;
+
+  const score = campaign.score ?? null;
+  const scoreCol = score === null ? "#6B7280" : score >= 80 ? "#16A34A" : score >= 60 ? "#0D9488" : score >= 40 ? "#D97706" : "#EF4444";
 
   const STATS = isEmployee
     ? [
@@ -166,13 +171,21 @@ const CampaignDetail: React.FC<Props> = ({
           label: "Module",
           value: modCfg?.label ?? campaign.module?.type ?? "—",
         },
-        {
-          icon: EmojiEventsOutlined,
-          color: ps.color,
-          bg: ps.bg,
-          label: "My Status",
-          value: ps.label,
-        },
+        pStatus === "COMPLETED" && score !== null
+          ? {
+              icon: EmojiEventsOutlined,
+              color: scoreCol,
+              bg: `${scoreCol}12`,
+              label: "My Score",
+              value: `${score} / 100`,
+            }
+          : {
+              icon: EmojiEventsOutlined,
+              color: ps.color,
+              bg: ps.bg,
+              label: "My Status",
+              value: ps.label,
+            },
         {
           icon: AccessTimeOutlined,
           color: remaining === null ? "#6B7280" : remaining === 0 ? "#DC2626" : remaining <= 7 ? "#D97706" : "#16A34A",
@@ -180,7 +193,7 @@ const CampaignDetail: React.FC<Props> = ({
           label: "Deadline",
           value: remaining === null ? "No deadline" : remaining === 0 ? "Expired" : `${remaining}d left`,
         },
-      ] as const
+      ]
     : [
         {
           icon: PeopleAltOutlined,
@@ -307,6 +320,7 @@ const CampaignDetail: React.FC<Props> = ({
                   module={campaign.module}
                   onConfigureModule={!isEmployee ? setConfigureModuleType : undefined}
                   showConfigure={!isEmployee}
+                  isEmployee={isEmployee}
                 />
               </Box>
               <CampaignSidebar campaign={campaign} showLastUpdated={!isEmployee} />

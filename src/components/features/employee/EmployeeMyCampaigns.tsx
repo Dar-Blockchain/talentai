@@ -188,19 +188,36 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               </Button>
             )}
             {campaign.participantStatus === "COMPLETED" && (
-              <Button
-                fullWidth
-                startIcon={<VisibilityOutlined />}
-                onClick={() => onStart(campaign._id)}
-                variant="outlined"
-                sx={{
-                  borderColor: "#E5E7EB", color: "#374151", fontWeight: 600, fontSize: "13px",
-                  textTransform: "none", borderRadius: 2, py: 0.9,
-                  "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: "#F0FDFA" },
-                }}
-              >
-                View Details
-              </Button>
+              <>
+                {campaign.score != null && (
+                  <Box sx={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    px: 1.5, py: 0.6, borderRadius: 2, flexShrink: 0,
+                    bgcolor: `${scoreColor(campaign.score)}15`,
+                    border: `1px solid ${scoreColor(campaign.score)}30`,
+                  }}>
+                    <Typography sx={{ fontSize: "15px", fontWeight: 800, color: scoreColor(campaign.score), lineHeight: 1 }}>
+                      {campaign.score}
+                    </Typography>
+                    <Typography sx={{ fontSize: "9px", color: scoreColor(campaign.score), fontWeight: 600, opacity: 0.8 }}>
+                      /100
+                    </Typography>
+                  </Box>
+                )}
+                <Button
+                  fullWidth
+                  startIcon={<VisibilityOutlined />}
+                  onClick={() => onStart(campaign._id)}
+                  variant="outlined"
+                  sx={{
+                    borderColor: "#E5E7EB", color: "#374151", fontWeight: 600, fontSize: "13px",
+                    textTransform: "none", borderRadius: 2, py: 0.9,
+                    "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: "#F0FDFA" },
+                  }}
+                >
+                  View Details
+                </Button>
+              </>
             )}
             <Tooltip title="Campaign details" arrow>
               <IconButton
@@ -440,32 +457,6 @@ const EmployeeMyCampaigns: React.FC = () => {
       {/* ── Error state ───────────────────────────────────────────────────────── */}
       {!loading && error && (
         <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>
-      )}
-
-      {/* ── Avg score banner (if any completed) ───────────────────────────────── */}
-      {avgScore > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-          <Box sx={{
-            display: "flex", alignItems: "center", gap: 2, p: 2, borderRadius: 3,
-            bgcolor: `${scoreColor(avgScore)}0D`, border: `1px solid ${scoreColor(avgScore)}30`,
-          }}>
-            <EmojiEventsOutlined sx={{ fontSize: 28, color: scoreColor(avgScore) }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>
-                Your average score across completed campaigns is <span style={{ color: scoreColor(avgScore) }}>{avgScore}%</span>
-              </Typography>
-              <Typography sx={{ fontSize: "12px", color: "#6B7280" }}>
-                {avgScore >= 80 ? "Outstanding performance — keep it up!" : avgScore >= 60 ? "Good work — a few more campaigns to boost your score." : "Room to grow — complete more assessments to improve."}
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={avgScore}
-              sx={{ width: 80, height: 6, borderRadius: 3, bgcolor: "#F3F4F6", "& .MuiLinearProgress-bar": { bgcolor: scoreColor(avgScore), borderRadius: 3 } }}
-            />
-            <Typography sx={{ fontSize: "14px", fontWeight: 800, color: scoreColor(avgScore), minWidth: 36 }}>{avgScore}%</Typography>
-          </Box>
-        </motion.div>
       )}
 
       {/* ── Campaign Grid ─────────────────────────────────────────────────────── */}

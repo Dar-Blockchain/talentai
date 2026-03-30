@@ -1,8 +1,12 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
+import SettingsOutlined              from "@mui/icons-material/SettingsOutlined";
+import CheckCircleOutlined           from "@mui/icons-material/CheckCircleOutlined";
+import RadioButtonUncheckedOutlined  from "@mui/icons-material/RadioButtonUncheckedOutlined";
+import AccessTimeOutlined            from "@mui/icons-material/AccessTimeOutlined";
+import QuizOutlined                  from "@mui/icons-material/QuizOutlined";
+import EmojiEventsOutlined           from "@mui/icons-material/EmojiEventsOutlined";
+import InfoOutlined                  from "@mui/icons-material/InfoOutlined";
 import { Campaign, CampaignModule, ModuleType } from "@/types/campaign";
 import { MODULE_CONFIG } from "@/constants/campaign";
 
@@ -14,12 +18,15 @@ const CARD = {
 } as const;
 
 interface Props {
-  module: Campaign["module"];
+  module:             Campaign["module"];
   onConfigureModule?: (moduleType: ModuleType) => void;
-  showConfigure?: boolean;
+  showConfigure?:     boolean;
+  isEmployee?:        boolean;
 }
 
-const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule, showConfigure = true }) => {
+const CampaignModuleCard: React.FC<Props> = ({
+  module: mod, onConfigureModule, showConfigure = true, isEmployee = false,
+}) => {
   if (!mod) return null;
 
   const cfg      = MODULE_CONFIG[mod.type];
@@ -30,21 +37,20 @@ const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule, s
   return (
     <Box sx={{ ...CARD, p: 0, overflow: "hidden" }}>
       {/* Header */}
-      <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75, borderBottom: "1px solid #F3F4F6" }}>
+      <Box sx={{ px: 2.5, pt: 2.25, pb: 1.75, borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Typography sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#0F172A" }}>
           Assessment Module
         </Typography>
       </Box>
 
-      <Box sx={{ p: 2.5 }}>
+      <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
         {/* Module banner */}
         <Box sx={{
           borderRadius: "14px", p: 2.25,
           background: `linear-gradient(135deg, ${color}10 0%, ${color}04 100%)`,
           border: `1px solid ${color}20`,
-          display: "flex", alignItems: "center", gap: 2, mb: hasConfig ? 2.5 : 0,
+          display: "flex", alignItems: "center", gap: 2,
         }}>
-          {/* Icon */}
           <Box sx={{
             width: 52, height: 52, borderRadius: "14px", flexShrink: 0,
             bgcolor: `${color}14`, border: `1px solid ${color}25`,
@@ -54,13 +60,12 @@ const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule, s
             <Icon sx={{ fontSize: 26, color }} />
           </Box>
 
-          {/* Name + description + configure */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.4 }}>
               <Typography sx={{ fontWeight: 700, fontSize: "0.9375rem", color: "#0F172A" }}>
                 {cfg.label}
               </Typography>
-              {showConfigure && (
+              {showConfigure && !isEmployee && (
                 <Box
                   onClick={() => onConfigureModule?.(mod.type)}
                   sx={{
@@ -85,12 +90,15 @@ const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule, s
           </Box>
         </Box>
 
-        {/* Configuration details */}
-        {hasConfig && <ConfigDetails mod={mod} color={color} />}
+        {/* Employee view: what to expect pills */}
+        {isEmployee && hasConfig && <EmployeeModuleDetails mod={mod} color={color} />}
 
-        {/* Not configured notice */}
-        {!hasConfig && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
+        {/* Company view: config details */}
+        {!isEmployee && hasConfig && <ConfigDetails mod={mod} color={color} />}
+
+        {/* Company view: not configured notice */}
+        {!isEmployee && !hasConfig && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1.25, borderRadius: "10px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" }}>
             <RadioButtonUncheckedOutlined sx={{ fontSize: 15, color: "#D97706", flexShrink: 0 }} />
             <Typography sx={{ fontSize: "12px", color: "#92400E" }}>
               Module not configured yet. Click <strong>Configure</strong> to set it up.
@@ -102,7 +110,71 @@ const CampaignModuleCard: React.FC<Props> = ({ module: mod, onConfigureModule, s
   );
 };
 
-// ─── Config details ───────────────────────────────────────────────────────────
+// ─── Employee: "What to expect" pills ────────────────────────────────────────
+
+const InfoPill: React.FC<{ icon: React.ElementType; label: string; value: string; color: string }> = ({
+  icon: PillIcon, label, value, color,
+}) => (
+  <Box sx={{
+    display: "flex", alignItems: "center", gap: 1.25,
+    px: 1.75, py: 1.25, borderRadius: "12px",
+    bgcolor: `${color}08`, border: `1px solid ${color}18`, flex: 1, minWidth: 0,
+  }}>
+    <Box sx={{
+      width: 30, height: 30, borderRadius: "8px", flexShrink: 0,
+      bgcolor: `${color}14`, display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <PillIcon sx={{ fontSize: 15, color }} />
+    </Box>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {value}
+      </Typography>
+    </Box>
+  </Box>
+);
+
+const EmployeeModuleDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, color }) => {
+  if (!mod.config) return null;
+
+  const pills: { icon: React.ElementType; label: string; value: string }[] = [];
+
+  if (mod.type === "QUESTIONNAIRE") {
+    const count = mod.config.questions?.length ?? 0;
+    pills.push({ icon: QuizOutlined, label: "Questions", value: `${count} question${count !== 1 ? "s" : ""}` });
+  }
+
+  if (mod.type === "AI_INTERVIEW") {
+    if (mod.config.durationMinutes) pills.push({ icon: AccessTimeOutlined, label: "Duration", value: `${mod.config.durationMinutes} min` });
+    if (mod.config.scoringCriteria?.length) pills.push({ icon: EmojiEventsOutlined, label: "Scoring", value: `${mod.config.scoringCriteria.length} criteria` });
+  }
+
+  if (mod.type === "SKILL_TEST") {
+    if (mod.config.skill) pills.push({ icon: InfoOutlined, label: "Skill", value: mod.config.skill });
+    if (mod.config.passingScore !== undefined) pills.push({ icon: EmojiEventsOutlined, label: "Pass Mark", value: `${mod.config.passingScore}%` });
+    if (mod.config.durationMinutes) pills.push({ icon: AccessTimeOutlined, label: "Duration", value: `${mod.config.durationMinutes} min` });
+  }
+
+  if (pills.length === 0) return null;
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        What to expect
+      </Typography>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        {pills.map((p) => (
+          <InfoPill key={p.label} icon={p.icon} label={p.label} value={p.value} color={color} />
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+// ─── Company: config details ──────────────────────────────────────────────────
 
 const ConfigRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1, borderBottom: "1px solid #F8FAFC" }}>
@@ -116,7 +188,6 @@ const ConfigDetails: React.FC<{ mod: CampaignModule; color: string }> = ({ mod, 
 
   return (
     <Box sx={{ borderRadius: "12px", border: "1px solid #F1F5F9", bgcolor: "#FAFBFC", overflow: "hidden" }}>
-      {/* Configured badge */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.75, py: 1, borderBottom: "1px solid #F1F5F9", bgcolor: "#F0FDF4" }}>
         <CheckCircleOutlined sx={{ fontSize: 13, color: "#16A34A" }} />
         <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#16A34A" }}>Configured</Typography>
