@@ -68,7 +68,7 @@ const profileSchema = new mongoose.Schema(
 
     // ========== CONTACT INFORMATION ==========
     contactInformation: {
-      email: { type: String, required: false },
+      email: { type: String, required: false, set: (value) => value ? value.toLowerCase() : value },
       address: { type: String, required: false },
       linkedinUrl: { type: String, required: false },
       githubUrl: { type: String, required: false },
@@ -115,7 +115,7 @@ const profileSchema = new mongoose.Schema(
 
     // ========== COMPANY SPECIFIC FIELDS ==========
     companyDetails: {
-      email: String,
+      email: { type: String, set: (value) => value ? value.toLowerCase() : value },
       name: String,
       industry: String,
       size: String,

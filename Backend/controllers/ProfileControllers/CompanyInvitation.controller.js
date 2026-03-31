@@ -69,7 +69,7 @@ module.exports.respondInvitation = async (req, res) => {
           .json({ success: false, message: "Invitation not found" });
       }
 
-      const invitationEmail = invitation.email;
+      const invitationEmail = invitation.email.toLowerCase();
       let userId;
       let userEmail;
       let jwtToken;
