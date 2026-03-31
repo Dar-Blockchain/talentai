@@ -28,6 +28,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const companyName = profile?.companyDetails?.name || "Company";
   const companyInitial = companyName[0] || "C";
+  const avatarUrl = profile?.user_image
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    : null;
 
   return (
     <Box
@@ -68,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <Box data-tour="header-chat"><HeaderChat /></Box>
         <Box data-tour="header-notif"><HeaderNotification /></Box>
-        <UserHeader companyName={companyName} companyInitial={companyInitial} />
+        <UserHeader companyName={companyName} companyInitial={companyInitial} avatarUrl={avatarUrl} />
       </Box>
     </Box>
     

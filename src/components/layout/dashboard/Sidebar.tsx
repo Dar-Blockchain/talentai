@@ -56,6 +56,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
   const companyName = profile?.companyDetails?.name || "Company";
   const companyInitial = companyName[0] || "C";
+  const avatarUrl = profile?.user_image
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    : null;
 
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -210,7 +213,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Avatar sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}>
+            <Avatar
+              src={avatarUrl ?? undefined}
+              sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}
+            >
               {companyInitial}
             </Avatar>
 
