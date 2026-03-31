@@ -212,7 +212,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             justifyContent: collapsed && !mobile ? "center" : "space-between",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer" }}
+            onClick={() => router.push("/company/settings")}
+          >
             <Avatar
               src={avatarUrl ?? undefined}
               sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}
