@@ -23,6 +23,15 @@ router.post(
   CompanyInvitationController.respondInvitation,
 );
 
+/**
+ * GET /details/:invitationId
+ * Get invitation details by ID
+ */
+router.get(
+  "/details/:invitationId",
+  CompanyInvitationController.getInvitationDetails,
+);
+
 // ========== PROTECTED ROUTES (AUTHENTICATION REQUIRED) ==========
 // All routes below require an authenticated user and are logged
 router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
@@ -63,15 +72,6 @@ router.get(
   "/myInvitations",
   resolveCompanyActor,
   CompanyInvitationController.getCompanyInvitations,
-);
-
-/**
- * GET /details/:invitationId
- * Get invitation details by ID
- */
-router.get(
-  "/details/:invitationId",
-  CompanyInvitationController.getInvitationDetails,
 );
 
 module.exports = router;
