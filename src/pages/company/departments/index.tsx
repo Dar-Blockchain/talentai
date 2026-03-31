@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import { AppDispatch } from "@/store/store";
@@ -33,6 +34,7 @@ import DeleteDepartmentDialog from "@/components/features/company/departments/de
 import AddOutlined from "@mui/icons-material/AddOutlined";
 
 const DepartmentsPage: React.FC = () => {
+  useCompanyAccess("canViewDepartments");
   const dispatch = useDispatch<AppDispatch>();
 
   const creating = useSelector(selectDepartmentCreating);

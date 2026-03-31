@@ -24,7 +24,7 @@ const AUTH_ONLY_PATHS = ["/signin", "/register"];
 // Each entry: path prefix → allowed roles (empty means any authenticated role)
 const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/dashboard/admin",     roles: ["Admin"] },
-  { prefix: "/company",             roles: ["Company"] },
+  { prefix: "/company",             roles: ["Company", "Employee"] },
   { prefix: "/profile/company",     roles: ["Company"] },
   { prefix: "/dashboard/candidate", roles: ["Candidate"] },
   { prefix: "/dashboard/member",    roles: ["Candidate"] },

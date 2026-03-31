@@ -20,9 +20,11 @@ import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import PostsStats from "@/components/features/company/posts/list/Stats";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 
 
 const PostsPage: React.FC = () => {
+  useCompanyAccess("canViewJobPosts");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
   const { showToast } = useToast();

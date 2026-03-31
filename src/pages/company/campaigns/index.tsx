@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 
 const AddOutlined = dynamic(() => import("@mui/icons-material/AddOutlined"));
 
@@ -18,6 +19,7 @@ const CampaignsGrid = dynamic(
 );
 
 const CampaignsPage: React.FC = () => {
+  useCompanyAccess("canViewCampaigns");
   return (
     <DashboardLayout>
       <PageHeader

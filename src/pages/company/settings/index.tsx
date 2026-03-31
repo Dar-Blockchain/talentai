@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import SettingsProfileCard from "@/components/features/company/settings/SettingsProfileCard";
 import CompanyInfoCard from "@/components/features/company/settings/CompanyInfoCard";
@@ -10,6 +11,7 @@ import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement
 type EditSection = "company" | "contact" | null;
 
 const SettingsPage: React.FC = () => {
+  useCompanyAccess("canViewCompanyProfile");
   const {
     profile, loading, uploadingImage, fieldErrors,
     handleInputChange, handleImageUpload, handleSaveProfile, setIsEditing,

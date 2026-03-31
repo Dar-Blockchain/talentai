@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import PersonAddOutlined from "@mui/icons-material/PersonAddOutlined";
@@ -45,6 +46,7 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
 
 
 const EmployeesPage: React.FC = () => {
+  useCompanyAccess("canManageTeam");
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
 
