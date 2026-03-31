@@ -85,6 +85,10 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
     const ModIcon  = mm.icon;
     const StatIcon = ps.icon;
     const remaining = daysLeft(campaign.deadline);
+    const isExpired = campaign.deadline
+      ? new Date(campaign.deadline).getTime() < Date.now()
+      : false;
+    const isActive = campaign.participantStatus === "INVITED" || campaign.participantStatus === "IN_PROGRESS";
 
     return (
       <motion.div
@@ -145,9 +149,9 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
               </Box>
               {campaign.deadline && campaign.participantStatus !== "COMPLETED" && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <AccessTimeOutlined sx={{ fontSize: 13, color: remaining !== null && remaining <= 7 ? ROSE : "#9CA3AF" }} />
-                  <Typography sx={{ fontSize: "11px", color: remaining !== null && remaining <= 7 ? ROSE : "#6B7280", fontWeight: remaining !== null && remaining <= 7 ? 600 : 400 }}>
-                    {remaining !== null && remaining > 0 ? `${remaining}d left` : remaining === 0 ? "Due today" : `Due ${fmtDate(campaign.deadline)}`}
+                  <AccessTimeOutlined sx={{ fontSize: 13, color: isExpired ? ROSE : remaining !== null && remaining <= 7 ? ROSE : "#9CA3AF" }} />
+                  <Typography sx={{ fontSize: "11px", color: isExpired ? ROSE : remaining !== null && remaining <= 7 ? ROSE : "#6B7280", fontWeight: isExpired || (remaining !== null && remaining <= 7) ? 600 : 400 }}>
+                    {isExpired ? "Expired" : remaining !== null && remaining > 0 ? `${remaining}d left` : "Due today"}
                   </Typography>
                 </Box>
               )}
@@ -159,7 +163,16 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
 
           {/* Footer CTA */}
           <Box sx={{ px: 2.5, py: 2, borderTop: "1px solid #F3F4F6", bgcolor: "#FAFAFA", display: "flex", gap: 1, alignItems: "center" }}>
-            {campaign.participantStatus === "INVITED" && (
+            {isActive && isExpired && (
+              <Box sx={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
+                py: 0.9, borderRadius: 2, bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+              }}>
+                <AccessTimeOutlined sx={{ fontSize: 15, color: "#EF4444" }} />
+                <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#EF4444" }}>Deadline passed</Typography>
+              </Box>
+            )}
+            {campaign.participantStatus === "INVITED" && !isExpired && (
               <Button
                 fullWidth
                 startIcon={<PlayArrowOutlined />}
@@ -173,7 +186,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 Start Campaign
               </Button>
             )}
-            {campaign.participantStatus === "IN_PROGRESS" && (
+            {campaign.participantStatus === "IN_PROGRESS" && !isExpired && (
               <Button
                 fullWidth
                 startIcon={<ArrowForwardOutlined />}

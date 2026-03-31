@@ -83,13 +83,16 @@ const CampaignDetail: React.FC<Props> = ({
   const modCfg    = MODULE_CONFIG[campaign.module?.type];
   const ModIcon   = modCfg?.icon;
   const remaining = daysLeft(campaign.deadline);
+  const isExpired = campaign.deadline
+    ? new Date(campaign.deadline).getTime() < Date.now()
+    : false;
 
   // Employee-mode: participant status + CTA
   const pStatus   = campaign.participantStatus ?? "INVITED";
   const ps        = PS_CONFIG[pStatus];
   const typeEntry = (isEmployee ? require("@/constants/campaign").CAMPAIGN_TYPES.find((t: any) => t.value === campaign.type) : null);
   const typeColor = typeEntry?.color ?? "#6B7280";
-  const canStart  = pStatus === "INVITED" || pStatus === "IN_PROGRESS";
+  const canStart  = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired;
   const moduleType = campaign.module?.type;
   const supportsAction = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
   const supportsResults = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
@@ -112,6 +115,17 @@ const CampaignDetail: React.FC<Props> = ({
         <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ps.color }} />
         <Typography sx={{ fontSize: "11px", fontWeight: 700, color: ps.color }}>{ps.label}</Typography>
       </Box>
+
+      {isExpired && pStatus !== "COMPLETED" && (
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 0.5,
+          px: 1.125, py: "4px", borderRadius: "999px",
+          bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+        }}>
+          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#EF4444" }} />
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#EF4444" }}>Deadline passed</Typography>
+        </Box>
+      )}
 
       {supportsAction && canStart && (
         <Box onClick={handleAssessmentAction} sx={{

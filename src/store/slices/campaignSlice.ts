@@ -178,20 +178,29 @@ export interface EmployeeCampaignFilters {
   search?: string;
   participantStatus?: string;
   period?: string;
+  page?: number;
+  limit?: number;
 }
 
 export const fetchEmployeeCampaigns = createAsyncThunk<
-  EmployeeCampaignEntry[],
+  { data: EmployeeCampaignEntry[]; total: number; pages: number; page: number; limit: number },
   EmployeeCampaignFilters,
   { rejectValue: string }
->("campaign/fetchEmployeeCampaigns", async ({ userId, search, participantStatus, period }, { rejectWithValue }) => {
+>("campaign/fetchEmployeeCampaigns", async ({ userId, search, participantStatus, period, page = 1, limit = 10 }, { rejectWithValue }) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = { page: String(page), limit: String(limit) };
     if (search)            params.search            = search;
     if (participantStatus) params.participantStatus = participantStatus;
     if (period)            params.period            = period;
     const response = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params });
-    return response.data.data as EmployeeCampaignEntry[];
+    const json = response.data;
+    return {
+      data:  json.data as EmployeeCampaignEntry[],
+      total: json.pagination?.total ?? json.data?.length ?? 0,
+      pages: json.pagination?.pages ?? 1,
+      page:  json.pagination?.page  ?? page,
+      limit: json.pagination?.limit ?? limit,
+    };
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
@@ -296,6 +305,9 @@ interface CampaignState {
   employeeCampaigns: EmployeeCampaignEntry[];
   employeeCampaignsLoading: boolean;
   employeeCampaignsError: string | null;
+  employeeCampaignsTotal: number;
+  employeeCampaignsPages: number;
+  employeeCampaignsPage: number;
 
   employeeMetrics: { total: number; invited: number; inProgress: number; completed: number } | null;
   employeeMetricsLoading: boolean;
@@ -344,6 +356,9 @@ const initialState: CampaignState = {
   employeeCampaigns: [],
   employeeCampaignsLoading: false,
   employeeCampaignsError: null,
+  employeeCampaignsTotal: 0,
+  employeeCampaignsPages: 1,
+  employeeCampaignsPage: 1,
 
   employeeMetrics: null,
   employeeMetricsLoading: false,
@@ -541,7 +556,10 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchEmployeeCampaigns.fulfilled, (state, action) => {
         state.employeeCampaignsLoading = false;
-        state.employeeCampaigns = action.payload;
+        state.employeeCampaigns = action.payload.data;
+        state.employeeCampaignsTotal = action.payload.total;
+        state.employeeCampaignsPages = action.payload.pages;
+        state.employeeCampaignsPage  = action.payload.page;
       })
       .addCase(fetchEmployeeCampaigns.rejected, (state, action) => {
         state.employeeCampaignsLoading = false;
@@ -683,6 +701,12 @@ export const selectEmployeeCampaignsLoading = (state: any) =>
   state.campaign.employeeCampaignsLoading as boolean;
 export const selectEmployeeCampaignsError = (state: any) =>
   state.campaign.employeeCampaignsError as string | null;
+export const selectEmployeeCampaignsTotal = (state: any) =>
+  state.campaign.employeeCampaignsTotal as number;
+export const selectEmployeeCampaignsPages = (state: any) =>
+  state.campaign.employeeCampaignsPages as number;
+export const selectEmployeeCampaignsPage = (state: any) =>
+  state.campaign.employeeCampaignsPage as number;
 
 export const selectParticipantActionLoading = (state: any) =>
   state.campaign.participantActionLoading as boolean;

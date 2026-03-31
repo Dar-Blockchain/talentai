@@ -241,41 +241,45 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer */}
       <Box sx={{ p: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            justifyContent: collapsed && !mobile ? "center" : "space-between",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Avatar sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}>
+        {collapsed && !mobile ? (
+          /* Collapsed: stack avatar + logout icon */
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+            <Avatar sx={{ bgcolor: "#0D9488", width: 36, height: 36, fontSize: 14 }}>
               {displayInitial}
             </Avatar>
-
-            {(!collapsed || mobile) && (
+            <IconButton
+              size="small"
+              onClick={handleLogout}
+              sx={{ color: "#6B7280", "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" } }}
+            >
+              <LogoutOutlined sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+        ) : (
+          /* Expanded: avatar + name/email + logout */
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+              <Avatar sx={{ bgcolor: "#0D9488", width: 36, height: 36, fontSize: 14, flexShrink: 0 }}>
+                {displayInitial}
+              </Avatar>
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {displayName}
                 </Typography>
-                <Typography sx={{ fontSize: 9, color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <Typography sx={{ fontSize: 11, color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {displayEmail}
                 </Typography>
               </Box>
-            )}
-          </Box>
-
-          {!collapsed && (
+            </Box>
             <IconButton
               size="small"
-              sx={{ color: "#6B7280" }}
               onClick={handleLogout}
+              sx={{ flexShrink: 0, color: "#6B7280", "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" } }}
             >
-              <LogoutOutlined />
+              <LogoutOutlined sx={{ fontSize: 18 }} />
             </IconButton>
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );

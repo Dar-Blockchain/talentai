@@ -15,8 +15,9 @@ import {
 } from '@/store/slices/campaignSlice';
 
 import { GlobalStyles }           from '@/components/features/campaign/assessment/styles';
-import { InterviewSpinner, InterviewErrorState } from '@/components/features/campaign/assessment/InterviewLoadingState';
+import { InterviewSpinner, InterviewErrorState, InterviewExpiredState } from '@/components/features/campaign/assessment/InterviewLoadingState';
 import InterviewUnsupportedModule from '@/components/features/campaign/assessment/InterviewUnsupportedModule';
+import { daysLeft } from '@/utils/functions';
 import QuestionnaireAssessment    from '@/components/features/campaign/assessment/QuestionnaireAssessment';
 import InterviewAssessment        from '@/components/features/campaign/assessment/InterviewAssessment';
 
@@ -60,6 +61,20 @@ const EmployeeCampaignAssessment: React.FC = () => {
       <>
         <style jsx global>{GlobalStyles}</style>
         <InterviewErrorState message={campaignError} onBack={handleBack} />
+      </>
+    );
+  }
+
+  const isExpired = campaign.deadline
+    ? new Date(campaign.deadline).getTime() < Date.now()
+    : false;
+  const pStatus = campaign.participantStatus;
+
+  if (isExpired && pStatus !== 'COMPLETED') {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <InterviewExpiredState onBack={handleBack} />
       </>
     );
   }

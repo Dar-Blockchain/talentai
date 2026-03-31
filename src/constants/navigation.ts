@@ -86,18 +86,18 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
         label: "My Campaigns",
         href: "/employee/campaigns",
       },
-      {
-        id: "my-skills",
-        icon: PsychologyOutlined,
-        label: "My Skills",
-        href: "/employee/skills",
-      },
-      {
-        id: "my-interviews",
-        icon: HowToRegOutlined,
-        label: "My Interviews",
-        href: "/employee/interviews",
-      },
+      // {
+      //   id: "my-skills",
+      //   icon: PsychologyOutlined,
+      //   label: "My Skills",
+      //   href: "/employee/skills",
+      // },
+      // {
+      //   id: "my-interviews",
+      //   icon: HowToRegOutlined,
+      //   label: "My Interviews",
+      //   href: "/employee/interviews",
+      // },
     ],
   },
   {
