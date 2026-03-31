@@ -70,10 +70,6 @@ const ApplicationsPage: React.FC = () => {
       <PageHeader
         title="Applications"
         subtitle={loading ? "Loading..." : `${applications.length} applicant${applications.length !== 1 ? "s" : ""}`}
-        breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Applications" },
-        ]}
       />
 
       <ApplicationMetrics metrics={metrics} />

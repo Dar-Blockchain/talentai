@@ -51,10 +51,6 @@ const NotificationsPage: React.FC = () => {
       <PageHeader
         title="Notifications"
         subtitle={unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
-        breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Notifications" },
-        ]}
         actions={
           notifications.length > 0 ? (
             <Box sx={{ display: "flex", gap: 1 }}>

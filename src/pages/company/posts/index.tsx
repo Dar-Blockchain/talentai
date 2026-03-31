@@ -89,10 +89,6 @@ const PostsPage: React.FC = () => {
             <PageHeader
               title="Job Posts"
               subtitle="Manage your open positions, track candidates, and share interview links."
-              breadcrumbs={[
-                { label: "Dashboard", href: "/company/dashboard" },
-                { label: "Job Posts" },
-              ]}
               actions={[
                 <AppButton
                   key="new"

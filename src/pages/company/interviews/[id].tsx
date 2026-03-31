@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
 import InterviewDetail from "@/components/features/company/interviews/details/InterviewDetail";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchInterviewById } from "@/store/slices/interviewSlice";
@@ -21,7 +22,9 @@ const InterviewDetailPage: React.FC = () => {
     dispatch(fetchInterviewById(id as string));
   }, [router.isReady, id, dispatch]);
 
-  const handleBack = () => router.push("/company/interviews");
+  const handleBack = () => router.back();
+
+  const candidateName = assessment?.candidate?.username || assessment?.candidate?.email || "Unknown";
 
   if (loading) {
     return (
@@ -47,6 +50,14 @@ const InterviewDetailPage: React.FC = () => {
 
   return (
     <DashboardLayout>
+      <PageHeader
+        title={candidateName}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/company/dashboard" },
+          { label: "Interviews", href: "/company/interviews" },
+          { label: candidateName },
+        ]}
+      />
       <InterviewDetail assessment={assessment} stepsData={stepsData} hasSteps={hasSteps} onBack={handleBack} />
     </DashboardLayout>
   );
