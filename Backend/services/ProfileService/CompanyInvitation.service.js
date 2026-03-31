@@ -224,12 +224,12 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
     throw error;
   }
 
-  // Verify token payload matches invitation data
-  if (decodedToken.userEmail !== userEmail) {
+  // Verify token payload matches invitation data (normalize to lowercase for comparison)
+  if (decodedToken.userEmail.toLowerCase() !== userEmail.toLowerCase()) {
     throw new Error("Invitation not for this user");
   }
 
-  if (decodedToken.userEmail !== invitation.email) {
+  if (decodedToken.userEmail.toLowerCase() !== invitation.email.toLowerCase()) {
     throw new Error("Token email does not match invitation email");
   }
 

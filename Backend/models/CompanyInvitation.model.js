@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const CompanyInvitationSchema = new mongoose.Schema({
-  email: { type: String, required: true },
+  email: { type: String, required: true, set: (value) => value.toLowerCase() },
   company: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   role: { type: String, default: "Manager" },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
