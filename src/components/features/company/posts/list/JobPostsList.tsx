@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { memo, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,13 +9,13 @@ import {
   Menu,
   MenuItem,
   Pagination,
+  Button,
 } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
-import { Button } from "@mui/material";
 import JobPostCard from "./JobPostCard";
 
 const TEAL      = "#0D9488";
@@ -43,8 +43,6 @@ interface JobPostsListProps {
   pagination: PaginationInfo;
   onPageChange: (page: number) => void;
   onDelete: (id: string) => void;
-  onCopyLink: (id: string) => void;
-  onViewPassed: (id: string) => void;
   onViewDetails: (id: string) => void;
   onCreateClick: () => void;
 }
@@ -133,7 +131,7 @@ const SortButton: React.FC<{ value: SortOption; onChange: (v: SortOption) => voi
 };
 
 /* ── Main component ────────────────────────────────────────── */
-const JobPostsList: React.FC<JobPostsListProps> = ({
+const JobPostsList = memo<JobPostsListProps>(({
   jobs,
   loading,
   error,
@@ -147,8 +145,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
   pagination,
   onPageChange,
   onDelete,
-  onCopyLink,
-  onViewPassed,
   onViewDetails,
   onCreateClick,
 }) => {
@@ -286,8 +282,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                   job={job}
                   index={i}
                   onDelete={onDelete}
-                  onCopyLink={onCopyLink}
-                  onViewPassed={onViewPassed}
                   onViewDetails={onViewDetails}
                 />
               ))}
@@ -315,6 +309,8 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
       </Box>
     </Box>
   );
-};
+});
+
+JobPostsList.displayName = "JobPostsList";
 
 export default JobPostsList;
