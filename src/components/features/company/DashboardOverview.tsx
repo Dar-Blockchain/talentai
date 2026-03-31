@@ -27,8 +27,8 @@ const TEAL_BORDER = "#99F6E4";
 
 const STAT_CONFIG = [
   // { key: "totalEmployees",   label: "Team Members",       icon: PeopleOutlined,           color: "#8B5CF6", bg: "#F5F3FF" },
-  { key: "avgInterviewScore",label: "Avg. Interview Score",icon: PsychologyOutlined,       color: "#3B82F6", bg: "#EFF6FF", suffix: "%" },
-  { key: "activeJobPosts",   label: "Active Job Posts",   icon: WorkOutlined,             color: TEAL,      bg: TEAL_BG },
+  { key: "avgInterviewScore", label: "Avg. Interview Score", icon: PsychologyOutlined, color: "#3B82F6", bg: "#EFF6FF", suffix: "%", emptyText: "No interviews yet", emptyHref: "/company/posts/create" },
+  { key: "activeJobPosts",    label: "Active Job Posts",    icon: WorkOutlined,        color: TEAL,      bg: TEAL_BG,   emptyText: "No posts yet",       emptyHref: "/company/posts/create" },
   // { key: "activeCampaigns",  label: "Active Campaigns",   icon: TrendingUpOutlined,        color: "#F59E0B", bg: "#FFFBEB" },
 ];
 
@@ -195,24 +195,33 @@ const DashboardOverview: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2.5 }}>
         {STAT_CONFIG.map((stat, idx) => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
-          const value = raw != null ? `${raw}${stat.suffix || ""}` : "—";
+          const isEmpty = !statsLoading && (raw == null || raw === 0);
           return (
             <motion.div key={stat.key} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
-              <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : stat.key === "activeCampaigns" ? "campaigns" : ""}`}>
+              <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : ""}`}>
                 <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
                   <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: stat.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <stat.icon sx={{ fontSize: 20, color: stat.color }} />
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "flex-end", gap: "2px", height: 24 }}>
                     {[3, 5, 4, 7, 5, 8, 6].map((h, i) => (
-                      <Box key={i} sx={{ width: 3, borderRadius: "2px 2px 0 0", height: `${h * 12}%`, bgcolor: stat.color, opacity: 0.2 + i * 0.1 }} />
+                      <Box key={i} sx={{ width: 3, borderRadius: "2px 2px 0 0", height: `${h * 12}%`, bgcolor: stat.color, opacity: isEmpty ? 0.08 : 0.2 + i * 0.1 }} />
                     ))}
                   </Box>
                 </Box>
                 {statsLoading ? (
                   <Skeleton variant="text" width={70} height={38} />
+                ) : isEmpty ? (
+                  <Box>
+                    <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#9CA3AF" }}>{stat.emptyText}</Typography>
+                    {stat.emptyHref && (
+                      <Typography onClick={() => router.push(stat.emptyHref!)} sx={{ fontSize: "0.75rem", fontWeight: 600, color: stat.color, cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}>
+                        Create one →
+                      </Typography>
+                    )}
+                  </Box>
                 ) : (
-                  <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>{value}</Typography>
+                  <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>{raw}{stat.suffix || ""}</Typography>
                 )}
                 <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: "#9CA3AF", mt: 0.75, textTransform: "uppercase", letterSpacing: "0.06em" }}>{stat.label}</Typography>
               </Card>
@@ -235,10 +244,17 @@ const DashboardOverview: React.FC = () => {
             </Box>
             {appMetricsLoading ? (
               <Skeleton variant="text" width={70} height={38} />
-            ) : (
+            ) : appMetrics?.totalApplicants ? (
               <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>
-                {appMetrics?.totalApplicants ?? "—"}
+                {appMetrics.totalApplicants}
               </Typography>
+            ) : (
+              <Box>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#9CA3AF" }}>No applicants yet</Typography>
+                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}>
+                  Post a job →
+                </Typography>
+              </Box>
             )}
             <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: "#9CA3AF", mt: 0.75, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Applicants</Typography>
           </Card>
@@ -255,8 +271,9 @@ const DashboardOverview: React.FC = () => {
             {richLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : trendData.length === 0 ? (
-              <Box sx={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No interview data yet</Typography>
+              <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No interviews conducted yet</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", textAlign: "center", maxWidth: 260 }}>Interviews run automatically when candidates complete a campaign</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -275,8 +292,8 @@ const DashboardOverview: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             )}
-            {/* Pass rate pill */}
-            {!richLoading && richStats && (
+            {/* Pass rate pill — only show when there's real data */}
+            {!richLoading && richStats && richStats.totalInterviews > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: TEAL }} />
@@ -298,8 +315,11 @@ const DashboardOverview: React.FC = () => {
             {richLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : !richStats?.scoreDistribution?.some((d: any) => d.count > 0) ? (
-              <Box sx={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No data yet</Typography>
+              <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No scores recorded yet</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", textAlign: "center", maxWidth: 200 }}>
+                  Scores appear after candidates complete interviews
+                </Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -316,10 +336,10 @@ const DashboardOverview: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             )}
-            {/* Legend */}
-            {!richLoading && richStats?.scoreDistribution && (
+            {/* Legend — only show when there's real data */}
+            {!richLoading && richStats?.scoreDistribution?.some((d: any) => d.count > 0) && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
-                {richStats.scoreDistribution.map((d: any, i: number) => (
+                {richStats.scoreDistribution.filter((d: any) => d.count > 0).map((d: any, i: number) => (
                   <Box key={d.range} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: "2px", bgcolor: BAR_COLORS[i] }} />
                     <Typography sx={{ fontSize: "0.68rem", color: "#6B7280" }}>{d.range}: <strong style={{ color: "#111827" }}>{d.count}</strong></Typography>
@@ -342,7 +362,8 @@ const DashboardOverview: React.FC = () => {
               SKELETON_ROWS.slice(0, 4).map((i) => <Skeleton key={i} variant="rectangular" height={36} sx={{ borderRadius: "8px" }} />)
             ) : !richStats?.topJobs?.length ? (
               <Box sx={{ py: 4, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No data yet</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No interviews yet</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.4 }}>Interview data appears after candidates complete a campaign</Typography>
               </Box>
             ) : richStats.topJobs.map((job: any, i: number) => {
               const pct = richStats.totalInterviews > 0 ? Math.round((job.count / richStats.totalInterviews) * 100) : 0;
@@ -368,7 +389,7 @@ const DashboardOverview: React.FC = () => {
         <Card>
           <CardHeader
             title="Recent Interviews"
-            subtitle={interviewsLoading ? "Loading..." : `${recentInterviews.length} latest results`}
+            subtitle={interviewsLoading ? "Loading..." : recentInterviews.length > 0 ? `${recentInterviews.length} latest results` : "No results yet"}
             action={<ViewAll onClick={() => router.push("/company/interviews")} />}
           />
           <Box sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -382,7 +403,8 @@ const DashboardOverview: React.FC = () => {
               ))
             ) : recentInterviews.length === 0 ? (
               <Box sx={{ py: 5, textAlign: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No interviews yet</Typography>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No interviews yet</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.4 }}>Interviews are generated automatically via campaigns</Typography>
               </Box>
             ) : recentInterviews.map((iv, i) => {
               const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
@@ -419,8 +441,9 @@ const DashboardOverview: React.FC = () => {
             {appsLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : appTrendData.every(d => d.count === 0) ? (
-              <Box sx={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No application data yet</Typography>
+              <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No applications yet</Typography>
+                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Post a job to attract candidates →</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -449,8 +472,9 @@ const DashboardOverview: React.FC = () => {
             {appsLoading ? (
               <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
             ) : appPerJobData.length === 0 ? (
-              <Box sx={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No application data yet</Typography>
+              <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No applications yet</Typography>
+                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Post a job to attract candidates →</Typography>
               </Box>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -476,7 +500,7 @@ const DashboardOverview: React.FC = () => {
       <Card data-tour="job-posts">
         <CardHeader
           title="Job Posts"
-          subtitle={postsLoading ? "Loading..." : `${recentPosts.length} recent posts`}
+          subtitle={postsLoading ? "Loading..." : recentPosts.length > 0 ? `${recentPosts.length} recent posts` : "No posts yet"}
           action={<ViewAll onClick={() => router.push("/company/posts")} />}
         />
         <Box sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -485,6 +509,7 @@ const DashboardOverview: React.FC = () => {
           ) : recentPosts.length === 0 ? (
             <Box sx={{ py: 5, textAlign: "center" }}>
               <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No job posts yet</Typography>
+              <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: TEAL, cursor: "pointer", mt: 0.75, "&:hover": { textDecoration: "underline" } }}>Create your first post →</Typography>
             </Box>
           ) : recentPosts.map((post: any, i: number) => {
             const status = post.status || "draft";
@@ -510,6 +535,7 @@ const DashboardOverview: React.FC = () => {
           })}
         </Box>
       </Card>
+
 
     </Box>
   );
