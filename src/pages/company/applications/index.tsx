@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { Box, Skeleton, Pagination, Typography } from "@mui/material";
@@ -15,10 +15,24 @@ import {
   selectApplicationsLoading,
 } from "@/store/slices/jobApplicationSlice";
 import ApplicationMetrics from "@/components/features/company/applications/ApplicationMetrics";
-import ApplicationFilters from "@/components/features/company/applications/ApplicationFilters";
+import ApplicationFilters, {
+  FilterState,
+  FilterPreset,
+  DEFAULT_FILTERS,
+} from "@/components/features/company/applications/ApplicationFilters";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
 
 const PAGE_SIZE = 8;
+const PRESETS_KEY = "app_filter_presets";
+
+function loadPresets(): FilterPreset[] {
+  try { return JSON.parse(localStorage.getItem(PRESETS_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function savePresets(presets: FilterPreset[]) {
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+}
 
 const ApplicationsPage: React.FC = () => {
   const router = useRouter();
@@ -29,61 +43,98 @@ const ApplicationsPage: React.FC = () => {
   const loading = useSelector(selectApplicationsLoading);
 
   const [page, setPage] = useState(1);
-  const [nameSearch, setNameSearch] = useState("");
-  const [skillSearch, setSkillSearch] = useState("");
-  const [postFilter, setPostFilter] = useState("all");
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [presets, setPresets] = useState<FilterPreset[]>([]);
 
   useEffect(() => {
+    setPresets(loadPresets());
     dispatch(fetchCompanyApplicationMetrics());
     dispatch(fetchCompanyApplications({}));
   }, [dispatch]);
 
+  // All filters sent server-side — debounced for text inputs
   useEffect(() => {
-    const params: { candidateName?: string; skill?: string; postId?: string } = {};
-    if (nameSearch.trim()) params.candidateName = nameSearch.trim();
-    if (skillSearch.trim()) params.skill = skillSearch.trim();
-    if (postFilter !== "all") params.postId = postFilter;
+    const params: Parameters<typeof fetchCompanyApplications>[0] = {};
+    if (filters.nameSearch.trim()) params.candidateName = filters.nameSearch.trim();
+    if (filters.skillSearch.trim()) params.skill = filters.skillSearch.trim();
+    if (filters.postFilter !== "all") params.postId = filters.postFilter;
+    if (filters.scoreMin > 0) params.scoreMin = filters.scoreMin;
+    if (filters.scoreMax < 100) params.scoreMax = filters.scoreMax;
+    if (filters.dateFrom) params.dateFrom = filters.dateFrom;
+    if (filters.dateTo) params.dateTo = filters.dateTo;
 
+    const delay = filters.nameSearch || filters.skillSearch ? 400 : 0;
     const timer = setTimeout(() => {
       dispatch(fetchCompanyApplications(params));
       setPage(1);
-    }, nameSearch || skillSearch ? 400 : 0);
+    }, delay);
 
     return () => clearTimeout(timer);
-  }, [nameSearch, skillSearch, postFilter, dispatch]);
+  }, [
+    filters.nameSearch, filters.skillSearch, filters.postFilter,
+    filters.scoreMin, filters.scoreMax,
+    filters.dateFrom, filters.dateTo, dispatch,
+  ]);
+
+  const filtered = applications;
 
   const postOptions = useMemo(() => {
     const seen = new Map<string, string>();
-    allApplications.forEach((a) => {
+    allApplications.forEach((a: any) => {
       if (a.post?._id) seen.set(a.post._id, a.post.jobDetails?.title || a.post.title || a.post._id);
     });
     return Array.from(seen.entries()).map(([id, title]) => ({ id, title }));
   }, [allApplications]);
 
-  const totalPages = Math.ceil(applications.length / PAGE_SIZE);
-  const paged = applications.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleClear = () => { setNameSearch(""); setSkillSearch(""); setPostFilter("all"); setPage(1); };
+  const handleFiltersChange = useCallback((f: FilterState) => {
+    setFilters(f);
+    setPage(1);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+  }, []);
+
+  const handleSavePreset = useCallback((name: string, f: FilterState) => {
+    const next = [...presets, { id: Date.now().toString(), name, filters: f }];
+    setPresets(next);
+    savePresets(next);
+  }, [presets]);
+
+  const handleDeletePreset = useCallback((id: string) => {
+    const next = presets.filter((p) => p.id !== id);
+    setPresets(next);
+    savePresets(next);
+  }, [presets]);
+
+  const handleApplyPreset = useCallback((f: FilterState) => {
+    setFilters(f);
+    setPage(1);
+  }, []);
 
   return (
     <DashboardLayout>
       <PageHeader
         title="Applications"
-        subtitle={loading ? "Loading..." : `${applications.length} applicant${applications.length !== 1 ? "s" : ""}`}
+        subtitle={loading ? "Loading..." : `${filtered.length} applicant${filtered.length !== 1 ? "s" : ""}`}
       />
 
       <ApplicationMetrics metrics={metrics} />
 
       <ApplicationFilters
-        nameSearch={nameSearch}
-        skillSearch={skillSearch}
-        postFilter={postFilter}
+        filters={filters}
         postOptions={postOptions}
-        resultCount={applications.length}
-        onNameChange={(v) => { setNameSearch(v); setPage(1); }}
-        onSkillChange={(v) => { setSkillSearch(v); setPage(1); }}
-        onPostChange={(v) => { setPostFilter(v); setPage(1); }}
+        resultCount={filtered.length}
+        presets={presets}
+        onChange={handleFiltersChange}
         onClear={handleClear}
+        onSavePreset={handleSavePreset}
+        onDeletePreset={handleDeletePreset}
+        onApplyPreset={handleApplyPreset}
       />
 
       {loading ? (
