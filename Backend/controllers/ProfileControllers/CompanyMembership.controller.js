@@ -6,7 +6,12 @@ const flattenMembership = (membership) => {
   const user = m?.user || {};
   const profile = user?.profile || {};
 
-  const { user: _user, department: _department, company: _company, ...rest } = m;
+  const {
+    user: _user,
+    department: _department,
+    company: _company,
+    ...rest
+  } = m;
 
   const result = {
     ...rest,
@@ -29,7 +34,17 @@ const flattenMembership = (membership) => {
 module.exports.getMembershipsByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { search, status, department, page = 1, limit = 10, sortBy, order, role, departmentId } = req.query;
+    const {
+      search,
+      status,
+      department,
+      page = 1,
+      limit = 10,
+      sortBy,
+      order,
+      role,
+      departmentId,
+    } = req.query;
 
     // Build filters object
     const filters = {};
@@ -62,21 +77,21 @@ module.exports.deleteMembership = async (req, res) => {
   try {
     const { membershipId } = req.params;
     const companyOwnerId = req.user._id;
-    
+
     const result = await CompanyMembershipService.deleteMembership(
       membershipId,
       companyOwnerId,
     );
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: result.message,
-      deleted: result 
+      deleted: result,
     });
   } catch (error) {
-    res.status(400).json({ 
-      success: false, 
-      message: error.message 
+    res.status(400).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -148,12 +163,10 @@ module.exports.updateMembership = async (req, res) => {
 module.exports.getMembershipStats = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const membershipStats = await CompanyMembershipService.getMembershipStatsByCompany(
-      companyId,
-    );
-    const invitationStats = await CompanyInvitationService.getInvitationStatsByCompany(
-      companyId,
-    );
+    const membershipStats =
+      await CompanyMembershipService.getMembershipStatsByCompany(companyId);
+    const invitationStats =
+      await CompanyInvitationService.getInvitationStatsByCompany(companyId);
 
     // combine totals for overall count
     const combinedTotal =
@@ -177,7 +190,8 @@ module.exports.getMembershipByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const membership = await CompanyMembershipService.getMembershipByUserId(userId);
+    const membership =
+      await CompanyMembershipService.getMembershipByUserId(userId);
     const flattenedMembership = flattenMembership(membership);
 
     res.json({ success: true, membership: flattenedMembership });
