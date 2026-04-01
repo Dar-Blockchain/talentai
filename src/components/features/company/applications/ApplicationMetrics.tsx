@@ -10,10 +10,10 @@ interface Props {
 }
 
 const STATS = [
-  { key: "totalApplicants", icon: PeopleOutlined,          label: "Total Applicants", color: "#8B5CF6", bg: "#F5F3FF",  fmt: (v: number) => v },
-  { key: "totalJobPosts",   icon: AssignmentIndOutlined,   label: "Job Posts",        color: "#0D9488", bg: "#F0FDFA",  fmt: (v: number) => v },
-  { key: "avgCVScore",      icon: StarOutlined,            label: "Avg CV Score",     color: "#F59E0B", bg: "#FFFBEB",  fmt: (v: number) => v ? `${v}%` : "—" },
-  { key: "topCVScore",      icon: TrendingUpOutlined,      label: "Top CV Score",     color: "#3B82F6", bg: "#EFF6FF",  fmt: (v: number) => v ? `${v}%` : "—" },
+  { key: "totalApplicants", icon: PeopleOutlined,          label: "Total Applicants", color: "#0D9488", bg: "#F0FDFA",  fmt: (v: number) => v },
+  { key: "totalJobPosts",   icon: AssignmentIndOutlined,   label: "Job Posts",        color: "#10B981", bg: "#F0FDF4",  fmt: (v: number) => v },
+  { key: "avgCVScore",      icon: StarOutlined,            label: "Avg CV Score",     color: "#6366F1", bg: "#EEF2FF",  fmt: (v: number) => v ? `${v}%` : "N/A" },
+  { key: "topCVScore",      icon: TrendingUpOutlined,      label: "Top CV Score",     color: "#6366F1", bg: "#EEF2FF",  fmt: (v: number) => v ? `${v}%` : "N/A" },
 ];
 
 const ApplicationMetrics: React.FC<Props> = ({ metrics }) => (

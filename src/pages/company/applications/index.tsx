@@ -37,24 +37,58 @@ function getCvUrl(app: any): string | null {
   return null;
 }
 
+const q = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+const listCell = (arr: string[]) => q(arr.filter(Boolean).join("\n"));
+const fmtDateCSV = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-GB") : "");
+
 function exportCSV(apps: any[]) {
-  const headers = ["Name", "Email", "Status", "CV Score", "Job Post", "Skills", "Applied At"];
+  const headers = [
+    "Name", "Email", "Phone", "Location",
+    "Status", "CV Score (%)", "Seniority", "Years of Experience",
+    "Current Title", "Applied For",
+    "Hard Skills", "Soft Skills", "Languages",
+    "Education", "Certifications",
+    "LinkedIn", "GitHub", "Portfolio",
+    "Applied At",
+  ];
+
   const rows = apps.map((a) => {
     const profile = a.profile || {};
     const cv = a.cvAnalysis || {};
     const name = profile.firstName && profile.lastName
       ? `${profile.firstName} ${profile.lastName}`.trim()
       : cv.name || "Candidate";
-    const email = profile.userId?.email || profile.email || "";
-    const status = a.status || "";
+    const email = cv.email || profile.userId?.email || profile.email || "";
+    const phone = cv.phone || profile.phone || "";
+    const location = cv.location || profile.location || "";
+    const status = (a.status || "").charAt(0).toUpperCase() + (a.status || "").slice(1);
     const score = a.matchScore ?? cv.analysisScore ?? "";
+    const seniority = cv.seniority || "";
+    const yearsExp = cv.yearsOfExperience != null ? cv.yearsOfExperience : "";
+    const title = cv.title || "";
     const post = a.post?.jobDetails?.title || a.post?.title || "";
-    const skills = (cv.skills || profile.skills?.map((s: any) => s.name) || []).join("; ");
-    const date = a.appliedAt || a.createdAt || "";
-    return [name, email, status, score, post, skills, date].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    const hardSkills = listCell(cv.skills || profile.skills?.map((s: any) => s.name) || []);
+    const softSkills = listCell((cv.softSkills || []).map((s: any) => s.name));
+    const languages = listCell((cv.spokenLanguages || []).map((l: any) =>
+      l.proficiency ? `${l.language} — ${l.proficiency}` : l.language
+    ));
+    const education = listCell((cv.education || []).map((e: any) =>
+      [e.degree, e.field ? `in ${e.field}` : "", `@ ${e.institution}`, e.year ? `(${e.year})` : ""].filter(Boolean).join(" ")
+    ));
+    const certifications = listCell(cv.certifications || []);
+    return [
+      q(name), q(email), q(phone), q(location),
+      q(status), q(score), q(seniority), q(yearsExp),
+      q(title), q(post),
+      hardSkills, softSkills, languages,
+      education, certifications,
+      q(cv.links?.linkedin || ""), q(cv.links?.github || ""), q(cv.links?.portfolio || ""),
+      q(fmtDateCSV(a.appliedAt || a.createdAt)),
+    ].join(",");
   });
-  const csv = [headers.join(","), ...rows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+  const csv = [headers.map(q).join(","), ...rows].join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

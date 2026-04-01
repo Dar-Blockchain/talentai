@@ -24,7 +24,7 @@ const InterviewsHeader: React.FC<InterviewsHeaderProps> = ({ stats, loading = fa
       icon: <HowToRegOutlined sx={{ fontSize: 18 }} />,
       label: "Total",
       value: stats.total,
-      color: "#8310FF",
+      color: "#0D9488",
     },
     {
       icon: <EmojiEventsOutlined sx={{ fontSize: 18 }} />,
@@ -36,7 +36,7 @@ const InterviewsHeader: React.FC<InterviewsHeaderProps> = ({ stats, loading = fa
       icon: <TrendingUpOutlined sx={{ fontSize: 18 }} />,
       label: "Avg. Score",
       value: `${stats.avgScore}%`,
-      color: "#0891B2",
+      color: "#6366F1",
     },
     {
       icon: <WarningAmberOutlined sx={{ fontSize: 18 }} />,
