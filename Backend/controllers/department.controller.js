@@ -5,7 +5,7 @@ const departmentService = require("../services/department.service");
  */
 exports.createDepartment = async (req, res) => {
   try {
-    const companyId = req.user.profile;
+    const companyId = req.user._id;
     const { name, description } = req.body;
 
     if (!name) {
@@ -29,7 +29,7 @@ exports.createDepartment = async (req, res) => {
  */
 exports.getCompanyDepartments = async (req, res) => {
   try {
-    const companyId = req.user.profile;
+    const companyId = req.user._id;
     const { page = 1, limit = 20, search = "" } = req.query;
 
     const result = await departmentService.getDepartmentsByCompany(
