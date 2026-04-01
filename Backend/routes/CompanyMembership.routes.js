@@ -8,7 +8,7 @@ const { controledAcces } = require("../middleware/authorize.middleware.js");
 
 // ========== MIDDLEWARE: Authentication + Logging ==========
 // All routes below require an authenticated user and are logged
-router.use(requireAuthUser,  controledAcces("Company"), authLogMiddleware("memberships"));
+router.use(requireAuthUser,  controledAcces(['Company', 'Employee']), authLogMiddleware("memberships"));
 
 // Get statistics for a company's memberships (counts by role/status)
 router.get(

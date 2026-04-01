@@ -25,8 +25,10 @@ module.exports.resendInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
     const { departmentId } = req.body;
-    const updated =
-      await CompanyInvitationService.resendInvitation(invitationId, departmentId);
+    const updated = await CompanyInvitationService.resendInvitation(
+      invitationId,
+      departmentId,
+    );
     res.json({ success: true, updated });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -48,7 +50,7 @@ module.exports.respondInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
     const { action, token, firstName, lastName } = req.body;
-    
+
     if (!action || !["accept", "reject"].includes(action))
       return res
         .status(400)
@@ -58,11 +60,15 @@ module.exports.respondInvitation = async (req, res) => {
       if (!token) {
         return res
           .status(400)
-          .json({ success: false, message: "Token is required for accepting invitation" });
+          .json({
+            success: false,
+            message: "Token is required for accepting invitation",
+          });
       }
 
       // Get invitation details to retrieve email
-      const invitation = await CompanyInvitationService.getInvitationDetails(invitationId);
+      const invitation =
+        await CompanyInvitationService.getInvitationDetails(invitationId);
       if (!invitation) {
         return res
           .status(404)
@@ -78,39 +84,43 @@ module.exports.respondInvitation = async (req, res) => {
       const User = require("../../models/User.model");
       const existingUser = await User.findOne({ email: invitationEmail });
 
-      let userRole = 'Employee';
+      let userRole = "Employee";
 
       if (existingUser) {
         // User already exists - use their credentials
         userId = existingUser._id;
         userEmail = existingUser.email;
-        userRole = existingUser.role || 'Employee';
+        userRole = existingUser.role || "Employee";
       } else {
         // User doesn't exist - create new account with roleType 'Employee'
         if (!firstName || !lastName) {
           return res
             .status(400)
-            .json({ success: false, message: "firstName and lastName are required for new user accounts" });
+            .json({
+              success: false,
+              message:
+                "firstName and lastName are required for new user accounts",
+            });
         }
 
         try {
           const newUserData = await authService.registerUser(
             invitationEmail,
-            'Employee',
-            { firstName, lastName }
+            "Employee",
+            { firstName, lastName },
           );
 
           userId = newUserData.user._id;
           userEmail = newUserData.user.email;
 
-          console.log(`✅ New employee account created for ${invitationEmail} (${firstName} ${lastName})`);
+          console.log(
+            `✅ New employee account created for ${invitationEmail} (${firstName} ${lastName})`,
+          );
         } catch (registrationError) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: `Failed to create user account: ${registrationError.message}`
-            });
+          return res.status(400).json({
+            success: false,
+            message: `Failed to create user account: ${registrationError.message}`,
+          });
         }
       }
 
@@ -119,7 +129,7 @@ module.exports.respondInvitation = async (req, res) => {
         invitationId,
         userId,
         userEmail,
-        token
+        token,
       );
 
       // Generate token after membership is created so we have the company ID
@@ -137,13 +147,13 @@ module.exports.respondInvitation = async (req, res) => {
         path: "/",
       });
 
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         message: "Invitation accepted successfully",
         user: fullUser,
         token: jwtToken,
         profile: userProfile || null,
-        companyMembership: accepted || null
+        companyMembership: accepted || null,
       });
     }
 
