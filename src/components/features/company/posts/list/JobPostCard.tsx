@@ -53,9 +53,10 @@ interface JobPostCardProps {
   onCopyLink: (id: string) => void;
   onViewPassed: (id: string) => void;
   onViewDetails: (id: string) => void;
+  canDelete?: boolean;
 }
 
-const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails }) => {
+const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails, canDelete = true }) => {
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -168,15 +169,17 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
               </ListItemIcon>
               <ListItemText primary="View Details" primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
             </MenuItem>
-            <MenuItem
-              onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onDelete(job._id); }}
-              sx={{ gap: 1, color: "#EF4444", fontSize: "13px", fontWeight: 600, "&:hover": { bgcolor: "#FEF2F2" } }}
-            >
-              <ListItemIcon sx={{ minWidth: "auto", color: "#EF4444" }}>
-                <DeleteOutlineOutlined sx={{ fontSize: 16 }} />
-              </ListItemIcon>
-              <ListItemText primary="Delete" primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
-            </MenuItem>
+            {canDelete && (
+              <MenuItem
+                onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onDelete(job._id); }}
+                sx={{ gap: 1, color: "#EF4444", fontSize: "13px", fontWeight: 600, "&:hover": { bgcolor: "#FEF2F2" } }}
+              >
+                <ListItemIcon sx={{ minWidth: "auto", color: "#EF4444" }}>
+                  <DeleteOutlineOutlined sx={{ fontSize: 16 }} />
+                </ListItemIcon>
+                <ListItemText primary="Delete" primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
+              </MenuItem>
+            )}
           </Menu>
         </Box>
 
