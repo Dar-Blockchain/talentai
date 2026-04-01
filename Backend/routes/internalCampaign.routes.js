@@ -18,10 +18,10 @@ const { controledAcces } = require("../middleware/authorize.middleware.js");
 // so that an admin user can access it without being blocked by the "Company" role check.
 router.get(
   "/admin/all",
-  requireAuthUser,           // ensure the request is authenticated
-  controledAcces("Admin"),  // only users with role 'Admin' may proceed
+  requireAuthUser, // ensure the request is authenticated
+  controledAcces("Admin"), // only users with role 'Admin' may proceed
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getAllCampaigns
+  internalCampaignController.getAllCampaigns,
 );
 
 // user-specific endpoint to get campaigns by userId parameter
@@ -31,7 +31,7 @@ router.get(
   "/employee/:userId",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getUserCampaigns
+  internalCampaignController.getUserCampaigns,
 );
 
 // employee campaign metrics: total, invited, inProgress, completed
@@ -40,7 +40,7 @@ router.get(
   "/employee/:userId/metrics",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getEmployeeCampaignMetrics
+  internalCampaignController.getEmployeeCampaignMetrics,
 );
 
 /**
@@ -50,7 +50,7 @@ router.post(
   "/:campaignId/participate/:userId",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.participateInCampaign
+  internalCampaignController.participateInCampaign,
 );
 
 /**
@@ -60,7 +60,7 @@ router.delete(
   "/:campaignId/participate/:participantId",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.removeEmployeeFromCampaign
+  internalCampaignController.removeEmployeeFromCampaign,
 );
 
 /**
@@ -72,13 +72,17 @@ router.get(
   requireAuthUser,
   controledAcces("Company"),
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getCampaignMetrics
+  internalCampaignController.getCampaignMetrics,
 );
 
 /**
  * GET /campaigns/:campaignId — Récupérer une campagne spécifique
  */
-router.get("/:campaignId", authLogMiddleware("InternalCampaign"), internalCampaignController.getCampaign);
+router.get(
+  "/:campaignId",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getCampaign,
+);
 
 /**
  * GET /campaigns/:campaignId/participants — accessible to authenticated employees who participate
@@ -87,7 +91,7 @@ router.get(
   "/:campaignId/participants",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getCampaignParticipants
+  internalCampaignController.getCampaignParticipants,
 );
 
 /**
@@ -97,7 +101,7 @@ router.get(
 router.patch(
   "/:campaignId/start/:userId",
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.startAssessment
+  internalCampaignController.startAssessment,
 );
 
 /**
@@ -107,7 +111,7 @@ router.patch(
 router.post(
   "/:campaignId/questionnaire/submit",
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.submitQuestionnaire
+  internalCampaignController.submitQuestionnaire,
 );
 
 /**
@@ -117,14 +121,14 @@ router.post(
 router.get(
   "/:campaignId/results/:participantId",
   authLogMiddleware("InternalCampaign"),
-  internalCampaignController.getParticipantResults
+  internalCampaignController.getParticipantResults,
 );
 
 // apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuthUser,
   controledAcces("Company"),
-  authLogMiddleware("InternalCampaign")
+  authLogMiddleware("InternalCampaign"),
 );
 
 /**
@@ -146,13 +150,18 @@ router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
  * GET /campaigns/:campaignId/non-participants — Employees of the company not yet in this campaign
  * Supports: search, department, role, sortBy, order, page, limit
  */
-router.get("/:campaignId/non-participants", internalCampaignController.getNonParticipants);
+router.get(
+  "/:campaignId/non-participants",
+  internalCampaignController.getNonParticipants,
+);
 
 /**
  * PATCH /campaigns/:campaignId/status — Changer le statut d'une campagne
  */
-router.patch("/:campaignId/status", internalCampaignController.updateCampaignStatus);
-
+router.patch(
+  "/:campaignId/status",
+  internalCampaignController.updateCampaignStatus,
+);
 
 /**
  * PUT /campaigns/:campaignId — Mettre à jour une campagne
@@ -162,7 +171,9 @@ router.put("/:campaignId", internalCampaignController.updateInternalCampaign);
 /**
  * DELETE /campaigns/:campaignId — Supprimer une campagne
  */
-router.delete("/:campaignId", internalCampaignController.deleteInternalCampaign);
-
+router.delete(
+  "/:campaignId",
+  internalCampaignController.deleteInternalCampaign,
+);
 
 module.exports = router;
