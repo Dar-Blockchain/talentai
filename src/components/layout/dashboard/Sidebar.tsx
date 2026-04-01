@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -20,7 +20,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
 import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
+import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
@@ -57,6 +57,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   const employeePermissions = useSelector(selectEmployeePermissions);
 
   const isEmployee = user?.role === "Employee";
+
+  // Fetch permissions on reload if not yet in store
+  useEffect(() => {
+    if (isEmployee && !employeePermissions && user?._id) {
+      dispatch(fetchEmployeePermissions(user._id));
+    }
+  }, [isEmployee, employeePermissions, user?._id]);
 
   // Build filtered groups for employees
   const activeEmployeeGroups = employeeNavGroups.map((group) => ({

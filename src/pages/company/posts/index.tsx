@@ -21,12 +21,18 @@ import AppButton from "@/components/ui/AppButton";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import PostsStats from "@/components/features/company/posts/list/Stats";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
+import { RootState } from "@/store/store";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 
 
 const PostsPage: React.FC = () => {
   useCompanyAccess("canViewJobPosts");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
+  const user        = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms    = useSelector(selectEmployeePermissions);
+  const canCreate = user?.role !== "Employee" || !!empPerms?.canCreateJobPosts;
+  const canDelete = user?.role !== "Employee" || !!empPerms?.canCreateJobPosts;
   const { showToast } = useToast();
 
   const posts      = useSelector(selectMyPosts);
@@ -102,7 +108,7 @@ const PostsPage: React.FC = () => {
                 { label: "Dashboard", href: "/company/dashboard" },
                 { label: "Job Posts" },
               ]}
-              actions={[
+              actions={canCreate ? [
                 <AppButton
                   key="new"
                   label="New Job Post"
@@ -111,7 +117,7 @@ const PostsPage: React.FC = () => {
                   size="medium"
                   onClick={handleCreateClick}
                 />,
-              ]}
+              ] : []}
             />
 
             <PostsStats />
@@ -134,6 +140,8 @@ const PostsPage: React.FC = () => {
               onViewPassed={(id) => router.push(`/posts/${id}?tab=passed`)}
               onViewDetails={(id) => router.push(`/company/posts/${id}`)}
               onCreateClick={handleCreateClick}
+              canCreate={canCreate}
+              canDelete={canDelete}
             />
 
             <DeletePostModal

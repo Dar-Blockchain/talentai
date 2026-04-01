@@ -47,6 +47,8 @@ interface JobPostsListProps {
   onViewPassed: (id: string) => void;
   onViewDetails: (id: string) => void;
   onCreateClick: () => void;
+  canCreate?: boolean;
+  canDelete?: boolean;
 }
 
 /* ── Skeleton card ─────────────────────────────────────────── */
@@ -151,6 +153,8 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
   onViewPassed,
   onViewDetails,
   onCreateClick,
+  canCreate = true,
+  canDelete = true,
 }) => {
   return (
     <Box>
@@ -256,7 +260,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                 ? "Try different keywords or clear the search."
                 : "Create your first job post to start attracting candidates."}
             </Typography>
-            {!search && (
+            {!search && canCreate && (
               <Button
                 variant="contained"
                 startIcon={<AddOutlined />}
@@ -289,6 +293,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                   onCopyLink={onCopyLink}
                   onViewPassed={onViewPassed}
                   onViewDetails={onViewDetails}
+                  canDelete={canDelete}
                 />
               ))}
             </Box>
