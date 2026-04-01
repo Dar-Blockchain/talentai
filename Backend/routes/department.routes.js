@@ -4,9 +4,10 @@ const departmentController = require("../controllers/department.controller");
 const { requireAuthUser } = require("../middleware/auth.middleware");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // all routes require authenticated company user
-router.use(requireAuthUser, controledAcces("Company"), authLogMiddleware("Department"));
+router.use(requireAuthUser,resolveCompanyActor, controledAcces(['Company', 'Employee']), authLogMiddleware("Department"));
 
 // CRUD
 router.post("/", departmentController.createDepartment);

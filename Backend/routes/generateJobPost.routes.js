@@ -18,8 +18,8 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 
-// Toutes les routes ci-dessous nécessitent un compte Company authentifié
-router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("LinkedinPost"));
+// Toutes les routes ci-dessous nécessitent un compte Company ou Employee authentifié
+router.use(requireAuthUser, controledAcces(['Company', 'Employee']), authLogMiddleware("LinkedinPost"));
 
 
 // POST /linkedin/generate-job-post
