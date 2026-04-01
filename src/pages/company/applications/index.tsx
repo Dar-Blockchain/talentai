@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
-import { Box, Skeleton, Pagination, Typography } from "@mui/material";
+import { Box, Skeleton, Pagination, Typography, Button, Menu, MenuItem, ListItemIcon } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
+import FileDownloadOutlined from "@mui/icons-material/FileDownloadOutlined";
+import TableChartOutlined from "@mui/icons-material/TableChartOutlined";
+import FolderZipOutlined from "@mui/icons-material/FolderZipOutlined";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "@/store/store";
@@ -21,6 +24,85 @@ import ApplicationFilters, {
   DEFAULT_FILTERS,
 } from "@/components/features/company/applications/ApplicationFilters";
 import ApplicationCard from "@/components/features/company/applications/ApplicationCard";
+
+function getCvUrl(app: any): string | null {
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const base = raw.endsWith("/") ? raw : `${raw}/`;
+  if (app.profile?.resume) return `${base}resume/${app.profile.resume}`;
+  if (app.cvAnalysis?.sourceUrl) {
+    const src = app.cvAnalysis.sourceUrl as string;
+    if (src.startsWith("http")) return src;
+    return `${base}${src.replace(/^public\//, "")}`;
+  }
+  return null;
+}
+
+function exportCSV(apps: any[]) {
+  const headers = ["Name", "Email", "Status", "CV Score", "Job Post", "Skills", "Applied At"];
+  const rows = apps.map((a) => {
+    const profile = a.profile || {};
+    const cv = a.cvAnalysis || {};
+    const name = profile.firstName && profile.lastName
+      ? `${profile.firstName} ${profile.lastName}`.trim()
+      : cv.name || "Candidate";
+    const email = profile.userId?.email || profile.email || "";
+    const status = a.status || "";
+    const score = a.matchScore ?? cv.analysisScore ?? "";
+    const post = a.post?.jobDetails?.title || a.post?.title || "";
+    const skills = (cv.skills || profile.skills?.map((s: any) => s.name) || []).join("; ");
+    const date = a.appliedAt || a.createdAt || "";
+    return [name, email, status, score, post, skills, date].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+  });
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `applications_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadCVsAsZip(apps: any[], onProgress?: (n: number, total: number) => void) {
+  const JSZip = (await import("jszip")).default;
+  const fileSaver = await import("file-saver");
+  const saveAs = fileSaver.saveAs ?? (fileSaver as any).default?.saveAs ?? (fileSaver as any).default;
+
+  const entries = apps
+    .map((a) => {
+      const profile = a.profile || {};
+      const cv = a.cvAnalysis || {};
+      const name = profile.firstName && profile.lastName
+        ? `${profile.firstName}_${profile.lastName}`.replace(/\s+/g, "_")
+        : cv.name?.replace(/\s+/g, "_") || "Candidate";
+      const url = getCvUrl(a);
+      return url ? { name, url, filename: url.split("/").pop() || "cv.pdf" } : null;
+    })
+    .filter(Boolean) as { name: string; url: string; filename: string }[];
+
+  if (entries.length === 0) return;
+
+  const zip = new JSZip();
+  const nameCounts: Record<string, number> = {};
+
+  await Promise.all(
+    entries.map(async ({ name, url, filename }, i) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const ext = filename.includes(".") ? filename.slice(filename.lastIndexOf(".")) : ".pdf";
+        nameCounts[name] = (nameCounts[name] || 0) + 1;
+        const safeName = nameCounts[name] > 1 ? `${name}_${nameCounts[name]}${ext}` : `${name}${ext}`;
+        zip.file(safeName, blob);
+        onProgress?.(i + 1, entries.length);
+      } catch { /* skip failed */ }
+    })
+  );
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  saveAs(blob, `cvs_${new Date().toISOString().slice(0, 10)}.zip`);
+}
 
 const PAGE_SIZE = 8;
 const PRESETS_KEY = "app_filter_presets";
@@ -45,6 +127,9 @@ const ApplicationsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [presets, setPresets] = useState<FilterPreset[]>([]);
+  const [exportAnchor, setExportAnchor] = useState<null | HTMLElement>(null);
+  const [cvDownloading, setCvDownloading] = useState(false);
+  const [cvProgress, setCvProgress] = useState({ done: 0, total: 0 });
 
   useEffect(() => {
     setPresets(loadPresets());
@@ -136,6 +221,69 @@ const ApplicationsPage: React.FC = () => {
         onDeletePreset={handleDeletePreset}
         onApplyPreset={handleApplyPreset}
       />
+
+      {/* Export toolbar */}
+      {!loading && filtered.length > 0 && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1.5, mb: 2 }}>
+          {cvDownloading && (
+            <Typography variant="caption" sx={{ color: "#6B7280" }}>
+              Downloading CVs… {cvProgress.done}/{cvProgress.total}
+            </Typography>
+          )}
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={cvDownloading}
+            startIcon={<FileDownloadOutlined sx={{ fontSize: 16 }} />}
+            onClick={(e) => setExportAnchor(e.currentTarget)}
+            sx={{
+              textTransform: "none", fontWeight: 600, fontSize: "0.8rem",
+              borderRadius: "10px", height: 36, px: 2,
+              borderColor: "#E5E7EB", color: "#374151",
+              "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
+            }}
+          >
+            Export ({filtered.length})
+          </Button>
+          <Menu
+            anchorEl={exportAnchor}
+            open={Boolean(exportAnchor)}
+            onClose={() => setExportAnchor(null)}
+            slotProps={{ paper: { sx: { borderRadius: "12px", border: "1px solid #E5E7EB", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", minWidth: 200 } } }}
+          >
+            <MenuItem
+              onClick={() => { exportCSV(filtered); setExportAnchor(null); }}
+              sx={{ gap: 1, py: 1.25 }}
+            >
+              <ListItemIcon sx={{ minWidth: 0 }}><TableChartOutlined sx={{ fontSize: 18, color: "#0D9488" }} /></ListItemIcon>
+              <Box>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600 }}>Export as CSV</Typography>
+              </Box>
+            </MenuItem>
+            <MenuItem
+              disabled={cvDownloading}
+              onClick={async () => {
+                setExportAnchor(null);
+                const total = filtered.filter((a: any) => getCvUrl(a)).length;
+                if (!total) return;
+                setCvDownloading(true);
+                setCvProgress({ done: 0, total });
+                await downloadCVsAsZip(filtered, (done, t) => setCvProgress({ done, total: t }));
+                setCvDownloading(false);
+              }}
+              sx={{ gap: 1, py: 1.25 }}
+            >
+              <ListItemIcon sx={{ minWidth: 0 }}><FolderZipOutlined sx={{ fontSize: 18, color: "#6366F1" }} /></ListItemIcon>
+              <Box>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600 }}>Download CVs as ZIP</Typography>
+                <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF" }}>
+                  {filtered.filter((a: any) => getCvUrl(a)).length} available
+                </Typography>
+              </Box>
+            </MenuItem>
+          </Menu>
+        </Box>
+      )}
 
       {loading ? (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2.5 }}>
