@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -67,6 +67,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     () => setCollapsed((c) => !c),
     [setCollapsed],
   );
+
+  // Prefetch all nav routes on mount so clicks are instant
+  useEffect(() => {
+    navigation.forEach((item) => router.prefetch(item.href));
+  }, [router]);
 
   const content = (mobile = false) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
