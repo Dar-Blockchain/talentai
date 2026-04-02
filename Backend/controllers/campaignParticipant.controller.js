@@ -151,7 +151,7 @@ exports.updateCampaignParticipant = async (req, res) => {
     const { status, accessedAt, completedAt } = req.body;
 
     // Validate status enum
-    const validStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
+    const validStatuses = ["NOT_STARTED", "INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
