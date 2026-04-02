@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -10,6 +10,7 @@ import {
   ListItemText,
   IconButton,
   Avatar,
+  Divider,
   useMediaQuery,
   useTheme,
   Typography,
@@ -56,6 +57,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
   const companyName = profile?.companyDetails?.name || "Company";
   const companyInitial = companyName[0] || "C";
+  const avatarUrl = profile?.user_image
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    : null;
 
   const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -63,6 +67,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     () => setCollapsed((c) => !c),
     [setCollapsed],
   );
+
+  // Prefetch all nav routes on mount so clicks are instant
+  useEffect(() => {
+    navigation.forEach((item) => router.prefetch(item.href));
+  }, [router]);
 
   const content = (mobile = false) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -135,8 +144,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <Box sx={{ flex: 1, overflowY: "auto" }} className="custom-scrollbar">
-        <List sx={{ px: 1.5 }}>
-          {navigation.map((item) => {
+        {(() => {
+          const groups = [
+            { label: "Hiring",  ids: ["dashboard", "posts", "interviews", "applications"] },
+            { label: "Account", ids: ["settings"] },
+          ];
+
+          const renderItem = (item: typeof navigation[0]) => {
             const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
             return (
               <Link key={item.id} href={item.href} passHref>
@@ -148,18 +162,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     px: collapsed && !mobile ? 1.2 : 2,
                     position: "relative",
                     color: isActive ? "#0D9488" : "#4B5563",
-                    bgcolor: isActive
-                      ? "rgba(243, 244, 246, 0.6)"
-                      : "transparent",
-                    justifyContent:
-                      collapsed && !mobile ? "center" : "flex-start",
+                    bgcolor: isActive ? "rgba(243, 244, 246, 0.6)" : "transparent",
+                    justifyContent: collapsed && !mobile ? "center" : "flex-start",
                     transition: "all 0.2s ease",
                     minHeight: collapsed && !mobile ? 40 : "auto",
-
-                    // Left border
-                    borderLeft: isActive
-                      ? "4px solid #0D9488"
-                      : "4px solid transparent",
+                    borderLeft: isActive ? "4px solid #0D9488" : "4px solid transparent",
                     "&:hover": {
                       bgcolor: "rgba(243, 244, 246, 0.6)",
                       color: "#111827",
@@ -171,32 +178,34 @@ const Sidebar: React.FC<SidebarProps> = ({
                     },
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: collapsed && !mobile ? 0 : 40,
-                      color: isActive ? "#0D9488" : "#6B7280",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <item.icon
-                      sx={{ fontSize: collapsed && !mobile ? 20 : 24 }}
-                    />
+                  <ListItemIcon sx={{ minWidth: collapsed && !mobile ? 0 : 40, color: isActive ? "#0D9488" : "#6B7280", justifyContent: "center" }}>
+                    <item.icon sx={{ fontSize: collapsed && !mobile ? 20 : 24 }} />
                   </ListItemIcon>
-
                   {(!collapsed || mobile) && (
-                    <ListItemText
-                      primary={item.label}
-                      primaryTypographyProps={{
-                        fontSize: "14px",
-                        fontWeight: 500,
-                      }}
-                    />
+                    <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "14px", fontWeight: 500 }} />
                   )}
                 </ListItemButton>
               </Link>
             );
-          })}
-        </List>
+          };
+
+          return groups.map((group, gi) => {
+            const items = navigation.filter((i) => group.ids.includes(i.id));
+            return (
+              <Box key={group.label}>
+                {gi > 0 && <Divider sx={{ mx: 2, my: 0.5 }} />}
+                {(!collapsed || mobile) && (
+                  <Typography sx={{ px: 3, pt: gi === 0 ? 2 : 1.5, pb: 0.5, fontSize: "0.62rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                    {group.label}
+                  </Typography>
+                )}
+                <List sx={{ px: 1.5, py: 0.5 }}>
+                  {items.map(renderItem)}
+                </List>
+              </Box>
+            );
+          });
+        })()}
       </Box>
 
       {/* Footer */}
@@ -209,8 +218,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             justifyContent: collapsed && !mobile ? "center" : "space-between",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Avatar sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer" }}
+            onClick={() => router.push("/company/settings")}
+          >
+            <Avatar
+              src={avatarUrl ?? undefined}
+              sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}
+            >
               {companyInitial}
             </Avatar>
 

@@ -150,7 +150,7 @@ const ApplicationDetailPage: React.FC = () => {
             <Box sx={{ flex: 1, minWidth: 200 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 0.5 }}>
                 <Typography sx={{ fontSize: "1.2rem", fontWeight: 800, color: "#111827" }}>{name}</Typography>
-                <Chip label={status.charAt(0).toUpperCase() + status.slice(1)} size="small"
+                <Chip label={status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} size="small"
                   sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color }} />
               </Box>
               {title && <Typography sx={{ fontSize: "0.85rem", color: "#6B7280", mb: 0.75 }}>{title}</Typography>}

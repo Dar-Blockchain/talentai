@@ -1,4 +1,4 @@
-import React, { memo, useState } from "react";
+import { memo, useState } from "react";
 import {
   Box,
   Typography,
@@ -50,8 +50,6 @@ interface JobPostCardProps {
   job: any;
   index?: number;
   onDelete: (id: string) => void;
-  onCopyLink: (id: string) => void;
-  onViewPassed: (id: string) => void;
   onViewDetails: (id: string) => void;
 }
 

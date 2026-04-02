@@ -290,13 +290,18 @@ module.exports.getApplicationsByCompany = async (req, res) => {
       });
     }
 
+    const { scoreMin, scoreMax, dateFrom, dateTo } = req.query;
+
     const filters = {};
     if (post || postId) filters.post = post || postId;
-    if (status) filters.status = status;
     if (search) filters.search = search;
     if (candidateName) filters.candidateName = candidateName;
     const skillParam = skill || skills;
     if (skillParam) filters.skills = Array.isArray(skillParam) ? skillParam : [skillParam];
+    if (scoreMin !== undefined) filters.scoreMin = parseFloat(scoreMin);
+    if (scoreMax !== undefined) filters.scoreMax = parseFloat(scoreMax);
+    if (dateFrom) filters.dateFrom = dateFrom;
+    if (dateTo) filters.dateTo = dateTo;
 
     const result = await jobApplicationService.getApplicationsByCompany(
       companyId,

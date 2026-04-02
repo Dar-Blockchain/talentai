@@ -365,6 +365,24 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     if (filters.post) query.post = filters.post;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
 
+    // Score range filter
+    if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
+      query.matchScore = {};
+      if (filters.scoreMin !== undefined) query.matchScore.$gte = filters.scoreMin;
+      if (filters.scoreMax !== undefined) query.matchScore.$lte = filters.scoreMax;
+    }
+
+    // Date range filter
+    if (filters.dateFrom || filters.dateTo) {
+      query.appliedAt = {};
+      if (filters.dateFrom) query.appliedAt.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        query.appliedAt.$lte = to;
+      }
+    }
+
     // Search filter for candidate name
     if (filters.search || filters.candidateName) {
       const searchTerm = filters.search || filters.candidateName;

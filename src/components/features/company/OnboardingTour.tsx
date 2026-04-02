@@ -18,13 +18,14 @@ const OnboardingTour: React.FC = () => {
   );
 
   useEffect(() => {
-    if (trafficCounter === 1) {
+    if (trafficCounter === 1 && !localStorage.getItem("tour_shown")) {
       const t = setTimeout(() => setActive(true), 600);
       return () => clearTimeout(t);
     }
   }, [trafficCounter]);
 
   const finish = useCallback(() => {
+    localStorage.setItem("tour_shown", "1");
     setActive(false);
   }, []);
 

@@ -26,11 +26,23 @@ const initialState: JobApplicationState = {
 
 export const fetchCompanyApplications = createAsyncThunk(
   'jobApplications/fetchCompany',
-  async (params: { candidateName?: string; skill?: string; postId?: string } = {}) => {
+  async (params: {
+    candidateName?: string;
+    skill?: string;
+    postId?: string;
+    scoreMin?: number;
+    scoreMax?: number;
+    dateFrom?: string;
+    dateTo?: string;
+  } = {}) => {
     const query = new URLSearchParams();
     if (params.candidateName) query.set('candidateName', params.candidateName);
     if (params.skill) query.set('skill', params.skill);
     if (params.postId) query.set('postId', params.postId);
+    if (params.scoreMin !== undefined && params.scoreMin > 0) query.set('scoreMin', String(params.scoreMin));
+    if (params.scoreMax !== undefined && params.scoreMax < 100) query.set('scoreMax', String(params.scoreMax));
+    if (params.dateFrom) query.set('dateFrom', params.dateFrom);
+    if (params.dateTo) query.set('dateTo', params.dateTo);
     const url = `job-applications/company/my${query.toString() ? `?${query}` : ''}`;
     const res = await axiosInstance.get(url);
     return Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];

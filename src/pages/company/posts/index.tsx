@@ -70,13 +70,6 @@ const PostsPage: React.FC = () => {
   // API handles all filtering + sorting server-side
   const filteredPosts = posts as any[];
 
-  const handleCopyLink = (id: string, companyId?: string) => {
-    navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${id}&companyId=${companyId}&ref=link`)
-      .then(() => showToast({ message: "Interview link copied!", severity: "success" }))
-      .catch(() => showToast({ message: "Failed to copy link", severity: "error" }));
-  };
-
   const handleDelete = (id: string) => {
     setJobToDelete(id);
     deletePostHook.handleOpen();
@@ -96,10 +89,6 @@ const PostsPage: React.FC = () => {
             <PageHeader
               title="Job Posts"
               subtitle="Manage your open positions, track candidates, and share interview links."
-              breadcrumbs={[
-                { label: "Dashboard", href: "/company/dashboard" },
-                { label: "Job Posts" },
-              ]}
               actions={[
                 <AppButton
                   key="new"
@@ -128,8 +117,6 @@ const PostsPage: React.FC = () => {
               pagination={pagination}
               onPageChange={setPage}
               onDelete={handleDelete}
-              onCopyLink={handleCopyLink}
-              onViewPassed={(id) => router.push(`/posts/${id}?tab=passed`)}
               onViewDetails={(id) => router.push(`/company/posts/${id}`)}
               onCreateClick={handleCreateClick}
             />

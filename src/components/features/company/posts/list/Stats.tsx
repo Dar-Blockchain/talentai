@@ -1,6 +1,4 @@
-"use client";
-
-import React, { memo, useEffect } from "react";
+import { memo, useEffect } from "react";
 import { Box, Skeleton } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";

@@ -3,6 +3,7 @@ const Post = require("../../models/Post.model");
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
+const crypto = require("crypto");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {
@@ -122,12 +123,43 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     await checkMonthlyInterviewLimit(companyId);
 
     // =======================
+    // CHECK IF ASSESSMENT ALREADY EXISTS
+    // =======================
+    const existingAssessment = await PostInterviewAssessment.findOne({
+      candidate: assessmentData.candidate,
+      post: assessmentData.post
+    });
+
+    if (existingAssessment) {
+      console.log(`✅ Assessment already exists for candidate ${assessmentData.candidate} and post ${assessmentData.post}. Returning existing assessment.`);
+      return await PostInterviewAssessment.findById(existingAssessment._id)
+        .populate({
+          path: 'candidate',
+          populate: {
+            path: 'profile',
+            model: 'Profile'
+          }
+        })
+        .populate('company')
+        .populate('post');
+    }
+
+    // =======================
     // CREATE ASSESSMENT
     // =======================
+    // Always generate a new unique sessionId (don't accept from client)
+    // Format: timestamp-random-hash
+    const sessionId = `session_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
+    
     const assessment = await PostInterviewAssessment.create({
       ...assessmentData,
       company,
-      completed: false
+      completed: false,
+      interviewData: {
+        ...assessmentData.interviewData,
+        sessionId,
+        timestamp: new Date()
+      }
     });
 
     // Increment monthly interviews usage (best-effort)
@@ -223,11 +255,26 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     return populatedAssessment;
 
   } catch (error) {
+    // If duplicate key error occurs, return the existing assessment instead
     if (error.code === 11000) {
-      const err = new Error('Duplicate session ID');
-      err.code = 11000;
-      err.status = 409;
-      throw err;
+      console.log('⚠️ Duplicate assessment detected. An assessment already exists for this candidate and post. Returning existing assessment...');
+      const existingAssessment = await PostInterviewAssessment.findOne({
+        candidate: assessmentData.candidate,
+        post: assessmentData.post
+      })
+        .populate({
+          path: 'candidate',
+          populate: {
+            path: 'profile',
+            model: 'Profile'
+          }
+        })
+        .populate('company')
+        .populate('post');
+      
+      if (existingAssessment) {
+        return existingAssessment;
+      }
     }
     throw error;
   }

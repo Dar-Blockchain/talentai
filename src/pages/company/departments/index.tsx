@@ -107,10 +107,6 @@ const DepartmentsPage: React.FC = () => {
         <PageHeader
           title="Departments"
           subtitle="Manage your company's organizational departments."
-          breadcrumbs={[
-            { label: "Dashboard", href: "/company/dashboard" },
-            { label: "Departments" },
-          ]}
           actions={[
             <AppButton
               key="create"

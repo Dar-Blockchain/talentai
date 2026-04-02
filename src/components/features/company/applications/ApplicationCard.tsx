@@ -7,12 +7,15 @@ import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardIos";
 const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  applied:     { bg: "#EFF6FF", color: "#2563EB" },
-  pending:     { bg: "#FFFBEB", color: "#D97706" },
-  shortlisted: { bg: "#F0FDF4", color: "#16A34A" },
-  accepted:    { bg: "#F0FDFA", color: "#0D9488" },
-  rejected:    { bg: "#FEF2F2", color: "#DC2626" },
-  withdrawn:   { bg: "#F3F4F6", color: "#6B7280" },
+  applied:               { bg: "#EFF6FF", color: "#2563EB" },
+  viewed:                { bg: "#F5F3FF", color: "#7C3AED" },
+  pending:               { bg: "#FFFBEB", color: "#D97706" },
+  shortlisted:           { bg: "#F0FDF4", color: "#16A34A" },
+  accepted:              { bg: "#F0FDFA", color: "#0D9488" },
+  rejected:              { bg: "#FEF2F2", color: "#DC2626" },
+  withdrawn:             { bg: "#F3F4F6", color: "#6B7280" },
+  interview_scheduled:   { bg: "#FFF7ED", color: "#EA580C" },
+  interview_completed:   { bg: "#F0FDF4", color: "#15803D" },
 };
 
 const getInitials = (name: string) =>
@@ -39,6 +42,7 @@ const ApplicationCard: React.FC<Props> = ({ app, index, onClick }) => {
   const postTitle = app.post?.jobDetails?.title || "—";
   const status = (app.status || "applied").toLowerCase();
   const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;
+  const statusLabel = status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
   return (
@@ -65,7 +69,7 @@ const ApplicationCard: React.FC<Props> = ({ app, index, onClick }) => {
               {name}
             </Typography>
             <Chip
-              label={status.charAt(0).toUpperCase() + status.slice(1)}
+              label={statusLabel}
               size="small"
               sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color, flexShrink: 0 }}
             />

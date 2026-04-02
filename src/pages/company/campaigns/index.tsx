@@ -23,10 +23,6 @@ const CampaignsPage: React.FC = () => {
       <PageHeader
         title="Campaigns"
         subtitle="Manage and monitor all company campaigns"
-        breadcrumbs={[
-          { label: "Dashboard", href: "/company/dashboard" },
-          { label: "Campaigns" },
-        ]}
         actions={[
           <Link key="new" href="/company/campaigns/new">
             <AppButton

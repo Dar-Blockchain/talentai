@@ -173,10 +173,6 @@ const EmployeesPage: React.FC = () => {
             <PageHeader
               title="Employees"
               subtitle="Manage your team members, roles, and invitations."
-              breadcrumbs={[
-                { label: "Dashboard", href: "/company/dashboard" },
-                { label: "Employees" },
-              ]}
               actions={[
                 <AppButton
                   key="add"
