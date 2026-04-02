@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Box, useTheme, useMediaQuery } from "@mui/material";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { navigation } from "@/constants/navigation";
+import { useRouter } from "next/router";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,11 @@ const HEADER_HEIGHT = 64;
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    navigation.forEach((item) => router.prefetch(item.href));
+  }, [router]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
