@@ -600,9 +600,10 @@ module.exports.inviteToInterview = async (req, res) => {
 
     // Update application status to "interview_scheduled"
     console.log(`📝 Updating application status to interview_scheduled`);
-    application.status = "interview_scheduled";
-    application.updatedAt = new Date();
-    await application.save();
+    await jobApplicationService.updateJobApplication(
+      applicationId,
+      { status: "interview_scheduled", updatedAt: new Date() }
+    );
     console.log(`✅ Application status updated`);
 
     console.log("=".repeat(80) + "\n");
