@@ -46,19 +46,19 @@ axiosInstance.interceptors.response.use(
       (data?.code === 'TOKEN_INVALID' ||
         data?.error === 'TOKEN_INVALID' ||
         data?.message === 'Invalid or expired token' || 'Token missing');
-    if (isTokenInvalid && !_isLoggingOut) {
-      clearTokens();
-      emitSessionExpired();
+    // if (isTokenInvalid && !_isLoggingOut) {
+    //   clearTokens();
+    //   emitSessionExpired();
 
-      emitToast({
-        message: 'Your session has expired. Please sign in again.',
-        severity: 'warning',
-      });
+    //   emitToast({
+    //     message: 'Your session has expired. Please sign in again.',
+    //     severity: 'warning',
+    //   });
 
-      if (typeof window !== 'undefined') {
-        window.location.href = '/signin';
-      }
-    }
+    //   if (typeof window !== 'undefined') {
+    //     window.location.href = '/signin';
+    //   }
+    // }
 
     return Promise.reject(error);
   }
