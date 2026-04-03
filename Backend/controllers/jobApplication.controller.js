@@ -598,14 +598,12 @@ module.exports.inviteToInterview = async (req, res) => {
 
     console.log(`✅ Interview invitation email sent successfully`);
 
-    // Update application status to "interview_scheduled" if interview date is provided
-    if (interviewDate) {
-      console.log(`📝 Updating application status to interview_scheduled`);
-      application.status = "interview_scheduled";
-      application.updatedAt = new Date();
-      await application.save();
-      console.log(`✅ Application status updated`);
-    }
+    // Update application status to "interview_scheduled"
+    console.log(`📝 Updating application status to interview_scheduled`);
+    application.status = "interview_scheduled";
+    application.updatedAt = new Date();
+    await application.save();
+    console.log(`✅ Application status updated`);
 
     console.log("=".repeat(80) + "\n");
 
