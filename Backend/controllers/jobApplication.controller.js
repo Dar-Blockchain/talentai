@@ -1,5 +1,7 @@
 const jobApplicationService = require("../services/jobApplication.service");
 const { sendInterviewInvitation } = require("../utils/email-service");
+const profileService = require("../services/ProfileService/profile.service");
+const postService = require("../services/PosteServices/post.service");
 
 // Centralized error handler
 const handleError = (res, error, defaultStatus = 500) => {
@@ -34,9 +36,12 @@ module.exports.createJobApplication = async (req, res) => {
     }
 
     // Get candidate profile from current user
-    const Profile = require("../models/Profile.model");
     console.log(`🔍 Fetching candidate profile for user: ${userId}`);
-    const profile = await Profile.findOne({ userId }).populate("cvAnalyses");
+    const profileResult = await profileService.getProfileByUserId(userId);
+    const profile = profileResult.profile;
+    if (profile) {
+      await profile.populate("cvAnalyses");
+    }
     if (!profile) {
       console.error(`❌ Candidate profile not found for user: ${userId}`);
       return res.status(404).json({
@@ -56,9 +61,8 @@ module.exports.createJobApplication = async (req, res) => {
     console.log(`📄 CV Analysis: ${cvAnalysis ? "Found (ID: " + cvAnalysis + ")" : "Not available"}`);
 
     // Get post and extract company from it
-    const Post = require("../models/Post.model");
     console.log(`\n🔍 Fetching job post: ${postId}`);
-    const post = await Post.findById(postId);
+    const post = await postService.getPostById(postId);
     if (!post) {
       console.error(`❌ Job post not found: ${postId}`);
       return res.status(404).json({
@@ -200,8 +204,8 @@ module.exports.getApplicationsByCandidate = async (req, res) => {
     if (isArchived !== undefined) filters.isArchived = isArchived === "true";
 
     // Find profile for this user
-    const Profile = require("../models/Profile.model");
-    const profile = await Profile.findOne({ userId: candidateId });
+    const profileResult = await profileService.getProfileByUserId(candidateId);
+    const profile = profileResult.profile;
 
     if (!profile) {
       return res.status(404).json({
@@ -557,9 +561,8 @@ module.exports.inviteToInterview = async (req, res) => {
     console.log(`   - Name: ${candidateName}`);
 
     // Fetch post details
-    const Post = require("../models/Post.model");
     console.log(`🔍 Fetching job post: ${application.post._id}`);
-    const post = await Post.findById(application.post._id).populate("user");
+    const post = await postService.getPostById(application.post._id);
 
     if (!post) {
       console.error(`❌ Job post not found: ${application.post._id}`);
