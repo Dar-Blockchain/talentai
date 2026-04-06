@@ -21,6 +21,7 @@ import {
   AccessTimeOutlined, CheckCircleOutlined, RadioButtonUncheckedOutlined,
   PlayArrowOutlined, VisibilityOutlined, ArrowForwardOutlined, FilterListOutlined,
   EmojiEventsOutlined, InfoOutlined, SearchOutlined, CalendarTodayOutlined, CloseOutlined,
+  PauseCircleOutlined, StopCircleOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
@@ -88,7 +89,10 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
     const isExpired = campaign.deadline
       ? new Date(campaign.deadline).getTime() < Date.now()
       : false;
-    const isActive = campaign.participantStatus === "INVITED" || campaign.participantStatus === "IN_PROGRESS";
+    const isPaused  = campaign.status === "PAUSED";
+    const isClosed  = campaign.status === "CLOSED";
+    const campaignAccessible = !isPaused && !isClosed;
+    const isActive = (campaign.participantStatus === "INVITED" || campaign.participantStatus === "IN_PROGRESS") && campaignAccessible;
 
     return (
       <motion.div
@@ -163,6 +167,24 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
 
           {/* Footer CTA */}
           <Box sx={{ px: 2.5, py: 2, borderTop: "1px solid #F3F4F6", bgcolor: "#FAFAFA", display: "flex", gap: 1, alignItems: "center" }}>
+            {isPaused && campaign.participantStatus !== "COMPLETED" && (
+              <Box sx={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
+                py: 0.9, borderRadius: 2, bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+              }}>
+                <PauseCircleOutlined sx={{ fontSize: 15, color: "#D97706" }} />
+                <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#D97706" }}>Campaign paused</Typography>
+              </Box>
+            )}
+            {isClosed && campaign.participantStatus !== "COMPLETED" && (
+              <Box sx={{
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
+                py: 0.9, borderRadius: 2, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE",
+              }}>
+                <StopCircleOutlined sx={{ fontSize: 15, color: "#2563EB" }} />
+                <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#2563EB" }}>Campaign closed</Typography>
+              </Box>
+            )}
             {isActive && isExpired && (
               <Box sx={{
                 flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
@@ -172,7 +194,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#EF4444" }}>Deadline passed</Typography>
               </Box>
             )}
-            {campaign.participantStatus === "INVITED" && !isExpired && (
+            {campaign.participantStatus === "INVITED" && !isExpired && campaignAccessible && (
               <Button
                 fullWidth
                 startIcon={<PlayArrowOutlined />}
@@ -186,7 +208,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 Start Campaign
               </Button>
             )}
-            {campaign.participantStatus === "IN_PROGRESS" && !isExpired && (
+            {campaign.participantStatus === "IN_PROGRESS" && !isExpired && campaignAccessible && (
               <Button
                 fullWidth
                 startIcon={<ArrowForwardOutlined />}

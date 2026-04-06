@@ -15,7 +15,7 @@ import {
 } from '@/store/slices/campaignSlice';
 
 import { GlobalStyles }           from '@/components/features/campaign/assessment/styles';
-import { InterviewSpinner, InterviewErrorState, InterviewExpiredState } from '@/components/features/campaign/assessment/InterviewLoadingState';
+import { InterviewSpinner, InterviewErrorState, InterviewExpiredState, InterviewPausedState, InterviewClosedState } from '@/components/features/campaign/assessment/InterviewLoadingState';
 import InterviewUnsupportedModule from '@/components/features/campaign/assessment/InterviewUnsupportedModule';
 import { daysLeft } from '@/utils/functions';
 import QuestionnaireAssessment    from '@/components/features/campaign/assessment/QuestionnaireAssessment';
@@ -82,6 +82,24 @@ const EmployeeCampaignAssessment: React.FC = () => {
       <>
         <style jsx global>{GlobalStyles}</style>
         <InterviewExpiredState onBack={handleBack} />
+      </>
+    );
+  }
+
+  if (campaign.status === 'PAUSED' && pStatus !== 'COMPLETED') {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <InterviewPausedState onBack={handleBack} />
+      </>
+    );
+  }
+
+  if (campaign.status === 'CLOSED' && pStatus !== 'COMPLETED') {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <InterviewClosedState onBack={handleBack} />
       </>
     );
   }

@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { Box, Typography, Menu, MenuItem, Tooltip } from "@mui/material";
+import { Box, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
 import { useRouter } from "next/router";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
-import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
+import ArrowBackOutlined        from "@mui/icons-material/ArrowBackOutlined";
+import DeleteOutlineOutlined    from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlined             from "@mui/icons-material/EditOutlined";
+import PlayArrowOutlined        from "@mui/icons-material/PlayArrow";
+import PauseOutlined            from "@mui/icons-material/PauseOutlined";
+import StopOutlined             from "@mui/icons-material/StopOutlined";
+import CalendarTodayOutlined    from "@mui/icons-material/CalendarTodayOutlined";
+import WarningAmberOutlined     from "@mui/icons-material/WarningAmberOutlined";
 import { Campaign, CampaignStatus } from "@/types/campaign";
 import {
   STATUS_COLORS,
@@ -29,13 +31,25 @@ interface Props {
   actionsNode?: React.ReactNode;
 }
 
+const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {
+  ACTIVE: PlayArrowOutlined,
+  PAUSED: PauseOutlined,
+  CLOSED: StopOutlined,
+};
+
+const STATUS_CHANGE_DESCRIPTIONS: Partial<Record<CampaignStatus, string>> = {
+  ACTIVE: "Participants will be able to access and start the assessment.",
+  PAUSED: "Participants will no longer be able to start new sessions until the campaign is resumed.",
+  CLOSED: "The campaign will be permanently closed. Participants will lose access.",
+};
+
 const CampaignHeader: React.FC<Props> = ({
   campaign, onChangeStatus, onDeleteClick, onEditClick,
   backLabel = "Campaigns", backUrl = "/company/campaigns",
   actionsNode,
 }) => {
   const router = useRouter();
-  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  const [pendingStatus, setPendingStatus] = useState<CampaignStatus | null>(null);
 
   const sc          = STATUS_COLORS[campaign.status]  ?? STATUS_COLORS.DRAFT;
   const tc          = TYPE_COLORS[campaign.type]       ?? TYPE_COLORS.CUSTOM;
@@ -75,7 +89,8 @@ const CampaignHeader: React.FC<Props> = ({
           </Box>
 
           {actionsNode ?? (
-            <Box sx={{ display: "flex", gap: 0.875 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
+              {/* Edit button — DRAFT only */}
               {campaign.status === "DRAFT" && onEditClick && (
                 <Box
                   onClick={onEditClick}
@@ -91,53 +106,47 @@ const CampaignHeader: React.FC<Props> = ({
                   <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
                 </Box>
               )}
-              {transitions.length > 0 && (
-                <>
+
+              {/* Inline status transition buttons */}
+              {transitions.map((s) => {
+                const blocked  = s === "ACTIVE" && !moduleConfigured;
+                const sColor   = STATUS_COLORS[s];
+                const Icon     = STATUS_ICONS[s];
+                const label    = STATUS_TRANSITION_LABELS[s];
+
+                const btn = (
                   <Box
-                    onClick={(e) => setAnchor(e.currentTarget)}
+                    key={s}
+                    onClick={() => !blocked && setPendingStatus(s)}
                     sx={{
-                      display: "flex", alignItems: "center", gap: 0.625,
-                      px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                      border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
+                      display: "flex", alignItems: "center", gap: 0.5,
+                      px: 1.5, py: 0.75, borderRadius: "10px",
+                      cursor: blocked ? "not-allowed" : "pointer",
+                      border: `1px solid ${sColor?.fg ?? "#E2E8F0"}30`,
+                      bgcolor: `${sColor?.bg ?? "#F8FAFC"}`,
+                      opacity: blocked ? 0.5 : 1,
                       transition: "all 0.15s",
-                      "&:hover": { bgcolor: `${typeColor}08`, borderColor: `${typeColor}30`, "& *": { color: typeColor } },
+                      "&:hover": blocked ? {} : {
+                        bgcolor: `${sColor?.fg ?? "#6B7280"}12`,
+                        borderColor: `${sColor?.fg ?? "#6B7280"}50`,
+                      },
                     }}
                   >
-                    <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>
-                      Change Status
+                    {Icon && <Icon sx={{ fontSize: 14, color: sColor?.fg ?? "#6B7280" }} />}
+                    <Typography sx={{ fontSize: "0.775rem", fontWeight: 700, color: sColor?.fg ?? "#475569" }}>
+                      {label}
                     </Typography>
-                    <KeyboardArrowDownOutlined sx={{ fontSize: 14, color: "#64748B" }} />
                   </Box>
-                  <Menu
-                    anchorEl={anchor}
-                    open={Boolean(anchor)}
-                    onClose={() => setAnchor(null)}
-                    slotProps={{ paper: { sx: { borderRadius: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 160, border: "1px solid #F3F4F6", mt: 0.5 } } }}
-                  >
-                    {transitions.map((s) => {
-                      const blocked = s === "ACTIVE" && !moduleConfigured;
-                      return (
-                        <Tooltip
-                          key={s}
-                          title={blocked ? "Configure the module before activating this campaign." : ""}
-                          placement="left"
-                          arrow
-                        >
-                          <span>
-                            <MenuItem
-                              disabled={blocked}
-                              onClick={() => { setAnchor(null); onChangeStatus?.(campaign._id, s); }}
-                              sx={{ fontSize: "13px", fontWeight: 600, color: STATUS_COLORS[s]?.fg }}
-                            >
-                              {STATUS_TRANSITION_LABELS[s]}
-                            </MenuItem>
-                          </span>
-                        </Tooltip>
-                      );
-                    })}
-                  </Menu>
-                </>
-              )}
+                );
+
+                return blocked ? (
+                  <Tooltip key={s} title="Configure the module before activating this campaign." placement="top" arrow>
+                    <span>{btn}</span>
+                  </Tooltip>
+                ) : btn;
+              })}
+
+              {/* Delete */}
               <Box
                 onClick={onDeleteClick}
                 sx={{
@@ -245,6 +254,85 @@ const CampaignHeader: React.FC<Props> = ({
         </Box>
 
       </Box>
+
+      {/* ── Status confirmation dialog ── */}
+      {pendingStatus && (() => {
+        const sColor = STATUS_COLORS[pendingStatus];
+        const Icon   = STATUS_ICONS[pendingStatus];
+        const label  = STATUS_TRANSITION_LABELS[pendingStatus];
+        const desc   = STATUS_CHANGE_DESCRIPTIONS[pendingStatus];
+        return (
+          <Dialog
+            open
+            onClose={() => setPendingStatus(null)}
+            maxWidth="xs"
+            fullWidth
+            slotProps={{ paper: { sx: { borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } } }}
+          >
+            <DialogTitle sx={{ pb: 1.5, pt: 2.5, px: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{
+                  width: 38, height: 38, borderRadius: "10px", flexShrink: 0,
+                  bgcolor: `${sColor?.bg}`, border: `1px solid ${sColor?.fg}25`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {Icon && <Icon sx={{ fontSize: 18, color: sColor?.fg }} />}
+                </Box>
+                <Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#0F172A" }}>
+                    {label} Campaign
+                  </Typography>
+                  <Typography sx={{ fontSize: "11px", color: "#94A3B8", mt: 0.25 }}>
+                    {campaign.title}
+                  </Typography>
+                </Box>
+              </Box>
+            </DialogTitle>
+
+            <DialogContent sx={{ px: 3, pb: 1 }}>
+              <Typography sx={{ fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
+                {desc}
+              </Typography>
+              <Box sx={{
+                mt: 1.5, px: 1.5, py: 1, borderRadius: "8px",
+                bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
+                display: "flex", alignItems: "center", gap: 1,
+              }}>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: sc.bg }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sc.fg }} />
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>{campaign.status}</Typography>
+                </Box>
+                <Typography sx={{ fontSize: "12px", color: "#94A3B8" }}>→</Typography>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: sColor?.bg }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sColor?.fg }} />
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sColor?.fg }}>{pendingStatus}</Typography>
+                </Box>
+              </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
+              <Button
+                onClick={() => setPendingStatus(null)}
+                sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => { onChangeStatus?.(campaign._id, pendingStatus); setPendingStatus(null); }}
+                variant="contained"
+                disableElevation
+                sx={{
+                  textTransform: "none", fontWeight: 700, fontSize: "13px",
+                  bgcolor: sColor?.fg, borderRadius: "8px",
+                  "&:hover": { bgcolor: sColor?.fg, opacity: 0.88 },
+                }}
+              >
+                Confirm
+              </Button>
+            </DialogActions>
+          </Dialog>
+        );
+      })()}
     </Box>
   );
 };

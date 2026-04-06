@@ -92,7 +92,8 @@ const CampaignDetail: React.FC<Props> = ({
   const ps        = PS_CONFIG[pStatus];
   const typeEntry = (isEmployee ? require("@/constants/campaign").CAMPAIGN_TYPES.find((t: any) => t.value === campaign.type) : null);
   const typeColor = typeEntry?.color ?? "#6B7280";
-  const canStart  = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired;
+  const campaignAccessible = campaign.status === "ACTIVE";
+  const canStart  = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired && campaignAccessible;
   const moduleType = campaign.module?.type;
   const supportsAction = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
   const supportsResults = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
@@ -124,6 +125,28 @@ const CampaignDetail: React.FC<Props> = ({
         }}>
           <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#EF4444" }} />
           <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#EF4444" }}>Deadline passed</Typography>
+        </Box>
+      )}
+
+      {campaign.status === "PAUSED" && (
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 0.5,
+          px: 1.125, py: "4px", borderRadius: "999px",
+          bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+        }}>
+          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#D97706" }} />
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#D97706" }}>Campaign paused</Typography>
+        </Box>
+      )}
+
+      {campaign.status === "CLOSED" && (
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 0.5,
+          px: 1.125, py: "4px", borderRadius: "999px",
+          bgcolor: "#EFF6FF", border: "1px solid #BFDBFE",
+        }}>
+          <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#2563EB" }} />
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#2563EB" }}>Campaign closed</Typography>
         </Box>
       )}
 
@@ -336,8 +359,8 @@ const CampaignDetail: React.FC<Props> = ({
                 <CampaignDetailsCard campaign={campaign} />
                 <CampaignModuleCard
                   module={campaign.module}
-                  onConfigureModule={!isEmployee ? setConfigureModuleType : undefined}
-                  showConfigure={!isEmployee}
+                  onConfigureModule={(!isEmployee && campaign.status !== "ACTIVE") ? setConfigureModuleType : undefined}
+                  showConfigure={!isEmployee && campaign.status !== "ACTIVE"}
                   isEmployee={isEmployee}
                 />
               </Box>
