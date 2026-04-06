@@ -31,6 +31,9 @@ interface EmployeesListProps {
   onEdit: (member: Member) => void;
   onDelete: (member: Member) => void;
   onSelect: (member: Member) => void;
+  canInvite?: boolean;
+  canAssignRoles?: boolean;
+  canRemove?: boolean;
   invitations?: Invitation[];
   fetchingInvitations?: boolean;
   onResend?: (id: string) => Promise<void>;
@@ -48,6 +51,7 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
   departmentFilter, onDepartmentFilterChange, departments,
   sortBy, onSortChange,
   onEdit, onDelete, onSelect,
+  canInvite = true, canAssignRoles = true, canRemove = true,
   invitations = [], fetchingInvitations = false, onResend, onCancel,
   total, page, pageSize, onPageChange,
 }) => {
@@ -102,7 +106,7 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
         {/* Tabs */}
         <Box sx={{ display: "inline-flex", alignItems: "center", bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, gap: 0.5, flexShrink: 0 }}>
           <TabPill id="employees"   label="Employees"   icon={<PeopleAltOutlined sx={{ fontSize: 16 }} />} count={loading ? "…" : total} color={PURPLE} />
-          <TabPill id="invitations" label="Invitations" icon={<EmailOutlined sx={{ fontSize: 16 }} />}    count={fetchingInvitations ? "…" : invitations.length} color={AMBER} pulse={invitations.length > 0} />
+          {canInvite && <TabPill id="invitations" label="Invitations" icon={<EmailOutlined sx={{ fontSize: 16 }} />}    count={fetchingInvitations ? "…" : invitations.length} color={AMBER} pulse={invitations.length > 0} />}
         </Box>
 
         {/* Filter bar (employees tab only) */}
@@ -139,7 +143,7 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
               </Typography>
             </Box>
           ) : (
-            <Box sx={GRID}>{members.map((m: Member, i: number) => <EmployeeCard key={m._id} member={m} index={i} onEdit={onEdit} onDelete={onDelete} onSelect={onSelect} />)}</Box>
+            <Box sx={GRID}>{members.map((m: Member, i: number) => <EmployeeCard key={m._id} member={m} index={i} onEdit={onEdit} onDelete={onDelete} onSelect={onSelect} canAssignRoles={canAssignRoles} canRemove={canRemove} />)}</Box>
           )
         )}
 

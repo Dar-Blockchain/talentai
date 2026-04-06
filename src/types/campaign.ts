@@ -12,7 +12,7 @@ export type CampaignStatus =
   | "EXPIRED";
 
 export type AnonymityMode = "ANONYMOUS" | "NOMINATIVE";
-export type AccessMethod = "LINK" | "ACCOUNTS" | "BOTH";
+export type AccessMethod = "LINK" | "ACCOUNTS";
 export type ModuleType =
   | "QUESTIONNAIRE"
   | "AI_INTERVIEW"
@@ -32,6 +32,8 @@ export interface Campaign {
   linkToken?: string | null;
   targetEmployeeCount?: number;
   deadline?: string;
+  participantCount?: number;
+  sessionCount?: number;
   participantStatus?: ParticipantStatus;
   progress?: number;
   score?: number;
@@ -147,6 +149,8 @@ export type ParticipantStatus = "INVITED" | "IN_PROGRESS" | "COMPLETED" | "DROPP
 export interface CampaignParticipant {
   _id: string;
   employeeId?: string;
+  anonymousToken?: string;
+  linkAccessToken?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -179,6 +183,7 @@ export type SessionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";
 
 export interface CampaignSession {
   _id: string;
+  isAnonymous?: boolean;
   participant?: {
     _id?: string;
     firstName?: string;

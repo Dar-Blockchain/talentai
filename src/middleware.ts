@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   "/interview/limit-reached",
   "/interview/results",
   "/invitation",
+  "/campaign",
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];

@@ -31,7 +31,14 @@ const EmployeeCampaignAssessment: React.FC = () => {
   const campaignLoading = useSelector(selectDetailLoading);
   const campaignError   = useSelector(selectDetailError);
 
-  const participantId = authUser?._id ?? '';
+  // For ANONYMOUS campaigns use the token stored in localStorage; otherwise use the user's _id
+  const participantId = (() => {
+    if (!campaign || !id) return authUser?._id ?? '';
+    if (campaign.anonymityMode === 'ANONYMOUS') {
+      return (typeof window !== 'undefined' ? localStorage.getItem(`anon_token_${id}`) : null) ?? authUser?._id ?? '';
+    }
+    return authUser?._id ?? '';
+  })();
 
   useEffect(() => {
     if (id) dispatch(fetchCampaignById(id));

@@ -12,7 +12,7 @@ import DeleteMemberDialog from "@/components/features/company/employees/delete/D
 import EmployeesHeader from "@/components/features/company/employees/list/EmployeesHeader";
 import EmployeesList, { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchMembers,
   fetchInvitations,
@@ -23,12 +23,12 @@ import {
   resendInvitation,
   cancelInvitation,
   selectMembers,
+  selectEmployeePermissions,
   clearAddMemberSuccess,
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
   clearError,
   Member,
-
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -47,7 +47,14 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
 
 const EmployeesPage: React.FC = () => {
   useCompanyAccess("canManageTeam");
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch    = useDispatch<AppDispatch>();
+  const user        = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms    = useSelector(selectEmployeePermissions);
+  const isEmployee  = user?.role === "Employee";
+  const canInvite          = !isEmployee || !!empPerms?.canInviteMembers;
+  const canAssignRoles     = !isEmployee || !!empPerms?.canAssignRoles;
+  const canRemove          = !isEmployee || !!empPerms?.canRemoveEmployee;
+  const canManagePerms     = !isEmployee || !!empPerms?.canManagePermissions;
   const { showToast } = useToast();
 
   const {
@@ -186,6 +193,9 @@ const EmployeesPage: React.FC = () => {
             onBack={() => setDetailMember(null)}
             onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
             onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
+            canAssignRoles={canAssignRoles}
+            canRemove={canRemove}
+            canManagePermissions={canManagePerms}
           />
         </Box>
       ) : (
@@ -197,7 +207,7 @@ const EmployeesPage: React.FC = () => {
               { label: "Dashboard", href: "/company/dashboard" },
               { label: "Employees" },
             ]}
-            actions={[
+            actions={canInvite ? [
               <AppButton
                 key="add"
                 label="Add Employee"
@@ -206,7 +216,7 @@ const EmployeesPage: React.FC = () => {
                 size="medium"
                 onClick={() => setAddModalOpen(true)}
               />,
-            ]}
+            ] : []}
           />
 
           <EmployeesHeader
@@ -232,6 +242,9 @@ const EmployeesPage: React.FC = () => {
             onSelect={setDetailMember}
             onEdit={(m) => { setSelectedMember(m); setEditModalOpen(true); }}
             onDelete={(m) => { setSelectedMember(m); setDeleteDialogOpen(true); }}
+            canInvite={canInvite}
+            canAssignRoles={canAssignRoles}
+            canRemove={canRemove}
             invitations={invitations}
             fetchingInvitations={fetchingInvitations}
             onResend={handleResendInvitation}

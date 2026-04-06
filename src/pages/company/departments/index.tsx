@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
+import { RootState } from "@/store/store";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import { AppDispatch } from "@/store/store";
@@ -35,7 +37,10 @@ import AddOutlined from "@mui/icons-material/AddOutlined";
 
 const DepartmentsPage: React.FC = () => {
   useCompanyAccess("canViewDepartments");
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch  = useDispatch<AppDispatch>();
+  const user      = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms  = useSelector(selectEmployeePermissions);
+  const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
 
   const creating = useSelector(selectDepartmentCreating);
   const createSuccess = useSelector(selectDepartmentCreateSuccess);
@@ -113,7 +118,7 @@ const DepartmentsPage: React.FC = () => {
             { label: "Dashboard", href: "/company/dashboard" },
             { label: "Departments" },
           ]}
-          actions={[
+          actions={canManage ? [
             <AppButton
               key="create"
               label="New Department"
@@ -122,13 +127,13 @@ const DepartmentsPage: React.FC = () => {
               size="medium"
               onClick={openCreate}
             />,
-          ]}
+          ] : []}
         />
 
         <DepartmentSearch onSearch={setSearch} />
         <DepartmentFetchError />
-        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} />
-        <DepartmentEmptyState search={search} onCreateClick={openCreate} />
+        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} canManage={canManage} />
+        <DepartmentEmptyState search={search} onCreateClick={openCreate} canManage={canManage} />
 
         <CreateDepartmentModal
           open={createOpen}

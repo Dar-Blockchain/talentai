@@ -16,6 +16,34 @@ import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, 
 
 const PURPLE = "#8310FF";
 
+// Packs: multiple keys rendered as a single toggle row.
+// primaryKey is what gets rendered; the rest are hidden and follow it.
+const PACK_ROWS: Partial<Record<EmployeePermissionKey, {
+  keys: EmployeePermissionKey[];
+  label: string;
+  description: string;
+}>> = {
+  canAssignRoles: {
+    keys: ["canAssignRoles", "canUpdateEmployeeDepartment"],
+    label: "Update Role & Department",
+    description: "Assign roles and change the department of team members",
+  },
+  canCreateDepartment: {
+    keys: ["canCreateDepartment", "canEditDepartment", "canDeleteDepartment"],
+    label: "Manage Departments",
+    description: "Create, edit and delete departments in the organisation",
+  },
+  canCreateCampaign: {
+    keys: ["canCreateCampaign", "canEditCampaign", "canDeleteCampaign", "canPublishCampaign"],
+    label: "Manage Campaigns",
+    description: "Create, edit, delete and publish campaigns",
+  },
+};
+// All keys that are absorbed into a pack (not rendered individually)
+const PACK_ABSORBED = new Set<EmployeePermissionKey>(
+  Object.values(PACK_ROWS).flatMap((p) => p!.keys.slice(1))
+);
+
 interface CategoryMeta {
   icon: React.ComponentType<any>;
   color: string;
@@ -41,7 +69,14 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
   const [expanded, setExpanded] = useState<string | false>(EMPLOYEE_PERMISSION_GROUPS[0]?.category ?? false);
 
   const toggle = useCallback(
-    (key: EmployeePermissionKey) => { onChange({ ...value, [key]: !value[key] }); },
+    (key: EmployeePermissionKey) => {
+      const newVal = !value[key];
+      const patch: Partial<EmployeePermission> = {};
+      const pack = PACK_ROWS[key];
+      if (pack) { pack.keys.forEach((k) => { patch[k] = newVal; }); }
+      else { patch[key] = newVal; }
+      onChange({ ...value, ...patch });
+    },
     [value, onChange],
   );
 
@@ -63,7 +98,11 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
         const keys        = group.permissions.map((p) => p.key);
         const allGranted  = keys.every((k) => !!value[k]);
         const someGranted = keys.some((k)  => !!value[k]);
-        const enabledCount = keys.filter((k) => !!value[k]).length;
+        const visiblePerms = group.permissions.filter((p) => !PACK_ABSORBED.has(p.key));
+        const enabledCount = visiblePerms.filter((p) => {
+          const pack = PACK_ROWS[p.key];
+          return pack ? pack.keys.every((k) => !!value[k]) : !!value[p.key];
+        }).length;
         const isOpen = expanded === group.category;
 
         return (
@@ -125,7 +164,7 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
                 border: `1px solid ${someGranted ? `${meta.color}25` : "#E2E8F0"}`,
               }}>
                 <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: someGranted ? meta.color : "#94A3B8" }}>
-                  {enabledCount} / {keys.length}
+                  {enabledCount} / {visiblePerms.length}
                 </Typography>
               </Box>
 
@@ -149,57 +188,63 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
             </AccordionSummary>
 
             <AccordionDetails sx={{ p: 0, bgcolor: "#fff" }}>
-              {group.permissions.map((perm, idx) => {
-                const enabled = !!value[perm.key];
-                return (
-                  <Box
-                    key={perm.key}
-                    sx={{
-                      px: 2.5, py: 1.5,
-                      display: "flex", alignItems: "center", gap: 2,
-                      borderBottom: idx < group.permissions.length - 1 ? "1px solid #F8FAFC" : "none",
-                      transition: "background 0.15s",
-                      "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
-                      opacity: disabled ? 0.6 : 1,
-                    }}
-                  >
-                    {/* Dot indicator */}
-                    <Box sx={{
-                      width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                      bgcolor: enabled ? meta.color : "#E2E8F0",
-                      boxShadow: enabled ? `0 0 0 3px ${meta.color}18` : "none",
-                      transition: "all 0.2s",
-                    }} />
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 }}>
-                        {perm.label}
-                      </Typography>
-                      <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 }}>
-                        {perm.description}
-                      </Typography>
-                    </Box>
-
-                    <Switch
-                      checked={enabled}
-                      onChange={() => !disabled && toggle(perm.key)}
-                      onClick={(e) => e.stopPropagation()}
-                      size="small"
-                      disabled={disabled}
+              {group.permissions
+                .filter((perm) => !PACK_ABSORBED.has(perm.key))
+                .map((perm, idx, visible) => {
+                  const pack    = PACK_ROWS[perm.key];
+                  const label   = pack ? pack.label       : perm.label;
+                  const desc    = pack ? pack.description : perm.description;
+                  const enabled = pack
+                    ? pack.keys.every((k) => !!value[k])
+                    : !!value[perm.key];
+                  return (
+                    <Box
+                      key={perm.key}
                       sx={{
-                        flexShrink: 0,
-                        "& .MuiSwitch-switchBase.Mui-checked": {
-                          color: "#fff",
-                          "& + .MuiSwitch-track": { bgcolor: meta.color, opacity: 1 },
-                        },
-                        "& .MuiSwitch-switchBase": { color: "#E2E8F0" },
-                        "& .MuiSwitch-track": { bgcolor: "#CBD5E1", opacity: 1, borderRadius: 99 },
-                        "& .MuiSwitch-thumb": { boxShadow: "0 1px 4px rgba(0,0,0,0.2)" },
+                        px: 2.5, py: 1.5,
+                        display: "flex", alignItems: "center", gap: 2,
+                        borderBottom: idx < visible.length - 1 ? "1px solid #F8FAFC" : "none",
+                        transition: "background 0.15s",
+                        "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
+                        opacity: disabled ? 0.6 : 1,
                       }}
-                    />
-                  </Box>
-                );
-              })}
+                    >
+                      <Box sx={{
+                        width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                        bgcolor: enabled ? meta.color : "#E2E8F0",
+                        boxShadow: enabled ? `0 0 0 3px ${meta.color}18` : "none",
+                        transition: "all 0.2s",
+                      }} />
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 }}>
+                          {label}
+                        </Typography>
+                        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 }}>
+                          {desc}
+                        </Typography>
+                      </Box>
+
+                      <Switch
+                        checked={enabled}
+                        onChange={() => !disabled && toggle(perm.key)}
+                        onClick={(e) => e.stopPropagation()}
+                        size="small"
+                        disabled={disabled}
+                        sx={{
+                          flexShrink: 0,
+                          "& .MuiSwitch-switchBase.Mui-checked": {
+                            color: "#fff",
+                            "& + .MuiSwitch-track": { bgcolor: meta.color, opacity: 1 },
+                          },
+                          "& .MuiSwitch-switchBase": { color: "#E2E8F0" },
+                          "& .MuiSwitch-track": { bgcolor: "#CBD5E1", opacity: 1, borderRadius: 99 },
+                          "& .MuiSwitch-thumb": { boxShadow: "0 1px 4px rgba(0,0,0,0.2)" },
+                        }}
+                      />
+                    </Box>
+                  );
+                })}
             </AccordionDetails>
           </Accordion>
         );

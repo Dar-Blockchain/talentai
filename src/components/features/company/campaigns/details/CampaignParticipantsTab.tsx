@@ -71,14 +71,12 @@ const STATUS_CONFIG: Record<ParticipantStatus, { label: string; color: string; b
   DROPPED:     { label: "Dropped",     color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: RadioButtonUncheckedOutlined },
 };
 
-function scoreColor(s: number) { return s >= 70 ? "#16A34A" : s >= 40 ? "#D97706" : "#DC2626"; }
-function scoreBg(s: number)    { return s >= 70 ? "#F0FDF4" : s >= 40 ? "#FFFBEB" : "#FEF2F2"; }
 
 // ─── Skeleton rows ─────────────────────────────────────────────────────────────
 
 const RowSkeleton: React.FC<{ showActions?: boolean }> = ({ showActions }) => (
   <Box sx={{
-    display: "grid", gridTemplateColumns: showActions ? "1fr 130px 140px 80px 80px" : "1fr 130px 140px 80px",
+    display: "grid", gridTemplateColumns: showActions ? "1fr 130px 80px" : "1fr 130px",
     alignItems: "center", gap: 2, px: 3, py: 2, borderBottom: "1px solid #F3F4F6",
   }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -88,9 +86,7 @@ const RowSkeleton: React.FC<{ showActions?: boolean }> = ({ showActions }) => (
         <Skeleton variant="text" width="62%" height={12} sx={{ mt: 0.5 }} />
       </Box>
     </Box>
-    <Skeleton variant="rounded" width={90}  height={24} sx={{ borderRadius: "999px" }} />
-    <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: "999px" }} />
-    <Skeleton variant="rounded" width={52}  height={24} sx={{ borderRadius: 1.5, ml: "auto" }} />
+    <Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: "999px" }} />
     {showActions && <Skeleton variant="circular" width={28} height={28} />}
   </Box>
 );
@@ -127,13 +123,10 @@ const ParticipantRow: React.FC<{
   const roleColor  = roleEntry?.color ?? "#6B7280";
   const roleLabel  = roleEntry?.label || roleStr || "—";
   const RoleIcon   = roleEntry?.icon ?? null;
-  const status     = STATUS_CONFIG[p.status] ?? STATUS_CONFIG.INVITED;
-  const StatusIcon = status.icon;
-
   return (
     <Box sx={{
       display: "grid",
-      gridTemplateColumns: onRemove ? "1fr 130px 140px 80px 80px" : "1fr 130px 140px 80px",
+      gridTemplateColumns: onRemove ? "1fr 130px 80px" : "1fr 130px",
       alignItems: "center", gap: 2, px: 3, py: 1.75,
       borderBottom: index < total - 1 ? "1px solid #F3F4F6" : "none",
       transition: "background-color 0.15s",
@@ -198,23 +191,6 @@ const ParticipantRow: React.FC<{
           {RoleIcon && <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 11 } }}><RoleIcon /></Box>}
           <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor }}>{roleLabel}</Typography>
         </Box>
-      </Box>
-
-      <Box>
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, px: 1.25, py: "4px", borderRadius: "999px", bgcolor: status.bg, border: `1px solid ${status.border}` }}>
-          <StatusIcon sx={{ fontSize: 12, color: status.color }} />
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: status.color }}>{status.label}</Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        {p.score !== null && p.score !== undefined ? (
-          <Box sx={{ px: 1.25, py: "4px", borderRadius: 1.5, minWidth: 46, textAlign: "center", bgcolor: scoreBg(p.score), border: `1px solid ${scoreColor(p.score)}28` }}>
-            <Typography sx={{ fontSize: "12px", fontWeight: 800, color: scoreColor(p.score), lineHeight: 1 }}>{p.score}%</Typography>
-          </Box>
-        ) : (
-          <Typography sx={{ fontSize: "12px", color: "#D1D5DB", pr: 0.5 }}>—</Typography>
-        )}
       </Box>
 
       {onRemove && (
@@ -698,7 +674,7 @@ const EmployeePickerRow: React.FC<{
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-interface Props { campaignId: string; mode?: "company" | "employee" }
+interface Props { campaignId: string; mode?: "company" | "employee"; anonymityMode?: string }
 
 const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company" }) => {
   const dispatch     = useDispatch<AppDispatch>();
@@ -737,38 +713,14 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
     if (removeCampaignParticipant.fulfilled.match(result)) refreshParticipants();
   }, [dispatch, campaignId, refreshParticipants]);
 
-  const inProgressCount = participants.filter(p => p.status === "IN_PROGRESS").length;
-  const completedCount  = participants.filter(p => p.status === "COMPLETED").length;
-  const invitedCount    = participants.filter(p => p.status === "INVITED").length;
-  const droppedCount    = participants.filter(p => p.status === "DROPPED").length;
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
 
       {/* ── Toolbar ── */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.6, borderRadius: "999px", bgcolor: `${PURPLE}0D`, border: `1px solid ${PURPLE}20` }}>
-            <PeopleAltOutlined sx={{ fontSize: 13, color: PURPLE }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: PURPLE }}>
-              {loading ? "…" : total} participant{total !== 1 ? "s" : ""}
-            </Typography>
-          </Box>
-          {!loading && !error && participants.length > 0 && (
-            (["INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"] as ParticipantStatus[]).map((s) => {
-              const cfg   = STATUS_CONFIG[s];
-              const count = s === "INVITED" ? invitedCount : s === "IN_PROGRESS" ? inProgressCount : s === "COMPLETED" ? completedCount : droppedCount;
-              if (count === 0) return null;
-              const Icon = cfg.icon;
-              return (
-                <Box key={s} sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, px: 1.25, py: "4px", borderRadius: "999px", bgcolor: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                  <Icon sx={{ fontSize: 11, color: cfg.color }} />
-                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: cfg.color }}>{count} {cfg.label}</Typography>
-                </Box>
-              );
-            })
-          )}
-        </Box>
+        <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
+          {loading ? "…" : `${total} participant${total !== 1 ? "s" : ""} total`}
+        </Typography>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{
@@ -809,12 +761,12 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
         {loading && <LinearProgress sx={{ height: 2, "& .MuiLinearProgress-bar": { bgcolor: PURPLE } }} />}
 
         <Box sx={{
-          display: "grid", gridTemplateColumns: isCompany ? "1fr 130px 140px 80px 80px" : "1fr 130px 140px 80px",
+          display: "grid", gridTemplateColumns: isCompany ? "1fr 130px 80px" : "1fr 130px",
           alignItems: "center", gap: 2, px: 3, py: 1.4,
           bgcolor: "#F8F9FB", borderBottom: "1px solid #E5E7EB",
         }}>
-          {[...["Participant", "Role", "Status", "Score"], ...(isCompany ? ["Actions"] : [])].map((col, i) => (
-            <Typography key={col || `col-${i}`} sx={{ fontSize: "10px", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: i === 3 ? "right" : "left" }}>
+          {[...["Participant", "Role"], ...(isCompany ? ["Actions"] : [])].map((col, i) => (
+            <Typography key={col || `col-${i}`} sx={{ fontSize: "10px", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               {col}
             </Typography>
           ))}

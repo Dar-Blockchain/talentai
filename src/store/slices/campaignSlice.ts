@@ -249,7 +249,12 @@ export const addCampaignParticipant = createAsyncThunk<
 >("campaign/addParticipant", async ({ campaignId, employeeId }, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.post(`internal-campaigns/${campaignId}/participate/${employeeId}`);
-    return response.data.data as CampaignParticipant;
+    const data = response.data.data as CampaignParticipant;
+    // For anonymous campaigns, persist the token in localStorage so the assessment page can retrieve it
+    if (data.anonymousToken) {
+      localStorage.setItem(`anon_token_${campaignId}`, data.anonymousToken);
+    }
+    return data;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message ?? err.message);
   }
@@ -265,6 +270,44 @@ export const removeCampaignParticipant = createAsyncThunk<
     return participantId;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.message ?? err.message);
+  }
+});
+
+// ─── Link-based access thunks ─────────────────────────────────────────────────
+
+export const fetchCampaignByLinkToken = createAsyncThunk<
+  Campaign,
+  string,
+  { rejectValue: string }
+>("campaign/fetchByLinkToken", async (token, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`internal-campaigns/link/${token}`);
+    return response.data.data as Campaign;
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.error ?? err.message);
+  }
+});
+
+export const joinCampaignByLink = createAsyncThunk<
+  { campaignId: string; anonymousToken?: string; linkAccessToken?: string; participantId?: string },
+  { token: string; name?: string; email?: string },
+  { rejectValue: string }
+>("campaign/joinByLink", async ({ token, name, email }, { rejectWithValue }) => {
+  try {
+    const body: Record<string, string> = {};
+    if (name)  body.name  = name;
+    if (email) body.email = email;
+    const response = await axiosInstance.post(`internal-campaigns/link/${token}/join`, body);
+    const data = response.data.data as { campaignId: string; anonymousToken?: string; linkAccessToken?: string; participantId?: string };
+    if (data.anonymousToken) {
+      localStorage.setItem(`anon_token_${data.campaignId}`, data.anonymousToken);
+    }
+    if (data.linkAccessToken) {
+      localStorage.setItem(`link_token_${data.campaignId}`, data.linkAccessToken);
+    }
+    return data;
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.error ?? err.message);
   }
 });
 

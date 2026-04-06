@@ -174,9 +174,9 @@ const CampaignDetail: React.FC<Props> = ({
           color: PURPLE,
           bg: `${PURPLE}08`,
           label: "Participants",
-          value: participantsTotal > 0
-            ? String(participantsTotal)
-            : campaign.targetEmployeeCount ? String(campaign.targetEmployeeCount) : "—",
+          value: campaign.participantCount !== undefined
+            ? String(campaign.participantCount)
+            : participantsTotal > 0 ? String(participantsTotal) : "—",
         },
         {
           icon: ModIcon,
@@ -214,9 +214,9 @@ const CampaignDetail: React.FC<Props> = ({
           color: PURPLE,
           bg: `${PURPLE}08`,
           label: "Participants",
-          value: participantsTotal > 0
-            ? String(participantsTotal)
-            : campaign.targetEmployeeCount ? String(campaign.targetEmployeeCount) : "—",
+          value: campaign.participantCount !== undefined
+            ? String(campaign.participantCount)
+            : participantsTotal > 0 ? String(participantsTotal) : "—",
         },
         {
           icon: ModIcon,
@@ -230,7 +230,9 @@ const CampaignDetail: React.FC<Props> = ({
           color: "#0891B2",
           bg: "#E0F2FE",
           label: "Sessions",
-          value: sessionsTotal > 0 ? String(sessionsTotal) : "—",
+          value: campaign.sessionCount !== undefined
+            ? String(campaign.sessionCount)
+            : sessionsTotal > 0 ? String(sessionsTotal) : "—",
         },
         {
           icon: AccessTimeOutlined,
@@ -241,9 +243,11 @@ const CampaignDetail: React.FC<Props> = ({
         },
       ] as const;
 
+  const isLinkBased = campaign.accessMethod === "LINK";
+
   const TABS: { key: TabKey; label: string; icon: React.ReactNode; count?: number | string; color: string }[] = [
     { key: "overview",     label: "Overview",     icon: <DashboardOutlined  sx={{ fontSize: 16 }} />, color: PURPLE,    count: undefined },
-    { key: "participants", label: "Participants", icon: <PeopleAltOutlined  sx={{ fontSize: 16 }} />, color: PURPLE,    count: participantsTotal || undefined },
+    ...(!isLinkBased ? [{ key: "participants" as TabKey, label: "Participants", icon: <PeopleAltOutlined sx={{ fontSize: 16 }} />, color: PURPLE, count: participantsTotal || undefined }] : []),
     ...(!isEmployee ? [{ key: "sessions" as TabKey, label: "Sessions", icon: <AssignmentOutlined sx={{ fontSize: 16 }} />, color: "#0891B2", count: sessionsTotal || undefined }] : []),
   ];
 
@@ -342,11 +346,11 @@ const CampaignDetail: React.FC<Props> = ({
           )}
 
           {tab === "participants" && (
-            <CampaignParticipantsTab campaignId={campaign._id} mode={mode} />
+            <CampaignParticipantsTab campaignId={campaign._id} mode={mode} anonymityMode={campaign.anonymityMode} />
           )}
 
           {tab === "sessions" && (
-            <CampaignSessionsTab campaignId={campaign._id} />
+            <CampaignSessionsTab campaignId={campaign._id} anonymityMode={campaign.anonymityMode} />
           )}
         </Box>
       </Box>

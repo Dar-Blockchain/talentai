@@ -21,10 +21,11 @@ interface DepartmentDetailHeaderProps {
   loadingMembers: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  canManage?: boolean;
 }
 
 const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
-  department, loading, membersTotal, loadingMembers, onEdit, onDelete,
+  department, loading, membersTotal, loadingMembers, onEdit, onDelete, canManage = true,
 }) => {
   const router = useRouter();
 
@@ -51,7 +52,7 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
             <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>Departments</Typography>
           </Box>
 
-          {department && (
+          {department && canManage && (
             <Box sx={{ display: "flex", gap: 0.875 }}>
               <Box
                 onClick={onEdit}

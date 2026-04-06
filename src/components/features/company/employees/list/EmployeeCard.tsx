@@ -58,9 +58,11 @@ interface EmployeeCardProps {
   onEdit: (member: Member) => void;
   onDelete: (member: Member) => void;
   onSelect: (member: Member) => void;
+  canAssignRoles?: boolean;
+  canRemove?: boolean;
 }
 
-const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect }) => {
+const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onEdit, onDelete, onSelect, canAssignRoles = true, canRemove = true }) => {
   const router = useRouter();
   const name    = (member.firstName && member.lastName)
     ? `${member.firstName} ${member.lastName}`
@@ -276,37 +278,41 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({ member, index = 0, onE
             </Tooltip>
 
             {/* Edit */}
-            <Tooltip title="Edit role" placement="top" arrow>
-              <Box
-                onClick={() => onEdit(member)}
-                sx={{
-                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
-                  py: 0.875, borderRadius: "10px",
-                  bgcolor: `${PURPLE}08`, border: `1px solid ${PURPLE}20`,
-                  cursor: "pointer", transition: "all 0.15s",
-                  "&:hover": { bgcolor: `${PURPLE}15`, borderColor: `${PURPLE}40` },
-                }}
-              >
-                <EditOutlined sx={{ fontSize: 13, color: PURPLE }} />
-                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: PURPLE }}>Edit</Typography>
-              </Box>
-            </Tooltip>
+            {canAssignRoles && (
+              <Tooltip title="Edit role" placement="top" arrow>
+                <Box
+                  onClick={() => onEdit(member)}
+                  sx={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5,
+                    py: 0.875, borderRadius: "10px",
+                    bgcolor: `${PURPLE}08`, border: `1px solid ${PURPLE}20`,
+                    cursor: "pointer", transition: "all 0.15s",
+                    "&:hover": { bgcolor: `${PURPLE}15`, borderColor: `${PURPLE}40` },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 13, color: PURPLE }} />
+                  <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: PURPLE }}>Edit</Typography>
+                </Box>
+              </Tooltip>
+            )}
 
             {/* Delete */}
-            <Tooltip title="Remove member" placement="top" arrow>
-              <Box
-                onClick={() => onDelete(member)}
-                sx={{
-                  width: 34, display: "flex", alignItems: "center", justifyContent: "center",
-                  py: 0.875, borderRadius: "10px",
-                  bgcolor: "#FEF2F2", border: "1px solid #FECACA",
-                  cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
-                  "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
-                }}
-              >
-                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
-              </Box>
-            </Tooltip>
+            {canRemove && (
+              <Tooltip title="Remove member" placement="top" arrow>
+                <Box
+                  onClick={() => onDelete(member)}
+                  sx={{
+                    width: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                    py: 0.875, borderRadius: "10px",
+                    bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+                    cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
+                    "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
+                  }}
+                >
+                  <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
+                </Box>
+              </Tooltip>
+            )}
           </Box>
         </Box>
       </Box>

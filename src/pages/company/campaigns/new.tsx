@@ -11,6 +11,7 @@ import {
   Stack,
   alpha,
   useTheme,
+  Tooltip,
 } from "@mui/material";
 import {
   CheckCircle as CheckCircleIcon,
@@ -25,7 +26,6 @@ import {
   VisibilityOff as VisibilityOffIcon,
   InsertLink as InsertLinkIcon,
   Lock as LockIcon,
-  AllInclusive as AllInclusiveIcon,
 } from "@mui/icons-material";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
@@ -49,6 +49,23 @@ import { useToast } from "@/hooks/useToast";
 import FormCard from "@/components/ui/FormCard";
 import ParticipantsStep from "@/components/features/company/campaigns/new/ParticipantsStep";
 
+const ACCESS_OPTIONS = [
+  {
+    value: "LINK",
+    label: "Unique Link",
+    desc: "Anyone with the link can participate without a TalentAI account",
+    Icon: InsertLinkIcon,
+    color: "#059669",
+  },
+  {
+    value: "ACCOUNTS",
+    label: "Platform Accounts",
+    desc: "Employees log in and see their assigned campaigns in the dashboard",
+    Icon: LockIcon,
+    color: "#2563EB",
+  },
+];
+
 const ANONYMITY_OPTIONS = [
   {
     value: "NOMINATIVE",
@@ -66,29 +83,6 @@ const ANONYMITY_OPTIONS = [
   },
 ];
 
-const ACCESS_OPTIONS = [
-  {
-    value: "LINK",
-    label: "Link",
-    desc: "Anyone with the link can participate",
-    Icon: InsertLinkIcon,
-    color: "#059669",
-  },
-  {
-    value: "ACCOUNTS",
-    label: "Accounts",
-    desc: "Participants must sign in",
-    Icon: LockIcon,
-    color: "#DC2626",
-  },
-  {
-    value: "BOTH",
-    label: "Both",
-    desc: "Link access or account login",
-    Icon: AllInclusiveIcon,
-    color: "#D97706",
-  },
-];
 
 const STEPS = [
   {
@@ -116,6 +110,7 @@ const NewCampaignPage: React.FC = () => {
     control,
     handleSubmit,
     trigger,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateCampaignForm>({
     mode: "onChange",
@@ -124,11 +119,14 @@ const NewCampaignPage: React.FC = () => {
       type: "" as CampaignType,
       description: "",
       anonymityMode: "ANONYMOUS",
-      accessMethod: "LINK",
+      accessMethod: "" as "LINK" | "ACCOUNTS",
       module: "" as ModuleType,
       deadline: "",
     },
   });
+
+  const accessMethod = watch("accessMethod");
+  const isLinkBased  = accessMethod === "LINK";
 
   const handleNext = async () => {
     const valid = await trigger([
@@ -182,6 +180,7 @@ const NewCampaignPage: React.FC = () => {
         />
 
         {/* ── Compact Stepper ── */}
+        {!isLinkBased && (
         <Box
           sx={{
             display: "flex",
@@ -298,6 +297,7 @@ const NewCampaignPage: React.FC = () => {
             );
           })}
         </Box>
+        )}
 
         <Box>
           <Paper
@@ -505,7 +505,7 @@ const NewCampaignPage: React.FC = () => {
                             <Box
                               sx={{
                                 display: "grid",
-                                gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+                                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
                                 gap: 1.5,
                               }}
                             >
@@ -567,6 +567,7 @@ const NewCampaignPage: React.FC = () => {
                         )}
                       />
                     </Box>
+
                   </Stack>
                 </FormCard>
 
@@ -708,29 +709,35 @@ const NewCampaignPage: React.FC = () => {
                             const module = MODULE_CONFIG[mod as ModuleType];
                             const Icon = module.icon;
                             const isSelected = field.value === (mod as ModuleType);
+                            const isComingSoon = mod === "TRAINING_PATH";
 
-                            return (
+                            const card = (
                               <Box
                                 key={mod}
-                                onClick={() =>
-                                  field.onChange(isSelected ? "" : mod)
-                                }
+                                onClick={() => {
+                                  if (!isComingSoon) field.onChange(isSelected ? "" : mod);
+                                }}
                                 sx={{
                                   display: "flex",
                                   alignItems: "flex-start",
                                   gap: 1,
                                   p: 1,
                                   borderRadius: 1.5,
-                                  cursor: "pointer",
+                                  cursor: isComingSoon ? "not-allowed" : "pointer",
                                   border: `1px solid ${isSelected ? module.color : theme.palette.divider}`,
-                                  bgcolor: isSelected
+                                  bgcolor: isComingSoon
+                                    ? alpha(theme.palette.grey[500], 0.04)
+                                    : isSelected
                                     ? alpha(module.color, 0.03)
                                     : "transparent",
+                                  opacity: isComingSoon ? 0.55 : 1,
                                   transition: "all 0.2s",
-                                  "&:hover": {
-                                    borderColor: module.color,
-                                    bgcolor: alpha(module.color, 0.05),
-                                  },
+                                  ...(!isComingSoon && {
+                                    "&:hover": {
+                                      borderColor: module.color,
+                                      bgcolor: alpha(module.color, 0.05),
+                                    },
+                                  }),
                                 }}
                               >
                                 <Box
@@ -785,6 +792,14 @@ const NewCampaignPage: React.FC = () => {
                                 )}
                               </Box>
                             );
+
+                            return isComingSoon ? (
+                              <Tooltip key={mod} title="Coming Soon" placement="top" arrow>
+                                <span style={{ display: "contents" }}>{card}</span>
+                              </Tooltip>
+                            ) : (
+                              <React.Fragment key={mod}>{card}</React.Fragment>
+                            );
                           })}
                         </Box>
 
@@ -801,10 +816,12 @@ const NewCampaignPage: React.FC = () => {
                 {/* Step 1 actions */}
                 <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 1 }}>
                   <AppButton
-                    label="Next: Who Can Participate"
+                    label={isLinkBased ? (isSubmitting ? "Creating..." : "Create Campaign") : "Next: Who Can Participate"}
                     variant="contained"
                     size="large"
-                    onClick={handleNext}
+                    loading={isLinkBased && isSubmitting}
+                    disabled={isLinkBased && isSubmitting}
+                    onClick={isLinkBased ? handleSubmit(onSubmit) : handleNext}
                     sx={{
                       px: 4,
                       background: "linear-gradient(45deg, #0D9488 30%, #14B8A6 90%)",

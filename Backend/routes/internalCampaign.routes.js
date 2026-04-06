@@ -120,6 +120,43 @@ router.get(
   internalCampaignController.getParticipantResults
 );
 
+/**
+ * GET /internal-campaigns/:campaignId/public — Public: limited campaign info by ID (no auth)
+ */
+router.get(
+  "/:campaignId/public",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getPublicCampaignInfo
+);
+
+/**
+ * GET /internal-campaigns/link/:token — Public: look up a campaign by its link token
+ */
+router.get(
+  "/link/:token",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.getCampaignByLinkToken
+);
+
+/**
+ * POST /internal-campaigns/link/:token/join — Join via link
+ * Anonymous campaigns: no auth needed.
+ * Nominative campaigns: requireAuthUser applied inline.
+ */
+router.post(
+  "/link/:token/join",
+  authLogMiddleware("InternalCampaign"),
+  (req, res, next) => {
+    // If an auth cookie is present, decode it; otherwise proceed without user context.
+    // The controller handles the NOMINATIVE vs ANONYMOUS distinction.
+    const { requireAuthUser: auth } = require("../middleware/auth.middleware");
+    const token = req.cookies?.api_token;
+    if (token) return auth(req, res, next);
+    next();
+  },
+  internalCampaignController.joinCampaignByLink
+);
+
 // apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuthUser,
@@ -141,6 +178,16 @@ router.get("/", internalCampaignController.getCompanyCampaigns);
  * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
  */
 router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
+
+/**
+ * GET /campaigns/:campaignId/sessions — Participants as sessions (company only)
+ */
+router.get("/:campaignId/sessions", internalCampaignController.getSessions);
+
+/**
+ * GET /campaigns/:campaignId/anonymous-scores — Anonymous participant scores (company only)
+ */
+router.get("/:campaignId/anonymous-scores", internalCampaignController.getAnonymousScores);
 
 /**
  * GET /campaigns/:campaignId/non-participants — Employees of the company not yet in this campaign

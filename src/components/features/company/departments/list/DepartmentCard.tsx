@@ -24,6 +24,7 @@ export interface DepartmentCardProps {
   index: number;
   onEdit: (dept: Department) => void;
   onDelete: (dept: Department) => void;
+  canManage?: boolean;
 }
 
 const DepartmentCard: React.FC<DepartmentCardProps> = ({
@@ -31,6 +32,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
   index,
   onEdit,
   onDelete,
+  canManage = true,
 }) => {
   const router = useRouter();
   return (
@@ -76,22 +78,24 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
-          <IconButton
-            size="small"
-            onClick={(e) => { e.stopPropagation(); onEdit(department); }}
-            sx={{ color: "#9CA3AF", "&:hover": { color: TEAL, bgcolor: TEAL_LIGHT } }}
-          >
-            <EditOutlined sx={{ fontSize: 17 }} />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={(e) => { e.stopPropagation(); onDelete(department); }}
-            sx={{ color: "#9CA3AF", "&:hover": { color: "#DC2626", bgcolor: "#FEF2F2" } }}
-          >
-            <DeleteOutlined sx={{ fontSize: 17 }} />
-          </IconButton>
-        </Box>
+        {canManage && (
+          <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onEdit(department); }}
+              sx={{ color: "#9CA3AF", "&:hover": { color: TEAL, bgcolor: TEAL_LIGHT } }}
+            >
+              <EditOutlined sx={{ fontSize: 17 }} />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onDelete(department); }}
+              sx={{ color: "#9CA3AF", "&:hover": { color: "#DC2626", bgcolor: "#FEF2F2" } }}
+            >
+              <DeleteOutlined sx={{ fontSize: 17 }} />
+            </IconButton>
+          </Box>
+        )}
       </Box>
 
       {/* Description */}

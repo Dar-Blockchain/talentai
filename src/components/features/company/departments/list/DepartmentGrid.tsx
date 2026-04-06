@@ -12,9 +12,10 @@ import DepartmentSkeletonCard from "./DepartmentSkeletonCard";
 interface DepartmentGridProps {
   onEdit: (dept: Department) => void;
   onDelete: (dept: Department) => void;
+  canManage?: boolean;
 }
 
-const DepartmentGrid: React.FC<DepartmentGridProps> = ({ onEdit, onDelete }) => {
+const DepartmentGrid: React.FC<DepartmentGridProps> = ({ onEdit, onDelete, canManage = true }) => {
   const departments = useSelector(selectDepartments);
   const loading = useSelector(selectDepartmentsLoading);
 
@@ -35,6 +36,7 @@ const DepartmentGrid: React.FC<DepartmentGridProps> = ({ onEdit, onDelete }) => 
               index={idx}
               onEdit={onEdit}
               onDelete={onDelete}
+              canManage={canManage}
             />
           ))}
     </Box>

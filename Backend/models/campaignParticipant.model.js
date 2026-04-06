@@ -12,13 +12,25 @@ const campaignParticipantSchema = new mongoose.Schema(
     employee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null,
     },
 
     anonymousToken: {
       type: String,
       index: true,
       default: null,
+    },
+
+    // LINK + NOMINATIVE: token used as participantId for submission (no account needed)
+    linkAccessToken: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+
+    // LINK + NOMINATIVE: name provided by participant on the join form
+    providerName: {
+      type: String,
+      trim: true,
     },
 
     email: {
@@ -40,10 +52,11 @@ const campaignParticipantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent duplicate participation
+// Prevent duplicate participation for named employees only.
+// $ne: null excludes anonymous participants (no employee field) from the unique constraint.
 campaignParticipantSchema.index(
   { campaign: 1, employee: 1 },
-  { unique: true, partialFilterExpression: { employee: { $exists: true } } }
+  { unique: true, partialFilterExpression: { employee: { $ne: null } } }
 );
 
 module.exports = mongoose.model(

@@ -29,6 +29,7 @@ export interface EmployeePermission {
   canAssignRoles: boolean;
   canRemoveEmployee: boolean;
   canUpdateEmployeeDepartment: boolean;
+  canManagePermissions: boolean;
 
   // Campaign Permissions
   canViewCampaigns: boolean;
@@ -157,8 +158,8 @@ export const EMPLOYEE_PERMISSION_GROUPS: EmployeePermissionGroup[] = [
     permissions: [
       {
         key: 'canManageTeam',
-        label: 'Manage Team',
-        description: 'View team list and control general team settings',
+        label: 'View Team',
+        description: 'View the list of team members and their profiles',
       },
       {
         key: 'canInviteMembers',
@@ -179,6 +180,11 @@ export const EMPLOYEE_PERMISSION_GROUPS: EmployeePermissionGroup[] = [
         key: 'canUpdateEmployeeDepartment',
         label: 'Update Employee Department',
         description: "Change a team member's assigned department",
+      },
+      {
+        key: 'canManagePermissions',
+        label: 'Manage Permissions',
+        description: 'View and edit permissions for other team members',
       },
     ],
   },
@@ -251,6 +257,7 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: Omit<EmployeePermission, '_id' | 'use
   canAssignRoles: false,
   canRemoveEmployee: false,
   canUpdateEmployeeDepartment: false,
+  canManagePermissions: false,
 
   // Campaigns
   canViewCampaigns: true,

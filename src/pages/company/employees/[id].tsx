@@ -6,7 +6,7 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
 import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   fetchMemberById,
   updateMemberRole,
@@ -14,6 +14,7 @@ import {
   selectCurrentMember,
   selectFetchingMember,
   selectMembers,
+  selectEmployeePermissions,
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
   Member,
@@ -25,6 +26,13 @@ const EmployeeDetailPage: React.FC = () => {
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
+
+  const user        = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms    = useSelector(selectEmployeePermissions);
+  const isEmployee  = user?.role === "Employee";
+  const canAssignRoles     = !isEmployee || !!empPerms?.canAssignRoles;
+  const canRemove          = !isEmployee || !!empPerms?.canRemoveEmployee;
+  const canManagePerms     = !isEmployee || !!empPerms?.canManagePermissions;
 
   const member       = useSelector(selectCurrentMember);
   const loading      = useSelector(selectFetchingMember);
@@ -105,6 +113,9 @@ const EmployeeDetailPage: React.FC = () => {
             onBack={handleBack}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            canAssignRoles={canAssignRoles}
+            canRemove={canRemove}
+            canManagePermissions={canManagePerms}
           />
         )}
 

@@ -9,9 +9,10 @@ import AppButton from "@/components/ui/AppButton";
 interface DepartmentEmptyStateProps {
   search: string;
   onCreateClick: () => void;
+  canManage?: boolean;
 }
 
-const DepartmentEmptyState: React.FC<DepartmentEmptyStateProps> = ({ search, onCreateClick }) => {
+const DepartmentEmptyState: React.FC<DepartmentEmptyStateProps> = ({ search, onCreateClick, canManage = true }) => {
   const departments = useSelector(selectDepartments);
   const loading = useSelector(selectDepartmentsLoading);
 
@@ -36,7 +37,7 @@ const DepartmentEmptyState: React.FC<DepartmentEmptyStateProps> = ({ search, onC
           ? "Try a different keyword"
           : "Create your first department to start organizing your teams."}
       </Typography>
-      {!search && (
+      {!search && canManage && (
         <AppButton
           label="Create Department"
           variant="contained"

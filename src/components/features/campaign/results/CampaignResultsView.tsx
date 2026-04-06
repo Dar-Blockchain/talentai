@@ -83,7 +83,7 @@ const ScoreBadge: React.FC<{ score: number | null; size?: 'sm' | 'lg' }> = ({ sc
 
 // ─── QuestionnaireResults ──────────────────────────────────────────────────────
 
-const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) => {
+export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) => {
   const questions: { question: string; type: string; options?: string[] }[] =
     data.campaign.module?.config?.questions ?? [];
   const answers = data.response?.answers ?? [];
@@ -232,7 +232,7 @@ const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) => {
 
 // ─── InterviewResults ──────────────────────────────────────────────────────────
 
-const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
+export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
   const { response } = data;
   const score    = response?.aiScore ?? response?.testResults?.score ?? null;
   const maxScore = response?.testResults?.maxScore ?? 100;
@@ -346,13 +346,14 @@ const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
 // ─── CampaignResultsView ───────────────────────────────────────────────────────
 
 interface Props {
-  campaignId:  string;
+  campaignId:    string;
   participantId: string;
-  breadcrumbs: { label: string; href?: string }[];
-  backHref:    string;
+  breadcrumbs:   { label: string; href?: string }[];
+  backHref:      string;
+  noLayout?:     boolean;
 }
 
-const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, breadcrumbs, backHref }) => {
+const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, breadcrumbs, backHref, noLayout }) => {
   const router = useRouter();
 
   const [data,    setData]    = useState<ResultsData | null>(null);
@@ -373,10 +374,8 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
   const meta       = MODULE_META[moduleType] ?? MODULE_META.QUESTIONNAIRE;
   const ModIcon    = meta.icon;
 
-  return (
-    <DashboardLayout>
-      <PageHeader title="" breadcrumbs={breadcrumbs} />
-
+  const content = (
+    <>
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress sx={{ color: '#8B5CF6' }} />
@@ -421,21 +420,38 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
             : <InterviewResults data={data} />
           }
 
-          {/* Back button */}
-          <Box
-            onClick={() => router.push(backHref)}
-            sx={{
-              display: 'inline-flex', alignItems: 'center', gap: 0.75,
-              cursor: 'pointer', color: '#64748B', fontSize: 13, fontWeight: 600,
-              '&:hover': { color: '#0F172A' }, transition: 'color 0.15s', pb: 2,
-            }}
-          >
-            <ArrowBackOutlined sx={{ fontSize: 16 }} />
-            Back to Campaign
-          </Box>
+          {/* Back button — hidden on public (link-based) results page */}
+          {!noLayout && (
+            <Box
+              onClick={() => router.push(backHref)}
+              sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                cursor: 'pointer', color: '#64748B', fontSize: 13, fontWeight: 600,
+                '&:hover': { color: '#0F172A' }, transition: 'color 0.15s', pb: 2,
+              }}
+            >
+              <ArrowBackOutlined sx={{ fontSize: 16 }} />
+              Back to Campaign
+            </Box>
+          )}
 
         </Box>
       ) : null}
+    </>
+  );
+
+  if (noLayout) {
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC', px: { xs: 2, md: 4 }, py: 4 }}>
+        {content}
+      </Box>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <PageHeader title="" breadcrumbs={breadcrumbs} />
+      {content}
     </DashboardLayout>
   );
 };

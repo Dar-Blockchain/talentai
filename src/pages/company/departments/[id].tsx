@@ -25,12 +25,17 @@ import {
   selectDepartmentDeleteSuccess,
   selectDepartmentDeleteError,
 } from "@/store/slices/departmentSlice";
-import { selectMembers } from "@/store/slices/memberSlice";
+import { selectMembers, selectEmployeePermissions } from "@/store/slices/memberSlice";
+import { RootState } from "@/store/store";
 
 const DepartmentDetailPage: React.FC = () => {
   const router   = useRouter();
   const { id }   = router.query;
   const dispatch = useDispatch<AppDispatch>();
+
+  const user      = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms  = useSelector(selectEmployeePermissions);
+  const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
 
   const department    = useSelector(selectCurrentDepartment);
   const loadingDept   = useSelector(selectCurrentDepartmentLoading);
@@ -92,6 +97,7 @@ const DepartmentDetailPage: React.FC = () => {
           loadingMembers={false}
           onEdit={() => setEditOpen(true)}
           onDelete={() => setDeleteOpen(true)}
+          canManage={canManage}
         />
 
         {id && typeof id === "string" && (

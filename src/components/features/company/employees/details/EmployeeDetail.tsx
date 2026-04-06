@@ -151,10 +151,13 @@ interface EmployeeDetailProps {
   onBack: () => void;
   onEdit: (member: Member) => void;
   onDelete: (member: Member) => void;
+  canAssignRoles?: boolean;
+  canRemove?: boolean;
+  canManagePermissions?: boolean;
 }
 
 /* ── Component ────────────────────────────────────────── */
-const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete }) => {
+const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete, canAssignRoles = true, canRemove = true, canManagePermissions = true }) => {
   const dispatch = useDispatch<AppDispatch>();
   const storedPermissions  = useSelector(selectEmployeePermissions);
   const fetchingPerms      = useSelector(selectFetchingPermissions);
@@ -234,32 +237,36 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
             </Box>
 
             <Box sx={{ display: "flex", gap: 0.875 }}>
-              <Box
-                onClick={() => onEdit(member)}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 0.625,
-                  px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                  border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
-                  transition: "all 0.15s",
-                  "&:hover": { bgcolor: `${PURPLE}08`, borderColor: `${PURPLE}30`, "& *": { color: PURPLE } },
-                }}
-              >
-                <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
-                <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
-              </Box>
-              <Box
-                onClick={() => onDelete(member)}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 0.625,
-                  px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                  border: "1px solid #FECACA", bgcolor: "#FEF7F7",
-                  transition: "all 0.15s",
-                  "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
-                }}
-              >
-                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-                <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Remove</Typography>
-              </Box>
+              {canAssignRoles && (
+                <Box
+                  onClick={() => onEdit(member)}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: `${PURPLE}08`, borderColor: `${PURPLE}30`, "& *": { color: PURPLE } },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
+                </Box>
+              )}
+              {canRemove && (
+                <Box
+                  onClick={() => onDelete(member)}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #FECACA", bgcolor: "#FEF7F7",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
+                  }}
+                >
+                  <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Remove</Typography>
+                </Box>
+              )}
             </Box>
           </Box>
 
@@ -342,8 +349,8 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
 
       {/* ── Tabs ────────────────────────────────────────── */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 2.5, bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, width: "fit-content" }}>
-        <Tab active={tab === "overview"}     label="Overview"     icon={<PersonOutlined />}  onClick={() => setTab("overview")} />
-        <Tab active={tab === "permissions"}  label="Permissions"  icon={<TuneOutlined />}    onClick={() => setTab("permissions")} />
+        <Tab active={tab === "overview"}    label="Overview"    icon={<PersonOutlined />} onClick={() => setTab("overview")} />
+        {canManagePermissions && <Tab active={tab === "permissions"} label="Permissions" icon={<TuneOutlined />}   onClick={() => setTab("permissions")} />}
       </Box>
 
       {/* ── Tab panels ──────────────────────────────────── */}
