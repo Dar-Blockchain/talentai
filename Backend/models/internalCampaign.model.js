@@ -20,7 +20,7 @@ const internalCampaignSchema = new mongoose.Schema(
   {
     company: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Profile",
+      ref: "User",
       required: true,
       index: true,
     },

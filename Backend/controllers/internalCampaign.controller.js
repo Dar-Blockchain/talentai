@@ -60,7 +60,7 @@ exports.createInternalCampaign = async (req, res) => {
       skill,
       participants, // Array of user IDs
     } = req.body;
-    const companyId = req.user.profile; // Assuming company ID comes from authenticated user's profile
+    const companyId = req.user._id; // Use authenticated user's ID as company ID
     console.log(
       `📢 Creating campaign for company ${companyId} with title "${title}" and module type "${module?.type}"`,
     );
@@ -169,7 +169,7 @@ exports.createInternalCampaign = async (req, res) => {
  */
 exports.getCompanyCampaigns = async (req, res) => {
   try {
-    const companyId = req.user.profile;
+    const companyId = req.user._id;
     const { status, type, targetDepartment, title, search, period, page = 1, limit = 10 } = req.query;
 
     const pageNum  = Math.max(1, parseInt(page) || 1);
@@ -488,7 +488,7 @@ exports.getCampaignParticipants = async (req, res) => {
 exports.updateInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    await verifyOwnership(campaignId, req.user.profile);
+    await verifyOwnership(campaignId, req.user._id);
     const updatedCampaign = await updateCampaign(campaignId, req.body);
     res.status(200).json({
       success: true,
@@ -509,7 +509,7 @@ exports.updateInternalCampaign = async (req, res) => {
 exports.deleteInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    await verifyOwnership(campaignId, req.user.profile);
+    await verifyOwnership(campaignId, req.user._id);
     await deleteCampaign(campaignId);
     res.status(200).json({
       success: true,
@@ -565,7 +565,7 @@ exports.getAllCampaigns = async (req, res) => {
  */
 exports.getCampaignMetrics = async (req, res) => {
   try {
-    const companyId = req.user.profile;
+    const companyId = req.user._id;
     const metrics = await getCampaignMetrics(companyId);
     res.status(200).json({
       success: true,
@@ -586,7 +586,7 @@ exports.updateCampaignStatus = async (req, res) => {
   try {
     const { campaignId } = req.params;
     const { status } = req.body;
-    await verifyOwnership(campaignId, req.user.profile);
+    await verifyOwnership(campaignId, req.user._id);
     const campaign = await updateCampaignStatus(campaignId, status);
     res.status(200).json({
       success: true,
@@ -1128,9 +1128,8 @@ exports.removeEmployeeFromCampaign = async (req, res) => {
 exports.getNonParticipants = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    // profileId is used to verify campaign ownership (InternalCampaign.company = Profile._id)
-    // userId is used to query CompanyMembership (CompanyMembership.company = User._id)
-    const profileId = req.user.profile;
+    // userId is used to verify campaign ownership (InternalCampaign.company = User._id)
+    // userId is also used to query CompanyMembership (CompanyMembership.company = User._id)
     const userId    = req.user._id;
     const {
       search,
@@ -1147,7 +1146,7 @@ exports.getNonParticipants = async (req, res) => {
     if (!campaign) {
       return res.status(404).json({ success: false, error: "Campaign not found" });
     }
-    if (campaign.company._id.toString() !== profileId.toString()) {
+    if (campaign.company._id.toString() !== userId.toString()) {
       return res.status(403).json({ success: false, error: "Unauthorized: You can only manage your own campaigns" });
     }
 

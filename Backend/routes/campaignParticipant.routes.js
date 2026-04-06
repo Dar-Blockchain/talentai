@@ -30,7 +30,7 @@ router.post(
 
 /**
  * GET /campaigns/:campaignId/participants — Récupérer tous les participants d'une campagne
- * Query: ?status=INVITED|IN_PROGRESS|COMPLETED|DROPPED
+ * Query: ?status=NOT_STARTED|INVITED|IN_PROGRESS|COMPLETED|DROPPED
  * Middleware: authentification requise + access company
  */
 router.get(
