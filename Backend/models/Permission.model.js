@@ -20,26 +20,26 @@ const permissionSchema = new mongoose.Schema(
     },
 
     // Job Post Permissions
-    canCreateJobPosts: { type: Boolean, default: true },
+    canCreateJobPosts: { type: Boolean, default: false },
     
     // Candidate Permissions
-    canUnlockCandidates: { type: Boolean, default: true },
-    canViewCandidateProfiles: { type: Boolean, default: true },
-    canContactCandidates: { type: Boolean, default: true },
+    canUnlockCandidates: { type: Boolean, default: false },
+    canViewCandidateProfiles: { type: Boolean, default: false },
+    canContactCandidates: { type: Boolean, default: false },
 
     
 
     // Matching Permissions
-    canAccessMatching: { type: Boolean, default: true },
+    canAccessMatching: { type: Boolean, default: false },
 
     // HR Agent Permissions
-    canUseHRAgents: { type: Boolean, default: true },
+    canUseHRAgents: { type: Boolean, default: false },
 
    
     // Team Permissions
-    canManageTeam: { type: Boolean, default: true },
-    canInviteMembers: { type: Boolean, default: true },
-    canAssignRoles: { type: Boolean, default: true },
+    canManageTeam: { type: Boolean, default: false },
+    canInviteMembers: { type: Boolean, default: false },
+    canAssignRoles: { type: Boolean, default: false },
 
     // Metadata
     lastModifiedBy: {
