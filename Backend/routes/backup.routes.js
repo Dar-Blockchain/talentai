@@ -26,7 +26,7 @@ router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Backup")
 router.post("/perform", async (req, res) => {
   try {
     logger.info("Manual backup triggered by admin");
-    
+
     const result = await backupService.performBackup();
 
     res.status(200).json({
@@ -98,7 +98,7 @@ router.post("/restore/:backupName", async (req, res) => {
     }
 
     logger.warn(`⚠️ Database restore initiated from backup: ${backupName}`);
-    
+
     const result = await backupService.restoreBackup(backupName);
 
     res.status(200).json({

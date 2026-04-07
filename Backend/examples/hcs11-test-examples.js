@@ -1,6 +1,6 @@
 /**
  * HCS-11 Service Test Examples
- * 
+ *
  * This file contains example usage and test scenarios for the HCS-11 service.
  * You can use these examples to test the API endpoints with tools like Postman or curl.
  */
@@ -141,12 +141,12 @@ const responseExamples = {
     available: true,
     message: "HCS-11 service is properly configured and available"
   },
-  
+
   validationSuccess: {
     isValid: true,
     errors: []
   },
-  
+
   validationFailure: {
     isValid: false,
     errors: [
@@ -154,14 +154,14 @@ const responseExamples = {
       "Company description is required"
     ]
   },
-  
+
   profileCreationSuccess: {
     success: true,
     message: "AI Agent profile created successfully for TechCorp AI",
     profile: { /* profile object */ },
     agentProfile: { /* formatted agent profile */ }
   },
-  
+
   inscriptionSuccess: {
     success: true,
     profileId: "0.0.123456",
@@ -180,12 +180,12 @@ const environmentSetup = {
     "HEDERA_ACCOUNT_ID=0.0.YOUR_ACCOUNT_ID",
     "HEDERA_PRIVATE_KEY=YOUR_PRIVATE_KEY_HERE"
   ],
-  
+
   dependencies: [
     "@hashgraphonline/standards-sdk: Already installed in package.json",
     "@hashgraph/sdk: Already installed in package.json"
   ],
-  
+
   setup: [
     "1. Add Hedera environment variables to Backend/.env",
     "2. Ensure you have a valid Hedera testnet account",
@@ -209,19 +209,19 @@ module.exports = {
 if (require.main === module) {
   console.log('🧪 HCS-11 Service Test Examples');
   console.log('================================\n');
-  
+
   console.log('📝 Basic Profile Example:');
   console.log(JSON.stringify(basicProfileExample, null, 2));
   console.log('\n');
-  
+
   console.log('📝 Complete Profile Example:');
   console.log(JSON.stringify(completeProfileExample, null, 2));
   console.log('\n');
-  
+
   console.log('🔧 Environment Setup:');
   environmentSetup.setup.forEach(step => console.log(step));
   console.log('\n');
-  
+
   console.log('🌐 API Endpoints:');
   console.log('GET  /api/hcs11/status');
   console.log('POST /api/hcs11/validate');

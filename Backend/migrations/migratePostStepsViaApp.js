@@ -1,8 +1,8 @@
 /**
  * Migration script: Rename post_Steps to PostSteps in MongoDB
  * This version uses the app's existing database connection
- * 
- * Usage: 
+ *
+ * Usage:
  * 1. Start your app normally to establish DB connection
  * 2. In another terminal, run: node Backend/migrations/migratePostStepsViaApp.js
  */
@@ -27,7 +27,7 @@ async function migratePostSteps() {
 
     // Find all documents that have post_Steps field using raw MongoDB
     console.log('🔍 Searching for posts with old post_Steps field...');
-    
+
     const postsWithOldField = await Post.collection.find({ post_Steps: { $exists: true } }).toArray();
     console.log(`📊 Found ${postsWithOldField.length} posts with old post_Steps field`);
 

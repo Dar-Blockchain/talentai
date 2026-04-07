@@ -11,14 +11,12 @@ const router = express.Router();
 const interviewDetailsController = require("../controllers/InterviewControllers/interviewDetailsController");
 
 // Import des middlewares
-const { controledAcces } = require('../middleware/controledAcces'); 
+const { controledAcces } = require('../middleware/controledAcces');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { requireAuthUser } = require("../middleware/authMiddleware");
 
-
 // Toutes les routes ci-dessous nécessitent un candidat authentifié
 router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
-
 
 // GET /interview-details/
 // Description: Récupère la liste de tous les entretiens
@@ -38,6 +36,5 @@ router.post("/", interviewDetailsController.addInterviewDetails);
 // Params: id (identifiant d'entretien)
 // Description: Permet au candidat de réclamer manuellement la récompense TAI si la distribution automatique a échoué
 router.post("/:id/claim-reward", interviewDetailsController.claimInterviewReward);
-
 
 module.exports = router;

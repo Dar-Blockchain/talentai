@@ -64,7 +64,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       // Update existing profile
       console.log("🔄 [createOrUpdateProfile] Updating existing profile for userId:", userId);
       console.log("📝 [createOrUpdateProfile] Profile data to update:", JSON.stringify(profileData, null, 2));
-      
+
       profile.firstName = profileData.firstName || profileData.FirstName || profile.firstName;
       profile.lastName = profileData.lastName || profileData.LastName || profile.lastName;
       profile.age = profileData.age || profile.age;
@@ -75,7 +75,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       profile.timeZone = profileData.timeZone || profile.timeZone;
       profile.targetRole = profileData.targetRole || profile.targetRole;
       profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
-      
+
       // Update salary expectations
       if (profileData.expectedSalary) {
         console.log("💰 [createOrUpdateProfile] Updating expectedSalary:", profileData.expectedSalary);
@@ -85,10 +85,10 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
           currency: profileData.expectedSalary.currency || "EUR"
         };
       }
-      
+
       profile.preferredContractType = profileData.preferredContractType || profile.preferredContractType;
       profile.workModePreference = profileData.workModePreference || profile.workModePreference;
-      
+
       // Update contact information
       if (profileData.contactInformation) {
         console.log("📧 [createOrUpdateProfile] Updating contactInformation:", JSON.stringify(profileData.contactInformation, null, 2));
@@ -103,7 +103,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
         };
         console.log("✅ [createOrUpdateProfile] contactInformation updated successfully:", profile.contactInformation);
       }
-      
+
       // Update overall score if provided
       if (typeof profileData.overallScore === "number") {
         profile.overallScore = profileData.overallScore;
@@ -144,7 +144,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
     const updatedUser = await User.findById(userId);
-    const companyMembership = updatedUser.companyMembership 
+    const companyMembership = updatedUser.companyMembership
       ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
@@ -210,7 +210,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     // Extract companyDetails from profileData (can be nested or flat)
     const companyDetailsInput = profileData.companyDetails || {};
-    
+
     const profileDataToSave = {
       userId,
       type: "Company",
@@ -225,7 +225,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
         employmentType: companyDetailsInput.employmentType || profileData.employmentType,
       },
       requiredSkills: profileData.requiredSkills || [],
-      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",    
+      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",
     };
 
     console.log("📊 [createOrUpdateCompanyProfile] Profile data to save:", JSON.stringify(profileDataToSave, null, 2));
@@ -239,7 +239,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       console.log("📝 [createOrUpdateCompanyProfile] Before update - contactInformation:", profile.contactInformation);
 
       profile.type = "Company";
-      
+
       // Merge companyDetails (preserve existing values if not provided)
       profile.companyDetails = {
         email: companyDetailsInput.email || profileData.email || profile.companyDetails?.email,
@@ -251,7 +251,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
         linkedin: companyDetailsInput.linkedin || profileData.linkedin || profile.companyDetails?.linkedin,
         employmentType: companyDetailsInput.employmentType || profileData.employmentType || profile.companyDetails?.employmentType,
       };
-      
+
       profile.requiredSkills = profileData.requiredSkills || profile.requiredSkills;
       profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
 
@@ -273,7 +273,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
     const updatedUser = await User.findById(userId);
-    const companyMembership = updatedUser.companyMembership 
+    const companyMembership = updatedUser.companyMembership
       ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
@@ -297,7 +297,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     throw error;
   }
 };
-
 
 exports.updateUserImage = async (userId, newFilename) => {
   if (!userId) {
@@ -338,7 +337,6 @@ console.log("Old image path to delete:", oldImagePath);
 
   return updatedUser;
 };
-
 
 // Get a profile by user ID
 // services/profileService.js
@@ -388,7 +386,6 @@ module.exports.getProfileByUserId = async (userId) => {
     throw error;
   }
 };
-
 
 module.exports.getProfileByPostId = async (postId) => {
   try {
@@ -769,8 +766,6 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
   }
 };
 
-
-
 // Delete a specific softSkill
 // 🔹 Function to delete a soft skill from a user profile with the same logic as deleteHardSkill
 module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
@@ -1050,23 +1045,22 @@ module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   }
 };
 
-
 // Update specific profile fields
 module.exports.updateProfileFields = async (userId, updateData) => {
   try {
     console.log('🔧 Updating profile fields for user:', userId);
     console.log('🔧 Update data:', updateData);
-    
+
     const profile = await Profile.findOneAndUpdate(
       { userId },
       { $set: updateData },
       { new: true }
     );
-    
+
     if (!profile) {
       throw new Error("Profile not found");
     }
-    
+
     console.log('✅ Profile fields updated successfully');
     return profile;
   } catch (error) {
@@ -1098,8 +1092,8 @@ module.exports.updateUserFields = async (userId, userUpdateData) => {
 
     const updatedUser = await User.findByIdAndUpdate(userId, mapped, { new: true });
 
-    if (!updatedUser) { 
-      throw new Error('User not found');  
+    if (!updatedUser) {
+      throw new Error('User not found');
     }
 
     return updatedUser;
@@ -1185,7 +1179,7 @@ module.exports.checkPlanLimit = async (userId, limitType) => {
     }
 
     const canUse = used < limit;
-    const message = canUse 
+    const message = canUse
       ? `You can create ${limit - used} more ${limitType}`
       : `You have reached the maximum ${limitType} (${limit}) for your plan`;
 

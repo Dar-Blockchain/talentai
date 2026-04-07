@@ -178,7 +178,7 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
       {
         $group: {
           _id: "$jobId",
-          assessments: { 
+          assessments: {
             $push: {
               _id: "$_id",
               condidateId: "$condidateId",
@@ -209,7 +209,7 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
           totalQuestions: { $first: "$numberOfQuestions" },  // Get the first value of numberOfQuestions
         },
       },
-      
+
       {
         $sort: { _id: -1 }, // Sort by jobId descending
       },
@@ -337,8 +337,6 @@ module.exports.getCounts = async () => {
     throw new Error('Error fetching counts: ' + error.message);
   }
 };
-
-
 
 module.exports.getCountsByDay = async () => {
   try {
@@ -521,7 +519,6 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
   }
 };
 
-
 const xlsx = require("xlsx");
 
 module.exports.generateUserExcel = async () => {
@@ -530,7 +527,7 @@ module.exports.generateUserExcel = async () => {
     const users = await User.find({})
       .populate("profile")  // Populate the profile field with associated data
       .select("username FirstName LastName email role lastLogin ip Localisation profile");  // Include profile in selection
-    
+
     // Convert users and profiles to JSON format for Excel
     const usersData = users.map(user => {
       const profile = user.profile ? {
@@ -626,7 +623,6 @@ module.exports.generateUserExcelWithAssessmentZero = async () => {
     throw new Error("Error generating Excel file: " + error.message);
   }
 };
-
 
 module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
   try {

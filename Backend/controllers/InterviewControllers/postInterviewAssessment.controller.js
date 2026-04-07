@@ -31,7 +31,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
       // Get candidate email and name
       const candidateEmail = req.user.email;
       const candidateName = req.user.profile?.firstName || req.user.username || 'Candidate';
-      
+
       // Get post title if available
       let postTitle = 'New Opportunity';
       if (assessment.post && assessment.post.jobDetails) {
@@ -39,7 +39,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
       }
 
       console.log(`📧 Sending interview assessment email to: ${candidateEmail}`);
-      
+
       // Send email to candidate asynchronously (don't block response)
       sendInterviewAssessmentEmail(candidateEmail, candidateName, postTitle).catch(err => {
         console.error('⚠️ Warning: Failed to send candidate email, but assessment was created:', err.message);
@@ -52,12 +52,12 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         if (companyId) {
           const companyUser = await User.findById(companyId).select('email');
           const companyProfile = await Profile.findOne({ userId: companyId }).select('firstName lastName');
-          
+
           if (companyUser && companyUser.email) {
             const companyName = companyProfile?.firstName || 'Company';
-            
+
             console.log(`📧 Sending interview completion notification to company: ${companyUser.email}`);
-            
+
             // Send email to company asynchronously
             sendInterviewCompletionNotificationToCompany(
               companyUser.email,

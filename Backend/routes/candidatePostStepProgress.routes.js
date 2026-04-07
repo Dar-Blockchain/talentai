@@ -39,4 +39,4 @@ router.delete('/candidate/:candidateId/post/:postId', candidatePostStepProgressC
 // Route upsert (créer ou mettre à jour)
 router.post('/candidate/:candidateId/post/:postId/upsert', candidatePostStepProgressController.upsertProgress);
 
-module.exports = router; 
+module.exports = router;

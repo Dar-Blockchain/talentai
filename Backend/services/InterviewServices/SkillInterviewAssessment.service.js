@@ -42,7 +42,7 @@ const createAssessment = async (data, rawInterviewData, userId) => {
     const candidateId = data.candidateId;
     console.log('Candidate ID from data:', candidateId);
     console.log('✅ Skill interview assessment created:', savedAssessment._id);
-    
+
     // If candidate exists, handle profile updates and remove previous assessments
     if (candidateId) {
       // Determine skill name from data (fallback to Unknown Skill)
@@ -68,7 +68,7 @@ const createAssessment = async (data, rawInterviewData, userId) => {
       const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
       const proficiencyLevel = getLevelFromScore(overallScore);
       const experienceLevel = getExperienceLabel(proficiencyLevel);
-      
+
       // Determine Levelconfirmed based on score: if score > 80%, use proficiencyLevel, else proficiencyLevel - 1
       const levelconfirmedValue = overallScore > 80 ? proficiencyLevel : proficiencyLevel - 1;
 
@@ -106,7 +106,7 @@ const createAssessment = async (data, rawInterviewData, userId) => {
 
       // Handle skill type - manage technical vs soft skills
       const skillType = data.skillType || 'technical';
-      
+
       if (skillType === 'soft') {
         const softSkill = {
           name: skillName,
@@ -222,7 +222,6 @@ const getAssessmentById = async (id) => {
     throw error;
   }
 };
-
 
 // ========== READ - Get all with pagination ==========
 const getAllAssessments = async (page = 1, limit = 10, filters = {}) => {

@@ -27,7 +27,6 @@ ${formattedSkills}
 - A condidate that has a list of todos for each skill:
 ${existingSkillTodoList}
 
-
 Generate a JSON array where each item is an object with:
 - title: the name of the skill
 - type:"Skill"

@@ -1,6 +1,6 @@
 /**
  * HCS-11 Company Agent Creation Test Examples
- * 
+ *
  * This file demonstrates how to create company agents with Hedera accounts
  * and HCS-11 profiles using the new /api/hcs11/create-company-agent endpoint.
  */
@@ -121,7 +121,7 @@ const expectedResponse = {
  */
 const keyFeatures = [
   "✅ Creates new Hedera account for the company agent",
-  "✅ Generates agent name in format: 'CompanyName:PostID'", 
+  "✅ Generates agent name in format: 'CompanyName:PostID'",
   "✅ Creates HCS-11 compliant profile with company and position info",
   "✅ Creates inbound and outbound Hedera topics for communication",
   "✅ Deploys profile to Hedera network with consensus messages",
@@ -137,11 +137,11 @@ const keyFeatures = [
  */
 const processFlow = [
   "1. 🔍 Validates input (companyName, postId, agentPosition, companyDescription required)",
-  "2. 🏦 Creates new Hedera account with private/public key pair",  
+  "2. 🏦 Creates new Hedera account with private/public key pair",
   "3. 🤖 Generates agent name: 'CompanyName:PostID'",
   "4. 📋 Builds HCS-11 compliant profile with company/position details",
   "5. 📩 Creates inbound topic: 'hcs-11:hcs://11/in-company-slug'",
-  "6. 📤 Creates outbound topic: 'hcs-11:hcs://11/out-company-slug'", 
+  "6. 📤 Creates outbound topic: 'hcs-11:hcs://11/out-company-slug'",
   "7. 🚀 Deploys profile to inbound topic with consensus message",
   "8. 📡 Registers agent on outbound topic for network discovery",
   "9. ✅ Returns complete response with all IDs, URLs, and verification links"
@@ -162,29 +162,28 @@ module.exports = {
 if (require.main === module) {
   console.log('🚀 HCS-11 Company Agent Creation Test Guide');
   console.log('===========================================\n');
-  
+
   console.log('📝 Basic Company Agent Example:');
   console.log(JSON.stringify(basicCompanyAgent, null, 2));
   console.log('\n');
-  
+
   console.log('🔧 Complete Company Agent Example:');
   console.log(JSON.stringify(completeCompanyAgent, null, 2));
   console.log('\n');
-  
+
   console.log('🏥 Healthcare Company Agent Example:');
   console.log(JSON.stringify(healthcareCompanyAgent, null, 2));
   console.log('\n');
-  
+
   console.log('🎯 Key Features:');
   keyFeatures.forEach(feature => console.log(feature));
   console.log('\n');
-  
+
   console.log('🔄 Process Flow:');
   processFlow.forEach(step => console.log(step));
   console.log('\n');
-  
+
   console.log('🌐 API Endpoint:');
   console.log('POST /api/hcs11/create-company-agent');
   console.log('🔑 Authentication: Bearer JWT Token Required');
-  console.log('📍 Swagger UI: http://localhost:5000/api/docs');
 }

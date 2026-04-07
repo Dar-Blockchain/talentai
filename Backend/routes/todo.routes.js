@@ -13,12 +13,10 @@ const todoController = require("../controllers/todo.controller");
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
-const { controledAcces } = require('../middleware/authorize.middleware.js'); 
-
+const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // Auth candidat obligatoire + logs
 router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("Todo"));
-
 
 // POST /todo/profile — génère une todo list pour le profil de l'utilisateur
 router.post("/profile", todoController.generateTodoListForProfile);

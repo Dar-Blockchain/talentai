@@ -132,7 +132,7 @@ const validatePostUpdate = (updateData, partial = true) => {
   if (partial) {
     if (updateData.jobDetails) {
       if (updateData.jobDetails.salary) {
-        if (typeof updateData.jobDetails.salary.min !== 'number' || 
+        if (typeof updateData.jobDetails.salary.min !== 'number' ||
             typeof updateData.jobDetails.salary.max !== 'number') {
           const err = new Error('Salary min and max must be numbers');
           err.status = 400;

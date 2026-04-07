@@ -11,12 +11,12 @@ const getHCS10Client = () => {
         console.warn('⚠️  HCS-11 Service: Hedera environment variables not set.');
         return null;
       }
-      
+
       console.log('🔧 HCS-11 Service Configuration:');
       console.log('   - Network:', process.env.HEDERA_NETWORK || 'testnet');
       console.log('   - Operator Account ID:', process.env.HEDERA_ACCOUNT_ID);
       console.log('   - Registry URL:', process.env.REGISTRY_URL || 'https://moonscape.tech');
-      
+
       hcs10Client = new HCS10Client({
         network: process.env.HEDERA_NETWORK || 'testnet',
         operatorId: process.env.HEDERA_ACCOUNT_ID,
@@ -25,7 +25,7 @@ const getHCS10Client = () => {
         prettyPrint: false,
         logLevel: 'info'
       });
-      
+
       console.log('✅ HCS-11 Service HCS10Client initialized successfully');
       console.log('   - Responsible Account ID:', process.env.HEDERA_ACCOUNT_ID);
     } catch (error) {
@@ -79,7 +79,7 @@ const buildHCS11Profile = (profileData) => {
   const agentConfig = profileData.agentConfig || {};
   const timestamp = new Date().toISOString();
   const profileId = `company_agent_${Date.now()}`;
-  
+
   return {
     // Core HCS-11 standard fields
     p: "hcs-11",
@@ -88,7 +88,7 @@ const buildHCS11Profile = (profileData) => {
     type: "agent_profile",
     op: "deploy",
     timestamp: timestamp,
-    
+
     // Agent Identity Section
     identity: {
       agentId: profileId,
@@ -99,7 +99,7 @@ const buildHCS11Profile = (profileData) => {
       description: agentConfig.bio || profileData.companyDescription,
       organizationalUnit: profileData.companyName
     },
-    
+
     // Company Information
     company: {
       name: profileData.companyName,
@@ -108,7 +108,7 @@ const buildHCS11Profile = (profileData) => {
       website: agentConfig.socialLinks?.website || '',
       socialLinks: agentConfig.socialLinks || {}
     },
-    
+
     // Agent Capabilities and Specialization
     capabilities: {
       core: agentConfig.capabilities || ['CUSTOMER_SUPPORT', 'GENERAL_PURPOSE'],
@@ -122,7 +122,7 @@ const buildHCS11Profile = (profileData) => {
       languages: agentConfig.properties?.supportedLanguages || ["en"],
       operatingHours: agentConfig.properties?.operatingHours || "24/7"
     },
-    
+
     // Governance and Compliance
     governance: {
       permissions: {
@@ -144,7 +144,7 @@ const buildHCS11Profile = (profileData) => {
         privacy: "by_design"
       }
     },
-    
+
     // Metadata and Versioning
     metadata: {
       creator: "TalentAI_HCS11_Service",
@@ -156,7 +156,7 @@ const buildHCS11Profile = (profileData) => {
       lastUpdated: timestamp,
       profileImage: agentConfig.profileImage || ''
     },
-    
+
     // Profile Hash and Integrity (to be calculated)
     integrity: {
       profileHash: null,
@@ -200,7 +200,7 @@ module.exports.createAIAgentProfile = async (profileData) => {
         error: 'CLIENT_UNAVAILABLE'
       };
     }
-    
+
     // Build HCS-11 compliant profile
     const hcs11Profile = buildHCS11Profile(profileData);
     const profileId = hcs11Profile.identity.agentId;
@@ -212,7 +212,7 @@ module.exports.createAIAgentProfile = async (profileData) => {
     console.log('   - Capabilities:', hcs11Profile.capabilities.core);
     console.log('   - AI Model:', hcs11Profile.capabilities.aiModel.version);
     console.log('   - Profile Size:', JSON.stringify(hcs11Profile).length, 'bytes');
-    
+
     return {
       success: true,
       profile: hcs11Profile,
@@ -260,7 +260,7 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
     if (agentCredentials && agentCredentials.accountId && agentCredentials.privateKey) {
       console.log('🔑 Using Agent Credentials for HCS10Client:');
       console.log('   - Agent Account ID:', agentCredentials.accountId);
-      
+
       try {
         const { HCS10Client } = require('@hashgraphonline/standards-sdk');
         client = new HCS10Client({
@@ -291,7 +291,7 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
         };
       }
     }
-    
+
     // Build HCS-11 compliant profile
     const hcs11Profile = buildHCS11Profile(profileData);
     const timestamp = new Date().toISOString();
@@ -312,20 +312,20 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
       const protocolStandard = '11';
       const companySlug = profileData.companyName.toLowerCase().replace(/\s+/g, '-');
       const inboundTopicMemo = `hcs-11:hcs://${protocolStandard}/in-${companySlug}`;
-      
+
       console.log('📩 Creating Inbound Topic:');
       console.log('   - Topic Name:', `${profileData.companyName}-Agent-Inbound`);
       console.log('   - Topic Memo:', inboundTopicMemo);
       console.log('   - Creator Account:', process.env.HEDERA_ACCOUNT_ID);
-      
+
       const inboundTopic = await client.createTopic(`${profileData.companyName}-Agent-Inbound`, inboundTopicMemo);
       inboundTopicId = inboundTopic.toString();
-      
+
       console.log('✅ Inbound Topic Created Successfully:');
       console.log('   - Topic ID:', inboundTopicId);
       console.log('   - Network:', process.env.HEDERA_NETWORK || 'testnet');
       console.log('   - HashScan URL:', `https://hashscan.io/${process.env.HEDERA_NETWORK || 'testnet'}/topic/${inboundTopicId}`);
-      
+
     } catch (topicError) {
       console.error(`❌ Failed to create inbound topic: ${topicError.message}`);
       console.error('   - Error Details:', topicError);
@@ -343,20 +343,20 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
       const protocolStandard = '11';
       const companySlug = profileData.companyName.toLowerCase().replace(/\s+/g, '-');
       const outboundTopicMemo = `hcs-11:hcs://${protocolStandard}/out-${companySlug}`;
-      
+
       console.log('📤 Creating Outbound Topic:');
       console.log('   - Topic Name:', `${profileData.companyName}-Agent-Outbound`);
       console.log('   - Topic Memo:', outboundTopicMemo);
       console.log('   - Creator Account:', process.env.HEDERA_ACCOUNT_ID);
-      
+
       const outboundTopic = await client.createTopic(`${profileData.companyName}-Agent-Outbound`, outboundTopicMemo);
       outboundTopicId = outboundTopic.toString();
-      
+
       console.log('✅ Outbound Topic Created Successfully:');
       console.log('   - Topic ID:', outboundTopicId);
       console.log('   - Network:', process.env.HEDERA_NETWORK || 'testnet');
       console.log('   - HashScan URL:', `https://hashscan.io/${process.env.HEDERA_NETWORK || 'testnet'}/topic/${outboundTopicId}`);
-      
+
     } catch (topicError) {
       console.error(`❌ Failed to create outbound topic: ${topicError.message}`);
       console.error('   - Error Details:', topicError);
@@ -399,7 +399,7 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
     console.log('   - Deployed By Account:', process.env.HEDERA_ACCOUNT_ID);
     console.log('   - Network:', process.env.HEDERA_NETWORK || 'testnet');
     console.log('   - Timestamp:', timestamp);
-    
+
     try {
       const deploymentId = `deploy_${Date.now()}`;
       const deploymentMessage = {
@@ -440,7 +440,7 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
       console.log('   - Agent ID:', profileId);
       console.log('   - Registration Topic ID:', outboundTopicId);
       console.log('   - Registration Account:', process.env.HEDERA_ACCOUNT_ID);
-      
+
       const registrationTimestamp = new Date().toISOString();
       const registrationMessage = {
         p: "hcs-11",
@@ -518,7 +518,7 @@ module.exports.createAndInscribeProfile = async (profileData, agentCredentials =
 
     } catch (deploymentError) {
       console.error(`❌ Failed to deploy profile: ${deploymentError.message}`);
-      
+
       // Return success with topics but note deployment failure
       return {
         success: true,

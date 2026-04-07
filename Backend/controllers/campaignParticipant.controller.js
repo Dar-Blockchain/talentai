@@ -122,7 +122,7 @@ exports.getParticipantByToken = async (req, res) => {
     const { token } = req.params;
 
     const participant = await campaignParticipantService.getParticipantByAnonymousToken(token);
-            
+
     if (!participant) {
       return res.status(404).json({
         success: false,

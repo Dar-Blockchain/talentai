@@ -56,4 +56,4 @@ router.put('/node/:nodeId/submit-task', postStepsController.submitTask);
 // GET /post-steps/post/:postId/next-node-number
 //router.get('/post/:postId/next-node-number', postStepsController.getNextNodeNumber);
 
-module.exports = router; 
+module.exports = router;

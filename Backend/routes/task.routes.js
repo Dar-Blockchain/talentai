@@ -1,6 +1,6 @@
 /**
  * Routes for task management
- * 
+ *
  * Middlewares globaux appliqués:
  * - requireAuthUser: nécessite un utilisateur authentifié
  * - LogMiddleware("Task"): journalise les requêtes liées aux tâches

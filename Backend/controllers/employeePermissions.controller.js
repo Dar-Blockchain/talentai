@@ -42,7 +42,7 @@ const getMembershipForUser = async (userId) => {
  */
 exports.getPermissions = async (req, res) => {
   if (!checkAuthentication(req, res)) return;
-  
+
   try {
     const userId = req.params.userId;
 
@@ -65,7 +65,7 @@ exports.getPermissions = async (req, res) => {
  */
 exports.updatePermissions = async (req, res) => {
   if (!checkAuthentication(req, res)) return;
-  
+
   try {
     const userId = req.params.userId;
     const { ...permissionsData } = req.body;
@@ -123,5 +123,4 @@ exports.getAvailablePermissions = async (req, res) => {
     handleError(res, error, 500);
   }
 };
-
 

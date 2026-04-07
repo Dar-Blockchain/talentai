@@ -299,7 +299,7 @@ exports.getCampaignStatistics = async (campaignId) => {
     // Calculate average AI score
     const responsesWithAIScore = responses.filter((r) => r.aiScore !== null);
     if (responsesWithAIScore.length > 0) {
-      stats.avgAIScore = 
+      stats.avgAIScore =
         responsesWithAIScore.reduce((acc, r) => acc + r.aiScore, 0) /
         responsesWithAIScore.length;
     }

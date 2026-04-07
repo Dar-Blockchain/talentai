@@ -89,7 +89,6 @@ async function createNotification(recipientId, content, type ) {
   return notification;
 }
 
-
 async function getUserNotifications(userId, ) {
   if (!userId) {
     throw new Error('User ID is required.');
@@ -164,7 +163,7 @@ async function markAllAsRead(userId) {
 
 async function deleteNotification(notificationId, userId, userRole = null) {
   const notification = await getNotificationById(notificationId, userId, userRole);
-  
+
   // Remove notification reference from user
   try {
     await User.findByIdAndUpdate(
@@ -175,7 +174,7 @@ async function deleteNotification(notificationId, userId, userRole = null) {
   } catch (error) {
     console.warn('Failed to remove notification reference from user:', error.message || error);
   }
-  
+
   await notification.remove();
   // Emit deletion event
   try {
@@ -354,8 +353,8 @@ async function autoArchiveOldNotifications(userId, daysOld = 15) {
   cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
   const result = await Notification.updateMany(
-    { 
-      recipient: userId, 
+    {
+      recipient: userId,
       archived: { $ne: true },
       createdAt: { $lt: cutoffDate }
     },

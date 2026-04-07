@@ -29,4 +29,3 @@ async function testEmailConfig() {
 
 module.exports = { sendTask, testEmailConfig };
 
-

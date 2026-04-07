@@ -273,7 +273,7 @@ const simulateHederaVerification = async (transactionHash, expectedAmount) => {
 const updateUserBalance = async (userId, amount) => {
   try {
     console.log(`💬 [updateUserBalance] Starting balance update for user: ${userId}, amount: ${amount}`);
-    
+
     let tokenBalance = await TokenBalance.findOne({ userId });
     const previousBalance = tokenBalance ? tokenBalance.balance : 0;
 
@@ -339,7 +339,7 @@ const spendTokens = async (userId, spendData) => {
     // Check user balance
     const userBalance = await getUserBalance(userId);
     console.log(`💰 [spendTokens] Current balance for user: ${userId} is ${userBalance.balance} tokens`);
-    
+
     if (userBalance.balance < amount) {
       console.error(`❌ [spendTokens] Insufficient balance for user: ${userId}. Required: ${amount}, Available: ${userBalance.balance}`);
       throw new Error("Insufficient token balance");
