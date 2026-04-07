@@ -124,11 +124,11 @@ const getDetailedPrompt = (description, companyLocation) =>
       }
     }
 
-        STRICT SKILL RULES:
+    STRICT SKILL RULES:
     - REQUIRED: Generate 1 to 3 skills in "requiredSkills" based on the actual requirements of the job description. Include only relevant and technical skills.
     - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
     - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
-     - The total percentage of requiredSkills and softSkills combined must equal 100%.
+    - The total percentage of requiredSkills and softSkills combined must equal 100%.
     - LIA must dynamically distribute the 90% among 1–3 requiredSkills and 1 soft skill based on importance, frequency, and context in the job description.
     - Salary, workMode, and contract together account for the remaining 10%.
     - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
@@ -167,14 +167,14 @@ const getDetailedPrompt = (description, companyLocation) =>
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
-"weights": {
-  "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
-  "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
-  "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
-  "salary": "DYNAMIC based on job description, max 10",
-  "workMode": "DYNAMIC based on job description, max 10",
-  "contract": "DYNAMIC based on job description, max 10"
-}
+    "weights": {
+    "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
+    "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
+    "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
+    "salary": "DYNAMIC based on job description, max 10",
+    "workMode": "DYNAMIC based on job description, max 10",
+    "contract": "DYNAMIC based on job description, max 10"
+      },
 
       "exchangeRates": {
         "USD": 1,
@@ -197,4 +197,3 @@ const getDetailedPrompt = (description, companyLocation) =>
 module.exports = {
   getDetailedPrompt,
 };
-
