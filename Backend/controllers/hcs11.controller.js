@@ -1,78 +1,5 @@
 const hcs11Service = require("../services/hcs11.service");
 
-/**
- * @swagger
- * /api/hcs11/create-profile:
- *   post:
- *     summary: Create an HCS-11 AI Agent Profile
- *     description: Creates an AI agent profile on Hedera using HCS-11 standard with company information
- *     tags: [HCS-11]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - companyName
- *               - companyDescription
- *             properties:
- *               companyName:
- *                 type: string
- *                 description: Name of the company
- *                 example: "TechCorp AI"
- *               companyDescription:
- *                 type: string
- *                 description: Description of the company
- *                 example: "Leading AI solutions for enterprise automation"
- *               agentConfig:
- *                 type: object
- *                 description: Optional agent configuration
- *                 properties:
- *                   displayName:
- *                     type: string
- *                     example: "TechCorp Assistant"
- *                   agentType:
- *                     type: string
- *                     example: "AUTONOMOUS"
- *                   capabilities:
- *                     type: array
- *                     items:
- *                       type: string
- *                     example: ["CUSTOMER_SUPPORT", "DATA_ANALYSIS"]
- *                   model:
- *                     type: string
- *                     example: "GPT-4"
- *                   bio:
- *                     type: string
- *                     example: "Advanced AI assistant"
- *                   socialLinks:
- *                     type: object
- *                     example: {"website": "https://techcorp.com"}
- *                   properties:
- *                     type: object
- *                     example: {"industry": "Technology"}
- *     responses:
- *       200:
- *         description: Profile created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 profile:
- *                   type: object
- *                 agentProfile:
- *                   type: object
- *       400:
- *         description: Bad request - validation failed
- *       500:
- *         description: Internal server error
- */
 const createProfile = async (req, res) => {
   try {
     console.log("📝 HCS-11 Profile creation request received");
@@ -122,57 +49,6 @@ const createProfile = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- * /api/hcs11/create-and-inscribe:
- *   post:
- *     summary: Create and inscribe HCS-11 AI Agent Profile to Hedera
- *     description: Creates an AI agent profile and inscribes it to Hedera network using HCS-11 standard
- *     tags: [HCS-11]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - companyName
- *               - companyDescription
- *             properties:
- *               companyName:
- *                 type: string
- *                 description: Name of the company
- *               companyDescription:
- *                 type: string
- *                 description: Description of the company
- *               agentConfig:
- *                 type: object
- *                 description: Optional agent configuration
- *     responses:
- *       200:
- *         description: Profile created and inscribed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 profileId:
- *                   type: string
- *                 topicId:
- *                   type: string
- *                 verificationUrl:
- *                   type: string
- *                 message:
- *                   type: string
- *                 agentProfile:
- *                   type: object
- *       400:
- *         description: Bad request - validation failed
- *       500:
- *         description: Internal server error
- */
 const createAndInscribeProfile = async (req, res) => {
   try {
     console.log("📝 HCS-11 Profile creation and inscription request received");
@@ -229,44 +105,6 @@ const createAndInscribeProfile = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- * /api/hcs11/validate:
- *   post:
- *     summary: Validate HCS-11 profile data
- *     description: Validates profile data before creation
- *     tags: [HCS-11]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - companyName
- *               - companyDescription
- *             properties:
- *               companyName:
- *                 type: string
- *               companyDescription:
- *                 type: string
- *               agentConfig:
- *                 type: object
- *     responses:
- *       200:
- *         description: Validation result
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 isValid:
- *                   type: boolean
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: string
- */
 const validateProfile = async (req, res) => {
   try {
     const { companyName, companyDescription, agentConfig } = req.body;
@@ -290,26 +128,6 @@ const validateProfile = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- * /api/hcs11/status:
- *   get:
- *     summary: Check HCS-11 service status
- *     description: Returns the status of HCS-11 service configuration
- *     tags: [HCS-11]
- *     responses:
- *       200:
- *         description: Service status
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 available:
- *                   type: boolean
- *                 message:
- *                   type: string
- */
 const getServiceStatus = async (req, res) => {
   try {
     const isAvailable = hcs11Service.isServiceAvailable();
@@ -330,81 +148,6 @@ const getServiceStatus = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- * /api/hcs11/create-company-agent:
- *   post:
- *     summary: Create company agent with Hedera account and HCS-11 profile
- *     description: Creates a new Hedera account, generates HCS-11 profile with inbound/outbound topics, and deploys to network
- *     tags: [HCS-11]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - companyName
- *               - postId
- *               - agentPosition
- *               - companyDescription
- *             properties:
- *               companyName:
- *                 type: string
- *                 description: Name of the company
- *                 example: "TechCorp AI"
- *               postId:
- *                 type: string
- *                 description: Post or job ID
- *                 example: "POST-2024-001"
- *               agentPosition:
- *                 type: string
- *                 description: Position/role of the agent
- *                 example: "Senior Developer"
- *               companyDescription:
- *                 type: string
- *                 description: Description of the company
- *                 example: "Leading AI solutions provider"
- *               agentConfig:
- *                 type: object
- *                 description: Optional additional agent configuration
- *                 properties:
- *                   capabilities:
- *                     type: array
- *                     items:
- *                       type: string
- *                     example: ["RECRUITING", "CANDIDATE_EVALUATION"]
- *                   model:
- *                     type: string
- *                     example: "GPT-4"
- *     responses:
- *       200:
- *         description: Company agent created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 agentId:
- *                   type: string
- *                   description: Generated agent ID
- *                 agentName:
- *                   type: string
- *                   description: Generated agent name (companyName:postId)
- *                 hederaAccountId:
- *                   type: string
- *                   description: Created Hedera account ID
- *                 onChainDetails:
- *                   $ref: '#/components/schemas/HCS11InscriptionResponse/properties/onChainDetails'
- *                 message:
- *                   type: string
- *       400:
- *         description: Bad request - validation failed
- *       500:
- *         description: Internal server error
- */
 const createCompanyAgent = async (req, res) => {
   try {
     console.log(

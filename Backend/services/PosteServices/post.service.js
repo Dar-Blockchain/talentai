@@ -50,14 +50,14 @@ module.exports.createPost = async (postData, token) => {
     await user.save();
     await post.save();
     console.log(post);
-    
+
     // Create and send technical test automatically
     try {
       if (token && post.skillAnalysis?.requiredSkills?.length > 0) {
         const testResult = await module.exports.createAndSendTechnicalTest(
-          post._id, 
-          token, 
-          user.email, 
+          post._id,
+          token,
+          user.email,
           user.username
         );
         console.log('Technical test created and sent:', testResult.message);
@@ -66,7 +66,7 @@ module.exports.createPost = async (postData, token) => {
       console.error('Error creating technical test:', testError.message);
       // Don't fail the post creation if test creation fails
     }
-    
+
     //await schedulePostMatchingAgenda(post._id.toString(), {
     //  requiredSkills: post.skillAnalysis.requiredSkills
     //});
@@ -283,7 +283,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     // Build query
     const query = {};
-    
+
     // Always filter by status "open"
     query.status = 'open';
 
@@ -299,7 +299,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     if (search) {
       const searchTerms = search.trim().split(/\s+/);
       const searchConditions = [];
-      
+
       // For each search term, search across multiple fields
       searchTerms.forEach(term => {
         searchConditions.push(
@@ -309,10 +309,10 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
           { "skillAnalysis.requiredSkills.name": { $regex: term, $options: "i" } }
         );
       });
-      
+
       // Use $or to match any of the search conditions
       query.$or = searchConditions;
-      
+
       console.log('  - Search terms:', searchTerms);
       console.log('  - Number of search conditions:', searchConditions.length);
     }
@@ -328,7 +328,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
         { "jobDetails.workType": { $regex: type, $options: "i" } },
         { "jobDetails.type": { $regex: type, $options: "i" } },
       ];
-      
+
       // If there's already an $or from search, combine using $and
       if (query.$or) {
         query.$and = [
@@ -662,7 +662,7 @@ module.exports.deletePost = async (postId, userId) => {
     }
 
     // ========== DELETE ASSOCIATED RECORDS IN CASCADE ==========
-    
+
     // 1. Delete PostSteps
     if (post.PostSteps && post.PostSteps.length > 0) {
       const PostSteps = require('../../models/postSteps.model');
@@ -780,7 +780,7 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     .populate('PostSteps')
     .sort({ createdAt: -1 })
     .lean();
-  
+
   // 🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}
   console.log(`🔍 [getPostsByUserTopSkill] Posts found with skills and status "open": ${candidatePosts.length}`);
 
@@ -878,9 +878,6 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
   };
 };
 
-
-
-
 // Create technical test using AI prompts based on post technologies
 // Generate coding project content based on experience level
 module.exports.generateCodingProject = async (technologies, jobTitle, experienceLevel, jobDescription = "", companyName = "Our Company", industry = "Technology") => {
@@ -889,7 +886,7 @@ module.exports.generateCodingProject = async (technologies, jobTitle, experience
   const createTechnologySpecificProject = (technologies, level, jobTitle, companyName, industry) => {
     const primaryTech = technologies[0]?.toLowerCase() || 'javascript';
     const secondaryTechs = technologies.slice(1);
-    
+
     // Base project structure that can be customized per technology
     const baseProject = {
       title: `${jobTitle} Technical Challenge`,
@@ -1049,7 +1046,7 @@ module.exports.generateCodingProject = async (technologies, jobTitle, experience
   const project = createTechnologySpecificProject(technologies, level, jobTitle, companyName, industry);
 
   // Create contextual description based on job and company
-  const contextualDescription = jobDescription 
+  const contextualDescription = jobDescription
     ? `As part of the ${jobTitle} role at ${companyName}, you'll be working on a project that aligns with our ${industry} industry focus. ${project.description} This project will help us evaluate your practical skills and how you approach real-world development challenges.`
     : project.description;
 
@@ -1065,7 +1062,7 @@ module.exports.generateCodingProject = async (technologies, jobTitle, experience
     'Government': 'This project will evaluate your skills in building secure, compliant government applications.'
   };
 
-  const finalDescription = industryContext[industry] 
+  const finalDescription = industryContext[industry]
     ? `${contextualDescription} ${industryContext[industry]}`
     : contextualDescription;
 
@@ -1103,7 +1100,7 @@ module.exports.createTechnicalTest = async (postId, token) => {
 
     // Generate coding project content based on experience level and post details
     const projectData = await module.exports.generateCodingProject(technologies, jobTitle, experienceLevel, jobDescription, companyName, industry);
-    
+
     return {
       postId,
       testContent: projectData,
@@ -1131,10 +1128,10 @@ module.exports.generateTestPDF = async (testData) => {
         right: 30
       }
     });
-    
+
     const fileName = `coding-project-${testData.postId}-${Date.now()}.pdf`;
     const filePath = path.join(__dirname, '../uploads', fileName);
-    
+
     // Ensure uploads directory exists
     const uploadsDir = path.dirname(filePath);
     if (!fs.existsSync(uploadsDir)) {
@@ -1170,16 +1167,16 @@ module.exports.generateTestPDF = async (testData) => {
        .fontSize(24)
        .font('Helvetica-Bold')
        .text('TECHNICAL ASSESSMENT', { align: 'center' });
-    
+
     doc.fontSize(14)
        .font('Helvetica')
        .text('Coding Project Assignment', { align: 'center' });
-    
+
     doc.moveDown(2);
 
     // Project information table
     addHeader('PROJECT DETAILS');
-    
+
     const projectInfo = [
       `Project: ${testData.testContent.title}`,
       `Position: ${testData.jobTitle}`,
@@ -1189,12 +1186,12 @@ module.exports.generateTestPDF = async (testData) => {
       `Technologies: ${testData.technologies.join(', ')}`,
       `Industry: ${testData.industry || 'Technology'}`
     ];
-    
+
     projectInfo.forEach(info => {
       doc.fontSize(12).text(info);
       doc.moveDown(0.3);
     });
-    
+
     doc.moveDown(1.5);
 
     // Project description
@@ -1275,7 +1272,7 @@ module.exports.generateTestPDF = async (testData) => {
     doc.fontSize(12)
        .fillColor('#2B6CB0')
        .text('Good luck! 🚀', { align: 'center' });
-    
+
     doc.fontSize(10)
        .fillColor('#718096')
        .text(`Generated on ${new Date().toLocaleDateString()} by TalenIA`, { align: 'center' });
@@ -1327,7 +1324,7 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
         </head>
         <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
           <div style="max-width: 700px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            
+
             <!-- Header -->
             <div style="background: linear-gradient(135deg, #1A365D 0%, #2B6CB0 100%); padding: 40px 30px; text-align: center;">
               <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">TECHNICAL ASSESSMENT</h1>
@@ -1338,7 +1335,7 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
             <!-- Main Content -->
             <div style="padding: 40px 30px;">
               <h2 style="color: #1A365D; margin: 0 0 20px 0; font-size: 24px;">Hello ${candidateName}! 👋</h2>
-              
+
               <p style="color: #4A5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                 Thank you for your interest in the <strong style="color: #2B6CB0;">${testData.jobTitle}</strong> position at <strong style="color: #2B6CB0;">${testData.companyName}</strong>.
               </p>
@@ -1446,10 +1443,10 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
             <!-- Footer -->
             <div style="background: #F7FAFC; padding: 30px; text-align: center; border-top: 1px solid #E2E8F0;">
               <p style="color: #718096; margin: 0 0 10px 0; font-size: 12px;">
-                Generated on ${new Date().toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                Generated on ${new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })} by TalenIA Technical Assessment Platform
               </p>
               <p style="color: #718096; margin: 0; font-size: 12px;">
@@ -1475,7 +1472,7 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
 
     const result = await transporter.sendMail(mailOptions);
     console.log('Technical test email sent:', result.messageId);
-    
+
     return result;
   } catch (error) {
     throw new Error(`Error sending email: ${error.message}`);
@@ -1486,16 +1483,16 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
 module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail, candidateName = 'Candidate') => {
   let testData = null;
   let pdfInfo = null;
-  
+
   try {
     // Step 1: Create technical test content
     testData = await module.exports.createTechnicalTest(postId, token);
     console.log('✅ Technical test content created');
-    
+
     // Step 2: Generate PDF
     pdfInfo = await module.exports.generateTestPDF(testData);
     console.log('✅ PDF generated:', pdfInfo.fileName);
-    
+
     // Step 3: Try to send email with PDF
     let emailResult = null;
     try {
@@ -1503,7 +1500,7 @@ module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail
       console.log('✅ Email sent successfully');
     } catch (emailError) {
       console.error('❌ Email sending failed:', emailError.message);
-      
+
       // Return success but with email failure info
       return {
         success: true,
@@ -1514,7 +1511,7 @@ module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail
         message: 'Technical test created successfully, but email sending failed. PDF is available for manual sending.'
       };
     }
-    
+
     // Step 4: Clean up PDF file after sending (optional)
     setTimeout(() => {
       if (fs.existsSync(pdfInfo.filePath)) {
@@ -1522,7 +1519,7 @@ module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail
         console.log('🗑️ PDF file cleaned up');
       }
     }, 60000); // Delete after 1 minute
-    
+
     return {
       success: true,
       testData,
@@ -1532,7 +1529,7 @@ module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail
     };
   } catch (error) {
     console.error('❌ Error in createAndSendTechnicalTest:', error);
-    
+
     // Clean up PDF file if it was created
     if (pdfInfo && fs.existsSync(pdfInfo.filePath)) {
       try {
@@ -1542,7 +1539,7 @@ module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail
         console.error('Error cleaning up PDF file:', cleanupError.message);
       }
     }
-    
+
     throw new Error(`Error in createAndSendTechnicalTest: ${error.message}`);
   }
 };

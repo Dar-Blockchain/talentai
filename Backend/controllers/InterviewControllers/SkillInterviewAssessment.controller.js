@@ -167,7 +167,6 @@ const getMy = async (req, res) => {
   }
 };
 
-
 module.exports = {
   create,
   getAll,

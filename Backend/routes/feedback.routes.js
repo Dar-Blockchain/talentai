@@ -18,9 +18,7 @@ const {requireAuthUser} = require('../middleware/auth.middleware');
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 
-
 router.use(requireAuthUser, authLogMiddleware("Feedback"));
-
 
 // POST /feedback/addFeedback
 // Accès: Candidate

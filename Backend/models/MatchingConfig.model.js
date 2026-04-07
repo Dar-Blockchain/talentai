@@ -15,7 +15,7 @@ const matchingConfigSchema = new mongoose.Schema({
     type: Map,
     of: Number,
     default: { USD: 1, EUR: 1.1, TND: 0.32 },
-  },  
+  },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   job: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
 }, { timestamps: true });

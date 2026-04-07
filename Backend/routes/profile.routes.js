@@ -38,7 +38,7 @@ router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCom
 router.get('/search/skills', profileController.searchProfilesBySkills);
 
 // POST /profile/addSoftSkills — ajoute des soft skills
-router.post('/addSoftSkills', profileController.addSoftSkills); 
+router.post('/addSoftSkills', profileController.addSoftSkills);
 
 // GET /profile/getSoftSkills — soft skills courants
 router.get('/getSoftSkills',profileController.getSoftSkills);
@@ -57,4 +57,4 @@ router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessm
 // GET /profiles/:userId — Public route (no auth required) — MUST be LAST to avoid catching other routes
 router.get('/:userId', profileController.getProfileById);
 
-module.exports = router; 
+module.exports = router;

@@ -970,7 +970,7 @@ const hrAgentController = {
           interviewNotes: interviewNotes,
         },
         conversationalPrompt: `🎯 ${sendingAgent.role.toUpperCase()} EVALUATION COMPLETE
-        
+
 Candidate: ${candidateId}
 Overall Assessment: ${
           evaluationResult.passed ? "✅ APPROVED" : "❌ NEEDS IMPROVEMENT"
@@ -2915,13 +2915,13 @@ ${interviewNotes}
           // In a real implementation, you'd use proper HCS message streaming
 
           // Simulate coordinator response after detecting agent message
-          const coordinatorPrompt = `As the HR Coordinator, I've received an evaluation for candidate ${candidateId}. 
+          const coordinatorPrompt = `As the HR Coordinator, I've received an evaluation for candidate ${candidateId}.
           Please provide a professional coordinator response that either:
           1. Approves the evaluation and moves to next step
           2. Requests additional information
           3. Schedules follow-up interviews
           4. Makes final hiring decision
-          
+
           Keep response professional, constructive, and actionable.`;
 
           const coordinatorResponse =
@@ -2981,7 +2981,7 @@ Next steps will be communicated to the evaluation team.`,
 ${coordinatorAgent.name} has successfully received, processed, and responded to the evaluation for candidate ${candidateId}.
 
 ✅ Message received and logged
-✅ Evaluation processed and completed  
+✅ Evaluation processed and completed
 ✅ Response sent and verified
 
 Message chain verified and stored on Hedera Consensus Service.`,

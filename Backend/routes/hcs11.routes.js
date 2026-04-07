@@ -8,13 +8,6 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 router.use(requireAuthUser, authLogMiddleware("HCS-11"));
 
 /**
- * @swagger
- * tags:
- *   name: HCS-11
- *   description: HCS-11 AI Agent Profile management endpoints
- */
-
-/**
  * Create HCS-11 AI Agent Profile (without inscribing to Hedera)
  */
 router.post('/create-profile', hcs11Controller.createProfile);

@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { EXPIRATION_HOURS } = require("../constants/auth-jwt.constants");
 
-
 // Générer un token JWT
 module.exports.generateToken = (userId, companyId, role) => {
   const payload = { id: userId };
@@ -16,7 +15,6 @@ module.exports.generateToken = (userId, companyId, role) => {
     expiresIn: "5y", // 5 ans
   });
 };
-
 
 module.exports.generateMemberToken = (memberEmail, senderEmail,  projectId) => {
   const payload = {

@@ -14,12 +14,12 @@ class DatabaseMonitor {
   enableQueryLogging() {
     mongoose.set('debug', (collection, method, query, doc, options) => {
       const startTime = Date.now();
-      
+
       // Log slow queries
       process.nextTick(() => {
         const duration = Date.now() - startTime;
         this.queryStats.total++;
-        
+
         if (duration > this.slowQueryThreshold) {
           this.queryStats.slow++;
           console.warn(`⚠️ Slow Query (${duration}ms):`, {
@@ -44,7 +44,7 @@ class DatabaseMonitor {
           port: mongoose.connection.port,
           name: mongoose.connection.name
         };
-        
+
         // Log pool status every 30 seconds in development
         if (process.env.NODE_ENV === 'development') {
         //  console.log('📊 DB Pool Status:', poolInfo);
@@ -57,7 +57,7 @@ class DatabaseMonitor {
   getStats() {
     return {
       ...this.queryStats,
-      slowQueryPercentage: this.queryStats.total > 0 
+      slowQueryPercentage: this.queryStats.total > 0
         ? ((this.queryStats.slow / this.queryStats.total) * 100).toFixed(2) + '%'
         : '0%'
     };

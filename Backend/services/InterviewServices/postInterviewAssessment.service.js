@@ -233,8 +233,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
   }
 };
 
-
-
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, limit = 10) => {
   try {

@@ -49,5 +49,4 @@ const requireAuthUser = async (req, res, next) => {
   }
 };
 
-
 module.exports = { requireAuthUser };

@@ -18,7 +18,7 @@ const getServiceClient = () => {
         console.warn('⚠️  Hedera Service: Environment variables not set.');
         return null;
       }
-      
+
       serviceClient = Client.forTestnet(); // Use forMainnet() for production
       serviceClient.setOperator(
         process.env.HEDERA_ACCOUNT_ID,

@@ -8,7 +8,7 @@ const moduleSchema = new mongoose.Schema(
       required: true,
     },
     config: {
-      type: mongoose.Schema.Types.Mixed,  //QUESTIONNAIRE [Q1,Q2] 
+      type: mongoose.Schema.Types.Mixed,  //QUESTIONNAIRE [Q1,Q2]
       default: {},
     },
     // 'order' removed — single module no longer needs ordering

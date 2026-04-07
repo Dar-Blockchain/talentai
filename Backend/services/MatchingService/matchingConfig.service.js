@@ -7,7 +7,7 @@ async function getMatchingConfig(updatedBy, jobId) {
     if (jobId && updatedBy) {
       doc = await MatchingConfig.findOne({ job: jobId, updatedBy }).lean();
     }
-    
+
     return doc;
   } catch (err) {
     console.warn('getMatchingConfig error, falling back to defaults', err.message);
@@ -34,7 +34,7 @@ module.exports = { getMatchingConfig };
  */
 async function addConfig(userId, payload = {}) {
   const Post = require('../../models/Post.model');
-  
+
   const toCreate = {
     name: payload.name || 'default',
     weights: payload.weights || defaultConfig().weights,
@@ -44,7 +44,7 @@ async function addConfig(userId, payload = {}) {
   };
 
   const created = await MatchingConfig.create(toCreate);
-  
+
   // Ajouter la relation bidirectionnelle: sauvegarder l'ID de MatchingConfig dans le Post
   if (payload.jobId) {
     await Post.findByIdAndUpdate(
@@ -53,7 +53,7 @@ async function addConfig(userId, payload = {}) {
       { new: true }
     );
   }
-  
+
   return created;
 }
 

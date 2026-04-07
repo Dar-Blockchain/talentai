@@ -15,7 +15,6 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const uploadfile = require("../middleware/fileResume-upload.middleware");
 
-
 // Journalisation de toutes les requêtes de ce routeur
 router.use(authLogMiddleware("Auth"));
 

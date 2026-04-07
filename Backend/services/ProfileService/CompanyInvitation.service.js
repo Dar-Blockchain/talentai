@@ -435,10 +435,10 @@ module.exports.getInvitationDetails = async (invitationId) => {
     });
 
   if (!invitation) throw new Error("Invitation not found");
-  
+
   // Convert to plain object to ensure clean transformation
   const invitationObj = invitation.toObject();
-  
+
   // Transform invitedBy to keep only required fields
   if (invitationObj.invitedBy) {
     const companyName = invitationObj.invitedBy.profile?.companyDetails?.name || "";

@@ -17,14 +17,14 @@ const getAgentServiceClient = () => {
         console.warn('⚠️  Agent Service: Environment variables not set.');
         return null;
       }
-      
+
       agentServiceClient = Client.forTestnet();
       agentServiceClient.setOperator(
         process.env.HEDERA_ACCOUNT_ID,
         process.env.HEDERA_PRIVATE_KEY
       );
       agentServiceClient.setNetworkTimeout(10000);
-      
+
       console.log('✅ Agent Service client initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing Agent Service client:', error.message);
@@ -114,7 +114,7 @@ async function generateContent(prompt) {
     // In production, this would call an actual AI service
     console.log('🤖 Generating technical test content...');
     console.log('📝 Prompt:', prompt.substring(0, 200) + '...');
-    
+
     // Mock technical test content based on the prompt
     const mockContent = `
 # CODING TECHNICAL ASSESSMENT
@@ -236,10 +236,10 @@ function processUsers(users) {
 
     // Simulate some processing time
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     console.log('✅ Technical test content generated successfully');
     return mockContent;
-    
+
   } catch (error) {
     console.error('❌ Error generating content:', error);
     throw new Error(`Content generation failed: ${error.message}`);

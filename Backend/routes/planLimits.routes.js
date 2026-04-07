@@ -27,7 +27,4 @@ router.use(requireAuthUser,authLogMiddleware("planLimits"),controledAcces('Admin
 // PUT /planLimits - Update plan by name (passed in body)
 router.put("/",  planLimitsController.updatePlan);
 
-
-
-
 module.exports = router;

@@ -8,17 +8,15 @@
  */
 const express = require('express');
 const router = express.Router();
-const logController = require('../controllers/log.controller');  
+const logController = require('../controllers/log.controller');
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/auth.middleware');
-const { controledAcces } = require('../middleware/authorize.middleware.js'); 
+const { controledAcces } = require('../middleware/authorize.middleware.js');
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
-
 
 // Toutes les routes ci-dessous nécessitent un admin authentifié
 router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Log"));
-
 
 // GET /logs/getAllLogs
 // Description: Récupère tous les logs paginés/filtrés selon implémentation

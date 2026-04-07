@@ -15,7 +15,6 @@ const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 
-
 // Toutes les routes ci-dessous nécessitent un admin authentifié
 router.use(requireAuthUser, authLogMiddleware("Dashboard"));
 

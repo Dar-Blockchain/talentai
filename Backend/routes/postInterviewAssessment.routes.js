@@ -1,6 +1,6 @@
 /**
  * Routes for Post Interview Assessment
- * 
+ *
  * Middlewares applied:
  * - requireAuthUser: requires authenticated user
  * - LogMiddleware("PostInterviewAssessment"): logs assessment requests
@@ -27,7 +27,6 @@ router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAss
 
 // GET /post-interview-assessments — Get all assessments
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
-
 
 // GET /post-interview-assessments/company/mine — Get all assessments for authenticated company
 router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);

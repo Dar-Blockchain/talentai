@@ -53,7 +53,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
 
     // Create profile based on roleType
     let profile = null;
-    
+
     if (roleType === 'Company') {
       // For Company: need at least email or name
       if (profileDataOptions.name || profileDataOptions.companyDetails?.name) {
@@ -99,7 +99,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
     } else {
       // For Candidate: create profile with firstName and lastName (now required)
       const resumePath = profileDataOptions.resumeFile ? profileDataOptions.resumeFile.filename : '';
-      
+
       profile = await Profile.create({
         userId: user._id,
         type: 'Candidate',
@@ -428,7 +428,7 @@ module.exports.connectWithGmail = async (id_token) => {
 
     // Get full user data including role
     const fullUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
-    
+
     const token = generateToken(fullUser._id, null, fullUser.role);
 
     return {

@@ -112,11 +112,11 @@ const getEmailTemplate = (otp) => `
         <div class="content">
           <p>Hello,</p>
           <p>We received a verification request for your account. Here is your authentication code:</p>
-          
+
           <div class="otp-code">
             ${otp}
           </div>
-          
+
           <div class="warning">
             <strong>Important:</strong>
             <ul>
@@ -125,7 +125,7 @@ const getEmailTemplate = (otp) => `
               <li>If you did not request this code, please ignore this email</li>
             </ul>
           </div>
-          
+
           <p>If you experience any difficulties, our support team is here to help at <a href="mailto:support@talenia.com">support@talenia.com</a></p>
         </div>
         <div class="footer">
@@ -179,7 +179,7 @@ const getActivationTemplate = (activationLink, project) => `
               <td style="padding:36px 32px 24px 32px; color:#2D3748;">
                 <p style="font-size:16px; margin:18px 0;">Hello,</p>
                 <p style="font-size:16px; margin:18px 0;">
-                 
+
                   To validate your role as a contributor and access the project <strong>${project.name}</strong>'s evaluation on TalenIA, please confirm your participation by clicking the button below.
                  </p>
 
@@ -202,7 +202,7 @@ const getActivationTemplate = (activationLink, project) => `
             <!-- Footer -->
             <tr>
               <td style="text-align:center; color:#718096; font-size:14px; background-color:#F7FAFC; padding:20px 10px 16px 10px;">
-                Need help? Contact us at 
+                Need help? Contact us at
                 <a href="mailto:support@talentai.bid" style="color:#2B6CB0; text-decoration:none;">support@talentai.bid</a><br/>
 o                <span style="display:block; margin-top:8px;">&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</span>
               </td>
@@ -214,7 +214,6 @@ o                <span style="display:block; margin-top:8px;">&copy; ${new Date(
   </body>
 </html>
 `;
-
 
 // Fonction d’envoi d’email d’activation
 const sendActivationEmail = async (to, activationLink, project) => {
@@ -468,20 +467,20 @@ const getInterviewAssessmentTemplate = (candidateName, postTitle) => `
     </div>
     <div class="content">
       <p>Hello ${candidateName},</p>
-      
+
       <div class="success-badge">
         ✓ Your interview assessment has been successfully completed!
       </div>
-      
+
       <p>Thank you for completing the interview assessment for the position:</p>
-      
+
       <div class="info-box">
         <strong>📋 Position:</strong>
         ${postTitle || 'Position Title'}
       </div>
-      
+
       <p>Your assessment has been recorded and the hiring team will review your responses. You will be notified about the next steps in the hiring process.</p>
-      
+
       <p>If you have any questions or concerns, please don't hesitate to contact us at <a href="mailto:support@talentai.bid">support@talentai.bid</a></p>
     </div>
     <div class="footer">
@@ -634,28 +633,28 @@ const getInterviewCompletionNotificationTemplate = (companyName, candidateName, 
     </div>
     <div class="content">
       <p>Hello ${companyName},</p>
-      
+
       <div class="alert-badge">
         ⚡ Candidate has completed interview assessment
       </div>
-      
+
       <div class="info-box">
         <strong>📋 Position:</strong>
         <p>${postTitle || 'New Opportunity'}</p>
       </div>
-      
+
       <div class="candidate-details">
         <strong style="color: #2B6CB0;">Candidate Details:</strong>
         <p><strong>Name:</strong> ${candidateName}</p>
         <p><strong>Email:</strong> ${candidateEmail}</p>
       </div>
-      
+
       <p>The candidate has successfully completed the interview assessment for the position above. You can now review their responses and evaluation scores in the TalenIA dashboard.</p>
-      
+
       <div class="cta-button">
         <a href="https://talentai.bid/dashboard/interviews" target="_blank">View Assessment Results</a>
       </div>
-      
+
       <p>If you have any questions, please contact our support team at <a href="mailto:support@talentai.bid">support@talentai.bid</a></p>
     </div>
     <div class="footer">
