@@ -37,7 +37,6 @@ export interface EmployeePermission {
   canEditCampaign: boolean;
   canDeleteCampaign: boolean;
   canPublishCampaign: boolean;
-  canViewCampaignAnalytics: boolean;
 
   // Department Permissions
   canViewDepartments: boolean;
@@ -145,11 +144,6 @@ export const EMPLOYEE_PERMISSION_GROUPS: EmployeePermissionGroup[] = [
         key: 'canPublishCampaign',
         label: 'Publish Campaign',
         description: 'Launch and activate campaigns for distribution',
-      },
-      {
-        key: 'canViewCampaignAnalytics',
-        label: 'View Campaign Analytics',
-        description: 'Access performance metrics and reports for campaigns',
       },
     ],
   },
@@ -265,7 +259,6 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: Omit<EmployeePermission, '_id' | 'use
   canEditCampaign: false,
   canDeleteCampaign: false,
   canPublishCampaign: false,
-  canViewCampaignAnalytics: false,
 
   // Departments
   canViewDepartments: true,

@@ -101,7 +101,7 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
           disableElevation
           sx={{
             textTransform: "none", fontWeight: 700, fontSize: "13px",
-            bgcolor: sColor?.fg, borderRadius: "8px",
+            bgcolor: sColor?.fg, borderRadius: "8px", color: "#fff",
             "&:hover": { bgcolor: sColor?.fg, opacity: 0.88 },
           }}
         >

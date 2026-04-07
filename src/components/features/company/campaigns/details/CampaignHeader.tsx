@@ -102,8 +102,8 @@ const CampaignHeader: React.FC<Props> = ({
                 </Box>
               )}
 
-              {/* Inline status transition buttons */}
-              {transitions.map((s) => {
+              {/* Inline status transition buttons — only if caller passed onChangeStatus */}
+              {onChangeStatus && transitions.map((s) => {
                 const blocked  = s === "ACTIVE" && !moduleConfigured;
                 const sColor   = STATUS_COLORS[s];
                 const Icon     = STATUS_ICONS[s];
@@ -141,20 +141,22 @@ const CampaignHeader: React.FC<Props> = ({
                 ) : btn;
               })}
 
-              {/* Delete */}
-              <Box
-                onClick={onDeleteClick}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 0.625,
-                  px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                  border: "1px solid #FECACA", bgcolor: "#FEF7F7",
-                  transition: "all 0.15s",
-                  "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
-                }}
-              >
-                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-                <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
-              </Box>
+              {/* Delete — only if caller passed onDeleteClick */}
+              {onDeleteClick && (
+                <Box
+                  onClick={onDeleteClick}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #FECACA", bgcolor: "#FEF7F7",
+                    transition: "all 0.15s",
+                    "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
+                  }}
+                >
+                  <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+                </Box>
+              )}
             </Box>
           )}
         </Box>

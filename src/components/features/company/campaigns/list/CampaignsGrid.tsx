@@ -5,7 +5,8 @@ import {
 } from "@mui/material";
 import { Campaign, CampaignStatus } from "@/types/campaign";
 import { useSelector, useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import CampaignCard from "./CampaignCard";
 import CampaignsSkeleton from "./CampaignsSkeleton";
@@ -63,6 +64,13 @@ const CampaignsGrid: React.FC = () => {
   const page          = useSelector(selectCampaignPage);
   const limit         = useSelector(selectCampaignLimit);
   const count         = useSelector(selectCampaignCount);
+
+  const user     = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms = useSelector(selectEmployeePermissions);
+  const isEmp    = user?.role === "Employee";
+  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign;
+  const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
+  const canPublish = !isEmp || !!empPerms?.canPublishCampaign;
 
   const [searchInput, setSearchInput] = useState("");
   const [search,      setSearch]      = useState("");
@@ -272,6 +280,9 @@ const CampaignsGrid: React.FC = () => {
                   onViewDetails={() => {}}
                   onDelete={(id, title) => setDeleteDialog({ open: true, id, title })}
                   onStatusChange={(id, title, currentStatus, targetStatus) => setStatusDialog({ open: true, id, title, currentStatus, targetStatus })}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  canPublish={canPublish}
                 />
               </motion.div>
             ))}

@@ -56,6 +56,9 @@ interface Props {
     moduleType: ModuleType,
     config: NonNullable<CampaignModule["config"]>,
   ) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canPublish?: boolean;
 }
 
 const CampaignDetail: React.FC<Props> = ({
@@ -64,6 +67,9 @@ const CampaignDetail: React.FC<Props> = ({
   onDelete,
   onChangeStatus,
   onSaveModuleConfig,
+  canEdit = true,
+  canDelete = true,
+  canPublish = true,
 }) => {
   const router = useRouter();
   const isEmployee = mode === "employee";
@@ -320,9 +326,9 @@ const CampaignDetail: React.FC<Props> = ({
       {/* Header */}
       <CampaignHeader
         campaign={campaign}
-        onChangeStatus={onChangeStatus}
-        onDeleteClick={() => setDeleteOpen(true)}
-        onEditClick={!isEmployee ? () => setEditOpen(true) : undefined}
+        onChangeStatus={canPublish ? onChangeStatus : undefined}
+        onDeleteClick={canDelete && !isEmployee ? () => setDeleteOpen(true) : undefined}
+        onEditClick={canEdit && !isEmployee ? () => setEditOpen(true) : undefined}
         backLabel={isEmployee ? "My Campaigns" : "Campaigns"}
         backUrl={isEmployee ? "/employee/campaigns" : "/company/campaigns"}
         actionsNode={employeeActionsNode}
@@ -407,7 +413,7 @@ const CampaignDetail: React.FC<Props> = ({
                   ? `Module is configured and ready.`
                   : `Set up the assessment module so participants know what to expect.`}
               </Typography>
-              {!moduleConfigured && campaign.module?.type && (
+              {!moduleConfigured && campaign.module?.type && canEdit && (
                 <Box
                   onClick={() => setConfigureModuleType(campaign.module!.type)}
                   sx={{
@@ -461,7 +467,7 @@ const CampaignDetail: React.FC<Props> = ({
                   ? `Ready to go! Activate the campaign to make it visible to participants.`
                   : `Complete step 1 first, then activate the campaign.`}
               </Typography>
-              {moduleConfigured && (
+              {moduleConfigured && canPublish && (
                 <Box
                   onClick={() => setPendingActivate(true)}
                   sx={{
@@ -523,8 +529,8 @@ const CampaignDetail: React.FC<Props> = ({
                 <CampaignDetailsCard campaign={campaign} />
                 <CampaignModuleCard
                   module={campaign.module}
-                  onConfigureModule={(!isEmployee && campaign.status !== "ACTIVE") ? setConfigureModuleType : undefined}
-                  showConfigure={!isEmployee && campaign.status !== "ACTIVE"}
+                  onConfigureModule={(canEdit && !isEmployee && campaign.status !== "ACTIVE") ? setConfigureModuleType : undefined}
+                  showConfigure={canEdit && !isEmployee && campaign.status !== "ACTIVE"}
                   isEmployee={isEmployee}
                 />
               </Box>

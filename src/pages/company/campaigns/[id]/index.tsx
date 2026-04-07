@@ -6,7 +6,9 @@ import PageHeader from "@/components/layout/dashboard/PageHeader";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
 import CampaignDetailSkeleton from "@/components/features/company/campaigns/details/CampaignDetailSkeleton";
 import CampaignDetailError from "@/components/features/company/campaigns/details/CampaignDetailError";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import {
   fetchCampaignById,
   deleteCampaign,
@@ -21,14 +23,24 @@ import { useToast } from "@/hooks/useToast";
 import { CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
 
 const CampaignDetailsPage: React.FC = () => {
+  useCompanyAccess("canViewCampaigns");
+
   const router = useRouter();
   const { id } = router.query;
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
 
   const campaign = useSelector(selectSelectedCampaign);
-  const loading = useSelector(selectDetailLoading);
-  const error = useSelector(selectDetailError);
+  const loading  = useSelector(selectDetailLoading);
+  const error    = useSelector(selectDetailError);
+
+  const user     = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms = useSelector(selectEmployeePermissions);
+  const isEmp    = user?.role === "Employee";
+  // While permissions are loading (null) treat as allowed; deny only once loaded and false
+  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign;
+  const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
+  const canPublish = !isEmp || !!empPerms?.canPublishCampaign;
 
   useEffect(() => {
     if (id && typeof id === "string") {
@@ -113,9 +125,12 @@ const CampaignDetailsPage: React.FC = () => {
         ) : campaign ? (
           <CampaignDetail
             campaign={campaign}
-            onDelete={handleDelete}
-            onChangeStatus={handleChangeStatus}
-            onSaveModuleConfig={handleSaveConfig}
+            onDelete={canDelete ? handleDelete : undefined}
+            onChangeStatus={canPublish ? handleChangeStatus : undefined}
+            onSaveModuleConfig={canEdit ? handleSaveConfig : undefined}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            canPublish={canPublish}
           />
         ) : null}
       </DashboardLayout>

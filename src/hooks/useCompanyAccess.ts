@@ -28,17 +28,21 @@ export function useCompanyAccess(permission: EmployeePermissionKey) {
   useEffect(() => {
     if (!isEmployee) return; // Company users are always allowed
 
-    // Fetch permissions if not loaded and not already fetching
-    if (!permissions && !loading && user?._id) {
+    // Always re-fetch on mount so permissions reflect latest state
+    if (user?._id && !loading) {
       dispatch(fetchEmployeePermissions(user._id));
-      return;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id]);
+
+  useEffect(() => {
+    if (!isEmployee) return;
 
     // Once loaded, check permission
     if (permissions && !permissions[permission]) {
       router.replace("/unauthorized");
     }
-  }, [isEmployee, permissions, loading, permission, user?._id]);
+  }, [isEmployee, permissions, permission]);
 
   // Returns true while we're still determining access (show nothing / spinner)
   return { checking: isEmployee && (!permissions || loading) };

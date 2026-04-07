@@ -43,6 +43,7 @@ import { CAMPAIGN_TYPES, MODULE_CONFIG } from "@/constants/campaign";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { AppDispatch } from "@/store/store";
 import { createCampaign } from "@/store/slices/campaignSlice";
 import { useToast } from "@/hooks/useToast";
@@ -98,6 +99,7 @@ const STEPS = [
 ];
 
 const NewCampaignPage: React.FC = () => {
+  useCompanyAccess("canCreateCampaign");
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
   const theme = useTheme();

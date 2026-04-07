@@ -309,7 +309,6 @@ const _getDefaultPermissionsByRole = (role) => {
     canEditCampaign: false,
     canDeleteCampaign: false,
     canPublishCampaign: false,
-    canViewCampaignAnalytics: false,
     canViewDepartments: false,
     canCreateDepartment: false,
     canEditDepartment: false,

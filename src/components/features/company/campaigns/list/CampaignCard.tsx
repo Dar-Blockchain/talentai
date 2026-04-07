@@ -51,7 +51,10 @@ const CampaignCard: React.FC<{
   onViewDetails: (id: string) => void;
   onDelete: (id: string, title: string) => void;
   onStatusChange: (id: string, title: string, currentStatus: Campaign["status"], targetStatus: CampaignStatus) => void;
-}> = memo(({ campaign, onViewDetails, onDelete, onStatusChange }) => {
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canPublish?: boolean;
+}> = memo(({ campaign, onViewDetails, onDelete, onStatusChange, canEdit = true, canDelete = true, canPublish = true }) => {
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const tc = TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM;
   const accentColor = STATUS_ACCENT[campaign.status] || "#9CA3AF";
@@ -129,90 +132,98 @@ const CampaignCard: React.FC<{
               }}
             />
           </Box>
-          <IconButton
-            size="small"
-            sx={{ color: "#9CA3AF", p: 0.25, "&:hover": { color: "#6B7280" } }}
-            onClick={(e) => setMenuAnchor(e.currentTarget)}
-          >
-            <MoreVertOutlined sx={{ fontSize: 18 }} />
-          </IconButton>
-          <Menu
-            anchorEl={menuAnchor}
-            open={Boolean(menuAnchor)}
-            onClose={() => setMenuAnchor(null)}
-            slotProps={{
-              paper: {
-                sx: {
-                  borderRadius: "14px",
-                  minWidth: 190,
-                  p: 0.75,
-                  bgcolor: "#fff",
-                  boxShadow: "0 8px 30px rgba(15,23,42,0.10)",
-                  border: "1px solid #E5E7EB",
-                },
-              },
-            }}
-          >
-            {/* Status section header */}
-            {(STATUS_TRANSITIONS[campaign.status]?.length ?? 0) > 0 && (
-              <Box sx={{ px: 1.25, pt: 0.5, pb: 0.75 }}>
-                <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Change Status
-                </Typography>
-              </Box>
-            )}
-
-            {/* Per-status action items */}
-            {(STATUS_TRANSITIONS[campaign.status] ?? []).map((s) => {
-              const sColor = STATUS_COLORS[s];
-              const Icon   = STATUS_ICONS[s];
-              const label  = STATUS_TRANSITION_LABELS[s];
-              return (
-                <MenuItem
-                  key={s}
-                  onClick={() => { setMenuAnchor(null); onStatusChange(campaign._id, campaign.title, campaign.status, s); }}
-                  sx={{
-                    borderRadius: "9px", px: 1.25, py: 0.875, gap: 1.25, minHeight: 36,
-                    "&:hover": { bgcolor: `${sColor?.bg}` },
-                  }}
-                >
-                  <Box sx={{
-                    width: 26, height: 26, borderRadius: "7px", flexShrink: 0,
-                    bgcolor: sColor?.bg, border: `1px solid ${sColor?.fg}25`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    {Icon && <Icon sx={{ fontSize: 14, color: sColor?.fg }} />}
+          {(canPublish || canDelete) && (
+            <>
+              <IconButton
+                size="small"
+                sx={{ color: "#9CA3AF", p: 0.25, "&:hover": { color: "#6B7280" } }}
+                onClick={(e) => setMenuAnchor(e.currentTarget)}
+              >
+                <MoreVertOutlined sx={{ fontSize: 18 }} />
+              </IconButton>
+              <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={() => setMenuAnchor(null)}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      borderRadius: "14px",
+                      minWidth: 190,
+                      p: 0.75,
+                      bgcolor: "#fff",
+                      boxShadow: "0 8px 30px rgba(15,23,42,0.10)",
+                      border: "1px solid #E5E7EB",
+                    },
+                  },
+                }}
+              >
+                {/* Status section header */}
+                {canPublish && (STATUS_TRANSITIONS[campaign.status]?.length ?? 0) > 0 && (
+                  <Box sx={{ px: 1.25, pt: 0.5, pb: 0.75 }}>
+                    <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      Change Status
+                    </Typography>
                   </Box>
-                  <Typography sx={{ fontSize: "13px", fontWeight: 600, color: sColor?.fg }}>
-                    {label}
-                  </Typography>
-                </MenuItem>
-              );
-            })}
+                )}
 
-            {/* Divider */}
-            <Box sx={{ my: 0.75, mx: 1, height: "1px", bgcolor: "#F3F4F6" }} />
+                {/* Per-status action items */}
+                {canPublish && (STATUS_TRANSITIONS[campaign.status] ?? []).map((s) => {
+                  const sColor = STATUS_COLORS[s];
+                  const Icon   = STATUS_ICONS[s];
+                  const label  = STATUS_TRANSITION_LABELS[s];
+                  return (
+                    <MenuItem
+                      key={s}
+                      onClick={() => { setMenuAnchor(null); onStatusChange(campaign._id, campaign.title, campaign.status, s); }}
+                      sx={{
+                        borderRadius: "9px", px: 1.25, py: 0.875, gap: 1.25, minHeight: 36,
+                        "&:hover": { bgcolor: `${sColor?.bg}` },
+                      }}
+                    >
+                      <Box sx={{
+                        width: 26, height: 26, borderRadius: "7px", flexShrink: 0,
+                        bgcolor: sColor?.bg, border: `1px solid ${sColor?.fg}25`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {Icon && <Icon sx={{ fontSize: 14, color: sColor?.fg }} />}
+                      </Box>
+                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: sColor?.fg }}>
+                        {label}
+                      </Typography>
+                    </MenuItem>
+                  );
+                })}
 
-            {/* Delete */}
-            <MenuItem
-              onClick={() => { setMenuAnchor(null); onDelete(campaign._id, campaign.title); }}
-              sx={{
-                borderRadius: "9px", px: 1.25, py: 0.875, gap: 1.25, minHeight: 36,
-                "&:hover": { bgcolor: "#FEF2F2" },
-              }}
-            >
-              <Box sx={{
-                width: 26, height: 26, borderRadius: "7px", flexShrink: 0,
-                bgcolor: "#FEF2F2", border: "1px solid #FECACA",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#DC2626" }} />
-              </Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}>
-                Delete Campaign
-              </Typography>
-            </MenuItem>
-          </Menu>
+                {/* Divider — only when both sections present */}
+                {canPublish && canDelete && (STATUS_TRANSITIONS[campaign.status]?.length ?? 0) > 0 && (
+                  <Box sx={{ my: 0.75, mx: 1, height: "1px", bgcolor: "#F3F4F6" }} />
+                )}
+
+                {/* Delete */}
+                {canDelete && (
+                  <MenuItem
+                    onClick={() => { setMenuAnchor(null); onDelete(campaign._id, campaign.title); }}
+                    sx={{
+                      borderRadius: "9px", px: 1.25, py: 0.875, gap: 1.25, minHeight: 36,
+                      "&:hover": { bgcolor: "#FEF2F2" },
+                    }}
+                  >
+                    <Box sx={{
+                      width: 26, height: 26, borderRadius: "7px", flexShrink: 0,
+                      bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#DC2626" }} />
+                    </Box>
+                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}>
+                      Delete Campaign
+                    </Typography>
+                  </MenuItem>
+                )}
+              </Menu>
+            </>
+          )}
         </Box>
 
         {/* Title + description */}
