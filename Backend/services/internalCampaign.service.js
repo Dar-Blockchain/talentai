@@ -26,7 +26,6 @@ exports.createCampaign = async (campaignData) => {
   }
 };
 
-
 /**
  * Get campaign by ID
  */
@@ -42,7 +41,6 @@ exports.getCampaignById = async (campaignId) => {
     throw err;
   }
 };
-
 
 /**
  * Get all campaigns with optional filters
@@ -82,7 +80,7 @@ exports.getCampaignsByCompanyPaginated = async (
   companyId,
   page = 1,
   limit = 10,
-  filters = {}
+  filters = {},
 ) => {
   try {
     const skip = (page - 1) * limit;
@@ -131,10 +129,10 @@ exports.updateCampaign = async (campaignId, updateData) => {
     const campaign = await InternalCampaign.findByIdAndUpdate(
       campaignId,
       updateData,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).populate([
       { path: "company", select: "username email role" },
-      { path: "createdBy", select: "username email" }
+      { path: "createdBy", select: "username email" },
     ]);
 
     return campaign;
@@ -166,7 +164,9 @@ exports.updateCampaignStatus = async (campaignId, status) => {
   try {
     const validStatuses = ["DRAFT", "ACTIVE", "PAUSED", "CLOSED", "EXPIRED"];
     if (!validStatuses.includes(status)) {
-      const err = new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+      const err = new Error(
+        `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+      );
       err.status = 400;
       throw err;
     }
@@ -174,10 +174,10 @@ exports.updateCampaignStatus = async (campaignId, status) => {
     return await InternalCampaign.findByIdAndUpdate(
       campaignId,
       { status },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).populate([
       { path: "company", select: "username email role" },
-      { path: "createdBy", select: "username email" }
+      { path: "createdBy", select: "username email" },
     ]);
   } catch (error) {
     error.status = error.status || 500;

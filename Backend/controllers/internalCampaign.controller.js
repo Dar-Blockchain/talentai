@@ -32,7 +32,10 @@ const verifyOwnership = async (campaignId, companyId) => {
   }
   // campaign.company may be an unpopulated ObjectId or a populated object
   const campaignCompanyId = campaign.company?._id ?? campaign.company;
-  if (!campaignCompanyId || campaignCompanyId.toString() !== companyId.toString()) {
+  if (
+    !campaignCompanyId ||
+    campaignCompanyId.toString() !== companyId.toString()
+  ) {
     const error = new Error(
       "Unauthorized: You can only manage your own campaigns",
     );
@@ -125,8 +128,8 @@ exports.createInternalCampaign = async (req, res) => {
         // LINK campaigns: participants not pre-added via bulk (they join via link)
         const campaignParticipantData = participants.map((employeeId) => ({
           campaign: campaign._id,
-          employee:      employeeId,
-          email:         userEmailMap[employeeId.toString()] || null,
+          employee: employeeId,
+          email: userEmailMap[employeeId.toString()] || null,
           ...(isAnonymous ? { anonymousToken: randomUUID() } : {}),
           status: "INVITED",
         }));
@@ -172,14 +175,23 @@ exports.createInternalCampaign = async (req, res) => {
 exports.getCompanyCampaigns = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { status, type, targetDepartment, title, search, period, page = 1, limit = 10 } = req.query;
+    const {
+      status,
+      type,
+      targetDepartment,
+      title,
+      search,
+      period,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    const pageNum  = Math.max(1, parseInt(page) || 1);
+    const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
 
     const filters = {};
-    if (status)           filters.status           = status;
-    if (type)             filters.type             = type;
+    if (status) filters.status = status;
+    if (type) filters.type = type;
     if (targetDepartment) filters.targetDepartment = targetDepartment;
 
     // title search (support both ?title= and ?search=)
@@ -210,7 +222,7 @@ exports.getCompanyCampaigns = async (req, res) => {
           ...campaign.toObject(),
           targetEmployeeCount: participantCount,
         };
-      })
+      }),
     );
 
     res.status(200).json({
@@ -232,7 +244,7 @@ exports.getCompanyCampaigns = async (req, res) => {
 exports.getCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    const { userId }     = req.query;
+    const { userId } = req.query;
 
     const campaign = await getCampaignById(campaignId);
 
@@ -248,23 +260,26 @@ exports.getCampaign = async (req, res) => {
     // Attach participant and session counts
     const [participantCount, sessionCount] = await Promise.all([
       CampaignParticipant.countDocuments({ campaign: campaignId }),
-      CampaignParticipant.countDocuments({ campaign: campaignId, status: "COMPLETED" }),
+      CampaignParticipant.countDocuments({
+        campaign: campaignId,
+        status: "COMPLETED",
+      }),
     ]);
     data.participantCount = participantCount;
-    data.sessionCount     = sessionCount;
+    data.sessionCount = sessionCount;
 
     if (userId) {
       const participant = await CampaignParticipant.findOne(
         { campaign: campaignId, employee: userId },
-        { status: 1, completedAt: 1 }
+        { status: 1, completedAt: 1 },
       ).lean();
       data.participantStatus = participant?.status ?? null;
-      data.completedAt       = participant?.completedAt ?? null;
+      data.completedAt = participant?.completedAt ?? null;
 
-      if (participant?.status === 'COMPLETED') {
+      if (participant?.status === "COMPLETED") {
         const response = await CampaignResponse.findOne(
           { campaign: campaignId, participant: participant._id },
-          { aiScore: 1 }
+          { aiScore: 1 },
         ).lean();
         data.score = response?.aiScore ?? null;
       }
@@ -310,8 +325,8 @@ exports.getCampaignParticipants = async (req, res) => {
       {
         $match: {
           campaign: campaignObjectId,
-          ...(status && { status })
-        }
+          ...(status && { status }),
+        },
       },
       // Stage 2: Populate employee data
       {
@@ -319,11 +334,11 @@ exports.getCampaignParticipants = async (req, res) => {
           from: "users",
           localField: "employee",
           foreignField: "_id",
-          as: "employee"
-        }
+          as: "employee",
+        },
       },
       {
-        $unwind: { path: "$employee", preserveNullAndEmptyArrays: true }
+        $unwind: { path: "$employee", preserveNullAndEmptyArrays: true },
       },
       // Stage 3: Populate employee profile
       {
@@ -331,11 +346,14 @@ exports.getCampaignParticipants = async (req, res) => {
           from: "profiles",
           localField: "employee._id",
           foreignField: "userId",
-          as: "employee.profile"
-        }
+          as: "employee.profile",
+        },
       },
       {
-        $unwind: { path: "$employee.profile", preserveNullAndEmptyArrays: true }
+        $unwind: {
+          path: "$employee.profile",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       // Stage 4: Populate company membership
       {
@@ -343,11 +361,14 @@ exports.getCampaignParticipants = async (req, res) => {
           from: "companymemberships",
           localField: "employee._id",
           foreignField: "user",
-          as: "employee.companyMembership"
-        }
+          as: "employee.companyMembership",
+        },
       },
       {
-        $unwind: { path: "$employee.companyMembership", preserveNullAndEmptyArrays: true }
+        $unwind: {
+          path: "$employee.companyMembership",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       // Stage 5: Populate department
       {
@@ -355,26 +376,41 @@ exports.getCampaignParticipants = async (req, res) => {
           from: "departments",
           localField: "employee.companyMembership.department",
           foreignField: "_id",
-          as: "employee.companyMembership.department"
-        }
+          as: "employee.companyMembership.department",
+        },
       },
       {
-        $unwind: { path: "$employee.companyMembership.department", preserveNullAndEmptyArrays: true }
+        $unwind: {
+          path: "$employee.companyMembership.department",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       // Stage 6: Apply search filter on firstName, lastName, email, providerName
-      ...(search ? [
-        {
-          $match: {
-            $or: [
-              { "employee.profile.firstName": { $regex: search, $options: "i" } },
-              { "employee.profile.lastName": { $regex: search, $options: "i" } },
-              { email: { $regex: search, $options: "i" } },
-              { "employee.email": { $regex: search, $options: "i" } },
-              { providerName: { $regex: search, $options: "i" } },
-            ]
-          }
-        }
-      ] : []),
+      ...(search
+        ? [
+            {
+              $match: {
+                $or: [
+                  {
+                    "employee.profile.firstName": {
+                      $regex: search,
+                      $options: "i",
+                    },
+                  },
+                  {
+                    "employee.profile.lastName": {
+                      $regex: search,
+                      $options: "i",
+                    },
+                  },
+                  { email: { $regex: search, $options: "i" } },
+                  { "employee.email": { $regex: search, $options: "i" } },
+                  { providerName: { $regex: search, $options: "i" } },
+                ],
+              },
+            },
+          ]
+        : []),
       // Stage 7: Sort by creation date
       { $sort: { createdAt: -1 } },
       // Stage 8: Join with campaign responses to get aiScore
@@ -394,7 +430,9 @@ exports.getCampaignParticipants = async (req, res) => {
           score: {
             $cond: {
               if: { $eq: ["$status", "COMPLETED"] },
-              then: { $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null] },
+              then: {
+                $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null],
+              },
               else: null,
             },
           },
@@ -425,44 +463,51 @@ exports.getCampaignParticipants = async (req, res) => {
                 "employee.profile.lastName": 1,
                 "employee.companyMembership.role": 1,
                 "employee.companyMembership.department._id": 1,
-                "employee.companyMembership.department.name": 1
-              }
-            }
-          ]
-        }
-      }
+                "employee.companyMembership.department.name": 1,
+              },
+            },
+          ],
+        },
+      },
     ];
 
     // Execute aggregation pipeline
     const result = await CampaignParticipant.aggregate(pipeline);
-    
+
     const totalParticipants = result[0]?.metadata[0]?.total || 0;
     const participants = result[0]?.data || [];
 
     // Transform participants data to include all required fields
-    const formattedWithScores = participants.map(participant => {
+    const formattedWithScores = participants.map((participant) => {
       // For LINK+NOMINATIVE participants: providerName is the full name, no employee record
       const hasEmployee = !!participant.employee?._id;
-      const firstName  = hasEmployee
-        ? (participant.employee?.profile?.firstName || participant.employee?.username || "Unknown")
-        : (participant.providerName || "Unknown");
-      const lastName   = hasEmployee ? (participant.employee?.profile?.lastName || "") : "";
+      const firstName = hasEmployee
+        ? participant.employee?.profile?.firstName ||
+          participant.employee?.username ||
+          "Unknown"
+        : participant.providerName || "Unknown";
+      const lastName = hasEmployee
+        ? participant.employee?.profile?.lastName || ""
+        : "";
       const department = participant.employee?.companyMembership?.department
-        ? { id: participant.employee.companyMembership.department._id, name: participant.employee.companyMembership.department.name }
+        ? {
+            id: participant.employee.companyMembership.department._id,
+            name: participant.employee.companyMembership.department.name,
+          }
         : null;
 
       return {
-        _id:        participant._id,
+        _id: participant._id,
         employeeId: participant.employee?._id || null,
         firstName,
         lastName,
-        email:      participant.email || participant.employee?.email || null,
-        role:       participant.employee?.companyMembership?.role   || null,
+        email: participant.email || participant.employee?.email || null,
+        role: participant.employee?.companyMembership?.role || null,
         department,
-        status:     participant.status,
-        score:      participant.score ?? null,
-        createdAt:  participant.createdAt,
-        updatedAt:  participant.updatedAt,
+        status: participant.status,
+        score: participant.score ?? null,
+        createdAt: participant.createdAt,
+        updatedAt: participant.updatedAt,
       };
     });
 
@@ -614,13 +659,21 @@ exports.updateCampaignStatus = async (req, res) => {
 exports.getUserCampaigns = async (req, res) => {
   try {
     const userId = req.params.userId;
-    const { status, type, participantStatus, search, period, page = 1, limit = 10 } = req.query;
+    const {
+      status,
+      type,
+      participantStatus,
+      search,
+      period,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    const pageNum  = Math.max(1, parseInt(page) || 1);
+    const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
-    const skip     = (pageNum - 1) * limitNum;
+    const skip = (pageNum - 1) * limitNum;
 
-    const ObjectId    = require("mongoose").Types.ObjectId;
+    const ObjectId = require("mongoose").Types.ObjectId;
     const userObjectId = new ObjectId(userId);
 
     // Resolve period → date threshold
@@ -634,7 +687,9 @@ exports.getUserCampaigns = async (req, res) => {
       }
     }
 
-    const participations = await CampaignParticipant.find({ employee: userObjectId })
+    const participations = await CampaignParticipant.find({
+      employee: userObjectId,
+    })
       .populate({
         path: "campaign",
         populate: { path: "company createdBy", select: "name _id email" },
@@ -646,11 +701,12 @@ exports.getUserCampaigns = async (req, res) => {
     );
 
     // campaign status filter
-    if (status)           filtered = filtered.filter((p) => p.campaign.status === status);
+    if (status) filtered = filtered.filter((p) => p.campaign.status === status);
     // campaign type filter
-    if (type)             filtered = filtered.filter((p) => p.campaign.type === type);
+    if (type) filtered = filtered.filter((p) => p.campaign.type === type);
     // participant status filter
-    if (participantStatus) filtered = filtered.filter((p) => p.status === participantStatus);
+    if (participantStatus)
+      filtered = filtered.filter((p) => p.status === participantStatus);
     // search filter (campaign title)
     if (search) {
       const re = new RegExp(search.trim(), "i");
@@ -661,30 +717,47 @@ exports.getUserCampaigns = async (req, res) => {
       filtered = filtered.filter((p) => new Date(p.createdAt) >= periodFrom);
     }
 
-    const total    = filtered.length;
+    const total = filtered.length;
     const paginated = filtered.slice(skip, skip + limitNum);
 
     // Bulk-fetch scores for paginated participants
     const participantIds = paginated.map((p) => p._id);
     const responses = await CampaignResponse.find(
       { participant: { $in: participantIds } },
-      { participant: 1, aiScore: 1 }
+      { participant: 1, aiScore: 1 },
     ).lean();
     const scoreMap = {};
-    responses.forEach((r) => { scoreMap[r.participant.toString()] = r.aiScore ?? null; });
+    responses.forEach((r) => {
+      scoreMap[r.participant.toString()] = r.aiScore ?? null;
+    });
 
     const campaigns = await Promise.all(
       paginated.map(async (p) => {
-        const targetEmployeeCount = await CampaignParticipant.countDocuments({ campaign: p.campaign._id });
-        const score = p.status === 'COMPLETED' ? (scoreMap[p._id.toString()] ?? null) : null;
-        return { ...p.campaign.toObject(), targetEmployeeCount, participantStatus: p.status, score };
-      })
+        const targetEmployeeCount = await CampaignParticipant.countDocuments({
+          campaign: p.campaign._id,
+        });
+        const score =
+          p.status === "COMPLETED"
+            ? (scoreMap[p._id.toString()] ?? null)
+            : null;
+        return {
+          ...p.campaign.toObject(),
+          targetEmployeeCount,
+          participantStatus: p.status,
+          score,
+        };
+      }),
     );
 
     res.status(200).json({
       success: true,
       data: campaigns,
-      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
     console.error(`❌ Error in getUserCampaigns: ${error.message}`);
@@ -729,9 +802,9 @@ exports.getEmployeeCampaignMetrics = async (req, res) => {
     const metrics = { total: 0, invited: 0, inProgress: 0, completed: 0 };
     for (const { _id, count } of counts) {
       metrics.total += count;
-      if (_id === "INVITED")     metrics.invited    = count;
+      if (_id === "INVITED") metrics.invited = count;
       if (_id === "IN_PROGRESS") metrics.inProgress = count;
-      if (_id === "COMPLETED")   metrics.completed  = count;
+      if (_id === "COMPLETED") metrics.completed = count;
     }
 
     res.status(200).json({ success: true, data: metrics });
@@ -757,25 +830,37 @@ async function scoreQuestionnaireAsync(responseId, campaign, answers) {
     const questions = campaign.module?.config?.questions ?? [];
 
     // Build Q&A pairs — include all available options for choice questions
-    const qaPairs = questions.map((q, i) => {
-      const raw        = answers[i]?.answer;
-      const selected   = Array.isArray(raw) ? raw : (raw !== undefined && raw !== "" ? [String(raw)] : []);
-      const answerText = selected.join(", ") || "(no answer)";
+    const qaPairs = questions
+      .map((q, i) => {
+        const raw = answers[i]?.answer;
+        const selected = Array.isArray(raw)
+          ? raw
+          : raw !== undefined && raw !== ""
+            ? [String(raw)]
+            : [];
+        const answerText = selected.join(", ") || "(no answer)";
 
-      if ((q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && Array.isArray(q.options) && q.options.length > 0) {
-        const optionLines = q.options.map(opt => {
-          const picked = selected.includes(opt);
-          return `  ${picked ? "✓" : "✗"} ${opt}`;
-        }).join("\n");
-        return `Q${i + 1} [${q.type}]: ${q.question}\nAvailable options (✓ = selected by respondent):\n${optionLines}`;
-      }
+        if (
+          (q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") &&
+          Array.isArray(q.options) &&
+          q.options.length > 0
+        ) {
+          const optionLines = q.options
+            .map((opt) => {
+              const picked = selected.includes(opt);
+              return `  ${picked ? "✓" : "✗"} ${opt}`;
+            })
+            .join("\n");
+          return `Q${i + 1} [${q.type}]: ${q.question}\nAvailable options (✓ = selected by respondent):\n${optionLines}`;
+        }
 
-      if (q.type === "RATING") {
-        return `Q${i + 1} [RATING]: ${q.question}\nRating given: ${raw ?? 0}/5`;
-      }
+        if (q.type === "RATING") {
+          return `Q${i + 1} [RATING]: ${q.question}\nRating given: ${raw ?? 0}/5`;
+        }
 
-      return `Q${i + 1} [TEXT]: ${q.question}\nAnswer: ${answerText}`;
-    }).join("\n\n");
+        return `Q${i + 1} [TEXT]: ${q.question}\nAnswer: ${answerText}`;
+      })
+      .join("\n\n");
 
     const systemPrompt = `You are an objective assessor evaluating questionnaire responses for a campaign titled "${campaign.title}".
 
@@ -817,16 +902,22 @@ Return JSON exactly:
 
     const scoredAnswers = answers.map((a, i) => ({
       ...a,
-      score: typeof parsed.scores?.[i] === "number" ? Math.round(parsed.scores[i]) : null,
+      score:
+        typeof parsed.scores?.[i] === "number"
+          ? Math.round(parsed.scores[i])
+          : null,
     }));
 
     await CampaignResponse.findByIdAndUpdate(responseId, {
-      answers:    scoredAnswers,
-      aiScore:    typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null,
-      aiSummary:  parsed.aiSummary ?? null,
+      answers: scoredAnswers,
+      aiScore:
+        typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null,
+      aiSummary: parsed.aiSummary ?? null,
     });
   } catch (err) {
-    console.error(`❌ scoreQuestionnaireAsync failed for response ${responseId}: ${err.message}`);
+    console.error(
+      `❌ scoreQuestionnaireAsync failed for response ${responseId}: ${err.message}`,
+    );
   }
 }
 
@@ -840,32 +931,62 @@ exports.saveQuestionnaireProgress = async (req, res) => {
     const { participantId, answers } = req.body;
 
     if (!participantId || !Array.isArray(answers)) {
-      return res.status(400).json({ success: false, error: "participantId and answers[] are required" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "participantId and answers[] are required",
+        });
     }
 
     // Resolve participant (same multi-strategy lookup as submit)
     let participant = null;
     if (mongoose.Types.ObjectId.isValid(participantId)) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: participantId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        employee: participantId,
+      });
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: participantId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        anonymousToken: participantId,
+      });
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: participantId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        linkAccessToken: participantId,
+      });
     }
-    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+    if (!participant)
+      return res
+        .status(404)
+        .json({ success: false, error: "Participant not found" });
 
     // Don't overwrite a completed submission
     if (participant.status === "COMPLETED") {
-      return res.status(200).json({ success: true, message: "Already completed — draft ignored" });
+      return res
+        .status(200)
+        .json({ success: true, message: "Already completed — draft ignored" });
     }
 
     // Upsert draft answers into CampaignResponse (no status change)
     await CampaignResponse.findOneAndUpdate(
-      { campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" },
-      { $set: { answers, campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      {
+        campaign: campaignId,
+        participant: participant._id,
+        moduleType: "QUESTIONNAIRE",
+      },
+      {
+        $set: {
+          answers,
+          campaign: campaignId,
+          participant: participant._id,
+          moduleType: "QUESTIONNAIRE",
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
     res.status(200).json({ success: true });
@@ -880,42 +1001,76 @@ exports.submitQuestionnaire = async (req, res) => {
     const { participantId, answers } = req.body;
 
     if (!participantId || !Array.isArray(answers)) {
-      return res.status(400).json({ success: false, error: "participantId and answers[] are required" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "participantId and answers[] are required",
+        });
     }
 
     const campaign = await InternalCampaign.findById(campaignId);
-    if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
+    if (!campaign)
+      return res
+        .status(404)
+        .json({ success: false, error: "Campaign not found" });
     if (campaign.module?.type !== "QUESTIONNAIRE") {
-      return res.status(400).json({ success: false, error: "Campaign module is not QUESTIONNAIRE" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "Campaign module is not QUESTIONNAIRE",
+        });
     }
 
     // participantId may be: employee _id (ObjectId), anonymousToken (UUID), or linkAccessToken (UUID)
     let participant = null;
     if (mongoose.Types.ObjectId.isValid(participantId)) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: participantId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        employee: participantId,
+      });
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: participantId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        anonymousToken: participantId,
+      });
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: participantId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        linkAccessToken: participantId,
+      });
     }
-    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+    if (!participant)
+      return res
+        .status(404)
+        .json({ success: false, error: "Participant not found" });
 
     // Upsert response (allow re-submission)
     const response = await CampaignResponse.findOneAndUpdate(
-      { campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" },
-      { answers, moduleType: "QUESTIONNAIRE", campaign: campaignId, participant: participant._id },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      {
+        campaign: campaignId,
+        participant: participant._id,
+        moduleType: "QUESTIONNAIRE",
+      },
+      {
+        answers,
+        moduleType: "QUESTIONNAIRE",
+        campaign: campaignId,
+        participant: participant._id,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
     // Mark participant as completed + update moduleProgress
-    participant.status      = "COMPLETED";
+    participant.status = "COMPLETED";
     participant.completedAt = new Date();
 
     participant.moduleProgress = {
-      moduleType:  "QUESTIONNAIRE",
-      status:      "COMPLETED",
+      moduleType: "QUESTIONNAIRE",
+      status: "COMPLETED",
       completedAt: new Date(),
       responseRef: response._id,
     };
@@ -943,22 +1098,36 @@ exports.startAssessment = async (req, res) => {
     // userId may be: employee _id (ObjectId), anonymousToken (UUID), or linkAccessToken (UUID)
     let participant = null;
     if (mongoose.Types.ObjectId.isValid(userId)) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: userId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        employee: userId,
+      });
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: userId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        anonymousToken: userId,
+      });
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: userId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        linkAccessToken: userId,
+      });
     }
-    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+    if (!participant)
+      return res
+        .status(404)
+        .json({ success: false, error: "Participant not found" });
 
     // Only move forward — don't overwrite COMPLETED
     if (participant.status === "INVITED") {
-      const campaign = await InternalCampaign.findById(campaignId).select("module").lean();
+      const campaign = await InternalCampaign.findById(campaignId)
+        .select("module")
+        .lean();
       const moduleType = campaign?.module?.type;
 
-      participant.status    = "IN_PROGRESS";
+      participant.status = "IN_PROGRESS";
       participant.accessedAt = new Date();
 
       // Set moduleProgress object for this module
@@ -979,7 +1148,9 @@ exports.startAssessment = async (req, res) => {
       data: {
         status: participant.status,
         // Return anonymousToken so ACCOUNTS+ANONYMOUS clients can store it for submissions
-        ...(participant.anonymousToken ? { anonymousToken: participant.anonymousToken } : {}),
+        ...(participant.anonymousToken
+          ? { anonymousToken: participant.anonymousToken }
+          : {}),
       },
     });
   } catch (error) {
@@ -1000,37 +1171,58 @@ exports.getParticipantResults = async (req, res) => {
     let participant = null;
     if (mongoose.Types.ObjectId.isValid(participantId)) {
       // Try direct participant _id first (company admin view), then employee lookup
-      participant = await CampaignParticipant.findOne({ _id: participantId, campaign: campaignId }).lean();
+      participant = await CampaignParticipant.findOne({
+        _id: participantId,
+        campaign: campaignId,
+      }).lean();
       if (!participant) {
-        participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: participantId }).lean();
+        participant = await CampaignParticipant.findOne({
+          campaign: campaignId,
+          employee: participantId,
+        }).lean();
       }
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: participantId }).lean();
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        anonymousToken: participantId,
+      }).lean();
     }
     if (!participant) {
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: participantId }).lean();
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        linkAccessToken: participantId,
+      }).lean();
     }
 
-    if (!campaign)    return res.status(404).json({ success: false, error: "Campaign not found" });
-    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+    if (!campaign)
+      return res
+        .status(404)
+        .json({ success: false, error: "Campaign not found" });
+    if (!participant)
+      return res
+        .status(404)
+        .json({ success: false, error: "Participant not found" });
 
-    const response = await CampaignResponse.findOne({ campaign: campaignId, participant: participant._id }).lean();
+    const response = await CampaignResponse.findOne({
+      campaign: campaignId,
+      participant: participant._id,
+    }).lean();
 
     res.status(200).json({
       success: true,
       data: {
         campaign: {
-          _id:    campaign._id,
-          title:  campaign.title,
-          type:   campaign.type,
+          _id: campaign._id,
+          title: campaign.title,
+          type: campaign.type,
           module: campaign.module,
         },
         participant: {
-          _id:         participant._id,
-          status:      participant.status,
+          _id: participant._id,
+          status: participant.status,
           completedAt: participant.completedAt,
-          score:       participant.score ?? null,
+          score: participant.score ?? null,
         },
         response: response ?? null,
       },
@@ -1091,10 +1283,15 @@ exports.participateInCampaign = async (req, res) => {
         status: "INVITED",
       });
       await participant.save();
-      console.log(`✅ LINK+ANONYMOUS participant created with token ${anonymousToken}`);
+      console.log(
+        `✅ LINK+ANONYMOUS participant created with token ${anonymousToken}`,
+      );
     } else if (isAnonymous && !isLinkBased) {
       // ACCOUNTS + ANONYMOUS: employee linked for access control, anonymousToken for submissions
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: userId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        employee: userId,
+      });
       if (participant) {
         anonymousToken = participant.anonymousToken;
         console.log(`ℹ️ ACCOUNTS+ANONYMOUS participant already exists`);
@@ -1112,7 +1309,10 @@ exports.participateInCampaign = async (req, res) => {
       }
     } else {
       // NOMINATIVE (LINK or ACCOUNTS) — check if already participating
-      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: userId });
+      participant = await CampaignParticipant.findOne({
+        campaign: campaignId,
+        employee: userId,
+      });
       if (participant) {
         console.log(`ℹ️ Participant already exists`);
       } else {
@@ -1142,7 +1342,9 @@ exports.participateInCampaign = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(`\n❌ [ERROR] Error in participateInCampaign: ${error.message}`);
+    console.error(
+      `\n❌ [ERROR] Error in participateInCampaign: ${error.message}`,
+    );
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
     res.status(500).json({
@@ -1201,7 +1403,7 @@ exports.getNonParticipants = async (req, res) => {
     const { campaignId } = req.params;
     // userId is used to verify campaign ownership (InternalCampaign.company = User._id)
     // userId is also used to query CompanyMembership (CompanyMembership.company = User._id)
-    const userId    = req.user._id;
+    const userId = req.user._id;
     const {
       search,
       department,
@@ -1215,22 +1417,32 @@ exports.getNonParticipants = async (req, res) => {
     // ── Verify campaign exists and belongs to this company ──────────────────
     const campaign = await getCampaignById(campaignId);
     if (!campaign) {
-      return res.status(404).json({ success: false, error: "Campaign not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Campaign not found" });
     }
     if (campaign.company._id.toString() !== userId.toString()) {
-      return res.status(403).json({ success: false, error: "Unauthorized: You can only manage your own campaigns" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "Unauthorized: You can only manage your own campaigns",
+        });
     }
 
     // ── Pagination ───────────────────────────────────────────────────────────
-    const pageNum  = Math.max(1, parseInt(page)  || 1);
+    const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
-    const skip     = (pageNum - 1) * limitNum;
+    const skip = (pageNum - 1) * limitNum;
 
     // ── Get IDs of employees already in this campaign ────────────────────────
-    const participantEmployeeIds = await CampaignParticipant.distinct("employee", {
-      campaign: new mongoose.Types.ObjectId(campaignId),
-      employee: { $ne: null },
-    });
+    const participantEmployeeIds = await CampaignParticipant.distinct(
+      "employee",
+      {
+        campaign: new mongoose.Types.ObjectId(campaignId),
+        employee: { $ne: null },
+      },
+    );
 
     // ── Build membership query ───────────────────────────────────────────────
     // CompanyMembership.company stores the company User._id (not the profile ID)
@@ -1256,7 +1468,7 @@ exports.getNonParticipants = async (req, res) => {
       const matchingUsers = await User.find({
         $or: [
           { username: { $regex: term, $options: "i" } },
-          { email:    { $regex: term, $options: "i" } },
+          { email: { $regex: term, $options: "i" } },
         ],
       }).select("_id");
 
@@ -1264,7 +1476,7 @@ exports.getNonParticipants = async (req, res) => {
       const matchingProfiles = await Profile.find({
         $or: [
           { firstName: { $regex: term, $options: "i" } },
-          { lastName:  { $regex: term, $options: "i" } },
+          { lastName: { $regex: term, $options: "i" } },
         ],
       }).select("userId");
 
@@ -1275,7 +1487,7 @@ exports.getNonParticipants = async (req, res) => {
 
       // Intersect: user must be in search results AND not a participant
       membershipQuery.user = {
-        $in:  searchUserIds,
+        $in: searchUserIds,
         $nin: participantEmployeeIds,
       };
     }
@@ -1283,7 +1495,7 @@ exports.getNonParticipants = async (req, res) => {
     // ── Sort setup ───────────────────────────────────────────────────────────
     const sortOrder = order === "asc" ? 1 : -1;
     const sortByName = sortBy === "name";
-    const sortQuery  = sortByName ? null : { createdAt: sortOrder };
+    const sortQuery = sortByName ? null : { createdAt: sortOrder };
 
     // ── Total count ──────────────────────────────────────────────────────────
     const total = await CompanyMembership.countDocuments(membershipQuery);
@@ -1308,19 +1520,22 @@ exports.getNonParticipants = async (req, res) => {
       });
       memberships = all.slice(skip, skip + limitNum);
     } else {
-      memberships = await queryBuilder.sort(sortQuery).skip(skip).limit(limitNum);
+      memberships = await queryBuilder
+        .sort(sortQuery)
+        .skip(skip)
+        .limit(limitNum);
     }
 
     // ── Format response ──────────────────────────────────────────────────────
     const data = memberships.map((m) => ({
-      _id:          m.user?._id     ?? null,
+      _id: m.user?._id ?? null,
       membershipId: m._id,
-      firstName:    m.user?.profile?.firstName || m.user?.username || "Unknown",
-      lastName:     m.user?.profile?.lastName  || "",
-      email:        m.user?.email   ?? null,
-      username:     m.user?.username ?? null,
-      role:         m.role          ?? null,
-      department:   m.department
+      firstName: m.user?.profile?.firstName || m.user?.username || "Unknown",
+      lastName: m.user?.profile?.lastName || "",
+      email: m.user?.email ?? null,
+      username: m.user?.username ?? null,
+      role: m.role ?? null,
+      department: m.department
         ? { id: m.department._id, name: m.department.name }
         : null,
     }));
@@ -1329,7 +1544,7 @@ exports.getNonParticipants = async (req, res) => {
       success: true,
       data: {
         total,
-        page:  pageNum,
+        page: pageNum,
         limit: limitNum,
         pages: Math.ceil(total / limitNum),
         data,
@@ -1353,35 +1568,54 @@ exports.getAnonymousScores = async (req, res) => {
     const { campaignId } = req.params;
 
     const campaign = await InternalCampaign.findById(campaignId).lean();
-    if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
+    if (!campaign)
+      return res
+        .status(404)
+        .json({ success: false, error: "Campaign not found" });
     if (campaign.anonymityMode !== "ANONYMOUS") {
-      return res.status(400).json({ success: false, error: "Campaign is not anonymous" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Campaign is not anonymous" });
     }
 
     // All anonymous participants for this campaign (both LINK+ANONYMOUS and ACCOUNTS+ANONYMOUS), oldest first
     const participants = await CampaignParticipant.find(
       { campaign: campaignId, anonymousToken: { $exists: true, $ne: null } },
-      { _id: 1, status: 1, completedAt: 1, accessedAt: 1, anonymousToken: 1, createdAt: 1 }
-    ).sort({ createdAt: 1 }).lean();
+      {
+        _id: 1,
+        status: 1,
+        completedAt: 1,
+        accessedAt: 1,
+        anonymousToken: 1,
+        createdAt: 1,
+      },
+    )
+      .sort({ createdAt: 1 })
+      .lean();
 
     const participantIds = participants.map((p) => p._id);
 
     // Fetch all responses in one query
     const responses = await CampaignResponse.find(
       { campaign: campaignId, participant: { $in: participantIds } },
-      { participant: 1, aiScore: 1, aiSummary: 1 }
+      { participant: 1, aiScore: 1, aiSummary: 1 },
     ).lean();
     const scoreMap = {};
-    responses.forEach((r) => { scoreMap[r.participant.toString()] = { score: r.aiScore ?? null, summary: r.aiSummary ?? null }; });
+    responses.forEach((r) => {
+      scoreMap[r.participant.toString()] = {
+        score: r.aiScore ?? null,
+        summary: r.aiSummary ?? null,
+      };
+    });
 
     const data = participants.map((p, i) => ({
-      index:       i + 1,
-      _id:         p._id,
-      status:      p.status,
+      index: i + 1,
+      _id: p._id,
+      status: p.status,
       completedAt: p.completedAt ?? null,
-      accessedAt:  p.accessedAt  ?? null,
-      score:       scoreMap[p._id.toString()]?.score  ?? null,
-      aiSummary:   scoreMap[p._id.toString()]?.summary ?? null,
+      accessedAt: p.accessedAt ?? null,
+      score: scoreMap[p._id.toString()]?.score ?? null,
+      aiSummary: scoreMap[p._id.toString()]?.summary ?? null,
     }));
 
     res.status(200).json({ success: true, data });
@@ -1404,41 +1638,87 @@ exports.getSessions = async (req, res) => {
     const { search, page = 1, limit = 10 } = req.query;
 
     const campaign = await InternalCampaign.findById(campaignId).lean();
-    if (!campaign) return res.status(404).json({ success: false, error: "Campaign not found" });
+    if (!campaign)
+      return res
+        .status(404)
+        .json({ success: false, error: "Campaign not found" });
 
-    const pageNum  = Math.max(1, parseInt(page) || 1);
+    const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
-    const skip     = (pageNum - 1) * limitNum;
+    const skip = (pageNum - 1) * limitNum;
     const campaignObjectId = new mongoose.Types.ObjectId(campaignId);
-    const statusMap = { INVITED: "PENDING", IN_PROGRESS: "IN_PROGRESS", COMPLETED: "COMPLETED", DROPPED: "EXPIRED" };
+    const statusMap = {
+      INVITED: "PENDING",
+      IN_PROGRESS: "IN_PROGRESS",
+      COMPLETED: "COMPLETED",
+      DROPPED: "EXPIRED",
+    };
 
     // For anonymous campaigns, fetch all anonymous participants first (oldest first) to compute sequential indices
     let anonIndexMap = {};
     if (campaign.anonymityMode === "ANONYMOUS") {
       const anonAll = await CampaignParticipant.find(
-        { campaign: campaignObjectId, anonymousToken: { $exists: true, $ne: null }, status: "COMPLETED" },
-        { _id: 1 }
-      ).sort({ createdAt: 1 }).lean();
-      anonAll.forEach((p, i) => { anonIndexMap[p._id.toString()] = i + 1; });
+        {
+          campaign: campaignObjectId,
+          anonymousToken: { $exists: true, $ne: null },
+          status: "COMPLETED",
+        },
+        { _id: 1 },
+      )
+        .sort({ createdAt: 1 })
+        .lean();
+      anonAll.forEach((p, i) => {
+        anonIndexMap[p._id.toString()] = i + 1;
+      });
     }
 
     const pipeline = [
       { $match: { campaign: campaignObjectId, status: "COMPLETED" } },
-      { $lookup: { from: "users",    localField: "employee", foreignField: "_id", as: "employeeUser" } },
-      { $unwind: { path: "$employeeUser",    preserveNullAndEmptyArrays: true } },
-      { $lookup: { from: "profiles", localField: "employeeUser._id", foreignField: "userId", as: "employeeProfile" } },
-      { $unwind: { path: "$employeeProfile", preserveNullAndEmptyArrays: true } },
-      ...(search ? [{
-        $match: {
-          $or: [
-            { "employeeProfile.firstName": { $regex: search, $options: "i" } },
-            { "employeeProfile.lastName":  { $regex: search, $options: "i" } },
-            { "employeeUser.email":        { $regex: search, $options: "i" } },
-            { email:                       { $regex: search, $options: "i" } },
-            { providerName:                { $regex: search, $options: "i" } },
-          ],
+      {
+        $lookup: {
+          from: "users",
+          localField: "employee",
+          foreignField: "_id",
+          as: "employeeUser",
         },
-      }] : []),
+      },
+      { $unwind: { path: "$employeeUser", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "employeeUser._id",
+          foreignField: "userId",
+          as: "employeeProfile",
+        },
+      },
+      {
+        $unwind: { path: "$employeeProfile", preserveNullAndEmptyArrays: true },
+      },
+      ...(search
+        ? [
+            {
+              $match: {
+                $or: [
+                  {
+                    "employeeProfile.firstName": {
+                      $regex: search,
+                      $options: "i",
+                    },
+                  },
+                  {
+                    "employeeProfile.lastName": {
+                      $regex: search,
+                      $options: "i",
+                    },
+                  },
+                  { "employeeUser.email": { $regex: search, $options: "i" } },
+                  { email: { $regex: search, $options: "i" } },
+                  { providerName: { $regex: search, $options: "i" } },
+                ],
+              },
+            },
+          ]
+        : []),
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -1456,7 +1736,9 @@ exports.getSessions = async (req, res) => {
           score: {
             $cond: {
               if: { $eq: ["$status", "COMPLETED"] },
-              then: { $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null] },
+              then: {
+                $ifNull: [{ $arrayElemAt: ["$response.aiScore", 0] }, null],
+              },
               else: null,
             },
           },
@@ -1470,9 +1752,13 @@ exports.getSessions = async (req, res) => {
             { $limit: limitNum },
             {
               $project: {
-                _id: 1, status: 1, score: 1,
-                accessedAt: 1, completedAt: 1,
-                providerName: 1, email: 1,
+                _id: 1,
+                status: 1,
+                score: 1,
+                accessedAt: 1,
+                completedAt: 1,
+                providerName: 1,
+                email: 1,
                 anonymousToken: 1,
                 "employeeUser._id": 1,
                 "employeeUser.email": 1,
@@ -1487,31 +1773,38 @@ exports.getSessions = async (req, res) => {
     ];
 
     const result = await CampaignParticipant.aggregate(pipeline);
-    const total  = result[0]?.metadata[0]?.total || 0;
-    const rows   = result[0]?.data || [];
+    const total = result[0]?.metadata[0]?.total || 0;
+    const rows = result[0]?.data || [];
 
     const sessions = rows.map((p) => {
       const isAnonymous = !!p.anonymousToken;
-      const anonIndex   = isAnonymous ? (anonIndexMap[p._id.toString()] ?? "?") : null;
+      const anonIndex = isAnonymous
+        ? (anonIndexMap[p._id.toString()] ?? "?")
+        : null;
       const hasEmployee = !!p.employeeUser?._id;
 
       const firstName = isAnonymous
         ? `Anonymous #${anonIndex}`
         : hasEmployee
-          ? (p.employeeProfile?.firstName || p.employeeUser?.username || "Unknown")
-          : (p.providerName || "Unknown");
-      const lastName = (isAnonymous || !hasEmployee) ? "" : (p.employeeProfile?.lastName || "");
-      const email    = isAnonymous ? null : (p.email || p.employeeUser?.email || null);
+          ? p.employeeProfile?.firstName ||
+            p.employeeUser?.username ||
+            "Unknown"
+          : p.providerName || "Unknown";
+      const lastName =
+        isAnonymous || !hasEmployee ? "" : p.employeeProfile?.lastName || "";
+      const email = isAnonymous
+        ? null
+        : p.email || p.employeeUser?.email || null;
 
       return {
-        _id:         p._id,
-        status:      statusMap[p.status] || "PENDING",
-        startedAt:   p.accessedAt  ?? null,
+        _id: p._id,
+        status: statusMap[p.status] || "PENDING",
+        startedAt: p.accessedAt ?? null,
         completedAt: p.completedAt ?? null,
-        score:       p.score       ?? undefined,
+        score: p.score ?? undefined,
         isAnonymous,
         participant: {
-          _id: p._id,  // direct participant _id for "View Results" lookup
+          _id: p._id, // direct participant _id for "View Results" lookup
           firstName,
           lastName,
           email,
@@ -1540,21 +1833,23 @@ exports.getPublicCampaignInfo = async (req, res) => {
       .populate("company", "name")
       .lean();
     if (!campaign) {
-      return res.status(404).json({ success: false, error: "Campaign not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Campaign not found" });
     }
     res.status(200).json({
       success: true,
       data: {
-        _id:          campaign._id,
-        title:        campaign.title,
-        description:  campaign.description,
-        type:         campaign.type,
-        status:       campaign.status,
+        _id: campaign._id,
+        title: campaign.title,
+        description: campaign.description,
+        type: campaign.type,
+        status: campaign.status,
         anonymityMode: campaign.anonymityMode,
         accessMethod: campaign.accessMethod,
-        module:       campaign.module,
-        deadline:     campaign.deadline,
-        company:      campaign.company,
+        module: campaign.module,
+        deadline: campaign.deadline,
+        company: campaign.company,
       },
     });
   } catch (error) {
@@ -1576,25 +1871,35 @@ exports.getCampaignByLinkToken = async (req, res) => {
       .lean();
 
     if (!campaign) {
-      return res.status(404).json({ success: false, error: "Campaign not found or link is invalid" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          error: "Campaign not found or link is invalid",
+        });
     }
     if (campaign.status !== "ACTIVE") {
-      return res.status(403).json({ success: false, error: "This campaign is not currently active" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "This campaign is not currently active",
+        });
     }
 
     res.status(200).json({
       success: true,
       data: {
-        _id:          campaign._id,
-        title:        campaign.title,
-        description:  campaign.description,
-        type:         campaign.type,
-        status:       campaign.status,
+        _id: campaign._id,
+        title: campaign.title,
+        description: campaign.description,
+        type: campaign.type,
+        status: campaign.status,
         anonymityMode: campaign.anonymityMode,
         accessMethod: campaign.accessMethod,
-        module:       campaign.module,
-        deadline:     campaign.deadline,
-        company:      campaign.company,
+        module: campaign.module,
+        deadline: campaign.deadline,
+        company: campaign.company,
       },
     });
   } catch (error) {
@@ -1623,16 +1928,36 @@ exports.joinCampaignByLink = async (req, res) => {
 
     const campaign = await InternalCampaign.findOne({ linkToken: token });
     if (!campaign) {
-      return res.status(404).json({ success: false, error: "Campaign not found or link is invalid" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          error: "Campaign not found or link is invalid",
+        });
     }
     if (campaign.status !== "ACTIVE") {
-      return res.status(403).json({ success: false, error: "This campaign is not currently active" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "This campaign is not currently active",
+        });
     }
-    if (campaign.deadline && new Date(campaign.deadline).getTime() < Date.now()) {
-      return res.status(403).json({ success: false, error: "This campaign has expired" });
+    if (
+      campaign.deadline &&
+      new Date(campaign.deadline).getTime() < Date.now()
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, error: "This campaign has expired" });
     }
     if (campaign.accessMethod === "ACCOUNTS") {
-      return res.status(403).json({ success: false, error: "This campaign requires an account login" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "This campaign requires an account login",
+        });
     }
 
     const isAnonymous = campaign.anonymityMode === "ANONYMOUS";
@@ -1648,7 +1973,7 @@ exports.joinCampaignByLink = async (req, res) => {
       return res.status(200).json({
         success: true,
         data: {
-          campaignId:    campaign._id,
+          campaignId: campaign._id,
           anonymousToken,
           participantId: participant._id,
         },
@@ -1660,20 +1985,23 @@ exports.joinCampaignByLink = async (req, res) => {
 
     if (userId) {
       // Logged-in user: create employee-linked participant (idempotent)
-      let participant = await CampaignParticipant.findOne({ campaign: campaign._id, employee: userId });
+      let participant = await CampaignParticipant.findOne({
+        campaign: campaign._id,
+        employee: userId,
+      });
       if (!participant) {
         const user = await User.findById(userId).select("email").lean();
         participant = await CampaignParticipant.create({
           campaign: campaign._id,
           employee: userId,
-          email:    user?.email ?? null,
-          status:   "INVITED",
+          email: user?.email ?? null,
+          status: "INVITED",
         });
       }
       return res.status(200).json({
         success: true,
         data: {
-          campaignId:    campaign._id,
+          campaignId: campaign._id,
           participantId: participant._id,
         },
       });
@@ -1682,22 +2010,27 @@ exports.joinCampaignByLink = async (req, res) => {
     // Not logged in: require name from body
     const { name, email } = req.body;
     if (!name?.trim()) {
-      return res.status(400).json({ success: false, error: "name is required to join this campaign" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "name is required to join this campaign",
+        });
     }
     const linkAccessToken = randomUUID();
     const participant = await CampaignParticipant.create({
-      campaign:      campaign._id,
-      providerName:  name.trim(),
-      email:         email?.trim() || null,
+      campaign: campaign._id,
+      providerName: name.trim(),
+      email: email?.trim() || null,
       linkAccessToken,
-      status:        "INVITED",
+      status: "INVITED",
     });
     return res.status(200).json({
       success: true,
       data: {
-        campaignId:      campaign._id,
+        campaignId: campaign._id,
         linkAccessToken,
-        participantId:   participant._id,
+        participantId: participant._id,
       },
     });
   } catch (error) {

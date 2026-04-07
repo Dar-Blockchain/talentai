@@ -13,6 +13,7 @@ const internalCampaignController = require("../controllers/internalCampaign.cont
 const { requireAuthUser } = require("../middleware/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
+const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // admin-specific endpoint is defined before we apply the company-only middleware
 // so that an admin user can access it without being blocked by the "Company" role check.
@@ -40,6 +41,7 @@ router.get(
   "/employee/:userId/metrics",
   requireAuthUser,
   authLogMiddleware("InternalCampaign"),
+  resolveCompanyActor,
   internalCampaignController.getEmployeeCampaignMetrics,
 );
 
@@ -70,8 +72,9 @@ router.delete(
 router.get(
   "/metrics",
   requireAuthUser,
-  controledAcces("Company"),
+  controledAcces(['Company', 'Employee']),
   authLogMiddleware("InternalCampaign"),
+  resolveCompanyActor,
   internalCampaignController.getCampaignMetrics,
 );
 
@@ -174,8 +177,9 @@ router.post(
 // apply generic middlewares for company users on all remaining routes
 router.use(
   requireAuthUser,
-  controledAcces("Company"),
+  controledAcces(['Company', 'Employee']),
   authLogMiddleware("InternalCampaign"),
+  resolveCompanyActor,
 );
 
 /**
