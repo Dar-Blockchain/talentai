@@ -146,7 +146,7 @@ const CampaignJoinPage: React.FC = () => {
   const isAccounts  = campaign.accessMethod === 'ACCOUNTS';
   const ModIcon     = MODULE_ICONS[campaign.module?.type] ?? QuestionnaireIcon;
   const modLabel    = MODULE_LABELS[campaign.module?.type] ?? campaign.module?.type;
-  const companyName = typeof campaign.company === 'object' ? (campaign.company as any).name : null;
+  const companyName = campaign.company && typeof campaign.company === 'object' ? (campaign.company as any).name : null;
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F8FAFC', p: 3 }}>

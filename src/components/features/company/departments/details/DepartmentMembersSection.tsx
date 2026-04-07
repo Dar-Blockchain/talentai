@@ -3,16 +3,21 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Box, Typography, Alert } from "@mui/material";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import PersonAddOutlined  from "@mui/icons-material/PersonAddOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { fetchMembers, selectMembers } from "@/store/slices/memberSlice";
+import {
+  fetchMembers, selectMembers, addEmployee,
+  clearAddMemberSuccess, Member,
+} from "@/store/slices/memberSlice";
 import { RoleFilter, SortOption } from "@/components/features/company/employees/list/EmployeesList";
 import EmployeesFilterBar from "@/components/features/company/employees/list/EmployeesFilterBar";
 import EmployeeCard from "@/components/features/company/employees/list/EmployeeCard";
 import EmployeeSkeletonCard from "@/components/features/company/employees/list/EmployeeSkeletonCard";
 import Pagination from "@/components/ui/Pagination";
 import { GRID } from "@/components/features/company/employees/list/constants";
-import { Member } from "@/store/slices/memberSlice";
+import AddEmployeeModal from "@/components/features/company/employees/create/AddEmployeeModal";
+import AppButton from "@/components/ui/AppButton";
 
 const PAGE_SIZE = 9;
 
@@ -24,9 +29,10 @@ const SORT_MAP: Record<SortOption, { sortBy: "date" | "name"; order: "asc" | "de
 
 interface DepartmentMembersSectionProps {
   departmentId: string;
+  canManage?: boolean;
 }
 
-const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ departmentId }) => {
+const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ departmentId, canManage = true }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { members, pageTotal, loading, error } = useSelector(selectMembers);
 
@@ -35,6 +41,7 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ dep
   const [roleFilter,      setRoleFilter]      = useState<RoleFilter>("all");
   const [sortBy,          setSortBy]          = useState<SortOption>("newest");
   const [page,            setPage]            = useState(1);
+  const [inviteOpen,      setInviteOpen]      = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -48,6 +55,14 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ dep
 
   // reset page on filter change
   useEffect(() => { setPage(1); }, [debouncedSearch, roleFilter, sortBy]);
+
+  const handleInvite = useCallback(async (email: string, role: string, deptId?: string) => {
+    await dispatch(addEmployee({ email, role, departmentId: deptId || departmentId })).unwrap();
+    setInviteOpen(false);
+    // Refresh members list
+    const { sortBy: sortByParam, order } = SORT_MAP[sortBy];
+    dispatch(fetchMembers({ departmentId, search: debouncedSearch || undefined, role: roleFilter !== "all" ? roleFilter : undefined, sortBy: sortByParam, order, page, limit: PAGE_SIZE }));
+  }, [dispatch, departmentId, sortBy, debouncedSearch, roleFilter, page]);
 
   useEffect(() => {
     const { sortBy: sortByParam, order } = SORT_MAP[sortBy];
@@ -78,6 +93,15 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ dep
             </Typography>
           )}
         </Typography>
+        {canManage && (
+          <AppButton
+            label="Invite Employee"
+            variant="contained"
+            size="small"
+            startIcon={<PersonAddOutlined sx={{ fontSize: 15 }} />}
+            onClick={() => setInviteOpen(true)}
+          />
+        )}
       </Box>
 
       {/* Filter bar */}
@@ -131,6 +155,13 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ dep
       {!loading && !error && pageTotal > PAGE_SIZE && (
         <Pagination page={page} total={pageTotal} pageSize={PAGE_SIZE} onPageChange={setPage} />
       )}
+
+      <AddEmployeeModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onSave={handleInvite}
+        defaultDepartmentId={departmentId}
+      />
     </Box>
   );
 };

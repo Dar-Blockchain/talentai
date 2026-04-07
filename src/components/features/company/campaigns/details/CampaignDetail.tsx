@@ -9,21 +9,28 @@ import CampaignSidebar from "./CampaignSidebar";
 import CampaignParticipantsTab from "./CampaignParticipantsTab";
 import CampaignSessionsTab from "./CampaignSessionsTab";
 import DeleteCampaignDialog from "./DeleteCampaignDialog";
+import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
 import ConfigureModuleModal from "./configure/ConfigureModuleModal";
 import EditCampaignModal from "./EditCampaignModal";
 import { useSelector } from "react-redux";
 import {
   selectCampaignParticipantsTotal,
   selectCampaignSessionsTotal,
+  selectCampaignDeleteLoading,
 } from "@/store/slices/campaignSlice";
-import PeopleAltOutlined    from "@mui/icons-material/PeopleAltOutlined";
-import AssignmentOutlined   from "@mui/icons-material/AssignmentOutlined";
-import AccessTimeOutlined   from "@mui/icons-material/AccessTimeOutlined";
-import DashboardOutlined    from "@mui/icons-material/DashboardOutlined";
-import EmojiEventsOutlined  from "@mui/icons-material/EmojiEventsOutlined";
-import PlayArrowOutlined    from "@mui/icons-material/PlayArrow";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
-import VisibilityOutlined   from "@mui/icons-material/VisibilityOutlined";
+import PeopleAltOutlined       from "@mui/icons-material/PeopleAltOutlined";
+import AssignmentOutlined      from "@mui/icons-material/AssignmentOutlined";
+import AccessTimeOutlined      from "@mui/icons-material/AccessTimeOutlined";
+import DashboardOutlined       from "@mui/icons-material/DashboardOutlined";
+import EmojiEventsOutlined     from "@mui/icons-material/EmojiEventsOutlined";
+import PlayArrowOutlined       from "@mui/icons-material/PlayArrow";
+import ArrowForwardOutlined    from "@mui/icons-material/ArrowForwardOutlined";
+import VisibilityOutlined      from "@mui/icons-material/VisibilityOutlined";
+import CheckCircleOutlined     from "@mui/icons-material/CheckCircleOutlined";
+import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUnchecked";
+import TuneOutlined            from "@mui/icons-material/TuneOutlined";
+import RocketLaunchOutlined    from "@mui/icons-material/RocketLaunchOutlined";
+import VisibilityOffOutlined   from "@mui/icons-material/VisibilityOffOutlined";
 import { MODULE_CONFIG } from "@/constants/campaign";
 import { daysLeft } from "@/utils/functions";
 
@@ -65,9 +72,11 @@ const CampaignDetail: React.FC<Props> = ({
   const [deleteOpen,          setDeleteOpen]          = useState(false);
   const [editOpen,            setEditOpen]            = useState(false);
   const [configureModuleType, setConfigureModuleType] = useState<ModuleType | null>(null);
+  const [pendingActivate,     setPendingActivate]     = useState(false);
 
   const participantsTotal = useSelector(selectCampaignParticipantsTotal);
   const sessionsTotal     = useSelector(selectCampaignSessionsTotal);
+  const deleteLoading     = useSelector(selectCampaignDeleteLoading);
 
   const currentModuleConfig = configureModuleType ? (campaign.module?.config ?? null) : null;
 
@@ -267,6 +276,8 @@ const CampaignDetail: React.FC<Props> = ({
       ] as const;
 
   const isLinkBased = campaign.accessMethod === "LINK";
+  const moduleConfigured = campaign.module?.config != null;
+  const showSetupBanner = !isEmployee && campaign.status === "DRAFT";
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode; count?: number | string; color: string }[] = [
     { key: "overview",     label: "Overview",     icon: <DashboardOutlined  sx={{ fontSize: 16 }} />, color: PURPLE,    count: undefined },
@@ -316,6 +327,159 @@ const CampaignDetail: React.FC<Props> = ({
         backUrl={isEmployee ? "/employee/campaigns" : "/company/campaigns"}
         actionsNode={employeeActionsNode}
       />
+
+      {/* ── Setup checklist banner (DRAFT only) ── */}
+      {showSetupBanner && (
+        <Box sx={{
+          bgcolor: "#fff",
+          border: "1px solid #E2E8F0",
+          borderRadius: "18px",
+          p: 2.5,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          overflow: "hidden",
+          position: "relative",
+        }}>
+          {/* Background gradient hint */}
+          <Box sx={{
+            position: "absolute", inset: 0, opacity: 0.035,
+            background: "linear-gradient(135deg, #F59E0B 0%, #8310FF 100%)",
+            pointerEvents: "none",
+          }} />
+
+          {/* Title row */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 2 }}>
+            <Box sx={{
+              width: 32, height: 32, borderRadius: "9px",
+              bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <VisibilityOffOutlined sx={{ fontSize: 16, color: "#D97706" }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "13.5px", fontWeight: 700, color: "#111827" }}>
+                Campaign not visible to participants yet
+              </Typography>
+              <Typography sx={{ fontSize: "11.5px", color: "#9CA3AF", mt: 0.1 }}>
+                Complete the steps below to launch it.
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Steps */}
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5 }}>
+
+            {/* Step 1 — Configure module */}
+            <Box sx={{
+              flex: 1, borderRadius: "14px", p: 2,
+              border: `1.5px solid ${moduleConfigured ? "#86EFAC" : "#FDE68A"}`,
+              bgcolor: moduleConfigured ? "#F0FDF4" : "#FFFBEB",
+              display: "flex", flexDirection: "column", gap: 1,
+            }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{
+                    width: 28, height: 28, borderRadius: "8px", flexShrink: 0,
+                    bgcolor: moduleConfigured ? "#DCFCE7" : "#FEF3C7",
+                    border: `1px solid ${moduleConfigured ? "#86EFAC" : "#FDE68A"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {moduleConfigured
+                      ? <CheckCircleOutlined sx={{ fontSize: 15, color: "#16A34A" }} />
+                      : <TuneOutlined sx={{ fontSize: 15, color: "#D97706" }} />}
+                  </Box>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: moduleConfigured ? "#15803D" : "#92400E" }}>
+                    Step 1 — Configure Module
+                  </Typography>
+                </Box>
+                {moduleConfigured
+                  ? <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: "#DCFCE7" }}>
+                      <CheckCircleOutlined sx={{ fontSize: 11, color: "#16A34A" }} />
+                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#16A34A" }}>Done</Typography>
+                    </Box>
+                  : <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: "#FEF3C7" }}>
+                      <RadioButtonUncheckedOutlined sx={{ fontSize: 11, color: "#D97706" }} />
+                      <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#D97706" }}>Pending</Typography>
+                    </Box>
+                }
+              </Box>
+              <Typography sx={{ fontSize: "11.5px", color: moduleConfigured ? "#166534" : "#78350F", lineHeight: 1.5 }}>
+                {moduleConfigured
+                  ? `Module is configured and ready.`
+                  : `Set up the assessment module so participants know what to expect.`}
+              </Typography>
+              {!moduleConfigured && campaign.module?.type && (
+                <Box
+                  onClick={() => setConfigureModuleType(campaign.module!.type)}
+                  sx={{
+                    mt: 0.25, alignSelf: "flex-start",
+                    display: "flex", alignItems: "center", gap: 0.5,
+                    px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer",
+                    bgcolor: "#FEF3C7", border: "1px solid #FDE68A",
+                    transition: "all 0.15s", "&:hover": { bgcolor: "#FDE68A" },
+                  }}
+                >
+                  <TuneOutlined sx={{ fontSize: 13, color: "#D97706" }} />
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#D97706" }}>Configure now</Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Arrow */}
+            <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", color: "#D1D5DB", fontSize: 22, fontWeight: 300 }}>
+              →
+            </Box>
+
+            {/* Step 2 — Activate */}
+            <Box sx={{
+              flex: 1, borderRadius: "14px", p: 2,
+              border: `1.5px solid ${moduleConfigured ? "#BFDBFE" : "#E5E7EB"}`,
+              bgcolor: moduleConfigured ? "#EFF6FF" : "#F9FAFB",
+              opacity: moduleConfigured ? 1 : 0.6,
+              display: "flex", flexDirection: "column", gap: 1,
+            }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{
+                    width: 28, height: 28, borderRadius: "8px", flexShrink: 0,
+                    bgcolor: moduleConfigured ? "#DBEAFE" : "#F3F4F6",
+                    border: `1px solid ${moduleConfigured ? "#BFDBFE" : "#E5E7EB"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <RocketLaunchOutlined sx={{ fontSize: 15, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
+                  </Box>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: moduleConfigured ? "#1E40AF" : "#6B7280" }}>
+                    Step 2 — Activate Campaign
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: moduleConfigured ? "#DBEAFE" : "#F3F4F6" }}>
+                  <RadioButtonUncheckedOutlined sx={{ fontSize: 11, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
+                  <Typography sx={{ fontSize: "10px", fontWeight: 700, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }}>Pending</Typography>
+                </Box>
+              </Box>
+              <Typography sx={{ fontSize: "11.5px", color: moduleConfigured ? "#1E40AF" : "#9CA3AF", lineHeight: 1.5 }}>
+                {moduleConfigured
+                  ? `Ready to go! Activate the campaign to make it visible to participants.`
+                  : `Complete step 1 first, then activate the campaign.`}
+              </Typography>
+              {moduleConfigured && (
+                <Box
+                  onClick={() => setPendingActivate(true)}
+                  sx={{
+                    mt: 0.25, alignSelf: "flex-start",
+                    display: "flex", alignItems: "center", gap: 0.5,
+                    px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer",
+                    bgcolor: "#2563EB", border: "1px solid #1D4ED8",
+                    transition: "all 0.15s", "&:hover": { bgcolor: "#1D4ED8" },
+                  }}
+                >
+                  <RocketLaunchOutlined sx={{ fontSize: 13, color: "#fff" }} />
+                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>Activate now</Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      )}
 
       {/* Stats row */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 1.5 }}>
@@ -390,11 +554,10 @@ const CampaignDetail: React.FC<Props> = ({
           <DeleteCampaignDialog
             open={deleteOpen}
             campaignTitle={campaign.title}
+            participantCount={campaign.participantCount}
+            loading={deleteLoading}
             onClose={() => setDeleteOpen(false)}
-            onConfirm={() => {
-              setDeleteOpen(false);
-              onDelete?.(campaign._id, campaign.title);
-            }}
+            onConfirm={() => onDelete?.(campaign._id, campaign.title)}
           />
           <ConfigureModuleModal
             open={configureModuleType !== null}
@@ -403,6 +566,14 @@ const CampaignDetail: React.FC<Props> = ({
             currentConfig={currentModuleConfig}
             onClose={() => setConfigureModuleType(null)}
             onSave={handleSaveConfig}
+          />
+          <ConfirmStatusChangeDialog
+            open={pendingActivate}
+            campaignTitle={campaign.title}
+            currentStatus={campaign.status}
+            targetStatus="ACTIVE"
+            onClose={() => setPendingActivate(false)}
+            onConfirm={() => { onChangeStatus?.(campaign._id, "ACTIVE"); setPendingActivate(false); }}
           />
         </>
       )}

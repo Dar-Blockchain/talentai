@@ -105,6 +105,16 @@ router.patch(
 );
 
 /**
+ * POST /internal-campaigns/:campaignId/questionnaire/save-progress
+ * Auto-save draft answers without completing — public, validated via participantId + campaignId
+ */
+router.post(
+  "/:campaignId/questionnaire/save-progress",
+  authLogMiddleware("InternalCampaign"),
+  internalCampaignController.saveQuestionnaireProgress,
+);
+
+/**
  * POST /internal-campaigns/:campaignId/questionnaire/submit
  * Submit questionnaire answers — public, validated via participantId + campaignId
  */

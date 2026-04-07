@@ -1,12 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import { useDispatch, useSelector } from 'react-redux';
 import { Box, Typography, Chip, Divider, CircularProgress, Alert } from '@mui/material';
 
 import DashboardLayout from '@/components/layout/dashboard/DashboardLayout';
 import PageHeader      from '@/components/layout/dashboard/PageHeader';
-import axiosInstance   from '@/utils/axiosInstance';
+import {
+  fetchParticipantResults,
+  selectParticipantResults,
+  selectResultsLoading,
+  selectResultsError,
+} from '@/store/slices/campaignSlice';
+import { AppDispatch } from '@/store/store';
 
 import ArrowBackOutlined           from '@mui/icons-material/ArrowBackOutlined';
 import CheckCircleOutlined         from '@mui/icons-material/CheckCircleOutlined';
@@ -22,30 +29,9 @@ import CalendarTodayOutlined       from '@mui/icons-material/CalendarTodayOutlin
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-interface Answer { questionId: string; answer: any; score?: number }
-
-export interface ResultsData {
-  campaign: {
-    _id: string;
-    title: string;
-    type: string;
-    module: { type: string; config: any } | null;
-  };
-  participant: {
-    _id: string;
-    status: string;
-    completedAt: string | null;
-    score: number | null;
-  };
-  response: {
-    answers:             Answer[];
-    aiScore:             number | null;
-    aiSummary:           string | null;
-    testResults:         { score: number; maxScore: number; breakdown: any } | null;
-    moduleType:          string;
-    interviewTranscript: { role: string; message: string; timestamp: string }[];
-  } | null;
-}
+// Re-export so existing imports of ResultsData from this file still work
+export type { ParticipantResultsData as ResultsData } from '@/store/slices/campaignSlice';
+import type { ParticipantResultsData as ResultsData } from '@/store/slices/campaignSlice';
 
 // ─── Module meta ───────────────────────────────────────────────────────────────
 
@@ -142,9 +128,14 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
       ) : (
         <Box sx={{ ...CARD, p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <CircularProgress size={18} sx={{ color: '#F59E0B', flexShrink: 0 }} />
-          <Typography sx={{ fontSize: 13, color: '#92400E' }}>
-            AI scoring is in progress — scores will appear shortly.
-          </Typography>
+          <Box>
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#92400E' }}>
+              AI scoring in progress…
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: '#B45309' }}>
+              This page refreshes automatically — scores will appear in a few seconds.
+            </Typography>
+          </Box>
         </Box>
       )}
 
@@ -354,20 +345,46 @@ interface Props {
 }
 
 const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, breadcrumbs, backHref, noLayout }) => {
-  const router = useRouter();
+  const router   = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const [data,    setData]    = useState<ResultsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const data    = useSelector(selectParticipantResults);
+  const loading = useSelector(selectResultsLoading);
+  const error   = useSelector(selectResultsError);
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
 
   useEffect(() => {
     if (!campaignId || !participantId) return;
-    setLoading(true);
-    axiosInstance
-      .get(`internal-campaigns/${campaignId}/results/${participantId}`)
-      .then(res => setData(res.data.data))
-      .catch(err => setError(err?.response?.data?.error ?? 'Failed to load results'))
-      .finally(() => setLoading(false));
+
+    const load = () => dispatch(fetchParticipantResults({ campaignId, participantId }));
+
+    load().then((action) => {
+      if (fetchParticipantResults.fulfilled.match(action)) {
+        const result = action.payload;
+        // Use == null (loose) to catch both null and undefined — aiScore is absent
+        // from the document until the async scoring job completes.
+        const needsPoll =
+          result.campaign?.module?.type === 'QUESTIONNAIRE' &&
+          result.response !== null &&
+          result.response?.aiScore == null;
+        if (needsPoll && !pollRef.current) {
+          pollRef.current = setInterval(() => {
+            load().then((a) => {
+              if (fetchParticipantResults.fulfilled.match(a) && a.payload.response?.aiScore != null) {
+                stopPolling();
+              }
+            });
+          }, 5000);
+        }
+      }
+    });
+
+    return stopPolling;
   }, [campaignId, participantId]);
 
   const moduleType = data?.campaign?.module?.type ?? 'QUESTIONNAIRE';
@@ -376,7 +393,7 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
 
   const content = (
     <>
-      {loading ? (
+      {loading && !data ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
           <CircularProgress sx={{ color: '#8B5CF6' }} />
         </Box>

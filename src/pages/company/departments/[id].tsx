@@ -101,7 +101,7 @@ const DepartmentDetailPage: React.FC = () => {
         />
 
         {id && typeof id === "string" && (
-          <DepartmentMembersSection departmentId={id} />
+          <DepartmentMembersSection departmentId={id} canManage={canManage} />
         )}
       </Box>
 
@@ -118,6 +118,7 @@ const DepartmentDetailPage: React.FC = () => {
           <DeleteDepartmentDialog
             open={deleteOpen}
             departmentName={department.name}
+            memberCount={pageTotal}
             onClose={() => { setDeleteOpen(false); dispatch(clearDeleteStatus()); }}
             onConfirm={handleConfirmDelete}
             deleting={deleting}

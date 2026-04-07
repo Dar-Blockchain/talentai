@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import { Box, Typography, Tooltip } from "@mui/material";
 import { useRouter } from "next/router";
 import ArrowBackOutlined        from "@mui/icons-material/ArrowBackOutlined";
 import DeleteOutlineOutlined    from "@mui/icons-material/DeleteOutlineOutlined";
@@ -20,6 +20,7 @@ import {
   MODULE_CONFIG,
 } from "@/constants/campaign";
 import { daysLeft } from "@/utils/functions";
+import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
 
 interface Props {
   campaign: Campaign;
@@ -35,12 +36,6 @@ const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {
   ACTIVE: PlayArrowOutlined,
   PAUSED: PauseOutlined,
   CLOSED: StopOutlined,
-};
-
-const STATUS_CHANGE_DESCRIPTIONS: Partial<Record<CampaignStatus, string>> = {
-  ACTIVE: "Participants will be able to access and start the assessment.",
-  PAUSED: "Participants will no longer be able to start new sessions until the campaign is resumed.",
-  CLOSED: "The campaign will be permanently closed. Participants will lose access.",
 };
 
 const CampaignHeader: React.FC<Props> = ({
@@ -256,83 +251,16 @@ const CampaignHeader: React.FC<Props> = ({
       </Box>
 
       {/* ── Status confirmation dialog ── */}
-      {pendingStatus && (() => {
-        const sColor = STATUS_COLORS[pendingStatus];
-        const Icon   = STATUS_ICONS[pendingStatus];
-        const label  = STATUS_TRANSITION_LABELS[pendingStatus];
-        const desc   = STATUS_CHANGE_DESCRIPTIONS[pendingStatus];
-        return (
-          <Dialog
-            open
-            onClose={() => setPendingStatus(null)}
-            maxWidth="xs"
-            fullWidth
-            slotProps={{ paper: { sx: { borderRadius: "16px", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } } }}
-          >
-            <DialogTitle sx={{ pb: 1.5, pt: 2.5, px: 3 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{
-                  width: 38, height: 38, borderRadius: "10px", flexShrink: 0,
-                  bgcolor: `${sColor?.bg}`, border: `1px solid ${sColor?.fg}25`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {Icon && <Icon sx={{ fontSize: 18, color: sColor?.fg }} />}
-                </Box>
-                <Box>
-                  <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#0F172A" }}>
-                    {label} Campaign
-                  </Typography>
-                  <Typography sx={{ fontSize: "11px", color: "#94A3B8", mt: 0.25 }}>
-                    {campaign.title}
-                  </Typography>
-                </Box>
-              </Box>
-            </DialogTitle>
-
-            <DialogContent sx={{ px: 3, pb: 1 }}>
-              <Typography sx={{ fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
-                {desc}
-              </Typography>
-              <Box sx={{
-                mt: 1.5, px: 1.5, py: 1, borderRadius: "8px",
-                bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
-                display: "flex", alignItems: "center", gap: 1,
-              }}>
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: sc.bg }}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sc.fg }} />
-                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>{campaign.status}</Typography>
-                </Box>
-                <Typography sx={{ fontSize: "12px", color: "#94A3B8" }}>→</Typography>
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: "2px", borderRadius: "999px", bgcolor: sColor?.bg }}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: sColor?.fg }} />
-                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sColor?.fg }}>{pendingStatus}</Typography>
-                </Box>
-              </Box>
-            </DialogContent>
-
-            <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>
-              <Button
-                onClick={() => setPendingStatus(null)}
-                sx={{ textTransform: "none", fontWeight: 600, fontSize: "13px", color: "#6B7280", "&:hover": { bgcolor: "#F3F4F6" } }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => { onChangeStatus?.(campaign._id, pendingStatus); setPendingStatus(null); }}
-                variant="contained"
-                disableElevation
-                sx={{
-                  textTransform: "none", fontWeight: 700, fontSize: "13px",
-                  bgcolor: sColor?.fg, borderRadius: "8px",
-                  "&:hover": { bgcolor: sColor?.fg, opacity: 0.88 },
-                }}
-              >
-                Confirm
-              </Button>
-            </DialogActions>
-          </Dialog>
-        );
-      })()}
+      {pendingStatus && (
+        <ConfirmStatusChangeDialog
+          open
+          campaignTitle={campaign.title}
+          currentStatus={campaign.status}
+          targetStatus={pendingStatus}
+          onClose={() => setPendingStatus(null)}
+          onConfirm={() => { onChangeStatus?.(campaign._id, pendingStatus); setPendingStatus(null); }}
+        />
+      )}
     </Box>
   );
 };

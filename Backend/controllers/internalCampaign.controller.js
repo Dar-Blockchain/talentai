@@ -30,7 +30,9 @@ const verifyOwnership = async (campaignId, companyId) => {
     error.status = 404;
     throw error;
   }
-  if (campaign.company._id.toString() !== companyId.toString()) {
+  // campaign.company may be an unpopulated ObjectId or a populated object
+  const campaignCompanyId = campaign.company?._id ?? campaign.company;
+  if (!campaignCompanyId || campaignCompanyId.toString() !== companyId.toString()) {
     const error = new Error(
       "Unauthorized: You can only manage your own campaigns",
     );
@@ -246,7 +248,7 @@ exports.getCampaign = async (req, res) => {
     // Attach participant and session counts
     const [participantCount, sessionCount] = await Promise.all([
       CampaignParticipant.countDocuments({ campaign: campaignId }),
-      CampaignParticipant.countDocuments({ campaign: campaignId, status: { $in: ["IN_PROGRESS", "COMPLETED"] } }),
+      CampaignParticipant.countDocuments({ campaign: campaignId, status: "COMPLETED" }),
     ]);
     data.participantCount = participantCount;
     data.sessionCount     = sessionCount;
@@ -488,7 +490,8 @@ exports.getCampaignParticipants = async (req, res) => {
 exports.updateInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    await verifyOwnership(campaignId, req.user._id);
+    const actorId = req.auth?.companyId || req.user._id;
+    await verifyOwnership(campaignId, actorId);
     const updatedCampaign = await updateCampaign(campaignId, req.body);
     res.status(200).json({
       success: true,
@@ -509,7 +512,8 @@ exports.updateInternalCampaign = async (req, res) => {
 exports.deleteInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
-    await verifyOwnership(campaignId, req.user._id);
+    const actorId = req.auth?.companyId || req.user._id;
+    await verifyOwnership(campaignId, actorId);
     await deleteCampaign(campaignId);
     res.status(200).json({
       success: true,
@@ -586,7 +590,8 @@ exports.updateCampaignStatus = async (req, res) => {
   try {
     const { campaignId } = req.params;
     const { status } = req.body;
-    await verifyOwnership(campaignId, req.user._id);
+    const actorId = req.auth?.companyId || req.user._id;
+    await verifyOwnership(campaignId, actorId);
     const campaign = await updateCampaignStatus(campaignId, status);
     res.status(200).json({
       success: true,
@@ -825,6 +830,50 @@ Return JSON exactly:
   }
 }
 
+/**
+ * POST /internal-campaigns/:campaignId/questionnaire/save-progress
+ * Auto-save draft answers — does NOT change participant status.
+ */
+exports.saveQuestionnaireProgress = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const { participantId, answers } = req.body;
+
+    if (!participantId || !Array.isArray(answers)) {
+      return res.status(400).json({ success: false, error: "participantId and answers[] are required" });
+    }
+
+    // Resolve participant (same multi-strategy lookup as submit)
+    let participant = null;
+    if (mongoose.Types.ObjectId.isValid(participantId)) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: participantId });
+    }
+    if (!participant) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: participantId });
+    }
+    if (!participant) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: participantId });
+    }
+    if (!participant) return res.status(404).json({ success: false, error: "Participant not found" });
+
+    // Don't overwrite a completed submission
+    if (participant.status === "COMPLETED") {
+      return res.status(200).json({ success: true, message: "Already completed — draft ignored" });
+    }
+
+    // Upsert draft answers into CampaignResponse (no status change)
+    await CampaignResponse.findOneAndUpdate(
+      { campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" },
+      { $set: { answers, campaign: campaignId, participant: participant._id, moduleType: "QUESTIONNAIRE" } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 exports.submitQuestionnaire = async (req, res) => {
   try {
     const { campaignId } = req.params;
@@ -860,9 +909,17 @@ exports.submitQuestionnaire = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Mark participant as completed
-    participant.status = "COMPLETED";
+    // Mark participant as completed + update moduleProgress
+    participant.status      = "COMPLETED";
     participant.completedAt = new Date();
+
+    participant.moduleProgress = {
+      moduleType:  "QUESTIONNAIRE",
+      status:      "COMPLETED",
+      completedAt: new Date(),
+      responseRef: response._id,
+    };
+
     await participant.save();
 
     // Trigger AI scoring asynchronously — does not block the response
@@ -898,8 +955,22 @@ exports.startAssessment = async (req, res) => {
 
     // Only move forward — don't overwrite COMPLETED
     if (participant.status === "INVITED") {
-      participant.status = "IN_PROGRESS";
+      const campaign = await InternalCampaign.findById(campaignId).select("module").lean();
+      const moduleType = campaign?.module?.type;
+
+      participant.status    = "IN_PROGRESS";
       participant.accessedAt = new Date();
+
+      // Set moduleProgress object for this module
+      if (moduleType && participant.moduleProgress?.status !== "COMPLETED") {
+        participant.moduleProgress = {
+          moduleType,
+          status: "IN_PROGRESS",
+          completedAt: null,
+          responseRef: participant.moduleProgress?.responseRef ?? null,
+        };
+      }
+
       await participant.save();
     }
 
@@ -1345,14 +1416,14 @@ exports.getSessions = async (req, res) => {
     let anonIndexMap = {};
     if (campaign.anonymityMode === "ANONYMOUS") {
       const anonAll = await CampaignParticipant.find(
-        { campaign: campaignObjectId, anonymousToken: { $exists: true, $ne: null }, status: { $in: ["IN_PROGRESS", "COMPLETED"] } },
+        { campaign: campaignObjectId, anonymousToken: { $exists: true, $ne: null }, status: "COMPLETED" },
         { _id: 1 }
       ).sort({ createdAt: 1 }).lean();
       anonAll.forEach((p, i) => { anonIndexMap[p._id.toString()] = i + 1; });
     }
 
     const pipeline = [
-      { $match: { campaign: campaignObjectId, status: { $in: ["IN_PROGRESS", "COMPLETED"] } } },
+      { $match: { campaign: campaignObjectId, status: "COMPLETED" } },
       { $lookup: { from: "users",    localField: "employee", foreignField: "_id", as: "employeeUser" } },
       { $unwind: { path: "$employeeUser",    preserveNullAndEmptyArrays: true } },
       { $lookup: { from: "profiles", localField: "employeeUser._id", foreignField: "userId", as: "employeeProfile" } },

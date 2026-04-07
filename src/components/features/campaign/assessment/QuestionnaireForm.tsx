@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box, Typography, Button, TextField, Radio, RadioGroup, Checkbox,
   FormControlLabel, LinearProgress, Chip, CircularProgress, Alert,
@@ -12,6 +12,7 @@ import AssignmentOutlined    from '@mui/icons-material/AssignmentOutlined';
 import SendRounded           from '@mui/icons-material/SendRounded';
 import StarRounded           from '@mui/icons-material/StarRounded';
 import StarBorderRounded     from '@mui/icons-material/StarBorderRounded';
+import SaveOutlined          from '@mui/icons-material/SaveOutlined';
 import { Question, QuestionType } from '@/types/campaign';
 import axiosInstance from '@/utils/axiosInstance';
 
@@ -26,6 +27,9 @@ interface Props {
 }
 
 type Answers = Record<number, string | number | string[]>;
+
+const DRAFT_KEY = (campaignId: string, participantId: string) =>
+  `qform_draft_${campaignId}_${participantId}`;
 
 // ─── Star Rating ──────────────────────────────────────────────────────────────
 
@@ -252,11 +256,28 @@ const CompletedScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questions, onComplete, onBack }) => {
-  const [current,   setCurrent]   = useState(0);
-  const [answers,   setAnswers]   = useState<Answers>({});
+  const draftKey = DRAFT_KEY(campaignId, participantId);
+
+  // Load draft from localStorage on first render
+  const loadDraft = (): { answers: Answers; current: number } => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { answers: {}, current: 0 };
+  };
+
+  const draft = loadDraft();
+
+  const [current,    setCurrent]    = useState(draft.current);
+  const [answers,    setAnswers]    = useState<Answers>(draft.answers);
   const [submitting, setSubmitting] = useState(false);
-  const [done,      setDone]      = useState(false);
-  const [error,     setError]     = useState<string | null>(null);
+  const [done,       setDone]       = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [resumed,    setResumed]    = useState(Object.keys(draft.answers).length > 0);
+
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const total      = questions.length;
   const progress   = total > 0 ? ((current + 1) / total) * 100 : 0;
@@ -266,21 +287,59 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
     ? (currentAns as string[]).length > 0
     : currentAns !== undefined && currentAns !== '';
 
+  // Persist draft to localStorage + debounce remote save
+  const persistDraft = useCallback((nextAnswers: Answers, nextCurrent: number) => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ answers: nextAnswers, current: nextCurrent }));
+    } catch {}
+
+    // Debounced remote save (2s)
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setSaveStatus('saving');
+      try {
+        const payload = questions.map((q, i) => ({
+          questionId: String(i),
+          answer: nextAnswers[i] ?? '',
+        }));
+        await axiosInstance.post(`internal-campaigns/${campaignId}/questionnaire/save-progress`, {
+          participantId,
+          answers: payload,
+        });
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch {
+        setSaveStatus('idle');
+      }
+    }, 2000);
+  }, [campaignId, participantId, questions, draftKey]);
+
   const setAnswer = (val: string | number | string[]) => {
-    setAnswers(prev => ({ ...prev, [current]: val }));
+    const next = { ...answers, [current]: val };
+    setAnswers(next);
+    persistDraft(next, current);
   };
 
   const goNext = () => {
-    if (current < total - 1) setCurrent(c => c + 1);
+    if (current < total - 1) {
+      const next = current + 1;
+      setCurrent(next);
+      persistDraft(answers, next);
+    }
   };
 
   const goPrev = () => {
-    if (current > 0) setCurrent(c => c - 1);
+    if (current > 0) {
+      const next = current - 1;
+      setCurrent(next);
+      persistDraft(answers, next);
+    }
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     try {
       const payload = questions.map((q, i) => ({
         questionId: String(i),
@@ -290,6 +349,8 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
         participantId,
         answers: payload,
       });
+      // Clear draft from localStorage on successful submit
+      try { localStorage.removeItem(draftKey); } catch {}
       setDone(true);
       onComplete();
     } catch (err: any) {
@@ -302,8 +363,8 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
   const answeredCount = Object.values(answers).filter(v =>
     Array.isArray(v) ? (v as string[]).length > 0 : v !== undefined && v !== ''
   ).length;
-  const allAnswered   = answeredCount === total;
-  const isLast        = current === total - 1;
+  const allAnswered = answeredCount === total;
+  const isLast      = current === total - 1;
 
   if (done) return <CompletedScreen onBack={onBack} />;
 
@@ -338,6 +399,23 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
             {answeredCount} of {total} answered
           </Typography>
         </Box>
+
+        {/* Auto-save indicator */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          {saveStatus === 'saving' && (
+            <>
+              <CircularProgress size={11} sx={{ color: '#9CA3AF' }} />
+              <Typography sx={{ fontSize: 11, color: '#9CA3AF' }}>Saving…</Typography>
+            </>
+          )}
+          {saveStatus === 'saved' && (
+            <>
+              <SaveOutlined sx={{ fontSize: 13, color: '#10B981' }} />
+              <Typography sx={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>Saved</Typography>
+            </>
+          )}
+        </Box>
+
         <Chip
           label={`${Math.round((answeredCount / total) * 100)}%`}
           size="small"
@@ -364,6 +442,18 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
 
       {/* Question area */}
       <Box sx={{ flex: 1, overflow: 'auto', px: 3, py: 3 }}>
+        {/* Resume banner */}
+        {resumed && (
+          <Alert
+            severity="info"
+            icon={<SaveOutlined sx={{ fontSize: 16 }} />}
+            onClose={() => setResumed(false)}
+            sx={{ mb: 2, borderRadius: 2, fontSize: 13, '& .MuiAlert-message': { fontWeight: 500 } }}
+          >
+            Your previous progress has been restored.
+          </Alert>
+        )}
+
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError(null)}>
             {error}
@@ -409,7 +499,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
             return (
               <Box
                 key={i}
-                onClick={() => setCurrent(i)}
+                onClick={() => { setCurrent(i); persistDraft(answers, i); }}
                 sx={{
                   width: active ? 20 : 8, height: 8, borderRadius: 4, cursor: 'pointer',
                   bgcolor: active ? '#8B5CF6' : answered ? '#10B981' : '#E5E7EB',

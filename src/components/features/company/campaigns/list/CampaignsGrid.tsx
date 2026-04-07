@@ -10,16 +10,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import CampaignCard from "./CampaignCard";
 import CampaignsSkeleton from "./CampaignsSkeleton";
 import DeleteCampaignDialog from "../details/DeleteCampaignDialog";
-import ChangeStatusDialog from "../details/ChangeStatusDialog";
+import ConfirmStatusChangeDialog from "../details/ConfirmStatusChangeDialog";
 import {
   selectCampaignLoading,
   selectCampaigns,
   fetchCampaigns,
   deleteCampaign,
   updateCampaignStatus,
+  fetchCampaignMetrics,
   selectCampaignLimit,
   selectCampaignPage,
   selectCampaignCount,
+  selectCampaignDeleteLoading,
   setPage,
 } from "@/store/slices/campaignSlice";
 import Pagination from "@/components/ui/Pagination";
@@ -55,11 +57,12 @@ const PERIOD_OPTIONS = [
 
 const CampaignsGrid: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const campaigns = useSelector(selectCampaigns);
-  const loading   = useSelector(selectCampaignLoading);
-  const page      = useSelector(selectCampaignPage);
-  const limit     = useSelector(selectCampaignLimit);
-  const count     = useSelector(selectCampaignCount);
+  const campaigns     = useSelector(selectCampaigns);
+  const loading       = useSelector(selectCampaignLoading);
+  const deleteLoading = useSelector(selectCampaignDeleteLoading);
+  const page          = useSelector(selectCampaignPage);
+  const limit         = useSelector(selectCampaignLimit);
+  const count         = useSelector(selectCampaignCount);
 
   const [searchInput, setSearchInput] = useState("");
   const [search,      setSearch]      = useState("");
@@ -113,18 +116,19 @@ const CampaignsGrid: React.FC = () => {
 
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: "", title: "" });
   const [statusDialog, setStatusDialog] = useState<{
-    open: boolean; id: string; title: string; currentStatus: Campaign["status"];
-  }>({ open: false, id: "", title: "", currentStatus: "DRAFT" });
+    open: boolean; id: string; title: string; currentStatus: CampaignStatus; targetStatus: CampaignStatus;
+  }>({ open: false, id: "", title: "", currentStatus: "DRAFT", targetStatus: "ACTIVE" });
 
   const handleDeleteConfirm = async () => {
     await dispatch(deleteCampaign(deleteDialog.id));
     setDeleteDialog({ open: false, id: "", title: "" });
     doFetch();
+    dispatch(fetchCampaignMetrics());
   };
 
-  const handleStatusConfirm = async (newStatus: Campaign["status"]) => {
-    await dispatch(updateCampaignStatus({ campaignId: statusDialog.id, status: newStatus }));
-    setStatusDialog({ open: false, id: "", title: "", currentStatus: "DRAFT" });
+  const handleStatusConfirm = async () => {
+    await dispatch(updateCampaignStatus({ campaignId: statusDialog.id, status: statusDialog.targetStatus }));
+    setStatusDialog({ open: false, id: "", title: "", currentStatus: "DRAFT", targetStatus: "ACTIVE" });
     doFetch();
   };
 
@@ -253,11 +257,6 @@ const CampaignsGrid: React.FC = () => {
           icon={<CampaignOutlined />}
           title={hasActiveFilters ? "No campaigns match your filters" : "No campaigns yet"}
           description={hasActiveFilters ? "Try adjusting your search or filters." : "Create your first assessment campaign to start measuring your team's skills."}
-          action={
-            !hasActiveFilters ? (
-              <AppButton label="New Campaign" variant="contained" startIcon={<AddOutlined />} size="medium" />
-            ) : undefined
-          }
         />
       ) : (
         <Box sx={{
@@ -272,7 +271,7 @@ const CampaignsGrid: React.FC = () => {
                   campaign={camp}
                   onViewDetails={() => {}}
                   onDelete={(id, title) => setDeleteDialog({ open: true, id, title })}
-                  onStatusChange={(id, title, s) => setStatusDialog({ open: true, id, title, currentStatus: s })}
+                  onStatusChange={(id, title, currentStatus, targetStatus) => setStatusDialog({ open: true, id, title, currentStatus, targetStatus })}
                 />
               </motion.div>
             ))}
@@ -289,13 +288,15 @@ const CampaignsGrid: React.FC = () => {
         campaignTitle={deleteDialog.title}
         onClose={() => setDeleteDialog({ open: false, id: "", title: "" })}
         onConfirm={handleDeleteConfirm}
+        loading={deleteLoading}
       />
 
-      <ChangeStatusDialog
+      <ConfirmStatusChangeDialog
         open={statusDialog.open}
         campaignTitle={statusDialog.title}
         currentStatus={statusDialog.currentStatus}
-        onClose={() => setStatusDialog({ open: false, id: "", title: "", currentStatus: "DRAFT" })}
+        targetStatus={statusDialog.targetStatus}
+        onClose={() => setStatusDialog({ open: false, id: "", title: "", currentStatus: "DRAFT", targetStatus: "ACTIVE" })}
         onConfirm={handleStatusConfirm}
       />
     </>

@@ -21,6 +21,7 @@ interface AddEmployeeModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (email: string, role: string, departmentId?: string) => Promise<void>;
+  defaultDepartmentId?: string;
 }
 
 
@@ -28,7 +29,7 @@ interface AddEmployeeModalProps {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PURPLE = '#8310FF';
 
-const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, onClose, onSave }) => {
+const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, onClose, onSave, defaultDepartmentId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const departments       = useSelector(selectDepartments);
   const departmentsLoading = useSelector(selectDepartmentsLoading);
@@ -43,7 +44,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
     if (open) {
       setEmail('');
       setRole('hr');
-      setDepartmentId('');
+      setDepartmentId(defaultDepartmentId ?? '');
       setRoleSearch('');
       if (departments.length === 0) dispatch(fetchDepartments({}));
     }
@@ -145,13 +146,16 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({ open, on
           {/* Department (optional) */}
           <Box>
             <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
-              Department <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>(optional)</Typography>
+              Department{' '}
+              {!defaultDepartmentId && (
+                <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>(optional)</Typography>
+              )}
             </Typography>
             <FormControl fullWidth size="small">
               <Select
                 value={departmentId}
                 onChange={(e) => setDepartmentId(e.target.value)}
-                disabled={loading || departmentsLoading}
+                disabled={loading || departmentsLoading || Boolean(defaultDepartmentId)}
                 displayEmpty
                 startAdornment={
                   <BusinessOutlined sx={{ fontSize: 18, color: '#9CA3AF', mr: 1 }} />

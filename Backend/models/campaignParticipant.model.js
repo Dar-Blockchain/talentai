@@ -46,8 +46,23 @@ const campaignParticipantSchema = new mongoose.Schema(
       index: true,
     },
 
-    accessedAt: Date,
-    completedAt: Date,
+    moduleProgress: {
+      moduleType: { type: String, default: null },
+      status: {
+        type: String,
+        enum: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+        default: "NOT_STARTED",
+      },
+      completedAt: { type: Date, default: null },
+      responseRef: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CampaignResponse",
+        default: null,
+      },
+    },
+
+    accessedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

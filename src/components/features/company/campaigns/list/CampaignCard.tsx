@@ -3,8 +3,6 @@ import {
   Box,
   Chip,
   IconButton,
-  ListItemIcon,
-  ListItemText,
   Menu,
   MenuItem,
   Tooltip,
@@ -13,19 +11,29 @@ import {
 import {
   AccessTimeOutlined,
   ChevronRightOutlined,
-  DeleteOutlined,
+  DeleteOutlineOutlined,
   MoreVertOutlined,
   PeopleAltOutlined,
-  SwapHorizOutlined,
+  PlayArrowOutlined,
+  PauseOutlined,
+  StopOutlined,
 } from "@mui/icons-material";
 import { daysLeft, fmtDate } from "@/utils/functions";
 import {
   MODULE_CONFIG,
   STATUS_COLORS,
   STATUS_TRANSITIONS,
+  STATUS_TRANSITION_LABELS,
   TYPE_COLORS,
   TYPE_LABELS,
 } from "@/constants/campaign";
+import { CampaignStatus } from "@/types/campaign";
+
+const STATUS_ICONS: Partial<Record<CampaignStatus, React.ElementType>> = {
+  ACTIVE: PlayArrowOutlined,
+  PAUSED: PauseOutlined,
+  CLOSED: StopOutlined,
+};
 import AppButton from "@/components/ui/AppButton";
 import { Campaign } from "@/types/campaign";
 import Link from "next/link";
@@ -42,7 +50,7 @@ const CampaignCard: React.FC<{
   campaign: Campaign;
   onViewDetails: (id: string) => void;
   onDelete: (id: string, title: string) => void;
-  onStatusChange: (id: string, title: string, currentStatus: Campaign["status"]) => void;
+  onStatusChange: (id: string, title: string, currentStatus: Campaign["status"], targetStatus: CampaignStatus) => void;
 }> = memo(({ campaign, onViewDetails, onDelete, onStatusChange }) => {
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const tc = TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM;
@@ -135,88 +143,74 @@ const CampaignCard: React.FC<{
             slotProps={{
               paper: {
                 sx: {
-                  borderRadius: 2.5,
-                  minWidth: 170,
-                  p: 0.5,
-                  backgroundColor: "#FFFFFF",
-                  boxShadow: "0px 6px 18px rgba(15, 23, 42, 0.05)",
-                  border: "1px solid #F1F5F9",
+                  borderRadius: "14px",
+                  minWidth: 190,
+                  p: 0.75,
+                  bgcolor: "#fff",
+                  boxShadow: "0 8px 30px rgba(15,23,42,0.10)",
+                  border: "1px solid #E5E7EB",
                 },
               },
             }}
           >
-            <MenuItem
-              onClick={() => {
-                setMenuAnchor(null);
-                onStatusChange(campaign._id, campaign.title, campaign.status);
-              }}
-              disabled={!STATUS_TRANSITIONS[campaign.status]?.length}
-              sx={{
-                borderRadius: 2,
-                px: 1.25,
-                py: 0.9,
-                gap: 1,
-                minHeight: 34,
-                "&:hover": { backgroundColor: "#F8FAFC" },
-                "&.Mui-disabled": { opacity: 0.4 },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0 }}>
-                <Box
+            {/* Status section header */}
+            {(STATUS_TRANSITIONS[campaign.status]?.length ?? 0) > 0 && (
+              <Box sx={{ px: 1.25, pt: 0.5, pb: 0.75 }}>
+                <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Change Status
+                </Typography>
+              </Box>
+            )}
+
+            {/* Per-status action items */}
+            {(STATUS_TRANSITIONS[campaign.status] ?? []).map((s) => {
+              const sColor = STATUS_COLORS[s];
+              const Icon   = STATUS_ICONS[s];
+              const label  = STATUS_TRANSITION_LABELS[s];
+              return (
+                <MenuItem
+                  key={s}
+                  onClick={() => { setMenuAnchor(null); onStatusChange(campaign._id, campaign.title, campaign.status, s); }}
                   sx={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "#EEF2FF",
+                    borderRadius: "9px", px: 1.25, py: 0.875, gap: 1.25, minHeight: 36,
+                    "&:hover": { bgcolor: `${sColor?.bg}` },
                   }}
                 >
-                  <SwapHorizOutlined sx={{ fontSize: 14, color: "#6366F1" }} />
-                </Box>
-              </ListItemIcon>
-              <ListItemText
-                primary="Change status"
-                primaryTypographyProps={{ fontSize: 12.5, fontWeight: 500, color: "#475569" }}
-              />
-            </MenuItem>
+                  <Box sx={{
+                    width: 26, height: 26, borderRadius: "7px", flexShrink: 0,
+                    bgcolor: sColor?.bg, border: `1px solid ${sColor?.fg}25`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {Icon && <Icon sx={{ fontSize: 14, color: sColor?.fg }} />}
+                  </Box>
+                  <Typography sx={{ fontSize: "13px", fontWeight: 600, color: sColor?.fg }}>
+                    {label}
+                  </Typography>
+                </MenuItem>
+              );
+            })}
 
-            <Box sx={{ my: 0.5, mx: 1, height: 1, backgroundColor: "#F1F5F9" }} />
+            {/* Divider */}
+            <Box sx={{ my: 0.75, mx: 1, height: "1px", bgcolor: "#F3F4F6" }} />
 
+            {/* Delete */}
             <MenuItem
-              onClick={() => {
-                setMenuAnchor(null);
-                onDelete(campaign._id, campaign.title);
-              }}
+              onClick={() => { setMenuAnchor(null); onDelete(campaign._id, campaign.title); }}
               sx={{
-                borderRadius: 2,
-                px: 1.25,
-                py: 0.9,
-                gap: 1,
-                minHeight: 34,
-                "&:hover": { backgroundColor: "#FFF5F5" },
+                borderRadius: "9px", px: 1.25, py: 0.875, gap: 1.25, minHeight: 36,
+                "&:hover": { bgcolor: "#FEF2F2" },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 0 }}>
-                <Box
-                  sx={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "#FEE2E2",
-                  }}
-                >
-                  <DeleteOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-                </Box>
-              </ListItemIcon>
-              <ListItemText
-                primary="Delete"
-                primaryTypographyProps={{ fontSize: 12.5, fontWeight: 500, color: "#64748B" }}
-              />
+              <Box sx={{
+                width: 26, height: 26, borderRadius: "7px", flexShrink: 0,
+                bgcolor: "#FEF2F2", border: "1px solid #FECACA",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#DC2626" }} />
+              </Box>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#DC2626" }}>
+                Delete Campaign
+              </Typography>
             </MenuItem>
           </Menu>
         </Box>

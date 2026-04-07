@@ -107,7 +107,7 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
         id: "campaigns",
         icon: CampaignOutlined,
         label: "Campaigns",
-        href: "/employee/campaigns",
+        href: "/company/campaigns",
         permission: "canViewCampaigns",
       },
       {

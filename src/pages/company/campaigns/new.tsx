@@ -718,6 +718,7 @@ const NewCampaignPage: React.FC = () => {
                                   if (!isComingSoon) field.onChange(isSelected ? "" : mod);
                                 }}
                                 sx={{
+                                  position: "relative",
                                   display: "flex",
                                   alignItems: "flex-start",
                                   gap: 1,
@@ -730,7 +731,7 @@ const NewCampaignPage: React.FC = () => {
                                     : isSelected
                                     ? alpha(module.color, 0.03)
                                     : "transparent",
-                                  opacity: isComingSoon ? 0.55 : 1,
+                                  opacity: isComingSoon ? 0.6 : 1,
                                   transition: "all 0.2s",
                                   ...(!isComingSoon && {
                                     "&:hover": {
@@ -761,12 +762,25 @@ const NewCampaignPage: React.FC = () => {
                                 </Box>
 
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontWeight: 600, fontSize: 13 }}
-                                  >
-                                    {module.label}
-                                  </Typography>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontWeight: 600, fontSize: 13 }}
+                                    >
+                                      {module.label}
+                                    </Typography>
+                                    {isComingSoon && (
+                                      <Box sx={{
+                                        display: "inline-flex", alignItems: "center",
+                                        px: 0.75, py: "1px", borderRadius: "999px",
+                                        bgcolor: "#F5F3FF", border: "1px solid #DDD6FE",
+                                      }}>
+                                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#7C3AED", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                                          Coming Soon
+                                        </Typography>
+                                      </Box>
+                                    )}
+                                  </Box>
                                   <Typography
                                     variant="caption"
                                     color="text.secondary"
@@ -793,11 +807,7 @@ const NewCampaignPage: React.FC = () => {
                               </Box>
                             );
 
-                            return isComingSoon ? (
-                              <Tooltip key={mod} title="Coming Soon" placement="top" arrow>
-                                <span style={{ display: "contents" }}>{card}</span>
-                              </Tooltip>
-                            ) : (
+                            return (
                               <React.Fragment key={mod}>{card}</React.Fragment>
                             );
                           })}

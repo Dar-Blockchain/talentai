@@ -26,7 +26,6 @@ import {
   selectDepartmentDeleteError,
   Department,
 } from "@/store/slices/departmentSlice";
-import DepartmentSearch from "@/components/features/company/departments/list/DepartmentSearch";
 import DepartmentFetchError from "@/components/features/company/departments/list/DepartmentFetchError";
 import DepartmentGrid from "@/components/features/company/departments/list/DepartmentGrid";
 import DepartmentEmptyState from "@/components/features/company/departments/list/DepartmentEmptyState";
@@ -130,9 +129,8 @@ const DepartmentsPage: React.FC = () => {
           ] : []}
         />
 
-        <DepartmentSearch onSearch={setSearch} />
         <DepartmentFetchError />
-        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} canManage={canManage} />
+        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} onSearch={setSearch} canManage={canManage} />
         <DepartmentEmptyState search={search} onCreateClick={openCreate} canManage={canManage} />
 
         <CreateDepartmentModal

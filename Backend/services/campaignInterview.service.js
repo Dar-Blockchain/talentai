@@ -419,18 +419,26 @@ class CampaignInterviewService {
     }
 
     // Upsert CampaignResponse
-    await CampaignResponse.findOneAndUpdate(
+    const savedResponse = await CampaignResponse.findOneAndUpdate(
       { campaign: campaignId, participant: participant._id, moduleType },
       { $set: $setData },
       { upsert: true, new: true }
     );
 
-    // Mark participant COMPLETED
+    // Mark participant COMPLETED + update moduleProgress
     if (participant.status !== "COMPLETED") {
       participant.status      = "COMPLETED";
       participant.completedAt = new Date();
-      await participant.save();
     }
+
+    participant.moduleProgress = {
+      moduleType,
+      status:      "COMPLETED",
+      completedAt: new Date(),
+      responseRef: savedResponse._id,
+    };
+
+    await participant.save();
 
     console.log(`✅ [CampaignInterview] Saved — participant=${participant._id} moduleType=${moduleType} aiScore=${aiScore} transcript=${interviewTranscript.length} turns`);
   }
