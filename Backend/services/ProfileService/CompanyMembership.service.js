@@ -171,11 +171,16 @@ module.exports.deleteMembership = async (membershipId, companyOwnerId) => {
 };
 
 // Update the role of a membership
-module.exports.updateMembershipRole = async (membershipId, newRole) => {
+module.exports.updateMembershipRole = async (membershipId, newRole, updatedBy = null) => {
+
+  const updateData = { role: newRole };
+  if (updatedBy) {
+    updateData.updatedBy = updatedBy;
+  }
 
   const updated = await CompanyMembershipModel.findByIdAndUpdate(
     membershipId,
-    { role: newRole },
+    updateData,
     { new: true }
   )
     .populate({
@@ -190,10 +195,15 @@ module.exports.updateMembershipRole = async (membershipId, newRole) => {
 };
 
 // Update the department of a membership (assign or unassign from department)
-module.exports.updateMembershipDepartment = async (membershipId, departmentId) => {
+module.exports.updateMembershipDepartment = async (membershipId, departmentId, updatedBy = null) => {
+  const updateData = { department: departmentId || null };
+  if (updatedBy) {
+    updateData.updatedBy = updatedBy;
+  }
+
   const updated = await CompanyMembershipModel.findByIdAndUpdate(
     membershipId,
-    { department: departmentId || null },
+    updateData,
     { new: true }
   )
     .populate({
@@ -209,7 +219,7 @@ module.exports.updateMembershipDepartment = async (membershipId, departmentId) =
 };
 
 // Update both role and department of a membership
-module.exports.updateMembership = async (membershipId, { role, departmentId }) => {
+module.exports.updateMembership = async (membershipId, { role, departmentId, updatedBy }) => {
   // Build the update object
   const updateData = {};
 
@@ -221,6 +231,11 @@ module.exports.updateMembership = async (membershipId, { role, departmentId }) =
   // Add department if provided
   if (departmentId !== undefined) {
     updateData.department = departmentId || null;
+  }
+
+  // Add updatedBy if provided
+  if (updatedBy) {
+    updateData.updatedBy = updatedBy;
   }
 
   // If nothing to update, throw error

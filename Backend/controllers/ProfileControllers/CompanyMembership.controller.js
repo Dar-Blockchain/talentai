@@ -109,9 +109,11 @@ module.exports.updateMembershipRole = async (req, res) => {
       });
     }
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const updated = await CompanyMembershipService.updateMembershipRole(
       membershipId,
       role,
+      updatedBy,
     );
     res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
@@ -125,9 +127,11 @@ module.exports.updateMembershipDepartment = async (req, res) => {
     const { membershipId } = req.params;
     const { departmentId } = req.body;
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const updated = await CompanyMembershipService.updateMembershipDepartment(
       membershipId,
       departmentId,
+      updatedBy,
     );
     res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
@@ -149,9 +153,10 @@ module.exports.updateMembership = async (req, res) => {
       });
     }
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const updated = await CompanyMembershipService.updateMembership(
       membershipId,
-      { role, departmentId },
+      { role, departmentId, updatedBy },
     );
     res.json({ success: true, updated: flattenMembership(updated) });
   } catch (error) {
