@@ -351,10 +351,11 @@ exports.updatePost = async (req, res) => {
         .json({ success: false, error: "Post ID is required" });
     }
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const post = await postService.updatePost(
       req.params.id,
       req.user._id,
-      req.body,
+      { ...req.body, updatedBy },
     );
     res.status(200).json({ success: true, data: post });
   } catch (error) {
@@ -394,10 +395,12 @@ exports.updatePostStatus = async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid status" });
     }
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const post = await postService.updatePostStatus(
       req.params.id,
       req.user._id,
       status,
+      updatedBy,
     );
     res.status(200).json({ success: true, data: post });
   } catch (error) {

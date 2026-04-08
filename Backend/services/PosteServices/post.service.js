@@ -646,6 +646,9 @@ module.exports.updatePost = async (postId, userId, updateData) => {
       throw new Error("Post not found or unauthorized");
     }
 
+    // Prevent modification of createdBy
+    if (updateData.createdBy) delete updateData.createdBy;
+
     Object.assign(post, updateData);
     return await post.save();
   } catch (error) {
@@ -713,7 +716,7 @@ module.exports.deletePost = async (postId, userId) => {
 };
 
 // Change post status
-module.exports.updatePostStatus = async (postId, userId, status) => {
+module.exports.updatePostStatus = async (postId, userId, status, updatedBy = null) => {
   try {
     const post = await Post.findOne({ _id: postId, user: userId });
     if (!post) {
@@ -721,6 +724,9 @@ module.exports.updatePostStatus = async (postId, userId, status) => {
     }
 
     post.status = status;
+    if (updatedBy) {
+      post.updatedBy = updatedBy;
+    }
     return await post.save();
   } catch (error) {
     throw new Error(`Error updating post status: ${error.message}`);

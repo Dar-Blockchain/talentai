@@ -147,6 +147,10 @@ const postSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
   agentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Agent",
