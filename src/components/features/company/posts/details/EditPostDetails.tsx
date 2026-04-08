@@ -243,7 +243,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
 
             {/* Bottom Save/Cancel bar */}
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 4, pt: 3, borderTop: "1px solid #E5E7EB" }}>
-              <Button variant="outlined" onClick={() => { resetForm(); onCancel(); }}
+              <Button variant="outlined" onClick={() => { resetForm({ values: getInitialValues(job) }); onCancel(); }}
                 sx={{ border: "none", background: "none", color: "rgba(133, 169, 227, 1)", textDecoration: "none", "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" } }}>
                 Cancel
               </Button>
