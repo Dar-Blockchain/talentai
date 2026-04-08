@@ -430,6 +430,10 @@ module.exports.getInvitationStatsByCompany = async (companyId) => {
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
     .populate({
+      path: "company",
+      select: "username email _id"
+    })
+    .populate({
       path: "invitedBy",
       select: "email role username profile",
       populate: {
