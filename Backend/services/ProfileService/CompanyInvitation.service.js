@@ -137,6 +137,7 @@ module.exports.sentInvitation = async (
     company,
     role,
     invitedBy,
+    createdBy: invitedBy,
     token,
     expiresAt,
   };
@@ -155,9 +156,10 @@ module.exports.sentInvitation = async (
  * Resend an invitation with a new token and expiration
  * @param {string} invitationId - The invitation ID to resend
  * @param {string|null} departmentId - Optional updated department ID
+ * @param {string|null} updatedBy - User ID of the person resending the invitation
  * @returns {Object} The updated invitation document
  */
-module.exports.resendInvitation = async (invitationId, departmentId = null) => {
+module.exports.resendInvitation = async (invitationId, departmentId = null, updatedBy = null) => {
   const updated = await CompanyInvitationModel.findById(invitationId).populate("invitedBy");
   if (!updated) {
     throw new Error("Invitation not found");
@@ -172,6 +174,9 @@ module.exports.resendInvitation = async (invitationId, departmentId = null) => {
   const { token, expiresAt } = _generateTokenAndExpiration(updated.email, updated.role);
 
   const updateData = { token, expiresAt, status: "pending" };
+  if (updatedBy) {
+    updateData.updatedBy = updatedBy;
+  }
 
   _addDepartmentIfProvided(updateData, departmentId);
 

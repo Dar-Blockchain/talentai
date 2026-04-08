@@ -5,7 +5,7 @@ const { generateToken } = require("../../utils/generate-token");
 module.exports.sentInvitation = async (req, res) => {
   try {
     const { email, role, departmentId } = req.body;
-    const invitedBy = req.user._id;
+    const invitedBy = req.actualUser?._id || req.user._id;
     const username = req.user.username;
     const member = await CompanyInvitationService.sentInvitation(
       invitedBy,
@@ -25,9 +25,11 @@ module.exports.resendInvitation = async (req, res) => {
   try {
     const { invitationId } = req.params;
     const { departmentId } = req.body;
+    const updatedBy = req.actualUser?._id || req.user._id;
     const updated = await CompanyInvitationService.resendInvitation(
       invitationId,
       departmentId,
+      updatedBy,
     );
     res.json({ success: true, updated });
   } catch (error) {

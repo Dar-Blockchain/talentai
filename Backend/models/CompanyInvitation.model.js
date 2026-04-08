@@ -7,6 +7,8 @@ const CompanyInvitationSchema = new mongoose.Schema({
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   status: { type: String, enum: ["active", "pending", "revoked"], default: "pending" },
   invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   token: { type: String, required: true, unique: true },
   expiresAt: { type: Date, required: true },
 }, { timestamps: true });
