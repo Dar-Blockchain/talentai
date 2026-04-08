@@ -5,10 +5,11 @@ const { generateToken } = require("../../utils/generate-token");
 module.exports.sentInvitation = async (req, res) => {
   try {
     const { email, role, departmentId } = req.body;
-    const invitedBy = req.actualUser?._id || req.user._id;
+    const company = req.user._id; // Company is the authenticated actor (after resolveCompanyActor)
+    const invitedBy = req.actualUser?._id || req.user._id; // Real user who sent the invitation
     const username = req.user.username;
     const member = await CompanyInvitationService.sentInvitation(
-      invitedBy,
+      company,
       email,
       role,
       invitedBy,
