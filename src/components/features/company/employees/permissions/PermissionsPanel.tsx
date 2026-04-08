@@ -63,9 +63,10 @@ export interface PermissionsPanelProps {
   value: Partial<EmployeePermission>;
   onChange: (updated: Partial<EmployeePermission>) => void;
   disabled?: boolean;
+  isOwner?: boolean;
 }
 
-const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, disabled = false }) => {
+const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, disabled = false, isOwner = false }) => {
   const [expanded, setExpanded] = useState<string | false>(EMPLOYEE_PERMISSION_GROUPS[0]?.category ?? false);
 
   const toggle = useCallback(
@@ -98,7 +99,7 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
         const keys        = group.permissions.map((p) => p.key);
         const allGranted  = keys.every((k) => !!value[k]);
         const someGranted = keys.some((k)  => !!value[k]);
-        const visiblePerms = group.permissions.filter((p) => !PACK_ABSORBED.has(p.key));
+        const visiblePerms = group.permissions.filter((p) => !PACK_ABSORBED.has(p.key) && (isOwner || p.key !== "canManagePermissions"));
         const enabledCount = visiblePerms.filter((p) => {
           const pack = PACK_ROWS[p.key];
           return pack ? pack.keys.every((k) => !!value[k]) : !!value[p.key];
@@ -189,7 +190,7 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = ({ value, onChange, di
 
             <AccordionDetails sx={{ p: 0, bgcolor: "#fff" }}>
               {group.permissions
-                .filter((perm) => !PACK_ABSORBED.has(perm.key))
+                .filter((perm) => !PACK_ABSORBED.has(perm.key) && (isOwner || perm.key !== "canManagePermissions"))
                 .map((perm, idx, visible) => {
                   const pack    = PACK_ROWS[perm.key];
                   const label   = pack ? pack.label       : perm.label;

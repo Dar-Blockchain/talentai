@@ -20,12 +20,10 @@ import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import {
   Member,
-  fetchEmployeePermissions,
   updateEmployeePermissions,
-  selectEmployeePermissions,
-  selectFetchingPermissions,
   selectUpdatingPermissions,
 } from "@/store/slices/memberSlice";
+import axiosInstance from "@/utils/axiosInstance";
 import { ROLES } from "@/constants/employee";
 import { EmployeePermission, DEFAULT_EMPLOYEE_PERMISSIONS } from "@/types/employeePermissions";
 import PermissionsPanel from "../permissions/PermissionsPanel";
@@ -154,34 +152,36 @@ interface EmployeeDetailProps {
   canAssignRoles?: boolean;
   canRemove?: boolean;
   canManagePermissions?: boolean;
+  isOwner?: boolean;
+  isSelf?: boolean;
 }
 
 /* ── Component ────────────────────────────────────────── */
-const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete, canAssignRoles = true, canRemove = true, canManagePermissions = true }) => {
+const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit, onDelete, canAssignRoles = true, canRemove = true, canManagePermissions = true, isOwner = false, isSelf = false }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const storedPermissions  = useSelector(selectEmployeePermissions);
-  const fetchingPerms      = useSelector(selectFetchingPermissions);
-  const updatingPerms      = useSelector(selectUpdatingPermissions);
+  const updatingPerms = useSelector(selectUpdatingPermissions);
 
   const userId = member.userId;
 
   const [tab, setTab]               = useState<"overview" | "permissions">("overview");
   const [permissions, setPermissions] = useState<Partial<EmployeePermission>>(DEFAULT_EMPLOYEE_PERMISSIONS);
+  const [fetchingPerms, setFetchingPerms] = useState(false);
   const [saved,   setSaved]   = useState(false);
 
-  // Fetch permissions when tab is first opened
+  // Fetch viewed member's permissions directly — avoids overwriting the viewer's
+  // own permissions in the shared Redux employeePermissions store.
   useEffect(() => {
-    if (tab === "permissions") {
-      dispatch(fetchEmployeePermissions(userId));
-    }
-  }, [tab, userId, dispatch]);
-
-  // Sync local state when permissions arrive from API
-  useEffect(() => {
-    if (storedPermissions) {
-      setPermissions(storedPermissions);
-    }
-  }, [storedPermissions]);
+    if (tab !== "permissions" || isSelf) return;
+    setFetchingPerms(true);
+    axiosInstance
+      .get(`employee-permissions/${userId}`)
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        if (data) setPermissions(data);
+      })
+      .catch(() => {/* no permissions yet — keep defaults */})
+      .finally(() => setFetchingPerms(false));
+  }, [tab, userId, isSelf]);
 
   const name    = (member.firstName && member.lastName)
     ? `${member.firstName} ${member.lastName}`
@@ -201,6 +201,9 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
     const result = await dispatch(updateEmployeePermissions({ memberId: userId, permissions }));
     if (updateEmployeePermissions.fulfilled.match(result)) {
       setSaved(true);
+      // Sync local state from the returned payload so UI stays consistent
+      const saved = (result as any).payload as Partial<EmployeePermission>;
+      if (saved) setPermissions(saved);
       setTimeout(() => setSaved(false), 2500);
     }
   }, [dispatch, permissions, userId]);
@@ -431,7 +434,21 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
           </motion.div>
         )}
 
-        {tab === "permissions" && (
+        {tab === "permissions" && isSelf && (
+          <motion.div key="permissions-self" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <Box sx={{ py: 6, textAlign: "center" }}>
+              <TuneOutlined sx={{ fontSize: 40, color: "#E2E8F0", mb: 1.5 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: "0.9375rem", color: "#0F172A", mb: 0.5 }}>
+                You cannot manage your own permissions
+              </Typography>
+              <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8" }}>
+                Ask the company owner to update your permissions.
+              </Typography>
+            </Box>
+          </motion.div>
+        )}
+
+        {tab === "permissions" && !isSelf && (
           <motion.div
             key="permissions"
             initial={{ opacity: 0, y: 6 }}
@@ -487,6 +504,7 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ member, onBack, onEdit,
                 value={permissions}
                 onChange={setPermissions}
                 disabled={updatingPerms}
+                isOwner={isOwner}
               />
             )}
           </motion.div>

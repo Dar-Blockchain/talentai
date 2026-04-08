@@ -35,7 +35,12 @@ const DepartmentDetailPage: React.FC = () => {
 
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms  = useSelector(selectEmployeePermissions);
-  const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
+  const isEmp          = user?.role === "Employee";
+  const canEdit        = !isEmp || !!empPerms?.canEditDepartment;
+  const canDelete      = !isEmp || !!empPerms?.canDeleteDepartment;
+  const canInvite      = !isEmp || !!empPerms?.canInviteMembers;
+  const canAssignRoles = !isEmp || !!empPerms?.canAssignRoles;
+  const canRemove      = !isEmp || !!empPerms?.canRemoveEmployee;
 
   const department    = useSelector(selectCurrentDepartment);
   const loadingDept   = useSelector(selectCurrentDepartmentLoading);
@@ -97,11 +102,17 @@ const DepartmentDetailPage: React.FC = () => {
           loadingMembers={false}
           onEdit={() => setEditOpen(true)}
           onDelete={() => setDeleteOpen(true)}
-          canManage={canManage}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
 
         {id && typeof id === "string" && (
-          <DepartmentMembersSection departmentId={id} canManage={canManage} />
+          <DepartmentMembersSection
+            departmentId={id}
+            canManage={canInvite}
+            canAssignRoles={canAssignRoles}
+            canRemove={canRemove}
+          />
         )}
       </Box>
 

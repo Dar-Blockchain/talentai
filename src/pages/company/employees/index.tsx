@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box } from "@mui/material";
+import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import PersonAddOutlined from "@mui/icons-material/PersonAddOutlined";
@@ -24,6 +24,8 @@ import {
   cancelInvitation,
   selectMembers,
   selectEmployeePermissions,
+  selectFetchingPermissions,
+  fetchEmployeePermissions,
   clearAddMemberSuccess,
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
@@ -46,11 +48,28 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
 
 
 const EmployeesPage: React.FC = () => {
-  useCompanyAccess("canManageTeam");
+  const router      = useRouter();
   const dispatch    = useDispatch<AppDispatch>();
   const user        = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms    = useSelector(selectEmployeePermissions);
+  const loadingPerms = useSelector(selectFetchingPermissions);
   const isEmployee  = user?.role === "Employee";
+
+  // Always re-fetch permissions on mount for employees
+  useEffect(() => {
+    if (isEmployee && user?._id && !loadingPerms) {
+      dispatch(fetchEmployeePermissions(user._id));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id]);
+
+  // Guard: employee must have canManageTeam OR canManagePermissions
+  useEffect(() => {
+    if (!isEmployee) return;
+    if (empPerms && !empPerms.canManageTeam && !empPerms.canManagePermissions) {
+      router.replace("/unauthorized");
+    }
+  }, [isEmployee, empPerms, router]);
   const canInvite          = !isEmployee || !!empPerms?.canInviteMembers;
   const canAssignRoles     = !isEmployee || !!empPerms?.canAssignRoles;
   const canRemove          = !isEmployee || !!empPerms?.canRemoveEmployee;

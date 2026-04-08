@@ -21,11 +21,12 @@ interface DepartmentDetailHeaderProps {
   loadingMembers: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  canManage?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
-  department, loading, membersTotal, loadingMembers, onEdit, onDelete, canManage = true,
+  department, loading, membersTotal, loadingMembers, onEdit, onDelete, canEdit = true, canDelete = true,
 }) => {
   const router = useRouter();
 
@@ -52,32 +53,36 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
             <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>Departments</Typography>
           </Box>
 
-          {department && canManage && (
+          {department && (canEdit || canDelete) && (
             <Box sx={{ display: "flex", gap: 0.875 }}>
-              <Box
-                onClick={onEdit}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 0.625,
-                  px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                  border: "1px solid #E2E8F0", bgcolor: "#F8FAFC", transition: "all 0.15s",
-                  "&:hover": { bgcolor: `${PURPLE}08`, borderColor: `${PURPLE}30`, "& *": { color: PURPLE } },
-                }}
-              >
-                <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
-                <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
-              </Box>
-              <Box
-                onClick={onDelete}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 0.625,
-                  px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                  border: "1px solid #FECACA", bgcolor: "#FEF7F7", transition: "all 0.15s",
-                  "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
-                }}
-              >
-                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
-                <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
-              </Box>
+              {canEdit && (
+                <Box
+                  onClick={onEdit}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #E2E8F0", bgcolor: "#F8FAFC", transition: "all 0.15s",
+                    "&:hover": { bgcolor: `${PURPLE}08`, borderColor: `${PURPLE}30`, "& *": { color: PURPLE } },
+                  }}
+                >
+                  <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
+                </Box>
+              )}
+              {canDelete && (
+                <Box
+                  onClick={onDelete}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 0.625,
+                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                    border: "1px solid #FECACA", bgcolor: "#FEF7F7", transition: "all 0.15s",
+                    "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" },
+                  }}
+                >
+                  <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#F87171" }} />
+                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+                </Box>
+              )}
             </Box>
           )}
         </Box>
