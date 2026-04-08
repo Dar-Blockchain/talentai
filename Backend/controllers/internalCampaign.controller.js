@@ -106,7 +106,7 @@ exports.createInternalCampaign = async (req, res) => {
       deadline,
       skill: skill || "",
       linkToken,
-      createdBy: req.user._id,
+      createdBy: req.actualUser?._id || req.user._id,
     });
 
     // Create campaign participants if provided
