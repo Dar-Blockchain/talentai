@@ -202,26 +202,35 @@ const ApplicationDetailPage: React.FC = () => {
                     View CV
                   </Button>
                 )}
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<VideoCallOutlined sx={{ fontSize: 15 }} />}
-                  onClick={() => {
-                    const postId = app?.post?._id || "";
-                    const companyId = app?.company?._id || app?.post?.user || "";
-                    const base = typeof window !== "undefined" ? window.location.origin : "";
-                    setInviteLink(postId ? `${base}/interview/hr/?jobId=${postId}&companyId=${companyId}&ref=link` : "");
-                    setInviteOpen(true);
-                  }}
-                  sx={{
-                    textTransform: "none", fontWeight: 600, fontSize: "0.78rem",
-                    borderRadius: "10px", height: 36,
-                    bgcolor: "#8310FF", boxShadow: "none", color: "#fff",
-                    "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none", color: "#fff" },
-                  }}
-                >
-                  Invite to Interview
-                </Button>
+                {app?.status === "interview_completed" ? (
+                  <Box sx={{ width: "100%", borderRadius: "10px", bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", px: 2, py: 1, textAlign: "center" }}>
+                    <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#16A34A" }}>✓ Interview Completed</Typography>
+                    <Typography sx={{ fontSize: "0.68rem", color: "#6B7280", mt: 0.25 }}>This candidate has already passed the interview.</Typography>
+                  </Box>
+                ) : (
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<VideoCallOutlined sx={{ fontSize: 15 }} />}
+                    onClick={() => {
+                      const postId = app?.post?._id || "";
+                      const companyId = app?.company?._id || app?.post?.user || "";
+                      const candidateEmail = (app?.profile?.userId as any)?.email || app?.profile?.contactInformation?.email || "";
+                      const base = typeof window !== "undefined" ? window.location.origin : "";
+                      const ref = candidateEmail ? encodeURIComponent(candidateEmail) : "link";
+                      setInviteLink(postId ? `${base}/interview/hr/?jobId=${postId}&companyId=${companyId}&ref=${ref}` : "");
+                      setInviteOpen(true);
+                    }}
+                    sx={{
+                      textTransform: "none", fontWeight: 600, fontSize: "0.78rem",
+                      borderRadius: "10px", height: 36,
+                      bgcolor: "#8310FF", boxShadow: "none", color: "#fff",
+                      "&:hover": { bgcolor: "#6d0ddb", boxShadow: "none", color: "#fff" },
+                    }}
+                  >
+                    Invite to Interview
+                  </Button>
+                )}
               </Box>
             </Box>
           </Box>
