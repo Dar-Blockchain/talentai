@@ -67,6 +67,7 @@ exports.createPost = async (req, res) => {
     const postData = {
       ...parsedData,
       user: userId,
+      createdBy: req.actualUser?._id || req.user._id,
     };
 
     // Handle custom expiration date (optional)
