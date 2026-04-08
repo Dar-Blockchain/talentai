@@ -258,7 +258,7 @@ const JobPostsList = memo<JobPostsListProps>(({
                 startIcon={<AddOutlined />}
                 onClick={onCreateClick}
                 sx={{
-                  textTransform: "none", fontWeight: 700,
+                  textTransform: "none", fontWeight: 700, color: "#fff",
                   bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" }, borderRadius: 2,
                 }}
               >
