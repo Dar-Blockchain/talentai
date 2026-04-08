@@ -431,7 +431,11 @@ module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
     .populate({
       path: "company",
-      select: "username email _id"
+      select: "email _id profile",
+      populate: {
+        path: "profile",
+        select: "companyDetails.name"
+      }
     })
     .populate({
       path: "invitedBy",
@@ -447,14 +451,24 @@ module.exports.getInvitationDetails = async (invitationId) => {
   // Convert to plain object to ensure clean transformation
   const invitationObj = invitation.toObject();
 
+  // Transform company to keep only required fields
+  if (invitationObj.company) {
+    const companyName = invitationObj.company.profile?.companyDetails?.name || "";
+    invitationObj.company = {
+      _id: invitationObj.company._id,
+      email: invitationObj.company.email,
+      name: companyName
+    };
+  }
+
   // Transform invitedBy to keep only required fields
   if (invitationObj.invitedBy) {
-    const companyName = invitationObj.invitedBy.profile?.companyDetails?.name || "";
+    const invitedByName = invitationObj.invitedBy.profile?.companyDetails?.name || "";
     invitationObj.invitedBy = {
       username: invitationObj.invitedBy.username,
       email: invitationObj.invitedBy.email,
       role: invitationObj.invitedBy.role,
-      name: companyName
+      name: invitedByName
     };
   }
 
