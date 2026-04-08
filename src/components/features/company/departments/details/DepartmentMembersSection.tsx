@@ -30,9 +30,11 @@ const SORT_MAP: Record<SortOption, { sortBy: "date" | "name"; order: "asc" | "de
 interface DepartmentMembersSectionProps {
   departmentId: string;
   canManage?: boolean;
+  canAssignRoles?: boolean;
+  canRemove?: boolean;
 }
 
-const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ departmentId, canManage = true }) => {
+const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ departmentId, canManage = true, canAssignRoles = true, canRemove = true }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { members, pageTotal, loading, error } = useSelector(selectMembers);
 
@@ -146,6 +148,8 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ dep
               onEdit={() => {}}
               onDelete={() => {}}
               onSelect={() => {}}
+              canAssignRoles={canAssignRoles}
+              canRemove={canRemove}
             />
           ))}
         </Box>

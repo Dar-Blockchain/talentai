@@ -30,9 +30,10 @@ const EmployeeDetailPage: React.FC = () => {
   const user        = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms    = useSelector(selectEmployeePermissions);
   const isEmployee  = user?.role === "Employee";
-  const canAssignRoles     = !isEmployee || !!empPerms?.canAssignRoles;
-  const canRemove          = !isEmployee || !!empPerms?.canRemoveEmployee;
-  const canManagePerms     = !isEmployee || !!empPerms?.canManagePermissions;
+  const isOwner     = user?.role === "Company";
+  const canAssignRoles = !isEmployee || !!empPerms?.canAssignRoles;
+  const canRemove      = !isEmployee || !!empPerms?.canRemoveEmployee;
+  const canManagePerms = !isEmployee || !!empPerms?.canManagePermissions;
 
   const member       = useSelector(selectCurrentMember);
   const loading      = useSelector(selectFetchingMember);
@@ -116,6 +117,8 @@ const EmployeeDetailPage: React.FC = () => {
             canAssignRoles={canAssignRoles}
             canRemove={canRemove}
             canManagePermissions={canManagePerms}
+            isOwner={isOwner}
+            isSelf={member.userId === user?._id}
           />
         )}
 

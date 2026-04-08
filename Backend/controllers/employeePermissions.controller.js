@@ -70,6 +70,17 @@ exports.updatePermissions = async (req, res) => {
     const userId = req.params.userId;
     const { ...permissionsData } = req.body;
     const modifiedBy = req.user._id;
+    const isOwner = req.auth?.role === "Company";
+
+    // Employees cannot edit their own permissions
+    if (req.user._id.toString() === userId.toString()) {
+      return res.status(403).json({ success: false, error: "You cannot modify your own permissions." });
+    }
+
+    // Only the company owner can grant or revoke canManagePermissions
+    if ("canManagePermissions" in permissionsData && !isOwner) {
+      return res.status(403).json({ success: false, error: "Only the company owner can grant or revoke the Manage Permissions permission." });
+    }
 
     // Get membership for the target user
     const membership = await getMembershipForUser(userId);

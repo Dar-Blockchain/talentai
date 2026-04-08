@@ -71,6 +71,10 @@ const employeePermissionsSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    canManagePermissions: {
+      type: Boolean,
+      default: false,
+    },
 
     // Campaigns
     canViewCampaigns: {
