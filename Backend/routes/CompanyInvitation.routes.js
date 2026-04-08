@@ -52,6 +52,7 @@ router.post(
  */
 router.post(
   "/resendInvitation/:invitationId",
+  resolveCompanyActor,
   CompanyInvitationController.resendInvitation,
 );
 
