@@ -124,16 +124,6 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
                   <Typography sx={{ fontSize: "12px", color: "#546274" }}>Update the job details for this position</Typography>
                 </Box>
               </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button variant="outlined" onClick={() => { resetForm(); onCancel(); }}
-                  sx={{ border: "none", background: "none", color: "rgba(133, 169, 227, 1)", textDecoration: "none", "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" } }}>
-                  Cancel
-                </Button>
-                <Button variant="contained" onClick={() => handleSubmit()}
-                  sx={{ textTransform: "none", height: "42px", width: "120px", borderRadius: "38px", background: "#0D9488", color: "white" }}>
-                  Save
-                </Button>
-              </Box>
             </Box>
 
             <Box sx={{ mt: 1 }}>
@@ -250,6 +240,18 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
                 onClose={() => setOpen(false)}
               />
             )}
+
+            {/* Bottom Save/Cancel bar */}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 4, pt: 3, borderTop: "1px solid #E5E7EB" }}>
+              <Button variant="outlined" onClick={() => { resetForm(); onCancel(); }}
+                sx={{ border: "none", background: "none", color: "rgba(133, 169, 227, 1)", textDecoration: "none", "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" } }}>
+                Cancel
+              </Button>
+              <Button variant="contained" onClick={() => handleSubmit()}
+                sx={{ textTransform: "none", height: "42px", width: "120px", borderRadius: "38px", background: "#0D9488", color: "white" }}>
+                Save
+              </Button>
+            </Box>
           </>
         )}
       </Formik>
