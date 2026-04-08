@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { deletePost, fetchMyPosts, selectDeletePostLoading } from "@/store/slices/postSlice";
@@ -25,12 +25,11 @@ export const useDeletePost = ({
   const isDeleting = useSelector(selectDeletePostLoading);
 
   const [open, setOpen] = useState(false);
-  const [waitingForRoute, setWaitingForRoute] = useState(false);
 
   const handleOpen = () => setOpen(true);
 
   const handleClose = () => {
-    if (!isDeleting && !waitingForRoute) setOpen(false);
+    if (!isDeleting) setOpen(false);
   };
 
   const handleDelete = async () => {
@@ -39,15 +38,15 @@ export const useDeletePost = ({
     try {
       await dispatch(deletePost(postId)).unwrap();
 
+      setOpen(false);
+      onSuccess?.();
+
       if (refetchAfterDelete) {
         dispatch(fetchMyPosts({}));
-        setOpen(false);
-        onSuccess?.();
         return;
       }
 
       if (redirectTo) {
-        setWaitingForRoute(true);
         router.push(redirectTo);
       }
     } catch (error) {
@@ -56,27 +55,9 @@ export const useDeletePost = ({
     }
   };
 
-  useEffect(() => {
-    if (!waitingForRoute) return;
-
-    const handleRouteDone = () => {
-      setWaitingForRoute(false);
-      setOpen(false);
-      onSuccess?.();
-    };
-
-    router.events.on("routeChangeComplete", handleRouteDone);
-    router.events.on("routeChangeError", handleRouteDone);
-
-    return () => {
-      router.events.off("routeChangeComplete", handleRouteDone);
-      router.events.off("routeChangeError", handleRouteDone);
-    };
-  }, [waitingForRoute, router.events, onSuccess]);
-
   return {
     open,
-    isDeleting: isDeleting || waitingForRoute,
+    isDeleting,
     handleOpen,
     handleClose,
     handleDelete,

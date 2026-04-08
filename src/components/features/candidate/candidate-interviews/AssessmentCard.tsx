@@ -126,7 +126,6 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({
   const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
   const companyName = assessment.company?.username || assessment.post?.user?.companyName || "Company";
   const interviewType = assessment.interviewData?.interviewType?.replace(/_/g, " ") || "HR Interview";
-  const skillType = assessment.skillType || "general";
   return (
     <Box
       sx={{

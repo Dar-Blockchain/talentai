@@ -14,15 +14,14 @@ import {
   Typography,
 } from '@mui/material';
 import { Feedback as FeedbackIcon } from '@mui/icons-material';
-import { PostInterviewData, FeedbackFormData } from '../../../../types/postInterview';
+import { FeedbackFormData } from '../../../../types/postInterview';
 
 interface FeedbackDialogProps {
   open: boolean;
-  interview: PostInterviewData | null;
   onClose: () => void;
 }
 
-const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, interview, onClose }) => {
+const FeedbackDialog: React.FC<FeedbackDialogProps> = ({ open, onClose }) => {
   const [feedback, setFeedback] = useState<FeedbackFormData>({
     overallExperience: '',
     easeOfUse: '',

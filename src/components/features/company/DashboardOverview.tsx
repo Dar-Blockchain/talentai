@@ -197,8 +197,8 @@ const DashboardOverview: React.FC = () => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
           const isEmpty = !statsLoading && (raw == null || raw === 0);
           return (
-            <motion.div key={stat.key} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
-              <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : ""}`}>
+            <motion.div key={stat.key} style={{ height: "100%" }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
+              <Card sx={{ p: 3, height: "100%", boxSizing: "border-box", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : ""}`}>
                 <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
                   <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: stat.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <stat.icon sx={{ fontSize: 20, color: stat.color }} />
@@ -214,11 +214,6 @@ const DashboardOverview: React.FC = () => {
                 ) : isEmpty ? (
                   <Box>
                     <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#9CA3AF" }}>{stat.emptyText}</Typography>
-                    {stat.emptyHref && (
-                      <Typography onClick={() => router.push(stat.emptyHref!)} sx={{ fontSize: "0.75rem", fontWeight: 600, color: stat.color, cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}>
-                        Create one →
-                      </Typography>
-                    )}
                   </Box>
                 ) : (
                   <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>{raw}{stat.suffix || ""}</Typography>

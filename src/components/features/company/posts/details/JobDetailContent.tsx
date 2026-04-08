@@ -28,7 +28,7 @@ const JobDetailContent: React.FC<Props> = ({
 }) => (
   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
     {activeEdit === "post" && (
-      <EditPostDetails onCancel={onCancelEdit} onSaveSuccess={onSaveSuccess} />
+      <EditPostDetails key="edit-post" onCancel={onCancelEdit} onSaveSuccess={onSaveSuccess} />
     )}
     {activeEdit === "recruitment" && (
       <EditRecruitmentFlow onCancel={onCancelEdit} />
