@@ -29,7 +29,7 @@ router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);
 
 // PUT /profile/updateProfileComplete — unified API for all profile updates (fields + image + type)
-router.put('/', uploadfile.single("user_image"), profileController.updateProfileComplete);
+router.put('/:userId', uploadfile.single("user_image"), profileController.updateProfileComplete);
 
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);

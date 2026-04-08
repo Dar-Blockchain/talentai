@@ -461,7 +461,7 @@ module.exports.updateProfileVisibility = async (req, res) => {
 // Unified update profile API - handles all profile updates including image upload
 module.exports.updateProfileComplete = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.params.userId;
     const profileData = req.body;
     const file = req.file;
     let result;
