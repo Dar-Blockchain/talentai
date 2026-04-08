@@ -121,7 +121,7 @@ export const fetchDepartmentMembers = createAsyncThunk<
     if (page)   params.page   = page;
     if (limit)  params.limit  = limit;
     const response = await axiosInstance.get(
-      `CompanyMembership/memberships/department/${departmentId}`,
+      `company-memberships/memberships/department/${departmentId}`,
       { params },
     );
     return {

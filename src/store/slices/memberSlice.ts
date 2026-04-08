@@ -35,13 +35,13 @@ export interface AddMemberPayload {
 }
 
 export interface UpdateRolePayload {
-  membershipId: string; // CompanyMembership ID
+  membershipId: string;
   role: string;
   departmentId?: string;
 }
 
 export interface DeleteMemberPayload {
-  membershipId: string; // CompanyMembership ID
+  membershipId: string;
 }
 
 export interface Invitation {
@@ -174,7 +174,7 @@ export const addEmployee = createAsyncThunk<
 
     console.log(`📡 [MemberSlice] Sending invitation payload:`, apiPayload);
 
-    const response = await axiosInstance.post("CompanyInvitation/sentInvitation", apiPayload);
+    const response = await axiosInstance.post("company-invitations/sentInvitation", apiPayload);
 
     console.log(`✅ [MemberSlice] Employee added successfully`, response.data);
     return response.data;
@@ -201,10 +201,7 @@ export const updateMemberRole = createAsyncThunk<
     const apiPayload: { role: string; departmentId?: string } = { role: payload.role };
     if (payload.departmentId !== undefined) apiPayload.departmentId = payload.departmentId || undefined;
 
-    console.log(`📡 [MemberSlice] Sending payload:`, apiPayload);
-    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
-
-    const response = await axiosInstance.patch(`CompanyMembership/${payload.membershipId}`, apiPayload);
+    const response = await axiosInstance.patch(`company-memberships/${payload.membershipId}`, apiPayload);
 
 
     console.log(`✅ [MemberSlice] Role updated successfully`, response.data);
@@ -227,10 +224,8 @@ export const deleteMember = createAsyncThunk<
 
 
   try {
-    console.log(`📡 [MemberSlice] Deleting member via API...`);
-    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
 
-    const response = await axiosInstance.delete(`CompanyMembership/${payload.membershipId}`);
+    const response = await axiosInstance.delete(`company-memberships/${payload.membershipId}`);
 
 
     console.log(`✅ [MemberSlice] Member deleted successfully`, response.data);
@@ -249,7 +244,7 @@ export const fetchMemberById = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMemberById", async (userId, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get(`CompanyMembership/user/${userId}`);
+    const response = await axiosInstance.get(`company-memberships/user/${userId}`);
     return response.data.membership || response.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to fetch member");
@@ -273,7 +268,7 @@ export const fetchMembers = createAsyncThunk<
     if (params?.limit)        query.set("limit",        String(params.limit));
 
     const qs = query.toString();
-    const response = await axiosInstance.get(`CompanyMembership/memberships${qs ? `?${qs}` : ""}`);
+    const response = await axiosInstance.get(`company-memberships/memberships${qs ? `?${qs}` : ""}`);
     return {
       members: response.data.memberships || response.data.members || [],
       total: response.data.total ?? response.data.pagination?.total ?? 0,
@@ -296,7 +291,7 @@ export const fetchMembersPage = createAsyncThunk<
     if (params.search) query.set("search", params.search);
     if (params.departmentIds?.length) query.set("departmentId", params.departmentIds.join(","));
 
-    const response = await axiosInstance.get(`CompanyMembership/memberships?${query.toString()}`);
+    const response = await axiosInstance.get(`company-memberships/memberships?${query.toString()}`);
     return {
       members: response.data.memberships || response.data.members || [],
       total: response.data.total ?? response.data.pagination?.total ?? 0,
@@ -317,7 +312,7 @@ export const fetchInvitations = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Fetching invitations from API...`);
-    const response = await axiosInstance.get("CompanyInvitation/myInvitations");
+    const response = await axiosInstance.get("company-invitations/myInvitations");
 
 
 
@@ -342,7 +337,7 @@ export const resendInvitation = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Resending invitation via API...`);
-    const response = await axiosInstance.post(`CompanyInvitation/resendInvitation/${invitationId}`);
+    const response = await axiosInstance.post(`company-invitations/resendInvitation/${invitationId}`);
 
 
 
@@ -367,7 +362,7 @@ export const cancelInvitation = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Deleting invitation via API...`);
-    const response = await axiosInstance.delete(`CompanyInvitation/deleteInvitation/${invitationId}`);
+    const response = await axiosInstance.delete(`company-invitations/deleteInvitation/${invitationId}`);
 
 
 
@@ -388,7 +383,7 @@ export const respondToInvitation = createAsyncThunk<
   { rejectValue: string }
 >("member/respondToInvitation", async ({ invitationId, action, token, firstName, lastName }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, {
+    const response = await axiosInstance.post(`company-invitations/respondInvitation/${invitationId}`, {
       action,
       ...(token && { token }),
       ...(firstName && { firstName }),
@@ -410,7 +405,7 @@ export const fetchMemberStats = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMemberStats", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("CompanyMembership/memberships/stats");
+    const response = await axiosInstance.get("company-memberships/memberships/stats");
     return response.data.stats as MemberStats;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching stats");
@@ -426,7 +421,7 @@ export const fetchInvitationDetails = createAsyncThunk<
   console.log(`🔑 [MemberSlice] fetchInvitationDetails CALLED with id:`, invitationId);
   try {
     console.log(`📡 [MemberSlice] Fetching invitation details from API...`);
-    const response = await axiosInstance.get(`CompanyInvitation/details/${invitationId}`);
+    const response = await axiosInstance.get(`company-invitations/details/${invitationId}`);
     console.log(`✅ [MemberSlice] Invitation details fetched successfully`, response.data);
     return response.data.invitation || response.data;
   } catch (error: any) {
@@ -473,7 +468,7 @@ export const acceptInvitationAsNewUser = createAsyncThunk<
   { rejectValue: string }
 >("member/acceptInvitationAsNewUser", async ({ invitationId, token, firstName, lastName }, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post(`CompanyInvitation/registerAndAccept/${invitationId}`, { token, firstName, lastName });
+    const response = await axiosInstance.post(`company-invitations/registerAndAccept/${invitationId}`, { token, firstName, lastName });
     return response.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Failed to accept invitation");

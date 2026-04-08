@@ -32,9 +32,14 @@ interface DepartmentMembersSectionProps {
   canManage?: boolean;
   canAssignRoles?: boolean;
   canRemove?: boolean;
+  onEdit?: (member: Member) => void;
+  onDelete?: (member: Member) => void;
 }
 
-const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ departmentId, canManage = true, canAssignRoles = true, canRemove = true }) => {
+const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
+  departmentId, canManage = true, canAssignRoles = true, canRemove = true,
+  onEdit, onDelete,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
   const { members, pageTotal, loading, error } = useSelector(selectMembers);
 
@@ -145,8 +150,8 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({ dep
               key={m._id}
               member={m as Member}
               index={i}
-              onEdit={() => {}}
-              onDelete={() => {}}
+              onEdit={(m) => onEdit?.(m)}
+              onDelete={(m) => onDelete?.(m)}
               onSelect={() => {}}
               canAssignRoles={canAssignRoles}
               canRemove={canRemove}

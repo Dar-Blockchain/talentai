@@ -8,6 +8,8 @@ import DepartmentDetailHeader from "@/components/features/company/departments/de
 import DepartmentMembersSection from "@/components/features/company/departments/details/DepartmentMembersSection";
 import EditDepartmentModal from "@/components/features/company/departments/edit/EditDepartmentModal";
 import DeleteDepartmentDialog from "@/components/features/company/departments/delete/DeleteDepartmentDialog";
+import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
+import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
 import { AppDispatch } from "@/store/store";
 import {
   fetchDepartmentById,
@@ -25,8 +27,14 @@ import {
   selectDepartmentDeleteSuccess,
   selectDepartmentDeleteError,
 } from "@/store/slices/departmentSlice";
-import { selectMembers, selectEmployeePermissions } from "@/store/slices/memberSlice";
+import {
+  selectMembers, selectEmployeePermissions,
+  updateMemberRole, deleteMember,
+  clearUpdateRoleSuccess, clearDeleteMemberSuccess,
+  Member,
+} from "@/store/slices/memberSlice";
 import { RootState } from "@/store/store";
+import { useToast } from "@/hooks/useToast";
 
 const DepartmentDetailPage: React.FC = () => {
   const router   = useRouter();
@@ -53,8 +61,14 @@ const DepartmentDetailPage: React.FC = () => {
   const deleteSuccess = useSelector(selectDepartmentDeleteSuccess);
   const deleteError   = useSelector(selectDepartmentDeleteError);
 
-  const [editOpen,   setEditOpen]   = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
+  const { showToast } = useToast();
+
+  const [editOpen,         setEditOpen]         = useState(false);
+  const [deleteOpen,       setDeleteOpen]       = useState(false);
+  const [memberEditOpen,   setMemberEditOpen]   = useState(false);
+  const [memberDeleteOpen, setMemberDeleteOpen] = useState(false);
+  const [selectedMember,   setSelectedMember]   = useState<Member | null>(null);
 
   useEffect(() => {
     if (id && typeof id === "string") dispatch(fetchDepartmentById(id));
@@ -77,6 +91,37 @@ const DepartmentDetailPage: React.FC = () => {
     if (!department) return;
     dispatch(deleteDepartment(department._id));
   }, [dispatch, department]);
+
+  // Member role update
+  const handleUpdateMemberRole = useCallback(async (role: string, departmentId?: string) => {
+    if (!selectedMember) throw new Error("No member selected");
+    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role, departmentId })).unwrap();
+  }, [dispatch, selectedMember]);
+
+  useEffect(() => {
+    if (updateRoleSuccess) {
+      setMemberEditOpen(false);
+      setSelectedMember(null);
+      dispatch(clearUpdateRoleSuccess());
+      showToast({ message: "Member role updated successfully!", severity: "success" });
+    }
+  }, [updateRoleSuccess, dispatch, showToast]);
+
+  // Member delete
+  const handleConfirmMemberDelete = useCallback(async () => {
+    if (!selectedMember) return;
+    try { await dispatch(deleteMember({ membershipId: selectedMember._id })).unwrap(); }
+    catch (e) { console.error(e); }
+  }, [dispatch, selectedMember]);
+
+  useEffect(() => {
+    if (deleteMemberSuccess) {
+      setMemberDeleteOpen(false);
+      setSelectedMember(null);
+      dispatch(clearDeleteMemberSuccess());
+      showToast({ message: "Team member removed successfully!", severity: "success" });
+    }
+  }, [deleteMemberSuccess, dispatch, showToast]);
 
   if (deptError) {
     return (
@@ -112,9 +157,29 @@ const DepartmentDetailPage: React.FC = () => {
             canManage={canInvite}
             canAssignRoles={canAssignRoles}
             canRemove={canRemove}
+            onEdit={(m) => { setSelectedMember(m); setMemberEditOpen(true); }}
+            onDelete={(m) => { setSelectedMember(m); setMemberDeleteOpen(true); }}
           />
         )}
       </Box>
+
+      {selectedMember && (
+        <EditRoleModal
+          open={memberEditOpen}
+          onClose={() => { setMemberEditOpen(false); setSelectedMember(null); }}
+          onSave={handleUpdateMemberRole}
+          currentRole={selectedMember.role}
+          currentDepartmentId={(selectedMember as any).department?._id ?? (selectedMember as any).departmentId ?? ""}
+          memberName={selectedMember.username || selectedMember.email || "Member"}
+        />
+      )}
+
+      <DeleteMemberDialog
+        open={memberDeleteOpen}
+        memberName={selectedMember?.username || selectedMember?.email || "this member"}
+        onCancel={() => { setMemberDeleteOpen(false); setSelectedMember(null); }}
+        onConfirm={handleConfirmMemberDelete}
+      />
 
       {department && (
         <>
