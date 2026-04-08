@@ -3,6 +3,11 @@ const resolveCompanyActor = (req, res, next) => {
   console.log("   - req.company:", req.company ? `${req.company._id}` : "undefined");
   console.log("   - req.user:", req.user ? `${req.user._id}` : "undefined");
 
+  // Garder l'ID réel de l'utilisateur avant de remplacer req.user
+  if (req.user && req.user._id) {
+    req.actualUser = req.user;
+  }
+
   // Si une company existe, elle devient l'acteur principal
   if (req.company && req.company._id) {
     console.log("✅ Using company as actor:", req.company._id);
