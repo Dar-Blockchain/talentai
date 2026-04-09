@@ -79,11 +79,16 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
  */
 module.exports.hasExistingAssessment = async (candidateId, postId) => {
   try {
-    // Check if post exists
-    const post = await Post.findById(postId).select("PostSteps");
+    // Check if post exists and is not archived
+    const post = await Post.findById(postId).select("PostSteps archived");
 
     if (!post) {
       throw new Error("Post not found");
+    }
+
+    // Check if post is archived
+    if (post.archived) {
+      throw new Error("This post is archived and cannot accept assessments");
     }
 
     // If post HAS PostSteps → return false
