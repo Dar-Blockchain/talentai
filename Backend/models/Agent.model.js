@@ -68,6 +68,17 @@ const agentSchema = new mongoose.Schema({
     sparse: true,
     description: "Optional reference to AgentConfig (one-to-one)",
   },
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when agent is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when agent was archived'
+  },
 });
 
 module.exports = mongoose.models.Agent || mongoose.model("Agent", agentSchema);

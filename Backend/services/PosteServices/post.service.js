@@ -661,52 +661,72 @@ module.exports.deletePost = async (postId, userId) => {
       throw new Error("Post not found or unauthorized");
     }
 
-    // ========== DELETE ASSOCIATED RECORDS IN CASCADE ==========
+    // ========== ARCHIVE ASSOCIATED RECORDS IN CASCADE ==========
     
-    // 1. Delete PostSteps
+    // 1. Archive PostSteps
     if (post.PostSteps && post.PostSteps.length > 0) {
       const PostSteps = require('../../models/postSteps.model');
-      await PostSteps.deleteMany({ _id: { $in: post.PostSteps } });
-      console.log(`🗑️ Deleted ${post.PostSteps.length} post step(s)`);
+      await PostSteps.updateMany(
+        { _id: { $in: post.PostSteps } },
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived ${post.PostSteps.length} post step(s)`);
     }
 
-    // 2. Delete agentConfig if exists
+    // 2. Archive agentConfig if exists
     if (post.agentConfig) {
       const AgentConfig = require('../../models/AgentConfig.model');
-      await AgentConfig.findByIdAndDelete(post.agentConfig);
-      console.log(`🗑️ Deleted agentConfig: ${post.agentConfig}`);
+      await AgentConfig.findByIdAndUpdate(
+        post.agentConfig,
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived agentConfig: ${post.agentConfig}`);
     }
 
-    // 3. Delete agent if exists
+    // 3. Archive agent if exists
     if (post.agentId) {
       const Agent = require('../../models/Agent.model');
-      await Agent.findByIdAndDelete(post.agentId);
-      console.log(`🗑️ Deleted agent: ${post.agentId}`);
+      await Agent.findByIdAndUpdate(
+        post.agentId,
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived agent: ${post.agentId}`);
     }
 
-    // 4. Delete MatchingConfig if exists
+    // 4. Archive MatchingConfig if exists
     if (post.MatchingConfig) {
       const MatchingConfig = require('../../models/MatchingConfig.model');
-      await MatchingConfig.findByIdAndDelete(post.MatchingConfig);
-      console.log(`🗑️ Deleted MatchingConfig: ${post.MatchingConfig}`);
+      await MatchingConfig.findByIdAndUpdate(
+        post.MatchingConfig,
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived MatchingConfig: ${post.MatchingConfig}`);
     }
 
-    // 5. Delete associated job assessments
+    // 5. Archive associated job assessments
     const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
-    await PostInterviewAssessment.deleteMany({ post: postId });
-    console.log(`🗑️ Deleted job assessment results for post`);
+    await PostInterviewAssessment.updateMany(
+      { post: postId },
+      { archived: true, archivedAt: new Date() }
+    );
+    console.log(`📦 Archived job assessment results for post`);
 
-    // 6. Delete the post itself
-    const deletedPost = await Post.findByIdAndDelete(postId);
-
-    // 7. Update the user by removing the post reference
-    await User.updateOne(
-      { _id: userId },
-      { $pull: { post: postId } }
+    // 6. Archive the post itself
+    const archivedPost = await Post.findByIdAndUpdate(
+      postId,
+      { archived: true, archivedAt: new Date() },
+      { new: true }
     );
 
-    console.log(`✅ Post ${postId} and all associated records deleted successfully`);
-    return deletedPost;
+    // 7. Remove the post reference from user (optional - keep reference for archive history)
+    // Keep post in user.post array to maintain history
+    // await User.updateOne(
+    //   { _id: userId },
+    //   { $pull: { post: postId } }
+    // );
+
+    console.log(`✅ Post ${postId} and all associated records archived successfully`);
+    return archivedPost;
   } catch (error) {
     throw new Error(`Error deleting post: ${error.message}`);
   }

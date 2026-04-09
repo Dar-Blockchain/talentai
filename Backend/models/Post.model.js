@@ -197,6 +197,18 @@ const postSchema = new mongoose.Schema({
     description: 'How the post was created: AI generated, pipeline builder, or manual'
   },
 
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when post is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when post was archived'
+  },
+
 });
 
 const Post = mongoose.models.Post || mongoose.model("Post", postSchema);

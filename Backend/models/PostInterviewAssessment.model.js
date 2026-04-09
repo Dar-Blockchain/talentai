@@ -159,7 +159,18 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when assessment is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when assessment was archived'
+  },
 }, {
   timestamps: true,
   collection: 'PostInterviewAssessment'
