@@ -75,7 +75,7 @@ exports.createInternalCampaign = async (req, res) => {
     // `module` should be a single object describing the assessment module
     if (
       !title ||
-      !type ||
+      // !type || // TODO: re-enable when campaign type is re-introduced
       !anonymityMode ||
       !module ||
       typeof module !== "object" ||
@@ -85,7 +85,7 @@ exports.createInternalCampaign = async (req, res) => {
       return res.status(400).json({
         success: false,
         error:
-          "Missing required fields: title, type, anonymityMode, module, accessMethod",
+          "Missing required fields: title, anonymityMode, module, accessMethod",
       });
     }
 

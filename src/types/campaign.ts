@@ -23,7 +23,7 @@ export interface Campaign {
   _id: string;
   company: string;
   title: string;
-  type: CampaignType;
+  type?: CampaignType;
   description?: string;
   status: CampaignStatus;
   anonymityMode: AnonymityMode;
@@ -46,8 +46,9 @@ export interface Campaign {
 
 export interface CreateCampaignForm {
   title: string;
-  type: CampaignType;
-  description?: string;
+  // type: CampaignType; // TODO: re-enable campaign type selection
+  // customType?: string;
+  description: string;
   anonymityMode: AnonymityMode;
   module: ModuleType;
   accessMethod: AccessMethod;
@@ -56,8 +57,9 @@ export interface CreateCampaignForm {
 
 export interface CreateCampaignPayload {
   title: string;
-  type: CampaignType;
-  description?: string;
+  // type: CampaignType; // TODO: re-enable campaign type selection
+  // customType?: string;
+  description: string;
   anonymityMode: AnonymityMode;
   module: CampaignModule;
   accessMethod: AccessMethod;

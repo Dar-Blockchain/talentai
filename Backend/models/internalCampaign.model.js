@@ -31,20 +31,23 @@ const internalCampaignSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // TODO: re-enable campaign type
+    // type: {
+    //   type: String,
+    //   enum: ["PRODUCTIVITY_DIAGNOSTIC", "SKILLS_MAPPING", "ENABLEMENT", "CUSTOM"],
+    //   required: true,
+    // },
     type: {
       type: String,
-      enum: [
-        "PRODUCTIVITY_DIAGNOSTIC",
-        "SKILLS_MAPPING",
-        "ENABLEMENT",
-        "CUSTOM",
-      ],
-      required: true,
+      enum: ["PRODUCTIVITY_DIAGNOSTIC", "SKILLS_MAPPING", "ENABLEMENT", "CUSTOM"],
+      required: false,
+      default: null,
     },
 
     description: {
       type: String,
       trim: true,
+      required: true,
     },
 
     status: {

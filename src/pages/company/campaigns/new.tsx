@@ -39,6 +39,7 @@ import {
   CreateCampaignPayload,
   CreateCampaignForm,
 } from "@/types/campaign";
+
 import { CAMPAIGN_TYPES, MODULE_CONFIG } from "@/constants/campaign";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
@@ -53,7 +54,7 @@ import ParticipantsStep from "@/components/features/company/campaigns/new/Partic
 const ACCESS_OPTIONS = [
   {
     value: "LINK",
-    label: "Unique Link",
+    label: "Shareable Link",
     desc: "Anyone with the link can participate without a TalentAI account",
     Icon: InsertLinkIcon,
     color: "#059669",
@@ -118,9 +119,9 @@ const NewCampaignPage: React.FC = () => {
     mode: "onChange",
     defaultValues: {
       title: "",
-      type: "" as CampaignType,
+      // type: "" as CampaignType, // TODO: re-enable
       description: "",
-      anonymityMode: "ANONYMOUS",
+      anonymityMode: "" as "NOMINATIVE" | "ANONYMOUS",
       accessMethod: "" as "LINK" | "ACCOUNTS",
       module: "" as ModuleType,
       deadline: "",
@@ -128,16 +129,19 @@ const NewCampaignPage: React.FC = () => {
   });
 
   const accessMethod = watch("accessMethod");
-  const isLinkBased  = accessMethod === "LINK";
+  const isAccounts   = accessMethod === "ACCOUNTS";
+  // const selectedType = watch("type"); // TODO: re-enable
 
   const handleNext = async () => {
-    const valid = await trigger([
+    const fields: (keyof CreateCampaignForm)[] = [
       "title",
-      "type",
+      "description",
+      // "type", // TODO: re-enable
       "module",
       "anonymityMode",
       "accessMethod",
-    ]);
+    ];
+    const valid = await trigger(fields);
     if (valid) setActiveStep(1);
   };
 
@@ -146,6 +150,7 @@ const NewCampaignPage: React.FC = () => {
       const formattedPayload: CreateCampaignPayload = {
         ...data,
         module: { type: data.module, config: null },
+        // type and customType omitted until re-enabled
         ...(selectedParticipants.length > 0 && {
           participants: selectedParticipants,
         }),
@@ -182,7 +187,7 @@ const NewCampaignPage: React.FC = () => {
         />
 
         {/* ── Compact Stepper ── */}
-        {!isLinkBased && (
+        {isAccounts && (
         <Box
           sx={{
             display: "flex",
@@ -342,13 +347,16 @@ const NewCampaignPage: React.FC = () => {
                     <Controller
                       name="description"
                       control={control}
-                      render={({ field }) => (
+                      rules={{ required: "Description is required" }}
+                      render={({ field, fieldState }) => (
                         <AppInput
                           label="Description"
                           placeholder="Describe the purpose and goals..."
+                          required
                           multiline
                           rows={3}
                           {...field}
+                          error={fieldState.error?.message}
                         />
                       )}
                     />
@@ -573,118 +581,11 @@ const NewCampaignPage: React.FC = () => {
                   </Stack>
                 </FormCard>
 
-                <FormCard
-                  icon={<CategoryIcon sx={{ fontSize: 20 }} />}
-                  title="Campaign Type"
-                  subtitle="Select the type of campaign"
-                >
-                  <Controller
-                    name="type"
-                    control={control}
-                    rules={{ required: "Campaign type is required" }}
-                    render={({ field }) => (
-                      <FormControl error={!!errors.type} fullWidth>
-                        <Box
-                          sx={{
-                            display: "grid",
-                            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                            gap: 1.5,
-                          }}
-                        >
-                          {CAMPAIGN_TYPES.map((type) => {
-                            const Icon = type.icon;
-                            const isSelected = field.value === type.value;
-
-                            return (
-                              <Box
-                                key={type.value}
-                                onClick={() => field.onChange(type.value)}
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "flex-start",
-                                  gap: 1,
-                                  p: 1,
-                                  borderRadius: 1.5,
-                                  cursor: "pointer",
-                                  border: `1px solid ${
-                                    isSelected
-                                      ? type.color
-                                      : theme.palette.divider
-                                  }`,
-                                  bgcolor: isSelected
-                                    ? alpha(type.color, 0.08)
-                                    : "transparent",
-                                  transition: "all 0.2s",
-                                  "&:hover": {
-                                    borderColor: type.color,
-                                    bgcolor: alpha(type.color, 0.04),
-                                  },
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: 1.5,
-                                    bgcolor: isSelected
-                                      ? alpha(type.color, 0.1)
-                                      : alpha(theme.palette.grey[500], 0.08),
-                                    color: isSelected
-                                      ? type.color
-                                      : theme.palette.text.secondary,
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <Icon sx={{ fontSize: 16 }} />
-                                </Box>
-
-                                <Box sx={{ flex: 1, minWidth: 0 }}>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontWeight: 500, fontSize: 13 }}
-                                  >
-                                    {type.label}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{
-                                      display: "block",
-                                      lineHeight: 1.3,
-                                      mt: 0.25,
-                                      fontSize: 11,
-                                    }}
-                                  >
-                                    {type.description}
-                                  </Typography>
-                                </Box>
-
-                                {isSelected && (
-                                  <CheckCircleIcon
-                                    sx={{
-                                      fontSize: 16,
-                                      color: type.color,
-                                      mt: 0.5,
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                            );
-                          })}
-                        </Box>
-
-                        {errors.type && (
-                          <FormHelperText error sx={{ mt: 1 }}>
-                            {errors.type.message}
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-                    )}
-                  />
+                {/* TODO: re-enable Campaign Type selection
+                <FormCard icon={<CategoryIcon sx={{ fontSize: 20 }} />} title="Campaign Type" subtitle="Select the type of campaign">
+                  ...
                 </FormCard>
+                */}
 
                 {/* Assessment Modules Card */}
                 <FormCard
@@ -828,12 +729,12 @@ const NewCampaignPage: React.FC = () => {
                 {/* Step 1 actions */}
                 <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 1 }}>
                   <AppButton
-                    label={isLinkBased ? (isSubmitting ? "Creating..." : "Create Campaign") : "Next: Who Can Participate"}
+                    label={isAccounts ? "Next: Who Can Participate" : (isSubmitting ? "Creating..." : "Create Campaign")}
                     variant="contained"
                     size="large"
-                    loading={isLinkBased && isSubmitting}
-                    disabled={isLinkBased && isSubmitting}
-                    onClick={isLinkBased ? handleSubmit(onSubmit) : handleNext}
+                    loading={!isAccounts && isSubmitting}
+                    disabled={!isAccounts && isSubmitting}
+                    onClick={isAccounts ? handleNext : handleSubmit(onSubmit)}
                     sx={{
                       px: 4,
                       background: "linear-gradient(45deg, #0D9488 30%, #14B8A6 90%)",
