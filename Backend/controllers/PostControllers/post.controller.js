@@ -307,7 +307,9 @@ exports.getUserPosts = async (req, res) => {
         .json({ success: false, error: "User not authenticated" });
     }
 
-    const { page = 1, limit = 6, search = "", sort = "newest", status = "" } = req.query;
+    const { page = 1, limit = 6, search = "", sort = "newest", status = "", archived = "false" } = req.query;
+    // Parse archived parameter: "true" string becomes boolean true, else false
+    const showArchived = archived === "true";
 
     // Parse and validate pagination
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -324,6 +326,7 @@ exports.getUserPosts = async (req, res) => {
       search,
       sortOption,
       status,
+      showArchived,
     );
 
     res.status(200).json({

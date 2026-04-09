@@ -542,15 +542,19 @@ module.exports.getPostsByUserId = async (userId) => {
 };
 
 // Get user's posts with pagination, search and sorting
-module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '') => {
+module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '', showArchived = false) => {
   try {
     // Validate pagination parameters
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
     const skip = (pageNum - 1) * limitNum;
 
-    // Build query with search filter
+    // Build query with search filter and archive filter
     let query = { user: userId };
+    // By default, show only non-archived posts (archived: false or not set)
+    if (!showArchived) {
+      query.archived = { $ne: true }; // Show posts where archived is false or not set
+    }
     if (search && search.trim() !== '') {
       query['jobDetails.title'] = { $regex: search.trim(), $options: 'i' }; // Case-insensitive search
     }
