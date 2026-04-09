@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
+import { useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
@@ -7,19 +8,24 @@ import SettingsProfileCard from "@/components/features/company/settings/Settings
 import CompanyInfoCard from "@/components/features/company/settings/CompanyInfoCard";
 import ContactCard from "@/components/features/company/settings/ContactCard";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 
 type EditSection = "company" | "contact" | null;
 
 const SettingsPage: React.FC = () => {
   useCompanyAccess("canViewCompanyProfile");
+  const empPerms = useSelector(selectEmployeePermissions);
   const {
-    profile, loading, uploadingImage, fieldErrors,
+    profile, loading, uploadingImage, fieldErrors, isEmployee,
     handleInputChange, handleImageUpload, handleSaveProfile, setIsEditing,
   } = useCompanyProfileManagement();
 
+  const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
+  const readOnly = !canEdit;
+
   const [editSection, setEditSection] = useState<EditSection>(null);
 
-  const startEdit  = (s: "company" | "contact") => { setEditSection(s); setIsEditing(true); };
+  const startEdit  = (s: "company" | "contact") => { if (readOnly) return; setEditSection(s); setIsEditing(true); };
   const cancelEdit = () => { setEditSection(null); setIsEditing(false); };
   const saveEdit   = async () => { await handleSaveProfile(); setEditSection(null); };
 
@@ -42,6 +48,7 @@ const SettingsPage: React.FC = () => {
               profile={profile}
               uploadingImage={uploadingImage}
               onImageUpload={handleImageUpload}
+              readOnly={readOnly}
             />
           </Box>
 
@@ -56,6 +63,7 @@ const SettingsPage: React.FC = () => {
               onCancel={cancelEdit}
               onSave={saveEdit}
               onInputChange={handleInputChange}
+              readOnly={readOnly}
             />
 
             <ContactCard
@@ -67,6 +75,7 @@ const SettingsPage: React.FC = () => {
               onCancel={cancelEdit}
               onSave={saveEdit}
               onInputChange={handleInputChange}
+              readOnly={readOnly}
             />
           </Box>
 

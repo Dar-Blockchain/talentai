@@ -45,9 +45,10 @@ export const useCompanyProfileManagement = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
 
-  const { user, profile: reduxProfile, loading, error } = useSelector(
+  const { user, profile: reduxProfile, companyMembership, loading, error } = useSelector(
     (state: RootState) => state.user.connectedUser
   );
+  const isEmployee = user?.role === "Employee";
 
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
@@ -71,19 +72,60 @@ export const useCompanyProfileManagement = () => {
     }
   }, [router.isReady, router.query.tab]);
 
-  // Update local profile state when Redux profile changes
-  useEffect(() => {
-    if (reduxProfile && user) {
-      console.log('🔍 [useCompanyProfileManagement] Redux profile structure:', {
-        hasCompanyDetails: !!reduxProfile.companyDetails,
-        companyDetailsKeys: reduxProfile.companyDetails ? Object.keys(reduxProfile.companyDetails) : [],
-        topLevelKeys: Object.keys(reduxProfile),
-        companyName: reduxProfile.companyDetails?.name,
-        directName: reduxProfile.name,
-        userId: reduxProfile.userId
-      });
+  // Normalize company size from backend format to frontend format
+  // Backend: "11–50 employees" -> Frontend: "11-50"
+  const normalizeCompanySize = (size: string | undefined): string => {
+    if (!size) return '';
+    return size.replace(/\s*employees?$/i, '').replace(/–/g, '-');
+  };
 
-      // Construct avatar URL
+  // Update local profile state when Redux data changes
+  useEffect(() => {
+    if (!user) return;
+
+    if (isEmployee) {
+      // For employees: use the company's profile from companyMembership
+      const companyUser = companyMembership?.company;
+      const companyProfile = companyUser?.profile;
+      if (!companyUser) return;
+
+      const companyData = companyProfile?.companyDetails || companyProfile || {};
+      const normalizedSize = normalizeCompanySize(companyData?.size);
+      const companyName = companyData?.name || companyUser?.username || '';
+      const avatarUrl = companyUser?.user_image
+        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${companyUser.user_image}`
+        : '';
+
+      setProfile({
+        username: companyUser.username || '',
+        email: companyUser.email || companyData?.email || '',
+        requiredExperienceLevel: companyProfile?.requiredExperienceLevel || companyData?.requiredExperienceLevel || 'Mid Level',
+        targetRole: companyProfile?.targetRole || '',
+        firstName: '',
+        lastName: '',
+        gender: 'Male',
+        country: companyData?.location || 'Tunisia',
+        language: 'English',
+        timezone: 'UTC+01:00',
+        phone: companyData?.phone || '',
+        address: companyData?.address || '',
+        linkedin: companyData?.linkedin || '',
+        githubUrl: '',
+        personalWebsite: companyData?.personalWebsite || '',
+        location: companyData?.location || '',
+        avatar: avatarUrl,
+        profileType: 'Company',
+        companyName,
+        name: companyName,
+        industry: companyData?.industry || '',
+        companySize: normalizedSize,
+        size: normalizedSize,
+        website: companyData?.website || '',
+        employmentType: companyData?.employmentType || 'Remote',
+        requiredSkills: companyProfile?.requiredSkills || companyData?.requiredSkills || [],
+      });
+    } else if (reduxProfile) {
+      // For company owner: use their own profile
       let avatarUrl = '';
       if (reduxProfile.user_image) {
         avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${reduxProfile.user_image}`;
@@ -91,26 +133,9 @@ export const useCompanyProfileManagement = () => {
         avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${user.user_image}`;
       }
 
-      // Normalize company size from backend format to frontend format
-      // Backend: "11–50 employees" -> Frontend: "11-50"
-      const normalizeCompanySize = (size: string | undefined): string => {
-        if (!size) return '';
-        // Remove " employees" suffix and replace en-dash with hyphen
-        return size.replace(/\s*employees?$/i, '').replace(/–/g, '-');
-      };
-
-      // Try multiple possible locations for company data
       const companyData = reduxProfile.companyDetails || reduxProfile;
       const normalizedSize = normalizeCompanySize(companyData?.size);
-
-      // Extract company name from multiple possible locations
-      const companyName = companyData?.name ||
-        reduxProfile.name ||
-        reduxProfile.userId?.username ||
-        user?.username ||
-        '';
-
-      console.log('🔍 [useCompanyProfileManagement] Extracted company name:', companyName);
+      const companyName = companyData?.name || reduxProfile.name || reduxProfile.userId?.username || user?.username || '';
 
       setProfile({
         username: user.username || '',
@@ -131,7 +156,7 @@ export const useCompanyProfileManagement = () => {
         location: reduxProfile.companyDetails?.location || companyData?.location || '',
         avatar: avatarUrl,
         profileType: 'Company',
-        companyName: companyName,
+        companyName,
         name: companyName,
         industry: companyData?.industry || '',
         companySize: normalizedSize,
@@ -141,7 +166,7 @@ export const useCompanyProfileManagement = () => {
         requiredSkills: reduxProfile?.requiredSkills || companyData?.requiredSkills || [],
       });
     }
-  }, [reduxProfile, user]);
+  }, [reduxProfile, companyMembership, user, isEmployee]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -276,8 +301,9 @@ export const useCompanyProfileManagement = () => {
 
     setUploadingImage(true);
 
+    const targetUserId = isEmployee ? companyMembership?.company?._id : undefined;
     try {
-      await dispatch(uploadProfileImage(file)).unwrap();
+      await dispatch(uploadProfileImage({ file, targetUserId })).unwrap();
       await dispatch(getMyProfile());
       setSaveSuccess(true);
       showToast({ message: 'Profile picture updated successfully!', severity: 'success' });
@@ -356,8 +382,11 @@ const handleSaveProfile = useCallback(async () => {
   }
 
   // 3️⃣ API CALL (ONLY HERE)
+  const targetUserId = isEmployee
+    ? companyMembership?.company?._id
+    : undefined;
   try {
-    await dispatch(updateProfile(updatePayload)).unwrap();
+    await dispatch(updateProfile({ payload: updatePayload, targetUserId })).unwrap();
     await dispatch(getMyProfile()).unwrap();
     setIsEditing(false);
     setSaveSuccess(true);
@@ -380,6 +409,7 @@ const handleSaveProfile = useCallback(async () => {
     // State
     activeTab,
     isEditing,
+    isEmployee,
     profile,
     loading,
     error,

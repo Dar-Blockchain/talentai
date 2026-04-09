@@ -253,7 +253,7 @@ const JoinTeamPage: React.FC = () => {
 
   const roleStr     = (currentInvitation as any).role as string;
   const role        = resolveRole(roleStr);
-  const invitedBy   = (currentInvitation as any).invitedBy?.name || (currentInvitation as any).invitedBy?.username || (currentInvitation as any).invitedBy?.email;
+  const invitedBy   = (currentInvitation as any).company?.name || (currentInvitation as any).company?.email;
   const companyLetter = (invitedBy?.[0] ?? "C").toUpperCase();
 
   return (

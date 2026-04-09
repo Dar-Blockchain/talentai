@@ -14,12 +14,14 @@ interface SettingsProfileCardProps {
   profile: UserProfile;
   uploadingImage: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readOnly?: boolean;
 }
 
 const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({
   profile,
   uploadingImage,
   onImageUpload,
+  readOnly = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver]   = useState(false);
@@ -28,6 +30,7 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({
   const initials    = displayName.charAt(0).toUpperCase();
 
   const handleDrop = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files[0];
@@ -41,19 +44,22 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({
     <SectionCard>
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", py: 1, gap: 1.5 }}>
 
-        {/* Clickable / draggable avatar */}
+        {/* Avatar — clickable only when not readOnly */}
         <Box
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onDragOver={readOnly ? undefined : (e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={readOnly ? undefined : () => setDragOver(false)}
+          onDrop={readOnly ? undefined : handleDrop}
+          onClick={readOnly ? undefined : () => fileInputRef.current?.click()}
           sx={{
-            position: "relative", cursor: "pointer",
+            position: "relative",
+            cursor: readOnly ? "default" : "pointer",
             width: 72, height: 72, borderRadius: "50%",
-            border: `2px dashed ${dragOver ? TEAL : TEAL_BORDER}`,
+            border: `2px ${readOnly ? "solid" : "dashed"} ${dragOver ? TEAL : TEAL_BORDER}`,
             transition: "all 0.2s",
-            "&:hover": { borderColor: TEAL },
-            "&:hover .upload-overlay": { opacity: 1 },
+            ...(!readOnly && {
+              "&:hover": { borderColor: TEAL },
+              "&:hover .upload-overlay": { opacity: 1 },
+            }),
           }}
         >
           {uploadingImage ? (
@@ -69,19 +75,21 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({
             </Avatar>
           )}
 
-          <Box
-            className="upload-overlay"
-            sx={{
-              position: "absolute", inset: 0, borderRadius: "50%",
-              bgcolor: "rgba(13,148,136,0.7)", opacity: 0, transition: "opacity 0.2s",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <CloudUploadOutlined sx={{ fontSize: 22, color: "#fff" }} />
-          </Box>
+          {!readOnly && (
+            <Box
+              className="upload-overlay"
+              sx={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                bgcolor: "rgba(13,148,136,0.7)", opacity: 0, transition: "opacity 0.2s",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <CloudUploadOutlined sx={{ fontSize: 22, color: "#fff" }} />
+            </Box>
+          )}
         </Box>
 
-        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onImageUpload} />
+        {!readOnly && <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onImageUpload} />}
 
         {/* Name + email */}
         <Box>

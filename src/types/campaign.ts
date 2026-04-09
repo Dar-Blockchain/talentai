@@ -35,6 +35,7 @@ export interface Campaign {
   participantCount?: number;
   sessionCount?: number;
   participantStatus?: ParticipantStatus;
+  targetDepartment?: string | null;
   progress?: number;
   score?: number;
   completedAt?: string;
@@ -119,6 +120,7 @@ export interface SkillTestModule {
     skill: string;
     passingScore?: number;
     maxAttempts?: number;
+    durationMinutes?: number;
   } | null;
 }
 

@@ -66,11 +66,14 @@ export const createOrUpdateProfile = createAsyncThunk<
 
 export const updateProfile = createAsyncThunk<
   any,
-  any,
+  { payload: any; targetUserId?: string },
   { rejectValue: string }
->("user/updateProfile", async (updatePayload, { rejectWithValue }) => {
+>("user/updateProfile", async ({ payload: updatePayload, targetUserId }, { getState, rejectWithValue }) => {
   try {
-    const response = await axiosInstance.put("profiles/", updatePayload);
+    const state = getState() as any;
+    const connectedUser = state.user.connectedUser.user;
+    const userId = targetUserId || connectedUser?._id || connectedUser?.id;
+    const response = await axiosInstance.put(`profiles/${userId}`, updatePayload);
     return response.data;
   } catch (error: any) {
     return rejectWithValue(
@@ -96,14 +99,17 @@ export const getMyProfile = createAsyncThunk<
 
 export const uploadProfileImage = createAsyncThunk<
   any,
-  File,
+  { file: File; targetUserId?: string },
   { rejectValue: string }
->("user/uploadProfileImage", async (file, { rejectWithValue }) => {
+>("user/uploadProfileImage", async ({ file, targetUserId }, { getState, rejectWithValue }) => {
   try {
+    const state = getState() as any;
+    const connectedUser = state.user.connectedUser.user;
+    const userId = targetUserId || connectedUser?._id || connectedUser?.id;
     const formData = new FormData();
     formData.append("user_image", file);
 
-    const response = await axiosInstance.put("profiles/", formData, {
+    const response = await axiosInstance.put(`profiles/${userId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;

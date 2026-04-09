@@ -28,7 +28,7 @@ interface Props {
 const CampaignSidebar: React.FC<Props> = ({ campaign, showLastUpdated = true }) => {
   const showLink =
     !!campaign.linkToken &&
-    (campaign.accessMethod === "LINK" || campaign.accessMethod === "BOTH");
+    (campaign.accessMethod === "LINK");
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>

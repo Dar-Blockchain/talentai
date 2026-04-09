@@ -27,6 +27,7 @@ interface CompanyInfoCardProps {
   onCancel: () => void;
   onSave: () => void;
   onInputChange: (field: keyof UserProfile, value: string) => void;
+  readOnly?: boolean;
 }
 
 const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({
@@ -38,12 +39,13 @@ const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({
   onCancel,
   onSave,
   onInputChange,
+  readOnly = false,
 }) => (
   <SectionCard>
     <SectionHeader
       title="Company Information"
       subtitle="Basic company details and profile settings"
-      action={
+      action={!readOnly ? (
         <EditActions
           isEditing={isEditing}
           loading={loading}
@@ -51,7 +53,7 @@ const CompanyInfoCard: React.FC<CompanyInfoCardProps> = ({
           onCancel={onCancel}
           onSave={onSave}
         />
-      }
+      ) : undefined}
     />
 
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>

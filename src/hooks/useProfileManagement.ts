@@ -225,7 +225,7 @@ export const useProfileManagement = () => {
     setUploadingImage(true);
 
     try {
-      await dispatch(uploadProfileImage(file)).unwrap();
+      await dispatch(uploadProfileImage({ file })).unwrap();
       await dispatch(getMyProfile());
       setSaveSuccess(true);
       showToast({ message: 'Profile picture updated successfully!', severity: 'success' });

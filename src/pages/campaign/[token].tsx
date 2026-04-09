@@ -3,51 +3,64 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  TextField,
-  alpha,
-} from '@mui/material';
+import { Box, Typography, CircularProgress, TextField, InputAdornment } from '@mui/material';
 import dynamic from 'next/dynamic';
 import {
   ErrorOutline as ErrorIcon,
   LockOutlined as LockIcon,
-  CalendarTodayOutlined as CalendarIcon,
-  BusinessOutlined as CompanyIcon,
   PlayArrowOutlined as PlayIcon,
   LoginOutlined as LoginIcon,
   AssignmentOutlined as QuestionnaireIcon,
   PsychologyOutlined as AIIcon,
   AssignmentTurnedInOutlined as SkillIcon,
   PersonOutlined as PersonIcon,
+  EmailOutlined as EmailIcon,
+  CheckCircleOutline as CheckIcon,
+  ArrowForwardOutlined as ArrowIcon,
+  TimerOutlined as TimerIcon,
+  GroupOutlined as GroupIcon,
+  BusinessOutlined as CompanyIcon,
 } from '@mui/icons-material';
-import {
-  fetchCampaignByLinkToken,
-  joinCampaignByLink,
-} from '@/store/slices/campaignSlice';
+import { fetchCampaignByLinkToken, joinCampaignByLink } from '@/store/slices/campaignSlice';
 import { AppDispatch, RootState } from '@/store/store';
 import { Campaign } from '@/types/campaign';
 import { fmtDate } from '@/utils/functions';
 
-const MODULE_ICONS: Record<string, React.ElementType> = {
-  QUESTIONNAIRE: QuestionnaireIcon,
-  AI_INTERVIEW:  AIIcon,
-  SKILL_TEST:    SkillIcon,
+/* ── palette ──────────────────────────────────────────────────────────────── */
+const P = {
+  indigo:    '#6366F1',
+  indigoSoft:'#EEF2FF',
+  indigoBdr: '#C7D2FE',
+  violet:    '#8B5CF6',
+  violetSoft:'#F5F3FF',
+  amber:     '#D97706',
+  amberSoft: '#FFFBEB',
+  slate50:   '#F8FAFC',
+  slate100:  '#F1F5F9',
+  slate200:  '#E2E8F0',
+  slate400:  '#94A3B8',
+  slate500:  '#64748B',
+  slate700:  '#334155',
+  slate900:  '#0F172A',
+  red:       '#E11D48',
+  redSoft:   '#FFF1F2',
+  redBdr:    '#FECDD3',
+  green:     '#16A34A',
+  greenSoft: '#F0FDF4',
+  white:     '#fff',
 };
 
-const MODULE_LABELS: Record<string, string> = {
-  QUESTIONNAIRE: 'Questionnaire',
-  AI_INTERVIEW:  'AI Interview',
-  SKILL_TEST:    'Skill Test',
+const MODULE_META: Record<string, { icon: React.ElementType; label: string; accent: string; soft: string; bdr: string; desc: string }> = {
+  QUESTIONNAIRE: { icon: QuestionnaireIcon, label: 'Questionnaire',   accent: P.violet,  soft: P.violetSoft, bdr: '#DDD6FE', desc: 'Answer a series of questions at your own pace.' },
+  AI_INTERVIEW:  { icon: AIIcon,           label: 'AI Interview',    accent: P.indigo,  soft: P.indigoSoft, bdr: P.indigoBdr, desc: 'Have a dynamic conversation with our AI interviewer.' },
+  SKILL_TEST:    { icon: SkillIcon,        label: 'Skill Assessment', accent: P.amber,   soft: P.amberSoft,  bdr: '#FDE68A', desc: 'Demonstrate your skills through practical tasks.' },
 };
 
+/* ── page ─────────────────────────────────────────────────────────────────── */
 const CampaignJoinPage: React.FC = () => {
   const router   = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { token } = router.query as { token?: string };
-
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -55,294 +68,384 @@ const CampaignJoinPage: React.FC = () => {
   const [error,    setError]    = useState<string | null>(null);
   const [joining,  setJoining]  = useState(false);
   const [joinErr,  setJoinErr]  = useState<string | null>(null);
-
-  // LINK+NOMINATIVE form state (for unauthenticated users)
   const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [nameErr,  setNameErr]  = useState('');
 
-  // ── Fetch campaign by token ─────────────────────────────────────────────────
   useEffect(() => {
     if (!router.isReady || !token) return;
     setLoading(true);
     dispatch(fetchCampaignByLinkToken(token))
-      .unwrap()
-      .then((c) => setCampaign(c))
-      .catch((e) => setError(e))
-      .finally(() => setLoading(false));
+      .unwrap().then(setCampaign).catch(setError).finally(() => setLoading(false));
   }, [router.isReady, token, dispatch]);
 
-  // ── Auto-join for logged-in users on NOMINATIVE campaigns ──────────────────
   useEffect(() => {
     if (!campaign || !user || joining || joinErr) return;
-    if (campaign.anonymityMode === 'NOMINATIVE') {
-      handleJoin();
-    }
+    if (campaign.anonymityMode === 'NOMINATIVE') handleJoin();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaign, user]);
 
   const handleJoin = async (opts?: { name?: string; email?: string }) => {
     if (!token) return;
-    setJoining(true);
-    setJoinErr(null);
+    setJoining(true); setJoinErr(null);
     try {
-      const result = await dispatch(joinCampaignByLink({ token, ...opts })).unwrap();
-      // LINK campaigns (anonymous or no-account nominative) → public assessment page
-      if (result.anonymousToken || result.linkAccessToken) {
-        router.push(`/campaign/assessment/${result.campaignId}`);
-      } else {
-        // Logged-in employee → employee assessment page
-        router.push(`/employee/campaigns/${result.campaignId}/assessment`);
-      }
-    } catch (e: any) {
-      setJoinErr(e);
-      setJoining(false);
-    }
+      const r = await dispatch(joinCampaignByLink({ token, ...opts })).unwrap();
+      if (r.anonymousToken || r.linkAccessToken) router.push(`/campaign/assessment/${r.campaignId}`);
+      else router.push(`/employee/campaigns/${r.campaignId}/assessment`);
+    } catch (e: any) { setJoinErr(e); setJoining(false); }
   };
 
   const handleFormSubmit = () => {
-    if (!name.trim()) {
-      setNameErr('Please enter your name');
-      return;
-    }
+    if (!name.trim()) { setNameErr('Please enter your name'); return; }
     setNameErr('');
     handleJoin({ name: name.trim(), email: email.trim() || undefined });
   };
 
-  const handleLoginRedirect = () => {
-    router.push(`/signin?returnUrl=${encodeURIComponent(router.asPath)}`);
-  };
+  const goSignIn = () => router.push(`/signin?returnUrl=${encodeURIComponent(router.asPath)}`);
 
-  // ── Loading ─────────────────────────────────────────────────────────────────
-  if (!router.isReady || loading) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F8FAFC' }}>
-        <CircularProgress sx={{ color: '#0D9488' }} />
+  /* loading */
+  if (!router.isReady || loading) return (
+    <Shell bg={`linear-gradient(160deg, ${P.indigoSoft} 0%, ${P.white} 60%, ${P.violetSoft} 100%)`}>
+      <Box sx={{ textAlign: 'center' }}>
+        <Box sx={{
+          px: 2.5, py: 1.25, borderRadius: '14px', mx: 'auto', mb: 3,
+          bgcolor: P.white, border: `1px solid ${P.slate200}`,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          display: 'inline-flex', alignItems: 'center',
+        }}>
+          <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 24, display: 'block' }} />
+        </Box>
+        <CircularProgress size={20} thickness={4} sx={{ color: P.indigo }} />
+        <Typography sx={{ fontSize: '0.8rem', color: P.slate400, mt: 1.5, fontWeight: 500 }}>Loading campaign…</Typography>
       </Box>
-    );
-  }
+    </Shell>
+  );
 
-  // ── Error ───────────────────────────────────────────────────────────────────
-  if (error || !campaign) {
-    return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F8FAFC', p: 3 }}>
-        <Box sx={{ textAlign: 'center', maxWidth: 400 }}>
-          <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-            <ErrorIcon sx={{ fontSize: 32, color: '#EF4444' }} />
+  /* error */
+  if (error || !campaign) return (
+    <Shell bg={`linear-gradient(160deg, ${P.indigoSoft} 0%, ${P.white} 60%, ${P.redSoft} 100%)`}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 400, width: '100%', gap: 2 }}>
+        <Box sx={{
+          px: 2.5, py: 1.25, borderRadius: '14px',
+          bgcolor: P.white, border: `1px solid ${P.slate200}`,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          display: 'inline-flex',
+        }}>
+          <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 22, display: 'block' }} />
+        </Box>
+        <Box sx={{
+          width: '100%', textAlign: 'center',
+          bgcolor: P.white, borderRadius: '24px', p: 5,
+          border: `1px solid ${P.redBdr}`,
+          boxShadow: '0 4px 32px rgba(0,0,0,0.06)',
+        }}>
+          <Box sx={{
+            width: 64, height: 64, borderRadius: '50%', mx: 'auto', mb: 3,
+            bgcolor: P.redSoft, border: `1px solid ${P.redBdr}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <ErrorIcon sx={{ fontSize: 30, color: P.red }} />
           </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: '1.25rem', color: '#0F172A', mb: 1 }}>
-            Campaign Not Found
-          </Typography>
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748B' }}>
+          <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: P.slate900, mb: 1 }}>Campaign Not Found</Typography>
+          <Typography sx={{ fontSize: '0.85rem', color: P.slate500, lineHeight: 1.65 }}>
             {error ?? 'This link is invalid or the campaign is no longer available.'}
           </Typography>
         </Box>
       </Box>
-    );
-  }
+    </Shell>
+  );
 
   const isExpired   = campaign.deadline ? new Date(campaign.deadline).getTime() < Date.now() : false;
   const isAnon      = campaign.anonymityMode === 'ANONYMOUS';
   const isAccounts  = campaign.accessMethod === 'ACCOUNTS';
-  const ModIcon     = MODULE_ICONS[campaign.module?.type] ?? QuestionnaireIcon;
-  const modLabel    = MODULE_LABELS[campaign.module?.type] ?? campaign.module?.type;
+  const mod         = MODULE_META[campaign.module?.type] ?? MODULE_META.QUESTIONNAIRE;
+  const ModIcon     = mod.icon;
   const companyName = campaign.company && typeof campaign.company === 'object' ? (campaign.company as any).name : null;
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#F8FAFC', p: 3 }}>
+    <Shell bg={`linear-gradient(160deg, ${P.indigoSoft} 0%, ${P.white} 55%, ${P.violetSoft} 100%)`}>
+
+      {/* subtle dot grid */}
       <Box sx={{
-        maxWidth: 480,
-        width: '100%',
-        bgcolor: '#fff',
-        borderRadius: '20px',
-        border: '1px solid #EDEEF0',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-        overflow: 'hidden',
-      }}>
-        {/* Header */}
-        <Box sx={{
-          background: 'linear-gradient(135deg, #0D9488 0%, #14B8A6 100%)',
-          p: 3,
-          pb: 2.5,
-        }}>
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: `radial-gradient(${P.slate200} 1px, transparent 1px)`,
+        backgroundSize: '28px 28px', opacity: 0.55,
+      }} />
+
+      <Box sx={{ maxWidth: 460, width: '100%', position: 'relative', zIndex: 1 }}>
+
+        {/* logo */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3.5 }}>
           <Box sx={{
-            width: 48, height: 48, borderRadius: '14px',
-            bgcolor: 'rgba(255,255,255,0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            mb: 1.5,
+            px: 2.5, py: 1.25, borderRadius: '16px',
+            bgcolor: P.white, border: `1px solid ${P.slate200}`,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            display: 'inline-flex', alignItems: 'center',
           }}>
-            <ModIcon sx={{ fontSize: 26, color: '#fff' }} />
+            <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 26, display: 'block' }} />
           </Box>
-          <Typography sx={{ fontWeight: 800, fontSize: '1.25rem', color: '#fff', lineHeight: 1.3, mb: 0.5 }}>
-            {campaign.title}
-          </Typography>
-          {campaign.description && (
-            <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
-              {campaign.description}
-            </Typography>
-          )}
         </Box>
 
-        {/* Meta */}
-        <Box sx={{ px: 3, pt: 2.5, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {companyName && (
-            <MetaRow icon={<CompanyIcon sx={{ fontSize: 15, color: '#0D9488' }} />} label="By" value={companyName} />
-          )}
-          <MetaRow
-            icon={<Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#0D9488' }} />}
-            label="Type"
-            value={modLabel}
-          />
-          {campaign.deadline && (
-            <MetaRow
-              icon={<CalendarIcon sx={{ fontSize: 15, color: isExpired ? '#EF4444' : '#64748B' }} />}
-              label="Deadline"
-              value={
-                <Typography component="span" sx={{ fontSize: '0.8rem', fontWeight: 600, color: isExpired ? '#EF4444' : '#0F172A' }}>
-                  {fmtDate(campaign.deadline)}{isExpired ? ' — Expired' : ''}
-                </Typography>
-              }
-            />
-          )}
-          <MetaRow
-            icon={<LockIcon sx={{ fontSize: 15, color: '#94A3B8' }} />}
-            label="Mode"
-            value={isAnon ? 'Anonymous' : 'Nominative'}
-          />
-        </Box>
+        {/* card */}
+        <Box sx={{
+          bgcolor: P.white, borderRadius: '24px',
+          border: `1px solid ${P.slate200}`,
+          boxShadow: '0 8px 48px rgba(0,0,0,0.07)',
+          overflow: 'hidden',
+        }}>
 
-        {/* Action area */}
-        <Box sx={{ px: 3, pb: 3 }}>
-          {isExpired ? (
-            <Box sx={{ p: 2, borderRadius: '12px', bgcolor: '#FEF2F2', border: '1px solid #FECACA', textAlign: 'center' }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#EF4444' }}>
-                This campaign has expired
+          {/* ── header ── */}
+          <Box sx={{
+            px: { xs: 3, sm: 4 }, pt: { xs: 3.5, sm: 4 }, pb: 3,
+            borderBottom: `1px solid ${P.slate100}`,
+            background: `linear-gradient(160deg, ${mod.soft} 0%, ${P.white} 100%)`,
+          }}>
+            {/* icon */}
+            <Box sx={{
+              width: 52, height: 52, borderRadius: '15px', mb: 2.5,
+              bgcolor: P.white, border: `1px solid ${mod.bdr}`,
+              boxShadow: `0 2px 10px ${mod.bdr}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <ModIcon sx={{ fontSize: 26, color: mod.accent }} />
+            </Box>
+
+            {/* type badge */}
+            <Box sx={{
+              display: 'inline-flex', alignItems: 'center', gap: 0.6,
+              px: 1.125, py: '4px', borderRadius: '999px',
+              bgcolor: mod.soft, border: `1px solid ${mod.bdr}`, mb: 1.5,
+            }}>
+              <Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: mod.accent }} />
+              <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, color: mod.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {mod.label}
               </Typography>
             </Box>
 
-          ) : isAccounts ? (
-            /* ACCOUNTS campaign reached via link → must log in */
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: alpha('#0D9488', 0.06), border: `1px solid ${alpha('#0D9488', 0.15)}`, textAlign: 'center' }}>
-                <Typography sx={{ fontSize: '0.8rem', color: '#0F172A', fontWeight: 600 }}>
-                  This campaign requires a TalentAI account
+            <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.2rem', sm: '1.35rem' }, color: P.slate900, lineHeight: 1.3, mb: campaign.description ? 0.75 : 0 }}>
+              {campaign.title}
+            </Typography>
+            {campaign.description && (
+              <Typography sx={{ fontSize: '0.825rem', color: P.slate500, lineHeight: 1.65 }}>
+                {campaign.description}
+              </Typography>
+            )}
+          </Box>
+
+          {/* ── meta row ── */}
+          <Box sx={{
+            px: { xs: 3, sm: 4 }, py: 2.25,
+            display: 'flex', flexWrap: 'wrap', gap: 0.875,
+            borderBottom: `1px solid ${P.slate100}`,
+          }}>
+            {companyName && <Chip icon={<CompanyIcon sx={{ fontSize: 12 }} />} label={companyName} />}
+            {campaign.deadline && (
+              <Chip
+                icon={<TimerIcon sx={{ fontSize: 12 }} />}
+                label={isExpired ? 'Expired' : `Until ${fmtDate(campaign.deadline)}`}
+                danger={isExpired}
+              />
+            )}
+            <Chip icon={<LockIcon sx={{ fontSize: 12 }} />} label={isAnon ? 'Anonymous' : 'Nominative'} />
+          </Box>
+
+          {/* ── what to expect ── */}
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2.5, borderBottom: `1px solid ${P.slate100}` }}>
+            <Box sx={{
+              display: 'flex', alignItems: 'flex-start', gap: 1.5,
+              p: 2, borderRadius: '12px',
+              bgcolor: mod.soft, border: `1px solid ${mod.bdr}`,
+            }}>
+              <CheckIcon sx={{ fontSize: 17, color: mod.accent, mt: '1px', flexShrink: 0 }} />
+              <Typography sx={{ fontSize: '0.8rem', color: P.slate700, lineHeight: 1.6 }}>
+                {mod.desc}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* ── action ── */}
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 3 }}>
+
+            {isExpired ? (
+              <StatusBox icon={<TimerIcon sx={{ fontSize: 22, color: P.red }} />} danger>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: P.red }}>Campaign has expired</Typography>
+                <Typography sx={{ fontSize: '0.775rem', color: '#FB7185', mt: 0.25 }}>The deadline has passed. Please contact the organiser.</Typography>
+              </StatusBox>
+
+            ) : isAccounts ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <StatusBox icon={<GroupIcon sx={{ fontSize: 20, color: P.indigo }} />}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: P.slate900 }}>Account required</Typography>
+                  <Typography sx={{ fontSize: '0.775rem', color: P.slate500, mt: 0.25 }}>Sign in with your TalentAI account to participate.</Typography>
+                </StatusBox>
+                <Btn label="Sign In to Participate" icon={<LoginIcon sx={{ fontSize: 17 }} />} onClick={goSignIn} accent={mod.accent} />
+              </Box>
+
+            ) : joinErr ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <StatusBox icon={<ErrorIcon sx={{ fontSize: 20, color: P.red }} />} danger>
+                  <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: P.red }}>{joinErr}</Typography>
+                </StatusBox>
+                <Btn label="Try Again" onClick={() => handleJoin()} loading={joining} accent={mod.accent} />
+              </Box>
+
+            ) : isAnon ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 2, py: 1.5, borderRadius: '10px', bgcolor: P.greenSoft, border: '1px solid #BBF7D0' }}>
+                  <CheckIcon sx={{ fontSize: 15, color: P.green, flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: '0.8rem', color: '#15803D', fontWeight: 500 }}>No account needed — participate anonymously</Typography>
+                </Box>
+                <Btn label={joining ? 'Starting…' : 'Start Assessment'} icon={<PlayIcon sx={{ fontSize: 17 }} />} onClick={() => handleJoin()} loading={joining} accent={mod.accent} />
+              </Box>
+
+            ) : user ? (
+              <Box sx={{ textAlign: 'center', py: 2.5 }}>
+                <CircularProgress size={28} thickness={3} sx={{ color: mod.accent, mb: 1.5 }} />
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: P.slate900 }}>Joining campaign…</Typography>
+                <Typography sx={{ fontSize: '0.775rem', color: P.slate400, mt: 0.5 }}>You will be redirected shortly</Typography>
+              </Box>
+
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ mb: 0.5 }}>
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: P.slate900, mb: 0.25 }}>Enter your details</Typography>
+                  <Typography sx={{ fontSize: '0.775rem', color: P.slate400 }}>No account needed — just your name.</Typography>
+                </Box>
+
+                <Field
+                  placeholder="Full name *"
+                  value={name}
+                  onChange={(v) => { setName(v); setNameErr(''); }}
+                  error={nameErr}
+                  icon={<PersonIcon sx={{ fontSize: 16, color: P.slate400 }} />}
+                  accent={mod.accent}
+                />
+                <Field
+                  placeholder="Email address (optional)"
+                  value={email}
+                  onChange={setEmail}
+                  type="email"
+                  icon={<EmailIcon sx={{ fontSize: 16, color: P.slate400 }} />}
+                  accent={mod.accent}
+                />
+
+                <Btn label={joining ? 'Joining…' : 'Start Assessment'} icon={<ArrowIcon sx={{ fontSize: 17 }} />} onClick={handleFormSubmit} loading={joining} accent={mod.accent} />
+
+                <Typography sx={{ textAlign: 'center', fontSize: '0.75rem', color: P.slate400 }}>
+                  Have an account?{' '}
+                  <Typography component="span" onClick={goSignIn}
+                    sx={{ color: mod.accent, fontWeight: 700, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
+                    Sign in instead
+                  </Typography>
                 </Typography>
               </Box>
-              <ActionButton
-                label="Sign In to Participate"
-                icon={<LoginIcon sx={{ fontSize: 18 }} />}
-                onClick={handleLoginRedirect}
-              />
-            </Box>
+            )}
+          </Box>
+        </Box>
 
-          ) : joinErr ? (
-            <Box sx={{ p: 2, borderRadius: '12px', bgcolor: '#FEF2F2', border: '1px solid #FECACA', textAlign: 'center' }}>
-              <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#EF4444', mb: 1 }}>{joinErr}</Typography>
-              <ActionButton label="Try Again" onClick={() => handleJoin()} loading={joining} />
-            </Box>
-
-          ) : isAnon ? (
-            /* LINK+ANONYMOUS: anyone can start immediately */
-            <ActionButton
-              label={joining ? 'Starting…' : 'Start Assessment'}
-              icon={<PlayIcon sx={{ fontSize: 18 }} />}
-              onClick={() => handleJoin()}
-              loading={joining}
-            />
-
-          ) : user ? (
-            /* LINK+NOMINATIVE + logged in: auto-joining */
-            <Box sx={{ textAlign: 'center' }}>
-              <CircularProgress size={24} sx={{ color: '#0D9488' }} />
-              <Typography sx={{ fontSize: '0.8rem', color: '#64748B', mt: 1 }}>Joining campaign…</Typography>
-            </Box>
-
-          ) : (
-            /* LINK+NOMINATIVE + not logged in: name/email form */
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: alpha('#0D9488', 0.06), border: `1px solid ${alpha('#0D9488', 0.15)}` }}>
-                <Typography sx={{ fontSize: '0.8rem', color: '#0F172A', fontWeight: 600, mb: 0.5 }}>
-                  Enter your details to participate
-                </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#64748B' }}>
-                  No account needed — just your name.
-                </Typography>
-              </Box>
-              <TextField
-                size="small"
-                placeholder="Your full name *"
-                value={name}
-                onChange={(e) => { setName(e.target.value); setNameErr(''); }}
-                error={!!nameErr}
-                helperText={nameErr}
-                InputProps={{ startAdornment: <PersonIcon sx={{ fontSize: 16, color: '#94A3B8', mr: 0.75 }} /> }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px', fontSize: '0.875rem' } }}
-              />
-              <TextField
-                size="small"
-                placeholder="Email address (optional)"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px', fontSize: '0.875rem' } }}
-              />
-              <ActionButton
-                label={joining ? 'Joining…' : 'Start Assessment'}
-                icon={<PlayIcon sx={{ fontSize: 18 }} />}
-                onClick={handleFormSubmit}
-                loading={joining}
-              />
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography
-                  component="span"
-                  sx={{ fontSize: '0.75rem', color: '#0D9488', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}
-                  onClick={handleLoginRedirect}
-                >
-                  Sign in with your account instead
-                </Typography>
-              </Box>
-            </Box>
-          )}
+        {/* footer */}
+        <Box sx={{
+          mt: 3.5, px: 2, py: 2, borderRadius: '16px',
+          bgcolor: P.white, border: `1px solid ${P.slate100}`,
+          boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.25,
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box component="img" src="/logo-purple.svg" alt="TalentAI" sx={{ height: 18, opacity: 0.55 }} />
+          </Box>
+          <Typography sx={{ fontSize: '0.7rem', color: P.slate400, fontWeight: 500 }}>
+            © {new Date().getFullYear()} TalentAI · All rights reserved
+          </Typography>
         </Box>
       </Box>
-    </Box>
+    </Shell>
   );
 };
 
-// ── Small helpers ─────────────────────────────────────────────────────────────
+/* ── helpers ─────────────────────────────────────────────────────────────── */
 
-const MetaRow: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNode }> = ({ icon, label, value }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-    <Box sx={{ width: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      {icon}
-    </Box>
-    <Typography sx={{ fontSize: '0.775rem', color: '#94A3B8', fontWeight: 600, minWidth: 52 }}>{label}</Typography>
-    {typeof value === 'string' ? (
-      <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A' }}>{value}</Typography>
-    ) : value}
+const Shell: React.FC<{ children: React.ReactNode; bg: string }> = ({ children, bg }) => (
+  <Box sx={{
+    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: bg, p: { xs: 2, sm: 3 }, position: 'relative', overflow: 'hidden',
+  }}>
+    {children}
   </Box>
 );
 
-const ActionButton: React.FC<{ label: string; icon?: React.ReactNode; onClick: () => void; loading?: boolean }> = ({ label, icon, onClick, loading }) => (
+const Chip: React.FC<{ icon: React.ReactNode; label: string; danger?: boolean }> = ({ icon, label, danger }) => (
+  <Box sx={{
+    display: 'inline-flex', alignItems: 'center', gap: 0.5,
+    px: 1.125, py: '4px', borderRadius: '999px',
+    bgcolor: danger ? P.redSoft : P.slate50,
+    border: `1px solid ${danger ? P.redBdr : P.slate200}`,
+  }}>
+    <Box sx={{ color: danger ? P.red : P.slate400, display: 'flex' }}>{icon}</Box>
+    <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: danger ? P.red : P.slate500 }}>{label}</Typography>
+  </Box>
+);
+
+const StatusBox: React.FC<{ icon: React.ReactNode; children: React.ReactNode; danger?: boolean }> = ({ icon, children, danger }) => (
+  <Box sx={{
+    display: 'flex', alignItems: 'flex-start', gap: 1.5,
+    p: 2.25, borderRadius: '12px',
+    bgcolor: danger ? P.redSoft : P.indigoSoft,
+    border: `1px solid ${danger ? P.redBdr : P.indigoBdr}`,
+  }}>
+    <Box sx={{ flexShrink: 0, mt: '1px' }}>{icon}</Box>
+    <Box>{children}</Box>
+  </Box>
+);
+
+const Field: React.FC<{
+  placeholder: string; value: string; onChange: (v: string) => void;
+  error?: string; icon: React.ReactNode; type?: string; accent: string;
+}> = ({ placeholder, value, onChange, error, icon, type, accent }) => (
+  <TextField
+    size="small"
+    placeholder={placeholder}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    error={!!error}
+    helperText={error}
+    type={type}
+    InputProps={{ startAdornment: <InputAdornment position="start">{icon}</InputAdornment> }}
+    sx={{
+      '& .MuiOutlinedInput-root': {
+        borderRadius: '11px', fontSize: '0.875rem', bgcolor: P.slate50,
+        '& fieldset': { borderColor: P.slate200 },
+        '&:hover fieldset': { borderColor: P.slate400 },
+        '&.Mui-focused fieldset': { borderColor: accent, borderWidth: '1.5px' },
+      },
+    }}
+  />
+);
+
+const Btn: React.FC<{ label: string; icon?: React.ReactNode; onClick: () => void; loading?: boolean; accent: string }> = ({
+  label, icon, onClick, loading, accent,
+}) => (
   <Box
     onClick={!loading ? onClick : undefined}
     sx={{
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
-      py: 1.375, px: 2.5, borderRadius: '12px', cursor: loading ? 'default' : 'pointer',
-      background: loading ? '#E2E8F0' : 'linear-gradient(135deg, #0D9488 0%, #14B8A6 100%)',
-      boxShadow: loading ? 'none' : '0 4px 14px rgba(13,148,136,0.3)',
-      transition: 'all 0.2s',
-      ...(!loading && { '&:hover': { boxShadow: '0 6px 20px rgba(13,148,136,0.4)', transform: 'translateY(-1px)' } }),
+      py: 1.5, borderRadius: '12px',
+      cursor: loading ? 'default' : 'pointer',
+      bgcolor: loading ? P.slate100 : accent,
+      boxShadow: loading ? 'none' : `0 4px 16px ${accent}40`,
+      transition: 'all 0.18s ease',
+      ...(!loading && {
+        '&:hover': { filter: 'brightness(1.08)', boxShadow: `0 6px 22px ${accent}50`, transform: 'translateY(-1px)' },
+        '&:active': { transform: 'translateY(0)', filter: 'brightness(0.97)' },
+      }),
     }}
   >
-    {loading ? (
-      <CircularProgress size={18} sx={{ color: '#64748B' }} />
-    ) : (
-      <>
-        {icon}
-        <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: loading ? '#64748B' : '#fff' }}>{label}</Typography>
-      </>
-    )}
+    {loading
+      ? <CircularProgress size={18} thickness={4} sx={{ color: P.slate400 }} />
+      : <>
+          {icon && <Box sx={{ color: P.white, display: 'flex' }}>{icon}</Box>}
+          <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: P.white }}>{label}</Typography>
+        </>
+    }
   </Box>
 );
 
