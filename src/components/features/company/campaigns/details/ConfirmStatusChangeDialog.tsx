@@ -3,9 +3,10 @@ import {
   Box, Typography, Button,
   Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
-import PlayArrowOutlined from "@mui/icons-material/PlayArrow";
-import PauseOutlined     from "@mui/icons-material/PauseOutlined";
-import StopOutlined      from "@mui/icons-material/StopOutlined";
+import PlayArrowOutlined  from "@mui/icons-material/PlayArrow";
+import PauseOutlined      from "@mui/icons-material/PauseOutlined";
+import StopOutlined       from "@mui/icons-material/StopOutlined";
+import InfoOutlined       from "@mui/icons-material/InfoOutlined";
 import { CampaignStatus } from "@/types/campaign";
 import { STATUS_COLORS, STATUS_TRANSITION_LABELS } from "@/constants/campaign";
 
@@ -86,6 +87,20 @@ const ConfirmStatusChangeDialog: React.FC<Props> = ({
             <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sColor?.fg }}>{targetStatus}</Typography>
           </Box>
         </Box>
+
+        {targetStatus === "ACTIVE" && (
+          <Box sx={{
+            display: "flex", alignItems: "flex-start", gap: 1,
+            mt: 1.5, px: 1.5, py: 1, borderRadius: "8px",
+            bgcolor: "#FFF7ED", border: "1px solid #FED7AA",
+          }}>
+            <InfoOutlined sx={{ fontSize: 14, color: "#EA580C", flexShrink: 0, mt: "1px" }} />
+            <Typography sx={{ fontSize: "11.5px", color: "#9A3412", lineHeight: 1.5 }}>
+              Once activated, the campaign <strong>can no longer be edited</strong>.
+            </Typography>
+          </Box>
+        )}
+
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, pt: 1.5, gap: 1 }}>

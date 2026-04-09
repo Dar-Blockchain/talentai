@@ -79,10 +79,10 @@ const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? A
 
 const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
   ({ campaign, index, onStart, onDetails }) => {
-    const tm = TYPE_META[campaign.type];
+    const tm = campaign.type ? TYPE_META[campaign.type] : null;
     const mm = MODULE_META[campaign.module.type];
     const ps = PARTICIPANT_STATUS_META[campaign?.participantStatus || "INVITED"];
-    const TypeIcon = tm.icon;
+    const TypeIcon = tm?.icon ?? null;
     const ModIcon  = mm.icon;
     const StatIcon = ps.icon;
     const remaining = daysLeft(campaign.deadline);
@@ -110,21 +110,25 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
         }}>
 
           {/* Top accent line per type */}
-          <Box sx={{ height: 3, bgcolor: tm.color, opacity: 0.7 }} />
+          <Box sx={{ height: 3, bgcolor: tm?.color ?? "#E5E7EB", opacity: 0.7 }} />
 
           <Box sx={{ p: 2.5, flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
 
             {/* Header row */}
             <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: tm.bg, flexShrink: 0 }}>
-                  <TypeIcon sx={{ fontSize: 18, color: tm.color }} />
-                </Box>
+                {tm && TypeIcon && (
+                  <Box sx={{ p: 1.1, borderRadius: 2, bgcolor: tm.bg, flexShrink: 0 }}>
+                    <TypeIcon sx={{ fontSize: 18, color: tm.color }} />
+                  </Box>
+                )}
                 <Box>
                   <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
                     {campaign.title}
                   </Typography>
-                  <Chip label={tm.label} size="small" sx={{ mt: 0.5, fontSize: "9px", fontWeight: 700, height: 18, bgcolor: tm.bg, color: tm.color, border: `1px solid ${tm.color}30` }} />
+                  {tm && (
+                    <Chip label={tm.label} size="small" sx={{ mt: 0.5, fontSize: "9px", fontWeight: 700, height: 18, bgcolor: tm.bg, color: tm.color, border: `1px solid ${tm.color}30` }} />
+                  )}
                 </Box>
               </Box>
 

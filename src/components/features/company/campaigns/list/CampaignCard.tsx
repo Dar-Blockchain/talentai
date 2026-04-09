@@ -24,8 +24,6 @@ import {
   STATUS_COLORS,
   STATUS_TRANSITIONS,
   STATUS_TRANSITION_LABELS,
-  TYPE_COLORS,
-  TYPE_LABELS,
 } from "@/constants/campaign";
 import { CampaignStatus } from "@/types/campaign";
 
@@ -56,7 +54,6 @@ const CampaignCard: React.FC<{
   canPublish?: boolean;
 }> = memo(({ campaign, onViewDetails, onDelete, onStatusChange, canEdit = true, canDelete = true, canPublish = true }) => {
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
-  const tc = TYPE_COLORS[campaign.type] || TYPE_COLORS.CUSTOM;
   const accentColor = STATUS_ACCENT[campaign.status] || "#9CA3AF";
   const remaining = daysLeft(campaign.deadline);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -113,22 +110,6 @@ const CampaignCard: React.FC<{
                 letterSpacing: 0.8,
                 height: 20,
                 px: 0.25,
-              }}
-            />
-            <Chip
-              label={TYPE_LABELS[campaign.type]}
-              size="small"
-              sx={{
-                bgcolor: tc.bg,
-                color: tc.fg,
-                fontSize: "9px",
-                fontWeight: 700,
-                fontFamily: "Poppins, sans-serif",
-                textTransform: "uppercase",
-                letterSpacing: 0.8,
-                height: 20,
-                px: 0.25,
-                border: `1px solid ${tc.border}`,
               }}
             />
           </Box>

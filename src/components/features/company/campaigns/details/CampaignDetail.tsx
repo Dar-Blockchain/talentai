@@ -105,8 +105,7 @@ const CampaignDetail: React.FC<Props> = ({
   // Employee-mode: participant status + CTA
   const pStatus   = campaign.participantStatus ?? "INVITED";
   const ps        = PS_CONFIG[pStatus];
-  const typeEntry = (isEmployee ? require("@/constants/campaign").CAMPAIGN_TYPES.find((t: any) => t.value === campaign.type) : null);
-  const typeColor = typeEntry?.color ?? "#6B7280";
+  const typeColor = "#8310FF";
   const campaignAccessible = campaign.status === "ACTIVE";
   const canStart  = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired && campaignAccessible;
   const moduleType = campaign.module?.type;

@@ -9,6 +9,7 @@ import PauseOutlined            from "@mui/icons-material/PauseOutlined";
 import StopOutlined             from "@mui/icons-material/StopOutlined";
 import CalendarTodayOutlined    from "@mui/icons-material/CalendarTodayOutlined";
 import WarningAmberOutlined     from "@mui/icons-material/WarningAmberOutlined";
+import CampaignOutlined         from "@mui/icons-material/CampaignOutlined";
 import { Campaign, CampaignStatus } from "@/types/campaign";
 import {
   STATUS_COLORS,
@@ -85,21 +86,37 @@ const CampaignHeader: React.FC<Props> = ({
 
           {actionsNode ?? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
-              {/* Edit button — DRAFT only */}
-              {campaign.status === "DRAFT" && onEditClick && (
-                <Box
-                  onClick={onEditClick}
-                  sx={{
-                    display: "flex", alignItems: "center", gap: 0.625,
-                    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-                    border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
-                    transition: "all 0.15s",
-                    "&:hover": { bgcolor: "#EEF2FF", borderColor: "#C7D2FE", "& *": { color: "#6366F1" } },
-                  }}
-                >
-                  <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
-                </Box>
+              {/* Edit button — DRAFT only, disabled otherwise */}
+              {onEditClick && (
+                campaign.status === "DRAFT" ? (
+                  <Box
+                    onClick={onEditClick}
+                    sx={{
+                      display: "flex", alignItems: "center", gap: 0.625,
+                      px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                      border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
+                      transition: "all 0.15s",
+                      "&:hover": { bgcolor: "#EEF2FF", borderColor: "#C7D2FE", "& *": { color: "#6366F1" } },
+                    }}
+                  >
+                    <EditOutlined sx={{ fontSize: 14, color: "#64748B" }} />
+                    <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
+                  </Box>
+                ) : (
+                  <Tooltip title="Editing is only available while the campaign is in Draft." placement="top" arrow>
+                    <Box
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 0.625,
+                        px: 1.625, py: 0.75, borderRadius: "10px", cursor: "not-allowed",
+                        border: "1px solid #E2E8F0", bgcolor: "#F8FAFC",
+                        opacity: 0.45,
+                      }}
+                    >
+                      <EditOutlined sx={{ fontSize: 14, color: "#94A3B8" }} />
+                      <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#94A3B8" }}>Edit</Typography>
+                    </Box>
+                  </Tooltip>
+                )
               )}
 
               {/* Inline status transition buttons — only if caller passed onChangeStatus */}
@@ -170,7 +187,10 @@ const CampaignHeader: React.FC<Props> = ({
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: `0 4px 18px ${typeColor}20`,
           }}>
-            {TypeIcon && <TypeIcon sx={{ fontSize: 32, color: typeColor }} />}
+            {TypeIcon
+              ? <TypeIcon sx={{ fontSize: 32, color: typeColor }} />
+              : <CampaignOutlined sx={{ fontSize: 32, color: typeColor }} />
+            }
           </Box>
 
           {/* Title / description / pills */}
@@ -194,17 +214,6 @@ const CampaignHeader: React.FC<Props> = ({
                 <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: sc.fg }} />
                 <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.fg }}>
                   {campaign.status}
-                </Typography>
-              </Box>
-
-              {/* Type */}
-              <Box sx={{
-                display: "inline-flex", alignItems: "center", gap: 0.5,
-                px: 1.125, py: "3px", borderRadius: "999px",
-                bgcolor: tc.bg, border: `1px solid ${tc.border}`,
-              }}>
-                <Typography sx={{ fontSize: "11px", fontWeight: 700, color: tc.fg }}>
-                  {TYPE_LABELS[campaign.type]}
                 </Typography>
               </Box>
 

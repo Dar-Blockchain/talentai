@@ -12,7 +12,6 @@ import LockOutlined          from "@mui/icons-material/LockOutlined";
 import LockOpenOutlined      from "@mui/icons-material/LockOpenOutlined";
 import LinkOutlined          from "@mui/icons-material/LinkOutlined";
 import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
-import MergeTypeOutlined     from "@mui/icons-material/MergeTypeOutlined";
 import WarningAmberOutlined  from "@mui/icons-material/WarningAmberOutlined";
 import AppButton             from "@/components/ui/AppButton";
 import { Campaign, ModuleType } from "@/types/campaign";
@@ -180,20 +179,23 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
             <FieldLabel label="Module Type" />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
               {MODULE_TYPES.map((mt) => {
-                const cfg      = MODULE_CONFIG[mt];
-                const Icon     = cfg.icon;
-                const selected = moduleType === mt;
+                const cfg        = MODULE_CONFIG[mt];
+                const Icon       = cfg.icon;
+                const selected   = moduleType === mt;
+                const comingSoon = mt === "TRAINING_PATH";
                 return (
                   <Box
                     key={mt}
-                    onClick={() => setModuleType(mt)}
+                    onClick={() => { if (!comingSoon) setModuleType(mt); }}
                     sx={{
                       display: "flex", alignItems: "center", gap: 1.25,
-                      px: 1.5, py: 1.125, borderRadius: "12px", cursor: "pointer",
+                      px: 1.5, py: 1.125, borderRadius: "12px",
+                      cursor: comingSoon ? "not-allowed" : "pointer",
                       border: `1.5px solid ${selected ? cfg.color + "50" : "#E5E7EB"}`,
                       bgcolor: selected ? `${cfg.color}08` : "#FAFAFA",
+                      opacity: comingSoon ? 0.5 : 1,
                       transition: "all 0.15s",
-                      "&:hover": { borderColor: `${cfg.color}40`, bgcolor: `${cfg.color}06` },
+                      ...(!comingSoon && { "&:hover": { borderColor: `${cfg.color}40`, bgcolor: `${cfg.color}06` } }),
                     }}
                   >
                     <Box sx={{
@@ -203,9 +205,16 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
                     }}>
                       <Icon sx={{ fontSize: 15, color: selected ? cfg.color : "#9CA3AF" }} />
                     </Box>
-                    <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: selected ? "#111827" : "#6B7280", lineHeight: 1.2 }}>
-                      {cfg.label}
-                    </Typography>
+                    <Box>
+                      <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: selected ? "#111827" : "#6B7280", lineHeight: 1.2 }}>
+                        {cfg.label}
+                      </Typography>
+                      {comingSoon && (
+                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                          Coming Soon
+                        </Typography>
+                      )}
+                    </Box>
                   </Box>
                 );
               })}
@@ -261,10 +270,6 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
                 <LinkOutlined sx={{ fontSize: 14 }} />
                 Public Link
               </ToggleButton>
-              <ToggleButton value="BOTH" sx={toggleSx}>
-                <MergeTypeOutlined sx={{ fontSize: 14 }} />
-                Both
-              </ToggleButton>
             </ToggleButtonGroup>
           </Box>
 
@@ -278,11 +283,11 @@ const EditCampaignModal: React.FC<Props> = ({ open, campaign, onClose, onSaved }
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2.5, gap: 1 }}>
-        <AppButton label="Cancel" variant="outlined" size="small" onClick={onClose} disabled={saving} />
+        <AppButton label="Cancel" variant="outlined" size="medium" onClick={onClose} disabled={saving} />
         <AppButton
           label={saving ? "Saving…" : "Save Changes"}
           variant="contained"
-          size="small"
+          size="medium"
           onClick={handleSave}
           disabled={saving}
           startIcon={saving ? <CircularProgress size={13} sx={{ color: "#fff" }} /> : undefined}

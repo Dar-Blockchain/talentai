@@ -1,6 +1,7 @@
 "use client";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Drawer, Box, Divider, Button } from "@mui/material";
+import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logout } from "@/store/slices/authSlice";
 import { useSelector } from "react-redux";
@@ -75,13 +76,16 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
     localStorage.getItem("userType") ||
     "candidate";
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
     try {
       await dispatch(logout()).unwrap();
-      onClose();
     } catch (error) {
       console.error("Logout failed:", error);
     }
+    onClose();
   }, [dispatch, onClose]);
 
   return (
@@ -151,6 +155,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
         </>
       )}
     </Drawer>
+    <LogoutProgressModal open={loggingOut} />
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Drawer,
@@ -25,6 +25,7 @@ import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
+import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -47,7 +48,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
     await dispatch(logout());
     router.push("/signin");
   }, [dispatch, router]);
@@ -315,6 +319,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {content(true)}
         </Drawer>
       )}
+      <LogoutProgressModal open={loggingOut} />
     </>
   );
 };

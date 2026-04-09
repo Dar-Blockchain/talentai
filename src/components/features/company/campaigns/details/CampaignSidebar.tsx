@@ -169,14 +169,6 @@ const CampaignInfoCard: React.FC<{ campaign: Campaign; showLastUpdated?: boolean
           }
         />
 
-        {/* Type */}
-        <InfoRow
-          icon={<GroupOutlined sx={{ fontSize: 14 }} />}
-          iconColor="#6B7280"
-          label="Type"
-          value={TYPE_LABELS[campaign.type]}
-        />
-
         {/* Module */}
         <InfoRow
           icon={<SecurityOutlined sx={{ fontSize: 14 }} />}

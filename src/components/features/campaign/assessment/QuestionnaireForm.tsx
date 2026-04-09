@@ -517,7 +517,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
             onClick={handleSubmit}
             disabled={submitting || !allAnswered}
             sx={{
-              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5,
+              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5, color: '#fff',
               background: 'linear-gradient(135deg, #10B981, #059669)',
               boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
               '&:hover': { boxShadow: '0 6px 20px rgba(16,185,129,0.4)' },
@@ -533,7 +533,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
             onClick={goNext}
             disabled={!isAnswered}
             sx={{
-              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5,
+              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5, color: '#fff',
               background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
               boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
               '&:hover': { boxShadow: '0 6px 20px rgba(99,102,241,0.35)' },
