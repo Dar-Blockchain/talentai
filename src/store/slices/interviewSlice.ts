@@ -340,7 +340,7 @@ export const fetchCompanyInterviewMetrics = createAsyncThunk<
  * Check if candidate already completed an assessment for a given post
  */
 export const checkPostInterviewAssessment = createAsyncThunk<
-  { exists: boolean; isCompanyBlocked?: boolean },
+  { exists: boolean; isCompanyBlocked?: boolean; isArchived?: boolean },
   string,
   { rejectValue: string }
 >(
@@ -350,10 +350,12 @@ export const checkPostInterviewAssessment = createAsyncThunk<
       const response = await axiosInstance.get(`post-interview-assessments/check/${postId}`);
       return { exists: !!response.data?.exists };
     } catch (error: any) {
-      // Backend explicitly blocks company accounts
       const msg: string = error?.response?.data?.message || error.message || '';
       if (msg.toLowerCase().includes('company')) {
         return { exists: false, isCompanyBlocked: true };
+      }
+      if (msg.toLowerCase().includes('archived')) {
+        return { exists: false, isArchived: true };
       }
       return rejectWithValue(msg || 'Error checking assessment');
     }

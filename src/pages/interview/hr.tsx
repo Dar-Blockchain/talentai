@@ -72,6 +72,7 @@ const IntelligentInterviewTest = () => {
   const [assessmentChecking, setAssessmentChecking] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
   const accessAllowed = useSelector(selectAccessAllowed);
   const accessLoading = useSelector(selectAccessLoading);
 
@@ -108,6 +109,7 @@ const IntelligentInterviewTest = () => {
     dispatch(checkPostInterviewAssessment(postId)).then((result) => {
       if (checkPostInterviewAssessment.fulfilled.match(result)) {
         if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
+        else if (result.payload.isArchived) setIsArchived(true);
         else if (result.payload.exists) setAlreadyCompleted(true);
       } else if (checkPostInterviewAssessment.rejected.match(result)) {
         // silently ignore — let them proceed
@@ -330,6 +332,38 @@ const IntelligentInterviewTest = () => {
           <Header />
           <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 }, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress sx={{ color: '#8310FF' }} />
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Post archived ── */
+  if (isArchived) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <Typography sx={{ fontSize: 32 }}>📦</Typography>
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                This position is no longer available
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                This job post has been archived by the company and is no longer accepting new interviews.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/dashboard/candidate')}
+                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+              >
+                Back to Dashboard
+              </Button>
+            </Box>
           </Container>
         </Box>
       </>

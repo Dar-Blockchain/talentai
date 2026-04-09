@@ -551,8 +551,9 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
 
     // Build query with search filter and archive filter
     let query = { user: userId };
-    // By default, show only non-archived posts (archived: false or not set)
-    if (!showArchived) {
+    if (showArchived) {
+      query.archived = true; // Show only archived posts
+    } else {
       query.archived = { $ne: true }; // Show posts where archived is false or not set
     }
     if (search && search.trim() !== '') {
@@ -1578,21 +1579,27 @@ module.exports.getPostMetrics = async (userId) => {
   try {
     const now = new Date();
 
-    // Get all posts for the user
+    // Get all posts for the user including archived flag
     const allPosts = await Post.find({ user: userId }).select(
-      'status expirationDate'
+      'status expirationDate archived'
     );
 
     // Initialize counters
     const metrics = {
-      total: allPosts.length,
+      total: 0,
       active: 0,
       draft: 0,
       closed: 0,
+      archived: 0,
     };
 
-    // Count posts by status — expired open posts count as closed
+    // Count posts by status — archived posts excluded from total
     allPosts.forEach((post) => {
+      if (post.archived) {
+        metrics.archived++;
+        return;
+      }
+      metrics.total++;
       const isExpired = post.expirationDate && new Date(post.expirationDate) < now;
       const s = post.status?.toLowerCase();
 

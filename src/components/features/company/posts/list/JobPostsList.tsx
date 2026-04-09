@@ -76,10 +76,10 @@ const JobPostSkeletonCard: React.FC = () => (
 
 /* ── Sort button ───────────────────────────────────────────── */
 const STATUS_FILTERS: { id: StatusFilter; label: string; color: string; bg: string }[] = [
-  { id: "all",     label: "All",    color: "#374151", bg: "#F3F4F6" },
-  { id: "active",  label: "Open",   color: "#059669", bg: "#ECFDF5" },
-  { id: "draft",   label: "Draft",  color: "#D97706", bg: "#FFFBEB" },
-  { id: "expired", label: "Closed", color: "#DC2626", bg: "#FEF2F2" },
+  { id: "all",      label: "All",      color: "#374151", bg: "#F3F4F6" },
+  { id: "active",   label: "Open",     color: "#059669", bg: "#ECFDF5" },
+  { id: "draft",    label: "Draft",    color: "#D97706", bg: "#FFFBEB" },
+  { id: "expired",  label: "Closed",   color: "#DC2626", bg: "#FEF2F2" },
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
