@@ -683,10 +683,10 @@ module.exports.getStatsCards = async (userId) => {
     const [totalUsers, avgOverallScoreAgg, openPostsCount, activeCampaignsCount] = await Promise.all([
       CompanyMembership.countDocuments({ company: userId, status: "active" }),
       PostInterviewAssessment.aggregate([
-        { $match: { company: new mongoose.Types.ObjectId(userId), "interviewData.finalReport.coverage.overall": { $ne: null } } },
+        { $match: { company: new mongoose.Types.ObjectId(userId), archived: { $ne: true }, "interviewData.finalReport.coverage.overall": { $ne: null } } },
         { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
       ]),
-      Post.countDocuments({ user: userId, status: POST_STATUS.OPEN }),
+      Post.countDocuments({ user: userId, status: POST_STATUS.OPEN, archived: { $ne: true } }),
       InternalCampaign.countDocuments({ company: userId, status: "ACTIVE" })
     ]);
 
@@ -711,7 +711,7 @@ module.exports.getRichStats = async (userId) => {
     const [scoreDistAgg, trendAgg, topJobsAgg, passRateAgg] = await Promise.all([
       // Score distribution buckets: 0-20, 20-40, 40-60, 60-80, 80-100
       PostInterviewAssessment.aggregate([
-        { $match: { company: oid, "interviewData.finalReport.scores.overall": { $exists: true } } },
+        { $match: { company: oid, archived: { $ne: true }, "interviewData.finalReport.scores.overall": { $exists: true } } },
         { $bucket: {
           groupBy: "$interviewData.finalReport.scores.overall",
           boundaries: [0, 20, 40, 60, 80, 101],
@@ -721,7 +721,7 @@ module.exports.getRichStats = async (userId) => {
       ]),
       // 30-day daily interview count
       PostInterviewAssessment.aggregate([
-        { $match: { company: oid, createdAt: { $gte: thirtyDaysAgo } } },
+        { $match: { company: oid, archived: { $ne: true }, createdAt: { $gte: thirtyDaysAgo } } },
         { $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
           count: { $sum: 1 },
@@ -731,7 +731,7 @@ module.exports.getRichStats = async (userId) => {
       ]),
       // Top 5 job posts by interview count
       PostInterviewAssessment.aggregate([
-        { $match: { company: oid } },
+        { $match: { company: oid, archived: { $ne: true } } },
         { $group: { _id: "$post", count: { $sum: 1 }, avgScore: { $avg: "$interviewData.finalReport.scores.overall" } } },
         { $sort: { count: -1 } },
         { $limit: 5 },
@@ -741,7 +741,7 @@ module.exports.getRichStats = async (userId) => {
       ]),
       // Pass rate (score >= 60)
       PostInterviewAssessment.aggregate([
-        { $match: { company: oid, "interviewData.finalReport.scores.overall": { $exists: true } } },
+        { $match: { company: oid, archived: { $ne: true }, "interviewData.finalReport.scores.overall": { $exists: true } } },
         { $group: {
           _id: null,
           total: { $sum: 1 },
@@ -759,7 +759,7 @@ module.exports.getRichStats = async (userId) => {
 
     const passRateData = passRateAgg[0] || { total: 0, passed: 0 };
     const passRate = passRateData.total > 0 ? Math.round((passRateData.passed / passRateData.total) * 100) : 0;
-    const totalInterviews = await PostInterviewAssessment.countDocuments({ company: oid });
+    const totalInterviews = await PostInterviewAssessment.countDocuments({ company: oid, archived: { $ne: true } });
 
     return { scoreDistribution, trend: trendAgg, topJobs: topJobsAgg, passRate, totalInterviews };
   } catch (error) {

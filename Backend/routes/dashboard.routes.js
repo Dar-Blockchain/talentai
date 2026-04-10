@@ -16,6 +16,7 @@ const { verifyApiKey, checkScope } = require("../middleware/security/api-key.mid
 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
+const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
 
 
 // All routes below require an authenticated admin
@@ -43,8 +44,8 @@ router.get("/getCounts", dashboardController.getCounts);
 
 // GET /dashboard/statsCards
 // Description: Retrieves statistics displayed as cards on the dashboard
-router.get("/statsCards", dashboardController.getStatsCards);
-router.get("/richStats", dashboardController.getRichStats);
+router.get("/statsCards", resolveCompanyActor, dashboardController.getStatsCards);
+router.get("/richStats", resolveCompanyActor, dashboardController.getRichStats);
 
 // GET /dashboard/getUserCountsByDay
 // Description: Retrieves daily evolution of user count

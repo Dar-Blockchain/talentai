@@ -455,7 +455,7 @@ module.exports.getAssessmentsByCompany = async (
   limit = 10,
 ) => {
   try {
-    const matchStage = { company: companyId, archived: false };
+    const matchStage = { company: companyId, archived: { $ne: true } };
 
     const pipeline = [
       { $match: matchStage },
@@ -543,7 +543,7 @@ module.exports.getAssessmentsByCompany = async (
 // ========== METRICS - Company interview summary ==========
 module.exports.getInterviewMetricsForCompany = async (companyId, filters = {}) => {
   try {
-    const matchStage = { company: companyId, archived: false };
+    const matchStage = { company: companyId, archived: { $ne: true } };
 
     const pipeline = [
       { $match: matchStage },
