@@ -69,7 +69,7 @@ const IntelligentInterviewTest = () => {
   const [step, setStep] = useState<'intro' | 'interview'>('intro');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
-  const [assessmentChecking, setAssessmentChecking] = useState(false);
+  const [assessmentChecking, setAssessmentChecking] = useState(true);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
@@ -85,7 +85,7 @@ const IntelligentInterviewTest = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-    if (!router.query.jobId) { setStep('interview'); return; }
+    if (!router.query.jobId) { setStep('interview'); setAssessmentChecking(false); return; }
     setStep('intro');
 
     const postId = router.query.jobId as string;
@@ -110,7 +110,6 @@ const IntelligentInterviewTest = () => {
     // Fetch matching details (non-blocking — only relevant for candidates)
     dispatch(fetchMatchingDetails(postId));
 
-    setAssessmentChecking(true);
     dispatch(checkPostInterviewAssessment(postId)).then((result) => {
       if (checkPostInterviewAssessment.fulfilled.match(result)) {
         if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
@@ -336,9 +335,12 @@ const IntelligentInterviewTest = () => {
         <style jsx global>{GlobalStyles}</style>
         <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
           <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 }, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress sx={{ color: '#8310FF' }} />
-          </Container>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)', gap: 2 }}>
+            <CircularProgress sx={{ color: '#8310FF' }} size={40} />
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>
+              Loading interview…
+            </Typography>
+          </Box>
         </Box>
       </>
     );
