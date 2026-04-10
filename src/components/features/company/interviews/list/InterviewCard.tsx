@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { useRouter } from "next/router";
 import { Box, Typography, Avatar, Chip, LinearProgress } from "@mui/material";
 import { motion } from "framer-motion";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
@@ -67,7 +68,7 @@ export interface InterviewAssessment {
   _id: string;
   post: {
     _id: string;
-    jobDetails?: { title?: string; location?: string; employmentType?: string };
+    jobDetails?: { title?: string; location?: string; employmentType?: string; experienceLevel?: string };
     skillAnalysis?: {
       requiredSkills?: Array<{ _id?: string; name?: string; percentage?: number; level?: string | number; category?: string }>;
       softSkills?: Array<{ _id?: string; name?: string; percentage?: number; level?: string | number }>;
@@ -99,11 +100,14 @@ interface InterviewCardProps {
 }
 
 const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick }) => {
+  const router = useRouter();
   const name  = assessment.candidate?.username || assessment.candidate?.email || "Unknown";
   const email = assessment.candidate?.email || "";
   const score = getScore(assessment);
   const sc    = scoreStyle(score);
   const title = assessment.post?.jobDetails?.title || "Untitled Position";
+  const candidateId = assessment.candidate?._id;
+  const postId = assessment.post?._id;
 
   return (
     <motion.div
@@ -140,7 +144,10 @@ const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick
               {name[0]?.toUpperCase() || "?"}
             </Avatar>
             <Box>
-              <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
+              <Typography
+                // onClick={(e) => { if (candidateId) { e.stopPropagation(); router.push(`/company/candidates/${candidateId}`); } }}
+                sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.3, ...(candidateId && { cursor: "pointer", "&:hover": { color: "#0D9488", textDecoration: "underline" } }) }}
+              >
                 {name}
               </Typography>
               {email && (
@@ -169,7 +176,10 @@ const InterviewCard = memo<InterviewCardProps>(({ assessment, index = 0, onClick
           <Box sx={{ width: 30, height: 30, borderRadius: 1.5, bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <WorkOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
           </Box>
-          <Typography sx={{ fontSize: "13px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <Typography
+            onClick={(e) => { if (postId) { e.stopPropagation(); router.push(`/company/posts/${postId}`); } }}
+            sx={{ fontSize: "13px", color: "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...(postId && { cursor: "pointer", "&:hover": { color: "#0D9488", textDecoration: "underline" } }) }}
+          >
             {title}
           </Typography>
         </Box>

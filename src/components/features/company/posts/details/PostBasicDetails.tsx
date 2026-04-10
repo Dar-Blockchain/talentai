@@ -59,7 +59,7 @@ const PostBasicDetails: React.FC<Props> = () => {
           )}
           {jd.salary && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 2, px: 1.5, py: 0.75 }}>
-              <AttachMoneyOutlined sx={{ fontSize: 14, color: "#16A34A" }} />
+              {/* <AttachMoneyOutlined sx={{ fontSize: 14, color: "#16A34A" }} /> */}
               <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#16A34A" }}>{formatSalary(jd.salary)}</Typography>
             </Box>
           )}

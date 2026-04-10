@@ -1,5 +1,5 @@
 "use client";
-import { Box, Tooltip, Typography } from "@mui/material";
+import { Box, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useCallback } from "react";
 import { Node } from "reactflow";
 import "reactflow/dist/style.css";
@@ -7,17 +7,19 @@ import styled from "@emotion/styled";
 import Image from "next/image";
 
 const Sidebar = styled(Box)({
-  width: "120px",
+  width: "clamp(52px, 10vw, 110px)",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  padding: "5px 10px",
-  gap: "15px",
+  padding: "5px 6px",
+  gap: "10px",
   overflowY: "auto",
+  flexShrink: 0,
 });
 const ActionButton = styled(Box)<{ actionType: string }>(({ actionType }) => ({
-  width: "90px",
-  height: "70px",
+  width: "100%",
+  maxWidth: "90px",
+  aspectRatio: "1 / 0.78",
   borderRadius: "6px",
   border: "1px solid rgba(98, 111, 134, 0.18)",
   backgroundColor: "white",
@@ -116,6 +118,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
   nodes,
   setNodes,
 }) => {
+  const theme = useTheme();
+  const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
   const addNode = useCallback(
     (type: string) => {
       const menuItem = menuItems.find((item) => item.type === type);
@@ -175,17 +179,20 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
             >
               {item.icon}
 
-              <Typography
-                variant="caption"
-                sx={{
-                  fontSize: "10px",
-                  fontWeight: 500,
-                  textAlign: "center",
-                  color: "rgba(32, 45, 57, 1)",
-                }}
-              >
-                {item.label.split(" ")[0]}
-              </Typography>
+              {!isSmall && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: "10px",
+                    fontWeight: 500,
+                    textAlign: "center",
+                    color: "rgba(32, 45, 57, 1)",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {item.label.split(" ")[0]}
+                </Typography>
+              )}
             </ActionButton>
           </Tooltip>
         );

@@ -1,16 +1,16 @@
 /**
  * Routes pour les campagnes internes
  *
- * Middlewares appliqués:
+ * Applied middlewares:
  * - requireAuthUser: authentification requise
- * - controledAcces('Company'): réservé aux entreprises
- * - authLogMiddleware: journalisation des requêtes
+ * - controledAcces('Company'): restricted to companies
+ * - authLogMiddleware: request logging
  */
 
 const express = require("express");
 const router = express.Router();
 const internalCampaignController = require("../controllers/internalCampaign.controller");
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuthUser } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
@@ -183,14 +183,19 @@ router.use(
 );
 
 /**
- * POST /campaigns — Créer une nouvelle campagne
+ * POST /campaigns - Create a new campaign
  */
 router.post("/", internalCampaignController.createInternalCampaign);
 
 /**
- * GET /campaigns — Récupérer toutes les campagnes de l'entreprise
+ * GET /campaigns — Retrieve all company campaigns
  */
 router.get("/", internalCampaignController.getCompanyCampaigns);
+
+/**
+ * GET /campaigns/metrics — Get campaign metrics
+ */
+router.get("/metrics", internalCampaignController.getCampaignMetrics);
 
 /**
  * GET /campaigns/:campaignId/stats — Obtenir les statistiques d'une campagne
@@ -203,7 +208,7 @@ router.get("/:campaignId/stats", internalCampaignController.getCampaignStats);
 router.get("/:campaignId/sessions", internalCampaignController.getSessions);
 
 /**
- * GET /campaigns/:campaignId/anonymous-scores — Anonymous participant scores (company only)
+ * GET /campaigns/:campaignId — Retrieve a specific campaign
  */
 router.get("/:campaignId/anonymous-scores", internalCampaignController.getAnonymousScores);
 
@@ -225,12 +230,12 @@ router.patch(
 );
 
 /**
- * PUT /campaigns/:campaignId — Mettre à jour une campagne
+ * PUT /campaigns/:campaignId - Update a campaign
  */
 router.put("/:campaignId", internalCampaignController.updateInternalCampaign);
 
 /**
- * DELETE /campaigns/:campaignId — Supprimer une campagne
+ * DELETE /campaigns/:campaignId - Delete a campaign
  */
 router.delete(
   "/:campaignId",

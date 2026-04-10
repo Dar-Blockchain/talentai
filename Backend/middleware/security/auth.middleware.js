@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const userModel = require("../models/User.model");
+const userModel = require("../../models/User.model");
 
 const requireAuthUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -22,9 +22,9 @@ const requireAuthUser = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid or expired token" });
     }
 
-    req.user = user; // ✅ TOUJOURS l’utilisateur
+    req.user = user; // ✅ ALWAYS the user
 
-    // CONTEXTE COMPANY (optionnel)
+    // COMPANY CONTEXT (optional)
     if (decodedToken.companyId) {
       const company = await userModel
         .findById(decodedToken.companyId)
@@ -34,7 +34,7 @@ const requireAuthUser = async (req, res, next) => {
         return res.status(401).json({ message: "Invalid or expired token" });
       }
 
-      req.company = company; // ✅ séparé
+      req.company = company; // ✅ separated
     }
 
     req.auth = {

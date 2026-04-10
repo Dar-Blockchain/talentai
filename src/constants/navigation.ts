@@ -7,6 +7,7 @@ import {
   PsychologyOutlined,
   SettingsOutlined,
   CorporateFareOutlined,
+  AssignmentIndOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
 
@@ -47,6 +48,18 @@ export const navigation = [
     label: "Interviews",
     href: "/company/interviews",
   },
+  {
+    id: "applications",
+    icon: AssignmentIndOutlined,
+    label: "Applications",
+    href: "/company/applications",
+  },
+  // {
+  //   id: "skills",
+  //   icon: PsychologyOutlined,
+  //   label: "Skills Matrix",
+  //   href: "/company/skills",
+  // },
   {
     id: "settings",
     icon: SettingsOutlined,

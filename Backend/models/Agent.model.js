@@ -58,15 +58,26 @@ const agentSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     description:
-      "Référence one-to-one vers un Post (un Agent lié à un seul Post)",
+      "One-to-one reference to a Post (an Agent linked to a single Post)",
   },
-  // Référence vers la configuration associée (one-to-one)
+  // Reference to associated configuration (one-to-one)
   agentConfig: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "AgentConfig",
     unique: true,
     sparse: true,
-    description: "Référence optionnelle vers AgentConfig (one-to-one)",
+    description: "Optional reference to AgentConfig (one-to-one)",
+  },
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when agent is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when agent was archived'
   },
 });
 

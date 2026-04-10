@@ -17,20 +17,25 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
       throw err;
     }
 
-    const username = extractUsernameFromEmail(email);
+    let username = extractUsernameFromEmail(email);
     const otp = generateOTP();
     const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
 
-    // Check if user exists (using .lean() for read-only)
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] })
-      .lean()
-      .select('_id username otp');
+    // Check if user exists by email only
+    const existingUser = await User.findOne({ email }).lean().select('_id');
 
     if (existingUser) {
       // User already exists - refuse registration
       const err = new Error('User already exists. Please use login instead.');
       err.status = 409; // Conflict status code
       throw err;
+    }
+
+    // If username is taken, append a number to make it unique
+    const usernameConflict = await User.findOne({ username }).lean().select('_id');
+    if (usernameConflict) {
+      const count = await User.countDocuments({ username: { $regex: `^${username}` } });
+      username = `${username}${count + 1}`;
     }
 
     // Determine user role
@@ -144,7 +149,7 @@ module.exports.registerUser = async (email, roleType = 'Candidate', profileDataO
   }
 };
 
-// Service de vérification OTP
+// OTP verification service
 exports.verifyUserOTP = async (email, otp, location = null) => {
   try {
     if (!email || !otp) {

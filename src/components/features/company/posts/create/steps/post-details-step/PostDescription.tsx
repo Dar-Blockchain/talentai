@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, MenuItem, TextField, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -53,7 +53,7 @@ const inputSx = {
 
 const PostDescription = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { promptDescription, salary, workMode, employmentType, expirationDate } = useSelector(
+  const { promptDescription, salary, workMode, employmentType, expirationDate, loading } = useSelector(
     (state: any) => state.postGeneration
   );
 
@@ -223,15 +223,17 @@ const PostDescription = () => {
       <Button
         variant="contained"
         onClick={handleGenerate}
-        startIcon={<AutoAwesomeOutlined />}
+        disabled={loading}
+        startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <AutoAwesomeOutlined />}
         sx={{
           textTransform: "none", fontWeight: 700, fontSize: "14px",
           borderRadius: "38px", height: 44,
-          bgcolor: TEAL, boxShadow: "none",
+          bgcolor: TEAL, color: "#fff", boxShadow: "none",
           "&:hover": { bgcolor: "#0F766E" },
+          "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.7, color: "#fff" },
         }}
       >
-        Generate Job Post with AI
+        {loading ? "Generating…" : "Generate Job Post with AI"}
       </Button>
     </Box>
   );

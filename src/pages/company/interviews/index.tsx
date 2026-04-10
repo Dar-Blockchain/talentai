@@ -72,10 +72,6 @@ const InterviewsPage: React.FC = () => {
         <PageHeader
           title="Interviews"
           subtitle="Track all candidate interview assessments for your company."
-          breadcrumbs={[
-            { label: "Dashboard", href: "/company/dashboard" },
-            { label: "Interviews" },
-          ]}
         />
 
         <InterviewsHeader

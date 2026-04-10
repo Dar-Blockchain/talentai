@@ -1,4 +1,5 @@
 const InterviewApplicant = require('../models/InterviewApplicant.model');
+const User = require('../models/User.model');
 const mongoose = require('mongoose');
 
 class InterviewApplicantController {
@@ -83,6 +84,49 @@ class InterviewApplicantController {
       });
     } catch (error) {
       console.error('InterviewApplicant getByJob error:', error.message);
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  /**
+   * Validate that the logged-in user is the intended recipient of the interview link
+   * GET /interview-applicants/validate/:jobId
+   */
+  static async validateAccess(req, res) {
+    try {
+      const { jobId } = req.params;
+      const { ref } = req.query; // candidate email encoded in the URL
+
+      if (!mongoose.Types.ObjectId.isValid(jobId)) {
+        return res.status(400).json({ success: false, message: 'Invalid jobId' });
+      }
+
+      // If no ref or ref is 'link', it's a public link — allow
+      if (!ref || ref === 'link') {
+        return res.status(200).json({ success: true, allowed: true, reason: 'open_link' });
+      }
+
+      // Get the logged-in user's email
+      const user = await User.findById(req.user._id).select('email');
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'User not found' });
+      }
+
+      const loggedInEmail = user.email.trim().toLowerCase();
+      const intendedEmail = decodeURIComponent(ref).trim().toLowerCase();
+
+      // Validate the logged-in user matches the intended recipient
+      if (loggedInEmail !== intendedEmail) {
+        return res.status(403).json({
+          success: false,
+          allowed: false,
+          message: 'This interview invitation was not sent to your account.',
+        });
+      }
+
+      return res.status(200).json({ success: true, allowed: true, reason: 'invited' });
+    } catch (error) {
+      console.error('InterviewApplicant validateAccess error:', error.message);
       return res.status(500).json({ success: false, message: error.message });
     }
   }

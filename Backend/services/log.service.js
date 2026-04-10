@@ -1,6 +1,6 @@
-const Log = require('../models/log.model');  // Importer le modèle Log
+const Log = require('../models/log.model');  // Import Log model
 
-// Fonction pour récupérer tous les logs
+// Function to retrieve all logs
 module.exports.getAllLogs = async (options = {}) => {
   try {
     const page = Math.max(1, parseInt(options.page, 10) || 1);
@@ -24,16 +24,16 @@ module.exports.getAllLogs = async (options = {}) => {
       },
     };
   } catch (error) {
-    throw new Error('Erreur lors de la récupération des logs');
+    throw new Error('Error retrieving logs');
   }
 };
 
-// Fonction pour récupérer le nombre total de logs
+// Function to retrieve total log count
 module.exports.getTotalLogsCount = async () => {
   try {
-    const count = await Log.getTotalLogsCount();  // Utiliser la méthode statique définie dans le modèle
+    const count = await Log.getTotalLogsCount();  // Use static method defined in model
     return count;
   } catch (error) {
-    throw new Error('Erreur lors de la récupération du nombre total de logs');
+    throw new Error('Error retrieving total log count');
   }
 };

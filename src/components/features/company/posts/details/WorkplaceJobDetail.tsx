@@ -64,10 +64,10 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
 
   const deletePost = useDeletePost({
     postId: job?._id,
+    redirectTo: "/company/posts",
     refetchAfterDelete: false,
     onSuccess: () => {
       showToast({ message: "Post deleted successfully", severity: "success" });
-      onBack();
     },
     onError: () => showToast({ message: "Failed to delete post", severity: "error" }),
   });

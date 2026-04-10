@@ -53,6 +53,7 @@ export const useCompanyProfileManagement = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
+  const [savedProfile, setSavedProfile] = useState<UserProfile>(initialProfile);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -137,7 +138,7 @@ export const useCompanyProfileManagement = () => {
       const normalizedSize = normalizeCompanySize(companyData?.size);
       const companyName = companyData?.name || reduxProfile.name || reduxProfile.userId?.username || user?.username || '';
 
-      setProfile({
+      const synced: UserProfile = {
         username: user.username || '',
         email: user.email || companyData?.email || '',
         requiredExperienceLevel: reduxProfile?.requiredExperienceLevel || companyData?.requiredExperienceLevel || 'Mid Level',
@@ -164,7 +165,11 @@ export const useCompanyProfileManagement = () => {
         website: reduxProfile.companyDetails?.website || companyData?.website || '',
         employmentType: companyData?.employmentType || 'Remote',
         requiredSkills: reduxProfile?.requiredSkills || companyData?.requiredSkills || [],
-      });
+      };
+      setSavedProfile(synced);
+      if (!isEditing) {
+        setProfile(synced);
+      }
     }
   }, [reduxProfile, companyMembership, user, isEmployee]);
 
@@ -397,6 +402,12 @@ const handleSaveProfile = useCallback(async () => {
 }, [profile, activeTab, dispatch, showToast]);
 
 
+  const handleCancel = useCallback(() => {
+    setProfile(savedProfile);
+    setFieldErrors({});
+    setIsEditing(false);
+  }, [savedProfile]);
+
   const handleDismissError = useCallback(() => {
     // Error is handled in Redux, no need to clear manually
   }, []);
@@ -425,6 +436,7 @@ const handleSaveProfile = useCallback(async () => {
     handleSelectChange,
     handleImageUpload,
     handleSaveProfile,
+    handleCancel,
     handleDismissError,
     handleDismissSuccess,
   };

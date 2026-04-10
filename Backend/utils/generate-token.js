@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const { EXPIRATION_HOURS } = require("../constants/auth-jwt.constants");
 
-// Générer un token JWT
+
+// Generate JWT token
 module.exports.generateToken = (userId, companyId, role) => {
   const payload = { id: userId };
   if (companyId) {

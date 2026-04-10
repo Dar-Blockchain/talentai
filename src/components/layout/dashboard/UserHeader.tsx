@@ -20,9 +20,10 @@ import { logout } from "@/store/slices/authSlice";
 interface UserHeaderProps {
   companyName: string;
   companyInitial: string;
+  avatarUrl?: string | null;
 }
 
-const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) => {
+const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial, avatarUrl }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const router = useRouter();
@@ -50,6 +51,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial }) 
         onClick={handleOpenMenu}
       >
         <Avatar
+          src={avatarUrl ?? undefined}
           sx={{
             width: 30,
             height: 30,

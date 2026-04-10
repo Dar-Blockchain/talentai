@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuthUser } = require('../middleware/auth.middleware');
+const { requireAuthUser } = require('../middleware/security/auth.middleware');
 const agentConfigController = require('../controllers/agentConfig.controller');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 

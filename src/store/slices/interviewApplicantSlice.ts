@@ -15,12 +15,14 @@ export interface InterviewApplicant {
 }
 
 interface InterviewApplicantState {
-  current: InterviewApplicant | null;   // the applicant registered in current session
-  list: InterviewApplicant[];            // applicants for a job (company view)
+  current: InterviewApplicant | null;
+  list: InterviewApplicant[];
   listLoading: boolean;
   listError: string | null;
   registerLoading: boolean;
   registerError: string | null;
+  accessAllowed: boolean | null;   // null = not checked yet
+  accessLoading: boolean;
 }
 
 const initialState: InterviewApplicantState = {
@@ -30,6 +32,8 @@ const initialState: InterviewApplicantState = {
   listError: null,
   registerLoading: false,
   registerError: null,
+  accessAllowed: null,
+  accessLoading: false,
 };
 
 /** Register a new applicant when they open the interview link */
@@ -97,6 +101,27 @@ export const updateApplicantStatus = createAsyncThunk<
   }
 );
 
+/** Validate that the logged-in user is the intended recipient of the invitation link */
+export const validateInterviewAccess = createAsyncThunk<
+  { allowed: boolean; reason?: string },
+  { jobId: string; ref: string; token: string },
+  { rejectValue: string }
+>(
+  'interviewApplicant/validateAccess',
+  async ({ jobId, ref, token }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}interview-applicants/validate/${jobId}?ref=${encodeURIComponent(ref)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      return { allowed: data.allowed ?? false, reason: data.reason };
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Network error');
+    }
+  }
+);
+
 const interviewApplicantSlice = createSlice({
   name: 'interviewApplicant',
   initialState,
@@ -143,6 +168,19 @@ const interviewApplicantSlice = createSlice({
         if (state.current?._id === updated._id) state.current = updated;
         const idx = state.list.findIndex(a => a._id === updated._id);
         if (idx !== -1) state.list[idx] = updated;
+      })
+      // validateAccess
+      .addCase(validateInterviewAccess.pending, (state) => {
+        state.accessLoading = true;
+        state.accessAllowed = null;
+      })
+      .addCase(validateInterviewAccess.fulfilled, (state, action) => {
+        state.accessLoading = false;
+        state.accessAllowed = action.payload.allowed;
+      })
+      .addCase(validateInterviewAccess.rejected, (state) => {
+        state.accessLoading = false;
+        state.accessAllowed = true; // allow on network error — fail open
       });
   },
 });
@@ -153,5 +191,7 @@ export const selectCurrentApplicant = (state: RootState) => state.interviewAppli
 export const selectApplicantList = (state: RootState) => state.interviewApplicant.list;
 export const selectApplicantListLoading = (state: RootState) => state.interviewApplicant.listLoading;
 export const selectRegisterLoading = (state: RootState) => state.interviewApplicant.registerLoading;
+export const selectAccessAllowed = (state: RootState) => state.interviewApplicant.accessAllowed;
+export const selectAccessLoading = (state: RootState) => state.interviewApplicant.accessLoading;
 
 export default interviewApplicantSlice.reducer;

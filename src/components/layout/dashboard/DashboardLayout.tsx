@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Box, useTheme, useMediaQuery, Modal, CircularProgress, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { isLoggingOutCheck } from "@/store/slices/authSlice";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { navigation } from "@/constants/navigation";
+import { useRouter } from "next/router";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isLoggingOut = useSelector(isLoggingOutCheck);
+  const router = useRouter();
+
+  useEffect(() => {
+    navigation.forEach((item) => router.prefetch(item.href));
+  }, [router]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -74,6 +80,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <Box
         sx={{
           flex: 1,
+          minWidth: 0,
           display: "flex",
           flexDirection: "column",
         }}

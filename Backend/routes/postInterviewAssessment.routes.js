@@ -11,8 +11,9 @@ const router = express.Router();
 const postInterviewAssessmentController = require('../controllers/InterviewControllers/postInterviewAssessment.controller');
 
 // Import middlewares
-const { requireAuthUser } = require('../middleware/auth.middleware');
+const { requireAuthUser } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
+const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
 
 // ========== PUBLIC ROUTES (no auth required) ==========
 
@@ -29,10 +30,10 @@ router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAss
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);
 
 // GET /post-interview-assessments/company/mine — Get all assessments for authenticated company
-router.get('/company/mine', postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
+router.get('/company/mine', resolveCompanyActor, postInterviewAssessmentController.getAllPostInterviewAssessmentsForCompany);
 
 // GET /post-interview-assessments/company/mine/metrics — Get interview metrics for authenticated company
-router.get('/company/mine/metrics', postInterviewAssessmentController.getInterviewMetricsForCompany);
+router.get('/company/mine/metrics', resolveCompanyActor, postInterviewAssessmentController.getInterviewMetricsForCompany);
 
 // GET /post-interview-assessments/candidate — Get all assessments for a candidate
 router.get('/candidate/my', postInterviewAssessmentController.getAssessmentsByCandidate);

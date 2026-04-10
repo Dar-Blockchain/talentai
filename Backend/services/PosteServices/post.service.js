@@ -212,7 +212,7 @@ module.exports.notifyMatchingCandidates = async (post) => {
 
     // ========== 5. SEND NOTIFICATIONS ==========
     const title = (post.jobDetails?.title) || post.title || 'Nouvelle offre';
-    const content = `Nouvelle offre: ${title} — correspond à vos compétences techniques.`;
+    const content = `New offer: ${title} — matches your technical skills.`;
 
     console.log('📤 Sending notifications to', recipientIds.length, 'candidates');
     await notificationService.broadcastSystemNotification(content, recipientIds);
@@ -542,15 +542,20 @@ module.exports.getPostsByUserId = async (userId) => {
 };
 
 // Get user's posts with pagination, search and sorting
-module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '') => {
+module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '', showArchived = false) => {
   try {
     // Validate pagination parameters
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // Cap limit at 100
     const skip = (pageNum - 1) * limitNum;
 
-    // Build query with search filter
+    // Build query with search filter and archive filter
     let query = { user: userId };
+    if (showArchived) {
+      query.archived = true; // Show only archived posts
+    } else {
+      query.archived = { $ne: true }; // Show posts where archived is false or not set
+    }
     if (search && search.trim() !== '') {
       query['jobDetails.title'] = { $regex: search.trim(), $options: 'i' }; // Case-insensitive search
     }
@@ -664,52 +669,72 @@ module.exports.deletePost = async (postId, userId) => {
       throw new Error("Post not found or unauthorized");
     }
 
-    // ========== DELETE ASSOCIATED RECORDS IN CASCADE ==========
-
-    // 1. Delete PostSteps
+    // ========== ARCHIVE ASSOCIATED RECORDS IN CASCADE ==========
+    
+    // 1. Archive PostSteps
     if (post.PostSteps && post.PostSteps.length > 0) {
       const PostSteps = require('../../models/postSteps.model');
-      await PostSteps.deleteMany({ _id: { $in: post.PostSteps } });
-      console.log(`🗑️ Deleted ${post.PostSteps.length} post step(s)`);
+      await PostSteps.updateMany(
+        { _id: { $in: post.PostSteps } },
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived ${post.PostSteps.length} post step(s)`);
     }
 
-    // 2. Delete agentConfig if exists
+    // 2. Archive agentConfig if exists
     if (post.agentConfig) {
       const AgentConfig = require('../../models/AgentConfig.model');
-      await AgentConfig.findByIdAndDelete(post.agentConfig);
-      console.log(`🗑️ Deleted agentConfig: ${post.agentConfig}`);
+      await AgentConfig.findByIdAndUpdate(
+        post.agentConfig,
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived agentConfig: ${post.agentConfig}`);
     }
 
-    // 3. Delete agent if exists
+    // 3. Archive agent if exists
     if (post.agentId) {
       const Agent = require('../../models/Agent.model');
-      await Agent.findByIdAndDelete(post.agentId);
-      console.log(`🗑️ Deleted agent: ${post.agentId}`);
+      await Agent.findByIdAndUpdate(
+        post.agentId,
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived agent: ${post.agentId}`);
     }
 
-    // 4. Delete MatchingConfig if exists
+    // 4. Archive MatchingConfig if exists
     if (post.MatchingConfig) {
       const MatchingConfig = require('../../models/MatchingConfig.model');
-      await MatchingConfig.findByIdAndDelete(post.MatchingConfig);
-      console.log(`🗑️ Deleted MatchingConfig: ${post.MatchingConfig}`);
+      await MatchingConfig.findByIdAndUpdate(
+        post.MatchingConfig,
+        { archived: true, archivedAt: new Date() }
+      );
+      console.log(`📦 Archived MatchingConfig: ${post.MatchingConfig}`);
     }
 
-    // 5. Delete associated job assessments
+    // 5. Archive associated job assessments
     const PostInterviewAssessment = require('../../models/PostInterviewAssessment.model');
-    await PostInterviewAssessment.deleteMany({ post: postId });
-    console.log(`🗑️ Deleted job assessment results for post`);
+    await PostInterviewAssessment.updateMany(
+      { post: postId },
+      { archived: true, archivedAt: new Date() }
+    );
+    console.log(`📦 Archived job assessment results for post`);
 
-    // 6. Delete the post itself
-    const deletedPost = await Post.findByIdAndDelete(postId);
-
-    // 7. Update the user by removing the post reference
-    await User.updateOne(
-      { _id: userId },
-      { $pull: { post: postId } }
+    // 6. Archive the post itself
+    const archivedPost = await Post.findByIdAndUpdate(
+      postId,
+      { archived: true, archivedAt: new Date() },
+      { new: true }
     );
 
-    console.log(`✅ Post ${postId} and all associated records deleted successfully`);
-    return deletedPost;
+    // 7. Remove the post reference from user (optional - keep reference for archive history)
+    // Keep post in user.post array to maintain history
+    // await User.updateOne(
+    //   { _id: userId },
+    //   { $pull: { post: postId } }
+    // );
+
+    console.log(`✅ Post ${postId} and all associated records archived successfully`);
+    return archivedPost;
   } catch (error) {
     throw new Error(`Error deleting post: ${error.message}`);
   }
@@ -760,7 +785,7 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     };
   }
 
-  // Extraire les noms des compétences
+  // Extract skill names
   const skillNames = user.profile.skills
     .map((s) => (typeof s === "string" ? s : s?.name))
     .filter(Boolean);
@@ -772,12 +797,12 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
     };
   }
 
-  // IDs de postes déjà testés
+  // Already tested post IDs
   const testedPosts = await PostInterviewAssessmentModel.find({
     candidate: user._id,
   }).distinct("jobId");
 
-  // Tous les postes correspondants aux skills, en excluant ceux déjà testés et avec status "open"
+  // All posts matching skills, excluding already tested ones and with status "open"
   let candidatePosts = await Post.find({
     "skillAnalysis.requiredSkills.name": { $in: skillNames },
     _id: { $nin: testedPosts },
@@ -1557,21 +1582,27 @@ module.exports.getPostMetrics = async (userId) => {
   try {
     const now = new Date();
 
-    // Get all posts for the user
+    // Get all posts for the user including archived flag
     const allPosts = await Post.find({ user: userId }).select(
-      'status expirationDate'
+      'status expirationDate archived'
     );
 
     // Initialize counters
     const metrics = {
-      total: allPosts.length,
+      total: 0,
       active: 0,
       draft: 0,
       closed: 0,
+      archived: 0,
     };
 
-    // Count posts by status — expired open posts count as closed
+    // Count posts by status — archived posts excluded from total
     allPosts.forEach((post) => {
+      if (post.archived) {
+        metrics.archived++;
+        return;
+      }
+      metrics.total++;
       const isExpired = post.expirationDate && new Date(post.expirationDate) < now;
       const s = post.status?.toLowerCase();
 

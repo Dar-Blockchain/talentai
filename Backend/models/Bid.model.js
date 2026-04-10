@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const BidSchema = new mongoose.Schema({
   postId: {
-    type: String, // ✅ supprimé: index: true
+    type: String, // ✅ removed: index: true
     required: true,
   },
   bidderId: {

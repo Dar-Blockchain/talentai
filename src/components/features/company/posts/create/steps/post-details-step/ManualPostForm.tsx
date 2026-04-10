@@ -115,7 +115,6 @@ const ManualPostForm = () => {
         {/* Title */}
         <Box sx={{ mb: 2 }}>
           <Typography sx={labelSx}>
-            <TitleOutlined sx={{ fontSize: 14 }} />
             Job Title
           </Typography>
           <TextField

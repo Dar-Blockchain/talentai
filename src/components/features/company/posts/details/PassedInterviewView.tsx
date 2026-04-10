@@ -220,7 +220,7 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle }) => {
                       <Button
                         size="small"
                         startIcon={<AssessmentOutlined sx={{ fontSize: 15 }} />}
-                        onClick={() => router.push(`/company/assessment/${candidate.assessmentId}`)}
+                        onClick={() => router.push(`/company/interviews/${candidate.assessmentId}`)}
                         sx={{
                           textTransform: "none", fontWeight: 600, fontSize: "12px",
                           borderRadius: 2, height: 34, px: 2,
@@ -264,8 +264,8 @@ const PassedInterviewView: React.FC<Props> = ({ jobId, jobTitle }) => {
                 page={page}
                 onChange={handlePageChange}
                 sx={{
-                  "& .MuiPaginationItem-root.Mui-selected": { bgcolor: TEAL, color: "#fff" },
-                  "& .MuiPaginationItem-root:hover": { bgcolor: TEAL_BG },
+                  "& .MuiPaginationItem-root.Mui-selected": { bgcolor: "rgba(131,16,255,0.1)", color: "#8310FF" },
+                  "& .MuiPaginationItem-root:hover": { bgcolor: "#F3F4F6" },
                 }}
               />
             </Box>

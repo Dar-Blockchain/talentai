@@ -12,12 +12,10 @@ import { useTaskSubmission } from '../../../hooks/useTaskSubmission';
 import { useNotification } from '../../../hooks/useNotification';
 
 // Components
-import DashboardHeader from './post-interview/DashboardHeader';
 import SummaryCards from './post-interview/SummaryCards';
 import ApplicationProgressSection from './post-interview/ApplicationProgressSection';
 import InterviewListSection from './post-interview/InterviewListSection';
 import FeedbackDialog from './post-interview/FeedbackDialog';
-import EmptyState from './post-interview/EmptyState';
 
 interface PostInterviewTabProps {
   data: PostInterviewData[];
@@ -34,7 +32,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
 
   // State
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
-  const [selectedInterview, setSelectedInterview] = useState<PostInterviewData | null>(null);
 
   // Custom Hooks
   const { candidateProgress, progressLoading, progressError, refetchProgress } = useCandidateProgress();
@@ -90,14 +87,12 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     [router]
   );
 
-  const handleProvideFeedback = useCallback((interview: PostInterviewData) => {
-    setSelectedInterview(interview);
+  const handleProvideFeedback = useCallback((_interview: PostInterviewData) => {
     setFeedbackDialogOpen(true);
   }, []);
 
   const handleCloseFeedback = useCallback(() => {
     setFeedbackDialogOpen(false);
-    setSelectedInterview(null);
   }, []);
 
   // Loading State
@@ -183,7 +178,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       )}
 
       {/* Feedback Dialog */}
-      <FeedbackDialog open={feedbackDialogOpen} interview={selectedInterview} onClose={handleCloseFeedback} />
+      <FeedbackDialog open={feedbackDialogOpen} onClose={handleCloseFeedback} />
 
       {/* Notification Snackbar */}
       <Snackbar

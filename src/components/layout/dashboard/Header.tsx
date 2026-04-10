@@ -4,12 +4,10 @@ import React from "react";
 import {
   Box,
   IconButton,
-  InputBase,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import UserHeader from "./UserHeader";
@@ -26,17 +24,12 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const user = useSelector((state: RootState) => state.user.connectedUser.user);
-  const userType = useSelector((state: RootState) => state.user.userType);
 
-  const displayName = (() => {
-    if (user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate" ) {
-      const full = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
-      return full || user?.username;
-    }
-    return profile?.companyDetails?.name || "Company";
-  })();
-  const displayInitial = displayName[0]?.toUpperCase() || "E";
+  const companyName = profile?.companyDetails?.name || "Company";
+  const companyInitial = companyName[0] || "C";
+  const avatarUrl = profile?.user_image
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
+    : null;
 
   return (
     <Box
@@ -75,9 +68,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <HeaderChat />
-        <HeaderNotification />
-        <UserHeader companyName={displayName} companyInitial={displayInitial} />
+        <Box data-tour="header-chat"><HeaderChat /></Box>
+        <Box data-tour="header-notif"><HeaderNotification /></Box>
+        <UserHeader companyName={companyName} companyInitial={companyInitial} avatarUrl={avatarUrl} />
       </Box>
     </Box>
     

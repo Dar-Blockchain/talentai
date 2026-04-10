@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { memo, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,13 +9,13 @@ import {
   Menu,
   MenuItem,
   Pagination,
+  Button,
 } from "@mui/material";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SortOutlined from "@mui/icons-material/SortOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
-import { Button } from "@mui/material";
 import JobPostCard from "./JobPostCard";
 
 const TEAL      = "#0D9488";
@@ -43,8 +43,6 @@ interface JobPostsListProps {
   pagination: PaginationInfo;
   onPageChange: (page: number) => void;
   onDelete: (id: string) => void;
-  onCopyLink: (id: string) => void;
-  onViewPassed: (id: string) => void;
   onViewDetails: (id: string) => void;
   onCreateClick: () => void;
   canCreate?: boolean;
@@ -80,10 +78,10 @@ const JobPostSkeletonCard: React.FC = () => (
 
 /* ── Sort button ───────────────────────────────────────────── */
 const STATUS_FILTERS: { id: StatusFilter; label: string; color: string; bg: string }[] = [
-  { id: "all",     label: "All",    color: "#374151", bg: "#F3F4F6" },
-  { id: "active",  label: "Open",   color: "#059669", bg: "#ECFDF5" },
-  { id: "draft",   label: "Draft",  color: "#D97706", bg: "#FFFBEB" },
-  { id: "expired", label: "Closed", color: "#DC2626", bg: "#FEF2F2" },
+  { id: "all",      label: "All",      color: "#374151", bg: "#F3F4F6" },
+  { id: "active",   label: "Open",     color: "#059669", bg: "#ECFDF5" },
+  { id: "draft",    label: "Draft",    color: "#D97706", bg: "#FFFBEB" },
+  { id: "expired",  label: "Closed",   color: "#DC2626", bg: "#FEF2F2" },
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -135,7 +133,7 @@ const SortButton: React.FC<{ value: SortOption; onChange: (v: SortOption) => voi
 };
 
 /* ── Main component ────────────────────────────────────────── */
-const JobPostsList: React.FC<JobPostsListProps> = ({
+const JobPostsList = memo<JobPostsListProps>(({
   jobs,
   loading,
   error,
@@ -149,8 +147,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
   pagination,
   onPageChange,
   onDelete,
-  onCopyLink,
-  onViewPassed,
   onViewDetails,
   onCreateClick,
   canCreate = true,
@@ -222,7 +218,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
               gap: { xs: 1.5, md: 2 },
             }}
           >
@@ -266,7 +262,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                 startIcon={<AddOutlined />}
                 onClick={onCreateClick}
                 sx={{
-                  textTransform: "none", fontWeight: 700,
+                  textTransform: "none", fontWeight: 700, color: "#fff",
                   bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" }, borderRadius: 2,
                 }}
               >
@@ -279,7 +275,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", xl: "repeat(3, 1fr)" },
+                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
                 gap: { xs: 1.5, md: 2 },
                 mb: pagination.totalPages > 1 ? 3 : 0,
               }}
@@ -290,8 +286,6 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                   job={job}
                   index={i}
                   onDelete={onDelete}
-                  onCopyLink={onCopyLink}
-                  onViewPassed={onViewPassed}
                   onViewDetails={onViewDetails}
                   canDelete={canDelete}
                 />
@@ -308,7 +302,7 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
                   sx={{
                     "& .MuiPaginationItem-root": {
                       fontWeight: 500,
-                      "&.Mui-selected": { bgcolor: TEAL_BG, color: TEAL, fontWeight: 700 },
+                      "&.Mui-selected": { bgcolor: "rgba(131,16,255,0.1)", color: "#8310FF", fontWeight: 700 },
                       "&:hover":        { bgcolor: "#F3F4F6" },
                     },
                   }}
@@ -320,6 +314,8 @@ const JobPostsList: React.FC<JobPostsListProps> = ({
       </Box>
     </Box>
   );
-};
+});
+
+JobPostsList.displayName = "JobPostsList";
 
 export default JobPostsList;

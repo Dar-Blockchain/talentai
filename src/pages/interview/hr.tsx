@@ -19,6 +19,7 @@ import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
+import { validateInterviewAccess, selectAccessAllowed, selectAccessLoading } from '@/store/slices/interviewApplicantSlice';
 
 // Types
 import {
@@ -50,9 +51,9 @@ import {
   SecurityModals,
   InterviewTimer,
 } from '@/components/features/interview/start';
-import JobOverview from '@/components/features/interview/start/JobOverview';
 import InterviewIntro from '@/components/features/interview/start/InterviewIntro';
 import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
+import CoverageDashboard from '@/components/features/interview/start/CoverageDashboard';
 
 // Styles
 import { GlobalStyles } from '@/components/features/interview/start/styles';
@@ -65,11 +66,15 @@ const IntelligentInterviewTest = () => {
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  const [step, setStep] = useState<'intro' | 'overview' | 'interview'>('intro');
+  const [step, setStep] = useState<'intro' | 'interview'>('intro');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
+  const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
   const [assessmentChecking, setAssessmentChecking] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
+  const accessAllowed = useSelector(selectAccessAllowed);
+  const accessLoading = useSelector(selectAccessLoading);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
@@ -82,10 +87,29 @@ const IntelligentInterviewTest = () => {
     setStep('intro');
 
     const postId = router.query.jobId as string;
+    const token = Cookies.get('api_token');
+
+    const ref = router.query.ref as string | undefined;
+    const isPublicLink = !ref || ref === 'link';
+
+    if (authUser && token) {
+      if (!isPublicLink) {
+        // Validate that the logged-in user is the intended recipient
+        dispatch(validateInterviewAccess({ jobId: postId, ref, token }));
+      }
+      // Auto-create job application (non-blocking)
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ post: postId }),
+      }).catch(() => {});
+    }
+
     setAssessmentChecking(true);
     dispatch(checkPostInterviewAssessment(postId)).then((result) => {
       if (checkPostInterviewAssessment.fulfilled.match(result)) {
         if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
+        else if (result.payload.isArchived) setIsArchived(true);
         else if (result.payload.exists) setAlreadyCompleted(true);
       } else if (checkPostInterviewAssessment.rejected.match(result)) {
         // silently ignore — let them proceed
@@ -113,6 +137,7 @@ const IntelligentInterviewTest = () => {
     jobData,
     limitReached,
     limitMessage,
+    isExpired,
   } = useInterviewConfig({ showNotification: notify });
 
   const endInterviewRef = useRef<() => void>(() => { });
@@ -245,8 +270,6 @@ const IntelligentInterviewTest = () => {
     jobData,
   });
 
-  const lastInterviewerMessage = audio.conversationHistory.filter(m => m.type !== 'system').slice(-1)[0] || null;
-
   const timer = useInterviewTimer({
     interviewStatus: socket.interviewStatus,
     onTimeUp: useCallback(() => { endInterviewRef.current(); }, []),
@@ -310,6 +333,99 @@ const IntelligentInterviewTest = () => {
           <Header />
           <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 }, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress sx={{ color: '#8310FF' }} />
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Post archived ── */
+  if (isArchived) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <Typography sx={{ fontSize: 32 }}>📦</Typography>
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                This position is no longer available
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                This job post has been archived by the company and is no longer accepting new interviews.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/dashboard/candidate')}
+                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+              >
+                Back to Dashboard
+              </Button>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Post expired ── */
+  if (isExpired) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #FED7AA', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <Typography sx={{ fontSize: 32 }}>⏰</Typography>
+              </Box>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
+                This position is no longer accepting applications
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
+                This job post has exceeded its expiration date and is no longer open for interviews.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => router.push('/dashboard/candidate')}
+                sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 3, py: 1.2, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+              >
+                Back to Dashboard
+              </Button>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
+  /* ── Access denied — wrong candidate ── */
+  if (accessAllowed === false && !accessLoading) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #FECACA', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+              <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                <Typography sx={{ fontSize: 28 }}>🚫</Typography>
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>
+                Access Denied
+              </Typography>
+              <Typography sx={{ color: '#6B7280', fontSize: '0.92rem', mb: 3 }}>
+                This interview invitation was not sent to your account. Please use the account that received the invitation email.
+              </Typography>
+              <Button variant="outlined" onClick={() => router.push('/dashboard/candidate')}
+                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', borderColor: '#E5E7EB', color: '#374151' }}>
+                Go to Dashboard
+              </Button>
+            </Box>
           </Container>
         </Box>
       </>
@@ -421,24 +537,8 @@ const IntelligentInterviewTest = () => {
         hasJobId={hasJobId}
         jobId={jobId}
         refParam={refParam}
-        totalSteps={hasJobId ? 3 : 2}
         jobData={jobData}
-        onNext={() => {
-          setStep(hasJobId ? 'overview' : 'interview');
-        }}
-      />
-    );
-  }
-
-  /* ── Step 2: Job Overview (only when jobId present) ── */
-  if (step === 'overview') {
-    return (
-      <JobOverview
-        jobData={jobData}
-        interviewConfig={interviewConfig}
-        pipelineLoading={pipelineLoading}
-        hasJobId={hasJobId}
-        onStart={() => setStep('interview')}
+        onNext={(_) => setStep('interview')}
       />
     );
   }
@@ -447,7 +547,7 @@ const IntelligentInterviewTest = () => {
     <>
       <style jsx global>{GlobalStyles}</style>
       <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
-
+        <Header />
 
         {/* ── Connection warning banner ── */}
         {socket.isHydrated && socket.connectionStatus !== 'connected' && (
@@ -567,14 +667,22 @@ const IntelligentInterviewTest = () => {
             }}
           >
             {/* Question panel (full-width, active only) */}
-            {isActive && lastInterviewerMessage && (
-              <QuestionPanel
-                currentMessage={lastInterviewerMessage}
-                isInReadingTime={audio.isInReadingTime}
-                readingTimeLeft={audio.readingTimeLeft}
-                questionHighlight={audio.questionHighlight}
-              />
-            )}
+            {isActive && (() => {
+              const allMsgs = audio.conversationHistory.filter(m => m.type !== 'system');
+              const lastMsg = allMsgs.slice(-1)[0];
+              if (!lastMsg) return null;
+              const qCount = audio.conversationHistory.filter(m => m.type === 'question' || m.type === 'follow_up').length;
+              const isQuestion = lastMsg.type === 'question' || lastMsg.type === 'follow_up';
+              return (
+                <QuestionPanel
+                  currentMessage={lastMsg}
+                  isInReadingTime={audio.isInReadingTime}
+                  readingTimeLeft={audio.readingTimeLeft}
+                  questionHighlight={audio.questionHighlight}
+                  questionNumber={isQuestion ? qCount : 0}
+                />
+              );
+            })()}
 
             {/* Two-column grid: camera LEFT · controls RIGHT */}
             <Box
@@ -605,7 +713,7 @@ const IntelligentInterviewTest = () => {
                   connectionStatus={socket.connectionStatus}
                   cameraStatus={camera.cameraStatus}
                   agentState={audio.agentState}
-                  currentTranscript={audio.currentTranscript}
+                  currentTranscript={audio.accumulatedTranscript || audio.currentTranscript}
                   onStartInterview={startInterview}
                   onEndInterview={endInterview}
                   onViewResults={handleViewResults}
@@ -614,11 +722,24 @@ const IntelligentInterviewTest = () => {
                 <AgentStatusPanel
                   interviewStatus={socket.interviewStatus}
                   agentState={audio.agentState}
+                  isVoiceActive={audio.speechPhase === 'speaking'}
                   onSubmitAnswer={audio.sendAccumulatedAnswer}
                 />
               </Box>
             </Box>
           </Box>
+
+          {/* ── Coverage Dashboard (shown after interview ends) ── */}
+          {coverage && (
+            <CoverageDashboard
+              interviewStatus={socket.interviewStatus}
+              coverage={coverage}
+              realTimeReport={null}
+              agentMessage=""
+              coverageDashboardExpanded={coverageDashboardExpanded}
+              onToggleExpand={() => setCoverageDashboardExpanded(p => !p)}
+            />
+          )}
 
         </Container>
 

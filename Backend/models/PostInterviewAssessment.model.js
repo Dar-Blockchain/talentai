@@ -141,7 +141,6 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
 
     sessionId: {
       type: String,
-      unique: true,
       required: true
     },
     interviewType: {
@@ -160,14 +159,30 @@ const postInterviewAssessmentSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when assessment is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when assessment was archived'
+  },
 }, {
   timestamps: true,
   collection: 'PostInterviewAssessment'
 });
 
 // ========== INDEXES ==========
-postInterviewAssessmentSchema.index({ post: 1, candidate: 1 });
+// NOTE: The old unique index on sessionId should be removed from MongoDB if it exists.
+// To remove it, run in MongoDB console:
+// db.PostInterviewAssessment.dropIndex("interviewData.sessionId_1")
+// 
+// The new unique index on (post, candidate) ensures only one assessment per candidate per post
+postInterviewAssessmentSchema.index({ post: 1, candidate: 1 }, { unique: true, sparse: true });
 postInterviewAssessmentSchema.index({ post: 1, company: 1 });
 postInterviewAssessmentSchema.index({ candidate: 1 });
 postInterviewAssessmentSchema.index({ company: 1 });

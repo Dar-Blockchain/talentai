@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 // List of possible notification types
 const NOTIFICATION_TYPES = ["info", "success", "warning", "error", "custom", "system"];
 
-// Schéma Mongoose pour les notifications
+// Mongoose schema for notifications
 const NotificationSchema = new mongoose.Schema(
   {
     content: {

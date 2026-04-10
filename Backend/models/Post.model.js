@@ -19,7 +19,7 @@ const skillSchema = new mongoose.Schema({
     required: false,
     validate: {
       validator: function (v) {
-        // Autorise undefined (pas encore calculé), mais valide la plage
+        // Allows undefined (not yet computed), but validates the range
         return v === undefined || (v >= 0 && v <= 100);
       },
       message: (props) =>
@@ -135,7 +135,7 @@ const postSchema = new mongoose.Schema({
       return date;
     },
     required: true,
-    description: 'Date d\'expiration du poste (par défaut 15 jours après la création)'
+    description: 'Post expiration date (by default 15 days after creation)'
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -156,15 +156,15 @@ const postSchema = new mongoose.Schema({
     ref: "Agent",
     unique: true,
     sparse: true,
-    description: "Référence one-to-one vers l'Agent associé à ce Post",
+    description: "One-to-one reference to the Agent associated with this Post",
   },
-  // Référence vers la configuration associée (one-to-one)
+  // Reference to associated configuration (one-to-one)
   agentConfig: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "AgentConfig",
     unique: true,
     sparse: true,
-    description: "Référence optionnelle vers AgentConfig (one-to-one)",
+    description: "Optional reference to AgentConfig (one-to-one)",
   },
   PostSteps: [
     {
@@ -204,6 +204,18 @@ const postSchema = new mongoose.Schema({
     enum: ['ai', 'pipeline', 'manual'],
     default: 'ai',
     description: 'How the post was created: AI generated, pipeline builder, or manual'
+  },
+
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when post is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when post was archived'
   },
 
 });

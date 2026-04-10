@@ -70,20 +70,13 @@ const PostsPage: React.FC = () => {
     : sortBy; // "newest" | "oldest" pass through
 
   const load = useCallback(() => {
-    dispatch(fetchMyPosts({ page, limit: 9, search, sort: apiSort, status: apiStatus }));
+    dispatch(fetchMyPosts({ page, limit: 8, search, sort: apiSort, status: apiStatus }));
   }, [dispatch, page, search, apiSort, apiStatus]);
 
   useEffect(() => { load(); }, [load]);
 
   // API handles all filtering + sorting server-side
   const filteredPosts = posts as any[];
-
-  const handleCopyLink = (id: string) => {
-    navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${id}&ref=link`)
-      .then(() => showToast({ message: "Interview link copied!", severity: "success" }))
-      .catch(() => showToast({ message: "Failed to copy link", severity: "error" }));
-  };
 
   const handleDelete = (id: string) => {
     setJobToDelete(id);
@@ -136,8 +129,6 @@ const PostsPage: React.FC = () => {
               pagination={pagination}
               onPageChange={setPage}
               onDelete={handleDelete}
-              onCopyLink={handleCopyLink}
-              onViewPassed={(id) => router.push(`/posts/${id}?tab=passed`)}
               onViewDetails={(id) => router.push(`/company/posts/${id}`)}
               onCreateClick={handleCreateClick}
               canCreate={canCreate}

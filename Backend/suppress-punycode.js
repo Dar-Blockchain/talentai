@@ -1,6 +1,6 @@
 // suppress-punycode.js
-// Précharge pour intercepter et ignorer spécifiquement la DeprecationWarning liée au module builtin `punycode`.
-// Chargez Node avec: node -r ./suppress-punycode.js app.js
+// Preload to intercept and ignore specifically the DeprecationWarning related to the `punycode` builtin module.
+// Load Node with: node -r ./suppress-punycode.js app.js
 
 const Module = require('module');
 const path = require('path');

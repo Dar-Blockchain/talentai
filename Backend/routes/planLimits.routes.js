@@ -1,13 +1,13 @@
 /**
  * Routes pour la gestion des limites de plan
  *
- * Chaque endpoint de gestion des plans (POST, PUT, DELETE) nécessite une authentification.
+ * Each plan management endpoint (POST, PUT, DELETE) requires authentication.
  * Les endpoints de consultation (GET) sont publics.
  */
 const express = require("express");
 const router = express.Router();
 const planLimitsController = require("../controllers/planLimits.controller");
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuthUser } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require('../middleware/authorize.middleware.js');
 

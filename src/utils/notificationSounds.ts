@@ -1,7 +1,7 @@
 /**
  * Notification Sound Utility
- * Gère la lecture des sons pour différents types de notifications
- * Version améliorée avec sons multi-tons professionnels
+ * Manages playing sounds for different notification types
+ * Enhanced version with multi-tone professional sounds
  */
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -53,16 +53,16 @@ const SOUND_CONFIGS: Record<NotificationType, SoundConfig> = {
 class NotificationSoundManager {
   private audioContext: AudioContext | null = null;
   private enabled: boolean = true;
-  private volume: number = 0.3; // Volume par défaut (0-1)
+  private volume: number = 0.3; // Default volume (0-1)
   private masterGain: GainNode | null = null;
 
   constructor() {
-    // Charger les préférences depuis localStorage
+    // Load preferences from localStorage
     this.loadSettings();
   }
 
   /**
-   * Initialise l'AudioContext (nécessaire pour certains navigateurs)
+   * Initializes the AudioContext (necessary for certain browsers)
    */
   private initAudioContext(): void {
     if (!this.audioContext) {
@@ -72,7 +72,7 @@ class NotificationSoundManager {
         this.masterGain.connect(this.audioContext.destination);
         this.masterGain.gain.value = this.volume;
       } catch (e) {
-        console.warn('Web Audio API non supportée:', e);
+        console.warn('Web Audio API not supported:', e);
       }
     }
   }
@@ -92,12 +92,12 @@ class NotificationSoundManager {
         this.volume = parsed.volume ?? 0.3;
       }
     } catch (e) {
-      console.warn('Erreur lors du chargement des paramètres audio:', e);
+      console.warn('Error loading audio settings:', e);
     }
   }
 
   /**
-   * Sauvegarde les paramètres dans localStorage
+   * Saves parameters to localStorage
    */
   private saveSettings(): void {
     try {
@@ -109,12 +109,12 @@ class NotificationSoundManager {
         volume: this.volume,
       }));
     } catch (e) {
-      console.warn('Erreur lors de la sauvegarde des paramètres audio:', e);
+      console.warn('Error saving audio settings:', e);
     }
   }
 
   /**
-   * Crée un oscillateur avec envelope ADSR
+   * Creates an oscillator with ADSR envelope
    */
   private createNote(
     freq: number,
@@ -128,19 +128,19 @@ class NotificationSoundManager {
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
 
-    // Connecter: oscillator -> gain -> masterGain -> destination
+    // Connect: oscillator -> gain -> masterGain -> destination
     oscillator.connect(gainNode);
     gainNode.connect(this.masterGain);
 
-    // Configuration de l'oscillateur
+    // Oscillator configuration
     oscillator.type = type;
     oscillator.frequency.setValueAtTime(freq, now + startTime);
 
-    // Envelope ADSR pour un son court et percutant (style Facebook)
-    const attack = 0.005;  // Attack très rapide pour un son "pop"
-    const decay = 0.02;    // Decay court
-    const sustain = 0.6;   // Sustain modéré
-    const release = 0.05;  // Release rapide
+    // ADSR envelope for short, punchy sound (Facebook style)
+    const attack = 0.005;  // Very fast attack for a 'pop' sound
+    const decay = 0.02;    // Short decay
+    const sustain = 0.6;   // Moderate sustain
+    const release = 0.05;  // Fast release
 
     const peakTime = now + startTime + attack;
     const sustainTime = now + startTime + attack + decay;
@@ -152,13 +152,13 @@ class NotificationSoundManager {
     gainNode.gain.setValueAtTime(sustain, endTime - release); // Hold Sustain
     gainNode.gain.linearRampToValueAtTime(0, endTime); // Release
 
-    // Démarrer et arrêter
+    // Start and stop
     oscillator.start(now + startTime);
     oscillator.stop(endTime);
   }
 
   /**
-   * Joue un son pour le type de notification donné
+   * Plays a sound for the given notification type
    */
   public play(type: NotificationType): void {
     if (!this.enabled) return;
@@ -169,10 +169,10 @@ class NotificationSoundManager {
     const config = SOUND_CONFIGS[type];
 
     try {
-      // Mettre à jour le volume master
+      // Update master volume
       this.masterGain.gain.value = this.volume;
 
-      // Jouer chaque note de la mélodie
+      // Play each note of the melody
       config.notes.forEach(note => {
         this.createNote(
           note.freq,
@@ -182,12 +182,12 @@ class NotificationSoundManager {
         );
       });
     } catch (e) {
-      console.warn('Erreur lors de la lecture du son:', e);
+      console.warn('Error playing sound:', e);
     }
   }
 
   /**
-   * Active/désactive les sons
+   * Enable/disable sounds
    */
   public setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -195,14 +195,14 @@ class NotificationSoundManager {
   }
 
   /**
-   * Obtient l'état actuel (activé/désactivé)
+   * Gets the current state (enabled/disabled)
    */
   public isEnabled(): boolean {
     return this.enabled;
   }
 
   /**
-   * Définit le volume (0-1)
+   * Sets the volume (0-1)
    */
   public setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
@@ -213,14 +213,14 @@ class NotificationSoundManager {
   }
 
   /**
-   * Obtient le volume actuel (0-1)
+   * Gets the current volume (0-1)
    */
   public getVolume(): number {
     return this.volume;
   }
 
   /**
-   * Test un son (pour prévisualisation)
+   * Test a sound (for preview)
    */
   public test(type: NotificationType): void {
     const wasEnabled = this.enabled;

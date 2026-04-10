@@ -42,6 +42,8 @@ const contactRouter = require('../routes/contact.routes');
 const interviewApplicantRouter = require('../routes/interviewApplicant.routes');
 const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
 const employeePermissionsRouter = require('../routes/employeePermissions.routes');
+const jobApplicationRouter = require("../routes/jobApplication.routes");
+const apiKeyRouter = require('../routes/apiKey.routes');
 
 // const backupRouter = require('../routes/backupRouter');
 
@@ -50,6 +52,18 @@ const employeePermissionsRouter = require('../routes/employeePermissions.routes'
  * @param {Express} app - Express application instance
  */
 function registerRoutes(app) {
+  // API Documentation
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  
+  // Campaign API Documentation (Swagger)
+  app.use("/api/docs/campaigns", swaggerUi.serve, swaggerUi.setup(campaignSwagger));
+  
+  // Department API Documentation (Swagger)
+  app.use("/api/docs/departments", swaggerUi.serve, swaggerUi.setup(departmentSwagger));
+
+  // Job Applications API Documentation (Swagger)
+  app.use("/api/docs/job-applications", swaggerUi.serve, swaggerUi.setup(jobApplicationSwagger));
+
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
@@ -90,6 +104,7 @@ function registerRoutes(app) {
   // Candidate Management
   app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
   app.use("/unlock-candidate", unlockCandidateRouter); //✅ Unlock Candidate -> unlock-candidates
+  app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
 
   // Blockchain & Web3
   app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools
@@ -116,7 +131,7 @@ function registerRoutes(app) {
 
   // Health check routes
   app.get("/", (req, res) => {
-    res.json({ message: "Bienvenue sur l'API Express!" });
+    res.json({ message: "Welcome to Express API!" });
   });
 
   // Register internal campaign routes
@@ -128,6 +143,9 @@ function registerRoutes(app) {
 
   // CV Analysis Routes
   app.use('/cv-analysis', cvAnalysisRouter); //✅ CV Analysis Management -> cv-analysis
+
+  // API Key Management
+  app.use('/api/api-keys', apiKeyRouter); //✅ API Key Management -> api-keys
 
   app.get("/some-route", (req, res) => {
     res.json("Route accessible");

@@ -418,13 +418,13 @@ module.exports.searchProfilesBySkills = async (skills) => {
   }
 };
 
-// Gérer les soft skills
+// Manage soft skills
 module.exports.addSoftSkills = async (userId, softSkills) => {
   try {
     const profile = await Profile.findOne({ userId });
 
     if (!profile) {
-      throw new Error("Profil non trouvé");
+      throw new Error("Profile not found");
     }
 
     if (!Array.isArray(softSkills)) {
@@ -433,7 +433,7 @@ module.exports.addSoftSkills = async (userId, softSkills) => {
       );
     }
 
-    // Vérification des soft skills existants
+    // Check existing soft skills
     const existingSoftSkills = profile.softSkills.map((skill) =>
       skill.name.toLowerCase()
     );
@@ -533,7 +533,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
   }
 };
 
-// Mettre à jour le finalBid
+// Update the finalBid
 module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   try {
     const profile = await Profile.findOne({ userId });
@@ -541,14 +541,14 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       throw new Error("Profile not found");
     }
 
-    // Initialiser companyBid si non défini
+    // Initialize companyBid if not defined
     if (!profile.companyBid) {
       profile.companyBid = {};
     }
 
     const lastCompanyId = profile.companyBid.company;
 
-    // 🚫 Vérifier si la même company veut bider de nouveau
+    // 🚫 Check if same company wants to bid again
     if (lastCompanyId && lastCompanyId.toString() === companyId.toString()) {
       throw new Error("You cannot bid again if your company made the last bid");
     }
@@ -564,13 +564,13 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       throw new Error("Invalid new bid. The bid must be a positive number.");
     }
 
-    // --- Vérifier le plafond de dépense (bidBudgetMax) si configuré pour cet agent ---
+    // --- Check spending ceiling (bidBudgetMax) if configured for this agent ---
     try {
       const agentConfig = await AgentConfig.findOne({ agentId: companyId });
       const bidBudgetMax = agentConfig?.bidBudgetMax ?? null;
 
       if (bidBudgetMax !== null && Number.isFinite(Number(bidBudgetMax))) {
-        // Calculer la somme des bids actuellement attribués à cette company/agent
+        // Calculate sum of bids currently assigned to this company/agent
         const bids = await Profile.find({ 'companyBid.company': companyId }).select('companyBid.finalBid');
         const currentSpent = bids.reduce((sum, p) => {
           const v = p?.companyBid?.finalBid ? Number(p.companyBid.finalBid) : 0;
@@ -579,14 +579,14 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
 
         if (currentSpent + parsedNewBid > Number(bidBudgetMax)) {
           throw new Error(
-            `Budget maximum atteint ou dépassé : plafond=${bidBudgetMax}, dépensé=${currentSpent}. Le nouveau bid de ${parsedNewBid} le dépasserait.`
+            `Maximum budget reached or exceeded: ceiling=${bidBudgetMax}, spent=${currentSpent}. New bid of ${parsedNewBid} would exceed it.`
           );
         }
       }
     } catch (e) {
-      // Ne pas bloquer le flow si la vérification échoue pour une raison non critique
-      if (e.message && e.message.includes('Budget maximum')) {
-        throw e; // remonter le message explicite au contrôleur
+      // Do not block flow if check fails for non-critical reason
+      if (e.message && e.message.includes('Maximum budget')) {
+        throw e; // Raise explicit message to controller
       }
       console.warn('⚠️ Error checking bidBudgetMax:', e.message);
     }
@@ -638,7 +638,7 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   }
 };
 
-// Supprimer un skill spécifique (avec nettoyage des relations et implications)
+// Delete a specific skill (with cleanup of relationships and implications)
 // 🔹 Fonction pour supprimer un hard skill d’un profil utilisateur
 module.exports.deleteHardSkill = async (userId, skillToDelete) => {
   try {
@@ -714,7 +714,7 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
         const delRes = await InterviewAssessment.deleteMany({ _id: { $in: assessmentIds } });
         console.log("✅ InterviewAssessment deleted:", delRes.deletedCount);
 
-        // 7.c Retirer les références dans le profil
+        // 7.c Remove references in the profile
         profile.interviewDetails = (profile.interviewDetails || []).filter(
           (id) => !assessmentIds.some((x) => x.toString() === id.toString())
         );

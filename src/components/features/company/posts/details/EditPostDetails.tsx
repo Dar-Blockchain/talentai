@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
   Box,
   Button,
@@ -54,6 +57,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
       salary: job?.jobDetails?.salary || { min: 0, max: 0, currency: "USD" },
     },
     skillAnalysis: job?.skillAnalysis || {},
+    expirationDate: job?.expirationDate || "",
   });
 
   const [open, setOpen] = useState(false);
@@ -104,6 +108,7 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
               jobDetails: values.jobDetails,
               skillAnalysis: values.skillAnalysis,
               linkedinPost: job?.linkedinPost,
+              expirationDate: values.expirationDate || undefined,
             },
           })).unwrap();
           resetForm();
@@ -116,32 +121,36 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
           <>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", background: "rgba(234, 255, 247, 1)", width: 45, height: 45, borderRadius: "5px" }}>
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", background: "rgba(13,148,136,0.1)", width: 45, height: 45, borderRadius: "5px" }}>
                   <Image src="/icons/edit.svg" alt="file" width={25} height={25} />
                 </Box>
                 <Box>
-                  <Typography sx={{ color: "rgba(41, 210, 145, 1)", fontWeight: 600, fontSize: "20px" }}>Edit Job Post</Typography>
+                  <Typography sx={{ color: "#0D9488", fontWeight: 600, fontSize: "20px" }}>Edit Job Post</Typography>
                   <Typography sx={{ fontSize: "12px", color: "#546274" }}>Update the job details for this position</Typography>
                 </Box>
-              </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button variant="outlined" onClick={() => { resetForm(); onCancel(); }}
-                  sx={{ border: "none", background: "none", color: "rgba(133, 169, 227, 1)", textDecoration: "none", "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" } }}>
-                  Cancel
-                </Button>
-                <Button variant="contained" onClick={() => handleSubmit()}
-                  sx={{ textTransform: "none", height: "42px", width: "120px", borderRadius: "38px", background: "rgba(0, 234, 144, 1)", color: "white" }}>
-                  Save
-                </Button>
               </Box>
             </Box>
 
             <Box sx={{ mt: 1 }}>
               <Typography sx={{ color: "rgba(84, 98, 116, 1)", fontWeight: 600, fontSize: "20px" }}>Job Details</Typography>
 
-              <Box sx={{ flex: 1 }}>
-                <Typography sx={{ lineHeight: "42px", fontWeight: 500, fontSize: "12px", color: "rgba(84, 98, 116, 0.53)" }}>Job Title</Typography>
-                <TextField fullWidth name="jobDetails.title" variant="outlined" value={values.jobDetails.title} onChange={handleChange} sx={inputStyle} />
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ lineHeight: "42px", fontWeight: 500, fontSize: "12px", color: "rgba(84, 98, 116, 0.53)" }}>Job Title</Typography>
+                  <TextField fullWidth name="jobDetails.title" variant="outlined" value={values.jobDetails.title} onChange={handleChange} sx={inputStyle} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{ lineHeight: "42px", fontWeight: 500, fontSize: "12px", color: "rgba(84, 98, 116, 0.53)" }}>Expiration Date</Typography>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      value={values.expirationDate ? new Date(values.expirationDate) : null}
+                      onChange={(date) => setFieldValue("expirationDate", date ? date.toISOString() : "")}
+                      minDate={new Date()}
+                      maxDate={job?.expirationDate ? new Date(job.expirationDate) : undefined}
+                      slotProps={{ textField: { fullWidth: true, sx: inputStyle } }}
+                    />
+                  </LocalizationProvider>
+                </Box>
               </Box>
 
               <Box sx={{ flex: 1 }}>
@@ -250,6 +259,18 @@ const EditPostDetails: React.FC<EditPostDetailsProps> = ({ onCancel, onSaveSucce
                 onClose={() => setOpen(false)}
               />
             )}
+
+            {/* Bottom Save/Cancel bar */}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 4, pt: 3, borderTop: "1px solid #E5E7EB" }}>
+              <Button variant="outlined" onClick={() => { resetForm({ values: getInitialValues(job) }); onCancel(); }}
+                sx={{ border: "none", background: "none", color: "rgba(133, 169, 227, 1)", textDecoration: "none", "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" } }}>
+                Cancel
+              </Button>
+              <Button variant="contained" onClick={() => handleSubmit()}
+                sx={{ textTransform: "none", height: "42px", width: "120px", borderRadius: "38px", background: "#0D9488", color: "white" }}>
+                Save
+              </Button>
+            </Box>
           </>
         )}
       </Formik>

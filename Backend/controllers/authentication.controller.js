@@ -209,7 +209,7 @@ module.exports.register = async (req, res) => {
   }
 };
 
-// Route de connexion (login) pour utilisateurs existants
+// User login (login) for existing users
 module.exports.login = async (req, res) => {
   try {
     const { email } = req.body;
@@ -230,7 +230,7 @@ module.exports.login = async (req, res) => {
   }
 };
 
-// Vérification OTP
+// OTP Verification
 module.exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp, location } = req.body;
@@ -251,7 +251,7 @@ module.exports.verifyOTP = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Email vérifié avec succès",
+      message: "Email verified successfully",
       user: result.user,
       token: result.token,
       profile: result.profile || null,
@@ -309,7 +309,7 @@ module.exports.connectWithGmail = async (req, res) => {
   }
 };
 
-// Route de déconnexion
+// Logout route
 module.exports.logout = (req, res) => {
   try {
     res.clearCookie("jwt_token");
@@ -322,10 +322,10 @@ module.exports.logout = (req, res) => {
             .status(500)
             .json({ success: false, error: "Logout failed" });
         }
-        res.status(200).json({ success: true, message: "Déconnexion réussie" });
+        res.status(200).json({ success: true, message: "Logout successful" });
       });
     } else {
-      res.status(200).json({ success: true, message: "Déconnexion réussie" });
+      res.status(200).json({ success: true, message: "Logout successful" });
     }
   } catch (error) {
     handleError(res, error, 500);

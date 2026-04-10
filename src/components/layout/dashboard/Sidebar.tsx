@@ -10,6 +10,7 @@ import {
   ListItemText,
   IconButton,
   Avatar,
+  Divider,
   useMediaQuery,
   useTheme,
   Typography,

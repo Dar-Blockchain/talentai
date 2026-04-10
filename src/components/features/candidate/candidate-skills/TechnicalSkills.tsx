@@ -75,7 +75,7 @@ function TechnicalSkills() {
         </Button>
       </Box>
       {skills?.length === 0 && <EmptySkills type="technical" />}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)" }, gap: 2 }}>
         {visibleSkills.map((item: any, index: number) => (
           <SkillCard key={index} skill={item} type={"technical"} />
         ))}

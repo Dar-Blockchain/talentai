@@ -18,6 +18,17 @@ const matchingConfigSchema = new mongoose.Schema({
   },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   job: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when config is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when config was archived'
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('MatchingConfig', matchingConfigSchema);

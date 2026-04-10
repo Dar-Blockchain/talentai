@@ -22,6 +22,7 @@ export interface UseInterviewConfigReturn {
   jobData: any | null;
   limitReached: boolean;
   limitMessage: string;
+  isExpired: boolean;
 }
 
 export interface UseInterviewConfigOptions {
@@ -76,6 +77,7 @@ export const useInterviewConfig = ({
   const [limitReached, setLimitReached] = useState(false);
   const [limitMessage, setLimitMessage] = useState('');
   const [configLoading, setConfigLoading] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   const fetchJobInterviewConfig = async (jobId: string) => {
     setConfigLoading(true);
@@ -255,7 +257,15 @@ export const useInterviewConfig = ({
             throw new Error('This is a pipeline job - please refresh the page. The interview configuration is being loaded from the pipeline steps.');
           }
 
-          throw new Error(`Failed to fetch job config: ${errorData.message || errorData.error || response.statusText}`);
+          const errMsg = errorData.message || errorData.error || response.statusText;
+          if (errMsg.toLowerCase().includes('expiration') || errMsg.toLowerCase().includes('expired')) {
+            setIsExpired(true);
+            setPipelineLoading(false);
+            setConfigLoading(false);
+            return;
+          }
+
+          throw new Error(`Failed to fetch job config: ${errMsg}`);
         }
 
         const config = await response.json();
@@ -360,5 +370,6 @@ export const useInterviewConfig = ({
     jobData,
     limitReached,
     limitMessage,
+    isExpired,
   };
 };

@@ -92,7 +92,7 @@ const CreateStepper: React.FC = () => {
     <Box>
       {/* ── Stepper header ───────────────────────────────────────────────────── */}
       <SectionCard sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 3 } }}>
           {/* Back button */}
           <Button
             startIcon={<ArrowBackOutlined sx={{ fontSize: 15 }} />}
@@ -108,11 +108,11 @@ const CreateStepper: React.FC = () => {
           </Button>
 
           {/* Stepper */}
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <Stepper
               activeStep={activeStep}
               connector={<TealConnector />}
-              sx={{ maxWidth: 480 }}
+              sx={{ maxWidth: 480, width: '100%', justifyContent: 'center' }}
             >
               {steps.map((label, i) => (
                 <Step key={label} completed={i < activeStep}>
@@ -181,6 +181,7 @@ const CreateStepper: React.FC = () => {
             textTransform: "none", fontWeight: 700, fontSize: "13px",
             borderRadius: "38px", height: 42, minWidth: 160,
             bgcolor: TEAL,
+            color: "#fff",
             "&:hover": { bgcolor: "#0F766E" },
             "&:disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
           }}
@@ -196,6 +197,7 @@ const CreateStepper: React.FC = () => {
       <PipelineWarningDialog
         open={pipelineWarningOpen}
         nodes={unconfiguredNodes}
+        totalNodes={recruitmentFlow.nodes.length}
         onCancel={() => setPipelineWarningOpen(false)}
         onConfirm={async () => {
           setPipelineWarningOpen(false);
