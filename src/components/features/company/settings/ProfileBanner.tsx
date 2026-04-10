@@ -14,7 +14,7 @@ interface Props {
   loading: boolean;
   uploadingImage: boolean;
   isEditing: boolean;
-  onStartEdit: () => void;
+  onStartEdit: (value: any) => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;

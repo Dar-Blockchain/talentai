@@ -166,7 +166,7 @@ router.post(
   (req, res, next) => {
     // If an auth cookie is present, decode it; otherwise proceed without user context.
     // The controller handles the NOMINATIVE vs ANONYMOUS distinction.
-    const { requireAuthUser: auth } = require("../middleware/auth.middleware");
+    const { requireAuthUser: auth } = require("../middleware/authorize.middleware");
     const token = req.cookies?.api_token;
     if (token) return auth(req, res, next);
     next();
