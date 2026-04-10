@@ -27,6 +27,7 @@ const intelligentInterviewService = require("./services/intelligentInterview.ser
 const intelligentInterviewController = require("./controllers/intelligentInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
+const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
@@ -166,6 +167,11 @@ const initializeApp = async () => {
       logger.info(
         "💡 Hedera clients will initialize on first use (lazy loading)",
       );
+
+      // Step 9: Initialize auto-invite scheduler for job applications
+      logger.section("Initializing auto-invite scheduler...");
+      scheduleAutoInvites();
+      logger.success("Auto-invite scheduler initialized (checks hourly between 12:00 - 21:00)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);

@@ -603,11 +603,13 @@ module.exports.inviteToInterview = async (req, res) => {
 
     // Update application status to "interview_scheduled"
     console.log(`📝 Updating application status to interview_scheduled`);
-    await jobApplicationService.updateJobApplication(
+    const updatedApplication = await jobApplicationService.updateJobApplication(
       applicationId,
       { status: "interview_scheduled", updatedAt: new Date() }
     );
     console.log(`✅ Application status updated`);
+    console.log(`   Status: ${updatedApplication.status}`);
+    console.log(`   Auto-invites will STOP once status changes to interview_completed`);
 
     console.log("=".repeat(80) + "\n");
 
@@ -626,6 +628,33 @@ module.exports.inviteToInterview = async (req, res) => {
     });
   } catch (error) {
     console.error(`\n❌ [ERROR] Error in inviteToInterview: ${error.message}`);
+    console.error("Stack trace:", error.stack);
+    console.log("=".repeat(80) + "\n");
+    handleError(res, error, 400);
+  }
+};
+
+// ========== TRIGGER AUTO INVITE (FOR TESTING) ==========
+module.exports.triggerAutoInvite = async (req, res) => {
+  try {
+    const { runAutoInviteJob } = require("../cron/autoInviteScheduler.cron");
+
+    console.log("\n" + "=".repeat(80));
+    console.log("🚀 [JOB APPLICATION] - MANUAL AUTO INVITE TRIGGER");
+    console.log("=".repeat(80) + "\n");
+
+    // Run the auto-invite job immediately
+    await runAutoInviteJob();
+
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Auto-invite scheduler triggered successfully",
+      note: "This endpoint is for testing purposes. In production, auto-invites run hourly between 12:00 - 21:00",
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in triggerAutoInvite: ${error.message}`);
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);

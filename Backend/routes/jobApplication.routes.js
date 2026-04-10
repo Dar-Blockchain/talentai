@@ -38,6 +38,9 @@ router.get("/company/my", jobApplicationController.getApplicationsByCompany);
 // GET /job-applications/company/my/metrics — Get application metrics for authenticated company
 router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics);
 
+// POST /job-applications/auto-invite/trigger — Trigger auto-invite scheduler manually (for testing)
+router.post("/auto-invite/trigger", jobApplicationController.triggerAutoInvite);
+
 // GET /job-applications/:applicationId — Get single application by ID
 router.get("/:applicationId", jobApplicationController.getJobApplicationById);
 
