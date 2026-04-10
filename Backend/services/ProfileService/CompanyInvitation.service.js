@@ -426,6 +426,17 @@ module.exports.getInvitationStatsByCompany = async (companyId) => {
   return { total };
 };
 
+/**
+ * Get all pending invitations for a specific department
+ * @param {string} departmentId
+ * @returns {Array}
+ */
+module.exports.getInvitationsByDepartment = async (departmentId) => {
+  return CompanyInvitationModel.find({ department: departmentId, status: "pending" })
+    .populate("invitedBy", "username email")
+    .sort({ createdAt: -1 });
+};
+
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)

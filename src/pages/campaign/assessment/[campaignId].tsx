@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Box } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import dynamic from 'next/dynamic';
 import axiosInstance from '@/utils/axiosInstance';
 import { Campaign } from '@/types/campaign';
@@ -21,9 +21,11 @@ const PublicAssessmentPage: React.FC = () => {
   const router      = useRouter();
   const { campaignId } = router.query as { campaignId?: string };
 
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState<string | null>(null);
+  const [campaign,        setCampaign]        = useState<Campaign | null>(null);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState<string | null>(null);
+  const [waitingResults,  setWaitingResults]  = useState(false);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resolve participantId from localStorage once the campaignId is available
   const participantId = (() => {
@@ -44,14 +46,54 @@ const PublicAssessmentPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [router.isReady, campaignId]);
 
-  const handleBack    = () => router.push('/');
-  const handleResults = () => router.push(`/campaign/results/${campaignId}`);
+  const handleBack = () => router.push('/');
+
+  const handleResults = useCallback(() => {
+    if (!campaignId || !participantId) return;
+    setWaitingResults(true);
+    const poll = async () => {
+      try {
+        const res = await axiosInstance.get(
+          `internal-campaigns/${campaignId}/results/${participantId}`
+        );
+        if (res.data?.data?.participant?.status === 'COMPLETED') {
+          router.push(`/campaign/results/${campaignId}`);
+          return;
+        }
+      } catch { /* keep polling */ }
+      pollRef.current = setTimeout(poll, 2000);
+    };
+    poll();
+  }, [campaignId, participantId, router]);
+
+  // Cleanup poll on unmount
+  useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
 
   if (!router.isReady || loading) {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
         <InterviewSpinner />
+      </>
+    );
+  }
+
+  if (waitingResults) {
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{
+          minHeight: '100vh', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 2, bgcolor: '#F8FAFC',
+        }}>
+          <CircularProgress size={40} sx={{ color: '#0D9488' }} />
+          <Typography sx={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>
+            Saving your results…
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: '#9CA3AF' }}>
+            You'll be redirected automatically once they're ready.
+          </Typography>
+        </Box>
       </>
     );
   }

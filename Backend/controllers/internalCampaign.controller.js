@@ -826,6 +826,7 @@ exports.getEmployeeCampaignMetrics = async (req, res) => {
  * Scores each answer individually, computes aiScore (0-100), generates aiSummary.
  */
 async function scoreQuestionnaireAsync(responseId, campaign, answers) {
+  console.log(`🔵 scoreQuestionnaireAsync started — responseId=${responseId}, questions=${campaign.module?.config?.questions?.length ?? 0}, answers=${answers?.length ?? 0}`);
   try {
     const questions = campaign.module?.config?.questions ?? [];
 
@@ -888,17 +889,26 @@ Return JSON exactly:
   "aiSummary": "<2-3 sentence summary of the respondent's overall performance>"
 }`;
 
-    const result = await bedrock.callLLM({
-      systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
+    const OpenAI = require("openai");
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       temperature: 0.3,
-      maxTokens: 512,
-      timeout: 20000,
+      max_tokens: 512,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userMessage },
+      ],
     });
 
-    // Parse JSON — strip possible markdown fences
-    const raw = result.content.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(raw);
+    const rawContent = completion.choices?.[0]?.message?.content ?? "";
+    console.log(`🤖 scoreQuestionnaireAsync LLM raw response: ${rawContent.substring(0, 200)}`);
+
+    // Extract JSON object — handles markdown fences and extra text
+    const jsonMatch = rawContent.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error(`No JSON object found in LLM response: ${rawContent.substring(0, 100)}`);
+    const parsed = JSON.parse(jsonMatch[0]);
 
     const scoredAnswers = answers.map((a, i) => ({
       ...a,
@@ -908,16 +918,20 @@ Return JSON exactly:
           : null,
     }));
 
+    // Use $set to avoid replacing other fields (moduleType, campaign, participant, etc.)
     await CampaignResponse.findByIdAndUpdate(responseId, {
-      answers: scoredAnswers,
-      aiScore:
-        typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null,
-      aiSummary: parsed.aiSummary ?? null,
+      $set: {
+        answers: scoredAnswers,
+        aiScore:
+          typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null,
+        aiSummary: parsed.aiSummary ?? null,
+      },
     });
+
+    console.log(`✅ scoreQuestionnaireAsync: response ${responseId} scored — aiScore=${parsed.aiScore}`);
   } catch (err) {
-    console.error(
-      `❌ scoreQuestionnaireAsync failed for response ${responseId}: ${err.message}`,
-    );
+    console.error(`❌ scoreQuestionnaireAsync failed for response ${responseId}:`, err.message);
+    console.error(err.stack);
   }
 }
 
@@ -1048,7 +1062,7 @@ exports.submitQuestionnaire = async (req, res) => {
         .status(404)
         .json({ success: false, error: "Participant not found" });
 
-    // Upsert response (allow re-submission)
+    // Upsert response (allow re-submission) — use $set to avoid replacing aiScore/aiSummary
     const response = await CampaignResponse.findOneAndUpdate(
       {
         campaign: campaignId,
@@ -1056,10 +1070,12 @@ exports.submitQuestionnaire = async (req, res) => {
         moduleType: "QUESTIONNAIRE",
       },
       {
-        answers,
-        moduleType: "QUESTIONNAIRE",
-        campaign: campaignId,
-        participant: participant._id,
+        $set: {
+          answers,
+          moduleType: "QUESTIONNAIRE",
+          campaign: campaignId,
+          participant: participant._id,
+        },
       },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );

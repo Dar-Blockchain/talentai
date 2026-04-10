@@ -103,6 +103,18 @@ export const QuestionnaireResults: React.FC<{ data: ResultsData }> = ({ data }) 
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {aiScore === null && (
+        <Box sx={{
+          ...CARD, p: 2.5,
+          display: 'flex', alignItems: 'center', gap: 1.5,
+          bgcolor: '#FFFBEB', border: '1px solid #FDE68A',
+        }}>
+          <CircularProgress size={16} sx={{ color: '#D97706', flexShrink: 0 }} />
+          <Typography sx={{ fontSize: 13, color: '#92400E', fontWeight: 500 }}>
+            AI scoring in progress — your score will appear shortly.
+          </Typography>
+        </Box>
+      )}
       {aiScore !== null ? (
         <Box sx={{ ...CARD, p: 3, display: 'flex', gap: 3, alignItems: 'flex-start' }}>
           <Box sx={{
@@ -274,7 +286,7 @@ export const InterviewResults: React.FC<{ data: ResultsData }> = ({ data }) => {
           <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 2 }}>
             Detailed Scores
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
             {subScores.map(({ label, value }) => {
               const color = value >= 75 ? '#16A34A' : value >= 50 ? '#D97706' : '#DC2626';
               return (
@@ -352,7 +364,9 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
   const loading = useSelector(selectResultsLoading);
   const error   = useSelector(selectResultsError);
 
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
+  const MAX_POLLS    = 24; // 24 × 5s = 2 min max
 
   const stopPolling = () => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
@@ -366,14 +380,19 @@ const CampaignResultsView: React.FC<Props> = ({ campaignId, participantId, bread
     load().then((action) => {
       if (fetchParticipantResults.fulfilled.match(action)) {
         const result = action.payload;
-        // Use == null (loose) to catch both null and undefined — aiScore is absent
-        // from the document until the async scoring job completes.
+        // Poll until aiScore is set (async LLM scoring) — max 2 minutes
         const needsPoll =
           result.campaign?.module?.type === 'QUESTIONNAIRE' &&
           result.response !== null &&
           result.response?.aiScore == null;
         if (needsPoll && !pollRef.current) {
+          pollCountRef.current = 0;
           pollRef.current = setInterval(() => {
+            pollCountRef.current += 1;
+            if (pollCountRef.current >= MAX_POLLS) {
+              stopPolling(); // Give up after 2 min — show results without score
+              return;
+            }
             load().then((a) => {
               if (fetchParticipantResults.fulfilled.match(a) && a.payload.response?.aiScore != null) {
                 stopPolling();

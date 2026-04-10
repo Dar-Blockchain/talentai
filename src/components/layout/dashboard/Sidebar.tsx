@@ -56,11 +56,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     router.push("/signin");
   }, [dispatch, router]);
 
-  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const user = useSelector((state: RootState) => state.user.connectedUser.user);
+  const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user              = useSelector((state: RootState) => state.user.connectedUser.user);
+  const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const employeePermissions = useSelector(selectEmployeePermissions);
 
-  const isEmployee = user?.role === "Employee";
+  const isEmployee  = user?.role === "Employee";
+  const companyName = companyMembership?.company?.profile?.companyDetails?.name
+    || companyMembership?.company?.username
+    || null;
 
   // Fetch permissions on reload if not yet in store
   useEffect(() => {
@@ -198,13 +202,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* Group label */}
                 {(!collapsed || mobile) && (
-                  <Typography sx={{
-                    fontSize: "10px", fontWeight: 700, color: "#9CA3AF",
-                    textTransform: "uppercase", letterSpacing: "0.08em",
-                    px: 2, py: 0.75,
-                  }}>
-                    {group.group}
-                  </Typography>
+                  <Box sx={{ px: 2, py: 0.75 }}>
+                    <Typography sx={{
+                      fontSize: "10px", fontWeight: 700, color: "#9CA3AF",
+                      textTransform: "uppercase", letterSpacing: "0.08em",
+                    }}>
+                      {group.group}
+                    </Typography>
+                    {group.group === "Company" && companyName && (
+                      <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#374151", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {companyName}
+                      </Typography>
+                    )}
+                  </Box>
                 )}
 
                 {/* Group items */}

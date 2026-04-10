@@ -71,6 +71,7 @@ const CampaignJoinPage: React.FC = () => {
   const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [nameErr,  setNameErr]  = useState('');
+  const [emailErr, setEmailErr] = useState('');
 
   useEffect(() => {
     if (!router.isReady || !token) return;
@@ -96,9 +97,13 @@ const CampaignJoinPage: React.FC = () => {
   };
 
   const handleFormSubmit = () => {
-    if (!name.trim()) { setNameErr('Please enter your name'); return; }
-    setNameErr('');
-    handleJoin({ name: name.trim(), email: email.trim() || undefined });
+    let valid = true;
+    if (!name.trim()) { setNameErr('Please enter your name'); valid = false; } else setNameErr('');
+    if (!email.trim()) { setEmailErr('Please enter your email'); valid = false; }
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setEmailErr('Please enter a valid email'); valid = false; }
+    else setEmailErr('');
+    if (!valid) return;
+    handleJoin({ name: name.trim(), email: email.trim() });
   };
 
   const goSignIn = () => router.push(`/signin?returnUrl=${encodeURIComponent(router.asPath)}`);
@@ -309,7 +314,7 @@ const CampaignJoinPage: React.FC = () => {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ mb: 0.5 }}>
                   <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: P.slate900, mb: 0.25 }}>Enter your details</Typography>
-                  <Typography sx={{ fontSize: '0.775rem', color: P.slate400 }}>No account needed — just your name.</Typography>
+                  <Typography sx={{ fontSize: '0.775rem', color: P.slate400 }}>No account needed — just your name and email.</Typography>
                 </Box>
 
                 <Field
@@ -321,10 +326,11 @@ const CampaignJoinPage: React.FC = () => {
                   accent={mod.accent}
                 />
                 <Field
-                  placeholder="Email address (optional)"
+                  placeholder="Email address *"
                   value={email}
-                  onChange={setEmail}
+                  onChange={(v) => { setEmail(v); setEmailErr(''); }}
                   type="email"
+                  error={emailErr}
                   icon={<EmailIcon sx={{ fontSize: 16, color: P.slate400 }} />}
                   accent={mod.accent}
                 />

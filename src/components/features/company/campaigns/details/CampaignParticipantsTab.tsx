@@ -76,9 +76,11 @@ const STATUS_CONFIG: Record<ParticipantStatus, { label: string; color: string; b
 
 const RowSkeleton: React.FC<{ showActions?: boolean }> = ({ showActions }) => (
   <Box sx={{
-    display: "grid", gridTemplateColumns: showActions ? "1fr 130px 80px" : "1fr 130px",
-    alignItems: "center", gap: 2, px: 3, py: 2, borderBottom: "1px solid #F3F4F6",
+    display: "grid",
+    gridTemplateColumns: showActions ? "44px 1fr 140px 120px 110px" : "44px 1fr 140px 120px",
+    alignItems: "center", gap: 2, px: 3, py: 1.875, borderBottom: "1px solid #F3F4F6",
   }}>
+    <Skeleton variant="rounded" width={22} height={18} sx={{ borderRadius: "6px" }} />
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
       <Skeleton variant="circular" width={40} height={40} sx={{ flexShrink: 0 }} />
       <Box sx={{ flex: 1 }}>
@@ -86,8 +88,9 @@ const RowSkeleton: React.FC<{ showActions?: boolean }> = ({ showActions }) => (
         <Skeleton variant="text" width="62%" height={12} sx={{ mt: 0.5 }} />
       </Box>
     </Box>
-    <Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: "999px" }} />
-    {showActions && <Skeleton variant="circular" width={28} height={28} />}
+    <Box sx={{ display: "flex", justifyContent: "center" }}><Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: "999px" }} /></Box>
+    <Box sx={{ display: "flex", justifyContent: "center" }}><Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: "999px" }} /></Box>
+    {showActions && <Box sx={{ display: "flex", justifyContent: "center", gap: 0.75 }}><Skeleton variant="circular" width={28} height={28} /><Skeleton variant="circular" width={28} height={28} /></Box>}
   </Box>
 );
 
@@ -114,36 +117,48 @@ const ParticipantRow: React.FC<{
   removing?: boolean;
 }> = ({ participant: p, index, total, campaignId, onRemove, removing }) => {
   const router = useRouter();
-  const name       = (p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || "Unknown";
-  const email      = p.email ?? "";
-  const letter     = name[0]?.toUpperCase() || "U";
-  const dept       = p.department?.name ?? null;
-  const roleStr    = (p.role ?? "") as string;
-  const roleEntry  = ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase());
-  const roleColor  = roleEntry?.color ?? "#6B7280";
-  const roleLabel  = roleEntry?.label || roleStr || "—";
-  const RoleIcon   = roleEntry?.icon ?? null;
+  const name      = (p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || "Unknown";
+  const email     = p.email ?? "";
+  const letter    = name[0]?.toUpperCase() || "U";
+  const dept      = p.department?.name ?? null;
+  const roleStr   = (p.role ?? "") as string;
+  const roleEntry = ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase());
+  const roleColor = roleEntry?.color ?? "#6B7280";
+  const roleLabel = roleEntry?.label || roleStr || "—";
+  const RoleIcon  = roleEntry?.icon ?? null;
+  const status    = p.status as ParticipantStatus | undefined;
+  const sc        = status ? STATUS_CONFIG[status] : null;
+  const StatusIcon = sc?.icon ?? null;
+  const isLast    = index === total - 1;
+
   return (
     <Box sx={{
       display: "grid",
-      gridTemplateColumns: onRemove ? "1fr 130px 80px" : "1fr 130px",
+      gridTemplateColumns: onRemove ? "44px 1fr 140px 120px 110px" : "44px 1fr 140px 120px",
       alignItems: "center", gap: 2, px: 3, py: 1.75,
-      borderBottom: index < total - 1 ? "1px solid #F3F4F6" : "none",
+      borderBottom: isLast ? "none" : "1px solid #F3F4F6",
       transition: "background-color 0.15s",
       "&:hover": { bgcolor: "#FAFBFF" },
     }}>
+
+      {/* Index */}
+      <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#CBD5E1", textAlign: "center" }}>
+        {index + 1}
+      </Typography>
+
+      {/* Participant info */}
       <Box
         onClick={() => p.employeeId && router.push(`/company/employees/${p.employeeId}`)}
         sx={{
           display: "flex", alignItems: "center", gap: 1.5, minWidth: 0,
           cursor: p.employeeId ? "pointer" : "default",
-          "&:hover .participant-name": p.employeeId ? { color: PURPLE, textDecoration: "underline" } : {},
+          "&:hover .participant-name": p.employeeId ? { color: PURPLE } : {},
         }}
       >
         <Avatar sx={{
-          width: 40, height: 40, fontSize: "0.9rem", fontWeight: 800, color: "#fff",
+          width: 38, height: 38, fontSize: "0.85rem", fontWeight: 800, color: "#fff",
           background: `linear-gradient(${pickGradient(email || name)})`,
-          flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+          flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
         }}>
           {letter}
         </Avatar>
@@ -164,11 +179,9 @@ const ParticipantRow: React.FC<{
             )}
             {dept && (
               <>
-                <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "#D1D5DB", flexShrink: 0 }} />
+                <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "#E2E8F0", flexShrink: 0 }} />
                 <Box
-                  onClick={(e) => {
-                    if (p.department?.id) { e.stopPropagation(); router.push(`/company/departments/${p.department.id}`); }
-                  }}
+                  onClick={(e) => { if (p.department?.id) { e.stopPropagation(); router.push(`/company/departments/${p.department.id}`); } }}
                   sx={{
                     display: "flex", alignItems: "center", gap: 0.35, flexShrink: 0,
                     px: 0.75, py: "2px", borderRadius: "6px", bgcolor: "#F1F5F9",
@@ -186,15 +199,37 @@ const ParticipantRow: React.FC<{
         </Box>
       </Box>
 
-      <Box>
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.25, py: "4px", borderRadius: "999px", bgcolor: `${roleColor}0F`, border: `1px solid ${roleColor}28`, minWidth: "max-content" }}>
+      {/* Status badge — centered */}
+      <Box sx={{ display: "flex", justifyContent: "center" }}>
+        {sc ? (
+          <Box sx={{
+            display: "inline-flex", alignItems: "center", gap: 0.5,
+            px: 1.125, py: "4px", borderRadius: "999px",
+            bgcolor: sc.bg, border: `1px solid ${sc.border}`,
+          }}>
+            {StatusIcon && <StatusIcon sx={{ fontSize: 11, color: sc.color }} />}
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color, whiteSpace: "nowrap" }}>{sc.label}</Typography>
+          </Box>
+        ) : (
+          <Typography sx={{ fontSize: "11px", color: "#CBD5E1" }}>—</Typography>
+        )}
+      </Box>
+
+      {/* Role badge — centered */}
+      <Box sx={{ display: "flex", justifyContent: "center" }}>
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 0.5,
+          px: 1.125, py: "4px", borderRadius: "999px",
+          bgcolor: `${roleColor}0F`, border: `1px solid ${roleColor}28`,
+        }}>
           {RoleIcon && <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 11 } }}><RoleIcon /></Box>}
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor }}>{roleLabel}</Typography>
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor, whiteSpace: "nowrap" }}>{roleLabel}</Typography>
         </Box>
       </Box>
 
+      {/* Actions — centered */}
       {onRemove && (
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75 }}>
           {p.status === "COMPLETED" && p.employeeId && (
             <Tooltip title="View Results" placement="top" arrow>
               <IconButton
@@ -718,15 +753,38 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
 
       {/* ── Toolbar ── */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
-        <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-          {loading ? "…" : `${total} participant${total !== 1 ? "s" : ""} total`}
-        </Typography>
+
+        {/* Stat chips */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.625, px: 1.25, py: 0.5, borderRadius: "10px", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+            <PeopleAltOutlined sx={{ fontSize: 13, color: "#64748B" }} />
+            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>
+              {loading ? "…" : total}
+            </Typography>
+            <Typography sx={{ fontSize: "11px", color: "#94A3B8", fontWeight: 500 }}>total</Typography>
+          </Box>
+          {!loading && participants.length > 0 && (
+            <>
+              {(["COMPLETED", "IN_PROGRESS", "INVITED"] as ParticipantStatus[]).map((s) => {
+                const count = participants.filter((p) => p.status === s).length;
+                if (!count) return null;
+                const sc = STATUS_CONFIG[s];
+                return (
+                  <Box key={s} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: sc.bg, border: `1px solid ${sc.border}` }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: sc.color }} />
+                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color }}>{count} {sc.label}</Typography>
+                  </Box>
+                );
+              })}
+            </>
+          )}
+        </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{
             display: "flex", alignItems: "center",
             bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px",
-            px: 1.5, py: 0.6, minWidth: 230,
+            px: 1.5, py: 0.6, minWidth: 220,
             boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
             "&:focus-within": { borderColor: PURPLE, boxShadow: `0 0 0 3px ${PURPLE}12` }, transition: "all 0.18s",
           }}>
@@ -744,29 +802,44 @@ const CampaignParticipantsTab: React.FC<Props> = ({ campaignId, mode = "company"
           </Box>
 
           {isCompany && (
-            <Tooltip title="Add participants" arrow>
-              <IconButton
-                onClick={() => setAddDialogOpen(true)}
-                sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}25`, color: PURPLE, "&:hover": { bgcolor: `${PURPLE}18` } }}
-              >
-                <PersonAddOutlined sx={{ fontSize: 17 }} />
-              </IconButton>
-            </Tooltip>
+            <Box
+              onClick={() => setAddDialogOpen(true)}
+              sx={{
+                display: "flex", alignItems: "center", gap: 0.625,
+                px: 1.5, py: 0.75, borderRadius: "10px", cursor: "pointer",
+                bgcolor: PURPLE, boxShadow: `0 3px 10px ${PURPLE}38`,
+                transition: "all 0.15s", "&:hover": { opacity: 0.9, boxShadow: `0 4px 14px ${PURPLE}50` },
+              }}
+            >
+              <PersonAddOutlined sx={{ fontSize: 15, color: "#fff" }} />
+              <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#fff" }}>Add</Typography>
+            </Box>
           )}
         </Box>
       </Box>
 
       {/* ── Table card ── */}
-      <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: 3, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.04)" }}>
+      <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: 3, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
         {loading && <LinearProgress sx={{ height: 2, "& .MuiLinearProgress-bar": { bgcolor: PURPLE } }} />}
 
+        {/* Header */}
         <Box sx={{
-          display: "grid", gridTemplateColumns: isCompany ? "1fr 130px 80px" : "1fr 130px",
-          alignItems: "center", gap: 2, px: 3, py: 1.4,
-          bgcolor: "#F8F9FB", borderBottom: "1px solid #E5E7EB",
+          display: "grid",
+          gridTemplateColumns: isCompany ? "44px 1fr 140px 120px 110px" : "44px 1fr 140px 120px",
+          alignItems: "center", gap: 2, px: 3, py: 1.5,
+          background: "linear-gradient(135deg, #F8F9FB 0%, #F3F4F8 100%)",
+          borderBottom: "1px solid #E5E7EB",
         }}>
-          {[...["Participant", "Role"], ...(isCompany ? ["Actions"] : [])].map((col, i) => (
-            <Typography key={col || `col-${i}`} sx={{ fontSize: "10px", fontWeight: 800, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          {["#", "Participant", "Status", "Role", ...(isCompany ? ["Actions"] : [])].map((col, i) => (
+            <Typography
+              key={col}
+              sx={{
+                fontSize: "10px", fontWeight: 800, color: "#94A3B8",
+                textTransform: "uppercase", letterSpacing: "0.08em",
+                // #=center, Participant=left, Status=center, Role=center, Actions=center
+                textAlign: i === 1 ? "left" : "center",
+              }}
+            >
               {col}
             </Typography>
           ))}

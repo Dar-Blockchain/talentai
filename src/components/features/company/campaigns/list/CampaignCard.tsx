@@ -17,6 +17,10 @@ import {
   PlayArrowOutlined,
   PauseOutlined,
   StopOutlined,
+  LinkOutlined,
+  LockPersonOutlined,
+  VisibilityOffOutlined,
+  VisibilityOutlined,
 } from "@mui/icons-material";
 import { daysLeft, fmtDate } from "@/utils/functions";
 import {
@@ -262,6 +266,44 @@ const CampaignCard: React.FC<{
               <strong style={{ color: "#374151" }}>{campaign.targetEmployeeCount}</strong>{" "}
               participant{campaign.targetEmployeeCount !== 1 ? "s" : ""}
             </Typography>
+          </Box>
+        )}
+
+        {/* Access method + Anonymity */}
+        {(campaign.accessMethod || campaign.anonymityMode) && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+            {campaign.accessMethod && (
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 0.5,
+                px: 1, py: 0.35, borderRadius: "6px",
+                bgcolor: campaign.accessMethod === "LINK" ? "#EFF6FF" : "#F5F3FF",
+                border: `1px solid ${campaign.accessMethod === "LINK" ? "#BFDBFE" : "#DDD6FE"}`,
+              }}>
+                {campaign.accessMethod === "LINK"
+                  ? <LinkOutlined sx={{ fontSize: 11, color: "#3B82F6" }} />
+                  : <LockPersonOutlined sx={{ fontSize: 11, color: "#8B5CF6" }} />
+                }
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.accessMethod === "LINK" ? "#1D4ED8" : "#5B21B6" }}>
+                  {campaign.accessMethod === "LINK" ? "Public link" : "Accounts only"}
+                </Typography>
+              </Box>
+            )}
+            {campaign.anonymityMode && (
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 0.5,
+                px: 1, py: 0.35, borderRadius: "6px",
+                bgcolor: campaign.anonymityMode === "ANONYMOUS" ? "#FFF7ED" : "#F0FDF4",
+                border: `1px solid ${campaign.anonymityMode === "ANONYMOUS" ? "#FED7AA" : "#BBF7D0"}`,
+              }}>
+                {campaign.anonymityMode === "ANONYMOUS"
+                  ? <VisibilityOffOutlined sx={{ fontSize: 11, color: "#EA580C" }} />
+                  : <VisibilityOutlined sx={{ fontSize: 11, color: "#10B981" }} />
+                }
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.anonymityMode === "ANONYMOUS" ? "#9A3412" : "#166534" }}>
+                  {campaign.anonymityMode === "ANONYMOUS" ? "Anonymous" : "Nominative"}
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
       </Box>

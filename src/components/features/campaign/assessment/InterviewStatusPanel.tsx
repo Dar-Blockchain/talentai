@@ -286,19 +286,11 @@ const ReadyState: React.FC<{
               sx={{
                 position: 'relative',
                 background: meta.gradient,
-                boxShadow: `0 4px 20px ${meta.shadow}`,
                 fontWeight: 800, fontSize: 15, textTransform: 'none',
                 borderRadius: '14px', py: 1.75, px: 2, letterSpacing: '-0.01em',
                 border: '1px solid rgba(255,255,255,0.2)',
                 overflow: 'hidden',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 60%)',
-                  pointerEvents: 'none',
-                },
                 '&:hover': {
-                  boxShadow: `0 8px 32px ${meta.shadow}`,
                   transform: 'translateY(-2px)',
                 },
                 '&:active': { transform: 'translateY(0px)' },

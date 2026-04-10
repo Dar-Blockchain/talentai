@@ -75,4 +75,13 @@ router.get(
   CompanyInvitationController.getCompanyInvitations,
 );
 
+/**
+ * GET /byDepartment/:departmentId
+ * Get all pending invitations for a specific department
+ */
+router.get(
+  "/byDepartment/:departmentId",
+  CompanyInvitationController.getInvitationsByDepartment,
+);
+
 module.exports = router;

@@ -1,6 +1,7 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import axiosInstance from '@/utils/axiosInstance';
 
 import { Campaign }  from '@/types/campaign';
 import { InterviewMessage, Coverage, InterviewStatus, AgentState, CameraStatus, ConnectionStatus } from '@/types/interview';
@@ -337,6 +338,29 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
     [router, campaignId],
   );
 
+  // Poll for results in DB after interview ends, then redirect
+  useEffect(() => {
+    if (socket.interviewStatus !== 'ended') return;
+    let cancelled = false;
+    const poll = async () => {
+      while (!cancelled) {
+        try {
+          const res = await axiosInstance.get(
+            `internal-campaigns/${campaignId}/results/${participantId}`
+          );
+          const status = res.data?.data?.participant?.status;
+          if (status === 'COMPLETED') {
+            if (!cancelled) router.push(`/employee/campaigns/${campaignId}/results`);
+            return;
+          }
+        } catch { /* keep polling */ }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    };
+    poll();
+    return () => { cancelled = true; };
+  }, [socket.interviewStatus, campaignId, participantId, router]);
+
   const showConnectionBanner = socket.isHydrated && socket.connectionStatus !== 'connected';
 
   const camProps: CameraProps = {
@@ -401,13 +425,18 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
         )}
 
         {socket.interviewStatus === 'ended' && (
-          <EndedView
-            {...camProps}
-            finalReport={finalReport}
-            coverage={coverage}
-            moduleType={moduleType}
-            onViewResults={handleViewResults}
-          />
+          <Box sx={{
+            height: '100%', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 2,
+          }}>
+            <CircularProgress size={40} sx={{ color: '#0D9488' }} />
+            <Typography sx={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>
+              Saving your results…
+            </Typography>
+            <Typography sx={{ fontSize: 13, color: '#9CA3AF' }}>
+              You'll be redirected automatically once they're ready.
+            </Typography>
+          </Box>
         )}
 
       </Box>

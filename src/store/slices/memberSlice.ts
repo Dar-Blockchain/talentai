@@ -398,6 +398,20 @@ export const respondToInvitation = createAsyncThunk<
   }
 });
 
+// Fetch invitations by department
+export const fetchInvitationsByDepartment = createAsyncThunk<
+  Invitation[],
+  string,
+  { rejectValue: string }
+>("member/fetchInvitationsByDepartment", async (departmentId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`company-invitations/byDepartment/${departmentId}`);
+    return response.data.invitations || [];
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch invitations");
+  }
+});
+
 // Fetch membership stats
 export const fetchMemberStats = createAsyncThunk<
   MemberStats,

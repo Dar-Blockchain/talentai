@@ -21,7 +21,8 @@ import {
   AccessTimeOutlined, CheckCircleOutlined, RadioButtonUncheckedOutlined,
   PlayArrowOutlined, VisibilityOutlined, ArrowForwardOutlined, FilterListOutlined,
   EmojiEventsOutlined, InfoOutlined, SearchOutlined, CalendarTodayOutlined, CloseOutlined,
-  PauseCircleOutlined, StopCircleOutlined,
+  PauseCircleOutlined, StopCircleOutlined, LinkOutlined, LockPersonOutlined,
+  VisibilityOffOutlined,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { Campaign, CampaignType, ModuleType, ParticipantStatus } from "@/types/campaign";
@@ -77,8 +78,8 @@ const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? A
 
 // ─── Campaign Card ────────────────────────────────────────────────────────────
 
-const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void }> = memo(
-  ({ campaign, index, onStart, onDetails }) => {
+const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: string) => void; onDetails: (id: string) => void; onResults: (id: string) => void }> = memo(
+  ({ campaign, index, onStart, onDetails, onResults }) => {
     const tm = campaign.type ? TYPE_META[campaign.type] : null;
     const mm = MODULE_META[campaign.module.type];
     const ps = PARTICIPANT_STATUS_META[campaign?.participantStatus || "INVITED"];
@@ -167,6 +168,41 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{campaign.targetEmployeeCount} participants</Typography>
               </Box>
             </Box>
+
+            {/* Access + Anonymity row */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              {/* Access method */}
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 0.5,
+                px: 1, py: 0.35, borderRadius: "6px",
+                bgcolor: campaign.accessMethod === "LINK" ? "#EFF6FF" : "#F5F3FF",
+                border: `1px solid ${campaign.accessMethod === "LINK" ? "#BFDBFE" : "#DDD6FE"}`,
+              }}>
+                {campaign.accessMethod === "LINK"
+                  ? <LinkOutlined sx={{ fontSize: 11, color: "#3B82F6" }} />
+                  : <LockPersonOutlined sx={{ fontSize: 11, color: PURPLE }} />
+                }
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.accessMethod === "LINK" ? "#1D4ED8" : "#5B21B6" }}>
+                  {campaign.accessMethod === "LINK" ? "Public link" : "Accounts only"}
+                </Typography>
+              </Box>
+
+              {/* Anonymity mode */}
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 0.5,
+                px: 1, py: 0.35, borderRadius: "6px",
+                bgcolor: campaign.anonymityMode === "ANONYMOUS" ? "#FFF7ED" : "#F0FDF4",
+                border: `1px solid ${campaign.anonymityMode === "ANONYMOUS" ? "#FED7AA" : "#BBF7D0"}`,
+              }}>
+                {campaign.anonymityMode === "ANONYMOUS"
+                  ? <VisibilityOffOutlined sx={{ fontSize: 11, color: "#EA580C" }} />
+                  : <VisibilityOutlined sx={{ fontSize: 11, color: GREEN }} />
+                }
+                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: campaign.anonymityMode === "ANONYMOUS" ? "#9A3412" : "#166534" }}>
+                  {campaign.anonymityMode === "ANONYMOUS" ? "Anonymous" : "Nominative"}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
 
           {/* Footer CTA */}
@@ -246,15 +282,17 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
                 <Button
                   fullWidth
                   startIcon={<VisibilityOutlined />}
-                  onClick={() => onStart(campaign._id)}
-                  variant="outlined"
+                  onClick={() => onResults(campaign._id)}
+                  variant="contained"
+                  disableElevation
                   sx={{
-                    borderColor: "#E5E7EB", color: "#374151", fontWeight: 600, fontSize: "13px",
+                    bgcolor: TEAL, color: "#fff", fontWeight: 700, fontSize: "13px",
                     textTransform: "none", borderRadius: 2, py: 0.9,
-                    "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: "#F0FDFA" },
+                    boxShadow: `0 3px 10px ${TEAL}40`,
+                    "&:hover": { bgcolor: "#0b7a6e", boxShadow: `0 4px 14px ${TEAL}55` },
                   }}
                 >
-                  View Details
+                  View Results
                 </Button>
               </>
             )}
@@ -398,6 +436,10 @@ const EmployeeMyCampaigns: React.FC = () => {
     router.push(`/employee/campaigns/${id}`);
   };
 
+  const handleResults = (id: string) => {
+    router.push(`/employee/campaigns/${id}/results`);
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
@@ -511,7 +553,7 @@ const EmployeeMyCampaigns: React.FC = () => {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
           <AnimatePresence mode="popLayout">
             {campaigns.map((campaign, i) => (
-              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} />
+              <CampaignCard key={campaign._id} campaign={campaign} index={i} onStart={handleStart} onDetails={handleDetails} onResults={handleResults} />
             ))}
           </AnimatePresence>
         </Box>

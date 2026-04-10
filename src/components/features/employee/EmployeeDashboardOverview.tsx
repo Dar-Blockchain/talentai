@@ -234,10 +234,11 @@ const EmployeeDashboardOverview: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
 
-  const userId  = useSelector((state: RootState) => state.user.connectedUser.user?._id);
-  const user    = useSelector((state: RootState) => state.user.connectedUser.user);
-  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
-  const metrics = useSelector((state: RootState) => state.campaign.employeeMetrics);
+  const userId           = useSelector((state: RootState) => state.user.connectedUser.user?._id);
+  const user             = useSelector((state: RootState) => state.user.connectedUser.user);
+  const profile          = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
+  const metrics          = useSelector((state: RootState) => state.campaign.employeeMetrics);
 
   const campaigns        = useSelector(selectEmployeeCampaigns);
   const campaignsLoading = useSelector(selectEmployeeCampaignsLoading);
@@ -257,7 +258,8 @@ const EmployeeDashboardOverview: React.FC = () => {
     return Math.round(scored.reduce((s, c) => s + (c as any).score, 0) / scored.length);
   }, [scored]);
 
-  const fullName = `${user?.firstName || profile?.firstName || ""} ${user?.lastName || profile?.lastName || ""}`.trim() || user?.username || "there";
+  const fullName   = `${user?.firstName || profile?.firstName || ""} ${user?.lastName || profile?.lastName || ""}`.trim() || user?.username || "there";
+  const companyName = companyMembership?.company?.profile?.companyDetails?.name || companyMembership?.company?.username || null;
 
   if (campaignsLoading && !campaigns.length) {
     return (
@@ -285,6 +287,8 @@ const EmployeeDashboardOverview: React.FC = () => {
           <Box sx={{ position: "absolute", bottom: -30, right: -20, width: 100, height: 100, borderRadius: "50%", bgcolor: "#F0FDFA", pointerEvents: "none" }} />
 
           <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+
+            {/* Left: greeting */}
             <Box>
               <Typography sx={{ fontSize: "12px", color: "#9CA3AF", fontWeight: 500, mb: 0.4 }}>{greeting()},</Typography>
               <Typography sx={{ fontSize: { xs: "20px", md: "24px" }, fontWeight: 800, color: "#111827", letterSpacing: "-0.3px" }}>
@@ -293,7 +297,15 @@ const EmployeeDashboardOverview: React.FC = () => {
               <Typography sx={{ fontSize: "13px", color: "#6B7280", mt: 0.5 }}>
                 Here's your campaign progress for today.
               </Typography>
+              {companyName && (
+                <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
+                  Member of{" "}
+                  <Box component="span" sx={{ fontWeight: 600, color: "#6B7280" }}>{companyName}</Box>
+                </Typography>
+              )}
             </Box>
+
+            {/* Right: score gauge */}
             {avgScore > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 3, px: 2.5, py: 1.5 }}>
                 <ScoreGauge score={avgScore} size={72} />

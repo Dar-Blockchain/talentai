@@ -191,7 +191,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       console.log('🏁 Interview ended:', data);
       setInterviewStatus('ended');
       callbacksRef.current.onInterviewEnded(data);
-      callbacksRef.current.onNotification('Interview completed!', 'success');
     });
 
     socket.on('interview_error', (error: any) => {
