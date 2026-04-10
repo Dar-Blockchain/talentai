@@ -3,6 +3,129 @@ const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
 const CVAnalysis = require("../models/CVAnalysis.model");
 const { calculateMatchScore } = require("./MatchingService/matching.service");
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// ========== CALCULATE MATCH SCORE WITH OPENAI ==========
+const calculateMatchScoreWithOpenAI = async (candidateProfile, jobPost) => {
+  try {
+    console.log(`\n🤖 [OPENAI MATCHING] - Sending to OpenAI for AI-powered matching...`);
+    
+    // Prepare candidate data
+    const candidateData = {
+      name: `${candidateProfile.firstName} ${candidateProfile.lastName}`,
+      skills: candidateProfile.skills?.map(s => ({
+        name: s.name,
+        level: s.Levelconfirmed || s.proficiencyLevel || "Not specified",
+        experienceLevel: s.experienceLevel || "Not specified"
+      })) || [],
+      softSkills: candidateProfile.softSkills?.map(s => ({
+        name: s.name,
+        category: s.category || "General",
+        level: s.proficiencyLevel || "Not specified"
+      })) || [],
+      salary: candidateProfile.expectedSalary || {},
+      workModePreference: candidateProfile.workModePreference || "Not specified",
+      contractPreference: candidateProfile.preferredContractType || "Not specified",
+      yearsOfExperience: candidateProfile.yearsOfExperience || "Not specified",
+    };
+
+    // Prepare job data
+    const jobData = {
+      title: jobPost.jobDetails?.title || "Not specified",
+      description: jobPost.jobDetails?.description || "Not specified",
+      requiredSkills: jobPost.skillAnalysis?.requiredSkills?.map(s => ({
+        name: s.name,
+        level: s.level || "Not specified",
+        importance: s.importance || "Not specified"
+      })) || [],
+      softSkills: jobPost.skillAnalysis?.softSkills?.map(s => ({
+        name: s.name,
+        level: s.level || "Not specified"
+      })) || [],
+      salary: jobPost.jobDetails?.salary || {},
+      workMode: jobPost.jobDetails?.workMode || "Not specified",
+      employmentType: jobPost.jobDetails?.employmentType || "Not specified",
+      experienceLevel: jobPost.jobDetails?.experienceLevel || "Not specified",
+    };
+
+    const prompt = `You are an expert HR and talent matching AI. Analyze the compatibility between a candidate and a job position.
+
+CANDIDATE PROFILE:
+${JSON.stringify(candidateData, null, 2)}
+
+JOB POSITION:
+${JSON.stringify(jobData, null, 2)}
+
+Based on this information, provide a matching score between 0 and 100, where:
+- 0-20: Poor match - candidate lacks critical skills or experience
+- 21-40: Below average - significant skill gaps or misalignment
+- 41-60: Average - some alignment but key gaps exist
+- 61-80: Good match - strong alignment with minor gaps
+- 81-100: Excellent match - strong alignment across most criteria
+
+Consider these factors:
+1. **Technical Skills Match** (40%): How well do candidate's technical skills match the job requirements?
+2. **Soft Skills Match** (10%): Do the soft skills align with the role's needs?
+3. **Experience Level** (15%): Does the candidate's experience level match the job's requirements?
+4. **Salary Alignment** (10%): Is there reasonable overlap between candidate's expectations and job offer?
+5. **Work Mode Match** (10%): Does work mode preference align with job requirements?
+6. **Contract Type Match** (15%): Does employment type preference match the job offer?
+
+IMPORTANT: Return ONLY a JSON object with this exact structure:
+{
+  "matchScore": <number 0-100>,
+  "reasoning": "<brief explanation of the score>"
+}
+
+Do not include any other text, markdown, or explanation outside of the JSON object.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 500
+    });
+
+    // Extract the response content
+    const content = response.choices[0]?.message?.content || "{}";
+    console.log(`📄 OpenAI Response:`, content);
+    
+    // Parse JSON response
+    let result = {};
+    try {
+      // Try to extract JSON from response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      } else {
+        result = JSON.parse(content);
+      }
+    } catch (parseError) {
+      console.error(`⚠️ Failed to parse OpenAI response:`, parseError.message);
+      return 0;
+    }
+
+    const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
+    
+    console.log(`✅ Match Score from OpenAI: ${matchScore}/100`);
+    console.log(`   Reasoning: ${result.reasoning || "Not provided"}`);
+    
+    return matchScore;
+  } catch (error) {
+    console.error(`❌ [OPENAI MATCHING ERROR]`, error.message);
+    console.error("Falling back to default score of 0");
+    return 0;
+  }
+};
 
 // ========== CALCULATE MATCH SCORE (via AI Agent) ==========
 const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
@@ -88,33 +211,17 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log(`   └─ Work Mode Weight: ${weights.workMode || 10}%`);
     console.log(`   └─ Contract Weight: ${weights.contract || 10}%`);
 
-    // Calculate match score using AI matching algorithm
-    console.log(`\n🔍 Step 4: Running AI matching algorithm...`);
-    console.log(`   This algorithm will:`);
-    console.log(`   1. Compare technical skills (levels and weights)`);
-    console.log(`   2. Match soft skills presence`);
-    console.log(`   3. Assess experience alignment`);
-    console.log(`   4. Evaluate salary compatibility`);
-    console.log(`   5. Check work mode preferences`);
-    console.log(`   6. Verify contract type match`);
+    // Calculate match score using OpenAI AI matching algorithm
+    console.log(`\n🔍 Step 4: Running OpenAI matching algorithm...`);
+    console.log(`   Sending candidate CV and job post to OpenAI for intelligent matching...`);
 
-    const matchResult = await calculateMatchScore(
-      jobSkills,
-      candidateSkills,
-      jobDetails,
-      candidateProfile,
-      companyId,
-      configData
-    );
+    const matchResult = await calculateMatchScoreWithOpenAI(profile, post);
 
-    const score = matchResult?.score || 0;
-    console.log(`\n✅ [MATCH SCORE CALCULATED]`);
+    const score = matchResult || 0;
+    console.log(`\n✅ [MATCH SCORE CALCULATED BY OPENAI]`);
     console.log(`   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
-    console.log(`   Job: "${post.title}"`);
+    console.log(`   Job: "${post.jobDetails?.title}"`);
     console.log(`   Final Match Score: ${score}/100`);
-    if (matchResult?.unlocked) {
-      console.log(`   Status: 🔓 UNLOCKED CANDIDATE`);
-    }
     console.log("=".repeat(80) + "\n");
 
     return score;
