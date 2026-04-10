@@ -196,6 +196,10 @@ const postSchema = new mongoose.Schema({
     default: 'ai',
     description: 'How the post was created: AI generated, pipeline builder, or manual'
   },
+  thresholdScore: {
+    type: Number,
+    default: 50,
+  },
 
   // Archive flag (soft delete)
   archived: {
