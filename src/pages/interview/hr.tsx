@@ -18,7 +18,7 @@ import Cookies from 'js-cookie';
 import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
-import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
+import { checkPostInterviewAssessment, fetchMatchingDetails, selectMatchingDetails, selectMatchingDetailsLoading } from '@/store/slices/interviewSlice';
 import { validateInterviewAccess, selectAccessAllowed, selectAccessLoading } from '@/store/slices/interviewApplicantSlice';
 
 // Types
@@ -75,6 +75,8 @@ const IntelligentInterviewTest = () => {
   const [isArchived, setIsArchived] = useState(false);
   const accessAllowed = useSelector(selectAccessAllowed);
   const accessLoading = useSelector(selectAccessLoading);
+  const matchingDetails = useSelector(selectMatchingDetails);
+  const matchingLoading = useSelector(selectMatchingDetailsLoading);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
@@ -104,6 +106,9 @@ const IntelligentInterviewTest = () => {
         body: JSON.stringify({ post: postId }),
       }).catch(() => {});
     }
+
+    // Fetch matching details (non-blocking — only relevant for candidates)
+    dispatch(fetchMatchingDetails(postId));
 
     setAssessmentChecking(true);
     dispatch(checkPostInterviewAssessment(postId)).then((result) => {
@@ -403,6 +408,71 @@ const IntelligentInterviewTest = () => {
     );
   }
 
+  /* ── Matching score too low ── */
+  if (!matchingLoading && matchingDetails && !matchingDetails.meetsThreshold) {
+    const pct = Math.round((matchingDetails.matchScore / matchingDetails.thresholdScore) * 100);
+    const barWidth = Math.min(pct, 100);
+    return (
+      <>
+        <style jsx global>{GlobalStyles}</style>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+          <Header />
+          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+
+              {/* Top accent bar */}
+              <Box sx={{ height: 4, bgcolor: '#F3F4F6' }}>
+                <Box sx={{ height: '100%', width: `${barWidth}%`, bgcolor: '#DC2626', borderRadius: '0 4px 4px 0', transition: 'width 0.6s ease' }} />
+              </Box>
+
+              <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+                {/* Icon */}
+                <Box sx={{ width: 68, height: 68, borderRadius: '50%', bgcolor: '#FEF2F2', border: '2px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                  <Typography sx={{ fontSize: 28 }}>🎯</Typography>
+                </Box>
+
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.25rem', color: '#111827', mb: 0.75 }}>
+                  Your profile doesn't meet the requirements
+                </Typography>
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.84rem', color: '#6B7280', lineHeight: 1.75, mb: 3.5, maxWidth: 380, mx: 'auto' }}>
+                  This position requires a minimum match score of <strong style={{ color: '#111827' }}>{matchingDetails.thresholdScore}/100</strong>. Based on your profile and CV, your current score is <strong style={{ color: '#DC2626' }}>{matchingDetails.matchScore}/100</strong>. We encourage you to strengthen your profile and apply to roles that better match your skills.
+                </Typography>
+
+                {/* Score comparison */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0, mb: 4, borderRadius: '14px', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
+                  <Box sx={{ flex: 1, py: 2.5, px: 2, bgcolor: '#FEF2F2', borderRight: '1px solid #E5E7EB' }}>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '2rem', color: '#DC2626', lineHeight: 1 }}>
+                      {matchingDetails.matchScore}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 600, color: '#EF4444', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Your Score
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, py: 2.5, px: 2, bgcolor: '#F9FAFB' }}>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '2rem', color: '#374151', lineHeight: 1 }}>
+                      {matchingDetails.thresholdScore}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 600, color: '#6B7280', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Required
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  onClick={() => router.push('/dashboard/candidate')}
+                  sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 4, py: 1.25, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+                >
+                  Explore Other Opportunities
+                </Button>
+              </Box>
+            </Box>
+          </Container>
+        </Box>
+      </>
+    );
+  }
+
   /* ── Access denied — wrong candidate ── */
   if (accessAllowed === false && !accessLoading) {
     return (
@@ -538,6 +608,7 @@ const IntelligentInterviewTest = () => {
         jobId={jobId}
         refParam={refParam}
         jobData={jobData}
+        checkingEligibility={matchingLoading}
         onNext={(_) => setStep('interview')}
       />
     );
