@@ -195,7 +195,7 @@ const DashboardOverview: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2.5 }}>
         {STAT_CONFIG.map((stat, idx) => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
-          const isEmpty = !statsLoading && (raw == null || raw === 0);
+          const isEmpty = !statsLoading && raw == null;
           return (
             <motion.div key={stat.key} style={{ height: "100%" }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
               <Card sx={{ p: 3, height: "100%", boxSizing: "border-box", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : ""}`}>
