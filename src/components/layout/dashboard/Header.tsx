@@ -24,9 +24,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user    = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  const companyName = profile?.companyDetails?.name || "Company";
-  const companyInitial = companyName[0] || "C";
+  const isEmployee = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate";
+  const companyName = isEmployee
+    ? `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || user?.username || "Employee"
+    : profile?.companyDetails?.name || "Company";
+  const companyInitial = companyName[0]?.toUpperCase() || "C";
   const avatarUrl = profile?.user_image
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
     : null;
