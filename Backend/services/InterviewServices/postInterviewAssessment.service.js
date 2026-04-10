@@ -135,6 +135,12 @@ module.exports.getMatchingDetails = async (candidateId, postId) => {
       throw new Error("Candidate profile not found");
     }
 
+    // Get threshold score — if 0 or not set, no restriction applies
+    const thresholdScore = post.thresholdScore || 0;
+    if (!thresholdScore) {
+      return { matchScore: null, thresholdScore: 0, meetsThreshold: true, message: "No threshold set for this position" };
+    }
+
     // Get JobApplication to retrieve matchScore
     const JobApplication = require("../../models/JobApplication.model");
     const application = await JobApplication.findOne({
@@ -142,12 +148,11 @@ module.exports.getMatchingDetails = async (candidateId, postId) => {
       post: postId
     });
 
+    // No application yet — fail open (let them proceed)
     if (!application) {
-      throw new Error("Job application not found");
+      return { matchScore: null, thresholdScore, meetsThreshold: true, message: "No application found — access granted" };
     }
 
-    // Get threshold score (default 50 if not set)
-    const thresholdScore = post.thresholdScore || 50;
     const matchScore = application.matchScore || 0;
     const meetsThreshold = matchScore >= thresholdScore;
 

@@ -31,6 +31,7 @@ interface InterviewIntroProps {
   refParam?: string;
   totalSteps?: number;
   jobData?: any;
+  checkingEligibility?: boolean;
   onNext: (applicantData: ApplicantData) => void;
 }
 
@@ -47,6 +48,7 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   jobId,
   refParam,
   jobData,
+  checkingEligibility = false,
   onNext,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -242,9 +244,9 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
             <Box sx={{ px: { xs: 3, md: 4 }, pb: 3, pt: 0.5, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #F3F4F6' }}>
               <Button
                 variant="contained"
-                endIcon={submitting ? undefined : <ArrowForwardIcon />}
+                endIcon={submitting || checkingEligibility ? undefined : <ArrowForwardIcon />}
                 onClick={handleNext}
-                disabled={submitting}
+                disabled={submitting || checkingEligibility}
                 sx={{
                   bgcolor: PURPLE, color: '#fff', fontFamily: 'Poppins', fontWeight: 600,
                   fontSize: '0.86rem', px: 3.5, py: 1.15, borderRadius: '8px',
@@ -253,7 +255,12 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                   '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF' },
                 }}
               >
-                {submitting ? (
+                {checkingEligibility ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={16} sx={{ color: '#9CA3AF' }} />
+                    <span>Checking eligibility…</span>
+                  </Box>
+                ) : submitting ? (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CircularProgress size={16} sx={{ color: '#fff' }} />
                     <span>Please wait…</span>

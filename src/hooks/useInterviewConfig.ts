@@ -258,7 +258,7 @@ export const useInterviewConfig = ({
           }
 
           const errMsg = errorData.message || errorData.error || response.statusText;
-          if (errMsg.toLowerCase().includes('expiration') || errMsg.toLowerCase().includes('expired')) {
+          if (response.status === 410) {
             setIsExpired(true);
             setPipelineLoading(false);
             setConfigLoading(false);
