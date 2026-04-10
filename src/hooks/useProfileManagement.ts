@@ -44,6 +44,7 @@ export const useProfileManagement = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
+  const [savedProfile, setSavedProfile] = useState<UserProfile>(initialProfile);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -93,7 +94,7 @@ export const useProfileManagement = () => {
         gender: reduxProfile.gender
       });
 
-      setProfile({
+      const synced: UserProfile = {
         username: userData?.username || user.username || '',
         email: userData?.email || user.email || '',
         requiredExperienceLevel: reduxProfile.requiredExperienceLevel || 'Mid Level',
@@ -119,7 +120,11 @@ export const useProfileManagement = () => {
         size: reduxProfile.companyDetails?.size || '',
         employmentType: reduxProfile.companyDetails?.employmentType || 'Remote',
         requiredSkills: reduxProfile.requiredSkills || [],
-      });
+      };
+      setSavedProfile(synced);
+      if (!isEditing) {
+        setProfile(synced);
+      }
 
       console.log('🟢 [useProfileManagement] Profile state set to:', {
         firstName: reduxProfile.firstName,
@@ -129,7 +134,7 @@ export const useProfileManagement = () => {
         timezone: reduxProfile.timeZone || reduxProfile.timezone || 'UTC+01:00'
       });
     }
-  }, [reduxProfile, user]);
+  }, [reduxProfile, user, isEditing]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -371,6 +376,11 @@ export const useProfileManagement = () => {
     handleSelectChange,
     handleImageUpload,
     handleSaveProfile,
+    handleCancel: () => {
+      setProfile(savedProfile);
+      setFieldErrors({});
+      setIsEditing(false);
+    },
     handleDismissError,
     handleDismissSuccess,
   };

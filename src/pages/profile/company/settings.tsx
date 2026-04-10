@@ -27,6 +27,7 @@ const CompanySettingsPage: React.FC = () => {
     handleSelectChange,
     handleImageUpload,
     handleSaveProfile,
+    handleCancel,
     handleDismissError,
     handleDismissSuccess,
   } = useCompanyProfileManagement();
@@ -91,7 +92,7 @@ const CompanySettingsPage: React.FC = () => {
               onSelectChange={handleSelectChange}
               onImageUpload={handleImageUpload}
               onSave={handleSaveProfile}
-              onCancel={() => setIsEditing(false)}
+              onCancel={handleCancel}
               onEditToggle={() => setIsEditing(!isEditing)}
             />
           )}
@@ -104,7 +105,7 @@ const CompanySettingsPage: React.FC = () => {
               fieldErrors={fieldErrors}
               onInputChange={handleInputChange}
               onSave={handleSaveProfile}
-              onCancel={() => setIsEditing(false)}
+              onCancel={handleCancel}
               onEditToggle={() => setIsEditing(!isEditing)}
             />
           )}
