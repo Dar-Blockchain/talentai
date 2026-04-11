@@ -13,14 +13,27 @@ const jobApplicationController = require("../controllers/jobApplication.controll
 // Import middlewares
 const { requireAuthUser } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // ========== PUBLIC ROUTES (no auth required) ==========
 
 // GET /job-applications/post/:postId — Get all applications for a post
 router.get("/post/:postId", jobApplicationController.getApplicationsByPost);
 
+router.use((req, res, next) => {
+  // First try API Key verification
+  verifyApiKey(req, res, (err) => {
+    // If API Key succeeds, continue
+    if (req.isApiKeyAuth) {
+      return next();
+    }
+    // Otherwise, require JWT authentication
+    return requireAuthUser(req, res, next);
+  });
+});
+
 // ========== AUTHENTICATED ROUTES ==========
-router.use(requireAuthUser, authLogMiddleware("JobApplication"));
+router.use( authLogMiddleware("JobApplication"));
 
 // POST /job-applications — Create new application
 router.post("/", jobApplicationController.createJobApplication);
