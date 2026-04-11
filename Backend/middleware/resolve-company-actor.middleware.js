@@ -1,5 +1,5 @@
 const resolveCompanyActor = (req, res, next) => {
-  // Si une company existe, elle devient l’acteur principal
+  // Si une company existe, elle devient l'acteur principal
   if (req.company && req.company._id) {
     req.user = req.company; // overwrite volontaire
   }

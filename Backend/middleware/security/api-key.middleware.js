@@ -1,4 +1,5 @@
 const ApiKey = require("../../models/ApiKey.model");
+const User = require("../../models/User.model");
 const { createClient } = require("redis");
 
 // Initialiser le client Redis
@@ -173,9 +174,16 @@ const verifyApiKey = async (req, res, next) => {
       // Don't block request if Redis is down, but log the error
     }
 
+    // Load user with all data
+    const user = await User.findById(apiKeyDoc.userId)
+      .populate("profile")
+      .populate("companyMembership")
+      .populate("notifications");
+
     // Add key and user to request context
     req.apiKey = apiKeyDoc;
     req.userId = apiKeyDoc.userId.toString();
+    req.user = user;
     req.isApiKeyAuth = true;
 
     // Update lastUsed
