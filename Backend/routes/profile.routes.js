@@ -13,11 +13,23 @@ const profileController = require('../controllers/ProfileControllers/profile.con
 const { requireAuthUser } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 const uploadfile = require('../middleware/file-upload.middleware');
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
+router.use((req, res, next) => {
+  // First try API Key verification
+  verifyApiKey(req, res, (err) => {
+    // If API Key succeeds, continue
+    if (req.isApiKeyAuth) {
+      return next();
+    }
+    // Otherwise, require JWT authentication
+    return requireAuthUser(req, res, next);
+  });
+});
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser,authLogMiddleware("Profile"));
+router.use(authLogMiddleware("Profile"));
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/me', profileController.getMyProfile);
