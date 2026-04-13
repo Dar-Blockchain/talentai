@@ -24,7 +24,7 @@ import {
 import { SectionTitle, FieldLabel } from "./SettingsShared";
 import { TEAL, TEAL_BG, TEAL_BORDER, AVAILABLE_SCOPES, fieldSx, fmtDate } from "./settingsConstants";
 
-const DEFAULT_FORM = { name: "", serviceName: "mobile-app", scopes: ["read:dashboard", "write:dashboard"] as string[], rateLimit: 5, expiresAt: "2027-12-31" };
+const DEFAULT_FORM = { name: "", serviceName: "mobile-app", scopes: AVAILABLE_SCOPES as string[], rateLimit: 5, expiresAt: "2027-12-31" };
 
 const datePicker = (value: string, onChange: (v: string) => void) => (
   <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -40,11 +40,11 @@ const datePicker = (value: string, onChange: (v: string) => void) => (
   </LocalizationProvider>
 );
 
-const ScopeChips = ({ scopes, onToggle }: { scopes: string[]; onToggle: (s: string) => void }) => (
+const ScopeChips = () => (
   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
     {AVAILABLE_SCOPES.map((s) => (
-      <Chip key={s} label={s} size="small" clickable onClick={() => onToggle(s)}
-        sx={{ height: 26, fontSize: "0.72rem", fontWeight: 600, bgcolor: scopes.includes(s) ? "rgba(13,148,136,0.1)" : "#F3F4F6", color: scopes.includes(s) ? TEAL : "#374151", border: scopes.includes(s) ? `1px solid ${TEAL_BORDER}` : "1px solid transparent" }}
+      <Chip key={s} label={s} size="small"
+        sx={{ height: 26, fontSize: "0.72rem", fontWeight: 600, bgcolor: "rgba(13,148,136,0.1)", color: TEAL, border: `1px solid ${TEAL_BORDER}`, cursor: "default", pointerEvents: "none" }}
       />
     ))}
   </Box>
@@ -90,7 +90,7 @@ const ApiKeysTab: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      await dispatch(createApiKey(form)).unwrap();
+      await dispatch(createApiKey({ ...form, scopes: ['all'] })).unwrap();
       setCreateOpen(false);
       setForm(DEFAULT_FORM);
       emitToast({ message: "API key created — copy it now!", severity: "success" });
@@ -102,7 +102,7 @@ const ApiKeysTab: React.FC = () => {
   const handleUpdate = async () => {
     if (!editingKey) return;
     try {
-      await dispatch(updateApiKey({ id: editingKey.id, data: editForm })).unwrap();
+      await dispatch(updateApiKey({ id: editingKey.id, data: { ...editForm, scopes: ['all'] } })).unwrap();
       setEditingKey(null);
       emitToast({ message: "API key updated", severity: "success" });
     } catch {
@@ -146,9 +146,6 @@ const ApiKeysTab: React.FC = () => {
     emitToast({ message: "Key copied to clipboard", severity: "success" });
     setTimeout(() => setCopied(false), 2000);
   };
-
-  const toggleScope = (s: string, setter: React.Dispatch<React.SetStateAction<any>>) =>
-    setter((f: any) => ({ ...f, scopes: f.scopes.includes(s) ? f.scopes.filter((x: string) => x !== s) : [...f.scopes, s] }));
 
   return (
     <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
@@ -239,7 +236,7 @@ const ApiKeysTab: React.FC = () => {
           fields={<>
             <Box><FieldLabel text="Key Name" /><TextField value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth placeholder="e.g. Mon app mobile" sx={fieldSx} /></Box>
             <Box><FieldLabel text="Service Name" /><TextField value={form.serviceName} onChange={(e) => setForm((f) => ({ ...f, serviceName: e.target.value }))} fullWidth placeholder="e.g. mobile-app" sx={fieldSx} /></Box>
-            <Box><FieldLabel text="Scopes" /><ScopeChips scopes={form.scopes} onToggle={(s) => toggleScope(s, setForm)} /></Box>
+            <Box><FieldLabel text="Scopes" /><ScopeChips /></Box>
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <Box><FieldLabel text="Rate Limit (req/s)" /><TextField type="number" value={form.rateLimit} onChange={(e) => setForm((f) => ({ ...f, rateLimit: Number(e.target.value) }))} fullWidth inputProps={{ min: 1 }} sx={fieldSx} /></Box>
               <Box><FieldLabel text="Expires At" />{datePicker(form.expiresAt, (v) => setForm((f) => ({ ...f, expiresAt: v })))}</Box>
@@ -261,7 +258,7 @@ const ApiKeysTab: React.FC = () => {
           fields={<>
             <Box><FieldLabel text="Key Name" /><TextField value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} fullWidth sx={fieldSx} /></Box>
             <Box><FieldLabel text="Service Name" /><TextField value={editForm.serviceName} onChange={(e) => setEditForm((f) => ({ ...f, serviceName: e.target.value }))} fullWidth sx={fieldSx} /></Box>
-            <Box><FieldLabel text="Scopes" /><ScopeChips scopes={editForm.scopes} onToggle={(s) => toggleScope(s, setEditForm)} /></Box>
+            <Box><FieldLabel text="Scopes" /><ScopeChips /></Box>
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <Box><FieldLabel text="Rate Limit (req/s)" /><TextField type="number" value={editForm.rateLimit} onChange={(e) => setEditForm((f) => ({ ...f, rateLimit: Number(e.target.value) }))} fullWidth inputProps={{ min: 1 }} sx={fieldSx} /></Box>
               <Box><FieldLabel text="Expires At" />{datePicker(editForm.expiresAt, (v) => setEditForm((f) => ({ ...f, expiresAt: v })))}</Box>
