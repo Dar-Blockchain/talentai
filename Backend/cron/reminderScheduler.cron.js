@@ -9,15 +9,21 @@ const { REMINDER_CONFIG, SCHEDULER_TIME_WINDOW } = require('../constants/schedul
 /**
  * Interview Reminder Scheduler
  * 
- * Sends strategic reminders to candidates:
- * 🔔 FIRST REMINDER:  24 hours after application
- * 🔔 SECOND REMINDER: When 48 hours or less until post expiration
+ * Sends EXACTLY 2 reminders to candidates:
+ * 🔔 FIRST REMINDER:  24 hours after JobApplication creation
+ * 🔔 SECOND REMINDER: Less than 24 hours BEFORE post expirationDate
+ * 
+ * Example Timeline (Post expires in 5 days):
+ * - Day 0: Candidate applies → JobApplication created
+ * - Day 1 at ~24h: FIRST REMINDER sent ✅
+ * - Day 4 at ~4h before expiration: SECOND REMINDER sent ✅
+ * - Day 5: Post expires
  * 
  * Features:
  * - Only sends between 12:00 and 21:00
- * - Stops when interview is completed
- * - Prevents duplicate reminders
- * - Tracks all reminder sends in database
+ * - Each reminder sent only ONCE
+ * - Stops when interview_completed
+ * - Prevents duplicate reminders via firstReminderSentAt / secondReminderSentAt
  */
 
 // Use REMINDER_TYPES from constants
@@ -57,13 +63,14 @@ const shouldSendFirstReminder = (application) => {
 const shouldSendSecondReminder = (application, post) => {
   const hoursUntilExpiration = calculateHoursUntilExpiration(post.expirationDate);
   
-  // Send if 48 hours or less remain until post expiration
-  const isWithin48HoursOfExpiration = hoursUntilExpiration <= REMINDER_CONFIG.SECOND_REMINDER_HOURS;
+  // Send if LESS THAN 24 hours remain until post expiration
+  // (i.e., there's less than 24h left before the post expires)
+  const isWithin24HoursOfExpiration = hoursUntilExpiration < REMINDER_CONFIG.SECOND_REMINDER_HOURS && hoursUntilExpiration > 0;
   const notYetSent = !application.secondReminderSentAt;
-  const shouldSend = isWithin48HoursOfExpiration && notYetSent;
+  const shouldSend = isWithin24HoursOfExpiration && notYetSent;
   
   console.log(`   [SECOND CHECK] Hours until expiration: ${hoursUntilExpiration.toFixed(1)}h`);
-  console.log(`                 Within ${REMINDER_CONFIG.SECOND_REMINDER_HOURS}h: ${isWithin48HoursOfExpiration}, Not sent: ${notYetSent}`);
+  console.log(`                 Within < 24h: ${isWithin24HoursOfExpiration}, Not sent: ${notYetSent}`);
   console.log(`                 Should send: ${shouldSend}`);
   return shouldSend;
 };

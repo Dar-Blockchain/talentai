@@ -53,7 +53,7 @@ const AUTO_INVITE_CONFIG = {
 const REMINDER_CONFIG = {
   // Reminder timings
   FIRST_REMINDER_HOURS: 24,    // Send first reminder 24h after application
-  SECOND_REMINDER_HOURS: 48,   // Send second reminder when ≤48h before post expiration
+  SECOND_REMINDER_HOURS: 24,   // Send second reminder when < 24h before post expiration
   
   // Cron schedule (hourly at minute 0)
   CRON_PATTERN: '0 * * * *',
@@ -64,7 +64,7 @@ const REMINDER_CONFIG = {
   // Reminder types
   TYPES: {
     FIRST_REMINDER: '24h',     // After 24 hours of application
-    SECOND_REMINDER: '48h'     // 48 hours before post expiration
+    SECOND_REMINDER: 'before_exp'  // Before 24h before expiration
   },
   
   // Messages
@@ -73,7 +73,7 @@ const REMINDER_CONFIG = {
     INITIALIZED: '✅ Reminder scheduler initialized:',
     FREQUENCY: '   ⏰ Frequency: Every hour (checks during 12:00 - 21:00)',
     FIRST_REMINDER_DESC: '   🔔 First reminder: 24 hours after application',
-    SECOND_REMINDER_DESC: '   🔔 Second reminder: When 48 hours or less until post expiration',
+    SECOND_REMINDER_DESC: '   🔔 Second reminder: Less than 24 hours before post expiration',
     STOPS_WHEN: '   ⛔ Stops when: Interview completed',
     EMAIL_WINDOW: '   📧 Only sends emails between 12:00 and 21:00',
     JOB_RUNNING: '⏰ [REMINDER SCHEDULER] Running at %datetime%',
@@ -87,7 +87,7 @@ const REMINDER_CONFIG = {
     APP_STATUS: '   Status: %status%',
     FIRST_CHECK: '   [FIRST CHECK] Hours: %hours%h, Already sent: %sent%, Should send: %shouldSend%',
     SECOND_CHECK: '   [SECOND CHECK] Hours until expiration: %hours%h',
-    SECOND_CHECK_CONDITIONS: '                 Within 48h: %within%, Not sent: %notSent%',
+    SECOND_CHECK_CONDITIONS: '                 Within 24h: %within%, Not sent: %notSent%',
     SECOND_CHECK_RESULT: '                 Should send: %shouldSend%',
     REMINDER_HEADER: '📧 [REMINDER - %type%] Processing application: %id%',
     CANDIDATE_NOT_FOUND: '   ❌ Candidate profile not found',
@@ -98,7 +98,7 @@ const REMINDER_CONFIG = {
     DB_ERROR: '   ❌ Error updating database: %error%',
     JOB_COMPLETE: '📊 Reminder job complete:',
     FIRST_REMINDERS_SENT: '   🔔 First reminders (24h):  %count%',
-    SECOND_REMINDERS_SENT: '   🔔 Second reminders (48h): %count%',
+    SECOND_REMINDERS_SENT: '   🔔 Second reminders (<24h before exp): %count%',
     SKIPPED: '   ⏭️  Skipped: %count%',
     TOTAL_SENT: '   📈 Total reminders sent: %count%',
     JOB_ERROR: '❌ [REMINDER SCHEDULER] Error: %error%'
