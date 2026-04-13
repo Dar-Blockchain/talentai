@@ -23,9 +23,8 @@ router.use(requireAuth, authLogMiddleware("Feedback"));
 
 
 // POST /feedback/addFeedback
-// Access: Candidate
-// Body: { message, rating, ... }
-router.post('/addFeedback', controledAcces('Candidate'), feedbackController.create);
+// Access: Any authenticated user (Candidate, Employee, etc.)
+router.post('/addFeedback', feedbackController.create);
 // GET /feedback/getAllFeedback
 // Access: Admin
 router.get('/getAllFeedback', controledAcces('Admin'), feedbackController.getAllFeedback);

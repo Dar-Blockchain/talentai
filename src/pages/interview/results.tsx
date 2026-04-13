@@ -22,6 +22,7 @@ import {
   KeyStrengths,
   AreasForImprovement,
   CoverageDetails,
+  InterviewFeedback,
   LoadingState,
   ErrorState,
   InterviewAnalysis,
@@ -590,6 +591,7 @@ export default function InterviewResults() {
       <KeyStrengths strengths={analysis.strengths} />
       <AreasForImprovement weaknesses={analysis.weaknesses} />
       <CoverageDetails coverage={analysis.coverage} />
+      <InterviewFeedback interviewId={localStorage.getItem('last_interview_id') || undefined} />
 
       {/* Back to Dashboard Button */}
       <Box

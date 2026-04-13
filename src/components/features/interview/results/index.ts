@@ -1,4 +1,5 @@
 export { default as ResultsHeader } from './ResultsHeader';
+export { default as InterviewFeedback } from './InterviewFeedback';
 export { default as RewardNotification } from './RewardNotification';
 export { default as KeyStrengths } from './KeyStrengths';
 export { default as AreasForImprovement } from './AreasForImprovement';

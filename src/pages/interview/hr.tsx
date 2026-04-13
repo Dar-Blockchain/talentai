@@ -282,7 +282,11 @@ const IntelligentInterviewTest = () => {
 
   const camera = useCamera({ showNotification: notify as any });
 
-  const security = useSecurityMonitoring({ interviewStatus: socket.interviewStatus });
+  const security = useSecurityMonitoring({
+    interviewStatus: socket.interviewStatus,
+    onTerminate: () => endInterviewRef.current(),
+    enabled: interviewConfig.enableSecurity !== false, // default ON unless explicitly false
+  });
 
   const startInterview = useCallback(async () => {
     if (!socket.socketRef.current || !socket.isConnected) { notify('Not connected to interview system', 'error'); return; }
@@ -619,7 +623,7 @@ const IntelligentInterviewTest = () => {
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none' }}>
         <Header />
 
         {/* ── Connection warning banner ── */}
@@ -839,6 +843,8 @@ const IntelligentInterviewTest = () => {
         <SecurityModals
           showFirstViolationModal={security.showFirstViolationModal}
           showSecurityModal={security.showSecurityModal}
+          violationType={security.violationType}
+          securityViolationCount={security.securityViolationCount}
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
           onReturnToDashboard={() => router.push('/dashboard/candidate')}
