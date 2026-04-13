@@ -234,4 +234,7 @@ const checkScope = (requiredScopes) => {
 module.exports = {
   verifyApiKey,
   checkScope,
+  getRedisClient,
+  getClientIp,
+  normalizeIp,
 };
