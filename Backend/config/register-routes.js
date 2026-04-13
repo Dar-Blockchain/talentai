@@ -3,6 +3,12 @@
  * Centralized route registration
  */
 
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("../swagger.json");
+const campaignSwagger = require("../docs/swagger-campaigns.json");
+const departmentSwagger = require("../docs/swagger-departments.json");
+const jobApplicationSwagger = require("../routes/swagger/jobApplication.swagger");
+
 // Import all route modules
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
@@ -51,7 +57,18 @@ const apiKeyRouter = require('../routes/apiKey.routes');
  * @param {Express} app - Express application instance
  */
 function registerRoutes(app) {
+  // API Documentation
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   
+  // Campaign API Documentation (Swagger)
+  app.use("/api/docs/campaigns", swaggerUi.serve, swaggerUi.setup(campaignSwagger));
+  
+  // Department API Documentation (Swagger)
+  app.use("/api/docs/departments", swaggerUi.serve, swaggerUi.setup(departmentSwagger));
+
+  // Job Applications API Documentation (Swagger)
+  app.use("/api/docs/job-applications", swaggerUi.serve, swaggerUi.setup(jobApplicationSwagger));
+
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
