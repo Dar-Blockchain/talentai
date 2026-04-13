@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
@@ -7,6 +7,9 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { InterviewStatus, ConnectionStatus, CameraStatus, AgentState } from '@/types/interview';
+
+const REPORT_POLL_INTERVAL = 1500; // ms between checks
+const REPORT_MAX_WAIT = 20000;     // max 20 s wait before navigating anyway
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
@@ -30,11 +33,52 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onStartInterview,
   onViewResults,
 }) => {
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const deadlineRef = useRef<number>(0);
+  const [waitDots, setWaitDots] = useState('');
 
   useEffect(() => {
-    if (interviewStatus === 'ended') {
-      onViewResults();
-    }
+    if (interviewStatus !== 'ended') return;
+
+    deadlineRef.current = Date.now() + REPORT_MAX_WAIT;
+
+    // Animate dots while waiting
+    const dotsInterval = setInterval(() => {
+      setWaitDots(d => d.length >= 3 ? '' : d + '.');
+    }, 500);
+
+    // Poll localStorage until finalReport has a real score
+    pollRef.current = setInterval(() => {
+      const raw = localStorage.getItem('last_interview_analysis');
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          const score =
+            parsed?.finalReport?.scores?.overall ??
+            parsed?.finalReport?.overallScore ??
+            parsed?.analytics?.overallScore ??
+            parsed?.analytics?.totalScore ??
+            null;
+          if (score !== null && score !== undefined) {
+            clearInterval(pollRef.current!);
+            clearInterval(dotsInterval);
+            onViewResults();
+            return;
+          }
+        } catch { /* ignore parse errors */ }
+      }
+      // Safety timeout — navigate anyway after max wait
+      if (Date.now() >= deadlineRef.current) {
+        clearInterval(pollRef.current!);
+        clearInterval(dotsInterval);
+        onViewResults();
+      }
+    }, REPORT_POLL_INTERVAL);
+
+    return () => {
+      clearInterval(pollRef.current!);
+      clearInterval(dotsInterval);
+    };
   }, [interviewStatus]);
 
   const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
@@ -229,15 +273,15 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
         )}
 
-        {/* ── ENDED ── auto-redirect to results */}
+        {/* ── ENDED ── wait for finalReport then auto-redirect */}
         {interviewStatus === 'ended' && (
           <Box sx={{ textAlign: 'center', py: 2 }}>
             <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
             <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
-              Analyzing your results…
+              Analyzing your results{waitDots}
             </Typography>
             <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>
-              You will be redirected automatically.
+              Please wait while we prepare your report.
             </Typography>
           </Box>
         )}
