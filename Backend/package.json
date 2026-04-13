@@ -12,7 +12,6 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.700.0",
     "@hashgraph/sdk": "^2.63.0",
-    "@hashgraphonline/conversational-agent": "0.2.220",
     "@hashgraphonline/standards-sdk": "^0.1.165",
     "agenda": "^5.0.0",
     "axios": "^1.11.0",

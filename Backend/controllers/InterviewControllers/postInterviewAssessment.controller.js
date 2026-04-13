@@ -4,6 +4,7 @@ const PostSteps = require("../../models/postSteps.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const JobApplication = require("../../models/JobApplication.model");
+const Post = require("../../models/Post.model");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========
@@ -184,9 +185,47 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
       postId
     );
 
+    // ===== CHECK THRESHOLD SCORE =====
+    let underThreshold = false;
+    let thresholdScore = null;
+    let matchScore = null;
+
+    try {
+      // Get the post to retrieve thresholdScore
+      const post = await Post.findById(postId).select('thresholdScore');
+      if (post) {
+        thresholdScore = post.thresholdScore;
+      }
+
+      // Get the candidate's profile
+      const candidateProfile = await Profile.findOne({ userId: candidateId }).select('_id');
+      if (candidateProfile) {
+        // Get JobApplication to retrieve matchScore
+        const jobApplication = await JobApplication.findOne({
+          profile: candidateProfile._id,
+          post: postId
+        }).select('matchScore');
+        
+        if (jobApplication && jobApplication.matchScore !== null) {
+          matchScore = jobApplication.matchScore;
+          
+          // Check if matchScore is under thresholdScore
+          if (thresholdScore !== null && matchScore < thresholdScore) {
+            underThreshold = true;
+          }
+        }
+      }
+    } catch (thresholdError) {
+      console.warn('⚠️ Warning: Could not check threshold score:', thresholdError.message);
+      // Don't block response if threshold check fails
+    }
+
     return res.status(200).json({
       success: true,
       exists,
+      underThreshold,
+      thresholdScore,
+      matchScore,
       message: exists
         ? "Candidate already has an assessment for this post"
         : "No assessment found for this candidate and post",
