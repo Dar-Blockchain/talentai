@@ -93,7 +93,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     try {
       // Get candidate email and name
       const candidateEmail = req.user.email;
-      const candidateName = req.user.profile?.firstName || req.user.username || 'Candidate';
+      const candidateName = `${req.user.profile?.firstName || ""} ${req.user.profile?.lastName || ""}`.trim() || req.user.username || 'Candidate';
       
       // Get post title if available
       let postTitle = 'New Opportunity';
