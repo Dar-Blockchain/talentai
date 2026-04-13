@@ -3,14 +3,14 @@ const router = express.Router();
 const { getConfig, updateConfig, addConfig } = require('../controllers/MatchingController/MatchingConfig.controller');
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const { controledAcces } = require('../middleware/authorize.middleware.js'); 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 
 // All routes below require an authenticated admin
-router.use(requireAuthUser,resolveCompanyActor, authLogMiddleware("MatchingConfig"));
+router.use(requireAuth,resolveCompanyActor, authLogMiddleware("MatchingConfig"));
 
 router.get('/', getConfig);
 router.post('/', addConfig);

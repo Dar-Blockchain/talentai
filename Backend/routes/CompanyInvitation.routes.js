@@ -8,13 +8,13 @@
 const express = require("express");
 const router = express.Router();
 const CompanyInvitationController = require("../controllers/ProfileControllers/CompanyInvitation.controller");
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
-// ========== MIDDLEWARE: Authentication + Logging ==========
-// All routes below require an authenticated user and are logged
-router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
+// ========== MIDDLEWARE: Authentication (API Key or JWT) + Logging ==========
+// All routes below accept either API Key or JWT authentication and are logged
+router.use(requireAuth, authLogMiddleware("sentInvitation"));
 
 /**
  * POST /sentInvitation

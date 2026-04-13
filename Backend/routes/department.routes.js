@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const departmentController = require("../controllers/department.controller");
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 
 // all routes require authenticated company user
-router.use(requireAuthUser, controledAcces("Company"), authLogMiddleware("Department"));
+router.use(requireAuth, controledAcces("Company"), authLogMiddleware("Department"));
 
 // CRUD
 router.post("/", departmentController.createDepartment);

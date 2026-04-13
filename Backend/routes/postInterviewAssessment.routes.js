@@ -11,7 +11,7 @@ const router = express.Router();
 const postInterviewAssessmentController = require('../controllers/InterviewControllers/postInterviewAssessment.controller');
 
 // Import middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
@@ -20,19 +20,9 @@ const { verifyApiKey, checkScope } = require("../middleware/security/api-key.mid
 
 // GET /post-interview-assessments/post/:postId — Get all assessments for a post
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
-router.use((req, res, next) => {
-  // First try API Key verification
-  verifyApiKey(req, res, (err) => {
-    // If API Key succeeds, continue
-    if (req.isApiKeyAuth) {
-      return next();
-    }
-    // Otherwise, require JWT authentication
-    return requireAuthUser(req, res, next);
-  });
-});
+
 // ========== AUTHENTICATED ROUTES ==========
-router.use(authLogMiddleware("PostInterviewAssessment"));
+router.use(requireAuth,authLogMiddleware("PostInterviewAssessment"));
 
 // GET /post-interview-assessments/check/:postId — Check if candidate has assessment for post
 router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAssessmentExists);

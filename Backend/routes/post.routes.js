@@ -9,7 +9,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // Import des middlewares
@@ -33,21 +33,8 @@ router.get("/details/:id", postController.getPostDetailsPublic);
 // Description: Returns public statistics (number of users, posts, companies)
 router.get("/public-stats", postController.getPublicStats);
 
-// Auth required + logs for all routes
-// Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
-router.use((req, res, next) => {
-  // First try API Key verification
-  verifyApiKey(req, res, (err) => {
-    // If API Key succeeds, continue
-    if (req.isApiKeyAuth) {
-      return next();
-    }
-    // Otherwise, require JWT authentication
-    return requireAuthUser(req, res, next);
-  });
-});
 
-router.use(authLogMiddleware("Post"));
+router.use(requireAuth,authLogMiddleware("Post"));
 
 // POST /post/save-post
 // Description: Creates a post
@@ -62,7 +49,7 @@ router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPo
 // GET /post/my-posts
 // Description: Posts of current user
 // Required scopes: read:posts
-router.get("/my-posts", checkScope(['read:posts']), resolveCompanyActor, postController.getUserPosts);
+router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
 // GET /post/metrics
 // Description: Returns post metrics (total, active, draft, expired, closed, cancelled)

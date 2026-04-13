@@ -10,7 +10,7 @@
 const express = require("express");
 const router = express.Router();
 const internalCampaignController = require("../controllers/internalCampaign.controller");
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js");
 const { controledAcces } = require("../middleware/authorize.middleware.js");
 
@@ -18,7 +18,7 @@ const { controledAcces } = require("../middleware/authorize.middleware.js");
 // so that an admin user can access it without being blocked by the "Company" role check.
 router.get(
   "/admin/all",
-  requireAuthUser,           // ensure the request is authenticated
+  requireAuth,           // ensure the request is authenticated
   controledAcces("Admin"),  // only users with role 'Admin' may proceed
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.getAllCampaigns
@@ -26,7 +26,7 @@ router.get(
 
 // apply generic middlewares for company users on all remaining routes
 router.use(
-  requireAuthUser,
+  requireAuth,
   controledAcces("Company"),
   authLogMiddleware("InternalCampaign")
 );

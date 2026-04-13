@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const agentConfigController = require('../controllers/agentConfig.controller');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
@@ -10,7 +10,7 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 //router.get('/getAgentConfigByPost/:postId', agentConfigController.getAgentConfigByPost);
 
 // Protected endpoints
-router.use(requireAuthUser, authLogMiddleware("AgentConfigs"));
+router.use(requireAuth, authLogMiddleware("AgentConfigs"));
 //router.get('/listAgentConfigs', agentConfigController.listAgentConfigs);
 router.post('/createAgentConfig', agentConfigController.createAgentConfig);
 router.put('/updateAgentConfig/:id', agentConfigController.updateAgentConfig);

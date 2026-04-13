@@ -10,26 +10,15 @@ const router = express.Router();
 const profileController = require('../controllers/ProfileControllers/profile.controller');
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 const uploadfile = require('../middleware/file-upload.middleware');
-const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
-router.use((req, res, next) => {
-  // First try API Key verification
-  verifyApiKey(req, res, (err) => {
-    // If API Key succeeds, continue
-    if (req.isApiKeyAuth) {
-      return next();
-    }
-    // Otherwise, require JWT authentication
-    return requireAuthUser(req, res, next);
-  });
-});
+
 // Auth obligatoire + logs pour toutes les routes
-router.use(authLogMiddleware("Profile"));
+router.use(requireAuth,authLogMiddleware("Profile"));
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/me', profileController.getMyProfile);
