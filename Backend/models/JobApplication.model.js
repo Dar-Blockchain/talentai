@@ -100,6 +100,18 @@ const jobApplicationSchema = new mongoose.Schema(
       description: "Number of times automatic interview invitation was sent"
     },
 
+    // ========== REMINDER TRACKING ==========
+    firstReminderSentAt: {
+      type: Date,
+      default: null,
+      description: "Timestamp when 24h reminder was sent"
+    },
+    secondReminderSentAt: {
+      type: Date,
+      default: null,
+      description: "Timestamp when 48h/expiration reminder was sent"
+    },
+
     // ========== NOTES & FEEDBACK ==========
     companyNotes: {
       type: String,
