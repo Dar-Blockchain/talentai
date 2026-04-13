@@ -32,6 +32,7 @@ import departmentReducer from './slices/departmentSlice';
 import interviewApplicantReducer from './slices/interviewApplicantSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
 import apiKeyReducer from './slices/apiKeySlice';
+import feedbackReducer from './slices/feedbackSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
@@ -57,6 +58,7 @@ const rootReducer = combineReducers({
   interviewApplicant: interviewApplicantReducer,
   jobApplications: jobApplicationReducer,
   apiKeys: apiKeyReducer,
+  feedback: feedbackReducer,
 });
 
 const persistConfig = {

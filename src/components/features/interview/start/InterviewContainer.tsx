@@ -1,10 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
@@ -32,6 +30,12 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onStartInterview,
   onViewResults,
 }) => {
+
+  useEffect(() => {
+    if (interviewStatus === 'ended') {
+      onViewResults();
+    }
+  }, [interviewStatus]);
 
   const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
 
@@ -225,51 +229,16 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
         )}
 
-        {/* ── ENDED ── */}
+        {/* ── ENDED ── auto-redirect to results */}
         {interviewStatus === 'ended' && (
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.08) 100%)',
-                border: '2px solid rgba(34,197,94,0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <CheckCircleOutlineIcon sx={{ fontSize: 36, color: '#22c55e' }} />
-            </Box>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>
-              Interview complete!
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
+              Analyzing your results…
             </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>
-              Your responses have been recorded and are being analyzed.
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>
+              You will be redirected automatically.
             </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={onViewResults}
-              startIcon={<AssessmentIcon />}
-              sx={{
-                fontFamily: 'Poppins',
-                fontWeight: 700,
-                fontSize: '0.92rem',
-                py: 1.5,
-                borderRadius: '12px',
-                bgcolor: '#8310FF',
-                color: '#fff',
-                textTransform: 'none',
-                boxShadow: 'none',
-                '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
-              }}
-            >
-              View Results
-            </Button>
           </Box>
         )}
       </Box>
