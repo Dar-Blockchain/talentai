@@ -13,6 +13,7 @@ export interface UseSecurityMonitoringReturn {
 export interface UseSecurityMonitoringOptions {
   interviewStatus: InterviewStatus;
   onTerminate?: () => void;
+  enabled?: boolean; // default true — set false to disable all security monitoring
 }
 
 const MAX_WARNINGS = 2; // 3rd violation terminates
@@ -20,6 +21,7 @@ const MAX_WARNINGS = 2; // 3rd violation terminates
 export const useSecurityMonitoring = ({
   interviewStatus,
   onTerminate,
+  enabled = true,
 }: UseSecurityMonitoringOptions): UseSecurityMonitoringReturn => {
   const [securityViolationCount, setSecurityViolationCount] = useState(0);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
@@ -30,7 +32,7 @@ export const useSecurityMonitoring = ({
   const terminatedRef = useRef(false);
 
   const handleSecurityViolation = useCallback((type: string) => {
-    if (interviewStatus !== 'active' || terminatedRef.current) return;
+    if (!enabled || interviewStatus !== 'active' || terminatedRef.current) return;
 
     violationCountRef.current += 1;
     const count = violationCountRef.current;
@@ -47,7 +49,7 @@ export const useSecurityMonitoring = ({
   }, [interviewStatus, onTerminate]);
 
   useEffect(() => {
-    if (interviewStatus !== 'active') return;
+    if (!enabled || interviewStatus !== 'active') return;
 
     // ── Block copy / cut ──────────────────────────────────────────────
     const handleCopy = (e: ClipboardEvent) => {

@@ -285,6 +285,7 @@ const IntelligentInterviewTest = () => {
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
+    enabled: interviewConfig.enableSecurity !== false, // default ON unless explicitly false
   });
 
   const startInterview = useCallback(async () => {
