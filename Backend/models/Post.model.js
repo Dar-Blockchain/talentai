@@ -198,7 +198,7 @@ const postSchema = new mongoose.Schema({
   },
   thresholdScore: {
     type: Number,
-    default: 50,
+    default: 0,
   },
 
   // Archive flag (soft delete)
