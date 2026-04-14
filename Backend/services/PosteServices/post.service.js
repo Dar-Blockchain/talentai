@@ -408,7 +408,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 // Get a post by its ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).populate();
+    const post = await Post.findById(postId).populate("PostSteps");
     if (!post) {
       throw new Error("Post not found");
     }
