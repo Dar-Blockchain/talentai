@@ -1,5 +1,4 @@
 const { getMatchingConfig } = require("./matchingConfig.service");
-const UnlockCandidate = require("../../models/UnlockCandidate.model");
 
 /* ------------------ CONSTANTS & HELPERS ------------------ */
 // Toggle verbose logs for debugging (false in production)
@@ -194,20 +193,12 @@ const calculateContractScore = (job, cand, MAX) => {
   return score;
 };
 
-/* ------------------ UNLOCK CHECK ------------------ */
+/* ------------------ UNLOCK CHECK (DEPRECATED) ------------------ */
 async function checkIfCandidateUnlocked(companyId, candidateId) {
-  try {
-    const unlocked = await UnlockCandidate.findOne({
-      idCompany: companyId,
-      idCandidate: candidateId,
-    });
-    if (VERBOSE)
-      console.log(`🔓 Candidate unlocked: ${!!unlocked}`);
-    return !!unlocked;
-  } catch {
-    if (VERBOSE) console.log("❌ Unlock check failed");
-    return false;
-  }
+  // Unlock feature has been removed - always return false
+  if (VERBOSE)
+    console.log(`🔓 Candidate unlock feature removed: false`);
+  return false;
 }
 
 /* ------------------ MAIN FUNCTION ------------------ */

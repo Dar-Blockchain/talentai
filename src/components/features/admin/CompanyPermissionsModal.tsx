@@ -54,8 +54,7 @@ const defaultPermissions: CompanyPermissions = DEFAULT_PERMISSIONS;
 
 const permissionItems: PermissionItem[] = [
   { key: 'canCreateJobPosts', label: 'Create Job Posts', description: 'Create, edit, delete, and manage job postings', icon: '📋' },
-  { key: 'canUnlockCandidates', label: 'Unlock Candidates', description: 'Purchase and unlock candidate profiles using tokens', icon: '🔓' },
-  { key: 'canViewCandidateProfiles', label: 'View Candidate Profiles', description: 'View unlocked candidate profiles, assessments, and resumes', icon: '👤' },
+  { key: 'canViewCandidateProfiles', label: 'View Candidate Profiles', description: 'View candidate profiles, assessments, and resumes', icon: '👤' },
   { key: 'canContactCandidates', label: 'Contact Candidates', description: 'Send messages and communicate with candidates', icon: '💬' },
   { key: 'canAccessMatching', label: 'Access Matching', description: 'Access matching algorithm and view candidate matches', icon: '🔍' },
   { key: 'canUseHRAgents', label: 'Use HR Agents', description: 'Create and manage AI HR agents for recruitment automation', icon: '🤖' },
@@ -102,7 +101,6 @@ const CompanyPermissionsModal: React.FC<CompanyPermissionsModalProps> = ({
       if (data.success && data.permissions) {
         const validPermissions: CompanyPermissions = {
           canCreateJobPosts: data.permissions.canCreateJobPosts ?? defaultPermissions.canCreateJobPosts,
-          canUnlockCandidates: data.permissions.canUnlockCandidates ?? defaultPermissions.canUnlockCandidates,
           canViewCandidateProfiles: data.permissions.canViewCandidateProfiles ?? defaultPermissions.canViewCandidateProfiles,
           canContactCandidates: data.permissions.canContactCandidates ?? defaultPermissions.canContactCandidates,
           canAccessMatching: data.permissions.canAccessMatching ?? defaultPermissions.canAccessMatching,

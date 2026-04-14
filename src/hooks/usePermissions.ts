@@ -66,7 +66,6 @@ export const usePermissions = (userId?: string, profileId?: string): UsePermissi
           userId,
           profileId,
           canCreateJobPosts: data.permissions.canCreateJobPosts ?? true,
-          canUnlockCandidates: data.permissions.canUnlockCandidates ?? true,
           canViewCandidateProfiles: data.permissions.canViewCandidateProfiles ?? true,
           canContactCandidates: data.permissions.canContactCandidates ?? true,
           canAccessMatching: data.permissions.canAccessMatching ?? true,
