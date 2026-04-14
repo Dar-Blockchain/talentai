@@ -14,10 +14,7 @@ import {
   selectCurrentJob,
   selectCurrentJobLoading,
   selectCurrentJobError,
-  processPostPayment,
   updatePostStatus,
-  resetPostPayment,
-  selectPostPayment,
 } from "@/store/slices/postSlice";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
@@ -42,13 +39,9 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
   const error   = useSelector(selectCurrentJobError);
   const connectedUser = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  const { data: paymentData, loading: isProcessingPayment, error: paymentError } = useSelector(selectPostPayment);
-
   const [activeEdit,       setActiveEdit]       = useState<"post" | "recruitment" | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [menuAnchor,       setMenuAnchor]       = useState<null | HTMLElement>(null);
-
-  const paymentSucceeded = !!paymentData;
 
   useEffect(() => {
     dispatch(fetchJobById(jobId));
@@ -75,23 +68,16 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
   };
 
   const handlePaymentConfirm = async () => {
-    if (paymentSucceeded) {
-      setPaymentModalOpen(false);
-      dispatch(resetPostPayment());
-      return;
-    }
     try {
-      await dispatch(processPostPayment({ postId: job?._id, agentId: job?.agentId })).unwrap();
       await dispatch(updatePostStatus({ postId: job?._id, status: "open" })).unwrap();
+      setPaymentModalOpen(false);
     } catch {
-      showToast({ message: "Payment failed. Please try again.", severity: "error" });
+      showToast({ message: "Failed to update post status. Please try again.", severity: "error" });
     }
   };
 
   const handlePaymentClose = () => {
-    if (isProcessingPayment) return;
     setPaymentModalOpen(false);
-    dispatch(resetPostPayment());
   };
 
   const handleCopyLink = () => {
