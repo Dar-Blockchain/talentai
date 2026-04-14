@@ -142,21 +142,7 @@ const postSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  agentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Agent",
-    unique: true,
-    sparse: true,
-    description: "One-to-one reference to the Agent associated with this Post",
-  },
-  // Reference to associated configuration (one-to-one)
-  agentConfig: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "AgentConfig",
-    unique: true,
-    sparse: true,
-    description: "Optional reference to AgentConfig (one-to-one)",
-  },
+
   PostSteps: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -170,10 +156,6 @@ const postSchema = new mongoose.Schema({
     enum: ['not_paid', 'pending', 'completed', 'failed'],
     default: 'not_paid',
     description: 'Payment status for agent creation'
-  },
-  paymentTransactionId: {
-    type: String,
-    description: 'Reference to TokenTransaction ID'
   },
   pricePaid: {
     type: Number,

@@ -27,14 +27,10 @@ const postStepsRouter = require("../routes/postSteps.routes");
 const candidatePostStepProgressRouter = require("../routes/candidatePostStepProgress.routes");
 const hederaToolsRouter = require("../routes/hederaTools.routes");
 const hcs11Router = require("../routes/hcs11.routes");
-const hrAgentRouter = require("../routes/hrAgent.routes");
 const taskRouter = require("../routes/task.routes");
-const agentConfigRouter = require("../routes/agentConfig.routes");
-const tokenRouter = require("../routes/token.routes");
 const stripRouter = require("../routes/Strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
 const matchingConfigRoutes = require("../routes/matchingConfig.routes");
-const paymentRouter = require("../routes/payment.routes");
 const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
@@ -112,20 +108,14 @@ function registerRoutes(app) {
   app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools
   app.use("/api/hcs11", hcs11Router); //✅ HCS11 Integration -> api/hcs11
 
-  // AI & Agents
-  app.use("/hr-agents", hrAgentRouter); //✅ HR Agents Management -> hr-agents
-  app.use("/agent-config", agentConfigRouter); //✅ Agent Configuration -> agent-configs
-
   // Utility & Management
   app.use("/todo", todoRouter); //✅ To-Do Management -> todos
   app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
   app.use("/logs", logRoutes); //✅ System Logs Management -> logs
   app.use("/task", taskRouter); //✅ Task Management -> tasks
-  app.use("/tokens", tokenRouter); //✅ Token Management -> tokens
   // app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
-  // Payment & Billing
-  app.use("/payment", paymentRouter); //✅ Payment Processing -> payments
+  // Billing
   app.use("/api/stripe", stripRouter); //✅ Stripe Integration -> api/stripe
 
   // Pipeline Interview

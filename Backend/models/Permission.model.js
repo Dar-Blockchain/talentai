@@ -31,9 +31,6 @@ const permissionSchema = new mongoose.Schema(
     // Matching Permissions
     canAccessMatching: { type: Boolean, default: true },
 
-    // HR Agent Permissions
-    canUseHRAgents: { type: Boolean, default: true },
-
    
     // Team Permissions
     canManageTeam: { type: Boolean, default: true },

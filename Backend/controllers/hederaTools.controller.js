@@ -10,7 +10,6 @@ const {
   coreConsensusPlugin,
 } = require("hedera-agent-kit");
 const { Client, PrivateKey, PublicKey } = require("@hashgraph/sdk");
-const AgentModel = require("../models/Agent.model");
 const EvaluationTopicModel = require("../models/EvaluationTopic.model");
 
 // Lazy client initialization

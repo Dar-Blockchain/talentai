@@ -2,7 +2,6 @@ const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const Post = require("../../models/Post.model");
 const hederaService = require("../hedera.service");
-const AgentConfig = require("../../models/AgentConfig.model");
 // const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
@@ -565,33 +564,6 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
     const parsedNewBid = Number(newBid);
     if (!Number.isFinite(parsedNewBid) || parsedNewBid <= 0) {
       throw new Error("Invalid new bid. The bid must be a positive number.");
-    }
-
-    // --- Check spending ceiling (bidBudgetMax) if configured for this agent ---
-    try {
-      const agentConfig = await AgentConfig.findOne({ agentId: companyId });
-      const bidBudgetMax = agentConfig?.bidBudgetMax ?? null;
-
-      if (bidBudgetMax !== null && Number.isFinite(Number(bidBudgetMax))) {
-        // Calculate sum of bids currently assigned to this company/agent
-        const bids = await Profile.find({ 'companyBid.company': companyId }).select('companyBid.finalBid');
-        const currentSpent = bids.reduce((sum, p) => {
-          const v = p?.companyBid?.finalBid ? Number(p.companyBid.finalBid) : 0;
-          return sum + (Number.isFinite(v) ? v : 0);
-        }, 0);
-
-        if (currentSpent + parsedNewBid > Number(bidBudgetMax)) {
-          throw new Error(
-            `Maximum budget reached or exceeded: ceiling=${bidBudgetMax}, spent=${currentSpent}. New bid of ${parsedNewBid} would exceed it.`
-          );
-        }
-      }
-    } catch (e) {
-      // Do not block flow if check fails for non-critical reason
-      if (e.message && e.message.includes('Maximum budget')) {
-        throw e; // Raise explicit message to controller
-      }
-      console.warn('⚠️ Error checking bidBudgetMax:', e.message);
     }
 
     // Check if new bid is strictly greater than old (if present)
