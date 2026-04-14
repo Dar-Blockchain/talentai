@@ -19,8 +19,6 @@ import {
   resetPostPayment,
   selectPostPayment,
 } from "@/store/slices/postSlice";
-import { selectTokenBalance, fetchTokenBalance } from "@/store/slices/tokenSlice";
-import { openModal as openTokenPurchaseModal } from "@/store/slices/tokenPurchaseSlice";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
@@ -44,7 +42,6 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
   const error   = useSelector(selectCurrentJobError);
   const connectedUser = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  const tokenBalance = useSelector(selectTokenBalance);
   const { data: paymentData, loading: isProcessingPayment, error: paymentError } = useSelector(selectPostPayment);
 
   const [activeEdit,       setActiveEdit]       = useState<"post" | "recruitment" | null>(null);
@@ -78,12 +75,6 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
   };
 
   const handlePaymentConfirm = async () => {
-    if (!paymentData && Number(tokenBalance) < 1000) {
-      dispatch(openTokenPurchaseModal());
-      setPaymentModalOpen(false);
-      dispatch(resetPostPayment());
-      return;
-    }
     if (paymentSucceeded) {
       setPaymentModalOpen(false);
       dispatch(resetPostPayment());
@@ -92,7 +83,6 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
     try {
       await dispatch(processPostPayment({ postId: job?._id, agentId: job?.agentId })).unwrap();
       await dispatch(updatePostStatus({ postId: job?._id, status: "open" })).unwrap();
-      await dispatch(fetchTokenBalance()).unwrap();
     } catch {
       showToast({ message: "Payment failed. Please try again.", severity: "error" });
     }
