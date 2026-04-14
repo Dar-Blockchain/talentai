@@ -48,7 +48,7 @@ const profileSchema = new mongoose.Schema(
       enum: ["Candidate", "Company", "Employee"],
       required: true,
     },
-    user_image: { type: String, required: false, default: "client.png" },
+    user_image: { type: String, required: false },
     resume: { type: String, required: false },
  
     // ========== PERSONAL INFORMATION ==========
