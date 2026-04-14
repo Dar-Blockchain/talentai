@@ -1664,7 +1664,7 @@
       "post": {
         "tags": ["Hedera Tools"],
         "summary": "Create Evaluation Topic",
-        "description": "Creates a new evaluation topic for candidate pipeline using agent credentials and HCS-11 standard",
+        "description": "Creates a new evaluation topic for candidate pipeline using agent credentials",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -1726,7 +1726,7 @@
                     },
                     "topicMemo": {
                       "type": "string",
-                      "description": "HCS-11 compliant topic memo"
+                      "description": "Topic identifier for Hedera"
                     },
                     "message": {
                       "type": "string",
@@ -1757,7 +1757,7 @@
       "post": {
         "tags": ["Hedera Tools"],
         "summary": "Submit Evaluation Message",
-        "description": "Submit HCS-11 evaluation message to existing topic using topic ID and agent credentials",
+        "description": "Submit evaluation message to existing topic using topic ID and agent credentials",
         "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
@@ -1844,7 +1844,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "HCS-11 evaluation message submitted by Olga-Technical-Agent to topic 0.0.123456"
+                      "example": "Evaluation message submitted by Olga-Technical-Agent to topic 0.0.123456"
                     }
                   }
                 }
@@ -1869,8 +1869,8 @@
     "/hr-agents/initialize": {
       "post": {
         "tags": ["HR Agents"],
-        "summary": "Initialize HR Validation Agents with HCS-11 Profiles",
-        "description": "Creates all 6 HR validation agents with Hedera wallets, HCS-11 compliant profiles, and HCS-10 communication topics (one-time operation). Each agent gets inbound/outbound topics for messaging. Requires Admin role and JWT token.",
+        "summary": "Initialize HR Validation Agents with Profiles",
+        "description": "Creates all 6 HR validation agents with Hedera wallets and communication topics (one-time operation). Each agent gets inbound/outbound topics for messaging. Requires Admin role and JWT token.",
         "security": [{ "bearerAuth": [] }],
          "requestBody": {
           "required": true,

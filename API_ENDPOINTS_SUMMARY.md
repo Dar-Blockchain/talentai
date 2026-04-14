@@ -134,15 +134,9 @@ This complete documentation package includes everything you need to understand, 
 - **Get matches?** → QUICK_START_GUIDE.md + SWAGGER_API_DOCUMENTATION.md
 - **API endpoint?** → `/matching/...` in SWAGGER_API_DOCUMENTATION.md
 
-#### 🤖 HR Agents (HCS-11)
-- **Initialize agents?** → SWIFT_START_GUIDE.md (Hedera section)
-- **Agent messaging?** → SWAGGER_API_DOCUMENTATION.md (HR Agents)
-- **Agent model?** → API_ARCHITECTURE.md (HRAgent Model)
-
 #### ⛓️ Blockchain (Hedera)
 - **Create agent?** → QUICK_START_GUIDE.md
 - **Create token?** → QUICK_START_GUIDE.md + SWAGGER_API_DOCUMENTATION.md
-- **HCS-11 profile?** → SWAGGER_API_DOCUMENTATION.md
 - **All Hedera tools?** → SWIFT_START_GUIDE.md
 
 #### 🔔 Notifications
@@ -210,13 +204,6 @@ This complete documentation package includes everything you need to understand, 
 - Submit Message: `POST /hedera-tools/submit-message`
 - Get Balance: `GET /hedera-tools/balance`
 
-### HCS-11 (`/api/hcs11`)
-- Status: `GET /api/hcs11/status`
-- Validate: `POST /api/hcs11/validate`
-- Create: `POST /api/hcs11/create-profile`
-- Inscribe: `POST /api/hcs11/create-and-inscribe`
-- Company Agent: `POST /api/hcs11/create-company-agent`
-
 ### Notifications (`/notification-system`)
 - Create: `POST /notification-system`
 - Get All: `GET /notification-system`
@@ -253,7 +240,6 @@ This complete documentation package includes everything you need to understand, 
 - 📊 Interviews: 3 endpoints
 - 🤖 HR Agents: 12+ endpoints
 - ⛓️ Hedera: 10+ endpoints
-- 🆔 HCS-11: 5 endpoints
 - 🔔 Notifications: 5 endpoints
 - 📊 Campaigns: 6 endpoints
 - 🏢 Company: 6 endpoints
@@ -303,8 +289,7 @@ This complete documentation package includes everything you need to understand, 
 | Version | Date | Changes |
 |---------|------|---------|
 | 2.0.0 | March 2026 | Complete documentation suite |
-| 1.5.0 | Feb 2026 | Added HCS-11 support |
-| 1.0.0 | Jan 2026 | Initial release |
+| 1.4.0 | Jan 2026 | Added Hedera integration |
 
 ---
 

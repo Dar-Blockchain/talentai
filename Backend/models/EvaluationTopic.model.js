@@ -6,7 +6,7 @@ const evaluationTopicSchema = new mongoose.Schema({
   postId: { type: String, required: true },
   candidateName: { type: String, required: true },
   candidateId: { type: String },
-  topicMemo: { type: String, required: true }, // HCS-11 compliant memo
+  topicMemo: { type: String, required: true }, // Topic identifier for Hedera
   status: {
     type: String,
     enum: ["active", "completed", "cancelled"],

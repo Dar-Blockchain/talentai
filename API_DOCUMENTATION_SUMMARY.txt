@@ -7,17 +7,14 @@ PROJECT OVERVIEW
 ================================================================================
 
 The TalentAI Platform is a comprehensive talent recruitment, evaluation, and
-HR management system powered by Hedera blockchain and HCS-11 standards.
+HR management system.
 
 Key Features:
   • 50+ API Endpoints (fully documented)
   • JWT-based Authentication with OAuth support
   • AI-Powered Intelligent Candidate Matching
-  • Blockchain Integration (Hedera network)
-  • HR Agent System (HCS-10/HCS-11 standards)
   • Real-time Notifications
   • Internal Campaign Management
-  • Payment Processing (Stripe integration)
   • Skill Assessment & Testing
   • Advanced Search & Filtering
 
@@ -173,41 +170,6 @@ POST STEPS & PROGRESS (3 endpoints)
 
 EVALUATION (1 endpoint)
   POST /api/generate-questions     - Generate interview questions
-
-HR AGENTS - HCS-11 (12+ endpoints)
-  POST /hr-agents/initialize              - Init all agents
-  POST /hr-agents/initialize-single       - Init one agent
-  GET  /hr-agents                         - List agents
-  GET  /hr-agents/avatar/{name}           - Get by avatar
-  GET  /hr-agents/role/{role}             - Get by role
-  DELETE /hr-agents/all                   - Delete all agents
-  POST /hr-agents/submit-evaluation-message - Agent messaging
-  GET  /hr-agents/profile/{id}            - Get profile
-  GET  /hr-agents/hcs11-profile/{id}      - Get network profile
-  GET  /hr-agents/check-all               - Check config
-  POST /hr-agents/fix-memo/{id}           - Fix memo
-  GET  /hr-agents/diagnose/{id}           - Diagnose issues
-
-HEDERA TOOLS (10+ endpoints)
-  POST /api/create-agent                  - Create agent
-  POST /api/create-token                  - Create token
-  POST /api/create-talentai-token         - Create TALAI token
-  POST /api/mint-tokens                   - Mint tokens
-  POST /hedera-tools/create-token         - Create token v2
-  POST /hedera-tools/create-topic         - Create topic
-  POST /hedera-tools/submit-message       - Submit message
-  POST /hedera-tools/create-evaluation-topic - Create eval topic
-  POST /hedera-tools/submit-evaluation-message - Submit eval
-  GET  /hedera-tools/balance              - Get balance
-  GET  /hedera-tools/my-balance           - Get my balance
-  GET  /hedera-tools/tools                - List tools
-
-HCS-11 STANDARDS (5 endpoints)
-  GET  /api/hcs11/status                  - Service status
-  POST /api/hcs11/validate                - Validate profile
-  POST /api/hcs11/create-profile          - Create profile
-  POST /api/hcs11/create-and-inscribe     - Create & inscribe
-  POST /api/hcs11/create-company-agent    - Create company agent
 
 NOTIFICATIONS (5 endpoints)
   POST  /notification-system              - Create notification
@@ -370,7 +332,7 @@ COVERAGE:
   ✓ Job Postings                100%
   ✓ Matching Engine             100%
   ✓ Interviews/Assessment       100%
-  ✓ HR Agents (HCS-11)          100%
+
   ✓ Blockchain (Hedera)         100%
   ✓ Notifications               100%
   ✓ Campaigns                   100%
@@ -436,7 +398,6 @@ DATABASE:
 
 BLOCKCHAIN:
   Network:        Hedera Testnet (development)
-  Standards:      HCS-10 (messaging), HCS-11 (profiles)
   Tokens:         TALAI (TalentAI native token)
   Transaction:    Cost-optimized
 
