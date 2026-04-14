@@ -12,7 +12,6 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.700.0",
     "@hashgraph/sdk": "^2.63.0",
-    "@hashgraphonline/standards-sdk": "^0.1.165",
     "agenda": "^5.0.0",
     "axios": "^1.11.0",
     "body-parser": "^2.2.2",
@@ -32,8 +31,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^6.9.7",
     "openai": "^4.94.0",
-    "pdfkit": "^0.17.1",
-    "qrcode": "^1.5.4",
+    "pdfkit": "^0.18.0",
     "redis": "^5.1.0",
     "socket.io": "^4.8.1",
     "stripe": "^20.0.0",
