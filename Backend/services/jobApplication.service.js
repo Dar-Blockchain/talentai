@@ -268,7 +268,7 @@ module.exports.createJobApplication = async (applicationData) => {
     const populatedApplication = await JobApplication.findById(application._id)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -311,7 +311,7 @@ module.exports.getAllJobApplications = async (filters = {}, page = 1, limit = 10
     const applications = await JobApplication.find(query)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -345,7 +345,7 @@ module.exports.getJobApplicationById = async (applicationId) => {
     const application = await JobApplication.findById(applicationId)
       .populate({ path: "profile", populate: { path: "userId", select: "email" } })
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -382,7 +382,7 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
 
     const applications = await JobApplication.find(query)
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -584,7 +584,7 @@ module.exports.updateJobApplication = async (applicationId, updateData) => {
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -621,7 +621,7 @@ module.exports.withdrawJobApplication = async (applicationId) => {
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+      .populate("company", "-authHistory -notifications");
 
     if (!application) {
       const error = new Error("Application not found");
@@ -655,7 +655,7 @@ module.exports.archiveJobApplication = async (applicationId) => {
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+      .populate("company", "-authHistory -notifications");
 
     if (!application) {
       const error = new Error("Application not found");

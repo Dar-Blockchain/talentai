@@ -1,7 +1,6 @@
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const Post = require("../../models/Post.model");
-const hederaService = require("../hedera.service");
 // const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
@@ -172,39 +171,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     // Ensure user role is updated to Company
     await User.findByIdAndUpdate(userId, { role: "Company" });
 
-    // Create Hedera account if user doesn't have one
-    if (!user.hederaAccountId) {
-      console.log('🔧 Creating Hedera account for new company user...');
-      try {
-        const hederaAccount = await hederaService.createHederaAccount();
-
-        // Update user with Hedera account info
-        const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          {
-            hederaAccountId: hederaAccount.hederaAccountId,
-            hederaPrivateKey: hederaAccount.hederaPrivateKey,
-            hederaPublicKey: hederaAccount.hederaPublicKey
-          },
-          { new: true }
-        );
-
-        console.log(`✅ Hedera account created for company user: ${hederaAccount.hederaAccountId}`);
-        console.log('Updated user Hedera fields:', {
-          hederaAccountId: updatedUser.hederaAccountId,
-          hederaPublicKey: updatedUser.hederaPublicKey,
-          hasPrivateKey: !!updatedUser.hederaPrivateKey
-        });
-      } catch (hederaError) {
-        console.error('❌ Failed to create Hedera account during company profile creation:', hederaError);
-        console.error('Error details:', hederaError.message);
-        // Don't fail the entire profile creation if Hedera account creation fails
-        console.log('⚠️  Company profile will be created without Hedera account. Account can be created later during first payment.');
-      }
-    } else {
-      console.log('ℹ️  User already has Hedera account:', user.hederaAccountId);
-    }
-
     let profile = await Profile.findOne({ userId });
 
     // Extract companyDetails from profileData (can be nested or flat)
@@ -343,7 +309,7 @@ console.log("Old image path to delete:", oldImagePath);
 // services/profileService.js
 module.exports.getProfileByUserId = async (userId) => {
   try {
-    const user = await User.findById(userId).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    const user = await User.findById(userId);
 
     if (!user) {
       throw new Error("User not found");

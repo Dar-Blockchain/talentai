@@ -229,8 +229,8 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
       logAuthAttempt('Success')
     ]);
 
-    // Fetch updated user without Hedera sensitive fields
-    const updatedUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    // Fetch updated user
+    const updatedUser = await User.findById(user._id);
 
     // Fetch profile and companyMembership in parallel if exist
     const [profile, companyMembership] = await Promise.all([
@@ -432,7 +432,7 @@ module.exports.connectWithGmail = async (id_token) => {
     }
 
     // Get full user data including role
-    const fullUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    const fullUser = await User.findById(user._id);
     
     const token = generateToken(fullUser._id, null, fullUser.role);
 

@@ -502,7 +502,7 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
               .populate("steps.interviewDetails")
               .populate(
                 "idCandidate",
-                "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+                "-authHistory -notifications",
               );
 
             return {
