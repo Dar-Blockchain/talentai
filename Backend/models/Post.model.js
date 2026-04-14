@@ -150,25 +150,6 @@ const postSchema = new mongoose.Schema({
     },
   ],
 
-  // Payment information
-  paymentStatus: {
-    type: String,
-    enum: ['not_paid', 'pending', 'completed', 'failed'],
-    default: 'not_paid',
-    description: 'Payment status for agent creation'
-  },
-  pricePaid: {
-    type: Number,
-    description: 'Amount paid in TAI tokens'
-  },
-  paymentCompletedAt: {
-    type: Date,
-    description: 'Timestamp when payment was completed'
-  },
-  paymentError: {
-    type: String,
-    description: 'Error message if payment failed'
-  },
   MatchingConfig: { type: mongoose.Schema.Types.ObjectId, ref: 'MatchingConfig' },
 
   // Post creation type

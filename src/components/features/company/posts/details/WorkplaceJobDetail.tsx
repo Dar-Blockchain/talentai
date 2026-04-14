@@ -242,10 +242,10 @@ const WorkplaceJobDetail: React.FC<Props> = ({ jobId, onBack }) => {
         open={paymentModalOpen}
         onClose={handlePaymentClose}
         onConfirm={handlePaymentConfirm}
-        tokenBalance={tokenBalance}
-        isProcessing={isProcessingPayment}
-        succeeded={paymentSucceeded}
-        error={paymentError}
+        tokenBalance={0}
+        isProcessing={false}
+        succeeded={false}
+        error={null}
       />
     </Box>
   );
