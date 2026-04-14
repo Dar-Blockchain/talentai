@@ -1,14 +1,3 @@
-/**
- * Routes Configuration
- * Centralized route registration
- */
-
-const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("../swagger.json");
-const campaignSwagger = require("../docs/swagger-campaigns.json");
-const departmentSwagger = require("../docs/swagger-departments.json");
-const jobApplicationSwagger = require("../routes/swagger/jobApplication.swagger");
-
 // Import all route modules
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
@@ -25,8 +14,6 @@ const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment
 const notificationSystemRouter = require("../routes/notificationSystem.routes");
 const postStepsRouter = require("../routes/postSteps.routes");
 const candidatePostStepProgressRouter = require("../routes/candidatePostStepProgress.routes");
-const hederaToolsRouter = require("../routes/hederaTools.routes");
-const hcs11Router = require("../routes/hcs11.routes");
 const taskRouter = require("../routes/task.routes");
 const stripRouter = require("../routes/Strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
@@ -52,18 +39,7 @@ const apiKeyRouter = require('../routes/apiKey.routes');
  * @param {Express} app - Express application instance
  */
 function registerRoutes(app) {
-  // API Documentation
-  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   
-  // Campaign API Documentation (Swagger)
-  app.use("/api/docs/campaigns", swaggerUi.serve, swaggerUi.setup(campaignSwagger));
-  
-  // Department API Documentation (Swagger)
-  app.use("/api/docs/departments", swaggerUi.serve, swaggerUi.setup(departmentSwagger));
-
-  // Job Applications API Documentation (Swagger)
-  app.use("/api/docs/job-applications", swaggerUi.serve, swaggerUi.setup(jobApplicationSwagger));
-
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
@@ -103,10 +79,6 @@ function registerRoutes(app) {
   // Candidate Management
   app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
   app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
-
-  // Blockchain & Web3
-  app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools
-  app.use("/api/hcs11", hcs11Router); //✅ HCS11 Integration -> api/hcs11
 
   // Utility & Management
   app.use("/todo", todoRouter); //✅ To-Do Management -> todos

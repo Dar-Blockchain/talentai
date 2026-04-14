@@ -197,13 +197,6 @@ This complete documentation package includes everything you need to understand, 
 - Messaging: `POST /hr-agents/submit-evaluation-message`
 - Profile: `GET /hr-agents/profile/{id}`
 
-### Hedera (`/hedera-tools`, `/api`)
-- Create Agent: `POST /api/create-agent`
-- Create Token: `POST /hedera-tools/create-token`
-- Create Topic: `POST /hedera-tools/create-topic`
-- Submit Message: `POST /hedera-tools/submit-message`
-- Get Balance: `GET /hedera-tools/balance`
-
 ### Notifications (`/notification-system`)
 - Create: `POST /notification-system`
 - Get All: `GET /notification-system`

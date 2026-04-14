@@ -332,8 +332,6 @@ COVERAGE:
   ✓ Job Postings                100%
   ✓ Matching Engine             100%
   ✓ Interviews/Assessment       100%
-
-  ✓ Blockchain (Hedera)         100%
   ✓ Notifications               100%
   ✓ Campaigns                   100%
   ✓ Payments                    100%
@@ -358,7 +356,6 @@ EXTERNAL TOOLS:
   🔗 Postman:      https://www.postman.com
   🔗 Insomnia:     https://insomnia.rest
   🔗 MongoDB:      https://www.mongodb.com
-  🔗 Hedera:       https://hedera.com
   🔗 Stripe:       https://stripe.com
 
 ================================================================================
@@ -395,11 +392,6 @@ DATABASE:
   Type:           MongoDB
   Collections:    users, profiles, posts, assessments, agents, etc.
   Indexing:       Optimized for common queries
-
-BLOCKCHAIN:
-  Network:        Hedera Testnet (development)
-  Tokens:         TALAI (TalentAI native token)
-  Transaction:    Cost-optimized
 
 ================================================================================
 GETTING STARTED CHECKLIST
@@ -439,7 +431,6 @@ NOTES
 ✓ All documentation is current as of March 2026
 ✓ API is production-ready with security features enabled
 ✓ Database requires MongoDB (local or cloud)
-✓ Hedera testnet credentials optional for blockchain features
 ✓ Stripe integration requires API keys (optional)
 ✓ All timestamps in UTC (ISO 8601 format)
 ✓ JWT tokens valid for 24 hours
