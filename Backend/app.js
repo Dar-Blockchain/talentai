@@ -34,8 +34,8 @@ const { scheduleReminders } = require("./cron/reminderScheduler.cron");
 
 // Auto-load CRON jobs
 // ⛔ DISABLED: All cron jobs disabled
-//const { initializeCronJobs } = require("./cron");
-//initializeCronJobs();
+const { initializeCronJobs } = require("./cron");
+initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module

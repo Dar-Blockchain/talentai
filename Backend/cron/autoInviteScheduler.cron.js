@@ -30,13 +30,6 @@ const calculateHoursSinceApplication = (appliedAt) => {
   return hoursElapsed;
 };
 
-const calculateHoursSinceLastInvite = (lastSentAt) => {
-  if (!lastSentAt) return null;
-  const now = new Date();
-  const hoursElapsed = (now - new Date(lastSentAt)) / (1000 * 60 * 60);
-  return hoursElapsed;
-};
-
 const sendAutoInvitation = async (application) => {
   try {
     const MSG = AUTO_INVITE_CONFIG.MESSAGES;
@@ -93,20 +86,16 @@ const sendAutoInvitation = async (application) => {
     console.log(`${MSG.EMAIL_SUCCESS.replace('%email%', candidateEmail)}`);
 
     // Update application with invitation tracking
-    const invitationCount = (application.autoInvitationCount || 0) + 1;
-    
     await JobApplication.findByIdAndUpdate(
       application._id,
       {
-        autoInvitationSent: true,
-        lastAutoInvitationSentAt: new Date(),
-        autoInvitationCount: invitationCount,
+        firstInvitationSentAt: new Date(),
         updatedAt: new Date()
       },
       { new: true }
     );
 
-    console.log(`${MSG.APP_UPDATED.replace('%count%', invitationCount)}`);
+    console.log(`${MSG.APP_UPDATED.replace('%count%', '1')}`);
     return true;
 
   } catch (error) {
@@ -132,33 +121,21 @@ const runAutoInviteJob = async () => {
 
     console.log(`${MSG.WITHIN_WINDOW}`);
 
-    // Find applications that:
-    // 1. Have status "applied" or "interview_scheduled" (NOT completed)
-    // 2. Were applied 5+ minutes ago
-    // 3. Haven't had an invitation sent OR last sent 5+ minutes ago
-    const twentyFourHoursAgo = new Date(Date.now() - CONFIG.FIRST_INVITE_HOURS * 60 * 1000);
-
-    // Find two groups of applications:
-    // Group 1: First-time invites (24+ hours since application, never invited)
+    // Find applications that need first-time invitations
+    // (Applied 5+ minutes ago and never invited)
     const firstTimeInvites = await JobApplication.find({
-      appliedAt: { $lte: twentyFourHoursAgo },
-      status: { $in: CONFIG.VALID_STATUSES },
-      autoInvitationSent: { $ne: true }
-    }).populate('profile post company').limit(CONFIG.BATCH_LIMIT);
+      appliedAt: { $lte: new Date(Date.now() - AUTO_INVITE_CONFIG.FIRST_INVITE_HOURS * 60 * 1000) },
+      status: { $in: AUTO_INVITE_CONFIG.VALID_STATUSES },
+      firstInvitationSentAt: null,
+      isArchived: false,
+      isWithdrawn: false
+    }).populate('profile post company').limit(AUTO_INVITE_CONFIG.BATCH_LIMIT);
 
-    // Group 2: Recurring invites (24+ hours since last invite, still pending)
-    const recurringInvites = await JobApplication.find({
-      lastAutoInvitationSentAt: { $lte: twentyFourHoursAgo },
-      status: { $in: CONFIG.VALID_STATUSES },
-      autoInvitationSent: true,
-      autoInvitationCount: { $gte: 1 }
-    }).populate('profile post company').limit(CONFIG.BATCH_LIMIT);
+    const pendingApplications = firstTimeInvites;
 
-    const pendingApplications = [...firstTimeInvites, ...recurringInvites];
-
-    console.log(`${MSG.FOUND_APPLICATIONS.replace('%firstTime%', firstTimeInvites.length).replace('%recurring%', recurringInvites.length)}`);
+    console.log(`${MSG.FOUND_APPLICATIONS.replace('%firstTime%', firstTimeInvites.length).replace('%recurring%', '0')}`);
     console.log(`${MSG.TOTAL_ELIGIBLE.replace('%total%', pendingApplications.length)}`);
-
+    
     if (pendingApplications.length === 0) {
       console.log(`${MSG.NO_PENDING}`);
       return;
@@ -169,14 +146,10 @@ const runAutoInviteJob = async () => {
 
     for (const application of pendingApplications) {
       const hoursElapsed = calculateHoursSinceApplication(application.appliedAt);
-      const hoursSinceLastInvite = calculateHoursSinceLastInvite(application.lastAutoInvitationSentAt);
       
       console.log(`\n📋 Application ${application._id}`);
       console.log(`   ⏱️  Hours since application: ${hoursElapsed.toFixed(2)}`);
-      if (hoursSinceLastInvite) {
-        console.log(`   🔄 Hours since last invite: ${hoursSinceLastInvite.toFixed(2)}`);
-      }
-      console.log(`   📧 Invitation #${application.autoInvitationCount + 1}`);
+      console.log(`   📧 Invitation #1`);
       console.log(`   Status: ${application.status}`);
 
       const sent = await sendAutoInvitation(application);

@@ -83,24 +83,12 @@ const jobApplicationSchema = new mongoose.Schema(
       description: "Score from interview assessment"
     },
 
-    // ========== AUTO INTERVIEW INVITATION ==========
-    autoInvitationSent: {
-      type: Boolean,
-      default: false,
-      description: "Whether automatic interview invitation was sent"
-    },
-    lastAutoInvitationSentAt: {
+    // ========== REMINDER TRACKING ==========
+    firstInvitationSentAt: {
       type: Date,
       default: null,
-      description: "Timestamp of last automatic interview invitation sent"
+      description: "Timestamp when automatic interview invitation was sent"
     },
-    autoInvitationCount: {
-      type: Number,
-      default: 0,
-      description: "Number of times automatic interview invitation was sent"
-    },
-
-    // ========== REMINDER TRACKING ==========
     firstReminderSentAt: {
       type: Date,
       default: null,
