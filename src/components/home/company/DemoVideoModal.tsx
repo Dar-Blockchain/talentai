@@ -1,7 +1,6 @@
 import { Box, Dialog, DialogContent, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-const DEMO_VIDEO_SRC = "https://drive.google.com/file/d/1oWx6YFJ3ezx3guiYB8Rwj1T12964zB_n/preview";
+import { DEMO_VIDEO_SRC } from "@/constants";
 
 interface DemoVideoModalProps {
   open: boolean;

@@ -1,5 +1,5 @@
 const jobApplicationService = require("../services/jobApplication.service");
-const { sendInterviewInvitation } = require("../utils/email-service");
+const { sendInterviewInvitation, sendCandidateEmail } = require("../utils/email-service");
 const profileService = require("../services/ProfileService/profile.service");
 const postService = require("../services/PosteServices/post.service");
 
@@ -573,7 +573,10 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     const jobTitle = post.jobDetails?.title || "Position";
-    const companyName = post.user?.username || "Our Company";
+
+    // Prefer the company's registered name over the login username
+    const companyProfile = await Profile.findOne({ userId: post.user._id }).select("companyDetails").lean();
+    const companyName = companyProfile?.companyDetails?.name || post.user?.username || "Our Company";
 
     console.log(`✅ Job post found`);
     console.log(`   - Title: ${jobTitle}`);
@@ -600,17 +603,6 @@ module.exports.inviteToInterview = async (req, res) => {
     }
 
     console.log(`✅ Interview invitation email sent successfully`);
-
-    // Update application status to "interview_scheduled"
-    console.log(`📝 Updating application status to interview_scheduled`);
-    const updatedApplication = await jobApplicationService.updateJobApplication(
-      applicationId,
-      { status: "interview_scheduled", updatedAt: new Date() }
-    );
-    console.log(`✅ Application status updated`);
-    console.log(`   Status: ${updatedApplication.status}`);
-    console.log(`   Auto-invites will STOP once status changes to interview_completed`);
-
     console.log("=".repeat(80) + "\n");
 
     res.status(200).json({
@@ -658,5 +650,167 @@ module.exports.triggerAutoInvite = async (req, res) => {
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
     handleError(res, error, 400);
+  }
+};
+
+// ========== GET - Flat summary list for a post ==========
+module.exports.getApplicationsSummaryByPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const {
+      status,
+      search,
+      matchScoreMin,
+      matchScoreMax,
+      interviewScoreMin,
+      interviewScoreMax,
+      dateFrom,
+      dateTo,
+      sort,
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const filters = {};
+    if (status)   filters.status   = status;
+    if (search)   filters.search   = search;
+    if (sort)     filters.sort     = sort;
+    if (dateFrom) filters.dateFrom = dateFrom;
+    if (dateTo)   filters.dateTo   = dateTo;
+    if (matchScoreMin !== undefined)     filters.matchScoreMin     = parseFloat(matchScoreMin);
+    if (matchScoreMax !== undefined)     filters.matchScoreMax     = parseFloat(matchScoreMax);
+    if (interviewScoreMin !== undefined) filters.interviewScoreMin = parseFloat(interviewScoreMin);
+    if (interviewScoreMax !== undefined) filters.interviewScoreMax = parseFloat(interviewScoreMax);
+
+    const result = await jobApplicationService.getApplicationsSummaryByPost(
+      postId,
+      filters,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Applications summary retrieved successfully",
+      data: result.data,
+      pagination: {
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        totalCount: result.totalCount,
+        limit: result.limit,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage,
+      },
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== CONTACT CANDIDATE ==========
+module.exports.contactCandidate = async (req, res) => {
+  try {
+    const { candidateEmail, candidateName, subject, message } = req.body;
+    if (!candidateEmail || !subject || !message) {
+      return res.status(400).json({ success: false, error: "candidateEmail, subject, and message are required." });
+    }
+
+    const Profile = require("../models/Profile.model");
+    const companyProfile = await Profile.findOne({ userId: req.user._id }).select("companyDetails firstName lastName");
+    const companyName =
+      companyProfile?.companyDetails?.name ||
+      `${companyProfile?.firstName || ""} ${companyProfile?.lastName || ""}`.trim() ||
+      "A Company";
+
+    const sent = await sendCandidateEmail(candidateEmail, candidateName || "Candidate", companyName, subject, message);
+    if (!sent) {
+      return res.status(500).json({ success: false, error: "Failed to send email. Please try again." });
+    }
+
+    res.status(200).json({ success: true, message: "Email sent successfully." });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== GET - Flat summary list for all company applications ==========
+module.exports.getApplicationsSummaryByCompany = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const {
+      status, search, postId,
+      matchScoreMin, matchScoreMax,
+      interviewScoreMin, interviewScoreMax,
+      dateFrom, dateTo, sort,
+      page = 1, limit = 20,
+    } = req.query;
+
+    const filters = {};
+    if (status)   filters.status   = status;
+    if (search)   filters.search   = search;
+    if (postId)   filters.postId   = postId;
+    if (sort)     filters.sort     = sort;
+    if (dateFrom) filters.dateFrom = dateFrom;
+    if (dateTo)   filters.dateTo   = dateTo;
+    if (matchScoreMin !== undefined)     filters.matchScoreMin     = parseFloat(matchScoreMin);
+    if (matchScoreMax !== undefined)     filters.matchScoreMax     = parseFloat(matchScoreMax);
+    if (interviewScoreMin !== undefined) filters.interviewScoreMin = parseFloat(interviewScoreMin);
+    if (interviewScoreMax !== undefined) filters.interviewScoreMax = parseFloat(interviewScoreMax);
+
+    const result = await jobApplicationService.getApplicationsSummaryByCompany(
+      companyId, filters, parseInt(page), parseInt(limit)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Company applications summary retrieved successfully",
+      data: result.data,
+      pagination: {
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        totalCount: result.totalCount,
+        limit: result.limit,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage,
+      },
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+module.exports.downloadCVsByCompany = async (req, res) => {
+  try {
+    const archiver = require("archiver");
+    const companyId = req.user._id;
+    const { status, search, postId, dateFrom, dateTo } = req.query;
+
+    const filters = {};
+    if (status)   filters.status   = status;
+    if (search)   filters.search   = search;
+    if (postId)   filters.postId   = postId;
+    if (dateFrom) filters.dateFrom = dateFrom;
+    if (dateTo)   filters.dateTo   = dateTo;
+
+    const files = await jobApplicationService.downloadCVsByCompany(companyId, filters);
+
+    if (files.length === 0) {
+      return res.status(404).json({ success: false, message: "No CVs found for the selected filters." });
+    }
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="candidates_cvs.zip"`);
+
+    const archive = archiver("zip", { zlib: { level: 6 } });
+    archive.on("error", (err) => { throw err; });
+    archive.pipe(res);
+
+    for (const { filePath, archiveName } of files) {
+      archive.file(filePath, { name: archiveName });
+    }
+
+    await archive.finalize();
+  } catch (error) {
+    handleError(res, error);
   }
 };

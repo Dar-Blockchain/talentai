@@ -580,3 +580,25 @@ module.exports.getInterviewMetricsForCompany = async (req, res) => {
     });
   }
 };
+
+// ========== READ - Get assessment by post + candidate user ==========
+module.exports.getAssessmentByPostAndCandidate = async (req, res) => {
+  try {
+    const { postId, candidateUserId } = req.params;
+    if (!postId || !candidateUserId) {
+      return res.status(400).json({ success: false, message: "postId and candidateUserId are required." });
+    }
+    const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
+    const assessment = await PostInterviewAssessment.findOne({ post: postId, candidate: candidateUserId })
+      .populate("candidate", "firstName lastName email username profile")
+      .populate("post", "jobDetails skillAnalysis")
+      .lean();
+    if (!assessment) {
+      return res.status(404).json({ success: false, message: "Assessment not found." });
+    }
+    res.status(200).json({ success: true, data: assessment });
+  } catch (error) {
+    console.error("Error getting assessment by post+candidate:", error);
+    res.status(error.status || 500).json({ success: false, message: error.message || "Error retrieving assessment." });
+  }
+};

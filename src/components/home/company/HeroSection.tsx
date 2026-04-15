@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Box, Button, Typography, Stack, Dialog, DialogContent, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Box, Button, Typography, Stack } from "@mui/material";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import CaptchaModal from "./CaptchaModal";
+import DemoVideoModal from "./DemoVideoModal";
 
 const ACCENT = "#0CDA8B";
 const CALENDLY = "https://calendly.com/talent__ai/30min";
-const DEMO_VIDEO_SRC = "https://drive.google.com/file/d/1oWx6YFJ3ezx3guiYB8Rwj1T12964zB_n/preview";
 
 const STATS = [
   { value: "90%", label: "Less Screening Time", sub: "AI filters candidates automatically" },
@@ -190,34 +189,7 @@ const CompanyHeroSection = () => {
       </Box>
 
       <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
-
-      {/* ── Demo video modal ── */}
-      <Dialog
-        open={videoOpen}
-        onClose={() => setVideoOpen(false)}
-        maxWidth="md"
-        fullWidth
-        slotProps={{ paper: { sx: { borderRadius: "12px", overflow: "hidden", bgcolor: "#000" } } }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1, bgcolor: "#111827" }}>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "14px", color: "#fff" }}>
-            TalentAI — Product Demo
-          </Typography>
-          <IconButton onClick={() => setVideoOpen(false)} size="small" sx={{ color: "#9CA3AF", "&:hover": { color: "#fff" } }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-        <DialogContent sx={{ p: 0, aspectRatio: "16/9", bgcolor: "#000" }}>
-          <iframe
-            src={DEMO_VIDEO_SRC}
-            width="100%"
-            height="100%"
-            allow="autoplay"
-            style={{ border: "none", display: "block", aspectRatio: "16/9" }}
-            allowFullScreen
-          />
-        </DialogContent>
-      </Dialog>
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </Box>
   );
 };

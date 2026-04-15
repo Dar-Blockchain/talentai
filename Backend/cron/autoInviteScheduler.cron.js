@@ -66,7 +66,8 @@ const sendAutoInvitation = async (application) => {
     const candidateEmail = candidateProfile.userId.email;
     const candidateName = `${candidateProfile.firstName} ${candidateProfile.lastName}`;
     const jobTitle = post.jobDetails?.title || 'Position';
-    const companyName = company.username || company.email || 'Our Company';
+    const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
+    const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
 
     console.log(`   📧 To: ${candidateEmail}`);
     console.log(`   👤 Candidate: ${candidateName}`);
@@ -132,7 +133,7 @@ const runAutoInviteJob = async () => {
     console.log(`${MSG.WITHIN_WINDOW}`);
 
     // Find applications that:
-    // 1. Have status "applied" or "interview_scheduled" (NOT completed)
+    // 1. Have status "visited" (NOT interview_completed)
     // 2. Were applied 24+ hours ago
     // 3. Haven't had an invitation sent OR last sent 24+ hours ago
     const twentyFourHoursAgo = new Date(Date.now() - CONFIG.FIRST_INVITE_HOURS * 60 * 60 * 1000);
