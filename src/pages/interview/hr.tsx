@@ -87,6 +87,14 @@ const IntelligentInterviewTest = () => {
 
     const postId = router.query.jobId as string;
     const token = Cookies.get('api_token');
+    const ref = router.query.ref as string | undefined;
+    const isPublicLink = ref === 'link';
+
+    // No token + public link → redirect to job landing page
+    if (!token && isPublicLink) {
+      router.replace(`/jobs/${postId}`);
+      return;
+    }
 
     if (authUser && token) {
       // Auto-create job application (non-blocking)

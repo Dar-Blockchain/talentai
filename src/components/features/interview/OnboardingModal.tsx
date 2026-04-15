@@ -156,7 +156,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobId, jobTitle
       fd.append('roleType', 'Candidate');
       if (cvFile) fd.append('resume', cvFile);
       await dispatch(registerUser(fd)).unwrap();
-      await dispatch(signinUser(email.trim().toLowerCase())).unwrap();
       startTimer();
       setStep('otp');
     } catch (err: any) {
