@@ -2,11 +2,7 @@ const Post = require("../../models/Post.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
-const aiService = require("../ai.Service");
 const nodemailer = require('nodemailer');
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
 
 // Validate post data
 const validatePostData = (postData) => {
@@ -49,22 +45,6 @@ module.exports.createPost = async (postData, token) => {
     await user.save();
     await post.save();
     console.log(post);
-    
-    // Create and send technical test automatically
-    try {
-      if (token && post.skillAnalysis?.requiredSkills?.length > 0) {
-        const testResult = await module.exports.createAndSendTechnicalTest(
-          post._id, 
-          token, 
-          user.email, 
-          user.username
-        );
-        console.log('Technical test created and sent:', testResult.message);
-      }
-    } catch (testError) {
-      console.error('Error creating technical test:', testError.message);
-      // Don't fail the post creation if test creation fails
-    }
     
     //await schedulePostMatchingAgenda(post._id.toString(), {
     //  requiredSkills: post.skillAnalysis.requiredSkills
@@ -902,423 +882,49 @@ module.exports.getPostsByUserTopSkill = async (userId, page = 1, limit = 10) => 
   };
 };
 
+/**
+ * Get post metrics (count by status) for a user
+ */
+module.exports.getPostMetrics = async (userId) => {
+  try {
+    const now = new Date();
 
+    // Get all posts for the user including archived flag
+    const allPosts = await Post.find({ user: userId }).select(
+      'status expirationDate archived'
+    );
 
-
-// Create technical test using AI prompts based on post technologies
-// Generate coding project content based on experience level
-module.exports.generateCodingProject = async (technologies, jobTitle, experienceLevel, jobDescription = "", companyName = "Our Company", industry = "Technology") => {
-
-  // Create technology-specific projects based on the actual technologies from the post
-  const createTechnologySpecificProject = (technologies, level, jobTitle, companyName, industry) => {
-    const primaryTech = technologies[0]?.toLowerCase() || 'javascript';
-    const secondaryTechs = technologies.slice(1);
-    
-    // Base project structure that can be customized per technology
-    const baseProject = {
-      title: `${jobTitle} Technical Challenge`,
-      description: `Build a comprehensive application that demonstrates your skills in ${technologies.join(', ')}. This project will evaluate your practical development abilities and how you approach real-world challenges in the ${industry} industry.`,
-      timeLimit: level === 'Entry' ? '3-4 hours' : level === 'Intermediate' ? '5-7 hours' : '8-12 hours',
-      evaluation: [
-        'Code Quality & Architecture (30%): Clean, maintainable code with proper structure',
-        'Functionality & Completeness (25%): All requirements implemented and working',
-        'Testing & Documentation (20%): Comprehensive tests and clear documentation',
-        'Performance & Optimization (15%): Efficient algorithms and optimized code',
-        'Best Practices & Standards (10%): Following industry conventions and patterns'
-      ]
+    // Initialize counters
+    const metrics = {
+      total: 0,
+      active: 0,
+      draft: 0,
+      closed: 0,
+      archived: 0,
     };
 
-    // Technology-specific requirements and deliverables
-    if (primaryTech.includes('react') || primaryTech.includes('vue') || primaryTech.includes('angular')) {
-      return {
-        ...baseProject,
-        title: `Modern Frontend Application - ${jobTitle}`,
-        requirements: [
-          'Create a responsive single-page application with modern UI/UX',
-          'Implement component-based architecture with reusable components',
-          'Add state management for complex data handling',
-          'Integrate with external APIs and handle loading/error states',
-          'Implement routing and navigation between different views',
-          'Add form validation and user input handling',
-          'Create responsive design that works on all device sizes',
-          'Implement data visualization or interactive features',
-          'Add unit tests for components and utilities',
-          'Optimize performance with lazy loading and code splitting'
-        ],
-        deliverables: [
-          'Complete frontend application with modern framework',
-          'Responsive UI with excellent user experience',
-          'Component library with reusable elements',
-          'Comprehensive testing suite with good coverage',
-          'Performance optimization and accessibility compliance',
-          'GitHub repository with detailed README',
-          'Live demo deployed on cloud platform',
-          'Code documentation and setup instructions'
-        ]
-      };
-    } else if (primaryTech.includes('node') || primaryTech.includes('express') || primaryTech.includes('javascript')) {
-      return {
-        ...baseProject,
-        title: `Backend API Development - ${jobTitle}`,
-        requirements: [
-          'Design and implement RESTful API with proper endpoints',
-          'Set up database integration (MongoDB, PostgreSQL, or MySQL)',
-          'Implement user authentication and authorization (JWT)',
-          'Add input validation and error handling middleware',
-          'Create CRUD operations for main entities',
-          'Implement data filtering, sorting, and pagination',
-          'Add API documentation with Swagger/OpenAPI',
-          'Write comprehensive unit and integration tests',
-          'Implement logging and monitoring capabilities',
-          'Add security measures and rate limiting'
-        ],
-        deliverables: [
-          'Complete working API with all endpoints',
-          'Database schema and migration scripts',
-          'Comprehensive API documentation',
-          'Postman collection or API testing suite',
-          'Unit and integration tests with good coverage',
-          'Docker containerization and deployment scripts',
-          'Security audit and performance testing results',
-          'GitHub repository with detailed setup guide'
-        ]
-      };
-    } else if (primaryTech.includes('python') || primaryTech.includes('django') || primaryTech.includes('flask')) {
-      return {
-        ...baseProject,
-        title: `Python Web Application - ${jobTitle}`,
-        requirements: [
-          'Build a web application using Python framework (Django/Flask)',
-          'Implement database models and migrations',
-          'Create API endpoints with proper serialization',
-          'Add user authentication and permissions system',
-          'Implement data validation and form handling',
-          'Add background tasks and job queues',
-          'Create admin interface for data management',
-          'Write comprehensive tests using pytest',
-          'Add API documentation and versioning',
-          'Implement caching and performance optimization'
-        ],
-        deliverables: [
-          'Complete Python web application',
-          'Database models and migration scripts',
-          'API documentation with examples',
-          'Comprehensive test suite with pytest',
-          'Docker configuration and deployment setup',
-          'Performance testing and optimization report',
-          'GitHub repository with detailed README',
-          'Live demo with admin access'
-        ]
-      };
-    } else if (primaryTech.includes('java') || primaryTech.includes('spring')) {
-      return {
-        ...baseProject,
-        title: `Java Enterprise Application - ${jobTitle}`,
-        requirements: [
-          'Build enterprise application using Spring Boot',
-          'Implement microservices architecture with proper communication',
-          'Add database integration with JPA/Hibernate',
-          'Implement security with Spring Security',
-          'Create RESTful APIs with proper error handling',
-          'Add configuration management and profiles',
-          'Implement logging and monitoring with Actuator',
-          'Write unit tests with JUnit and Mockito',
-          'Add API documentation with Swagger',
-          'Implement caching and performance optimization'
-        ],
-        deliverables: [
-          'Complete Spring Boot application',
-          'Microservices architecture with proper separation',
-          'Database integration and migration scripts',
-          'Comprehensive test suite with good coverage',
-          'API documentation and Postman collection',
-          'Docker containerization and deployment',
-          'Performance testing and monitoring setup',
-          'GitHub repository with detailed documentation'
-        ]
-      };
-    } else {
-      // Generic full-stack project for other technologies
-      return {
-        ...baseProject,
-        title: `Full-Stack Application - ${jobTitle}`,
-        requirements: [
-          'Build a complete full-stack application',
-          'Implement both frontend and backend components',
-          'Add database integration and data persistence',
-          'Implement user authentication and authorization',
-          'Create responsive user interface',
-          'Add API endpoints for data communication',
-          'Implement error handling and validation',
-          'Write tests for both frontend and backend',
-          'Add deployment configuration',
-          'Implement security best practices'
-        ],
-        deliverables: [
-          'Complete full-stack application',
-          'Frontend with modern UI/UX',
-          'Backend API with proper endpoints',
-          'Database schema and data models',
-          'Comprehensive testing suite',
-          'Deployment configuration and scripts',
-          'Documentation and setup instructions',
-          'Live demo with all features working'
-        ]
-      };
-    }
-  };
+    // Count posts by status — archived posts excluded from total
+    allPosts.forEach((post) => {
+      if (post.archived) {
+        metrics.archived++;
+        return;
+      }
+      metrics.total++;
+      const isExpired = post.expirationDate && new Date(post.expirationDate) < now;
+      const s = post.status?.toLowerCase();
 
-  // Select project based on experience level and actual technologies
-  const level = experienceLevel || 'Intermediate';
-  const project = createTechnologySpecificProject(technologies, level, jobTitle, companyName, industry);
-
-  // Create contextual description based on job and company
-  const contextualDescription = jobDescription 
-    ? `As part of the ${jobTitle} role at ${companyName}, you'll be working on a project that aligns with our ${industry} industry focus. ${project.description} This project will help us evaluate your practical skills and how you approach real-world development challenges.`
-    : project.description;
-
-  // Add additional context based on industry
-  const industryContext = {
-    'Technology': 'This project will test your ability to work with modern web technologies and frameworks.',
-    'Finance': 'This project will evaluate your skills in building secure, scalable financial applications.',
-    'Healthcare': 'This project will assess your ability to handle sensitive data and compliance requirements.',
-    'E-commerce': 'This project will test your skills in building high-performance, user-friendly shopping experiences.',
-    'Education': 'This project will evaluate your ability to create engaging, accessible learning platforms.',
-    'Manufacturing': 'This project will assess your skills in building industrial-grade, reliable applications.',
-    'Media': 'This project will test your ability to handle large-scale content and real-time interactions.',
-    'Government': 'This project will evaluate your skills in building secure, compliant government applications.'
-  };
-
-  const finalDescription = industryContext[industry] 
-    ? `${contextualDescription} ${industryContext[industry]}`
-    : contextualDescription;
-
-  return {
-    title: project.title,
-    description: finalDescription,
-    requirements: project.requirements,
-    deliverables: project.deliverables,
-    timeLimit: project.timeLimit,
-    evaluation: project.evaluation,
-    experienceLevel: level,
-    technologies: technologies,
-    jobTitle: jobTitle,
-    companyName: companyName,
-    industry: industry,
-    difficulty: level,
-    estimatedComplexity: project.requirements.length > 8 ? 'High' : project.requirements.length > 5 ? 'Medium' : 'Low'
-  };
-};
-
-module.exports.createTechnicalTest = async (postId, token) => {
-  try {
-    const post = await Post.findById(postId).populate("user", "username email");
-    if (!post) {
-      throw new Error("Post not found");
-    }
-
-    // Extract technologies and experience level from the post
-    const technologies = post.skillAnalysis?.requiredSkills?.map(skill => skill.name) || ['JavaScript', 'React', 'Node.js'];
-    const jobTitle = post.jobDetails?.title || "Software Developer";
-    const experienceLevel = post.jobDetails?.experienceLevel || "Intermediate";
-    const jobDescription = post.jobDetails?.description || "";
-    const companyName = post.companyName || post.jobDetails?.companyName || "Our Company";
-    const industry = post.industry || post.jobDetails?.industry || "Technology";
-
-    // Generate coding project content based on experience level and post details
-    const projectData = await module.exports.generateCodingProject(technologies, jobTitle, experienceLevel, jobDescription, companyName, industry);
-    
-    return {
-      postId,
-      testContent: projectData,
-      technologies,
-      jobTitle,
-      experienceLevel,
-      companyName,
-      industry,
-      createdAt: new Date()
-    };
-  } catch (error) {
-    throw new Error(`Error creating technical test: ${error.message}`);
-  }
-};
-
-// Generate PDF from technical test content
-module.exports.generateTestPDF = async (testData) => {
-  try {
-    const doc = new PDFDocument({
-      size: 'A4',
-      margins: {
-        top: 30,
-        bottom: 30,
-        left: 30,
-        right: 30
+      if (s === 'draft') {
+        metrics.draft++;
+      } else if (s === 'closed' || isExpired) {
+        metrics.closed++;
+      } else if (s === 'open') {
+        metrics.active++;
       }
     });
-    
-    const fileName = `coding-project-${testData.postId}-${Date.now()}.pdf`;
-    const filePath = path.join(__dirname, '../uploads', fileName);
-    
-    // Ensure uploads directory exists
-    const uploadsDir = path.dirname(filePath);
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
 
-    // Create write stream
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
-
-    // Simple helper functions
-    const addHeader = (text, fontSize = 16) => {
-      doc.fillColor('#1A365D')
-         .fontSize(fontSize)
-         .font('Helvetica-Bold')
-         .text(text);
-      doc.fillColor('black')
-         .font('Helvetica');
-      doc.moveDown(0.8);
-    };
-
-    const addList = (items, numbered = false) => {
-      doc.fontSize(11);
-      items.forEach((item, index) => {
-        const prefix = numbered ? `${index + 1}. ` : '• ';
-        doc.text(`${prefix}${item}`, { indent: 20 });
-        doc.moveDown(0.3);
-      });
-    };
-
-    // Simple header
-    doc.fillColor('#1A365D')
-       .fontSize(24)
-       .font('Helvetica-Bold')
-       .text('TECHNICAL ASSESSMENT', { align: 'center' });
-    
-    doc.fontSize(14)
-       .font('Helvetica')
-       .text('Coding Project Assignment', { align: 'center' });
-    
-    doc.moveDown(2);
-
-    // Project information table
-    addHeader('PROJECT DETAILS');
-    
-    const projectInfo = [
-      `Project: ${testData.testContent.title}`,
-      `Position: ${testData.jobTitle}`,
-      `Company: ${testData.companyName || 'Our Company'}`,
-      `Level: ${testData.experienceLevel}`,
-      `Duration: ${testData.testContent.timeLimit}`,
-      `Technologies: ${testData.technologies.join(', ')}`,
-      `Industry: ${testData.industry || 'Technology'}`
-    ];
-    
-    projectInfo.forEach(info => {
-      doc.fontSize(12).text(info);
-      doc.moveDown(0.3);
-    });
-    
-    doc.moveDown(1.5);
-
-    // Project description
-    addHeader('WHAT TO BUILD');
-    doc.fontSize(11).text(testData.testContent.description);
-    doc.moveDown(1.5);
-
-    // Requirements
-    addHeader('REQUIREMENTS');
-    addList(testData.testContent.requirements, true);
-    doc.moveDown(1.5);
-
-    // Deliverables
-    addHeader('WHAT TO SUBMIT');
-    addList(testData.testContent.deliverables, true);
-    doc.moveDown(1.5);
-
-    // Evaluation
-    addHeader('HOW YOU WILL BE EVALUATED');
-    addList(testData.testContent.evaluation, true);
-    doc.moveDown(1.5);
-
-    // Submission steps
-    addHeader('SUBMISSION STEPS');
-    const submissionSteps = [
-      'Create a GitHub repository with your solution',
-      'Write a README.md with setup instructions',
-      'Add unit tests with good coverage',
-      'Deploy your app to a cloud platform',
-      'Email us your GitHub link and demo URL',
-      'Include screenshots or demo video'
-    ];
-    addList(submissionSteps, true);
-    doc.moveDown(1.5);
-
-    // Project structure
-    addHeader('RECOMMENDED FOLDER STRUCTURE');
-    doc.fontSize(10).font('Courier');
-    const structure = [
-      'project-name/',
-      '├── README.md',
-      '├── package.json',
-      '├── src/',
-      '│   ├── components/',
-      '│   ├── services/',
-      '│   └── index.js',
-      '├── tests/',
-      '└── docs/'
-    ];
-    structure.forEach(line => {
-      doc.text(line, { indent: 20 });
-      doc.moveDown(0.2);
-    });
-    doc.font('Helvetica');
-    doc.moveDown(1.5);
-
-    // Tips
-    addHeader('TIPS');
-    const tips = [
-      'Read all requirements before starting',
-      'Plan your approach first',
-      'Write clean, commented code',
-      'Test your solution thoroughly',
-      'Document your decisions',
-      'Make sure it runs without errors'
-    ];
-    addList(tips);
-    doc.moveDown(1.5);
-
-    // Deadline
-    addHeader('DEADLINE');
-    doc.fontSize(12).text(`Submit within ${testData.testContent.timeLimit} of receiving this assignment.`);
-    doc.moveDown(0.5);
-    doc.text('Questions? Email: technical-support@talentai.bid');
-    doc.moveDown(1);
-
-    // Footer
-    doc.fontSize(12)
-       .fillColor('#2B6CB0')
-       .text('Good luck! 🚀', { align: 'center' });
-    
-    doc.fontSize(10)
-       .fillColor('#718096')
-       .text(`Generated on ${new Date().toLocaleDateString()} by TalenIA`, { align: 'center' });
-
-    // Finalize the PDF
-    doc.end();
-
-    return new Promise((resolve, reject) => {
-      stream.on('finish', () => {
-        resolve({
-          fileName,
-          filePath,
-          size: fs.statSync(filePath).size
-        });
-      });
-      stream.on('error', reject);
-    });
+    return metrics;
   } catch (error) {
-    throw new Error(`Error generating PDF: ${error.message}`);
+    throw new Error(`Error getting post metrics: ${error.message}`);
   }
 };
 
@@ -1503,71 +1109,6 @@ module.exports.sendTechnicalTestEmail = async (testData, pdfInfo, candidateEmail
     return result;
   } catch (error) {
     throw new Error(`Error sending email: ${error.message}`);
-  }
-};
-
-// Main function to create and send technical test
-module.exports.createAndSendTechnicalTest = async (postId, token, candidateEmail, candidateName = 'Candidate') => {
-  let testData = null;
-  let pdfInfo = null;
-  
-  try {
-    // Step 1: Create technical test content
-    testData = await module.exports.createTechnicalTest(postId, token);
-    console.log('✅ Technical test content created');
-    
-    // Step 2: Generate PDF
-    pdfInfo = await module.exports.generateTestPDF(testData);
-    console.log('✅ PDF generated:', pdfInfo.fileName);
-    
-    // Step 3: Try to send email with PDF
-    let emailResult = null;
-    try {
-      emailResult = await module.exports.sendTechnicalTestEmail(testData, pdfInfo, candidateEmail, candidateName);
-      console.log('✅ Email sent successfully');
-    } catch (emailError) {
-      console.error('❌ Email sending failed:', emailError.message);
-      
-      // Return success but with email failure info
-      return {
-        success: true,
-        testData,
-        pdfInfo,
-        emailResult: null,
-        emailError: emailError.message,
-        message: 'Technical test created successfully, but email sending failed. PDF is available for manual sending.'
-      };
-    }
-    
-    // Step 4: Clean up PDF file after sending (optional)
-    setTimeout(() => {
-      if (fs.existsSync(pdfInfo.filePath)) {
-        fs.unlinkSync(pdfInfo.filePath);
-        console.log('🗑️ PDF file cleaned up');
-      }
-    }, 60000); // Delete after 1 minute
-    
-    return {
-      success: true,
-      testData,
-      pdfInfo,
-      emailResult,
-      message: 'Technical test created and sent successfully'
-    };
-  } catch (error) {
-    console.error('❌ Error in createAndSendTechnicalTest:', error);
-    
-    // Clean up PDF file if it was created
-    if (pdfInfo && fs.existsSync(pdfInfo.filePath)) {
-      try {
-        fs.unlinkSync(pdfInfo.filePath);
-        console.log('🗑️ PDF file cleaned up after error');
-      } catch (cleanupError) {
-        console.error('Error cleaning up PDF file:', cleanupError.message);
-      }
-    }
-    
-    throw new Error(`Error in createAndSendTechnicalTest: ${error.message}`);
   }
 };
 
