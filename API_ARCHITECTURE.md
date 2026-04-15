@@ -159,24 +159,7 @@
 └─ /hr-agents/hcs11-profile/{id}           [GET]    - Get network profile
 ```
 
-### 7. **HEDERA BLOCKCHAIN TOOLS** (`/hedera-tools` & `/api`)
-```
-/api/create-agent                           [POST]   - Create agent
-/api/create-token                           [POST]   - Create token
-/api/create-talentai-token                  [POST]   - Create TALAI
-/api/mint-tokens                            [POST]   - Mint tokens
-
-/hedera-tools/create-token                  [POST]   - Create token v2
-/hedera-tools/create-topic                  [POST]   - Create topic
-/hedera-tools/submit-message                [POST]   - Submit message
-/hedera-tools/create-evaluation-topic       [POST]   - Create eval topic
-/hedera-tools/submit-evaluation-message     [POST]   - Submit eval
-/hedera-tools/balance                       [GET]    - Get balance
-/hedera-tools/my-balance                    [GET]    - Get my balance
-/hedera-tools/tools                         [GET]    - List tools
-```
-
-### 8. **HCS-11 STANDARDS** (`/api/hcs11`)
+### 7. **HCS-11 STANDARDS** (`/api/hcs11`)
 ```
 /api/hcs11/status                    [GET]    - Service status
 /api/hcs11/validate                  [POST]   - Validate profile
@@ -185,7 +168,7 @@
 /api/hcs11/create-company-agent      [POST]   - Create company agent
 ```
 
-### 9. **NOTIFICATION SYSTEM** (`/notification-system`)
+### 8. **NOTIFICATION SYSTEM** (`/notification-system`)
 ```
 /notification-system                [POST]   - Create notification
 /notification-system                [GET]    - Get notifications
@@ -194,7 +177,7 @@
 /notification-system/{id}/read      [PATCH]  - Mark as read
 ```
 
-### 10. **INTERNAL CAMPAIGNS**
+### 9. **INTERNAL CAMPAIGNS**
 ```
 /internal-campaigns                 [POST]   - Create campaign
 /internal-campaigns                 [GET]    - Get campaigns
@@ -207,7 +190,7 @@
 /campaign-participants              [GET]    - Get participants
 ```
 
-### 11. **COMPANY MANAGEMENT**
+### 10. **COMPANY MANAGEMENT**
 ```
 /permissions                        [GET]    - Get permissions
 /admin                              [GET]    - Admin permissions
@@ -217,14 +200,14 @@
 /dashboard                          [GET]    - Dashboard
 ```
 
-### 12. **PAYMENT PROCESSING**
+### 11. **PAYMENT PROCESSING**
 ```
 /payment                            [POST]   - Process payment
 /payment                            [GET]    - Get payments
 /api/stripe                         [POST]   - Stripe integration
 ```
 
-### 13. **UTILITIES**
+### 12. **UTILITIES**
 ```
 /todo                               [POST/GET]   - To-do items
 /feedback                           [POST/GET]   - Feedback
@@ -236,7 +219,7 @@
 /unlock-candidate                   [POST]       - Unlock candidate
 ```
 
-### 14. **DOCUMENTATION**
+### 13. **DOCUMENTATION**
 ```
 /api/docs                           [GET]    - Main Swagger docs
 /api/docs/campaigns                 [GET]    - Campaign docs

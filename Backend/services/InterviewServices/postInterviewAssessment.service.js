@@ -568,9 +568,6 @@ module.exports.getAssessmentsByCompany = async (
       $project: {
         'candidate.authHistory': 0,
         'candidate.notifications': 0,
-        'candidate.hederaAccountId': 0,
-        'candidate.hederaPrivateKey': 0,
-        'candidate.hederaPublicKey': 0,
         'post.linkedinPost': 0,
       },
     });

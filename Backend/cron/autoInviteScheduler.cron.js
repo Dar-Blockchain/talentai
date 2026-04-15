@@ -133,10 +133,10 @@ const runAutoInviteJob = async () => {
     console.log(`${MSG.WITHIN_WINDOW}`);
 
     // Find applications that:
-    // 1. Have status "visited" (NOT interview_completed)
-    // 2. Were applied 24+ hours ago
-    // 3. Haven't had an invitation sent OR last sent 24+ hours ago
-    const twentyFourHoursAgo = new Date(Date.now() - CONFIG.FIRST_INVITE_HOURS * 60 * 60 * 1000);
+    // 1. Have status "applied" or "interview_scheduled" (NOT completed)
+    // 2. Were applied 5+ minutes ago
+    // 3. Haven't had an invitation sent OR last sent 5+ minutes ago
+    const twentyFourHoursAgo = new Date(Date.now() - CONFIG.FIRST_INVITE_HOURS * 60 * 1000);
 
     // Find two groups of applications:
     // Group 1: First-time invites (24+ hours since application, never invited)

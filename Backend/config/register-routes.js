@@ -1,14 +1,3 @@
-/**
- * Routes Configuration
- * Centralized route registration
- */
-
-const swaggerUi = require("swagger-ui-express");
-const swaggerDocument = require("../swagger.json");
-const campaignSwagger = require("../docs/swagger-campaigns.json");
-const departmentSwagger = require("../docs/swagger-departments.json");
-const jobApplicationSwagger = require("../routes/swagger/jobApplication.swagger");
-
 // Import all route modules
 const authRouter = require("../routes/authentication.routes");
 const companyPermissionsRouter = require("../routes/companyPermissions.routes");
@@ -25,17 +14,10 @@ const postInterviewAssessmentRouter = require("../routes/postInterviewAssessment
 const notificationSystemRouter = require("../routes/notificationSystem.routes");
 const postStepsRouter = require("../routes/postSteps.routes");
 const candidatePostStepProgressRouter = require("../routes/candidatePostStepProgress.routes");
-const hederaToolsRouter = require("../routes/hederaTools.routes");
-const hcs11Router = require("../routes/hcs11.routes");
-const hrAgentRouter = require("../routes/hrAgent.routes");
 const taskRouter = require("../routes/task.routes");
-const agentConfigRouter = require("../routes/agentConfig.routes");
-const tokenRouter = require("../routes/token.routes");
 const stripRouter = require("../routes/Strip.routes");
 const SkillInterviewAssessmentRoutes = require("../routes/skillInterviewAssessment.routes");
 const matchingConfigRoutes = require("../routes/matchingConfig.routes");
-const paymentRouter = require("../routes/payment.routes");
-const unlockCandidateRouter = require("../routes/unlockCandidate.routes");
 const pipelineInterviewRoutes = require("../routes/pipelineInterview.routes");
 const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
@@ -56,18 +38,7 @@ const apiKeyRouter = require('../routes/apiKey.routes');
  * @param {Express} app - Express application instance
  */
 function registerRoutes(app) {
-  // API Documentation
-  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   
-  // Campaign API Documentation (Swagger)
-  app.use("/api/docs/campaigns", swaggerUi.serve, swaggerUi.setup(campaignSwagger));
-  
-  // Department API Documentation (Swagger)
-  app.use("/api/docs/departments", swaggerUi.serve, swaggerUi.setup(departmentSwagger));
-
-  // Job Applications API Documentation (Swagger)
-  app.use("/api/docs/job-applications", swaggerUi.serve, swaggerUi.setup(jobApplicationSwagger));
-
   // Authentication & Profile
   app.use("/auth", authRouter); //✅ authentication
   app.use("/admin", companyPermissionsRouter); // ✅ (admin company permissions) -> admin (to be checked)
@@ -106,27 +77,16 @@ function registerRoutes(app) {
 
   // Candidate Management
   app.use("/candidate-progress", candidatePostStepProgressRouter); //✅ Candidate Post Step Progress -> candidate-progress
-  app.use("/unlock-candidate", unlockCandidateRouter); //✅ Unlock Candidate -> unlock-candidates
   app.use("/job-applications", jobApplicationRouter); //✅ Job Applications -> job-applications
-
-  // Blockchain & Web3
-  app.use("/hedera-tools", hederaToolsRouter); //✅ Hedera Tools -> hedera-tools
-  app.use("/api/hcs11", hcs11Router); //✅ HCS11 Integration -> api/hcs11
-
-  // AI & Agents
-  app.use("/hr-agents", hrAgentRouter); //✅ HR Agents Management -> hr-agents
-  app.use("/agent-config", agentConfigRouter); //✅ Agent Configuration -> agent-configs
 
   // Utility & Management
   app.use("/todo", todoRouter); //✅ To-Do Management -> todos
   app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
   app.use("/logs", logRoutes); //✅ System Logs Management -> logs
   app.use("/task", taskRouter); //✅ Task Management -> tasks
-  app.use("/tokens", tokenRouter); //✅ Token Management -> tokens
   // app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
-  // Payment & Billing
-  app.use("/payment", paymentRouter); //✅ Payment Processing -> payments
+  // Billing
   app.use("/api/stripe", stripRouter); //✅ Stripe Integration -> api/stripe
 
   // Pipeline Interview

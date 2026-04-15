@@ -188,28 +188,6 @@ curl -X POST http://localhost:5001/internal-campaigns \
 
 ## 4️⃣ Hedera Blockchain Operations
 
-### Create Autonomous Agent
-```bash
-curl -X POST http://localhost:5001/api/create-agent \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "MyAutoAgent"
-  }'
-```
-
-### Create Token
-```bash
-curl -X POST http://localhost:5001/hedera-tools/create-token \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "name": "TalentToken",
-    "symbol": "TAL",
-    "decimals": 2,
-    "initialSupply": 1000,
-    "agentId": "agent_mongo_id"
-  }'
-```
 
 ### Create HCS-11 Profile
 ```bash

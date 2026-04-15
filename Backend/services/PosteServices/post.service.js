@@ -2,7 +2,6 @@ const Post = require("../../models/Post.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const PostInterviewAssessmentModel = require("../../models/PostInterviewAssessment.model");
-const AgentService = require("../Agent.service");
 const aiService = require("../ai.Service");
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
@@ -409,7 +408,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 // Get a post by its ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).populate("user", "username email").populate("PostSteps").populate('agentConfig').populate('agentId');
+    const post = await Post.findById(postId).populate("PostSteps");
     if (!post) {
       throw new Error("Post not found");
     }
@@ -425,8 +424,8 @@ module.exports.getPipelineJobDetails = async (postId) => {
     const post = await Post.findById(postId)
       .populate("user", "username email")
       .populate("PostSteps")
-      .populate('agentConfig')
-      .populate('agentId');
+      .populate()
+      .populate();
 
     if (!post) {
       throw new Error("Post not found");
@@ -533,8 +532,8 @@ module.exports.getPostsByUserId = async (userId) => {
     return await Post.find({ user: userId })
       .populate("user", "username email")
       .populate("PostSteps") // Populate the PostSteps reference
-      .populate('agentConfig')
-      .populate('agentId')
+      .populate()
+      .populate()
       .sort({ createdAt: -1 });
   } catch (error) {
     throw new Error(`Error fetching user posts: ${error.message}`);
@@ -604,8 +603,8 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
       Post.find(query)
         .populate("user", "username email")
         .populate("PostSteps")
-        .populate('agentConfig')
-        .populate('agentId')
+        .populate()
+        .populate()
         .sort(sortObj)
         .skip(skip)
         .limit(limitNum)
@@ -1617,3 +1616,4 @@ module.exports.getPostMetrics = async (userId) => {
     throw new Error(`Error getting post metrics: ${error.message}`);
   }
 };
+

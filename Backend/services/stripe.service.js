@@ -1,12 +1,12 @@
 const Stripe = require('stripe');
 require('dotenv').config();
-const { getPlanById } = require('../controllers/payment.controller');
+const planLimitsService = require('./planLimits.service');
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 exports.createCheckoutSession = async ({ planId, baseUrl }) => {
   try {
-    const plan = await getPlanById(planId);
+    const plan = await planLimitsService.getPlanById(planId);
 
     if (!plan) {
       throw new Error('Invalid plan ID.');

@@ -19,7 +19,6 @@ import {
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import AssessmentModal from './AssessmentModal';
-import { selectTokenBalance } from '@/store/slices/tokenSlice';
 import { RootState } from '@/store/store';
 
 interface Task {
@@ -35,7 +34,7 @@ interface Task {
 export default function CandidateEngagementTasks() {
   const router = useRouter();
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
-  const tokenBalance = useSelector(selectTokenBalance) ?? 0;
+  const tokenBalance = 0; // Token system removed
   const [testModalOpen, setTestModalOpen] = useState(false);
   const onStartTest = () => setTestModalOpen(true);
 

@@ -8,7 +8,6 @@ const {
 const {
   getMatchingConfig,
 } = require("../../services/MatchingService/matchingConfig.service");
-const UnlockCandidate = require("../../models/UnlockCandidate.model");
 const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
 const { prepareSkills } = require("../../helpers/matching.helpers");
 
@@ -65,25 +64,6 @@ exports.matchCandidatesToJob = async (req, res) => {
       ...jobPost.jobDetails,
       skillAnalysis: jobPost.skillAnalysis,
     };
-
-    /* -----------------------------------------
-       2️⃣b Load all unlocked in single query
-    ----------------------------------------- */
-    // Extract all candidate IDs present
-    const candidateIds = candidates
-      .filter((c) => c.userId?._id)
-      .map((c) => c.userId._id);
-
-    // Mongo query to retrieve all unlocks
-    const unlockedRecords = await UnlockCandidate.find(
-      { idCompany, idCandidate: { $in: candidateIds } },
-      { idCandidate: 1, _id: 0 },
-    ).lean();
-
-    // Create Set for fast lookup
-    const unlockedSet = new Set(
-      unlockedRecords.map((u) => String(u.idCandidate)),
-    );
 
     /* -----------------------------------------
        2️⃣c Get candidates who passed interview for this job
@@ -164,7 +144,6 @@ exports.matchCandidatesToJob = async (req, res) => {
           candidate,
           idCompany,
           matchingConfig,
-          unlockedSet,
         );
       } catch (err) {
         console.error(`Error matching candidate ${candidateIdStr}:`, err);
@@ -182,8 +161,8 @@ exports.matchCandidatesToJob = async (req, res) => {
       const interviewScore = hasPassedInterview
         ? interviewScoreMap.get(candidateIdStr) || 0
         : null;
-      // Check unlocked from score object, or fallback to unlockedSet directly
-      const isUnlocked = score?.unlocked || unlockedSet.has(candidateIdStr);
+      // Unlock feature has been removed - always set to false
+      const isUnlocked = false;
 
       return {
         candidateId: candidate.userId._id,

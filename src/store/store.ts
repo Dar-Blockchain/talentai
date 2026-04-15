@@ -13,8 +13,6 @@ import storage from 'redux-persist/lib/storage';
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
-import tokenReducer from './slices/tokenSlice';
-import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
 import candidateReducer from './slices/candidateSlice';
 import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
@@ -38,8 +36,6 @@ const rootReducer = combineReducers({
   user: userReducer,
   auth: authReducer,
   post: postReducer,
-  token: tokenReducer,
-  tokenPurchase: tokenPurchaseReducer,
   candidate: candidateReducer,
   postGeneration: postGenerationReducer,
   interview: interviewReducer,

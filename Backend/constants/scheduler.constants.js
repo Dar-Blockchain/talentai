@@ -13,7 +13,7 @@ const SCHEDULER_TIME_WINDOW = {
 // ========== AUTO INVITE SCHEDULER ==========
 const AUTO_INVITE_CONFIG = {
   // Time thresholds
-  FIRST_INVITE_HOURS: 24,      // Send first invitation 24h after application
+  FIRST_INVITE_HOURS: 5,       // Send first invitation 5 minutes after application
   RECURRING_INVITE_HOURS: 24,  // Send recurring invitations every 24h
   
   // Batch processing

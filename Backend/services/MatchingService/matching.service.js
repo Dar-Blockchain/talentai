@@ -195,7 +195,7 @@ const calculateContractScore = (job, cand, MAX) => {
 /* ------------------------------------------------
    🚀 MAIN FUNCTION (Optimized)
 ------------------------------------------------ */
-async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, candidateProfile = {}, idCompany, matchingConfig = {}, unlockedSet = new Set()) {
+async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, candidateProfile = {}, idCompany, matchingConfig = {}) {
   if (VERBOSE) console.log("\n========== MATCHING START ==========");
   if (VERBOSE) console.log(candidateProfile.firstName + " " + candidateProfile.lastName);
 
@@ -204,8 +204,8 @@ async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, 
     return 0;
   }
 
-  // lookup unlock state from Set (fast)
-  const unlocked = candidateProfile.userId?._id ? unlockedSet.has(String(candidateProfile.userId._id)) : false;
+  // Unlock status is no longer supported - always return false
+  const unlocked = false;
 
   const cfg = matchingConfig || {};
   const weights = (cfg && cfg.weights) || {};

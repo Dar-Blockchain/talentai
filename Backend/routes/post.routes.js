@@ -14,7 +14,6 @@ const { verifyApiKey, checkScope } = require("../middleware/security/api-key.mid
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
-const postPaymentController = require("../controllers/postPayment.controller");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
@@ -88,26 +87,8 @@ router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 router.post("/send-technical-test", resolveCompanyActor,postController.sendTechnicalTest);
 
 // ========================================
-// PAYMENT ROUTES
+// INTERVIEW CONFIGURATION ROUTES
 // ========================================
-
-// GET /post/payment/calculate-price/:postId
-// Description: Calculate payment price for a post based on number of steps
-router.get("/payment/calculate-price/:postId", resolveCompanyActor,postPaymentController.calculatePostPrice);
-
-// POST /post/payment/process
-// Description: Process payment for agent creation after post and agent are created
-// Body: { postId, agentId }
-// Required scopes: write:posts
-router.post("/payment/process", checkScope(['write:posts']), resolveCompanyActor,postPaymentController.processPostPayment);
-
-// GET /post/payment/history
-// Description: Get payment history for user's posts
-router.get("/payment/history", resolveCompanyActor,postPaymentController.getPostPaymentHistory);
-
-// GET /post/payment/details/:postId
-// Description: Get payment details for a specific post
-router.get("/payment/details/:postId", resolveCompanyActor,postPaymentController.getPostPaymentDetails);
 
 // GET /post/interview-config/:jobId
 // Description: Get interview configuration for job-based HR interview (prompt flow)
