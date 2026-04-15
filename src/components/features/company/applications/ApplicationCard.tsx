@@ -1,135 +1,158 @@
-import React from "react";
-import { Box, Typography, Avatar, Chip, Divider } from "@mui/material";
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/router";
+import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutline";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardIos";
+import { ApplicationSummaryItem } from "@/store/slices/jobApplicationSlice";
+import { ContactTarget } from "@/components/features/company/posts/details/ContactCandidateModal";
+import { AssessmentTarget } from "@/components/features/company/posts/details/AssessmentDetailsModal";
+import { InviteTarget } from "./InviteToInterviewModal";
+import ApplicationCardActions from "./ApplicationCardActions";
 
-const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899"];
+const TEAL = "#0D9488";
 
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  applied:               { bg: "#EFF6FF", color: "#2563EB" },
-  viewed:                { bg: "#F5F3FF", color: "#7C3AED" },
-  pending:               { bg: "#FFFBEB", color: "#D97706" },
-  shortlisted:           { bg: "#F0FDF4", color: "#16A34A" },
-  accepted:              { bg: "#F0FDFA", color: "#0D9488" },
-  rejected:              { bg: "#FEF2F2", color: "#DC2626" },
-  withdrawn:             { bg: "#F3F4F6", color: "#6B7280" },
-  interview_scheduled:   { bg: "#FFF7ED", color: "#EA580C" },
-  interview_completed:   { bg: "#F0FDF4", color: "#15803D" },
+export const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+  visited:             { label: "Visited",             bg: "#EFF6FF", color: "#2563EB" },
+  interview_completed: { label: "Interview Completed", bg: "#D1FAE5", color: "#059669" },
 };
 
-const getInitials = (name: string) =>
-  name.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+const AVATAR_COLORS = ["#0D9488", "#3B82F6", "#8B5CF6", "#F59E0B", "#EC4899", "#10B981", "#EF4444"];
 
-const fmtDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
-
-interface Props {
-  app: any;
-  index: number;
-  onClick: () => void;
+export function avatarColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
 }
 
-const ApplicationCard: React.FC<Props> = ({ app, index, onClick }) => {
-  const profile = app.profile || {};
-  const cv = app.cvAnalysis || {};
-  const name = profile.firstName && profile.lastName
-    ? `${profile.firstName} ${profile.lastName}`.trim()
-    : cv.name || "Candidate";
-  const title = cv.title || "";
-  const skills: string[] = cv.skills || profile.skills?.map((s: any) => s.name) || [];
-  const cvScore = app.matchScore ?? cv.analysisScore ?? null;
-  const postTitle = app.post?.jobDetails?.title || "—";
-  const status = (app.status || "applied").toLowerCase();
-  const sc = STATUS_STYLE[status] ?? STATUS_STYLE.applied;
-  const statusLabel = status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
-  const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
+export function fmtDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function initials(first?: string | null, last?: string | null) {
+  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
+}
+
+export interface ApplicationCardProps {
+  app: ApplicationSummaryItem;
+  /** postId used for the assessment modal and actions menu */
+  postId: string;
+  /** Show the job-post chip — true on the all-applications page, false inside a post detail view */
+  showPostTitle?: boolean;
+  onContact: (target: ContactTarget) => void;
+  onAssessment: (target: AssessmentTarget) => void;
+  onInvite: (target: InviteTarget) => void;
+}
+
+const ApplicationCard: React.FC<ApplicationCardProps> = ({
+  app,
+  postId,
+  showPostTitle = false,
+  onContact,
+  onAssessment,
+  onInvite,
+}) => {
+  const router = useRouter();
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+  const name      = `${app.firstName ?? ""} ${app.lastName ?? ""}`.trim() || "Unknown";
+  const bgColor   = avatarColor(name);
+  const avatarUrl = app.userImage
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${app.userImage}`
+    : undefined;
+  const appId = String(app.id);
+  const style = STATUS_STYLE[app.status] ?? STATUS_STYLE.visited;
 
   return (
-    <Box
-      onClick={onClick}
+    <Paper
+      elevation={0}
       sx={{
-        bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB",
-        overflow: "hidden", display: "flex", flexDirection: "column",
-        cursor: "pointer", transition: "box-shadow 0.2s, border-color 0.2s",
-        "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.07)", borderColor: "#D1FAE5" },
+        border: "1px solid #E5E7EB", borderRadius: "12px",
+        p: "14px 16px", display: "flex", alignItems: "center", gap: 2,
+        transition: "box-shadow 0.15s, border-color 0.15s",
+        "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)", borderColor: "#D1D5DB" },
       }}
     >
-      {/* Top accent */}
-      <Box sx={{ height: 3, bgcolor: sc.color, opacity: 0.6 }} />
+      {/* Avatar */}
+      <Avatar
+        src={avatarUrl}
+        onClick={() => router.push(`/company/applications/${appId}`)}
+        sx={{ width: 40, height: 40, bgcolor: bgColor, fontSize: 13, fontWeight: 700, flexShrink: 0, cursor: "pointer", "&:hover": { opacity: 0.85 } }}
+      >
+        {initials(app.firstName, app.lastName)}
+      </Avatar>
 
-      {/* Header */}
-      <Box sx={{ p: 2.5, display: "flex", alignItems: "center", gap: 2 }}>
-        <Avatar sx={{ width: 48, height: 48, bgcolor: avatarColor, fontSize: "15px", fontWeight: 700, flexShrink: 0 }}>
-          {getInitials(name)}
-        </Avatar>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {name}
-            </Typography>
+      {/* Name + chips + email + date */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Typography
+            onClick={() => router.push(`/company/applications/${appId}`)}
+            sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3, cursor: "pointer", "&:hover": { color: TEAL, textDecoration: "underline" } }}
+          >
+            {name}
+          </Typography>
+          <Chip
+            label={style.label}
+            size="small"
+            sx={{ bgcolor: style.bg, color: style.color, fontWeight: 600, fontSize: "10px", height: 18, borderRadius: "4px" }}
+          />
+          {showPostTitle && app.postTitle && (
             <Chip
-              label={statusLabel}
+              label={app.postTitle}
               size="small"
-              sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: sc.bg, color: sc.color, flexShrink: 0 }}
+              icon={<WorkOutlineOutlined style={{ fontSize: 10 }} />}
+              onClick={() => app.postId && router.push(`/company/posts/${app.postId}`)}
+              sx={{
+                bgcolor: `${TEAL}0F`, color: TEAL, fontWeight: 600, fontSize: "10px",
+                height: 18, borderRadius: "4px",
+                cursor: app.postId ? "pointer" : "default",
+                "& .MuiChip-icon": { color: `${TEAL} !important` },
+              }}
             />
-          </Box>
-          {title && (
-            <Typography sx={{ fontSize: "0.75rem", color: "#6B7280", mt: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {title}
-            </Typography>
           )}
         </Box>
-        {cvScore != null && (
-          <Box sx={{
-            flexShrink: 0, textAlign: "center", borderRadius: "10px", px: 1.5, py: 0.75,
-            bgcolor: cvScore >= 70 ? "rgba(5,150,105,0.08)" : cvScore >= 50 ? "rgba(217,119,6,0.08)" : "rgba(220,38,38,0.08)",
-          }}>
-            <Typography sx={{ fontSize: "1.1rem", fontWeight: 800, lineHeight: 1, color: cvScore >= 70 ? "#059669" : cvScore >= 50 ? "#D97706" : "#DC2626" }}>
-              {cvScore}%
-            </Typography>
-            <Typography sx={{ fontSize: "0.6rem", color: "#9CA3AF", fontWeight: 600 }}>CV Score</Typography>
-          </Box>
+
+        <Typography sx={{ fontSize: "11px", color: "#6B7280", mt: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {app.email || "—"}
+        </Typography>
+
+        {app.appliedAt && (
+          <Typography sx={{ fontSize: "10px", color: "#9CA3AF", mt: 0.15 }}>
+            Applied {fmtDate(app.appliedAt)}
+            {app.completedAt && ` · Completed ${fmtDate(app.completedAt)}`}
+          </Typography>
         )}
       </Box>
 
-      {/* Skills */}
-      {skills.length > 0 && (
-        <>
-          <Divider />
-          <Box sx={{ px: 2.5, py: 1.25, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-            {skills.slice(0, 5).map((s: string) => (
-              <Chip key={s} label={s} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 500, bgcolor: "#F3F4F6", color: "#374151" }} />
-            ))}
-            {skills.length > 5 && (
-              <Chip label={`+${skills.length - 5}`} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 600, bgcolor: "#F0FDFA", color: "#0D9488" }} />
-            )}
-          </Box>
-        </>
-      )}
-
-      <Divider />
-
-      {/* Footer */}
-      <Box sx={{ px: 2.5, py: 1.25, display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#FAFAFA" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-            <WorkOutlineOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {postTitle}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-            <CalendarTodayOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-            <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{fmtDate(app.appliedAt || app.createdAt)}</Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.3, color: "#0D9488" }}>
-          <Typography sx={{ fontSize: "0.72rem", fontWeight: 600 }}>Details</Typography>
-          <ArrowForwardOutlined sx={{ fontSize: 11 }} />
-        </Box>
-      </Box>
-    </Box>
+      <ApplicationCardActions
+        app={app}
+        name={name}
+        appId={appId}
+        postId={postId}
+        avatarUrl={avatarUrl}
+        bgColor={bgColor}
+        menuAnchorEl={menuAnchor}
+        menuOpen={Boolean(menuAnchor)}
+        onMenuOpen={(e) => setMenuAnchor(e.currentTarget)}
+        onMenuClose={() => setMenuAnchor(null)}
+        onContact={() => {
+          if (app.email) onContact({ name, email: app.email, candidateUserId: app.candidateUserId, avatarUrl, bgColor });
+        }}
+        onAssessment={() => {
+          if (app.candidateUserId) onAssessment({
+            applicationId: appId,
+            postId,
+            candidateUserId: app.candidateUserId,
+            candidateName: name,
+            candidateEmail: app.email || "",
+            avatarUrl,
+            bgColor,
+          });
+        }}
+        onInvite={() => onInvite({ applicationId: appId, name, postTitle: app.postTitle || "", postId })}
+      />
+    </Paper>
   );
 };
 

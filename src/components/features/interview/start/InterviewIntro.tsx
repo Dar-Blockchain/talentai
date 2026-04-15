@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Box, Typography, Container, Button, Chip, CircularProgress } from '@mui/material';
-import { AppDispatch, RootState } from '@/store/store';
-import { registerApplicant, selectRegisterLoading } from '@/store/slices/interviewApplicantSlice';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { Box, Typography, Container, Button, Chip } from '@mui/material';
+import { RootState } from '@/store/store';
 import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
@@ -51,37 +50,14 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
   checkingEligibility = false,
   onNext,
 }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const submitting = useSelector(selectRegisterLoading);
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 
-  const registered = useRef(false);
-  useEffect(() => {
-    if (!jobId || registered.current) return;
-    registered.current = true;
+  const handleNext = () => {
     const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
     const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
     const email = authUser?.email || profile?.email || '';
-    const payload: Parameters<typeof registerApplicant>[0] = { jobId, firstName, lastName, email };
-    if (refParam) payload.ref = refParam;
-    dispatch(registerApplicant(payload));
-  }, [jobId]);
-
-  const handleNext = async () => {
-    const firstName = profile?.firstName || profile?.name?.split(' ')[0] || authUser?.username || 'Unknown';
-    const lastName = profile?.lastName || profile?.name?.split(' ').slice(1).join(' ') || '';
-    const email = authUser?.email || profile?.email || '';
-    if (!registered.current) {
-      registered.current = true;
-      const payload: Parameters<typeof registerApplicant>[0] = { jobId: jobId!, firstName, lastName, email };
-      if (refParam) payload.ref = refParam;
-      const result = await dispatch(registerApplicant(payload));
-      const applicantId = registerApplicant.fulfilled.match(result) ? result.payload._id : '';
-      onNext({ firstName, lastName, email, applicantId });
-    } else {
-      onNext({ firstName, lastName, email, applicantId: '' });
-    }
+    onNext({ firstName, lastName, email, applicantId: '' });
   };
 
   const duration = interviewConfig?.sessionSettings?.duration || 20;
@@ -244,9 +220,9 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
             <Box sx={{ px: { xs: 3, md: 4 }, pb: 3, pt: 0.5, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #F3F4F6' }}>
               <Button
                 variant="contained"
-                endIcon={submitting || checkingEligibility ? undefined : <ArrowForwardIcon />}
+                endIcon={checkingEligibility ? undefined : <ArrowForwardIcon />}
                 onClick={handleNext}
-                disabled={submitting || checkingEligibility}
+                disabled={checkingEligibility}
                 sx={{
                   bgcolor: PURPLE, color: '#fff', fontFamily: 'Poppins', fontWeight: 600,
                   fontSize: '0.86rem', px: 3.5, py: 1.15, borderRadius: '8px',
@@ -259,11 +235,6 @@ const InterviewIntro: React.FC<InterviewIntroProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CircularProgress size={16} sx={{ color: '#9CA3AF' }} />
                     <span>Checking eligibility…</span>
-                  </Box>
-                ) : submitting ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CircularProgress size={16} sx={{ color: '#fff' }} />
-                    <span>Please wait…</span>
                   </Box>
                 ) : 'Start Interview'}
               </Button>

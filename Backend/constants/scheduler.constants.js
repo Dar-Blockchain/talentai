@@ -23,8 +23,8 @@ const AUTO_INVITE_CONFIG = {
   CRON_PATTERN: '0 * * * *',
   
   // Application statuses to process
-  VALID_STATUSES: ['applied', 'interview_scheduled'],
-  
+  VALID_STATUSES: ['visited'],
+
   // Messages
   MESSAGES: {
     INIT: '🚀 Initializing auto-invite scheduler...',
@@ -59,8 +59,8 @@ const REMINDER_CONFIG = {
   CRON_PATTERN: '0 * * * *',
   
   // Application statuses to process
-  VALID_STATUSES: ['applied', 'interview_scheduled'],
-  
+  VALID_STATUSES: ['visited'],
+
   // Reminder types
   TYPES: {
     FIRST_REMINDER: '24h',     // After 24 hours of application
