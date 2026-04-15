@@ -5,7 +5,7 @@
 
 // ========== TIME WINDOWS ==========
 const SCHEDULER_TIME_WINDOW = {
-  START_HOUR: 12,        // 12:00 (noon)
+  START_HOUR: 9,        // 12:00 (noon)
   END_HOUR: 21,          // 21:00 (9 PM)
   DESCRIPTION: 'Emails only sent between 12:00 and 21:00'
 };
@@ -13,14 +13,14 @@ const SCHEDULER_TIME_WINDOW = {
 // ========== AUTO INVITE SCHEDULER ==========
 const AUTO_INVITE_CONFIG = {
   // Time thresholds
-  FIRST_INVITE_HOURS: 5,       // Send first invitation 5 minutes after application
+  FIRST_INVITE_HOURS: 10 / 3600,  // Send first invitation ~10 seconds after application (TESTING)
   RECURRING_INVITE_HOURS: 24,  // Send recurring invitations every 24h
   
   // Batch processing
   BATCH_LIMIT: 10,             // Process max 10 applications per run
   
-  // Cron schedule (hourly at minute 0)
-  CRON_PATTERN: '0 * * * *',
+  // Cron schedule (daily at 11:56 for testing)
+  CRON_PATTERN: '56 11 * * *',  // À 11:56 chaque jour
   
   // Application statuses to process
   VALID_STATUSES: ['visited'],
@@ -52,11 +52,11 @@ const AUTO_INVITE_CONFIG = {
 // ========== REMINDER SCHEDULER ==========
 const REMINDER_CONFIG = {
   // Reminder timings
-  FIRST_REMINDER_HOURS: 24,    // Send first reminder 24h after application
-  SECOND_REMINDER_HOURS: 24,   // Send second reminder when < 24h before post expiration
+  FIRST_REMINDER_HOURS: 10 / 3600,    // Send first reminder ~10 seconds after application (TESTING)
+  SECOND_REMINDER_HOURS: 10 / 3600,   // Send second reminder ~10 seconds before post expiration (TESTING)
   
-  // Cron schedule (hourly at minute 0)
-  CRON_PATTERN: '0 * * * *',
+  // Cron schedule (daily at 11:56 for testing)
+  CRON_PATTERN: '10 12 * * *',  // À 11:56 chaque jour
   
   // Application statuses to process
   VALID_STATUSES: ['visited'],
@@ -71,9 +71,9 @@ const REMINDER_CONFIG = {
   MESSAGES: {
     INIT: '🚀 Initializing Interview Reminder Scheduler...',
     INITIALIZED: '✅ Reminder scheduler initialized:',
-    FREQUENCY: '   ⏰ Frequency: Every hour (checks during 12:00 - 21:00)',
-    FIRST_REMINDER_DESC: '   🔔 First reminder: 24 hours after application',
-    SECOND_REMINDER_DESC: '   🔔 Second reminder: Less than 24 hours before post expiration',
+    FREQUENCY: '   ⏰ Frequency: Every day at 11:56 AM (checks during 9:00 - 21:00) - TESTING',
+    FIRST_REMINDER_DESC: '   🔔 First reminder: ~10 seconds after application (TESTING)',
+    SECOND_REMINDER_DESC: '   🔔 Second reminder: ~10 seconds before post expiration (TESTING)',
     STOPS_WHEN: '   ⛔ Stops when: Interview completed',
     EMAIL_WINDOW: '   📧 Only sends emails between 12:00 and 21:00',
     JOB_RUNNING: '⏰ [REMINDER SCHEDULER] Running at %datetime%',
@@ -97,8 +97,8 @@ const REMINDER_CONFIG = {
     DB_UPDATED: '   ✅ Database updated - %type% reminder tracked',
     DB_ERROR: '   ❌ Error updating database: %error%',
     JOB_COMPLETE: '📊 Reminder job complete:',
-    FIRST_REMINDERS_SENT: '   🔔 First reminders (24h):  %count%',
-    SECOND_REMINDERS_SENT: '   🔔 Second reminders (<24h before exp): %count%',
+    FIRST_REMINDERS_SENT: '   🔔 First reminders (~10s):  %count%',
+    SECOND_REMINDERS_SENT: '   🔔 Second reminders (~10s before exp): %count%',
     SKIPPED: '   ⏭️  Skipped: %count%',
     TOTAL_SENT: '   📈 Total reminders sent: %count%',
     JOB_ERROR: '❌ [REMINDER SCHEDULER] Error: %error%'

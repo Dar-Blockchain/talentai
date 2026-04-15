@@ -34,8 +34,8 @@ const { scheduleReminders } = require("./cron/reminderScheduler.cron");
 
 // Auto-load CRON jobs
 // ⛔ DISABLED: All cron jobs disabled
-//const { initializeCronJobs } = require("./cron");
-//initializeCronJobs();
+const { initializeCronJobs } = require("./cron");
+initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module
@@ -177,7 +177,7 @@ const initializeApp = async () => {
       // Step 10: Initialize interview reminder scheduler
       logger.section("Initializing interview reminder scheduler...");
       scheduleReminders();
-      logger.success("Interview reminder scheduler initialized (24h + 48h reminders)");
+      logger.success("Interview reminder scheduler initialized (~10s reminders - TESTING MODE)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);
