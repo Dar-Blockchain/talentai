@@ -82,10 +82,6 @@ router.get("/adsPost", postController.getPostsByUserTopSkills);
 // Description: Post detail alias
 router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 
-// POST /post/send-technical-test
-// Description: Send technical test task via email with PDF
-router.post("/send-technical-test", resolveCompanyActor,postController.sendTechnicalTest);
-
 // ========================================
 // INTERVIEW CONFIGURATION ROUTES
 // ========================================
