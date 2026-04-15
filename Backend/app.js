@@ -177,7 +177,7 @@ const initializeApp = async () => {
       // Step 10: Initialize interview reminder scheduler
       logger.section("Initializing interview reminder scheduler...");
       scheduleReminders();
-      logger.success("Interview reminder scheduler initialized (~10s reminders - TESTING MODE)");
+      logger.success("Interview reminder scheduler initialized (24h + 48h reminders)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);

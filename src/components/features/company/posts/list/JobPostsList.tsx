@@ -8,6 +8,9 @@ import {
 } from "@mui/material";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import AddOutlined from "@mui/icons-material/AddOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
+import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
 import JobPostCard from "./JobPostCard";
 
 const TEAL = "#0D9488";

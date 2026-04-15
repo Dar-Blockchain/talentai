@@ -12,6 +12,8 @@ const PUBLIC_PATHS = [
   "/interview/expired",
   "/interview/limit-reached",
   "/interview/results",
+  "/interview/hr",  // public interview links (ref=link) — auth handled inside the page
+  "/jobs",          // public job landing pages
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];

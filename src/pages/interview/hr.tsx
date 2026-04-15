@@ -84,10 +84,17 @@ const IntelligentInterviewTest = () => {
   useEffect(() => {
     if (!router.isReady) return;
     if (!router.query.jobId) { setStep('interview'); setAssessmentChecking(false); return; }
-    setStep('intro');
 
     const postId = router.query.jobId as string;
     const token = Cookies.get('api_token');
+    const ref = router.query.ref as string | undefined;
+    const isPublicLink = ref === 'link';
+
+    // No token + public link → redirect to job landing page
+    if (!token && isPublicLink) {
+      router.replace(`/jobs/${postId}`);
+      return;
+    }
 
     if (authUser && token) {
       // Auto-create job application (non-blocking)
@@ -96,20 +103,21 @@ const IntelligentInterviewTest = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ post: postId }),
       }).catch(() => {});
+
+      // Fetch matching details — only meaningful for logged-in candidates
+      dispatch(fetchMatchingDetails(postId));
+
+      dispatch(checkPostInterviewAssessment(postId)).then((result) => {
+        if (checkPostInterviewAssessment.fulfilled.match(result)) {
+          if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
+          else if (result.payload.isArchived) setIsArchived(true);
+          else if (result.payload.exists) setAlreadyCompleted(true);
+        }
+      }).finally(() => setAssessmentChecking(false));
+    } else {
+      // Guest (no token) — skip all auth-required checks
+      setAssessmentChecking(false);
     }
-
-    // Fetch matching details (non-blocking — only relevant for candidates)
-    dispatch(fetchMatchingDetails(postId));
-
-    dispatch(checkPostInterviewAssessment(postId)).then((result) => {
-      if (checkPostInterviewAssessment.fulfilled.match(result)) {
-        if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
-        else if (result.payload.isArchived) setIsArchived(true);
-        else if (result.payload.exists) setAlreadyCompleted(true);
-      } else if (checkPostInterviewAssessment.rejected.match(result)) {
-        // silently ignore — let them proceed
-      }
-    }).finally(() => setAssessmentChecking(false));
   }, [router.isReady, router.query.jobId]);
 
   const { notification, showNotification, hideNotification } = useNotification();
