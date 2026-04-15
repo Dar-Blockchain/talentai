@@ -1,10 +1,7 @@
-const OpenAI = require("openai");
+const { callLLM } = require("../helpers/bedrock.helpers");
 const fs = require("fs");
 const path = require("path");
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const { PDFParse } = require("pdf-parse");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -77,19 +74,15 @@ function cleanAnalyzedData(data) {
   return data;
 }
 
-async function uploadPdfToOpenAI(pdfPath) {
-  const uploadedFile = await openai.files.create({
-    file: fs.createReadStream(pdfPath),
-    purpose: "user_data",
-  });
-
-  return uploadedFile.id;
+async function extractTextFromPdf(pdfPath) {
+  const fileBuffer = fs.readFileSync(pdfPath);
+  const parser = new PDFParse({ data: fileBuffer });
+  const result = await parser.getText();
+  const text = (result?.text || "").replace(/\s+/g, " ").trim();
+  return text;
 }
 
 async function analyzeCV(pdfPath, maxRetries = 3) {
-  let fileId = null;
-
-  try {
     if (!pdfPath) {
       throw new Error("pdfPath is required");
     }
@@ -103,10 +96,16 @@ async function analyzeCV(pdfPath, maxRetries = 3) {
       throw new Error("Only PDF files are supported");
     }
 
-    fileId = await uploadPdfToOpenAI(pdfPath);
+    const cvText = await extractTextFromPdf(pdfPath);
+    const maxTextLength = 100000;
+    const documentText =
+      cvText.length > maxTextLength
+        ? `${cvText.slice(0, maxTextLength)}\n\n[TRUNCATED: resume text exceeded ${maxTextLength} chars]`
+        : cvText;
 
     const prompt = `
 You are an expert CV/resume parser with deep knowledge of software engineering, recruitment, ATS systems, and HR.
+If the resume text is truncated, analyze the available information only and return the best possible result.
 
 Read the attached CV carefully and extract all relevant information.
 
@@ -194,47 +193,37 @@ Return this exact structure:
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await openai.responses.create({
-          model: "gpt-4o",
-          input: [
+        const response = await callLLM({
+          messages: [
             {
               role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: prompt,
-                },
-                {
-                  type: "input_file",
-                  file_id: fileId,
-                },
-              ],
+              content: `${prompt}\n\nCV_TEXT:\n${documentText}`,
             },
           ],
+          temperature: 0,
+          maxTokens: 4096,
+          timeout: 120000,
         });
 
-        const rawText = response.output_text || "{}";
+        const rawText = response.content || "{}";
         const jsonText = extractJson(rawText);
 
-        // Parse and validate
         const parsedData = JSON.parse(jsonText);
-        
-        // Clean the data to remove empty required fields
         const cleanedData = cleanAnalyzedData(parsedData);
 
         return JSON.stringify(cleanedData);
       } catch (error) {
         lastError = error;
 
-        const status = error?.status || 0;
-        const type = error?.type || "";
+        const status = error?.$metadata?.httpStatusCode || 0;
         const code = error?.code || "";
+        const name = error?.name || "";
 
         const retryable =
           status >= 500 ||
-          type === "server_error" ||
-          code === "server_error" ||
-          code === "rate_limit_exceeded";
+          name === "ThrottlingException" ||
+          code === "ThrottlingException" ||
+          code === "ServiceUnavailableException";
 
         if (!retryable || attempt === maxRetries) {
           throw error;
@@ -245,11 +234,6 @@ Return this exact structure:
     }
 
     throw lastError || new Error("Unknown error while analyzing CV");
-  } finally {
-    if (fileId) {
-      await openai.files.del(fileId).catch(() => {});
-    }
-  }
 }
 
 module.exports = { analyzeCV };
