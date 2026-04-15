@@ -19,7 +19,7 @@ import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { checkPostInterviewAssessment, fetchMatchingDetails, selectMatchingDetails, selectMatchingDetailsLoading } from '@/store/slices/interviewSlice';
-import { validateInterviewAccess, selectAccessAllowed, selectAccessLoading } from '@/store/slices/interviewApplicantSlice';
+
 
 // Types
 import {
@@ -73,8 +73,6 @@ const IntelligentInterviewTest = () => {
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
-  const accessAllowed = useSelector(selectAccessAllowed);
-  const accessLoading = useSelector(selectAccessLoading);
   const matchingDetails = useSelector(selectMatchingDetails);
   const matchingLoading = useSelector(selectMatchingDetailsLoading);
 
@@ -89,22 +87,8 @@ const IntelligentInterviewTest = () => {
 
     const postId = router.query.jobId as string;
     const token = Cookies.get('api_token');
-    const ref = router.query.ref as string | undefined;
-    const isPublicLink = !ref || ref === 'link';
 
-    // No token + public link → show job landing page first
-    if (!token && isPublicLink) {
-      router.replace(`/jobs/${postId}`);
-      return;
-    }
-
-    setStep('intro');
-
-    if (token) {
-      if (!isPublicLink && ref) {
-        // Validate that the logged-in user is the intended recipient
-        dispatch(validateInterviewAccess({ jobId: postId, ref, token }));
-      }
+    if (authUser && token) {
       // Auto-create job application (non-blocking)
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
         method: 'POST',
@@ -479,35 +463,6 @@ const IntelligentInterviewTest = () => {
                   Explore Other Opportunities
                 </Button>
               </Box>
-            </Box>
-          </Container>
-        </Box>
-      </>
-    );
-  }
-
-  /* ── Access denied — wrong candidate ── */
-  if (accessAllowed === false && !accessLoading) {
-    return (
-      <>
-        <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
-          <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #FECACA', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <Typography sx={{ fontSize: 28 }}>🚫</Typography>
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>
-                Access Denied
-              </Typography>
-              <Typography sx={{ color: '#6B7280', fontSize: '0.92rem', mb: 3 }}>
-                This interview invitation was not sent to your account. Please use the account that received the invitation email.
-              </Typography>
-              <Button variant="outlined" onClick={() => router.push('/dashboard/candidate')}
-                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', borderColor: '#E5E7EB', color: '#374151' }}>
-                Go to Dashboard
-              </Button>
             </Box>
           </Container>
         </Box>

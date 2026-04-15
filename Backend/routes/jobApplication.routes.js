@@ -36,8 +36,23 @@ router.get("/candidate/my", jobApplicationController.getApplicationsByCandidate)
 // Query params: page, limit, post (filter by post), status, search/candidateName (search by candidate name), skills (filter by skills)
 router.get("/company/my", jobApplicationController.getApplicationsByCompany);
 
+// POST /job-applications/contact-candidate — Send a direct email to a candidate
+router.post("/contact-candidate", jobApplicationController.contactCandidate);
+
+// GET /job-applications/post/:postId/summary — Flat summary list for a post (company only)
+// Query params: status, search, matchScoreMin, matchScoreMax, interviewScoreMin, interviewScoreMax,
+//               dateFrom, dateTo, sort (appliedAt_desc|appliedAt_asc|matchScore_desc|matchScore_asc|
+//               interviewScore_desc|interviewScore_asc|name_asc|name_desc), page, limit
+router.get("/post/:postId/summary", jobApplicationController.getApplicationsSummaryByPost);
+
+// GET /job-applications/company/my/summary — Flat summary list for all company applications
+router.get("/company/my/summary", jobApplicationController.getApplicationsSummaryByCompany);
+
 // GET /job-applications/company/my/metrics — Get application metrics for authenticated company
 router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics);
+
+// GET /job-applications/company/my/cvs/download — Download all matching CVs as a ZIP
+router.get("/company/my/cvs/download", jobApplicationController.downloadCVsByCompany);
 
 // POST /job-applications/auto-invite/trigger — Trigger auto-invite scheduler manually (for testing)
 router.post("/auto-invite/trigger", jobApplicationController.triggerAutoInvite);

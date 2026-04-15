@@ -21,6 +21,9 @@ const { verifyApiKey, checkScope } = require("../middleware/security/api-key.mid
 // GET /post-interview-assessments/post/:postId — Get all assessments for a post
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
 
+// GET /post-interview-assessments/post/:postId/candidate/:candidateUserId — Get assessment for one candidate
+router.get('/post/:postId/candidate/:candidateUserId', postInterviewAssessmentController.getAssessmentByPostAndCandidate);
+
 // ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuth,authLogMiddleware("PostInterviewAssessment"));
 

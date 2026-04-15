@@ -98,7 +98,8 @@ const sendReminderEmail = async (application, post, reminderType) => {
     const candidateEmail = candidateProfile.userId.email;
     const candidateName = `${candidateProfile.firstName} ${candidateProfile.lastName}`;
     const jobTitle = post.jobDetails?.title || 'Position';
-    const companyName = company.username || company.email || 'Our Company';
+    const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
+    const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
 
     console.log(`   📧 To: ${candidateEmail}`);
     console.log(`   👤 Candidate: ${candidateName}`);

@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <Box sx={{ flex: 1, overflowY: "auto" }} className="custom-scrollbar">
         {(() => {
           const groups = [
-            { label: "Hiring",  ids: ["dashboard", "posts", "interviews", "applications"] },
+            { label: "Hiring",  ids: ["dashboard", "posts", "applications"] },
             { label: "Account", ids: ["settings"] },
           ];
 

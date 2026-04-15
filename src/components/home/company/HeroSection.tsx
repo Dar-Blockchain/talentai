@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Box, Button, Typography, Stack } from "@mui/material";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import CaptchaModal from "./CaptchaModal";
+import DemoVideoModal from "./DemoVideoModal";
 
 const ACCENT = "#0CDA8B";
 const CALENDLY = "https://calendly.com/talent__ai/30min";
@@ -14,6 +16,7 @@ const STATS = [
 
 const CompanyHeroSection = () => {
   const [captchaOpen, setCaptchaOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const openDemo = () => setCaptchaOpen(true);
   const handleVerified = () => window.open(CALENDLY, "_blank");
@@ -112,7 +115,8 @@ const CompanyHeroSection = () => {
 
             <Button
               variant="outlined"
-              onClick={openDemo}
+              onClick={() => setVideoOpen(true)}
+              startIcon={<PlayCircleOutlineIcon />}
               sx={{
                 border: `2px solid ${ACCENT}`,
                 color: "black",
@@ -185,6 +189,7 @@ const CompanyHeroSection = () => {
       </Box>
 
       <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </Box>
   );
 };

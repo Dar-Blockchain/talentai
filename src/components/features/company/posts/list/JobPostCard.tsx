@@ -7,7 +7,6 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
@@ -18,14 +17,15 @@ import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
-import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
+import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
+import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
 
 const TEAL = "#0D9488";
-const TEAL_BG = "#F0FDFA";
-const TEAL_BORDER = "#99F6E4";
 
 const fmtDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 const getDaysLeft = (expirationDate?: string) => {
   if (!expirationDate) return null;
@@ -38,12 +38,12 @@ const CREATION_TYPE: Record<string, { label: string; color: string; bg: string; 
   manual:   { label: "Manual",       color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 };
 
-const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  open:    { label: "Open",   color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
-  active:  { label: "Open",   color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
-  draft:   { label: "Draft",  color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B" },
-  closed:  { label: "Closed", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444" },
-  expired: { label: "Closed", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444" },
+const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; dot: string; accent: string }> = {
+  open:    { label: "Open",   color: "#059669", bg: "#ECFDF5", dot: "#10B981", accent: "#10B981" },
+  active:  { label: "Open",   color: "#059669", bg: "#ECFDF5", dot: "#10B981", accent: "#10B981" },
+  draft:   { label: "Draft",  color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B", accent: "#F59E0B" },
+  closed:  { label: "Closed", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444", accent: "#EF4444" },
+  expired: { label: "Closed", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444", accent: "#EF4444" },
 };
 
 interface JobPostCardProps {
@@ -57,18 +57,18 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const jd       = job.jobDetails || {};
-  const isDraft  = job.status === "draft";
-  const daysLeft = getDaysLeft(job.expirationDate);
+  const jd        = job.jobDetails || {};
+  const isDraft   = job.status === "draft";
+  const daysLeft  = getDaysLeft(job.expirationDate);
   const isExpired = daysLeft !== null && daysLeft <= 0;
-  const ctInfo   = CREATION_TYPE[job.creationType] || CREATION_TYPE.manual;
+  const ctInfo    = CREATION_TYPE[job.creationType] || CREATION_TYPE.manual;
   const { Icon: CtIcon } = ctInfo;
 
-  const statusKey    = isDraft ? "draft" : isExpired ? "expired" : "active";
-  const statusStyle  = STATUS_STYLES[statusKey];
+  const statusKey   = isDraft ? "draft" : isExpired ? "expired" : (job.status === "closed" ? "closed" : "active");
+  const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.active;
 
-  const expiryColor  = isExpired ? "#DC2626" : daysLeft !== null && daysLeft <= 3 ? "#D97706" : TEAL;
-  const expiryBg     = isExpired ? "#FEF2F2" : daysLeft !== null && daysLeft <= 3 ? "#FFFBEB" : TEAL_BG;
+  const expiryColor = isExpired ? "#DC2626" : daysLeft !== null && daysLeft <= 3 ? "#D97706" : TEAL;
+  const expiryBg    = isExpired ? "#FEF2F2" : daysLeft !== null && daysLeft <= 3 ? "#FFFBEB" : `${TEAL}12`;
 
   return (
     <motion.div
@@ -78,157 +78,171 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
       style={{ height: "100%" }}
     >
       <Box
+        onClick={() => onViewDetails(job._id)}
         sx={{
           bgcolor: "#fff",
           border: "1px solid #E5E7EB",
-          borderRadius: 3,
-          p: { xs: 2, sm: 3 },
+          borderRadius: "14px",
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          gap: 2,
           height: "100%",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
           transition: "all 0.18s",
+          cursor: "pointer",
           "&:hover": {
-            borderColor: TEAL_BORDER,
-            boxShadow: "0 4px 20px rgba(13,148,136,0.10)",
+            borderColor: `${TEAL}60`,
+            boxShadow: `0 6px 24px rgba(13,148,136,0.10)`,
             transform: "translateY(-2px)",
           },
-          cursor: "pointer",
         }}
-        onClick={() => onViewDetails(job._id)}
       >
-        {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-          {/* Icon */}
-          <Box
-            sx={{
-              width: 40, height: 40, borderRadius: 2,
-              bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`,
+        {/* Left accent bar */}
+        <Box sx={{ height: 3, bgcolor: statusStyle.accent, width: "100%", flexShrink: 0 }} />
+
+        <Box sx={{ p: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
+          {/* Header row */}
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+            {/* Icon */}
+            <Box sx={{
+              width: 42, height: 42, borderRadius: "10px", flexShrink: 0,
+              bgcolor: `${TEAL}10`, border: `1px solid ${TEAL}25`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
-          </Box>
-
-          {/* Title + creation type */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              sx={{ fontSize: { xs: "13px", sm: "15px" }, fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.5 }}
-              noWrap
-            >
-              {jd.title || "Untitled Position"}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-              <Chip
-                icon={<CtIcon sx={{ fontSize: 11 }} />}
-                label={ctInfo.label}
-                size="small"
-                sx={{
-                  fontSize: "10px", fontWeight: 600, height: 20,
-                  color: ctInfo.color, bgcolor: ctInfo.bg,
-                  border: `1px solid ${ctInfo.color}30`,
-                }}
-              />
-              {jd.workMode && (
-                <Chip label={jd.workMode} size="small" sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }} />
-              )}
-              {jd.employmentType && (
-                <Chip label={jd.employmentType} size="small" sx={{ fontSize: "10px", height: 20, bgcolor: "#F3F4F6", color: "#6B7280" }} />
-              )}
+            }}>
+              <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
             </Box>
+
+            {/* Title + chips */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                sx={{ fontSize: "14px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.5 }}
+                noWrap
+              >
+                {jd.title || "Untitled Position"}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                <Chip
+                  icon={<CtIcon sx={{ fontSize: 10 }} />}
+                  label={ctInfo.label}
+                  size="small"
+                  sx={{ fontSize: "10px", fontWeight: 600, height: 18, color: ctInfo.color, bgcolor: ctInfo.bg, border: `1px solid ${ctInfo.color}25`, "& .MuiChip-icon": { color: `${ctInfo.color} !important` } }}
+                />
+                {/* Status chip */}
+                <Chip
+                  label={statusStyle.label}
+                  size="small"
+                  sx={{ fontSize: "10px", fontWeight: 700, height: 18, color: statusStyle.color, bgcolor: statusStyle.bg }}
+                  icon={<Box component="span" sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: statusStyle.dot, display: "inline-block", ml: "6px !important", mr: "-2px !important" }} />}
+                />
+              </Box>
+            </Box>
+
+            {/* 3-dot menu */}
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }}
+              sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6", color: "#374151" }, borderRadius: "8px", flexShrink: 0, p: 0.5 }}
+            >
+              <MoreVertOutlined sx={{ fontSize: 18 }} />
+            </IconButton>
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={(e: any) => { e.stopPropagation?.(); setMenuAnchor(null); }}
+              onClick={(e) => e.stopPropagation()}
+              transformOrigin={{ horizontal: "right", vertical: "top" }}
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+              PaperProps={{ sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 160, mt: 0.5, border: "1px solid #E5E7EB" } }}
+            >
+              <MenuItem
+                onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); router.push(`/company/posts/${job._id}`); }}
+                sx={{ gap: 1, fontSize: "13px", fontWeight: 600, mx: 0.5, borderRadius: "8px", "&:hover": { bgcolor: `${TEAL}0D` } }}
+              >
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <Box sx={{ width: 24, height: 24, borderRadius: "6px", bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <OpenInNewOutlined sx={{ fontSize: 13, color: TEAL }} />
+                  </Box>
+                </ListItemIcon>
+                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>View Details</Typography>
+              </MenuItem>
+              <MenuItem
+                onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onDelete(job._id); }}
+                sx={{ gap: 1, mx: 0.5, borderRadius: "8px", mt: 0.25, "&:hover": { bgcolor: "#FEF2F2" } }}
+              >
+                <ListItemIcon sx={{ minWidth: 28 }}>
+                  <Box sx={{ width: 24, height: 24, borderRadius: "6px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#EF4444" }} />
+                  </Box>
+                </ListItemIcon>
+                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+              </MenuItem>
+            </Menu>
           </Box>
 
-          {/* 3-dot menu */}
-          <IconButton
-            size="small"
-            onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }}
-            sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6" }, borderRadius: 1.5, flexShrink: 0 }}
-          >
-            <MoreVertOutlined sx={{ fontSize: 18 }} />
-          </IconButton>
-          <Menu
-            anchorEl={menuAnchor}
-            open={Boolean(menuAnchor)}
-            onClose={(e: any) => { e.stopPropagation?.(); setMenuAnchor(null); }}
-            onClick={(e) => e.stopPropagation()}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-            PaperProps={{ sx: { borderRadius: 2, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 150, mt: 0.5 } }}
-          >
-            <MenuItem
-              onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); router.push(`/company/posts/${job._id}`); }}
-              sx={{ gap: 1, fontSize: "13px", fontWeight: 600 }}
-            >
-              <ListItemIcon sx={{ minWidth: "auto", color: TEAL }}>
-                <ChevronRightOutlined sx={{ fontSize: 16 }} />
-              </ListItemIcon>
-              <ListItemText primary="View Details" primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
-            </MenuItem>
-            <MenuItem
-              onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onDelete(job._id); }}
-              sx={{ gap: 1, color: "#EF4444", fontSize: "13px", fontWeight: 600, "&:hover": { bgcolor: "#FEF2F2" } }}
-            >
-              <ListItemIcon sx={{ minWidth: "auto", color: "#EF4444" }}>
-                <DeleteOutlineOutlined sx={{ fontSize: 16 }} />
-              </ListItemIcon>
-              <ListItemText primary="Delete" primaryTypographyProps={{ fontSize: "13px", fontWeight: 600 }} />
-            </MenuItem>
-          </Menu>
-        </Box>
-
-        {/* Description */}
-        {jd.description && (
-          <Typography
-            sx={{
-              fontSize: "12px", color: "#6B7280", lineHeight: 1.6,
-              display: "-webkit-box", WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical", overflow: "hidden",
-              flex: 1,
-            }}
-          >
-            {jd.description}
-          </Typography>
-        )}
-
-        {/* Footer */}
-        <Box
-          sx={{
-            display: "flex", alignItems: "center",
-            justifyContent: "space-between", flexWrap: "wrap",
-            gap: 1, pt: 1.5, borderTop: "1px solid #F3F4F6",
-          }}
-        >
-          {/* Status */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-            <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: statusStyle.dot }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: statusStyle.color }}>
-              {statusStyle.label}
-            </Typography>
-          </Box>
-
-          {/* Date / days left */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-            {daysLeft !== null && !isExpired && (
-              <Chip
-                label={`${daysLeft}d left`}
-                size="small"
-                sx={{
-                  fontSize: "10px", fontWeight: 700, height: 20,
-                  color: expiryColor, bgcolor: expiryBg,
-                  border: `1px solid ${expiryColor}40`,
-                }}
-              />
-            )}
-            {job.expirationDate && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", whiteSpace: "nowrap" }}>
-                  Exp. {fmtDate(job.expirationDate)}
-                </Typography>
+          {/* Meta row */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+            {jd.employmentType && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                <BusinessCenterOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+                <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{jd.employmentType}</Typography>
               </Box>
             )}
+            {jd.location && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                <LocationOnOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+                <Typography sx={{ fontSize: "11px", color: "#6B7280" }} noWrap>{jd.location}</Typography>
+              </Box>
+            )}
+            {jd.workMode && (
+              <Chip label={jd.workMode} size="small" sx={{ fontSize: "10px", height: 17, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+            )}
+          </Box>
+
+          {/* Description */}
+          {jd.description && (
+            <Typography sx={{
+              fontSize: "12px", color: "#6B7280", lineHeight: 1.6, flex: 1,
+              display: "-webkit-box", WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical", overflow: "hidden",
+            }}>
+              {jd.description}
+            </Typography>
+          )}
+
+          {/* Footer */}
+          <Box sx={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            flexWrap: "wrap", gap: 1, pt: 1.5, borderTop: "1px solid #F3F4F6", mt: "auto",
+          }}>
+            {/* Created date */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <CalendarTodayOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
+                {job.createdAt ? fmtDate(job.createdAt) : "—"}
+              </Typography>
+            </Box>
+
+            {/* Expiry / days left */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              {daysLeft !== null && !isExpired && (
+                <Chip
+                  label={`${daysLeft}d left`}
+                  size="small"
+                  sx={{ fontSize: "10px", fontWeight: 700, height: 18, color: expiryColor, bgcolor: expiryBg, border: `1px solid ${expiryColor}30` }}
+                />
+              )}
+              {isExpired && (
+                <Chip label="Expired" size="small" sx={{ fontSize: "10px", fontWeight: 700, height: 18, color: "#DC2626", bgcolor: "#FEF2F2" }} />
+              )}
+              {job.expirationDate && !isExpired && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                  <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
+                  <Typography sx={{ fontSize: "11px", color: "#9CA3AF", whiteSpace: "nowrap" }}>
+                    Exp. {fmtDate(job.expirationDate)}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
         </Box>
       </Box>

@@ -41,12 +41,12 @@ export const navigation = [
   //   label: "Departments",
   //   href: "/company/departments",
   // },
-  {
-    id: "interviews",
-    icon: HowToRegOutlined,
-    label: "Interviews",
-    href: "/company/interviews",
-  },
+  // {
+  //   id: "interviews",
+  //   icon: HowToRegOutlined,
+  //   label: "Interviews",
+  //   href: "/company/interviews",
+  // },
   {
     id: "applications",
     icon: AssignmentIndOutlined,

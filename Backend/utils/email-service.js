@@ -136,11 +136,45 @@ const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, 
   }
 };
 
+// ─── Send Direct Message to Candidate (from company) ─────────────────────────
+const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message) => {
+  const escaped = (t) => String(t || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#F7FAFC;">
+      <div style="background:#0D9488;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;">
+        <h2 style="margin:0;font-size:18px;">Message from ${escaped(fromCompanyName)}</h2>
+      </div>
+      <div style="background:#fff;padding:24px;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+        <p style="margin:0 0 16px;color:#374151;">Hi ${escaped(candidateName)},</p>
+        <div style="white-space:pre-wrap;line-height:1.7;color:#111827;">${escaped(message)}</div>
+        <hr style="border:none;border-top:1px solid #E5E7EB;margin:20px 0;"/>
+        <p style="font-size:12px;color:#9CA3AF;margin:0;">You received this message via TalentAI. Reply directly to this email to respond.</p>
+      </div>
+      <p style="text-align:center;color:#9CA3AF;font-size:12px;margin-top:16px;">TalentAI — contact@talentai.bid</p>
+    </div>`;
+  const mailOptions = {
+    from: `"${fromCompanyName} via TalentAI" <contact@talentai.bid>`,
+    to,
+    subject,
+    html,
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Candidate email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Candidate email failed:", error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
   sendInterviewAssessmentEmail,
   sendInterviewCompletionNotificationToCompany,
   sendInterviewInvitation,
+  sendCandidateEmail,
   transporter,
 };

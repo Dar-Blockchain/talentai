@@ -27,7 +27,6 @@ import campaignReducer from './slices/campaignSlice';
 import participantReducer from './slices/participantSlice';
 import companyReducer from './slices/companySlice';
 import departmentReducer from './slices/departmentSlice';
-import interviewApplicantReducer from './slices/interviewApplicantSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
 import apiKeyReducer from './slices/apiKeySlice';
 import feedbackReducer from './slices/feedbackSlice';
@@ -51,7 +50,6 @@ const rootReducer = combineReducers({
   participant: participantReducer,
   company: companyReducer,
   department: departmentReducer,
-  interviewApplicant: interviewApplicantReducer,
   jobApplications: jobApplicationReducer,
   apiKeys: apiKeyReducer,
   feedback: feedbackReducer,
