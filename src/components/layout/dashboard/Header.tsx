@@ -4,31 +4,36 @@ import React from "react";
 import {
   Box,
   IconButton,
-  InputBase,
+  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import MenuOutlined from "@mui/icons-material/MenuOutlined";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { useRouter } from "next/router";
+import { navigation } from "@/constants/navigation";
 import UserHeader from "./UserHeader";
 import HeaderNotification from "@/components/layout/header/HeaderNotification";
 import HeaderChat from "./HeaderChat";
+import GlobalSearch from "./GlobalSearch";
 
 interface HeaderProps {
   onOpenMobile: () => void;
   breadcrumb: string;
 }
 
+const TEAL = "#0D9488";
+
 const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
-  const theme = useTheme();
+  const theme   = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const router  = useRouter();
 
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user    = useSelector((state: RootState) => state.user.connectedUser.user);
 
-  const isEmployee = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate";
+  const isEmployee  = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate";
   const companyName = isEmployee
     ? `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || user?.username || "Employee"
     : profile?.companyDetails?.name || "Company";
@@ -37,49 +42,103 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile }) => {
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
     : null;
 
+  // Resolve current page label + icon
+  const currentNav = navigation.find(
+    (i) => router.pathname === i.href || router.pathname.startsWith(i.href + "/")
+  );
+  const PageIcon = currentNav?.icon;
+  const pageLabel = currentNav?.label || "Dashboard";
+
   return (
     <Box
       sx={{
         height: 64,
         bgcolor: "#fff",
-        borderBottom: "1px solid #E5E7EB",
+        borderBottom: "1px solid #F3F4F6",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        px: { xs: 2, md: 4 },
+        px: { xs: 2, md: 3 },
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      {/* ── Left: mobile menu + page title ── */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         {isMobile && (
-          <IconButton onClick={onOpenMobile}>
-            <MenuOutlined />
+          <IconButton
+            onClick={onOpenMobile}
+            size="small"
+            sx={{
+              color: "#6B7280", width: 34, height: 34, borderRadius: "9px",
+              bgcolor: "#F9FAFB", border: "1px solid #F3F4F6",
+              "&:hover": { bgcolor: "#F3F4F6" },
+            }}
+          >
+            <MenuOutlined sx={{ fontSize: 18 }} />
           </IconButton>
         )}
-        {/* <Box
-          sx={{
-            display: { xs: "none", lg: "flex" },
-            alignItems: "center",
-            bgcolor: "#F9FAFB",
-            border: "1px solid #E5E7EB",
-            borderRadius: 2,
-            px: 1.5,
-            py: 0.5,
-            width: 440,
-            minWidth: 240,
-          }}
-        >
-          <SearchOutlined sx={{ color: "#9CA3AF", fontSize: 18, mr: 1 }} />
-          <InputBase placeholder="Search anything..." sx={{ fontSize: "13px", flex: 1 }} />
-        </Box> */}
+
+        {/* Page title with icon */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {PageIcon && (
+            <Box sx={{
+              width: 30, height: 30, borderRadius: "8px",
+              bgcolor: `${TEAL}10`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <PageIcon sx={{ fontSize: 15, color: TEAL }} />
+            </Box>
+          )}
+          <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#111827" }}>
+            {pageLabel}
+          </Typography>
+        </Box>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Box data-tour="header-chat"><HeaderChat /></Box>
-        <Box data-tour="header-notif"><HeaderNotification /></Box>
+      {/* ── Right: search + actions + user ── */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <GlobalSearch />
+
+        <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />
+
+        {/* Chat */}
+        <Box
+          sx={{
+            "& .MuiIconButton-root": {
+              width: 34, height: 34, borderRadius: "9px",
+              bgcolor: "#F9FAFB", border: "1px solid #F3F4F6",
+              color: "#6B7280",
+              "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
+              transition: "all 0.15s",
+            },
+          }}
+          data-tour="header-chat"
+        >
+          <HeaderChat />
+        </Box>
+
+        {/* Notifications */}
+        <Box
+          sx={{
+            "& .MuiIconButton-root": {
+              width: 34, height: 34, borderRadius: "9px",
+              bgcolor: "#F9FAFB", border: "1px solid #F3F4F6",
+              color: "#6B7280",
+              "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
+              transition: "all 0.15s",
+            },
+          }}
+          data-tour="header-notif"
+        >
+          <HeaderNotification />
+        </Box>
+
+        {/* Divider */}
+        <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.5 }} />
+
+        {/* User */}
         <UserHeader companyName={companyName} companyInitial={companyInitial} avatarUrl={avatarUrl} />
       </Box>
     </Box>
-    
   );
 };
 

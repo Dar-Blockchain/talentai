@@ -8,10 +8,9 @@ import {
   Typography,
   Menu,
   MenuItem,
-  Divider,
 } from "@mui/material";
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
-import { LogoutOutlined, SettingsOutlined } from "@mui/icons-material";
+import { LogoutOutlined, TuneOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -23,81 +22,93 @@ interface UserHeaderProps {
   avatarUrl?: string | null;
 }
 
+const TEAL = "#0D9488";
+
 const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial, avatarUrl }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
-
   return (
     <>
       <Box
+        onClick={(e) => setAnchorEl(e.currentTarget)}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
+          display: "flex", alignItems: "center", gap: 0.75,
           cursor: "pointer",
-          padding: "4px 8px",
-          borderRadius: 2,
+          px: 1, py: 0.5,
+          borderRadius: "10px",
+          border: "1px solid transparent",
+          transition: "all 0.15s",
+          "&:hover": { bgcolor: "#F9FAFB", borderColor: "#E5E7EB" },
         }}
-        onClick={handleOpenMenu}
       >
         <Avatar
           src={avatarUrl ?? undefined}
-          sx={{
-            width: 30,
-            height: 30,
-            fontSize: 14,
-            bgcolor: "#0D9488",
-          }}
+          sx={{ width: 28, height: 28, fontSize: 12, bgcolor: TEAL, flexShrink: 0 }}
         >
           {companyInitial}
         </Avatar>
-        <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>
+        <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {companyName}
         </Typography>
-        <KeyboardArrowDownOutlined sx={{ fontSize: 20, color: "#6B7280" }} />
+        <KeyboardArrowDownOutlined sx={{
+          fontSize: 15, color: "#9CA3AF", flexShrink: 0,
+          transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "transform 0.15s",
+        }} />
       </Box>
 
       <Menu
         anchorEl={anchorEl}
         open={open}
-        onClose={handleCloseMenu}
+        onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         PaperProps={{
-          sx: { minWidth: 180, borderRadius: 2, mt: 1 },
+          sx: {
+            minWidth: 200, borderRadius: "12px", mt: 0.75,
+            border: "1px solid #E5E7EB",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            p: 0.75, overflow: "visible",
+          },
         }}
       >
+        {/* Profile preview */}
+        <Box sx={{ px: 1.5, py: 1, mb: 0.5 }}>
+          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>{companyName}</Typography>
+          <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF", mt: 0.25 }}>Company account</Typography>
+        </Box>
+
+        <Box sx={{ height: "1px", bgcolor: "#F3F4F6", mx: 0.5, mb: 0.5 }} />
+
         <MenuItem
-          onClick={() => {
-            handleCloseMenu();
-            router.push("/company/settings");
-          }}
-          sx={{ fontSize: 14 }}
+          onClick={() => { setAnchorEl(null); router.push("/company/settings"); }}
+          sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#F9FAFB" } }}
         >
-          <SettingsOutlined sx={{ mr: 1, fontSize: 16 }} />
-          Settings
+          <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <TuneOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Settings</Typography>
+            <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Manage your account</Typography>
+          </Box>
         </MenuItem>
-        <Divider />
+
+        <Box sx={{ height: "1px", bgcolor: "#F3F4F6", mx: 0.5, my: 0.5 }} />
+
         <MenuItem
-          sx={{ fontSize: 14 }}
-          onClick={async () => {
-            handleCloseMenu();
-            await dispatch(logout());
-            router.push("/signin");
-          }}
+          onClick={async () => { setAnchorEl(null); await dispatch(logout()); router.push("/signin"); }}
+          sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#F9FAFB" } }}
         >
-          <LogoutOutlined sx={{ mr: 1, fontSize: 16 }} />
-          Logout
+          <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <LogoutOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>Sign out</Typography>
+            <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>End your session</Typography>
+          </Box>
         </MenuItem>
       </Menu>
     </>
