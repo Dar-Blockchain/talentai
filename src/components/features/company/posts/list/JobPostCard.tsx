@@ -1,26 +1,17 @@
 import { memo, useState } from "react";
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-} from "@mui/material";
+import { Box, Typography, IconButton, Menu, MenuItem, Tooltip } from "@mui/material";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import BusinessCenterOutlined from "@mui/icons-material/BusinessCenterOutlined";
+import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 
 const TEAL = "#0D9488";
 
@@ -33,17 +24,17 @@ const getDaysLeft = (expirationDate?: string) => {
 };
 
 const CREATION_TYPE: Record<string, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
-  ai:       { label: "AI Generated", color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  pipeline: { label: "Pipeline",     color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
-  manual:   { label: "Manual",       color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+  ai:       { label: "AI",       color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+  pipeline: { label: "Pipeline", color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
+  manual:   { label: "Manual",   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 };
 
-const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; dot: string; accent: string }> = {
-  open:    { label: "Open",   color: "#059669", bg: "#ECFDF5", dot: "#10B981", accent: "#10B981" },
-  active:  { label: "Open",   color: "#059669", bg: "#ECFDF5", dot: "#10B981", accent: "#10B981" },
-  draft:   { label: "Draft",  color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B", accent: "#F59E0B" },
-  closed:  { label: "Closed", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444", accent: "#EF4444" },
-  expired: { label: "Closed", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444", accent: "#EF4444" },
+const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; bar: string }> = {
+  active:  { label: "Open",   color: "#059669", bg: "#ECFDF5", bar: "#10B981" },
+  open:    { label: "Open",   color: "#059669", bg: "#ECFDF5", bar: "#10B981" },
+  draft:   { label: "Draft",  color: "#D97706", bg: "#FFFBEB", bar: "#F59E0B" },
+  closed:  { label: "Closed", color: "#DC2626", bg: "#FEF2F2", bar: "#EF4444" },
+  expired: { label: "Expired",color: "#DC2626", bg: "#FEF2F2", bar: "#EF4444" },
 };
 
 interface JobPostCardProps {
@@ -56,25 +47,33 @@ interface JobPostCardProps {
 const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails }) => {
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [copied, setCopied] = useState(false);
 
-  const jd        = job.jobDetails || {};
-  const isDraft   = job.status === "draft";
-  const daysLeft  = getDaysLeft(job.expirationDate);
+  const jd       = job.jobDetails || {};
+  const isDraft  = job.status === "draft";
+  const daysLeft = getDaysLeft(job.expirationDate);
   const isExpired = daysLeft !== null && daysLeft <= 0;
-  const ctInfo    = CREATION_TYPE[job.creationType] || CREATION_TYPE.manual;
+  const ctInfo   = CREATION_TYPE[job.creationType] || CREATION_TYPE.manual;
   const { Icon: CtIcon } = ctInfo;
 
-  const statusKey   = isDraft ? "draft" : isExpired ? "expired" : (job.status === "closed" ? "closed" : "active");
+  const statusKey   = isDraft ? "draft" : isExpired ? "expired" : job.status === "closed" ? "closed" : "active";
   const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.active;
 
-  const expiryColor = isExpired ? "#DC2626" : daysLeft !== null && daysLeft <= 3 ? "#D97706" : TEAL;
-  const expiryBg    = isExpired ? "#FEF2F2" : daysLeft !== null && daysLeft <= 3 ? "#FFFBEB" : `${TEAL}12`;
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMenuAnchor(null);
+    const link = `${window.location.origin}/interview/hr?jobId=${job._id}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay: index * 0.05 }}
+      transition={{ duration: 0.18, delay: index * 0.04 }}
       style={{ height: "100%" }}
     >
       <Box
@@ -82,58 +81,65 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
         sx={{
           bgcolor: "#fff",
           border: "1px solid #E5E7EB",
-          borderRadius: "14px",
-          overflow: "hidden",
+          borderRadius: "12px",
           display: "flex",
           flexDirection: "column",
           height: "100%",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-          transition: "all 0.18s",
+          overflow: "hidden",
           cursor: "pointer",
+          transition: "all 0.15s",
           "&:hover": {
-            borderColor: `${TEAL}60`,
-            boxShadow: `0 6px 24px rgba(13,148,136,0.10)`,
-            transform: "translateY(-2px)",
+            borderColor: `${TEAL}40`,
+            boxShadow: `0 4px 16px rgba(13,148,136,0.08)`,
+            transform: "translateY(-1px)",
           },
         }}
       >
-        {/* Left accent bar */}
-        <Box sx={{ height: 3, bgcolor: statusStyle.accent, width: "100%", flexShrink: 0 }} />
+        {/* Top accent bar */}
+        <Box sx={{ height: 3, bgcolor: statusStyle.bar, flexShrink: 0 }} />
 
-        <Box sx={{ p: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
-          {/* Header row */}
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+        <Box sx={{ p: 1.75, display: "flex", flexDirection: "column", gap: 1.25, flex: 1 }}>
+
+          {/* ── Header row ── */}
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
             {/* Icon */}
             <Box sx={{
-              width: 42, height: 42, borderRadius: "10px", flexShrink: 0,
-              bgcolor: `${TEAL}10`, border: `1px solid ${TEAL}25`,
+              width: 34, height: 34, borderRadius: "9px", flexShrink: 0,
+              bgcolor: `${TEAL}0F`, border: `1px solid ${TEAL}20`,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
+              <WorkOutlineOutlined sx={{ fontSize: 16, color: TEAL }} />
             </Box>
 
-            {/* Title + chips */}
+            {/* Title + badges */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                sx={{ fontSize: "14px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.5 }}
-                noWrap
-              >
+              <Typography noWrap sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.4 }}>
                 {jd.title || "Untitled Position"}
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                <Chip
-                  icon={<CtIcon sx={{ fontSize: 10 }} />}
-                  label={ctInfo.label}
-                  size="small"
-                  sx={{ fontSize: "10px", fontWeight: 600, height: 18, color: ctInfo.color, bgcolor: ctInfo.bg, border: `1px solid ${ctInfo.color}25`, "& .MuiChip-icon": { color: `${ctInfo.color} !important` } }}
-                />
-                {/* Status chip */}
-                <Chip
-                  label={statusStyle.label}
-                  size="small"
-                  sx={{ fontSize: "10px", fontWeight: 700, height: 18, color: statusStyle.color, bgcolor: statusStyle.bg }}
-                  icon={<Box component="span" sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: statusStyle.dot, display: "inline-block", ml: "6px !important", mr: "-2px !important" }} />}
-                />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {/* Creation type badge */}
+                <Box sx={{
+                  display: "inline-flex", alignItems: "center", gap: 0.4,
+                  px: "6px", py: "2px", borderRadius: "5px",
+                  bgcolor: ctInfo.bg, border: `1px solid ${ctInfo.color}28`,
+                }}>
+                  <CtIcon sx={{ fontSize: 9, color: ctInfo.color }} />
+                  <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: ctInfo.color, lineHeight: 1 }}>
+                    {ctInfo.label}
+                  </Typography>
+                </Box>
+
+                {/* Status badge with dot */}
+                <Box sx={{
+                  display: "inline-flex", alignItems: "center", gap: 0.4,
+                  px: "6px", py: "2px", borderRadius: "5px",
+                  bgcolor: statusStyle.bg, border: `1px solid ${statusStyle.color}28`,
+                }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: statusStyle.bar, flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: statusStyle.color, lineHeight: 1 }}>
+                    {statusStyle.label}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
 
@@ -141,10 +147,14 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             <IconButton
               size="small"
               onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }}
-              sx={{ color: "#9CA3AF", "&:hover": { bgcolor: "#F3F4F6", color: "#374151" }, borderRadius: "8px", flexShrink: 0, p: 0.5 }}
+              sx={{
+                color: "#9CA3AF", borderRadius: "6px", p: 0.3, flexShrink: 0,
+                "&:hover": { bgcolor: "#F3F4F6", color: "#374151" },
+              }}
             >
-              <MoreVertOutlined sx={{ fontSize: 18 }} />
+              <MoreVertOutlined sx={{ fontSize: 15 }} />
             </IconButton>
+
             <Menu
               anchorEl={menuAnchor}
               open={Boolean(menuAnchor)}
@@ -152,56 +162,105 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
               onClick={(e) => e.stopPropagation()}
               transformOrigin={{ horizontal: "right", vertical: "top" }}
               anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{ sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 160, mt: 0.5, border: "1px solid #E5E7EB" } }}
+              PaperProps={{
+                sx: {
+                  borderRadius: "12px",
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)",
+                  minWidth: 188,
+                  mt: 0.75,
+                  border: "1px solid #E5E7EB",
+                  p: 0.75,
+                  overflow: "visible",
+                },
+              }}
             >
+              {/* Header label */}
+              <Box sx={{ px: 1.5, pt: 0.5, pb: 1 }}>
+                <Typography noWrap sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {jd.title || "Post actions"}
+                </Typography>
+              </Box>
+
               <MenuItem
                 onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); router.push(`/company/posts/${job._id}`); }}
-                sx={{ gap: 1, fontSize: "13px", fontWeight: 600, mx: 0.5, borderRadius: "8px", "&:hover": { bgcolor: `${TEAL}0D` } }}
+                sx={{
+                  gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25,
+                  "&:hover": { bgcolor: "#F5F5F5", "& .menu-icon-box": { bgcolor: "#E9E9E9" } },
+                }}
               >
-                <ListItemIcon sx={{ minWidth: 28 }}>
-                  <Box sx={{ width: 24, height: 24, borderRadius: "6px", bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <OpenInNewOutlined sx={{ fontSize: 13, color: TEAL }} />
-                  </Box>
-                </ListItemIcon>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>View Details</Typography>
+                <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
+                  <OpenInNewOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>View Details</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Open full post page</Typography>
+                </Box>
               </MenuItem>
+
+              {!isDraft && (
+                <MenuItem
+                  onClick={handleCopyLink}
+                  sx={{
+                    gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25,
+                    "&:hover": { bgcolor: "#F5F5F5", "& .menu-icon-box": { bgcolor: "#E9E9E9" } },
+                  }}
+                >
+                  <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
+                    <ContentCopyOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>
+                      {copied ? "Copied!" : "Share Link"}
+                    </Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Share with candidates</Typography>
+                  </Box>
+                </MenuItem>
+              )}
+
+              <Box sx={{ my: 0.75, height: "1px", bgcolor: "#F3F4F6", mx: 0.5 }} />
+
               <MenuItem
                 onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onDelete(job._id); }}
-                sx={{ gap: 1, mx: 0.5, borderRadius: "8px", mt: 0.25, "&:hover": { bgcolor: "#FEF2F2" } }}
+                sx={{
+                  gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25,
+                  "&:hover": { bgcolor: "#F5F5F5", "& .menu-icon-box": { bgcolor: "#E9E9E9" } },
+                }}
               >
-                <ListItemIcon sx={{ minWidth: 28 }}>
-                  <Box sx={{ width: 24, height: 24, borderRadius: "6px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#EF4444" }} />
-                  </Box>
-                </ListItemIcon>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444" }}>Delete</Typography>
+                <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
+                  <DeleteOutlineOutlined sx={{ fontSize: 13, color: "#6B7280" }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#374151", lineHeight: 1.2 }}>Delete Post</Typography>
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>This action is permanent</Typography>
+                </Box>
               </MenuItem>
             </Menu>
           </Box>
 
-          {/* Meta row */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-            {jd.employmentType && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <BusinessCenterOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{jd.employmentType}</Typography>
+          {/* ── Meta pills ── */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+            {jd.location && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <LocationOnOutlined sx={{ fontSize: 10, color: "#9CA3AF" }} />
+                <Typography noWrap sx={{ fontSize: "10.5px", color: "#6B7280", maxWidth: 100 }}>{jd.location}</Typography>
               </Box>
             )}
-            {jd.location && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <LocationOnOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "11px", color: "#6B7280" }} noWrap>{jd.location}</Typography>
-              </Box>
+            {jd.employmentType && (
+              <Typography sx={{ fontSize: "10px", color: "#6B7280", bgcolor: "#F3F4F6", px: 0.75, py: 0.15, borderRadius: "4px" }}>
+                {jd.employmentType}
+              </Typography>
             )}
             {jd.workMode && (
-              <Chip label={jd.workMode} size="small" sx={{ fontSize: "10px", height: 17, bgcolor: "#F3F4F6", color: "#6B7280" }} />
+              <Typography sx={{ fontSize: "10px", color: "#6B7280", bgcolor: "#F3F4F6", px: 0.75, py: 0.15, borderRadius: "4px" }}>
+                {jd.workMode}
+              </Typography>
             )}
           </Box>
 
-          {/* Description */}
+          {/* ── Description ── */}
           {jd.description && (
             <Typography sx={{
-              fontSize: "12px", color: "#6B7280", lineHeight: 1.6, flex: 1,
+              fontSize: "11px", color: "#6B7280", lineHeight: 1.55,
               display: "-webkit-box", WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical", overflow: "hidden",
             }}>
@@ -209,40 +268,57 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             </Typography>
           )}
 
-          {/* Footer */}
+          {/* ── Footer ── */}
           <Box sx={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            flexWrap: "wrap", gap: 1, pt: 1.5, borderTop: "1px solid #F3F4F6", mt: "auto",
+            pt: 1, borderTop: "1px solid #F3F4F6", mt: "auto",
           }}>
-            {/* Created date */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <CalendarTodayOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-              <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>
-                {job.createdAt ? fmtDate(job.createdAt) : "—"}
-              </Typography>
-            </Box>
-
-            {/* Expiry / days left */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+              {job.createdAt && (
+                <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtDate(job.createdAt)}</Typography>
+              )}
               {daysLeft !== null && !isExpired && (
-                <Chip
-                  label={`${daysLeft}d left`}
-                  size="small"
-                  sx={{ fontSize: "10px", fontWeight: 700, height: 18, color: expiryColor, bgcolor: expiryBg, border: `1px solid ${expiryColor}30` }}
-                />
+                <Typography sx={{
+                  fontSize: "9.5px", fontWeight: 700,
+                  color: daysLeft <= 3 ? "#D97706" : TEAL,
+                  bgcolor: daysLeft <= 3 ? "#FFFBEB" : `${TEAL}10`,
+                  px: 0.6, py: 0.1, borderRadius: "4px",
+                }}>
+                  {daysLeft}d left
+                </Typography>
               )}
               {isExpired && (
-                <Chip label="Expired" size="small" sx={{ fontSize: "10px", fontWeight: 700, height: 18, color: "#DC2626", bgcolor: "#FEF2F2" }} />
+                <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: "#DC2626", bgcolor: "#FEF2F2", px: 0.6, py: 0.1, borderRadius: "4px" }}>
+                  Expired
+                </Typography>
               )}
               {job.expirationDate && !isExpired && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                  <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-                  <Typography sx={{ fontSize: "11px", color: "#9CA3AF", whiteSpace: "nowrap" }}>
-                    Exp. {fmtDate(job.expirationDate)}
-                  </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <AccessTimeOutlined sx={{ fontSize: 9, color: "#D1D5DB" }} />
+                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtDate(job.expirationDate)}</Typography>
                 </Box>
               )}
             </Box>
+
+            {!isDraft && (
+              <Tooltip title={copied ? "Copied!" : "Share Link"} placement="top">
+                <IconButton
+                  size="small"
+                  onClick={handleCopyLink}
+                  sx={{
+                    p: 0.4, borderRadius: "6px",
+                    color: copied ? "#059669" : "#9CA3AF",
+                    bgcolor: copied ? "#ECFDF5" : "transparent",
+                    border: "1px solid",
+                    borderColor: copied ? "#A7F3D0" : "#E5E7EB",
+                    transition: "all 0.18s",
+                    "&:hover": { color: "#059669", bgcolor: "#F0FDF4", borderColor: "#A7F3D0" },
+                  }}
+                >
+                  <ContentCopyOutlined sx={{ fontSize: 11 }} />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Box>
       </Box>

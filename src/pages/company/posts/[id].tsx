@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { Box, Alert, Breadcrumbs, Chip, Link as MuiLink, Menu, MenuItem, Tabs, Tab, Tooltip, Typography } from "@mui/material";
+import { Box, Alert, Breadcrumbs, Chip, IconButton, Link as MuiLink, Menu, MenuItem, Tabs, Tab, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -47,7 +47,8 @@ const PostDetailsPage: React.FC = () => {
   const job = useSelector(selectCurrentJob);
   const loading = useSelector(selectCurrentJobLoading);
   const error = useSelector(selectCurrentJobError);
-  const connectedUser = useSelector((state: RootState) => state.user.connectedUser.user);
+  const connectedUser        = useSelector((state: RootState) => state.user.connectedUser.user);
+  const companyMembership    = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const jobMatches = useSelector(selectJobMatches);
   const hasPassedCandidates = jobMatches.length > 0;
 
@@ -68,9 +69,14 @@ const PostDetailsPage: React.FC = () => {
   }, [activeTab]);
 
   const isOwner = useMemo(() => {
-    if (!job || !connectedUser) return false;
-    return job.user?._id === connectedUser._id;
-  }, [job, connectedUser]);
+    if (!job) return false;
+    const jobOwnerId = String(job.user?._id ?? "");
+    if (!jobOwnerId) return false;
+    // Post may be owned by the user directly OR by their company (resolveCompanyActor sets post.user = company)
+    const matchesUser    = connectedUser    && jobOwnerId === String(connectedUser._id    ?? "");
+    const matchesCompany = companyMembership && jobOwnerId === String(companyMembership._id ?? "");
+    return !!(matchesUser || matchesCompany);
+  }, [job, connectedUser, companyMembership]);
 
   const deletePost = useDeletePost({
     postId: job?._id,
@@ -242,33 +248,6 @@ const PostDetailsPage: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* Edit */}
-                      {isOwner && !activeEdit && activeTab === "details" && (
-                        <Tooltip
-                          title={hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
-                          arrow
-                          disableHoverListener={!hasPassedCandidates}
-                        >
-                          <Box
-                            onClick={() => !hasPassedCandidates && setActiveEdit("post")}
-                            sx={{
-                              display: "flex", alignItems: "center", gap: 0.75,
-                              px: 1.75, height: 36, borderRadius: "10px",
-                              cursor: hasPassedCandidates ? "not-allowed" : "pointer",
-                              border: "1.5px solid #E5E7EB", bgcolor: "#fff",
-                              opacity: hasPassedCandidates ? 0.45 : 1,
-                              transition: "border-color 0.15s, background 0.15s",
-                              "&:hover": hasPassedCandidates ? {} : { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" },
-                            }}
-                          >
-                            <EditOutlined sx={{ fontSize: 14, color: "#6B7280" }} />
-                            <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#374151", lineHeight: 1 }}>
-                              Edit
-                            </Typography>
-                          </Box>
-                        </Tooltip>
-                      )}
-
                       {/* Copy Interview Link */}
                       {!isDraft && (
                         <Box
@@ -288,29 +267,31 @@ const PostDetailsPage: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* More menu */}
+                      {/* Three-dot menu (Edit + Delete) */}
                       {isOwner && (
                         <>
-                          <Box
-                            onClick={(e) => setMenuAnchor(e.currentTarget as HTMLElement)}
+                          <IconButton
+                            onClick={(e) => setMenuAnchor(e.currentTarget)}
                             sx={{
-                              width: 36, height: 36, borderRadius: "10px", cursor: "pointer",
-                              display: "flex", alignItems: "center", justifyContent: "center",
+                              width: 36, height: 36, borderRadius: "10px",
                               border: "1.5px solid #E5E7EB", bgcolor: "#fff",
-                              transition: "border-color 0.15s, background 0.15s",
-                              "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB" },
+                              color: "#6B7280",
+                              transition: "all 0.15s",
+                              "&:hover": { borderColor: "#D1D5DB", bgcolor: "#F9FAFB", color: "#374151" },
                             }}
                           >
-                            <MoreVertOutlined sx={{ fontSize: 17, color: "#6B7280" }} />
-                          </Box>
+                            <MoreVertOutlined sx={{ fontSize: 18 }} />
+                          </IconButton>
+
                           <Menu
                             anchorEl={menuAnchor}
                             open={Boolean(menuAnchor)}
                             onClose={() => setMenuAnchor(null)}
                             transformOrigin={{ horizontal: "right", vertical: "top" }}
                             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-                            slotProps={{ paper: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 170, mt: 0.75, border: "1px solid #E5E7EB" } } }}
+                            slotProps={{ paper: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", minWidth: 180, mt: 0.75, border: "1px solid #E5E7EB" } } }}
                           >
+                            {/* Edit */}
                             <Tooltip
                               title={hasPassedCandidates ? "Cannot edit — candidates have already passed this interview" : ""}
                               arrow placement="left"
@@ -320,10 +301,10 @@ const PostDetailsPage: React.FC = () => {
                                 <MenuItem
                                   disabled={hasPassedCandidates}
                                   onClick={() => { setMenuAnchor(null); setActiveEdit("post"); }}
-                                  sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#F0FDF4" }, "&.Mui-disabled": { opacity: 0.45 } }}
+                                  sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#F0FDFA" }, "&.Mui-disabled": { opacity: 0.45 } }}
                                 >
-                                  <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <EditOutlined sx={{ fontSize: 15, color: TEAL }} />
+                                  <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#F0FDFA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <EditOutlined sx={{ fontSize: 14, color: TEAL }} />
                                   </Box>
                                   <Box>
                                     <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Edit Post</Typography>
@@ -335,12 +316,13 @@ const PostDetailsPage: React.FC = () => {
 
                             <Box sx={{ mx: 1.5, my: 0.5, height: "1px", bgcolor: "#F3F4F6" }} />
 
+                            {/* Delete */}
                             <MenuItem
                               onClick={() => { setMenuAnchor(null); deletePost.handleOpen(); }}
                               sx={{ mx: 0.5, borderRadius: "8px", gap: 1.25, py: 1, px: 1.25, "&:hover": { bgcolor: "#FEF2F2" } }}
                             >
                               <Box sx={{ width: 28, height: 28, borderRadius: "7px", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <DeleteOutlineOutlined sx={{ fontSize: 15, color: "#EF4444" }} />
+                                <DeleteOutlineOutlined sx={{ fontSize: 14, color: "#EF4444" }} />
                               </Box>
                               <Box>
                                 <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#EF4444", lineHeight: 1.2 }}>Delete Post</Typography>

@@ -3,7 +3,7 @@ import { Box, Typography, Skeleton } from "@mui/material";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import StarOutlined from "@mui/icons-material/StarOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUp";
-import AssignmentIndOutlined from "@mui/icons-material/AssignmentIndOutlined";
+import { WorkOutlineOutlined } from "@mui/icons-material";
 
 interface Props {
   metrics: { totalApplicants: number; totalJobPosts: number; avgCVScore: number; topCVScore: number } | null;
@@ -11,7 +11,7 @@ interface Props {
 
 const STATS = [
   { key: "totalApplicants", icon: PeopleOutlined,          label: "Total Applicants", color: "#0D9488", bg: "#F0FDFA",  fmt: (v: number) => v },
-  { key: "totalJobPosts",   icon: AssignmentIndOutlined,   label: "Job Posts",        color: "#10B981", bg: "#F0FDF4",  fmt: (v: number) => v },
+  { key: "totalJobPosts",   icon: WorkOutlineOutlined,   label: "Job Posts",        color: "#10B981", bg: "#F0FDF4",  fmt: (v: number) => v },
   { key: "avgCVScore",      icon: StarOutlined,            label: "Avg CV Score",     color: "#6366F1", bg: "#EEF2FF",  fmt: (v: number) => v != null ? `${v}%` : "N/A" },
   { key: "topCVScore",      icon: TrendingUpOutlined,      label: "Top CV Score",     color: "#6366F1", bg: "#EEF2FF",  fmt: (v: number) => v != null ? `${v}%` : "N/A" },
 ];

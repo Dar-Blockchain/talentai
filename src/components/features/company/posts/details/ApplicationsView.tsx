@@ -27,6 +27,11 @@ import ApplicationCard from "@/components/features/company/applications/Applicat
 const TEAL = "#0D9488";
 const PAGE_SIZE = 10;
 
+const STATUS_STYLE: Record<string, { label: string }> = {
+  visited:             { label: "Visited" },
+  interview_completed: { label: "Interview Completed" },
+};
+
 const SORT_GROUPS = [
   {
     label: "Date Applied",

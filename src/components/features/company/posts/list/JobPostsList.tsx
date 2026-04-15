@@ -83,7 +83,7 @@ const JobPostsList = memo<JobPostsListProps>(({
 }) => {
   if (loading) {
     return (
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: { xs: 1.5, md: 2 } }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" }, gap: { xs: 1.5, md: 2 } }}>
         {Array.from({ length: 6 }).map((_, i) => <JobPostSkeletonCard key={i} />)}
       </Box>
     );
@@ -127,7 +127,7 @@ const JobPostsList = memo<JobPostsListProps>(({
     <Box>
       <Box sx={{
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" },
         gap: { xs: 1.5, md: 2 },
         mb: pagination.totalPages > 1 ? 3 : 0,
       }}>
