@@ -91,8 +91,9 @@ const PostDetailsPage: React.FC = () => {
 
   const handleCopyLink = () => {
     if (!job?._id) return;
+    const companyId = job.user || connectedUser?._id || '';
     navigator.clipboard
-      .writeText(`${window.location.origin}/interview/hr?jobId=${job._id}&companyId=${job.user?._id}&ref=link`)
+      .writeText(`${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`)
       .then(() => showToast({ message: "Interview link copied!", severity: "success" }))
       .catch(() => showToast({ message: "Failed to copy link", severity: "error" }));
   };
