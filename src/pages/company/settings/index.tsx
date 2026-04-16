@@ -18,7 +18,7 @@ const SettingsPage: React.FC = () => {
   const empPerms = useSelector(selectEmployeePermissions);
   const {
     profile, loading, uploadingImage, fieldErrors, isEmployee,
-    handleInputChange, handleImageUpload, handleSaveProfile, setIsEditing,
+    handleInputChange, handleImageUpload, handleSaveProfile, handleCancel,
   } = useCompanyProfileManagement();
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
@@ -29,18 +29,16 @@ const SettingsPage: React.FC = () => {
   const startEdit = () => {
     if (!canEdit) return;
     setEditing(true);
-    setIsEditing(true);
   };
 
   const cancelEdit = () => {
     setEditing(false);
-    setIsEditing(false);
+    handleCancel();
   };
 
   const saveEdit = async () => {
     await handleSaveProfile();
     setEditing(false);
-    setIsEditing(false);
   };
 
   return (
