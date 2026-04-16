@@ -3,7 +3,7 @@
  *
  * Usage: node seeders/planLimits.seeder.js
  * This script creates default plans if they don't already exist
- * 
+ *
  * Can also be imported and used programmatically:
  * const { seedDefaultPlans } = require('./planLimits.seeder');
  * await seedDefaultPlans();
@@ -22,7 +22,7 @@ const defaultPlans = [
     monthlyInterviewLimit: 15,
     description: "Trial plan for new users",
     isActive: true,
-  }, 
+  },
 ];
 
 // Connect to MongoDB (only if needed)
@@ -56,7 +56,7 @@ const seedDefaultPlans = async () => {
 
     // Check if plans already exist
     const existingPlansCount = await PlanLimits.countDocuments();
-    
+
     if (existingPlansCount > 0) {
       console.log(`ℹ️  PlanLimits table already contains ${existingPlansCount} plan(s). Skipping seeding...`);
       return true;

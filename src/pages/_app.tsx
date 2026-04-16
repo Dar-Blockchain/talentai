@@ -1,22 +1,22 @@
 import "@/styles/globals.css";
-import "@/styles/walletconnect-override.css";
 import type { AppProps } from "next/app";
-import { Provider, useSelector } from "react-redux";
+import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline, Dialog, DialogContent, Box, Typography, CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import { Poppins } from "next/font/google";
 import MuiToast from "@/components/ui/Toast";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { useAuthCheck } from "@/hooks/useAuthCheck";
-import { isTokenExpired } from "@/utils/tokenUtils";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { isLoggingOutCheck } from "@/store/slices/authSlice";
+import { isLoggingOutCheck, clearAuth, logout } from "@/store/slices/authSlice";
+import { clearConnectedUser } from "@/store/slices/userSlice";
+import { setToastHandler } from "@/utils/toastEmitter";
+import { setSessionExpiredHandler } from "@/utils/storeEmitter";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -44,29 +44,50 @@ const theme = createTheme({
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
+  const dispatch = useDispatch<typeof store.dispatch>();
+  const router = useRouter();
 
   const userId = user?._id;
-  const { checkingAuth } = useAuthCheck();
   const isLoggingOut = useSelector(isLoggingOutCheck);
 
+  // Force logout when middleware detected an invalid/role-less token
   useEffect(() => {
-    const token = localStorage.getItem("api_token");
-    if (token && isTokenExpired(token)) {
-      localStorage.removeItem("api_token");
-      localStorage.removeItem("token");
-      Cookies.remove("api_token");
-      Cookies.remove("token");
-    }
-  }, []);
-
-  if(isLoggingOut) return <LoadingScreen title='Logging out, please wait...'/>
-
-  if (checkingAuth) {
-    return <LoadingScreen />;
-  }
+    if (router.query.force_logout !== "1") return;
+    dispatch(logout()).finally(() => {
+      persistor.purge();
+      router.replace("/signin");
+    });
+  }, [router.query.force_logout]);
 
   return (
-    <NotificationProvider userId={userId}>{children}</NotificationProvider>
+    <NotificationProvider userId={userId}>
+      {children}
+      <Dialog
+        open={isLoggingOut}
+        disableEscapeKeyDown
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            px: 4,
+            py: 3.5,
+            minWidth: 260,
+            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          },
+        }}
+      >
+        <DialogContent sx={{ p: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2.5 }}>
+          <CircularProgress size={36} thickness={4} sx={{ color: "#0D9488" }} />
+          <Box sx={{ textAlign: "center" }}>
+            <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>
+              Déconnexion en cours
+            </Typography>
+            <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.5 }}>
+              Veuillez patienter…
+            </Typography>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </NotificationProvider>
   );
 }
 
@@ -109,7 +130,20 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 
 function MuiToastWrapper() {
-  const { open, toastOptions, closeToast } = useToast();
+  const { open, toastOptions, closeToast, showToast } = useToast();
+
+  useEffect(() => {
+    setToastHandler(showToast);
+  }, [showToast]);
+
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      store.dispatch(clearAuth());
+      store.dispatch(clearConnectedUser());
+      persistor.purge();
+    });
+  }, []);
+
   return (
     <MuiToast
       open={open}

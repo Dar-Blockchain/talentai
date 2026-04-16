@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const { EXPIRATION_HOURS } = require("../constants/auth-jwt.constants");
 
 
-// Générer un token JWT
+// Generate JWT token
 module.exports.generateToken = (userId, companyId, role) => {
   const payload = { id: userId };
   if (companyId) {
@@ -11,11 +11,11 @@ module.exports.generateToken = (userId, companyId, role) => {
   if (role) {
     payload.role = role;
   }
+  console.log(payload, "payload");
   return jwt.sign(payload, process.env.Net_Secret, {
     expiresIn: "5y", // 5 ans
   });
 };
-
 
 module.exports.generateMemberToken = (memberEmail, senderEmail,  projectId) => {
   const payload = {

@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
+const NOTIFICATION_API_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+
 interface Notification {
   id: string;
   type: 'success' | 'info' | 'warning' | 'error';
@@ -10,6 +12,8 @@ interface Notification {
   icon: string;
   archived?: boolean;
 }
+
+
 
 interface NotificationState {
   notifications: Notification[];
@@ -35,6 +39,30 @@ const initialState: NotificationState = {
   nonArchivedCount: 0,
   archivedCount: 0,
   unreadCount: 0,
+};
+
+// Derive a human-readable title from notification type + content (mirrors backend logic)
+const deriveTitle = (type: string, content: string): string => {
+  if (content) {
+    const c = content.toLowerCase();
+    if (c.includes('interview'))                                      return 'Interview Update';
+    if (c.includes('application'))                                    return 'Application Update';
+    if (c.includes('unlocked') || c.includes('interested in your'))  return 'Profile Unlocked';
+    if (c.includes('match') || c.includes('matches your'))           return 'New Job Match';
+    if (c.includes('new offer') || c.includes('job') || c.includes('position') || c.includes('offer')) return 'New Job Offer';
+    if (c.includes('score') || c.includes('test') || c.includes('passed') || c.includes('level up')) return 'Test Result';
+    if (c.includes('profile'))                                        return 'Profile Update';
+    if (c.includes('plan') || c.includes('limit') || c.includes('subscription')) return 'Plan Update';
+    if (c.includes('company'))                                        return 'Company Update';
+    if (c.includes('welcome') || c.includes('registered'))           return 'Welcome!';
+    if (c.includes('password') || c.includes('login') || c.includes('sign')) return 'Account Security';
+  }
+  switch (type) {
+    case 'success': return 'Success';
+    case 'warning': return 'Warning';
+    case 'error':   return 'Error';
+    default:        return 'Notification';
+  }
 };
 
 // Helper to format timestamps
@@ -66,7 +94,7 @@ export const fetchNotifications = createAsyncThunk(
   'notifications/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const token = localStorage.getItem('api_token');
 
       console.log('🔍 Fetching notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
@@ -144,7 +172,7 @@ export const fetchNotifications = createAsyncThunk(
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
-        title: notif.title || 'System Notification',
+        title: notif.title || deriveTitle(notif.type || 'info', notif.content || notif.message || ''),
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
         isRead: notif.read !== undefined ? notif.read : (notif.isRead || false),
@@ -169,7 +197,7 @@ export const markNotificationAsRead = createAsyncThunk(
   'notifications/markAsRead',
   async (id: string, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const response = await fetch(`${apiUrl}/notification-system/markAsRead/${id}/read`, {
         method: 'PATCH',
         headers: getApiHeaders(),
@@ -190,7 +218,7 @@ export const markAllNotificationsAsRead = createAsyncThunk(
   'notifications/markAllAsRead',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const response = await fetch(`${apiUrl}/notification-system/mark-all-read`, {
         method: 'PATCH',
         headers: getApiHeaders(),
@@ -212,7 +240,7 @@ export const createNotification = createAsyncThunk(
   'notifications/create',
   async ({ type, content }: { type: 'info' | 'success' | 'warning' | 'error' | 'custom'; content: string }, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const response = await fetch(`${apiUrl}/notification-system/AddNotification/${type}`, {
         method: 'POST',
         headers: getApiHeaders(),
@@ -236,7 +264,7 @@ export const broadcastSystemNotification = createAsyncThunk(
   'notifications/broadcast',
   async ({ content, recipientIds }: { content: string; recipientIds: string[] }, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const token = localStorage.getItem('api_token');
 
       if (!token) {
@@ -277,7 +305,7 @@ export const archiveNotification = createAsyncThunk(
   'notifications/archive',
   async (id: string, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const response = await fetch(`${apiUrl}/notification-system/archiveNotification/${id}`, {
         method: 'PATCH',
         headers: getApiHeaders(),
@@ -299,7 +327,7 @@ export const archiveAllNotifications = createAsyncThunk(
   'notifications/archiveAll',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
       const response = await fetch(`${apiUrl}/notification-system/archive-all`, {
         method: 'PATCH',
         headers: getApiHeaders(),
@@ -323,7 +351,7 @@ export const fetchArchivedNotifications = createAsyncThunk(
   'notifications/fetchArchived',
   async (_, { rejectWithValue }) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = NOTIFICATION_API_URL;
 
       console.log('🗄️ Fetching archived notifications from:', `${apiUrl}/notification-system/GetMyNotification`);
 
@@ -366,7 +394,7 @@ export const fetchArchivedNotifications = createAsyncThunk(
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
-        title: notif.title || 'System Notification',
+        title: notif.title || deriveTitle(notif.type || 'info', notif.content || notif.message || ''),
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
         isRead: true, // Archived notifications are always read
@@ -398,7 +426,7 @@ const notificationSlice = createSlice({
       const notification: Notification = {
         id: action.payload._id || action.payload.id || Date.now().toString(),
         type: action.payload.type === 'system' ? 'info' : (action.payload.type || 'info'),
-        title: action.payload.title || 'System Notification',
+        title: action.payload.title || deriveTitle(action.payload.type || 'info', action.payload.content || action.payload.message || ''),
         message: action.payload.content || action.payload.message || '',
         timestamp: formatTimestamp(action.payload.createdAt ? new Date(action.payload.createdAt) : new Date()),
         isRead: action.payload.read || action.payload.isRead || false,

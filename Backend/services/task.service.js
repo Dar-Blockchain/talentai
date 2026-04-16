@@ -2,24 +2,18 @@ const nodemailer = require('nodemailer');
 const postService = require('./PosteServices/post.service');
 
 async function sendTask({ postId, token, candidateEmail, candidateName, stepId, candidateId, jobTitle, stepLabel }) {
-  // Pour l'instant, on délègue à postService.createAndSendTechnicalTest
-  const result = await postService.createAndSendTechnicalTest(
-    postId,
-    token,
-    candidateEmail,
-    candidateName
-  );
-  return result;
+  // Task sending functionality has been removed
+  throw new Error('Task sending functionality is not available');
 }
 
 async function testEmailConfig() {
   const transporter = nodemailer.createTransport({
-    host: "mail.privateemail.com",
+    host: process.env.Email_host,
     port: 465,
     secure: true,
     auth: {
-      user: "contact@talentai.bid",
-      pass: "87h0u74H",
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
 
@@ -28,5 +22,4 @@ async function testEmailConfig() {
 }
 
 module.exports = { sendTask, testEmailConfig };
-
 

@@ -1,0 +1,412 @@
+{
+  "info": {
+    "name": "Internal Campaigns & Participants API",
+    "description": "Collection pour tester l'API des Campagnes Internes et Participants",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Internal Campaigns",
+      "item": [
+        {
+          "name": "Create Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Employee Skills Assessment 2026\",\n  \"type\": \"SKILLS_MAPPING\",\n  \"description\": \"Assess current employee skills\",\n  \"anonymityMode\": \"NOMINATIVE\",\n  \"modules\": [\n    {\n      \"type\": \"QUESTIONNAIRE\",\n      \"order\": 1,\n      \"config\": {}\n    },\n    {\n      \"type\": \"SKILL_TEST\",\n      \"order\": 2,\n      \"config\": {}\n    }\n  ],\n  \"accessMethod\": \"BOTH\",\n  \"targetDepartment\": \"Engineering\",\n  \"targetEmployeeCount\": 50,\n  \"deadline\": \"2026-03-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns"]
+            }
+          }
+        },
+        {
+          "name": "Get All Campaigns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns?status=ACTIVE",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Campaign by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns", "{{campaign_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Campaign",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Campaign Title\",\n  \"description\": \"Updated description\",\n  \"deadline\": \"2026-04-30T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns", "{{campaign_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Change Campaign Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns/{{campaign_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns", "{{campaign_id}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get Campaign Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns/{{campaign_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns", "{{campaign_id}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Delete Campaign",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/internal-campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["internal-campaigns", "{{campaign_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Campaign Participants",
+      "item": [
+        {
+          "name": "Add Participant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{campaign_id}}/participants",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{campaign_id}}", "participants"]
+            }
+          }
+        },
+        {
+          "name": "Add Multiple Participants (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participants\": [\n    { \"email\": \"john@example.com\" },\n    { \"email\": \"jane@example.com\" },\n    { \"employeeId\": \"emp_123\" },\n    { \"email\": \"bob@example.com\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{campaign_id}}/participants/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{campaign_id}}", "participants", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Get Campaign Participants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{campaign_id}}/participants?status=IN_PROGRESS",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{campaign_id}}", "participants"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "IN_PROGRESS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Participant by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{participant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{participant_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Participant by Token (No Auth)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/token/{{anonymous_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "token", "{{anonymous_token}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Participant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"accessedAt\": \"2026-02-19T10:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{participant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{participant_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Module Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"moduleType\": \"QUESTIONNAIRE\",\n  \"status\": \"COMPLETED\",\n  \"completedAt\": \"2026-02-19T11:45:00Z\",\n  \"responseRef\": \"response_id_12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{participant_id}}/module-progress",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{participant_id}}", "module-progress"]
+            }
+          }
+        },
+        {
+          "name": "Mark Participant as Dropped",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"No response after 2 reminders\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{participant_id}}/drop",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{participant_id}}", "drop"]
+            }
+          }
+        },
+        {
+          "name": "Delete Participant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/campaign-participants/{{participant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["campaign-participants", "{{participant_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "campaign_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "participant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "anonymous_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

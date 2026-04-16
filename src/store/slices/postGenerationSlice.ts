@@ -1,6 +1,7 @@
 // postGenerationSlice.ts
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import axiosInstance from "@/utils/axiosInstance";
 
 // ------------------------------------------------------
 // Types
@@ -76,7 +77,6 @@ export interface PostGenerationState {
   generatedPost: PostGenerationResponse | null;
   creationType: "ai" | "manual" | null;
   promptDescription: string;
-  generationType: "quick" | "detailed";
   workMode: string;
   employmentType: string;
   salary: Salary;
@@ -102,7 +102,6 @@ const initialState: PostGenerationState = {
   generatedPost: null,
   creationType: null,
   promptDescription: "",
-  generationType: "quick",
   workMode: "",
   employmentType: "",
   salary: { min: null, max: null, currency: "USD" },
@@ -121,7 +120,6 @@ export const generatePost = createAsyncThunk<
   PostGenerationResponse,
   {
     jobDescription: string;
-    type: "quick" | "detailed";
     salary: Salary;
     contractType?: string;
     workMode?: string;
@@ -129,12 +127,7 @@ export const generatePost = createAsyncThunk<
   { rejectValue: string }
 >("postGeneration/generatePost", async (payload, { rejectWithValue }) => {
   try {
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("api_token="))
-      ?.split("=")[1];
-
-    const { jobDescription, salary, contractType, workMode, type } = payload;
+    const { jobDescription, salary, contractType, workMode } = payload;
 
     const salaryText = `\n\nSalary Range: ${
       salary.currency
@@ -149,32 +142,15 @@ export const generatePost = createAsyncThunk<
     const descriptionWithDetails =
       jobDescription + salaryText + contractTypeText + workModeText;
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          description: descriptionWithDetails,
-          type,
-          contractType,
-          workMode,
-        }),
-      }
-    );
+    const res = await axiosInstance.post("linkedinPost/generate-job-post", {
+      description: descriptionWithDetails,
+      contractType,
+      workMode,
+    });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to generate job");
-    }
-
-    return data;
+    return res.data;
   } catch (err: any) {
-    return rejectWithValue(err.message);
+    return rejectWithValue(err.response?.data?.message || err.message);
   }
 });
 
@@ -193,7 +169,6 @@ const postGenerationSlice = createSlice({
       state.generatedAt = null;
       state.creationType = null;
       state.promptDescription = "";
-      state.generationType = "quick";
       state.workMode = "";
       state.employmentType = "";
       state.salary = { min: null, max: null, currency: "USD" };
@@ -213,10 +188,6 @@ const postGenerationSlice = createSlice({
 
     setPromptDescription(state, action: PayloadAction<string>) {
       state.promptDescription = action.payload;
-    },
-
-    setGenerationType(state, action: PayloadAction<"quick" | "detailed">) {
-      state.generationType = action.payload;
     },
 
     setWorkMode(state, action: PayloadAction<string>) {
@@ -390,7 +361,6 @@ export const {
   clearPost,
   setCreationType,
   setPromptDescription,
-  setGenerationType,
   setWorkMode,
   setEmploymentType,
   setExpirationDate,
@@ -402,7 +372,6 @@ export const {
   deleteSoftSkill,
   addHardSkill,
   addSoftSkill,
-
   updateJobField,
   updateJobSalaryField,
   updateRequirements,

@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      set: (value) => value.toLowerCase(),
     },
     otp: {
       code: String,
@@ -35,7 +36,7 @@ const userSchema = new mongoose.Schema(
     },
     ip: String,
     Localisation: String,
-    role: { type: String, enum: ["Company", "Candidate", "Admin"] },
+    role: { type: String, enum: ["Company", "Candidate", "Admin", "Employee"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
@@ -65,12 +66,6 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    // Hedera account information
-    hederaAccountId: { type: String, default: null },
-    hederaPrivateKey: { type: String, default: null },
-    hederaPublicKey: { type: String, default: null },
-    // Gas fee balance for transaction fees (in HBAR)
-    gasFeeBalance: { type: Number, default: 0, min: 0 },
     // Notifications relationship
     notifications: [
       {

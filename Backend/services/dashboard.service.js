@@ -1,8 +1,8 @@
 // usersService.js
+const mongoose = require('mongoose');
 const User = require("../models/User.model");
 const Post = require('../models/Post.model');
 const Feedback = require('../models/feedback.model');
-const Bid = require('../models/Bid.model');
 const Profile = require('../models/Profile.model');
 
 module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
@@ -51,7 +51,10 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
 
 // jobAssessmentService.js
 const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
-const JobAssessmentResult = PostInterviewAssessment; // alias pour compatibilité
+const JobAssessmentResult = PostInterviewAssessment; // alias for compatibility
+const { POST_STATUS } = require("../constants/posts.constants");
+const InternalCampaign = require("../models/internalCampaign.model");
+const CompanyMembership = require("../models/CompanyMembership.model");
 
 module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
   try {
@@ -174,7 +177,7 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
       {
         $group: {
           _id: "$jobId",
-          assessments: { 
+          assessments: {
             $push: {
               _id: "$_id",
               condidateId: "$condidateId",
@@ -205,7 +208,7 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
           totalQuestions: { $first: "$numberOfQuestions" },  // Get the first value of numberOfQuestions
         },
       },
-      
+
       {
         $sort: { _id: -1 }, // Sort by jobId descending
       },
@@ -266,12 +269,11 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
 module.exports.getCounts = async () => {
   try {
     // Run independent counts in parallel
-    const [userCount, postCount, jobAssessmentCount, feedbackCount, bidCount] = await Promise.all([
+    const [userCount, postCount, jobAssessmentCount, feedbackCount] = await Promise.all([
       User.countDocuments(),
       Post.countDocuments(),
       JobAssessmentResult.countDocuments(),
-      Feedback.countDocuments(),
-      Bid.countDocuments()
+      Feedback.countDocuments()
     ]);
 
     // Prepare aggregate promises
@@ -320,7 +322,6 @@ module.exports.getCounts = async () => {
       jobAssessmentsWithScore: jobAssessmentWithScoreCount,
       jobAssessmentsWithScorePercentage: jobAssessmentWithScorePercentage,
       feedback: feedbackCount,
-      bids: bidCount,
       avgOverallScore: avgOverallScore,
       totalSkills: totalSkillsCount,
       totalHardSkills: totalHardSkillsCount,
@@ -333,8 +334,6 @@ module.exports.getCounts = async () => {
     throw new Error('Error fetching counts: ' + error.message);
   }
 };
-
-
 
 module.exports.getCountsByDay = async () => {
   try {
@@ -517,7 +516,6 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
   }
 };
 
-
 const xlsx = require("xlsx");
 
 module.exports.generateUserExcel = async () => {
@@ -526,7 +524,7 @@ module.exports.generateUserExcel = async () => {
     const users = await User.find({})
       .populate("profile")  // Populate the profile field with associated data
       .select("username FirstName LastName email role lastLogin ip Localisation profile");  // Include profile in selection
-    
+
     // Convert users and profiles to JSON format for Excel
     const usersData = users.map(user => {
       const profile = user.profile ? {
@@ -623,7 +621,6 @@ module.exports.generateUserExcelWithAssessmentZero = async () => {
   }
 };
 
-
 module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
   try {
     // Retrieve all assessment results with overallScore >= 50
@@ -670,5 +667,95 @@ module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
     return fileBuffer;
   } catch (error) {
     throw new Error("Error generating Excel file: " + error.message);
+  }
+};
+
+module.exports.getStatsCards = async (userId) => {
+  try {
+    // filter stats by company/user id
+    const [totalUsers, avgOverallScoreAgg, openPostsCount, activeCampaignsCount] = await Promise.all([
+      CompanyMembership.countDocuments({ company: userId, status: "active" }),
+      PostInterviewAssessment.aggregate([
+        { $match: { company: new mongoose.Types.ObjectId(userId), archived: { $ne: true }, "interviewData.finalReport.coverage.overall": { $ne: null } } },
+        { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
+      ]),
+      Post.countDocuments({ user: userId, status: POST_STATUS.OPEN, archived: { $ne: true } }),
+      InternalCampaign.countDocuments({ company: userId, status: "ACTIVE" })
+    ]);
+
+    const avgOverall = (avgOverallScoreAgg && avgOverallScoreAgg.length > 0) ? Math.round(avgOverallScoreAgg[0].avgOverallScore) : 0;
+
+    return {
+      totalEmployees: totalUsers,
+      avgInterviewScore: avgOverall,
+      activeJobPosts: openPostsCount,
+      activeCampaigns: activeCampaignsCount
+    };
+  } catch (error) {
+    throw new Error('Error fetching statsCards: ' + error.message);
+  }
+};
+
+module.exports.getRichStats = async (userId) => {
+  try {
+    const oid = new mongoose.Types.ObjectId(userId);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [scoreDistAgg, trendAgg, topJobsAgg, passRateAgg] = await Promise.all([
+      // Score distribution buckets: 0-20, 20-40, 40-60, 60-80, 80-100
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, archived: { $ne: true }, "interviewData.finalReport.scores.overall": { $exists: true } } },
+        { $bucket: {
+          groupBy: "$interviewData.finalReport.scores.overall",
+          boundaries: [0, 20, 40, 60, 80, 101],
+          default: "other",
+          output: { count: { $sum: 1 } }
+        }}
+      ]),
+      // 30-day daily interview count
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, archived: { $ne: true }, createdAt: { $gte: thirtyDaysAgo } } },
+        { $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+          avgScore: { $avg: "$interviewData.finalReport.scores.overall" }
+        }},
+        { $sort: { _id: 1 } }
+      ]),
+      // Top 5 job posts by interview count
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, archived: { $ne: true } } },
+        { $group: { _id: "$post", count: { $sum: 1 }, avgScore: { $avg: "$interviewData.finalReport.scores.overall" } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: "posts", localField: "_id", foreignField: "_id", as: "postDoc" } },
+        { $unwind: { path: "$postDoc", preserveNullAndEmptyArrays: true } },
+        { $project: { title: { $ifNull: ["$postDoc.jobDetails.title", "Unknown"] }, count: 1, avgScore: { $round: ["$avgScore", 0] } } }
+      ]),
+      // Pass rate (score >= 60)
+      PostInterviewAssessment.aggregate([
+        { $match: { company: oid, archived: { $ne: true }, "interviewData.finalReport.scores.overall": { $exists: true } } },
+        { $group: {
+          _id: null,
+          total: { $sum: 1 },
+          passed: { $sum: { $cond: [{ $gte: ["$interviewData.finalReport.scores.overall", 60] }, 1, 0] } }
+        }}
+      ])
+    ]);
+
+    const bucketMap = { 0: "0–20", 20: "20–40", 40: "40–60", 60: "60–80", 80: "80–100" };
+    const allBuckets = [0, 20, 40, 60, 80];
+    const scoreDistribution = allBuckets.map(id => ({
+      range: bucketMap[id],
+      count: scoreDistAgg.find(b => b._id === id)?.count || 0
+    }));
+
+    const passRateData = passRateAgg[0] || { total: 0, passed: 0 };
+    const passRate = passRateData.total > 0 ? Math.round((passRateData.passed / passRateData.total) * 100) : 0;
+    const totalInterviews = await PostInterviewAssessment.countDocuments({ company: oid, archived: { $ne: true } });
+
+    return { scoreDistribution, trend: trendAgg, topJobs: topJobsAgg, passRate, totalInterviews };
+  } catch (error) {
+    throw new Error('Error fetching rich stats: ' + error.message);
   }
 };

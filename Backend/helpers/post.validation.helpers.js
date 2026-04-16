@@ -132,7 +132,7 @@ const validatePostUpdate = (updateData, partial = true) => {
   if (partial) {
     if (updateData.jobDetails) {
       if (updateData.jobDetails.salary) {
-        if (typeof updateData.jobDetails.salary.min !== 'number' || 
+        if (typeof updateData.jobDetails.salary.min !== 'number' ||
             typeof updateData.jobDetails.salary.max !== 'number') {
           const err = new Error('Salary min and max must be numbers');
           err.status = 400;
@@ -150,38 +150,8 @@ const validatePostUpdate = (updateData, partial = true) => {
   return true;
 };
 
-/**
- * Validate technical test input
- * @param {string} postId - Post ID
- * @param {string} candidateEmail - Email
- * @param {string} candidateName - Name
- * @throws {Error} If validation fails
- */
-const validateTechnicalTestInput = (postId, candidateEmail, candidateName) => {
-  if (!postId || typeof postId !== 'string') {
-    const err = new Error('postId is required and must be a string');
-    err.status = 400;
-    throw err;
-  }
-
-  if (!candidateEmail || !candidateEmail.includes('@')) {
-    const err = new Error('candidateEmail is required and must be valid');
-    err.status = 400;
-    throw err;
-  }
-
-  if (!candidateName || typeof candidateName !== 'string' || candidateName.trim().length === 0) {
-    const err = new Error('candidateName is required and must be non-empty');
-    err.status = 400;
-    throw err;
-  }
-
-  return true;
-};
-
 module.exports = {
   validatePostData,
   parseJsonFields,
-  validatePostUpdate,
-  validateTechnicalTestInput
+  validatePostUpdate
 };

@@ -11,11 +11,11 @@ const router = express.Router();
 const companyPermissionsController = require("../controllers/companyPermissions.controller");
 
 // Import middlewares
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // All routes require admin authentication
-router.use(requireAuthUser, controledAcces('Admin'));
+router.use(requireAuth, controledAcces('Admin'));
 
 // GET /admin/companies/:companyId/permissions
 // Description: Retrieve permissions for a specific company

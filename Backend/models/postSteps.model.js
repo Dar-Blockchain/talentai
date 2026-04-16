@@ -98,6 +98,17 @@ const postStepSchema = new mongoose.Schema(
     },
     data: dataSchema,
     connections: [connectionSchema],
+    // Archive flag (soft delete)
+    archived: {
+      type: Boolean,
+      default: false,
+      description: 'Soft delete flag - true when step is archived instead of deleted'
+    },
+    archivedAt: {
+      type: Date,
+      default: null,
+      description: 'Timestamp when step was archived'
+    },
   },
   {
     timestamps: true,

@@ -3,6 +3,7 @@ const Post = require("../../models/Post.model");
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const CandidatePostStepProgress = require("../../models/CandidatePostStepProgress.model");
+const crypto = require("crypto");
 
 // ========== MONTHLY INTERVIEW LIMIT HELPERS ==========
 const checkMonthlyInterviewLimit = async (companyId) => {
@@ -66,6 +67,114 @@ const incrementMonthlyInterviewsUsage = async (companyId) => {
   }
 };
 
+// ========== CHECK EXISTENCE ==========
+/**
+ * Check if an assessment already exists for a candidate and post
+ * Only returns true if:
+ * 1. The post has PostSteps
+ * 2. The assessment exists for the candidate and post
+ * @param {string} candidateId - The candidate ID
+ * @param {string} postId - The post ID
+ * @returns {Promise<boolean>} True if assessment exists, false otherwise
+ */
+module.exports.hasExistingAssessment = async (candidateId, postId) => {
+  try {
+    // Check if post exists and is not archived
+    const post = await Post.findById(postId).select("PostSteps archived");
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if post is archived
+    if (post.archived) {
+      throw new Error("This post is archived and cannot accept assessments");
+    }
+
+    // If post HAS PostSteps → return false
+    if (post.PostSteps && post.PostSteps.length > 0) {
+      return false;
+    }
+
+    // If post has NO PostSteps → check assessment
+    const assessment = await PostInterviewAssessment.findOne({
+      candidate: candidateId,
+      post: postId
+    });
+
+    return assessment !== null;
+
+  } catch (error) {
+    console.error("Error checking existing assessment:", error.message);
+    throw error;
+  }
+};
+
+// ========== GET MATCHING DETAILS ==========
+module.exports.getMatchingDetails = async (candidateId, postId) => {
+  try {
+    console.log(`\n📊 [MATCHING DETAILS] - Getting match score and threshold for candidate`);
+    
+    // Check if post exists and is not archived
+    const post = await Post.findById(postId).select("thresholdScore archived");
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if post is archived
+    if (post.archived) {
+      throw new Error("This post is archived and cannot accept assessments");
+    }
+
+    // Get candidate profile
+    const Profile = require("../../models/Profile.model");
+    const candidateProfile = await Profile.findOne({ userId: candidateId });
+    
+    if (!candidateProfile) {
+      throw new Error("Candidate profile not found");
+    }
+
+    // Get threshold score — if 0 or not set, no restriction applies
+    const thresholdScore = post.thresholdScore || 0;
+    if (!thresholdScore) {
+      return { matchScore: null, thresholdScore: 0, meetsThreshold: true, message: "No threshold set for this position" };
+    }
+
+    // Get JobApplication to retrieve matchScore
+    const JobApplication = require("../../models/JobApplication.model");
+    const application = await JobApplication.findOne({
+      profile: candidateProfile._id,
+      post: postId
+    });
+
+    // No application yet — fail open (let them proceed)
+    if (!application) {
+      return { matchScore: null, thresholdScore, meetsThreshold: true, message: "No application found — access granted" };
+    }
+
+    const matchScore = application.matchScore || 0;
+    const meetsThreshold = matchScore >= thresholdScore;
+
+    console.log(`✅ Matching Details Retrieved:`);
+    console.log(`   Match Score: ${matchScore}/100`);
+    console.log(`   Threshold Score: ${thresholdScore}/100`);
+    console.log(`   Meets Threshold: ${meetsThreshold}`);
+
+    return {
+      matchScore,
+      thresholdScore,
+      meetsThreshold,
+      message: meetsThreshold 
+        ? "Your match score meets the required threshold" 
+        : `Your match score (${matchScore}/100) is below the minimum required score (${thresholdScore}/100)`
+    };
+  } catch (error) {
+    console.error("Error getting matching details:", error.message);
+    throw error;
+  }
+};
+
 // ========== CREATE ==========
 module.exports.createPostInterviewAssessment = async (assessmentData) => {
   try {
@@ -84,12 +193,43 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     await checkMonthlyInterviewLimit(companyId);
 
     // =======================
+    // CHECK IF ASSESSMENT ALREADY EXISTS
+    // =======================
+    const existingAssessment = await PostInterviewAssessment.findOne({
+      candidate: assessmentData.candidate,
+      post: assessmentData.post
+    });
+
+    if (existingAssessment) {
+      console.log(`✅ Assessment already exists for candidate ${assessmentData.candidate} and post ${assessmentData.post}. Returning existing assessment.`);
+      return await PostInterviewAssessment.findById(existingAssessment._id)
+        .populate({
+          path: 'candidate',
+          populate: {
+            path: 'profile',
+            model: 'Profile'
+          }
+        })
+        .populate('company')
+        .populate('post');
+    }
+
+    // =======================
     // CREATE ASSESSMENT
     // =======================
+    // Always generate a new unique sessionId (don't accept from client)
+    // Format: timestamp-random-hash
+    const sessionId = `session_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
+    
     const assessment = await PostInterviewAssessment.create({
       ...assessmentData,
       company,
-      completed: false
+      completed: false,
+      interviewData: {
+        ...assessmentData.interviewData,
+        sessionId,
+        timestamp: new Date()
+      }
     });
 
     // Increment monthly interviews usage (best-effort)
@@ -99,15 +239,6 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
       console.error('⚠️ Warning: failed to increment monthly interviews usage:', incErr.message || incErr);
       // Do not fail assessment creation if increment fails
     }
-
-    // =======================
-    // INCREMENT CANDIDATE QUOTA
-    // =======================
-    await Profile.findOneAndUpdate(
-      { userId: assessmentData.candidate },
-      { $inc: { quota: 1 } },
-      { new: true }
-    );
 
     // =======================
     // UPDATE PIPELINE
@@ -194,17 +325,30 @@ module.exports.createPostInterviewAssessment = async (assessmentData) => {
     return populatedAssessment;
 
   } catch (error) {
+    // If duplicate key error occurs, return the existing assessment instead
     if (error.code === 11000) {
-      const err = new Error('Duplicate session ID');
-      err.code = 11000;
-      err.status = 409;
-      throw err;
+      console.log('⚠️ Duplicate assessment detected. An assessment already exists for this candidate and post. Returning existing assessment...');
+      const existingAssessment = await PostInterviewAssessment.findOne({
+        candidate: assessmentData.candidate,
+        post: assessmentData.post
+      })
+        .populate({
+          path: 'candidate',
+          populate: {
+            path: 'profile',
+            model: 'Profile'
+          }
+        })
+        .populate('company')
+        .populate('post');
+      
+      if (existingAssessment) {
+        return existingAssessment;
+      }
     }
     throw error;
   }
 };
-
-
 
 // ========== READ - Get all assessments ==========
 module.exports.getAllPostInterviewAssessments = async (filters = {}, page = 1, limit = 10) => {
@@ -363,18 +507,195 @@ module.exports.getAssessmentsByCandidate = async (candidateId, filters = {}) => 
 };
 
 // ========== READ - Get all for a company ==========
-module.exports.getAssessmentsByCompany = async (companyId, filters = {}) => {
+// supports optional filters:
+//   jobTitle           -> partial/case-insensitive match against post.jobDetails.title
+//   candidateUsername  -> partial/case-insensitive match against candidate.username
+// pagination parameters page & limit
+module.exports.getAssessmentsByCompany = async (
+  companyId,
+  filters = {},
+  page = 1,
+  limit = 10,
+) => {
   try {
-    const query = { company: companyId };
+    const matchStage = { company: companyId, archived: { $ne: true } };
 
-    const assessments = await PostInterviewAssessment.find(query)
-      .populate('candidate', '-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey')
-      .populate('post', '-linkedinPost')
-      .sort({ createdAt: -1 });
+    const pipeline = [
+      { $match: matchStage },
+      // bring in candidate and post documents
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'candidate',
+          foreignField: '_id',
+          as: 'candidate',
+        },
+      },
+      { $unwind: { path: '$candidate', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
+        },
+      },
+      { $unwind: { path: '$post', preserveNullAndEmptyArrays: true } },
+    ];
 
-    return assessments;
+    // Generic search that searches across candidate name, email, and job title
+    if (filters.search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            // Search in candidate email
+            { 'candidate.email': { $regex: filters.search, $options: 'i' } },
+            // Search in candidate name (firstName, lastName, username)
+            { 'candidate.profile.firstName': { $regex: filters.search, $options: 'i' } },
+            { 'candidate.profile.lastName': { $regex: filters.search, $options: 'i' } },
+            { 'candidate.username': { $regex: filters.search, $options: 'i' } },
+            // Search in job title
+            { 'post.jobDetails.title': { $regex: filters.search, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    // project out sensitive or unnecessary fields before pagination
+    pipeline.push({
+      $project: {
+        'candidate.authHistory': 0,
+        'candidate.notifications': 0,
+        'post.linkedinPost': 0,
+      },
+    });
+
+    // prepare faceted pagination
+    const skip = (page - 1) * limit;
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [{ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: limit }],
+      },
+    });
+
+    const aggResult = await PostInterviewAssessment.aggregate(pipeline);
+    const meta = (aggResult[0] && aggResult[0].metadata[0]) || { total: 0 };
+    const data = (aggResult[0] && aggResult[0].data) || [];
+    const totalCount = meta.total;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data,
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   } catch (error) {
     console.error('❌ Error getting assessments by company:', error.message);
+    throw error;
+  }
+};
+
+// ========== METRICS - Company interview summary ==========
+module.exports.getInterviewMetricsForCompany = async (companyId, filters = {}) => {
+  try {
+    const matchStage = { company: companyId, archived: { $ne: true } };
+
+    const pipeline = [
+      { $match: matchStage },
+      // populate candidate & post for filtering
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'candidate',
+          foreignField: '_id',
+          as: 'candidate',
+        },
+      },
+      { $unwind: { path: '$candidate', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'posts',
+          localField: 'post',
+          foreignField: '_id',
+          as: 'post',
+        },
+      },
+      { $unwind: { path: '$post', preserveNullAndEmptyArrays: true } },
+    ];
+
+    if (filters.jobTitle) {
+      pipeline.push({
+        $match: { 'post.jobDetails.title': { $regex: filters.jobTitle, $options: 'i' } },
+      });
+    }
+    if (filters.candidateUsername) {
+      pipeline.push({
+        $match: { 'candidate.username': { $regex: filters.candidateUsername, $options: 'i' } },
+      });
+    }
+
+    if (filters.candidateName) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'candidate.username': { $regex: filters.candidateName, $options: 'i' } },
+            { 'candidate.profile.firstName': { $regex: filters.candidateName, $options: 'i' } },
+            { 'candidate.profile.lastName': { $regex: filters.candidateName, $options: 'i' } },
+          ],
+        },
+      });
+    }
+
+    if (filters.candidateEmail) {
+      pipeline.push({
+        $match: { 'candidate.email': { $regex: filters.candidateEmail, $options: 'i' } },
+      });
+    }
+
+    // compute summary metrics
+    pipeline.push({
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        sumScore: { $sum: '$interviewData.finalReport.scores.overall' },
+        needWork: {
+          $sum: {
+            $cond: [
+              { $lt: ['$interviewData.finalReport.scores.overall', 20] },
+              1,
+              0,
+            ],
+          },
+        },
+        excellent: {
+          $sum: {
+            $cond: [
+              { $gt: ['$interviewData.finalReport.scores.overall', 70] },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    });
+
+    const agg = await PostInterviewAssessment.aggregate(pipeline);
+    const row = agg[0] || { total: 0, sumScore: 0, needWork: 0, excellent: 0 };
+    const avgScore = row.total > 0 ? row.sumScore / row.total : 0;
+
+    return {
+      total: row.total,
+      needWork: row.needWork,
+      excellent: row.excellent,
+      avgScore,
+    };
+  } catch (error) {
+    console.error('❌ Error computing interview metrics for company:', error.message);
     throw error;
   }
 };

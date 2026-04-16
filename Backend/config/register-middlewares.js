@@ -25,7 +25,9 @@ function registerMiddlewares(app) {
         "https://staging.talentai.bid",
         "https://backend.staging.talentai.bid",
         "http://localhost:3000",
+        "http://localhost:3001",
         "http://localhost:5173",
+        "https://app.talentai.bid"
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       allowedHeaders: [
@@ -40,9 +42,6 @@ function registerMiddlewares(app) {
       optionsSuccessStatus: 204,
     }),
   );
-
-  // Enable pre-flight for all routes
-  app.options("*", cors());
 
   // Static files
   app.use(express.static(path.join(__dirname, "../public")));

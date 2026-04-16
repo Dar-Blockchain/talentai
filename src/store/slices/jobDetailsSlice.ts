@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Job, transformJobData } from '@/utils/jobHelpers';
+import axiosInstance from '@/utils/axiosInstance';
 
 // ─── Search params ────────────────────────────────────────
 export interface SearchJobsParams {
@@ -47,25 +48,16 @@ export const searchJobs = createAsyncThunk<
   'jobDetails/searchJobs',
   async (params, { rejectWithValue }) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-      const query = new URLSearchParams({
-        page: (params.page || 1).toString(),
-        limit: (params.limit || 6).toString(),
+      const response = await axiosInstance.get('post/search', {
+        params: {
+          page: params.page || 1,
+          limit: params.limit || 6,
+          ...(params.search ? { search: params.search } : {}),
+          ...(params.location && params.location !== 'All Locations' ? { location: params.location } : {}),
+        },
       });
 
-      if (params.search) query.append('search', params.search);
-      if (params.location && params.location !== 'All Locations') {
-        query.append('location', params.location);
-      }
-
-      const response = await fetch(`${baseUrl}post/search?${query}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch jobs: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         const jobs = (data.results || []).map(transformJobData);

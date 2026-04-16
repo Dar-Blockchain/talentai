@@ -12,7 +12,6 @@ export interface Permission {
   canCreateJobPosts: boolean;
 
   // Candidate Permissions
-  canUnlockCandidates: boolean;
   canViewCandidateProfiles: boolean;
   canContactCandidates: boolean;
 
@@ -71,14 +70,9 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     category: PERMISSION_CATEGORIES.CANDIDATES,
     permissions: [
       {
-        key: 'canUnlockCandidates',
-        label: 'Unlock Candidates',
-        description: 'Purchase and unlock candidate profiles using tokens',
-      },
-      {
         key: 'canViewCandidateProfiles',
         label: 'View Candidate Profiles',
-        description: 'View unlocked candidate profiles, assessments, and resumes',
+        description: 'View candidate profiles, assessments, and resumes',
       },
       {
         key: 'canContactCandidates',
@@ -134,7 +128,6 @@ export const DEFAULT_PERMISSIONS: Omit<Permission, '_id' | 'userId' | 'profileId
   canCreateJobPosts: true,
 
   // Candidate Permissions
-  canUnlockCandidates: true,
   canViewCandidateProfiles: true,
   canContactCandidates: true,
 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
+import axiosInstance from "@/utils/axiosInstance";
 // import { broadcastSystemNotification } from "./notificationSlice";
 
 interface RecruitmentFlowState {
@@ -20,11 +20,6 @@ interface RecommendedState {
   pagination: PaginationState;
 }
 
-interface PostPaymentState {
-  loading: boolean;
-  error: string | null;
-  data: any | null;
-}
 interface UpdatePostStatusState {
   loading: boolean;
   error: string | null;
@@ -59,6 +54,19 @@ interface AssessmentDetailsState {
   error: string | null;
 }
 
+interface PostMetrics {
+  total: number;
+  active: number;
+  draft: number;
+  closed: number;
+}
+
+interface PostMetricsState {
+  data: PostMetrics | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface PostState {
   steps: any[];
   loading: boolean;
@@ -81,11 +89,11 @@ interface PostState {
   recommended: RecommendedState;
   savePost: SavePostState;
   recruitmentFlow: RecruitmentFlowState;
-  postPayment: PostPaymentState;
   updatePostStatus: UpdatePostStatusState;
   candidateAssessments: CandidateAssessmentsState;
   companyAssessments: CompanyAssessmentsState;
   assessmentDetails: AssessmentDetailsState;
+  postMetrics: PostMetricsState;
 }
 
 // Initial state
@@ -144,11 +152,6 @@ const initialState: PostState = {
     nodes: [],
     edges: [],
   },
-  postPayment: {
-    loading: false,
-    error: null,
-    data: null,
-  },
   updatePostStatus: {
     loading: false,
     error: null,
@@ -185,6 +188,12 @@ const initialState: PostState = {
     loading: false,
     error: null,
   },
+  postMetrics: {
+    data: null,
+    loading: false,
+    error: null,
+  },
+
 };
 
 export const savePost = createAsyncThunk(
@@ -195,26 +204,8 @@ export const savePost = createAsyncThunk(
         throw new Error("No job data available");
       }
 
-      const token = Cookies.get("api_token");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/save-post`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(jobData),
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to save job");
-      }
-
-      const saved = await res.json();
-
+      const res = await axiosInstance.post("post/save-post", jobData);
+      const saved = res.data;
       const job = saved.data || saved;
       return {
         success: true,
@@ -222,7 +213,7 @@ export const savePost = createAsyncThunk(
         planUsage: saved.planUsage || null,
       };
     } catch (err: any) {
-      return rejectWithValue(err.message || "Error saving job");
+      return rejectWithValue(err.response?.data?.message || err.message || "Error saving job");
     }
   }
 );
@@ -238,39 +229,21 @@ export const updatePost = createAsyncThunk(
         throw new Error("Job ID or data is missing");
       }
 
-      const token = Cookies.get("api_token");
-
       console.log("📤 updatePost - jobId:", jobId);
       console.log("📤 updatePost - jobData:", JSON.stringify(jobData, null, 2));
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePost/${jobId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(jobData),
-        }
-      );
-
-      const responseData = await res.json();
+      const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
+      const responseData = res.data;
       console.log("📥 updatePost - response:", responseData);
 
-      if (!res.ok) {
-        throw new Error(responseData.message || "Failed to update job");
-      }
-
       const job = responseData.data || responseData;
-
       return {
         success: true,
         jobData: job,
       };
     } catch (err: any) {
       console.error("❌ updatePost - error:", err);
-      return rejectWithValue(err.message || "Error updating job");
+      return rejectWithValue(err.response?.data?.message || err.message || "Error updating job");
     }
   }
 );
@@ -285,36 +258,16 @@ export const fetchRecommendedPosts = createAsyncThunk(
     { rejectWithValue }) => {
     try {
       const { page = 1, limit = 10} = params;
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("api_token="))
-        ?.split("=")[1];
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
       });
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/adsPost?${queryParams}`,
-        {
-          method: "GET",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Failed to fetch recommended posts"
-        );
-      }
-
-      const data = await response.json();
-
-      return data;
+      const response = await axiosInstance.get(`post/adsPost?${queryParams}`);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || "An error occurred while fetching recommended posts"
+        error.response?.data?.message || error.message || "An error occurred while fetching recommended posts"
       );
     }
   }
@@ -328,35 +281,11 @@ export const postRecruitmentSteps = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("api_token="))
-        ?.split("=")[1];
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-steps/post/${postId}/steps`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(steps),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Failed to post recruitment steps"
-        );
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await axiosInstance.post(`post-steps/post/${postId}/steps`, steps);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || "An error occurred while posting recruitment steps"
+        error.response?.data?.message || error.message || "An error occurred while posting recruitment steps"
       );
     }
   }
@@ -371,41 +300,25 @@ export const fetchMyPosts = createAsyncThunk(
       limit?: number;
       search?: string;
       sort?: string;
+      status?: string;
+      creationType?: string;
     } = {},
     { rejectWithValue }
   ) => {
     try {
-      const { page = 1, limit = 10, search = "", sort = "newest" } = params;
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("api_token="))
-        ?.split("=")[1];
+      const { page = 1, limit = 12, search = "", sort = "newest", status, creationType } = params;
 
-      // Build query parameters
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
         ...(search && { search }),
         sort,
+        ...(status && status !== "all" && { status }),
+        ...(creationType && creationType !== "all" && { creationType }),
       });
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts?${queryParams}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch my posts");
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get(`post/my-posts?${queryParams}`);
+      const data = response.data;
       return {
         posts: data.results || [],
         pagination: {
@@ -419,7 +332,7 @@ export const fetchMyPosts = createAsyncThunk(
       };
     } catch (error: any) {
       return rejectWithValue(
-        error.message || "An error occurred while fetching posts"
+        error.response?.data?.message || error.message || "An error occurred while fetching posts"
       );
     }
   }
@@ -461,12 +374,6 @@ export const fetchJobMatches = createAsyncThunk(
     // Create the fetch promise and store it
     const fetchPromise = (async () => {
       try {
-        const token = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("api_token="))
-          ?.split("=")[1];
-
-        // Build query parameters
         const queryParams = new URLSearchParams({
           page: page.toString(),
           limit: limit.toString(),
@@ -478,23 +385,11 @@ export const fetchJobMatches = createAsyncThunk(
           `matching/jobs/${selectedJobId}/matches?${queryParams}`
         );
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches?${queryParams}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const response = await axiosInstance.get(
+          `matching/jobs/${selectedJobId}/matches?${queryParams}`
         );
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || "Failed to fetch job matches");
-        }
-
-        const data = await response.json();
+        const data = response.data;
         const matches = data && Array.isArray(data.matches) ? data.matches : [];
 
         // Send notification to newly matched candidates
@@ -555,7 +450,7 @@ export const fetchJobMatches = createAsyncThunk(
           fetchKey
         );
         return rejectWithValue(
-          error.message || "An error occurred while fetching matches"
+          error.response?.data?.message || error.message || "An error occurred while fetching matches"
         );
       }
     })();
@@ -572,31 +467,11 @@ export const deletePost = createAsyncThunk(
   "post/deletePost",
   async (jobId: string, { rejectWithValue }) => {
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("api_token="))
-        ?.split("=")[1];
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/deletePost/${jobId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete post");
-      }
-
+      await axiosInstance.delete(`post/deletePost/${jobId}`);
       return jobId;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || "An error occurred while deleting post"
+        error.response?.data?.message || error.message || "An error occurred while deleting post"
       );
     }
   }
@@ -607,70 +482,11 @@ export const fetchJobById = createAsyncThunk(
   "post/fetchJobById",
   async (jobId: string, { rejectWithValue }) => {
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("api_token="))
-        ?.split("=")[1];
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/details/${jobId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch job");
-      }
-
-      const data = await response.json();
-      return data?.data;
+      const response = await axiosInstance.get(`post/details/${jobId}`);
+      return response.data?.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || "An error occurred while fetching the job"
-      );
-    }
-  }
-);
-
-export const processPostPayment = createAsyncThunk(
-  "post/processPostPayment",
-  async (
-    { postId, agentId }: { postId: string; agentId: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const token = Cookies.get("api_token");
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/payment/process`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            postId,
-            agentId,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Payment processing failed");
-      }
-
-      return await response.json();
-    } catch (error: any) {
-      return rejectWithValue(
-        error.message || "An error occurred while processing payment"
+        error.response?.data?.message || error.message || "An error occurred while fetching the job"
       );
     }
   }
@@ -683,29 +499,10 @@ export const updatePostStatus = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = Cookies.get("api_token");
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/updatePostStatus/${postId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to update post status");
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await axiosInstance.patch(`post/updatePostStatus/${postId}`, { status });
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.message || "Error updating post status");
+      return rejectWithValue(error.response?.data?.message || error.message || "Error updating post status");
     }
   }
 );
@@ -718,32 +515,29 @@ export const savePostInterviewAssessment = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = Cookies.get("api_token");
+      // Normalise legacy interviewType values to the enum the backend model accepts
+      const interviewTypeMap: Record<string, string> = {
+        TECHNICAL_SKILL: "TECHNICAL_INTERVIEW",
+        SOFT_SKILL:      "ASSESSMENT",
+        SALARY_INTERVIEW: "HR_INTERVIEW",
+        PSYCHOTECHNIC:   "EVALUATION",
+      };
+      const normalizedInterviewData = interviewData?.interviewType
+        ? {
+            ...interviewData,
+            interviewType:
+              interviewTypeMap[interviewData.interviewType] ??
+              interviewData.interviewType,
+          }
+        : interviewData;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            post: postId,
-            interviewData,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to save post interview assessment");
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await axiosInstance.post("post-interview-assessments", {
+        post: postId,
+        interviewData: normalizedInterviewData,
+      });
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.message || "Error saving post interview assessment");
+      return rejectWithValue(error.response?.data?.message || error.message || "Error saving post interview assessment");
     }
   }
 );
@@ -757,30 +551,14 @@ export const fetchCandidateAssessments = createAsyncThunk(
   ) => {
     try {
       const { page = 1, limit = 10 } = params;
-      const token = localStorage.getItem("token");
 
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
       });
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/candidate/my?${queryParams}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch candidate assessments");
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get(`post-interview-assessments/candidate/my?${queryParams}`);
+      const data = response.data;
 
       // Handle API response: { success, message, count, data: [{ post, assessments: [...], candidatePostStepProgress }] }
       // Keep the grouped structure as-is
@@ -803,7 +581,7 @@ export const fetchCandidateAssessments = createAsyncThunk(
         },
       };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Error fetching candidate assessments");
+      return rejectWithValue(error.response?.data?.message || error.message || "Error fetching candidate assessments");
     }
   }
 );
@@ -817,25 +595,9 @@ export const fetchCompanyAssessments = createAsyncThunk(
   ) => {
     try {
       const { page = 1, limit = 50 } = params;
-      const token = localStorage.getItem("api_token");
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/company/mine`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch company assessments");
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get("post-interview-assessments/company/mine");
+      const data = response.data;
       const rawData = data?.data || data;
       let normalized: any[] = [];
 
@@ -911,7 +673,7 @@ export const fetchCompanyAssessments = createAsyncThunk(
         },
       };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Error fetching company assessments");
+      return rejectWithValue(error.response?.data?.message || error.message || "Error fetching company assessments");
     }
   }
 );
@@ -925,34 +687,29 @@ export const fetchAssessmentDetails = createAsyncThunk<
   "post/fetchAssessmentDetails",
   async (id, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("api_token");
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post-interview-assessments/${id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch assessment details");
-      }
-
-      const data = await response.json();
-      const responseData = data.data || data;
+      const response = await axiosInstance.get(`post-interview-assessments/${id}`);
+      const responseData = response.data.data || response.data;
       const assessment = responseData.assessment || responseData;
       const stepsData = responseData.stepsData || null;
-
       return { assessment, stepsData };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to load assessment");
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to load assessment");
     }
   }
 );
+
+export const fetchPostMetrics = createAsyncThunk(
+  "post/fetchPostMetrics",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("post/metrics");
+      return res.data.data as PostMetrics;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch post metrics");
+    }
+  }
+);
+
 
 // Post slice
 const postSlice = createSlice({
@@ -964,11 +721,8 @@ const postSlice = createSlice({
       state.savePost.error = null;
       state.savePost.savedPost = null;
     },
-    updateAgentConfigInCurrentJob: (state, action: PayloadAction<any>) => {
-      state.currentJob.agentConfig = {
-        ...state.currentJob.agentConfig,
-        ...action.payload,
-      };
+    setSavedPost: (state, action: PayloadAction<any>) => {
+      state.savePost.savedPost = action.payload;
     },
     clearError: (state) => {
       state.error = null;
@@ -1005,11 +759,7 @@ const postSlice = createSlice({
       state.recruitmentFlow.nodes = [];
       state.recruitmentFlow.edges = [];
     },
-    resetPostPayment(state) {
-      state.postPayment.loading = false;
-      state.postPayment.error = null;
-      state.postPayment.data = null;
-    },
+
     clearAssessmentDetails(state) {
       state.assessmentDetails = { assessment: null, stepsData: null, loading: false, error: null };
     },
@@ -1135,18 +885,7 @@ const postSlice = createSlice({
         state.recommended.error = action.payload as string;
       })
       // ---- POST PAYMENT ----
-      .addCase(processPostPayment.pending, (state) => {
-        state.postPayment.loading = true;
-        state.postPayment.error = null;
-      })
-      .addCase(processPostPayment.fulfilled, (state, action) => {
-        state.postPayment.loading = false;
-        state.postPayment.data = action.payload;
-      })
-      .addCase(processPostPayment.rejected, (state, action) => {
-        state.postPayment.loading = false;
-        state.postPayment.error = action.payload as string;
-      })
+
       // ---- UPDATE POST STATUS ----
       .addCase(updatePostStatus.pending, (state) => {
         state.updatePostStatus.loading = true;
@@ -1204,13 +943,28 @@ const postSlice = createSlice({
       .addCase(fetchAssessmentDetails.rejected, (state, action) => {
         state.assessmentDetails.loading = false;
         state.assessmentDetails.error = action.payload as string;
-      });
+      })
+      // ---- POST METRICS ----
+      .addCase(fetchPostMetrics.pending, (state) => {
+        state.postMetrics.loading = true;
+        state.postMetrics.error = null;
+      })
+      .addCase(fetchPostMetrics.fulfilled, (state, action) => {
+        state.postMetrics.loading = false;
+        state.postMetrics.data = action.payload;
+      })
+      .addCase(fetchPostMetrics.rejected, (state, action) => {
+        state.postMetrics.loading = false;
+        state.postMetrics.error = action.payload as string;
+      })
+      ;
   },
 });
 
 // Export actions
 export const {
   resetSavePost,
+  setSavedPost,
   clearError,
   setSteps,
   addStep,
@@ -1219,8 +973,7 @@ export const {
   setFlowNodes,
   setFlowEdges,
   resetFlow,
-  resetPostPayment,
-  updateAgentConfigInCurrentJob,
+
   clearAssessmentDetails,
 } = postSlice.actions;
 
@@ -1275,12 +1028,6 @@ export const selectRecommended = (state: { post: PostState }) => ({
   pagination: state.post.recommended.pagination,
 });
 
-export const selectPostPayment = (state: { post: PostState }) => ({
-  data: state.post.postPayment.data,
-  loading: state.post.postPayment.loading,
-  error: state.post.postPayment.error,
-});
-
 // Candidate Assessments Selectors
 export const selectCandidateAssessments = (state: { post: PostState }) =>
   state.post.candidateAssessments.items;
@@ -1310,3 +1057,12 @@ export const selectAssessmentDetailsLoading = (state: { post: PostState }) =>
   state.post.assessmentDetails.loading;
 export const selectAssessmentDetailsError = (state: { post: PostState }) =>
   state.post.assessmentDetails.error;
+
+// Post Metrics Selectors
+export const selectPostMetrics = (state: { post: PostState }) =>
+  state.post.postMetrics.data;
+export const selectPostMetricsLoading = (state: { post: PostState }) =>
+  state.post.postMetrics.loading;
+export const selectPostMetricsError = (state: { post: PostState }) =>
+  state.post.postMetrics.error;
+

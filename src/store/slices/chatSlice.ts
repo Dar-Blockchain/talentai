@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import axiosInstance from "@/utils/axiosInstance";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -78,10 +79,6 @@ const initialState: ChatState = {
   sendMessageError: null,
 };
 
-// ─── Helper ──────────────────────────────────────────────
-
-const getToken = () => localStorage.getItem("token");
-
 // ─── Thunks ──────────────────────────────────────────────
 
 // Fetch all conversations
@@ -89,26 +86,10 @@ export const fetchConversations = createAsyncThunk(
   "chat/fetchConversations",
   async (params: { limit?: number } | undefined, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const query = params && params.limit ? `?limit=${params.limit}` : "";
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations${query}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch conversations");
-      }
-
-      const data = await response.json();
-      return data.data as Conversation[];
+      const response = await axiosInstance.get("chat/conversations", {
+        params: params?.limit ? { limit: params.limit } : {},
+      });
+      return response.data.data as Conversation[];
     } catch (error: any) {
       return rejectWithValue(error.message || "Error fetching conversations");
     }
@@ -120,25 +101,8 @@ export const fetchConversation = createAsyncThunk(
   "chat/fetchConversation",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/${conversationId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch conversation");
-      }
-
-      const data = await response.json();
-      return data.data as Conversation;
+      const response = await axiosInstance.get(`chat/conversations/${conversationId}`);
+      return response.data.data as Conversation;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error fetching conversation");
     }
@@ -150,25 +114,8 @@ export const fetchMessages = createAsyncThunk(
   "chat/fetchMessages",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/messages/${conversationId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to fetch messages");
-      }
-
-      const data = await response.json();
-      return data.data as Message[];
+      const response = await axiosInstance.get(`chat/messages/${conversationId}`);
+      return response.data.data as Message[];
     } catch (error: any) {
       return rejectWithValue(error.message || "Error fetching messages");
     }
@@ -183,26 +130,8 @@ export const sendMessage = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/messages`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to send message");
-      }
-
-      const data = await response.json();
-      return data.data || data;
+      const response = await axiosInstance.post("chat/messages", payload);
+      return response.data.data || response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error sending message");
     }
@@ -214,23 +143,7 @@ export const markConversationRead = createAsyncThunk(
   "chat/markConversationRead",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/${conversationId}/read`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to mark conversation as read");
-      }
-
+      await axiosInstance.put(`chat/conversations/${conversationId}/read`);
       return conversationId;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error marking conversation as read");
@@ -243,23 +156,7 @@ export const deleteMessage = createAsyncThunk(
   "chat/deleteMessage",
   async (messageId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/messages/${messageId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete message");
-      }
-
+      await axiosInstance.delete(`chat/messages/${messageId}`);
       return messageId;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error deleting message");
@@ -272,23 +169,7 @@ export const deleteConversation = createAsyncThunk(
   "chat/deleteConversation",
   async (conversationId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/${conversationId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete conversation");
-      }
-
+      await axiosInstance.delete(`chat/conversations/${conversationId}`);
       return conversationId;
     } catch (error: any) {
       return rejectWithValue(error.message || "Error deleting conversation");
@@ -305,25 +186,8 @@ export const createOrFindConversation = createAsyncThunk<
   "chat/createOrFindConversation",
   async ({ candidateId, companyId }, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ candidateId, companyId }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to create conversation");
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.post("chat/conversations", { candidateId, companyId });
+      const data = response.data;
       if (data.success && data.data?._id) {
         return data.data;
       }

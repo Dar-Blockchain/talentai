@@ -8,6 +8,7 @@ import {
   removeNotification,
 } from '../slices/notificationSlice';
 import { playNotificationSound, NotificationType } from '@/utils/notificationSounds';
+import { emitToast } from '@/utils/toastEmitter';
 
 let socket: Socket | null = null;
 
@@ -32,15 +33,42 @@ const formatTimestamp = (date: Date): string => {
   return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
 };
 
-const mapNotificationData = (data: any) => ({
-  id: data._id || data.id || Date.now().toString(),
-  type: data.type === 'system' ? 'info' : (data.type || 'info'),
-  title: data.title || 'System Notification',
-  message: data.content || data.message || '',
-  timestamp: formatTimestamp(data.createdAt ? new Date(data.createdAt) : new Date()),
-  isRead: data.read !== undefined ? data.read : (data.isRead || false),
-  icon: data.type === 'system' ? 'info' : (data.type || 'info'),
-});
+const deriveTitle = (type: string, content: string): string => {
+  if (content) {
+    const c = content.toLowerCase();
+    if (c.includes('interview'))                                      return 'Interview Update';
+    if (c.includes('application'))                                    return 'Application Update';
+    if (c.includes('unlocked') || c.includes('interested in your'))  return 'Profile Unlocked';
+    if (c.includes('match') || c.includes('matches your'))           return 'New Job Match';
+    if (c.includes('new offer') || c.includes('job') || c.includes('position') || c.includes('offer')) return 'New Job Offer';
+    if (c.includes('score') || c.includes('test') || c.includes('passed') || c.includes('level up')) return 'Test Result';
+    if (c.includes('profile'))                                        return 'Profile Update';
+    if (c.includes('plan') || c.includes('limit') || c.includes('subscription')) return 'Plan Update';
+    if (c.includes('company'))                                        return 'Company Update';
+    if (c.includes('welcome') || c.includes('registered'))           return 'Welcome!';
+    if (c.includes('password') || c.includes('login') || c.includes('sign')) return 'Account Security';
+  }
+  switch (type) {
+    case 'success': return 'Success';
+    case 'warning': return 'Warning';
+    case 'error':   return 'Error';
+    default:        return 'Notification';
+  }
+};
+
+const mapNotificationData = (data: any) => {
+  const type = data.type === 'system' ? 'info' : (data.type || 'info');
+  const message = data.content || data.message || '';
+  return {
+    id: data._id || data.id || Date.now().toString(),
+    type,
+    title: data.title || deriveTitle(type, message),
+    message,
+    timestamp: formatTimestamp(data.createdAt ? new Date(data.createdAt) : new Date()),
+    isRead: data.read !== undefined ? data.read : (data.isRead || false),
+    icon: type,
+  };
+};
 
 export const socketMiddleware: Middleware = (store) => {
   return (next) => (action: unknown) => {
@@ -64,30 +92,42 @@ export const socketMiddleware: Middleware = (store) => {
         transports: ['websocket', 'polling'],
       });
 
+      let toastEnabled = false;
+      // Delay toasts by 2s after connect so login-time notifications don't flash before the page loads
       socket.on('connect', () => {
         store.dispatch(setSocketConnected(true));
         socket!.emit('join', userId);
+        setTimeout(() => { toastEnabled = true; }, 2000);
       });
 
       socket.on('disconnect', () => {
         store.dispatch(setSocketConnected(false));
       });
 
+      // Helper: suppress welcome toasts after first login
+      const shouldShowToast = (message: string): boolean => {
+        const isWelcome = message.toLowerCase().includes('welcome') || message.toLowerCase().includes('registered');
+        if (isWelcome) {
+          const trafficCounter = (store.getState() as any).user?.connectedUser?.user?.trafficCounter ?? 0;
+          return trafficCounter <= 1;
+        }
+        return true;
+      };
+
       // Listen for new notifications from backend
       socket.on('notification', (data: any) => {
         const notification = mapNotificationData(data);
         store.dispatch(addNotification(notification));
-        // Play notification sound
         playNotificationSound(notification.type as NotificationType);
+        if (toastEnabled && shouldShowToast(notification.message)) emitToast({ message: notification.message, severity: notification.type as any });
       });
 
       // Listen for broadcast system notifications
       socket.on('broadcast_notification', (data: any) => {
-        console.log('📢 [Socket] Received broadcast notification:', data);
         const notification = mapNotificationData(data);
         store.dispatch(addNotification(notification));
-        // Play notification sound
         playNotificationSound(notification.type as NotificationType);
+        if (toastEnabled && shouldShowToast(notification.message)) emitToast({ message: notification.message, severity: notification.type as any });
       });
 
       // Listen for notification read events
@@ -112,50 +152,53 @@ export const socketMiddleware: Middleware = (store) => {
 
       // Listen for interview completion notifications
       socket.on('interview_completed', (data: any) => {
+        const message = `Your ${data.interviewType || 'interview'} has been completed successfully. Results are now available.`;
         const notification = {
           id: Date.now().toString(),
           type: 'success' as const,
           title: 'Interview Completed',
-          message: `Your ${data.interviewType || 'interview'} has been completed successfully. Results are now available.`,
+          message,
           timestamp: formatTimestamp(new Date()),
           isRead: false,
           icon: 'success',
         };
         store.dispatch(addNotification(notification));
-        // Play notification sound
         playNotificationSound('success');
+        if (toastEnabled) emitToast({ message, severity: 'success' });
       });
 
       // Listen for match notifications
       socket.on('new_match', (data: any) => {
+        const message = data.message || 'A new candidate matches your job posting.';
         const notification = {
           id: Date.now().toString(),
           type: 'info' as const,
           title: 'New Match Found',
-          message: data.message || 'A new candidate matches your job posting.',
+          message,
           timestamp: formatTimestamp(new Date()),
           isRead: false,
           icon: 'info',
         };
         store.dispatch(addNotification(notification));
-        // Play notification sound
         playNotificationSound('info');
+        if (toastEnabled) emitToast({ message, severity: 'info' });
       });
 
       // Listen for purchase notifications
       socket.on('purchase_successful', (data: any) => {
+        const message = data.message || 'Candidate profile purchased successfully.';
         const notification = {
           id: Date.now().toString(),
           type: 'success' as const,
           title: 'Purchase Successful',
-          message: data.message || 'Candidate profile purchased successfully.',
+          message,
           timestamp: formatTimestamp(new Date()),
           isRead: false,
           icon: 'success',
         };
         store.dispatch(addNotification(notification));
-        // Play notification sound
         playNotificationSound('success');
+        if (toastEnabled) emitToast({ message, severity: 'success' });
       });
     }
 

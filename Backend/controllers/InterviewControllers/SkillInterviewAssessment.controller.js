@@ -1,5 +1,4 @@
 const SkillInterviewAssessmentService = require("../../services/InterviewServices/SkillInterviewAssessment.service");
-const SkillInterviewAssessment = require("../../models/SkillInterviewAssessment.model");
 const Profile = require("../../models/Profile.model");
 
 // ========== POST - Create a new assessment ==========
@@ -7,6 +6,24 @@ const create = async (req, res) => {
   try {
     const data = req.body;
     const userId = req.user?._id;
+    const userRole = req.user?.role;
+
+    // Check if user is a Company - not allowed
+    if (userRole === 'Company') {
+      return res.status(403).json({
+        success: false,
+        message: "Company users do not have permission to create skill interview assessments",
+      });
+    }
+
+    // Check if user quota has reached limit
+    const userProfile = await Profile.findOne({ userId });
+    if (userProfile && userProfile.quota === 5) {
+      return res.status(403).json({
+        success: false,
+        message: "You have reached your assessment quota limit. Please upgrade to the next level to create more assessments.",
+      });
+    }
 
     // Basic validation
     if (!data.interviewData?.sessionId) {
@@ -142,7 +159,7 @@ const getMy = async (req, res) => {
       ...result,
     });
   } catch (error) {
-    console.error("Error in getAll:", error);
+    console.error("Error in getMy:", error);
     return res.status(500).json({
       success: false,
       message: error.message || "Internal server error",

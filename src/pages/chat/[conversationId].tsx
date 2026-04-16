@@ -34,7 +34,7 @@ import {
   MessageList,
   MessageInput,
   DeleteConversationDialog,
-} from '@/components/chat';
+} from '@/components/features/chat';
 
 const ConversationPage = () => {
   const router = useRouter();
@@ -227,7 +227,7 @@ const ConversationPage = () => {
 
   const getDashboardRoute = () => {
     const role = profile?.type?.toLowerCase();
-    return role === 'company' ? '/dashboard/company' : '/dashboard/candidate';
+    return role === 'company' ? '/company/dashboard' : '/dashboard/candidate';
   };
 
   const otherUser = conversation?.participants?.find((p: any) => p._id !== currentUserId);

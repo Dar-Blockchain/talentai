@@ -91,10 +91,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
             }}
           >
             {interviewConfig.interviewType === 'TECHNICAL_SKILL'
-              ? `Validate ${routerQuery.skill || 'technical'} expertise • ${interviewConfig.context.experienceLevel}`
+              ? `${interviewConfig.context.targetCompany} • ${routerQuery.skill || 'technical'} expertise • ${interviewConfig.context.experienceLevel}`
               : interviewConfig.interviewType === 'SOFT_SKILL'
-              ? `Assess ${routerQuery.skill || 'soft skill'} in ${routerQuery.category || 'general'} context • ${interviewConfig.context.experienceLevel}`
-              : 'Intelligent Real-time Interview with AI'}
+              ? `${interviewConfig.context.targetCompany} • ${routerQuery.skill || 'soft skill'} in ${routerQuery.category || 'general'} context • ${interviewConfig.context.experienceLevel}`
+              : `${interviewConfig.context.targetCompany} • Intelligent Real-time Interview with AI`}
           </Typography>
 
           {/* Status Indicators */}

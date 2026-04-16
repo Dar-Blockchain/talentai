@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance, { setAxiosLoggingOut } from "@/utils/axiosInstance";
 import Cookies from "js-cookie";
 import { createNotification } from "./notificationSlice";
 import { clearConnectedUser, setConnectedUser } from "./userSlice";
@@ -9,6 +9,7 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  isLoggingOut: boolean;
 }
 
 const initialState: AuthState = {
@@ -16,30 +17,40 @@ const initialState: AuthState = {
   token: null,
   isLoading: false,
   error: null,
+  isLoggingOut: false,
 };
 
-// Global flag to skip interceptor checks during logout
-let isLoggingOut = false;
+// Selector for logout state
+export const isLoggingOutCheck = (state: { auth: AuthState }): boolean =>
+  state.auth.isLoggingOut;
 
-// Export function to set logout flag
-export const setLoggingOut = (value: boolean) => {
-  isLoggingOut = value;
-};
-
-// Export function to check if logging out
-export const isLoggingOutCheck = (): boolean => {
-  return isLoggingOut;
-};
+// Signin user thunk
+export const signinUser = createAsyncThunk(
+  "auth/signin",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('auth', { email });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message || error.response.data?.error || `Server error: ${error.response.status}`
+        );
+      } else if (error.request) {
+        return rejectWithValue("Network error: Unable to connect to server");
+      } else {
+        return rejectWithValue(error.message || "Sign in failed. Please try again.");
+      }
+    }
+  }
+);
 
 // Register user thunk
 export const registerUser = createAsyncThunk(
   "auth/register",
-  async (email: string, { rejectWithValue }) => {
+  async (payload: FormData | Record<string, any>, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`,
-        { email }
-      );
+      const response = await axiosInstance.post('auth/register', payload);
       return response.data;
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -48,6 +59,7 @@ export const registerUser = createAsyncThunk(
         // Server responded with error status
         const message =
           error.response.data?.message ||
+          error.response.data?.error ||
           `Server error: ${error.response.status}`;
         return rejectWithValue(message);
       } else if (error.request) {
@@ -70,18 +82,11 @@ export const verifyOTP = createAsyncThunk(
     { rejectWithValue, dispatch }
   ) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`,
+      const response = await axiosInstance.post(
+        'auth/verify-otp',
+        { email, otp, location },
         {
-          email,
-          otp,
-          location,
-        },
-        {
-          validateStatus: (status) => {
-            // Accept all status codes to prevent axios from throwing
-            return status >= 200 && status < 500;
-          },
+          validateStatus: (status) => status >= 200 && status < 500,
         }
       );
 
@@ -134,23 +139,37 @@ export const verifyOTP = createAsyncThunk(
   }
 );
 
+export const resendOTP = createAsyncThunk(
+  "auth/resendOTP",
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("auth/resend-otp", { email });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message || error.response.data?.error || `Server error: ${error.response.status}`
+        );
+      } else if (error.request) {
+        return rejectWithValue("Network error: Unable to connect to server");
+      } else {
+        return rejectWithValue(error.message || "Failed to resend code. Please try again.");
+      }
+    }
+  }
+);
+
 // Async thunk for logout - handles all cleanup centrally
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      // Prevent interceptors from running
-      setLoggingOut(true);
-
+      setAxiosLoggingOut(true);
       dispatch(clearConnectedUser());
 
       // Clear storage
-      localStorage.removeItem("api_token");
-      localStorage.removeItem("token");
       const userType = localStorage.getItem("userType");
-
       localStorage.clear();
-
       if (userType) {
         localStorage.setItem("userType", userType);
       }
@@ -160,16 +179,16 @@ export const logout = createAsyncThunk(
         Cookies.remove(cookieName, { path: "/" });
       });
 
+      // Delay reset so in-flight responses (e.g. 401s) are still suppressed
+      setTimeout(() => setAxiosLoggingOut(false), 500);
       return true;
     } catch (error: any) {
       console.error("❌ Logout error:", error);
-      // Still redirect to signin even on error
+      setAxiosLoggingOut(false);
       if (typeof window !== 'undefined') {
         window.location.href = '/signin';
       }
       return rejectWithValue(error.message || "Logout failed");
-    } finally {
-      setLoggingOut(false);
     }
   }
 );
@@ -187,14 +206,30 @@ const authSlice = createSlice({
       state.error = null;
       state.token = null;
     },
+    loginAsGuest: (state, action) => {
+      state.isAuthenticated = true;
+      state.token = action.payload.token;
+    },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(signinUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(signinUser.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(signinUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
         state.isAuthenticated = false;
         state.error = null;
@@ -224,22 +259,41 @@ const authSlice = createSlice({
             sameSite: "lax",
           });
         }
+        if (action.payload.user?.role) {
+          Cookies.set("user_role", action.payload.user.role, {
+            expires: 30,
+            path: "/",
+            sameSite: "lax",
+          });
+        }
       })
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      .addCase(logout.pending, (state) => {
+      .addCase(resendOTP.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(resendOTP.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(resendOTP.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(logout.pending, (state) => {
+        state.isLoggingOut = true;
       })
       .addCase(logout.fulfilled, (state) => {
-        state.isLoading = false;
+        state.isLoggingOut = false;
         state.isAuthenticated = false;
         state.error = null;
         state.token = null;
       })
       .addCase(logout.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoggingOut = false;
         state.isAuthenticated = false;
         state.error = action.payload as string;
         state.token = null;
@@ -247,5 +301,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearAuth } = authSlice.actions;
+export const { clearError, clearAuth, loginAsGuest } = authSlice.actions;
 export default authSlice.reducer;

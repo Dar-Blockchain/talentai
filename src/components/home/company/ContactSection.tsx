@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -12,9 +12,9 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
+import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 
-const ACCENT    = "rgba(12,218,139,1)";
-const ACCENT_DIM = "rgba(12,218,139,0.7)";
+const ACCENT     = "#0CDA8B";
 const ACCENT_BG  = "rgba(12,218,139,0.10)";
 const TEXT_DARK  = "#0b1b1f";
 
@@ -22,10 +22,10 @@ const TEAM_SIZES = ["1–10", "11–50", "51–200", "200+"];
 
 const FIELD_SX = {
   "& .MuiOutlinedInput-root": {
-    borderRadius: 0.5,
+    borderRadius: 1.5,
     fontFamily: "Poppins",
     fontSize: "14px",
-    bgcolor: "rgba(255,255,255,0.85)",
+    bgcolor: "#fff",
     "&.Mui-focused fieldset": { borderColor: ACCENT },
     "&:hover fieldset": { borderColor: "rgba(12,218,139,0.5)" },
   },
@@ -35,9 +35,18 @@ const FIELD_SX = {
 };
 
 const TRUST_ITEMS = [
-  { icon: <AccessTimeOutlinedIcon sx={{ fontSize: 18, color: ACCENT }} />, text: "Reply within 24 hours" },
-  { icon: <GroupsOutlinedIcon     sx={{ fontSize: 18, color: ACCENT }} />, text: "Dedicated onboarding team" },
-  { icon: <TrendingUpOutlinedIcon  sx={{ fontSize: 18, color: ACCENT }} />, text: "Hire 75% faster from day one" },
+  {
+    icon: <AccessTimeOutlinedIcon sx={{ fontSize: 16, color: ACCENT }} />,
+    text: "Response within 24 hours — no sales runaround",
+  },
+  {
+    icon: <GroupsOutlinedIcon sx={{ fontSize: 16, color: ACCENT }} />,
+    text: "Dedicated onboarding team from day one",
+  },
+  {
+    icon: <TrendingUpOutlinedIcon sx={{ fontSize: 16, color: ACCENT }} />,
+    text: "Teams cut time-to-hire by up to 75%",
+  },
 ];
 
 interface FormState { name: string; email: string; company: string; teamSize: string; message: string }
@@ -80,7 +89,20 @@ const ContactSection: React.FC = () => {
       if (res.ok) {
         setSubmitted(true);
       } else {
-        setSendError("Something went wrong. Please try again or email us directly.");
+        const json = await res.json().catch(() => null);
+        const msg: string = json?.message || "Something went wrong. Please try again or email us directly.";
+        // Route field-specific errors to the inline field helper instead of the banner
+        if (/message/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, message: msg }));
+        } else if (/email/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, email: msg }));
+        } else if (/name/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, name: msg }));
+        } else if (/company/i.test(msg)) {
+          setErrors((prev) => ({ ...prev, company: msg }));
+        } else {
+          setSendError(msg);
+        }
       }
     } catch {
       setSendError("Network error. Please check your connection and try again.");
@@ -92,97 +114,155 @@ const ContactSection: React.FC = () => {
   return (
     <Box
       sx={{
-        px: 3,
-        py: { xs: 6, md: 8 },
-        background: "linear-gradient(0deg, #F3F7FB, #F3F7FB)",
-        backgroundImage: `
-          linear-gradient(0deg, #F3F7FB, #F3F7FB),
-          linear-gradient(90deg, rgba(0,255,157,0.15) 1px, transparent 1px),
-          linear-gradient(180deg, rgba(0,255,157,0.15) 1px, transparent 1px)
-        `,
-        backgroundSize: "80px 80px",
-        backgroundBlendMode: "overlay",
-        maxWidth: "98%",
-        borderRadius: "10px",
+        maxWidth: 1200,
         mx: "auto",
+        px: { xs: 2, md: 4 },
+        py: { xs: 3, md: 5 },
       }}
     >
-      {/* Section heading */}
-      <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "36px", lineHeight: "43.2px", textAlign: "center", color: TEXT_DARK, mb: 1 }}>
-        Get in Touch
-      </Typography>
-      <Typography sx={{ fontFamily: "Poppins", fontWeight: 400, fontSize: "20px", lineHeight: 1.6, textAlign: "center", color: TEXT_DARK, mb: 6 }}>
-        Tell us about your team and we'll show you how TalentAI fits.
-      </Typography>
+      {/* ── Section header ── */}
+      <Box sx={{ textAlign: "left", mb: { xs: 5, md: 7 }, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+        {/* Overline pill */}
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 1,
+          bgcolor: ACCENT_BG, border: `1.5px solid rgba(12,218,139,0.40)`,
+          borderRadius: "24px", px: 2.5, py: 1, mb: 2,
+        }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
+            Let's Talk
+          </Typography>
+        </Box>
 
-      {/* Two-column card */}
+        <Typography sx={{
+          fontFamily: "Poppins",
+          fontWeight: 700,
+          fontSize: { xs: "26px", md: "38px" },
+          lineHeight: 1.2,
+          color: TEXT_DARK,
+          mb: 1.5,
+        }}>
+          Reclaim Your Calendar.{" "}
+          <Box component="span" sx={{ color: ACCENT }}>Hire with Confidence.</Box>
+        </Typography>
+
+        <Typography sx={{
+          fontFamily: "Poppins",
+          fontWeight: 400,
+          fontSize: { xs: "15px", md: "17px" },
+          lineHeight: 1.65,
+          color: "#4B5563",
+          maxWidth: 840,
+        }}>
+          Every day without TalentAI is another $500 lost to an open role — and another great candidate hired by your competitor. Let's fix your pipeline today.
+        </Typography>
+      </Box>
+
+      {/* ── Two-column card ── */}
       <Box sx={{
-        maxWidth: 960,
+        maxWidth: 1000,
         mx: "auto",
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "1fr 1.5fr" },
-        borderRadius: "10px",
+        gridTemplateColumns: { xs: "1fr", md: "5fr 7fr" },
+        borderRadius: 3,
         overflow: "hidden",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.10)",
+        boxShadow: "0 24px 64px rgba(0,0,0,0.10)",
+        border: "1px solid rgba(0,0,0,0.05)",
       }}>
 
-        {/* Left — dark panel matching Hero/BiasFree dark style */}
+        {/* ── Left dark panel ── */}
         <Box sx={{
-          background: "#141415",
+          background: "#0E0F10",
           p: { xs: 4, md: 5 },
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          gap: 4,
+          gap: 5,
+          position: "relative",
+          overflow: "hidden",
         }}>
-          <Box>
-            <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "22px", color: "#fff", mb: 1.5, lineHeight: 1.3 }}>
-              Let's talk about<br />your hiring goals
+          <Box sx={{ position: "relative" }}>
+            <Typography sx={{
+              fontFamily: "Poppins",
+              fontWeight: 700,
+              fontSize: { xs: "20px", md: "24px" },
+              color: "#fff",
+              lineHeight: 1.3,
+              mb: 2,
+            }}>
+              Let's build a hiring process<br />
+              <Box component="span" sx={{ color: ACCENT }}>your team is proud of</Box>
             </Typography>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>
-              Whether you're scaling a team or optimizing your pipeline, our AI hiring platform is built for you.
+            <Typography sx={{
+              fontFamily: "Poppins",
+              fontSize: "14px",
+              color: "rgba(255,255,255,0.50)",
+              lineHeight: 1.75,
+            }}>
+              You didn't get into HR to spend your days scheduling interviews and sorting spreadsheets. Tell us where your pipeline is breaking — we'll show you exactly how TalentAI fixes it.
             </Typography>
           </Box>
 
           {/* Trust bullets */}
-          <Stack spacing={2.5}>
+          <Stack spacing={2} sx={{ position: "relative" }}>
             {TRUST_ITEMS.map((item, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ width: 32, height: 32, borderRadius: "50%", bgcolor: ACCENT_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${ACCENT}30` }}>
+              <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                <Box sx={{
+                  width: 30, height: 30, borderRadius: "8px",
+                  bgcolor: ACCENT_BG, border: `1px solid rgba(12,218,139,0.20)`,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, mt: 0.1,
+                }}>
                   {item.icon}
                 </Box>
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.8)", fontWeight: 500 }}>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.75)", fontWeight: 500, lineHeight: 1.5 }}>
                   {item.text}
                 </Typography>
               </Box>
             ))}
           </Stack>
 
-          {/* Email */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 2, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-            <EmailOutlinedIcon sx={{ fontSize: 15, color: ACCENT }} />
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
+          {/* Email footer */}
+          <Box sx={{
+            display: "flex", alignItems: "center", gap: 1,
+            pt: 2, borderTop: "1px solid rgba(255,255,255,0.07)",
+            position: "relative",
+          }}>
+            <EmailOutlinedIcon sx={{ fontSize: 14, color: ACCENT }} />
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", color: "rgba(255,255,255,0.40)" }}>
               contact@talentai.bid
             </Typography>
           </Box>
         </Box>
 
-        {/* Right — form panel */}
-        <Box sx={{ bgcolor: "rgba(243,247,251,0.95)", p: { xs: 4, md: 5 } }}>
+        {/* ── Right form panel ── */}
+        <Box sx={{ bgcolor: "#fff", p: { xs: 4, md: 5 } }}>
           {submitted ? (
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", py: 6, gap: 2 }}>
-              <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: ACCENT_BG, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${ACCENT}50` }}>
-                <CheckCircleOutlineIcon sx={{ fontSize: 36, color: ACCENT }} />
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", py: 8, gap: 2.5 }}>
+              <Box sx={{
+                width: 72, height: 72, borderRadius: "50%",
+                bgcolor: ACCENT_BG, display: "flex", alignItems: "center", justifyContent: "center",
+                border: `2px solid rgba(12,218,139,0.40)`,
+              }}>
+                <CheckCircleOutlineIcon sx={{ fontSize: 40, color: ACCENT }} />
               </Box>
-              <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "20px", color: TEXT_DARK }}>
+              <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "22px", color: TEXT_DARK }}>
                 Message sent!
               </Typography>
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#6B7280" }}>
-                We'll get back to you within 24 hours.
+              <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#6B7280", maxWidth: 260 }}>
+                We'll get back to you within 24 hours — no sales runaround.
               </Typography>
             </Box>
           ) : (
             <Stack spacing={2.5}>
+              {/* Form title */}
+              <Box sx={{ mb: 0.5 }}>
+                <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "18px", color: TEXT_DARK, mb: 0.5 }}>
+                  Tell us about your team
+                </Typography>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "#6B7280" }}>
+                  We'll reach out with a personalised demo.
+                </Typography>
+              </Box>
+
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField label="Full name"  size="small" fullWidth required value={form.name}    onChange={handleChange("name")}    error={!!errors.name}    helperText={errors.name}    sx={FIELD_SX} />
                 <TextField label="Work email" size="small" fullWidth required type="email" value={form.email}   onChange={handleChange("email")}   error={!!errors.email}   helperText={errors.email}   sx={FIELD_SX} />
@@ -197,7 +277,7 @@ const ContactSection: React.FC = () => {
                 </TextField>
               </Stack>
               <TextField
-                label="How can we help?"
+                label="Where is your pipeline breaking?"
                 size="small" fullWidth required multiline rows={4}
                 value={form.message}
                 onChange={handleChange("message")}
@@ -209,19 +289,20 @@ const ContactSection: React.FC = () => {
                 variant="contained"
                 fullWidth
                 disabled={sending}
+                endIcon={<ArrowForwardOutlined />}
                 onClick={handleSubmit}
                 sx={{
                   backgroundColor: ACCENT,
-                  color: TEXT_DARK,
+                  color: "#fff",
                   boxShadow: "none",
-                  borderRadius: 0.5,
+                  borderRadius: 0,
                   textTransform: "none",
                   fontFamily: "Poppins",
-                  fontWeight: 500,
-                  fontSize: "0.95rem",
-                  py: 1.25,
-                  "&:hover": { backgroundColor: ACCENT_DIM },
-                  "&.Mui-disabled": { backgroundColor: ACCENT_DIM, color: TEXT_DARK, opacity: 0.7 },
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  py: 1.5,
+                  "&:hover": { backgroundColor: ACCENT, boxShadow: "none" },
+                  "&.Mui-disabled": { backgroundColor: ACCENT, color: "#fff", opacity: 0.7 },
                 }}
               >
                 {sending ? "Sending…" : "Send Message"}
@@ -232,7 +313,7 @@ const ContactSection: React.FC = () => {
                 </Typography>
               )}
               <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "#9CA3AF", textAlign: "center" }}>
-                No spam. We respect your privacy.
+                No spam. We respect your privacy. GDPR compliant.
               </Typography>
             </Stack>
           )}

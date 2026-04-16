@@ -3,20 +3,19 @@ import React, { useMemo, useEffect, useState, useRef } from "react";
 import { AppBar, Box, Toolbar } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import HeaderLogo from "@/components/header/HeaderLogo";
-import TokenDisplay from "@/components/header/TokenDisplay";
-import HeaderNotification from "@/components/header/HeaderNotification";
-import UserAvatar from "@/components/header/UserAvatar";
-import HamburgerButton from "@/components/header/HamburgerButton";
+import HeaderLogo from "@/components/layout/header/HeaderLogo";
+import HeaderNotification from "@/components/layout/header/HeaderNotification";
+import UserAvatar from "@/components/layout/header/UserAvatar";
+import HamburgerButton from "@/components/layout/header/HamburgerButton";
 import {
   appBarStyle,
   containerStyle,
   desktopMenuStyle,
   toolbarStyle,
-} from "@/components/header/styles";
-import HeaderNavMenu from "@/components/header/HeaderNavMenu";
-import HeaderPrimaryActions from "@/components/header/HeaderPrimaryActions";
-import HeaderMessagesDropdown from "@/components/header/HeaderMessagesDropdown";
+} from "@/components/layout/header/styles";
+import HeaderNavMenu from "@/components/layout/header/HeaderNavMenu";
+import HeaderPrimaryActions from "@/components/layout/header/HeaderPrimaryActions";
+import HeaderMessagesDropdown from "@/components/layout/header/HeaderMessagesDropdown";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 
@@ -49,10 +48,6 @@ const Header = () => {
       router.pathname === "/home/company" ||
       router.pathname === "/home/candidate"
     );
-  }, [router.pathname]);
-
-  const isWorkspacePage = useMemo(() => {
-    return router.pathname === "/workspaces";
   }, [router.pathname]);
 
   /* ===============================
@@ -136,16 +131,14 @@ const Header = () => {
           {/* RIGHT – AUTHENTICATED */}
           {isAuthenticated && (
             <Box sx={desktopMenuStyle}>
-              {!showHeaderNavMenu && !isWorkspacePage && <TokenDisplay />}
-
               {/* Messages Dropdown */}
-              {!showHeaderNavMenu && !isWorkspacePage && (
+              {!showHeaderNavMenu && (
                 <HeaderMessagesDropdown
                   userId={userId}
                   unreadMessageCount={unreadMessageCount}
                 />
               )}
-              {!isCompany && !showHeaderNavMenu && !isWorkspacePage && (
+              {!isCompany && !showHeaderNavMenu && (
                 <HeaderNotification />
               )}
 

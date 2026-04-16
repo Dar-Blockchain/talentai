@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
+import axiosInstance from '@/utils/axiosInstance';
 
 export interface SkillInterviewAssessment {
   _id: string;
@@ -76,6 +77,37 @@ interface InterviewReportState {
   error: string | null;
 }
 
+interface CompanyInterviewsState {
+  items: any[];
+  total: number;
+  totalPages: number;
+  loading: boolean;
+  error: string | null;
+}
+
+interface CompanyInterviewMetrics {
+  total: number;
+  needWork: number;
+  excellent: number;
+  avgScore: number;
+  loading: boolean;
+  error: string | null;
+}
+
+interface InterviewDetailState {
+  data: any | null;
+  stepsData: any | null;
+  hasSteps: boolean;
+  loading: boolean;
+  error: string | null;
+}
+
+interface MatchingDetailsState {
+  data: { matchScore: number; thresholdScore: number; meetsThreshold: boolean; message: string } | null;
+  loading: boolean;
+  error: string | null;
+}
+
 interface InterviewState {
   data: SkillInterviewAssessment[];
   loading: boolean;
@@ -87,6 +119,10 @@ interface InterviewState {
   technicalAssessments: SkillTypeAssessments;
   softAssessments: SkillTypeAssessments;
   report: InterviewReportState;
+  companyInterviews: CompanyInterviewsState;
+  companyMetrics: CompanyInterviewMetrics;
+  interviewDetail: InterviewDetailState;
+  matchingDetails: MatchingDetailsState;
 }
 
 const initialState: InterviewState = {
@@ -100,6 +136,10 @@ const initialState: InterviewState = {
   technicalAssessments: { data: [], loading: false, error: null, total: 0 },
   softAssessments: { data: [], loading: false, error: null, total: 0 },
   report: { data: null, loading: false, error: null },
+  companyInterviews: { items: [], total: 0, totalPages: 1, loading: false, error: null },
+  companyMetrics: { total: 0, needWork: 0, excellent: 0, avgScore: 0, loading: false, error: null },
+  interviewDetail: { data: null, stepsData: null, hasSteps: false, loading: false, error: null },
+  matchingDetails: { data: null, loading: false, error: null },
 };
 
 /**
@@ -112,28 +152,30 @@ export const saveInterviewAssessment = createAsyncThunk<
 >(
   'interview/saveAssessment',
   async ({ skill, proficiency, interviewData, skillType }, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
+    // Normalise legacy interviewType values to the enum the backend model accepts
+    const interviewTypeMap: Record<string, string> = {
+      TECHNICAL_SKILL:  'TECHNICAL_INTERVIEW',
+      SOFT_SKILL:       'ASSESSMENT',
+      SALARY_INTERVIEW: 'HR_INTERVIEW',
+      PSYCHOTECHNIC:    'EVALUATION',
+    };
+    const normalizedInterviewData = interviewData?.interviewType
+      ? {
+          ...interviewData,
+          interviewType:
+            interviewTypeMap[interviewData.interviewType] ??
+            interviewData.interviewType,
+        }
+      : interviewData;
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ skill, proficiency, interviewData, skillType }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return rejectWithValue(errorData.message || `Failed to save interview: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
+      const response = await axiosInstance.post('skill-interview-assessments/', {
+        skill,
+        proficiency,
+        interviewData: normalizedInterviewData,
+        skillType,
+      });
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error saving interview assessment');
     }
@@ -152,24 +194,14 @@ export const fetchInterviewAssessments = createAsyncThunk<
   async ({ type, page, limit, candidateId }, { rejectWithValue }) => {
     console.log('🔄 [InterviewSlice] fetchInterviewAssessments CALLED:', { type, page, limit, candidateId });
 
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/my?page=${page + 1}&limit=${limit}&candidateId=${candidateId}`;
+      console.log('📡 [InterviewSlice] Making HTTP request to skill-interview-assessments/my');
 
-      console.log('📡 [InterviewSlice] Making HTTP request to:', url);
-
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      const response = await axiosInstance.get('skill-interview-assessments/my', {
+        params: { page: page + 1, limit, candidateId },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [InterviewSlice] API Error:', response.status, errorText);
-        return rejectWithValue(`Failed to fetch interview details: ${response.status}`);
-      }
-
-      const json = await response.json();
+      const json = response.data;
       console.log('📦 [InterviewSlice] Raw API Response:', json);
 
       const results = Array.isArray(json.results)
@@ -207,32 +239,13 @@ export const fetchSkillAssessmentsByType = createAsyncThunk<
 >(
   'interview/fetchSkillAssessmentsByType',
   async ({ skillType, limit = 20 }, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const params = new URLSearchParams();
-      params.append('skillType', skillType);
-      params.append('limit', limit.toString());
-
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/my?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+      const response = await axiosInstance.get('skill-interview-assessments/my', {
+        params: { skillType, limit },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return rejectWithValue(errorData.message || `Failed to fetch skill assessments: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       const results = data.data || data.results || [];
       const total = data.pagination?.totalCount || data.total || results.length;
-
       return { results, total, skillType };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching skill assessments');
@@ -250,20 +263,9 @@ export const fetchInterviewReport = createAsyncThunk<
 >(
   'interview/fetchReport',
   async (id, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}skill-interview-assessments/${id}`;
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) {
-        return rejectWithValue('Failed to fetch interview details');
-      }
-
-      const json = await response.json();
-      return json.data;
+      const response = await axiosInstance.get(`skill-interview-assessments/${id}`);
+      return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error fetching data');
     }
@@ -280,19 +282,9 @@ export const fetchInterviewDetailsById = createAsyncThunk<
 >(
   'interview/fetchDetailsById',
   async (interviewId, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interview-details/getInterviewDetailsById/${interviewId}`;
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) {
-        return rejectWithValue('Failed to fetch interview details');
-      }
-
-      const data = await response.json();
+      const response = await axiosInstance.get(`interview-details/getInterviewDetailsById/${interviewId}`);
+      const data = response.data;
       if (data.success && data.data) {
         return data.data;
       }
@@ -304,38 +296,141 @@ export const fetchInterviewDetailsById = createAsyncThunk<
 );
 
 /**
- * Claim interview reward
+ * Fetch company interview metrics
  */
-export const claimInterviewReward = createAsyncThunk<
+export const fetchCompanyInterviewMetrics = createAsyncThunk<
+  { total: number; needWork: number; excellent: number; avgScore: number },
+  void,
+  { rejectValue: string }
+>(
+  'interview/fetchCompanyInterviewMetrics',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('post-interview-assessments/company/mine/metrics');
+      const d = response.data.data ?? {};
+      return {
+        total:     typeof d.total    === 'number' ? d.total    : 0,
+        needWork:  typeof d.needWork === 'number' ? d.needWork : 0,
+        excellent: typeof d.excellent === 'number' ? d.excellent : 0,
+        avgScore:  typeof d.avgScore  === 'number' ? d.avgScore  : 0,
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching interview metrics');
+    }
+  }
+);
+
+/**
+ * Check if candidate already completed an assessment for a given post
+ */
+export const checkPostInterviewAssessment = createAsyncThunk<
+  { exists: boolean; isCompanyBlocked?: boolean; isArchived?: boolean },
+  string,
+  { rejectValue: string }
+>(
+  'interview/checkPostAssessment',
+  async (postId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`post-interview-assessments/check/${postId}`);
+      return { exists: !!response.data?.exists };
+    } catch (error: any) {
+      const msg: string = error?.response?.data?.message || error.message || '';
+      if (msg.toLowerCase().includes('company')) {
+        return { exists: false, isCompanyBlocked: true };
+      }
+      if (msg.toLowerCase().includes('archived')) {
+        return { exists: false, isArchived: true };
+      }
+      return rejectWithValue(msg || 'Error checking assessment');
+    }
+  }
+);
+
+/**
+ * Fetch matching details for a candidate and post
+ */
+export const fetchMatchingDetails = createAsyncThunk<
+  { matchScore: number; thresholdScore: number; meetsThreshold: boolean; message: string },
+  string,
+  { rejectValue: string }
+>(
+  'interview/fetchMatchingDetails',
+  async (postId) => {
+    try {
+      const response = await axiosInstance.get(`post-interview-assessments/matching/${postId}`);
+      return response.data.data;
+    } catch {
+      // Fail open — don't block candidate if check fails (network error, no application yet, etc.)
+      return { matchScore: null, thresholdScore: 0, meetsThreshold: true, message: '' };
+    }
+  }
+);
+
+/**
+ * Fetch company post-interview assessments
+ */
+export const fetchCompanyInterviews = createAsyncThunk<
+  { items: any[]; total: number; totalPages: number },
+  { search?: string; page?: number; limit?: number },
+  { rejectValue: string }
+>(
+  'interview/fetchCompanyInterviews',
+  async ({ search, page = 1, limit = 12 }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('post-interview-assessments/company/mine', {
+        params: {
+          page,
+          limit,
+          ...(search ? { search } : {}),
+        },
+      });
+
+      const json = response.data;
+
+      // Response shape: { data: [ { post, assessments: [ { assessment, candidatePostStepProgress } ] } ] }
+      let items: any[] = [];
+      if (Array.isArray(json.data)) {
+        json.data.forEach((group: any) => {
+          if (Array.isArray(group.assessments)) {
+            group.assessments.forEach((entry: any) => {
+              if (entry.assessment) {
+                items.push(entry.assessment);
+              }
+            });
+          }
+        });
+      }
+
+      const total = typeof json.count === 'number' ? json.count
+        : typeof json.total === 'number' ? json.total
+        : items.length;
+
+      const totalPages = json.pagination?.totalPages ?? (Math.ceil(total / limit) || 1);
+
+      return { items, total, totalPages };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error fetching company interviews');
+    }
+  }
+);
+
+/**
+ * Fetch a single post-interview assessment by ID
+ */
+export const fetchInterviewById = createAsyncThunk<
   any,
   string,
   { rejectValue: string }
 >(
-  'interview/claimReward',
-  async (interviewId, { rejectWithValue }) => {
-    const token = localStorage.getItem('api_token');
-
+  'interview/fetchInterviewById',
+  async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/${interviewId}/claim-reward`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        return result;
-      } else {
-        return rejectWithValue(result.error || 'Failed to claim reward');
-      }
+      const response = await axiosInstance.get(`post-interview-assessments/${id}`);
+      // API returns { success, data: { assessment, stepsData, hasSteps } }
+      const d = response.data?.data;
+      return { assessment: d?.assessment || d, stepsData: d?.stepsData || null, hasSteps: d?.hasSteps || false };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to claim reward');
+      return rejectWithValue(error.response?.data?.message || error.message || 'Error fetching interview');
     }
   }
 );
@@ -413,6 +508,68 @@ const interviewSlice = createSlice({
       .addCase(fetchInterviewReport.rejected, (state, action) => {
         state.report.loading = false;
         state.report.error = action.payload || 'An error occurred';
+      })
+      // ---- COMPANY INTERVIEWS ----
+      .addCase(fetchCompanyInterviews.pending, (state) => {
+        state.companyInterviews.loading = true;
+        state.companyInterviews.error = null;
+      })
+      .addCase(fetchCompanyInterviews.fulfilled, (state, action) => {
+        state.companyInterviews.loading = false;
+        state.companyInterviews.items = action.payload.items;
+        state.companyInterviews.total = action.payload.total;
+        state.companyInterviews.totalPages = action.payload.totalPages ?? 1;
+      })
+      .addCase(fetchCompanyInterviews.rejected, (state, action) => {
+        state.companyInterviews.loading = false;
+        state.companyInterviews.error = (action.payload as string) || 'An error occurred';
+      })
+      // ---- COMPANY METRICS ----
+      .addCase(fetchCompanyInterviewMetrics.pending, (state) => {
+        state.companyMetrics.loading = true;
+        state.companyMetrics.error = null;
+      })
+      .addCase(fetchCompanyInterviewMetrics.fulfilled, (state, action) => {
+        state.companyMetrics.loading = false;
+        state.companyMetrics.total    = action.payload.total;
+        state.companyMetrics.needWork = action.payload.needWork;
+        state.companyMetrics.excellent = action.payload.excellent;
+        state.companyMetrics.avgScore  = action.payload.avgScore;
+      })
+      .addCase(fetchCompanyInterviewMetrics.rejected, (state, action) => {
+        state.companyMetrics.loading = false;
+        state.companyMetrics.error = action.payload || 'An error occurred';
+      })
+      // ---- INTERVIEW DETAIL ----
+      .addCase(fetchInterviewById.pending, (state) => {
+        state.interviewDetail.loading = true;
+        state.interviewDetail.error = null;
+        state.interviewDetail.data = null;
+        state.interviewDetail.stepsData = null;
+        state.interviewDetail.hasSteps = false;
+      })
+      .addCase(fetchInterviewById.fulfilled, (state, action) => {
+        state.interviewDetail.loading = false;
+        state.interviewDetail.data = action.payload.assessment;
+        state.interviewDetail.stepsData = action.payload.stepsData;
+        state.interviewDetail.hasSteps = action.payload.hasSteps;
+      })
+      .addCase(fetchInterviewById.rejected, (state, action) => {
+        state.interviewDetail.loading = false;
+        state.interviewDetail.error = action.payload || 'An error occurred';
+      })
+      // ---- MATCHING DETAILS ----
+      .addCase(fetchMatchingDetails.pending, (state) => {
+        state.matchingDetails.loading = true;
+        state.matchingDetails.error = null;
+      })
+      .addCase(fetchMatchingDetails.fulfilled, (state, action) => {
+        state.matchingDetails.loading = false;
+        state.matchingDetails.data = action.payload;
+      })
+      .addCase(fetchMatchingDetails.rejected, (state, action) => {
+        state.matchingDetails.loading = false;
+        state.matchingDetails.error = action.payload || 'An error occurred';
       });
   },
 });
@@ -432,5 +589,13 @@ export const selectSoftAssessments = (state: RootState) => state.interview.softA
 export const selectInterviewReport = (state: RootState) => state.interview.report.data;
 export const selectInterviewReportLoading = (state: RootState) => state.interview.report.loading;
 export const selectInterviewReportError = (state: RootState) => state.interview.report.error;
+export const selectCompanyInterviews = (state: RootState) => state.interview.companyInterviews.items;
+export const selectCompanyInterviewsLoading = (state: RootState) => state.interview.companyInterviews.loading;
+export const selectCompanyInterviewsTotal = (state: RootState) => state.interview.companyInterviews.total;
+export const selectCompanyInterviewsTotalPages = (state: RootState) => state.interview.companyInterviews.totalPages;
+export const selectCompanyMetrics = (state: RootState) => state.interview.companyMetrics;
+export const selectMatchingDetails = (state: RootState) => state.interview.matchingDetails.data;
+export const selectMatchingDetailsLoading = (state: RootState) => state.interview.matchingDetails.loading;
+export const selectMatchingDetailsError = (state: RootState) => state.interview.matchingDetails.error;
 
 export default interviewSlice.reducer;

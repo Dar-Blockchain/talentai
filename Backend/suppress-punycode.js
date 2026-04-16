@@ -1,6 +1,6 @@
 // suppress-punycode.js
-// Précharge pour intercepter et ignorer spécifiquement la DeprecationWarning liée au module builtin `punycode`.
-// Chargez Node avec: node -r ./suppress-punycode.js app.js
+// Preload to intercept and ignore specifically the DeprecationWarning related to the `punycode` builtin module.
+// Load Node with: node -r ./suppress-punycode.js app.js
 
 const Module = require('module');
 const path = require('path');
@@ -36,5 +36,12 @@ process.on('warning', (warning) => {
     console.warn(warning.name + ': ' + warning.message);
   }
 });
+
+// Polyfill browser-only globals required by pdf-parse (pdfjs internally uses DOMMatrix)
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  globalThis.DOMMatrix = class DOMMatrix {
+    constructor() {}
+  };
+}
 
 // nothing else - the app will be loaded after this preloaded module

@@ -60,10 +60,10 @@ const performBackup = async () => {
 
         logger.success(`✅ Backup completed successfully`);
         logger.info(`Backup size: ${getDirectorySize(backupPath)}`);
-        
+
         // Clean up old backups
         cleanupOldBackups();
-        
+
         resolve({
           success: true,
           backupName,
@@ -229,7 +229,7 @@ const restoreBackup = async (backupName) => {
         }
 
         logger.success(`✅ Restore completed successfully from ${backupName}`);
-        
+
         resolve({
           success: true,
           backupName,
@@ -249,11 +249,11 @@ const restoreBackup = async (backupName) => {
 const initializeDailyBackup = async () => {
   try {
     initializeBackupDir();
-    
+
     // Perform initial backup on startup
     logger.info('🔄 Performing initial database backup on startup...');
     await performBackup();
-    
+
     logger.success('Daily backup service initialized');
     return true;
   } catch (error) {

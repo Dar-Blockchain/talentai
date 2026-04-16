@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import axiosInstance from "@/utils/axiosInstance";
 
 interface UserState {
   connectedUser: {
@@ -18,7 +19,7 @@ interface UserState {
     loading: boolean;
     error: string | null;
   };
-  userType: "company" | "candidate" | null;
+  userType: "company" | "candidate" | "employee" | null;
   currentSpace?: "personal" | "membership" | null;
 }
 
@@ -48,75 +49,36 @@ export const createOrUpdateProfile = createAsyncThunk<
   any,
   { rejectValue: string }
 >("user/createOrUpdateProfile", async (profileData, { rejectWithValue }) => {
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    return rejectWithValue("No authentication token found");
-  }
-
-  // Determine endpoint based on user type
   const endpoint =
     profileData.type === "company"
       ? "profiles/createOrUpdateCompanyProfile"
       : "profiles/createOrUpdateProfile";
 
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData),
-      }
-    );
-
-    if (!response.ok) {
-      return rejectWithValue("Failed to create/update profile");
-    }
-
-    const data = await response.json();
-    return data;
+    const response = await axiosInstance.post(endpoint, profileData);
+    return response.data;
   } catch (error: any) {
     return rejectWithValue(
-      "An error occurred while creating/updating profile"
+      error.response?.data?.message || "An error occurred while creating/updating profile"
     );
   }
 });
 
 export const updateProfile = createAsyncThunk<
   any,
-  any,
+  { payload: any; targetUserId?: string },
   { rejectValue: string }
->("user/updateProfile", async (updatePayload, { rejectWithValue }) => {
-
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    return rejectWithValue("No authentication token found");
-  }
-
+>("user/updateProfile", async ({ payload: updatePayload, targetUserId }, { getState, rejectWithValue }) => {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatePayload),
-      }
-    );
-
-    if (!response.ok) {
-      return rejectWithValue("Failed to update profile");
-    }
-
-    const data = await response.json();
-    return data;
+    const state = getState() as any;
+    const connectedUser = state.user.connectedUser.user;
+    const userId = targetUserId || connectedUser?._id || connectedUser?.id;
+    const response = await axiosInstance.put(`profiles/${userId}`, updatePayload);
+    return response.data;
   } catch (error: any) {
-    return rejectWithValue("An error occurred while updating profile");
+    return rejectWithValue(
+      error.response?.data?.message || "An error occurred while updating profile"
+    );
   }
 });
 
@@ -124,79 +86,37 @@ export const getMyProfile = createAsyncThunk<
   any,
   void,
   { rejectValue: string }
->("user/getMyProfile", async (_, { rejectWithValue, getState }) => {
-
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    return rejectWithValue("No authentication token found");
-  }
-
+>("user/getMyProfile", async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/me`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403 || response.status === 404) {
-        localStorage.clear();
-        if (typeof window !== "undefined") {
-          document.cookie.split(";").forEach((c) => {
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
-          });
-          window.location.replace("/signin");
-        }
-        return rejectWithValue("Session expired");
-      }
-      return rejectWithValue("Failed to fetch profile");
-    }
-
-    const data = await response.json();
-    return data;
+    const response = await axiosInstance.get("profiles/me");
+    return response.data;
   } catch (error: any) {
-    return rejectWithValue("An error occurred while fetching profile");
+    return rejectWithValue(
+      error.response?.data?.message || "An error occurred while fetching profile"
+    );
   }
 });
 
 export const uploadProfileImage = createAsyncThunk<
   any,
-  File,
+  { file: File; targetUserId?: string },
   { rejectValue: string }
->("user/uploadProfileImage", async (file, { rejectWithValue }) => {
-  const token = localStorage.getItem("api_token");
-  if (!token) {
-    return rejectWithValue("No authentication token found");
-  }
-
+>("user/uploadProfileImage", async ({ file, targetUserId }, { getState, rejectWithValue }) => {
   try {
+    const state = getState() as any;
+    const connectedUser = state.user.connectedUser.user;
+    const userId = targetUserId || connectedUser?._id || connectedUser?.id;
     const formData = new FormData();
-    formData.append('user_image', file);
+    formData.append("user_image", file);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      return rejectWithValue("Failed to upload profile image");
-    }
-
-    const data = await response.json();
-    return data;
+    const response = await axiosInstance.put(`profiles/${userId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
   } catch (error: any) {
-    return rejectWithValue("An error occurred while uploading profile image");
+    return rejectWithValue(
+      error.response?.data?.message || "An error occurred while uploading profile image"
+    );
   }
 });
 
@@ -204,30 +124,14 @@ export const getProfileById = createAsyncThunk<
   any,
   string,
   { rejectValue: string; state: RootState }
->("user/getProfileById", async (userId, { rejectWithValue, getState }) => {
-  const token = localStorage.getItem("api_token");
-
+>("user/getProfileById", async (userId, { rejectWithValue }) => {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/${userId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      return rejectWithValue("Failed to fetch profile");
-    }
-
-    const data = await response.json();
-
-    return data;
+    const response = await axiosInstance.get(`profiles/${userId}`);
+    return response.data;
   } catch (error: any) {
-    return rejectWithValue("An error occurred while fetching profile");
+    return rejectWithValue(
+      error.response?.data?.message || "An error occurred while fetching profile"
+    );
   }
 });
 
@@ -255,7 +159,7 @@ const userSlice = createSlice({
       state.targetUser.user = null;
       state.targetUser.profile = null;
     },
-    setUserType(state, action: PayloadAction<"company" | "candidate">) {
+    setUserType(state, action: PayloadAction<"company" | "candidate" | "employee">) {
       state.userType = action.payload;
     },
     setCurrentSpace(state, action: PayloadAction<"personal" | "membership">) {

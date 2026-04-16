@@ -11,11 +11,6 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     const userId = req.user._id;
     const profileData = req.body;
 
-    // Validation: profile type is required
-    if (!profileData.type) {
-      return res.status(400).json({ message: "Profile type is required" });
-    }
-
     // Validation: firstName and lastName (handle both camelCase and PascalCase)
     const firstName = profileData.firstName || profileData.FirstName;
     const lastName = profileData.lastName || profileData.LastName;
@@ -85,14 +80,11 @@ module.exports.createOrUpdateProfile = async (req, res) => {
       profileData,
     );
 
-    // Remove Hedera sensitive fields from user object
+    // Remove sensitive fields from user object
     if (result.user) {
       result.user = result.user.toObject
         ? result.user.toObject()
         : { ...result.user };
-      delete result.user.hederaAccountId;
-      delete result.user.hederaPrivateKey;
-      delete result.user.hederaPublicKey;
     }
 
     res.status(200).json({
@@ -127,14 +119,11 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       profileData,
     );
 
-    // Remove Hedera sensitive fields from user object
+    // Remove sensitive fields from user object
     if (result.user) {
       result.user = result.user.toObject
         ? result.user.toObject()
         : { ...result.user };
-      delete result.user.hederaAccountId;
-      delete result.user.hederaPrivateKey;
-      delete result.user.hederaPublicKey;
     }
 
     res.status(200).json({
@@ -185,14 +174,11 @@ module.exports.getProfileById = async (req, res) => {
     // Use the service to retrieve the profile
     const result = await profileService.getProfileByUserId(userId);
 
-    // Remove Hedera sensitive fields from user object
+    // Remove sensitive fields from user object
     if (result.user) {
       result.user = result.user.toObject
         ? result.user.toObject()
         : { ...result.user };
-      delete result.user.hederaAccountId;
-      delete result.user.hederaPrivateKey;
-      delete result.user.hederaPublicKey;
     }
 
     res.status(200).json({
@@ -466,7 +452,7 @@ module.exports.updateProfileVisibility = async (req, res) => {
 // Unified update profile API - handles all profile updates including image upload
 module.exports.updateProfileComplete = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.params.userId;
     const profileData = req.body;
     const file = req.file;
     let result;
@@ -503,7 +489,7 @@ module.exports.updateProfileComplete = async (req, res) => {
     if (existing && existing.profile && existing.profile.type) {
       accountType = existing.profile.type;
     } else if (existing && existing.user && existing.user.role) {
-      accountType = existing.user.role === "Company" ? "Company" : "Candidate";
+      accountType = existing.user.role === "Company" ? "Company" : existing.user.role === "Member" ? "Member" : "Candidate";
     }
     console.log(
       "👤 [updateProfileComplete] Account type determined:",
@@ -555,9 +541,9 @@ module.exports.updateProfileComplete = async (req, res) => {
         console.log(
           "✅ [updateProfileComplete] Company profile updated successfully",
         );
-      } else {
+      } else if (accountType === "Candidate" || accountType === "Member") {
         console.log(
-          "👥 [updateProfileComplete] Processing CANDIDATE profile update",
+          `👥 [updateProfileComplete] Processing ${accountType.toUpperCase()} profile update`,
         );
         // Candidate validations - Allow single field updates (no requirement for both first+last)
         const firstName = profileData.firstName || profileData.FirstName;

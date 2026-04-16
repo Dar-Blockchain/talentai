@@ -11,10 +11,10 @@ module.exports.getAllUsers = async (req, res) => {
       limit = 10,
     } = req.query;
 
-    // Créer l'objet searchQuery pour passer au service
+    // Create searchQuery object to pass to service
     const searchQuery = { username, email, role };
 
-    // Appeler le service pour récupérer les utilisateurs avec pagination et recherche
+    // Call service to retrieve users with pagination and search
     const result = await dashboardService.getAllUsers(searchQuery, page, limit);
 
     res.status(200).json(result);
@@ -23,7 +23,7 @@ module.exports.getAllUsers = async (req, res) => {
       .status(500)
       .json({
         message:
-          error.message || "Erreur lors de la récupération des utilisateurs",
+          error.message || "Error retrieving users",
       });
   }
 };
@@ -32,13 +32,13 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
 
-    // Appeler le service pour récupérer les résultats d'évaluation groupés par jobId
+    // Call service to retrieve assessment results grouped by jobId
     const result = await dashboardService.getJobAssessmentResultsGroupedByJobId(
       page,
       limit,
     );
 
-    // Retourner la réponse avec les résultats et la pagination
+    // Return response with results and pagination
     res.status(200).json(result);
   } catch (error) {
     res
@@ -46,51 +46,65 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (req, res) => {
       .json({
         message:
           error.message ||
-          "Erreur lors de la récupération des résultats d'évaluation des jobs",
+          "Error retrieving job assessment results",
       });
   }
 };
 
-// Fonction pour gérer la requête et envoyer les résultats
+// Function to manage request and send results
 module.exports.getCounts = async (req, res) => {
   try {
-    // Appeler la fonction de service pour obtenir les résultats
+    // Call service function to get results
     const counts = await dashboardService.getCounts();
     res.status(200).json({ success: true, data: counts });
   } catch (error) {
-    // En cas d'erreur, renvoyer un message d'erreur
+    // In case of error, return an error message
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Fonction pour gérer la requête et envoyer les résultats
+// Function to manage request and send results
+module.exports.getStatsCards = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID missing in request' });
+    }
+    const stats = await dashboardService.getStatsCards(userId);
+    res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Function to manage request and send results
 module.exports.getCountsByDay = async (req, res) => {
   try {
-    // Appeler la fonction de service pour obtenir les résultats
+    // Call service function to get results
     const countsByDay = await dashboardService.getCountsByDay();
     res.status(200).json({ success: true, data: countsByDay });
   } catch (error) {
-    // En cas d'erreur, renvoyer un message d'erreur
+    // In case of error, return an error message
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Fonction pour gérer la requête et envoyer les résultats
+// Function to manage request and send results
 module.exports.getUserCountsByLocation = async (req, res) => {
   try {
-    // Appeler la fonction de service pour obtenir le nombre d'utilisateurs par localisation
+    // Call service function to get number of users by location
     const userCountsByLocation =
       await dashboardService.getUserCountsByLocation();
     res.status(200).json({ success: true, data: userCountsByLocation });
   } catch (error) {
-    // En cas d'erreur, renvoyer un message d'erreur
+    // In case of error, return an error message
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Contrôleur qui renvoie tous les JobAssessmentResult pour un skill spécifique
+// Controller that returns all JobAssessmentResult for a specific skill
 module.exports.getJobAssessmentsBySkill = async (req, res) => {
-  const { skillName } = req.body; // On récupère le nom de la compétence depuis les paramètres de l'URL
+  const { skillName } = req.body; // Retrieve the skill name from URL parameters
 
   try {
     const assessments =
@@ -99,29 +113,40 @@ module.exports.getJobAssessmentsBySkill = async (req, res) => {
     if (!assessments || assessments.length === 0) {
       return res
         .status(404)
-        .json({ message: "Aucune évaluation trouvée pour cette compétence." });
+        .json({ message: "No assessment found for this skill." });
     }
 
-    // Retourne les résultats des évaluations
+    // Returns assessment results
     return res.status(200).json({ assessments });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
+module.exports.getRichStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    if (!userId) return res.status(400).json({ success: false, message: 'User ID missing' });
+    const data = await dashboardService.getRichStats(userId);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports.downloadUserExcel = async (req, res) => {
   try {
-    // Appeler le service pour générer le fichier Excel
+    // Call the service to generate Excel file
     const fileBuffer = await dashboardService.generateUserExcel();
 
-    // Définir les en-têtes de la réponse pour télécharger le fichier
+    // Set response headers for file download
     res.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
 
-    // Envoyer le fichier en réponse
+    // Send the file in response
     res.send(fileBuffer);
   } catch (error) {
     res
@@ -132,11 +157,11 @@ module.exports.downloadUserExcel = async (req, res) => {
 
 module.exports.downloadUserExcelWithAssessmentZero = async (req, res) => {
   try {
-    // Appeler le service pour générer le fichier Excel des utilisateurs avec un overallScore de 0
+    // Call service to generate Excel file for users with overallScore of 0
     const fileBuffer =
       await dashboardService.generateUserExcelWithAssessmentZero();
 
-    // Définir les en-têtes de la réponse pour télécharger le fichier
+    // Set response headers for file download
     res.setHeader(
       "Content-Disposition",
       "attachment; filename=users_with_score_0.xlsx",
@@ -146,22 +171,22 @@ module.exports.downloadUserExcelWithAssessmentZero = async (req, res) => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
 
-    // Envoyer le fichier en réponse
+    // Send the file in response
     res.send(fileBuffer);
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Erreur interne du serveur", error: error.message });
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
 module.exports.downloadUserExcelWithAssessmentAbove50 = async (req, res) => {
   try {
-    // Appeler le service pour générer le fichier Excel des utilisateurs avec un overallScore de 0
+    // Call service to generate Excel file for users with overallScore of 0
     const fileBuffer =
       await dashboardService.generateUserExcelWithAssessmentAbove50();
 
-    // Définir les en-têtes de la réponse pour télécharger le fichier
+    // Set response headers for file download
     res.setHeader(
       "Content-Disposition",
       "attachment; filename=users_with_score_0.xlsx",
@@ -171,11 +196,11 @@ module.exports.downloadUserExcelWithAssessmentAbove50 = async (req, res) => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
 
-    // Envoyer le fichier en réponse
+    // Send the file in response
     res.send(fileBuffer);
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Erreur interne du serveur", error: error.message });
+      .json({ message: "Internal server error", error: error.message });
   }
 };

@@ -1,59 +1,70 @@
 /**
- * Routes du tableau de bord (statistiques et exports)
+ * Dashboard routes (statistics and exports)
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Admin'): restreint aux administrateurs
- * - LogMiddleware("Dashboard"): journalise les accès au dashboard
+ * Global middlewares applied:
+ * - requireAuthUser: requires an authenticated user
+ * - controledAcces('Admin'): restricted to administrators
+ * - LogMiddleware("Dashboard"): logs dashboard access
  */
 const express = require("express");
 const router = express.Router();
 const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
+
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
+const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
 
 
-// Toutes les routes ci-dessous nécessitent un admin authentifié
-router.use(requireAuthUser, authLogMiddleware("Dashboard"));
+// All routes below require an authenticated admin
+//router.use(requireAuthUser, authLogMiddleware("Dashboard"));
+// Auth required + logs for all routes
+// Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
+router.use(requireAuth);
 
 // GET /dashboard/getAllUsers
-// Description: Récupère la liste de tous les utilisateurs
+// Description: Retrieves the list of all users
 router.get("/getAllUsers", dashboardController.getAllUsers);
 
 // GET /dashboard/getCounts
-// Description: Récupère les compteurs globaux (utilisateurs, etc.)
+// Description: Retrieves global counters (users, etc.)
 router.get("/getCounts", dashboardController.getCounts);
 
+// GET /dashboard/statsCards
+// Description: Retrieves statistics displayed as cards on the dashboard
+router.get("/statsCards", resolveCompanyActor, dashboardController.getStatsCards);
+router.get("/richStats", resolveCompanyActor, dashboardController.getRichStats);
+
 // GET /dashboard/getUserCountsByDay
-// Description: Récupère l'évolution journalière du nombre d'utilisateurs
+// Description: Retrieves daily evolution of user count
 router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
 
 // GET /dashboard/getUserCountsByLocation
-// Description: Statistiques par localisation
+// Description: Statistics by location
 router.get("/getUserCountsByLocation", dashboardController.getUserCountsByLocation);
 
 // GET /dashboard/job-assessment-results-grouped
-// Description: Résultats d'évaluations groupés par jobId
+// Description: Assessment results grouped by jobId
 router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId);
 
 // POST /dashboard/getJobAssessmentsBySkill
 // Body: { skill: string }
-// Description: Récupère les évaluations par compétence
+// Description: Retrieves assessments by skill
 router.post("/getJobAssessmentsBySkill", dashboardController.getJobAssessmentsBySkill);
 
 // GET /dashboard/downloadUserExcel
-// Description: Télécharge un export Excel des utilisateurs
+// Description: Downloads an Excel export of users
 router.get("/downloadUserExcel", dashboardController.downloadUserExcel);
 
 // GET /dashboard/download-users-with-assessment-zero
-// Description: Télécharge les utilisateurs sans évaluation
+// Description: Downloads users without assessment
 router.get("/download-users-with-assessment-zero", dashboardController.downloadUserExcelWithAssessmentZero);
 
 // GET /dashboard/download-users-with-assessment-Above50
-// Description: Télécharge les utilisateurs avec score > 50
+// Description: Downloads users with score > 50
 router.get("/download-users-with-assessment-Above50", dashboardController.downloadUserExcelWithAssessmentAbove50);
 
 module.exports = router;

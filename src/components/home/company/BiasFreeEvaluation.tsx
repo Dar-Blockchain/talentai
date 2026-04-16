@@ -1,423 +1,174 @@
-import React from "react";
-import { Box, Button, Checkbox, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Button, Stack, Typography } from "@mui/material";
+import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import CaptchaModal from "./CaptchaModal";
+import DemoVideoModal from "./DemoVideoModal";
 
-const Bullet: React.FC<{ label: string }> = ({ label }) => (
-  <Stack direction="row" spacing={1.5} alignItems="center">
-    <img
-      src="/images/home/icon.png"
-      alt="Check icon"
-      style={{
-        width: 30,
-        height: 30,
-        objectFit: "contain",
-      }}
-    />
-    <Typography
-      variant="body2"
-      sx={{
-        fontFamily: "Poppins",
-        fontWeight: 400,
-        fontStyle: "normal",
-        fontSize: "16px",
-        lineHeight: "24px",
-        letterSpacing: 0,
-        verticalAlign: "middle",
-      }}
-    >
-      {label}
-    </Typography>
-  </Stack>
-);
+const ACCENT = "#0CDA8B";
+const ACCENT_BG = "rgba(12,218,139,0.08)";
+const CALENDLY = "https://calendly.com/talent__ai/30min";
 
-const Pill: React.FC<{ label: string; color: string; icon: string }> = ({
-  label,
-  color,
-  icon,
-}) => (
-  <Box
-    sx={{
-      p: 1.5,
-      borderRadius: 2,
-      bgcolor: "while",
-      color: "#374151",
-      textAlign: "center",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100%",
-      minHeight: "auto",
-      cursor: "pointer",
-      transition: "all 0.2s ease",
-      boxShadow: "0px 0px 9.96px 0px rgba(0, 0, 0, 0.06)",
-      border: "1.63px solid rgba(0, 0, 0, 0.06)",
-      "&:hover": {
-        transform: "translateY(-2px)",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-      },
-    }}
-  >
-    <Box
-      sx={{
-        width: 36,
-        height: 36,
-        borderRadius: 2,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "1.1rem",
-        pb: 1.2,
-      }}
-    >
-      <Box
-        component="img"
-        src={icon}
-        alt={`${label} icon`}
-        sx={{
-          width: 24,
-          height: 24,
-          objectFit: "contain",
-        }}
-      />
-    </Box>
-    <Typography
-      variant="body2"
-      sx={{
-        color: "#374151",
-        fontFamily: "Poppins",
-        fontWeight: 500,
-        fontStyle: "normal", // 'Medium' devient 'normal'
-        fontSize: "16.33px",
-        lineHeight: "100%",
-        letterSpacing: "0%",
-      }}
-    >
-      {label}
-    </Typography>
-  </Box>
-);
+const BULLETS = [
+  "AI Video Interviews — No Scheduling Needed",
+  "Drag-&-Drop Pipeline, Live in 30 Minutes",
+  "Auto-Ranked Shortlists — You Just Approve",
+  "Pay-Per-Hire Credits, No Bloated Contracts",
+];
+
+const PILLS = [
+  { label: "Technical", icon: "/icons/technical.svg" },
+  { label: "Task", icon: "/icons/task.svg" },
+  { label: "Soft", icon: "/icons/soft.svg" },
+  { label: "Condition", icon: "/icons/condition.svg" },
+  { label: "HR", icon: "/icons/hr.svg" },
+  { label: "Email", icon: "/icons/email.svg" },
+];
 
 const BiasFreeEvaluation: React.FC = () => {
+  const [captchaOpen, setCaptchaOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
+
+  const handleVerified = () => window.open(CALENDLY, "_blank");
+
   return (
-    <Box id="features">
-      {/* Floating Video Card Section */}
-      <Box
-        sx={{
-          position: "relative",
-          maxWidth: 1500,
-          mx: "auto",
-          mb: { xs: 2, md: 3 },
-          mt: 10,
-        }}
-      >
-        <Box sx={{ mx: 3 }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "36px",
-              lineHeight: "43.2px",
-              letterSpacing: 0,
-              verticalAlign: "middle",
-              mb: 1,
-            }}
-          >
-            The intelligent hiring platform you deserve
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "16px",
-              lineHeight: "24px",
-              letterSpacing: 0,
-              verticalAlign: "middle",
-            }}
-          >
-            End-to-end recruitment automation powered by conversational AI and
-            Hedera blockchain.
+    <Box id="features" sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
+
+      {/* ── Section header ── */}
+      <Box sx={{ mb: { xs: 5, md: 7 } }}>
+        <Box sx={{
+          display: "inline-flex", alignItems: "center", gap: 1,
+          bgcolor: ACCENT_BG, border: "1.5px solid rgba(12,218,139,0.40)",
+          borderRadius: "24px", px: 2.5, py: 1, mb: 3,
+        }}>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: "15px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px" }}>
+            The Solution
           </Typography>
         </Box>
-        {/* Floating Blocks Row */}
-        <Box
-          sx={{
-            position: "relative",
-            zIndex: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 4,
-            mt: { xs: 3, md: 5 },
-            px: 3,
-            gap: 4,
-            maxWidth: 1400,
-            mx: "auto",
-          }}
-        >
-          {/* White Video Card - 60% */}
-          <Box
-            sx={{
-              bgcolor: "#000",
-              borderRadius: 3,
-              p: 4,
-              width: { xs: "90%", md: "70%" },
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
-              border: "1px solid #000",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            {/* Video iframe - Normal size */}
+
+        <Typography sx={{
+          fontFamily: "Poppins", fontWeight: 700,
+          fontSize: { xs: "28px", md: "44px" },
+          lineHeight: 1.15, color: "#111827", mb: 1.5,
+        }}>
+          Stop Guessing. Start Hiring With Confidence.
+        </Typography>
+        <Typography sx={{
+          fontFamily: "Poppins", fontSize: { xs: "15px", md: "17px" },
+          lineHeight: 1.65, color: "#4B5563", maxWidth: 600,
+        }}>
+          TalentAI replaces manual screening with AI-driven conversations and
+          blockchain-verified proof — so every hire is based on performance, not paperwork.
+        </Typography>
+      </Box>
+
+      {/* ── Two-column body ── */}
+      <Box sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+        gap: { xs: 5, md: 8 },
+        alignItems: "start",
+      }}>
+
+        {/* Left — video card + promo banner */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {/* Video frame */}
+          <Box sx={{
+            bgcolor: "#0E0F10", borderRadius: 3, overflow: "hidden",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+            aspect: "16/9", display: "flex", alignItems: "center", justifyContent: "center",
+            p: 2,
+          }}>
             <img
               src="/images/home/Iframe.png"
-              alt="Video Feed"
-              style={{
-                width: "auto",
-
-                height: "110%",
-                maxWidth: "105%",
-                maxHeight: "100%",
-                objectFit: "contain",
-                display: "block",
-              }}
+              alt="AI Interview Demo"
+              style={{ width: "100%", height: "auto", borderRadius: "8px", display: "block" }}
             />
           </Box>
 
-          {/* Promotional Banner - 35% */}
-          <Box
-            sx={{
-              bgcolor: "#141415",
-              borderRadius: "10px",
-              p: 4,
-              width: { xs: "90%", md: "35%" },
-              maxWidth: "400px",
-              height: "auto",
-              minHeight: "236px",
-              opacity: 1,
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
-              border: "1px solid #E5E7EB",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "flex-start",
-              color: "#fff",
-              position: "relative",
-            }}
-          >
-            {/* Hiring time image on the right */}
-            <Box
-              sx={{
-                position: "absolute",
-                right: -22,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 80,
-                height: 100,
-                zIndex: 1,
-              }}
-            >
-              <img src="/images/partners/hiring_time.png" alt="Hiring Time" />
-            </Box>
-
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: "Poppins, sans-serif",
-                fontWeight: 400,
-                mb: 2,
-                color: "#fff",
-                textAlign: "left",
-                fontSize: { xs: "1rem", md: "1.25rem" },
-                lineHeight: 1.3,
-                zIndex: 2,
-                position: "relative",
-              }}
-            >
-              Watch How We Cut Hiring Time by 75%
+          {/* Promo banner */}
+          <Box sx={{
+            background: "#0E0F10",
+            borderRadius: 3, p: 3,
+            border: "1px solid rgba(12,218,139,0.15)",
+            position: "relative", overflow: "hidden",
+          }}>
+            <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "18px", color: "#fff", mb: 1, lineHeight: 1.3 }}>
+              See How We Eliminate 75% of Your Hiring Workload
             </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                fontFamily: "Poppins, sans-serif",
-                fontWeight: 400,
-                fontStyle: "normal",
-                color: "#D1D5DB",
-                mb: 3,
-                textAlign: "left",
-                fontSize: "14px",
-                lineHeight: "24px",
-                letterSpacing: "0%",
-                verticalAlign: "middle",
-                zIndex: 2,
-                position: "relative",
-              }}
-            >
-              Transform weeks of manual work into minutes of intelligent
-              automation.
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.50)", mb: 2.5 }}>
+              Watch a real AI agent conduct a full technical + soft-skills interview in minutes.
             </Typography>
             <Button
               variant="contained"
-              onClick={() => window.open("https://calendly.com/talent__ai/30min", "_blank")}
+              onClick={() => setVideoOpen(true)}
               sx={{
-                textTransform: "none",
-                backgroundColor: "rgba(12,218,139,1)",
-                color: "#0b1b1f",
-                borderRadius: 0.5,
+                bgcolor: ACCENT, color: "#fff",
+                fontFamily: "Poppins", fontWeight: 600, fontSize: "13px",
+                textTransform: "none", borderRadius: 0,
                 boxShadow: "none",
-                px: 3,
-                py: 1.5,
-                fontFamily: "Poppins",
-                fontSize: "0.95rem",
-                fontWeight: 500,
-                zIndex: 2,
-                position: "relative",
-                "&:hover": { backgroundColor: "rgba(12,218,139,0.7)" },
+                "&:hover": { bgcolor: ACCENT },
               }}
             >
-              Request a Demo
+              Watch a 2-Min Demo
             </Button>
           </Box>
         </Box>
 
-        {/* Bias-Free Evaluation Section */}
-        <Box
-          sx={{
-            backgroundColor: "rgba(20, 20, 21, 1)",
-            color: "#fff",
-            py: { xs: 6, md: 10 },
-            px: 3,
-            mb: { xs: 2, md: 3 },
-            position: "relative",
-            zIndex: 1,
-            mt: { xs: -16, md: -20 },
-          }}
-        >
-          <Box
-            sx={{
-              maxWidth: 1300,
-              mx: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: { xs: 4, md: 6 },
-            }}
-          >
-            {/* Left side - Text content */}
-            <Box sx={{ flex: 1, maxWidth: 500, ml: 6, mt: { xs: 8, md: 12 } }}>
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 400,
-                  fontStyle: "normal",
-                  fontSize: "36px",
-                  lineHeight: "43.2px",
-                  letterSpacing: 0,
-                  verticalAlign: "middle",
-                  mb: 1,
-                }}
-              >
-                Bias-Free Evaluation.
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  fontFamily: "Poppins",
-                  fontWeight: 400,
-                  fontStyle: "normal",
-                  fontSize: "16px",
-                  lineHeight: "24px",
-                  letterSpacing: 0,
-                  mb: 2,
-                }}
-              >
-                Our platform ensures that every candidate is assessed
-                objectively, using data-driven methods that eliminate
-                unconscious bias in recruitment decisions. This leads to fairer
-                outcomes and a more diverse, high-performing workforce.{" "}
-              </Typography>
+        {/* Right — Bias-Free copy + bullets + module grid */}
+        <Box>
+          <Typography sx={{
+            fontFamily: "Poppins", fontWeight: 700,
+            fontSize: { xs: "22px", md: "28px" },
+            lineHeight: 1.25, color: "#111827", mb: 1.5,
+          }}>
+            Every Candidate Evaluated <Box component="span" sx={{ color: ACCENT }}>on Merit.</Box><br />
+            <Box component="span" sx={{ color: ACCENT }}>Nothing Else.</Box>
+          </Typography>
+          <Typography sx={{
+            fontFamily: "Poppins", fontSize: "15px",
+            color: "#4B5563", lineHeight: 1.7, mb: 3,
+          }}>
+            Unconscious bias costs companies top talent and exposes them to legal risk.
+            TalentAI's AI agents evaluate every candidate on the same criteria — skills,
+            communication, cultural alignment — with zero room for gut instinct to override the data.
+          </Typography>
 
-              <Stack spacing={2} sx={{ mb: 4 }}>
-                <Bullet label="Conversational AI Interviews" />
-                <Bullet label="Blockchain-Verified Credentials" />
-                <Bullet label="Drag-&-Drop Pipeline Builder" />
-                <Bullet label="Automated Decision-Making" />
-                <Bullet label="Fair Credit Pricing" />
-              </Stack>
-              {/* 
-              <Button
-                variant="outlined"
-                sx={{
-                  textTransform: 'none',
-                  color: '#fff',
-                  borderColor: '#fff',
-                  borderRadius: '2px',
-                  maxWidth: 235,
-                  height: 48,
-                  fontFamily: 'Poppins',
-                  fontWeight: 400,
-                  fontStyle: 'normal',
-                  fontSize: '16px',
-                  lineHeight: '24px',
-                  letterSpacing: 0,
-                  textAlign: 'center',
-                  verticalAlign: 'middle',
-                  '&:hover': {
-                    borderColor: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                  }
-                }}
-              >
-                Discover Recruitment Flow
-              </Button> */}
-            </Box>
-
-            {/* Right side - White card with icon grid */}
-            <Box
-              sx={{
-                flex: 1,
-                display: { xs: "none", md: "flex" },
-                justifyContent: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  bgcolor: "rgba(251, 252, 254, 1)",
-                  borderRadius: 3,
-                  mt: 10,
-                  p: 3,
-                  width: 360,
-                  height: "auto",
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gridTemplateRows: "1fr 1fr 1fr",
-                  gap: 2.5,
-                  boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)",
-                  border: "1.97px solid rgba(98, 111, 134, 0.15)",
-                }}
-              >
-                <Pill
-                  label="Technical"
-                  color="#8B5CF6"
-                  icon="/icons/technical.svg"
-                />
-                <Pill label="Task" color="#EF4444" icon="/icons/task.svg" />
-                <Pill label="Soft" color="#F59E0B" icon="/icons/soft.svg" />
-                <Pill
-                  label="Condition"
-                  color="#3B82F6"
-                  icon="/icons/condition.svg"
-                />
-                <Pill label="HR" color="#06B6D4" icon="/icons/hr.svg" />
-                <Pill label="Email" color="#10B981" icon="/icons/email.svg" />
+          {/* Bullets */}
+          <Stack spacing={1.5} sx={{ mb: 4 }}>
+            {BULLETS.map((b) => (
+              <Box key={b} sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+                <CheckCircleOutlined sx={{ fontSize: 18, color: ACCENT, mt: 0.15, flexShrink: 0 }} />
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", fontWeight: 500, color: "#374151", lineHeight: 1.5 }}>
+                  {b}
+                </Typography>
               </Box>
-            </Box>
+            ))}
+          </Stack>
+
+          {/* Module grid */}
+          <Box sx={{
+            display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.5,
+          }}>
+            {PILLS.map((p) => (
+              <Box key={p.label} sx={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                gap: 1, p: 2, borderRadius: 2,
+                bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
+                transition: "all 0.2s",
+                "&:hover": { border: `1px solid rgba(12,218,139,0.40)`, bgcolor: ACCENT_BG, transform: "translateY(-2px)" },
+              }}>
+                <Box component="img" src={p.icon} alt={p.label} sx={{ width: 28, height: 28, objectFit: "contain" }} />
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", fontWeight: 600, color: "#374151" }}>
+                  {p.label}
+                </Typography>
+              </Box>
+            ))}
           </Box>
         </Box>
       </Box>
+
+      <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </Box>
   );
 };

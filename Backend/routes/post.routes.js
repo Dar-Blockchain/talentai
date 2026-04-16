@@ -1,18 +1,19 @@
 /**
- * Routes des offres (posts)
+ * Post (job offers) routes
  *
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - LogMiddleware("Post"): journalise les requêtes liées aux posts
- * - controledAcces: certaines routes peuvent nécessiter un rôle spécifique côté contrôleur
+ * Global middlewares applied:
+ * - requireAuthUser: requires an authenticated user
+ * - verifyApiKey: alternative for API key authentication
+ * - LogMiddleware("Post"): logs post-related requests
+ * - controledAcces: some routes may require a specific role on the controller side
  */
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
-const postPaymentController = require("../controllers/postPayment.controller");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
@@ -20,80 +21,70 @@ const resolveCompanyActor = require("../middleware/resolve-company-actor.middlew
 // Public routes - no authentication required
 
 // GET /post/search
-// Description: Retourne tous les posts avec recherche, filtres et pagination (public)
+// Description: Returns all posts with search, filters and pagination (public)
 router.get("/search", postController.getAllPostsWithSearch);
 
 // GET /post/details/:id
-// Description: Retourne les détails d'un post par son ID (public)
+// Description: Returns post details by ID (public)
 router.get("/details/:id", postController.getPostDetailsPublic);
 
 // GET /post/public-stats
-// Description: Retourne les statistiques publiques (nombre d'utilisateurs, posts, entreprises)
+// Description: Returns public statistics (number of users, posts, companies)
 router.get("/public-stats", postController.getPublicStats);
 
-// Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser, authLogMiddleware("Post"));
+
+router.use(requireAuth,authLogMiddleware("Post"));
 
 // POST /post/save-post
-// Description: Crée un post
-router.post("/save-post",resolveCompanyActor, postController.createPost);
+// Description: Creates a post
+// Required scopes: write:posts
+router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, postController.createPost);
 
 // GET /post/get-all-posts
-// Description: Retourne tous les posts
-router.get("/get-all-posts", postController.getAllPosts);
+// Description: Returns all posts
+// Required scopes: read:posts
+router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPosts);
 
 // GET /post/my-posts
-// Description: Posts de l'utilisateur courant
+// Description: Posts of current user
+// Required scopes: read:posts
 router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
+// GET /post/metrics
+// Description: Returns post metrics (total, active, draft, expired, closed, cancelled)
+router.get("/metrics", postController.getPostMetrics);
+
 // GET /post/getPostById/:id
-// Description: Détails d'un post
-router.get("/getPostById/:id", postController.getPostById);
+// Description: Post details
+// Required scopes: read:posts
+router.get("/getPostById/:id", checkScope(['read:posts']), postController.getPostById);
 
 // PUT /post/updatePost/:id
-// Description: Met à jour un post
-router.put("/updatePost/:id", resolveCompanyActor,postController.updatePost);
+// Description: Updates a post
+// Required scopes: write:posts
+router.put("/updatePost/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePost);
 
 // PATCH /post/updatePostStatus/:id
-// Description: Modifie le statut d'un post (actif/brouillon, etc.)
-router.patch("/updatePostStatus/:id", resolveCompanyActor,postController.updatePostStatus);
+// Description: Changes post status (active/draft, etc.)
+// Required scopes: write:posts
+router.patch("/updatePostStatus/:id", checkScope(['write:posts']), resolveCompanyActor,postController.updatePostStatus);
 
 // DELETE /post/deletePost/:id
-// Description: Supprime un post
-router.delete("/deletePost/:id", resolveCompanyActor,postController.deletePost);
+// Description: Deletes a post
+// Required scopes: delete:posts
+router.delete("/deletePost/:id", checkScope(['delete:posts']), resolveCompanyActor,postController.deletePost);
 
 // GET /post/adsPost
-// Description: 3 posts proposés à partir des 3 premières compétences du profil + pagination
+// Description: 3 posts suggested from top 3 profile skills + pagination
 router.get("/adsPost", postController.getPostsByUserTopSkills);
 
 // GET /post/DetailsPost/:id
-// Description: Alias de détail de post
+// Description: Post detail alias
 router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 
-// POST /post/send-technical-test
-// Description: Send technical test task via email with PDF
-router.post("/send-technical-test", resolveCompanyActor,postController.sendTechnicalTest);
-
 // ========================================
-// PAYMENT ROUTES
+// INTERVIEW CONFIGURATION ROUTES
 // ========================================
-
-// GET /post/payment/calculate-price/:postId
-// Description: Calculate payment price for a post based on number of steps
-router.get("/payment/calculate-price/:postId", resolveCompanyActor,postPaymentController.calculatePostPrice);
-
-// POST /post/payment/process
-// Description: Process payment for agent creation after post and agent are created
-// Body: { postId, agentId }
-router.post("/payment/process", resolveCompanyActor,postPaymentController.processPostPayment);
-
-// GET /post/payment/history
-// Description: Get payment history for user's posts
-router.get("/payment/history", resolveCompanyActor,postPaymentController.getPostPaymentHistory);
-
-// GET /post/payment/details/:postId
-// Description: Get payment details for a specific post
-router.get("/payment/details/:postId", resolveCompanyActor,postPaymentController.getPostPaymentDetails);
 
 // GET /post/interview-config/:jobId
 // Description: Get interview configuration for job-based HR interview (prompt flow)

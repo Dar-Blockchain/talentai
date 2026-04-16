@@ -10,23 +10,23 @@ import { logInterviewDataToConsole } from '@/utils/exportInterviewData';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } from '@/utils/notificationHelpers';
+import { createNotification, broadcastSystemNotification } from '@/store/slices/notificationSlice';
 import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill, getMyProfile } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
-import { saveInterviewAssessment, fetchInterviewDetailsById, claimInterviewReward } from '@/store/slices/interviewSlice';
+import { saveInterviewAssessment, fetchInterviewDetailsById } from '@/store/slices/interviewSlice';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
 import {
   ResultsHeader,
-  RewardNotification,
   KeyStrengths,
   AreasForImprovement,
   CoverageDetails,
+  InterviewFeedback,
   LoadingState,
   ErrorState,
   InterviewAnalysis,
-  RewardInfo,
   determineLevel,
-} from '@/components/post-interview-results';
+} from '@/components/features/interview/results';
 
 export default function InterviewResults() {
   const router = useRouter();
@@ -35,8 +35,6 @@ export default function InterviewResults() {
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rewardInfo, setRewardInfo] = useState<RewardInfo | null>(null);
-  const [claimingReward, setClaimingReward] = useState(false);
 
   useEffect(() => {
     if (router.isReady) {
@@ -128,10 +126,8 @@ export default function InterviewResults() {
             return;
           }
 
-          if (showStatus) {
-            showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
-          }
-          throw new Error(errorMsg);
+          showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          return;
         }
 
         result = actionResult.payload;
@@ -153,7 +149,7 @@ export default function InterviewResults() {
             if (showStatus) {
               showToast({ message: 'This interview has already been saved.', severity: 'info' });
             }
-            return; // Don't throw, just return - the results are still valid
+            return;
           }
 
           // Always show plan limit errors as a toast
@@ -162,10 +158,8 @@ export default function InterviewResults() {
             return;
           }
 
-          if (showStatus) {
-            showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
-          }
-          throw new Error(errorMsg);
+          showToast({ message: errorMsg || 'Failed to save interview', severity: 'error' });
+          return;
         }
 
         result = actionResult.payload;
@@ -196,24 +190,6 @@ export default function InterviewResults() {
       // Refresh profile to update planUsage (monthlyInterviewsUsed)
       dispatch(getMyProfile());
 
-      if (result.reward) {
-        if (result.reward.success && !result.reward.skipped) {
-          setRewardInfo({
-            success: true,
-            amount: result.reward.amount,
-            transactionId: result.reward.transactionId,
-            interviewId: result.data._id
-          });
-        } else if (result.reward.canRetry) {
-          setRewardInfo({
-            success: false,
-            canRetry: true,
-            error: result.reward.error,
-            interviewId: result.data._id
-          });
-        }
-      }
-
       try {
         const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : 'Interview';
         const score = parsedData?.finalReport?.coverage?.overall || parsedData?.overallScore || 0;
@@ -230,6 +206,31 @@ export default function InterviewResults() {
         } else {
           notifySkillTestCompleted(dispatch, skillName);
         }
+
+        // Persistent notification saved to DB — visible in the notification bell
+        const scoreText = score > 0 ? ` — you scored ${Math.round(score)}%` : '';
+        const level = score >= 80 ? 'Expert' : score >= 60 ? 'Intermediate' : score >= 40 ? 'Beginner' : null;
+        const levelText = level ? ` and reached ${level} level` : '';
+        dispatch(createNotification({
+          type: 'success',
+          content: `You completed your ${skillName} interview${scoreText}${levelText}. Your results are now available in your dashboard.`,
+        }));
+
+        // Notify company — fetch post owner userId then broadcast to them
+        if (jobId) {
+          try {
+            const companyUserId = result.data?.post?.user?._id || result.data?.post?.user;
+            if (companyUserId) {
+              const candidateName = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim() || 'A candidate';
+              dispatch(broadcastSystemNotification({
+                content: `${candidateName} has just completed the ${skillName} interview${scoreText}. Check your dashboard to review their results.`,
+                recipientIds: [companyUserId],
+              }));
+            }
+          } catch (companyNotifError) {
+            console.error('❌ [Save] Error notifying company:', companyNotifError);
+          }
+        }
       } catch (notifError) {
         console.error('❌ [Save] Error sending notification:', notifError);
       }
@@ -241,9 +242,6 @@ export default function InterviewResults() {
       return result;
     } catch (error) {
       console.error('❌ [Save] Error saving interview:', error);
-      if (showStatus) {
-        showToast({ message: 'Error saving interview', severity: 'error' });
-      }
     }
   };
 
@@ -253,42 +251,6 @@ export default function InterviewResults() {
       saveInterviewToBackend(false);
     }
   }, [analysis]);
-
-  const handleClaimReward = async () => {
-    if (!rewardInfo?.interviewId) return;
-
-    try {
-      setClaimingReward(true);
-
-      const actionResult = await dispatch(claimInterviewReward(rewardInfo.interviewId));
-
-      if (claimInterviewReward.fulfilled.match(actionResult)) {
-        const result = actionResult.payload;
-        setRewardInfo({
-          success: true,
-          amount: result.reward.amount,
-          transactionId: result.reward.transactionId,
-          interviewId: rewardInfo.interviewId
-        });
-      } else {
-        const errorMsg = actionResult.payload as string;
-        setRewardInfo({
-          ...rewardInfo,
-          success: false,
-          error: errorMsg,
-          canRetry: true
-        });
-      }
-    } catch (error: any) {
-      setRewardInfo({
-        ...rewardInfo,
-        success: false,
-        error: error.message || 'Failed to claim reward'
-      });
-    } finally {
-      setClaimingReward(false);
-    }
-  };
 
   const fetchAnalysis = async () => {
     try {
@@ -381,8 +343,10 @@ export default function InterviewResults() {
     const role = urlParams.get('role') || localStorage.getItem('interview_role');
     const category = urlParams.get('category') || localStorage.getItem('interview_category');
 
-    let overallScore = 0;
-    if (coverage.areas && Object.keys(coverage.areas).length > 0) {
+    // Use the composite score from backend (quality 35% + skills 25% + coverage 15% + depth 15% + communication 10%)
+    let overallScore = scores.overall || 0;
+    if (!overallScore && coverage.areas && Object.keys(coverage.areas).length > 0) {
+      // Fallback: calculate from coverage only if no composite score exists
       let weightedSum = 0;
       let totalWeight = 0;
       Object.values(coverage.areas).forEach((area: any) => {
@@ -392,8 +356,6 @@ export default function InterviewResults() {
         totalWeight += weight;
       });
       overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
-    } else {
-      overallScore = scores.overall || coverage.overall || 0;
     }
 
     let primarySkillName = 'General Assessment';
@@ -414,10 +376,8 @@ export default function InterviewResults() {
       skill: primarySkillName,
       score: overallScore,
       level: determineLevel(overallScore),
-      strengths: finalReport.recommendations?.strengths ||
-        coverage.aiAnalysis?.strongestAreas?.map((a: string) => `Strong in ${a.replace('_', ' ')}`) || [],
-      improvements: finalReport.recommendations?.improvements ||
-        coverage.aiAnalysis?.weakestAreas?.map((a: string) => `Improve ${a.replace('_', ' ')}`) || []
+      strengths: finalReport.strengths || [],
+      improvements: finalReport.weaknesses || []
     }];
 
     return {
@@ -427,9 +387,9 @@ export default function InterviewResults() {
       duration: analytics.duration || 0,
       completedAt: socketData.timestamp || new Date().toISOString(),
       skillScores: skillScores,
-      strengths: finalReport.recommendations?.strengths || extractStrengths(coverage),
-      weaknesses: finalReport.recommendations?.improvements || extractWeaknesses(coverage),
-      recommendations: finalReport.recommendations?.suggestions || generateRecommendations(coverage),
+      strengths: finalReport.strengths || [],
+      weaknesses: finalReport.weaknesses || [],
+      recommendations: finalReport.recommendations || [],
       feedback: finalReport.summary || 'Interview analysis in progress...',
       conversationQuality: {
         clarity: scores.clarity || 0,
@@ -495,7 +455,7 @@ export default function InterviewResults() {
         }
       });
     }
-    return strengths.length > 0 ? strengths : ['No strengths data available'];
+    return strengths;
   };
 
   const extractWeaknesses = (coverage: any): string[] => {
@@ -514,7 +474,7 @@ export default function InterviewResults() {
         }
       });
     }
-    return weaknesses.length > 0 ? weaknesses : ['No weaknesses data available'];
+    return weaknesses;
   };
 
   const generateRecommendations = (coverage: any): string[] => {
@@ -547,7 +507,7 @@ export default function InterviewResults() {
       });
     }
 
-    return recommendations.length > 0 ? recommendations.slice(0, 10) : ['No recommendations available'];
+    return recommendations.slice(0, 10);
   };
 
   if (loading) {
@@ -562,17 +522,10 @@ export default function InterviewResults() {
     <PageContainer>
       <Header />
       <ResultsHeader analysis={analysis} />
-
-      {rewardInfo && (
-        <RewardNotification
-          rewardInfo={rewardInfo}
-          claimingReward={claimingReward}
-          onClaimReward={handleClaimReward}
-        />
-      )}
       <KeyStrengths strengths={analysis.strengths} />
       <AreasForImprovement weaknesses={analysis.weaknesses} />
       <CoverageDetails coverage={analysis.coverage} />
+      <InterviewFeedback interviewId={localStorage.getItem('last_interview_id') || undefined} />
 
       {/* Back to Dashboard Button */}
       <Box
@@ -590,16 +543,16 @@ export default function InterviewResults() {
             window.location.href = '/dashboard/candidate';
           }}
           sx={{
-            background: 'rgba(163, 98, 239, 1)',
-            color: '#ffffff',
+            bgcolor: '#8310FF',
+            color: '#fff',
             fontWeight: 600,
-            borderRadius: '38px',
+            borderRadius: '10px',
             px: 4,
             py: 1.5,
             textTransform: 'none',
-            '&:hover': {
-              background: 'rgba(163, 98, 239, 0.8)',
-            },
+            boxShadow: 'none',
+            fontFamily: 'Poppins',
+            '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
           }}
         >
           Back to Dashboard

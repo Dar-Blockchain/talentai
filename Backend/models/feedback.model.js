@@ -6,26 +6,25 @@ const FeedbackSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  feedback: {
-    type: [String], // Tableau de 5 chaînes de caractères
+  rating: {
+    type: Number,
     required: true,
-    validate: [arrayLimit, "{PATH} exceeds the limit of 5"],
-    default: ["", "", "", "", ""], // Initialisation vide des 5 cases
+    min: 1,
+    max: 5,
   },
   comment: {
     type: String,
     trim: true,
     maxlength: 1000,
   },
+  interviewId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PostInterviewAssessment",
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
-
-// Validation de la longueur du tableau feedback (5 éléments maximum)
-function arrayLimit(val) {
-  return val.length === 5;
-}
 
 module.exports = mongoose.model("Feedback", FeedbackSchema);

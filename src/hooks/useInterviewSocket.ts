@@ -11,6 +11,7 @@ import {
 
 export interface InterviewStartedData {
   sessionId: string;
+  targetCompany?: string;
   config: {
     duration: number;
     interviewType: string;
@@ -37,11 +38,13 @@ export interface UseInterviewSocketCallbacks {
   onInterviewStarted: (data: InterviewStartedData) => void;
   onInterviewMessage: (message: InterviewMessage) => void;
   onCoverageUpdate: (coverage: Coverage) => void;
-  onReportUpdate: (report: RealTimeReport) => void;
+  onReportUpdate?: (report: RealTimeReport) => void;
   onSilenceResponse: (data: SilenceResponseData) => void;
   onVoiceActivity: (data: { isActive: boolean }) => void;
   onInterviewEnded: (data: InterviewEndedData) => void;
   onInterviewError: (error: { message: string }) => void;
+  /** Socket.IO namespace to connect to. Defaults to '/interview'. */
+  namespace?: string;
 }
 
 export interface UseInterviewSocketReturn {
@@ -66,6 +69,8 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
   const [interviewStatus, setInterviewStatus] = useState<InterviewStatus>('idle');
   const sessionIdRef = useRef<string | null>(null);
 
+  const namespace = callbacks.namespace ?? '/interview';
+
   // Store callbacks in refs to avoid stale closures
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
@@ -86,10 +91,10 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     connectionInitialized.current = true;
 
     const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.23.207.114:5000').replace(/\/$/, '');
-    console.log('🔗 Attempting to connect to:', `${baseUrl}/interview`);
-    console.log('🔗 Socket.IO will connect to namespace: /interview');
+    console.log('🔗 Attempting to connect to:', `${baseUrl}${namespace}`);
+    console.log('🔗 Socket.IO will connect to namespace:', namespace);
 
-    const socket = io(`${baseUrl}/interview`, {
+    const socket = io(`${baseUrl}${namespace}`, {
       path: '/socket.io/',
       transports: ['websocket', 'polling'],
       forceNew: false,
@@ -156,7 +161,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       sessionIdRef.current = data.sessionId;
       setInterviewStatus('active');
       callbacksRef.current.onInterviewStarted(data);
-      callbacksRef.current.onNotification('Interview started successfully!', 'success');
     });
 
     socket.on('interviewer_message', (message: InterviewMessage) => {
@@ -171,7 +175,7 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     socket.on('report_update', (data: any) => {
       console.log('📋 Report update:', data);
-      callbacksRef.current.onReportUpdate(data.report);
+      callbacksRef.current.onReportUpdate?.(data.report);
     });
 
     socket.on('silence_response', (data: any) => {
@@ -187,7 +191,6 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       console.log('🏁 Interview ended:', data);
       setInterviewStatus('ended');
       callbacksRef.current.onInterviewEnded(data);
-      callbacksRef.current.onNotification('Interview completed!', 'success');
     });
 
     socket.on('interview_error', (error: any) => {

@@ -4,7 +4,7 @@ const TopicSchema = new mongoose.Schema({
   postId: {
     type: String,
     required: true,
-    unique: true, // ✅ garde l’unicité qui génère déjà un index
+    unique: true, // ✅ keep uniqueness which already generates an index
   },
   topicId: {
     type: String,
@@ -26,7 +26,7 @@ const TopicSchema = new mongoose.Schema({
 });
 
 // Indexes for faster querying
-// ✅ supprimé: TopicSchema.index({ postId: 1 });
+// ✅ removed: TopicSchema.index({ postId: 1 });
 TopicSchema.index({ status: 1 });
 
 // Add closedAt timestamp when status changes to closed

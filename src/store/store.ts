@@ -11,14 +11,8 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from './slices/authSlice';
-import bidReducer from './slices/bidSlice';
-import todoReducer from './slices/todoSlice';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
-import hrAgentsReducer from './slices/hrAgentsSlice';
-import tokenReducer from './slices/tokenSlice';
-import agentConfigReducer from './slices/agentConfigSlice';
-import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
 import candidateReducer from './slices/candidateSlice';
 import postGenerationReducer from './slices/postGenerationSlice';
 import interviewReducer from './slices/interviewSlice';
@@ -29,18 +23,18 @@ import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
+import campaignReducer from './slices/campaignSlice';
+import companyReducer from './slices/companySlice';
+import departmentReducer from './slices/departmentSlice';
+import jobApplicationReducer from './slices/jobApplicationSlice';
+import apiKeyReducer from './slices/apiKeySlice';
+import feedbackReducer from './slices/feedbackSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
   user: userReducer,
   auth: authReducer,
-  bid: bidReducer,
-  todo: todoReducer,
   post: postReducer,
-  hrAgents: hrAgentsReducer,
-  token: tokenReducer,
-  agentConfig: agentConfigReducer,
-  tokenPurchase: tokenPurchaseReducer,
   candidate: candidateReducer,
   postGeneration: postGenerationReducer,
   interview: interviewReducer,
@@ -50,7 +44,13 @@ const rootReducer = combineReducers({
   member: memberReducer,
   chat: chatReducer,
   admin: adminReducer,
-  planLimits: planLimitsReducer
+  planLimits: planLimitsReducer,
+  campaign: campaignReducer,
+  company: companyReducer,
+  department: departmentReducer,
+  jobApplications: jobApplicationReducer,
+  apiKeys: apiKeyReducer,
+  feedback: feedbackReducer,
 });
 
 const persistConfig = {

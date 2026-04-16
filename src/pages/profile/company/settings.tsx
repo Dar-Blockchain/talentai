@@ -3,11 +3,10 @@ import React from "react";
 import { Box, Card, CardContent, Typography, Breadcrumbs, Link } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Header from "@/components/layout/Header";
-import ProfileSidebar from "@/components/profile/ProfileSidebar";
-import PersonalInformationTab from "@/components/profile/PersonalInformationTab";
-import ContactInformationTab from "@/components/profile/ContactInformationTab";
-import TeamMembersTab from "@/components/profile/TeamMembersTab";
-import SnackbarNotifications from "@/components/profile/SnackbarNotifications";
+import ProfileSidebar from "@/components/features/profile/ProfileSidebar";
+import PersonalInformationTab from "@/components/features/profile/PersonalInformationTab";
+import ContactInformationTab from "@/components/features/profile/ContactInformationTab";
+import SnackbarNotifications from "@/components/features/profile/SnackbarNotifications";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
 import PageContainer from "@/components/layout/PageContainer";
 
@@ -28,6 +27,7 @@ const CompanySettingsPage: React.FC = () => {
     handleSelectChange,
     handleImageUpload,
     handleSaveProfile,
+    handleCancel,
     handleDismissError,
     handleDismissSuccess,
   } = useCompanyProfileManagement();
@@ -46,7 +46,7 @@ const CompanySettingsPage: React.FC = () => {
           <Link
             underline="hover"
             color="inherit"
-            href="/dashboard/company"
+            href="/company/dashboard"
             sx={{
               cursor: 'pointer',
               fontSize: '0.875rem',
@@ -92,7 +92,7 @@ const CompanySettingsPage: React.FC = () => {
               onSelectChange={handleSelectChange}
               onImageUpload={handleImageUpload}
               onSave={handleSaveProfile}
-              onCancel={() => setIsEditing(false)}
+              onCancel={handleCancel}
               onEditToggle={() => setIsEditing(!isEditing)}
             />
           )}
@@ -105,16 +105,13 @@ const CompanySettingsPage: React.FC = () => {
               fieldErrors={fieldErrors}
               onInputChange={handleInputChange}
               onSave={handleSaveProfile}
-              onCancel={() => setIsEditing(false)}
+              onCancel={handleCancel}
               onEditToggle={() => setIsEditing(!isEditing)}
             />
           )}
 
-          {activeTab === "team" && <TeamMembersTab />}
-
           {activeTab !== "personal" &&
-            activeTab !== "contact" &&
-            activeTab !== "team" && (
+            activeTab !== "contact" && (
               <Card
                 sx={{
                   borderRadius: 3,

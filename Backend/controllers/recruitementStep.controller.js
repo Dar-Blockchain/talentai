@@ -1,4 +1,3 @@
-const { Together } = require("together-ai");
 require("dotenv").config();
 
 const Post = require("../models/Post.model");

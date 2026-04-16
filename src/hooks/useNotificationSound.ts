@@ -1,5 +1,5 @@
 /**
- * Hook pour gérer les paramètres des sons de notification
+ * Hook to manage notification sound settings
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,14 +9,14 @@ export const useNotificationSound = () => {
   const [enabled, setEnabledState] = useState(notificationSound.isEnabled());
   const [volume, setVolumeState] = useState(notificationSound.getVolume());
 
-  // Synchroniser avec localStorage au montage
+  // Synchronize with localStorage on mount
   useEffect(() => {
     setEnabledState(notificationSound.isEnabled());
     setVolumeState(notificationSound.getVolume());
   }, []);
 
   /**
-   * Active/désactive les sons
+   * Enable/disable sounds
    */
   const setEnabled = useCallback((value: boolean) => {
     notificationSound.setEnabled(value);
@@ -24,10 +24,10 @@ export const useNotificationSound = () => {
   }, []);
 
   /**
-   * Modifie le volume (0-100)
+   * Changes the volume (0-100)
    */
   const setVolume = useCallback((value: number) => {
-    const normalizedVolume = value / 100; // Convertir 0-100 en 0-1
+    const normalizedVolume = value / 100; // Convert 0-100 to 0-1
     notificationSound.setVolume(normalizedVolume);
     setVolumeState(normalizedVolume);
   }, []);
@@ -41,7 +41,7 @@ export const useNotificationSound = () => {
   }, [enabled, setEnabled]);
 
   /**
-   * Teste un son
+   * Test a sound
    */
   const testSound = useCallback((type: NotificationType) => {
     notificationSound.test(type);

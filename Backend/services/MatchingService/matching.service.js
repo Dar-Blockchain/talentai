@@ -1,8 +1,8 @@
 /* ------------------------------------------------
    CONSTANTS & HELPERS
 ------------------------------------------------ */
-// Toggle verbose logs for debugging (false in production)
-const VERBOSE = false;
+// Toggle verbose logs for debugging (controlled by environment variable)
+const VERBOSE = process.env.VERBOSE_MATCHING === 'true' || process.env.NODE_ENV === 'development';
 
 const convertLevelToNumber = (level) => {
   if (level == null) return 1; // null, undefined → default = 1
@@ -11,8 +11,8 @@ const convertLevelToNumber = (level) => {
 };
 
 /**
- * Retourne une version normalisée pour affichage (First letter uppercase)
- * Préservée pour compatibilité publique.
+ * Returns a normalized version for display (First letter uppercase)
+ * Preserved for public compatibility.
  */
 const normalizeSkillName = (name) =>
   name
@@ -23,12 +23,12 @@ const normalizeSkillName = (name) =>
     : "";
 
 /**
- * Clef interne utilisée pour lookup/comparaisons (lowercase, trimmed)
+ * Internal key used for lookup/comparisons (lowercase, trimmed)
  */
 const normalizeSkillKey = (name) => (name ? name.split(".")[0].trim().toLowerCase() : "");
 
 /* ------------------------------------------------
-   0️⃣ HARD SKILLS (Optimisé)
+   0️⃣ HARD SKILLS (Optimized)
 ------------------------------------------------ */
 function calculateHardSkillsScore(jobSkills, candidateSkills, MAX, candidateProfile) {
   if (VERBOSE) {
@@ -76,7 +76,7 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, MAX, candidateProf
 }
 
 /* ------------------------------------------------
-   1️⃣ SOFT SKILLS (Optimisé)
+   1️⃣ SOFT SKILLS (Optimized)
 ------------------------------------------------ */
 function calculateSoftSkillsScore(jobSoft, candSoft, MAX, candidateProfile) {
   if (VERBOSE) console.log(`\n--- Soft Skills Calculation ${candidateProfile.firstName} ${candidateProfile.lastName} --- `);
@@ -100,7 +100,7 @@ function calculateSoftSkillsScore(jobSoft, candSoft, MAX, candidateProfile) {
 }
 
 /* ------------------------------------------------
-   2️⃣ EXPERIENCE (Optimisé)
+   2️⃣ EXPERIENCE (Optimized)
 ------------------------------------------------ */
 function calculateExperienceScore(jobSkills, candidateSkills, MAX, candidateProfile) {
   if (VERBOSE) console.log(`\n--- Experience Score Calculation ${candidateProfile.firstName} ${candidateProfile.lastName} --- `);
@@ -132,7 +132,7 @@ function calculateExperienceScore(jobSkills, candidateSkills, MAX, candidateProf
 }
 
 /* ------------------------------------------------
-   3️⃣ SALARY (Optimisé)
+   3️⃣ SALARY (Optimized)
 ------------------------------------------------ */
 function calculateSalaryScore(jobDetails, candProf, RATES, MAX, perUSD = true) {
   if (VERBOSE) console.log(`\n--- Salary Score Calculation ${candProf.firstName} ${candProf.lastName} --- `);
@@ -176,9 +176,9 @@ function calculateSalaryScore(jobDetails, candProf, RATES, MAX, perUSD = true) {
    4️⃣ WORK MODE
 ------------------------------------------------ */
 const calculateWorkModeScore = (job, cand, MAX) => {
-  if (!job.location || !cand.workModePreference) return 0;
-  const score = job.location.toLowerCase() === cand.workModePreference.toLowerCase() ? MAX : MAX / 2;
-  if (VERBOSE) console.log(`💡 WorkMode: Job=${job.location}, Cand=${cand.workModePreference}, Score=${score}`);
+  if (!job.workMode || !cand.workModePreference) return 0;
+  const score = job.workMode.toLowerCase() === cand.workModePreference.toLowerCase() ? MAX : MAX / 2;
+  if (VERBOSE) console.log(`💡 WorkMode: Job=${job.workMode}, Cand=${cand.workModePreference}, Score=${score}`);
   return score;
 };
 
@@ -193,9 +193,9 @@ const calculateContractScore = (job, cand, MAX) => {
 };
 
 /* ------------------------------------------------
-   🚀 MAIN FUNCTION (Optimisée)
+   🚀 MAIN FUNCTION (Optimized)
 ------------------------------------------------ */
-async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, candidateProfile = {}, idCompany, matchingConfig = {}, unlockedSet = new Set()) {
+async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, candidateProfile = {}, idCompany, matchingConfig = {}) {
   if (VERBOSE) console.log("\n========== MATCHING START ==========");
   if (VERBOSE) console.log(candidateProfile.firstName + " " + candidateProfile.lastName);
 
@@ -204,16 +204,26 @@ async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, 
     return 0;
   }
 
-  // lookup unlock state from Set (fast)
-  const unlocked = candidateProfile.userId?._id ? unlockedSet.has(String(candidateProfile.userId._id)) : false;
+  // Unlock status is no longer supported - always return false
+  const unlocked = false;
 
   const cfg = matchingConfig || {};
   const weights = (cfg && cfg.weights) || {};
   const { hardSkill = 50, SoftSkill = 10, experience = 10, salary = 10, workMode = 10, contract = 10 } = weights;
 
+  console.log(`\n📊 [MATCHING ENGINE] - Calculating match score for: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
+  console.log(`\n🎯 COMPONENT WEIGHTS CONFIGURATION:`);
+  console.log(`   Hard Skills Weight .... ${hardSkill}%`);
+  console.log(`   Soft Skills Weight .... ${SoftSkill}%`);
+  console.log(`   Experience Weight ..... ${experience}%`);
+  console.log(`   Salary Weight ......... ${salary}%`);
+  console.log(`   Work Mode Weight ...... ${workMode}%`);
+  console.log(`   Contract Weight ....... ${contract}%`);
+  console.log(`   TOTAL ................ ${hardSkill + SoftSkill + experience + salary + workMode + contract}%`);
+
   const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, hardSkill, candidateProfile);
   if (hardSkillScore === 0) {
-    if (VERBOSE) console.log("❌ Candidate eliminated: no hard skill match");
+    console.log(`❌ [ELIMINATION] Candidate eliminated: no hard skill match - cannot proceed`);
     return 0;
   }
 
@@ -225,8 +235,18 @@ async function calculateMatchScore(jobSkills, candidateSkills, jobDetails = {}, 
 
   const total = hardSkillScore + softSkillScore + experienceScore + salaryScore + workModeScore + contractScore;
 
+  console.log(`\n📋 [SCORING BREAKDOWN]:`);
+  console.log(`   Hard Skills Score .... ${hardSkillScore.toFixed(2)} / ${hardSkill}%`);
+  console.log(`   Soft Skills Score .... ${softSkillScore.toFixed(2)} / ${SoftSkill}%`);
+  console.log(`   Experience Score .... ${experienceScore.toFixed(2)} / ${experience}%`);
+  console.log(`   Salary Score ........ ${salaryScore.toFixed(2)} / ${salary}%`);
+  console.log(`   Work Mode Score .... ${workModeScore.toFixed(2)} / ${workMode}%`);
+  console.log(`   Contract Score ..... ${contractScore.toFixed(2)} / ${contract}%`);
+  console.log(`   ─────────────────────────────────────────`);
+  console.log(`   💯 TOTAL SCORE ...... ${total.toFixed(2)} / 100`);
+
   if (VERBOSE) {
-    console.log("---------- SCORES DETAIL ----------");
+    console.log("---------- DETAILED VERBOSE SCORES ----------");
     console.log(`Hard Skills ${candidateProfile.firstName} ${candidateProfile.lastName} : ${hardSkillScore.toFixed(2)}`);
     console.log(`Soft Skills ${candidateProfile.firstName} ${candidateProfile.lastName} : ${softSkillScore.toFixed(2)}`);
     console.log(`Experience ${candidateProfile.firstName} ${candidateProfile.lastName} : ${experienceScore.toFixed(2)}`);

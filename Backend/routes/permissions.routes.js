@@ -10,10 +10,13 @@ const router = express.Router();
 const companyPermissionsController = require("../controllers/companyPermissions.controller");
 
 // Import middlewares
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
+
+router.use(requireAuth);
 
 // GET /permissions/me
 // Description: Get current user's own permissions
-router.get("/me", requireAuthUser, companyPermissionsController.getMyPermissions);
+router.get("/me", companyPermissionsController.getMyPermissions);
 
 module.exports = router;

@@ -1,0 +1,68 @@
+import React, { useState } from "react";
+import { Button, Stack } from "@mui/material";
+import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import DemoVideoModal from "@/components/home/company/DemoVideoModal";
+
+const HeaderPrimaryActions = () => {
+  const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.user.connectedUser);
+  const [videoOpen, setVideoOpen] = useState(false);
+
+  const userType = user?.role?.toLowerCase()  || localStorage.getItem("userType") || "candidate";
+
+  return (
+    <Stack direction="row" spacing={2}>
+      <Button
+        variant="outlined"
+        onClick={() => router.push("/signin")}
+        sx={{
+          backgroundColor: "#ffffff",
+          color: userType === "candidate" ? "#BD85FF" : "#4DD9A3",
+          border: "none",
+          borderRadius: 999,
+          textTransform: "none",
+          px: 2,
+          py: 0.75,
+          fontSize: "14px",
+          fontWeight: 600,
+          "&:hover": {
+            color: "white",
+            backgroundColor: userType === "candidate" ? "#BD85FF" : "#4DD9A3",
+          },
+        }}
+      >
+        Login
+      </Button>
+      <Button
+        variant="outlined"
+        onClick={() =>
+          userType === "candidate"
+            ? router.push("/signin")
+            : setVideoOpen(true)
+        }
+        sx={{
+          backgroundColor: "#ffffff",
+          color: "#383A3D",
+          border: "none",
+          borderRadius: 999,
+          textTransform: "none",
+          px: 2,
+          py: 0.75,
+          fontSize: "14px",
+          fontWeight: 600,
+          "&:hover": {
+            backgroundColor: "#f9fafb",
+          },
+        }}
+      >
+        {userType === "candidate" ? "Sign-up" : "Watch Demo"}
+      </Button>
+
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
+    </Stack>
+  );
+};
+
+export default HeaderPrimaryActions;

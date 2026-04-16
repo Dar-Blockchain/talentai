@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p c:/Users/takwa/projetsBlockChain/talentai/src/pages/register)",
+      "Bash(mkdir -p c:/Users/takwa/projetsBlockChain/talentai/src/components/features/register)"
+    ]
+  }
+}

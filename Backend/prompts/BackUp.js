@@ -5,7 +5,7 @@ const getQuickPrompt = (description, companyLocation) =>
     2. Extract and suggest relevant skills
     3. Format it for LinkedIn
     4. Provide comprehensive skill analysis
-    
+
     IMPORTANT:
     - Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
     - For the "location" field, extract the location from the job description if specified.
@@ -21,17 +21,17 @@ const getQuickPrompt = (description, companyLocation) =>
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - Only one soft skill must be generated.
-    - If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level". 
+    - If the job description explicitly mentions language (for example: English, French, Spanish), INCLUDE THAT LANGUAGE as the single soft skill. Assign the language a suitable "percentage" and "level".
     - If no language is mentioned, generate one relevant soft skill as usual (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management) .
     - **CRITICAL: The sum of all percentages in requiredSkills + softSkills must equal EXACTLY 100%**
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
-    
+
     Job Description:
     ${description}
-    
+
     Return the response in the following JSON format:
-    
+
     {
       "jobDetails": {
         "title": "Job title",
@@ -63,7 +63,7 @@ const getQuickPrompt = (description, companyLocation) =>
             "name": "Soft Skill 1",
             "level": "Required level (1-5) based on needs",
             "percentage": 0
-          },        
+          },
         ],
 
         "suggestedSkills": {
@@ -141,7 +141,7 @@ const getQuickPrompt = (description, companyLocation) =>
     - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
     - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
- 
+
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
@@ -161,14 +161,13 @@ const getQuickPrompt = (description, companyLocation) =>
         }
     },
 
-    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.  
-    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".  
-    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.  
-    - The total sum of all weights must always equal 100%.  
+    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.
+    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".
+    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.
+    - The total sum of all weights must always equal 100%.
     - Return only the defined JSON fields; do NOT add any extra fields.
 
     The "exchangeRates" values must reflect today's real exchange rates.
-
 
 `.trim();
 
@@ -179,7 +178,7 @@ const getDetailedPrompt = (description, companyLocation) =>
     2. Extract and suggest relevant skills
     3. Format it for LinkedIn
     4. Provide comprehensive skill analysis
-    
+
     IMPORTANT:
     - Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
     - For the "location" field, extract the location from the job description if specified.
@@ -200,12 +199,12 @@ const getDetailedPrompt = (description, companyLocation) =>
     - Only one soft skill must be generated.
      - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
-    
+
     Job Description:
     ${description}
-    
+
     Return the response in the following JSON format:
-    
+
     {
       "jobDetails": {
         "title": "Job title",
@@ -237,7 +236,7 @@ const getDetailedPrompt = (description, companyLocation) =>
             "name": "Soft Skill 1",
             "level": "Required level (1-5) based on needs",
             "percentage": 0
-          },        
+          },
         ],
 
         "suggestedSkills": {
@@ -315,7 +314,7 @@ const getDetailedPrompt = (description, companyLocation) =>
     - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
     - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
- 
+
     Before generating the job details, include the following matching configuration exactly as structured:
 
     "matchingConfig": {
@@ -335,14 +334,13 @@ const getDetailedPrompt = (description, companyLocation) =>
       }
     },
 
-    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.  
-    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".  
-    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.  
-    - The total sum of all weights must always equal 100%.  
+    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.
+    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".
+    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.
+    - The total sum of all weights must always equal 100%.
     - Return only the defined JSON fields; do NOT add any extra fields.
 
     The "exchangeRates" values must reflect today's real exchange rates.
-
 
 `.trim();
 

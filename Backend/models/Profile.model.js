@@ -27,6 +27,14 @@ const softSkillSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const languageSchema = new mongoose.Schema(
+  {
+    language: String,
+    proficiency: String, // Native, B2, B1, A2, A1, etc.
+  },
+  { timestamps: true }
+);
+
 const profileSchema = new mongoose.Schema(
   {
     // ========== IDENTIFICATION & BASIC INFO ==========
@@ -37,10 +45,11 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company"],
+      enum: ["Candidate", "Company", "Employee"],
       required: true,
     },
-    user_image: { type: String, required: false, default: "client.png" },
+    user_image: { type: String, required: false },
+    resume: { type: String, required: false },
 
     // ========== PERSONAL INFORMATION ==========
     firstName: { type: String, required: false },
@@ -53,13 +62,13 @@ const profileSchema = new mongoose.Schema(
     },
     educationLevel: { type: String, required: false },
     country: { type: String, required: false },
-    language: { type: String, required: false },
+    spokenLanguages: [languageSchema],
     timeZone: { type: String, required: false },
+    phone: { type: String, required: false },
 
     // ========== CONTACT INFORMATION ==========
     contactInformation: {
-      email: { type: String, required: false },
-      phone: { type: String, required: false },
+      email: { type: String, required: false, set: (value) => value ? value.toLowerCase() : value },
       address: { type: String, required: false },
       linkedinUrl: { type: String, required: false },
       githubUrl: { type: String, required: false },
@@ -100,10 +109,13 @@ const profileSchema = new mongoose.Schema(
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "SkillInterviewAssessment" },
     ],
+    cvAnalyses: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "CVAnalysis" },
+    ],
 
     // ========== COMPANY SPECIFIC FIELDS ==========
     companyDetails: {
-      email: String,
+      email: { type: String, set: (value) => value ? value.toLowerCase() : value },
       name: String,
       industry: String,
       size: String,
@@ -181,7 +193,7 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    if (doc.type === "Company" && !doc.planLimits) {
+    if ((doc.type === "Company" || doc.type === "Member") && !doc.planLimits) {
       // Get the Trial plan
       const trialPlan = await PlanLimits.findOne({ name: "Trial" });
 
@@ -189,9 +201,9 @@ profileSchema.post("save", async function (doc) {
         await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
           planLimits: trialPlan._id,
         });
-        console.log(`✅ Trial plan assigned to company profile: ${doc._id}`);
+        console.log(`✅ Trial plan assigned to ${doc.type.toLowerCase()} profile: ${doc._id}`);
       } else {
-        console.warn(`⚠️  Trial plan not found. Company profile ${doc._id} was not assigned a plan.`);
+        console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
       }
     }
   } catch (error) {

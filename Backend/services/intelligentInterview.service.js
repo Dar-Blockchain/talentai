@@ -3,9 +3,12 @@
  * Core AI engine for adaptive interview management
  */
 
-const { Together } = require("together-ai");
+const bedrock = require("../helpers/bedrock.helpers");
+const ragService = require("./rag.service");
 const configManager = require("../utils/config-manager");
+const { detectJobCategory, getEvaluationFramework } = require("../utils/config-manager");
 const redisSessionManager = require("../utils/redis-session-manager");
+const Post = require("../models/Post.model");
 require('dotenv').config();
 
 /**
@@ -17,19 +20,17 @@ class AIUtils {
    */
   static parseJSONResponse(responseContent, methodName) {
     try {
-      // Try direct parsing first
-      return JSON.parse(responseContent);
+      // Pre-strip markdown code fences if present (Nova Lite often wraps JSON in ```json```)
+      let cleaned = responseContent;
+      if (cleaned.trimStart().startsWith('```')) {
+        const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (fenceMatch) cleaned = fenceMatch[1];
+      }
+      return JSON.parse(cleaned);
     } catch (error) {
-      console.error(`JSON parsing error in ${methodName}:`, error.message);
-      console.error('Response content (first 200 chars):', responseContent.substring(0, 200));
+      console.warn(`⚠️ JSON parse failed in ${methodName}, trying fallback extraction`);
 
       try {
-        // Extract JSON from markdown code blocks
-        const jsonMatch = responseContent.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[1]);
-        }
-
         // Extract JSON that might have text before/after
         const jsonStart = responseContent.indexOf('{');
         const jsonEnd = responseContent.lastIndexOf('}');
@@ -41,6 +42,38 @@ class AIUtils {
         // Return fallback structure based on method
         return AIUtils.getFallbackResponse(methodName, responseContent);
       } catch (fallbackError) {
+        // Try truncation repair: LLM output may be cut off mid-JSON
+        try {
+          const jsonStart = responseContent.indexOf('{');
+          if (jsonStart !== -1) {
+            let truncated = responseContent.substring(jsonStart);
+            // Remove any trailing incomplete string value (cut off mid-quote)
+            truncated = truncated.replace(/,?\s*"[^"]*$/, '');
+            // Count unmatched brackets and close them
+            let openBraces = 0, openBrackets = 0;
+            let inString = false;
+            for (let i = 0; i < truncated.length; i++) {
+              const ch = truncated[i];
+              if (ch === '"' && (i === 0 || truncated[i-1] !== '\\')) inString = !inString;
+              if (!inString) {
+                if (ch === '{') openBraces++;
+                else if (ch === '}') openBraces--;
+                else if (ch === '[') openBrackets++;
+                else if (ch === ']') openBrackets--;
+              }
+            }
+            // Remove trailing comma before closing
+            truncated = truncated.replace(/,\s*$/, '');
+            const closing = ']'.repeat(Math.max(0, openBrackets)) + '}'.repeat(Math.max(0, openBraces));
+            if (closing.length > 0) {
+              const repaired = truncated + closing;
+              console.warn(`🔧 [${methodName}] Attempting truncation repair (added ${closing.length} closing brackets)`);
+              return JSON.parse(repaired);
+            }
+          }
+        } catch (repairError) {
+          // Repair also failed — fall through to fallback
+        }
         console.error(`Fallback parsing also failed in ${methodName}:`, fallbackError.message);
         return AIUtils.getFallbackResponse(methodName, responseContent);
       }
@@ -107,6 +140,25 @@ class AIUtils {
         aiInsights: ["Report generation failed, using fallback"],
         trends: ["Unable to analyze trends"],
         fallback: true
+      },
+      'combinedAnalysis': {
+        quality: { score: 10, answeredQuestion: false, depthLevel: "surface", isOffTopic: false, completeness: "avoided" },
+        skills: { demonstrated: [], hinted: [], gaps: [] },
+        coverage: { areasImpacted: [] },
+        style: { verbosity: "detailed", confidence: "moderate", usesExamples: false },
+        interestingTopics: [],
+        shouldEnd: { shouldEnd: false, reason: "" },
+        fallback: true
+      },
+      'buildAgentPersona': {
+        mustHaveSkills: [],
+        niceToHaveSkills: [],
+        keyBehaviors: [],
+        redFlags: [],
+        seniorityExpectations: "Standard expectations",
+        domainSpecificTopics: [],
+        agentTone: "professional and conversational",
+        fallback: true
       }
     };
 
@@ -134,59 +186,23 @@ class AIUtils {
  * Memory AI - Manages conversation memory and semantic deduplication
  */
 class MemoryAI {
-  constructor(together, sessionManager) {
-    this.together = together;
+  constructor(sessionManager) {
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async analyzeQuestionSimilarity(newQuestion, sessionHistory, sessionId) {
     try {
-      // Extract previous questions from session history
-      const previousQuestions = sessionHistory
-        .filter(entry => entry.type === 'interviewer' && entry.content.includes('?'))
-        .map(entry => ({ question: entry.content, timestamp: entry.timestamp }));
-
-      if (previousQuestions.length === 0) {
-        return { isSimilar: false, confidence: 0, reasoning: "No previous questions to compare" };
-      }
-
-      const systemPrompt = `You are an AI that analyzes interview question similarity. Determine if questions have similar INTENT and PURPOSE, not just similar words.
-
-CRITICAL ANALYSIS CRITERIA:
-- Questions asking about the same skill/competency are SIMILAR
-- Different phrasings of the same concept are SIMILAR
-- Questions targeting different aspects of the same topic may be DIFFERENT
-- Consider the interview flow and natural progression
-
-RESPONSE FORMAT (JSON only):
-{
-  "isSimilar": boolean,
-  "confidence": number,
-  "reasoning": "detailed explanation",
-  "similarQuestions": [{"index": number, "similarity": number}],
-  "recommendations": "suggestions for question variation"
-}`;
-
-      const userPrompt = `NEW QUESTION: "${newQuestion}"
-
-PREVIOUS QUESTIONS:
-${previousQuestions.map((q, i) => `${i + 1}. "${q.question}" (${q.timestamp})`).join('\n')}
-
-Analyze if the new question is semantically similar to any previous questions.`;
-
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.2,
-        max_tokens: 800
-      });
-
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'analyzeQuestionSimilarity');
+      // Use RAG vector search instead of LLM call (100x faster, near-free)
+      const result = await ragService.findSimilarQuestions(sessionId, newQuestion);
+      return {
+        isSimilar: result.isSimilar,
+        confidence: result.isSimilar ? Math.round(result.score * 100) : 0,
+        reasoning: result.isSimilar
+          ? `Similar to: "${result.similarQuestion}" (score: ${result.score.toFixed(2)})`
+          : "No similar questions found via vector search",
+        similarQuestions: result.isSimilar ? [{ question: result.similarQuestion, similarity: result.score }] : [],
+        recommendations: result.isSimilar ? "Generate alternative question for same area" : "Question is unique"
+      };
     } catch (error) {
       console.error('Error in analyzeQuestionSimilarity:', error);
       return { isSimilar: false, confidence: 0, reasoning: "Analysis failed", error: error.message };
@@ -228,18 +244,16 @@ RESPONSE FORMAT (JSON only):
   "keyInsights": ["important insights about candidate"]
 }`;
 
-      const aiResponse = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyze: "${candidateResponse}"` }
-        ],
+      const aiResponse = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Analyze: "${candidateResponse}"` }],
         temperature: 0.3,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = aiResponse.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'analyzeResponseIntelligence');
+      return AIUtils.parseJSONResponse(aiResponse.content, 'analyzeResponseIntelligence');
     } catch (error) {
       console.error('Error analyzing response intelligence:', error);
       return { error: error.message };
@@ -279,18 +293,16 @@ TARGET AREA: ${targetArea || 'General'}
 
 Evaluate if the response adequately answered the question. If clarification is needed, suggest a specific follow-up question.`;
 
-      const aiResponse = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const aiResponse = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.3,
-        max_tokens: 700
+        maxTokens: 700,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = aiResponse.choices[0].message.content.trim();
-      const result = AIUtils.parseJSONResponse(responseContent, 'analyzeResponseQuality');
+      const result = AIUtils.parseJSONResponse(aiResponse.content, 'analyzeResponseQuality');
 
       console.log(`🔍 [Response Quality] ${result.answeredQuestion ? '✅ Answered' : '❌ Not Answered'} - Score: ${result.qualityScore}/100`);
 
@@ -315,10 +327,8 @@ Evaluate if the response adequately answered the question. If clarification is n
  * Coverage Analysis AI - Intelligent topic coverage evaluation
  */
 class CoverageAnalysisAI {
-  constructor(together, sessionManager) {
-    this.together = together;
+  constructor(sessionManager) {
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async analyzeCoverageIntelligently(candidateResponse, currentCoverage, focusAreas, sessionHistory) {
@@ -351,7 +361,7 @@ RESPONSE FORMAT (JSON only):
   }
 }`;
 
-      const contextHistory = sessionHistory.slice(-5).map(entry =>
+      const contextHistory = sessionHistory.slice(-20).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
 
@@ -368,18 +378,16 @@ ${contextHistory}
 
 Analyze this response intelligently for coverage of focus areas. Look for implicit evidence and progressive skill demonstration.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.2,
-        max_tokens: 1200
+        maxTokens: 1200,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'analyzeCoverageIntelligently');
+      return AIUtils.parseJSONResponse(response.content, 'analyzeCoverageIntelligently');
     } catch (error) {
       console.error('Error in intelligent coverage analysis:', error);
       throw error;
@@ -424,18 +432,16 @@ ${areaHistory.map(entry => `${entry.type}: ${entry.content}`).join('\n')}
 
 Determine if this competency area has been sufficiently explored for the target role.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'determineIfCoverageIsSufficient');
+      return AIUtils.parseJSONResponse(response.content, 'determineIfCoverageIsSufficient');
     } catch (error) {
       console.error('Error determining coverage sufficiency:', error);
       return { isSufficient: false, confidence: 0, reasoning: "Analysis failed" };
@@ -447,101 +453,215 @@ Determine if this competency area has been sufficiently explored for the target 
  * Question Generator AI - Creates intelligent, targeted questions
  */
 class QuestionGeneratorAI {
-  constructor(together, sessionManager) {
-    this.together = together;
+  constructor(sessionManager) {
     this.sessionManager = sessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo"; // Faster model for question generation
   }
 
-  async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis) {
+  async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis, questionStrategy = null, questionStyle = null) {
     try {
-      // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
-      let questionGuidelines = '';
+      const persona = session.agentPersona || {};
+      const candidateProfile = session.candidateProfile || {};
 
-      if (session.config.interviewType === 'TECHNICAL_SKILL') {
-        const focusAreaNames = session.config.intelligenceContext?.focusAreas
-          ?.map(a => a.skillName || a.area) || [];
-        const roleContext = session.config.context.targetRole;
+      // Build persona context for the prompt
+      let personaBlock = '';
+      if (persona.job) {
+        personaBlock = `
+=== AGENT PERSONA ===
+Role: ${persona.job.title} at ${persona.job.company}
+Category: ${persona.jobCategory} | Interview: ${persona.interviewType}
+Must-Have Skills: ${persona.idealCandidate?.mustHaveSkills?.join(", ") || "N/A"}
+Nice-to-Have: ${persona.idealCandidate?.niceToHaveSkills?.join(", ") || "N/A"}
+Red Flags: ${persona.idealCandidate?.redFlags?.join(", ") || "N/A"}
+Tone: ${persona.agentBehavior?.tone || "professional"}
+Domain Topics: ${persona.agentBehavior?.domainTopics?.join(", ") || "N/A"}
+Experience Level: ${persona.job.experienceLevel || "mid"}
+Seniority Expectations: ${persona.idealCandidate?.seniorityExpectations || "N/A"}
 
-        questionGuidelines = `
-⚠️ CRITICAL: This is a TECHNICAL SKILL interview for the role of "${roleContext}".
-Ask questions that assess the practical, domain-specific expertise required for this role.
+=== JOB REQUIREMENTS (questions MUST align with these) ===
+${(persona.job.requirements || []).slice(0, 10).join("\n") || "N/A"}
 
-FOCUS AREAS FOR THIS ROLE:
-${focusAreaNames.map(a => `- ${a}`).join('\n')}
-
-RULES:
-- Ask questions about the focus areas listed above — these define what "technical" means for THIS role
-- Probe for real-world experience, implementation details, and best practices
-- Match the technical domain to the role (marketing → analytics, campaigns, growth metrics; dev → code, architecture; design → UX process, tools)
-- Do NOT ask about topics outside the listed focus areas
-- Be natural and conversational
-- Assess expertise at ${session.config.context.experienceLevel} level`;
-      } else if (session.config.interviewType === 'HR_INTERVIEW') {
-        questionGuidelines = `
-This is an HR/BEHAVIORAL interview - focus on soft skills, teamwork, cultural fit, and behavioral patterns.`;
-      } else if (session.config.interviewType === 'SOFT_SKILL') {
-        questionGuidelines = `
-This is a SOFT SKILLS interview - focus on communication, emotional intelligence, collaboration, and interpersonal abilities.`;
+=== JOB RESPONSIBILITIES ===
+${(persona.job.responsibilities || []).slice(0, 10).join("\n") || "N/A"}`;
       }
 
-      const systemPrompt = `You are an expert interviewer generating intelligent, targeted questions based on coverage gaps and conversation flow.
+      // Build candidate profile context
+      let profileBlock = '';
+      if (candidateProfile.responseQualities?.length > 0) {
+        profileBlock = `
+=== CANDIDATE PROFILE ===
+Style: ${candidateProfile.communicationStyle?.verbosity || "unknown"} speaker, ${candidateProfile.communicationStyle?.confidenceLevel || "unknown"} confidence
+Uses Examples: ${candidateProfile.communicationStyle?.usesExamples ? "yes" : "not yet"}
+Expertise Shown: ${candidateProfile.revealedExpertise?.slice(-5).join(", ") || "none yet"}
+Gaps Identified: ${candidateProfile.revealedGaps?.slice(-3).join(", ") || "none yet"}
+Current Difficulty: ${candidateProfile.currentDifficulty || "intermediate"}`;
+      }
+
+      // Build strategy context
+      let strategyBlock = '';
+      if (questionStrategy) {
+        const modeInstructions = {
+          bridge: `BRIDGE MODE: The candidate just mentioned "${questionStrategy.context}". Naturally bridge from that topic to explore ${questionStrategy.targetArea}. Use what they said as a springboard.`,
+          probe: `PROBE MODE: ${questionStrategy.context}. Ask for a specific, concrete example or deeper technical detail about ${questionStrategy.targetArea}.`,
+          transition: `TRANSITION MODE: ${questionStrategy.context}. Smoothly transition to ${questionStrategy.targetArea} — connect it to something already discussed if possible.`,
+          validate: `VALIDATE MODE: ${questionStrategy.context}. Ask a quick validation question for ${questionStrategy.targetArea} to confirm the candidate's strength.`,
+        };
+        strategyBlock = `\n=== QUESTION STRATEGY ===\n${modeInstructions[questionStrategy.mode] || `Target: ${questionStrategy.targetArea}`}`;
+      }
+
+      // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
+      const experienceLevel = session.agentPersona?.job?.experienceLevel || session.config.context?.experienceLevel || 'mid';
+      let questionGuidelines = '';
+      if (session.config.interviewType === 'TECHNICAL_SKILL') {
+        const focusAreaNames = Object.keys(session.coverage?.areas || {});
+        questionGuidelines = `
+TECHNICAL SKILL interview for "${session.config.context.targetRole}".
+Focus areas: ${focusAreaNames.join(', ')}
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
+      } else if (session.config.interviewType === 'HR_INTERVIEW') {
+        questionGuidelines = `HR/BEHAVIORAL interview — focus on soft skills, teamwork, cultural fit.
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
+      } else if (session.config.interviewType === 'SOFT_SKILL') {
+        questionGuidelines = `SOFT SKILLS interview — focus on communication, EQ, collaboration.
+Experience Level: ${experienceLevel} — calibrate question complexity accordingly.`;
+      }
+
+      // Adapt style based on candidate profile
+      let styleInstruction = '';
+      if (candidateProfile.communicationStyle?.verbosity === 'concise') {
+        styleInstruction = 'Candidate is concise — ask open-ended questions that invite elaboration.';
+      } else if (candidateProfile.communicationStyle?.verbosity === 'rambling') {
+        styleInstruction = 'Candidate tends to ramble — ask focused, specific questions.';
+      }
+
+      // Build question style block
+      let questionStyleBlock = '';
+      if (questionStyle && questionStyle.instruction) {
+        questionStyleBlock = `
+=== QUESTION STYLE ===
+${questionStyle.instruction}
+IMPORTANT: Follow this style while respecting the strategy mode above. The style dictates HOW to phrase the question; the strategy dictates WHAT area to target.`;
+      }
+
+      const systemPrompt = `You are an expert interviewer. Generate ONE targeted question.
+${personaBlock}
+${profileBlock}
+${strategyBlock}
 
 ${questionGuidelines}
+${styleInstruction}
+${questionStyleBlock}
 
-QUESTION GENERATION PRINCIPLES:
-- Target specific coverage gaps identified
-- Build naturally on previous conversation
-- Match candidate's communication style
-- Avoid repetitive or similar questions
-- Progress logically through competency exploration
-- Be natural and conversational, not robotic
-- STRICTLY follow the interview type guidelines above
+RULES:
+- ONE clear question, 1-2 sentences, max 40 words
+- No preambles ("That's great...", "Interesting...")
+- No multi-part questions
+- Target the specified coverage gap
+- Be natural and conversational
+- NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
+- Questions MUST be directly relevant to the JOB REQUIREMENTS and RESPONSIBILITIES listed above. Do NOT ask about technologies, tools, or concepts not mentioned in the JD.
+- PRIORITIZE asking about skills from the "JD SKILLS NOT YET ASKED ABOUT" list. Each question should target a DIFFERENT uncovered skill.
+- NEVER ask a question similar to any in the "ALREADY ASKED" list
+- Each question must explore a NEW angle or sub-topic not yet covered
+- Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
+- CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
+  * Junior/Entry: ONLY basic concepts, "what is", "how would you", simple practical scenarios. NO system design, NO advanced patterns, NO questions about tools/technologies NOT listed in the JD (e.g., do NOT ask about GraphQL if the JD only mentions REST APIs). Keep questions SIMPLE and FOUNDATIONAL.
+  * Mid-Level: Practical experience questions, trade-off discussions, real project examples
+  * Senior: Architecture decisions, system design, leadership, cross-team impact
+  * Lead/Principal: Strategic thinking, org-wide impact, technical vision
+  HARD RULE: For Junior/Entry level, NEVER ask about: system design, microservices, GraphQL (unless in JD), distributed systems, architecture patterns, caching strategies, or any advanced topic. Stick to BASICS of the required skills.
 
 RESPONSE FORMAT (JSON only):
 {
-  "question": "the actual question to ask",
-  "targetAreas": ["coverage areas this addresses"],
-  "reasoning": "why this question was chosen",
-  "expectedOutcomes": ["what we hope to learn"],
-  "followUpStrategy": "potential follow-up approach"
+  "question": "the actual question",
+  "targetAreas": ["area"],
+  "reasoning": "why this question",
+  "expectedOutcomes": ["what we learn"],
+  "followUpStrategy": "approach",
+  "questionStyle": "${questionStyle?.id || 'direct'}"
 }`;
 
-      const recentContext = session.conversation.slice(-3).map(entry =>
+      const recentContext = session.conversation.slice(-6).map(entry =>
         `${entry.type}: ${entry.content}`
       ).join('\n');
 
-      const userPrompt = `INTERVIEW CONTEXT:
-Role: ${session.config.context.targetRole}
-Company: ${session.config.context.targetCompany}
-Experience Level: ${session.config.context.experienceLevel}
+      const allAskedQuestions = session.conversation
+        .filter(e => e.type === 'interviewer')
+        .map(e => `- ${e.content}`)
+        .join('\n');
 
-CURRENT COVERAGE ANALYSIS:
-${JSON.stringify(coverageAnalysis, null, 2)}
+      const coverageSummary = Object.fromEntries(
+        Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, `${d.percentage}% (${d.questionsAsked || 0}q)`])
+      );
 
-MEMORY ANALYSIS:
-Previous Questions: ${JSON.stringify(memoryAnalysis?.previousQuestions?.slice(-3) || [])}
+      // Build explored topics summary per area to prevent theme repetition
+      const exploredTopicsSummary = Object.entries(session.coverage?.areas || {})
+        .filter(([_, d]) => d.topicsExplored?.length > 0)
+        .map(([area, d]) => `${area}: ${d.topicsExplored.join(', ')}`)
+        .join('\n') || 'none yet';
+
+      // Detect overused themes: bigrams that appear 2+ times in questions
+      const allQuestionTexts = session.conversation
+        .filter(e => e.type === 'interviewer')
+        .map(e => e.content.toLowerCase());
+      const themeFrequency = {};
+      for (const q of allQuestionTexts) {
+        const words = q.split(/\s+/).filter(w => w.length > 3);
+        for (let i = 0; i < words.length - 1; i++) {
+          const bigram = `${words[i]} ${words[i+1]}`;
+          themeFrequency[bigram] = (themeFrequency[bigram] || 0) + 1;
+        }
+      }
+      const overusedThemes = Object.entries(themeFrequency)
+        .filter(([_, count]) => count >= 2)
+        .map(([theme]) => theme);
+
+      // RAG context from JD (if available)
+      const ragBlock = session.ragContext ? `
+RELEVANT JD CONTEXT (use this to align questions with job requirements):
+${session.ragContext}` : '';
+
+      // JD skills tracking — show which skills are uncovered vs covered
+      const checklist = session.jdSkillsChecklist || [];
+      const uncoveredSkills = checklist.filter(s => !s.asked).map(s => s.skill);
+      const coveredSkills = checklist.filter(s => s.asked).map(s =>
+        `${s.skill} ${s.covered ? '(demonstrated)' : '(asked, not demonstrated)'}`
+      );
+      const skillTrackingBlock = checklist.length > 0 ? `
+JD SKILLS NOT YET ASKED ABOUT (PRIORITIZE these — ask about a different skill each question):
+${uncoveredSkills.join(', ') || 'all skills covered'}
+
+JD SKILLS ALREADY EXPLORED:
+${coveredSkills.join(', ') || 'none yet'}` : '';
+
+      const userPrompt = `Role: ${session.config.context.targetRole} at ${session.config.context.targetCompany}
+
+COVERAGE: ${JSON.stringify(coverageSummary)}
+WEAKEST: ${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || Object.entries(session.coverage?.areas || {}).filter(([_,d]) => d.percentage < 50).map(([a]) => a))}
+${skillTrackingBlock}
+
+TOPICS ALREADY EXPLORED (do NOT revisit these — pick a DIFFERENT sub-topic):
+${exploredTopicsSummary}
+${overusedThemes.length > 0 ? `\nOVERUSED THEMES (AVOID these completely — pick a fresh topic):\n${overusedThemes.join(', ')}` : ''}
+${ragBlock}
+
+ALREADY ASKED (DO NOT repeat or rephrase these):
+${allAskedQuestions || '(none yet)'}
 
 RECENT CONVERSATION:
 ${recentContext}
 
-COVERAGE GAPS TO ADDRESS:
-${JSON.stringify(coverageAnalysis?.overallAssessment?.weakestAreas || [])}
+Generate the next question.`;
 
-Generate the next intelligent question that targets the most important coverage gap while maintaining natural conversation flow.`;
-
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.7,
-        max_tokens: 500
+        maxTokens: 300,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'generateIntelligentQuestion');
+      return AIUtils.parseJSONResponse(response.content, 'generateIntelligentQuestion');
     } catch (error) {
       console.error('Error generating intelligent question:', error);
       throw error;
@@ -576,6 +696,11 @@ RESPONSE FORMAT (JSON only):
          entry.aiAnalysis?.topicsDiscussed?.includes(areaName))
       );
 
+      const askedQuestions = candidateHistory
+        .filter(e => e.type === 'interviewer')
+        .map(e => `- ${e.content}`)
+        .join('\n');
+
       const userPrompt = `TARGET COMPETENCY AREA: ${areaName}
 
 AREA COVERAGE DATA:
@@ -584,22 +709,24 @@ ${JSON.stringify(areaData, null, 2)}
 ROLE CONTEXT:
 ${JSON.stringify(roleContext, null, 2)}
 
+ALREADY ASKED (generate something COMPLETELY DIFFERENT):
+${askedQuestions || '(none yet)'}
+
 CANDIDATE'S PREVIOUS RESPONSES ABOUT THIS AREA:
 ${relevantHistory.map(entry => entry.content).join('\n---\n')}
 
 Generate a targeted question to explore this competency area more deeply. Respond with ONLY valid JSON.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const aiResponse = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
+      const responseContent = aiResponse.content;
 
       // Validate response is not suspiciously short or malformed
       if (responseContent.length < 10 || !responseContent.includes('{')) {
@@ -631,11 +758,9 @@ Generate a targeted question to explore this competency area more deeply. Respon
  * Decision Engine AI - Makes intelligent interview flow decisions
  */
 class DecisionEngineAI {
-  constructor(together, sessionManager, serviceInstance) {
-    this.together = together;
+  constructor(sessionManager, serviceInstance) {
     this.sessionManager = sessionManager;
     this.service = serviceInstance; // Reference to parent IntelligentInterviewService
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
   }
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
@@ -797,18 +922,16 @@ Current Topic Area: ${currentArea || 'N/A'}
 
 Make the next intelligent decision for interview progression. Consider question counts to avoid over-asking on same topic.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.3,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'makeIntelligentDecision');
+      return AIUtils.parseJSONResponse(response.content, 'makeIntelligentDecision');
     } catch (error) {
       console.error('Error in intelligent decision making:', error);
       throw error;
@@ -817,17 +940,472 @@ Make the next intelligent decision for interview progression. Consider question 
 
 }
 
+// ═══════════════════════════════════════════════════════════
+// Question Style Definitions for Diverse Question Generation
+// ═══════════════════════════════════════════════════════════
+
+const UNIVERSAL_STYLES = {
+  situational: {
+    id: 'situational',
+    instruction: `STYLE: SITUATIONAL — Frame your question as a hypothetical scenario. Start with "Imagine..." or "Suppose you..." and place the candidate in a realistic work situation related to the target area. The scenario should require them to explain their approach, not just recall a past event.`,
+    minTurn: 0,
+    requiresContext: false
+  },
+  'problem-finding': {
+    id: 'problem-finding',
+    instruction: `STYLE: PROBLEM-FINDING — Present a flawed approach, design decision, or technical strategy related to the target area and ask the candidate to identify what's wrong with it. For example: "A developer proposes [X approach] for [Y problem]. What issues do you see?" The flaw should be realistic and calibrated to the candidate's assessed difficulty level.`,
+    minTurn: 2,
+    requiresContext: false
+  },
+  challenge: {
+    id: 'challenge',
+    instruction: `STYLE: CHALLENGE — Push back on something the candidate said in their last answer to test depth and conviction. Reference a specific claim they made and present a counterpoint or edge case. For example: "You mentioned X, but what about Y? How would you handle that?" Be respectful but probing.`,
+    minTurn: 1,
+    requiresContext: true
+  }
+};
+
+const FRAMEWORK_STYLE_INSTRUCTIONS = {
+  'scenario-based':          'STYLE: SCENARIO-BASED — Ask a question grounded in a realistic work scenario specific to the domain.',
+  'code review':             'STYLE: CODE REVIEW — Describe a coding approach, design pattern, or architecture decision verbally and ask the candidate to critique it, identify potential issues, or suggest improvements. This is entirely verbal — do NOT present actual code.',
+  'architecture discussion': 'STYLE: ARCHITECTURE DISCUSSION — Ask about system design, architectural trade-offs, or scaling decisions.',
+  'debugging walkthrough':   'STYLE: DEBUGGING WALKTHROUGH — Describe a bug symptom and ask how they would diagnose and fix it.',
+  'behavioral STAR':         'STYLE: BEHAVIORAL STAR — Ask for a specific past experience. Expect the candidate to describe the Situation, Task, Action, and Result.',
+  'values-based':            'STYLE: VALUES-BASED — Ask about personal values, ethics, or principles relevant to the role.',
+  'motivational':            'STYLE: MOTIVATIONAL — Ask what drives the candidate, their career goals, or what excites them about this role.',
+  'role-play':               'STYLE: ROLE-PLAY — Set up a brief role-play scenario (e.g., "I\'m a client who says X. How do you respond?").',
+  'deal walkthrough':        'STYLE: DEAL WALKTHROUGH — Ask the candidate to walk through a deal or project end-to-end.',
+  'objection handling':      'STYLE: OBJECTION HANDLING — Present an objection and ask how they would respond.',
+  'pipeline review':         'STYLE: PIPELINE REVIEW — Ask about pipeline management, forecasting, or deal qualification.',
+  'portfolio review':        'STYLE: PORTFOLIO REVIEW — Ask the candidate to walk through a piece of their work or portfolio.',
+  'design critique':         'STYLE: DESIGN CRITIQUE — Describe a design and ask for their critique of it.',
+  'whiteboard exercise':     'STYLE: WHITEBOARD — Ask the candidate to walk through their solution design step by step, explaining each component and how they connect. This is entirely verbal — do NOT present actual code or diagrams.',
+  'case study':              'STYLE: CASE STUDY — Present a business case and ask for their analysis.',
+  'prioritization exercise': 'STYLE: PRIORITIZATION — Present competing priorities and ask how they would decide.',
+  'metrics discussion':      'STYLE: METRICS — Ask about KPIs, success metrics, or how they measure impact.',
+  'roadmap review':          'STYLE: ROADMAP REVIEW — Ask about product roadmap decisions, sequencing, or trade-offs.',
+  'SQL challenge':           'STYLE: SQL CHALLENGE — Describe a data retrieval or transformation problem and ask the candidate to explain their query approach and reasoning step by step. This is entirely verbal — do NOT present actual code or SQL.',
+  'analysis walkthrough':    'STYLE: ANALYSIS WALKTHROUGH — Ask the candidate to walk through an analytical approach step by step.',
+  'reflective':              'STYLE: REFLECTIVE — Ask the candidate to reflect on a lesson learned or a growth experience.',
+  'campaign analysis':       'STYLE: CAMPAIGN ANALYSIS — Ask the candidate to analyze a campaign\'s performance.',
+  'deal storytelling':       'STYLE: DEAL STORYTELLING — Ask the candidate to tell the story of a specific deal or negotiation.',
+  'portfolio discussion':    'STYLE: PORTFOLIO DISCUSSION — Ask the candidate to discuss a specific piece from their portfolio.',
+};
+
 class IntelligentInterviewService {
   constructor() {
-    this.together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
     this.sessionManager = redisSessionManager;
-    this.model = "meta-llama/Llama-3.3-70B-Instruct-Turbo";
 
-    // Initialize AI service components
-    this.memoryAI = new MemoryAI(this.together, this.sessionManager);
-    this.coverageAI = new CoverageAnalysisAI(this.together, this.sessionManager);
-    this.questionAI = new QuestionGeneratorAI(this.together, this.sessionManager);
-    this.decisionAI = new DecisionEngineAI(this.together, this.sessionManager, this);
+    // Initialize AI service components (no longer need Together AI client)
+    this.memoryAI = new MemoryAI(this.sessionManager);
+    this.coverageAI = new CoverageAnalysisAI(this.sessionManager);
+    this.questionAI = new QuestionGeneratorAI(this.sessionManager);
+    this.decisionAI = new DecisionEngineAI(this.sessionManager, this);
+  }
+
+  /**
+   * Build agent persona from job description — ONE LLM call at interview start.
+   * Creates a job-aware AI profile with must-have skills, red flags, and evaluation framework.
+   */
+  async buildAgentPersona(jobData, interviewConfig) {
+    const jobCategory = interviewConfig.jobCategory || detectJobCategory(jobData.title, jobData.description);
+    const evaluationFramework = getEvaluationFramework(jobCategory, interviewConfig.interviewType);
+
+    try {
+      const analysis = await bedrock.callLLM({
+        systemPrompt: "You are an expert recruiter. Analyze this job and return ONLY a valid JSON object. No explanation, no reasoning, no text before or after the JSON.",
+        messages: [{ role: "user", content: `
+Title: ${jobData.title}
+Company: ${jobData.company || jobData.companyName || ""}
+Description: ${jobData.description || ""}
+Required Skills: ${JSON.stringify(jobData.skills || [])}
+Requirements: ${JSON.stringify(jobData.requirements || [])}
+Responsibilities: ${JSON.stringify(jobData.responsibilities || [])}
+Experience Level: ${jobData.experienceLevel || interviewConfig.context?.experienceLevel || "mid"}
+Category: ${jobCategory}
+Interview Type: ${interviewConfig.interviewType}
+
+Return JSON:
+{
+  "mustHaveSkills": ["3-5 SHORT skill/technology NAMES only (e.g., 'Next.js', 'Express.js', 'TypeScript') — extract ONLY the skill name, NOT the full requirement sentence"],
+  "niceToHaveSkills": ["3-5 bonus skills inferred from the JD"],
+  "keyBehaviors": ["3-5 needed behaviors"],
+  "redFlags": ["3-5 disqualifying signs"],
+  "seniorityExpectations": "one sentence",
+  "domainSpecificTopics": ["3-5 industry topics to explore"],
+  "agentTone": "description of interviewer tone for this role",
+  "focusAreas": {
+    "area_key_1": { "weight": 30, "description": "What this area evaluates — specific to JD", "indicators": ["3-4 specific indicators from JD"] },
+    "area_key_2": { "weight": 25, "description": "...", "indicators": ["..."] },
+    "area_key_3": { "weight": 25, "description": "...", "indicators": ["..."] },
+    "area_key_4": { "weight": 20, "description": "...", "indicators": ["..."] }
+  },
+  "questionStyles": ["4 interview styles suited for this role"]
+}
+
+RULES for focusAreas:
+- Focus areas MUST be derived from the REQUIRED SKILLS and REQUIREMENTS — NOT from responsibilities
+- Required Skills are the PRIMARY driver: each focus area should cluster around 1-2 required skills/technologies
+- Responsibilities are SECONDARY context — they show HOW skills are applied, not WHAT to test
+- Do NOT create a separate focus area for something that is only a sub-task in one responsibility (e.g., "SEO" mentioned once in "optimizing for SEO and performance" should NOT become its own area — it belongs as a minor indicator under the relevant skill area)
+- Generate 4 areas SPECIFIC to this JD — NOT generic areas like "technical_depth" or "problem_solving"
+- Weights must sum to 100
+- Example for JD with Required Skills [Next.js, Express.js, Node.js]: "nextjs_frontend" (30%), "expressjs_backend" (25%), "javascript_typescript" (25%), "testing_quality" (20%)
+- Example for Android Developer JD: "kotlin_java" (30%), "android_platform" (25%), "architecture_patterns" (25%), "testing_devops" (20%)
+- area_key must be lowercase with underscores, max 25 chars
+- questionStyles: pick 4 from: scenario-based, code review, architecture discussion, debugging walkthrough, behavioral STAR, situational, values-based, role-play, case study, portfolio review, whiteboard exercise, prioritization exercise, metrics discussion, analysis walkthrough, reflective` }],
+        temperature: 0.2,
+        maxTokens: 800,
+        timeout: 30000,
+        useFastModel: true
+      });
+
+      var parsed = AIUtils.parseJSONResponse(analysis.content, 'buildAgentPersona');
+    } catch (error) {
+      console.warn('⚠️ [Persona] LLM analysis failed, using defaults:', error.message);
+      var parsed = AIUtils.getFallbackResponse('buildAgentPersona', '');
+    }
+
+    // Use LLM-generated focus areas if valid, otherwise fall back to static framework
+    const llmFocusAreas = parsed.focusAreas;
+    const llmQuestionStyles = parsed.questionStyles;
+    let finalEvaluationFramework;
+
+    if (llmFocusAreas && typeof llmFocusAreas === 'object' && Object.keys(llmFocusAreas).length >= 3) {
+      const totalWeight = Object.values(llmFocusAreas).reduce((sum, a) => sum + (a?.weight || 0), 0);
+      if (totalWeight >= 80 && totalWeight <= 120) {
+        // Normalize weights to sum to exactly 100
+        const normFactor = 100 / totalWeight;
+        for (const key of Object.keys(llmFocusAreas)) {
+          llmFocusAreas[key].weight = Math.round(llmFocusAreas[key].weight * normFactor);
+          // Ensure indicators is an array
+          if (!Array.isArray(llmFocusAreas[key].indicators)) {
+            llmFocusAreas[key].indicators = [];
+          }
+        }
+        finalEvaluationFramework = {
+          focusAreas: llmFocusAreas,
+          questionStyles: Array.isArray(llmQuestionStyles) && llmQuestionStyles.length > 0
+            ? llmQuestionStyles
+            : evaluationFramework.questionStyles
+        };
+        console.log(`🎯 [Persona] LLM-generated focus areas: ${Object.keys(llmFocusAreas).join(', ')}`);
+      } else {
+        finalEvaluationFramework = evaluationFramework;
+        console.log(`⚠️ [Persona] LLM focus areas invalid weights (${totalWeight}), using static framework`);
+      }
+    } else {
+      finalEvaluationFramework = evaluationFramework;
+      console.log(`⚠️ [Persona] No LLM focus areas returned, using static framework: ${Object.keys(evaluationFramework.focusAreas).join(', ')}`);
+    }
+
+    console.log(`🎭 [Persona] Built for ${jobCategory}/${interviewConfig.interviewType}: ${parsed.mustHaveSkills?.length || 0} must-haves, ${parsed.redFlags?.length || 0} red flags, ${Object.keys(finalEvaluationFramework.focusAreas).length} focus areas`);
+
+    return {
+      job: {
+        title: jobData.title,
+        company: jobData.company || jobData.companyName,
+        description: jobData.description,
+        requirements: jobData.requirements || [],
+        responsibilities: jobData.responsibilities || [],
+        experienceLevel: jobData.experienceLevel || interviewConfig.context?.experienceLevel || "mid",
+      },
+      interviewType: interviewConfig.interviewType,
+      jobCategory,
+      idealCandidate: parsed,
+      evaluationFramework: finalEvaluationFramework,
+      agentBehavior: {
+        tone: parsed.agentTone || "professional and conversational",
+        domainTopics: parsed.domainSpecificTopics || [],
+      },
+    };
+  }
+
+  /**
+   * Combined Analysis — ONE LLM call replaces analyzeResponseIntelligence + analyzeResponseQuality
+   * + analyzeCoverageIntelligently + shouldEndInterview (LLM part).
+   */
+  async combinedAnalysis(candidateResponse, session, lastQuestion, targetArea) {
+    const persona = session.agentPersona || {};
+    const personaContext = persona.job ? `
+=== AGENT PERSONA ===
+Role: ${persona.job.title} at ${persona.job.company}
+Category: ${persona.jobCategory} (${persona.interviewType})
+Must-Have Skills: ${persona.idealCandidate?.mustHaveSkills?.join(", ") || "N/A"}
+Red Flags: ${persona.idealCandidate?.redFlags?.join(", ") || "N/A"}
+=== FOCUS AREAS ===
+${Object.entries(session.coverage?.areas || {}).map(([a, d]) => `${a} (${d.weight || 0}%): ${d.description || a}`).join("\n")}
+` : `
+=== FOCUS AREAS ===
+${Object.entries(session.coverage?.areas || {}).map(([a, d]) => `${a}: ${d.percentage || 0}%`).join("\n")}
+`;
+
+    const areaKeys = Object.keys(session.coverage?.areas || {});
+    const systemPrompt = `You are an expert interview analyst. Analyze this candidate response comprehensively in ONE pass.
+${personaContext}
+Return ONLY valid JSON with ALL of these fields:
+{
+  "quality": { "score": 0-100, "answeredQuestion": true/false, "depthLevel": "surface|moderate|deep", "isOffTopic": true/false, "completeness": "complete|partial|minimal|avoided" },
+  "skills": { "demonstrated": ["skill1"], "hinted": ["skill2"], "gaps": ["skill3"] },
+  "coverage": { "areasImpacted": [{ "area": "MUST be one of: ${areaKeys.join(', ')}", "increase": 5-25, "evidence": "brief evidence" }] },
+  "style": { "verbosity": "concise|detailed|rambling", "confidence": "hesitant|moderate|confident", "usesExamples": true/false },
+  "interestingTopics": [{ "topic": "what they mentioned", "unexplored": ["angle1"], "relevantArea": "focus_area" }],
+  "shouldEnd": { "shouldEnd": false, "reason": "ONLY set true if candidate had 8+ poor responses OR all areas >80% covered. For early interviews (< 6 exchanges), ALWAYS false." }
+}
+
+CRITICAL AREA NAME RULE: In "areasImpacted", the "area" value MUST be exactly one of: ${areaKeys.join(', ')}
+Do NOT invent new area names. Every on-topic answer should impact at least one area.
+
+COVERAGE INCREASE GUIDE (use these ranges — do NOT default to low values):
+- Deep answer with specific examples and technical detail: increase 18-25
+- Good answer showing solid understanding: increase 12-17
+- Surface-level or partial answer: increase 5-11
+- Off-topic, avoided, or no useful signal: increase 0
+The goal is to complete coverage of 4 areas in ~12-15 total questions (roughly 3-4 questions per area).
+
+QUALITY SCORE CALIBRATION (be FAIR — give credit where it's due):
+- 80-100: Excellent — deep technical detail, specific examples, demonstrates mastery
+- 60-79: Good — solid understanding, some specifics, shows competence
+- 40-59: Fair — shows basic understanding, somewhat vague but on-topic
+- 20-39: Weak — major gaps, confused, or mostly wrong
+- 0-19: No answer / completely off-topic / "I don't know"
+A candidate who answers the question on-topic with some understanding should score AT LEAST 50.
+A good answer with real examples MUST score 70+. Only score below 40 if the answer is genuinely weak.
+DEFAULT to 55-65 if the answer is reasonable but not exceptional.
+- KEYWORD DROPPING: If the response is mostly buzzwords/tool names strung together without real explanation (e.g. "Android Studio build last version Kotlin"), score 15-30 max with depthLevel "surface". Do NOT reward keyword repetition as knowledge.
+
+DEPTH LEVEL CALIBRATION:
+- "deep": Specific technical details, real examples, trade-offs, or internals explained
+- "moderate": Shows understanding with some specifics but stays conceptual
+- "surface": Vague or generic response without specifics
+Default to "moderate" for any answer that shows understanding. Use "surface" ONLY for one-word or truly empty responses.
+
+TRANSCRIPTION TOLERANCE (CRITICAL):
+The candidate response is from SPEECH-TO-TEXT transcription and may contain misspelled technical terms (e.g., "nexus" = "Next.js", "express us" = "Express", "type strip" = "TypeScript", "no JS" = "Node.js"). ALWAYS infer the intended meaning from context. If a candidate clearly describes using a technology/framework for its known purpose, credit them even if the exact name is garbled by transcription. Judge the SUBSTANCE and technical understanding, not the exact transcribed words.
+
+SKILL DETECTION (CRITICAL — anti-gaming rules):
+- "demonstrated" = candidate EXPLAINED or APPLIED the skill with real understanding (specific details, how/why, trade-offs, real examples). Simply NAMING a technology without explaining it is NOT "demonstrated" — put it in "hinted" instead.
+- "hinted" = candidate mentioned the skill name or used keywords but did NOT show real understanding. This includes keyword dropping, name-dropping without context, or vague references.
+- "gaps" = candidate was asked about this skill but showed confusion, wrong info, or couldn't answer.
+- ANTI-GAMING: If the candidate strings together buzzwords/keywords without forming coherent explanations (e.g. "Android Studio build last version"), score quality 15-25 and put ALL mentioned skills in "hinted", NOT "demonstrated". This is keyword dropping, not knowledge.`;
+
+    const coverageSummary = Object.fromEntries(
+      Object.entries(session.coverage?.areas || {}).map(([a, d]) => [a, d.percentage + "%"])
+    );
+
+    const userPrompt = `INTERVIEWER QUESTION: "${lastQuestion || "N/A"}"
+TARGET AREA: ${targetArea || "General"}
+CANDIDATE RESPONSE: "${candidateResponse}"
+CURRENT COVERAGE: ${JSON.stringify(coverageSummary)}
+CONVERSATION LENGTH: ${session.conversation?.length || 0} exchanges`;
+
+    try {
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+        temperature: 0.2,
+        maxTokens: 2048,
+        timeout: 25000,
+        useFastModel: false // gpt-oss — strong model for critical analysis (needs high maxTokens for reasoning + JSON)
+      });
+
+      return AIUtils.parseJSONResponse(response.content, 'combinedAnalysis');
+    } catch (error) {
+      console.warn('⚠️ [Combined Analysis] Failed, using fallback:', error.message);
+      return AIUtils.getFallbackResponse('combinedAnalysis', '');
+    }
+  }
+
+  /**
+   * Update candidate profile with analysis results. Pure logic — no LLM call.
+   */
+  updateCandidateProfile(profile, analysis, turnNumber) {
+    if (!profile) {
+      profile = {
+        communicationStyle: { verbosity: null, confidenceLevel: null, usesExamples: null },
+        revealedExpertise: [], revealedGaps: [], mentionedProjects: [], anchors: [],
+        currentDifficulty: "intermediate", responseQualities: [],
+      };
+    }
+
+    if (analysis.style) {
+      profile.communicationStyle.verbosity = analysis.style.verbosity;
+      profile.communicationStyle.confidenceLevel = analysis.style.confidence;
+      profile.communicationStyle.usesExamples = analysis.style.usesExamples;
+    }
+
+    if (analysis.skills?.demonstrated && (analysis.quality?.score || 0) >= 50) {
+      for (const s of analysis.skills.demonstrated) {
+        if (!profile.revealedExpertise.includes(s)) profile.revealedExpertise.push(s);
+      }
+    }
+    if (analysis.skills?.gaps) {
+      for (const s of analysis.skills.gaps) {
+        if (!profile.revealedGaps.includes(s)) profile.revealedGaps.push(s);
+      }
+    }
+
+    if (analysis.interestingTopics) {
+      for (const topic of analysis.interestingTopics) {
+        profile.anchors.push({
+          turn: turnNumber,
+          topic: topic.topic,
+          unexplored: topic.unexplored || [],
+          relevantArea: topic.relevantArea
+        });
+      }
+      profile.anchors = profile.anchors.slice(-10);
+    }
+
+    profile.responseQualities.push(analysis.quality?.score ?? 0);
+    const avg = profile.responseQualities.reduce((a, b) => a + b, 0) / profile.responseQualities.length;
+    profile.currentDifficulty = avg >= 75 ? "advanced" : avg >= 50 ? "intermediate" : "foundational";
+
+    return profile;
+  }
+
+  /**
+   * Decide question strategy based on analysis + profile + coverage. Pure logic — no LLM call.
+   * Returns one of 4 modes: bridge, probe, transition, validate.
+   */
+  decideQuestionStrategy(analysis, candidateProfile, coverage, session) {
+    const areas = coverage.areas || {};
+    const currentArea = session.currentFocusArea;
+    const questionsInArea = areas[currentArea]?.questionsAsked || 0;
+
+    // PASS/SKIP: If candidate just passed, immediately transition to different area
+    const lastCandidateEntry = session.conversation?.filter(e => e.type === 'candidate').slice(-1)[0];
+    const lastMeta = lastCandidateEntry?.metadata;
+    if (lastMeta?.answeredQuestion === false || lastMeta?.completeness === 'avoided') {
+      const weakest = Object.entries(areas)
+        .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+        .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+      if (weakest) {
+        return {
+          mode: "transition",
+          targetArea: weakest[0],
+          context: `Candidate passed on ${currentArea} — moving to ${weakest[0]}`
+        };
+      }
+    }
+
+    // HARD CAP: After 2 questions in current area, always transition to weakest area
+    if (questionsInArea >= 2 && currentArea) {
+      const weakest = Object.entries(areas)
+        .filter(([name, d]) => name !== currentArea && d.percentage < 70 && !d.completed)
+        .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+      if (weakest) {
+        return {
+          mode: "transition",
+          targetArea: weakest[0],
+          context: `Forced transition after ${questionsInArea} questions in ${currentArea}`
+        };
+      }
+    }
+
+    // Priority 1: BRIDGE — candidate mentioned something mapping to a gap
+    for (const topic of (analysis.interestingTopics || [])) {
+      if (topic.relevantArea && areas[topic.relevantArea] && areas[topic.relevantArea].percentage < 60) {
+        return {
+          mode: "bridge",
+          targetArea: topic.relevantArea,
+          context: `Candidate mentioned "${topic.topic}"`,
+          unexploredAngles: topic.unexplored
+        };
+      }
+    }
+
+    // Priority 2: PROBE — only 1 follow-up before moving on
+    if (currentArea && questionsInArea < 2 && areas[currentArea]?.percentage < 70 && analysis.quality?.depthLevel === "surface") {
+      return {
+        mode: "probe",
+        targetArea: currentArea,
+        context: "Answer was surface-level — ask for specific example"
+      };
+    }
+
+    // Priority 3: TRANSITION — explore weakest uncovered area (threshold raised to < 70%)
+    const weakest = Object.entries(areas)
+      .filter(([_, d]) => d.percentage < 70 && !d.completed)
+      .sort((a, b) => a[1].percentage - b[1].percentage)[0];
+
+    if (weakest) {
+      const anchor = candidateProfile?.anchors?.find(a => a.unexplored?.length > 0);
+      return {
+        mode: "transition",
+        targetArea: weakest[0],
+        context: anchor ? `Bridge from "${anchor.topic}" to ${weakest[0]}` : `Transition to ${weakest[0]}`
+      };
+    }
+
+    // Priority 4: VALIDATE
+    return {
+      mode: "validate",
+      targetArea: currentArea || Object.keys(areas)[0],
+      context: "Ask a final validation question"
+    };
+  }
+
+  /**
+   * Select question style — pure logic, no LLM call (~0ms).
+   * Picks from universal styles + framework-defined styles + direct, with rotation to avoid repeats.
+   */
+  selectQuestionStyle(session, analysis, questionStrategy) {
+    const turnNumber = Math.floor((session.conversation?.length || 0) / 2);
+    const styleHistory = session.questionStyleHistory || [];
+    const lastStyle = styleHistory.length > 0 ? styleHistory[styleHistory.length - 1] : null;
+    const lastTwoStyles = new Set(styleHistory.slice(-2));
+
+    // Build available styles pool
+    const frameworkStyles = session.agentPersona?.evaluationFramework?.questionStyles || [];
+    const availableStyles = [];
+
+    // Universal: situational (always eligible)
+    availableStyles.push(UNIVERSAL_STYLES.situational);
+
+    // Universal: problem-finding (after turn 2 — need context about candidate level)
+    if (turnNumber >= 2) {
+      availableStyles.push(UNIVERSAL_STYLES['problem-finding']);
+    }
+
+    // Universal: challenge (only when there's something worth challenging)
+    const lastQuality = analysis?.quality?.score || 50;
+    const lastDepth = analysis?.quality?.depthLevel;
+    const lastConfidence = session.candidateProfile?.communicationStyle?.confidenceLevel;
+    if (turnNumber >= 1 &&
+        (lastQuality >= 55 || lastConfidence === 'confident') &&
+        lastDepth !== 'surface' &&
+        questionStrategy?.mode !== 'transition') {
+      availableStyles.push(UNIVERSAL_STYLES.challenge);
+    }
+
+    // Framework styles (from config-manager, category-specific)
+    for (const styleName of frameworkStyles) {
+      if (styleName === 'situational') continue; // already in universal
+      const instruction = FRAMEWORK_STYLE_INSTRUCTIONS[styleName];
+      if (instruction) {
+        availableStyles.push({ id: styleName, instruction, minTurn: 0, requiresContext: false });
+      }
+    }
+
+    // Direct style (preserves current default behavior)
+    availableStyles.push({ id: 'direct', instruction: null, minTurn: 0, requiresContext: false });
+
+    // Hard filter: no consecutive repeats
+    let eligible = availableStyles.filter(s => s.id !== lastStyle);
+
+    // Soft filter: deprioritize styles used in last 2 turns
+    const fresh = eligible.filter(s => !lastTwoStyles.has(s.id));
+    const pool = fresh.length > 0 ? fresh : eligible;
+
+    // Weighted random: universal=3, framework=2, direct=1
+    const weighted = [];
+    for (const style of pool) {
+      const weight = UNIVERSAL_STYLES[style.id] ? 3 : (style.id === 'direct' ? 1 : 2);
+      for (let i = 0; i < weight; i++) weighted.push(style);
+    }
+
+    return weighted[Math.floor(Math.random() * weighted.length)];
   }
 
   /**
@@ -992,10 +1570,10 @@ class IntelligentInterviewService {
 
   async shouldEndInterview(session, totalDuration) {
     try {
-      // 🕐 TIME LIMIT CHECK (20 minutes max by default)
+      // 🕐 TIME LIMIT CHECK (hard cap = target × 1.5, e.g., 45 min)
       if (session.interviewStartTime) {
         const elapsedMinutes = (Date.now() - session.interviewStartTime) / 60000;
-        const maxDuration = session.maxDurationMinutes || 20;
+        const maxDuration = session.maxDurationMinutes || 45;
 
         if (elapsedMinutes >= maxDuration) {
           console.log(`⏰ [Time Limit] ${elapsedMinutes.toFixed(1)} minutes elapsed (max: ${maxDuration}) - ending interview`);
@@ -1035,9 +1613,10 @@ class IntelligentInterviewService {
           };
         }
 
-        // 8 CONSECUTIVE GOOD ANSWERS → End with excellent score
-        if (tracking.consecutiveGoodAnswers >= 8) {
-          console.log(`✅ [Excellent Quality Termination] 8 consecutive good answers - ending interview with good score`);
+        // 8 CONSECUTIVE GOOD ANSWERS → End only if coverage is also adequate
+        const overallCoverage = session.coverage?.overall || 0;
+        if (tracking.consecutiveGoodAnswers >= 8 && overallCoverage >= 60) {
+          console.log(`✅ [Excellent Quality Termination] 8 consecutive good answers + ${overallCoverage}% coverage - ending interview`);
           return {
             shouldEnd: true,
             confidence: 95,
@@ -1084,9 +1663,29 @@ class IntelligentInterviewService {
         };
       }
 
-      // EARLY SUCCESS: Consistently excellent performance after 8+ responses (10-12 minutes)
-      if (candidateResponseCount >= 8 && overallQualityAverage >= 80) {
-        console.log(`✅ [Early Success - Excellent Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses`);
+      // EARLY EXCELLENCE: Consistently outstanding performance after 6+ responses (symmetric with poor exit)
+      if (candidateResponseCount >= 6 && overallQualityAverage >= 85) {
+        console.log(`🌟 [Early Excellence] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses — ending early`);
+        return {
+          shouldEnd: true,
+          confidence: 95,
+          reasoning: `Candidate consistently demonstrates excellent competency (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Clear signal of strong capability — further questioning provides diminishing returns.`,
+          completedObjectives: ['Technical competency validated', 'Consistently excellent responses'],
+          remainingGaps: [],
+          recommendedAction: 'End interview - candidate clearly qualified',
+          earlySuccess: true,
+          terminationReason: 'early_excellence',
+          message: 'Excellent! You\'ve demonstrated outstanding understanding across all topics. Thank you for your time.',
+          qualityScore: overallQualityAverage,
+          responseCount: candidateResponseCount,
+          score: 'excellent'
+        };
+      }
+
+      // EARLY SUCCESS: Consistently excellent performance after 8+ responses — only if coverage adequate
+      const overallCov = session.coverage?.overall || 0;
+      if (candidateResponseCount >= 8 && overallQualityAverage >= 80 && overallCov >= 60) {
+        console.log(`✅ [Early Success - Excellent Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality, ${overallCov}% coverage over ${candidateResponseCount} responses`);
         return {
           shouldEnd: true,
           confidence: 90,
@@ -1103,7 +1702,22 @@ class IntelligentInterviewService {
         };
       }
 
-      // Continue with standard evaluation if no early termination
+      // Coverage-based guard: skip LLM if insufficient evidence to assess the candidate
+      const currentOverallCoverage = session.coverage?.overall || 0;
+      const areasExplored = Object.values(session.coverage?.areas || {})
+        .filter(a => a.percentage > 0).length;
+      const totalAreas = Object.keys(session.coverage?.areas || {}).length;
+
+      if (currentOverallCoverage < 40 || areasExplored < Math.min(2, totalAreas)) {
+        console.log(`⏳ [shouldEndInterview] Coverage ${currentOverallCoverage}%, ${areasExplored}/${totalAreas} areas explored — insufficient data, continuing`);
+        return {
+          shouldEnd: false,
+          confidence: 0,
+          reasoning: `Coverage at ${currentOverallCoverage}% with ${areasExplored}/${totalAreas} areas explored — insufficient data to assess candidate`
+        };
+      }
+
+      // Continue with LLM evaluation now that we have enough evidence
       const systemPrompt = `Determine if an interview should end based on coverage completeness and interview objectives.
 
 EVALUATION CRITERIA:
@@ -1113,6 +1727,12 @@ EVALUATION CRITERIA:
 - Diminishing returns from continued questioning
 - Interview objectives achievement
 
+CRITICAL RULES:
+- Do NOT recommend ending if overall coverage is below 50% — the agent needs more data to reliably score the candidate.
+- Do NOT recommend ending if fewer than half the focus areas have been explored.
+- Only recommend ending when there is SUFFICIENT evidence to evaluate the candidate's competency across the key areas.
+- The goal is to gather enough data for a reliable assessment, not to end quickly.
+
 RESPONSE FORMAT (JSON only):
 {
   "shouldEnd": boolean,
@@ -1120,12 +1740,14 @@ RESPONSE FORMAT (JSON only):
   "reasoning": "why end or continue",
   "completedObjectives": ["achieved objectives"],
   "remainingGaps": ["important gaps if continuing"],
-  "recommendedAction": "specific next steps"
+  "recommendedAction": "specific next steps",
+  "message": "a professional closing message to the candidate if shouldEnd is true, otherwise empty string"
 }`;
 
       const userPrompt = `INTERVIEW EVALUATION:
-Total Duration: ${totalDuration} minutes
-Target Duration: ${session.config.sessionSettings.duration} minutes
+Elapsed: ${totalDuration} minutes
+Target Duration: ${session.targetDurationMinutes || session.config.sessionSettings.duration} minutes
+Maximum Duration: ${session.maxDurationMinutes || 45} minutes
 
 COVERAGE STATUS:
 ${JSON.stringify(session.coverage, null, 2)}
@@ -1134,21 +1756,19 @@ FOCUS AREAS:
 ${JSON.stringify(session.config.intelligenceContext.focusAreas, null, 2)}
 
 CONVERSATION LENGTH: ${session.conversation.length} exchanges
-
 Determine if interview objectives have been sufficiently met to end the session.`;
 
-      const response = await this.together.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
-        max_tokens: 500
+        maxTokens: 500,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'shouldEndInterview');
+      return AIUtils.parseJSONResponse(response.content, 'shouldEndInterview');
     } catch (error) {
       console.error('Error determining interview end:', error);
       return { shouldEnd: false, confidence: 0, reasoning: "Analysis failed" };
@@ -1158,7 +1778,7 @@ Determine if interview objectives have been sufficiently met to end the session.
   /**
    * Start new interview session
    */
-  async startInterview(sessionId, userConfig, candidateId) {
+  async startInterview(sessionId, userConfig, candidateId, onGreetingChunk = null) {
     try {
       console.log(`🚀 [Service] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
 
@@ -1185,18 +1805,136 @@ Determine if interview objectives have been sufficiently met to end the session.
       const session = await this.sessionManager.createSession(sessionId, config, candidateId);
       console.log('✅ [Service] Session created in Redis');
 
+      // Fetch full job description from Post model and cache in session
+      let jobDescription = null;
+      try {
+        const jobId = userConfig.context?.jobId || userConfig.jobId;
+        if (jobId) {
+          const post = await Post.findById(jobId)
+            .populate({ path: 'user', populate: { path: 'profile', select: 'companyDetails' } });
+          if (post?.jobDetails) {
+            const companyName = post.user?.profile?.companyDetails?.name || config.context.targetCompany || 'the company';
+            jobDescription = {
+              title: post.jobDetails?.title || config.context.targetRole,
+              companyName: companyName,
+              description: post.jobDetails.description,
+              requirements: post.jobDetails.requirements || [],
+              responsibilities: post.jobDetails.responsibilities || [],
+              skills: (post.skillAnalysis?.requiredSkills || []).map(s => s.name).filter(Boolean)
+            };
+            // Propagate real company name to all downstream uses (greeting, prompts, result)
+            config.context.targetCompany = companyName;
+            console.log(`✅ [Service] Full JD loaded: ${jobDescription.title} at ${companyName} (${jobDescription.requirements.length} requirements, ${jobDescription.responsibilities.length} responsibilities)`);
+
+            // Index JD for RAG (runs once, skips if already indexed)
+            ragService.indexJobDescription(jobId, jobDescription).catch(err =>
+              console.warn('⚠️ [RAG] JD indexing failed (non-blocking):', err.message)
+            );
+          }
+        }
+      } catch (jdError) {
+        console.warn('⚠️ [Service] Failed to load JD from DB:', jdError.message);
+      }
+
+      // Fallback: load JD from config context (sent by getJobInterviewConfig endpoint)
+      if (!jobDescription && userConfig.context?.jobDescription) {
+        jobDescription = {
+          title: userConfig.context.targetRole || 'Position',
+          companyName: userConfig.context.targetCompany || 'the company',
+          description: userConfig.context.jobDescription,
+          requirements: Array.isArray(userConfig.context.requirements)
+            ? userConfig.context.requirements
+            : [],
+          responsibilities: Array.isArray(userConfig.context.responsibilities)
+            ? userConfig.context.responsibilities
+            : []
+        };
+        console.log(`✅ [Service] JD loaded from config context: ${jobDescription.title} at ${jobDescription.companyName}`);
+      }
+
+      // Build agent persona from JD (ONE LLM call — sets evaluation framework + ideal candidate)
+      let agentPersona = null;
+      if (jobDescription) {
+        try {
+          agentPersona = await this.buildAgentPersona(jobDescription, config);
+          await this.sessionManager.updateSession(sessionId, { agentPersona });
+
+          // Override coverage areas with evaluation framework from persona
+          const frameworkAreas = {};
+          for (const [area, areaConfig] of Object.entries(agentPersona.evaluationFramework.focusAreas)) {
+            frameworkAreas[area] = {
+              percentage: 0,
+              weight: areaConfig.weight,
+              questionsAsked: 0,
+              completed: false,
+              indicators: [],
+              description: areaConfig.description,
+            };
+          }
+          await this.sessionManager.updateCoverage(sessionId, {
+            overall: 0,
+            areas: frameworkAreas,
+            completedAreas: [],
+            lastUpdated: new Date().toISOString()
+          });
+          console.log(`✅ [Service] Persona-driven coverage initialized: ${Object.keys(frameworkAreas).length} areas from ${agentPersona.jobCategory} framework`);
+
+          // Sync intelligenceContext.focusAreas with persona-driven areas (so analysis prompts use JD-specific areas)
+          const syncedFocusAreas = Object.entries(agentPersona.evaluationFramework.focusAreas).map(
+            ([area, cfg]) => ({
+              area,
+              weight: (cfg.weight || 25) / 100,
+              indicators: cfg.indicators || [],
+              depth: cfg.description || ""
+            })
+          );
+          config.intelligenceContext.focusAreas = syncedFocusAreas;
+          await this.sessionManager.updateSession(sessionId, { config });
+          console.log(`🔄 [Service] intelligenceContext.focusAreas synced: ${syncedFocusAreas.map(a => a.area).join(', ')}`);
+
+          // Build JD skills checklist for tracking question coverage
+          const jdSkillsChecklist = [
+            ...(agentPersona.idealCandidate?.mustHaveSkills || []),
+            ...(agentPersona.idealCandidate?.niceToHaveSkills || [])
+          ].map(skill => ({ skill, asked: false, covered: false }));
+          await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist });
+          console.log(`📋 [Service] JD skills checklist initialized: ${jdSkillsChecklist.length} skills to track`);
+
+        } catch (personaError) {
+          console.warn('⚠️ [Service] Persona building failed (non-blocking):', personaError.message);
+        }
+      }
+
+      // Initialize candidate profile for adaptive behavior
+      await this.sessionManager.updateSession(sessionId, {
+        candidateProfile: {
+          communicationStyle: { verbosity: null, confidenceLevel: null, usesExamples: null },
+          revealedExpertise: [],
+          revealedGaps: [],
+          mentionedProjects: [],
+          anchors: [],
+          currentDifficulty: "intermediate",
+          responseQualities: [],
+        }
+      });
+
       // Initialize interview timing and quality tracking
-      const coverageAreas = Object.keys(session.coverage?.areas || {});
-      const totalMinutes = config.sessionSettings?.duration || 20;
+      // Re-fetch session to get updated coverage (may have been overridden by persona)
+      const updatedSessionForTiming = await this.sessionManager.getSession(sessionId);
+      const coverageAreas = Object.keys(updatedSessionForTiming.coverage?.areas || {});
+      const totalMinutes = config.sessionSettings?.duration || 30;
+      const maxDurationMinutes = Math.ceil(totalMinutes * 1.5); // 30 → 45
       const timeBudgetPerAreaMs = coverageAreas.length > 0
         ? (totalMinutes * 60 * 1000) / coverageAreas.length
         : totalMinutes * 60 * 1000;
 
       await this.sessionManager.updateSession(sessionId, {
         interviewStartTime: Date.now(),
-        maxDurationMinutes: totalMinutes,
+        targetDurationMinutes: totalMinutes,     // target duration (e.g., 30 min)
+        maxDurationMinutes: maxDurationMinutes,   // hard cap (e.g., 45 min)
         timeBudgetPerAreaMs,
         coverageAreaCount: coverageAreas.length,
+        jobDescription,
         qualityTracking: {
           consecutiveBadAnswers: 0,
           consecutiveGoodAnswers: 0,
@@ -1205,13 +1943,13 @@ Determine if interview objectives have been sufficiently met to end the session.
           lastQualityScore: null
         }
       });
-      console.log(`✅ [Service] Interview timing initialized: ${totalMinutes}min total, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
+      console.log(`✅ [Service] Interview timing: target ${totalMinutes}min, max ${maxDurationMinutes}min, ${Math.round(timeBudgetPerAreaMs/1000)}s per area (${coverageAreas.length} areas)`);
 
       // Generate intelligent greeting with error handling
       let greeting;
       try {
         console.log('🤖 Generating AI greeting...');
-        greeting = await this.generateIntelligentGreeting(config);
+        greeting = await this.generateIntelligentGreeting(config, onGreetingChunk, agentPersona);
         console.log('✅ AI greeting generated');
       } catch (greetingError) {
         console.error('⚠️ AI greeting failed, using fallback:', greetingError.message);
@@ -1252,7 +1990,16 @@ Determine if interview objectives have been sufficiently met to end the session.
           interviewType: config.interviewType,
           duration: config.sessionSettings.duration,
           silenceTimeout: config.sessionSettings.silenceTimeout
-        }
+        },
+        jobDetails: jobDescription ? {
+          title: jobDescription.title,
+          companyName: jobDescription.companyName,
+          description: jobDescription.description,
+          requirements: jobDescription.requirements,
+          responsibilities: jobDescription.responsibilities
+        } : null,
+        targetRole: config.context.targetRole,
+        targetCompany: config.context.targetCompany
       };
 
       console.log('✅ [Service] Result prepared:', {
@@ -1277,7 +2024,7 @@ Determine if interview objectives have been sufficiently met to end the session.
   /**
    * Generate intelligent greeting based on context
    */
-  async generateIntelligentGreeting(config) {
+  async generateIntelligentGreeting(config, onChunk = null, persona = null) {
     const maxRetries = 2;
     let lastError = null;
 
@@ -1285,28 +2032,25 @@ Determine if interview objectives have been sufficiently met to end the session.
       try {
         const startTime = Date.now();
 
-        const prompt = this.buildGreetingPrompt(config);
+        const prompt = this.buildGreetingPrompt(config, persona);
 
         console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
-        const response = await this.together.chat.completions.create({
-          model: config.models.fastModel,
-          messages: [
-            {
-              role: "system",
-              content: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
+        const llmOptions = {
+          systemPrompt: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences.",
+          messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
-          max_tokens: 400
-        });
+          maxTokens: 400,
+          timeout: 30000
+        };
+
+        // Use streaming if onChunk callback is provided
+        const response = onChunk
+          ? await bedrock.callLLMStreaming({ ...llmOptions, onChunk })
+          : await bedrock.callLLM(llmOptions);
 
         const processingTime = Date.now() - startTime;
-        const greeting = response.choices[0].message.content.trim();
+        const greeting = response.content.trim();
 
         // Log the actual response for debugging
         console.log('✅ [Greeting] AI response received:', {
@@ -1384,385 +2128,462 @@ Determine if interview objectives have been sufficiently met to end the session.
   }
 
   /**
-   * Process candidate response with full AI intelligence
+   * Process candidate response — NEW PIPELINE (target: <5s per turn)
+   *
+   * Step 1: combinedAnalysis()              — Nova Lite (~2-3s)
+   * Step 2: updateCandidateProfile()        — Pure logic (0ms)
+   * Step 3: Apply coverage updates          — Pure logic (0ms)
+   * Step 4: Quality filter + termination    — Pure logic (0ms)
+   * Step 5: decideQuestionStrategy()        — Pure logic (0ms)
+   * Step 5.5: selectQuestionStyle()         — Pure logic (0ms)
+   * Step 6: generateIntelligentQuestion()   — Nova Lite (~2-3s)
+   * Step 7: Quick dedup (RAG vector)        — ~50ms
+   * Step 8: Emit + background updates       — Immediate
    */
   async processCandidateResponse(sessionId, transcript, audioMetadata = {}) {
     try {
+      const pipelineStart = Date.now();
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) {
         throw new Error(`Session ${sessionId} not found`);
       }
 
-      console.log('🧠 Processing candidate response with AI intelligence...');
+      console.log('🧠 [Pipeline] Processing candidate response...');
 
-      // Store conversation entry with AI analysis
+      // Store conversation entry (without separate AI analysis — combined analysis handles it)
       const candidateEntry = {
         type: 'candidate',
         content: transcript,
         timestamp: new Date().toISOString(),
         metadata: audioMetadata
       };
+      await this.sessionManager.addConversationEntry(sessionId, candidateEntry);
 
-      await this.memoryAI.storeConversationWithIntelligence(sessionId, candidateEntry);
-
-      // Get updated session with new conversation entry
-      const updatedSession = await this.sessionManager.getSession(sessionId);
-
-      // Check if candidate adequately answered the previous question
-      const recentInterviewerMessages = updatedSession.conversation
+      // Get last interviewer question context
+      const recentInterviewerMessages = session.conversation
         .filter(entry => entry.type === 'interviewer')
         .slice(-1);
+      const lastQuestion = recentInterviewerMessages[0]?.content || null;
+      const targetArea = recentInterviewerMessages[0]?.metadata?.targetAreas?.[0] || null;
 
-      let responseQuality = null;
-      if (recentInterviewerMessages.length > 0) {
-        const lastQuestion = recentInterviewerMessages[0].content;
-        const targetArea = recentInterviewerMessages[0].metadata?.targetAreas?.[0];
+      // ── STEP 1: Combined Analysis (ONE Nova Lite call, ~2-3s) ──
+      const step1Start = Date.now();
+      const analysis = await this.combinedAnalysis(transcript, session, lastQuestion, targetArea);
+      console.log(`⚡ [Step 1] Combined analysis: ${Date.now() - step1Start}ms — quality: ${analysis.quality?.score}/100, depth: ${analysis.quality?.depthLevel}`);
 
-        responseQuality = await this.memoryAI.analyzeResponseQuality(
-          lastQuestion,
-          transcript,
-          targetArea
-        );
+      // ── STEP 2: Update Candidate Profile (pure logic, ~0ms) ──
+      const turnNumber = Math.floor((session.conversation?.length || 0) / 2);
+      const updatedProfile = this.updateCandidateProfile(
+        session.candidateProfile || null,
+        analysis,
+        turnNumber
+      );
+      await this.sessionManager.updateSession(sessionId, { candidateProfile: updatedProfile });
 
-        console.log(`📊 [Response Quality] Answered: ${responseQuality.answeredQuestion}, Score: ${responseQuality.qualityScore}/100`);
+      // Store quality metadata on the candidate entry
+      candidateEntry.metadata = {
+        ...candidateEntry.metadata,
+        qualityScore: analysis.quality?.score,
+        answeredQuestion: analysis.quality?.answeredQuestion,
+        completeness: analysis.quality?.completeness,
+        depthLevel: analysis.quality?.depthLevel || 'moderate',
+        targetArea
+      };
 
-        // STORE QUALITY SCORES: Add quality metadata to candidate entry for smart limit calculations
-        candidateEntry.metadata = {
-          ...candidateEntry.metadata,
-          qualityScore: responseQuality.qualityScore,
-          answeredQuestion: responseQuality.answeredQuestion,
-          completeness: responseQuality.completeness,
-          targetArea: targetArea  // Track which area this response relates to
-        };
-
-        console.log(`💾 [Quality Storage] Stored quality score ${responseQuality.qualityScore}/100 for area: ${targetArea}`);
-
-        // 🚫 INTELLIGENT FILTER: Ignore off-topic/inappropriate responses
-        // Don't build questions from low-quality or irrelevant content
-        if (responseQuality.qualityScore < 30 || (responseQuality.completeness === 'avoided' && responseQuality.qualityScore < 50)) {
-          console.log(`🚫 [Low Quality Filter] Ignoring response content (quality: ${responseQuality.qualityScore}, completeness: ${responseQuality.completeness})`);
-          console.log(`   Response was off-topic, rude, or inappropriate - generating next question without using this content`);
-
-          // Update quality counters (for 8 bad answers termination)
-          await this.updateQualityCounters(sessionId, responseQuality.qualityScore);
-
-          // Check if should end interview due to poor quality
-          const endCheck = await this.shouldEndInterview(updatedSession);
-          if (endCheck.shouldEnd) {
-            return {
-              action: 'end_interview',
-              content: endCheck.message,
-              reasoning: endCheck.reason,
-              metadata: { terminationReason: endCheck.reason, score: endCheck.score }
-            };
-          }
-
-          // DON'T use this response for question generation
-          // Generate next question based on coverage gaps ONLY, not response content
-          const coverageAnalysis = await AIUtils.withTimeout(
-            this.coverageAI.analyzeCoverageIntelligently(
-              "[LOW QUALITY - IGNORING CONTENT]",  // Don't pass actual response
-              updatedSession.coverage,
-              updatedSession.config.intelligenceContext.focusAreas,
-              updatedSession.conversation.slice(0, -1)  // Exclude this bad response
-            ),
-            15000,
-            'analyzeCoverageIntelligently (low quality path)'
-          );
-
-          // Update coverage (minimal impact for bad response)
-          if (coverageAnalysis.coverageUpdates) {
-            const updatedCoverage = await this.updateCoverageIntelligently(
-              sessionId,
-              updatedSession.coverage,
-              coverageAnalysis
-            );
-            await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
-          }
-
-          // Build session locally instead of re-fetching from Redis
-          const refreshedSession = { ...updatedSession };
-
-          // Generate new question ignoring the bad response
-          const nextQuestion = await AIUtils.withTimeout(
-            this.questionAI.generateIntelligentQuestion(
-              refreshedSession,
-              coverageAnalysis,
-              { previousQuestions: refreshedSession.conversation.filter(e => e.type === 'interviewer') }
-            ),
-            10000,
-            'generateIntelligentQuestion (low quality path)'
-          );
-
-          // Store the generated question
-          await this.sessionManager.addConversationEntry(sessionId, {
-            type: 'interviewer',
-            content: nextQuestion.question,
-            timestamp: new Date().toISOString(),
-            metadata: {
-              aiGenerated: true,
-              targetAreas: nextQuestion.targetAreas,
-              reasoning: 'Previous response was off-topic/inappropriate - moving forward',
-              ignoredPreviousResponse: true
+      // ── STEP 3: Apply coverage updates from analysis (pure logic, ~0ms) ──
+      let finalCoverage = { ...session.coverage };
+      if (analysis.coverage?.areasImpacted?.length > 0) {
+        console.log(`📊 [Coverage] LLM areasImpacted: ${analysis.coverage.areasImpacted.map(a => `${a.area}(+${a.increase})`).join(', ')} | Session areas: ${Object.keys(finalCoverage.areas).join(', ')} | Quality: ${analysis.quality?.score}`);
+        for (const impact of analysis.coverage.areasImpacted) {
+          let matchedAreaKey = impact.area;
+          if (!finalCoverage.areas[matchedAreaKey]) {
+            // Fuzzy match: find closest session area key
+            const impactLower = matchedAreaKey.toLowerCase().replace(/[_\s-]/g, '');
+            matchedAreaKey = Object.keys(finalCoverage.areas).find(key => {
+              const keyLower = key.toLowerCase().replace(/[_\s-]/g, '');
+              return keyLower.includes(impactLower) || impactLower.includes(keyLower) ||
+                keyLower.split('_').some(w => w.length > 2 && impactLower.includes(w));
+            }) || null;
+            if (matchedAreaKey) {
+              console.log(`🔄 [Coverage] Fuzzy matched "${impact.area}" → "${matchedAreaKey}"`);
             }
-          });
-
-          // Set area start time if this is the first question targeting this area
-          const lowQualityTargetArea = nextQuestion.targetAreas?.[0];
-          if (lowQualityTargetArea) {
-            await this.sessionManager.setAreaStartTime(sessionId, lowQualityTargetArea);
           }
+          if (matchedAreaKey && finalCoverage.areas[matchedAreaKey]) {
+            const area = finalCoverage.areas[matchedAreaKey];
+            let increase = impact.increase || 0;
 
-          return {
-            action: 'continue_probing',
-            content: nextQuestion.question,
-            reasoning: 'Response was off-topic/inappropriate - moving to next question without referencing it',
-            targetAreas: nextQuestion.targetAreas,
-            metadata: {
-              ignoredResponse: true,
-              originalQuality: responseQuality.qualityScore
+            // PASS/SKIP HANDLING: Candidate can't answer = gap recorded, NO coverage credit
+            const isPassSkip = analysis.quality?.answeredQuestion === false ||
+              analysis.quality?.completeness === 'avoided';
+            if (isPassSkip && increase === 0) {
+              // increase stays 0 — no coverage credit for not answering
+              console.log(`⏭️ [Coverage] Pass/skip detected for "${impact.area}" — gap recorded, no coverage credit`);
+              area.indicators = area.indicators || [];
+              area.indicators.push({
+                name: `Gap: candidate passed on ${impact.area}`,
+                covered: true,
+                evidence: ['Candidate could not answer / requested to skip'],
+                quality: 0,
+                aiGenerated: true,
+                reasoning: 'Candidate explicitly passed or could not answer'
+              });
             }
-          };
+
+            // CODE-LEVEL BOOST: LLM returns conservative values, amplify based on answer quality
+            const qualityScore = analysis.quality?.score || 0;
+            const depth = analysis.quality?.depthLevel || 'surface';
+            if (increase > 0 && !isPassSkip) {
+              if (depth === 'deep' && qualityScore >= 70) {
+                increase = Math.max(increase, 25);
+              } else if (depth === 'moderate' && qualityScore >= 50) {
+                increase = Math.max(increase, 18);
+              } else if (qualityScore >= 50) {
+                increase = Math.max(increase, 12);
+              } else if (qualityScore >= 30) {
+                increase = Math.max(increase, 8);
+              } else if (qualityScore >= 15) {
+                increase = Math.max(increase, 3); // minimal credit for weak but on-topic answers
+              } else {
+                increase = 0; // quality < 15 = no coverage credit (truly garbage / off-topic)
+              }
+            }
+
+            area.percentage = Math.min(100, (area.percentage || 0) + increase);
+            area.lastUpdated = new Date().toISOString();
+            if (impact.evidence) {
+              area.indicators = area.indicators || [];
+              area.indicators.push({
+                name: `AI-detected: ${impact.area}`,
+                covered: true,
+                evidence: [impact.evidence],
+                quality: Math.min(10, Math.round((analysis.quality?.score || 0) / 10)),
+                aiGenerated: true
+              });
+            }
+
+            // Mark area completed when coverage is sufficient
+            if (area.percentage >= 80 && !area.completed) {
+              area.completed = true;
+              console.log(`✅ [Coverage] Area "${impact.area}" marked completed at ${area.percentage}%`);
+            }
+
+            // Track explored sub-topics to prevent theme repetition
+            const topicsFromResponse = (analysis.skills?.demonstrated || [])
+              .concat(analysis.interestingTopics?.map(t => t.topic) || []);
+            if (topicsFromResponse.length > 0) {
+              area.topicsExplored = area.topicsExplored || [];
+              for (const topic of topicsFromResponse) {
+                if (!area.topicsExplored.includes(topic)) {
+                  area.topicsExplored.push(topic);
+                }
+              }
+            }
+
+            // Update JD skills checklist — mark covered skills based on demonstrated
+            const checklist = session.jdSkillsChecklist || [];
+            const demonstratedSkills = analysis.skills?.demonstrated || [];
+            for (const item of checklist) {
+              if (!item.covered && demonstratedSkills.some(d => {
+                const dLower = d.toLowerCase();
+                const sLower = item.skill.toLowerCase();
+                return dLower.includes(sLower) || sLower.includes(dLower) ||
+                  sLower.split(/[\s,/]+/).some(w => w.length > 2 && dLower.includes(w)) ||
+                  dLower.split(/[\s,/]+/).some(w => w.length > 2 && sLower.includes(w));
+              })) {
+                item.covered = true;
+              }
+            }
+
+            // SCORE BONUS: Reward candidates who cover an area before time budget expires
+            if (session.timeBudgetPerAreaMs && area.percentage >= 60 && !area.earlyCompletionBonus) {
+              const areaStartTime = area.startTime;
+              if (areaStartTime) {
+                const elapsed = Date.now() - areaStartTime;
+                const timeBudget = session.timeBudgetPerAreaMs;
+                if (elapsed < timeBudget) {
+                  const timeRemainingRatio = (timeBudget - elapsed) / timeBudget;
+                  const bonus = Math.round(timeRemainingRatio * 15);
+                  area.percentage = Math.min(100, area.percentage + bonus);
+                  area.earlyCompletionBonus = bonus;
+                  console.log(`🎁 [Score Bonus] +${bonus}% for "${impact.area}"`);
+                }
+              }
+            }
+          } else {
+            console.warn(`⚠️ [Coverage] Area mismatch (no fuzzy match found): LLM returned "${impact.area}" but session only has [${Object.keys(finalCoverage.areas).join(', ')}]`);
+          }
         }
 
-        // Update quality counters for valid responses too
-        await this.updateQualityCounters(sessionId, responseQuality.qualityScore);
+        // Recalculate overall coverage
+        const areaEntries = Object.values(finalCoverage.areas);
+        const totalWeight = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
+        finalCoverage.overall = totalWeight > 0
+          ? Math.round(areaEntries.reduce((sum, a) => sum + ((a.percentage / 100) * (a.weight || 25)), 0) / totalWeight * 100)
+          : 0;
+        finalCoverage.lastUpdated = new Date().toISOString();
 
-        // Check if should end interview (time or quality thresholds)
-        const endCheck = await this.shouldEndInterview(updatedSession);
-        if (endCheck.shouldEnd) {
-          return {
-            action: 'end_interview',
-            content: endCheck.message,
-            reasoning: endCheck.reason,
-            metadata: { terminationReason: endCheck.reason, score: endCheck.score }
-          };
+        await this.sessionManager.updateCoverage(sessionId, finalCoverage);
+      } else {
+        // No areasImpacted from LLM — but if it's a pass/skip, still record the gap
+        const isPassSkipNoAreas = analysis.quality?.answeredQuestion === false ||
+          analysis.quality?.completeness === 'avoided';
+        if (isPassSkipNoAreas && targetArea && finalCoverage.areas[targetArea]) {
+          const area = finalCoverage.areas[targetArea];
+          // No coverage credit for not answering — gap recorded only
+          area.lastUpdated = new Date().toISOString();
+          area.indicators = area.indicators || [];
+          area.indicators.push({
+            name: `Gap: candidate passed on ${targetArea}`,
+            covered: true,
+            evidence: ['Candidate could not answer / requested to skip'],
+            quality: 0,
+            aiGenerated: true,
+            reasoning: 'Candidate explicitly passed or could not answer'
+          });
+          console.log(`⏭️ [Coverage] Pass/skip (no areas from LLM) for "${targetArea}" — gap recorded, no coverage credit`);
+
+          // Recalculate overall
+          const areaEntries = Object.values(finalCoverage.areas);
+          const totalWeight = areaEntries.reduce((sum, a) => sum + (a.weight || 25), 0);
+          finalCoverage.overall = totalWeight > 0
+            ? Math.round(areaEntries.reduce((sum, a) => sum + ((a.percentage / 100) * (a.weight || 25)), 0) / totalWeight * 100)
+            : 0;
+          finalCoverage.lastUpdated = new Date().toISOString();
+          await this.sessionManager.updateCoverage(sessionId, finalCoverage);
         }
       }
 
-      // Perform intelligent coverage analysis
-      const coverageAnalysis = await AIUtils.withTimeout(
-        this.coverageAI.analyzeCoverageIntelligently(
-          transcript,
-          updatedSession.coverage,
-          updatedSession.config.intelligenceContext.focusAreas,
-          updatedSession.conversation
+      // Save updated JD skills checklist
+      if (session.jdSkillsChecklist?.length > 0) {
+        await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: session.jdSkillsChecklist });
+      }
+
+      // ── STEP 3.5: Compute running score (pure logic, ~0ms) ──
+      const runningScoreData = this.computeRunningScore(session, updatedProfile, finalCoverage, analysis);
+      await this.sessionManager.updateSession(sessionId, { runningScoreData });
+
+      // ── STEP 4: Quality filter + termination check (pure logic, ~0ms) ──
+      const qualityScore = analysis.quality?.score || 0;
+      await this.updateQualityCounters(sessionId, qualityScore);
+
+      // LOW QUALITY FILTER: If off-topic/garbage, generate from gaps only
+      const isLowQuality = qualityScore < 30 || (analysis.quality?.completeness === 'avoided' && qualityScore < 50);
+
+      // Check rule-based termination (time, consecutive bad/good, avg quality)
+      const updatedSessionForEnd = { ...session, coverage: finalCoverage, qualityTracking: session.qualityTracking };
+      const endCheck = await this.shouldEndInterview(updatedSessionForEnd);
+      if (endCheck.shouldEnd) {
+        console.log(`🛑 [Pipeline] Ending interview: ${endCheck.terminationReason}`);
+        return {
+          action: 'end_interview',
+          content: endCheck.message || 'Thank you for your time. This concludes our interview.',
+          reasoning: endCheck.reason || endCheck.reasoning,
+          metadata: { terminationReason: endCheck.terminationReason, score: endCheck.score }
+        };
+      }
+
+      // AI-suggested termination from combined analysis (only trusted after 6+ turns)
+      const turnCount = Math.floor((session.conversation?.length || 0) / 2);
+      if (analysis.shouldEnd?.shouldEnd && turnCount >= 6) {
+        console.log(`🛑 [Pipeline] AI suggests ending at turn ${turnCount}: ${analysis.shouldEnd.reason}`);
+        return {
+          action: 'end_interview',
+          content: 'Thank you for your time. This concludes our interview.',
+          reasoning: analysis.shouldEnd.reason,
+          metadata: { terminationReason: 'ai_determined', score: 'ai' }
+        };
+      } else if (analysis.shouldEnd?.shouldEnd && turnCount < 6) {
+        console.log(`⚠️ [Pipeline] LLM suggested ending at turn ${turnCount} — IGNORED (min 6 turns required)`);
+      }
+
+      if (isLowQuality) {
+        console.log(`🚫 [Pipeline] Low quality (${qualityScore}) — generating from gaps only`);
+      }
+
+      // ── STEP 5: Decide question strategy (pure logic, ~0ms) ──
+      const finalSession = { ...session, coverage: finalCoverage, candidateProfile: updatedProfile, currentFocusArea: targetArea };
+      const strategy = this.decideQuestionStrategy(analysis, updatedProfile, finalCoverage, finalSession);
+      console.log(`🎯 [Step 5] Strategy: ${strategy.mode} → ${strategy.targetArea} (${strategy.context})`);
+
+      // ── STEP 5.5: Select question style (pure logic, ~0ms) ──
+      const questionStyle = this.selectQuestionStyle(finalSession, analysis, strategy);
+      console.log(`🎨 [Step 5.5] Style: ${questionStyle.id} | Strategy: ${strategy.mode} → ${strategy.targetArea}`);
+
+      // ── STEP 5.7: Retrieve RAG context from JD (async, ~100ms) ──
+      let ragContext = '';
+      try {
+        const jobId = session.jobDescription?._id || session.config?.jobId;
+        if (jobId) {
+          const rag = await ragService.retrieveContext(jobId, sessionId, transcript);
+          ragContext = rag.jdContext || '';
+          if (ragContext) {
+            console.log(`📚 [Step 5.7] RAG context retrieved: ${ragContext.length} chars`);
+          }
+        }
+      } catch (ragErr) {
+        console.warn('⚠️ [Step 5.7] RAG context retrieval failed (non-blocking):', ragErr.message);
+      }
+      finalSession.ragContext = ragContext;
+
+      // ── STEP 6: Generate question with strategy + style context (Nova Lite, ~2-3s) ──
+      const step6Start = Date.now();
+
+      // Build a lightweight coverage analysis object for question generator
+      const coverageForQGen = {
+        overallAssessment: {
+          weakestAreas: Object.entries(finalCoverage.areas)
+            .filter(([_, d]) => d.percentage < 50)
+            .sort((a, b) => a[1].percentage - b[1].percentage)
+            .map(([a]) => a),
+          strongestAreas: Object.entries(finalCoverage.areas)
+            .filter(([_, d]) => d.percentage >= 60)
+            .map(([a]) => a)
+        }
+      };
+
+      const proposedQuestion = await AIUtils.withTimeout(
+        this.questionAI.generateIntelligentQuestion(
+          finalSession,
+          coverageForQGen,
+          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer').slice(-5) },
+          strategy,       // Pass strategy for adaptive prompting
+          questionStyle   // Pass style for diverse question phrasing
         ),
         15000,
-        'analyzeCoverageIntelligently'
-      );
+        'generateIntelligentQuestion'
+      ).catch(err => {
+        console.warn('⚠️ Question generation failed, using fallback:', err.message);
+        const areaLabel = strategy.targetArea?.replace(/_/g, ' ') || 'your background';
+        const fallbackQuestions = {
+          bridge: `Can you tell me more about how your experience relates to ${areaLabel}?`,
+          probe: `Could you walk me through a specific example related to ${areaLabel}?`,
+          transition: `Let's shift gears — can you share your experience with ${areaLabel}?`,
+          validate: `How would you rate your confidence in ${areaLabel}?`
+        };
+        return {
+          question: fallbackQuestions[strategy.mode] || 'Can you tell me about a challenging project you worked on recently?',
+          targetAreas: [strategy.targetArea || 'General'],
+          reasoning: 'Fallback question due to AI timeout',
+          fallback: true
+        };
+      });
 
-      // Update coverage based on AI analysis
-      let finalCoverage = updatedSession.coverage;
-      if (coverageAnalysis.coverageUpdates) {
-        finalCoverage = await this.updateCoverageIntelligently(
-          sessionId,
-          updatedSession.coverage,
-          coverageAnalysis
-        );
-        await this.sessionManager.updateCoverage(sessionId, finalCoverage);
-      }
+      console.log(`⚡ [Step 6] Question generated: ${Date.now() - step6Start}ms`);
 
-      // Build finalSession locally instead of re-fetching from Redis
-      const finalSession = { ...updatedSession, coverage: finalCoverage };
-
-      // Run decision analysis and question generation IN PARALLEL (both depend on coverageAnalysis but not each other)
-      const [decisionAnalysis, proposedQuestion] = await Promise.all([
-        AIUtils.withTimeout(
-          this.decisionAI.makeIntelligentDecision(
-            finalSession,
-            transcript,
-            {
-              coverage: coverageAnalysis,
-              memory: candidateEntry.aiAnalysis
-            }
-          ),
-          15000,
-          'makeIntelligentDecision'
-        ),
-        AIUtils.withTimeout(
-          this.questionAI.generateIntelligentQuestion(
-            finalSession,
-            coverageAnalysis,
-            { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
-          ),
-          10000,
-          'generateIntelligentQuestion'
-        )
-      ]);
-
-      // SIMPLIFIED: Just generate next question (no clarification requests - be more patient)
-      let nextAction;
-      if (decisionAnalysis.decision === 'explore_new_area' || decisionAnalysis.decision === 'continue_probing') {
-        // Normal flow - use the pre-generated question
-        // Verify question isn't too similar to previous ones
-        const similarityAnalysis = await AIUtils.withTimeout(
-          this.memoryAI.analyzeQuestionSimilarity(
-            proposedQuestion.question,
-            finalSession.conversation,
-            sessionId
-          ),
+      // ── STEP 7: Quick dedup via RAG vector search (~50ms) ──
+      let finalQuestion = proposedQuestion;
+      try {
+        const similarityCheck = await AIUtils.withTimeout(
+          this.memoryAI.analyzeQuestionSimilarity(proposedQuestion.question, finalSession.conversation, sessionId),
           8000,
           'analyzeQuestionSimilarity'
         );
 
-        if (similarityAnalysis.isSimilar && similarityAnalysis.confidence > 70) {
-          // Generate alternative question for same target area
-          console.log('🔄 Question similarity detected - generating alternative for area:', decisionAnalysis.targetArea);
-
-          // Validate that we have the required data before calling AI
-          const targetArea = decisionAnalysis.targetArea;
-          const areaData = finalSession.coverage.areas[targetArea];
-
-          if (!targetArea || !areaData) {
-            console.warn('⚠️ Missing targetArea or areaData, using original question instead');
-            console.warn('   targetArea:', targetArea);
-            console.warn('   areaData exists:', !!areaData);
-
-            // Fall back to using the original proposed question
-            nextAction = {
-              type: 'question',
-              content: proposedQuestion.question,
-              reasoning: proposedQuestion.reasoning + ' (similarity detected but fallback used)',
-              targetAreas: proposedQuestion.targetAreas
-            };
-          } else {
-            try {
-              // Try to generate targeted question with validated data
-              nextAction = await this.questionAI.generateTargetedQuestionForArea(
-                targetArea,
-                areaData,
-                finalSession.conversation,
-                finalSession.config.context
-              );
-              nextAction.type = 'question';
-              nextAction.content = nextAction.question;
-
-              console.log('✅ Successfully generated alternative question');
-            } catch (targetedQuestionError) {
-              console.error('❌ Failed to generate targeted question, falling back to original:', targetedQuestionError.message);
-
-              // Fall back to the original proposed question
-              nextAction = {
-                type: 'question',
-                content: proposedQuestion.question,
-                reasoning: proposedQuestion.reasoning + ' (targeted generation failed)',
-                targetAreas: proposedQuestion.targetAreas
-              };
-            }
+        if (similarityCheck.isSimilar && similarityCheck.confidence > 70) {
+          console.log('🔄 [Step 7] Similar question detected — regenerating once');
+          try {
+            const altQuestion = await this.questionAI.generateTargetedQuestionForArea(
+              strategy.targetArea,
+              finalCoverage.areas[strategy.targetArea] || {},
+              finalSession.conversation,
+              finalSession.config.context
+            );
+            finalQuestion = { ...altQuestion, targetAreas: [strategy.targetArea] };
+          } catch (altErr) {
+            console.warn('⚠️ Alt question failed, using original:', altErr.message);
           }
-        } else {
-          nextAction = {
-            type: 'question',
-            content: proposedQuestion.question,
-            reasoning: proposedQuestion.reasoning,
-            targetAreas: proposedQuestion.targetAreas
-          };
         }
-
-        // Store interviewer question in conversation
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'interviewer',
-          content: nextAction.content,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            aiGenerated: true,
-            targetAreas: nextAction.targetAreas || [decisionAnalysis.targetArea],
-            reasoning: nextAction.reasoning
-          }
-        });
-
-        // Detect complexity and save question for potential rephrasing
-        const complexity = await this.detectQuestionComplexity(nextAction.content);
-        await this.sessionManager.saveCurrentQuestion(sessionId, nextAction.content, complexity);
-        console.log(`💾 [Question] Saved with complexity: ${complexity}`);
-
-        // Track questions asked per coverage area (max 5 per area to avoid repetition)
-        const targetArea = decisionAnalysis.targetArea;
-        if (targetArea && finalSession.coverage.areas[targetArea]) {
-          await this.incrementAreaQuestionCount(sessionId, targetArea);
-          console.log(`📊 [Question Counter] Incremented for area: ${targetArea}`);
-        }
-
-        // Set area start time if this is the first question targeting this area
-        const questionTargetArea = nextAction.targetAreas?.[0] || decisionAnalysis.targetArea;
-        if (questionTargetArea) {
-          await this.sessionManager.setAreaStartTime(sessionId, questionTargetArea);
-        }
-
-      } else if (decisionAnalysis.decision === 'end_interview') {
-        nextAction = {
-          type: 'end_interview',
-          content: 'Thank you for your time. This concludes our interview.',
-          reasoning: decisionAnalysis.reasoning
-        };
-      } else {
-        // FALLBACK: For ANY other decision type (seek_examples, wrap_up_area, unexpected, etc.)
-        // Always generate next question to keep interview moving forward
-        console.log(`⚠️ Unhandled decision type: "${decisionAnalysis.decision}" - generating next question anyway`);
-
-        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
-          finalSession,
-          coverageAnalysis,
-          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
-        );
-
-        nextAction = {
-          type: 'question',
-          content: proposedQuestion.question,
-          reasoning: `Fallback for "${decisionAnalysis.decision}": ${decisionAnalysis.reasoning}`,
-          targetAreas: proposedQuestion.targetAreas
-        };
-
-        // Store interviewer question in conversation
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'interviewer',
-          content: nextAction.content,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            aiGenerated: true,
-            targetAreas: nextAction.targetAreas,
-            reasoning: nextAction.reasoning,
-            fallback: true
-          }
-        });
-
-        // Set area start time if this is the first question targeting this area
-        const fallbackTargetArea = nextAction.targetAreas?.[0];
-        if (fallbackTargetArea) {
-          await this.sessionManager.setAreaStartTime(sessionId, fallbackTargetArea);
-        }
-
-        console.log(`✅ [Fallback] Generated next question to keep interview moving`);
+      } catch (simError) {
+        console.warn('⚠️ Dedup check failed, proceeding:', simError.message);
       }
 
-      // Update real-time report with AI insights
-      const reportUpdate = await this.updateRealTimeReportIntelligently(
-        finalSession,
-        transcript,
-        coverageAnalysis,
-        decisionAnalysis
-      );
-      await this.sessionManager.updateRealTimeReport(sessionId, reportUpdate);
+      // ── STEP 8: Store question + background updates ──
+      const questionContent = finalQuestion.question || finalQuestion.content;
+      const questionTargetAreas = finalQuestion.targetAreas || [strategy.targetArea];
 
-      console.log('✅ AI processing complete');
+      await this.sessionManager.addConversationEntry(sessionId, {
+        type: 'interviewer',
+        content: questionContent,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          aiGenerated: true,
+          targetAreas: questionTargetAreas,
+          reasoning: finalQuestion.reasoning,
+          strategy: strategy.mode,
+          questionStyle: questionStyle.id,
+          ignoredPreviousResponse: isLowQuality
+        }
+      });
+
+      // Track question style history for rotation (capped at 10)
+      const currentStyleHistory = finalSession.questionStyleHistory || [];
+      currentStyleHistory.push(questionStyle.id);
+      await this.sessionManager.updateSession(sessionId, {
+        questionStyleHistory: currentStyleHistory.slice(-10)
+      });
+
+      // Track area and question count
+      if (strategy.targetArea && finalCoverage.areas[strategy.targetArea]) {
+        await this.incrementAreaQuestionCount(sessionId, strategy.targetArea);
+        await this.sessionManager.setAreaStartTime(sessionId, strategy.targetArea);
+        await this.sessionManager.updateSession(sessionId, { currentFocusArea: strategy.targetArea });
+      }
+
+      // Mark JD skills as "asked" based on question content
+      const skillChecklist = finalSession.jdSkillsChecklist || [];
+      if (skillChecklist.length > 0) {
+        const questionLower = questionContent.toLowerCase();
+        for (const item of skillChecklist) {
+          if (!item.asked) {
+            const sLower = item.skill.toLowerCase();
+            if (questionLower.includes(sLower) ||
+              sLower.split(/[\s,/]+/).some(w => w.length > 2 && questionLower.includes(w))) {
+              item.asked = true;
+            }
+          }
+        }
+        await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: skillChecklist });
+      }
+
+      // Detect complexity for silence handling
+      const complexity = await this.detectQuestionComplexity(questionContent);
+      await this.sessionManager.saveCurrentQuestion(sessionId, questionContent, complexity);
+
+      // Fire-and-forget: index question in RAG + update report
+      ragService.indexAskedQuestion(sessionId, questionContent).catch(err =>
+        console.warn('⚠️ [RAG] Question indexing failed (non-blocking):', err.message)
+      );
+
+      const coverageAnalysisForReport = {
+        overallAssessment: coverageForQGen.overallAssessment,
+        coverageUpdates: analysis.coverage?.areasImpacted || []
+      };
+      this.updateRealTimeReportIntelligently(finalSession, transcript, coverageAnalysisForReport, { decision: strategy.mode, targetArea: strategy.targetArea })
+        .then(reportUpdate => this.sessionManager.updateRealTimeReport(sessionId, reportUpdate))
+        .catch(err => console.warn('⚠️ [Report] Background update failed:', err.message));
+
+      const totalTime = Date.now() - pipelineStart;
+      console.log(`✅ [Pipeline] Complete in ${totalTime}ms (target: <5000ms) — strategy: ${strategy.mode}, quality: ${qualityScore}/100`);
 
       return {
-        action: decisionAnalysis.decision,
-        content: nextAction?.content || 'Continue...',
-        reasoning: decisionAnalysis.reasoning,
-        targetArea: decisionAnalysis.targetArea,
-        confidence: decisionAnalysis.confidence,
-        coverageUpdate: coverageAnalysis.overallAssessment,
+        action: strategy.mode === 'validate' ? 'wrap_up_area' : 'continue_probing',
+        content: questionContent,
+        reasoning: finalQuestion.reasoning,
+        targetArea: strategy.targetArea,
+        confidence: analysis.quality?.score || 50,
+        coverageUpdate: coverageForQGen.overallAssessment,
         metadata: {
-          aiDecision: decisionAnalysis,
-          coverageAnalysis: coverageAnalysis.overallAssessment,
+          strategy: strategy.mode,
+          questionStyle: questionStyle.id,
+          pipelineTimeMs: totalTime,
+          qualityScore,
+          coverageAnalysis: coverageForQGen.overallAssessment,
           timestamp: new Date().toISOString()
         }
       };
 
     } catch (error) {
-      console.error('❌ Failed to process candidate response intelligently:', error);
+      console.error('❌ Failed to process candidate response:', error);
       throw error;
     }
   }
@@ -1777,24 +2598,17 @@ Determine if interview objectives have been sufficiently met to end the session.
 
       const prompt = this.buildDecisionPrompt(session, candidateResponse);
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.thinkingModel,
-        messages: [
-          {
-            role: "system",
-            content: this.getDecisionSystemPrompt(config)
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt: this.getDecisionSystemPrompt(config),
+        messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
-        max_tokens: 800
+        maxTokens: 800,
+        timeout: 30000,
+        useFastModel: true
       });
 
       const processingTime = Date.now() - startTime;
-      const decisionContent = response.choices[0].message.content.trim();
+      const decisionContent = response.content.trim();
 
       // Parse AI decision (expecting JSON format)
       let decision;
@@ -1865,23 +2679,16 @@ Determine if interview objectives have been sufficiently met to end the session.
         Return JSON format with coverage updates.
       `;
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.thinkingModel,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert interview analyst. Analyze responses for evidence of competencies and skills. Return structured JSON data."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt: "You are an expert interview analyst. Analyze responses for evidence of competencies and skills. Return structured JSON data.",
+        messages: [{ role: "user", content: prompt }],
         temperature: 0.3,
-        max_tokens: 600
+        maxTokens: 600,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const analysisContent = response.choices[0].message.content.trim();
+      const analysisContent = response.content.trim();
 
       let coverageAnalysis;
       try {
@@ -1973,23 +2780,16 @@ Determine if interview objectives have been sufficiently met to end the session.
         Return JSON format.
       `;
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.analysisModel,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert interview evaluator. Provide constructive, actionable feedback in real-time. Be specific and evidence-based."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt: "You are an expert interview evaluator. Provide constructive, actionable feedback in real-time. Be specific and evidence-based.",
+        messages: [{ role: "user", content: prompt }],
         temperature: 0.4,
-        max_tokens: 800
+        maxTokens: 800,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const reportContent = response.choices[0].message.content.trim();
+      const reportContent = response.content.trim();
 
       let reportUpdate;
       try {
@@ -2145,23 +2945,16 @@ Example: "Take your time - there's no rush. Would you like me to rephrase the qu
 
         console.log(`🔇 [Silence] Attempt ${attempt}/${maxRetries} - Generating silence prompt...`);
 
-        const response = await this.together.chat.completions.create({
-          model: config.models.fastModel,
-          messages: [
-            {
-              role: "system",
-              content: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
+        const response = await bedrock.callLLM({
+          systemPrompt: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural.",
+          messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
-          max_tokens: 300
+          maxTokens: 300,
+          timeout: 30000,
+          useFastModel: true
         });
 
-        const silencePrompt = response.choices[0].message.content.trim();
+        const silencePrompt = response.content.trim();
 
         // Log the response for debugging
         console.log('✅ [Silence] AI response received:', {
@@ -2251,18 +3044,16 @@ RESPONSE FORMAT (JSON only):
   "estimatedThinkingTime": number (in seconds)
 }`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyze this question: "${questionText}"` }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Analyze this question: "${questionText}"` }],
         temperature: 0.2,
-        max_tokens: 200
+        maxTokens: 200,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const responseContent = response.choices[0].message.content.trim();
-      const parsed = AIUtils.parseJSONResponse(responseContent, 'detectQuestionComplexity');
+      const parsed = AIUtils.parseJSONResponse(response.content, 'detectQuestionComplexity');
 
       console.log(`🔍 [Complexity] Detected:`, {
         complexity: parsed.complexity,
@@ -2297,17 +3088,16 @@ Examples:
 - "No rush - I'm listening."
 - "Whenever you're ready."`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }],
         temperature: 0.7,
-        max_tokens: 100
+        maxTokens: 100,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const patiencePrompt = response.choices[0].message.content.trim();
+      const patiencePrompt = response.content.trim();
 
       // Validation
       if (patiencePrompt.length < 10 || /^[a-z]+\d*$/i.test(patiencePrompt)) {
@@ -2356,17 +3146,16 @@ Examples:
 - "Can I break this into smaller parts for you?"
 - "Would you like me to provide a specific example?"`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }],
         temperature: 0.7,
-        max_tokens: 150
+        maxTokens: 150,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const helpOffer = response.choices[0].message.content.trim();
+      const helpOffer = response.content.trim();
 
       // Validation
       if (helpOffer.length < 15 || /^[a-z]+\d*$/i.test(helpOffer)) {
@@ -2436,17 +3225,16 @@ ${recentContext}
 
 Rephrase this question to help the candidate answer it.`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo", // Use better model for rephrasing
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.6,
-        max_tokens: 400
+        maxTokens: 400,
+        timeout: 30000,
+        useFastModel: true
       });
 
-      const rephrasedQuestion = response.choices[0].message.content.trim();
+      const rephrasedQuestion = response.content.trim();
 
       // Validation
       if (rephrasedQuestion.length < 20 || /^[a-z]+\d*$/i.test(rephrasedQuestion)) {
@@ -2516,11 +3304,25 @@ Rephrase this question to help the candidate answer it.`;
   /**
    * Helper method to build greeting prompt
    */
-  buildGreetingPrompt(config) {
+  buildGreetingPrompt(config, persona = null) {
     // Extract only the essential information, avoid large JSON objects
     const interviewerStyle = config.interviewerPersona?.style || 'professional';
-    const interviewerTone = config.interviewerPersona?.tone || 'friendly';
+    const interviewerTone = persona?.agentBehavior?.tone || config.interviewerPersona?.tone || 'friendly';
     const cultureTrait = config.companyProfile?.culture?.values?.[0] || 'innovation';
+
+    // Build persona-specific context for the greeting
+    let personaContext = '';
+    if (persona?.idealCandidate) {
+      const domainTopics = persona.agentBehavior?.domainTopics?.slice(0, 3).join(', ') || '';
+      const mustHaves = persona.idealCandidate?.mustHaveSkills?.slice(0, 3).join(', ') || '';
+      personaContext = `
+JOB-SPECIFIC CONTEXT (use to make greeting relevant):
+- Job Category: ${persona.jobCategory}
+- Key Skills to Explore: ${mustHaves}
+- Domain Topics: ${domainTopics}
+- Tone: ${persona.agentBehavior?.tone || 'professional'}
+- Seniority: ${persona.idealCandidate?.seniorityExpectations || 'standard'}`;
+    }
 
     // INTERVIEW TYPE SPECIFIC FOCUS
     let interviewFocus = '';
@@ -2551,7 +3353,6 @@ FOCUS:
       exampleGreeting = `"Hello! Today we'll be discussing your communication style and collaboration experiences. I'm looking forward to understanding how you work with others and handle various workplace scenarios."`;
 
     } else {
-      // Default/generic
       interviewFocus = `Standard professional interview.`;
       exampleGreeting = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position. Let's have a great conversation."`;
     }
@@ -2560,6 +3361,7 @@ FOCUS:
 
 INTERVIEW TYPE & FOCUS:
 ${interviewFocus}
+${personaContext}
 
 INTERVIEW CONTEXT:
 - Position: ${config.context.targetRole}
@@ -2572,6 +3374,7 @@ REQUIREMENTS:
 - Write 2-3 natural, conversational sentences
 - Welcome the candidate warmly
 - Briefly mention the position and set expectations for the interview type
+- If persona context is available, reference specific aspects of the role (domain, key topics)
 - Set a comfortable, professional tone appropriate for ${config.interviewType}
 - DO NOT use labels, bullet points, or structured format
 - DO NOT include explanations or meta-text
@@ -2679,13 +3482,168 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
   }
 
   async generateFinalReport(session) {
-    // This would be implemented with comprehensive analysis
-    // For now, return basic structure
+    const persona = session.agentPersona || {};
+    const candidateProfile = session.candidateProfile || {};
+    const coverage = session.coverage || { overall: 0, areas: {} };
+    const conversation = session.conversation || [];
+    const runningData = session.runningScoreData;
+
+    const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
+    const demonstrated = candidateProfile.revealedExpertise || [];
+    const gaps = candidateProfile.revealedGaps || [];
+    const commStyle = candidateProfile.communicationStyle || {};
+
+    // ── 1. Use pre-computed running score (source of truth) ──
+    let finalScore, qualityScore, coverageScore, effectiveSkillsScore, effectiveDepthScore, effectiveCommunicationScore;
+
+    if (runningData?.scores) {
+      finalScore = runningData.scores.overall;
+      qualityScore = runningData.scores.quality;
+      coverageScore = runningData.scores.coverage;
+      effectiveSkillsScore = runningData.scores.skills;
+      effectiveDepthScore = runningData.scores.depth;
+      effectiveCommunicationScore = runningData.scores.communication;
+      console.log(`📊 [FinalReport] Using running score: overall=${finalScore} (q=${qualityScore} c=${coverageScore} s=${effectiveSkillsScore} d=${effectiveDepthScore} comm=${effectiveCommunicationScore})`);
+    } else {
+      // Fallback: compute from scratch if no running score exists
+      console.warn('⚠️ [FinalReport] No running score found, computing from scratch');
+      const responseQualities = candidateProfile.responseQualities || [];
+      qualityScore = responseQualities.length > 0
+        ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
+        : 0;
+      coverageScore = coverage.overall || 0;
+      let skillsScore;
+      if (mustHaves.length > 0) {
+        const mustHavesCovered = mustHaves.filter(s => {
+          const skillLower = s.toLowerCase();
+          return demonstrated.some(d => {
+            const dLower = d.toLowerCase();
+            return dLower.includes(skillLower) || skillLower.includes(dLower) ||
+              skillLower.split(/[\s,/]+/).some(word => word.length > 2 && dLower.includes(word)) ||
+              dLower.split(/[\s,/]+/).some(word => word.length > 2 && skillLower.includes(word));
+          });
+        });
+        skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+      } else {
+        skillsScore = 50;
+      }
+      const depths = conversation
+        .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
+        .map(e => e.metadata.depthLevel);
+      const depthValues = { deep: 100, moderate: 80, surface: 40 };
+      const depthScore = depths.length > 0
+        ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 30), 0) / depths.length)
+        : 20;
+      let communicationScore = 30;
+      if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
+      else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
+      if (commStyle.usesExamples) communicationScore += 15;
+      if (commStyle.verbosity === 'detailed') communicationScore += 10;
+      else if (commStyle.verbosity === 'concise') communicationScore += 5;
+      communicationScore = Math.min(100, communicationScore);
+
+      const isNonAnsweringFallback = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
+      effectiveSkillsScore = isNonAnsweringFallback ? 0 : skillsScore;
+      effectiveDepthScore = isNonAnsweringFallback ? 0 : depthScore;
+      effectiveCommunicationScore = isNonAnsweringFallback ? 0 : communicationScore;
+      finalScore = isNonAnsweringFallback
+        ? Math.max(0, Math.round((qualityScore * 0.40) + (coverageScore * 0.10)))
+        : Math.round((qualityScore * 0.40) + (coverageScore * 0.10) + (skillsScore * 0.25) + (depthScore * 0.15) + (communicationScore * 0.10));
+    }
+
+    // ── 2. Non-answering detection ──
+    const isNonAnswering = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
+
+    // ── 3. Strengths/weaknesses from running score data (deterministic, not LLM) ──
+    let finalStrengths = runningData?.strengths || [];
+    let finalWeaknesses = runningData?.weaknesses || [];
+
+    if (isNonAnswering) {
+      finalStrengths = [];
+      finalWeaknesses = mustHaves.length > 0
+        ? mustHaves.map(s => `Failed to demonstrate knowledge of ${s}`)
+        : ['Candidate did not provide substantive answers to interview questions'];
+    }
+
+    // ── 4. LLM summary only — no evaluation, just summarize what happened ──
+    let aiSummary = { summary: '', recommendation: 'maybe', reasoning: '' };
+    try {
+      const responseQualities = candidateProfile.responseQualities || [];
+      const areaScores = Object.entries(coverage.areas || {}).map(([a, d]) =>
+        `${a.replace(/_/g, ' ')}: ${d.percentage}% coverage`
+      ).join('\n');
+
+      const conversationSummary = conversation
+        .slice(-20)
+        .map(e => `${e.type === 'interviewer' ? 'Q' : 'A'}: ${e.content.substring(0, 200)}`)
+        .join('\n');
+
+      const summaryResponse = await bedrock.callLLM({
+        systemPrompt: `You are an expert recruiter writing a concise interview summary.
+Your job is ONLY to summarize what happened in the interview. Do NOT evaluate, give feedback, or generate strengths/weaknesses — those are already pre-computed.
+Just describe what topics were discussed and give a hiring recommendation based on the pre-computed score.
+Return ONLY valid JSON.`,
+        messages: [{ role: "user", content: `Role: ${persona.job?.title || 'Unknown'} at ${persona.job?.company || 'Unknown'}
+
+PRE-COMPUTED DATA (use these directly, do not re-evaluate):
+- Overall Score: ${finalScore}/100
+- Quality Average: ${qualityScore}/100 (across ${responseQualities.length} responses)
+- Coverage: ${coverageScore}%
+- Skills Demonstrated: ${demonstrated.join(', ') || 'None identified'}
+- Skills Gaps: ${gaps.join(', ') || 'None identified'}
+
+AREA COVERAGE:
+${areaScores}
+
+CONVERSATION:
+${conversationSummary}
+
+Write JSON:
+{
+  "summary": "2-3 sentence summary of what was discussed in the interview, referencing specific topics. Do NOT give feedback or evaluate — just summarize.",
+  "recommendation": "strong_hire | hire | maybe | no_hire",
+  "reasoning": "1 sentence justification based on the pre-computed score and what was observed"
+}` }],
+        temperature: 0.3,
+        maxTokens: 1500,
+        timeout: 20000,
+        useFastModel: false // gpt-oss needs higher maxTokens for reasoning + JSON
+      });
+
+      aiSummary = AIUtils.parseJSONResponse(summaryResponse.content, 'generateFinalReport');
+    } catch (err) {
+      console.warn('⚠️ [FinalReport] LLM summary failed:', err.message);
+      aiSummary.summary = `Candidate scored ${finalScore}/100 overall. Quality: ${qualityScore}/100, Coverage: ${coverageScore}%.`;
+      aiSummary.recommendation = finalScore >= 75 ? 'hire' : finalScore >= 55 ? 'maybe' : 'no_hire';
+      aiSummary.reasoning = `Based on composite score of ${finalScore}/100.`;
+    }
+
+    if (isNonAnswering) {
+      aiSummary.recommendation = 'no_hire';
+    }
+
     return {
-      summary: "Interview completed successfully",
-      coverage: session.coverage,
-      recommendations: session.realTimeReport.recommendations,
-      scores: session.realTimeReport.scores,
+      summary: aiSummary.summary,
+      coverage,
+      scores: {
+        overall: finalScore,
+        quality: qualityScore,
+        coverage: coverageScore,
+        skills: effectiveSkillsScore,
+        depth: effectiveDepthScore,
+        communication: effectiveCommunicationScore,
+      },
+      strengths: finalStrengths,
+      weaknesses: finalWeaknesses,
+      recommendation: aiSummary.recommendation,
+      reasoning: aiSummary.reasoning,
+      recommendations: runningData?.weaknesses || [],
+      candidateProfile: {
+        communicationStyle: commStyle,
+        revealedExpertise: demonstrated,
+        revealedGaps: gaps,
+        difficultyLevel: candidateProfile.currentDifficulty || 'intermediate',
+      },
       timestamp: new Date().toISOString()
     };
   }
@@ -2717,7 +3675,7 @@ Example format for ${config.interviewType}: ${exampleGreeting}`;
                     name: `AI-detected: ${update.indicators?.[0] || 'competency'}`,
                     covered: true,
                     evidence: [evidence],
-                    quality: update.qualityScore || 5,
+                    quality: Math.min(10, Math.round((update.qualityScore || 50) / 10)),
                     aiGenerated: true,
                     reasoning: update.reasoning
                   });
@@ -2854,30 +3812,41 @@ RESPONSE FORMAT (JSON only):
   "trends": ["observed trends in performance"]
 }`;
 
-      const userPrompt = `CURRENT REPORT:
-${JSON.stringify(session.realTimeReport, null, 2)}
+      // Trim inputs to prevent token overflow → truncated JSON output
+      const trimmedReport = {
+        strengths: (session.realTimeReport?.strengths || []).slice(-5),
+        weaknesses: (session.realTimeReport?.weaknesses || []).slice(-5),
+        overallProgress: session.realTimeReport?.overallProgress || 0
+      };
+      const trimmedDecision = {
+        decision: decisionAnalysis?.decision,
+        reasoning: decisionAnalysis?.reasoning,
+        targetArea: decisionAnalysis?.targetArea
+      };
 
-LATEST RESPONSE: "${candidateResponse}"
+      const userPrompt = `CURRENT REPORT:
+${JSON.stringify(trimmedReport)}
+
+LATEST RESPONSE: "${candidateResponse.substring(0, 500)}"
 
 COVERAGE ANALYSIS:
-${JSON.stringify(coverageAnalysis.overallAssessment, null, 2)}
+${JSON.stringify(coverageAnalysis?.overallAssessment || {})}
 
 DECISION ANALYSIS:
-${JSON.stringify(decisionAnalysis, null, 2)}
+${JSON.stringify(trimmedDecision)}
 
 Update the real-time report with new AI-powered insights.`;
 
-      const response = await this.together.chat.completions.create({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
+      const response = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
         temperature: 0.4,
-        max_tokens: 1000
+        maxTokens: 1500,
+        timeout: 30000,
+        useFastModel: false // gpt-oss — strong model for report insights
       });
 
-      const reportUpdate = AIUtils.parseJSONResponse(response.choices[0].message.content, 'updateRealTimeReport');
+      const reportUpdate = AIUtils.parseJSONResponse(response.content, 'updateRealTimeReport');
 
       return {
         ...reportUpdate,
@@ -2897,254 +3866,131 @@ Update the real-time report with new AI-powered insights.`;
   }
 
   /**
-   * INTELLIGENT RESPONSE SYSTEM - NEW METHODS
-   * Selective AI analysis to reduce costs by 60%
+   * Compute running score deterministically after each candidate response.
+   * Pure logic — no LLM call (~0ms). Same formula as generateFinalReport().
    */
+  computeRunningScore(session, updatedProfile, finalCoverage, analysis) {
+    const persona = session.agentPersona || {};
+    const conversation = session.conversation || [];
+    const existing = session.runningScoreData || { strengths: [], weaknesses: [] };
 
-  /**
-   * Determine if response needs full AI analysis or can use lightweight heuristics
-   */
-  shouldDoFullAnalysis(responseAnalysis, session) {
-    // SKIP AI for obviously good responses (save $$$ - 30% of responses)
-    if (responseAnalysis.quality >= 75) {
-      console.log('⚡ [Optimization] Skipping AI - response quality excellent:', responseAnalysis.quality);
-      return false;
-    }
+    // 1. Quality score: average of per-response quality scores
+    const responseQualities = updatedProfile.responseQualities || [];
+    const qualityScore = responseQualities.length > 0
+      ? Math.round(responseQualities.reduce((a, b) => a + b, 0) / responseQualities.length)
+      : 0;
 
-    // SKIP AI for obviously insufficient responses (save $$$ - 10% of responses)
-    if (responseAnalysis.wordCount < 10) {
-      console.log('⚡ [Optimization] Skipping AI - response too short:', responseAnalysis.wordCount);
-      return false;
-    }
+    // 2. Coverage score
+    const coverageScore = finalCoverage.overall || 0;
 
-    // SKIP AI for generic acknowledgments (save $$$ - 5% of responses)
-    const genericPatterns = /^(yes|no|okay|ok|sure|i see|right|understood|got it)\.?$/i;
-    if (genericPatterns.test(session.lastTranscript?.trim())) {
-      console.log('⚡ [Optimization] Skipping AI - generic acknowledgment');
-      return false;
-    }
-
-    // USE AI every 3rd response minimum to maintain coverage tracking (15% of remaining)
-    const conversationLength = session.conversation?.length || 0;
-    const responseCount = Math.floor(conversationLength / 2); // Rough estimate of candidate responses
-    if (responseCount > 0 && responseCount % 3 !== 0) {
-      // Check if quality is consistently good
-      if (responseAnalysis.quality >= 60 && !responseAnalysis.needsSupport) {
-        console.log('⚡ [Optimization] Skipping AI - consistent quality, not 3rd response');
-        return false;
-      }
-    }
-
-    // USE AI for medium-quality responses needing interpretation (40% of responses)
-    if (responseAnalysis.quality >= 50 && responseAnalysis.quality < 75) {
-      console.log('🧠 [AI Required] Medium quality - needs interpretation:', responseAnalysis.quality);
-      return true;
-    }
-
-    // USE AI for struggling/off-topic/rambling responses (need better understanding)
-    if (['struggling', 'off_topic', 'rambling'].includes(responseAnalysis.type)) {
-      console.log('🧠 [AI Required] Problematic response type:', responseAnalysis.type);
-      return true;
-    }
-
-    // USE AI for longer responses needing interpretation
-    if (responseAnalysis.wordCount > 80) {
-      console.log('🧠 [AI Required] Long response needs analysis:', responseAnalysis.wordCount);
-      return true;
-    }
-
-    // Default: skip AI
-    console.log('⚡ [Optimization] Skipping AI - default case');
-    return false;
-  }
-
-  /**
-   * Quick coverage update without full AI analysis
-   * Update based on heuristic analysis only
-   */
-  async quickCoverageUpdate(sessionId, responseAnalysis) {
-    try {
-      const session = await this.sessionManager.getSession(sessionId);
-
-      // Extract likely areas from keywords in response
-      const keywords = responseAnalysis.signals.responseKeywords || [];
-      const updatedCoverage = { ...session.coverage };
-
-      // Simple keyword-to-area mapping
-      const areaKeywords = {
-        'technical_skills': ['code', 'programming', 'develop', 'build', 'system', 'database', 'api'],
-        'problem_solving': ['solve', 'problem', 'challenge', 'solution', 'approach', 'debug'],
-        'leadership': ['lead', 'manage', 'team', 'mentor', 'guide', 'coordinate'],
-        'communication': ['explain', 'present', 'discuss', 'communicate', 'collaborate'],
-        'experience': ['project', 'work', 'experience', 'role', 'position', 'company']
-      };
-
-      // Quick scoring based on keyword matches
-      for (const [area, areaWords] of Object.entries(areaKeywords)) {
-        const matches = keywords.filter(kw => areaWords.some(aw => kw.includes(aw) || aw.includes(kw)));
-
-        if (matches.length > 0 && updatedCoverage.areas[area]) {
-          // Increment score based on quality
-          const increment = Math.round(responseAnalysis.quality / 20); // 0-5 points
-          updatedCoverage.areas[area].score = Math.min(100, updatedCoverage.areas[area].score + increment);
-          updatedCoverage.areas[area].questionsAsked += 1;
-
-          console.log(`📊 [Quick Update] ${area}: +${increment} points (${matches.length} keywords matched)`);
-        }
-      }
-
-      await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
-
-      return {
-        updated: true,
-        method: 'heuristic',
-        areasUpdated: Object.keys(areaKeywords).filter(area =>
-          keywords.some(kw => areaKeywords[area].some(aw => kw.includes(aw) || aw.includes(kw)))
-        )
-      };
-
-    } catch (error) {
-      console.error('❌ Error in quick coverage update:', error);
-      return { updated: false, error: error.message };
-    }
-  }
-
-  /**
-   * Process candidate response with intelligent decision:
-   * - Use lightweight analysis first
-   * - Selectively call expensive AI (60% cost reduction)
-   */
-  async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
-    try {
-      const ResponseQualityAnalyzer = require('../utils/response-quality-analyzer');
-      const CandidateBehaviorTracker = require('../utils/candidate-behavior-tracker');
-      const ContextualInterventions = require('../utils/contextual-interventions');
-
-      const session = await this.sessionManager.getSession(sessionId);
-      if (!session) {
-        throw new Error(`Session ${sessionId} not found`);
-      }
-
-      // STEP 1: Lightweight heuristic analysis (< 1ms, $0)
-      const currentQuestion = session.currentQuestionContext?.originalQuestion || session.conversation[session.conversation.length - 1]?.content;
-      const responseAnalysis = ResponseQualityAnalyzer.analyzeResponseQuality(transcript, currentQuestion);
-
-      console.log('📊 [Response Analysis]', {
-        quality: responseAnalysis.quality,
-        type: responseAnalysis.type,
-        wordCount: responseAnalysis.wordCount,
-        needsSupport: responseAnalysis.needsSupport,
-        supportType: responseAnalysis.supportType
-      });
-
-      // STEP 2: Update behavior tracker
-      let behaviorTracker = CandidateBehaviorTracker.fromJSON(session.behaviorTrackerData);
-      behaviorTracker.addResponse(responseAnalysis);
-      await this.sessionManager.updateSession(sessionId, {
-        behaviorTrackerData: behaviorTracker.toJSON()
-      });
-
-      // REMOVED: No interventions for MVP - just generate next question always
-      // const immediateIntervention = behaviorTracker.needsImmediateIntervention(responseAnalysis);
-      // if (immediateIntervention.needed) { ... }
-
-      // STEP 3: Decide if full AI analysis is needed
-      const needsAI = this.shouldDoFullAnalysis(responseAnalysis, session);
-
-      if (needsAI) {
-        // USE EXPENSIVE AI ANALYSIS (40% of responses)
-        console.log('🧠 [Full AI Analysis] Response needs deep interpretation');
-
-        // Call original processCandidateResponse for full AI processing
-        return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
-      } else {
-        // SKIP EXPENSIVE AI (60% of responses - COST SAVINGS!)
-        console.log('⚡ [Optimized Path] Using lightweight processing');
-
-        // Store candidate response with lightweight analysis
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'candidate',
-          content: transcript,
-          timestamp: new Date().toISOString(),
-          metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
+    // 3. Skills score: fuzzy match demonstrated vs must-haves
+    const mustHaves = persona.idealCandidate?.mustHaveSkills || [];
+    const demonstrated = updatedProfile.revealedExpertise || [];
+    let skillsScore;
+    if (mustHaves.length > 0) {
+      const mustHavesCovered = mustHaves.filter(s => {
+        const skillLower = s.toLowerCase();
+        return demonstrated.some(d => {
+          const dLower = d.toLowerCase();
+          return dLower.includes(skillLower) || skillLower.includes(dLower) ||
+            skillLower.split(/[\s,/]+/).some(word => word.length > 2 && dLower.includes(word)) ||
+            dLower.split(/[\s,/]+/).some(word => word.length > 2 && skillLower.includes(word));
         });
+      });
+      skillsScore = Math.round((mustHavesCovered.length / mustHaves.length) * 100);
+    } else {
+      skillsScore = 50;
+    }
 
-        // Quick coverage update without AI
-        const coverageUpdate = await this.quickCoverageUpdate(sessionId, responseAnalysis);
+    // 4. Depth score
+    const depths = conversation
+      .filter(e => e.type === 'candidate' && e.metadata?.depthLevel)
+      .map(e => e.metadata.depthLevel);
+    const depthValues = { deep: 100, moderate: 80, surface: 40 };
+    const depthScore = depths.length > 0
+      ? Math.round(depths.reduce((sum, d) => sum + (depthValues[d] || 30), 0) / depths.length)
+      : 20;
 
-        // Check if delayed intervention is recommended
-        const delayedIntervention = behaviorTracker.needsDelayedIntervention(responseAnalysis);
+    // 5. Communication score
+    const commStyle = updatedProfile.communicationStyle || {};
+    let communicationScore = 30;
+    if (commStyle.confidenceLevel === 'confident') communicationScore += 20;
+    else if (commStyle.confidenceLevel === 'moderate') communicationScore += 10;
+    if (commStyle.usesExamples) communicationScore += 15;
+    if (commStyle.verbosity === 'detailed') communicationScore += 10;
+    else if (commStyle.verbosity === 'concise') communicationScore += 5;
+    communicationScore = Math.min(100, communicationScore);
 
-        // Generate next question using AI (still needed for quality questions)
-        // Build session locally instead of re-fetching from Redis
-        const lightweightSession = {
-          ...session,
-          conversation: [...session.conversation, {
-            type: 'candidate',
-            content: transcript,
-            timestamp: new Date().toISOString(),
-            metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
-          }]
-        };
-        const decisionAnalysis = {
-          decision: 'continue_probing',
-          targetArea: 'General',
-          reasoning: 'Continue conversation based on lightweight analysis'
-        };
+    // Non-answering detection
+    const isNonAnswering = qualityScore <= 15 && coverageScore <= 5 && demonstrated.length === 0;
+    const effectiveSkills = isNonAnswering ? 0 : skillsScore;
+    const effectiveDepth = isNonAnswering ? 0 : depthScore;
+    const effectiveComm = isNonAnswering ? 0 : communicationScore;
 
-        const proposedQuestion = await AIUtils.withTimeout(
-          this.questionAI.generateIntelligentQuestion(
-            lightweightSession,
-            { overallAssessment: { recommendedFocus: ['General'] } },
-            { previousQuestions: lightweightSession.conversation.filter(e => e.type === 'interviewer') }
-          ),
-          10000,
-          'generateIntelligentQuestion (lightweight path)'
+    // Composite score
+    const overall = isNonAnswering
+      ? Math.max(0, Math.round((qualityScore * 0.40) + (coverageScore * 0.10)))
+      : Math.round(
+          (qualityScore * 0.40) +
+          (coverageScore * 0.10) +
+          (skillsScore * 0.25) +
+          (depthScore * 0.15) +
+          (communicationScore * 0.10)
         );
 
-        // Store interviewer question
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'interviewer',
-          content: proposedQuestion.question,
-          timestamp: new Date().toISOString(),
-          metadata: {
-            aiGenerated: true,
-            lightweightProcessing: true,
-            targetAreas: proposedQuestion.targetAreas
-          }
-        });
-
-        // Save question for potential rephrasing
-        const complexity = await this.detectQuestionComplexity(proposedQuestion.question);
-        await this.sessionManager.saveCurrentQuestion(sessionId, proposedQuestion.question, complexity);
-
-        // Set area start time if this is the first question targeting this area
-        const lightweightTargetArea = proposedQuestion.targetAreas?.[0];
-        if (lightweightTargetArea) {
-          await this.sessionManager.setAreaStartTime(sessionId, lightweightTargetArea);
+    // Accumulate strengths deterministically — only when quality backs it up
+    const strengths = [...(existing.strengths || [])];
+    if ((analysis.quality?.score || 0) >= 60) {
+      for (const skill of (analysis.skills?.demonstrated || [])) {
+        const entry = `Demonstrated knowledge of ${skill}`;
+        if (!strengths.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
+          strengths.push(entry);
         }
-
-        return {
-          action: 'continue_probing',
-          content: proposedQuestion.question,
-          reasoning: proposedQuestion.reasoning,
-          delayedIntervention: delayedIntervention.needed ? delayedIntervention : null,
-          metadata: {
-            lightweight: true,
-            costOptimized: true,
-            responseQuality: responseAnalysis.quality,
-            timestamp: new Date().toISOString()
-          }
-        };
       }
-
-    } catch (error) {
-      console.error('❌ Failed to process candidate response intelligently:', error);
-
-      // Fallback to full AI processing on error
-      console.log('⚠️ Falling back to full AI processing due to error');
-      return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
     }
+    if ((analysis.quality?.score || 0) >= 70 && analysis.quality?.depthLevel === 'deep') {
+      const areaName = (analysis.coverage?.areasImpacted?.[0]?.area || '').replace(/_/g, ' ');
+      if (areaName && !strengths.some(s => s.toLowerCase().includes(areaName.toLowerCase()))) {
+        strengths.push(`Strong depth of knowledge in ${areaName}`);
+      }
+    }
+
+    // Accumulate weaknesses deterministically
+    const weaknesses = [...(existing.weaknesses || [])];
+    for (const gap of (analysis.skills?.gaps || [])) {
+      const entry = `Gap identified in ${gap}`;
+      if (!weaknesses.some(w => w.toLowerCase().includes(gap.toLowerCase()))) {
+        weaknesses.push(entry);
+      }
+    }
+    if ((analysis.quality?.score || 0) < 40 || analysis.quality?.completeness === 'avoided') {
+      const areaName = (analysis.coverage?.areasImpacted?.[0]?.area || '').replace(/_/g, ' ');
+      if (areaName && !weaknesses.some(w => w.toLowerCase().includes(areaName.toLowerCase()))) {
+        weaknesses.push(`Needs improvement in ${areaName}`);
+      }
+    }
+
+    const result = {
+      scores: { overall, quality: qualityScore, coverage: coverageScore, skills: effectiveSkills, depth: effectiveDepth, communication: effectiveComm },
+      strengths: strengths.slice(0, 10),
+      weaknesses: weaknesses.slice(0, 10),
+      lastUpdated: new Date().toISOString()
+    };
+
+    console.log(`📊 [RunningScore] overall=${overall} (q=${qualityScore} c=${coverageScore} s=${effectiveSkills} d=${effectiveDepth} comm=${effectiveComm})${isNonAnswering ? ' NON-ANSWERING' : ''}`);
+    return result;
+  }
+
+  // REMOVED: shouldDoFullAnalysis — every response now gets full AI analysis
+
+  // REMOVED: quickCoverageUpdate — every response now gets full AI coverage analysis
+
+  /**
+   * Process candidate response — always uses full AI analysis.
+   * Legacy alias kept for backward compatibility with controller.
+   */
+  async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
+    return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
   }
 }
 

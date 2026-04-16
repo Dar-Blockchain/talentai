@@ -9,7 +9,7 @@ const { extractUsernameFromEmail, formatLocation } = require("../helpers/auth-va
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
 // Service d'inscription
-module.exports.registerUser = async (email) => {
+module.exports.registerUser = async (email, roleType = 'Candidate', profileDataOptions = {}) => {
   try {
     if (!email || typeof email !== 'string') {
       const err = new Error('Email is required');
@@ -17,48 +17,37 @@ module.exports.registerUser = async (email) => {
       throw err;
     }
 
-    const username = extractUsernameFromEmail(email);
+    let username = extractUsernameFromEmail(email);
     const otp = generateOTP();
     const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
 
-    // Check if user exists (using .lean() for read-only)
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] })
-      .lean()
-      .select('_id username otp');
+    // Check if user exists by email only
+    const existingUser = await User.findOne({ email }).lean().select('_id');
 
     if (existingUser) {
-      // Update existing user's OTP
-      await User.updateOne(
-        { _id: existingUser._id },
-        {
-          otp: {
-            code: otp,
-            expiresAt: otpExpiry
-          }
-        }
-      );
-
-      // Send OTP
-      const emailSent = await sendOTP(email, otp);
-      if (!emailSent) {
-        const err = new Error('Error sending OTP email');
-        err.status = 500;
-        throw err;
-      }
-
-      console.log('📧 OTP re-sent for existing user:', email);
-
-      return {
-        email,
-        username: existingUser.username,
-        message: 'New OTP code sent to your email'
-      };
+      // User already exists - refuse registration
+      const err = new Error('User already exists. Please use login instead.');
+      err.status = 409; // Conflict status code
+      throw err;
     }
+
+    // If username is taken, append a number to make it unique
+    const usernameConflict = await User.findOne({ username }).lean().select('_id');
+    if (usernameConflict) {
+      const count = await User.countDocuments({ username: { $regex: `^${username}` } });
+      username = `${username}${count + 1}`;
+    }
+
+    // Determine user role
+    const userRole = roleType === 'Company' ? 'Company' : roleType === 'Member' || roleType === 'Employee' ? roleType : 'Candidate';
 
     // Create new user
     const user = new User({
       username,
       email,
+      FirstName: profileDataOptions.firstName || '',
+      LastName: profileDataOptions.lastName || '',
+      role: userRole,
       otp: {
         code: otp,
         expiresAt: otpExpiry
@@ -66,6 +55,76 @@ module.exports.registerUser = async (email) => {
     });
 
     await user.save();
+
+    // Create profile based on roleType
+    let profile = null;
+
+    if (roleType === 'Company') {
+      // For Company: need at least email or name
+      if (profileDataOptions.name || profileDataOptions.companyDetails?.name) {
+        profile = await Profile.create({
+          userId: user._id,
+          type: 'Company',
+          companyDetails: {
+            email: profileDataOptions.companyDetails?.email || email,
+            name: profileDataOptions.companyDetails?.name || profileDataOptions.name || '',
+            industry: profileDataOptions.companyDetails?.industry || '',
+            size: profileDataOptions.companyDetails?.size || '',
+            location: profileDataOptions.companyDetails?.location || '',
+            website: profileDataOptions.companyDetails?.website || '',
+            linkedin: profileDataOptions.companyDetails?.linkedin || '',
+          },
+          requiredSkills: [],
+          requiredExperienceLevel: 'Entry Level',
+        });
+        console.log('✅ Company profile created during registration for userId:', user._id);
+
+        // Link profile to user as ObjectID
+        user.profile = profile._id;
+        await user.save();
+        console.log('🔗 Company profile linked to user - user.profile:', profile._id);
+      }
+    } else if (roleType === 'Member' || roleType === 'Employee') {
+      // For Member and Employee: create profile similar to Candidate
+      profile = await Profile.create({
+        userId: user._id,
+        type: roleType === 'Employee' ? 'Employee' : 'Member',
+        firstName: profileDataOptions.firstName,
+        lastName: profileDataOptions.lastName,
+        phone: profileDataOptions.phone || '',
+        skills: [],
+        overallScore: 0,
+      });
+      console.log(`✅ ${roleType} profile created during registration for userId:`, user._id);
+
+      // Link profile to user as ObjectID
+      user.profile = profile._id;
+      await user.save();
+      console.log(`🔗 ${roleType} profile linked to user - user.profile:`, profile._id);
+    } else {
+      // For Candidate: create profile with firstName and lastName (now required)
+      const resumePath = profileDataOptions.resumeFile ? profileDataOptions.resumeFile.filename : '';
+
+      profile = await Profile.create({
+        userId: user._id,
+        type: 'Candidate',
+        firstName: profileDataOptions.firstName,
+        lastName: profileDataOptions.lastName,
+        phone: profileDataOptions.phone || '',
+        resume: resumePath,
+        skills: [],
+        overallScore: 0,
+      });
+      console.log('✅ Candidate profile created during registration for userId:', user._id);
+      if (resumePath) {
+        console.log('📄 Resume uploaded:', resumePath);
+      }
+
+      // Link profile to user as ObjectID
+      user.profile = profile._id;
+      await user.save();
+      console.log('🔗 Candidate profile linked to user - user.profile:', profile._id);
+    }
 
     // Send OTP
     const emailSent = await sendOTP(email, otp);
@@ -80,6 +139,8 @@ module.exports.registerUser = async (email) => {
     return {
       email,
       username,
+      user: user.toObject ? user.toObject() : user,
+      profile: profile ? (profile.toObject ? profile.toObject() : profile) : null,
       message: 'Registration successful. Please check your email for OTP code.'
     };
   } catch (error) {
@@ -88,7 +149,7 @@ module.exports.registerUser = async (email) => {
   }
 };
 
-// Service de vérification OTP
+// OTP verification service
 exports.verifyUserOTP = async (email, otp, location = null) => {
   try {
     if (!email || !otp) {
@@ -168,8 +229,8 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
       logAuthAttempt('Success')
     ]);
 
-    // Fetch updated user without Hedera sensitive fields
-    const updatedUser = await User.findById(user._id).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    // Fetch updated user
+    const updatedUser = await User.findById(user._id);
 
     // Fetch profile and companyMembership in parallel if exist
     const [profile, companyMembership] = await Promise.all([
@@ -191,11 +252,126 @@ exports.verifyUserOTP = async (email, otp, location = null) => {
     // Generate token with company info if companyMembership exists
     let token;
     if (companyMembership) {
-      token = generateToken(updatedUser._id, companyMembership.company._id, companyMembership.role);
+      token = generateToken(updatedUser._id, companyMembership.company._id, updatedUser.role);
     } else {
-      token = generateToken(updatedUser._id);
+      token = generateToken(updatedUser._id, null, updatedUser.role);
     }
     return { user: updatedUser, token, profile, companyMembership };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// Service de connexion (login) pour utilisateurs existants
+module.exports.loginUser = async (email) => {
+  try {
+    if (!email || typeof email !== 'string') {
+      const err = new Error('Email is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const err = new Error('User not found. Please register first.');
+      err.status = 404;
+      throw err;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+
+    // Update user with new OTP
+    await User.updateOne(
+      { _id: user._id },
+      {
+        otp: {
+          code: otp,
+          expiresAt: otpExpiry
+        }
+      }
+    );
+
+    // Send OTP
+    const emailSent = await sendOTP(email, otp);
+    if (!emailSent) {
+      const err = new Error('Error sending OTP email');
+      err.status = 500;
+      throw err;
+    }
+
+    console.log('📧 Login OTP sent to:', email);
+
+    return {
+      email,
+      username: user.username,
+      message: 'OTP code sent to your email. Please verify to login.'
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// Service de renvoi d'OTP
+module.exports.resendOTP = async (email) => {
+  try {
+    if (!email || typeof email !== 'string') {
+      const err = new Error('Email is required');
+      err.status = 400;
+      throw err;
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const err = new Error('User not found. Please register first.');
+      err.status = 404;
+      throw err;
+    }
+
+    // Check if user is banned
+    if (user.isBanned) {
+      const err = new Error('User is banned. Please contact support.');
+      err.status = 403;
+      throw err;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+
+    // Update user with new OTP
+    await User.updateOne(
+      { _id: user._id },
+      {
+        otp: {
+          code: otp,
+          expiresAt: otpExpiry
+        }
+      }
+    );
+
+    // Send OTP
+    const emailSent = await sendOTP(email, otp);
+    if (!emailSent) {
+      const err = new Error('Error sending OTP email');
+      err.status = 500;
+      throw err;
+    }
+
+    console.log('📧 OTP resent to:', email);
+
+    return {
+      email,
+      username: user.username,
+      message: 'New OTP code has been sent to your email. OTP expires in 5 minutes.'
+    };
   } catch (error) {
     error.status = error.status || 500;
     throw error;
@@ -234,6 +410,7 @@ module.exports.connectWithGmail = async (id_token) => {
       const newUser = new User({
         username,
         email,
+        role: 'Candidate', // Default role for Gmail signup
         isVerified: true,
         trafficCounter: 1,
         lastLogin: new Date()
@@ -254,12 +431,15 @@ module.exports.connectWithGmail = async (id_token) => {
       console.log('✅ User logged in via Gmail:', email);
     }
 
-    const token = generateToken(user._id);
+    // Get full user data including role
+    const fullUser = await User.findById(user._id);
+    
+    const token = generateToken(fullUser._id, null, fullUser.role);
 
     return {
-      user,
+      user: fullUser,
       token,
-      message: user.isVerified ? 'Login successful' : 'Account created successfully'
+      message: fullUser.isVerified ? 'Login successful' : 'Account created successfully'
     };
   } catch (error) {
     error.status = error.status || 500;

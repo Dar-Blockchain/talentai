@@ -1,9 +1,9 @@
 /**
  * Migration script: Rename post_Steps to PostSteps in MongoDB
- * 
+ *
  * Usage: node Backend/migrations/migratePostSteps.js
  * Or with custom URL: DB_URL=mongodb+srv://user:pass@cluster.mongodb.net/dbname node Backend/migrations/migratePostSteps.js
- * 
+ *
  * This script will:
  * 1. Find all Post documents with post_Steps field
  * 2. Copy post_Steps data to PostSteps
@@ -22,7 +22,7 @@ async function migratePostSteps() {
     // Connect to MongoDB with options for compatibility
     const mongoURL = process.env.DB_URL || 'mongodb://localhost:27017/talentai';
     console.log('🔗 Connecting to MongoDB:', mongoURL);
-    
+
     // Connection options to support older MongoDB versions
     const connectOptions = {
       useNewUrlParser: true,
@@ -30,7 +30,7 @@ async function migratePostSteps() {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     };
-    
+
     await mongoose.connect(mongoURL, connectOptions);
     console.log('✅ Connected to MongoDB');
 

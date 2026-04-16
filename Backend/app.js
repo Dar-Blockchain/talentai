@@ -22,17 +22,20 @@ const { initializeSocketServer } = require("./socket-handlers/socket-server");
 // Import services
 const connectDB = require("./config/mongo.connection");
 const socket = require("./socket");
-const {
-  initializeAgenda,
-} = require("./services/Agent&AgendaServices/agenda.service");
+//const { initializeAgenda } = require("./services/Agent&AgendaServices/agenda.service");
 const intelligentInterviewService = require("./services/intelligentInterview.service");
 const intelligentInterviewController = require("./controllers/intelligentInterview.controller");
+const campaignInterviewService = require("./services/campaignInterview.service");
+const campaignInterviewController = require("./controllers/campaignInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
+const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
+const { scheduleReminders } = require("./cron/reminderScheduler.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
 // Auto-load CRON jobs
+// ⛔ DISABLED: All cron jobs disabled
 const { initializeCronJobs } = require("./cron");
 initializeCronJobs();
 
@@ -58,6 +61,19 @@ const io = socket.init(server);
 initializeSocketServer(io);
 
 /**
+ * Initialize default plan limits
+ */
+const initializePlanLimits = async () => {
+  logger.section("Initializing default plans...");
+  try {
+    await seedDefaultPlans();
+    logger.success("PlanLimits initialization completed");
+  } catch (error) {
+    logger.warn("PlanLimits seeding failed but application will continue");
+  }
+};
+
+/**
  * Application initialization sequence
  */
 const initializeApp = async () => {
@@ -69,19 +85,28 @@ const initializeApp = async () => {
     logger.section("Connecting to database...");
     await connectDB();
 
-    // Step 1.5: Seed PlanLimits if table is empty
-    logger.section("Initializing default plans...");
+    // Step 1.2: Deduplicate InterviewApplicant records (one-time fix)
     try {
-      await seedDefaultPlans();
-      logger.success("PlanLimits initialization completed");
-    } catch (error) {
-      logger.warn(
-        "PlanLimits seeding encountered an issue, but application will continue",
-      );
+      const InterviewApplicant = require('./models/InterviewApplicant.model');
+      const dupes = await InterviewApplicant.aggregate([
+        { $group: { _id: { jobId: '$jobId', email: '$email' }, ids: { $push: '$_id' }, count: { $sum: 1 } } },
+        { $match: { count: { $gt: 1 } } },
+      ]);
+      for (const { ids } of dupes) {
+        const [, ...toDelete] = ids; // keep oldest, delete the rest
+        await InterviewApplicant.deleteMany({ _id: { $in: toDelete } });
+      }
+      if (dupes.length > 0) logger.success(`Removed ${dupes.reduce((s, d) => s + d.ids.length - 1, 0)} duplicate InterviewApplicant records`);
+    } catch (e) {
+      logger.warn('InterviewApplicant dedup failed: ' + e.message);
     }
 
+    // Step 1.5: Seed PlanLimits if table is empty
+    logger.section("Initializing default plans...");
+    await initializePlanLimits();
+
     // Step 2: Initialize scheduler
-    await initializeAgenda();
+    //await initializeAgenda();
 
     // Step 2.5: Initialize daily backup scheduler
     // const agenda = require('agenda');
@@ -114,7 +139,12 @@ const initializeApp = async () => {
       );
     }
 
-    // Step 6.5: Initialize backup service
+    // Step 6.5: Initialize campaign interview service
+    logger.section("Initializing campaign interview service...");
+    await campaignInterviewService.initialize();
+    logger.success("Campaign interview service initialization completed");
+
+    // Step 6.6: Initialize backup service
     // logger.section('Initializing database backup service...');
     // await backupService.initializeDailyBackup();
     // logger.success('Database backup service initialized');
@@ -142,9 +172,23 @@ const initializeApp = async () => {
       // Initialize interview namespace
       intelligentInterviewController.initializeHandlers(io);
       logger.success("Interview namespace /interview initialized and ready");
+
+      // Initialize campaign interview namespace
+      campaignInterviewController.initializeHandlers(io);
+      logger.success("Campaign interview namespace /campaign-interview initialized and ready");
       logger.info(
         "💡 Hedera clients will initialize on first use (lazy loading)",
       );
+
+      // Step 9: Initialize auto-invite scheduler for job applications
+      logger.section("Initializing auto-invite scheduler...");
+      scheduleAutoInvites();
+      logger.success("Auto-invite scheduler initialized (checks hourly between 12:00 - 21:00)");
+
+      // Step 10: Initialize interview reminder scheduler
+      logger.section("Initializing interview reminder scheduler...");
+      scheduleReminders();
+      logger.success("Interview reminder scheduler initialized (24h + 48h reminders)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);

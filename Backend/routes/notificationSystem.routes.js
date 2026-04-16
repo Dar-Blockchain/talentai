@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/notificationSystem.controller');
-const { requireAuthUser } = require('../middleware/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 // All routes require an authenticated user
-router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));
+router.use(requireAuth, authLogMiddleware('NotificationSystem'));
 
 // POST /notification-system/AddNotification — create a system notification
 router.post('/AddNotification', controller.createSystemNotification);

@@ -1,18 +1,18 @@
 /**
  * Routes for task management
  * 
- * Middlewares globaux appliqués:
- * - requireAuthUser: nécessite un utilisateur authentifié
- * - LogMiddleware("Task"): journalise les requêtes liées aux tâches
+ * Global applied middleware:
+ * - requireAuthUser: requires an authenticated user
+ * - LogMiddleware("Task"): logs task-related requests
  */
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const taskController = require("../controllers/task.controller");
 
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser, authLogMiddleware("Task"));
+router.use(requireAuth, authLogMiddleware("Task"));
 
 // POST /task/send-task
 // Description: Send technical test task via email with PDF

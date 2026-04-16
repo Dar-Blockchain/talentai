@@ -1,14 +1,11 @@
-const { Together } = require("together-ai");
+const bedrock = require("../../helpers/bedrock.helpers");
 require("dotenv").config();
 const Company = require("../../models/Profile.model");
 const {
-  getQuickPrompt,
   getDetailedPrompt,
 } = require("../../prompts/generate-job-post-prompts");
 
-const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-
-async function generateJobPost(description, type = "detailed", user, overrides = {}) {
+async function generateJobPost(description, user, overrides = {}) {
   // Configurable retry parameters via env
   const MAX_RETRIES = parseInt(process.env.GENERATE_JOBPOST_MAX_RETRIES || "3", 10);
   const BASE_DELAY_MS = parseInt(process.env.GENERATE_JOBPOST_BASE_DELAY_MS || "1000", 10);
@@ -29,50 +26,27 @@ async function generateJobPost(description, type = "detailed", user, overrides =
     const company = user?.profile ? await Company.findById(user.profile) : null;
     const companyLocation = company?.companyDetails?.location || "";
 
-    const prompt =
-      type === "quick"
-        ? getQuickPrompt(description, companyLocation)
-        : getDetailedPrompt(description, companyLocation);
-    const config =
-      type === "quick"
-        ? {
-            max_tokens: 1000,
-            temperature: 0.4,
-            top_p: 0.9,
-          }
-        : {
-            max_tokens: 2500,
-            temperature: 0.7,
-          };
+    const prompt = getDetailedPrompt(description, companyLocation);
 
-    const stream = await together.chat.completions.create({
-      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            type === "quick"
-              ? "You are a precise technical recruiter. Always return clean, accurate JSON with proper formatting."
-              : "You are an expert technical recruiter and AI assistant specializing in job analysis, skill assessment, and creating engaging job posts. Provide comprehensive analysis while maintaining professional formatting.",
-        },
-        { role: "user", content: prompt },
-      ],
-      ...config,
-      stream: true,
+    const response = await bedrock.callLLM({
+      systemPrompt: "You are an expert technical recruiter and AI assistant specializing in job analysis, skill assessment, and creating engaging job posts. Provide comprehensive analysis while maintaining professional formatting.",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      maxTokens: 4096,
+      timeout: 30000,
     });
 
-    let raw = "";
-    for await (const chunk of stream) {
-      const content = chunk.choices?.[0]?.delta?.content;
-      if (content) raw += content;
-    }
+    const raw = response.content;
 
-    // Clean and parse the response
+    // Clean and parse the response (handle thinking/reasoning text before JSON)
     let result;
     try {
-      let jsonStr = raw
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?/g, "")
+      const firstBrace = raw.indexOf('{');
+      const lastBrace = raw.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1) {
+        throw new Error("No JSON object found in LLM response");
+      }
+      let jsonStr = raw.substring(firstBrace, lastBrace + 1)
         .replace(/\n/g, " ")
         .replace(/\s+/g, " ")
         .trim();
@@ -110,38 +84,38 @@ async function generateJobPost(description, type = "detailed", user, overrides =
       }
 
       // Build finalPost if needed
-      if (type === "detailed" && !result?.linkedinPost?.finalPost) {
+      if (!result?.linkedinPost?.finalPost) {
         try {
           const format = result.linkedinPost.formatting.emojis;
           result.linkedinPost.finalPost = `${
             result.linkedinPost.formattedContent.headline
           }
-  
+
 ${format.company} ${result.linkedinPost.formattedContent.introduction}
-  
+
 ${result.linkedinPost.formattedContent.companyPitch}
-  
+
 ${format.requirements} Role Overview:
 ${result.linkedinPost.formattedContent.roleOverview}
-  
+
 ${format.requirements} Key Points:
 ${result.linkedinPost.formattedContent.keyPoints
   .map((point) => `• ${point}`)
   .join("\n")}
-  
+
 ${format.skills} Required Skills:
 ${result.linkedinPost.formattedContent.skillsRequired}
-  
+
 ${format.benefits} What We Offer:
 ${result.linkedinPost.formattedContent.benefitsSection}
-  
+
 ${format.location} Location: ${result.jobDetails.location}
 ${format.salary} Salary: ${result.jobDetails.salary.currency}${
             result.jobDetails.salary.min
           }-${result.jobDetails.salary.max}
-  
+
 ${format.apply} ${result.linkedinPost.formattedContent.callToAction}
-  
+
 ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
         } catch (inner) {
           // If building finalPost fails, ignore and return whatever parsed result we have
