@@ -102,7 +102,7 @@ const sendReminderEmail = async (application, post, reminderType) => {
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
 
     // Build interview link
-    const interviewLink = `https://app.talentai.bid/interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
+    const interviewLink = `${process.env.BASE_URL}interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
 
     console.log(`   📧 To: ${candidateEmail}`);
     console.log(`   👤 Candidate: ${candidateName}`);
