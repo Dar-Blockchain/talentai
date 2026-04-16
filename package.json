@@ -18,7 +18,7 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@hashgraph/hedera-wallet-connect": "^2.0.3",
     "@hashgraph/proto": "^2.24.0",
-    "@hashgraph/sdk": "^2.65.1",
+
     "@langchain/core": "^1.1.31",
     "@mui/icons-material": "^7.0.2",
     "@mui/lab": "^7.0.0-beta.14",
