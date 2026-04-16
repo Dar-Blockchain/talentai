@@ -99,7 +99,7 @@ Based on this information, provide a matching score between 0 and 100, where:
 
 Consider these factors WITH WEIGHTS:
 1. Technical Skills Match (80%): How well do candidate's technical skills match the job requirements?
-2. Soft Skills Match (10%): Do the soft skills align with the role's needs?
+2. Soft Skills Match (10%): Do the candidate's soft skills align with the role's needs?
 3. Experience Level (10%): Does the candidate's experience level match the job's requirements?
 4. Resume Verification: Use the extracted CV text and structured resume analysis to verify real experience claims.
 
@@ -167,7 +167,10 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
       console.error(`\n    ❌ JSON PARSING ERROR: ${parseError.message}`);
       console.error(`    📝 Failed to parse: ${content.substring(0, 200)}`);
       console.warn(`    ⚠️  Defaulting to score 0 due to parse error`);
-      return 0;
+      return {
+        matchScore: 0,
+        reasoning: "AI response parsing failed."
+      };
     }
 
     // ═══ STEP 6: Validate and normalize score ═══
@@ -178,7 +181,8 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
     console.log(`    ✓ Raw score from AI: ${result.matchScore}`);
     console.log(`    ✓ Normalized score: ${matchScore}/100`);
     console.log(`    ✓ Score is valid (0-100 range)`);
-    console.log(`    💡 AI Reasoning: "${reasoning.substring(0, 120)}${reasoning.length > 720 ? "..." : ""}"`);
+    console.log(`    💡 AI Reasoning (${reasoning.length} chars):`);
+    console.log(reasoning);
 
     // ═══ FINAL RESULT ═══
     console.log("\n" + "─".repeat(80));
@@ -186,7 +190,10 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
     console.log(`   Final Score: ${matchScore}/100`);
     console.log("─".repeat(80) + "\n");
     
-    return matchScore;
+    return {
+      matchScore,
+      reasoning,
+    };
   } catch (error) {
     console.error(`\n❌ [BEDROCK MATCHING ERROR] Critical error occurred`);
     console.error(`   Error Type: ${error.name}`);
@@ -222,7 +229,10 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     if (!profile) {
       console.error(`\n   ❌ ERROR: Profile NOT FOUND with ID ${profileId}`);
       console.warn(`   Returning score: 0 (default fallback)`);
-      return 0;
+      return {
+        matchScore: 0,
+        reasoning: "Candidate profile not found.",
+      };
     }
     
     console.log(`\n✅ PROFILE LOADED SUCCESSFULLY`);
@@ -257,7 +267,10 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     if (!post) {
       console.error(`\n   ❌ ERROR: Job Post NOT FOUND with ID ${postId}`);
       console.warn(`   Returning score: 0 (default fallback)`);
-      return 0;
+      return {
+        matchScore: 0,
+        reasoning: "Job post not found.",
+      };
     }
     
     console.log(`\n✅ JOB POST LOADED SUCCESSFULLY`);
@@ -343,9 +356,12 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log("\n\n[STEP 5️⃣] PROCESS & FINALIZE RESULTS");
     console.log("─".repeat(100));
     
-    const score = matchResult || 0;
+    const score = matchResult.matchScore || 0;
+    const reasoning = matchResult.reasoning || "No reasoning provided";
     
     console.log(`\n📊 FINAL MATCH SCORE: ${score}/100`);
+    console.log(`   AI Reasoning (${reasoning.length} chars):`);
+    console.log(reasoning);
     
     // Interpret the score
     let interpretation = "";
@@ -366,7 +382,10 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log("✅ MATCH SCORE CALCULATION COMPLETED SUCCESSFULLY");
     console.log("═".repeat(100) + "\n");
 
-    return score;
+    return {
+      matchScore: score,
+      reasoning,
+    };
   } catch (error) {
     console.error("\n" + "═".repeat(100));
     console.error("❌ [CRITICAL ERROR] MATCH SCORE CALCULATION FAILED");
@@ -377,7 +396,10 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.error(`     • Location: ${error.stack.split('\n')[1]}`);
     console.error(`\n   Fallback Action: Returning default score of 0`);
     console.error("═".repeat(100) + "\n");
-    return 0;
+    return {
+      matchScore: 0,
+      reasoning: `Match score calculation failed: ${error.message}`,
+    };
   }
 };
 
@@ -401,14 +423,15 @@ module.exports.createJobApplication = async (applicationData) => {
     }
 
     // Calculate match score automatically using AI matching
-    const calculatedMatchScore = await calculateApplicationMatchScore(
+    const matchResult = await calculateApplicationMatchScore(
       cleanData.profile,
       cleanData.post,
       cleanData.company
     );
 
-    // Add calculated match score to application data
-    cleanData.matchScore = calculatedMatchScore;
+    // Add calculated match score and reasoning to application data
+    cleanData.matchScore = matchResult.matchScore;
+    cleanData.matchReasoning = matchResult.reasoning;
     cleanData.status = "visited";
 
     const application = await JobApplication.create(cleanData);

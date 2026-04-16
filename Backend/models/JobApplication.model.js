@@ -46,6 +46,11 @@ const jobApplicationSchema = new mongoose.Schema(
       default: null,
       description: "Calculated match score between candidate and job"
     },
+    matchReasoning: {
+      type: String,
+      default: null,
+      description: "Detailed AI reasoning explaining how the match score was computed"
+    },
     appliedAt: {
       type: Date,
       default: Date.now,
