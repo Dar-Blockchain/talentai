@@ -63,7 +63,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuAnchor(null);
-    const link = `${window.location.origin}/interview/hr?jobId=${job._id}`;
+    const companyId = job.user?._id || '';
+    const link = `${window.location.origin}/interview/hr?jobId=${job._id}${companyId ? `&companyId=${companyId}` : ''}&ref=link`;
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
