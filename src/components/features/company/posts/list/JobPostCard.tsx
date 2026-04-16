@@ -98,35 +98,35 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
         }}
       >
         {/* Top accent bar */}
-        <Box sx={{ height: 3, bgcolor: statusStyle.bar, flexShrink: 0 }} />
+        <Box sx={{ height: 4, bgcolor: statusStyle.bar, flexShrink: 0 }} />
 
-        <Box sx={{ p: 1.75, display: "flex", flexDirection: "column", gap: 1.25, flex: 1 }}>
+        <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
 
           {/* ── Header row ── */}
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
             {/* Icon */}
             <Box sx={{
-              width: 34, height: 34, borderRadius: "9px", flexShrink: 0,
+              width: 44, height: 44, borderRadius: "11px", flexShrink: 0,
               bgcolor: `${TEAL}0F`, border: `1px solid ${TEAL}20`,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <WorkOutlineOutlined sx={{ fontSize: 16, color: TEAL }} />
+              <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
             </Box>
 
             {/* Title + badges */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography noWrap sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.4 }}>
+              <Typography noWrap sx={{ fontSize: "14.5px", fontWeight: 700, color: "#111827", lineHeight: 1.3, mb: 0.6 }}>
                 {jd.title || "Untitled Position"}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 {/* Creation type badge */}
                 <Box sx={{
                   display: "inline-flex", alignItems: "center", gap: 0.4,
-                  px: "6px", py: "2px", borderRadius: "5px",
+                  px: "7px", py: "3px", borderRadius: "5px",
                   bgcolor: ctInfo.bg, border: `1px solid ${ctInfo.color}28`,
                 }}>
-                  <CtIcon sx={{ fontSize: 9, color: ctInfo.color }} />
-                  <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: ctInfo.color, lineHeight: 1 }}>
+                  <CtIcon sx={{ fontSize: 10, color: ctInfo.color }} />
+                  <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: ctInfo.color, lineHeight: 1 }}>
                     {ctInfo.label}
                   </Typography>
                 </Box>
@@ -134,11 +134,11 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                 {/* Status badge with dot */}
                 <Box sx={{
                   display: "inline-flex", alignItems: "center", gap: 0.4,
-                  px: "6px", py: "2px", borderRadius: "5px",
+                  px: "7px", py: "3px", borderRadius: "5px",
                   bgcolor: statusStyle.bg, border: `1px solid ${statusStyle.color}28`,
                 }}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: statusStyle.bar, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: statusStyle.color, lineHeight: 1 }}>
+                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: statusStyle.bar, flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: statusStyle.color, lineHeight: 1 }}>
                     {statusStyle.label}
                   </Typography>
                 </Box>
@@ -240,20 +240,20 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           </Box>
 
           {/* ── Meta pills ── */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
             {jd.location && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-                <LocationOnOutlined sx={{ fontSize: 10, color: "#9CA3AF" }} />
-                <Typography noWrap sx={{ fontSize: "10.5px", color: "#6B7280", maxWidth: 100 }}>{jd.location}</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                <LocationOnOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
+                <Typography noWrap sx={{ fontSize: "12px", color: "#6B7280", maxWidth: 120 }}>{jd.location}</Typography>
               </Box>
             )}
             {jd.employmentType && (
-              <Typography sx={{ fontSize: "10px", color: "#6B7280", bgcolor: "#F3F4F6", px: 0.75, py: 0.15, borderRadius: "4px" }}>
+              <Typography sx={{ fontSize: "11px", color: "#6B7280", bgcolor: "#F3F4F6", px: 1, py: 0.3, borderRadius: "5px" }}>
                 {jd.employmentType}
               </Typography>
             )}
             {jd.workMode && (
-              <Typography sx={{ fontSize: "10px", color: "#6B7280", bgcolor: "#F3F4F6", px: 0.75, py: 0.15, borderRadius: "4px" }}>
+              <Typography sx={{ fontSize: "11px", color: "#6B7280", bgcolor: "#F3F4F6", px: 1, py: 0.3, borderRadius: "5px" }}>
                 {jd.workMode}
               </Typography>
             )}
@@ -262,8 +262,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           {/* ── Description ── */}
           {jd.description && (
             <Typography sx={{
-              fontSize: "11px", color: "#6B7280", lineHeight: 1.55,
-              display: "-webkit-box", WebkitLineClamp: 2,
+              fontSize: "12.5px", color: "#6B7280", lineHeight: 1.65,
+              display: "-webkit-box", WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical", overflow: "hidden",
             }}>
               {jd.description}
@@ -273,31 +273,31 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           {/* ── Footer ── */}
           <Box sx={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            pt: 1, borderTop: "1px solid #F3F4F6", mt: "auto",
+            pt: 1.5, borderTop: "1px solid #F3F4F6", mt: "auto",
           }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
               {job.createdAt && (
-                <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtDate(job.createdAt)}</Typography>
+                <Typography sx={{ fontSize: "11.5px", color: "#9CA3AF" }}>{fmtDate(job.createdAt)}</Typography>
               )}
               {daysLeft !== null && !isExpired && (
                 <Typography sx={{
-                  fontSize: "9.5px", fontWeight: 700,
+                  fontSize: "10.5px", fontWeight: 700,
                   color: daysLeft <= 3 ? "#D97706" : TEAL,
                   bgcolor: daysLeft <= 3 ? "#FFFBEB" : `${TEAL}10`,
-                  px: 0.6, py: 0.1, borderRadius: "4px",
+                  px: 0.75, py: 0.2, borderRadius: "4px",
                 }}>
                   {daysLeft}d left
                 </Typography>
               )}
               {isExpired && (
-                <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: "#DC2626", bgcolor: "#FEF2F2", px: 0.6, py: 0.1, borderRadius: "4px" }}>
+                <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#DC2626", bgcolor: "#FEF2F2", px: 0.75, py: 0.2, borderRadius: "4px" }}>
                   Expired
                 </Typography>
               )}
               {job.expirationDate && !isExpired && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-                  <AccessTimeOutlined sx={{ fontSize: 9, color: "#D1D5DB" }} />
-                  <Typography sx={{ fontSize: "10px", color: "#9CA3AF" }}>{fmtDate(job.expirationDate)}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
+                  <AccessTimeOutlined sx={{ fontSize: 11, color: "#D1D5DB" }} />
+                  <Typography sx={{ fontSize: "11.5px", color: "#9CA3AF" }}>{fmtDate(job.expirationDate)}</Typography>
                 </Box>
               )}
             </Box>
@@ -308,7 +308,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   size="small"
                   onClick={handleCopyLink}
                   sx={{
-                    p: 0.4, borderRadius: "6px",
+                    p: 0.75, borderRadius: "8px",
                     color: copied ? "#059669" : "#9CA3AF",
                     bgcolor: copied ? "#ECFDF5" : "transparent",
                     border: "1px solid",
@@ -317,7 +317,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                     "&:hover": { color: "#059669", bgcolor: "#F0FDF4", borderColor: "#A7F3D0" },
                   }}
                 >
-                  <ContentCopyOutlined sx={{ fontSize: 11 }} />
+                  <ContentCopyOutlined sx={{ fontSize: 14 }} />
                 </IconButton>
               </Tooltip>
             )}
