@@ -1,52 +1,88 @@
+const fs = require("fs");
+const path = require("path");
+const { PDFParse } = require("pdf-parse");
 const JobApplication = require("../models/JobApplication.model");
 const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
 const { callLLM } = require("../helpers/bedrock.helpers");
+const { analyzeCV } = require("./analyseResume.service");
+
+async function extractResumeTextFromPdf(pdfPath) {
+  const fileBuffer = fs.readFileSync(pdfPath);
+  const parser = new PDFParse({ data: fileBuffer });
+  const result = await parser.getText();
+  return (result?.text || "").replace(/\s+/g, " ").trim();
+}
 
 // ========== CALCULATE MATCH SCORE WITH BEDROCK ==========
-const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost) => {
+const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeAnalysis = null, resumeText = "") => {
   try {
-    console.log(`\n🤖 [BEDROCK MATCHING] - Sending to Bedrock for AI-powered matching...`);
+    console.log("\n" + "─".repeat(80));
+    console.log("🤖 [BEDROCK MATCHING ENGINE] - CALLING AI FOR INTELLIGENT MATCHING");
+    console.log("─".repeat(80));
+    console.log("📋 LOGIC: Prepare all candidate & job data, send to Bedrock AI, parse score");
     
-    // Prepare candidate data
+    // ═══ STEP 1: Prepare candidate data ═══
+    console.log("\n[1️⃣  STEP] Preparing CANDIDATE DATA for AI analysis...");
+    const jobPostObject = jobPost.toObject ? jobPost.toObject() : jobPost;
+
     const candidateData = {
       name: `${candidateProfile.firstName} ${candidateProfile.lastName}`,
-      skills: candidateProfile.skills?.map(s => ({
+      resumeFile: candidateProfile.resume || "Not specified",
+      resumeText: resumeText || "Not available",
+      resumeAnalysis: resumeAnalysis || {},
+      skills: candidateProfile.skills?.map((s) => ({
         name: s.name,
         level: s.Levelconfirmed || s.proficiencyLevel || "Not specified",
-        experienceLevel: s.experienceLevel || "Not specified"
+        experienceLevel: s.experienceLevel || "Not specified",
       })) || [],
-      softSkills: candidateProfile.softSkills?.map(s => ({
+      softSkills: candidateProfile.softSkills?.map((s) => ({
         name: s.name,
         category: s.category || "General",
-        level: s.proficiencyLevel || "Not specified"
+        level: s.proficiencyLevel || "Not specified",
       })) || [],
       salary: candidateProfile.expectedSalary || {},
       workModePreference: candidateProfile.workModePreference || "Not specified",
       contractPreference: candidateProfile.preferredContractType || "Not specified",
       yearsOfExperience: candidateProfile.yearsOfExperience || "Not specified",
     };
+    console.log(`    ✓ Name: ${candidateData.name}`);
+    console.log(`    ✓ Technical Skills: ${candidateData.skills.length} skills extracted`);
+    console.log(`    ✓ Soft Skills: ${candidateData.softSkills.length} skills extracted`);
+    console.log(`    ✓ Resume Attached: ${candidateData.resumeFile !== "Not specified" ? "YES" : "NO"}`);
+    console.log(`    ✓ Years of Experience: ${candidateData.yearsOfExperience}`);
 
-    // Prepare job data
+    // ═══ STEP 2: Prepare job posting data ═══
+    console.log("\n[2️⃣  STEP] Preparing JOB POSTING DATA for comparison...");
     const jobData = {
       title: jobPost.jobDetails?.title || "Not specified",
       description: jobPost.jobDetails?.description || "Not specified",
-      requiredSkills: jobPost.skillAnalysis?.requiredSkills?.map(s => ({
+      requiredSkills: jobPost.skillAnalysis?.requiredSkills?.map((s) => ({
         name: s.name,
         level: s.level || "Not specified",
-        importance: s.importance || "Not specified"
+        importance: s.importance || "Not specified",
       })) || [],
-      softSkills: jobPost.skillAnalysis?.softSkills?.map(s => ({
+      softSkills: jobPost.skillAnalysis?.softSkills?.map((s) => ({
         name: s.name,
-        level: s.level || "Not specified"
+        level: s.level || "Not specified",
       })) || [],
       salary: jobPost.jobDetails?.salary || {},
       workMode: jobPost.jobDetails?.workMode || "Not specified",
       employmentType: jobPost.jobDetails?.employmentType || "Not specified",
       experienceLevel: jobPost.jobDetails?.experienceLevel || "Not specified",
+      fullJobPosting: jobPostObject,
     };
+    console.log(`    ✓ Job Title: ${jobData.title}`);
+    console.log(`    ✓ Required Technical Skills: ${jobData.requiredSkills.length} skills needed`);
+    console.log(`    ✓ Required Soft Skills: ${jobData.softSkills.length} skills needed`);
+    console.log(`    ✓ Experience Level: ${jobData.experienceLevel}`);
+    console.log(`    ✓ Work Mode: ${jobData.workMode}`);
 
-    const prompt = `Analyze the compatibility between a candidate and a job position. Return ONLY valid JSON.
+    // ═══ STEP 3: Build AI prompt ═══
+    console.log("\n[3️⃣  STEP] Building AI PROMPT with matching criteria...");
+    const prompt = `Analyze the compatibility between a candidate and a job position.
+Use the extracted resume analysis from the candidate's PDF, the candidate profile data, and the complete job posting content.
+Return ONLY valid JSON.
 
 CANDIDATE:
 ${JSON.stringify(candidateData, null, 2)}
@@ -61,10 +97,11 @@ Based on this information, provide a matching score between 0 and 100, where:
 - 61-80: Good match - strong alignment with minor gaps
 - 81-100: Excellent match - strong alignment across most criteria
 
-Consider these factors:
-1. **Technical Skills Match** (80%): How well do candidate's technical skills match the job requirements?
-2. **Soft Skills Match** (10%): Do the soft skills align with the role's needs?
-3. **Experience Level** (10%): Does the candidate's experience level match the job's requirements?
+Consider these factors WITH WEIGHTS:
+1. Technical Skills Match (80%): How well do candidate's technical skills match the job requirements?
+2. Soft Skills Match (10%): Do the candidate's soft skills align with the role's needs?
+3. Experience Level (10%): Does the candidate's experience level match the job's requirements?
+4. Resume Verification: Use the extracted CV text and structured resume analysis to verify real experience claims.
 
 IMPORTANT: Return ONLY a JSON object with this exact structure:
 {
@@ -73,7 +110,14 @@ IMPORTANT: Return ONLY a JSON object with this exact structure:
 }
 
 Do not include any other text, markdown, or explanation outside of the JSON object.`;
+    console.log(`    ✓ AI Prompt length: ${prompt.length} characters`);
+    console.log(`    ✓ Temperature: 0.7 (balanced creativity)`);
+    console.log(`    ✓ Max Tokens: 2000`);
 
+    // ═══ STEP 4: Call Bedrock API ═══
+    console.log("\n[4️⃣  STEP] Sending REQUEST to Bedrock AI model...");
+    console.log(`    ⏳ Calling callLLM() with candidate + job data...`);
+    
     const response = await callLLM({
       messages: [
         {
@@ -84,48 +128,78 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
       temperature: 0.7,
       maxTokens: 2000
     });
+    console.log(`    ✓ Bedrock API response received`);
 
-    // Extract the response content
+    // ═══ STEP 4: Process Bedrock response ═══
+    console.log("\n[4️⃣  STEP] Processing BEDROCK RESPONSE...");
     const content = response.content || "{}";
-    console.log(`📄 Bedrock Response:`, content.substring(0, 300));
+    console.log(`    ✓ Response received (${content.length} characters)`);
+    console.log(`    📄 Response Preview: ${content.substring(0, 150)}...`);
     
-    // Parse JSON response - improved parsing for truncated JSON
+    // ═══ STEP 5: Parse JSON response ═══
+    console.log("\n[5️⃣  STEP] Parsing JSON response from AI...");
     let result = {};
     try {
       // Try to extract JSON from response
       let jsonMatch = content.match(/\{[\s\S]*\}/);
       
       if (jsonMatch) {
+        console.log(`    ✓ JSON object found in response`);
         let jsonStr = jsonMatch[0];
         
         // If JSON appears truncated, try to fix it
         if (!jsonStr.endsWith('}')) {
-          // Find the last complete field
+          console.log(`    ⚠️  JSON appears truncated, attempting to fix...`);
           const lastQuoteIndex = jsonStr.lastIndexOf('"');
           if (lastQuoteIndex > 0) {
             jsonStr = jsonStr.substring(0, lastQuoteIndex) + '"}';
+            console.log(`    ✓ JSON fixed successfully`);
           }
         }
         
         result = JSON.parse(jsonStr);
+        console.log(`    ✓ JSON parsed successfully`);
       } else {
+        console.log(`    ℹ️  No JSON braces found, attempting direct parse...`);
         result = JSON.parse(content);
       }
     } catch (parseError) {
-      console.error(`⚠️ Failed to parse Bedrock response:`, parseError.message);
-      console.error(`   Response content: ${content.substring(0, 300)}`);
-      return 0;
+      console.error(`\n    ❌ JSON PARSING ERROR: ${parseError.message}`);
+      console.error(`    📝 Failed to parse: ${content.substring(0, 200)}`);
+      console.warn(`    ⚠️  Defaulting to score 0 due to parse error`);
+      return {
+        matchScore: 0,
+        reasoning: "AI response parsing failed."
+      };
     }
 
+    // ═══ STEP 6: Validate and normalize score ═══
+    console.log("\n[6️⃣  STEP] Validating and normalizing MATCH SCORE...");
     const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
+    const reasoning = result.reasoning || "No reasoning provided";
     
-    console.log(`✅ Match Score from Bedrock: ${matchScore}/100`);
-    console.log(`   Reasoning: ${(result.reasoning || "Not provided").substring(0, 100)}`);
+    console.log(`    ✓ Raw score from AI: ${result.matchScore}`);
+    console.log(`    ✓ Normalized score: ${matchScore}/100`);
+    console.log(`    ✓ Score is valid (0-100 range)`);
+    console.log(`    💡 AI Reasoning (${reasoning.length} chars):`);
+    console.log(reasoning);
+
+    // ═══ FINAL RESULT ═══
+    console.log("\n" + "─".repeat(80));
+    console.log(`✅ BEDROCK MATCHING COMPLETE`);
+    console.log(`   Final Score: ${matchScore}/100`);
+    console.log("─".repeat(80) + "\n");
     
-    return matchScore;
+    return {
+      matchScore,
+      reasoning,
+    };
   } catch (error) {
-    console.error(`❌ [BEDROCK MATCHING ERROR]`, error.message);
-    console.error("Falling back to default score of 0");
+    console.error(`\n❌ [BEDROCK MATCHING ERROR] Critical error occurred`);
+    console.error(`   Error Type: ${error.name}`);
+    console.error(`   Error Message: ${error.message}`);
+    console.error(`   Stack: ${error.stack.split('\n')[0]}`);
+    console.warn(`   ⚠️  Fallback: Returning default score of 0`);
     return 0;
   }
 };
@@ -133,105 +207,199 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
 // ========== CALCULATE MATCH SCORE (via AI Agent) ==========
 const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
   try {
-    console.log("\n" + "=".repeat(80));
-    console.log("📊 [MATCH SCORE ENGINE] - CALCULATING MATCH SCORE");
-    console.log("=".repeat(80));
-    console.log(`Profile ID: ${profileId}`);
-    console.log(`Post ID: ${postId}`);
-    console.log(`Company ID: ${companyId}`);
+    console.log("\n" + "═".repeat(100));
+    console.log("🎯 [MATCH SCORE CALCULATION ENGINE] - COMPLETE WORKFLOW");
+    console.log("═".repeat(100));
+    console.log("📌 OBJECTIVE: Calculate intelligent job-candidate match score using AI");
+    console.log("📋 WORKFLOW: Load Candidate → Load Job → Extract Resume → Call AI → Return Score");
+    console.log("═".repeat(100));
+    
+    console.log(`\n⏱️  Starting process at: ${new Date().toISOString()}`);
+    console.log(`   Input Parameters:`);
+    console.log(`     • Profile ID: ${profileId}`);
+    console.log(`     • Post ID: ${postId}`);
+    console.log(`     • Company ID: ${companyId}`);
 
-    // Fetch candidate profile with all skills data
-    console.log(`\n🔍 Step 1: Fetching candidate profile...`);
+    // ═══ STEP 1: Fetch candidate profile ═══
+    console.log("\n\n[STEP 1️⃣] LOAD CANDIDATE PROFILE FROM DATABASE");
+    console.log("─".repeat(100));
+    console.log("📥 Action: Fetching profile from MongoDB with ID: " + profileId);
+    
     const profile = await Profile.findById(profileId).populate("userId", "firstName lastName email");
     if (!profile) {
-      console.warn(`❌ Profile not found: ${profileId}`);
-      return 0;
+      console.error(`\n   ❌ ERROR: Profile NOT FOUND with ID ${profileId}`);
+      console.warn(`   Returning score: 0 (default fallback)`);
+      return {
+        matchScore: 0,
+        reasoning: "Candidate profile not found.",
+      };
     }
-    console.log(`✅ Profile loaded: ${profile.firstName || "Unknown"} ${profile.lastName || ""}`);
-    console.log(`   └─ Technical Skills: ${profile.skills?.length || 0} found`);
+    
+    console.log(`\n✅ PROFILE LOADED SUCCESSFULLY`);
+    console.log(`   Candidate Name: ${profile.firstName || "Unknown"} ${profile.lastName || ""}`);
+    console.log(`   Email: ${profile.userId?.email || "Not provided"}`);
+    console.log(`\n   Technical Skills Information:`);
+    console.log(`     └─ Total Skills: ${profile.skills?.length || 0}`);
     if (profile.skills && profile.skills.length > 0) {
-      console.log(`      Skills: ${profile.skills.map(s => `${s.name} (Lvl: ${s.Levelconfirmed})`).join(", ")}`);
+      console.log(`     └─ Skill Details: ${profile.skills.map(s => `${s.name} (Level: ${s.Levelconfirmed || "N/A"})`).join(" | ")}`);
+    } else {
+      console.log(`     └─ ⚠️  No technical skills recorded`);
     }
-    console.log(`   └─ Soft Skills: ${profile.softSkills?.length || 0} found`);
-    console.log(`   └─ Salary Expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`);
-    console.log(`   └─ Work Mode Preference: ${profile.workModePreference || "Not specified"}`);
-    console.log(`   └─ Contract Type: ${profile.preferredContractType || "Not specified"}`);
+    
+    console.log(`\n   Soft Skills Information:`);
+    console.log(`     └─ Total Soft Skills: ${profile.softSkills?.length || 0}`);
+    if (profile.softSkills && profile.softSkills.length > 0) {
+      console.log(`     └─ Skill Details: ${profile.softSkills.map(s => `${s.name} (${s.category || "General"})`).join(" | ")}`);
+    }
+    
+    console.log(`\n   Compensation & Preferences:`);
+    console.log(`     └─ Expected Salary: ${profile.expectedSalary?.min || "N/A"}-${profile.expectedSalary?.max || "N/A"} ${profile.expectedSalary?.currency || "N/A"}`);
+    console.log(`     └─ Work Mode Preference: ${profile.workModePreference || "Not specified"}`);
+    console.log(`     └─ Contract Type Preference: ${profile.preferredContractType || "Not specified"}`);
+    console.log(`     └─ CV/Resume File: ${profile.resume || "NOT UPLOADED"}`);
 
-    // Fetch job post with skill requirements
-    console.log(`\n🔍 Step 2: Fetching job post...`);
+    // ═══ STEP 2: Fetch job post ═══
+    console.log("\n\n[STEP 2️⃣] LOAD JOB POSTING FROM DATABASE");
+    console.log("─".repeat(100));
+    console.log("📥 Action: Fetching job post from MongoDB with ID: " + postId);
+    
     const post = await Post.findById(postId).populate("skillAnalysis");
     if (!post) {
-      console.warn(`❌ Post not found: ${postId}`);
-      return 0;
+      console.error(`\n   ❌ ERROR: Job Post NOT FOUND with ID ${postId}`);
+      console.warn(`   Returning score: 0 (default fallback)`);
+      return {
+        matchScore: 0,
+        reasoning: "Job post not found.",
+      };
     }
-    console.log(`✅ Job post loaded: "${post.jobDetails?.title || "Untitled"}"`);
-    console.log(`   └─ Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0} found`);
-    if (post.skillAnalysis && post.skillAnalysis.requiredSkills) {
-      console.log(`      Skills: ${post.skillAnalysis.requiredSkills.map(s => `${s.name} (Lvl: ${s.level}, Weight: ${s.percentage}%)`).join(", ")}`);
+    
+    console.log(`\n✅ JOB POST LOADED SUCCESSFULLY`);
+    console.log(`   Job Title: "${post.jobDetails?.title || "Untitled"}"`);
+    console.log(`   Company: ${post.user ? "(populated)" : "(not populated)"}`);
+    
+    console.log(`\n   Required Skills Analysis:`);
+    console.log(`     └─ Total Required Skills: ${post.skillAnalysis?.requiredSkills?.length || 0}`);
+    if (post.skillAnalysis && post.skillAnalysis.requiredSkills && post.skillAnalysis.requiredSkills.length > 0) {
+      console.log(`     └─ Skill Details: ${post.skillAnalysis.requiredSkills.map(s => `${s.name} (Level: ${s.level}, Weight: ${s.percentage || "N/A"}%)`).join(" | ")}`);
     }
-    console.log(`   └─ Soft Skills Required: ${post.skillAnalysis?.softSkills?.length || 0}`);
-    console.log(`   └─ Salary Offered: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`);
-    console.log(`   └─ Work Mode: ${post.jobDetails?.workMode || "Not specified"}`);
-    console.log(`   └─ Employment Type: ${post.jobDetails?.employmentType || "Not specified"}`);
+    
+    console.log(`\n   Required Soft Skills:`);
+    console.log(`     └─ Total Soft Skills: ${post.skillAnalysis?.softSkills?.length || 0}`);
+    if (post.skillAnalysis && post.skillAnalysis.softSkills && post.skillAnalysis.softSkills.length > 0) {
+      console.log(`     └─ Skill Details: ${post.skillAnalysis.softSkills.map(s => `${s.name}`).join(" | ")}`);
+    }
+    
+    console.log(`\n   Job Compensation & Details:`);
+    console.log(`     └─ Salary Offered: ${post.jobDetails?.salary?.min || "N/A"}-${post.jobDetails?.salary?.max || "N/A"} ${post.jobDetails?.salary?.currency || "N/A"}`);
+    console.log(`     └─ Work Mode: ${post.jobDetails?.workMode || "Not specified"}`);
+    console.log(`     └─ Employment Type: ${post.jobDetails?.employmentType || "Not specified"}`);
+    console.log(`     └─ Experience Level Required: ${post.jobDetails?.experienceLevel || "Not specified"}`);
 
-    // Extract job skills from post skillAnalysis
-    const jobSkills = post.skillAnalysis?.requiredSkills || [];
-    const jobDetails = {
-      title: post.jobDetails?.title,
-      description: post.jobDetails?.description,
-      skillAnalysis: post.skillAnalysis,
-      salary: post.jobDetails?.salary,
-      location: post.jobDetails?.location,
-      workMode: post.jobDetails?.workMode,
-      employmentType: post.jobDetails?.employmentType,
+    // ═══ STEP 3: Extract and analyze resume ═══
+    console.log("\n\n[STEP 3️⃣] EXTRACT & ANALYZE CANDIDATE RESUME (PDF)");
+    console.log("─".repeat(100));
+    
+    let resumeAnalysis = null;
+    let resumeText = "";
+    
+    if (profile.resume) {
+      const resumeFilePath = path.resolve(__dirname, "../public/resume", profile.resume);
+      console.log(`📁 Resume File Path: ${resumeFilePath}`);
+      console.log(`📄 File Name: ${profile.resume}`);
+      
+      try {
+        console.log(`\n⏳ Processing: Extracting text from PDF...`);
+        resumeText = await extractResumeTextFromPdf(resumeFilePath);
+        console.log(`   ✓ Text extraction completed (${resumeText.length} characters extracted)`);
+        
+        console.log(`\n⏳ Processing: Analyzing resume with AI...`);
+        const analysisJson = await analyzeCV(resumeFilePath);
+        resumeAnalysis = JSON.parse(analysisJson);
+        
+        console.log(`✅ RESUME ANALYSIS COMPLETED`);
+        console.log(`   Data Fields Extracted: ${Object.keys(resumeAnalysis).length}`);
+        console.log(`     └─ Name: ${resumeAnalysis.name || "N/A"}`);
+        console.log(`     └─ Email: ${resumeAnalysis.email || "N/A"}`);
+        console.log(`     └─ Years of Experience: ${resumeAnalysis.yearsOfExperience || "N/A"}`);
+        console.log(`     └─ Technical Skills Count: ${(resumeAnalysis.skills || []).length}`);
+        console.log(`     └─ Work Experience Entries: ${(resumeAnalysis.experience || []).length}`);
+        console.log(`     └─ Education Entries: ${(resumeAnalysis.education || []).length}`);
+        console.log(`     └─ Certifications: ${(resumeAnalysis.certifications || []).length}`);
+      } catch (error) {
+        console.warn(`\n⚠️  RESUME EXTRACTION WARNING`);
+        console.warn(`   Error occurred: ${error.message}`);
+        console.warn(`   Proceeding WITHOUT resume analysis (will use profile data only)`);
+        resumeAnalysis = null;
+        resumeText = "";
+      }
+    } else {
+      console.log(`⚠️  NO RESUME UPLOADED`);
+      console.log(`   Candidate has not uploaded a CV`);
+      console.log(`   Matching will use PROFILE DATA ONLY`);
+    }
+
+    // ═══ STEP 4: Call Bedrock AI for matching ═══
+    console.log("\n\n[STEP 4️⃣] INVOKE BEDROCK AI MATCHING ENGINE");
+    console.log("─".repeat(100));
+    console.log("🤖 Action: Sending all data to Bedrock AI for intelligent analysis");
+    console.log(`   Data being sent:`);
+    console.log(`     • Candidate Profile: Name, skills, experience, preferences`);
+    console.log(`     • Resume Analysis: ${resumeAnalysis ? "YES (structured data)" : "NO"}`);
+    console.log(`     • Resume Text: ${resumeText ? `YES (${resumeText.length} chars)` : "NO"}`);
+    console.log(`     • Job Description: Title, requirements, compensation`);
+
+    console.log(`\n⏳ Calling Bedrock AI... (this may take 2-5 seconds)`);
+    const matchResult = await calculateMatchScoreWithBedrock(profile, post, resumeAnalysis, resumeText);
+    console.log(`\n✅ AI Matching Completed`);
+
+    // ═══ STEP 5: Process result ═══
+    console.log("\n\n[STEP 5️⃣] PROCESS & FINALIZE RESULTS");
+    console.log("─".repeat(100));
+    
+    const score = matchResult.matchScore || 0;
+    const reasoning = matchResult.reasoning || "No reasoning provided";
+    
+    console.log(`\n📊 FINAL MATCH SCORE: ${score}/100`);
+    console.log(`   AI Reasoning (${reasoning.length} chars):`);
+    console.log(reasoning);
+    
+    // Interpret the score
+    let interpretation = "";
+    if (score >= 81) interpretation = "🟢 EXCELLENT MATCH - Strong fit for this role";
+    else if (score >= 61) interpretation = "🔵 GOOD MATCH - Reasonable fit with minor gaps";
+    else if (score >= 41) interpretation = "🟡 AVERAGE MATCH - Some alignment, key gaps exist";
+    else if (score >= 21) interpretation = "🟠 BELOW AVERAGE - Significant gaps in fit";
+    else interpretation = "🔴 POOR MATCH - Lacks critical skills/experience";
+    
+    console.log(`   Interpretation: ${interpretation}`);
+    console.log(`\n   Summary:`);
+    console.log(`     └─ Candidate: ${profile.firstName} ${profile.lastName}`);
+    console.log(`     └─ Position: "${post.jobDetails?.title}"`);
+    console.log(`     └─ Company ID: ${companyId}`);
+    console.log(`     └─ Evaluation Date: ${new Date().toISOString()}`);
+
+    console.log("\n" + "═".repeat(100));
+    console.log("✅ MATCH SCORE CALCULATION COMPLETED SUCCESSFULLY");
+    console.log("═".repeat(100) + "\n");
+
+    return {
+      matchScore: score,
+      reasoning,
     };
-
-    // Extract candidate skills from profile
-    const candidateSkills = profile.skills || [];
-    const candidateProfile = {
-      _id: profile._id,
-      userId: profile.userId,
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      email: profile.email,
-      softSkills: profile.softSkills || [],
-      expectedSalary: profile.expectedSalary,
-      workModePreference: profile.workModePreference,
-      preferredContractType: profile.preferredContractType,
-    };
-
-    // Get matching configuration (if exists)
-    console.log(`\n🔍 Step 3: Loading matching configuration...`);
-    const MatchingConfig = require("../models/MatchingConfig.model");
-    const matchingConfig = await MatchingConfig.findOne({ company: companyId });
-    const configData = matchingConfig || { weights: {} };
-    console.log(`✅ Matching config loaded${matchingConfig ? " (custom weights)" : " (default weights)"}`);
-    const weights = configData.weights || {};
-    console.log(`   └─ Hard Skills Weight: ${weights.hardSkill || 50}%`);
-    console.log(`   └─ Soft Skills Weight: ${weights.SoftSkill || 10}%`);
-    console.log(`   └─ Experience Weight: ${weights.experience || 10}%`);
-    console.log(`   └─ Salary Weight: ${weights.salary || 10}%`);
-    console.log(`   └─ Work Mode Weight: ${weights.workMode || 10}%`);
-    console.log(`   └─ Contract Weight: ${weights.contract || 10}%`);
-
-    // Calculate match score using Bedrock AI matching algorithm
-    console.log(`\n🔍 Step 4: Running Bedrock matching algorithm...`);
-    console.log(`   Sending candidate CV and job post to Bedrock for intelligent matching...`);
-
-    const matchResult = await calculateMatchScoreWithBedrock(profile, post);
-
-    const score = matchResult || 0;
-    console.log(`\n✅ [MATCH SCORE CALCULATED BY BEDROCK]`);
-    console.log(`   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
-    console.log(`   Job: "${post.jobDetails?.title}"`);
-    console.log(`   Final Match Score: ${score}/100`);
-    console.log("=".repeat(80) + "\n");
-
-    return score;
   } catch (error) {
-    console.error(`❌ [MATCH SCORE ERROR] Error calculating match score:`, error);
-    console.error("Stack trace:", error.stack);
-    return 0; // Return 0 if calculation fails
+    console.error("\n" + "═".repeat(100));
+    console.error("❌ [CRITICAL ERROR] MATCH SCORE CALCULATION FAILED");
+    console.error("═".repeat(100));
+    console.error(`\n   Error Details:`);
+    console.error(`     • Error Type: ${error.name}`);
+    console.error(`     • Error Message: ${error.message}`);
+    console.error(`     • Location: ${error.stack.split('\n')[1]}`);
+    console.error(`\n   Fallback Action: Returning default score of 0`);
+    console.error("═".repeat(100) + "\n");
+    return {
+      matchScore: 0,
+      reasoning: `Match score calculation failed: ${error.message}`,
+    };
   }
 };
 
@@ -255,14 +423,15 @@ module.exports.createJobApplication = async (applicationData) => {
     }
 
     // Calculate match score automatically using AI matching
-    const calculatedMatchScore = await calculateApplicationMatchScore(
+    const matchResult = await calculateApplicationMatchScore(
       cleanData.profile,
       cleanData.post,
       cleanData.company
     );
 
-    // Add calculated match score to application data
-    cleanData.matchScore = calculatedMatchScore;
+    // Add calculated match score and reasoning to application data
+    cleanData.matchScore = matchResult.matchScore;
+    cleanData.matchReasoning = matchResult.reasoning;
     cleanData.status = "visited";
 
     const application = await JobApplication.create(cleanData);
