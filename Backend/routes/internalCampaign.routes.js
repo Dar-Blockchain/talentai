@@ -2,7 +2,7 @@
  * Routes pour les campagnes internes
  *
  * Applied middlewares:
- * - requireAuthUser: authentification requise
+ * - requireAuth: authentification requise
  * - controledAcces('Company'): restricted to companies
  * - authLogMiddleware: request logging
  */
@@ -30,7 +30,7 @@ router.get(
 // Example: GET /internal-campaigns/employee/:userId
 router.get(
   "/employee/:userId",
-  requireAuthUser,
+  requireAuth,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.getUserCampaigns,
 );
@@ -39,7 +39,7 @@ router.get(
 // Example: GET /internal-campaigns/employee/:userId/metrics
 router.get(
   "/employee/:userId/metrics",
-  requireAuthUser,
+  requireAuth,
   authLogMiddleware("InternalCampaign"),
   resolveCompanyActor,
   internalCampaignController.getEmployeeCampaignMetrics,
@@ -50,7 +50,7 @@ router.get(
  */
 router.post(
   "/:campaignId/participate/:userId",
-  requireAuthUser,
+  requireAuth,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.participateInCampaign,
 );
@@ -60,7 +60,7 @@ router.post(
  */
 router.delete(
   "/:campaignId/participate/:participantId",
-  requireAuthUser,
+  requireAuth,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.removeEmployeeFromCampaign,
 );
@@ -71,7 +71,7 @@ router.delete(
  */
 router.get(
   "/metrics",
-  requireAuthUser,
+  requireAuth,
   controledAcces(['Company', 'Employee']),
   authLogMiddleware("InternalCampaign"),
   resolveCompanyActor,
@@ -92,7 +92,7 @@ router.get(
  */
 router.get(
   "/:campaignId/participants",
-  requireAuthUser,
+  requireAuth,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.getCampaignParticipants,
 );
@@ -103,6 +103,7 @@ router.get(
  */
 router.patch(
   "/:campaignId/start/:userId",
+  requireAuth,
   authLogMiddleware("InternalCampaign"),
   internalCampaignController.startAssessment,
 );
@@ -158,7 +159,7 @@ router.get(
 /**
  * POST /internal-campaigns/link/:token/join — Join via link
  * Anonymous campaigns: no auth needed.
- * Nominative campaigns: requireAuthUser applied inline.
+ * Nominative campaigns: requireAuth applied inline.
  */
 router.post(
   "/link/:token/join",
@@ -166,9 +167,8 @@ router.post(
   (req, res, next) => {
     // If an auth cookie is present, decode it; otherwise proceed without user context.
     // The controller handles the NOMINATIVE vs ANONYMOUS distinction.
-    const { requireAuthUser: auth } = require("../middleware/authorize.middleware");
     const token = req.cookies?.api_token;
-    if (token) return auth(req, res, next);
+    if (token) return requireAuth(req, res, next);
     next();
   },
   internalCampaignController.joinCampaignByLink

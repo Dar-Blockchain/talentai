@@ -47,9 +47,11 @@ const HOVER_TXT = "#E8F6F9"; // hover text — near white
 const LABEL_C = "#a3aed1"; // section label — visible
 
 const GROUPS = [
-  { label: "MAIN", ids: ["dashboard"] },
-  { label: "JOBS", ids: ["posts", "applications"] },
-  { label: "ACCOUNT", ids: ["settings"] },
+  { label: "MAIN",         ids: ["dashboard"] },
+  { label: "JOBS",   ids: ["posts", "applications"] },
+  { label: "CAMPAIGNS",   ids: ["campaigns"] },
+  { label: "Team",     ids: ["employees", "departments"] },
+  { label: "Account",  ids: ["settings"] },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -109,16 +111,63 @@ const Sidebar: React.FC<SidebarProps> = ({
     : profile?.companyDetails?.email;
 
   const companyEmail = profile?.companyDetails?.email || "";
-  const initial = companyName[0]?.toUpperCase() || "C";
+  const initial = companyName ? companyName[0]?.toUpperCase() || "C" : "C";
   const avatarUrl = profile?.user_image
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
     : null;
 
-  const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
-  const handleToggle = useCallback(
-    () => setCollapsed((c) => !c),
-    [setCollapsed],
-  );
+  const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
+  const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
+
+  const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
+
+  const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {
+    const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+    const btn = (
+      <Link key={item.id} href={item.href} passHref style={{ textDecoration: "none" }}>
+        <Box
+          data-tour={`nav-${item.id}`}
+          sx={{
+            display: "flex", alignItems: "center",
+            gap: isCollapsed ? 0 : 1.25,
+            px: isCollapsed ? 0 : 1.25,
+            py: isCollapsed ? 0 : 0.875,
+            height: isCollapsed ? 42 : "auto",
+            borderRadius: "9px",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            cursor: "pointer", transition: "all 0.12s", position: "relative",
+            bgcolor: isActive ? `${TEAL}22` : "transparent",
+            color: isActive ? TEAL_LIGHT : TXT_CLR,
+            "&:hover": {
+              bgcolor: isActive ? `${TEAL}28` : HOVER_BG,
+              color: isActive ? TEAL_LIGHT : HOVER_TXT,
+              "& .nav-icon": { color: isActive ? TEAL_LIGHT : HOVER_TXT },
+            },
+          }}
+        >
+          {isActive && (
+            <Box sx={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: "0 3px 3px 0", bgcolor: TEAL_LIGHT }} />
+          )}
+          <Box className="nav-icon" sx={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: isCollapsed ? 38 : 28, height: isCollapsed ? 38 : 28,
+            borderRadius: "8px", flexShrink: 0,
+            color: isActive ? TEAL_LIGHT : ICO_CLR, transition: "color 0.12s",
+          }}>
+            <item.icon sx={{ fontSize: isCollapsed ? 18 : 16 }} />
+          </Box>
+          {!isCollapsed && (
+            <Typography sx={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: "inherit", lineHeight: 1 }}>
+              {item.label}
+            </Typography>
+          )}
+        </Box>
+      </Link>
+    );
+    return isCollapsed ? (
+      <Tooltip key={item.id} title={item.label} placement="right" arrow><span>{btn}</span></Tooltip>
+    ) : btn;
+  };
 
   const content = (mobile = false) => {
     const isCollapsed = collapsed && !mobile;
@@ -215,157 +264,55 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Box>
 
         {/* ── Nav ── */}
-        <Box
-          sx={{ flex: 1, overflowY: "auto", py: 2, px: 1 }}
-          className="custom-scrollbar"
-        >
-          {GROUPS.map((group, gi) => {
+        <Box sx={{ flex: 1, overflowY: "auto", py: 2, px: 1 }} className="custom-scrollbar">
+
+          {/* ── Company nav ── */}
+          {!isEmployee && GROUPS.map((group, gi) => {
             const items = navigation.filter((i) => group.ids.includes(i.id));
             if (items.length === 0) return null;
 
             return (
               <Box key={group.label || gi} sx={{ mb: 1.5 }}>
                 {group.label && !isCollapsed && (
-                  <Typography
-                    sx={{
-                      px: 1.25,
-                      pt: gi === 0 ? 0 : 0.5,
-                      pb: 0.5,
-                      opacity: 0.5,
-                      fontSize: "9px",
-                      fontWeight: 700,
-                      color: LABEL_C,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.14em",
-                    }}
-                  >
+                  <Typography sx={{
+                    px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
+                    fontSize: "9px", fontWeight: 700, color: LABEL_C,
+                    textTransform: "uppercase", letterSpacing: "0.14em",
+                  }}>
                     {group.label}
                   </Typography>
                 )}
-
                 {gi > 0 && isCollapsed && (
-                  <Box
-                    sx={{
-                      mx: "auto",
-                      mb: 1.5,
-                      width: 24,
-                      height: "1px",
-                      bgcolor: BORDER,
-                    }}
-                  />
+                  <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
                 )}
-
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}
-                >
-                  {items.map((item) => {
-                    const isActive =
-                      router.pathname === item.href ||
-                      router.pathname.startsWith(item.href + "/");
-
-                    const btn = (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                        passHref
-                        style={{ textDecoration: "none" }}
-                      >
-                        <Box
-                          data-tour={`nav-${item.id}`}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: isCollapsed ? 0 : 1.25,
-                            px: isCollapsed ? 0 : 1.25,
-                            py: isCollapsed ? 0 : 0.875,
-                            height: isCollapsed ? 42 : "auto",
-                            borderRadius: "9px",
-                            justifyContent: isCollapsed
-                              ? "center"
-                              : "flex-start",
-                            cursor: "pointer",
-                            transition: "all 0.12s",
-                            position: "relative",
-                            bgcolor: isActive ? `${TEAL}22` : "transparent",
-                            color: isActive ? TEAL_LIGHT : TXT_CLR,
-                            "&:hover": {
-                              bgcolor: isActive ? `${TEAL}28` : HOVER_BG,
-                              color: isActive ? TEAL_LIGHT : HOVER_TXT,
-                              "& .nav-icon": {
-                                color: isActive ? TEAL_LIGHT : HOVER_TXT,
-                              },
-                            },
-                          }}
-                        >
-                          {/* Active bar */}
-                          {isActive && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                left: 0,
-                                top: "20%",
-                                bottom: "20%",
-                                width: 3,
-                                borderRadius: "0 3px 3px 0",
-                                bgcolor: TEAL_LIGHT,
-                              }}
-                            />
-                          )}
-
-                          {/* Icon */}
-                          <Box
-                            className="nav-icon"
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              width: isCollapsed ? 38 : 28,
-                              height: isCollapsed ? 38 : 28,
-                              borderRadius: "8px",
-                              flexShrink: 0,
-                              color: isActive ? TEAL_LIGHT : ICO_CLR,
-                              transition: "color 0.12s",
-                            }}
-                          >
-                            <item.icon
-                              sx={{ fontSize: isCollapsed ? 18 : 16 }}
-                            />
-                          </Box>
-
-                          {/* Label */}
-                          {!isCollapsed && (
-                            <Typography
-                              sx={{
-                                fontSize: "0.85rem",
-                                fontWeight: isActive ? 600 : 400,
-                                color: "inherit",
-                                lineHeight: 1,
-                              }}
-                            >
-                              {item.label}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Link>
-                    );
-
-                    return isCollapsed ? (
-                      <Tooltip
-                        key={item.id}
-                        title={item.label}
-                        placement="right"
-                        arrow
-                      >
-                        <span>{btn}</span>
-                      </Tooltip>
-                    ) : (
-                      btn
-                    );
-                  })}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                  {items.map((item) => renderNavItem(item, isCollapsed))}
                 </Box>
               </Box>
             );
           })}
+
+          {/* ── Employee nav ── */}
+          {isEmployee && activeEmployeeGroups.map((group, gi) => (
+            <Box key={group.group || gi} sx={{ mb: 1.5 }}>
+              {group.group && !isCollapsed && (
+                <Typography sx={{
+                  px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
+                  fontSize: "9px", fontWeight: 700, color: LABEL_C,
+                  textTransform: "uppercase", letterSpacing: "0.14em",
+                }}>
+                  {group.group}
+                </Typography>
+              )}
+              {gi > 0 && isCollapsed && (
+                <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
+              )}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                {group.items.map((item) => renderNavItem(item, isCollapsed))}
+              </Box>
+            </Box>
+          ))}
+
         </Box>
 
         {/* ── Footer ── */}
@@ -380,16 +327,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <Box
-            onClick={() => router.push("/company/settings")}
+            onClick={() => router.push(settingsHref)}
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: "flex", alignItems: "center",
               gap: isCollapsed ? 0 : 1,
-              px: isCollapsed ? 0 : 1,
-              py: 0.75,
+              px: isCollapsed ? 0 : 1, py: 0.75,
               height: isCollapsed ? 42 : "auto",
-              borderRadius: "9px",
-              cursor: "pointer",
+              borderRadius: "9px", cursor: "pointer",
               justifyContent: isCollapsed ? "center" : "flex-start",
               transition: "all 0.12s",
               "&:hover": { bgcolor: HOVER_BG },
@@ -397,37 +341,19 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             <Avatar
               src={avatarUrl ?? undefined}
-              sx={{
-                bgcolor: TEAL,
-                width: 28,
-                height: 28,
-                fontSize: "11px",
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
+              sx={{ bgcolor: TEAL, width: 28, height: 28, fontSize: "11px", fontWeight: 700, flexShrink: 0 }}
             >
-              {initial}
+              {displayInitial}
             </Avatar>
 
             {!isCollapsed && (
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  noWrap
-                  sx={{
-                    fontSize: "12.5px",
-                    fontWeight: 600,
-                    color: "#E8F6F9",
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {companyName}
+                <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
+                  {displayName}
                 </Typography>
-                {companyEmail && (
-                  <Typography
-                    noWrap
-                    sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3 }}
-                  >
-                    {companyEmail}
+                {displayEmail && (
+                  <Typography noWrap sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3 }}>
+                    {displayEmail}
                   </Typography>
                 )}
               </Box>

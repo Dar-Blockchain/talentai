@@ -3,7 +3,6 @@ import {
   CampaignOutlined,
   WorkOutlineOutlined,
   GroupsOutlined,
-  HowToRegOutlined,
   PsychologyOutlined,
   TuneOutlined,
   CorporateFareOutlined,
@@ -43,12 +42,6 @@ export const navigation = [
     icon: CorporateFareOutlined,
     label: "Departments",
     href: "/company/departments",
-  },
-  {
-    id: "interviews",
-    icon: HowToRegOutlined,
-    label: "Interviews",
-    href: "/company/interviews",
   },
   {
     id: "applications",
@@ -131,13 +124,6 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
         label: "Job Posts",
         href: "/company/posts",
         permission: "canViewJobPosts",
-      },
-      {
-        id: "interviews",
-        icon: HowToRegOutlined,
-        label: "Interviews",
-        href: "/company/interviews",
-        permission: "canViewInterviewResults",
       },
       {
         id: "employees",
