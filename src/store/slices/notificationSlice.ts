@@ -41,6 +41,28 @@ const initialState: NotificationState = {
   unreadCount: 0,
 };
 
+// Derive a human-readable title from notification type + content
+const deriveTitle = (type: string, content: string): string => {
+  if (content) {
+    if (content.includes('interview') || content.includes('Interview')) return 'Interview Update';
+    if (content.includes('profile') || content.includes('Profile')) return 'Profile Update';
+    if (content.includes('job') || content.includes('Job') || content.includes('position')) return 'Job Update';
+    if (content.includes('application') || content.includes('Application')) return 'Application Update';
+    if (content.includes('match') || content.includes('Match')) return 'New Match';
+    if (content.includes('unlocked') || content.includes('Unlocked')) return 'Profile Unlocked';
+    if (content.includes('score') || content.includes('Score') || content.includes('test') || content.includes('Test')) return 'Test Result';
+    if (content.includes('level') || content.includes('Level')) return 'Level Up';
+    if (content.includes('plan') || content.includes('Plan') || content.includes('limit')) return 'Plan Update';
+    if (content.includes('company') || content.includes('Company')) return 'Company Update';
+  }
+  switch (type) {
+    case 'success': return 'Success';
+    case 'warning': return 'Warning';
+    case 'error': return 'Error';
+    default: return 'Notification';
+  }
+};
+
 // Helper to format timestamps
 const formatTimestamp = (date: Date): string => {
   const now = new Date();
@@ -148,7 +170,7 @@ export const fetchNotifications = createAsyncThunk(
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
-        title: notif.title || 'System Notification',
+        title: notif.title || deriveTitle(notif.type || 'info', notif.content || notif.message || ''),
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
         isRead: notif.read !== undefined ? notif.read : (notif.isRead || false),
@@ -370,7 +392,7 @@ export const fetchArchivedNotifications = createAsyncThunk(
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
-        title: notif.title || 'System Notification',
+        title: notif.title || deriveTitle(notif.type || 'info', notif.content || notif.message || ''),
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
         isRead: true, // Archived notifications are always read
@@ -402,7 +424,7 @@ const notificationSlice = createSlice({
       const notification: Notification = {
         id: action.payload._id || action.payload.id || Date.now().toString(),
         type: action.payload.type === 'system' ? 'info' : (action.payload.type || 'info'),
-        title: action.payload.title || 'System Notification',
+        title: action.payload.title || deriveTitle(action.payload.type || 'info', action.payload.content || action.payload.message || ''),
         message: action.payload.content || action.payload.message || '',
         timestamp: formatTimestamp(action.payload.createdAt ? new Date(action.payload.createdAt) : new Date()),
         isRead: action.payload.read || action.payload.isRead || false,
