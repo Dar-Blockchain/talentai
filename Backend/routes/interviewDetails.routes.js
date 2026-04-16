@@ -34,10 +34,4 @@ router.get("/getInterviewDetailsById/:id", interviewDetailsController.getIntervi
 // Description: Adds interview details (converts new format to old)
 router.post("/", interviewDetailsController.addInterviewDetails);
 
-// POST /interview-details/:id/claim-reward
-// Params: id (interview identifier)
-// Description: Allows candidate to manually claim TAI reward if automatic distribution failed
-router.post("/:id/claim-reward", interviewDetailsController.claimInterviewReward);
-
-
 module.exports = router;
