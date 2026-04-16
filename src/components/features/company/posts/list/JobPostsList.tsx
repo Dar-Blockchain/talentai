@@ -132,7 +132,7 @@ const JobPostsList = memo<JobPostsListProps>(({
       <Box sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" },
-        gap: { xs: 1.5, md: 2 },
+        gap: { xs: 2, md: 2.5 },
         mb: pagination.totalPages > 1 ? 3 : 0,
       }}>
         {jobs.map((job: any, i: number) => (
