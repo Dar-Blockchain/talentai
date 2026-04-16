@@ -8,6 +8,8 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { navigation } from "@/constants/navigation";
 import { useRouter } from "next/router";
+import OnboardingTour from "@/components/features/company/OnboardingTour";
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -42,6 +44,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
+      <OnboardingTour />
       {/* Logout loading modal */}
       <Modal open={isLoggingOut} disableAutoFocus>
         <Box sx={{

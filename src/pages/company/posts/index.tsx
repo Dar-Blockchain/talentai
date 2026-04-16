@@ -38,6 +38,10 @@ import SortOutlined from "@mui/icons-material/SortOutlined";
 import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
 import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
+import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
+import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
+import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 
 const TEAL = "#0D9488";
 
@@ -48,6 +52,21 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string; color: string }[] =
     { value: "draft", label: "Draft", color: "#D97706" },
     { value: "expired", label: "Closed", color: "#DC2626" },
   ];
+
+type TypeFilter = "all" | "ai" | "pipeline" | "manual";
+
+const TYPE_OPTIONS: {
+  value: TypeFilter;
+  label: string;
+  color: string;
+  bg: string;
+  Icon: React.ElementType;
+}[] = [
+  { value: "all",      label: "All types",  color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
+  { value: "ai",       label: "AI",         color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
+  { value: "pipeline", label: "Pipeline",   color: "#0891B2", bg: "#ECFEFF", Icon: AccountTreeOutlined },
+  { value: "manual",   label: "Manual",     color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
+];
 
 const SORT_GROUPS = [
   {
@@ -96,6 +115,7 @@ const PostsPage: React.FC = () => {
   const pagination = useSelector(selectMyPostsPagination);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -138,9 +158,10 @@ const PostsPage: React.FC = () => {
         search,
         sort: apiSort,
         status: apiStatus,
+        creationType: typeFilter !== "all" ? typeFilter : undefined,
       }),
     );
-  }, [dispatch, page, search, apiSort, apiStatus]);
+  }, [dispatch, page, search, apiSort, apiStatus, typeFilter]);
 
   useEffect(() => {
     load();
@@ -236,7 +257,7 @@ const PostsPage: React.FC = () => {
                   borderRadius: "8px",
                   px: 1.25,
                   height: 34,
-                  minWidth: 200,
+                  width: { xs: "100%", sm: 220, md: 300, lg: 380 },
                   "&:focus-within": { borderColor: TEAL },
                   transition: "border-color 0.15s",
                 }}
@@ -245,7 +266,7 @@ const PostsPage: React.FC = () => {
                   sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }}
                 />
                 <InputBase
-                  placeholder="Search by title, type…"
+                  placeholder="Search by title, description..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -319,6 +340,84 @@ const PostsPage: React.FC = () => {
                           fontSize: "13px",
                           fontWeight: statusFilter === value ? 700 : 400,
                           color: statusFilter === value ? color : "#374151",
+                        }}
+                      >
+                        {label}
+                      </Typography>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Type */}
+              <FormControl size="small">
+                <Select
+                  value={typeFilter}
+                  onChange={(e) => {
+                    setTypeFilter(e.target.value as TypeFilter);
+                    setPage(1);
+                  }}
+                  displayEmpty
+                  renderValue={(val) => {
+                    const opt = TYPE_OPTIONS.find((o) => o.value === val);
+                    const Icon = opt?.Icon ?? FilterListOutlined;
+                    return (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Icon sx={{ fontSize: 14, color: val === "all" ? "#9CA3AF" : opt?.color }} />
+                        <Typography
+                          sx={{
+                            fontSize: "13px",
+                            color: val === "all" ? "#9CA3AF" : opt?.color,
+                          }}
+                        >
+                          {opt?.label ?? "All types"}
+                        </Typography>
+                      </Box>
+                    );
+                  }}
+                  sx={selectSx}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        borderRadius: "12px",
+                        boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+                        border: "1px solid #E5E7EB",
+                        mt: 0.5,
+                        minWidth: 160,
+                      },
+                    },
+                  }}
+                >
+                  {TYPE_OPTIONS.map(({ value, label, color, bg, Icon }) => (
+                    <MenuItem
+                      key={value}
+                      value={value}
+                      sx={{
+                        mx: 0.5,
+                        borderRadius: "8px",
+                        py: 0.75,
+                        px: 1.25,
+                        gap: 1,
+                        "&:hover": { bgcolor: `${color}0D` },
+                        "&.Mui-selected": {
+                          bgcolor: `${color}12`,
+                          "&:hover": { bgcolor: `${color}1A` },
+                        },
+                      }}
+                    >
+                      {value !== "all" && (
+                        <Box sx={{
+                          width: 20, height: 20, borderRadius: "5px",
+                          bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                        }}>
+                          <Icon sx={{ fontSize: 11, color }} />
+                        </Box>
+                      )}
+                      <Typography
+                        sx={{
+                          fontSize: "13px",
+                          fontWeight: typeFilter === value ? 700 : 400,
+                          color: typeFilter === value ? color : "#374151",
                         }}
                       >
                         {label}
@@ -470,7 +569,7 @@ const PostsPage: React.FC = () => {
           jobs={filteredPosts}
           loading={loading}
           error={error}
-          hasFilters={!!search || statusFilter !== "all"}
+          hasFilters={!!search || statusFilter !== "all" || typeFilter !== "all"}
           page={page}
           pagination={pagination}
           onPageChange={setPage}

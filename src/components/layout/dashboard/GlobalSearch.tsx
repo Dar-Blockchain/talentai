@@ -53,7 +53,7 @@ const GlobalSearch: React.FC = () => {
 
   const anchorRef  = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLInputElement>(null);
-  const debounce   = useRef<ReturnType<typeof setTimeout>>();
+  const debounce   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Ctrl+K / Cmd+K shortcut
   useEffect(() => {
