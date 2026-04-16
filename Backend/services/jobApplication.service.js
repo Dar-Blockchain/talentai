@@ -130,14 +130,14 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
     });
     console.log(`    ✓ Bedrock API response received`);
 
-    // ═══ STEP 5: Process Bedrock response ═══
-    console.log("\n[5️⃣  STEP] Processing BEDROCK RESPONSE...");
+    // ═══ STEP 4: Process Bedrock response ═══
+    console.log("\n[4️⃣  STEP] Processing BEDROCK RESPONSE...");
     const content = response.content || "{}";
     console.log(`    ✓ Response received (${content.length} characters)`);
     console.log(`    📄 Response Preview: ${content.substring(0, 150)}...`);
     
-    // ═══ STEP 6: Parse JSON response ═══
-    console.log("\n[6️⃣  STEP] Parsing JSON response from AI...");
+    // ═══ STEP 5: Parse JSON response ═══
+    console.log("\n[5️⃣  STEP] Parsing JSON response from AI...");
     let result = {};
     try {
       // Try to extract JSON from response
@@ -170,15 +170,15 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
       return 0;
     }
 
-    // ═══ STEP 7: Validate and normalize score ═══
-    console.log("\n[7️⃣  STEP] Validating and normalizing MATCH SCORE...");
+    // ═══ STEP 6: Validate and normalize score ═══
+    console.log("\n[6️⃣  STEP] Validating and normalizing MATCH SCORE...");
     const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
     const reasoning = result.reasoning || "No reasoning provided";
     
     console.log(`    ✓ Raw score from AI: ${result.matchScore}`);
     console.log(`    ✓ Normalized score: ${matchScore}/100`);
     console.log(`    ✓ Score is valid (0-100 range)`);
-    console.log(`    💡 AI Reasoning: "${reasoning.substring(0, 120)}${reasoning.length > 120 ? "..." : ""}"`);
+    console.log(`    💡 AI Reasoning: "${reasoning.substring(0, 120)}${reasoning.length > 720 ? "..." : ""}"`);
 
     // ═══ FINAL RESULT ═══
     console.log("\n" + "─".repeat(80));
@@ -204,7 +204,7 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log("🎯 [MATCH SCORE CALCULATION ENGINE] - COMPLETE WORKFLOW");
     console.log("═".repeat(100));
     console.log("📌 OBJECTIVE: Calculate intelligent job-candidate match score using AI");
-    console.log("📋 WORKFLOW: Load Candidate → Load Job → Load Config → Extract Resume → Call AI → Return Score");
+    console.log("📋 WORKFLOW: Load Candidate → Load Job → Extract Resume → Call AI → Return Score");
     console.log("═".repeat(100));
     
     console.log(`\n⏱️  Starting process at: ${new Date().toISOString()}`);
@@ -282,34 +282,8 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log(`     └─ Employment Type: ${post.jobDetails?.employmentType || "Not specified"}`);
     console.log(`     └─ Experience Level Required: ${post.jobDetails?.experienceLevel || "Not specified"}`);
 
-    // ═══ STEP 3: Load matching configuration ═══
-    console.log("\n\n[STEP 3️⃣] LOAD COMPANY'S MATCHING CONFIGURATION");
-    console.log("─".repeat(100));
-    console.log("📥 Action: Fetching matching config for company: " + companyId);
-    
-    const MatchingConfig = require("../models/MatchingConfig.model");
-    const matchingConfig = await MatchingConfig.findOne({ company: companyId });
-    const configData = matchingConfig || { weights: {} };
-    
-    if (matchingConfig) {
-      console.log(`✅ CUSTOM MATCHING CONFIG FOUND`);
-      console.log(`   This company has custom weighted criteria `);
-    } else {
-      console.log(`ℹ️  NO CUSTOM CONFIG FOUND - Using DEFAULT WEIGHTS`);
-      console.log(`   Standard matching criteria will be applied`);
-    }
-    
-    const weights = configData.weights || {};
-    console.log(`\n   Applied Weight Distribution:`);
-    console.log(`     └─ Hard Technical Skills: ${weights.hardSkill || 50}%`);
-    console.log(`     └─ Soft Skills: ${weights.SoftSkill || 10}%`);
-    console.log(`     └─ Experience Level: ${weights.experience || 10}%`);
-    console.log(`     └─ Salary Alignment: ${weights.salary || 10}%`);
-    console.log(`     └─ Work Mode Match: ${weights.workMode || 10}%`);
-    console.log(`     └─ Contract Type Match: ${weights.contract || 10}%`);
-
-    // ═══ STEP 4: Extract and analyze resume ═══
-    console.log("\n\n[STEP 4️⃣] EXTRACT & ANALYZE CANDIDATE RESUME (PDF)");
+    // ═══ STEP 3: Extract and analyze resume ═══
+    console.log("\n\n[STEP 3️⃣] EXTRACT & ANALYZE CANDIDATE RESUME (PDF)");
     console.log("─".repeat(100));
     
     let resumeAnalysis = null;
@@ -351,8 +325,8 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       console.log(`   Matching will use PROFILE DATA ONLY`);
     }
 
-    // ═══ STEP 5: Call Bedrock AI for matching ═══
-    console.log("\n\n[STEP 5️⃣] INVOKE BEDROCK AI MATCHING ENGINE");
+    // ═══ STEP 4: Call Bedrock AI for matching ═══
+    console.log("\n\n[STEP 4️⃣] INVOKE BEDROCK AI MATCHING ENGINE");
     console.log("─".repeat(100));
     console.log("🤖 Action: Sending all data to Bedrock AI for intelligent analysis");
     console.log(`   Data being sent:`);
@@ -360,14 +334,13 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log(`     • Resume Analysis: ${resumeAnalysis ? "YES (structured data)" : "NO"}`);
     console.log(`     • Resume Text: ${resumeText ? `YES (${resumeText.length} chars)` : "NO"}`);
     console.log(`     • Job Description: Title, requirements, compensation`);
-    console.log(`     • Matching Weights: Custom (if available)`);
 
     console.log(`\n⏳ Calling Bedrock AI... (this may take 2-5 seconds)`);
     const matchResult = await calculateMatchScoreWithBedrock(profile, post, resumeAnalysis, resumeText);
     console.log(`\n✅ AI Matching Completed`);
 
-    // ═══ STEP 6: Process result ═══
-    console.log("\n\n[STEP 6️⃣] PROCESS & FINALIZE RESULTS");
+    // ═══ STEP 5: Process result ═══
+    console.log("\n\n[STEP 5️⃣] PROCESS & FINALIZE RESULTS");
     console.log("─".repeat(100));
     
     const score = matchResult || 0;

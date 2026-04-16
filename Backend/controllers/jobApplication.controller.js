@@ -85,21 +85,6 @@ module.exports.createJobApplication = async (req, res) => {
       // matchScore will be calculated automatically - DO NOT SET IT HERE
     };
 
-    console.log(`\n📊 [MATCH SCORE CALCULATION]`);
-    console.log(`   This will use an AI-powered matching algorithm that considers:`);
-    console.log(`   1️⃣  HARD SKILLS (50%) - Technical skills match`);
-    console.log(`        └─ Comparing: ${profile.skills?.length || 0} candidate skills vs ${post.skillAnalysis?.requiredSkills?.length || 0} required skills`);
-    console.log(`   2️⃣  SOFT SKILLS (10%) - Behavioral skills match`);
-    console.log(`        └─ Comparing: ${profile.softSkills?.length || 0} candidate soft skills vs ${post.skillAnalysis?.softSkills?.length || 0} required soft skills`);
-    console.log(`   3️⃣  EXPERIENCE (10%) - Professional experience alignment`);
-    console.log(`        └─ Based on skill levels and years of experience`);
-    console.log(`   4️⃣  SALARY (10%) - Compensation alignment`);
-    console.log(`        └─ Job range: ${post.jobDetails?.salary?.min}-${post.jobDetails?.salary?.max} ${post.jobDetails?.salary?.currency}`);
-    console.log(`        └─ Candidate expectation: ${profile.expectedSalary?.min}-${profile.expectedSalary?.max} ${profile.expectedSalary?.currency}`);
-    console.log(`   5️⃣  WORK MODE (10%) - Work location/mode match`);
-    console.log(`        └─ Job: ${post.jobDetails?.workMode || "Not specified"} | Candidate preference: ${profile.workModePreference || "Not specified"}`);
-    console.log(`   6️⃣  CONTRACT TYPE (10%) - Employment type match`);
-    console.log(`        └─ Job: ${post.jobDetails?.employmentType || "Not specified"} | Candidate preference: ${profile.preferredContractType || "Not specified"}`);
     console.log(`\n   ⚙️  Processing with jobApplicationService.createJobApplication()...`);
 
     const application = await jobApplicationService.createJobApplication(
