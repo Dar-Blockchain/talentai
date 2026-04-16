@@ -92,21 +92,34 @@ export const socketMiddleware: Middleware = (store) => {
         transports: ['websocket', 'polling'],
       });
 
+      let toastEnabled = false;
+      // Delay toasts by 2s after connect so login-time notifications don't flash before the page loads
       socket.on('connect', () => {
         store.dispatch(setSocketConnected(true));
         socket!.emit('join', userId);
+        setTimeout(() => { toastEnabled = true; }, 2000);
       });
 
       socket.on('disconnect', () => {
         store.dispatch(setSocketConnected(false));
       });
 
+      // Helper: suppress welcome toasts after first login
+      const shouldShowToast = (message: string): boolean => {
+        const isWelcome = message.toLowerCase().includes('welcome') || message.toLowerCase().includes('registered');
+        if (isWelcome) {
+          const trafficCounter = (store.getState() as any).user?.connectedUser?.user?.trafficCounter ?? 0;
+          return trafficCounter <= 1;
+        }
+        return true;
+      };
+
       // Listen for new notifications from backend
       socket.on('notification', (data: any) => {
         const notification = mapNotificationData(data);
         store.dispatch(addNotification(notification));
         playNotificationSound(notification.type as NotificationType);
-        emitToast({ message: notification.message, severity: notification.type as any });
+        if (toastEnabled && shouldShowToast(notification.message)) emitToast({ message: notification.message, severity: notification.type as any });
       });
 
       // Listen for broadcast system notifications
@@ -114,7 +127,7 @@ export const socketMiddleware: Middleware = (store) => {
         const notification = mapNotificationData(data);
         store.dispatch(addNotification(notification));
         playNotificationSound(notification.type as NotificationType);
-        emitToast({ message: notification.message, severity: notification.type as any });
+        if (toastEnabled && shouldShowToast(notification.message)) emitToast({ message: notification.message, severity: notification.type as any });
       });
 
       // Listen for notification read events
@@ -151,7 +164,7 @@ export const socketMiddleware: Middleware = (store) => {
         };
         store.dispatch(addNotification(notification));
         playNotificationSound('success');
-        emitToast({ message, severity: 'success' });
+        if (toastEnabled) emitToast({ message, severity: 'success' });
       });
 
       // Listen for match notifications
@@ -168,7 +181,7 @@ export const socketMiddleware: Middleware = (store) => {
         };
         store.dispatch(addNotification(notification));
         playNotificationSound('info');
-        emitToast({ message, severity: 'info' });
+        if (toastEnabled) emitToast({ message, severity: 'info' });
       });
 
       // Listen for purchase notifications
@@ -185,7 +198,7 @@ export const socketMiddleware: Middleware = (store) => {
         };
         store.dispatch(addNotification(notification));
         playNotificationSound('success');
-        emitToast({ message, severity: 'success' });
+        if (toastEnabled) emitToast({ message, severity: 'success' });
       });
     }
 
