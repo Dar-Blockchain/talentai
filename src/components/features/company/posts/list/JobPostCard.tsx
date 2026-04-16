@@ -13,8 +13,6 @@ import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 
-const TEAL = "#0D9488";
-
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -29,12 +27,12 @@ const CREATION_TYPE: Record<string, { label: string; color: string; bg: string; 
   manual:   { label: "Manual",   color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 };
 
-const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; bar: string }> = {
-  active:  { label: "Open",   color: "#059669", bg: "#ECFDF5", bar: "#10B981" },
-  open:    { label: "Open",   color: "#059669", bg: "#ECFDF5", bar: "#10B981" },
-  draft:   { label: "Draft",  color: "#D97706", bg: "#FFFBEB", bar: "#F59E0B" },
-  closed:  { label: "Closed", color: "#DC2626", bg: "#FEF2F2", bar: "#EF4444" },
-  expired: { label: "Expired",color: "#DC2626", bg: "#FEF2F2", bar: "#EF4444" },
+const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+  active:  { label: "Open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
+  open:    { label: "Open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
+  draft:   { label: "Draft",   color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B" },
+  closed:  { label: "Closed",  color: "#6B7280", bg: "#F3F4F6", dot: "#9CA3AF" },
+  expired: { label: "Expired", color: "#DC2626", bg: "#FEF2F2", dot: "#EF4444" },
 };
 
 interface JobPostCardProps {
@@ -76,7 +74,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, delay: index * 0.04 }}
-      style={{ height: "100%" }}
+      style={{ height: "100%", minWidth: 0 }}
     >
       <Box
         onClick={() => onViewDetails(job._id)}
@@ -91,14 +89,14 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           cursor: "pointer",
           transition: "all 0.15s",
           "&:hover": {
-            borderColor: `${TEAL}40`,
-            boxShadow: `0 4px 16px rgba(13,148,136,0.08)`,
+            borderColor: "#D1D5DB",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.07)",
             transform: "translateY(-1px)",
           },
         }}
       >
-        {/* Top accent bar */}
-        <Box sx={{ height: 4, bgcolor: statusStyle.bar, flexShrink: 0 }} />
+        {/* Top accent bar — subtle gray */}
+        <Box sx={{ height: 3, bgcolor: "#E5E7EB", flexShrink: 0 }} />
 
         <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
 
@@ -107,10 +105,10 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             {/* Icon */}
             <Box sx={{
               width: 44, height: 44, borderRadius: "11px", flexShrink: 0,
-              bgcolor: `${TEAL}0F`, border: `1px solid ${TEAL}20`,
+              bgcolor: "#F3F4F6", border: "1px solid #E5E7EB",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
+              <WorkOutlineOutlined sx={{ fontSize: 20, color: "#6B7280" }} />
             </Box>
 
             {/* Title + badges */}
@@ -137,7 +135,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   px: "7px", py: "3px", borderRadius: "5px",
                   bgcolor: statusStyle.bg, border: `1px solid ${statusStyle.color}28`,
                 }}>
-                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: statusStyle.bar, flexShrink: 0 }} />
+                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: statusStyle.dot, flexShrink: 0 }} />
                   <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: statusStyle.color, lineHeight: 1 }}>
                     {statusStyle.label}
                   </Typography>
@@ -282,8 +280,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
               {daysLeft !== null && !isExpired && (
                 <Typography sx={{
                   fontSize: "10.5px", fontWeight: 700,
-                  color: daysLeft <= 3 ? "#D97706" : TEAL,
-                  bgcolor: daysLeft <= 3 ? "#FFFBEB" : `${TEAL}10`,
+                  color: daysLeft <= 3 ? "#DC2626" : "#059669",
+                  bgcolor: daysLeft <= 3 ? "#FEF2F2" : "#ECFDF5",
                   px: 0.75, py: 0.2, borderRadius: "4px",
                 }}>
                   {daysLeft}d left
@@ -309,12 +307,12 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   onClick={handleCopyLink}
                   sx={{
                     p: 0.75, borderRadius: "8px",
-                    color: copied ? "#059669" : "#9CA3AF",
-                    bgcolor: copied ? "#ECFDF5" : "transparent",
+                    color: copied ? "#374151" : "#9CA3AF",
+                    bgcolor: copied ? "#F3F4F6" : "transparent",
                     border: "1px solid",
-                    borderColor: copied ? "#A7F3D0" : "#E5E7EB",
+                    borderColor: "#E5E7EB",
                     transition: "all 0.18s",
-                    "&:hover": { color: "#059669", bgcolor: "#F0FDF4", borderColor: "#A7F3D0" },
+                    "&:hover": { color: "#374151", bgcolor: "#F3F4F6" },
                   }}
                 >
                   <ContentCopyOutlined sx={{ fontSize: 14 }} />
