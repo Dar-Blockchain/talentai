@@ -3,16 +3,12 @@ const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
 const CVAnalysis = require("../models/CVAnalysis.model");
 const { calculateMatchScore } = require("./MatchingService/matching.service");
-const OpenAI = require("openai");
+const { callLLM } = require("../helpers/bedrock.helpers");
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// ========== CALCULATE MATCH SCORE WITH OPENAI ==========
+// ========== CALCULATE MATCH SCORE WITH BEDROCK ==========
 const calculateMatchScoreWithOpenAI = async (candidateProfile, jobPost) => {
   try {
-    console.log(`\n🤖 [OPENAI MATCHING] - Sending to OpenAI for AI-powered matching...`);
+    console.log(`\n🤖 [BEDROCK MATCHING] - Sending to Bedrock for AI-powered matching...`);
     
     // Prepare candidate data
     const candidateData = {
@@ -52,12 +48,12 @@ const calculateMatchScoreWithOpenAI = async (candidateProfile, jobPost) => {
       experienceLevel: jobPost.jobDetails?.experienceLevel || "Not specified",
     };
 
-    const prompt = `You are an expert HR and talent matching AI. Analyze the compatibility between a candidate and a job position.
+    const prompt = `Analyze the compatibility between a candidate and a job position. Return ONLY valid JSON.
 
-CANDIDATE PROFILE:
+CANDIDATE:
 ${JSON.stringify(candidateData, null, 2)}
 
-JOB POSITION:
+JOB:
 ${JSON.stringify(jobData, null, 2)}
 
 Based on this information, provide a matching score between 0 and 100, where:
@@ -68,12 +64,9 @@ Based on this information, provide a matching score between 0 and 100, where:
 - 81-100: Excellent match - strong alignment across most criteria
 
 Consider these factors:
-1. **Technical Skills Match** (40%): How well do candidate's technical skills match the job requirements?
+1. **Technical Skills Match** (80%): How well do candidate's technical skills match the job requirements?
 2. **Soft Skills Match** (10%): Do the soft skills align with the role's needs?
-3. **Experience Level** (15%): Does the candidate's experience level match the job's requirements?
-4. **Salary Alignment** (10%): Is there reasonable overlap between candidate's expectations and job offer?
-5. **Work Mode Match** (10%): Does work mode preference align with job requirements?
-6. **Contract Type Match** (15%): Does employment type preference match the job offer?
+3. **Experience Level** (10%): Does the candidate's experience level match the job's requirements?
 
 IMPORTANT: Return ONLY a JSON object with this exact structure:
 {
@@ -83,8 +76,7 @@ IMPORTANT: Return ONLY a JSON object with this exact structure:
 
 Do not include any other text, markdown, or explanation outside of the JSON object.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
+    const response = await callLLM({
       messages: [
         {
           role: "user",
@@ -92,36 +84,49 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
         }
       ],
       temperature: 0.7,
-      max_tokens: 500
+      maxTokens: 2000
     });
 
     // Extract the response content
-    const content = response.choices[0]?.message?.content || "{}";
-    console.log(`📄 OpenAI Response:`, content);
+    const content = response.content || "{}";
+    console.log(`📄 Bedrock Response:`, content.substring(0, 300));
     
-    // Parse JSON response
+    // Parse JSON response - improved parsing for truncated JSON
     let result = {};
     try {
       // Try to extract JSON from response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let jsonMatch = content.match(/\{[\s\S]*\}/);
+      
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+        let jsonStr = jsonMatch[0];
+        
+        // If JSON appears truncated, try to fix it
+        if (!jsonStr.endsWith('}')) {
+          // Find the last complete field
+          const lastQuoteIndex = jsonStr.lastIndexOf('"');
+          if (lastQuoteIndex > 0) {
+            jsonStr = jsonStr.substring(0, lastQuoteIndex) + '"}';
+          }
+        }
+        
+        result = JSON.parse(jsonStr);
       } else {
         result = JSON.parse(content);
       }
     } catch (parseError) {
-      console.error(`⚠️ Failed to parse OpenAI response:`, parseError.message);
+      console.error(`⚠️ Failed to parse Bedrock response:`, parseError.message);
+      console.error(`   Response content: ${content.substring(0, 300)}`);
       return 0;
     }
 
     const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
     
-    console.log(`✅ Match Score from OpenAI: ${matchScore}/100`);
-    console.log(`   Reasoning: ${result.reasoning || "Not provided"}`);
+    console.log(`✅ Match Score from Bedrock: ${matchScore}/100`);
+    console.log(`   Reasoning: ${(result.reasoning || "Not provided").substring(0, 100)}`);
     
     return matchScore;
   } catch (error) {
-    console.error(`❌ [OPENAI MATCHING ERROR]`, error.message);
+    console.error(`❌ [BEDROCK MATCHING ERROR]`, error.message);
     console.error("Falling back to default score of 0");
     return 0;
   }
