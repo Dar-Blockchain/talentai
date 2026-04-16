@@ -296,30 +296,6 @@ export const fetchInterviewDetailsById = createAsyncThunk<
 );
 
 /**
- * Claim interview reward
- */
-export const claimInterviewReward = createAsyncThunk<
-  any,
-  string,
-  { rejectValue: string }
->(
-  'interview/claimReward',
-  async (interviewId, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(`interviewDetails/${interviewId}/claim-reward`);
-      const result = response.data;
-      if (result.success) {
-        return result;
-      } else {
-        return rejectWithValue(result.error || 'Failed to claim reward');
-      }
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to claim reward');
-    }
-  }
-);
-
-/**
  * Fetch company interview metrics
  */
 export const fetchCompanyInterviewMetrics = createAsyncThunk<

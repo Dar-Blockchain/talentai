@@ -1,12 +1,10 @@
 const JobApplication = require("../models/JobApplication.model");
 const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
-const CVAnalysis = require("../models/CVAnalysis.model");
-const { calculateMatchScore } = require("./MatchingService/matching.service");
 const { callLLM } = require("../helpers/bedrock.helpers");
 
 // ========== CALCULATE MATCH SCORE WITH BEDROCK ==========
-const calculateMatchScoreWithOpenAI = async (candidateProfile, jobPost) => {
+const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost) => {
   try {
     console.log(`\n🤖 [BEDROCK MATCHING] - Sending to Bedrock for AI-powered matching...`);
     
@@ -216,14 +214,14 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log(`   └─ Work Mode Weight: ${weights.workMode || 10}%`);
     console.log(`   └─ Contract Weight: ${weights.contract || 10}%`);
 
-    // Calculate match score using OpenAI AI matching algorithm
-    console.log(`\n🔍 Step 4: Running OpenAI matching algorithm...`);
-    console.log(`   Sending candidate CV and job post to OpenAI for intelligent matching...`);
+    // Calculate match score using Bedrock AI matching algorithm
+    console.log(`\n🔍 Step 4: Running Bedrock matching algorithm...`);
+    console.log(`   Sending candidate CV and job post to Bedrock for intelligent matching...`);
 
-    const matchResult = await calculateMatchScoreWithOpenAI(profile, post);
+    const matchResult = await calculateMatchScoreWithBedrock(profile, post);
 
     const score = matchResult || 0;
-    console.log(`\n✅ [MATCH SCORE CALCULATED BY OPENAI]`);
+    console.log(`\n✅ [MATCH SCORE CALCULATED BY BEDROCK]`);
     console.log(`   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
     console.log(`   Job: "${post.jobDetails?.title}"`);
     console.log(`   Final Match Score: ${score}/100`);

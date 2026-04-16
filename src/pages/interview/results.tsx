@@ -13,12 +13,11 @@ import { notifySkillTestPassed, notifySkillLevelUp, notifySkillTestCompleted } f
 import { createNotification, broadcastSystemNotification } from '@/store/slices/notificationSlice';
 import { updateProfileQuota, updateProfileSkills, updateProfileSoftSkill, getMyProfile } from '@/store/slices/userSlice';
 import { savePostInterviewAssessment } from '@/store/slices/postSlice';
-import { saveInterviewAssessment, fetchInterviewDetailsById, claimInterviewReward } from '@/store/slices/interviewSlice';
+import { saveInterviewAssessment, fetchInterviewDetailsById } from '@/store/slices/interviewSlice';
 import PageContainer from '@/components/layout/PageContainer';
 import Header from '@/components/layout/Header';
 import {
   ResultsHeader,
-  RewardNotification,
   KeyStrengths,
   AreasForImprovement,
   CoverageDetails,
@@ -26,7 +25,6 @@ import {
   LoadingState,
   ErrorState,
   InterviewAnalysis,
-  RewardInfo,
   determineLevel,
 } from '@/components/features/interview/results';
 
@@ -37,8 +35,6 @@ export default function InterviewResults() {
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rewardInfo, setRewardInfo] = useState<RewardInfo | null>(null);
-  const [claimingReward, setClaimingReward] = useState(false);
 
   useEffect(() => {
     if (router.isReady) {
@@ -194,24 +190,6 @@ export default function InterviewResults() {
       // Refresh profile to update planUsage (monthlyInterviewsUsed)
       dispatch(getMyProfile());
 
-      if (result.reward) {
-        if (result.reward.success && !result.reward.skipped) {
-          setRewardInfo({
-            success: true,
-            amount: result.reward.amount,
-            transactionId: result.reward.transactionId,
-            interviewId: result.data._id
-          });
-        } else if (result.reward.canRetry) {
-          setRewardInfo({
-            success: false,
-            canRetry: true,
-            error: result.reward.error,
-            interviewId: result.data._id
-          });
-        }
-      }
-
       try {
         const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : 'Interview';
         const score = parsedData?.finalReport?.coverage?.overall || parsedData?.overallScore || 0;
@@ -273,42 +251,6 @@ export default function InterviewResults() {
       saveInterviewToBackend(false);
     }
   }, [analysis]);
-
-  const handleClaimReward = async () => {
-    if (!rewardInfo?.interviewId) return;
-
-    try {
-      setClaimingReward(true);
-
-      const actionResult = await dispatch(claimInterviewReward(rewardInfo.interviewId));
-
-      if (claimInterviewReward.fulfilled.match(actionResult)) {
-        const result = actionResult.payload;
-        setRewardInfo({
-          success: true,
-          amount: result.reward.amount,
-          transactionId: result.reward.transactionId,
-          interviewId: rewardInfo.interviewId
-        });
-      } else {
-        const errorMsg = actionResult.payload as string;
-        setRewardInfo({
-          ...rewardInfo,
-          success: false,
-          error: errorMsg,
-          canRetry: true
-        });
-      }
-    } catch (error: any) {
-      setRewardInfo({
-        ...rewardInfo,
-        success: false,
-        error: error.message || 'Failed to claim reward'
-      });
-    } finally {
-      setClaimingReward(false);
-    }
-  };
 
   const fetchAnalysis = async () => {
     try {
@@ -580,14 +522,6 @@ export default function InterviewResults() {
     <PageContainer>
       <Header />
       <ResultsHeader analysis={analysis} />
-
-      {rewardInfo && (
-        <RewardNotification
-          rewardInfo={rewardInfo}
-          claimingReward={claimingReward}
-          onClaimReward={handleClaimReward}
-        />
-      )}
       <KeyStrengths strengths={analysis.strengths} />
       <AreasForImprovement weaknesses={analysis.weaknesses} />
       <CoverageDetails coverage={analysis.coverage} />
