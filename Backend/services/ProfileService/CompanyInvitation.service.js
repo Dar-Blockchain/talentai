@@ -147,7 +147,10 @@ module.exports.sentInvitation = async (
   const member = await CompanyInvitationModel.create(invitationData);
   const invitationLink = _buildInvitationLink(token, member._id, company);
 
-  await _sendInvitationEmail(userEmail, username, role, invitationLink);
+  const companyProfile = await Profile.findOne({ userId: company });
+  const companyName = companyProfile?.companyDetails?.name || username;
+
+  await _sendInvitationEmail(userEmail, companyName, role, invitationLink);
 
   return member;
 };
@@ -187,9 +190,10 @@ module.exports.resendInvitation = async (invitationId, departmentId = null, upda
   ).populate("invitedBy");
 
   const invitationLink = _buildInvitationLink(token, invitationId, updatedInvitation.company);
-  const senderName = updatedInvitation.invitedBy?.username || "Admin";
+  const companyProfile = await Profile.findOne({ userId: updatedInvitation.company });
+  const companyName = companyProfile?.companyDetails?.name || updatedInvitation.invitedBy?.username || "Admin";
 
-  await _sendInvitationEmail(updatedInvitation.email, senderName, updatedInvitation.role, invitationLink, true);
+  await _sendInvitationEmail(updatedInvitation.email, companyName, updatedInvitation.role, invitationLink, true);
 
   return updatedInvitation;
 };

@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Stack } from "@mui/material";
-
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import DemoVideoModal from "@/components/home/company/DemoVideoModal";
 
 const HeaderPrimaryActions = () => {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const userType = user?.role?.toLowerCase()  || localStorage.getItem("userType") || "candidate";
 
@@ -39,10 +40,7 @@ const HeaderPrimaryActions = () => {
         onClick={() =>
           userType === "candidate"
             ? router.push("/signin")
-            : window.open(
-                "https://www.youtube.com/watch?v=_wGI7HxQQHU",
-                "_blank"
-              )
+            : setVideoOpen(true)
         }
         sx={{
           backgroundColor: "#ffffff",
@@ -61,6 +59,8 @@ const HeaderPrimaryActions = () => {
       >
         {userType === "candidate" ? "Sign-up" : "Watch Demo"}
       </Button>
+
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </Stack>
   );
 };

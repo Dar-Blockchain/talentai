@@ -20,7 +20,11 @@ const permissionSchema = new mongoose.Schema(
     },
 
     // Job Post Permissions
-    canCreateJobPosts: { type: Boolean, default: false },
+    canCreateJobPosts: { type: Boolean, default: true },
+    
+    // Candidate Permissions
+    canViewCandidateProfiles: { type: Boolean, default: true },
+    canContactCandidates: { type: Boolean, default: true },
 
     // Candidate Permissions
     canUnlockCandidates: { type: Boolean, default: false },
@@ -30,9 +34,7 @@ const permissionSchema = new mongoose.Schema(
     // Matching Permissions
     canAccessMatching: { type: Boolean, default: false },
 
-    // HR Agent Permissions
-    canUseHRAgents: { type: Boolean, default: false },
-
+   
     // Team Permissions
     canManageTeam: { type: Boolean, default: false },
     canInviteMembers: { type: Boolean, default: false },

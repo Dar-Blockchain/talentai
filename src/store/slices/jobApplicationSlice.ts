@@ -8,13 +8,42 @@ interface ApplicationMetrics {
   topCVScore: number;
 }
 
+export interface ApplicationSummaryItem {
+  id: string;
+  candidateUserId: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  userImage: string | null;
+  matchScore: number | null;
+  interviewScore: number | null;
+  appliedAt: string | null;
+  completedAt: string | null;
+  status: string;
+  postId?: string | null;
+  postTitle?: string | null;
+  resumeFile?: string | null;
+}
+
+interface SummaryState {
+  data: ApplicationSummaryItem[];
+  loading: boolean;
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+}
+
 interface JobApplicationState {
   applications: any[];
   allApplications: any[];
   metrics: ApplicationMetrics | null;
   loading: boolean;
   metricsLoading: boolean;
+  postSummary: SummaryState;
+  companySummary: SummaryState;
 }
+
+const emptySummary: SummaryState = { data: [], loading: false, currentPage: 1, totalPages: 1, totalCount: 0 };
 
 const initialState: JobApplicationState = {
   applications: [],
@@ -22,6 +51,8 @@ const initialState: JobApplicationState = {
   metrics: null,
   loading: false,
   metricsLoading: false,
+  postSummary: { ...emptySummary },
+  companySummary: { ...emptySummary },
 };
 
 export const fetchCompanyApplications = createAsyncThunk(
@@ -45,7 +76,80 @@ export const fetchCompanyApplications = createAsyncThunk(
     if (params.dateTo) query.set('dateTo', params.dateTo);
     const url = `job-applications/company/my${query.toString() ? `?${query}` : ''}`;
     const res = await axiosInstance.get(url);
-    return Array.isArray(res.data) ? res.data : Array.isArray(res.data?.data) ? res.data.data : [];
+    return (Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []) as any[];
+  }
+);
+
+export const fetchPostApplicationsSummary = createAsyncThunk(
+  'jobApplications/fetchPostSummary',
+  async (params: {
+    postId: string;
+    status?: string;
+    search?: string;
+    matchScoreMin?: number;
+    matchScoreMax?: number;
+    interviewScoreMin?: number;
+    interviewScoreMax?: number;
+    dateFrom?: string;
+    dateTo?: string;
+    sort?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const { postId, ...rest } = params;
+    const query = new URLSearchParams();
+    Object.entries(rest).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
+    });
+    const url = `job-applications/post/${postId}/summary${query.toString() ? `?${query}` : ''}`;
+    const res = await axiosInstance.get(url);
+    return {
+      data: (res.data?.data ?? []) as ApplicationSummaryItem[],
+      pagination: res.data?.pagination ?? {},
+    };
+  }
+);
+
+export const fetchCompanyApplicationsSummary = createAsyncThunk(
+  'jobApplications/fetchCompanySummary',
+  async (params: {
+    status?: string;
+    search?: string;
+    postId?: string;
+    matchScoreMin?: number;
+    matchScoreMax?: number;
+    interviewScoreMin?: number;
+    interviewScoreMax?: number;
+    dateFrom?: string;
+    dateTo?: string;
+    sort?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
+    });
+    const res = await axiosInstance.get(`job-applications/company/my/summary${query.toString() ? `?${query}` : ''}`);
+    return {
+      data: (res.data?.data ?? []) as ApplicationSummaryItem[],
+      pagination: res.data?.pagination ?? {},
+    };
+  }
+);
+
+export const inviteToInterview = createAsyncThunk(
+  'jobApplications/inviteToInterview',
+  async (params: { applicationId: string; interviewLink: string }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        `job-applications/${params.applicationId}/invite-to-interview`,
+        { interviewLink: params.interviewLink }
+      );
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error ?? 'Failed to send invitation');
+    }
   }
 );
 
@@ -80,6 +184,32 @@ const jobApplicationSlice = createSlice({
       .addCase(fetchCompanyApplications.rejected, (state) => {
         state.loading = false;
       })
+      .addCase(fetchPostApplicationsSummary.pending, (state) => {
+        state.postSummary.loading = true;
+      })
+      .addCase(fetchPostApplicationsSummary.fulfilled, (state, action) => {
+        state.postSummary.loading = false;
+        state.postSummary.data = action.payload.data;
+        state.postSummary.currentPage = action.payload.pagination.currentPage ?? 1;
+        state.postSummary.totalPages = action.payload.pagination.totalPages ?? 1;
+        state.postSummary.totalCount = action.payload.pagination.totalCount ?? 0;
+      })
+      .addCase(fetchPostApplicationsSummary.rejected, (state) => {
+        state.postSummary.loading = false;
+      })
+      .addCase(fetchCompanyApplicationsSummary.pending, (state) => {
+        state.companySummary.loading = true;
+      })
+      .addCase(fetchCompanyApplicationsSummary.fulfilled, (state, action) => {
+        state.companySummary.loading = false;
+        state.companySummary.data = action.payload.data;
+        state.companySummary.currentPage = action.payload.pagination.currentPage ?? 1;
+        state.companySummary.totalPages = action.payload.pagination.totalPages ?? 1;
+        state.companySummary.totalCount = action.payload.pagination.totalCount ?? 0;
+      })
+      .addCase(fetchCompanyApplicationsSummary.rejected, (state) => {
+        state.companySummary.loading = false;
+      })
       .addCase(fetchCompanyApplicationMetrics.pending, (state) => {
         state.metricsLoading = true;
       })
@@ -101,3 +231,17 @@ export const selectApplicationMetrics = (state: { jobApplications: JobApplicatio
 export const selectApplicationMetricsLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.metricsLoading;
 export const selectAllApplications = (state: { jobApplications: JobApplicationState }) => state.jobApplications.allApplications;
 export const selectApplicationsLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.loading;
+export const selectPostSummary = (state: { jobApplications: JobApplicationState }) => state.jobApplications.postSummary.data;
+export const selectPostSummaryLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.postSummary.loading;
+export const selectPostSummaryPagination = (state: { jobApplications: JobApplicationState }) => ({
+  currentPage: state.jobApplications.postSummary.currentPage,
+  totalPages: state.jobApplications.postSummary.totalPages,
+  totalCount: state.jobApplications.postSummary.totalCount,
+});
+export const selectCompanySummary = (state: { jobApplications: JobApplicationState }) => state.jobApplications.companySummary.data;
+export const selectCompanySummaryLoading = (state: { jobApplications: JobApplicationState }) => state.jobApplications.companySummary.loading;
+export const selectCompanySummaryPagination = (state: { jobApplications: JobApplicationState }) => ({
+  currentPage: state.jobApplications.companySummary.currentPage,
+  totalPages: state.jobApplications.companySummary.totalPages,
+  totalCount: state.jobApplications.companySummary.totalCount,
+});

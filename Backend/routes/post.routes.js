@@ -9,12 +9,11 @@
  */
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // Import des middlewares
 const postController = require("../controllers/PostControllers/post.controller");
-const postPaymentController = require("../controllers/postPayment.controller");
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
@@ -33,21 +32,8 @@ router.get("/details/:id", postController.getPostDetailsPublic);
 // Description: Returns public statistics (number of users, posts, companies)
 router.get("/public-stats", postController.getPublicStats);
 
-// Auth required + logs for all routes
-// Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
-router.use((req, res, next) => {
-  // First try API Key verification
-  verifyApiKey(req, res, (err) => {
-    // If API Key succeeds, continue
-    if (req.isApiKeyAuth) {
-      return next();
-    }
-    // Otherwise, require JWT authentication
-    return requireAuthUser(req, res, next);
-  });
-});
 
-router.use(authLogMiddleware("Post"));
+router.use(requireAuth,authLogMiddleware("Post"));
 
 // POST /post/save-post
 // Description: Creates a post
@@ -62,7 +48,7 @@ router.get("/get-all-posts", checkScope(['read:posts']), postController.getAllPo
 // GET /post/my-posts
 // Description: Posts of current user
 // Required scopes: read:posts
-router.get("/my-posts", checkScope(['read:posts']), resolveCompanyActor, postController.getUserPosts);
+router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 
 // GET /post/metrics
 // Description: Returns post metrics (total, active, draft, expired, closed, cancelled)
@@ -96,31 +82,9 @@ router.get("/adsPost", postController.getPostsByUserTopSkills);
 // Description: Post detail alias
 router.get("/DetailsPost/:id", resolveCompanyActor,postController.getPostById);
 
-// POST /post/send-technical-test
-// Description: Send technical test task via email with PDF
-router.post("/send-technical-test", resolveCompanyActor,postController.sendTechnicalTest);
-
 // ========================================
-// PAYMENT ROUTES
+// INTERVIEW CONFIGURATION ROUTES
 // ========================================
-
-// GET /post/payment/calculate-price/:postId
-// Description: Calculate payment price for a post based on number of steps
-router.get("/payment/calculate-price/:postId", resolveCompanyActor,postPaymentController.calculatePostPrice);
-
-// POST /post/payment/process
-// Description: Process payment for agent creation after post and agent are created
-// Body: { postId, agentId }
-// Required scopes: write:posts
-router.post("/payment/process", checkScope(['write:posts']), resolveCompanyActor,postPaymentController.processPostPayment);
-
-// GET /post/payment/history
-// Description: Get payment history for user's posts
-router.get("/payment/history", resolveCompanyActor,postPaymentController.getPostPaymentHistory);
-
-// GET /post/payment/details/:postId
-// Description: Get payment details for a specific post
-router.get("/payment/details/:postId", resolveCompanyActor,postPaymentController.getPostPaymentDetails);
 
 // GET /post/interview-config/:jobId
 // Description: Get interview configuration for job-based HR interview (prompt flow)

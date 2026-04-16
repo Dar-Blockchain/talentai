@@ -16,11 +16,11 @@ const {
 } = require('../controllers/InterviewControllers/SkillInterviewAssessment.controller');
 
 // Import middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 
 // ========== AUTHENTICATED ROUTES ==========
-router.use(requireAuthUser, authLogMiddleware("SkillInterviewAssessment"));
+router.use(requireAuth, authLogMiddleware("SkillInterviewAssessment"));
 
 // ========== CREATE ==========
 // POST /api/skill-interview-assessments

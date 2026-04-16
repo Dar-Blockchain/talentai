@@ -1,13 +1,8 @@
 const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
-const { sendPostEmail } = require("../../utils/email-service");
-const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
 const {
   parseJsonFields,
-  validateTechnicalTestInput,
 } = require("../../helpers/post.validation.helpers");
-const notificationService = require("../../services/notificationSystem.service");
-const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 
 // Centralized error handler
@@ -452,28 +447,6 @@ exports.getPostsByUserTopSkills = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ [getPostsByUserTopSkills] Error:", error.message);
-    handleError(res, error, 400);
-  }
-};
-
-// Send technical test task
-exports.sendTechnicalTest = async (req, res) => {
-  try {
-    const { postId, candidateEmail, candidateName } = req.body;
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
-    // Validate input
-    validateTechnicalTestInput(postId, candidateEmail, candidateName);
-
-    const result = await postService.createAndSendTechnicalTest(
-      postId,
-      token,
-      candidateEmail,
-      candidateName,
-    );
-
-    res.status(200).json({ success: true, data: result });
-  } catch (error) {
     handleError(res, error, 400);
   }
 };

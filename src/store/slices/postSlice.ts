@@ -20,11 +20,6 @@ interface RecommendedState {
   pagination: PaginationState;
 }
 
-interface PostPaymentState {
-  loading: boolean;
-  error: string | null;
-  data: any | null;
-}
 interface UpdatePostStatusState {
   loading: boolean;
   error: string | null;
@@ -94,7 +89,6 @@ interface PostState {
   recommended: RecommendedState;
   savePost: SavePostState;
   recruitmentFlow: RecruitmentFlowState;
-  postPayment: PostPaymentState;
   updatePostStatus: UpdatePostStatusState;
   candidateAssessments: CandidateAssessmentsState;
   companyAssessments: CompanyAssessmentsState;
@@ -157,11 +151,6 @@ const initialState: PostState = {
   recruitmentFlow: {
     nodes: [],
     edges: [],
-  },
-  postPayment: {
-    loading: false,
-    error: null,
-    data: null,
   },
   updatePostStatus: {
     loading: false,
@@ -501,23 +490,6 @@ export const fetchJobById = createAsyncThunk(
   }
 );
 
-export const processPostPayment = createAsyncThunk(
-  "post/processPostPayment",
-  async (
-    { postId, agentId }: { postId: string; agentId: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const response = await axiosInstance.post("post/payment/process", { postId, agentId });
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "An error occurred while processing payment"
-      );
-    }
-  }
-);
-
 export const updatePostStatus = createAsyncThunk(
   "post/updatePostStatus",
   async (
@@ -785,11 +757,7 @@ const postSlice = createSlice({
       state.recruitmentFlow.nodes = [];
       state.recruitmentFlow.edges = [];
     },
-    resetPostPayment(state) {
-      state.postPayment.loading = false;
-      state.postPayment.error = null;
-      state.postPayment.data = null;
-    },
+
     clearAssessmentDetails(state) {
       state.assessmentDetails = { assessment: null, stepsData: null, loading: false, error: null };
     },
@@ -915,18 +883,7 @@ const postSlice = createSlice({
         state.recommended.error = action.payload as string;
       })
       // ---- POST PAYMENT ----
-      .addCase(processPostPayment.pending, (state) => {
-        state.postPayment.loading = true;
-        state.postPayment.error = null;
-      })
-      .addCase(processPostPayment.fulfilled, (state, action) => {
-        state.postPayment.loading = false;
-        state.postPayment.data = action.payload;
-      })
-      .addCase(processPostPayment.rejected, (state, action) => {
-        state.postPayment.loading = false;
-        state.postPayment.error = action.payload as string;
-      })
+
       // ---- UPDATE POST STATUS ----
       .addCase(updatePostStatus.pending, (state) => {
         state.updatePostStatus.loading = true;
@@ -1014,7 +971,7 @@ export const {
   setFlowNodes,
   setFlowEdges,
   resetFlow,
-  resetPostPayment,
+
   clearAssessmentDetails,
 } = postSlice.actions;
 
@@ -1067,12 +1024,6 @@ export const selectRecommended = (state: { post: PostState }) => ({
   loading: state.post.recommended.loading,
   error: state.post.recommended.error,
   pagination: state.post.recommended.pagination,
-});
-
-export const selectPostPayment = (state: { post: PostState }) => ({
-  data: state.post.postPayment.data,
-  loading: state.post.postPayment.loading,
-  error: state.post.postPayment.error,
 });
 
 // Candidate Assessments Selectors

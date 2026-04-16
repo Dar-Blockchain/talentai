@@ -11,20 +11,27 @@ const router = express.Router();
 const postInterviewAssessmentController = require('../controllers/InterviewControllers/postInterviewAssessment.controller');
 
 // Import middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
+const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 // ========== PUBLIC ROUTES (no auth required) ==========
 
 // GET /post-interview-assessments/post/:postId — Get all assessments for a post
 router.get('/post/:postId', postInterviewAssessmentController.getAssessmentsByPost);
 
+// GET /post-interview-assessments/post/:postId/candidate/:candidateUserId — Get assessment for one candidate
+router.get('/post/:postId/candidate/:candidateUserId', postInterviewAssessmentController.getAssessmentByPostAndCandidate);
+
 // ========== AUTHENTICATED ROUTES ==========
-router.use(requireAuthUser, authLogMiddleware("PostInterviewAssessment"));
+router.use(requireAuth,authLogMiddleware("PostInterviewAssessment"));
 
 // GET /post-interview-assessments/check/:postId — Check if candidate has assessment for post
 router.get('/check/:postId', postInterviewAssessmentController.checkCandidateAssessmentExists);
+
+// GET /post-interview-assessments/matching/:postId — Get matching details for candidate and post
+router.get('/matching/:postId', postInterviewAssessmentController.getMatchingDetails);
 
 // GET /post-interview-assessments — Get all assessments
 router.get('/', postInterviewAssessmentController.getAllPostInterviewAssessments);

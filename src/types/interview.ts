@@ -26,6 +26,7 @@ export interface InterviewConfig {
       contextAwareThresholds: boolean;
     };
   };
+  enableSecurity?: boolean;
 }
 
 export interface InterviewMessage {

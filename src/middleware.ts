@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   "/interview/results",
   "/invitation",
   "/campaign",
+  "/interview/hr",  // public interview links (ref=link) — auth handled inside the page
+  "/jobs",          // public job landing pages
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];

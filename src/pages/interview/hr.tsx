@@ -18,8 +18,8 @@ import Cookies from 'js-cookie';
 import { RootState, AppDispatch } from '@/store/store';
 import { useSelector, useDispatch } from 'react-redux';
 import dynamic from 'next/dynamic';
-import { checkPostInterviewAssessment } from '@/store/slices/interviewSlice';
-import { validateInterviewAccess, selectAccessAllowed, selectAccessLoading } from '@/store/slices/interviewApplicantSlice';
+import { checkPostInterviewAssessment, fetchMatchingDetails, selectMatchingDetails, selectMatchingDetailsLoading } from '@/store/slices/interviewSlice';
+
 
 // Types
 import {
@@ -69,12 +69,12 @@ const IntelligentInterviewTest = () => {
   const [step, setStep] = useState<'intro' | 'interview'>('intro');
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(true);
-  const [assessmentChecking, setAssessmentChecking] = useState(false);
+  const [assessmentChecking, setAssessmentChecking] = useState(true);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [companyBlocked, setCompanyBlocked] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
-  const accessAllowed = useSelector(selectAccessAllowed);
-  const accessLoading = useSelector(selectAccessLoading);
+  const matchingDetails = useSelector(selectMatchingDetails);
+  const matchingLoading = useSelector(selectMatchingDetailsLoading);
 
   // Once router is ready: show overview only if jobId is in the URL, otherwise skip straight to interview
   const hasJobId = router.isReady && typeof router.query.jobId === 'string' && !!router.query.jobId;
@@ -83,38 +83,41 @@ const IntelligentInterviewTest = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-    if (!router.query.jobId) { setStep('interview'); return; }
-    setStep('intro');
+    if (!router.query.jobId) { setStep('interview'); setAssessmentChecking(false); return; }
 
     const postId = router.query.jobId as string;
     const token = Cookies.get('api_token');
-
     const ref = router.query.ref as string | undefined;
-    const isPublicLink = !ref || ref === 'link';
+    const isPublicLink = ref === 'link';
+
+    // No token + public link → redirect to job landing page
+    if (!token && isPublicLink) {
+      router.replace(`/jobs/${postId}`);
+      return;
+    }
 
     if (authUser && token) {
-      if (!isPublicLink) {
-        // Validate that the logged-in user is the intended recipient
-        dispatch(validateInterviewAccess({ jobId: postId, ref, token }));
-      }
       // Auto-create job application (non-blocking)
       fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}job-applications/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ post: postId }),
       }).catch(() => {});
-    }
 
-    setAssessmentChecking(true);
-    dispatch(checkPostInterviewAssessment(postId)).then((result) => {
-      if (checkPostInterviewAssessment.fulfilled.match(result)) {
-        if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
-        else if (result.payload.isArchived) setIsArchived(true);
-        else if (result.payload.exists) setAlreadyCompleted(true);
-      } else if (checkPostInterviewAssessment.rejected.match(result)) {
-        // silently ignore — let them proceed
-      }
-    }).finally(() => setAssessmentChecking(false));
+      // Fetch matching details — only meaningful for logged-in candidates
+      dispatch(fetchMatchingDetails(postId));
+
+      dispatch(checkPostInterviewAssessment(postId)).then((result) => {
+        if (checkPostInterviewAssessment.fulfilled.match(result)) {
+          if (result.payload.isCompanyBlocked) setCompanyBlocked(true);
+          else if (result.payload.isArchived) setIsArchived(true);
+          else if (result.payload.exists) setAlreadyCompleted(true);
+        }
+      }).finally(() => setAssessmentChecking(false));
+    } else {
+      // Guest (no token) — skip all auth-required checks
+      setAssessmentChecking(false);
+    }
   }, [router.isReady, router.query.jobId]);
 
   const { notification, showNotification, hideNotification } = useNotification();
@@ -278,7 +281,11 @@ const IntelligentInterviewTest = () => {
 
   const camera = useCamera({ showNotification: notify as any });
 
-  const security = useSecurityMonitoring({ interviewStatus: socket.interviewStatus });
+  const security = useSecurityMonitoring({
+    interviewStatus: socket.interviewStatus,
+    onTerminate: () => endInterviewRef.current(),
+    enabled: interviewConfig.enableSecurity !== false, // default ON unless explicitly false
+  });
 
   const startInterview = useCallback(async () => {
     if (!socket.socketRef.current || !socket.isConnected) { notify('Not connected to interview system', 'error'); return; }
@@ -331,9 +338,12 @@ const IntelligentInterviewTest = () => {
         <style jsx global>{GlobalStyles}</style>
         <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
           <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 }, display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress sx={{ color: '#8310FF' }} />
-          </Container>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)', gap: 2 }}>
+            <CircularProgress sx={{ color: '#8310FF' }} size={40} />
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280' }}>
+              Loading interview…
+            </Typography>
+          </Box>
         </Box>
       </>
     );
@@ -403,28 +413,64 @@ const IntelligentInterviewTest = () => {
     );
   }
 
-  /* ── Access denied — wrong candidate ── */
-  if (accessAllowed === false && !accessLoading) {
+  /* ── Matching score too low ── */
+  if (!matchingLoading && matchingDetails && !matchingDetails.meetsThreshold) {
+    const pct = Math.round((matchingDetails.matchScore / matchingDetails.thresholdScore) * 100);
+    const barWidth = Math.min(pct, 100);
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
         <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
           <Header />
           <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #FECACA', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <Typography sx={{ fontSize: 28 }}>🚫</Typography>
+            <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+
+              {/* Top accent bar */}
+              <Box sx={{ height: 4, bgcolor: '#F3F4F6' }}>
+                <Box sx={{ height: '100%', width: `${barWidth}%`, bgcolor: '#DC2626', borderRadius: '0 4px 4px 0', transition: 'width 0.6s ease' }} />
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827', mb: 1 }}>
-                Access Denied
-              </Typography>
-              <Typography sx={{ color: '#6B7280', fontSize: '0.92rem', mb: 3 }}>
-                This interview invitation was not sent to your account. Please use the account that received the invitation email.
-              </Typography>
-              <Button variant="outlined" onClick={() => router.push('/dashboard/candidate')}
-                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px', borderColor: '#E5E7EB', color: '#374151' }}>
-                Go to Dashboard
-              </Button>
+
+              <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+                {/* Icon */}
+                <Box sx={{ width: 68, height: 68, borderRadius: '50%', bgcolor: '#FEF2F2', border: '2px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
+                  <Typography sx={{ fontSize: 28 }}>🎯</Typography>
+                </Box>
+
+                <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.25rem', color: '#111827', mb: 0.75 }}>
+                  Your profile doesn't meet the requirements
+                </Typography>
+                <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.84rem', color: '#6B7280', lineHeight: 1.75, mb: 3.5, maxWidth: 380, mx: 'auto' }}>
+                  This position requires a minimum match score of <strong style={{ color: '#111827' }}>{matchingDetails.thresholdScore}/100</strong>. Based on your profile and CV, your current score is <strong style={{ color: '#DC2626' }}>{matchingDetails.matchScore}/100</strong>. We encourage you to strengthen your profile and apply to roles that better match your skills.
+                </Typography>
+
+                {/* Score comparison */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0, mb: 4, borderRadius: '14px', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
+                  <Box sx={{ flex: 1, py: 2.5, px: 2, bgcolor: '#FEF2F2', borderRight: '1px solid #E5E7EB' }}>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '2rem', color: '#DC2626', lineHeight: 1 }}>
+                      {matchingDetails.matchScore}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 600, color: '#EF4444', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Your Score
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, py: 2.5, px: 2, bgcolor: '#F9FAFB' }}>
+                    <Typography sx={{ fontFamily: 'Poppins', fontWeight: 800, fontSize: '2rem', color: '#374151', lineHeight: 1 }}>
+                      {matchingDetails.thresholdScore}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.7rem', fontWeight: 600, color: '#6B7280', mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Required
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  onClick={() => router.push('/dashboard/candidate')}
+                  sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', bgcolor: '#8310FF', color: '#fff', borderRadius: '10px', px: 4, py: 1.25, boxShadow: 'none', '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' } }}
+                >
+                  Explore Other Opportunities
+                </Button>
+              </Box>
             </Box>
           </Container>
         </Box>
@@ -538,6 +584,7 @@ const IntelligentInterviewTest = () => {
         jobId={jobId}
         refParam={refParam}
         jobData={jobData}
+        checkingEligibility={matchingLoading}
         onNext={(_) => setStep('interview')}
       />
     );
@@ -546,7 +593,7 @@ const IntelligentInterviewTest = () => {
   return (
     <>
       <style jsx global>{GlobalStyles}</style>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none' }}>
         <Header />
 
         {/* ── Connection warning banner ── */}
@@ -766,6 +813,8 @@ const IntelligentInterviewTest = () => {
         <SecurityModals
           showFirstViolationModal={security.showFirstViolationModal}
           showSecurityModal={security.showSecurityModal}
+          violationType={security.violationType}
+          securityViolationCount={security.securityViolationCount}
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
           onReturnToDashboard={() => router.push('/dashboard/candidate')}

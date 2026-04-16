@@ -11,7 +11,7 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authentication.controller");
 
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const uploadfile = require("../middleware/fileResume-upload.middleware");
 
@@ -59,11 +59,11 @@ router.post("/connect-gmail", authController.connectWithGmail);
 // GET /auth/warnUser
 // Access: Protected (Authenticated user)
 // Description: Notifies/warns the logged-in user (internal use)
-router.get("/warnUser", requireAuthUser, authController.warnUser);
+router.get("/warnUser", requireAuth, authController.warnUser);
 
 // POST /auth/logout
 // Access: Protected (Authenticated user)
 // Description: Invalidates session/token on server side if applicable
-router.post("/logout", requireAuthUser, authController.logout);
+router.post("/logout", requireAuth, authController.logout);
 
 module.exports = router;

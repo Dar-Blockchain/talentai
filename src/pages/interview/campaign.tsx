@@ -714,6 +714,8 @@ const CampaignInterview = () => {
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
           onReturnToDashboard={() => router.push('/company/dashboard')}
+          violationType={security.violationType}
+          securityViolationCount={security.securityViolationCount}
         />
 
         {/* Fixed Timer */}

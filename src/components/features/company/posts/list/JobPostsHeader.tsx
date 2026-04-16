@@ -7,6 +7,7 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
+import { WorkOutlineOutlined } from "@mui/icons-material";
 
 const TEAL = "#0D9488";
 
@@ -30,7 +31,7 @@ const JobPostsHeader: React.FC<JobPostsHeaderProps> = ({
       <PageBanner
         title="Job Posts"
         subtitle="Manage your open positions, track candidates, and share interview links."
-        icon={<WorkOutlined />}
+        icon={<WorkOutlineOutlined />}
         gradient="135deg, #0D9488 0%, #0891B2 100%"
         action={
           <Button

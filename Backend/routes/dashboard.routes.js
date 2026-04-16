@@ -11,7 +11,7 @@ const router = express.Router();
 const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
@@ -23,17 +23,8 @@ const resolveCompanyActor = require('../middleware/resolve-company-actor.middlew
 //router.use(requireAuthUser, authLogMiddleware("Dashboard"));
 // Auth required + logs for all routes
 // Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
-router.use((req, res, next) => {
-  // First try API Key verification
-  verifyApiKey(req, res, (err) => {
-    // If API Key succeeds, continue
-    if (req.isApiKeyAuth) {
-      return next();
-    }
-    // Otherwise, require JWT authentication
-    return requireAuthUser(req, res, next);
-  });
-});
+router.use(requireAuth);
+
 // GET /dashboard/getAllUsers
 // Description: Retrieves the list of all users
 router.get("/getAllUsers", dashboardController.getAllUsers);

@@ -14,16 +14,16 @@ const router = express.Router();
 const feedbackController = require('../controllers/feedback.controller');
 
 // Auth obligatoire + logs
-const {requireAuthUser} = require('../middleware/security/auth.middleware');
+const {requireAuth} = require('../middleware/security/auth.middleware');
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 
-router.use(requireAuthUser, authLogMiddleware("Feedback"));
+
+router.use(requireAuth, authLogMiddleware("Feedback"));
 
 // POST /feedback/addFeedback
-// Access: Candidate
-// Body: { message, rating, ... }
-router.post('/addFeedback', controledAcces('Candidate'), feedbackController.create);
+// Access: Any authenticated user (Candidate, Employee, etc.)
+router.post('/addFeedback', feedbackController.create);
 // GET /feedback/getAllFeedback
 // Access: Admin
 router.get('/getAllFeedback', controledAcces('Admin'), feedbackController.getAllFeedback);

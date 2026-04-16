@@ -1,0 +1,126 @@
+/**
+ * Scheduler Constants
+ * Configuration and constants for auto-invite and reminder schedulers
+ */
+
+// ========== TIME WINDOWS ==========
+const SCHEDULER_TIME_WINDOW = {
+  START_HOUR: 12,        // 12:00 (noon)
+  END_HOUR: 21,          // 21:00 (9 PM)
+  DESCRIPTION: 'Emails only sent between 12:00 and 21:00'
+};
+
+// ========== AUTO INVITE SCHEDULER ==========
+const AUTO_INVITE_CONFIG = {
+  // Time thresholds
+  FIRST_INVITE_HOURS: 5,       // Send first invitation 5 minutes after application
+  RECURRING_INVITE_HOURS: 24,  // Send recurring invitations every 24h
+  
+  // Batch processing
+  BATCH_LIMIT: 10,             // Process max 10 applications per run
+  
+  // Cron schedule (hourly at minute 0)
+  CRON_PATTERN: '0 * * * *',
+  
+  // Application statuses to process
+  VALID_STATUSES: ['visited'],
+
+  // Messages
+  MESSAGES: {
+    INIT: '🚀 Initializing auto-invite scheduler...',
+    RUNNING: '✅ Auto-invite scheduler running: Hourly (daily between 12:00 - 21:00) until interview completed',
+    OUTSIDE_WINDOW: '⏭️  Outside time window. Skipping auto-invitations.',
+    WITHIN_WINDOW: '✅ Within time window (12:00 - 21:00). Processing auto-invitations...',
+    FOUND_APPLICATIONS: '📊 Found %firstTime% first-time + %recurring% recurring invites',
+    TOTAL_ELIGIBLE: '   Total: %total% application(s) eligible for auto-invitation',
+    NO_PENDING: '✅ No pending auto-invitations at this time',
+    BATCH_COMPLETE: '📊 Auto-invitation batch complete:',
+    SENT: '   ✅ Sent: %count%',
+    FAILED: '   ❌ Failed: %count%',
+    PROCESSING_APP: '📧 [AUTO INVITATION] Processing application: %id%',
+    CANDIDATE_PROFILE_NOT_FOUND: '❌ Candidate profile not found for application: %id%',
+    POST_NOT_FOUND: '❌ Post not found for application: %id%',
+    COMPANY_NOT_FOUND: '❌ Company not found for post: %id%',
+    EMAIL_FAILED: '❌ Failed to send email to %email%',
+    EMAIL_SUCCESS: '✅ Email sent successfully to %email%',
+    APP_UPDATED: '✅ Application updated - Invitation #%count% sent',
+    ERROR: '❌ Error sending auto invitation for application %id%: %error%',
+    JOB_ERROR: '❌ [AUTO INVITE SCHEDULER] Error: %error%'
+  }
+};
+
+// ========== REMINDER SCHEDULER ==========
+const REMINDER_CONFIG = {
+  // Reminder timings
+  FIRST_REMINDER_HOURS: 24,    // Send first reminder 24h after application
+  SECOND_REMINDER_HOURS: 24,   // Send second reminder when < 24h before post expiration
+  
+  // Cron schedule (hourly at minute 0)
+  CRON_PATTERN: '0 * * * *',
+  
+  // Application statuses to process
+  VALID_STATUSES: ['visited'],
+
+  // Reminder types
+  TYPES: {
+    FIRST_REMINDER: '24h',     // After 24 hours of application
+    SECOND_REMINDER: 'before_exp'  // Before 24h before expiration
+  },
+  
+  // Messages
+  MESSAGES: {
+    INIT: '🚀 Initializing Interview Reminder Scheduler...',
+    INITIALIZED: '✅ Reminder scheduler initialized:',
+    FREQUENCY: '   ⏰ Frequency: Every hour (checks during 12:00 - 21:00)',
+    FIRST_REMINDER_DESC: '   🔔 First reminder: 24 hours after application',
+    SECOND_REMINDER_DESC: '   🔔 Second reminder: Less than 24 hours before post expiration',
+    STOPS_WHEN: '   ⛔ Stops when: Interview completed',
+    EMAIL_WINDOW: '   📧 Only sends emails between 12:00 and 21:00',
+    JOB_RUNNING: '⏰ [REMINDER SCHEDULER] Running at %datetime%',
+    OUTSIDE_WINDOW: '⏭️  Outside time window (current hour: %hour%). Skipping.',
+    WITHIN_WINDOW: '✅ Within time window. Processing reminders...',
+    FOUND_APPLICATIONS: '📊 Found %count% pending applications',
+    SKIPPING_NO_POST: '⏭️  Skipping - post not found',
+    APP_HEADER: '📋 Application: %id%',
+    HOURS_SINCE_APPLICATION: '   ⏱️  Since application: %hours%h',
+    HOURS_UNTIL_EXPIRATION: '   ⏳ Until expiration: %hours%h',
+    APP_STATUS: '   Status: %status%',
+    FIRST_CHECK: '   [FIRST CHECK] Hours: %hours%h, Already sent: %sent%, Should send: %shouldSend%',
+    SECOND_CHECK: '   [SECOND CHECK] Hours until expiration: %hours%h',
+    SECOND_CHECK_CONDITIONS: '                 Within 24h: %within%, Not sent: %notSent%',
+    SECOND_CHECK_RESULT: '                 Should send: %shouldSend%',
+    REMINDER_HEADER: '📧 [REMINDER - %type%] Processing application: %id%',
+    CANDIDATE_NOT_FOUND: '   ❌ Candidate profile not found',
+    COMPANY_NOT_FOUND: '   ❌ Company not found',
+    EMAIL_FAILED: '   ❌ Failed to send email',
+    EMAIL_SUCCESS: '   ✅ Email sent successfully',
+    DB_UPDATED: '   ✅ Database updated - %type% reminder tracked',
+    DB_ERROR: '   ❌ Error updating database: %error%',
+    JOB_COMPLETE: '📊 Reminder job complete:',
+    FIRST_REMINDERS_SENT: '   🔔 First reminders (24h):  %count%',
+    SECOND_REMINDERS_SENT: '   🔔 Second reminders (<24h before exp): %count%',
+    SKIPPED: '   ⏭️  Skipped: %count%',
+    TOTAL_SENT: '   📈 Total reminders sent: %count%',
+    JOB_ERROR: '❌ [REMINDER SCHEDULER] Error: %error%'
+  }
+};
+
+// ========== SHARED CONFIGURATIONS ==========
+const SHARED_CONFIG = {
+  TIME_WINDOW: SCHEDULER_TIME_WINDOW,
+  
+  // Email info structure
+  EMAIL_INFO_TEMPLATE: {
+    email: 'candidateEmail@example.com',
+    candidateName: 'John Doe',
+    jobTitle: 'Software Engineer',
+    companyName: 'Tech Company'
+  }
+};
+
+module.exports = {
+  SCHEDULER_TIME_WINDOW,
+  AUTO_INVITE_CONFIG,
+  REMINDER_CONFIG,
+  SHARED_CONFIG
+};

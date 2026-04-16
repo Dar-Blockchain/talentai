@@ -1,20 +1,22 @@
 import {
-  DashboardOutlined,
+  SpaceDashboardOutlined,
   CampaignOutlined,
-  ArticleOutlined,
+  WorkOutlineOutlined,
   GroupsOutlined,
   HowToRegOutlined,
   PsychologyOutlined,
-  SettingsOutlined,
+  TuneOutlined,
   CorporateFareOutlined,
-  AssignmentIndOutlined,
+  PeopleAltOutlined,
+  DashboardOutlined,
+  SettingsOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
 
 export const navigation = [
   {
     id: "dashboard",
-    icon: DashboardOutlined,
+    icon: SpaceDashboardOutlined,
     label: "Dashboard",
     href: "/company/dashboard",
   },
@@ -26,7 +28,7 @@ export const navigation = [
   },
   {
     id: "posts",
-    icon: ArticleOutlined,
+    icon: WorkOutlineOutlined,
     label: "Posts",
     href: "/company/posts",
   },
@@ -50,7 +52,7 @@ export const navigation = [
   },
   {
     id: "applications",
-    icon: AssignmentIndOutlined,
+    icon: PeopleAltOutlined,
     label: "Applications",
     href: "/company/applications",
   },
@@ -62,7 +64,7 @@ export const navigation = [
   // },
   {
     id: "settings",
-    icon: SettingsOutlined,
+    icon: TuneOutlined,
     label: "Settings",
     href: "/company/settings",
   },
@@ -125,7 +127,7 @@ export const employeeNavGroups: EmployeeNavGroup[] = [
       },
       {
         id: "posts",
-        icon: ArticleOutlined,
+        icon: WorkOutlineOutlined,
         label: "Job Posts",
         href: "/company/posts",
         permission: "canViewJobPosts",

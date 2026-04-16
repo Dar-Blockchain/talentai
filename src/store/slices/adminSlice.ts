@@ -17,7 +17,6 @@ interface DashboardStats {
   jobAssessmentsWithScore: number;
   jobAssessmentsWithScorePercentage: number;
   feedback: number;
-  bids: number;
   avgOverallScore: number;
   totalSkills: number;
   totalHardSkills: number;
@@ -95,7 +94,6 @@ const defaultStats: DashboardStats = {
   jobAssessmentsWithScore: 0,
   jobAssessmentsWithScorePercentage: 0,
   feedback: 0,
-  bids: 0,
   avgOverallScore: 0,
   totalSkills: 0,
   totalHardSkills: 0,
@@ -154,7 +152,6 @@ export const fetchAdminStats = createAsyncThunk<
         jobAssessmentsWithScorePercentage:
           data.data.jobAssessmentsWithScorePercentage || 0,
         feedback: data.data.feedback || 0,
-        bids: data.data.bids || 0,
         avgOverallScore: data.data.avgOverallScore || 0,
         totalSkills: data.data.totalSkills || 0,
         totalHardSkills: data.data.totalHardSkills || 0,

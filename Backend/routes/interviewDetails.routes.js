@@ -13,11 +13,11 @@ const interviewDetailsController = require("../controllers/InterviewControllers/
 // Import des middlewares
 const { controledAcces } = require('../middleware/controledAcces');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const { requireAuthUser } = require("../middleware/authMiddleware");
+const { requireAuth } = require("../middleware/authMiddleware");
 
 
 // All routes below require an authenticated candidate
-router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
+router.use(requireAuth, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
 
 // GET /interview-details/
 // Description: Retrieves the list of all interviews
