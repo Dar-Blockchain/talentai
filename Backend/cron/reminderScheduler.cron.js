@@ -101,10 +101,14 @@ const sendReminderEmail = async (application, post, reminderType) => {
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
 
+    // Build interview link
+    const interviewLink = `https://app.talentai.bid/interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
+
     console.log(`   📧 To: ${candidateEmail}`);
     console.log(`   👤 Candidate: ${candidateName}`);
     console.log(`   💼 Position: ${jobTitle}`);
     console.log(`   🏢 Company: ${companyName}`);
+    console.log(`   🔗 Interview Link: ${interviewLink}`);
 
     // Send interview invitation email
     const emailSent = await sendInterviewInvitation(
@@ -114,7 +118,7 @@ const sendReminderEmail = async (application, post, reminderType) => {
       companyName,
       null, // No specific date
       null, // No specific time
-      null  // No specific link
+      interviewLink  // Interview link
     );
 
     if (!emailSent) {
