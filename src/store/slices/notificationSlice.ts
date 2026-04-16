@@ -41,25 +41,27 @@ const initialState: NotificationState = {
   unreadCount: 0,
 };
 
-// Derive a human-readable title from notification type + content
+// Derive a human-readable title from notification type + content (mirrors backend logic)
 const deriveTitle = (type: string, content: string): string => {
   if (content) {
-    if (content.includes('interview') || content.includes('Interview')) return 'Interview Update';
-    if (content.includes('profile') || content.includes('Profile')) return 'Profile Update';
-    if (content.includes('job') || content.includes('Job') || content.includes('position')) return 'Job Update';
-    if (content.includes('application') || content.includes('Application')) return 'Application Update';
-    if (content.includes('match') || content.includes('Match')) return 'New Match';
-    if (content.includes('unlocked') || content.includes('Unlocked')) return 'Profile Unlocked';
-    if (content.includes('score') || content.includes('Score') || content.includes('test') || content.includes('Test')) return 'Test Result';
-    if (content.includes('level') || content.includes('Level')) return 'Level Up';
-    if (content.includes('plan') || content.includes('Plan') || content.includes('limit')) return 'Plan Update';
-    if (content.includes('company') || content.includes('Company')) return 'Company Update';
+    const c = content.toLowerCase();
+    if (c.includes('interview'))                                      return 'Interview Update';
+    if (c.includes('application'))                                    return 'Application Update';
+    if (c.includes('unlocked') || c.includes('interested in your'))  return 'Profile Unlocked';
+    if (c.includes('match') || c.includes('matches your'))           return 'New Job Match';
+    if (c.includes('new offer') || c.includes('job') || c.includes('position') || c.includes('offer')) return 'New Job Offer';
+    if (c.includes('score') || c.includes('test') || c.includes('passed') || c.includes('level up')) return 'Test Result';
+    if (c.includes('profile'))                                        return 'Profile Update';
+    if (c.includes('plan') || c.includes('limit') || c.includes('subscription')) return 'Plan Update';
+    if (c.includes('company'))                                        return 'Company Update';
+    if (c.includes('welcome') || c.includes('registered'))           return 'Welcome!';
+    if (c.includes('password') || c.includes('login') || c.includes('sign')) return 'Account Security';
   }
   switch (type) {
     case 'success': return 'Success';
     case 'warning': return 'Warning';
-    case 'error': return 'Error';
-    default: return 'Notification';
+    case 'error':   return 'Error';
+    default:        return 'Notification';
   }
 };
 
