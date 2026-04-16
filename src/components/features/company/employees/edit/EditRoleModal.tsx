@@ -1,110 +1,83 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Alert,
-  Box,
-  CircularProgress,
-  Typography,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, TextField, Typography, Box, IconButton,
+  CircularProgress, Alert, Select, MenuItem, FormControl, InputAdornment,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import EditOutlined from '@mui/icons-material/EditOutlined';
+import BusinessOutlined from '@mui/icons-material/BusinessOutlined';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-
-interface Role {
-  value: string;
-  label: string;
-  description: string;
-}
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchDepartments, selectDepartments, selectDepartmentsLoading } from '@/store/slices/departmentSlice';
+import { ROLES } from '@/constants/employee';
 
 interface EditRoleModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (role: string) => Promise<void>;
+  onSave: (role: string, departmentId?: string) => Promise<void>;
   currentRole: string;
+  currentDepartmentId?: string;
   memberName: string;
 }
 
-// Role options
-const ROLES: readonly Role[] = [
-  { value: 'RH', label: 'HR', description: 'Manage candidates, recruitment, and team operations' },
-  { value: 'TechLead', label: 'Technical Leader', description: 'Manage technical assessments and evaluations' },
-  { value: 'Supervisor', label: 'Supervisor', description: 'Oversee team operations and workflows' },
-  { value: 'Manager', label: 'Manager', description: 'Manage department and strategic decisions' },
-] as const;
+const PURPLE = '#8310FF';
 
 const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
-  open,
-  onClose,
-  onSave,
-  currentRole,
-  memberName
+  open, onClose, onSave, currentRole, currentDepartmentId, memberName,
 }) => {
-  const [role, setRole] = useState(currentRole);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const departments        = useSelector(selectDepartments);
+  const departmentsLoading = useSelector(selectDepartmentsLoading);
 
-  // Reset state when modal opens with new current role
+  const [role,         setRole]         = useState(currentRole);
+  const [departmentId, setDepartmentId] = useState(currentDepartmentId ?? '');
+  const [roleSearch,   setRoleSearch]   = useState('');
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState<string | null>(null);
+  const [success,      setSuccess]      = useState(false);
+
   useEffect(() => {
     if (open) {
       setRole(currentRole);
+      setDepartmentId(currentDepartmentId ?? '');
+      setRoleSearch('');
       setError(null);
-      setSuccessMessage(null);
+      setSuccess(false);
+      if (departments.length === 0) dispatch(fetchDepartments({}));
     }
-  }, [open, currentRole]);
+  }, [open, currentRole, currentDepartmentId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isChanged = useMemo(
+    () => role !== currentRole || departmentId !== (currentDepartmentId ?? ''),
+    [role, departmentId, currentRole, currentDepartmentId],
+  );
 
   const handleSave = useCallback(async () => {
-    console.log('🔵 [EditRoleModal] handleSave called with role:', role);
-
-    if (!role) {
-      console.log('❌ [EditRoleModal] Validation failed: Role is required');
-      setError('Role is required');
-      return;
-    }
-
-    console.log('✅ [EditRoleModal] Validation passed, calling onSave...');
+    if (!role) { setError('Please select a role'); return; }
     setLoading(true);
     setError(null);
-    setSuccessMessage(null);
-
     try {
-      await onSave(role);
-      console.log('✅ [EditRoleModal] onSave completed successfully');
-      setSuccessMessage('Role updated successfully!');
-
-      // Close modal after 1.5 seconds
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      await onSave(role, departmentId || undefined);
+      setSuccess(true);
+      setTimeout(onClose, 1200);
     } catch (err: any) {
-      console.error('❌ [EditRoleModal] Error in onSave:', err);
-      setError(err.message || 'Failed to update role');
+      setError(err.message || 'Failed to update member');
     } finally {
       setLoading(false);
     }
-  }, [role, onSave, onClose]);
+  }, [role, departmentId, onSave, onClose]);
 
-  const handleClose = useCallback(() => {
-    if (!loading) {
-      onClose();
-    }
-  }, [loading, onClose]);
+  const handleClose = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
 
-  const handleRoleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setRole(event.target.value);
-    setError(null);
-  }, []);
-
-  const isFormChanged = useMemo(() => {
-    return role !== currentRole;
-  }, [role, currentRole]);
+  const filteredRoles = useMemo(() => {
+    const q = roleSearch.trim().toLowerCase();
+    return !q ? ROLES : ROLES.filter((r) =>
+      r.label.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)
+    );
+  }, [roleSearch]);
 
   return (
     <Dialog
@@ -112,172 +85,216 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-        },
-      }}
+      slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: '90vh', boxShadow: '0 20px 48px rgba(0,0,0,0.12)' } } }}
     >
-      <DialogTitle
-        sx={{
-          fontSize: '1.5rem',
-          fontWeight: 700,
-          color: '#1a1a1a',
-          pb: 1,
-        }}
-      >
-        Edit Role
+      {/* Header */}
+      <DialogTitle sx={{ p: 0 }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          px: 3, py: 2.5, borderBottom: '1px solid #f3f4f6',
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{
+              width: 38, height: 38, borderRadius: 2,
+              bgcolor: `${PURPLE}18`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: PURPLE,
+            }}>
+              <EditOutlined sx={{ fontSize: 20 }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#111827', lineHeight: 1.2 }}>
+                Edit Member
+              </Typography>
+              <Typography sx={{ fontSize: '0.775rem', color: '#9CA3AF', mt: 0.25 }}>
+                Updating <strong style={{ color: '#374151' }}>{memberName}</strong>
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleClose} disabled={loading} size="small"
+            sx={{ color: '#9CA3AF', '&:hover': { bgcolor: '#F3F4F6', color: '#374151' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 2 }}>
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
-          Update the role for <strong>{memberName}</strong>
-        </Typography>
+      <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
+        {error   && <Alert severity="error"   sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2, borderRadius: 2 }}>Member updated successfully!</Alert>}
 
-        {/* Error Alert */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
 
-        {/* Success Alert */}
-        {successMessage && (
-          <Alert
-            severity="success"
-            icon={<CheckCircleIcon />}
-            sx={{ mb: 2, borderRadius: 2 }}
-          >
-            {successMessage}
-          </Alert>
-        )}
-
-        {/* Role Selection */}
-        <FormControl component="fieldset" fullWidth>
-          <FormLabel
-            component="legend"
-            sx={{
-              fontWeight: 600,
-              color: '#1a1a1a',
-              mb: 2,
-              '&.Mui-focused': {
-                color: '#8310FF',
-              },
-            }}
-          >
-            Select Role
-          </FormLabel>
-          <RadioGroup value={role} onChange={handleRoleChange}>
-            {ROLES.map((roleOption) => (
-              <Box
-                key={roleOption.value}
-                sx={{
-                  mb: 1.5,
-                  p: 2,
-                  border: '1px solid',
-                  borderColor: role === roleOption.value ? '#8310FF' : '#e5e7eb',
-                  borderRadius: 2,
-                  backgroundColor: role === roleOption.value ? 'rgba(131, 16, 255, 0.04)' : 'transparent',
-                  transition: 'all 0.2s',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    borderColor: '#8310FF',
-                    backgroundColor: 'rgba(131, 16, 255, 0.04)',
-                  },
+          {/* Role */}
+          <Box>
+            <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
+              Role
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={loading}
+                onClose={() => setRoleSearch('')}
+                MenuProps={{
+                  PaperProps: { sx: { maxHeight: 360, borderRadius: 2, mt: 0.5, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' } },
+                  autoFocus: false,
                 }}
-                onClick={() => setRole(roleOption.value)}
-              >
-                <FormControlLabel
-                  value={roleOption.value}
-                  control={
-                    <Radio
-                      sx={{
-                        color: '#94a3b8',
-                        '&.Mui-checked': {
-                          color: '#8310FF',
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontWeight: 600,
-                          color: '#1a1a1a',
-                          fontSize: '0.95rem',
-                        }}
-                      >
-                        {roleOption.label}
+                renderValue={(val) => {
+                  const r = ROLES.find((r) => r.value === val);
+                  if (!r) return null;
+                  const Icon = r.icon;
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{
+                        width: 28, height: 28, borderRadius: 1.5,
+                        bgcolor: `${r.color}18`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: r.color, flexShrink: 0, '& svg': { fontSize: 16 },
+                      }}>
+                        <Icon />
+                      </Box>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
+                        {r.label}
                       </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: '#64748b',
-                          display: 'block',
-                          mt: 0.5,
-                        }}
-                      >
-                        {roleOption.description}
+                      <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        — {r.description}
                       </Typography>
                     </Box>
-                  }
+                  );
+                }}
+                sx={{
+                  borderRadius: 2, bgcolor: '#F8FAFC',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: PURPLE, borderWidth: 2 },
+                }}
+              >
+                {/* Sticky search */}
+                <MenuItem
+                  disableRipple
+                  onKeyDown={(e) => e.stopPropagation()}
                   sx={{
-                    margin: 0,
-                    width: '100%',
-                    alignItems: 'flex-start',
+                    position: 'sticky', top: 0, zIndex: 1,
+                    bgcolor: '#fff', p: 1.25,
+                    borderBottom: '1px solid #f3f4f6',
+                    '&:hover': { bgcolor: '#fff' },
+                    '&.Mui-focusVisible': { bgcolor: '#fff' },
                   }}
-                />
-              </Box>
-            ))}
-          </RadioGroup>
-        </FormControl>
+                >
+                  <TextField
+                    size="small" fullWidth autoFocus
+                    placeholder="Search roles…"
+                    value={roleSearch}
+                    onChange={(e) => setRoleSearch(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchOutlined sx={{ fontSize: 18, color: '#9CA3AF' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1.5, bgcolor: '#F8FAFC',
+                        '& fieldset': { borderColor: '#E2E8F0' },
+                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                        '&.Mui-focused fieldset': { borderColor: PURPLE, borderWidth: 2 },
+                      },
+                    }}
+                  />
+                </MenuItem>
+
+                {filteredRoles.map((r) => {
+                  const Icon = r.icon;
+                  return (
+                    <MenuItem key={r.value} value={r.value} sx={{ py: 1.25, px: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{
+                          width: 34, height: 34, borderRadius: 1.5,
+                          bgcolor: `${r.color}18`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: r.color, flexShrink: 0, '& svg': { fontSize: 18 },
+                        }}>
+                          <Icon />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#111827', lineHeight: 1.2 }}>
+                            {r.label}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.72rem', color: '#6b7280' }}>
+                            {r.description}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
+
+                {filteredRoles.length === 0 && (
+                  <MenuItem disabled sx={{ py: 2, justifyContent: 'center' }}>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#9CA3AF' }}>No roles match "{roleSearch}"</Typography>
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Department */}
+          <Box>
+            <Typography sx={{ mb: 1, fontWeight: 600, fontSize: '0.8rem', color: '#374151' }}>
+              Department{' '}
+              <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.75rem' }}>
+                (optional)
+              </Typography>
+            </Typography>
+            <FormControl fullWidth size="small">
+              <Select
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
+                disabled={loading || departmentsLoading}
+                displayEmpty
+                startAdornment={<BusinessOutlined sx={{ fontSize: 18, color: '#9CA3AF', mr: 1 }} />}
+                sx={{
+                  borderRadius: 2, bgcolor: '#F8FAFC',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: PURPLE, borderWidth: 2 },
+                }}
+              >
+                <MenuItem value="">
+                  <Typography sx={{ color: '#9CA3AF', fontSize: '0.875rem' }}>No department</Typography>
+                </MenuItem>
+                {departments.map((d) => (
+                  <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+      <DialogActions sx={{ px: 3, pb: 3, pt: 2.5, gap: 1.5 }}>
         <Button
-          onClick={handleClose}
-          disabled={loading}
-          sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            color: '#64748b',
-            '&:hover': {
-              backgroundColor: '#f8fafc',
-            },
-          }}
+          onClick={handleClose} disabled={loading}
+          sx={{ textTransform: 'none', fontWeight: 600, color: '#6B7280', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#F3F4F6' } }}
         >
           Cancel
         </Button>
         <Button
-          onClick={handleSave}
-          disabled={loading || !isFormChanged}
-          variant="contained"
+          onClick={handleSave} disabled={loading || !isChanged} variant="contained"
           sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 3,
-            background: 'linear-gradient(135deg, #8310FF 0%, #a855f7 100%)',
-            boxShadow: '0 4px 12px rgba(131, 16, 255, 0.3)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #6b0fd9 0%, #9333ea 100%)',
-              boxShadow: '0 6px 16px rgba(131, 16, 255, 0.4)',
-            },
-            '&.Mui-disabled': {
-              background: '#e2e8f0',
-              color: '#94a3b8',
-            },
+            textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 3,
+            bgcolor: PURPLE,
+            color: '#fff',
+            boxShadow: '0 2px 8px rgba(131,16,255,0.3)',
+            '&:hover': { bgcolor: '#7209E6', boxShadow: '0 4px 14px rgba(131,16,255,0.4)' },
+            '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF', boxShadow: 'none' },
           }}
         >
-          {loading ? (
-            <>
-              <CircularProgress size={18} sx={{ mr: 1, color: 'white' }} />
-              Updating...
-            </>
-          ) : (
-            'Update Role'
-          )}
+          {loading
+            ? <><CircularProgress size={15} sx={{ mr: 1, color: '#fff' }} />Updating…</>
+            : 'Save Changes'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -285,5 +302,4 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
 });
 
 EditRoleModal.displayName = 'EditRoleModal';
-
 export default EditRoleModal;

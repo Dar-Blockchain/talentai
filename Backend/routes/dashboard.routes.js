@@ -11,28 +11,20 @@ const router = express.Router();
 const dashboardController = require("../controllers/dashboard.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { verifyApiKey, checkScope } = require("../middleware/security/api-key.middleware");
 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const { controledAcces } = require('../middleware/authorize.middleware.js'); // Importez le middleware
+const resolveCompanyActor = require('../middleware/resolve-company-actor.middleware');
 
 
 // All routes below require an authenticated admin
 //router.use(requireAuthUser, authLogMiddleware("Dashboard"));
 // Auth required + logs for all routes
 // Accepts either JWT (requireAuthUser) or API key (verifyApiKey)
-router.use((req, res, next) => {
-  // First try API Key verification
-  verifyApiKey(req, res, (err) => {
-    // If API Key succeeds, continue
-    if (req.isApiKeyAuth) {
-      return next();
-    }
-    // Otherwise, require JWT authentication
-    return requireAuthUser(req, res, next);
-  });
-});
+router.use(requireAuth);
+
 // GET /dashboard/getAllUsers
 // Description: Retrieves the list of all users
 router.get("/getAllUsers", dashboardController.getAllUsers);
@@ -43,8 +35,8 @@ router.get("/getCounts", dashboardController.getCounts);
 
 // GET /dashboard/statsCards
 // Description: Retrieves statistics displayed as cards on the dashboard
-router.get("/statsCards", dashboardController.getStatsCards);
-router.get("/richStats", dashboardController.getRichStats);
+router.get("/statsCards", resolveCompanyActor, dashboardController.getStatsCards);
+router.get("/richStats", resolveCompanyActor, dashboardController.getRichStats);
 
 // GET /dashboard/getUserCountsByDay
 // Description: Retrieves daily evolution of user count

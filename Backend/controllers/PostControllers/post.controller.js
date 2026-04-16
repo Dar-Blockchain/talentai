@@ -1,13 +1,8 @@
 const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
-const { sendPostEmail } = require("../../utils/email-service");
-const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
 const {
   parseJsonFields,
-  validateTechnicalTestInput,
 } = require("../../helpers/post.validation.helpers");
-const notificationService = require("../../services/notificationSystem.service");
-const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 
 // Centralized error handler
@@ -67,6 +62,7 @@ exports.createPost = async (req, res) => {
     const postData = {
       ...parsedData,
       user: userId,
+      createdBy: req.actualUser?._id || req.user._id,
     };
 
     // Handle custom expiration date (optional)
@@ -307,7 +303,9 @@ exports.getUserPosts = async (req, res) => {
         .json({ success: false, error: "User not authenticated" });
     }
 
-    const { page = 1, limit = 6, search = "", sort = "newest", status = "" } = req.query;
+    const { page = 1, limit = 6, search = "", sort = "newest", status = "", archived = "false", creationType = "" } = req.query;
+    // Parse archived parameter: "true" string becomes boolean true, else false
+    const showArchived = archived === "true";
 
     // Parse and validate pagination
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -324,6 +322,8 @@ exports.getUserPosts = async (req, res) => {
       search,
       sortOption,
       status,
+      showArchived,
+      creationType,
     );
 
     res.status(200).json({
@@ -350,10 +350,11 @@ exports.updatePost = async (req, res) => {
         .json({ success: false, error: "Post ID is required" });
     }
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const post = await postService.updatePost(
       req.params.id,
       req.user._id,
-      req.body,
+      { ...req.body, updatedBy },
     );
     res.status(200).json({ success: true, data: post });
   } catch (error) {
@@ -393,10 +394,12 @@ exports.updatePostStatus = async (req, res) => {
       return res.status(400).json({ success: false, error: "Invalid status" });
     }
 
+    const updatedBy = req.actualUser?._id || req.user._id;
     const post = await postService.updatePostStatus(
       req.params.id,
       req.user._id,
       status,
+      updatedBy,
     );
     res.status(200).json({ success: true, data: post });
   } catch (error) {
@@ -445,28 +448,6 @@ exports.getPostsByUserTopSkills = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ [getPostsByUserTopSkills] Error:", error.message);
-    handleError(res, error, 400);
-  }
-};
-
-// Send technical test task
-exports.sendTechnicalTest = async (req, res) => {
-  try {
-    const { postId, candidateEmail, candidateName } = req.body;
-    const token = req.headers.authorization?.replace("Bearer ", "");
-
-    // Validate input
-    validateTechnicalTestInput(postId, candidateEmail, candidateName);
-
-    const result = await postService.createAndSendTechnicalTest(
-      postId,
-      token,
-      candidateEmail,
-      candidateName,
-    );
-
-    res.status(200).json({ success: true, data: result });
-  } catch (error) {
     handleError(res, error, 400);
   }
 };

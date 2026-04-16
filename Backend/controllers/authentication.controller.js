@@ -22,7 +22,7 @@ const handleError = (res, error, defaultStatus = 500) => {
 // Route d'inscription
 module.exports.register = async (req, res) => {
   const resumeFile = req.file; // Get uploaded file if exists
-  
+
   try {
     const { email, roleType, firstName, lastName, name, companyDetails, phone } = req.body;
 
@@ -45,7 +45,7 @@ module.exports.register = async (req, res) => {
         // Check if file still exists
         if (fs.existsSync(resumeFile.path)) {
           console.log('📄 Analyzing CV from file:', resumeFile.path);
-          
+
           // Analyze the CV
           const analyzedCV = await analyzeCV(resumeFile.path);
           const cvData = JSON.parse(analyzedCV);
@@ -116,7 +116,7 @@ module.exports.register = async (req, res) => {
               if (!profileUpdateData.$push) {
                 profileUpdateData.$push = {};
               }
-              
+
               profileUpdateData.$push.spokenLanguages = {
                 $each: cvData.spokenLanguages,
               };
@@ -444,9 +444,9 @@ module.exports.parseCV = async (req, res) => {
     });
   } catch (error) {
     console.error('Error parsing CV:', error);
-    
+
     // Handle region/country restriction errors
-    if (error?.message?.includes('not allowed from unsupported countries') || 
+    if (error?.message?.includes('not allowed from unsupported countries') ||
         error?.message?.includes('Anthropic') ||
         error?.message?.includes('AccessDenied')) {
       return res.status(403).json({
@@ -454,7 +454,7 @@ module.exports.parseCV = async (req, res) => {
         error: 'CV analysis service (Claude/Anthropic) is not available in your region. Please contact support for alternative solutions.'
       });
     }
-    
+
     handleError(res, error, 400);
   }
 }

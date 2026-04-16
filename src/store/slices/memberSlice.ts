@@ -1,21 +1,20 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import axiosInstance from "@/utils/axiosInstance";
+import { EmployeePermission } from "@/types/employeePermissions";
 
 // Type definitions based on your API response
 export type MemberRole = "RH" | "TechLead" | "Supervisor" | "Manager" | "Owner";
 export type MemberStatus = "active" | "pending" | "inactive";
 
-export interface User {
-  _id: string;
-  username: string;
-  email: string;
-}
-
 export interface Member {
   _id: string;
-  user: User;
-  Organization: string;
+  userId: string;
+  company: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
   role: MemberRole;
   status: MemberStatus;
   createdAt: string;
@@ -31,17 +30,18 @@ export interface MemberResponse {
 export interface AddMemberPayload {
   accountId?: string; // Optional - kept for backwards compatibility but not used in new invitation API
   email: string;
-  role: MemberRole;
+  role: string;
   departmentId?: string;
 }
 
 export interface UpdateRolePayload {
-  membershipId: string; // CompanyMembership ID
-  role: MemberRole;
+  membershipId: string;
+  role: string;
+  departmentId?: string;
 }
 
 export interface DeleteMemberPayload {
-  membershipId: string; // CompanyMembership ID
+  membershipId: string;
 }
 
 export interface Invitation {
@@ -79,6 +79,16 @@ export interface FetchMembersParams {
   departmentIds?: string[];
 }
 
+export interface FetchMembersFilters {
+  search?: string;
+  departmentId?: string;
+  role?: string;
+  sortBy?: "name" | "date";
+  order?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
 interface MemberState {
   members: Member[];
   pageTotal: number;
@@ -95,12 +105,21 @@ interface MemberState {
   resendingInvitation: boolean;
   cancellingInvitation: boolean;
   sharedAccountId: string | null;
-  currentInvitation: (Invitation & { organization?: { _id: string; name: string } }) | null;
+  currentInvitation: (Invitation & { emailExists?: boolean; organization?: { _id: string; name: string } }) | null;
   fetchingInvitationDetails: boolean;
   respondingToInvitation: boolean;
   invitationResponse: { success: boolean; action: 'accept' | 'reject' } | null;
   stats: MemberStats | null;
   fetchingStats: boolean;
+  currentMember: Member | null;
+  fetchingMember: boolean;
+  fetchMemberError: string | null;
+  employeePermissions: EmployeePermission | null;
+  fetchingPermissions: boolean;
+  updatingPermissions: boolean;
+  permissionsError: string | null;
+  registeringWithInvitation: boolean;
+  registrationError: string | null;
 }
 
 const initialState: MemberState = {
@@ -125,6 +144,15 @@ const initialState: MemberState = {
   invitationResponse: null,
   stats: null,
   fetchingStats: false,
+  currentMember: null,
+  fetchingMember: false,
+  fetchMemberError: null,
+  employeePermissions: null,
+  fetchingPermissions: false,
+  updatingPermissions: false,
+  permissionsError: null,
+  registeringWithInvitation: false,
+  registrationError: null,
 };
 
 // Add a new member (employee)
@@ -138,7 +166,7 @@ export const addEmployee = createAsyncThunk<
   try {
     console.log(`📡 [MemberSlice] Sending invitation via API...`);
 
-    const apiPayload: { email: string; role: MemberRole; departmentId?: string } = {
+    const apiPayload: { email: string; role: string; departmentId?: string } = {
       email: payload.email,
       role: payload.role,
       ...(payload.departmentId && { departmentId: payload.departmentId }),
@@ -146,7 +174,7 @@ export const addEmployee = createAsyncThunk<
 
     console.log(`📡 [MemberSlice] Sending invitation payload:`, apiPayload);
 
-    const response = await axiosInstance.post("CompanyInvitation/sentInvitation", apiPayload);
+    const response = await axiosInstance.post("company-invitations/sentInvitation", apiPayload);
 
     console.log(`✅ [MemberSlice] Employee added successfully`, response.data);
     return response.data;
@@ -170,12 +198,10 @@ export const updateMemberRole = createAsyncThunk<
   try {
     console.log(`📡 [MemberSlice] Updating member role via API...`);
 
-    const apiPayload = { role: payload.role };
+    const apiPayload: { role: string; departmentId?: string } = { role: payload.role };
+    if (payload.departmentId !== undefined) apiPayload.departmentId = payload.departmentId || undefined;
 
-    console.log(`📡 [MemberSlice] Sending payload:`, apiPayload);
-    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}/role`);
-
-    const response = await axiosInstance.patch(`CompanyMembership/${payload.membershipId}/role`, apiPayload);
+    const response = await axiosInstance.patch(`company-memberships/${payload.membershipId}`, apiPayload);
 
 
     console.log(`✅ [MemberSlice] Role updated successfully`, response.data);
@@ -198,10 +224,8 @@ export const deleteMember = createAsyncThunk<
 
 
   try {
-    console.log(`📡 [MemberSlice] Deleting member via API...`);
-    console.log(`📡 [MemberSlice] URL: CompanyMembership/${payload.membershipId}`);
 
-    const response = await axiosInstance.delete(`CompanyMembership/${payload.membershipId}`);
+    const response = await axiosInstance.delete(`company-memberships/${payload.membershipId}`);
 
 
     console.log(`✅ [MemberSlice] Member deleted successfully`, response.data);
@@ -213,26 +237,43 @@ export const deleteMember = createAsyncThunk<
   }
 });
 
-// Fetch active members
-export const fetchMembers = createAsyncThunk<
-  Member[],
-  void,
+// Fetch a single member by user ID
+export const fetchMemberById = createAsyncThunk<
+  Member,
+  string,
   { rejectValue: string }
->("member/fetchMembers", async (_, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] fetchMembers CALLED`);
-
-
+>("member/fetchMemberById", async (userId, { rejectWithValue }) => {
   try {
-    console.log(`📡 [MemberSlice] Fetching members from API...`);
-    const response = await axiosInstance.get("CompanyMembership/memberships");
-
-
-
-    console.log(`✅ [MemberSlice] Members fetched successfully`, response.data);
-    return response.data.memberships || response.data.members || [];
+    const response = await axiosInstance.get(`company-memberships/user/${userId}`);
+    return response.data.membership || response.data;
   } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch member");
+  }
+});
 
-    console.error(`❌ [MemberSlice] Exception:`, error);
+// Fetch active members (with optional backend filters)
+export const fetchMembers = createAsyncThunk<
+  { members: Member[]; total: number },
+  FetchMembersFilters | undefined,
+  { rejectValue: string }
+>("member/fetchMembers", async (params, { rejectWithValue }) => {
+  try {
+    const query = new URLSearchParams();
+    if (params?.search)       query.set("search",      params.search);
+    if (params?.departmentId) query.set("departmentId", params.departmentId);
+    if (params?.role)         query.set("role",         params.role);
+    if (params?.sortBy)       query.set("sortBy",       params.sortBy);
+    if (params?.order)        query.set("order",        params.order);
+    if (params?.page)         query.set("page",         String(params.page));
+    if (params?.limit)        query.set("limit",        String(params.limit));
+
+    const qs = query.toString();
+    const response = await axiosInstance.get(`company-memberships/memberships${qs ? `?${qs}` : ""}`);
+    return {
+      members: response.data.memberships || response.data.members || [],
+      total: response.data.total ?? response.data.pagination?.total ?? 0,
+    };
+  } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching members");
   }
 });
@@ -250,7 +291,7 @@ export const fetchMembersPage = createAsyncThunk<
     if (params.search) query.set("search", params.search);
     if (params.departmentIds?.length) query.set("departmentId", params.departmentIds.join(","));
 
-    const response = await axiosInstance.get(`CompanyMembership/memberships?${query.toString()}`);
+    const response = await axiosInstance.get(`company-memberships/memberships?${query.toString()}`);
     return {
       members: response.data.memberships || response.data.members || [],
       total: response.data.total ?? response.data.pagination?.total ?? 0,
@@ -271,7 +312,7 @@ export const fetchInvitations = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Fetching invitations from API...`);
-    const response = await axiosInstance.get("CompanyInvitation/myInvitations");
+    const response = await axiosInstance.get("company-invitations/myInvitations");
 
 
 
@@ -296,7 +337,7 @@ export const resendInvitation = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Resending invitation via API...`);
-    const response = await axiosInstance.post(`CompanyInvitation/resendInvitation/${invitationId}`);
+    const response = await axiosInstance.post(`company-invitations/resendInvitation/${invitationId}`);
 
 
 
@@ -321,7 +362,7 @@ export const cancelInvitation = createAsyncThunk<
 
   try {
     console.log(`📡 [MemberSlice] Deleting invitation via API...`);
-    const response = await axiosInstance.delete(`CompanyInvitation/deleteInvitation/${invitationId}`);
+    const response = await axiosInstance.delete(`company-invitations/deleteInvitation/${invitationId}`);
 
 
 
@@ -335,23 +376,39 @@ export const cancelInvitation = createAsyncThunk<
 });
 
 // Respond to invitation (accept or reject)
+// For new users (no account): pass firstName + lastName → backend registers + accepts in one step
 export const respondToInvitation = createAsyncThunk<
-  { success: boolean; message: string },
-  { invitationId: string; action: 'accept' | 'reject'; token?: string },
+  { success: boolean; action: string; token?: string; user?: any },
+  { invitationId: string; action: 'accept' | 'reject'; token?: string; firstName?: string; lastName?: string },
   { rejectValue: string }
->("member/respondToInvitation", async ({ invitationId, action, token }, { rejectWithValue }) => {
-  console.log(`🔑 [MemberSlice] respondToInvitation CALLED with id: ${invitationId}, action: ${action}`);
+>("member/respondToInvitation", async ({ invitationId, action, token, firstName, lastName }, { rejectWithValue }) => {
   try {
-    console.log(`📡 [MemberSlice] Responding to invitation via API...`);
-    const response = await axiosInstance.post(`CompanyInvitation/respondInvitation/${invitationId}`, { action, ...(token && { token }) });
-    console.log(`✅ [MemberSlice] Invitation ${action}ed successfully`, response.data);
+    const response = await axiosInstance.post(`company-invitations/respondInvitation/${invitationId}`, {
+      action,
+      ...(token && { token }),
+      ...(firstName && { firstName }),
+      ...(lastName && { lastName }),
+    });
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 404) {
       return rejectWithValue("Invitation not found or has expired");
     }
-    console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || `An error occurred while ${action}ing invitation`);
+  }
+});
+
+// Fetch invitations by department
+export const fetchInvitationsByDepartment = createAsyncThunk<
+  Invitation[],
+  string,
+  { rejectValue: string }
+>("member/fetchInvitationsByDepartment", async (departmentId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`company-invitations/byDepartment/${departmentId}`);
+    return response.data.invitations || [];
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch invitations");
   }
 });
 
@@ -362,7 +419,7 @@ export const fetchMemberStats = createAsyncThunk<
   { rejectValue: string }
 >("member/fetchMemberStats", async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get("CompanyMembership/memberships/stats");
+    const response = await axiosInstance.get("company-memberships/memberships/stats");
     return response.data.stats as MemberStats;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching stats");
@@ -378,7 +435,7 @@ export const fetchInvitationDetails = createAsyncThunk<
   console.log(`🔑 [MemberSlice] fetchInvitationDetails CALLED with id:`, invitationId);
   try {
     console.log(`📡 [MemberSlice] Fetching invitation details from API...`);
-    const response = await axiosInstance.get(`CompanyInvitation/details/${invitationId}`);
+    const response = await axiosInstance.get(`company-invitations/details/${invitationId}`);
     console.log(`✅ [MemberSlice] Invitation details fetched successfully`, response.data);
     return response.data.invitation || response.data;
   } catch (error: any) {
@@ -387,6 +444,48 @@ export const fetchInvitationDetails = createAsyncThunk<
     }
     console.error(`❌ [MemberSlice] Exception:`, error);
     return rejectWithValue(error.response?.data?.message || "An error occurred while fetching invitation details");
+  }
+});
+
+// Fetch employee permissions
+export const fetchEmployeePermissions = createAsyncThunk<
+  EmployeePermission,
+  string,
+  { rejectValue: string }
+>("member/fetchEmployeePermissions", async (memberId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`employee-permissions/${memberId}`);
+    return response.data.data || response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to fetch permissions");
+  }
+});
+
+// Update employee permissions
+export const updateEmployeePermissions = createAsyncThunk<
+  EmployeePermission,
+  { memberId: string; permissions: Partial<EmployeePermission> },
+  { rejectValue: string }
+>("member/updateEmployeePermissions", async ({ memberId, permissions }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.put(`employee-permissions/${memberId}`, permissions);
+    return response.data.data || response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to update permissions");
+  }
+});
+
+// Register as new user and accept invitation in one step
+export const acceptInvitationAsNewUser = createAsyncThunk<
+  { token: string; user: any },
+  { invitationId: string; token: string; firstName: string; lastName: string },
+  { rejectValue: string }
+>("member/acceptInvitationAsNewUser", async ({ invitationId, token, firstName, lastName }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post(`company-invitations/registerAndAccept/${invitationId}`, { token, firstName, lastName });
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || "Failed to accept invitation");
   }
 });
 
@@ -499,14 +598,11 @@ const memberSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        fetchMembers.fulfilled,
-        (state: MemberState, action: PayloadAction<Member[]>) => {
-          state.loading = false;
-          state.members = action.payload;
-          console.log('✅ [MemberSlice] Members fetched successfully');
-        }
-      )
+      .addCase(fetchMembers.fulfilled, (state: MemberState, action) => {
+        state.loading = false;
+        state.members = action.payload.members;
+        state.pageTotal = action.payload.total;
+      })
       .addCase(
         fetchMembers.rejected,
         (state: MemberState, action: PayloadAction<string | undefined>) => {
@@ -648,7 +744,59 @@ const memberSlice = createSlice({
           state.fetchingInvitationDetails = false;
           state.error = action.payload || "An error occurred";
         }
-      );
+      )
+      // Handle fetchMemberById
+      .addCase(fetchMemberById.pending, (state: MemberState) => {
+        state.fetchingMember = true;
+        state.fetchMemberError = null;
+        state.currentMember = null;
+      })
+      .addCase(fetchMemberById.fulfilled, (state: MemberState, action: PayloadAction<Member>) => {
+        state.fetchingMember = false;
+        state.currentMember = action.payload;
+      })
+      .addCase(fetchMemberById.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.fetchingMember = false;
+        state.fetchMemberError = action.payload || "An error occurred";
+      })
+      // Handle fetchEmployeePermissions
+      .addCase(fetchEmployeePermissions.pending, (state: MemberState) => {
+        state.fetchingPermissions = true;
+        state.permissionsError = null;
+      })
+      .addCase(fetchEmployeePermissions.fulfilled, (state: MemberState, action: PayloadAction<EmployeePermission>) => {
+        state.fetchingPermissions = false;
+        state.employeePermissions = action.payload;
+      })
+      .addCase(fetchEmployeePermissions.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.fetchingPermissions = false;
+        state.permissionsError = action.payload || "An error occurred";
+      })
+      // Handle updateEmployeePermissions
+      .addCase(updateEmployeePermissions.pending, (state: MemberState) => {
+        state.updatingPermissions = true;
+        state.permissionsError = null;
+      })
+      .addCase(updateEmployeePermissions.fulfilled, (state: MemberState, action: PayloadAction<EmployeePermission>) => {
+        state.updatingPermissions = false;
+        state.employeePermissions = action.payload;
+      })
+      .addCase(updateEmployeePermissions.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.updatingPermissions = false;
+        state.permissionsError = action.payload || "An error occurred";
+      })
+      // Handle acceptInvitationAsNewUser
+      .addCase(acceptInvitationAsNewUser.pending, (state: MemberState) => {
+        state.registeringWithInvitation = true;
+        state.registrationError = null;
+      })
+      .addCase(acceptInvitationAsNewUser.fulfilled, (state: MemberState) => {
+        state.registeringWithInvitation = false;
+      })
+      .addCase(acceptInvitationAsNewUser.rejected, (state: MemberState, action: PayloadAction<string | undefined>) => {
+        state.registeringWithInvitation = false;
+        state.registrationError = action.payload || "An error occurred";
+      });
   },
 });
 
@@ -676,6 +824,17 @@ export const selectMembers = (state: RootState) => ({
   invitationResponse: state.member.invitationResponse,
   stats: state.member.stats,
   fetchingStats: state.member.fetchingStats,
+  registeringWithInvitation: state.member.registeringWithInvitation,
+  registrationError: state.member.registrationError,
 });
+
+export const selectCurrentMember       = (state: RootState) => state.member.currentMember;
+export const selectFetchingMember      = (state: RootState) => state.member.fetchingMember;
+export const selectFetchMemberError    = (state: RootState) => state.member.fetchMemberError;
+
+export const selectEmployeePermissions      = (state: RootState) => state.member.employeePermissions;
+export const selectFetchingPermissions      = (state: RootState) => state.member.fetchingPermissions;
+export const selectUpdatingPermissions      = (state: RootState) => state.member.updatingPermissions;
+export const selectPermissionsError         = (state: RootState) => state.member.permissionsError;
 
 export default memberSlice.reducer;

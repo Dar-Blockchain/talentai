@@ -122,7 +122,7 @@ exports.getParticipantByToken = async (req, res) => {
     const { token } = req.params;
 
     const participant = await campaignParticipantService.getParticipantByAnonymousToken(token);
-            
+
     if (!participant) {
       return res.status(404).json({
         success: false,
@@ -151,7 +151,7 @@ exports.updateCampaignParticipant = async (req, res) => {
     const { status, accessedAt, completedAt } = req.body;
 
     // Validate status enum
-    const validStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
+    const validStatuses = ["NOT_STARTED", "INVITED", "IN_PROGRESS", "COMPLETED", "DROPPED"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,

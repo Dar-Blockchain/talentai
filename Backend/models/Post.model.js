@@ -142,21 +142,16 @@ const postSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  agentId: {
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Agent",
-    unique: true,
-    sparse: true,
-    description: "One-to-one reference to the Agent associated with this Post",
+    ref: "User",
+    required: true,
   },
-  // Reference to associated configuration (one-to-one)
-  agentConfig: {
+  updatedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "AgentConfig",
-    unique: true,
-    sparse: true,
-    description: "Optional reference to AgentConfig (one-to-one)",
+    ref: "User",
   },
+  
   PostSteps: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -164,29 +159,6 @@ const postSchema = new mongoose.Schema({
     },
   ],
 
-  // Payment information
-  paymentStatus: {
-    type: String,
-    enum: ['not_paid', 'pending', 'completed', 'failed'],
-    default: 'not_paid',
-    description: 'Payment status for agent creation'
-  },
-  paymentTransactionId: {
-    type: String,
-    description: 'Reference to TokenTransaction ID'
-  },
-  pricePaid: {
-    type: Number,
-    description: 'Amount paid in TAI tokens'
-  },
-  paymentCompletedAt: {
-    type: Date,
-    description: 'Timestamp when payment was completed'
-  },
-  paymentError: {
-    type: String,
-    description: 'Error message if payment failed'
-  },
   MatchingConfig: { type: mongoose.Schema.Types.ObjectId, ref: 'MatchingConfig' },
 
   // Post creation type
@@ -195,6 +167,22 @@ const postSchema = new mongoose.Schema({
     enum: ['ai', 'pipeline', 'manual'],
     default: 'ai',
     description: 'How the post was created: AI generated, pipeline builder, or manual'
+  },
+  thresholdScore: {
+    type: Number,
+    default: 0,
+  },
+
+  // Archive flag (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    description: 'Soft delete flag - true when post is archived instead of deleted'
+  },
+  archivedAt: {
+    type: Date,
+    default: null,
+    description: 'Timestamp when post was archived'
   },
 
 });

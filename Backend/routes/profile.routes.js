@@ -10,14 +10,15 @@ const router = express.Router();
 const profileController = require('../controllers/ProfileControllers/profile.controller');
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 const uploadfile = require('../middleware/file-upload.middleware');
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
+
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser,authLogMiddleware("Profile"));
+router.use(requireAuth,authLogMiddleware("Profile"));
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/me', profileController.getMyProfile);
@@ -29,7 +30,7 @@ router.post('/createOrUpdateProfile',profileController.createOrUpdateProfile);
 router.put('/updateProfileVisibility', profileController.updateProfileVisibility);
 
 // PUT /profile/updateProfileComplete — unified API for all profile updates (fields + image + type)
-router.put('/', uploadfile.single("user_image"), profileController.updateProfileComplete);
+router.put('/:userId', uploadfile.single("user_image"), profileController.updateProfileComplete);
 
 // POST /profile/createOrUpdateCompanyProfile — creates/updates company profile
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
@@ -38,7 +39,7 @@ router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCom
 router.get('/search/skills', profileController.searchProfilesBySkills);
 
 // POST /profile/addSoftSkills — ajoute des soft skills
-router.post('/addSoftSkills', profileController.addSoftSkills); 
+router.post('/addSoftSkills', profileController.addSoftSkills);
 
 // GET /profile/getSoftSkills — soft skills courants
 router.get('/getSoftSkills',profileController.getSoftSkills);
@@ -57,4 +58,4 @@ router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessm
 // GET /profiles/:userId — Public route (no auth required) — MUST be LAST to avoid catching other routes
 router.get('/:userId', profileController.getProfileById);
 
-module.exports = router; 
+module.exports = router;

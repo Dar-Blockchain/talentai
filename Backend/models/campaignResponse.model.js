@@ -50,9 +50,10 @@ const campaignResponseSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       max: 100,
+      default: null,
     },
 
-    aiSummary: String,
+    aiSummary: { type: String, default: null },
   },
   { timestamps: true }
 );

@@ -6,11 +6,11 @@ import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { signinUser, verifyOTP } from "@/store/slices/authSlice";
+import { fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { usePersistentCountdown } from "@/hooks/usePersistentCountdown";
 import { getUserLocation } from "@/utils/api";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
-import { isInvitationUrl } from "@/utils/memberInvitation";
 import { formatTimeLeft } from "@/utils/functions";
 
 type FormValues = {
@@ -122,8 +122,12 @@ const invitationEmail = useMemo(() => {
         setLoading(false);
         return;
       }
+      // Fetch permissions for employees before redirecting
+      if (response.user?.role === "Employee" && response.user?._id) {
+        await dispatch(fetchEmployeePermissions(response.user._id));
+      }
       // Keep loading state active during redirect
-      handleRedirectTo(response.user, response.profile, response.companyMembership);
+      handleRedirectTo(response.user, response.profile);
     } catch (err: any) {
       showToast({
         message:
@@ -134,11 +138,9 @@ const invitationEmail = useMemo(() => {
     }
   };
 
-  const handleRedirectTo = (user: any, profile: any, companyMembership: any) => {
+  const handleRedirectTo = (user: any, profile: any) => {
     const userRole = user?.role;
     const hasProfile = !!profile?._id;
-    const hasMembership = !!companyMembership?._id || isInvitationUrl(returnUrl);
-    const isCompany = userRole === "Company";
 
     if (userRole === "Admin") {
       router.replace("/dashboard/admin");
@@ -159,12 +161,17 @@ const invitationEmail = useMemo(() => {
       return;
     }
 
-    if (hasMembership) {
-      router.replace("/workspaces");
+    if (userRole === "Employee") {
+      router.replace("/employee/dashboard");
       return;
     }
 
-    router.replace(isCompany ? "/company/dashboard" : "/dashboard/candidate");
+    if (userRole === "Company") {
+      router.replace("/company/dashboard");
+      return;
+    }
+
+    router.replace("/dashboard/candidate");
   };
 
   useEffect(() => {

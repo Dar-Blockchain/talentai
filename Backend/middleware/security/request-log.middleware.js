@@ -27,7 +27,10 @@ function authLogMiddleware(logType) {
       if (token) {
         // If it's an API key (starts with sk_), don't verify as JWT
         if (token.startsWith("sk_")) {
-          req.user = null;
+          // Don't overwrite req.user if it was already set by verifyApiKey
+          if (!req.isApiKeyAuth) {
+            req.user = null;
+          }
           appendLog(req, res, startTime, logType); // Pass logType as parameter
           next();
         } else {

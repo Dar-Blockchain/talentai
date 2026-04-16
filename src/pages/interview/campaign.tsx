@@ -680,16 +680,6 @@ const CampaignInterview = () => {
         <AgentStatusPanel
           interviewStatus={socket.interviewStatus}
           agentState={audio.agentState}
-          agentMessage={audio.agentMessage}
-          isInReadingTime={audio.isInReadingTime}
-          readingTimeLeft={audio.readingTimeLeft}
-          accumulatedTurns={audio.accumulatedTurns}
-          isVoiceActive={audio.isVoiceActive}
-          currentTranscript={audio.currentTranscript}
-          debugMode={audio.debugMode}
-          setDebugMode={audio.setDebugMode}
-          silenceDebugLog={audio.silenceDebugLog}
-          transcriptDebugLog={audio.transcriptDebugLog}
           onSubmitAnswer={audio.sendAccumulatedAnswer}
         />
 
@@ -724,6 +714,8 @@ const CampaignInterview = () => {
           onDismissFirst={() => security.setShowFirstViolationModal(false)}
           onDismissSecond={() => security.setShowSecurityModal(false)}
           onReturnToDashboard={() => router.push('/company/dashboard')}
+          violationType={security.violationType}
+          securityViolationCount={security.securityViolationCount}
         />
 
         {/* Fixed Timer */}

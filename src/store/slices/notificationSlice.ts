@@ -41,6 +41,30 @@ const initialState: NotificationState = {
   unreadCount: 0,
 };
 
+// Derive a human-readable title from notification type + content (mirrors backend logic)
+const deriveTitle = (type: string, content: string): string => {
+  if (content) {
+    const c = content.toLowerCase();
+    if (c.includes('interview'))                                      return 'Interview Update';
+    if (c.includes('application'))                                    return 'Application Update';
+    if (c.includes('unlocked') || c.includes('interested in your'))  return 'Profile Unlocked';
+    if (c.includes('match') || c.includes('matches your'))           return 'New Job Match';
+    if (c.includes('new offer') || c.includes('job') || c.includes('position') || c.includes('offer')) return 'New Job Offer';
+    if (c.includes('score') || c.includes('test') || c.includes('passed') || c.includes('level up')) return 'Test Result';
+    if (c.includes('profile'))                                        return 'Profile Update';
+    if (c.includes('plan') || c.includes('limit') || c.includes('subscription')) return 'Plan Update';
+    if (c.includes('company'))                                        return 'Company Update';
+    if (c.includes('welcome') || c.includes('registered'))           return 'Welcome!';
+    if (c.includes('password') || c.includes('login') || c.includes('sign')) return 'Account Security';
+  }
+  switch (type) {
+    case 'success': return 'Success';
+    case 'warning': return 'Warning';
+    case 'error':   return 'Error';
+    default:        return 'Notification';
+  }
+};
+
 // Helper to format timestamps
 const formatTimestamp = (date: Date): string => {
   const now = new Date();
@@ -148,7 +172,7 @@ export const fetchNotifications = createAsyncThunk(
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
-        title: notif.title || 'System Notification',
+        title: notif.title || deriveTitle(notif.type || 'info', notif.content || notif.message || ''),
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
         isRead: notif.read !== undefined ? notif.read : (notif.isRead || false),
@@ -370,7 +394,7 @@ export const fetchArchivedNotifications = createAsyncThunk(
       const mapped = notificationsArray.map((notif: any) => ({
         id: notif._id || notif.id,
         type: notif.type === 'system' ? 'info' : (notif.type || 'info'),
-        title: notif.title || 'System Notification',
+        title: notif.title || deriveTitle(notif.type || 'info', notif.content || notif.message || ''),
         message: notif.content || notif.message || '',
         timestamp: formatTimestamp(new Date(notif.createdAt)),
         isRead: true, // Archived notifications are always read
@@ -402,7 +426,7 @@ const notificationSlice = createSlice({
       const notification: Notification = {
         id: action.payload._id || action.payload.id || Date.now().toString(),
         type: action.payload.type === 'system' ? 'info' : (action.payload.type || 'info'),
-        title: action.payload.title || 'System Notification',
+        title: action.payload.title || deriveTitle(action.payload.type || 'info', action.payload.content || action.payload.message || ''),
         message: action.payload.content || action.payload.message || '',
         timestamp: formatTimestamp(action.payload.createdAt ? new Date(action.payload.createdAt) : new Date()),
         isRead: action.payload.read || action.payload.isRead || false,

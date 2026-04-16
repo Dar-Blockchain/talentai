@@ -159,7 +159,7 @@ const getMy = async (req, res) => {
       ...result,
     });
   } catch (error) {
-    console.error("Error in getAll:", error);
+    console.error("Error in getMy:", error);
     return res.status(500).json({
       success: false,
       message: error.message || "Internal server error",

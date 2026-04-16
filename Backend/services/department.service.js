@@ -83,6 +83,7 @@ exports.updateDepartment = async (id, updateData) => {
       throw err;
     }
     if (updateData.companyId) delete updateData.companyId; // cannot change owner
+    if (updateData.createdBy) delete updateData.createdBy; // cannot modify createdBy
     const dept = await Department.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,

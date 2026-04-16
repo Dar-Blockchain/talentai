@@ -14,6 +14,7 @@ export interface ApiKey {
   lastUsed?: string;
   expiresAt?: string;
   createdAt: string;
+  ipWhitelist?: string[];
 }
 
 interface ApiKeyState {
@@ -44,7 +45,7 @@ export const fetchApiKeys = createAsyncThunk('apiKeys/fetchAll', async () => {
 
 export const createApiKey = createAsyncThunk(
   'apiKeys/create',
-  async (payload: { name: string; serviceName: string; scopes: string[]; rateLimit: number; expiresAt: string }) => {
+  async (payload: { name: string; serviceName: string; scopes: string[]; rateLimit: number; expiresAt: string; ipWhitelist?: string[] }) => {
     const res = await axiosInstance.post('api/api-keys', payload, { headers: authHeaders() });
     return (res.data?.data ?? res.data) as ApiKey;
   }
@@ -62,7 +63,7 @@ export const toggleApiKey = createAsyncThunk('apiKeys/toggle', async (id: string
 
 export const updateApiKey = createAsyncThunk(
   'apiKeys/update',
-  async ({ id, data }: { id: string; data: Partial<Pick<ApiKey, 'name' | 'serviceName' | 'scopes' | 'rateLimit' | 'expiresAt'>> }) => {
+  async ({ id, data }: { id: string; data: Partial<Pick<ApiKey, 'name' | 'serviceName' | 'scopes' | 'rateLimit' | 'expiresAt' | 'ipWhitelist'>> }) => {
     const res = await axiosInstance.put(`api/api-keys/${id}`, data, { headers: authHeaders() });
     return (res.data?.data ?? res.data) as ApiKey;
   }

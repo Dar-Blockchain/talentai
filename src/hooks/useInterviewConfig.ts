@@ -22,6 +22,7 @@ export interface UseInterviewConfigReturn {
   jobData: any | null;
   limitReached: boolean;
   limitMessage: string;
+  isExpired: boolean;
 }
 
 export interface UseInterviewConfigOptions {
@@ -76,13 +77,17 @@ export const useInterviewConfig = ({
   const [limitReached, setLimitReached] = useState(false);
   const [limitMessage, setLimitMessage] = useState('');
   const [configLoading, setConfigLoading] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   const fetchJobInterviewConfig = async (jobId: string) => {
     setConfigLoading(true);
     try {
       const token = Cookies.get('api_token');
+      const ref = router.query.ref as string | undefined;
+      const isPublicLink = !ref || ref === 'link';
 
-      if (!token) {
+      // Public interview link (ref=link) — no login required, proceed without token
+      if (!token && !isPublicLink) {
         const returnUrl = window.location.pathname + window.location.search;
         router.push(`/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
         setConfigLoading(false);
@@ -94,18 +99,18 @@ export const useInterviewConfig = ({
       console.log('🔍 Fetching interview config for jobId:', jobId);
 
       // 1. Check if this is a pipeline job
-      const postResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/getPostById/${jobId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      // Guests (no token) use the public endpoint; authenticated users use the protected one
+      const postUrl = token
+        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}post/getPostById/${jobId}`
+        : `${process.env.NEXT_PUBLIC_API_BASE_URL}post/details/${jobId}`;
+
+      const postHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) postHeaders['Authorization'] = `Bearer ${token}`;
+
+      const postResponse = await fetch(postUrl, { headers: postHeaders });
 
       if (!postResponse.ok) {
-        if (postResponse.status === 401 || postResponse.status === 403) {
+        if ((postResponse.status === 401 || postResponse.status === 403) && token) {
           const returnUrl = window.location.pathname + window.location.search;
           router.push(`/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
           return;
@@ -115,7 +120,8 @@ export const useInterviewConfig = ({
 
       const postData = await postResponse.json();
       console.log('📋 Raw post data:', postData);
-      const post = postData.data || postData.post || postData;
+      // post/details wraps in data.data, post/getPostById wraps in data.data or data.post
+      const post = postData.data?.data || postData.data || postData.post || postData;
       setJobData(post);
       const isPipeline = post?.creationType === 'pipeline';
 
@@ -230,14 +236,12 @@ export const useInterviewConfig = ({
       } else {
         console.log('📋 Regular interview - fetching standard config...');
 
+        const configHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) configHeaders['Authorization'] = `Bearer ${token}`;
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}post/interview-config/${jobId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            }
-          }
+          { headers: configHeaders }
         );
 
         if (!response.ok) {
@@ -255,7 +259,28 @@ export const useInterviewConfig = ({
             throw new Error('This is a pipeline job - please refresh the page. The interview configuration is being loaded from the pipeline steps.');
           }
 
-          throw new Error(`Failed to fetch job config: ${errorData.message || errorData.error || response.statusText}`);
+          if (response.status === 410) {
+            setIsExpired(true);
+            setPipelineLoading(false);
+            setConfigLoading(false);
+            return;
+          }
+
+          // Guest without token — endpoint requires auth but we still want to proceed
+          // with default HR config so the interview can start
+          if (response.status === 401 && !token) {
+            console.warn('⚠️ interview-config requires auth — using default config for guest');
+            const defaultConfig = buildInterviewConfigFromURL({ type: 'hr' });
+            setInterviewConfig(defaultConfig);
+            localStorage.setItem('interview_jobId', jobId);
+            localStorage.setItem('interview_type', 'hr');
+            setPipelineLoading(false);
+            setConfigLoading(false);
+            return;
+          }
+
+          const errMsg = errorData.message || errorData.error || response.statusText;
+          throw new Error(`Failed to fetch job config: ${errMsg}`);
         }
 
         const config = await response.json();
@@ -360,5 +385,6 @@ export const useInterviewConfig = ({
     jobData,
     limitReached,
     limitMessage,
+    isExpired,
   };
 };

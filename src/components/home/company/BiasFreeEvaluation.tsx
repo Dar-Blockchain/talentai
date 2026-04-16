@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CaptchaModal from "./CaptchaModal";
+import DemoVideoModal from "./DemoVideoModal";
 
 const ACCENT = "#0CDA8B";
 const ACCENT_BG = "rgba(12,218,139,0.08)";
@@ -25,8 +26,8 @@ const PILLS = [
 
 const BiasFreeEvaluation: React.FC = () => {
   const [captchaOpen, setCaptchaOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
 
-  const openDemo = () => setCaptchaOpen(true);
   const handleVerified = () => window.open(CALENDLY, "_blank");
 
   return (
@@ -99,7 +100,7 @@ const BiasFreeEvaluation: React.FC = () => {
             </Typography>
             <Button
               variant="contained"
-              onClick={openDemo}
+              onClick={() => setVideoOpen(true)}
               sx={{
                 bgcolor: ACCENT, color: "#fff",
                 fontFamily: "Poppins", fontWeight: 600, fontSize: "13px",
@@ -167,6 +168,7 @@ const BiasFreeEvaluation: React.FC = () => {
       </Box>
 
       <CaptchaModal open={captchaOpen} onVerified={handleVerified} onClose={() => setCaptchaOpen(false)} />
+      <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />
     </Box>
   );
 };

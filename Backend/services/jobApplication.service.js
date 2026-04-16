@@ -1,8 +1,134 @@
 const JobApplication = require("../models/JobApplication.model");
 const Profile = require("../models/Profile.model");
 const Post = require("../models/Post.model");
-const CVAnalysis = require("../models/CVAnalysis.model");
-const { calculateMatchScore } = require("./MatchingService/matching.service");
+const { callLLM } = require("../helpers/bedrock.helpers");
+
+// ========== CALCULATE MATCH SCORE WITH BEDROCK ==========
+const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost) => {
+  try {
+    console.log(`\n🤖 [BEDROCK MATCHING] - Sending to Bedrock for AI-powered matching...`);
+    
+    // Prepare candidate data
+    const candidateData = {
+      name: `${candidateProfile.firstName} ${candidateProfile.lastName}`,
+      skills: candidateProfile.skills?.map(s => ({
+        name: s.name,
+        level: s.Levelconfirmed || s.proficiencyLevel || "Not specified",
+        experienceLevel: s.experienceLevel || "Not specified"
+      })) || [],
+      softSkills: candidateProfile.softSkills?.map(s => ({
+        name: s.name,
+        category: s.category || "General",
+        level: s.proficiencyLevel || "Not specified"
+      })) || [],
+      salary: candidateProfile.expectedSalary || {},
+      workModePreference: candidateProfile.workModePreference || "Not specified",
+      contractPreference: candidateProfile.preferredContractType || "Not specified",
+      yearsOfExperience: candidateProfile.yearsOfExperience || "Not specified",
+    };
+
+    // Prepare job data
+    const jobData = {
+      title: jobPost.jobDetails?.title || "Not specified",
+      description: jobPost.jobDetails?.description || "Not specified",
+      requiredSkills: jobPost.skillAnalysis?.requiredSkills?.map(s => ({
+        name: s.name,
+        level: s.level || "Not specified",
+        importance: s.importance || "Not specified"
+      })) || [],
+      softSkills: jobPost.skillAnalysis?.softSkills?.map(s => ({
+        name: s.name,
+        level: s.level || "Not specified"
+      })) || [],
+      salary: jobPost.jobDetails?.salary || {},
+      workMode: jobPost.jobDetails?.workMode || "Not specified",
+      employmentType: jobPost.jobDetails?.employmentType || "Not specified",
+      experienceLevel: jobPost.jobDetails?.experienceLevel || "Not specified",
+    };
+
+    const prompt = `Analyze the compatibility between a candidate and a job position. Return ONLY valid JSON.
+
+CANDIDATE:
+${JSON.stringify(candidateData, null, 2)}
+
+JOB:
+${JSON.stringify(jobData, null, 2)}
+
+Based on this information, provide a matching score between 0 and 100, where:
+- 0-20: Poor match - candidate lacks critical skills or experience
+- 21-40: Below average - significant skill gaps or misalignment
+- 41-60: Average - some alignment but key gaps exist
+- 61-80: Good match - strong alignment with minor gaps
+- 81-100: Excellent match - strong alignment across most criteria
+
+Consider these factors:
+1. **Technical Skills Match** (80%): How well do candidate's technical skills match the job requirements?
+2. **Soft Skills Match** (10%): Do the soft skills align with the role's needs?
+3. **Experience Level** (10%): Does the candidate's experience level match the job's requirements?
+
+IMPORTANT: Return ONLY a JSON object with this exact structure:
+{
+  "matchScore": <number 0-100>,
+  "reasoning": "<brief explanation of the score>"
+}
+
+Do not include any other text, markdown, or explanation outside of the JSON object.`;
+
+    const response = await callLLM({
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      maxTokens: 2000
+    });
+
+    // Extract the response content
+    const content = response.content || "{}";
+    console.log(`📄 Bedrock Response:`, content.substring(0, 300));
+    
+    // Parse JSON response - improved parsing for truncated JSON
+    let result = {};
+    try {
+      // Try to extract JSON from response
+      let jsonMatch = content.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        let jsonStr = jsonMatch[0];
+        
+        // If JSON appears truncated, try to fix it
+        if (!jsonStr.endsWith('}')) {
+          // Find the last complete field
+          const lastQuoteIndex = jsonStr.lastIndexOf('"');
+          if (lastQuoteIndex > 0) {
+            jsonStr = jsonStr.substring(0, lastQuoteIndex) + '"}';
+          }
+        }
+        
+        result = JSON.parse(jsonStr);
+      } else {
+        result = JSON.parse(content);
+      }
+    } catch (parseError) {
+      console.error(`⚠️ Failed to parse Bedrock response:`, parseError.message);
+      console.error(`   Response content: ${content.substring(0, 300)}`);
+      return 0;
+    }
+
+    const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
+    
+    console.log(`✅ Match Score from Bedrock: ${matchScore}/100`);
+    console.log(`   Reasoning: ${(result.reasoning || "Not provided").substring(0, 100)}`);
+    
+    return matchScore;
+  } catch (error) {
+    console.error(`❌ [BEDROCK MATCHING ERROR]`, error.message);
+    console.error("Falling back to default score of 0");
+    return 0;
+  }
+};
 
 // ========== CALCULATE MATCH SCORE (via AI Agent) ==========
 const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
@@ -88,33 +214,17 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     console.log(`   └─ Work Mode Weight: ${weights.workMode || 10}%`);
     console.log(`   └─ Contract Weight: ${weights.contract || 10}%`);
 
-    // Calculate match score using AI matching algorithm
-    console.log(`\n🔍 Step 4: Running AI matching algorithm...`);
-    console.log(`   This algorithm will:`);
-    console.log(`   1. Compare technical skills (levels and weights)`);
-    console.log(`   2. Match soft skills presence`);
-    console.log(`   3. Assess experience alignment`);
-    console.log(`   4. Evaluate salary compatibility`);
-    console.log(`   5. Check work mode preferences`);
-    console.log(`   6. Verify contract type match`);
+    // Calculate match score using Bedrock AI matching algorithm
+    console.log(`\n🔍 Step 4: Running Bedrock matching algorithm...`);
+    console.log(`   Sending candidate CV and job post to Bedrock for intelligent matching...`);
 
-    const matchResult = await calculateMatchScore(
-      jobSkills,
-      candidateSkills,
-      jobDetails,
-      candidateProfile,
-      companyId,
-      configData
-    );
+    const matchResult = await calculateMatchScoreWithBedrock(profile, post);
 
-    const score = matchResult?.score || 0;
-    console.log(`\n✅ [MATCH SCORE CALCULATED]`);
+    const score = matchResult || 0;
+    console.log(`\n✅ [MATCH SCORE CALCULATED BY BEDROCK]`);
     console.log(`   Candidate: ${candidateProfile.firstName} ${candidateProfile.lastName}`);
-    console.log(`   Job: "${post.title}"`);
+    console.log(`   Job: "${post.jobDetails?.title}"`);
     console.log(`   Final Match Score: ${score}/100`);
-    if (matchResult?.unlocked) {
-      console.log(`   Status: 🔓 UNLOCKED CANDIDATE`);
-    }
     console.log("=".repeat(80) + "\n");
 
     return score;
@@ -153,7 +263,7 @@ module.exports.createJobApplication = async (applicationData) => {
 
     // Add calculated match score to application data
     cleanData.matchScore = calculatedMatchScore;
-    cleanData.status = "applied";
+    cleanData.status = "visited";
 
     const application = await JobApplication.create(cleanData);
 
@@ -161,7 +271,7 @@ module.exports.createJobApplication = async (applicationData) => {
     const populatedApplication = await JobApplication.findById(application._id)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -204,7 +314,7 @@ module.exports.getAllJobApplications = async (filters = {}, page = 1, limit = 10
     const applications = await JobApplication.find(query)
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -238,7 +348,7 @@ module.exports.getJobApplicationById = async (applicationId) => {
     const application = await JobApplication.findById(applicationId)
       .populate({ path: "profile", populate: { path: "userId", select: "email" } })
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -275,7 +385,7 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
 
     const applications = await JobApplication.find(query)
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort({ appliedAt: -1 })
@@ -422,10 +532,20 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     const totalPages = Math.ceil(totalCount / limit);
 
     const applications = await JobApplication.find(query)
-      .populate({ path: "profile", populate: { path: "userId", select: "email" } })
-      .populate("post")
-      .populate("cvAnalysis")
-      .populate("interviewAssessment")
+      .select("_id status matchScore appliedAt createdAt profile post company cvAnalysis")
+      .populate({
+        path: "profile",
+        select: "firstName lastName email user_image resume phone location contactInformation skills",
+        populate: { path: "userId", select: "email" },
+      })
+      .populate({
+        path: "post",
+        select: "_id jobDetails title",
+      })
+      .populate({
+        path: "cvAnalysis",
+        select: "name email phone location analysisScore sourceUrl skills softSkills spokenLanguages education certifications links seniority yearsOfExperience title summary experience",
+      })
       .sort({ appliedAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -462,14 +582,6 @@ module.exports.updateJobApplication = async (applicationId, updateData) => {
     // Updates timestamps
     updateData.updatedAt = new Date();
 
-    // Handle status-based fields
-    if (updateData.status === "viewed" && !updateData.viewedAt) {
-      updateData.viewedAt = new Date();
-    }
-    if (updateData.status === "shortlisted" && !updateData.shortlistedAt) {
-      updateData.shortlistedAt = new Date();
-    }
-
     const application = await JobApplication.findByIdAndUpdate(
       applicationId,
       updateData,
@@ -477,7 +589,7 @@ module.exports.updateJobApplication = async (applicationId, updateData) => {
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey")
+      .populate("company", "-authHistory -notifications")
       .populate("cvAnalysis")
       .populate("interviewAssessment");
 
@@ -514,7 +626,7 @@ module.exports.withdrawJobApplication = async (applicationId) => {
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+      .populate("company", "-authHistory -notifications");
 
     if (!application) {
       const error = new Error("Application not found");
@@ -548,7 +660,7 @@ module.exports.archiveJobApplication = async (applicationId) => {
     )
       .populate("profile")
       .populate("post")
-      .populate("company", "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey");
+      .populate("company", "-authHistory -notifications");
 
     if (!application) {
       const error = new Error("Application not found");
@@ -605,30 +717,13 @@ module.exports.getApplicationStats = async (companyId, postId = null) => {
         $group: {
           _id: null,
           totalApplications: { $sum: 1 },
-          appliedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "applied"] }, 1, 0] },
-          },
-          viewedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "viewed"] }, 1, 0] },
-          },
-          shortlistedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "shortlisted"] }, 1, 0] },
-          },
-          interviewScheduledCount: {
-            $sum: {
-              $cond: [{ $eq: ["$status", "interview_scheduled"] }, 1, 0],
-            },
+          visitedCount: {
+            $sum: { $cond: [{ $eq: ["$status", "visited"] }, 1, 0] },
           },
           interviewCompletedCount: {
             $sum: {
               $cond: [{ $eq: ["$status", "interview_completed"] }, 1, 0],
             },
-          },
-          rejectedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "rejected"] }, 1, 0] },
-          },
-          acceptedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "accepted"] }, 1, 0] },
           },
           averageMatchScore: { $avg: "$matchScore" },
         },
@@ -686,6 +781,311 @@ module.exports.getApplicationMetrics = async (companyId) => {
       avgCVScore: appMetrics.avgCVScore ? Math.round(appMetrics.avgCVScore) : 0,
       topCVScore: appMetrics.topCVScore ? Math.round(appMetrics.topCVScore) : 0,
     };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== READ - Flat summary of applications for a post ==========
+module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page = 1, limit = 20) => {
+  try {
+    if (!postId) {
+      const error = new Error("Post ID is required");
+      error.status = 400;
+      throw error;
+    }
+
+    const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+
+    // ── Build base query ─────────────────────────────────────────────────────
+    const query = { post: postId, isWithdrawn: false };
+
+    if (filters.status) query.status = filters.status;
+
+    if (filters.matchScoreMin !== undefined || filters.matchScoreMax !== undefined) {
+      query.matchScore = {};
+      if (filters.matchScoreMin !== undefined) query.matchScore.$gte = filters.matchScoreMin;
+      if (filters.matchScoreMax !== undefined) query.matchScore.$lte = filters.matchScoreMax;
+    }
+
+    if (filters.dateFrom || filters.dateTo) {
+      query.appliedAt = {};
+      if (filters.dateFrom) query.appliedAt.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        query.appliedAt.$lte = to;
+      }
+    }
+
+    // ── Search by name / email ────────────────────────────────────────────────
+    if (filters.search) {
+      const rx = { $regex: filters.search, $options: "i" };
+      const profileMatches = await Profile.find({
+        $or: [{ firstName: rx }, { lastName: rx }, { email: rx }],
+      }).select("_id");
+      query.profile = { $in: profileMatches.map((p) => p._id) };
+    }
+
+    // ── Fetch applications (all, for in-memory interviewScore sort/filter) ───
+    const applications = await JobApplication.find(query)
+      .select("_id status matchScore appliedAt profile")
+      .populate({
+        path: "profile",
+        select: "firstName lastName email user_image userId resume",
+        populate: { path: "userId", select: "email" },
+      })
+      .sort({ appliedAt: -1 })
+      .lean();
+
+    // ── Fetch all assessments for this post in one query ─────────────────────
+    const assessments = await PostInterviewAssessment.find({ post: postId })
+      .select("candidate interviewData.finalReport.scores.overall createdAt")
+      .lean();
+
+    const assessmentByUser = new Map();
+    assessments.forEach((a) => {
+      assessmentByUser.set(String(a.candidate), a);
+    });
+
+    // ── Merge & build flat rows ───────────────────────────────────────────────
+    let rows = applications.map((app) => {
+      const p = app.profile || {};
+      const userId = String(p.userId?._id || p.userId || "");
+      const assessment = assessmentByUser.get(userId);
+      const interviewScore = assessment?.interviewData?.finalReport?.scores?.overall ?? null;
+      return {
+        id: app._id,
+        candidateUserId: userId || null,
+        firstName: p.firstName || null,
+        lastName: p.lastName || null,
+        email: p.email || p.userId?.email || null,
+        userImage: p.user_image || null,
+        matchScore: app.matchScore ?? null,
+        interviewScore: interviewScore !== undefined ? interviewScore : null,
+        appliedAt: app.appliedAt || null,
+        completedAt: assessment?.createdAt || null,
+        status: app.status,
+        resumeFile: p.resume || null,
+      };
+    });
+
+    // ── In-memory filters that depend on joined data ──────────────────────────
+    if (filters.interviewScoreMin !== undefined) {
+      rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore >= filters.interviewScoreMin);
+    }
+    if (filters.interviewScoreMax !== undefined) {
+      rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore <= filters.interviewScoreMax);
+    }
+
+    // ── Sort ──────────────────────────────────────────────────────────────────
+    const sortMap = {
+      appliedAt_desc: (a, b) => new Date(b.appliedAt) - new Date(a.appliedAt),
+      appliedAt_asc:  (a, b) => new Date(a.appliedAt) - new Date(b.appliedAt),
+      matchScore_desc: (a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1),
+      matchScore_asc:  (a, b) => (a.matchScore ?? -1) - (b.matchScore ?? -1),
+      interviewScore_desc: (a, b) => (b.interviewScore ?? -1) - (a.interviewScore ?? -1),
+      interviewScore_asc:  (a, b) => (a.interviewScore ?? -1) - (b.interviewScore ?? -1),
+      name_asc:  (a, b) => (a.firstName || "").localeCompare(b.firstName || ""),
+      name_desc: (a, b) => (b.firstName || "").localeCompare(a.firstName || ""),
+    };
+    if (filters.sort && sortMap[filters.sort]) {
+      rows.sort(sortMap[filters.sort]);
+    }
+
+    // ── Paginate ──────────────────────────────────────────────────────────────
+    const totalCount = rows.length;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    const skip = (page - 1) * limit;
+    const data = rows.slice(skip, skip + limit);
+
+    return {
+      data,
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== READ - Flat summary of all applications for a company ==========
+module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {}, page = 1, limit = 20) => {
+  try {
+    if (!companyId) throw Object.assign(new Error("Company ID is required"), { status: 400 });
+
+    const PostInterviewAssessment = require("../models/PostInterviewAssessment.model");
+    const ObjectId = require("mongoose").Types.ObjectId;
+
+    const query = { company: new ObjectId(companyId), isWithdrawn: false };
+
+    if (filters.status) query.status = filters.status;
+    if (filters.postId) query.post = new ObjectId(filters.postId);
+
+    if (filters.matchScoreMin !== undefined || filters.matchScoreMax !== undefined) {
+      query.matchScore = {};
+      if (filters.matchScoreMin !== undefined) query.matchScore.$gte = filters.matchScoreMin;
+      if (filters.matchScoreMax !== undefined) query.matchScore.$lte = filters.matchScoreMax;
+    }
+
+    if (filters.dateFrom || filters.dateTo) {
+      query.appliedAt = {};
+      if (filters.dateFrom) query.appliedAt.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        query.appliedAt.$lte = to;
+      }
+    }
+
+    if (filters.search) {
+      const rx = { $regex: filters.search, $options: "i" };
+      const profileMatches = await Profile.find({
+        $or: [{ firstName: rx }, { lastName: rx }, { email: rx }],
+      }).select("_id");
+      query.profile = { $in: profileMatches.map((p) => p._id) };
+    }
+
+    const applications = await JobApplication.find(query)
+      .select("_id status matchScore appliedAt profile post")
+      .populate({
+        path: "profile",
+        select: "firstName lastName email user_image userId resume",
+        populate: { path: "userId", select: "email" },
+      })
+      .populate({ path: "post", select: "jobDetails" })
+      .sort({ appliedAt: -1 })
+      .lean();
+
+    const postIds = [...new Set(applications.map((a) => String(a.post?._id)).filter(Boolean))];
+    const assessments = await PostInterviewAssessment.find({ post: { $in: postIds } })
+      .select("candidate post interviewData.finalReport.scores.overall createdAt")
+      .lean();
+
+    const assessmentMap = new Map();
+    assessments.forEach((a) => {
+      assessmentMap.set(`${a.post}:${a.candidate}`, a);
+    });
+
+    let rows = applications.map((app) => {
+      const p = app.profile || {};
+      const userId = String(p.userId?._id || p.userId || "");
+      const postId = String(app.post?._id || "");
+      const assessment = assessmentMap.get(`${postId}:${userId}`);
+      const interviewScore = assessment?.interviewData?.finalReport?.scores?.overall ?? null;
+      return {
+        id: app._id,
+        candidateUserId: userId || null,
+        firstName: p.firstName || null,
+        lastName: p.lastName || null,
+        email: p.email || p.userId?.email || null,
+        userImage: p.user_image || null,
+        matchScore: app.matchScore ?? null,
+        interviewScore: interviewScore !== undefined ? interviewScore : null,
+        appliedAt: app.appliedAt || null,
+        completedAt: assessment?.createdAt || null,
+        status: app.status,
+        postId: postId || null,
+        postTitle: app.post?.jobDetails?.title || null,
+        resumeFile: p.resume || null,
+      };
+    });
+
+    if (filters.interviewScoreMin !== undefined)
+      rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore >= filters.interviewScoreMin);
+    if (filters.interviewScoreMax !== undefined)
+      rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore <= filters.interviewScoreMax);
+
+    const sortMap = {
+      appliedAt_desc:      (a, b) => new Date(b.appliedAt) - new Date(a.appliedAt),
+      appliedAt_asc:       (a, b) => new Date(a.appliedAt) - new Date(b.appliedAt),
+      matchScore_desc:     (a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1),
+      matchScore_asc:      (a, b) => (a.matchScore ?? -1) - (b.matchScore ?? -1),
+      interviewScore_desc: (a, b) => (b.interviewScore ?? -1) - (a.interviewScore ?? -1),
+      interviewScore_asc:  (a, b) => (a.interviewScore ?? -1) - (b.interviewScore ?? -1),
+      name_asc:            (a, b) => (a.firstName || "").localeCompare(b.firstName || ""),
+      name_desc:           (a, b) => (b.firstName || "").localeCompare(a.firstName || ""),
+    };
+    if (filters.sort && sortMap[filters.sort]) rows.sort(sortMap[filters.sort]);
+
+    const totalCount = rows.length;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    const data = rows.slice((page - 1) * limit, page * limit);
+
+    return { data, currentPage: page, totalPages, totalCount, limit, hasNextPage: page < totalPages, hasPrevPage: page > 1 };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+module.exports.downloadCVsByCompany = async (companyId, filters = {}) => {
+  try {
+    if (!companyId) throw Object.assign(new Error("Company ID is required"), { status: 400 });
+
+    const ObjectId = require("mongoose").Types.ObjectId;
+    const path = require("path");
+    const fs = require("fs");
+
+    const query = { company: new ObjectId(companyId), isWithdrawn: false };
+    if (filters.status) query.status = filters.status;
+    if (filters.postId) query.post = new ObjectId(filters.postId);
+
+    if (filters.dateFrom || filters.dateTo) {
+      query.appliedAt = {};
+      if (filters.dateFrom) query.appliedAt.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        query.appliedAt.$lte = to;
+      }
+    }
+
+    if (filters.search) {
+      const rx = { $regex: filters.search, $options: "i" };
+      const profileMatches = await Profile.find({
+        $or: [{ firstName: rx }, { lastName: rx }, { email: rx }],
+      }).select("_id");
+      query.profile = { $in: profileMatches.map((p) => p._id) };
+    }
+
+    const applications = await JobApplication.find(query)
+      .select("profile post")
+      .populate({ path: "profile", select: "firstName lastName resume" })
+      .populate({ path: "post", select: "jobDetails" })
+      .lean();
+
+    const resumeDir = path.resolve(__dirname, "../public/resume");
+
+    const files = [];
+    const seenFiles = new Set();
+
+    for (const app of applications) {
+      const p = app.profile;
+      if (!p || !p.resume) continue;
+
+      const filePath = path.join(resumeDir, p.resume);
+      if (!fs.existsSync(filePath)) continue;
+      if (seenFiles.has(filePath)) continue;
+      seenFiles.add(filePath);
+
+      const firstName = p.firstName || "Unknown";
+      const lastName  = p.lastName  || "";
+      const postTitle = app.post?.jobDetails?.title || "Job";
+      const ext       = path.extname(p.resume) || ".pdf";
+      const archiveName = `${firstName}_${lastName}_${postTitle}${ext}`
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+      files.push({ filePath, archiveName });
+    }
+
+    return files;
   } catch (error) {
     error.status = error.status || 500;
     throw error;

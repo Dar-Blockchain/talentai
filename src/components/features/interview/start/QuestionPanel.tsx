@@ -32,6 +32,8 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
         borderBottom: '1px solid #f0edf8',
         transform: questionHighlight ? 'translateY(1px)' : 'none',
         transition: 'transform 0.3s ease',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
       }}
     >
       <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2}>

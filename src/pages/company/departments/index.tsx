@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
+import { RootState } from "@/store/store";
+import { selectEmployeePermissions } from "@/store/slices/memberSlice";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import AppButton from "@/components/ui/AppButton";
 import { AppDispatch } from "@/store/store";
@@ -23,17 +26,20 @@ import {
   selectDepartmentDeleteError,
   Department,
 } from "@/store/slices/departmentSlice";
-import DepartmentSearch from "@/components/features/company/departments/DepartmentSearch";
-import DepartmentFetchError from "@/components/features/company/departments/DepartmentFetchError";
-import DepartmentGrid from "@/components/features/company/departments/DepartmentGrid";
-import DepartmentEmptyState from "@/components/features/company/departments/DepartmentEmptyState";
-import CreateDepartmentModal from "@/components/features/company/departments/CreateDepartmentModal";
-import EditDepartmentModal from "@/components/features/company/departments/EditDepartmentModal";
-import DeleteDepartmentDialog from "@/components/features/company/departments/DeleteDepartmentDialog";
+import DepartmentFetchError from "@/components/features/company/departments/list/DepartmentFetchError";
+import DepartmentGrid from "@/components/features/company/departments/list/DepartmentGrid";
+import DepartmentEmptyState from "@/components/features/company/departments/list/DepartmentEmptyState";
+import CreateDepartmentModal from "@/components/features/company/departments/new/CreateDepartmentModal";
+import EditDepartmentModal from "@/components/features/company/departments/edit/EditDepartmentModal";
+import DeleteDepartmentDialog from "@/components/features/company/departments/delete/DeleteDepartmentDialog";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 
 const DepartmentsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  useCompanyAccess("canViewDepartments");
+  const dispatch  = useDispatch<AppDispatch>();
+  const user      = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms  = useSelector(selectEmployeePermissions);
+  const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
 
   const creating = useSelector(selectDepartmentCreating);
   const createSuccess = useSelector(selectDepartmentCreateSuccess);
@@ -107,7 +113,11 @@ const DepartmentsPage: React.FC = () => {
         <PageHeader
           title="Departments"
           subtitle="Manage your company's organizational departments."
-          actions={[
+          breadcrumbs={[
+            { label: "Dashboard", href: "/company/dashboard" },
+            { label: "Departments" },
+          ]}
+          actions={canManage ? [
             <AppButton
               key="create"
               label="New Department"
@@ -116,13 +126,12 @@ const DepartmentsPage: React.FC = () => {
               size="medium"
               onClick={openCreate}
             />,
-          ]}
+          ] : []}
         />
 
-        <DepartmentSearch onSearch={setSearch} />
         <DepartmentFetchError />
-        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} />
-        <DepartmentEmptyState search={search} onCreateClick={openCreate} />
+        <DepartmentGrid onEdit={setEditTarget} onDelete={setDeleteTarget} onSearch={setSearch} canManage={canManage} />
+        <DepartmentEmptyState search={search} onCreateClick={openCreate} canManage={canManage} />
 
         <CreateDepartmentModal
           open={createOpen}

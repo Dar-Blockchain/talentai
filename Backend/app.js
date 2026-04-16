@@ -25,15 +25,19 @@ const socket = require("./socket");
 //const { initializeAgenda } = require("./services/Agent&AgendaServices/agenda.service");
 const intelligentInterviewService = require("./services/intelligentInterview.service");
 const intelligentInterviewController = require("./controllers/intelligentInterview.controller");
+const campaignInterviewService = require("./services/campaignInterview.service");
+const campaignInterviewController = require("./controllers/campaignInterview.controller");
 const chatSocketHandler = require("./socket-handlers/chatSocketHandler");
 const { seedDefaultPlans } = require("./seeders/planLimits.seeder");
+const { scheduleAutoInvites } = require("./cron/autoInviteScheduler.cron");
+const { scheduleReminders } = require("./cron/reminderScheduler.cron");
 //const backupService = require('./services/backupService');
 //const { scheduleDailyBackup } = require('./cron/dailyBackup');
 
 // Auto-load CRON jobs
 // ⛔ DISABLED: All cron jobs disabled
-//const { initializeCronJobs } = require("./cron");
-//initializeCronJobs();
+const { initializeCronJobs } = require("./cron");
+initializeCronJobs();
 
 /**
  * Suppress deprecation warnings for punycode module
@@ -135,7 +139,12 @@ const initializeApp = async () => {
       );
     }
 
-    // Step 6.5: Initialize backup service
+    // Step 6.5: Initialize campaign interview service
+    logger.section("Initializing campaign interview service...");
+    await campaignInterviewService.initialize();
+    logger.success("Campaign interview service initialization completed");
+
+    // Step 6.6: Initialize backup service
     // logger.section('Initializing database backup service...');
     // await backupService.initializeDailyBackup();
     // logger.success('Database backup service initialized');
@@ -163,9 +172,23 @@ const initializeApp = async () => {
       // Initialize interview namespace
       intelligentInterviewController.initializeHandlers(io);
       logger.success("Interview namespace /interview initialized and ready");
+
+      // Initialize campaign interview namespace
+      campaignInterviewController.initializeHandlers(io);
+      logger.success("Campaign interview namespace /campaign-interview initialized and ready");
       logger.info(
         "💡 Hedera clients will initialize on first use (lazy loading)",
       );
+
+      // Step 9: Initialize auto-invite scheduler for job applications
+      logger.section("Initializing auto-invite scheduler...");
+      scheduleAutoInvites();
+      logger.success("Auto-invite scheduler initialized (checks hourly between 12:00 - 21:00)");
+
+      // Step 10: Initialize interview reminder scheduler
+      logger.section("Initializing interview reminder scheduler...");
+      scheduleReminders();
+      logger.success("Interview reminder scheduler initialized (24h + 48h reminders)");
     });
   } catch (error) {
     logger.error("Failed to initialize application", error.message);

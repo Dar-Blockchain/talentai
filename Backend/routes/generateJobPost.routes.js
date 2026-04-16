@@ -10,16 +10,15 @@ const express = require("express");
 const router = express.Router();
 const generateJobPostController = require("../controllers/PostControllers/generateJobPost.controller");
 
-
 // Import des middlewares
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const { controledAcces } = require('../middleware/authorize.middleware.js'); 
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
 
-// All routes below require an authenticated Company account
-router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("LinkedinPost"));
+// All routes below: accept either API Key or JWT, then verify Company access
+router.use(requireAuth, controledAcces('Company'), authLogMiddleware("LinkedinPost"));
 
 
 // POST /linkedin/generate-job-post

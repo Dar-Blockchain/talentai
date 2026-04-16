@@ -50,10 +50,6 @@ const Header = () => {
     );
   }, [router.pathname]);
 
-  const isWorkspacePage = useMemo(() => {
-    return router.pathname === "/workspaces";
-  }, [router.pathname]);
-
   /* ===============================
      FETCH UNREAD MESSAGE COUNT
   ================================ */
@@ -136,13 +132,13 @@ const Header = () => {
           {isAuthenticated && (
             <Box sx={desktopMenuStyle}>
               {/* Messages Dropdown */}
-              {!showHeaderNavMenu && !isWorkspacePage && (
+              {!showHeaderNavMenu && (
                 <HeaderMessagesDropdown
                   userId={userId}
                   unreadMessageCount={unreadMessageCount}
                 />
               )}
-              {!isCompany && !showHeaderNavMenu && !isWorkspacePage && (
+              {!isCompany && !showHeaderNavMenu && (
                 <HeaderNotification />
               )}
 

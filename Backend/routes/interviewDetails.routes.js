@@ -11,14 +11,13 @@ const router = express.Router();
 const interviewDetailsController = require("../controllers/InterviewControllers/interviewDetailsController");
 
 // Import des middlewares
-const { controledAcces } = require('../middleware/controledAcces'); 
+const { controledAcces } = require('../middleware/controledAcces');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-const { requireAuthUser } = require("../middleware/authMiddleware");
+const { requireAuth } = require("../middleware/authMiddleware");
 
 
 // All routes below require an authenticated candidate
-router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
-
+router.use(requireAuth, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
 
 // GET /interview-details/
 // Description: Retrieves the list of all interviews
@@ -33,11 +32,5 @@ router.get("/getInterviewDetailsById/:id", interviewDetailsController.getIntervi
 // Body: { newInterviewData, profileId, userId? }
 // Description: Adds interview details (converts new format to old)
 router.post("/", interviewDetailsController.addInterviewDetails);
-
-// POST /interview-details/:id/claim-reward
-// Params: id (interview identifier)
-// Description: Allows candidate to manually claim TAI reward if automatic distribution failed
-router.post("/:id/claim-reward", interviewDetailsController.claimInterviewReward);
-
 
 module.exports = router;

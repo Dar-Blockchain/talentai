@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyboardVoiceIcon from '@mui/icons-material/KeyboardVoice';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { InterviewStatus, ConnectionStatus, CameraStatus, AgentState } from '@/types/interview';
+
+const REPORT_POLL_INTERVAL = 1500; // ms between checks
+const REPORT_MAX_WAIT = 20000;     // max 20 s wait before navigating anyway
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
@@ -32,6 +33,53 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   onStartInterview,
   onViewResults,
 }) => {
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const deadlineRef = useRef<number>(0);
+  const [waitDots, setWaitDots] = useState('');
+
+  useEffect(() => {
+    if (interviewStatus !== 'ended') return;
+
+    deadlineRef.current = Date.now() + REPORT_MAX_WAIT;
+
+    // Animate dots while waiting
+    const dotsInterval = setInterval(() => {
+      setWaitDots(d => d.length >= 3 ? '' : d + '.');
+    }, 500);
+
+    // Poll localStorage until finalReport has a real score
+    pollRef.current = setInterval(() => {
+      const raw = localStorage.getItem('last_interview_analysis');
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          const score =
+            parsed?.finalReport?.scores?.overall ??
+            parsed?.finalReport?.overallScore ??
+            parsed?.analytics?.overallScore ??
+            parsed?.analytics?.totalScore ??
+            null;
+          if (score !== null && score !== undefined) {
+            clearInterval(pollRef.current!);
+            clearInterval(dotsInterval);
+            onViewResults();
+            return;
+          }
+        } catch { /* ignore parse errors */ }
+      }
+      // Safety timeout — navigate anyway after max wait
+      if (Date.now() >= deadlineRef.current) {
+        clearInterval(pollRef.current!);
+        clearInterval(dotsInterval);
+        onViewResults();
+      }
+    }, REPORT_POLL_INTERVAL);
+
+    return () => {
+      clearInterval(pollRef.current!);
+      clearInterval(dotsInterval);
+    };
+  }, [interviewStatus]);
 
   const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
 
@@ -225,51 +273,16 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
           </Box>
         )}
 
-        {/* ── ENDED ── */}
+        {/* ── ENDED ── wait for finalReport then auto-redirect */}
         {interviewStatus === 'ended' && (
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.08) 100%)',
-                border: '2px solid rgba(34,197,94,0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <CheckCircleOutlineIcon sx={{ fontSize: 36, color: '#22c55e' }} />
-            </Box>
-            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.2rem', color: '#111827', mb: 0.5 }}>
-              Interview complete!
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <CircularProgress size={48} sx={{ color: '#8310FF', mb: 2 }} />
+            <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1rem', color: '#111827', mb: 0.5 }}>
+              Analyzing your results{waitDots}
             </Typography>
-            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280', mb: 3, lineHeight: 1.6 }}>
-              Your responses have been recorded and are being analyzed.
+            <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.82rem', color: '#6b7280' }}>
+              Please wait while we prepare your report.
             </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={onViewResults}
-              startIcon={<AssessmentIcon />}
-              sx={{
-                fontFamily: 'Poppins',
-                fontWeight: 700,
-                fontSize: '0.92rem',
-                py: 1.5,
-                borderRadius: '12px',
-                bgcolor: '#8310FF',
-                color: '#fff',
-                textTransform: 'none',
-                boxShadow: 'none',
-                '&:hover': { bgcolor: '#6d0ee0', boxShadow: 'none' },
-              }}
-            >
-              View Results
-            </Button>
           </Box>
         )}
       </Box>

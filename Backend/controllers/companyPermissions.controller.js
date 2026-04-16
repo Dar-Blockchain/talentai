@@ -2,11 +2,8 @@
  * Company Permissions Controller
  * Handles company permissions management operations (Admin only)
  *
- * Uses the new PermissionModel with 7 granular permissions:
- * Uses the new PermissionModel with 9 granular permissions:
- * Uses the new PermissionModel with 8 granular permissions:
+ * Uses the new PermissionModel with granular permissions:
  * - canCreateJobPosts
- * - canUnlockCandidates
  * - canViewCandidateProfiles
  * - canContactCandidates
  * - canAccessMatching
@@ -73,7 +70,6 @@ module.exports.getCompanyPermissions = async (req, res) => {
         success: true,
         permissions: {
           canCreateJobPosts: true,
-          canUnlockCandidates: true,
           canViewCandidateProfiles: true,
           canContactCandidates: true,
           canAccessMatching: true,
@@ -92,7 +88,6 @@ module.exports.getCompanyPermissions = async (req, res) => {
     // Return the 8 permissions from PermissionModel
     const permissions = {
       canCreateJobPosts: permission.canCreateJobPosts,
-      canUnlockCandidates: permission.canUnlockCandidates,
       canViewCandidateProfiles: permission.canViewCandidateProfiles,
       canContactCandidates: permission.canContactCandidates,
       canAccessMatching: permission.canAccessMatching,
@@ -141,7 +136,6 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     // Validate all required permission fields
     const requiredFields = [
       "canCreateJobPosts",
-      "canUnlockCandidates",
       "canViewCandidateProfiles",
       "canContactCandidates",
       "canAccessMatching",
@@ -198,7 +192,6 @@ module.exports.updateCompanyPermissions = async (req, res) => {
       {
         $set: {
           canCreateJobPosts: permissions.canCreateJobPosts,
-          canUnlockCandidates: permissions.canUnlockCandidates,
           canViewCandidateProfiles: permissions.canViewCandidateProfiles,
           canContactCandidates: permissions.canContactCandidates,
           canAccessMatching: permissions.canAccessMatching,
@@ -224,7 +217,6 @@ module.exports.updateCompanyPermissions = async (req, res) => {
     // Return the updated permissions
     const resultPermissions = {
       canCreateJobPosts: updatedPermission.canCreateJobPosts,
-      canUnlockCandidates: updatedPermission.canUnlockCandidates,
       canViewCandidateProfiles: updatedPermission.canViewCandidateProfiles,
       canContactCandidates: updatedPermission.canContactCandidates,
       canAccessMatching: updatedPermission.canAccessMatching,
@@ -308,7 +300,6 @@ module.exports.getMyPermissions = async (req, res) => {
         success: true,
         permissions: {
           canCreateJobPosts: true,
-          canUnlockCandidates: true,
           canViewCandidateProfiles: true,
           canContactCandidates: true,
           canAccessMatching: true,
@@ -327,7 +318,6 @@ module.exports.getMyPermissions = async (req, res) => {
     // Return the 8 permissions from PermissionModel
     const permissions = {
       canCreateJobPosts: permission.canCreateJobPosts,
-      canUnlockCandidates: permission.canUnlockCandidates,
       canViewCandidateProfiles: permission.canViewCandidateProfiles,
       canContactCandidates: permission.canContactCandidates,
       canAccessMatching: permission.canAccessMatching,

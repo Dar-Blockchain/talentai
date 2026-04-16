@@ -195,7 +195,7 @@ const DashboardOverview: React.FC = () => {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2.5 }}>
         {STAT_CONFIG.map((stat, idx) => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
-          const isEmpty = !statsLoading && (raw == null || raw === 0);
+          const isEmpty = !statsLoading && raw == null;
           return (
             <motion.div key={stat.key} style={{ height: "100%" }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
               <Card sx={{ p: 3, height: "100%", boxSizing: "border-box", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : ""}`}>
@@ -385,7 +385,7 @@ const DashboardOverview: React.FC = () => {
           <CardHeader
             title="Recent Interviews"
             subtitle={interviewsLoading ? "Loading..." : recentInterviews.length > 0 ? `${recentInterviews.length} latest results` : "No results yet"}
-            action={<ViewAll onClick={() => router.push("/company/interviews")} />}
+            action={<ViewAll onClick={() => router.push("/company/applications")} />}
           />
           <Box sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
             {interviewsLoading ? (
@@ -405,7 +405,7 @@ const DashboardOverview: React.FC = () => {
               const vs = VERDICT_STYLE[iv.verdict] ?? VERDICT_STYLE.Pending;
               const VIcon = vs.icon;
               return (
-                <Box key={iv.id || i} onClick={() => iv.id && router.push(`/company/interviews/${iv.id}`)}
+                <Box key={iv.id || i} onClick={() => iv.id && router.push(`/company/applications/${iv.id}`)}
                   sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: "10px", border: "1px solid #F3F4F6", cursor: "pointer", "&:hover": { borderColor: TEAL_BORDER, bgcolor: TEAL_BG }, transition: "all 0.15s" }}>
                   <Avatar sx={{ width: 36, height: 36, bgcolor: AVATAR_COLORS[i % AVATAR_COLORS.length], fontSize: "12px", fontWeight: 700, flexShrink: 0 }}>
                     {iv.avatar}

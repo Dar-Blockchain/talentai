@@ -1,30 +1,28 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Drawer,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   IconButton,
   Avatar,
-  Divider,
+  Tooltip,
+  Typography,
   useMediaQuery,
   useTheme,
-  Typography,
 } from "@mui/material";
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
-import { navigation } from "@/constants/navigation";
+import { navigation, employeeNavGroups, EmployeeNavItem } from "@/constants/navigation";
+import { selectEmployeePermissions, fetchEmployeePermissions } from "@/store/slices/memberSlice";
 import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
+import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -34,7 +32,27 @@ interface SidebarProps {
 }
 
 const DRAWER_WIDTH = 240;
-const COLLAPSED_WIDTH = 72;
+const COLLAPSED_WIDTH = 64;
+const TEAL = "#0D9488";
+const TEAL_LIGHT = "#14B8A6";
+
+// Dark sidebar palette — teal-tinted navy, matches brand
+const BG = "#0D1B2A"; // deep navy-teal
+const BG_TOP = "#091422"; // logo bar + footer (deeper)
+const BORDER = "#1E3448"; // border
+const ICO_CLR = "#a3aed1"; // inactive icon — clear teal-blue
+const TXT_CLR = "#a3aed1"; // inactive label — readable teal-blue
+const HOVER_BG = "#162840"; // hover row
+const HOVER_TXT = "#E8F6F9"; // hover text — near white
+const LABEL_C = "#a3aed1"; // section label — visible
+
+const GROUPS = [
+  { label: "MAIN",         ids: ["dashboard"] },
+  { label: "JOBS",   ids: ["posts", "applications"] },
+  { label: "CAMPAIGNS",   ids: ["campaigns"] },
+  { label: "Team",     ids: ["employees", "departments"] },
+  { label: "Account",  ids: ["settings"] },
+];
 
 const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
@@ -47,209 +65,330 @@ const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
     await dispatch(logout());
     router.push("/signin");
   }, [dispatch, router]);
 
-  const profile = useSelector(
-    (state: RootState) => state.user.connectedUser.profile,
-  );
-  const companyName = profile?.companyDetails?.name || "Company";
-  const companyInitial = companyName[0] || "C";
+  const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const user              = useSelector((state: RootState) => state.user.connectedUser.user);
+  const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
+  const employeePermissions = useSelector(selectEmployeePermissions);
+
+  const isEmployee  = user?.role === "Employee";
+  const companyName = companyMembership?.company?.profile?.companyDetails?.name
+    || companyMembership?.company?.username
+    || null;
+
+  // Fetch permissions on reload if not yet in store
+  useEffect(() => {
+    if (isEmployee && !employeePermissions && user?._id) {
+      dispatch(fetchEmployeePermissions(user._id));
+    }
+  }, [isEmployee, employeePermissions, user?._id]);
+
+  // Build filtered groups for employees
+  const activeEmployeeGroups = employeeNavGroups.map((group) => ({
+    ...group,
+    items: group.items.filter(
+      (item) => !item.permission || !!employeePermissions?.[item.permission]
+    ),
+  })).filter((group) => group.items.length > 0);
+
+  const displayName = (() => {
+    if (user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate") {
+      const full = `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim();
+      return full || user?.username || "Employee";
+    }
+    return profile?.companyDetails?.name || "Company";
+  })();
+  const displayInitial = displayName[0]?.toUpperCase() || "E";
+  const displayEmail = user?.role === "Employee" || user?.role === "Admin" || user?.role === "Candidate"
+    ? user?.email
+    : profile?.companyDetails?.email;
+
+  const companyEmail = profile?.companyDetails?.email || "";
+  const initial = companyName ? companyName[0]?.toUpperCase() || "C" : "C";
   const avatarUrl = profile?.user_image
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile.user_image}`
     : null;
 
-  const drawerWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
+  const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
+  const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
-  const handleToggleCollapse = useCallback(
-    () => setCollapsed((c) => !c),
-    [setCollapsed],
-  );
+  const settingsHref = isEmployee ? "/employee/dashboard" : "/company/settings";
 
-
-  const content = (mobile = false) => (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* Logo */}
-      <Box
-        sx={{
-          p: 2.5,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          borderBottom: "1px solid #E5E7EB",
-          height: 64,
-        }}
-      >
+  const renderNavItem = (item: { id: string; icon: React.ElementType; label: string; href: string }, isCollapsed: boolean) => {
+    const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
+    const btn = (
+      <Link key={item.id} href={item.href} passHref style={{ textDecoration: "none" }}>
         <Box
+          data-tour={`nav-${item.id}`}
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
+            display: "flex", alignItems: "center",
+            gap: isCollapsed ? 0 : 1.25,
+            px: isCollapsed ? 0 : 1.25,
+            py: isCollapsed ? 0 : 0.875,
+            height: isCollapsed ? 42 : "auto",
+            borderRadius: "9px",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            cursor: "pointer", transition: "all 0.12s", position: "relative",
+            bgcolor: isActive ? `${TEAL}22` : "transparent",
+            color: isActive ? TEAL_LIGHT : TXT_CLR,
+            "&:hover": {
+              bgcolor: isActive ? `${TEAL}28` : HOVER_BG,
+              color: isActive ? TEAL_LIGHT : HOVER_TXT,
+              "& .nav-icon": { color: isActive ? TEAL_LIGHT : HOVER_TXT },
+            },
           }}
         >
-          {/* Logo */}
-          {!collapsed && (
+          {isActive && (
+            <Box sx={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: "0 3px 3px 0", bgcolor: TEAL_LIGHT }} />
+          )}
+          <Box className="nav-icon" sx={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: isCollapsed ? 38 : 28, height: isCollapsed ? 38 : 28,
+            borderRadius: "8px", flexShrink: 0,
+            color: isActive ? TEAL_LIGHT : ICO_CLR, transition: "color 0.12s",
+          }}>
+            <item.icon sx={{ fontSize: isCollapsed ? 18 : 16 }} />
+          </Box>
+          {!isCollapsed && (
+            <Typography sx={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: "inherit", lineHeight: 1 }}>
+              {item.label}
+            </Typography>
+          )}
+        </Box>
+      </Link>
+    );
+    return isCollapsed ? (
+      <Tooltip key={item.id} title={item.label} placement="right" arrow><span>{btn}</span></Tooltip>
+    ) : btn;
+  };
+
+  const content = (mobile = false) => {
+    const isCollapsed = collapsed && !mobile;
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          bgcolor: BG,
+        }}
+      >
+        {/* ── Logo bar ── */}
+        <Box
+          sx={{
+            height: 64,
+            px: isCollapsed ? 0 : 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: isCollapsed ? "center" : "space-between",
+            bgcolor: BG_TOP,
+            borderBottom: `1px solid ${BORDER}`,
+            flexShrink: 0,
+          }}
+        >
+          {/* Logo — only visible when expanded */}
+          {!isCollapsed && (
             <Box
-              sx={{
-                backgroundColor: "#141415",
-                borderRadius: collapsed && !mobile ? "50%" : "24px",
-                width: collapsed && !mobile ? 28 : 115,
-                height: 30,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.3s",
-              }}
-            >
-              <Box
-                component="img"
-                src="/images/home/logocompany.png"
-                alt="Company"
-                sx={{ height: collapsed && !mobile ? 14 : 20 }}
-              />
-            </Box>
+              component="img"
+              src="/images/home/logocompany.png"
+              alt="TalentAI"
+              sx={{ height: 20 }}
+            />
           )}
 
-          {/* Collapse / Expand Button (Desktop only) */}
-          {!mobile && (
+          {/* Collapse toggle */}
+          {!mobile && !isCollapsed && (
+            <Tooltip title="Collapse" placement="right">
+              <IconButton
+                onClick={handleToggle}
+                size="small"
+                sx={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: "7px",
+                  bgcolor: BORDER,
+                  color: ICO_CLR,
+                  "&:hover": { bgcolor: HOVER_BG, color: HOVER_TXT },
+                  transition: "all 0.15s",
+                }}
+              >
+                <ChevronLeftOutlined sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {/* Expand float */}
+          {!mobile && isCollapsed && (
+            <Tooltip title="Expand" placement="right">
+              <IconButton
+                onClick={handleToggle}
+                size="small"
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "8px",
+                  bgcolor: BORDER,
+                  color: ICO_CLR,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  "&:hover": {
+                    bgcolor: HOVER_BG,
+                    color: HOVER_TXT,
+                  },
+                  transition: "all 0.15s",
+                }}
+              >
+                <ChevronRightOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {mobile && (
             <IconButton
-              onClick={handleToggleCollapse}
+              onClick={onCloseMobile}
               size="small"
-              sx={{
-                color: "#6B7280",
-                p: 0.5,
-                backgroundColor: "rgba(243, 244, 246, 0.6)!important",
-              }}
+              sx={{ color: ICO_CLR }}
             >
-              {collapsed ? <ChevronRightOutlined /> : <ChevronLeftOutlined />}
+              <CloseOutlined sx={{ fontSize: 17 }} />
             </IconButton>
           )}
         </Box>
 
-        {/* Close button for mobile */}
-        {mobile && (
-          <IconButton onClick={onCloseMobile} size="small">
-            <CloseOutlined sx={{ color: "#6B7280" }} />
-          </IconButton>
-        )}
-      </Box>
+        {/* ── Nav ── */}
+        <Box sx={{ flex: 1, overflowY: "auto", py: 2, px: 1 }} className="custom-scrollbar">
 
-      {/* Navigation */}
-      <Box sx={{ flex: 1, overflowY: "auto" }} className="custom-scrollbar">
-        {(() => {
-          const groups = [
-            { label: "Hiring",  ids: ["dashboard", "posts", "interviews", "applications"] },
-            { label: "Account", ids: ["settings"] },
-          ];
-
-          const renderItem = (item: typeof navigation[0]) => {
-            const isActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
-            return (
-              <Link key={item.id} href={item.href} passHref>
-                <ListItemButton data-tour={`nav-${item.id}`}
-                  sx={{
-                    borderRadius: 2,
-                    mb: 0.5,
-                    py: collapsed && !mobile ? 0.8 : 1,
-                    px: collapsed && !mobile ? 1.2 : 2,
-                    position: "relative",
-                    color: isActive ? "#0D9488" : "#4B5563",
-                    bgcolor: isActive ? "rgba(243, 244, 246, 0.6)" : "transparent",
-                    justifyContent: collapsed && !mobile ? "center" : "flex-start",
-                    transition: "all 0.2s ease",
-                    minHeight: collapsed && !mobile ? 40 : "auto",
-                    borderLeft: isActive ? "4px solid #0D9488" : "4px solid transparent",
-                    "&:hover": {
-                      bgcolor: "rgba(243, 244, 246, 0.6)",
-                      color: "#111827",
-                      borderLeft: "4px solid #0D9488",
-                      "& .MuiListItemIcon-root": { color: "#0D9488" },
-                    },
-                    "&:focus": {
-                      "& .MuiListItemIcon-root": { color: "#0D9488" },
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: collapsed && !mobile ? 0 : 40, color: isActive ? "#0D9488" : "#6B7280", justifyContent: "center" }}>
-                    <item.icon sx={{ fontSize: collapsed && !mobile ? 20 : 24 }} />
-                  </ListItemIcon>
-                  {(!collapsed || mobile) && (
-                    <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "14px", fontWeight: 500 }} />
-                  )}
-                </ListItemButton>
-              </Link>
-            );
-          };
-
-          return groups.map((group, gi) => {
+          {/* ── Company nav ── */}
+          {!isEmployee && GROUPS.map((group, gi) => {
             const items = navigation.filter((i) => group.ids.includes(i.id));
+            if (items.length === 0) return null;
+
             return (
-              <Box key={group.label}>
-                {gi > 0 && <Divider sx={{ mx: 2, my: 0.5 }} />}
-                {(!collapsed || mobile) && (
-                  <Typography sx={{ px: 3, pt: gi === 0 ? 2 : 1.5, pb: 0.5, fontSize: "0.62rem", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              <Box key={group.label || gi} sx={{ mb: 1.5 }}>
+                {group.label && !isCollapsed && (
+                  <Typography sx={{
+                    px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
+                    fontSize: "9px", fontWeight: 700, color: LABEL_C,
+                    textTransform: "uppercase", letterSpacing: "0.14em",
+                  }}>
                     {group.label}
                   </Typography>
                 )}
-                <List sx={{ px: 1.5, py: 0.5 }}>
-                  {items.map(renderItem)}
-                </List>
+                {gi > 0 && isCollapsed && (
+                  <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
+                )}
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                  {items.map((item) => renderNavItem(item, isCollapsed))}
+                </Box>
               </Box>
             );
-          });
-        })()}
-      </Box>
+          })}
 
-      {/* Footer */}
-      <Box sx={{ p: 2, borderTop: "1px solid #E5E7EB", flexShrink: 0 }}>
+          {/* ── Employee nav ── */}
+          {isEmployee && activeEmployeeGroups.map((group, gi) => (
+            <Box key={group.group || gi} sx={{ mb: 1.5 }}>
+              {group.group && !isCollapsed && (
+                <Typography sx={{
+                  px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
+                  fontSize: "9px", fontWeight: 700, color: LABEL_C,
+                  textTransform: "uppercase", letterSpacing: "0.14em",
+                }}>
+                  {group.group}
+                </Typography>
+              )}
+              {gi > 0 && isCollapsed && (
+                <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: BORDER }} />
+              )}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                {group.items.map((item) => renderNavItem(item, isCollapsed))}
+              </Box>
+            </Box>
+          ))}
+
+        </Box>
+
+        {/* ── Footer ── */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            justifyContent: collapsed && !mobile ? "center" : "space-between",
+            px: 1,
+            pb: 1.5,
+            pt: 1.25,
+            borderTop: `1px solid ${BORDER}`,
+            bgcolor: BG_TOP,
+            flexShrink: 0,
           }}
         >
           <Box
-            sx={{ display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer" }}
-            onClick={() => router.push("/company/settings")}
+            onClick={() => router.push(settingsHref)}
+            sx={{
+              display: "flex", alignItems: "center",
+              gap: isCollapsed ? 0 : 1,
+              px: isCollapsed ? 0 : 1, py: 0.75,
+              height: isCollapsed ? 42 : "auto",
+              borderRadius: "9px", cursor: "pointer",
+              justifyContent: isCollapsed ? "center" : "flex-start",
+              transition: "all 0.12s",
+              "&:hover": { bgcolor: HOVER_BG },
+            }}
           >
             <Avatar
               src={avatarUrl ?? undefined}
-              sx={{ bgcolor: "#0D9488", width: 36, height: 36 }}
+              sx={{ bgcolor: TEAL, width: 28, height: 28, fontSize: "11px", fontWeight: 700, flexShrink: 0 }}
             >
-              {companyInitial}
+              {displayInitial}
             </Avatar>
 
-            {(!collapsed || mobile) && (
-              <Box>
-                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-                  {companyName}
+            {!isCollapsed && (
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
+                  {displayName}
                 </Typography>
-                <Typography sx={{ fontSize: 9, color: "#6B7280" }}>
-                  {profile?.companyDetails?.email}
-                </Typography>
+                {displayEmail && (
+                  <Typography noWrap sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3 }}>
+                    {displayEmail}
+                  </Typography>
+                )}
               </Box>
             )}
-          </Box>
 
-          {!collapsed && (
-            <IconButton
-              size="small"
-              sx={{ color: "#6B7280" }}
-              onClick={handleLogout}
-            >
-              <LogoutOutlined />
-            </IconButton>
-          )}
+            {!isCollapsed && (
+              <Tooltip title="Sign out">
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                  sx={{
+                    color: ICO_CLR,
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    flexShrink: 0,
+                    "&:hover": {
+                      bgcolor: "rgba(239,68,68,0.15)",
+                      color: "#F87171",
+                    },
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <LogoutOutlined sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
       </Box>
-    </Box>
-  );
+    );
+  };
 
   return (
     <>
@@ -258,12 +397,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           variant="permanent"
           sx={{
             width: drawerWidth,
+            flexShrink: 0,
             "& .MuiDrawer-paper": {
               width: drawerWidth,
-              transition: "width 0.3s",
+              transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
               overflowX: "hidden",
-              borderRight: "1px solid #E5E7EB",
-              display: "flex",
+              borderRight: `1px solid ${BORDER}`,
+              boxShadow: "4px 0 20px rgba(0,0,0,0.15)",
+              bgcolor: BG,
             },
           }}
         >
@@ -271,10 +412,21 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Drawer>
       )}
       {isMobile && (
-        <Drawer open={mobileOpen} onClose={onCloseMobile}>
+        <Drawer
+          open={mobileOpen}
+          onClose={onCloseMobile}
+          sx={{
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              borderRight: `1px solid ${BORDER}`,
+              bgcolor: BG,
+            },
+          }}
+        >
           {content(true)}
         </Drawer>
       )}
+      <LogoutProgressModal open={loggingOut} />
     </>
   );
 };

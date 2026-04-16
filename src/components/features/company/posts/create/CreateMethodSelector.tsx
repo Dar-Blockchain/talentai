@@ -1,116 +1,154 @@
 import React from "react";
-import { Box, Typography, Chip } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
+import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesome";
 import CheckOutlined from "@mui/icons-material/CheckOutlined";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
+import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { setCreationType } from "@/store/slices/postGenerationSlice";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 
-const TEAL        = "#0D9488";
-const TEAL_BG     = "#F0FDFA";
-const TEAL_BORDER = "#99F6E4";
+const TEAL = "#0D9488";
 
 interface MethodCardProps {
   title: string;
+  subtitle: string;
   description: string;
   icon: React.ElementType;
+  badge: { label: string; color: string; bg: string };
   accentColor: string;
   accentBg: string;
   accentBorder: string;
-  features: string[];
-  chip: { label: string; color: string; bg: string };
+  accentBarColor: string;
+  features: { text: string; note?: string }[];
   onClick: () => void;
 }
 
 const MethodCard: React.FC<MethodCardProps> = ({
   title,
+  subtitle,
   description,
   icon: Icon,
+  badge,
   accentColor,
   accentBg,
   accentBorder,
+  accentBarColor,
   features,
-  chip,
   onClick,
 }) => (
   <Box
     onClick={onClick}
     sx={{
       bgcolor: "#fff",
-      border: `1.5px solid #E5E7EB`,
-      borderRadius: 3,
-      p: 3,
+      border: "1.5px solid #E5E7EB",
+      borderRadius: "20px",
+      overflow: "hidden",
       cursor: "pointer",
-      transition: "all 0.2s",
+      transition: "all 0.22s cubic-bezier(.4,0,.2,1)",
+      display: "flex",
+      flexDirection: "column",
       "&:hover": {
         borderColor: accentColor,
-        boxShadow: `0 8px 24px ${accentColor}20`,
-        transform: "translateY(-2px)",
+        boxShadow: `0 12px 40px ${accentColor}1A`,
+        transform: "translateY(-3px)",
+        "& .card-cta": { bgcolor: accentColor, color: "#fff" },
+        "& .card-arrow": { color: "#fff" },
       },
     }}
   >
-    {/* Icon */}
-    <Box
-      sx={{
-        width: 52, height: 52, borderRadius: 2,
-        bgcolor: accentBg, border: `1px solid ${accentBorder}`,
-        display: "flex", alignItems: "center", justifyContent: "center", mb: 2.5,
-      }}
-    >
-      <Icon sx={{ fontSize: 26, color: accentColor }} />
-    </Box>
+    {/* Top accent bar */}
+    <Box sx={{ height: 4, bgcolor: accentBarColor, flexShrink: 0 }} />
 
-    {/* Title + chip */}
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
-      <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#111827" }}>
+    <Box sx={{ p: 3.5, display: "flex", flexDirection: "column", flex: 1 }}>
+
+      {/* Header row: icon + badge */}
+      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
+        <Box
+          sx={{
+            width: 56, height: 56, borderRadius: "14px",
+            bgcolor: accentBg, border: `1.5px solid ${accentBorder}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <Icon sx={{ fontSize: 28, color: accentColor }} />
+        </Box>
+
+        <Box
+          sx={{
+            display: "inline-flex", alignItems: "center", gap: 0.5,
+            px: 1.25, py: 0.5, borderRadius: "20px",
+            bgcolor: badge.bg, border: `1px solid ${badge.color}30`,
+          }}
+        >
+          <AutoAwesomeOutlined sx={{ fontSize: 10, color: badge.color }} />
+          <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: badge.color, lineHeight: 1 }}>
+            {badge.label}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Title + subtitle */}
+      <Typography sx={{ fontSize: "18px", fontWeight: 800, color: "#111827", lineHeight: 1.2, mb: 0.4 }}>
         {title}
       </Typography>
-      <Chip
-        label={chip.label}
-        size="small"
-        sx={{
-          height: 20, fontSize: "10px", fontWeight: 700,
-          color: chip.color, bgcolor: chip.bg,
-        }}
-      />
-    </Box>
-
-    {/* Description */}
-    <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.6, mb: 2.5 }}>
-      {description}
-    </Typography>
-
-    {/* Features */}
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
-      {features.map((f) => (
-        <Box key={f} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <CheckOutlined sx={{ fontSize: 14, color: accentColor }} />
-          <Typography sx={{ fontSize: "12px", color: "#374151" }}>{f}</Typography>
-        </Box>
-      ))}
-    </Box>
-
-    {/* CTA */}
-    <Box
-      sx={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        pt: 2, borderTop: "1px solid #F3F4F6",
-      }}
-    >
-      <Typography sx={{ fontSize: "12px", fontWeight: 700, color: accentColor }}>
-        Select this method
+      <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: accentColor, mb: 1.5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {subtitle}
       </Typography>
+
+      {/* Description */}
+      <Typography sx={{ fontSize: "13.5px", color: "#6B7280", lineHeight: 1.65, mb: 2.5 }}>
+        {description}
+      </Typography>
+
+      {/* Divider */}
+      <Box sx={{ height: "1px", bgcolor: "#F3F4F6", mb: 2 }} />
+
+      {/* Features */}
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mb: 3, flex: 1 }}>
+        {features.map(({ text, note }) => (
+          <Box key={text} sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+            <Box
+              sx={{
+                width: 18, height: 18, borderRadius: "5px", flexShrink: 0, mt: "1px",
+                bgcolor: accentBg, border: `1px solid ${accentBorder}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <CheckOutlined sx={{ fontSize: 11, color: accentColor }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: "13px", color: "#374151", lineHeight: 1.4 }}>
+                {text}
+              </Typography>
+              {note && (
+                <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.3 }}>
+                  {note}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      {/* CTA row */}
       <Box
+        className="card-cta"
         sx={{
-          width: 28, height: 28, borderRadius: "50%",
-          bgcolor: accentBg, border: `1px solid ${accentBorder}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
+          py: 1.25, borderRadius: "12px",
+          bgcolor: accentBg, border: `1.5px solid ${accentBorder}`,
+          transition: "all 0.22s",
         }}
       >
-        <ArrowForwardOutlined sx={{ fontSize: 14, color: accentColor }} />
+        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "inherit", lineHeight: 1 }}>
+          Get started
+        </Typography>
+        <ArrowForwardOutlined className="card-arrow" sx={{ fontSize: 15, color: accentColor, transition: "color 0.22s" }} />
       </Box>
     </Box>
   </Box>
@@ -124,6 +162,7 @@ const CreateMethodSelector: React.FC = () => {
       <PageHeader
         title="New Job Post"
         subtitle="Choose how you want to create your job post — AI-powered or fully custom."
+        icon={WorkOutlineOutlined}
         breadcrumbs={[
           { label: "Dashboard", href: "/company/dashboard" },
           { label: "Job Posts", href: "/company/posts" },
@@ -131,39 +170,61 @@ const CreateMethodSelector: React.FC = () => {
         ]}
       />
 
-      <Box sx={{ maxWidth: 840, mx: "auto" }}>
+      <Box sx={{ maxWidth: 900, mx: "auto" }}>
+
+        {/* Section label */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+          <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
+          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
+            Select a creation method
+          </Typography>
+          <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
+        </Box>
+
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
           <MethodCard
             title="AI-Powered"
-            description="Describe your ideal candidate and let AI generate a comprehensive job post with matching configuration in minutes."
+            subtitle="Fastest — 1 step"
+            description="Describe your ideal candidate and let AI generate a comprehensive job post with skills, requirements, and matching configuration in minutes."
             icon={SmartToyOutlined}
+            badge={{ label: "Recommended", color: TEAL, bg: "#F0FDFA" }}
             accentColor={TEAL}
-            accentBg={TEAL_BG}
-            accentBorder={TEAL_BORDER}
+            accentBg="#F0FDFA"
+            accentBorder="#99F6E4"
+            accentBarColor={TEAL}
             features={[
-              "Quick & easy — 1 step",
-              "AI-generated job description",
-              "Automatic candidate matching",
+              { text: "AI-generated job description", note: "Saves up to 30 minutes of writing" },
+              { text: "Automatic skill extraction" },
+              { text: "Smart candidate matching" },
             ]}
-            chip={{ label: "Recommended", color: TEAL, bg: TEAL_BG }}
             onClick={() => dispatch(setCreationType("ai"))}
           />
 
           <MethodCard
             title="Custom Pipeline"
-            description="Design your own recruitment workflow with custom tests, interviews, and conditions for complete control."
+            subtitle="Full control — 2 steps"
+            description="Design your own recruitment workflow with custom tests, interviews, and evaluation conditions. Perfect for structured hiring processes."
             icon={AccountTreeOutlined}
+            badge={{ label: "Advanced", color: "#6366F1", bg: "#EEF2FF" }}
             accentColor="#6366F1"
             accentBg="#EEF2FF"
             accentBorder="#C7D2FE"
+            accentBarColor="#818CF8"
             features={[
-              "Full customization — 2 steps",
-              "Visual pipeline builder",
-              "Custom evaluation steps",
+              { text: "Visual pipeline builder", note: "Drag-and-drop step configuration" },
+              { text: "Custom evaluation steps" },
+              { text: "Multi-stage interview flows" },
             ]}
-            chip={{ label: "Advanced", color: "#6366F1", bg: "#EEF2FF" }}
             onClick={() => dispatch(setCreationType("manual"))}
           />
+        </Box>
+
+        {/* Bottom hint */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mt: 3.5 }}>
+          <EditNoteOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
+          <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
+            Both methods let you fully edit all details before publishing.
+          </Typography>
         </Box>
       </Box>
     </Box>

@@ -50,8 +50,7 @@ export const registerUser = createAsyncThunk(
   "auth/register",
   async (payload: FormData | Record<string, any>, { rejectWithValue }) => {
     try {
-      const headers = payload instanceof FormData ? { "Content-Type": "multipart/form-data" } : {};
-      const response = await axiosInstance.post('auth/register', payload, { headers });
+      const response = await axiosInstance.post('auth/register', payload);
       return response.data;
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -207,6 +206,10 @@ const authSlice = createSlice({
       state.error = null;
       state.token = null;
     },
+    loginAsGuest: (state, action) => {
+      state.isAuthenticated = true;
+      state.token = action.payload.token;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -298,5 +301,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearAuth } = authSlice.actions;
+export const { clearError, clearAuth, loginAsGuest } = authSlice.actions;
 export default authSlice.reducer;

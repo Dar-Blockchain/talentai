@@ -9,6 +9,7 @@ import { useSelector } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
 import UserIcon from "@/components/icons/UserIcon";
 import { useRouter } from "next/router";
+import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 
 interface UserAvatarProps {
   showDropdown?: boolean;
@@ -19,6 +20,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const dispatch = useDispatch<AppDispatch>();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const open = Boolean(anchorEl);
   const { user, profile } = useSelector(
     (state: RootState) => state.user.connectedUser
@@ -58,6 +60,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [profile?.user_image, profile?.userId?.user_image, user?.user_image]);
 
   const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
     try {
       await dispatch(logout()).unwrap();
     } catch (error) {
@@ -147,6 +150,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         onClose={() => setAnchorEl(null)}
         onLogout={handleLogout}
       />
+
+      <LogoutProgressModal open={loggingOut} />
     </Box>
   );
 };

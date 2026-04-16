@@ -2,8 +2,11 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const User = require("../../models/User.model");
+const Profile = require("../../models/Profile.model");
 const CompanyMembershipModel = require("../../models/CompanyMembership.model");
 const CompanyInvitationModel = require("../../models/CompanyInvitation.model");
+const EmployeePermissionsModel = require("../../models/EmployeePermissions.model");
+const employeePermissionsService = require("../employeePermissions.service");
 const { sendCompanyInvitation } = require("../../utils/email-service");
 
 // Constants
@@ -134,6 +137,7 @@ module.exports.sentInvitation = async (
     company,
     role,
     invitedBy,
+    createdBy: invitedBy,
     token,
     expiresAt,
   };
@@ -143,7 +147,10 @@ module.exports.sentInvitation = async (
   const member = await CompanyInvitationModel.create(invitationData);
   const invitationLink = _buildInvitationLink(token, member._id, company);
 
-  await _sendInvitationEmail(userEmail, username, role, invitationLink);
+  const companyProfile = await Profile.findOne({ userId: company });
+  const companyName = companyProfile?.companyDetails?.name || username;
+
+  await _sendInvitationEmail(userEmail, companyName, role, invitationLink);
 
   return member;
 };
@@ -152,9 +159,10 @@ module.exports.sentInvitation = async (
  * Resend an invitation with a new token and expiration
  * @param {string} invitationId - The invitation ID to resend
  * @param {string|null} departmentId - Optional updated department ID
+ * @param {string|null} updatedBy - User ID of the person resending the invitation
  * @returns {Object} The updated invitation document
  */
-module.exports.resendInvitation = async (invitationId, departmentId = null) => {
+module.exports.resendInvitation = async (invitationId, departmentId = null, updatedBy = null) => {
   const updated = await CompanyInvitationModel.findById(invitationId).populate("invitedBy");
   if (!updated) {
     throw new Error("Invitation not found");
@@ -169,6 +177,9 @@ module.exports.resendInvitation = async (invitationId, departmentId = null) => {
   const { token, expiresAt } = _generateTokenAndExpiration(updated.email, updated.role);
 
   const updateData = { token, expiresAt, status: "pending" };
+  if (updatedBy) {
+    updateData.updatedBy = updatedBy;
+  }
 
   _addDepartmentIfProvided(updateData, departmentId);
 
@@ -179,9 +190,10 @@ module.exports.resendInvitation = async (invitationId, departmentId = null) => {
   ).populate("invitedBy");
 
   const invitationLink = _buildInvitationLink(token, invitationId, updatedInvitation.company);
-  const senderName = updatedInvitation.invitedBy?.username || "Admin";
+  const companyProfile = await Profile.findOne({ userId: updatedInvitation.company });
+  const companyName = companyProfile?.companyDetails?.name || updatedInvitation.invitedBy?.username || "Admin";
 
-  await _sendInvitationEmail(updatedInvitation.email, senderName, updatedInvitation.role, invitationLink, true);
+  await _sendInvitationEmail(updatedInvitation.email, companyName, updatedInvitation.role, invitationLink, true);
 
   return updatedInvitation;
 };
@@ -221,12 +233,12 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
     throw error;
   }
 
-  // Verify token payload matches invitation data
-  if (decodedToken.userEmail !== userEmail) {
+  // Verify token payload matches invitation data (normalize to lowercase for comparison)
+  if (decodedToken.userEmail.toLowerCase() !== userEmail.toLowerCase()) {
     throw new Error("Invitation not for this user");
   }
 
-  if (decodedToken.userEmail !== invitation.email) {
+  if (decodedToken.userEmail.toLowerCase() !== invitation.email.toLowerCase()) {
     throw new Error("Token email does not match invitation email");
   }
 
@@ -244,6 +256,30 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
 
   const membership = await CompanyMembershipModel.create(membershipData);
 
+  // Create default employee permissions based on role
+  const defaultPermissions = _getDefaultPermissionsByRole(invitation.role);
+
+  try {
+    const employeePermissions = await EmployeePermissionsModel.create({
+      userId,
+      membershipId: membership._id,
+      ...defaultPermissions,
+      lastModifiedBy: invitation.invitedBy || userId, // Fallback to userId if invitedBy is not valid
+    });
+
+    // Link membership to permissions
+    await CompanyMembershipModel.findByIdAndUpdate(
+      membership._id,
+      { permissions: employeePermissions._id },
+      { new: true }
+    );
+
+    console.log("✅ Employee permissions created successfully for user:", userId);
+  } catch (permError) {
+    console.error("⚠️ Warning: Failed to create employee permissions:", permError.message);
+    // Don't throw - membership creation was successful, continue with invitation acceptance
+  }
+
   await CompanyInvitationModel.findByIdAndDelete(invitationId);
 
   await User.findByIdAndUpdate(
@@ -252,7 +288,108 @@ module.exports.acceptInvitation = async (invitationId, userId, userEmail, token)
     { new: true },
   );
 
-  return membership;
+  return {
+    membership,
+    permissions: true, // Indicate permissions were set up
+  };
+};
+
+/**
+ * Get default permissions based on user role
+ * @param {string} role - The user's role in the company
+ * @returns {Object} Default permissions object
+ */
+const _getDefaultPermissionsByRole = (role) => {
+  const basePermissions = {
+    canViewJobPosts: false,
+    canCreateJobPosts: false,
+    canViewCandidates: false,
+    canViewInterviewResults: false,
+    canContactCandidates: false,
+    canAccessMatching: false,
+    canUseHRAgents: false,
+    canManageTeam: false,
+    canInviteMembers: false,
+    canAssignRoles: false,
+    canRemoveEmployee: false,
+    canUpdateEmployeeDepartment: false,
+    canViewCampaigns: false,
+    canCreateCampaign: false,
+    canEditCampaign: false,
+    canDeleteCampaign: false,
+    canPublishCampaign: false,
+    canViewDepartments: false,
+    canCreateDepartment: false,
+    canEditDepartment: false,
+    canDeleteDepartment: false,
+    canViewCompanyProfile: false,
+    canEditCompanyProfile: false,
+    canManageSettings: false,
+    canManageBilling: false,
+    canManageIntegrations: false,
+  };
+
+  // Role-based default permissions
+  switch (role?.toLowerCase()) {
+    case "admin":
+      // Admin has full permissions
+      return Object.keys(basePermissions).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {});
+
+    case "manager":
+      // Manager has some permissions
+      return {
+        ...basePermissions,
+        canViewJobPosts: true,
+        canCreateJobPosts: true,
+        canViewCandidates: true,
+        canViewInterviewResults: true,
+        canContactCandidates: true,
+        canViewCampaigns: true,
+        canViewDepartments: true,
+        canViewCompanyProfile: true,
+      };
+
+    case "recruiter":
+      // Recruiter has limited permissions focused on recruitment
+      return {
+        ...basePermissions,
+        canViewJobPosts: true,
+        canCreateJobPosts: true,
+        canViewCandidates: true,
+        canContactCandidates: true,
+        canAccessMatching: true,
+        canViewCampaigns: true,
+      };
+
+    case "hr":
+    case "human resources":
+      // HR has permissions for team and candidates
+      return {
+        ...basePermissions,
+        canViewCandidates: true,
+        canViewInterviewResults: true,
+        canContactCandidates: true,
+        canManageTeam: true,
+        canViewDepartments: true,
+        canViewCompanyProfile: true,
+      };
+
+    case "employee":
+    case "staff":
+      // Employee has minimal read permissions
+      return {
+        ...basePermissions,
+        canViewJobPosts: true,
+        canViewCampaigns: true,
+      };
+
+    default:
+      // Default: minimal permissions for unknown roles
+      return basePermissions;
+  }
 };
 
 /**
@@ -293,9 +430,28 @@ module.exports.getInvitationStatsByCompany = async (companyId) => {
   return { total };
 };
 
+/**
+ * Get all pending invitations for a specific department
+ * @param {string} departmentId
+ * @returns {Array}
+ */
+module.exports.getInvitationsByDepartment = async (departmentId) => {
+  return CompanyInvitationModel.find({ department: departmentId, status: "pending" })
+    .populate("invitedBy", "username email")
+    .sort({ createdAt: -1 });
+};
+
 // Get invitation details by invitation ID
 module.exports.getInvitationDetails = async (invitationId) => {
   const invitation = await CompanyInvitationModel.findById(invitationId)
+    .populate({
+      path: "company",
+      select: "email _id profile",
+      populate: {
+        path: "profile",
+        select: "companyDetails.name"
+      }
+    })
     .populate({
       path: "invitedBy",
       select: "email role username profile",
@@ -306,18 +462,28 @@ module.exports.getInvitationDetails = async (invitationId) => {
     });
 
   if (!invitation) throw new Error("Invitation not found");
-  
+
   // Convert to plain object to ensure clean transformation
   const invitationObj = invitation.toObject();
-  
+
+  // Transform company to keep only required fields
+  if (invitationObj.company) {
+    const companyName = invitationObj.company.profile?.companyDetails?.name || "";
+    invitationObj.company = {
+      _id: invitationObj.company._id,
+      email: invitationObj.company.email,
+      name: companyName
+    };
+  }
+
   // Transform invitedBy to keep only required fields
   if (invitationObj.invitedBy) {
-    const companyName = invitationObj.invitedBy.profile?.companyDetails?.name || "";
+    const invitedByName = invitationObj.invitedBy.profile?.companyDetails?.name || "";
     invitationObj.invitedBy = {
       username: invitationObj.invitedBy.username,
       email: invitationObj.invitedBy.email,
       role: invitationObj.invitedBy.role,
-      name: companyName
+      name: invitedByName
     };
   }
 

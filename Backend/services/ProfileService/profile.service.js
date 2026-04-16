@@ -1,8 +1,6 @@
 const Profile = require("../../models/Profile.model");
 const User = require("../../models/User.model");
 const Post = require("../../models/Post.model");
-const hederaService = require("../hedera.service");
-const AgentConfig = require("../../models/AgentConfig.model");
 // const { POST_STATUS } = require("../../constants/posts.constants");
 const fs = require("fs");
 const path = require("path");
@@ -64,7 +62,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       // Update existing profile
       console.log("🔄 [createOrUpdateProfile] Updating existing profile for userId:", userId);
       console.log("📝 [createOrUpdateProfile] Profile data to update:", JSON.stringify(profileData, null, 2));
-      
+
       profile.firstName = profileData.firstName || profileData.FirstName || profile.firstName;
       profile.lastName = profileData.lastName || profileData.LastName || profile.lastName;
       profile.age = profileData.age || profile.age;
@@ -75,7 +73,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
       profile.timeZone = profileData.timeZone || profile.timeZone;
       profile.targetRole = profileData.targetRole || profile.targetRole;
       profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
-      
+
       // Update salary expectations
       if (profileData.expectedSalary) {
         console.log("💰 [createOrUpdateProfile] Updating expectedSalary:", profileData.expectedSalary);
@@ -85,10 +83,10 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
           currency: profileData.expectedSalary.currency || "EUR"
         };
       }
-      
+
       profile.preferredContractType = profileData.preferredContractType || profile.preferredContractType;
       profile.workModePreference = profileData.workModePreference || profile.workModePreference;
-      
+
       // Update contact information
       if (profileData.contactInformation) {
         console.log("📧 [createOrUpdateProfile] Updating contactInformation:", JSON.stringify(profileData.contactInformation, null, 2));
@@ -103,7 +101,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
         };
         console.log("✅ [createOrUpdateProfile] contactInformation updated successfully:", profile.contactInformation);
       }
-      
+
       // Update overall score if provided
       if (typeof profileData.overallScore === "number") {
         profile.overallScore = profileData.overallScore;
@@ -144,7 +142,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
     const updatedUser = await User.findById(userId);
-    const companyMembership = updatedUser.companyMembership 
+    const companyMembership = updatedUser.companyMembership
       ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
@@ -173,44 +171,11 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     // Ensure user role is updated to Company
     await User.findByIdAndUpdate(userId, { role: "Company" });
 
-    // Create Hedera account if user doesn't have one
-    if (!user.hederaAccountId) {
-      console.log('🔧 Creating Hedera account for new company user...');
-      try {
-        const hederaAccount = await hederaService.createHederaAccount();
-
-        // Update user with Hedera account info
-        const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          {
-            hederaAccountId: hederaAccount.hederaAccountId,
-            hederaPrivateKey: hederaAccount.hederaPrivateKey,
-            hederaPublicKey: hederaAccount.hederaPublicKey
-          },
-          { new: true }
-        );
-
-        console.log(`✅ Hedera account created for company user: ${hederaAccount.hederaAccountId}`);
-        console.log('Updated user Hedera fields:', {
-          hederaAccountId: updatedUser.hederaAccountId,
-          hederaPublicKey: updatedUser.hederaPublicKey,
-          hasPrivateKey: !!updatedUser.hederaPrivateKey
-        });
-      } catch (hederaError) {
-        console.error('❌ Failed to create Hedera account during company profile creation:', hederaError);
-        console.error('Error details:', hederaError.message);
-        // Don't fail the entire profile creation if Hedera account creation fails
-        console.log('⚠️  Company profile will be created without Hedera account. Account can be created later during first payment.');
-      }
-    } else {
-      console.log('ℹ️  User already has Hedera account:', user.hederaAccountId);
-    }
-
     let profile = await Profile.findOne({ userId });
 
     // Extract companyDetails from profileData (can be nested or flat)
     const companyDetailsInput = profileData.companyDetails || {};
-    
+
     const profileDataToSave = {
       userId,
       type: "Company",
@@ -225,7 +190,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
         employmentType: companyDetailsInput.employmentType || profileData.employmentType,
       },
       requiredSkills: profileData.requiredSkills || [],
-      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",    
+      requiredExperienceLevel: profileData.requiredExperienceLevel || "Entry Level",
     };
 
     console.log("📊 [createOrUpdateCompanyProfile] Profile data to save:", JSON.stringify(profileDataToSave, null, 2));
@@ -239,7 +204,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       console.log("📝 [createOrUpdateCompanyProfile] Before update - contactInformation:", profile.contactInformation);
 
       profile.type = "Company";
-      
+
       // Merge companyDetails (preserve existing values if not provided)
       profile.companyDetails = {
         email: companyDetailsInput.email || profileData.email || profile.companyDetails?.email,
@@ -251,7 +216,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
         linkedin: companyDetailsInput.linkedin || profileData.linkedin || profile.companyDetails?.linkedin,
         employmentType: companyDetailsInput.employmentType || profileData.employmentType || profile.companyDetails?.employmentType,
       };
-      
+
       profile.requiredSkills = profileData.requiredSkills || profile.requiredSkills;
       profile.requiredExperienceLevel = profileData.requiredExperienceLevel || profile.requiredExperienceLevel;
 
@@ -273,7 +238,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
     const updatedUser = await User.findById(userId);
-    const companyMembership = updatedUser.companyMembership 
+    const companyMembership = updatedUser.companyMembership
       ? await require('../../models/CompanyMembership.model').findById(updatedUser.companyMembership).populate({ path: 'company', select: 'username email Localisation user_image createdAt updatedAt', populate: { path: 'profile' } }).select('_id role updatedAt company')
       : null;
 
@@ -297,7 +262,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     throw error;
   }
 };
-
 
 exports.updateUserImage = async (userId, newFilename) => {
   if (!userId) {
@@ -339,12 +303,11 @@ console.log("Old image path to delete:", oldImagePath);
   return updatedUser;
 };
 
-
 // Get a profile by user ID
 // services/profileService.js
 module.exports.getProfileByUserId = async (userId) => {
   try {
-    const user = await User.findById(userId).select('-hederaAccountId -hederaPrivateKey -hederaPublicKey');
+    const user = await User.findById(userId);
 
     if (!user) {
       throw new Error("User not found");
@@ -388,7 +351,6 @@ module.exports.getProfileByUserId = async (userId) => {
     throw error;
   }
 };
-
 
 module.exports.getProfileByPostId = async (postId) => {
   try {
@@ -567,33 +529,6 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       throw new Error("Invalid new bid. The bid must be a positive number.");
     }
 
-    // --- Check spending ceiling (bidBudgetMax) if configured for this agent ---
-    try {
-      const agentConfig = await AgentConfig.findOne({ agentId: companyId });
-      const bidBudgetMax = agentConfig?.bidBudgetMax ?? null;
-
-      if (bidBudgetMax !== null && Number.isFinite(Number(bidBudgetMax))) {
-        // Calculate sum of bids currently assigned to this company/agent
-        const bids = await Profile.find({ 'companyBid.company': companyId }).select('companyBid.finalBid');
-        const currentSpent = bids.reduce((sum, p) => {
-          const v = p?.companyBid?.finalBid ? Number(p.companyBid.finalBid) : 0;
-          return sum + (Number.isFinite(v) ? v : 0);
-        }, 0);
-
-        if (currentSpent + parsedNewBid > Number(bidBudgetMax)) {
-          throw new Error(
-            `Maximum budget reached or exceeded: ceiling=${bidBudgetMax}, spent=${currentSpent}. New bid of ${parsedNewBid} would exceed it.`
-          );
-        }
-      }
-    } catch (e) {
-      // Do not block flow if check fails for non-critical reason
-      if (e.message && e.message.includes('Maximum budget')) {
-        throw e; // Raise explicit message to controller
-      }
-      console.warn('⚠️ Error checking bidBudgetMax:', e.message);
-    }
-
     // Check if new bid is strictly greater than old (if present)
     if (currentFinalBid !== null && parsedNewBid <= currentFinalBid) {
       throw new Error(
@@ -768,8 +703,6 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
     throw error;
   }
 };
-
-
 
 // Delete a specific softSkill
 // 🔹 Function to delete a soft skill from a user profile with the same logic as deleteHardSkill
@@ -1050,23 +983,22 @@ module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   }
 };
 
-
 // Update specific profile fields
 module.exports.updateProfileFields = async (userId, updateData) => {
   try {
     console.log('🔧 Updating profile fields for user:', userId);
     console.log('🔧 Update data:', updateData);
-    
+
     const profile = await Profile.findOneAndUpdate(
       { userId },
       { $set: updateData },
       { new: true }
     );
-    
+
     if (!profile) {
       throw new Error("Profile not found");
     }
-    
+
     console.log('✅ Profile fields updated successfully');
     return profile;
   } catch (error) {
@@ -1098,8 +1030,8 @@ module.exports.updateUserFields = async (userId, userUpdateData) => {
 
     const updatedUser = await User.findByIdAndUpdate(userId, mapped, { new: true });
 
-    if (!updatedUser) { 
-      throw new Error('User not found');  
+    if (!updatedUser) {
+      throw new Error('User not found');
     }
 
     return updatedUser;
@@ -1185,7 +1117,7 @@ module.exports.checkPlanLimit = async (userId, limitType) => {
     }
 
     const canUse = used < limit;
-    const message = canUse 
+    const message = canUse
       ? `You can create ${limit - used} more ${limitType}`
       : `You have reached the maximum ${limitType} (${limit}) for your plan`;
 

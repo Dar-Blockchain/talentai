@@ -2,14 +2,8 @@ const nodemailer = require('nodemailer');
 const postService = require('./PosteServices/post.service');
 
 async function sendTask({ postId, token, candidateEmail, candidateName, stepId, candidateId, jobTitle, stepLabel }) {
-  // For now, delegate to postService.createAndSendTechnicalTest
-  const result = await postService.createAndSendTechnicalTest(
-    postId,
-    token,
-    candidateEmail,
-    candidateName
-  );
-  return result;
+  // Task sending functionality has been removed
+  throw new Error('Task sending functionality is not available');
 }
 
 async function testEmailConfig() {
@@ -28,5 +22,4 @@ async function testEmailConfig() {
 }
 
 module.exports = { sendTask, testEmailConfig };
-
 

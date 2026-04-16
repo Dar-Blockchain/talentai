@@ -17,7 +17,6 @@ module.exports.generateToken = (userId, companyId, role) => {
   });
 };
 
-
 module.exports.generateMemberToken = (memberEmail, senderEmail,  projectId) => {
   const payload = {
     memberEmail,

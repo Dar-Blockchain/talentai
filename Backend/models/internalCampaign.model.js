@@ -8,7 +8,7 @@ const moduleSchema = new mongoose.Schema(
       required: true,
     },
     config: {
-      type: mongoose.Schema.Types.Mixed,  //QUESTIONNAIRE [Q1,Q2] 
+      type: mongoose.Schema.Types.Mixed,  //QUESTIONNAIRE [Q1,Q2]
       default: {},
     },
     // 'order' removed — single module no longer needs ordering
@@ -20,7 +20,7 @@ const internalCampaignSchema = new mongoose.Schema(
   {
     company: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Profile",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -31,20 +31,23 @@ const internalCampaignSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // TODO: re-enable campaign type
+    // type: {
+    //   type: String,
+    //   enum: ["PRODUCTIVITY_DIAGNOSTIC", "SKILLS_MAPPING", "ENABLEMENT", "CUSTOM"],
+    //   required: true,
+    // },
     type: {
       type: String,
-      enum: [
-        "PRODUCTIVITY_DIAGNOSTIC",
-        "SKILLS_MAPPING",
-        "ENABLEMENT",
-        "CUSTOM",
-      ],
-      required: true,
+      enum: ["PRODUCTIVITY_DIAGNOSTIC", "SKILLS_MAPPING", "ENABLEMENT", "CUSTOM"],
+      required: false,
+      default: null,
     },
 
     description: {
       type: String,
       trim: true,
+      required: true,
     },
 
     status: {
@@ -96,6 +99,12 @@ const internalCampaignSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    participants: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "CampaignParticipant",
+      default: [],
     },
   },
   { timestamps: true }

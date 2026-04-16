@@ -23,6 +23,17 @@ export interface UpdateDepartmentPayload {
   description?: string;
 }
 
+export interface DepartmentMember {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  username: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt: string;
+}
+
 interface DepartmentsResponse {
   data: Department[];
   pagination: {
@@ -79,6 +90,49 @@ export const updateDepartment = createAsyncThunk<
   }
 });
 
+export const fetchDepartmentById = createAsyncThunk<
+  Department,
+  string,
+  { rejectValue: string }
+>("department/fetchById", async (departmentId, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get(`departments/${departmentId}`);
+    return (response.data.data || response.data) as Department;
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Error fetching department");
+  }
+});
+
+export interface FetchDepartmentMembersParams {
+  departmentId: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export const fetchDepartmentMembers = createAsyncThunk<
+  { members: DepartmentMember[]; total: number },
+  FetchDepartmentMembersParams,
+  { rejectValue: string }
+>("department/fetchMembers", async ({ departmentId, search, page, limit }, { rejectWithValue }) => {
+  try {
+    const params: Record<string, any> = {};
+    if (search) params.search = search;
+    if (page)   params.page   = page;
+    if (limit)  params.limit  = limit;
+    const response = await axiosInstance.get(
+      `company-memberships/memberships/department/${departmentId}`,
+      { params },
+    );
+    return {
+      members: response.data.memberships || [],
+      total: response.data.pagination?.total ?? 0,
+    };
+  } catch (err: any) {
+    return rejectWithValue(err.response?.data?.message || "Error fetching department members");
+  }
+});
+
 export const deleteDepartment = createAsyncThunk<
   string,
   string,
@@ -110,6 +164,13 @@ interface DepartmentState {
   page: number;
   limit: number;
   total: number;
+  currentDepartment: Department | null;
+  loadingCurrent: boolean;
+  currentError: string | null;
+  departmentMembers: DepartmentMember[];
+  membersTotal: number;
+  loadingMembers: boolean;
+  membersError: string | null;
 }
 
 const initialState: DepartmentState = {
@@ -128,6 +189,13 @@ const initialState: DepartmentState = {
   page: 1,
   limit: 10,
   total: 0,
+  currentDepartment: null,
+  loadingCurrent: false,
+  currentError: null,
+  departmentMembers: [],
+  membersTotal: 0,
+  loadingMembers: false,
+  membersError: null,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -210,6 +278,38 @@ const departmentSlice = createSlice({
         state.updateError = action.payload || "Error updating department";
       });
 
+    // fetchDepartmentById
+    builder
+      .addCase(fetchDepartmentById.pending, (state) => {
+        state.loadingCurrent = true;
+        state.currentError = null;
+        state.currentDepartment = null;
+      })
+      .addCase(fetchDepartmentById.fulfilled, (state, action) => {
+        state.loadingCurrent = false;
+        state.currentDepartment = action.payload;
+      })
+      .addCase(fetchDepartmentById.rejected, (state, action) => {
+        state.loadingCurrent = false;
+        state.currentError = action.payload || "Error fetching department";
+      });
+
+    // fetchDepartmentMembers
+    builder
+      .addCase(fetchDepartmentMembers.pending, (state) => {
+        state.loadingMembers = true;
+        state.membersError = null;
+      })
+      .addCase(fetchDepartmentMembers.fulfilled, (state, action) => {
+        state.loadingMembers = false;
+        state.departmentMembers = action.payload.members;
+        state.membersTotal = action.payload.total;
+      })
+      .addCase(fetchDepartmentMembers.rejected, (state, action) => {
+        state.loadingMembers = false;
+        state.membersError = action.payload || "Error fetching members";
+      });
+
     // deleteDepartment
     builder
       .addCase(deleteDepartment.pending, (state) => {
@@ -265,5 +365,19 @@ export const selectDepartmentPage = (state: any) =>
   state.department.page as number;
 export const selectDepartmentLimit = (state: any) =>
   state.department.limit as number;
+export const selectCurrentDepartment = (state: any) =>
+  state.department.currentDepartment as Department | null;
+export const selectCurrentDepartmentLoading = (state: any) =>
+  state.department.loadingCurrent as boolean;
+export const selectCurrentDepartmentError = (state: any) =>
+  state.department.currentError as string | null;
+export const selectDepartmentMembers = (state: any) =>
+  state.department.departmentMembers as DepartmentMember[];
+export const selectDepartmentMembersTotal = (state: any) =>
+  state.department.membersTotal as number;
+export const selectDepartmentMembersLoading = (state: any) =>
+  state.department.loadingMembers as boolean;
+export const selectDepartmentMembersError = (state: any) =>
+  state.department.membersError as string | null;
 
 export default departmentSlice.reducer;

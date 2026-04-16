@@ -25,7 +25,7 @@ const EmployeesHeader: React.FC<EmployeesHeaderProps> = ({ stats, loading = fals
     },
     {
       icon: <CheckCircleOutline sx={{ fontSize: 18 }} />,
-      label: "Members",
+      label: "Employees",
       value: stats?.memberships.total ?? 0,
       color: "#10B981",
     },

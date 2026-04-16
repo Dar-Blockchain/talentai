@@ -4,6 +4,7 @@ const PostSteps = require("../../models/postSteps.model");
 const User = require("../../models/User.model");
 const Profile = require("../../models/Profile.model");
 const JobApplication = require("../../models/JobApplication.model");
+const Post = require("../../models/Post.model");
 const { sendInterviewAssessmentEmail, sendInterviewCompletionNotificationToCompany } = require("../../utils/email-service");
 
 // ========== CREATE ==========
@@ -93,7 +94,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
     try {
       // Get candidate email and name
       const candidateEmail = req.user.email;
-      const candidateName = req.user.profile?.firstName || req.user.username || 'Candidate';
+      const candidateName = `${req.user.profile?.firstName || ""} ${req.user.profile?.lastName || ""}`.trim() || req.user.username || 'Candidate';
       
       // Get post title if available
       let postTitle = 'New Opportunity';
@@ -102,7 +103,7 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
       }
 
       console.log(`📧 Sending interview assessment email to: ${candidateEmail}`);
-      
+
       // Send email to candidate asynchronously (don't block response)
       sendInterviewAssessmentEmail(candidateEmail, candidateName, postTitle).catch(err => {
         console.error('⚠️ Warning: Failed to send candidate email, but assessment was created:', err.message);
@@ -115,12 +116,12 @@ module.exports.createPostInterviewAssessment = async (req, res) => {
         if (companyId) {
           const companyUser = await User.findById(companyId).select('email');
           const companyProfile = await Profile.findOne({ userId: companyId }).select('firstName lastName');
-          
+
           if (companyUser && companyUser.email) {
             const companyName = companyProfile?.firstName || 'Company';
-            
+
             console.log(`📧 Sending interview completion notification to company: ${companyUser.email}`);
-            
+
             // Send email to company asynchronously
             sendInterviewCompletionNotificationToCompany(
               companyUser.email,
@@ -184,9 +185,47 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
       postId
     );
 
+    // ===== CHECK THRESHOLD SCORE =====
+    let underThreshold = false;
+    let thresholdScore = null;
+    let matchScore = null;
+
+    try {
+      // Get the post to retrieve thresholdScore
+      const post = await Post.findById(postId).select('thresholdScore');
+      if (post) {
+        thresholdScore = post.thresholdScore;
+      }
+
+      // Get the candidate's profile
+      const candidateProfile = await Profile.findOne({ userId: candidateId }).select('_id');
+      if (candidateProfile) {
+        // Get JobApplication to retrieve matchScore
+        const jobApplication = await JobApplication.findOne({
+          profile: candidateProfile._id,
+          post: postId
+        }).select('matchScore');
+        
+        if (jobApplication && jobApplication.matchScore !== null) {
+          matchScore = jobApplication.matchScore;
+          
+          // Check if matchScore is under thresholdScore
+          if (thresholdScore !== null && matchScore < thresholdScore) {
+            underThreshold = true;
+          }
+        }
+      }
+    } catch (thresholdError) {
+      console.warn('⚠️ Warning: Could not check threshold score:', thresholdError.message);
+      // Don't block response if threshold check fails
+    }
+
     return res.status(200).json({
       success: true,
       exists,
+      underThreshold,
+      thresholdScore,
+      matchScore,
       message: exists
         ? "Candidate already has an assessment for this post"
         : "No assessment found for this candidate and post",
@@ -196,6 +235,47 @@ module.exports.checkCandidateAssessmentExists = async (req, res) => {
     return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Error checking assessment existence",
+    });
+  }
+};
+
+// ========== GET MATCHING DETAILS ==========
+module.exports.getMatchingDetails = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const candidateId = req.user._id;
+    const userRole = req.user.role;
+
+    if (!postId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required parameter: postId",
+      });
+    }
+
+    // Check if user is a Company - Companies cannot check matching details for themselves
+    if (userRole === "Company") {
+      return res.status(403).json({
+        success: false,
+        message: "Company accounts cannot check interview matching details",
+      });
+    }
+
+    const matchingDetails = await postInterviewAssessmentService.getMatchingDetails(
+      candidateId,
+      postId
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: matchingDetails,
+      message: "Matching details retrieved successfully",
+    });
+  } catch (error) {
+    console.error("❌ Controller error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Error retrieving matching details",
     });
   }
 };
@@ -422,7 +502,7 @@ module.exports.getAllPostInterviewAssessmentsForCompany = async (req, res) => {
               .populate("steps.interviewDetails")
               .populate(
                 "idCandidate",
-                "-authHistory -notifications -hederaAccountId -hederaPrivateKey -hederaPublicKey",
+                "-authHistory -notifications",
               );
 
             return {
@@ -498,5 +578,27 @@ module.exports.getInterviewMetricsForCompany = async (req, res) => {
       success: false,
       message: error.message || "Error retrieving metrics",
     });
+  }
+};
+
+// ========== READ - Get assessment by post + candidate user ==========
+module.exports.getAssessmentByPostAndCandidate = async (req, res) => {
+  try {
+    const { postId, candidateUserId } = req.params;
+    if (!postId || !candidateUserId) {
+      return res.status(400).json({ success: false, message: "postId and candidateUserId are required." });
+    }
+    const PostInterviewAssessment = require("../../models/PostInterviewAssessment.model");
+    const assessment = await PostInterviewAssessment.findOne({ post: postId, candidate: candidateUserId })
+      .populate("candidate", "firstName lastName email username profile")
+      .populate("post", "jobDetails skillAnalysis")
+      .lean();
+    if (!assessment) {
+      return res.status(404).json({ success: false, message: "Assessment not found." });
+    }
+    res.status(200).json({ success: true, data: assessment });
+  } catch (error) {
+    console.error("Error getting assessment by post+candidate:", error);
+    res.status(error.status || 500).json({ success: false, message: error.message || "Error retrieving assessment." });
   }
 };

@@ -8,13 +8,13 @@
 const express = require("express");
 const router = express.Router();
 const CompanyInvitationController = require("../controllers/ProfileControllers/CompanyInvitation.controller");
-const { requireAuthUser } = require("../middleware/security/auth.middleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
-// ========== MIDDLEWARE: Authentication + Logging ==========
-// All routes below require an authenticated user and are logged
-router.use(requireAuthUser, authLogMiddleware("sentInvitation"));
+// ========== MIDDLEWARE: Authentication (API Key or JWT) + Logging ==========
+// All routes below accept either API Key or JWT authentication and are logged
+router.use(requireAuth, authLogMiddleware("sentInvitation"));
 
 /**
  * POST /sentInvitation
@@ -32,6 +32,7 @@ router.post(
  */
 router.post(
   "/resendInvitation/:invitationId",
+  resolveCompanyActor,
   CompanyInvitationController.resendInvitation,
 );
 
@@ -45,15 +46,6 @@ router.delete(
 );
 
 /**
- * POST /respondInvitation/:invitationId
- * Accept or reject an invitation (body: { action: 'accept'|'reject' })
- */
-router.post(
-  "/respondInvitation/:invitationId",
-  CompanyInvitationController.respondInvitation,
-);
-
-/**
  * GET /myInvitations
  * Get all invitations for companies owned by current user
  */
@@ -64,12 +56,12 @@ router.get(
 );
 
 /**
- * GET /details/:invitationId
- * Get invitation details by ID
+ * GET /byDepartment/:departmentId
+ * Get all pending invitations for a specific department
  */
 router.get(
-  "/details/:invitationId",
-  CompanyInvitationController.getInvitationDetails,
+  "/byDepartment/:departmentId",
+  CompanyInvitationController.getInvitationsByDepartment,
 );
 
 module.exports = router;

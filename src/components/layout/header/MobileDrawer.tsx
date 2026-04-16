@@ -1,6 +1,7 @@
 "use client";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Drawer, Box, Divider, Button } from "@mui/material";
+import LogoutProgressModal from "@/components/ui/LogoutProgressModal";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { logout } from "@/store/slices/authSlice";
 import { useSelector } from "react-redux";
@@ -66,7 +67,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
+    (state: RootState) => state.auth.isAuthenticated,
   );
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
@@ -75,82 +76,89 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose }) => {
     localStorage.getItem("userType") ||
     "candidate";
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
     try {
       await dispatch(logout()).unwrap();
-      onClose();
     } catch (error) {
       console.error("Logout failed:", error);
     }
+    onClose();
   }, [dispatch, onClose]);
 
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: 260,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          p: 2,
-          "@media (min-width:750px)": { display: "none" },
-        },
-      }}
-    >
-      {isAuthenticated && (
-        <>
-          <Box>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-              <HeaderLogo />
+    <>
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={onClose}
+        PaperProps={{
+          sx: {
+            width: 260,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            p: 2,
+            "@media (min-width:750px)": { display: "none" },
+          },
+        }}
+      >
+        {isAuthenticated && (
+          <>
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                <HeaderLogo />
+              </Box>
+
+              {/* User Info */}
+              <Box sx={{ mb: 1 }}>
+                <UserAvatar showDropdown={false} />
+              </Box>
             </Box>
 
-            {/* User Info */}
-            <Box sx={{ mb: 1 }}>
-              <UserAvatar showDropdown={false} />
-            </Box>
-          </Box>
+            {/* Logout */}
+            <LogoutButton onClick={handleLogout} isLoading={false} fullWidth />
+          </>
+        )}
 
-          {/* Logout */}
-          <LogoutButton onClick={handleLogout} isLoading={false} fullWidth />
-        </>
-      )}
-
-      {!isAuthenticated && (
-        <>
-          <Box>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-              <HeaderLogo />
+        {!isAuthenticated && (
+          <>
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                <HeaderLogo />
+              </Box>
+              <HeaderNavMenu direction="column" />
             </Box>
-            <HeaderNavMenu direction="column" />
-          </Box>
-          <Button
-            variant="outlined"
-            onClick={() => router.push("/signin")}
-            sx={{
-              backgroundColor: userType === "candidate" ? "#BD85FF" : "#4DD9A3",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: 999,
-              textTransform: "none",
-              px: 2,
-              py: 0.75,
-              fontSize: "14px",
-              fontWeight: 600,
-              "&:hover": {
-                color: "white",
+            <Button
+              variant="outlined"
+              onClick={() => router.push("/signin")}
+              sx={{
                 backgroundColor:
                   userType === "candidate" ? "#BD85FF" : "#4DD9A3",
-              },
-            }}
-          >
-            Login
-          </Button>
-        </>
-      )}
-    </Drawer>
+                color: "#ffffff",
+                border: "none",
+                borderRadius: 999,
+                textTransform: "none",
+                px: 2,
+                py: 0.75,
+                fontSize: "14px",
+                fontWeight: 600,
+                "&:hover": {
+                  color: "white",
+                  backgroundColor:
+                    userType === "candidate" ? "#BD85FF" : "#4DD9A3",
+                },
+              }}
+            >
+              Login
+            </Button>
+          </>
+        )}
+      </Drawer>
+      <LogoutProgressModal open={loggingOut} />
+    </>
   );
 };
 

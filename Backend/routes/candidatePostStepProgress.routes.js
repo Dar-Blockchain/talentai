@@ -7,11 +7,11 @@
 const express = require('express');
 const router = express.Router();
 const candidatePostStepProgressController = require('../controllers/candidatePostStepProgress.controller');
-const {requireAuthUser} = require('../middleware/security/auth.middleware');
+const {requireAuth} = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware")
 
 // Auth obligatoire pour toutes les routes
-router.use(requireAuthUser,authLogMiddleware("CandidatePostStepProgress"));
+router.use(requireAuth,authLogMiddleware("CandidatePostStepProgress"));
 
 // CRUD de base
 // GET /candidate-post-step-progress/getUserProgress: progression de l'utilisateur courant
@@ -39,4 +39,4 @@ router.delete('/candidate/:candidateId/post/:postId', candidatePostStepProgressC
 // Upsert route (create or update)
 router.post('/candidate/:candidateId/post/:postId/upsert', candidatePostStepProgressController.upsertProgress);
 
-module.exports = router; 
+module.exports = router;

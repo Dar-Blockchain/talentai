@@ -5,7 +5,8 @@ const departmentService = require("../services/department.service");
  */
 exports.createDepartment = async (req, res) => {
   try {
-    const companyId = req.user.profile;
+    const companyId = req.user._id;
+    const createdBy = req.actualUser?._id || req.user._id;
     const { name, description } = req.body;
 
     if (!name) {
@@ -16,6 +17,7 @@ exports.createDepartment = async (req, res) => {
       name,
       description: description || "",
       companyId,
+      createdBy,
     });
 
     res.status(201).json({ success: true, data: dept });
@@ -29,7 +31,7 @@ exports.createDepartment = async (req, res) => {
  */
 exports.getCompanyDepartments = async (req, res) => {
   try {
-    const companyId = req.user.profile;
+    const companyId = req.user._id;
     const { page = 1, limit = 20, search = "" } = req.query;
 
     const result = await departmentService.getDepartmentsByCompany(
@@ -71,7 +73,12 @@ exports.getDepartment = async (req, res) => {
 exports.updateDepartment = async (req, res) => {
   try {
     const { id } = req.params;
-    const updated = await departmentService.updateDepartment(id, req.body);
+    const updatedBy = req.actualUser?._id || req.user._id;
+    const updateData = {
+      ...req.body,
+      updatedBy,
+    };
+    const updated = await departmentService.updateDepartment(id, updateData);
     if (!updated) {
       return res.status(404).json({ success: false, error: "Department not found" });
     }

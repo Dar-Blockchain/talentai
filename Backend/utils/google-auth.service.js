@@ -1,8 +1,7 @@
-const { OAuth2Client } = require("google-auth-library"); 
+const { OAuth2Client } = require("google-auth-library");
 
 // Initialisation du client OAuth2 avec ton Client ID Google
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 
 module.exports.GetGmailByToken = async (id_token) => {
 
@@ -15,7 +14,6 @@ module.exports.GetGmailByToken = async (id_token) => {
     // Extract user information from the validated token
     const payload = ticket.getPayload();
     const email = payload.email;
-  
+
     return email;
   };
-  

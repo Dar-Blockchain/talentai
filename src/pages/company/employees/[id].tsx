@@ -6,16 +6,18 @@ import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import EditRoleModal from "@/components/features/company/employees/edit/EditRoleModal";
 import DeleteMemberDialog from "@/components/features/company/employees/delete/DeleteMemberDialog";
 import EmployeeDetail from "@/components/features/company/employees/details/EmployeeDetail";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import {
-  fetchMembers,
+  fetchMemberById,
   updateMemberRole,
   deleteMember,
+  selectCurrentMember,
+  selectFetchingMember,
   selectMembers,
+  selectEmployeePermissions,
   clearUpdateRoleSuccess,
   clearDeleteMemberSuccess,
   Member,
-  MemberRole,
 } from "@/store/slices/memberSlice";
 import { useToast } from "@/hooks/useToast";
 
@@ -25,18 +27,26 @@ const EmployeeDetailPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { showToast } = useToast();
 
-  const { members, loading, updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
+  const user        = useSelector((state: RootState) => state.user.connectedUser.user);
+  const empPerms    = useSelector(selectEmployeePermissions);
+  const isEmployee  = user?.role === "Employee";
+  const isOwner     = user?.role === "Company";
+  const canAssignRoles = !isEmployee || !!empPerms?.canAssignRoles;
+  const canRemove      = !isEmployee || !!empPerms?.canRemoveEmployee;
+  const canManagePerms = !isEmployee || !!empPerms?.canManagePermissions;
+
+  const member       = useSelector(selectCurrentMember);
+  const loading      = useSelector(selectFetchingMember);
+  const { updateRoleSuccess, deleteMemberSuccess } = useSelector(selectMembers);
 
   const [editModalOpen, setEditModalOpen]       = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember]     = useState<Member | null>(null);
 
-  // Load members if not yet loaded
+  // Load member by user ID
   useEffect(() => {
-    if (members.length === 0) dispatch(fetchMembers());
-  }, [dispatch, members.length]);
-
-  const member = members.find((m) => m._id === id) ?? null;
+    if (id) dispatch(fetchMemberById(id as string));
+  }, [dispatch, id]);
 
   // Role update success
   useEffect(() => {
@@ -45,9 +55,9 @@ const EmployeeDetailPage: React.FC = () => {
       setSelectedMember(null);
       dispatch(clearUpdateRoleSuccess());
       showToast({ message: "Member role updated successfully!", severity: "success" });
-      dispatch(fetchMembers());
+      if (id) dispatch(fetchMemberById(id as string));
     }
-  }, [updateRoleSuccess, dispatch, showToast]);
+  }, [updateRoleSuccess, dispatch, showToast, id]);
 
   // Delete success → go back to list
   useEffect(() => {
@@ -58,9 +68,9 @@ const EmployeeDetailPage: React.FC = () => {
     }
   }, [deleteMemberSuccess, dispatch, showToast, router]);
 
-  const handleUpdateRole = useCallback(async (role: string) => {
+  const handleUpdateRole = useCallback(async (role: string, departmentId?: string) => {
     if (!selectedMember) throw new Error("No member selected");
-    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role: role as MemberRole })).unwrap();
+    await dispatch(updateMemberRole({ membershipId: selectedMember._id, role, departmentId })).unwrap();
   }, [dispatch, selectedMember]);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -85,7 +95,7 @@ const EmployeeDetailPage: React.FC = () => {
 
   return (
       <DashboardLayout>
-        {loading && members.length === 0 ? (
+        {loading && !member ? (
           <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
             <CircularProgress sx={{ color: "#8310FF" }} />
           </Box>
@@ -104,6 +114,11 @@ const EmployeeDetailPage: React.FC = () => {
             onBack={handleBack}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            canAssignRoles={canAssignRoles}
+            canRemove={canRemove}
+            canManagePermissions={canManagePerms}
+            isOwner={isOwner}
+            isSelf={member.userId === user?._id}
           />
         )}
 
@@ -113,13 +128,14 @@ const EmployeeDetailPage: React.FC = () => {
             onClose={() => { setEditModalOpen(false); setSelectedMember(null); }}
             onSave={handleUpdateRole}
             currentRole={selectedMember.role}
-            memberName={selectedMember.user?.username || selectedMember.user?.email || "Member"}
+            currentDepartmentId={(selectedMember as any).department?._id ?? (selectedMember as any).departmentId ?? ""}
+            memberName={selectedMember.username || selectedMember.email || "Member"}
           />
         )}
 
         <DeleteMemberDialog
           open={deleteDialogOpen}
-          memberName={selectedMember?.user?.username || selectedMember?.user?.email || "this member"}
+          memberName={selectedMember?.username || selectedMember?.email || "this member"}
           onCancel={() => { setDeleteDialogOpen(false); setSelectedMember(null); }}
           onConfirm={handleConfirmDelete}
         />

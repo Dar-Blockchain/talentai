@@ -34,8 +34,8 @@ const jobApplicationSchema = new mongoose.Schema(
     // ========== APPLICATION DETAILS ==========
     status: {
       type: String,
-      enum: ["applied", "viewed", "shortlisted", "rejected", "accepted", "interview_scheduled", "interview_completed"],
-      default: "applied",
+      enum: ["visited", "interview_completed"],
+      default: "visited",
       index: true,
       description: "Current status of the application"
     },
@@ -81,6 +81,23 @@ const jobApplicationSchema = new mongoose.Schema(
       max: 100,
       default: null,
       description: "Score from interview assessment"
+    },
+
+    // ========== REMINDER TRACKING ==========
+    firstInvitationSentAt: {
+      type: Date,
+      default: null,
+      description: "Timestamp when automatic interview invitation was sent"
+    },
+    firstReminderSentAt: {
+      type: Date,
+      default: null,
+      description: "Timestamp when 24h reminder was sent"
+    },
+    secondReminderSentAt: {
+      type: Date,
+      default: null,
+      description: "Timestamp when 48h/expiration reminder was sent"
     },
 
     // ========== NOTES & FEEDBACK ==========

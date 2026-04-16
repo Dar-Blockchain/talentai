@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import InterviewsHeader from "@/components/features/company/interviews/list/InterviewsHeader";
 import InterviewsList, { ScoreFilter, SortOption } from "@/components/features/company/interviews/list/InterviewsList";
@@ -22,6 +23,7 @@ import {
 const ROW = 12;
 
 const InterviewsPage: React.FC = () => {
+  useCompanyAccess("canViewInterviewResults");
   const dispatch    = useDispatch<AppDispatch>();
   const router      = useRouter();
   const results     = useSelector(selectCompanyInterviews) as InterviewAssessment[];

@@ -6,6 +6,7 @@ module.exports = {
       "https://staging.talentai.bid",
       "https://backend.staging.talentai.bid",
       "http://localhost:3000",
+      "http://localhost:3001",
       "http://localhost:5173",
       "https://app.talentai.bid"
     ];
@@ -51,4 +52,4 @@ module.exports = {
     }
     return io;
   }
-}; 
+};

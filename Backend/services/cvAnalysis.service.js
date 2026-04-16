@@ -13,7 +13,7 @@ class CVAnalysisService {
    */
   static normalizeSpokenLanguages(languages) {
     if (!languages) return [];
-    
+
     if (!Array.isArray(languages)) {
       return [];
     }
@@ -42,7 +42,7 @@ class CVAnalysisService {
    */
   static normalizeSoftSkills(softSkills) {
     if (!softSkills) return [];
-    
+
     if (!Array.isArray(softSkills)) {
       return [];
     }
@@ -205,7 +205,7 @@ class CVAnalysisService {
         }
 
         const updatedProfile = await Profile.findByIdAndUpdate(profileId, updateObject, { new: true });
-        
+
         if (!updatedProfile) {
           console.warn(`⚠️ Profile not found for ID: ${profileId}`);
         } else {

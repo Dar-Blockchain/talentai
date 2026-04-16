@@ -14,9 +14,17 @@ const departmentSchema = new mongoose.Schema(
     },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Profile",   // assuming departments belong to a company profile
+      ref: "User",   // departments belong to a user/company
       required: true,
       index: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   { timestamps: true }

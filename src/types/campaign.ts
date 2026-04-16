@@ -12,7 +12,7 @@ export type CampaignStatus =
   | "EXPIRED";
 
 export type AnonymityMode = "ANONYMOUS" | "NOMINATIVE";
-export type AccessMethod = "LINK" | "ACCOUNTS" | "BOTH";
+export type AccessMethod = "LINK" | "ACCOUNTS";
 export type ModuleType =
   | "QUESTIONNAIRE"
   | "AI_INTERVIEW"
@@ -23,17 +23,22 @@ export interface Campaign {
   _id: string;
   company: string;
   title: string;
-  type: CampaignType;
+  type?: CampaignType;
   description?: string;
   status: CampaignStatus;
   anonymityMode: AnonymityMode;
-  module: CampaignModule; // single module object
+  module: CampaignModule;
   accessMethod: AccessMethod;
   linkToken?: string | null;
-  targetDepartment?: string;
   targetEmployeeCount?: number;
   deadline?: string;
-  skill?: string;
+  participantCount?: number;
+  sessionCount?: number;
+  participantStatus?: ParticipantStatus;
+  targetDepartment?: string | null;
+  progress?: number;
+  score?: number;
+  completedAt?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -41,20 +46,22 @@ export interface Campaign {
 
 export interface CreateCampaignForm {
   title: string;
-  type: CampaignType;
-  description?: string;
+  // type: CampaignType; // TODO: re-enable campaign type selection
+  // customType?: string;
+  description: string;
   anonymityMode: AnonymityMode;
-  module: ModuleType; // select a single module type
+  module: ModuleType;
   accessMethod: AccessMethod;
   deadline?: string;
 }
 
 export interface CreateCampaignPayload {
   title: string;
-  type: CampaignType;
-  description?: string;
+  // type: CampaignType; // TODO: re-enable campaign type selection
+  // customType?: string;
+  description: string;
   anonymityMode: AnonymityMode;
-  module: CampaignModule; // single module record
+  module: CampaignModule;
   accessMethod: AccessMethod;
   deadline?: string;
   participants?: string[];
@@ -81,7 +88,7 @@ export interface CampaignMetrics {
   expired: number;
 }
 
-export type QuestionType = "TEXT" | "MULTIPLE_CHOICE" | "RATING";
+export type QuestionType = "TEXT" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "RATING";
 
 export interface Question {
   question: string;
@@ -115,6 +122,7 @@ export interface SkillTestModule {
     skill: string;
     passingScore?: number;
     maxAttempts?: number;
+    durationMinutes?: number;
   } | null;
 }
 
@@ -137,3 +145,59 @@ export type CampaignModule =
   | AIInterviewModule
   | SkillTestModule
   | TrainingPathModule;
+
+// ─── Participants ─────────────────────────────────────────────────────────────
+
+export type ParticipantStatus = "INVITED" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
+
+export interface CampaignParticipant {
+  _id: string;
+  employeeId?: string;
+  anonymousToken?: string;
+  linkAccessToken?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+  department?: { id: string; name: string };
+  status: ParticipantStatus;
+  accessedAt?: string;
+  completedAt?: string;
+  score?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Non-participants (employees not yet in a campaign) ───────────────────────
+
+export interface NonParticipant {
+  _id: string;
+  membershipId: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  username: string | null;
+  role: string | null;
+  department: { id: string; name: string } | null;
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+export type SessionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";
+
+export interface CampaignSession {
+  _id: string;
+  isAnonymous?: boolean;
+  participant?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email?: string;
+  };
+  status: SessionStatus;
+  startedAt?: string;
+  completedAt?: string;
+  score?: number;
+  durationMinutes?: number;
+}

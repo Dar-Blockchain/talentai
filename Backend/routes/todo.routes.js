@@ -11,13 +11,12 @@ const router = express.Router();
 const todoController = require("../controllers/todo.controller");
 
 // Import des middlewares
-const { requireAuthUser } = require('../middleware/security/auth.middleware');
+const { requireAuth } = require('../middleware/security/auth.middleware');
 const authLogMiddleware = require("../middleware/security/request-log.middleware.js")
-const { controledAcces } = require('../middleware/authorize.middleware.js'); 
-
+const { controledAcces } = require('../middleware/authorize.middleware.js');
 
 // Auth candidat obligatoire + logs
-router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("Todo"));
+router.use(requireAuth, controledAcces('Candidate'), authLogMiddleware("Todo"));
 
 
 // POST /todo/profile — generates a todo list for user profile

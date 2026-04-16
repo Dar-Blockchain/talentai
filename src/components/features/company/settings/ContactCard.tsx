@@ -33,6 +33,7 @@ interface ContactCardProps {
   onCancel: () => void;
   onSave: () => void;
   onInputChange: (field: keyof UserProfile, value: string) => void;
+  readOnly?: boolean;
 }
 
 const ContactCard: React.FC<ContactCardProps> = ({
@@ -44,6 +45,7 @@ const ContactCard: React.FC<ContactCardProps> = ({
   onCancel,
   onSave,
   onInputChange,
+  readOnly = false,
 }) => {
   const countries = useMemo(() => getAllCountryNames(), []);
 
@@ -52,7 +54,7 @@ const ContactCard: React.FC<ContactCardProps> = ({
       <SectionHeader
         title="Contact & Presence"
         subtitle="Location, social links, and company details"
-        action={
+        action={!readOnly ? (
           <EditActions
             isEditing={isEditing}
             loading={loading}
@@ -60,7 +62,7 @@ const ContactCard: React.FC<ContactCardProps> = ({
             onCancel={onCancel}
             onSave={onSave}
           />
-        }
+        ) : undefined}
       />
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
