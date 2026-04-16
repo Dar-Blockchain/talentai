@@ -49,6 +49,7 @@ const AdminDashboardHome: React.FC = () => {
     dispatch(fetchAllUsersForMap(undefined));
     dispatch(fetchUserGrowthData(undefined));
   }, [dispatch]);
+  
 
   const processUserLocations = useMemo(() => {
     const locationMap = new Map<string, { count: number; users: any[] }>();

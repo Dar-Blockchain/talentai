@@ -10,7 +10,7 @@ const compileTemplate = (templateName) => {
 };
 
 const transporter = nodemailer.createTransport({
-  host: process.env.Email_host,
+  host: process.env.EMAIL_HOST,
   port: 465,
   secure: true,
   auth: {
