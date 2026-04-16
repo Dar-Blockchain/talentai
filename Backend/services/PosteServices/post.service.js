@@ -521,7 +521,7 @@ module.exports.getPostsByUserId = async (userId) => {
 };
 
 // Get user's posts with pagination, search and sorting
-module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '', showArchived = false) => {
+module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit = 6, search = '', sort = 'newest', status = '', showArchived = false, creationType = '') => {
   try {
     // Validate pagination parameters
     const pageNum = Math.max(1, parseInt(page, 10));
@@ -536,7 +536,22 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
       query.archived = { $ne: true }; // Show posts where archived is false or not set
     }
     if (search && search.trim() !== '') {
-      query['jobDetails.title'] = { $regex: search.trim(), $options: 'i' }; // Case-insensitive search
+      const searchRegex = { $regex: search.trim(), $options: 'i' };
+      query.$and = [
+        ...(query.$and || []),
+        {
+          $or: [
+            { 'jobDetails.title': searchRegex },
+            { 'jobDetails.description': searchRegex },
+          ],
+        },
+      ];
+    }
+
+    // Add creationType filter if provided
+    const validCreationTypes = ['ai', 'pipeline', 'manual'];
+    if (creationType && validCreationTypes.includes(creationType.toLowerCase())) {
+      query.creationType = creationType.toLowerCase();
     }
 
     // Add status filter if provided

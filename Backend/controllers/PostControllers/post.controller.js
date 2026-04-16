@@ -303,7 +303,7 @@ exports.getUserPosts = async (req, res) => {
         .json({ success: false, error: "User not authenticated" });
     }
 
-    const { page = 1, limit = 6, search = "", sort = "newest", status = "", archived = "false" } = req.query;
+    const { page = 1, limit = 6, search = "", sort = "newest", status = "", archived = "false", creationType = "" } = req.query;
     // Parse archived parameter: "true" string becomes boolean true, else false
     const showArchived = archived === "true";
 
@@ -323,6 +323,7 @@ exports.getUserPosts = async (req, res) => {
       sortOption,
       status,
       showArchived,
+      creationType,
     );
 
     res.status(200).json({

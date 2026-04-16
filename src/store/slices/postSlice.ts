@@ -301,11 +301,12 @@ export const fetchMyPosts = createAsyncThunk(
       search?: string;
       sort?: string;
       status?: string;
+      creationType?: string;
     } = {},
     { rejectWithValue }
   ) => {
     try {
-      const { page = 1, limit = 12, search = "", sort = "newest", status } = params;
+      const { page = 1, limit = 12, search = "", sort = "newest", status, creationType } = params;
 
       const queryParams = new URLSearchParams({
         page: page.toString(),
@@ -313,6 +314,7 @@ export const fetchMyPosts = createAsyncThunk(
         ...(search && { search }),
         sort,
         ...(status && status !== "all" && { status }),
+        ...(creationType && creationType !== "all" && { creationType }),
       });
 
       const response = await axiosInstance.get(`post/my-posts?${queryParams}`);
