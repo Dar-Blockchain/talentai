@@ -96,8 +96,9 @@ const MuiToast: React.FC<MuiToastProps> = ({
         border: `1px solid ${borderColors[severity]}`,
         boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
         display: "flex",
-        alignItems: "center",
-        minWidth: "max-content",
+        alignItems: "flex-start",
+        minWidth: 280,
+        maxWidth: 360,
         fontWeight: 400,
         fontSize: 12,
         backdropFilter: "blur(8px)",
@@ -117,7 +118,9 @@ const MuiToast: React.FC<MuiToastProps> = ({
         </IconButton>
       }
     >
-      {message}
+      <span style={{ whiteSpace: "pre-line" }}>
+        {message.length > 100 ? message.slice(0, 100).trimEnd() + "…" : message}
+      </span>
     </Alert>
   </Snackbar>
 );
