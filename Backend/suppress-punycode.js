@@ -37,4 +37,11 @@ process.on('warning', (warning) => {
   }
 });
 
+// Polyfill browser-only globals required by pdf-parse (pdfjs internally uses DOMMatrix)
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  globalThis.DOMMatrix = class DOMMatrix {
+    constructor() {}
+  };
+}
+
 // nothing else - the app will be loaded after this preloaded module
