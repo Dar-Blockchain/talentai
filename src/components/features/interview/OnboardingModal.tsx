@@ -100,6 +100,19 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobId, jobTitle
     setLoading(true);
     setApiError('');
     try {
+      // Check if email belongs to a company/employee account — block them
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/check-role?email=${encodeURIComponent(trimmed)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.exists && data.role && data.role !== 'Candidate') {
+            setApiError('This email is registered as a company account. Please use a personal email to apply.');
+            setLoading(false);
+            return;
+          }
+        }
+      } catch { /* ignore check errors, let signin handle it */ }
+
       // Try signin — if it works, user exists → go straight to OTP
       await dispatch(signinUser(trimmed)).unwrap();
       startTimer();
