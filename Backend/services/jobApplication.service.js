@@ -916,20 +916,17 @@ module.exports.getApplicationMetrics = async (companyId) => {
 
     const ObjectId = require("mongoose").Types.ObjectId;
 
-    // Get count of unique posts that have received applications
+    // Get total number of applicants (all applications for this company)
+    const totalApplicants = await JobApplication.countDocuments({ company: new ObjectId(companyId) });
+
+    // Get count of unique job posts that have received applications
     const postsWithApplications = await JobApplication.aggregate([
       { $match: { company: new ObjectId(companyId) } },
-      {
-        $group: {
-          _id: "$post",
-        },
-      },
-      {
-        $count: "totalPosts",
-      },
+      { $group: { _id: "$post" } },
+      { $count: "totalPosts" },
     ]);
 
-    // Get metrics for all applications
+    // Get avg/top CV scores across all applications
     const applicationsMetrics = await JobApplication.aggregate([
       { $match: { company: new ObjectId(companyId) } },
       {
@@ -945,7 +942,7 @@ module.exports.getApplicationMetrics = async (companyId) => {
     const appMetrics = applicationsMetrics[0] || {};
 
     return {
-      totalApplicants: totalPostsWithApplications,
+      totalApplicants,
       totalJobPosts: totalPostsWithApplications,
       avgCVScore: appMetrics.avgCVScore ? Math.round(appMetrics.avgCVScore) : 0,
       topCVScore: appMetrics.topCVScore ? Math.round(appMetrics.topCVScore) : 0,
