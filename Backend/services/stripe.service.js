@@ -6,11 +6,13 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfileId }) => {
   try {
-    const plan = await planLimitsService.getPlanById(planId);
+    const result = await planLimitsService.getPlanById(planId);
 
-    if (!plan) {
+    if (!result || !result.data) {
       throw new Error("Invalid plan ID.");
     }
+
+    const plan = result.data;
 
     // ✅ Prevent free plans from going to Stripe
     if (plan.priceUsd <= 0) {

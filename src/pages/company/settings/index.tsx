@@ -1,7 +1,9 @@
 'use client';
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import Link from "next/link";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
+import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCompanyProfileManagement } from "@/hooks/useCompanyProfileManagement";
 import { selectEmployeePermissions } from "@/store/slices/memberSlice";
@@ -11,9 +13,12 @@ import CompanyInfoTab from "@/components/features/company/settings/CompanyInfoTa
 import ContactTab from "@/components/features/company/settings/ContactTab";
 import ApiKeysTab from "@/components/features/company/settings/ApiKeysTab";
 import { TEAL } from "@/components/features/company/settings/settingsConstants";
+import AppButton from "@/components/ui/AppButton";
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import KeyOutlined from "@mui/icons-material/KeyOutlined";
+import CreditCardOutlined from "@mui/icons-material/CreditCardOutlined";
+import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 
 const SettingsPage: React.FC = () => {
   useCompanyAccess("canViewCompanyProfile");
@@ -29,6 +34,25 @@ const SettingsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
+      <PageHeader
+        title="Settings"
+        subtitle="Manage your company profile and API keys"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/company/dashboard" },
+          { label: "Settings" },
+        ]}
+        icon={SettingsOutlined}
+        actions={[
+          <Link key="plans" href="/company/plans">
+            <AppButton
+              label="View Plans"
+              variant="outlined"
+              startIcon={<CreditCardOutlined />}
+              size="medium"
+            />
+          </Link>,
+        ]}
+      />
 
       {/* Main settings card */}
       <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden" }}>
