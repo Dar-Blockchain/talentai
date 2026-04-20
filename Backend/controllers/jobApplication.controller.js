@@ -35,6 +35,20 @@ module.exports.createJobApplication = async (req, res) => {
       });
     }
 
+    // Early check: has this user already applied to this post (via any of their profiles)?
+    const JobApplication = require("../models/jobApplication.model");
+    const Profile = require("../models/ProfileModel");
+    const userProfiles = await Profile.find({ userId }).select("_id").lean();
+    if (userProfiles.length > 0) {
+      const existingApp = await JobApplication.findOne({
+        profile: { $in: userProfiles.map(p => p._id) },
+        post: postId,
+      });
+      if (existingApp) {
+        return res.status(409).json({ success: false, error: "You have already applied for this job." });
+      }
+    }
+
     // Get candidate profile from current user
     console.log(`🔍 Fetching candidate profile for user: ${userId}`);
     const profileResult = await profileService.getProfileByUserId(userId);

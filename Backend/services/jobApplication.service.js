@@ -409,11 +409,10 @@ module.exports.createJobApplication = async (applicationData) => {
     // Remove matchScore from applicationData if provided (it will be calculated)
     const { matchScore: _, ...cleanData } = applicationData;
 
-    // Check if application already exists
+    // Check if application already exists (regardless of withdrawal status)
     const existing = await JobApplication.findOne({
       profile: cleanData.profile,
       post: cleanData.post,
-      isWithdrawn: false,
     });
 
     if (existing) {
