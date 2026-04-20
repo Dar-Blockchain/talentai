@@ -4,7 +4,7 @@ const planLimitsService = require("./planLimits.service");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-exports.createCheckoutSession = async ({ planId, baseUrl }) => {
+exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfileId }) => {
   try {
     const plan = await planLimitsService.getPlanById(planId);
 
@@ -12,7 +12,12 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
       throw new Error("Invalid plan ID.");
     }
 
-    console.log("Selected plan:", plan);
+    // ✅ Prevent free plans from going to Stripe
+    if (plan.priceUsd <= 0) {
+      throw new Error(`Plan "${plan.name}" is free and does not require payment. Assign it directly to the user.`);
+    }
+
+    console.log("Selected plan:", plan.name, "- Price:", plan.priceUsd);
 
     const amount = Math.round(plan.priceUsd * 100); // USD → cents
     const currency = "usd";
@@ -28,6 +33,8 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
       cancel_url,
       metadata: {
         planId,
+        userId: userId.toString(),
+        companyProfileId: companyProfileId.toString(),
       },
       line_items: [
         {
@@ -41,14 +48,13 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
       ],
     });
 
-    // 👉 Retourne session + sessionId
     return {
       success: true,
       sessionId: session.id,
       session,
     };
   } catch (err) {
-    console.error("❌ Error creating Stripe checkout session:", err);
+    console.error("❌ Error creating Stripe checkout session:", err.message);
     throw err;
   }
 };
