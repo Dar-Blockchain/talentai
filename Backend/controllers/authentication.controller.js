@@ -1,6 +1,7 @@
 const authService = require("../services/authentication.service");
 const CVAnalysisService = require("../services/cvAnalysis.service");
 const Profile = require("../models/Profile.model");
+const User = require("../models/User.model");
 const {
   validateEmail,
   validateOTPInput,
@@ -458,3 +459,18 @@ module.exports.parseCV = async (req, res) => {
     handleError(res, error, 400);
   }
 }
+
+// Check role by email — public endpoint used by the job application modal
+module.exports.checkRole = async (req, res) => {
+  try {
+    const email = (req.query.email || "").trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    const user = await User.findOne({ email }).select("role").lean();
+    if (!user) return res.status(404).json({ role: null, exists: false });
+
+    res.json({ role: user.role, exists: true });
+  } catch (error) {
+    handleError(res, error);
+  }
+};

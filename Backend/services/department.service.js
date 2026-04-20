@@ -95,6 +95,44 @@ exports.updateDepartment = async (id, updateData) => {
 };
 
 /**
+ * Department stats with 30-day trend
+ */
+exports.getDepartmentStats = async (companyId) => {
+  const CompanyMembership = require("../models/CompanyMembership.model");
+
+  const total = await Department.countDocuments({ companyId });
+
+  const since = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
+  since.setHours(0, 0, 0, 0);
+  const trendRaw = await Department.aggregate([
+    { $match: { companyId: new mongoose.Types.ObjectId(companyId), createdAt: { $gte: since } } },
+    { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+  ]);
+  const trendMap = {};
+  trendRaw.forEach(({ _id, count }) => { trendMap[_id] = count; });
+  const trend = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    trend.push({ date: d, count: trendMap[d] || 0 });
+  }
+
+  // Members per department (top 8)
+  const depts = await Department.find({ companyId }).select("_id name").lean();
+  const memberCounts = await CompanyMembership.aggregate([
+    { $match: { company: new mongoose.Types.ObjectId(companyId), department: { $ne: null } } },
+    { $group: { _id: "$department", count: { $sum: 1 } } },
+  ]);
+  const countMap = {};
+  memberCounts.forEach(({ _id, count }) => { countMap[_id.toString()] = count; });
+  const byDepartment = depts
+    .map((d) => ({ name: d.name.length > 16 ? d.name.slice(0, 16) + "…" : d.name, members: countMap[d._id.toString()] || 0 }))
+    .sort((a, b) => b.members - a.members)
+    .slice(0, 8);
+
+  return { total, trend, byDepartment };
+};
+
+/**
  * Delete department
  */
 exports.deleteDepartment = async (id) => {

@@ -146,6 +146,25 @@ export const deleteDepartment = createAsyncThunk<
   }
 });
 
+export interface DepartmentStats {
+  total: number;
+  trend: { date: string; count: number }[];
+  byDepartment: { name: string; members: number }[];
+}
+
+export const fetchDepartmentStats = createAsyncThunk<
+  DepartmentStats,
+  void,
+  { rejectValue: string }
+>("department/fetchStats", async (_, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.get("departments/stats");
+    return response.data.data as DepartmentStats;
+  } catch (err: any) {
+    return rejectWithValue(err.message);
+  }
+});
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 interface DepartmentState {
@@ -171,6 +190,8 @@ interface DepartmentState {
   membersTotal: number;
   loadingMembers: boolean;
   membersError: string | null;
+  deptStats: DepartmentStats | null;
+  deptStatsLoading: boolean;
 }
 
 const initialState: DepartmentState = {
@@ -196,6 +217,8 @@ const initialState: DepartmentState = {
   membersTotal: 0,
   loadingMembers: false,
   membersError: null,
+  deptStats: null,
+  deptStatsLoading: false,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -327,6 +350,15 @@ const departmentSlice = createSlice({
         state.deleting = false;
         state.deleteError = action.payload || "Error deleting department";
       });
+
+    // fetchDepartmentStats
+    builder
+      .addCase(fetchDepartmentStats.pending, (state) => { state.deptStatsLoading = true; })
+      .addCase(fetchDepartmentStats.fulfilled, (state, action) => {
+        state.deptStatsLoading = false;
+        state.deptStats = action.payload;
+      })
+      .addCase(fetchDepartmentStats.rejected, (state) => { state.deptStatsLoading = false; });
   },
 });
 
@@ -379,5 +411,9 @@ export const selectDepartmentMembersLoading = (state: any) =>
   state.department.loadingMembers as boolean;
 export const selectDepartmentMembersError = (state: any) =>
   state.department.membersError as string | null;
+export const selectDepartmentStats = (state: any) =>
+  state.department.deptStats as DepartmentStats | null;
+export const selectDepartmentStatsLoading = (state: any) =>
+  state.department.deptStatsLoading as boolean;
 
 export default departmentSlice.reducer;

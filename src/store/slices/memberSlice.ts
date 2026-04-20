@@ -68,7 +68,7 @@ export interface Invitation {
 
 export interface MemberStats {
   total: number;
-  memberships: { total: number };
+  memberships: { total: number; trend?: { date: string; count: number }[] };
   invitations: { total: number };
 }
 

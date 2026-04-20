@@ -262,10 +262,24 @@ module.exports.updateMembership = async (membershipId, { role, departmentId, upd
 
 // Compute simple statistics for a company's memberships (counts by role/status)
 module.exports.getMembershipStatsByCompany = async (companyId) => {
-
+  const mongoose = require("mongoose");
   const total = await CompanyMembershipModel.countDocuments({ company: companyId });
 
-  return { total };
+  const since = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
+  since.setHours(0, 0, 0, 0);
+  const trendRaw = await CompanyMembershipModel.aggregate([
+    { $match: { company: new mongoose.Types.ObjectId(companyId), createdAt: { $gte: since } } },
+    { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+  ]);
+  const trendMap = {};
+  trendRaw.forEach(({ _id, count }) => { trendMap[_id] = count; });
+  const trend = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    trend.push({ date: d, count: trendMap[d] || 0 });
+  }
+
+  return { total, trend };
 };
 
 // Get membership by userId

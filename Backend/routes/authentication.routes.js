@@ -66,4 +66,9 @@ router.get("/warnUser", requireAuth, authController.warnUser);
 // Description: Invalidates session/token on server side if applicable
 router.post("/logout", requireAuth, authController.logout);
 
+// GET /auth/check-role?email=...
+// Access: Public
+// Description: Returns the role of a user by email (used by job application modal to block non-candidates)
+router.get("/check-role", authController.checkRole);
+
 module.exports = router;

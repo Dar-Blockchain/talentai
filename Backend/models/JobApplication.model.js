@@ -142,7 +142,7 @@ const jobApplicationSchema = new mongoose.Schema(
 );
 
 // Indexes for better query performance
-jobApplicationSchema.index({ profile: 1, post: 1 }, { unique: true, sparse: true, description: "Ensure one application per candidate per post" });
+jobApplicationSchema.index({ profile: 1, post: 1 }, { unique: true, description: "Ensure one application per candidate per post" });
 jobApplicationSchema.index({ company: 1, post: 1 });
 jobApplicationSchema.index({ company: 1, status: 1 });
 jobApplicationSchema.index({ profile: 1, status: 1 });
