@@ -35,7 +35,6 @@ const PRIMARY = '#8310FF';
 
 interface EditableConfig {
   postsLimit: number;
-  candidateUnlockLimit: number;
   monthlyInterviewLimit: number;
 }
 
@@ -59,7 +58,6 @@ const CompanyConfig: React.FC = () => {
     plans.forEach((plan) => {
       initialConfigs[plan._id] = {
         postsLimit: plan.postsLimit,
-        candidateUnlockLimit: plan.candidateUnlockLimit,
         monthlyInterviewLimit: plan.monthlyInterviewLimit,
       };
     });
@@ -96,13 +94,6 @@ const CompanyConfig: React.FC = () => {
       description: 'Maximum number of job posts a company can create',
       icon: <PostIcon sx={{ color: PRIMARY }} />,
       placeholder: 'Enter post limit',
-    },
-    {
-      key: 'candidateUnlockLimit' as keyof EditableConfig,
-      label: 'Candidate Unlock Limit',
-      description: 'Maximum number of candidates a company can unlock',
-      icon: <UnlockIcon sx={{ color: PRIMARY }} />,
-      placeholder: 'Enter unlock limit',
     },
     {
       key: 'monthlyInterviewLimit' as keyof EditableConfig,

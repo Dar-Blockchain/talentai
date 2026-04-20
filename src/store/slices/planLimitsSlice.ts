@@ -8,7 +8,6 @@ export interface PlanLimit {
   _id: string;
   name: string;
   postsLimit: number;
-  candidateUnlockLimit: number;
   monthlyInterviewLimit: number;
   priceUsd?: number;
   stripePriceId?: string;

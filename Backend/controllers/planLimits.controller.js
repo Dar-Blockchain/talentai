@@ -18,7 +18,6 @@ module.exports.createPlan = async (req, res) => {
     const {
       name,
       postsLimit,
-      candidateUnlockLimit,
       monthlyInterviewLimit,
       description,
       isActive,
@@ -27,7 +26,6 @@ module.exports.createPlan = async (req, res) => {
     const result = await planLimitsService.createPlan({
       name,
       postsLimit,
-      candidateUnlockLimit,
       monthlyInterviewLimit,
       description,
       isActive,
