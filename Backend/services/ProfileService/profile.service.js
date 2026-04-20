@@ -1102,11 +1102,6 @@ module.exports.checkPlanLimit = async (userId, limitType) => {
         limit = planLimits.postsLimit || 0;
         fieldName = 'postsLimit';
         break;
-      case 'candidateUnlocks':
-        used = planUsage.candidateUnlocksUsed || 0;
-        limit = planLimits.candidateUnlockLimit || 0;
-        fieldName = 'candidateUnlockLimit';
-        break;
       case 'monthlyInterviews':
         used = planUsage.monthlyInterviewsUsed || 0;
         limit = planLimits.monthlyInterviewLimit || 0;
@@ -1141,12 +1136,12 @@ module.exports.checkPlanLimit = async (userId, limitType) => {
 /**
  * Increment plan usage counter
  * @param {string} userId - User ID
- * @param {string} usageType - Type of usage: 'postsUsed', 'candidateUnlocksUsed', 'monthlyInterviewsUsed'
+ * @param {string} usageType - Type of usage: 'postsUsed', 'monthlyInterviewsUsed'
  * @returns {object} - Updated profile
  */
 module.exports.incrementPlanUsage = async (userId, usageType) => {
   try {
-    if (!['postsUsed', 'candidateUnlocksUsed', 'monthlyInterviewsUsed'].includes(usageType)) {
+    if (!['postsUsed', 'monthlyInterviewsUsed'].includes(usageType)) {
       throw new Error('Invalid usage type');
     }
 
