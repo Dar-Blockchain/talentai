@@ -29,7 +29,7 @@ const defaultPlans = [
     postsLimit: 20,
     candidateUnlockLimit: 20,
     monthlyInterviewLimit: 50,
-    priceUsd: 29,
+    priceUsd: 99,
     description: "Standard plan for growing teams",
     isActive: true,
   },
@@ -38,7 +38,7 @@ const defaultPlans = [
     postsLimit: 50,
     candidateUnlockLimit: 50,
     monthlyInterviewLimit: 120,
-    priceUsd: 79,
+    priceUsd: 499,
     description: "Gold plan for larger teams",
     isActive: true,
   },
@@ -47,10 +47,28 @@ const defaultPlans = [
     postsLimit: 100,
     candidateUnlockLimit: 100,
     monthlyInterviewLimit: 250,
-    priceUsd: 149,
+    priceUsd: 999,
     description: "Platinum plan for enterprise customers",
     isActive: true,
   },
+    {
+    name: "Platinum",
+    postsLimit: 100,
+    candidateUnlockLimit: 100,
+    monthlyInterviewLimit: 250,
+    priceUsd: 999,
+    description: "Platinum plan for enterprise customers",
+    isActive: true,
+  },
+  {
+    name: "Diamond",
+    postsLimit: 200,
+    candidateUnlockLimit: 200,
+    monthlyInterviewLimit: 500,
+    priceUsd: 1499,
+    description: "Diamond plan for large enterprises",
+    isActive: true,
+  }  
 ];
 
 // Connect to MongoDB (only if needed)
