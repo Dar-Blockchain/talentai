@@ -30,6 +30,12 @@ const planLimitsSchema = new mongoose.Schema(
     },
 
     // ========== PLAN METADATA ==========
+    priceUsd: {
+      type: Number,
+      required: true,
+      default: 0,
+      description: "Price of the plan in USD",
+    },
     isActive: {
       type: Boolean,
       default: true,
