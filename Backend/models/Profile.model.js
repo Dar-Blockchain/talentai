@@ -134,11 +134,6 @@ const profileSchema = new mongoose.Schema(
         default: 0,
         description: "Current number of posts created",
       },
-      candidateUnlocksUsed: {
-        type: Number,
-        default: 0,
-        description: "Current number of candidates unlocked",
-      },
       monthlyInterviewsUsed: {
         type: Number,
         default: 0,
