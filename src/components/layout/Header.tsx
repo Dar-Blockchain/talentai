@@ -1,18 +1,12 @@
 "use client";
 import React, { useMemo, useEffect, useState, useRef } from "react";
-import { AppBar, Box, Toolbar } from "@mui/material";
+import { Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import HeaderLogo from "@/components/layout/header/HeaderLogo";
 import HeaderNotification from "@/components/layout/header/HeaderNotification";
 import UserAvatar from "@/components/layout/header/UserAvatar";
 import HamburgerButton from "@/components/layout/header/HamburgerButton";
-import {
-  appBarStyle,
-  containerStyle,
-  desktopMenuStyle,
-  toolbarStyle,
-} from "@/components/layout/header/styles";
 import HeaderNavMenu from "@/components/layout/header/HeaderNavMenu";
 import HeaderPrimaryActions from "@/components/layout/header/HeaderPrimaryActions";
 import HeaderMessagesDropdown from "@/components/layout/header/HeaderMessagesDropdown";
@@ -20,144 +14,148 @@ import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 
 const Header = () => {
-  const router = useRouter();
+  const router    = useRouter();
   const socketRef = useRef<Socket | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
-  // Get the user object (contains the actual user ID for WebSocket)
-  const connectedUser = useSelector(
-    (state: RootState) => state.user?.connectedUser?.user
-  );
-  const profile = useSelector(
-    (state: RootState) => state.user?.connectedUser?.profile
-  );
-  // User ID for WebSocket should be the user._id, not profile._id
-  const userId = connectedUser?._id;
-
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const connectedUser   = useSelector((state: RootState) => state.user?.connectedUser?.user);
+  const profile         = useSelector((state: RootState) => state.user?.connectedUser?.profile);
+  const userId          = connectedUser?._id;
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
-  const isCompany = useMemo(
-    () => profile?.type?.toLowerCase() === "company",
-    [profile?.type]
-  );
+  const showHeaderNavMenu = useMemo(() => (
+    router.pathname === "/home/company" || router.pathname === "/home/candidate"
+  ), [router.pathname]);
 
-  const showHeaderNavMenu = useMemo(() => {
-    return (
-      router.pathname === "/home/company" ||
-      router.pathname === "/home/candidate"
-    );
-  }, [router.pathname]);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  /* ===============================
-     FETCH UNREAD MESSAGE COUNT
-  ================================ */
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    const fetchUnread = async () => {
+    (async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/unread-count`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         if (res.ok) {
           const data = await res.json();
           setUnreadMessageCount(data.data?.totalUnread || 0);
         }
-      } catch (err) {
-        console.error("Failed to fetch unread messages", err);
-      }
-    };
-
-    fetchUnread();
+      } catch { /* silent */ }
+    })();
   }, [isAuthenticated]);
 
-  /* ===============================
-     SOCKET.IO – HEADER LEVEL ONLY
-  ================================ */
   useEffect(() => {
     if (!userId || !isAuthenticated) return;
-
     const token = localStorage.getItem("token");
     if (!token) return;
-
-    console.log("🔌 Header: Connecting to chat WebSocket with userId:", userId);
-
     const socket = io(
       `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")}/chat`,
-      {
-        auth: { userId, token },
-        transports: ["websocket", "polling"],
-      }
+      { auth: { userId, token }, transports: ["websocket", "polling"] }
     );
-
     socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("✅ Header: WebSocket connected, socket id:", socket.id);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("❌ Header: WebSocket connection error:", error);
-    });
-
-    socket.on("message_notification", (data) => {
-      console.log("📩 Header: Received message notification:", data);
-      setUnreadMessageCount((prev) => prev + 1);
-    });
-
-    return () => {
-      console.log("🔌 Header: Disconnecting WebSocket");
-      socket.disconnect();
-    };
+    socket.on("message_notification", () => setUnreadMessageCount((p) => p + 1));
+    return () => { socket.disconnect(); };
   }, [userId, isAuthenticated]);
 
+  const isLandingPage = router.pathname === "/home/company" || router.pathname === "/home/candidate";
+  const isCompact     = scrolled || !isLandingPage;
+
   return (
-    <AppBar position="static" elevation={0} sx={appBarStyle}>
-      <Box sx={containerStyle}>
-        <Toolbar sx={toolbarStyle}>
-          {/* LEFT */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <HeaderLogo />
-            {showHeaderNavMenu && <HeaderNavMenu />}
+    <>
+      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1100 }}>
+        <Box sx={{
+          maxWidth: isCompact ? "1000px" : "1440px",
+          mx: "auto",
+          px: { xs: 1.5, md: 4 },
+          pt: isCompact ? 3 : 1.5,
+          pb: isCompact ? 1.5 : 0,
+          transition: "max-width 0.5s cubic-bezier(0.22,1,0.36,1), padding-top 0.4s ease, padding-bottom 0.4s ease",
+        }}>
+          {/* Inner bar */}
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            "@media (min-width:800px)": { gridTemplateColumns: "1fr auto 1fr" },
+            alignItems: "center",
+            height: 54,
+            px: { xs: 1.5, md: 2.5 },
+            borderRadius: isCompact ? "99px" : "0px",
+            bgcolor: isCompact ? "rgba(242,243,244,0.97)" : "transparent",
+            backdropFilter: isCompact ? "blur(18px)" : "none",
+            WebkitBackdropFilter: isCompact ? "blur(18px)" : "none",
+            border: "1px solid",
+            borderColor: isCompact ? "rgba(13,148,136,0.18)" : "transparent",
+            boxShadow: isCompact
+              ? "0 12px 40px rgba(0,0,0,0.14), 0 4px 14px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.06)"
+              : "none",
+            transition: [
+              "background-color 0.4s ease",
+              "border-color 0.4s ease",
+              "box-shadow 0.4s ease",
+              "border-radius 0.5s cubic-bezier(0.22,1,0.36,1)",
+            ].join(", "),
+          }}>
+
+            {/* LEFT — logo */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <HeaderLogo />
+            </Box>
+
+            {/* CENTER — nav (hidden <800px) */}
+            <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" }, alignItems: "center", justifyContent: "center" }}>
+              {showHeaderNavMenu && <HeaderNavMenu inverted={!isCompact} />}
+            </Box>
+
+            {/* RIGHT — actions */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+              {isAuthenticated ? (
+                <>
+                  {/* Icon group pill (hidden <800px) */}
+                  <Box sx={{
+                    display: "none",
+                    "@media (min-width:800px)": { display: "flex" },
+                    alignItems: "center",
+                    gap: 0.25,
+                    px: 0.5,
+                    py: 0.5,
+                    borderRadius: "12px",
+                    bgcolor: "rgba(13,148,136,0.05)",
+                  }}>
+                    <HeaderMessagesDropdown userId={userId} unreadMessageCount={unreadMessageCount} />
+                    <HeaderNotification />
+                  </Box>
+
+                  {/* User pill (hidden <800px) */}
+                  <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
+                    <UserAvatar />
+                  </Box>
+                </>
+              ) : (
+                /* Primary actions (hidden <800px) */
+                <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
+                  <HeaderPrimaryActions inverted={!isCompact} />
+                </Box>
+              )}
+              <HamburgerButton
+                userId={userId}
+                unreadMessageCount={unreadMessageCount}
+              />
+            </Box>
           </Box>
-
-          {/* RIGHT – AUTHENTICATED */}
-          {isAuthenticated && (
-            <Box sx={desktopMenuStyle}>
-              {/* Messages Dropdown */}
-              {!showHeaderNavMenu && (
-                <HeaderMessagesDropdown
-                  userId={userId}
-                  unreadMessageCount={unreadMessageCount}
-                />
-              )}
-              {!isCompany && !showHeaderNavMenu && (
-                <HeaderNotification />
-              )}
-
-              <UserAvatar />
-            </Box>
-          )}
-
-          {/* RIGHT – NOT AUTHENTICATED */}
-          {!isAuthenticated && (
-            <Box sx={desktopMenuStyle}>
-              <HeaderPrimaryActions />
-            </Box>
-          )}
-
-          {/* MOBILE */}
-          <HamburgerButton />
-        </Toolbar>
+        </Box>
       </Box>
-    </AppBar>
+
+      {/* Spacer so page content starts below the fixed header */}
+      <Box sx={{ height: { xs: 76, md: 90 } }} />
+    </>
   );
 };
 

@@ -1,266 +1,159 @@
 import { Box, Typography } from "@mui/material";
+import TuneOutlined            from "@mui/icons-material/TuneOutlined";
+import PsychologyOutlined       from "@mui/icons-material/PsychologyOutlined";
+import WorkspacePremiumOutlined from "@mui/icons-material/WorkspacePremiumOutlined";
+import { motion } from "framer-motion";
 
-const ACCENT    = "#0CDA8B";
-const ACCENT_BG = "rgba(12,218,139,0.08)";
-const ACCENT_BORDER = "rgba(12,218,139,0.25)";
+const ACCENT       = "#9CA3AF";
+const ACCENT_BG    = "rgba(156,163,175,0.10)";
+const ACCENT_LIGHT = "rgba(156,163,175,0.25)";
+const ease = [0.22, 1, 0.36, 1] as const;
+const VP   = { once: true, margin: "-60px" };
 
 const STEPS = [
   {
     number: "01",
-    label: "Build Your Pipeline",
-    description:
-      "Choose your interview modules, set pass/fail thresholds, and launch your first AI-driven role in under 30 minutes. No IT required.",
-    tag: "Setup",
+    tag:    "Setup",
+    label:  "Build Your Pipeline",
+    desc:   "Choose your interview modules, set pass/fail thresholds, and launch your first AI-driven role in under 30 minutes. No IT required.",
+    Icon:   TuneOutlined,
   },
   {
     number: "02",
-    label: "AI Agents Interview Candidates",
-    description:
-      "Your AI recruiter runs 24/7 — assessing technical depth, soft skills, and culture fit through natural conversation, at scale, without bias.",
-    tag: "Automated",
+    tag:    "Automated",
+    label:  "AI Agents Interview Candidates",
+    desc:   "Your AI recruiter runs 24/7 — assessing technical depth, soft skills, and culture fit through natural conversation, at scale, without bias.",
+    Icon:   PsychologyOutlined,
   },
   {
     number: "03",
-    label: "Review & Hire",
-    description:
-      "Receive auto-ranked shortlists with blockchain-verified credentials. Compare candidates side-by-side and extend offers with full confidence.",
-    tag: "Decision",
+    tag:    "Decision",
+    label:  "Review & Hire",
+    desc:   "Receive auto-ranked shortlists with blockchain-verified credentials. Compare candidates side-by-side and extend offers with full confidence.",
+    Icon:   WorkspacePremiumOutlined,
   },
 ];
 
 export default function GradientStepper() {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 3, md: 0 } }}>
+    <Box sx={{ maxWidth: 720, mx: "auto" }}>
       {STEPS.map((step, i) => (
-        <Box
+        <motion.div
           key={step.number}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr 56px 1fr" },
-            alignItems: "center",
-            gap: { xs: 0, md: 0 },
-          }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VP}
+          transition={{ duration: 0.55, delay: i * 0.12, ease }}
         >
-          {/* Left: content card (odd steps) or spacer (even steps) */}
-          {i % 2 === 0 ? (
-            <Box sx={{ display: { xs: "none", md: "block" } }}><StepCard step={step} /></Box>
-          ) : (
-            <Box sx={{ display: { xs: "none", md: "block" } }} />
-          )}
+          <Box sx={{ display: "flex", gap: { xs: 2, md: 3 }, alignItems: "flex-start" }}>
 
-          {/* Center: timeline track */}
-          <Box
-            sx={{
-              display: { xs: "none", md: "flex" },
-              flexDirection: "column",
-              alignItems: "center",
-              height: "100%",
-              minHeight: 160,
-              position: "relative",
-            }}
-          >
-            {/* Top line */}
+            {/* ── Left: circle + connector line ── */}
             <Box sx={{
-              flex: 1,
-              width: 2,
-              bgcolor: i === 0 ? "transparent" : ACCENT_BORDER,
-              minHeight: 32,
-            }} />
-
-            {/* Circle */}
-            <Box sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              bgcolor: ACCENT_BG,
-              border: `2px solid ${ACCENT_BORDER}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              zIndex: 1,
+              display: "flex", flexDirection: "column",
+              alignItems: "center", flexShrink: 0, pt: 0.5,
             }}>
-              <Typography sx={{
-                fontFamily: "Poppins",
-                fontWeight: 800,
-                fontSize: "14px",
-                color: ACCENT,
-                lineHeight: 1,
+              {/* Icon circle */}
+              <Box sx={{
+                width: { xs: 44, md: 52 },
+                height: { xs: 44, md: 52 },
+                borderRadius: "50%",
+                bgcolor: ACCENT,
+                boxShadow: `0 0 0 6px rgba(156,163,175,0.12)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
               }}>
-                {step.number}
-              </Typography>
+                <step.Icon sx={{ fontSize: { xs: 20, md: 24 }, color: "#fff" }} />
+              </Box>
+
+              {/* Connector line */}
+              {i < STEPS.length - 1 && (
+                <Box sx={{
+                  width: "2px",
+                  flex: 1,
+                  minHeight: { xs: 48, md: 56 },
+                  mt: 1, mb: 1,
+                  background: `linear-gradient(180deg, #9CA3AF 0%, rgba(156,163,175,0.12) 100%)`,
+                  borderRadius: "2px",
+                }} />
+              )}
             </Box>
 
-            {/* Bottom line */}
-            <Box sx={{
-              flex: 1,
-              width: 2,
-              bgcolor: i === STEPS.length - 1 ? "transparent" : ACCENT_BORDER,
-              minHeight: 32,
-            }} />
-          </Box>
+            {/* ── Right: card ── */}
+            <Box sx={{ flex: 1, mb: i < STEPS.length - 1 ? { xs: 3, md: 4 } : 0 }}>
+              <motion.div
+                whileHover={{ x: 4, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+              >
+                <Box sx={{
+                  bgcolor: "#fff",
+                  borderRadius: "20px",
+                  border: "1px solid #E5E7EB",
+                  p: { xs: 2.5, md: 3.5 },
+                  position: "relative", overflow: "hidden",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                  transition: "border-color 0.2s, box-shadow 0.2s",
+                  "&:hover": {
+                    borderColor: "rgba(0,0,0,0.18)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+                  },
+                }}>
 
-          {/* Right: content card (even steps) or spacer (odd steps) */}
-          {i % 2 !== 0 ? (
-            <Box sx={{ display: { xs: "none", md: "block" } }}><StepCard step={step} /></Box>
-          ) : (
-            <Box sx={{ display: { xs: "none", md: "block" } }} />
-          )}
+                  {/* Top gradient bar */}
+                  <Box sx={{
+                    position: "absolute", top: 0, left: 0, right: 0, height: "3px",
+                    background: `linear-gradient(90deg, #D1D5DB 0%, rgba(209,213,219,0.15) 100%)`,
+                    borderRadius: "20px 20px 0 0",
+                  }} />
 
-          {/* Mobile: full-width card with number inline */}
-          <Box sx={{ display: { xs: "block", md: "none" } }}>
-            <MobileStepCard step={step} isLast={i === STEPS.length - 1} />
+                  {/* Watermark number */}
+                  <Typography sx={{
+                    position: "absolute", bottom: -10, right: 16,
+                    fontFamily: "Poppins", fontWeight: 900,
+                    fontSize: "80px", lineHeight: 1,
+                    color: "rgba(0,0,0,0.04)",
+                    letterSpacing: "-4px", userSelect: "none", pointerEvents: "none",
+                  }}>
+                    {step.number}
+                  </Typography>
+
+                  {/* Tag row */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                    <Box sx={{
+                      display: "inline-flex", alignItems: "center",
+                      bgcolor: ACCENT_BG, border: `1px solid ${ACCENT_LIGHT}`,
+                      borderRadius: "20px", px: 1.5, py: 0.4,
+                    }}>
+                      <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", fontWeight: 700, color: ACCENT, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+                        {step.tag}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{
+                      fontFamily: "Poppins", fontSize: "11px", fontWeight: 700,
+                      color: "#9CA3AF", letterSpacing: "1px", textTransform: "uppercase",
+                    }}>
+                      Step {step.number}
+                    </Typography>
+                  </Box>
+
+                  <Typography sx={{
+                    fontFamily: "Poppins", fontWeight: 700,
+                    fontSize: { xs: "17px", md: "20px" },
+                    color: "#111827", lineHeight: 1.3, mb: 1,
+                  }}>
+                    {step.label}
+                  </Typography>
+
+                  <Typography sx={{
+                    fontFamily: "Poppins", fontSize: { xs: "13px", md: "14px" },
+                    color: "#6B7280", lineHeight: 1.75,
+                  }}>
+                    {step.desc}
+                  </Typography>
+                </Box>
+              </motion.div>
+            </Box>
           </Box>
-        </Box>
+        </motion.div>
       ))}
-    </Box>
-  );
-}
-
-function StepCard({ step }: { step: typeof STEPS[number] }) {
-  return (
-    <Box sx={{
-      bgcolor: "#fff",
-      border: "1px solid #E5E7EB",
-      borderRadius: 3,
-      p: { xs: 3, md: 4 },
-      boxShadow: "0 4px 24px rgba(0,0,0,0.05)",
-      position: "relative",
-      overflow: "hidden",
-      m: { md: 2 },
-      "&::before": {
-        content: '""',
-        position: "absolute",
-        top: 0, left: 0, right: 0,
-        height: "3px",
-        background: "linear-gradient(90deg, rgba(12,218,139,0.9) 0%, rgba(12,218,139,0.15) 100%)",
-        borderRadius: "3px 3px 0 0",
-      },
-    }}>
-      {/* Big decorative number */}
-      <Typography sx={{
-        fontFamily: "Poppins",
-        fontWeight: 900,
-        fontSize: "72px",
-        lineHeight: 1,
-        color: "rgba(12,218,139,0.08)",
-        position: "absolute",
-        top: 8,
-        right: 16,
-        userSelect: "none",
-        letterSpacing: "-4px",
-      }}>
-        {step.number}
-      </Typography>
-
-      {/* Tag */}
-      <Box sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.5,
-        bgcolor: ACCENT_BG,
-        border: `1px solid ${ACCENT_BORDER}`,
-        borderRadius: "20px",
-        px: 1.5,
-        py: 0.4,
-        mb: 2,
-      }}>
-        <Typography sx={{
-          fontFamily: "Poppins",
-          fontSize: "11px",
-          fontWeight: 700,
-          color: ACCENT,
-          letterSpacing: "0.5px",
-          textTransform: "uppercase",
-        }}>
-          {step.tag}
-        </Typography>
-      </Box>
-
-      <Typography sx={{
-        fontFamily: "Poppins",
-        fontWeight: 700,
-        fontSize: { xs: "18px", md: "20px" },
-        color: "#111827",
-        mb: 1.5,
-        lineHeight: 1.3,
-        position: "relative",
-      }}>
-        {step.label}
-      </Typography>
-      <Typography sx={{
-        fontFamily: "Poppins",
-        fontSize: "14px",
-        color: "#6B7280",
-        lineHeight: 1.75,
-        position: "relative",
-      }}>
-        {step.description}
-      </Typography>
-    </Box>
-  );
-}
-
-function MobileStepCard({ step, isLast }: { step: typeof STEPS[number]; isLast: boolean }) {
-  return (
-    <Box sx={{ display: "flex", gap: 2.5, alignItems: "flex-start" }}>
-      {/* Left: number + vertical line */}
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-        <Box sx={{
-          width: 44,
-          height: 44,
-          borderRadius: "50%",
-          bgcolor: ACCENT_BG,
-          border: `2px solid ${ACCENT_BORDER}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "13px", color: "#059669" }}>
-            {step.number}
-          </Typography>
-        </Box>
-        {!isLast && (
-          <Box sx={{ width: 2, flex: 1, minHeight: 40, bgcolor: ACCENT_BORDER, mt: 1 }} />
-        )}
-      </Box>
-
-      {/* Right: content */}
-      <Box sx={{
-        flex: 1,
-        bgcolor: "#fff",
-        border: "1px solid #E5E7EB",
-        borderRadius: 3,
-        p: 3,
-        mb: isLast ? 0 : 3,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-        overflow: "hidden",
-        position: "relative",
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0, left: 0, right: 0,
-          height: "3px",
-          background: "linear-gradient(90deg, rgba(12,218,139,0.9) 0%, rgba(12,218,139,0.15) 100%)",
-          borderRadius: "3px 3px 0 0",
-        },
-      }}>
-        <Box sx={{
-          display: "inline-flex", alignItems: "center", gap: 0.5,
-          bgcolor: ACCENT_BG, border: `1px solid ${ACCENT_BORDER}`,
-          borderRadius: "20px", px: 1.5, py: 0.4, mb: 1.5,
-        }}>
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: ACCENT, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-            {step.tag}
-          </Typography>
-        </Box>
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "17px", color: "#111827", mb: 1, lineHeight: 1.3 }}>
-          {step.label}
-        </Typography>
-        <Typography sx={{ fontFamily: "Poppins", fontSize: "14px", color: "#6B7280", lineHeight: 1.75 }}>
-          {step.description}
-        </Typography>
-      </Box>
     </Box>
   );
 }

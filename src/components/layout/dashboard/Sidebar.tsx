@@ -200,7 +200,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               component="img"
               src="/images/home/logocompany.png"
               alt="TalentAI"
-              sx={{ height: 20 }}
+              onClick={() => router.push("/")}
+              sx={{ height: 20, cursor: "pointer" }}
             />
           )}
 

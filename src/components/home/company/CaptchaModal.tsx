@@ -107,7 +107,7 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }
               flexShrink: 0,
             }}
           >
-            <ShieldIcon sx={{ color: "#0CDA8B", fontSize: 20 }} />
+            <ShieldIcon sx={{ color: "#0D9488", fontSize: 20 }} />
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#111827", lineHeight: 1.2 }}>
@@ -148,7 +148,7 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }
               height: THUMB_SIZE,
               borderRadius: `${THUMB_SIZE / 2}px`,
               background: "#f3f4f6",
-              border: `1.5px solid ${verified ? "#0CDA8B" : "#e5e7eb"}`,
+              border: `1.5px solid ${verified ? "#0D9488" : "#e5e7eb"}`,
               position: "relative",
               overflow: "hidden",
               userSelect: "none",
@@ -164,8 +164,8 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }
                 bottom: 0,
                 width: x + THUMB_SIZE,
                 background: verified
-                  ? "linear-gradient(90deg,#0CDA8B,#09c47c)"
-                  : `linear-gradient(90deg, rgba(12,218,139,${0.15 + progress * 0.25}), rgba(12,218,139,${0.05 + progress * 0.15}))`,
+                  ? "linear-gradient(90deg,#0D9488,#09c47c)"
+                  : `linear-gradient(90deg, rgba(13,148,136,${0.15 + progress * 0.25}), rgba(13,148,136,${0.05 + progress * 0.15}))`,
                 transition: dragging ? "none" : "width .4s ease, background .3s",
                 borderRadius: `${THUMB_SIZE / 2}px`,
               }}
@@ -209,10 +209,10 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }
                 height: THUMB_SIZE,
                 borderRadius: "50%",
                 background: verified
-                  ? "linear-gradient(135deg,#0CDA8B,#09c47c)"
+                  ? "linear-gradient(135deg,#0D9488,#09c47c)"
                   : "#fff",
                 boxShadow: verified
-                  ? "0 4px 20px rgba(12,218,139,0.5)"
+                  ? "0 4px 20px rgba(13,148,136,0.5)"
                   : "0 2px 12px rgba(0,0,0,0.15)",
                 display: "flex",
                 alignItems: "center",
@@ -228,7 +228,7 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ open, onVerified, onClose }
               ) : (
                 <ArrowForwardIcon
                   sx={{
-                    color: "#0CDA8B",
+                    color: "#0D9488",
                     fontSize: 22,
                     transform: `translateX(${progress * 3}px)`,
                     transition: "transform .1s",
