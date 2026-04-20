@@ -2,9 +2,7 @@
 import React, { useState } from "react";
 import {
   Box,
-  IconButton,
   Badge,
-  Tooltip,
   Popover,
   Typography,
   Avatar,
@@ -92,35 +90,37 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
 
   return (
     <>
-      <Tooltip title="Messages">
-        <IconButton
-          onClick={handleMessagesClick}
+      <Box
+        onClick={handleMessagesClick}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: "8px",
+          cursor: "pointer",
+          transition: "background 0.15s",
+          "&:hover": { bgcolor: "rgba(13,148,136,0.12)" },
+        }}
+      >
+        <Badge
+          badgeContent={unreadMessageCount || undefined}
           sx={{
-            backgroundColor: "white",
-            borderRadius: "50%",
-            width: 40,
-            height: 40,
-            boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-            "&:hover": { backgroundColor: "#f9fafb" },
+            "& .MuiBadge-badge": {
+              bgcolor: "#EF4444",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: "10px",
+              minWidth: 16,
+              height: 16,
+              padding: 0,
+            },
           }}
         >
-          <Badge
-            badgeContent={unreadMessageCount}
-            color="error"
-            invisible={unreadMessageCount === 0}
-            sx={{
-              "& .MuiBadge-badge": {
-                backgroundColor: "#8310FF",
-                color: "white",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-              },
-            }}
-          >
-            <ChatIcon sx={{ color: "#6b7280", fontSize: 20 }} />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+          <ChatIcon sx={{ color: "#0D9488", fontSize: 18 }} />
+        </Badge>
+      </Box>
 
       <Popover
         open={messagesOpen}

@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
     <LandingPageLayout
       logo="/images/home/logocompany.png"
       type="company"
-      color="#29D291D4"
+      color="#0D9488"
       headerLink="Are you a Job Seeker?"
       heroTitle="Revolutionize Your Hiring with"
       heroSubtitle="AI-Powered Intelligence"
@@ -67,12 +67,12 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Block 7 — Final CTA (dark) */}
-      <Box sx={{ background: "#0E0F10", py: { xs: 6, md: 9 } }}>
+      <Box sx={{ background: "#0E0F10" }}>
         <FinalCTA />
       </Box>
 
       {/* Block 8 — FAQ (light grey) */}
-      <Box sx={{ background: "#F2F3F4", py: { xs: 6, md: 9 } }}>
+      <Box sx={{ background: "#F2F3F4" }}>
         <FAQSection />
       </Box>
 

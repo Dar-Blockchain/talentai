@@ -6,78 +6,47 @@ import { RootState } from "@/store/store";
 import { useRouter } from "next/router";
 
 const HeaderLogo = () => {
-  const router = useRouter();
-
-  const storedUserType = useSelector(
-    (state: RootState) => state.user.userType
-  );
-
-  const { user } = useSelector((state: RootState) => state.user.connectedUser);
+  const router         = useRouter();
+  const storedUserType = useSelector((state: RootState) => state.user.userType);
+  const { user }       = useSelector((state: RootState) => state.user.connectedUser);
 
   const userType =
-    router.pathname === '/home/candidate' ||
-    router.pathname === '/home/company'
+    router.pathname === "/home/candidate" || router.pathname === "/home/company"
       ? storedUserType
-      : user?.role?.toLowerCase() ?? storedUserType ?? 'candidate';
-
-  const isCompany = useMemo(
-    () => userType === "company",
-    [userType]
-  );
+      : user?.role?.toLowerCase() ?? storedUserType ?? "candidate";
 
   const logoSrc = useMemo(
-    () =>
-      userType === "candidate"
-        ? "/images/home/logocandidate.png"
-        : "/images/home/logocompany.png",
+    () => userType === "candidate"
+      ? "/images/home/logocandidate.png"
+      : "/images/home/logocompany.png",
     [userType]
   );
 
-  const homeRoute = useMemo(
-    () => (isCompany ? "/" : "/home/candidate"),
-    [isCompany]
-  );
-
-  const navigateToHome = useCallback(
-    () => router.push(homeRoute),
-    [router, homeRoute]
-  );
+  const homeRoute  = useMemo(() => userType === "company" ? "/" : "/home/candidate", [userType]);
+  const goHome     = useCallback(() => router.push(homeRoute), [router, homeRoute]);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", height: "50px" }}>
+    <Box
+      onClick={goHome}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#111",
+        borderRadius: "10px",
+        px: 1.5,
+        py: 0.6,
+        cursor: "pointer",
+        transition: "opacity 0.2s",
+        "&:hover": { opacity: 0.82 },
+      }}
+    >
       <Box
-        sx={{
-          backgroundColor: "white",
-          borderRadius: "50px",
-          height: 40,
-          width: 138,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-        }}
-      >
-        <Box
-          sx={{
-            backgroundColor: "#141415",
-            borderRadius: "50px",
-            width: 134,
-            height: 36,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-          onClick={navigateToHome}
-        >
-          <Box
-            component="img"
-            src={logoSrc}
-            alt="Logo"
-            style={{ height: 24 }}
-          />
-        </Box>
-      </Box>
+        component="img"
+        src={logoSrc}
+        alt="TalentAI"
+        sx={{ height: 22, display: "block", userSelect: "none" }}
+      />
     </Box>
   );
 };

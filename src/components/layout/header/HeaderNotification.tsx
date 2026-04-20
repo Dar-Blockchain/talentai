@@ -1,15 +1,12 @@
 "use client";
 import React, { useState, useCallback, useMemo } from "react";
-import { IconButton } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import Badge from "@mui/material/Badge";
+import { Box, Badge } from "@mui/material";
 import { useRouter } from "next/router";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationDropdown from "./NotificationDropdown";
-import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import { NotificationsOutlined } from "@mui/icons-material";
 import { RootState } from "@/store/store";
 import { useSelector } from "react-redux";
-import { NotificationsOutlined } from "@mui/icons-material";
 
 const HeaderNotification = () => {
   const router = useRouter();
@@ -52,19 +49,27 @@ const HeaderNotification = () => {
 
   return (
     <>
-    
-            <IconButton
-                    onClick={handleNotificationClick}
-
-              sx={{ color: "#6B7280" }}
-            >
-              <Badge
-                badgeContent={unreadCount > 9 ? "9+" : unreadCount || undefined}
-                sx={{ "& .MuiBadge-badge": { bgcolor: "#EF4444", color: "#fff", fontSize: "10px", fontWeight: 700, minWidth: 18, height: 18 } }}
-              >
-                <NotificationsOutlined sx={{ fontSize: 20 }} />
-              </Badge>
-            </IconButton>
+      <Box
+        onClick={handleNotificationClick}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: "8px",
+          cursor: "pointer",
+          transition: "background 0.15s",
+          "&:hover": { bgcolor: "rgba(13,148,136,0.12)" },
+        }}
+      >
+        <Badge
+          badgeContent={unreadCount > 9 ? "9+" : unreadCount || undefined}
+          sx={{ "& .MuiBadge-badge": { bgcolor: "#EF4444", color: "#fff", fontSize: "10px", fontWeight: 700, minWidth: 16, height: 16, padding: 0 } }}
+        >
+          <NotificationsOutlined sx={{ fontSize: 18, color: "#0D9488" }} />
+        </Badge>
+      </Box>
       <NotificationDropdown
         anchorEl={notificationAnchor}
         open={Boolean(notificationAnchor)}

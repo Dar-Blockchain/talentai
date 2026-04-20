@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material";
+import { motion } from "framer-motion";
 
 const clients = [
   { name: "Dar Blockchain", logo: "/images/GLOBAL_COMPANIES/DarBlockchain.png" },
@@ -11,54 +12,81 @@ const partners = [
   { logo: "/images/partners/hedera.png",  alt: "Built on Hedera Hashgraph" },
 ];
 
-const LABEL_SX = {
-  fontFamily: "Poppins", fontWeight: 600, fontSize: "11px",
-  letterSpacing: "1.5px", textTransform: "uppercase" as const,
-  color: "rgba(89,91,95,0.5)", mb: 2,
-};
+const VP   = { once: true, margin: "-40px" };
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const allLogos = [
+  ...clients.map((c) => ({ src: c.logo, alt: c.name, h: 26 })),
+  ...partners.map((p) => ({ src: p.logo, alt: p.alt, h: 32 })),
+];
 
 const GlobalCompanies: React.FC = () => (
   <Box sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
-    <Box sx={{
-      display: "grid",
-      gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-      gap: { xs: 4, md: 0 },
-      alignItems: "center",
-    }}>
+    {/* Single centered label */}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={VP}
+      transition={{ duration: 0.5, ease }}
+    >
+      <Typography sx={{
+        fontFamily: "Poppins", fontWeight: 500, fontSize: "12px",
+        letterSpacing: "2px", textTransform: "uppercase",
+        color: "rgba(89,91,95,0.45)", textAlign: "center", mb: 3,
+      }}>
+        Trusted by teams & backed by
+      </Typography>
+    </motion.div>
 
-      {/* TRUSTED BY */}
-      <Box>
-        <Typography sx={LABEL_SX}>Trusted by</Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 3, md: 4 }, flexWrap: "wrap" }}>
-          {clients.map((item) => (
-            <Box
-              key={item.name}
-              component="img"
-              src={item.logo}
-              alt={item.name}
-              sx={{ height: { xs: 24, md: 30 }, width: "auto", objectFit: "contain" }}
-            />
-          ))}
-        </Box>
+    {/* Logo strip */}
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={VP}
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } } }}
+    >
+      <Box sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexWrap: "wrap",
+        gap: { xs: 3, md: 0 },
+      }}>
+        {allLogos.map((logo, i) => (
+          <motion.div
+            key={logo.alt}
+            variants={{
+              hidden:  { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease } },
+            }}
+          >
+            <Box sx={{
+              display: "flex",
+              alignItems: "center",
+              px: { xs: 0, md: 4 },
+              borderRight: {
+                md: i < allLogos.length - 1 ? "1px solid rgba(0,0,0,0.08)" : "none",
+              },
+            }}>
+              <Box
+                component="img"
+                src={logo.src}
+                alt={logo.alt}
+                sx={{
+                  height: { xs: logo.h * 0.85, md: logo.h },
+                  width: "auto",
+                  objectFit: "contain",
+                  opacity: 0.75,
+                  filter: "grayscale(20%)",
+                  transition: "opacity 0.2s, filter 0.2s",
+                  "&:hover": { opacity: 1, filter: "grayscale(0%)" },
+                }}
+              />
+            </Box>
+          </motion.div>
+        ))}
       </Box>
-
-      {/* PARTNERS */}
-      <Box sx={{ borderLeft: { md: "1px solid rgba(0,0,0,0.08)" }, pl: { md: 6 } }}>
-        <Typography sx={LABEL_SX}>Partners</Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 3, md: 4 }, flexWrap: "wrap" }}>
-          {partners.map((p) => (
-            <Box
-              key={p.alt}
-              component="img"
-              src={p.logo}
-              alt={p.alt}
-              sx={{ height: { xs: 28, md: 36 }, width: "auto", objectFit: "contain" }}
-            />
-          ))}
-        </Box>
-      </Box>
-
-    </Box>
+    </motion.div>
   </Box>
 );
 
