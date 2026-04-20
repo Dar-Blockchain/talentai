@@ -253,6 +253,21 @@ exports.getCampaignMetrics = async (companyId) => {
       .filter((key) => key !== "total")
       .reduce((sum, key) => sum + result[key], 0);
 
+    // 30-day creation trend
+    const since = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
+    since.setHours(0, 0, 0, 0);
+    const trendRaw = await InternalCampaign.aggregate([
+      { $match: { company: new mongoose.Types.ObjectId(companyId), createdAt: { $gte: since } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+    ]);
+    const trendMap = {};
+    trendRaw.forEach(({ _id, count }) => { trendMap[_id] = count; });
+    result.trend = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      result.trend.push({ date: d, count: trendMap[d] || 0 });
+    }
+
     return result;
   } catch (error) {
     throw new Error(`Error getting campaign metrics: ${error.message}`);

@@ -89,6 +89,19 @@ exports.updateDepartment = async (req, res) => {
 };
 
 /**
+ * GET /departments/stats
+ */
+exports.getDepartmentStats = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const stats = await departmentService.getDepartmentStats(companyId);
+    res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
  * DELETE /departments/:id
  */
 exports.deleteDepartment = async (req, res) => {

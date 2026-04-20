@@ -46,6 +46,11 @@ const jobApplicationSchema = new mongoose.Schema(
       default: null,
       description: "Calculated match score between candidate and job"
     },
+    matchReasoning: {
+      type: String,
+      default: null,
+      description: "Detailed AI reasoning explaining how the match score was computed"
+    },
     appliedAt: {
       type: Date,
       default: Date.now,
@@ -137,7 +142,7 @@ const jobApplicationSchema = new mongoose.Schema(
 );
 
 // Indexes for better query performance
-jobApplicationSchema.index({ profile: 1, post: 1 }, { unique: true, sparse: true, description: "Ensure one application per candidate per post" });
+jobApplicationSchema.index({ profile: 1, post: 1 }, { unique: true, description: "Ensure one application per candidate per post" });
 jobApplicationSchema.index({ company: 1, post: 1 });
 jobApplicationSchema.index({ company: 1, status: 1 });
 jobApplicationSchema.index({ profile: 1, status: 1 });

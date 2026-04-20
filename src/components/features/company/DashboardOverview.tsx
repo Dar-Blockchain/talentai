@@ -4,9 +4,11 @@ import { Box, Typography, Avatar, Chip, Skeleton } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { fetchCompanyInterviews, selectCompanyInterviews, selectCompanyInterviewsLoading } from "@/store/slices/interviewSlice";
-import { fetchMyPosts, selectMyPosts, selectMyPostsLoading } from "@/store/slices/postSlice";
 import { fetchDashboardStats, selectDashboardStats, selectDashboardStatsLoading, fetchRichStats, selectRichStats, selectRichStatsLoading } from "@/store/slices/companySlice";
 import { fetchCompanyApplicationMetrics, fetchCompanyApplications, selectApplicationMetrics, selectApplicationMetricsLoading, selectAllApplications, selectApplicationsLoading } from "@/store/slices/jobApplicationSlice";
+import { fetchCampaignMetrics, selectCampaignMetrics, selectCampaignMetricsLoading } from "@/store/slices/campaignSlice";
+import { fetchDepartmentStats, selectDepartmentStats, selectDepartmentStatsLoading } from "@/store/slices/departmentSlice";
+import { fetchMemberStats, selectMembers } from "@/store/slices/memberSlice";
 import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
 import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
@@ -14,6 +16,9 @@ import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
 import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
+import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
+import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
+import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import { motion } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -60,9 +65,6 @@ const getVerdict = (score: number) =>
 
 const getInitials = (name: string) =>
   name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-
-const fmtDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
 
 const fmtDay = (d: string) => {
   const dt = new Date(d);
@@ -113,8 +115,6 @@ const DashboardOverview: React.FC = () => {
 
   const rawInterviews   = useSelector(selectCompanyInterviews);
   const interviewsLoading = useSelector(selectCompanyInterviewsLoading);
-  const rawPosts        = useSelector(selectMyPosts);
-  const postsLoading    = useSelector(selectMyPostsLoading);
   const dashboardStats  = useSelector(selectDashboardStats);
   const statsLoading    = useSelector(selectDashboardStatsLoading);
   const richStats       = useSelector(selectRichStats);
@@ -123,14 +123,21 @@ const DashboardOverview: React.FC = () => {
   const appMetricsLoading = useSelector(selectApplicationMetricsLoading);
   const allApplications   = useSelector(selectAllApplications);
   const appsLoading       = useSelector(selectApplicationsLoading);
+  const campaignMetrics   = useSelector(selectCampaignMetrics);
+  const campaignMetricsLoading = useSelector(selectCampaignMetricsLoading);
+  const deptStats         = useSelector(selectDepartmentStats);
+  const deptStatsLoading  = useSelector(selectDepartmentStatsLoading);
+  const { stats: memberStats, fetchingStats: memberStatsLoading } = useSelector(selectMembers);
 
   useEffect(() => {
     dispatch(fetchCompanyInterviews({ limit: 5 }));
-    dispatch(fetchMyPosts({ limit: 5 }));
     dispatch(fetchDashboardStats());
     dispatch(fetchRichStats());
     dispatch(fetchCompanyApplicationMetrics());
     dispatch(fetchCompanyApplications({}));
+    dispatch(fetchCampaignMetrics());
+    dispatch(fetchDepartmentStats());
+    dispatch(fetchMemberStats());
   }, [dispatch]);
 
   const recentInterviews = useMemo(() =>
@@ -141,8 +148,6 @@ const DashboardOverview: React.FC = () => {
       return { id: iv._id as string, name, job: iv.post?.jobDetails?.title || "—", score, verdict: getVerdict(score), avatar: getInitials(name), time: fmtTime(iv.createdAt) };
     }),
     [rawInterviews]);
-
-  const recentPosts = useMemo(() => rawPosts.slice(0, 5), [rawPosts]);
 
   // Applications over time — last 30 days
   const appTrendData = useMemo(() => {
@@ -191,69 +196,105 @@ const DashboardOverview: React.FC = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
-      {/* ══ Row 1: Stat Cards ════════════════════════════════════════════════ */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2.5 }}>
+      {/* ══ Stat Cards — all 6 in one compact row ══════════════════════════ */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" }, gap: 1.5 }}>
+
+        {/* Avg Interview Score + Active Job Posts */}
         {STAT_CONFIG.map((stat, idx) => {
           const raw = dashboardStats ? (dashboardStats as any)[stat.key] : null;
           const isEmpty = !statsLoading && raw == null;
           return (
-            <motion.div key={stat.key} style={{ height: "100%" }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.07 }}>
-              <Card sx={{ p: 3, height: "100%", boxSizing: "border-box", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s" }} data-tour={`stat-${stat.key === "activeJobPosts" ? "jobs" : ""}`}>
-                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
-                  <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: stat.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <motion.div key={stat.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+              <Card sx={{ p: 2, "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: stat.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <stat.icon sx={{ fontSize: 20, color: stat.color }} />
                   </Box>
-                  <Box sx={{ display: "flex", alignItems: "flex-end", gap: "2px", height: 24 }}>
-                    {[3, 5, 4, 7, 5, 8, 6].map((h, i) => (
-                      <Box key={i} sx={{ width: 3, borderRadius: "2px 2px 0 0", height: `${h * 12}%`, bgcolor: stat.color, opacity: isEmpty ? 0.08 : 0.2 + i * 0.1 }} />
-                    ))}
+                  <Box sx={{ minWidth: 0 }}>
+                    {statsLoading ? <Skeleton variant="text" width={40} height={22} /> : isEmpty ? (
+                      <Typography sx={{ fontSize: "0.72rem", fontWeight: 600, color: "#9CA3AF" }}>—</Typography>
+                    ) : (
+                      <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{raw}{stat.suffix || ""}</Typography>
+                    )}
+                    <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{stat.label}</Typography>
                   </Box>
                 </Box>
-                {statsLoading ? (
-                  <Skeleton variant="text" width={70} height={38} />
-                ) : isEmpty ? (
-                  <Box>
-                    <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#9CA3AF" }}>{stat.emptyText}</Typography>
-                  </Box>
-                ) : (
-                  <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>{raw}{stat.suffix || ""}</Typography>
-                )}
-                <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: "#9CA3AF", mt: 0.75, textTransform: "uppercase", letterSpacing: "0.06em" }}>{stat.label}</Typography>
               </Card>
             </motion.div>
           );
         })}
 
         {/* Total Applicants */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: STAT_CONFIG.length * 0.07 }}>
-          <Card sx={{ p: 3, "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }, transition: "box-shadow 0.2s", cursor: "pointer" }} onClick={() => router.push("/company/applications")}>
-            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2.5 }}>
-              <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card sx={{ p: 2, cursor: "pointer", "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }} onClick={() => router.push("/company/applications")}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <PeopleOutlined sx={{ fontSize: 20, color: "#8B5CF6" }} />
               </Box>
-              <Box sx={{ display: "flex", alignItems: "flex-end", gap: "2px", height: 24 }}>
-                {[3, 5, 4, 7, 5, 8, 6].map((h, i) => (
-                  <Box key={i} sx={{ width: 3, borderRadius: "2px 2px 0 0", height: `${h * 12}%`, bgcolor: "#8B5CF6", opacity: 0.2 + i * 0.1 }} />
-                ))}
+              <Box sx={{ minWidth: 0 }}>
+                {appMetricsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
+                  <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{appMetrics?.totalApplicants ?? 0}</Typography>
+                )}
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Applicants</Typography>
               </Box>
             </Box>
-            {appMetricsLoading ? (
-              <Skeleton variant="text" width={70} height={38} />
-            ) : appMetrics?.totalApplicants ? (
-              <Typography sx={{ fontSize: "1.75rem", fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>
-                {appMetrics.totalApplicants}
-              </Typography>
-            ) : (
-              <Box>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#9CA3AF" }}>No applicants yet</Typography>
-                <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#8B5CF6", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}>
-                  Post a job →
-                </Typography>
-              </Box>
-            )}
-            <Typography sx={{ fontSize: "0.7rem", fontWeight: 600, color: "#9CA3AF", mt: 0.75, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total Applicants</Typography>
           </Card>
         </motion.div>
+
+        {/* Campaigns */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card sx={{ p: 2, cursor: "pointer", "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }} onClick={() => router.push("/company/campaigns")}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#FFF7ED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <CampaignOutlined sx={{ fontSize: 20, color: "#F59E0B" }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                {campaignMetricsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+                    <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{campaignMetrics?.total ?? 0}</Typography>
+                    {(campaignMetrics?.active ?? 0) > 0 && <Typography sx={{ fontSize: "0.62rem", color: "#10B981", fontWeight: 700 }}>{campaignMetrics!.active} active</Typography>}
+                  </Box>
+                )}
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Campaigns</Typography>
+              </Box>
+            </Box>
+          </Card>
+        </motion.div>
+
+        {/* Departments */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card sx={{ p: 2, cursor: "pointer", "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }} onClick={() => router.push("/company/departments")}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <AccountTreeOutlined sx={{ fontSize: 20, color: "#3B82F6" }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                {deptStatsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
+                  <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{deptStats?.total ?? 0}</Typography>
+                )}
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Departments</Typography>
+              </Box>
+            </Box>
+          </Card>
+        </motion.div>
+
+        {/* Team Members */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <Card sx={{ p: 2, cursor: "pointer", "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }} onClick={() => router.push("/company/team")}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#FDF4FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <GroupsOutlined sx={{ fontSize: 20, color: "#A855F7" }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                {memberStatsLoading ? <Skeleton variant="text" width={40} height={22} /> : (
+                  <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 }}>{memberStats?.total ?? 0}</Typography>
+                )}
+                <Typography sx={{ fontSize: "0.67rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", mt: 0.3 }}>Team Members</Typography>
+              </Box>
+            </Box>
+          </Card>
+        </motion.div>
+
       </Box>
 
       {/* ══ Row 3: Interview Trend + Score Distribution ══════════════════════ */}
@@ -491,46 +532,86 @@ const DashboardOverview: React.FC = () => {
 
       </Box>
 
-      {/* ══ Row 4: Job Posts ═══════════════════════════════════════════════ */}
-      <Card data-tour="job-posts">
-        <CardHeader
-          title="Job Posts"
-          subtitle={postsLoading ? "Loading..." : recentPosts.length > 0 ? `${recentPosts.length} recent posts` : "No posts yet"}
-          action={<ViewAll onClick={() => router.push("/company/posts")} />}
-        />
-        <Box sx={{ px: 3, py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
-          {postsLoading ? (
-            SKELETON_ROWS.map((i) => <Skeleton key={i} variant="rectangular" height={72} sx={{ borderRadius: "10px" }} />)
-          ) : recentPosts.length === 0 ? (
-            <Box sx={{ py: 5, textAlign: "center" }}>
-              <Typography sx={{ fontSize: "0.82rem", color: "#9CA3AF" }}>No job posts yet</Typography>
-              <Typography onClick={() => router.push("/company/posts/create")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: TEAL, cursor: "pointer", mt: 0.75, "&:hover": { textDecoration: "underline" } }}>Create your first post →</Typography>
-            </Box>
-          ) : recentPosts.map((post: any, i: number) => {
-            const status = post.status || "draft";
-            const isActive = status.toLowerCase() === "active";
-            return (
-              <Box key={post._id || i} onClick={() => post._id && router.push(`/company/posts/${post._id}`)}
-                sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.75, borderRadius: "10px", border: "1px solid #E5E7EB", cursor: "pointer", "&:hover": { borderColor: TEAL_BORDER, bgcolor: TEAL_BG }, transition: "all 0.15s" }}>
-                <Box sx={{ width: 38, height: 38, borderRadius: "9px", bgcolor: isActive ? TEAL_BG : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <WorkOutlined sx={{ fontSize: 18, color: isActive ? TEAL : "#9CA3AF" }} />
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.jobDetails?.title || "—"}</Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.4 }}>
-                    <Chip label={status.charAt(0).toUpperCase() + status.slice(1)} size="small"
-                      sx={{ fontSize: "0.65rem", height: 18, fontWeight: 600, bgcolor: isActive ? TEAL_BG : "#F3F4F6", color: isActive ? TEAL : "#6B7280" }} />
-                    {post.expirationDate && (
-                      <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>Exp. {fmtDate(post.expirationDate)}</Typography>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
-      </Card>
+      {/* ══ Campaign Activity + Department Members ════════════════════════════ */}
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
 
+        {/* Campaign Activity — trend + status breakdown */}
+        <Card>
+          <CardHeader title="Campaign Activity" subtitle="Campaigns created over the last 30 days" action={<ViewAll onClick={() => router.push("/company/campaigns")} />} />
+          <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
+            {campaignMetricsLoading ? (
+              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
+            ) : !campaignMetrics?.trend?.some(d => d.count > 0) ? (
+              <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No campaigns yet</Typography>
+                <Typography onClick={() => router.push("/company/campaigns")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#F59E0B", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Create your first campaign →</Typography>
+              </Box>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={campaignMetrics!.trend} margin={{ left: -20, right: 4, top: 4, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="campTrendGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={(v) => { const d = new Date(v); return `${d.getMonth()+1}/${d.getDate()}`; }} tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} interval={4} />
+                  <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<ScoreTooltip />} />
+                  <Area type="monotone" dataKey="count" name="Campaigns" stroke="#F59E0B" strokeWidth={2} fill="url(#campTrendGrad)" dot={false} activeDot={{ r: 4, fill: "#F59E0B" }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+            {!campaignMetricsLoading && campaignMetrics && campaignMetrics.total > 0 && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5, pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
+                {[
+                  { key: "active",  label: "Active",  color: "#10B981" },
+                  { key: "draft",   label: "Draft",   color: "#D97706" },
+                  { key: "paused",  label: "Paused",  color: "#3B82F6" },
+                  { key: "closed",  label: "Closed",  color: "#6B7280" },
+                  { key: "expired", label: "Expired", color: "#EF4444" },
+                ].filter(s => (campaignMetrics as any)[s.key] > 0).map(s => (
+                  <Box key={s.key} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: s.color }} />
+                    <Typography sx={{ fontSize: "0.68rem", color: "#6B7280" }}>{s.label}: <strong style={{ color: "#111827" }}>{(campaignMetrics as any)[s.key]}</strong></Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        </Card>
+
+        {/* Department Members — horizontal bar */}
+        <Card>
+          <CardHeader title="Members per Department" subtitle="Team distribution across departments" action={<ViewAll onClick={() => router.push("/company/departments")} />} />
+          <Box sx={{ px: 3, pt: 2.5, pb: 2 }}>
+            {deptStatsLoading ? (
+              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: "8px" }} />
+            ) : !deptStats?.byDepartment?.length || deptStats.byDepartment.every(d => d.members === 0) ? (
+              <Box sx={{ height: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
+                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#6B7280" }}>No departments yet</Typography>
+                <Typography onClick={() => router.push("/company/departments")} sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#3B82F6", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>Create your first department →</Typography>
+              </Box>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={deptStats.byDepartment} layout="vertical" margin={{ left: 4, right: 24, top: 4, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} width={90} />
+                  <Tooltip content={<ScoreTooltip />} />
+                  <Bar dataKey="members" name="Members" radius={[0, 6, 6, 0]} maxBarSize={24}>
+                    {deptStats.byDepartment.map((_, i) => (
+                      <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} fillOpacity={0.85} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Box>
+        </Card>
+
+      </Box>
 
     </Box>
   );

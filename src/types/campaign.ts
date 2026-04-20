@@ -86,6 +86,7 @@ export interface CampaignMetrics {
   closed: number;
   paused: number;
   expired: number;
+  trend?: { date: string; count: number }[];
 }
 
 export type QuestionType = "TEXT" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "RATING";
