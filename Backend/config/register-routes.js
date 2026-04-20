@@ -89,7 +89,7 @@ function registerRoutes(app) {
   // app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
   // Billing
-  app.use("/api/stripe", stripRouter); //✅ Stripe Integration -> api/stripe
+  app.use("/stripe", stripRouter); //✅ Stripe Integration -> api/stripe
 
   // Pipeline Interview
   app.use("/api/pipeline-interview", pipelineInterviewRoutes); // Pipeline Interview Routes -> /interview-pipelines
