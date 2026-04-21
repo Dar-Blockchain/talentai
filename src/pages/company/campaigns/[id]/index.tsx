@@ -2,7 +2,6 @@ import React, { useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
 import CampaignDetailSkeleton from "@/components/features/company/campaigns/details/CampaignDetailSkeleton";
 import CampaignDetailError from "@/components/features/company/campaigns/details/CampaignDetailError";
@@ -101,22 +100,8 @@ const CampaignDetailsPage: React.FC = () => {
     [dispatch, showToast],
   );
 
-  const breadcrumbTitle = loading
-    ? "Loading..."
-    : error
-      ? "Not found"
-      : campaign?.title ?? "";
-
   return (
       <DashboardLayout>
-        <PageHeader
-          title=""
-          breadcrumbs={[
-            { label: "Dashboard", href: "/company/dashboard" },
-            { label: "Campaigns", href: "/company/campaigns" },
-            { label: breadcrumbTitle },
-          ]}
-        />
 
         {loading ? (
           <CampaignDetailSkeleton />

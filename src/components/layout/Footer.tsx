@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
   return (
     <Box
       sx={{
-        backgroundColor: "#121212",
+        backgroundColor: "#111827",
         color: "#fff",
         py: 4,
         px: 3,

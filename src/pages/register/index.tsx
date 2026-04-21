@@ -52,12 +52,12 @@ const Register = () => {
   const router = useRouter();
   const returnUrl = router.query.returnUrl as string | undefined;
   const hasReturnUrl = !!returnUrl;
-  const [userType, setUserType] = useState<UserType | null>(hasReturnUrl ? "candidate" : null);
+  const [userType, setUserType] = useState<UserType | null>(null);
   const [formStep, setFormStep] = useState<1 | 2>(1);
 
   const theme = config[userType ?? "candidate"];
   const isOtpStep = formStep === 2;
-  const showRoleSelect = !userType && !hasReturnUrl;
+  const showRoleSelect = !userType;
 
   return (
     <RegisterContainer>

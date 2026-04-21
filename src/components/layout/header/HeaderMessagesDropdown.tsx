@@ -11,6 +11,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import ChatIcon from "@mui/icons-material/Chat";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
@@ -98,10 +99,13 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
           justifyContent: "center",
           width: 32,
           height: 32,
-          borderRadius: "8px",
+          borderRadius: "9px",
           cursor: "pointer",
-          transition: "background 0.15s",
-          "&:hover": { bgcolor: "rgba(13,148,136,0.12)" },
+          transition: "background 0.15s, box-shadow 0.15s",
+          "&:hover": {
+            bgcolor: "rgba(13,148,136,0.10)",
+            boxShadow: "0 0 0 3px rgba(13,148,136,0.08)",
+          },
         }}
       >
         <Badge
@@ -111,14 +115,15 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
               bgcolor: "#EF4444",
               color: "#fff",
               fontWeight: 700,
-              fontSize: "10px",
-              minWidth: 16,
-              height: 16,
+              fontSize: "9px",
+              minWidth: 15,
+              height: 15,
               padding: 0,
+              boxShadow: "0 0 0 1.5px #fff",
             },
           }}
         >
-          <ChatIcon sx={{ color: "#0D9488", fontSize: 18 }} />
+          <ChatBubbleOutlineRoundedIcon sx={{ color: "#374151", fontSize: 18 }} />
         </Badge>
       </Box>
 

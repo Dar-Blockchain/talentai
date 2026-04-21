@@ -118,20 +118,19 @@ const Header = () => {
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
               {isAuthenticated ? (
                 <>
-                  {/* Icon group pill (hidden <800px) */}
+                  {/* Icon group (hidden <800px) */}
                   <Box sx={{
                     display: "none",
                     "@media (min-width:800px)": { display: "flex" },
                     alignItems: "center",
-                    gap: 0.25,
-                    px: 0.5,
-                    py: 0.5,
-                    borderRadius: "12px",
-                    bgcolor: "rgba(13,148,136,0.05)",
+                    gap: 0.5,
                   }}>
                     <HeaderMessagesDropdown userId={userId} unreadMessageCount={unreadMessageCount} />
                     <HeaderNotification />
                   </Box>
+
+                  {/* Divider */}
+                  <Box sx={{ width: "1px", height: 20, bgcolor: "rgba(0,0,0,0.10)" }} />
 
                   {/* User pill (hidden <800px) */}
                   <Box sx={{ display: "none", "@media (min-width:800px)": { display: "flex" } }}>
