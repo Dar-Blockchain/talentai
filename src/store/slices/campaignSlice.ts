@@ -563,6 +563,10 @@ const campaignSlice = createSlice({
       .addCase(fetchCampaignById.pending, (state) => {
         state.detailLoading = true;
         state.detailError = null;
+        state.sessions = [];
+        state.sessionsTotal = 0;
+        state.participants = [];
+        state.participantsTotal = 0;
       })
       .addCase(
         fetchCampaignById.fulfilled,
