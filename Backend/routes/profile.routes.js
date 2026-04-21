@@ -53,6 +53,17 @@ router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
 
 router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
 
+// ========== PAYMENT MANAGEMENT ROUTES ==========
+
+// GET /profile/:profileId/payments — Get all payments for a profile
+router.get('/:profileId/payments', profileController.getProfilePayments);
+
+// GET /profile/:profileId/payments/active — Get active (most recent completed) payment
+router.get('/:profileId/payments/active', profileController.getActiveProfilePayment);
+
+// POST /profile/:profileId/payments/add — Add payment to profile
+router.post('/:profileId/payments/add', profileController.addPaymentToProfile);
+
 // GET /profiles/:userId — Public route (no auth required) — MUST be LAST to avoid catching other routes
 router.get('/:userId', profileController.getProfileById);
 
