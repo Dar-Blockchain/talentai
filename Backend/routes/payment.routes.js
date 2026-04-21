@@ -78,7 +78,6 @@ router.put(
   "/:paymentId/status",
   requireAuth,
   authLogMiddleware("payments"),
-  controledAcces("Admin"),
   paymentController.updatePaymentStatusWithProfileLink
 );
 

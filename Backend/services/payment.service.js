@@ -311,6 +311,43 @@ module.exports.updatePaymentStatusWithProfileLink = async (paymentId, status, ad
     // Save the payment (this will trigger post-save hook for profile linking)
     await payment.save({ validateBeforeSave: true });
 
+    console.log(`📌 [updatePaymentStatusWithProfileLink] Payment ${paymentId} status updated to: ${status}`);
+
+    // ✅ FALLBACK: Explicitly update profile planLimits if payment is completed
+    if (status === "completed" && payment.planId && payment.companyProfileId) {
+      try {
+        const profile = await Profile.findById(payment.companyProfileId);
+        if (profile) {
+          // Ensure payments array exists
+          if (!profile.payments) {
+            profile.payments = [];
+          }
+
+          // Add payment to profile if not already there
+          if (!profile.payments.includes(paymentId)) {
+            profile.payments.push(paymentId);
+            console.log(`✅ [Fallback] Payment ${paymentId} added to profile payments array`);
+          }
+
+          // Update planLimits with payment's plan
+          const planLimitsChanged = !profile.planLimits || profile.planLimits.toString() !== payment.planId.toString();
+          if (planLimitsChanged) {
+            profile.planLimits = payment.planId;
+            console.log(`✅ [Fallback] Profile planLimits updated to: ${payment.planId}`);
+          }
+
+          // Save profile if changes were made
+          if (!profile.payments.includes(paymentId) || planLimitsChanged) {
+            await profile.save();
+            console.log(`✅ [Fallback] Profile ${payment.companyProfileId} saved with updated planLimits and payments`);
+          }
+        }
+      } catch (fallbackErr) {
+        console.error("⚠️ [Fallback] Error updating profile planLimits:", fallbackErr.message);
+        // Continue - payment status is already updated
+      }
+    }
+
     // Populate relations for response
     await payment.populate("userId");
     await payment.populate("companyProfileId");
