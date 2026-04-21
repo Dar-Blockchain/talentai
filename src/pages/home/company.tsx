@@ -42,7 +42,7 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Block 2 — Problem (dark) */}
-      <Box sx={{ background: "#0E0F10", py: { xs: 6, md: 9 } }}>
+      <Box sx={{ background: "#111827", py: { xs: 6, md: 9 } }}>
         <AISpotlight />
       </Box>
 
@@ -52,7 +52,7 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Block 4 — Stakes (dark) */}
-      <Box sx={{ background: "#0E0F10", py: { xs: 6, md: 9 } }}>
+      <Box sx={{ background: "#111827", py: { xs: 6, md: 9 } }}>
         <StakesSection />
       </Box>
 
@@ -67,7 +67,7 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Block 7 — Final CTA (dark) */}
-      <Box sx={{ background: "#0E0F10" }}>
+      <Box sx={{ background: "#111827" }}>
         <FinalCTA />
       </Box>
 

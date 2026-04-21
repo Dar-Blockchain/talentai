@@ -1,292 +1,191 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
-import WarningAmberOutlined  from "@mui/icons-material/WarningAmberOutlined";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
 
-const ACCENT    = "#0D9488";
-const ACCENT_BG = "rgba(13,148,136,0.10)";
-const VP   = { once: true, margin: "-80px" };
-const ease = [0.22, 1, 0.36, 1] as const;
+const ACCENT = "#0D9488";
+const VP     = { once: true, margin: "-80px" };
+const ease   = [0.22, 1, 0.36, 1] as const;
+
+// $500/day per open role → per second
+const DRAIN_PER_SECOND = 500 / 86400;
 
 const STATS = [
-  { target: 42,  suffix: "+",  unit: "days",    label: "Average hiring cycle",        bar: 72, color: "#F87171" },
-  { target: 500, prefix: "$",  unit: "/ day",   label: "Lost per open role daily",    bar: 85, color: "#FB923C" },
-  { target: 25,  prefix: "$",  suffix: "K",     label: "Cost of one bad hire",        bar: 60, color: "#FBBF24" },
-  { target: 200, suffix: "+",  unit: "resumes", label: "Screened manually per role",  bar: 90, color: "#A78BFA" },
-];
-
-const PAIN_POINTS = [
-  "Top candidates accept competing offers in under 14 days",
-  "HR teams spend 23+ hours per week just scheduling interviews",
-  "39% of hires underperform due to inconsistent evaluation",
+  { target: 42,  suffix: "+", unit: "days to hire",       label: "avg hiring cycle"     },
+  { target: 500, prefix: "$", unit: "lost per role/day",  label: "empty seat cost"      },
+  { target: 25,  prefix: "$", suffix: "K", unit: "per bad hire", label: "wrong hire cost" },
+  { target: 200, suffix: "+", unit: "resumes screened",   label: "manual review load"   },
 ];
 
 /* ── Animated counter ─────────────────────────────── */
-const Counter: React.FC<{
-  target: number; prefix?: string; suffix?: string;
-  color: string; started: boolean;
-}> = ({ target, prefix = "", suffix = "", color, started }) => {
+const Counter: React.FC<{ target: number; prefix?: string; suffix?: string; started: boolean; size?: string }> =
+  ({ target, prefix = "", suffix = "", started, size = "clamp(32px, 4vw, 48px)" }) => {
   const raw = useMotionValue(0);
   const num = useTransform(raw, (v) => Math.round(v).toLocaleString());
-
-  useEffect(() => {
-    if (started) animate(raw, target, { duration: 1.6, ease: "easeOut" });
-  }, [started, raw, target]);
-
+  useEffect(() => { if (started) animate(raw, target, { duration: 1.8, ease: "easeOut" }); }, [started, raw, target]);
   return (
-    <Box sx={{ display: "inline-flex", alignItems: "baseline", gap: 0.25 }}>
-      {prefix && (
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "14px", color, lineHeight: 1 }}>
-          {prefix}
-        </Typography>
-      )}
-      <motion.span style={{
-        fontFamily: "Poppins", fontWeight: 900,
-        fontSize: "clamp(24px, 3vw, 32px)", lineHeight: 1, color,
-      }}>
-        {num}
-      </motion.span>
-      {suffix && (
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "14px", color, lineHeight: 1 }}>
-          {suffix}
-        </Typography>
-      )}
+    <Box sx={{ display: "inline-flex", alignItems: "baseline", gap: "2px" }}>
+      {prefix && <Typography component="span" sx={{ fontFamily: "Poppins", fontWeight: 800, fontSize: "85%", color: "inherit", lineHeight: 1 }}>{prefix}</Typography>}
+      <motion.span style={{ fontFamily: "Poppins", fontWeight: 900, fontSize: size, lineHeight: 1, color: "inherit" }}>{num}</motion.span>
+      {suffix && <Typography component="span" sx={{ fontFamily: "Poppins", fontWeight: 900, fontSize: "85%", color: "inherit", lineHeight: 1 }}>{suffix}</Typography>}
     </Box>
   );
 };
 
-/* ── Stat row ─────────────────────────────────────── */
-const StatRow: React.FC<{ stat: typeof STATS[number]; index: number; started: boolean }> = ({ stat, index, started }) => (
-  <motion.div
-    variants={{
-      hidden:  { opacity: 0, x: 20 },
-      visible: { opacity: 1, x: 0, transition: { duration: 0.45, delay: index * 0.09, ease } },
-    }}
-  >
-    <Box sx={{
-      display: "flex", alignItems: "center", gap: 2,
-      px: 2.5, py: 2,
-      borderRadius: "12px",
-      bgcolor: "rgba(255,255,255,0.03)",
-      border: "1px solid rgba(255,255,255,0.06)",
-      transition: "background 0.2s, border-color 0.2s",
-      "&:hover": {
-        bgcolor: "rgba(255,255,255,0.05)",
-        borderColor: `${stat.color}30`,
-      },
-    }}>
-      {/* Left accent bar */}
-      <Box sx={{ width: "3px", height: 40, borderRadius: "3px", bgcolor: stat.color, flexShrink: 0, opacity: 0.85 }} />
-
-      {/* Number */}
-      <Box sx={{ minWidth: 90, flexShrink: 0 }}>
-        <Counter
-          target={stat.target}
-          prefix={stat.prefix}
-          suffix={stat.suffix}
-          color={stat.color}
-          started={started}
-        />
-        {stat.unit && (
-          <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", color: "rgba(255,255,255,0.30)", mt: 0.1 }}>
-            {stat.unit}
-          </Typography>
-        )}
-      </Box>
-
-      {/* Label + bar */}
-      <Box sx={{ flex: 1 }}>
-        <Typography sx={{
-          fontFamily: "Poppins", fontSize: "12.5px", fontWeight: 600,
-          color: "rgba(255,255,255,0.65)", lineHeight: 1.3, mb: 0.75,
-        }}>
-          {stat.label}
-        </Typography>
-        <Box sx={{ height: "3px", width: "100%", bgcolor: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={started ? { width: `${stat.bar}%` } : { width: 0 }}
-            transition={{ duration: 1.4, delay: 0.3 + index * 0.1, ease: "easeOut" }}
-            style={{
-              height: "100%",
-              background: `linear-gradient(90deg, ${stat.color}, ${stat.color}55)`,
-              borderRadius: 2,
-            }}
-          />
-        </Box>
-      </Box>
-    </Box>
-  </motion.div>
-);
-
 /* ── Main component ───────────────────────────────── */
 const AISpotlight: React.FC = () => {
-  const ref     = useRef<HTMLDivElement>(null);
-  const inView  = useInView(ref, { once: true, margin: "-80px" });
+  const ref    = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  // Live drain counter — starts ticking when in view
+  const [elapsed, setElapsed]   = useState(0);
+  const [started, setStarted]   = useState(false);
+  const startTime                = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!inView) return;
+    setStarted(true);
+    startTime.current = Date.now();
+    const id = setInterval(() => {
+      setElapsed((Date.now() - startTime.current!) / 1000);
+    }, 50);
+    return () => clearInterval(id);
+  }, [inView]);
+
+  const drainedAmount = (elapsed * DRAIN_PER_SECOND).toFixed(2);
 
   return (
-    <Box ref={ref} sx={{ maxWidth: 1200, mx: "auto", px: { xs: 2, md: 4 } }}>
-      <Box sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-        gap: { xs: 6, md: 8 },
-        alignItems: "center",
-      }}>
+    <Box sx={{ position: "relative", overflow: "hidden" }}>
 
-        {/* ── LEFT: copy ── */}
-        <motion.div
-          initial={{ opacity: 0, x: -36 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={VP}
-          transition={{ duration: 0.65, ease }}
-        >
-          {/* Overline */}
+      {/* Background grid */}
+      <Box sx={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+      }} />
+
+      {/* Drifting glow — top left */}
+      <motion.div
+        animate={{ x: [0, 25, 0], y: [0, -18, 0] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        style={{ position: "absolute", top: -100, left: -100, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.09) 0%, transparent 70%)", pointerEvents: "none" }}
+      />
+      {/* Drifting glow — bottom right */}
+      <motion.div
+        animate={{ x: [0, -20, 0], y: [0, 22, 0] }}
+        transition={{ duration: 17, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        style={{ position: "absolute", bottom: -80, right: -80, width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.025) 0%, transparent 70%)", pointerEvents: "none" }}
+      />
+
+      {/* ── Content ── */}
+      <Box ref={ref} sx={{ maxWidth: 1000, mx: "auto", px: { xs: 3, md: 6 }, py: { xs: 2, md: 3 }, position: "relative", textAlign: "center" }}>
+
+        {/* Overline */}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP} transition={{ duration: 0.55, ease }}>
           <Box sx={{
             display: "inline-flex", alignItems: "center", gap: 1,
-            bgcolor: ACCENT_BG, border: "1.5px solid rgba(13,148,136,0.40)",
-            borderRadius: "24px", px: 2.5, py: 0.9, mb: 3,
+            bgcolor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)",
+            borderRadius: "24px", px: 2.5, py: 0.85, mb: 3,
           }}>
-            <WarningAmberOutlined sx={{ fontSize: 14, color: ACCENT }} />
-            <Typography sx={{ fontFamily: "Poppins", fontSize: "12px", fontWeight: 700, color: ACCENT, letterSpacing: "0.8px", textTransform: "uppercase" }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: ACCENT, boxShadow: `0 0 6px ${ACCENT}` }} />
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: "1px", textTransform: "uppercase" }}>
               The Hiring Crisis Is Real
             </Typography>
           </Box>
+        </motion.div>
 
-          {/* Headline */}
+        {/* Headline */}
+        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP} transition={{ duration: 0.6, delay: 0.05, ease }}>
           <Typography sx={{
             fontFamily: "Poppins", fontWeight: 800,
-            fontSize: { xs: "26px", sm: "32px", md: "42px" },
-            lineHeight: 1.12, color: "#fff", mb: 2,
-            letterSpacing: "-0.5px",
+            fontSize: { xs: "28px", sm: "36px", md: "52px" },
+            lineHeight: 1.1, color: "#fff", mb: 1.5,
+            letterSpacing: { xs: "-0.5px", md: "-1.5px" },
           }}>
-            200+ Resumes.{" "}
-            <Box component="span" sx={{
-              color: ACCENT,
-              textShadow: "0 0 32px rgba(13,148,136,0.45)",
-            }}>
-              Zero Time.
-            </Box>
-            <br />
-            Your Best Hire Just{" "}
-            <Box component="span" sx={{ color: "rgba(255,255,255,0.55)" }}>
-              Accepted Another Offer.
-            </Box>
+            Every Delay Has{" "}
+            <Box component="span" sx={{ color: ACCENT }}>a Price Tag.</Box>
           </Typography>
+          <Typography sx={{ fontFamily: "Poppins", fontSize: { xs: "14px", md: "16px" }, color: "rgba(255,255,255,0.32)", mb: { xs: 5, md: 7 }, maxWidth: 480, mx: "auto" }}>
+            Slow hiring isn't free. Here's what it's costing your business right now.
+          </Typography>
+        </motion.div>
 
-          {/* Subtitle */}
-          <Typography sx={{
-            fontFamily: "Poppins", fontSize: { xs: "14px", md: "15px" },
-            color: "rgba(255,255,255,0.40)", lineHeight: 1.75, mb: 3.5, maxWidth: 440,
+        {/* ── 4 stats row ── */}
+        <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP} transition={{ duration: 0.6, delay: 0.1, ease }}>
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
+            mb: { xs: 5, md: 7 },
+            borderRadius: "16px",
+            border: "1px solid rgba(255,255,255,0.07)",
+            overflow: "hidden",
           }}>
-            Every minute your seat stays empty, your competitors get stronger. Here's what slow hiring is costing you right now.
-          </Typography>
+            {STATS.map((s, i) => (
+              <Box key={i} sx={{
+                px: { xs: 2, md: 3 }, py: { xs: 3, md: 4 },
+                borderRight: {
+                  xs: i % 2 === 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  md: i < 3 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                },
+                borderBottom: { xs: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none", md: "none" },
+                position: "relative",
+                transition: "background 0.22s",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.03)" },
+              }}>
+                {/* Top accent per cell */}
+                <Box sx={{
+                  position: "absolute", top: 0, left: "20%", right: "20%", height: "2px",
+                  background: `linear-gradient(90deg, transparent, ${ACCENT}60, transparent)`,
+                }} />
 
-          {/* Pain points */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            {PAIN_POINTS.map((point, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -14 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={VP}
-                transition={{ duration: 0.4, delay: 0.15 + i * 0.08, ease }}
-              >
-                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                  <Box sx={{
-                    width: 18, height: 18, borderRadius: "50%", flexShrink: 0, mt: 0.15,
-                    bgcolor: "rgba(248,113,113,0.12)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#F87171" }} />
-                  </Box>
-                  <Typography sx={{
-                    fontFamily: "Poppins", fontSize: "13px",
-                    color: "rgba(255,255,255,0.50)", lineHeight: 1.55,
-                  }}>
-                    {point}
-                  </Typography>
+                <Box sx={{ color: "#fff", mb: 0.75 }}>
+                  <Counter target={s.target} prefix={s.prefix} suffix={s.suffix} started={started} />
                 </Box>
-              </motion.div>
+                <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.30)", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                  {s.unit}
+                </Typography>
+              </Box>
             ))}
           </Box>
         </motion.div>
 
-        {/* ── RIGHT: damage report card ── */}
-        <motion.div
-          initial={{ opacity: 0, x: 36 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={VP}
-          transition={{ duration: 0.65, delay: 0.15, ease }}
-        >
+        {/* ── Live drain counter ── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={VP} transition={{ duration: 0.6, delay: 0.2, ease }}>
           <Box sx={{
-            borderRadius: "20px",
-            border: "1px solid rgba(255,255,255,0.07)",
-            bgcolor: "#0A0B0C",
-            overflow: "hidden",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.35)",
+            mx: "auto", maxWidth: 620,
+            px: { xs: 3, md: 5 }, py: { xs: 3, md: 3.5 },
+            borderRadius: "16px",
+            bgcolor: "rgba(13,148,136,0.05)",
+            border: "1px solid rgba(13,148,136,0.18)",
+            position: "relative", overflow: "hidden",
           }}>
+            {/* Pulsing border glow */}
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              style={{ position: "absolute", inset: 0, borderRadius: "16px", boxShadow: `inset 0 0 24px rgba(13,148,136,0.08)`, pointerEvents: "none" }}
+            />
 
-            {/* Card header */}
-            <Box sx={{
-              px: 3, py: 1.75,
-              bgcolor: "rgba(255,255,255,0.02)",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ display: "flex", gap: 0.6 }}>
-                  {["#FF5F57", "#FFBD2E", "#28C840"].map((c) => (
-                    <Box key={c} sx={{ width: 9, height: 9, borderRadius: "50%", bgcolor: c, opacity: 0.85 }} />
-                  ))}
-                </Box>
-                <Typography sx={{ fontFamily: "monospace", fontSize: "11px", color: "rgba(255,255,255,0.22)" }}>
-                  hiring_damage_report.live
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <motion.div
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 1.4, repeat: Infinity }}
-                >
-                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#F87171" }} />
-                </motion.div>
-                <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.5px" }}>
-                  LIVE
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Stat rows */}
-            <Box sx={{ p: 2 }}>
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={VP}
-                variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
-              >
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-                  {STATS.map((s, i) => (
-                    <StatRow key={i} stat={s} index={i} started={inView} />
-                  ))}
-                </Box>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 0.75 }}>
+              <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
+                <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: ACCENT, boxShadow: `0 0 8px ${ACCENT}` }} />
               </motion.div>
+              <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.35)", letterSpacing: "1px", textTransform: "uppercase" }}>
+                Draining since you opened this page
+              </Typography>
             </Box>
 
-            {/* Card footer */}
-            <Box sx={{
-              px: 3, py: 1.25,
-              borderTop: "1px solid rgba(255,255,255,0.05)",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
+            <Typography sx={{
+              fontFamily: "Poppins", fontWeight: 900,
+              fontSize: { xs: "36px", md: "52px" },
+              letterSpacing: "-2px", lineHeight: 1,
+              color: ACCENT,
             }}>
-              <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", color: "rgba(255,255,255,0.18)" }}>
-                Industry averages · 2024
-              </Typography>
-              <Box sx={{ display: "flex", gap: 0.5 }}>
-                {[0.6, 0.35, 0.15].map((o, i) => (
-                  <Box key={i} sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#F87171", opacity: o }} />
-                ))}
-              </Box>
-            </Box>
+              ${drainedAmount}
+            </Typography>
+
+            <Typography sx={{ fontFamily: "Poppins", fontSize: "11.5px", color: "rgba(255,255,255,0.22)", mt: 0.75 }}>
+              per open role, every second you wait
+            </Typography>
           </Box>
         </motion.div>
 
