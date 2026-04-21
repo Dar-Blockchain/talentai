@@ -51,7 +51,6 @@ router.get(
   "/company/:companyProfileId",
   requireAuth,
   authLogMiddleware("payments"),
-  controledAcces("Admin"),
   paymentController.getCompanyPaymentHistory
 );
 
