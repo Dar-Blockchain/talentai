@@ -29,6 +29,7 @@ import departmentReducer from './slices/departmentSlice';
 import jobApplicationReducer from './slices/jobApplicationSlice';
 import apiKeyReducer from './slices/apiKeySlice';
 import feedbackReducer from './slices/feedbackSlice';
+import paymentReducer from './slices/paymentSlice';
 import { socketMiddleware } from './middleware/socketMiddleware';
 
 const rootReducer = combineReducers({
@@ -51,6 +52,7 @@ const rootReducer = combineReducers({
   jobApplications: jobApplicationReducer,
   apiKeys: apiKeyReducer,
   feedback: feedbackReducer,
+  payment: paymentReducer,
 });
 
 const persistConfig = {

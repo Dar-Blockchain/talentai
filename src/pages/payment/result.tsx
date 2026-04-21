@@ -1,10 +1,13 @@
 'use client';
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useDispatch } from "react-redux";
 import Link from "next/link";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import dynamic from "next/dynamic";
 import AppButton from "@/components/ui/AppButton";
+import { updatePaymentStatus } from "@/store/slices/paymentSlice";
+import { AppDispatch } from "@/store/store";
 
 const CheckCircleOutlined = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
 const CancelOutlined = dynamic(() => import("@mui/icons-material/CancelOutlined"));
@@ -13,12 +16,27 @@ const DashboardOutlined = dynamic(() => import("@mui/icons-material/DashboardOut
 
 const PaymentResultPage: React.FC = () => {
   const router = useRouter();
-  const { status } = router.query;
+  const dispatch = useDispatch<AppDispatch>();
+  const { status, session_id } = router.query;
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (status === "success") {
+      const paymentId = localStorage.getItem("pending_payment_id");
+      if (paymentId) {
+        dispatch(updatePaymentStatus({
+          paymentId,
+          status: "completed",
+          additionalData: { stripeSessionId: session_id },
+        })).finally(() => localStorage.removeItem("pending_payment_id"));
+      }
+    }
+  }, [router.isReady, status]);
 
   if (!mounted) {
     return (
