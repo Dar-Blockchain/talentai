@@ -245,3 +245,51 @@ exports.deletePayment = async (req, res) => {
     });
   }
 };
+
+/**
+ * Update payment status with automatic profile linking
+ * PUT /payments/:paymentId/status
+ */
+exports.updatePaymentStatusWithProfileLink = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { status, additionalData } = req.body;
+
+    if (!paymentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment ID is required",
+      });
+    }
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment status is required",
+      });
+    }
+
+    const validStatuses = ["pending", "completed", "failed", "cancelled"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+      });
+    }
+
+    const result = await paymentService.updatePaymentStatusWithProfileLink(
+      paymentId,
+      status,
+      additionalData || {}
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Error updating payment status with profile link:", error);
+    const statusCode = error.status || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to update payment status",
+    });
+  }
+};

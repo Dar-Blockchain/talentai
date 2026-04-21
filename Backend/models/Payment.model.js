@@ -100,8 +100,28 @@ const paymentSchema = new mongoose.Schema(
 // Index for quick lookups
 paymentSchema.index({ userId: 1, status: 1 });
 paymentSchema.index({ companyProfileId: 1 });
+paymentSchema.index({ profileId: 1 });
 paymentSchema.index({ planId: 1 });
 paymentSchema.index({ stripeSessionId: 1 });
 paymentSchema.index({ createdAt: -1 });
+
+// Post-save hook to automatically link payment to profile
+paymentSchema.post("save", async function (doc) {
+  try {
+    if (doc.companyProfileId) {
+      const Profile = require("./Profile.model");
+      const profile = await Profile.findById(doc.companyProfileId);
+      
+      if (profile && !profile.payments.includes(doc._id)) {
+        profile.payments.push(doc._id);
+        await profile.save();
+        console.log(`✅ Payment ${doc._id} automatically linked to profile ${doc.companyProfileId}`);
+      }
+    }
+  } catch (error) {
+    console.error("Warning: Error in Payment post-save hook:", error.message);
+    // Don't throw - payment is already saved
+  }
+});
 
 module.exports = mongoose.model("Payment", paymentSchema);

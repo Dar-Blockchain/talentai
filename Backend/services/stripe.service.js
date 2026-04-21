@@ -2,6 +2,7 @@ const Stripe = require("stripe");
 require("dotenv").config();
 const planLimitsService = require("./planLimits.service");
 const Payment = require("../models/Payment.model");
+const Profile = require("../models/Profile.model");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -71,6 +72,24 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
 
     await payment.save();
     console.log("✅ Payment record created:", payment._id);
+
+    // ✅ Link payment to company profile
+    try {
+      const profile = await Profile.findById(companyProfileId);
+      if (profile) {
+        if (!profile.payments) {
+          profile.payments = [];
+        }
+        profile.payments.push(payment._id);
+        await profile.save();
+        console.log("✅ Payment linked to profile:", companyProfileId);
+      } else {
+        console.warn("⚠️  Profile not found for payment linking:", companyProfileId);
+      }
+    } catch (err) {
+      console.error("⚠️  Error linking payment to profile:", err.message);
+      // Don't throw here - payment is already created
+    }
 
     return {
       success: true,
