@@ -18,7 +18,6 @@ const defaultPlans = [
   {
     name: "Trial",
     postsLimit: 5,
-    candidateUnlockLimit: 5,
     monthlyInterviewLimit: 15,
     priceUsd: 0,
     description: "Trial plan for new users",
@@ -27,7 +26,6 @@ const defaultPlans = [
   {
     name: "Standard",
     postsLimit: 20,
-    candidateUnlockLimit: 20,
     monthlyInterviewLimit: 50,
     priceUsd: 99,
     description: "Standard plan for growing teams",
@@ -36,7 +34,6 @@ const defaultPlans = [
   {
     name: "Gold",
     postsLimit: 50,
-    candidateUnlockLimit: 50,
     monthlyInterviewLimit: 120,
     priceUsd: 499,
     description: "Gold plan for larger teams",
@@ -45,7 +42,6 @@ const defaultPlans = [
   {
     name: "Platinum",
     postsLimit: 100,
-    candidateUnlockLimit: 100,
     monthlyInterviewLimit: 250,
     priceUsd: 999,
     description: "Platinum plan for enterprise customers",
@@ -54,7 +50,6 @@ const defaultPlans = [
   {
     name: "Diamond",
     postsLimit: 200,
-    candidateUnlockLimit: 200,
     monthlyInterviewLimit: 500,
     priceUsd: 1499,
     description: "Diamond plan for large enterprises",
@@ -106,7 +101,7 @@ const seedDefaultPlans = async () => {
 
     // Display all plans
     const allPlans = await PlanLimits.find().select(
-      "name postsLimit candidateUnlockLimit monthlyInterviewLimit"
+      "name postsLimit monthlyInterviewLimit"
     );
     console.log("\n📋 Current Plans:");
     console.table(allPlans);
