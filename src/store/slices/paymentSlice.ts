@@ -54,6 +54,24 @@ export const updatePaymentStatus = createAsyncThunk<
   }
 );
 
+export const verifyPayment = createAsyncThunk<
+  Payment,
+  { sessionId: string },
+  { rejectValue: string }
+>(
+  "payment/verify",
+  async ({ sessionId }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("payments/verify", { sessionId });
+      return res.data.data as Payment;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || "Failed to verify payment"
+      );
+    }
+  }
+);
+
 // ─── Slice ───────────────────────────────────────────────
 
 const paymentSlice = createSlice({
@@ -77,6 +95,20 @@ const paymentSlice = createSlice({
       .addCase(updatePaymentStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to update payment status";
+      });
+
+    builder
+      .addCase(verifyPayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.lastUpdated = action.payload;
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to verify payment";
       });
   },
 });
