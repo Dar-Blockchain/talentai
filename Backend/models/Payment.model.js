@@ -105,17 +105,35 @@ paymentSchema.index({ planId: 1 });
 paymentSchema.index({ stripeSessionId: 1 });
 paymentSchema.index({ createdAt: -1 });
 
-// Post-save hook to automatically link payment to profile
+// Post-save hook to automatically link payment to profile and update planLimits
 paymentSchema.post("save", async function (doc) {
   try {
     if (doc.companyProfileId) {
       const Profile = require("./Profile.model");
       const profile = await Profile.findById(doc.companyProfileId);
       
-      if (profile && !profile.payments.includes(doc._id)) {
-        profile.payments.push(doc._id);
-        await profile.save();
-        console.log(`✅ Payment ${doc._id} automatically linked to profile ${doc.companyProfileId}`);
+      if (profile) {
+        let updated = false;
+
+        // ✅ Add payment to profile if not already there
+        if (!profile.payments.includes(doc._id)) {
+          profile.payments.push(doc._id);
+          updated = true;
+          console.log(`✅ Payment ${doc._id} linked to profile ${doc.companyProfileId}`);
+        }
+
+        // ✅ Update planLimits when payment is completed
+        if (doc.status === "completed" && doc.planId) {
+          profile.planLimits = doc.planId;
+          updated = true;
+          console.log(`✅ Profile planLimits updated with plan ${doc.planId} for payment ${doc._id}`);
+        }
+
+        // Save profile only if something changed
+        if (updated) {
+          await profile.save();
+          console.log(`✅ Profile ${doc.companyProfileId} updated successfully`);
+        }
       }
     }
   } catch (error) {
