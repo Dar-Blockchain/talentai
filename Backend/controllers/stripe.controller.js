@@ -53,6 +53,7 @@ exports.createCheckoutSession = async (req, res) => {
       url: result.session.url,
       sessionId: result.sessionId,
       planId: planId,
+      paymentId: result.paymentId,  // ✨ NEW: Payment record ID
     });
   } catch (error) {
     console.error("Stripe error:", error);

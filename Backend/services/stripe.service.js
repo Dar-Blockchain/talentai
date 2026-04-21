@@ -1,6 +1,7 @@
 const Stripe = require("stripe");
 require("dotenv").config();
 const planLimitsService = require("./planLimits.service");
+const Payment = require("../models/Payment.model");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -50,10 +51,32 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
       ],
     });
 
+    // ✅ Create payment record in database
+    const payment = new Payment({
+      userId,
+      companyProfileId,
+      planId,
+      planName: plan.name,
+      planPrice: plan.priceUsd,
+      stripeSessionId: session.id,
+      status: "pending",
+      amountCents: amount,
+      currency,
+      metadata: {
+        planDescription: plan.description,
+        postsLimit: plan.postsLimit,
+        monthlyInterviewLimit: plan.monthlyInterviewLimit,
+      },
+    });
+
+    await payment.save();
+    console.log("✅ Payment record created:", payment._id);
+
     return {
       success: true,
       sessionId: session.id,
       session,
+      paymentId: payment._id,
     };
   } catch (err) {
     console.error("❌ Error creating Stripe checkout session:", err.message);
