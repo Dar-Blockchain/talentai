@@ -20,9 +20,46 @@ const defaultPlans = [
     postsLimit: 5,
     candidateUnlockLimit: 5,
     monthlyInterviewLimit: 15,
+    priceUsd: 0,
     description: "Trial plan for new users",
     isActive: true,
   },
+  {
+    name: "Standard",
+    postsLimit: 20,
+    candidateUnlockLimit: 20,
+    monthlyInterviewLimit: 50,
+    priceUsd: 99,
+    description: "Standard plan for growing teams",
+    isActive: true,
+  },
+  {
+    name: "Gold",
+    postsLimit: 50,
+    candidateUnlockLimit: 50,
+    monthlyInterviewLimit: 120,
+    priceUsd: 499,
+    description: "Gold plan for larger teams",
+    isActive: true,
+  },
+  {
+    name: "Platinum",
+    postsLimit: 100,
+    candidateUnlockLimit: 100,
+    monthlyInterviewLimit: 250,
+    priceUsd: 999,
+    description: "Platinum plan for enterprise customers",
+    isActive: true,
+  },
+  {
+    name: "Diamond",
+    postsLimit: 200,
+    candidateUnlockLimit: 200,
+    monthlyInterviewLimit: 500,
+    priceUsd: 1499,
+    description: "Diamond plan for large enterprises",
+    isActive: true,
+  }  
 ];
 
 // Connect to MongoDB (only if needed)
@@ -54,20 +91,15 @@ const seedDefaultPlans = async () => {
 
     console.log("🌱 Starting PlanLimits seeding...");
 
-    // Check if plans already exist
-    const existingPlansCount = await PlanLimits.countDocuments();
-
-    if (existingPlansCount > 0) {
-      console.log(`ℹ️  PlanLimits table already contains ${existingPlansCount} plan(s). Skipping seeding...`);
-      return true;
-    }
-
-    console.log("📝 Table is empty. Creating default plans...");
+    console.log("📝 Upserting default plans...");
 
     for (const plan of defaultPlans) {
-      const newPlan = new PlanLimits(plan);
-      await newPlan.save();
-      console.log(`✅ Plan "${plan.name}" created successfully`);
+      await PlanLimits.findOneAndUpdate(
+        { name: plan.name },
+        { $set: plan },
+        { upsert: true, new: true }
+      );
+      console.log(`✅ Plan "${plan.name}" upserted`);
     }
 
     console.log("🎉 PlanLimits seeding completed successfully!");

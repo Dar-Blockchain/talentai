@@ -25,7 +25,6 @@ Les champs d'utilisation sont stockés dans le Profile du type "Company".
 planLimits: ObjectId (référence au PlanLimits)
 planUsage: {
   postsUsed: Number,
-  candidateUnlocksUsed: Number,
   monthlyInterviewsUsed: Number,
   lastMonthlyResetDate: Date
 }
@@ -102,12 +101,10 @@ Réponse:
     "plan": { /* PlanLimits object */ },
     "usage": {
       "postsUsed": 3,
-      "candidateUnlocksUsed": 15,
       "monthlyInterviewsUsed": 5,
       "lastMonthlyResetDate": "2026-02-05T..."
     },
     "remainingPosts": 17,
-    "remainingCandidateUnlocks": 35,
     "remainingMonthlyInterviews": 10
   }
 }
@@ -120,8 +117,7 @@ Content-Type: application/json
 Authorization: Bearer <token>
 
 {
-  "postsUsed": 5,
-  "candidateUnlocksUsed": 20
+  "postsUsed": 5
 }
 ```
 
@@ -137,7 +133,6 @@ Authorization: Bearer <token>
 
 Compteurs disponibles:
 - postsUsed
-- candidateUnlocksUsed
 - monthlyInterviewsUsed
 ```
 
@@ -256,10 +251,7 @@ const usage = await planLimitsService.getCompanyPlanUsage(companyProfileId);
 1. **Post Creation** (`Post.controller.js`)
    - Incrémenter `postsUsed` quand une company crée un post
 
-2. **Candidate Unlock** (`UnlockCandidate.controller.js`)
-   - Incrémenter `candidateUnlocksUsed` quand une company débloque un candidat
-
-3. **Interview Creation** (`IntelligentInterview.controller.js`)
+2. **Interview Creation** (`IntelligentInterview.controller.js`)
    - Incrémenter `monthlyInterviewsUsed` quand une interview est créée
    - Appeler `resetMonthlyInterviewCounterIfNeeded` avant chaque vérification
 
