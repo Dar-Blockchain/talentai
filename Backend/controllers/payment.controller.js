@@ -136,7 +136,7 @@ exports.verifyPaymentStatus = async (req, res) => {
       status = "pending";
     }
 
-    const updateResult = await paymentService.updatePaymentStatus(
+    const updateResult = await paymentService.updatePaymentStatusWithProfileLink(
       payment._id,
       status,
       {
@@ -246,35 +246,4 @@ exports.deletePayment = async (req, res) => {
   }
 };
 
-/**
- * Update payment status with automatic profile linking
- * PUT /payments/:paymentId/status
- */
-exports.updatePaymentStatusWithProfileLink = async (req, res) => {
-  try {
-    const { paymentId } = req.params;
-    const { additionalData } = req.body;
 
-    if (!paymentId) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment ID is required",
-      });
-    }
-
-    const result = await paymentService.updatePaymentStatusWithProfileLink(
-      paymentId,
-      "completed",
-      additionalData || {}
-    );
-
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error("Error updating payment status with profile link:", error);
-    const statusCode = error.status || 500;
-    return res.status(statusCode).json({
-      success: false,
-      message: error.message || "Failed to update payment status",
-    });
-  }
-};

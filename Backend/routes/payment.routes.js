@@ -72,12 +72,4 @@ router.delete(
   paymentController.deletePayment
 );
 
-// PUT /payments/:paymentId/status - Update payment status with automatic profile linking (Admin only)
-router.put(
-  "/:paymentId/status",
-  requireAuth,
-  authLogMiddleware("payments"),
-  paymentController.updatePaymentStatusWithProfileLink
-);
-
 module.exports = router;
