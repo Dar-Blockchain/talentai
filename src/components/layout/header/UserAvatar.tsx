@@ -73,36 +73,56 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
           pl: 0.5,
           pr: 1,
           py: 0.4,
-          borderRadius: "10px",
+          borderRadius: "12px",
           cursor: "pointer",
+          bgcolor: "transparent",
           border: "1px solid",
-          borderColor: open ? "rgba(13,148,136,0.4)" : "rgba(13,148,136,0.2)",
-          bgcolor: open ? "rgba(13,148,136,0.08)" : "rgba(13,148,136,0.04)",
-          transition: "border-color 0.15s, background 0.15s",
-          "&:hover": { borderColor: "rgba(13,148,136,0.4)", bgcolor: "rgba(13,148,136,0.08)" },
+          borderColor: open ? "rgba(13,148,136,0.40)" : "rgba(0,0,0,0.12)",
+          boxShadow: open
+            ? "0 4px 16px rgba(13,148,136,0.12), 0 1px 4px rgba(0,0,0,0.06)"
+            : "0 1px 4px rgba(0,0,0,0.06)",
+          transition: "border-color 0.18s, box-shadow 0.18s",
+          "&:hover": {
+            borderColor: "rgba(13,148,136,0.40)",
+            boxShadow: "0 4px 16px rgba(13,148,136,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+          },
         }}
       >
-        {/* Avatar */}
-        <Avatar
-          src={avatarUrl || undefined}
-          sx={{
-            width: 26,
-            height: 26,
-            fontSize: "10px",
-            fontWeight: 700,
-            bgcolor: "#0D9488",
-            color: "#fff",
-            borderRadius: "7px",
-          }}
-        >
-          {!avatarUrl && initials}
-        </Avatar>
+        {/* Avatar with online dot */}
+        <Box sx={{ position: "relative", flexShrink: 0 }}>
+          <Avatar
+            src={avatarUrl || undefined}
+            sx={{
+              width: 26,
+              height: 26,
+              fontSize: "10px",
+              fontWeight: 700,
+              bgcolor: "#0D9488",
+              color: "#fff",
+              borderRadius: "8px",
+              border: "1.5px solid rgba(255,255,255,0.9)",
+            }}
+          >
+            {!avatarUrl && initials}
+          </Avatar>
+          {/* Online indicator */}
+          <Box sx={{
+            position: "absolute",
+            bottom: -1,
+            right: -1,
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            bgcolor: "#22C55E",
+            border: "1.5px solid #fff",
+          }} />
+        </Box>
 
         {/* Name */}
         <Typography sx={{
-          fontSize: "13px",
-          fontWeight: 500,
-          color: "#374151",
+          fontSize: "12.5px",
+          fontWeight: 600,
+          color: "#111827",
           maxWidth: 96,
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -116,7 +136,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         {/* Chevron */}
         {showDropdown && (
           <KeyboardArrowDownRounded sx={{
-            fontSize: 15,
+            fontSize: 14,
             color: "#9CA3AF",
             transition: "transform 0.2s",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",

@@ -4,7 +4,7 @@ import { Box, Badge } from "@mui/material";
 import { useRouter } from "next/router";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationDropdown from "./NotificationDropdown";
-import { NotificationsOutlined } from "@mui/icons-material";
+import { NotificationsNoneRounded } from "@mui/icons-material";
 import { RootState } from "@/store/store";
 import { useSelector } from "react-redux";
 
@@ -57,17 +57,31 @@ const HeaderNotification = () => {
           justifyContent: "center",
           width: 32,
           height: 32,
-          borderRadius: "8px",
+          borderRadius: "9px",
           cursor: "pointer",
-          transition: "background 0.15s",
-          "&:hover": { bgcolor: "rgba(13,148,136,0.12)" },
+          transition: "background 0.15s, box-shadow 0.15s",
+          "&:hover": {
+            bgcolor: "rgba(13,148,136,0.10)",
+            boxShadow: "0 0 0 3px rgba(13,148,136,0.08)",
+          },
         }}
       >
         <Badge
           badgeContent={unreadCount > 9 ? "9+" : unreadCount || undefined}
-          sx={{ "& .MuiBadge-badge": { bgcolor: "#EF4444", color: "#fff", fontSize: "10px", fontWeight: 700, minWidth: 16, height: 16, padding: 0 } }}
+          sx={{
+            "& .MuiBadge-badge": {
+              bgcolor: "#EF4444",
+              color: "#fff",
+              fontSize: "9px",
+              fontWeight: 700,
+              minWidth: 15,
+              height: 15,
+              padding: 0,
+              boxShadow: "0 0 0 1.5px #fff",
+            },
+          }}
         >
-          <NotificationsOutlined sx={{ fontSize: 18, color: "#0D9488" }} />
+          <NotificationsNoneRounded sx={{ fontSize: 19, color: "#374151" }} />
         </Badge>
       </Box>
       <NotificationDropdown
