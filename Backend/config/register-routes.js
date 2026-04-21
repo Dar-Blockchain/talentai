@@ -31,6 +31,7 @@ const cvAnalysisRouter = require('../routes/cvAnalysis.routes');
 const employeePermissionsRouter = require('../routes/employeePermissions.routes');
 const jobApplicationRouter = require("../routes/jobApplication.routes");
 const apiKeyRouter = require('../routes/apiKey.routes');
+const paymentRouter = require('../routes/payment.routes');
 
 // const backupRouter = require('../routes/backupRouter');
 
@@ -94,6 +95,8 @@ function registerRoutes(app) {
   // Pipeline Interview
   app.use("/api/pipeline-interview", pipelineInterviewRoutes); // Pipeline Interview Routes -> /interview-pipelines
 
+  //payment
+  app.use("/payments", paymentRouter); //✅ Payment Management -> payments
   // Health check routes
   app.get("/", (req, res) => {
     res.json({ message: "Welcome to Express API!" });

@@ -498,83 +498,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
   }
 };
 
-// Update the finalBid
-module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
-  try {
-    const profile = await Profile.findOne({ userId });
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
 
-    // Initialize companyBid if not defined
-    if (!profile.companyBid) {
-      profile.companyBid = {};
-    }
-
-    const lastCompanyId = profile.companyBid.company;
-
-    // 🚫 Check if same company wants to bid again
-    if (lastCompanyId && lastCompanyId.toString() === companyId.toString()) {
-      throw new Error("You cannot bid again if your company made the last bid");
-    }
-
-    // Valider et normaliser les valeurs de bid en nombres
-    const currentFinalBid =
-      profile.companyBid && profile.companyBid.finalBid
-        ? Number(profile.companyBid.finalBid)
-        : null;
-
-    const parsedNewBid = Number(newBid);
-    if (!Number.isFinite(parsedNewBid) || parsedNewBid <= 0) {
-      throw new Error("Invalid new bid. The bid must be a positive number.");
-    }
-
-    // Check if new bid is strictly greater than old (if present)
-    if (currentFinalBid !== null && parsedNewBid <= currentFinalBid) {
-      throw new Error(
-        `The new bid must be strictly greater than current bid (${currentFinalBid}). Received: ${parsedNewBid}`
-      );
-    }
-
-    // ✅ Update the bid
-    let finalBid = parsedNewBid;
-
-    // ✅ Update the bid
-    profile.companyBid.finalBid = finalBid;
-    profile.companyBid.company = companyId;
-    profile.companyBid.post = postId;
-    profile.companyBid.dateBid = new Date();
-    await profile.save();
-
-    // 🔄 Remove user from old company if there was one
-    if (lastCompanyId && lastCompanyId.toString() !== companyId.toString()) {
-      const oldCompanyProfile = await Profile.findOne({
-        userId: lastCompanyId,
-      });
-      if (oldCompanyProfile && oldCompanyProfile.type === "Company") {
-        oldCompanyProfile.usersBidedByCompany =
-          oldCompanyProfile.usersBidedByCompany.filter(
-            (id) => id.toString() !== userId.toString()
-          );
-        await oldCompanyProfile.save();
-      }
-    }
-
-    // ➕ Ajouter l'user dans la nouvelle compagnie
-    const newCompanyProfile = await Profile.findOne({ userId: companyId });
-    if (newCompanyProfile && newCompanyProfile.type === "Company") {
-      if (!newCompanyProfile.usersBidedByCompany.includes(userId)) {
-        newCompanyProfile.usersBidedByCompany.push(userId);
-        await newCompanyProfile.save();
-      }
-    }
-
-    return profile;
-  } catch (error) {
-    console.error("Error updating finalBid:", error);
-    throw error;
-  }
-};
 
 // Delete a specific skill (with cleanup of relationships and implications)
 // 🔹 Fonction pour supprimer un hard skill d’un profil utilisateur
@@ -816,55 +740,6 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 
   } catch (error) {
     console.error("🚨 Error deleting soft skill:", error.message);
-    throw error;
-  }
-};
-
-// Retrieve company bid information
-
-module.exports.getCompanyBids = async (companyId) => {
-  try {
-    // Retrieve the company profile
-    const companyProfile = await Profile.findOne({
-      userId: companyId,
-      type: "Company",
-    });
-
-    if (!companyProfile) {
-      throw new Error("Company profile not found");
-    }
-
-    // Retrieve the candidates bidded by the company
-    const candidates = await Profile.find({
-      userId: { $in: companyProfile.usersBidedByCompany },
-    })
-      .populate({
-        path: "userId",
-        select: "username email",
-      })
-      .populate({
-        path: "companyBid.post",
-        select: "jobDetails.title status createdAt",
-      });
-
-    // Build enriched result
-    const enrichedCandidates = candidates.map((candidate) => ({
-      _id: candidate._id,
-      userInfo: candidate.userId,
-      finalBid: candidate.companyBid?.finalBid || null,
-      dateBid: candidate.companyBid?.dateBid || null,
-      overallScore: candidate.overallScore,
-      skills: candidate.skills,
-      softSkills: candidate.softSkills,
-      post: candidate.companyBid?.post || null,
-    }));
-
-    return {
-      companyName: companyProfile.companyDetails?.name || "Unknown Company",
-      bidedCandidates: enrichedCandidates,
-    };
-  } catch (error) {
-    console.error("Error getting bidded candidates:", error);
     throw error;
   }
 };
@@ -1163,6 +1038,121 @@ module.exports.incrementPlanUsage = async (userId, usageType) => {
     return profile;
   } catch (error) {
     console.error('❌ Error incrementing plan usage:', error);
+    throw error;
+  }
+};
+
+// ========== PAYMENT MANAGEMENT FUNCTIONS ==========
+
+/**
+ * Get all payments for a profile
+ * @param {string} profileId - Profile ID
+ * @returns {object} - Payments with plan and user details
+ */
+module.exports.getProfilePayments = async (profileId) => {
+  try {
+    const profile = await Profile.findById(profileId).populate({
+      path: 'payments',
+      populate: [
+        { path: 'planId', select: 'name priceUsd postsLimit monthlyInterviewLimit' },
+        { path: 'userId', select: 'email FirstName LastName' }
+      ]
+    });
+
+    if (!profile) {
+      const error = new Error("Profile not found");
+      error.status = 404;
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: "Payments retrieved successfully",
+      profileId: profile._id,
+      profileType: profile.type,
+      payments: profile.payments || [],
+      totalPayments: (profile.payments || []).length,
+      totalAmountPaid: (profile.payments || [])
+        .filter(p => p.status === 'completed')
+        .reduce((sum, p) => sum + p.planPrice, 0)
+    };
+  } catch (error) {
+    console.error("Error retrieving profile payments:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get active payment for a profile (most recent completed payment)
+ * @param {string} profileId - Profile ID
+ * @returns {object} - Active payment details
+ */
+module.exports.getActiveProfilePayment = async (profileId) => {
+  try {
+    const profile = await Profile.findById(profileId).populate({
+      path: 'payments',
+      match: { status: 'completed' },
+      populate: { path: 'planId', select: 'name priceUsd postsLimit monthlyInterviewLimit' },
+      options: { sort: { completedAt: -1 }, limit: 1 }
+    });
+
+    if (!profile) {
+      const error = new Error("Profile not found");
+      error.status = 404;
+      throw error;
+    }
+
+    const activePayment = profile.payments && profile.payments.length > 0 
+      ? profile.payments[0] 
+      : null;
+
+    return {
+      success: true,
+      message: activePayment ? "Active payment found" : "No active payment found",
+      profileId: profile._id,
+      activePayment
+    };
+  } catch (error) {
+    console.error("Error retrieving active profile payment:", error);
+    throw error;
+  }
+};
+
+/**
+ * Add payment to profile payments array
+ * @param {string} profileId - Profile ID
+ * @param {string} paymentId - Payment ID
+ * @returns {object} - Updated profile
+ */
+module.exports.addPaymentToProfile = async (profileId, paymentId) => {
+  try {
+    const profile = await Profile.findById(profileId);
+
+    if (!profile) {
+      const error = new Error("Profile not found");
+      error.status = 404;
+      throw error;
+    }
+
+    if (!profile.payments) {
+      profile.payments = [];
+    }
+
+    // Prevent duplicate payments
+    if (!profile.payments.includes(paymentId)) {
+      profile.payments.push(paymentId);
+      await profile.save();
+      console.log(`✅ Payment ${paymentId} added to profile ${profileId}`);
+    }
+
+    return {
+      success: true,
+      message: "Payment added to profile",
+      profileId: profile._id,
+      paymentsCount: profile.payments.length
+    };
+  } catch (error) {
+    console.error("Error adding payment to profile:", error);
     throw error;
   }
 };

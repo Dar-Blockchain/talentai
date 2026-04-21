@@ -142,6 +142,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobId, jobTitle
     if (!form.firstName.trim()) e.firstName = 'Required';
     if (!form.lastName.trim()) e.lastName = 'Required';
     if (!form.phone.trim()) e.phone = 'Required';
+    if (!cvFile) e.cv = 'CV is required';
     setFormErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -362,7 +363,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ open, jobId, jobTitle
                 {/* CV upload */}
                 <Box>
                   <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151', mb: 0.75 }}>
-                    CV / Resume <Typography component="span" sx={{ fontWeight: 400, color: '#9CA3AF', fontSize: '0.78rem' }}>(PDF, optional)</Typography>
+                    CV / Resume <Typography component="span" sx={{ fontWeight: 400, color: '#DC2626', fontSize: '0.78rem' }}>*</Typography>
                   </Typography>
                   <Box onClick={() => fileInputRef.current?.click()} sx={{
                     border: `2px dashed ${formErrors.cv ? '#DC2626' : cvFile ? PURPLE : '#E5E7EB'}`,

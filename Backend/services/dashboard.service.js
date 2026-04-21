@@ -541,8 +541,6 @@ module.exports.generateUserExcel = async () => {
         requiredSkills: user.profile.requiredSkills,
         requiredExperienceLevel: user.profile.requiredExperienceLevel,
         assessmentResults: user.profile.assessmentResults,
-        companyBid: user.profile.companyBid,
-        usersBidedByCompany: user.profile.usersBidedByCompany
       } : {}; // If profile is null, return empty object
 
       return {

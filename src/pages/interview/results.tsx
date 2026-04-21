@@ -192,28 +192,12 @@ export default function InterviewResults() {
 
       try {
         const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : 'Interview';
-        const score = parsedData?.finalReport?.coverage?.overall || parsedData?.overallScore || 0;
-
-        if (score > 0) {
-          notifySkillTestPassed(dispatch, skillName, Math.round(score));
-          if (score >= 80) {
-            notifySkillLevelUp(dispatch, skillName, 'Expert');
-          } else if (score >= 60) {
-            notifySkillLevelUp(dispatch, skillName, 'Intermediate');
-          } else if (score >= 40) {
-            notifySkillLevelUp(dispatch, skillName, 'Beginner');
-          }
-        } else {
-          notifySkillTestCompleted(dispatch, skillName);
-        }
+        notifySkillTestCompleted(dispatch, skillName);
 
         // Persistent notification saved to DB — visible in the notification bell
-        const scoreText = score > 0 ? ` — you scored ${Math.round(score)}%` : '';
-        const level = score >= 80 ? 'Expert' : score >= 60 ? 'Intermediate' : score >= 40 ? 'Beginner' : null;
-        const levelText = level ? ` and reached ${level} level` : '';
         dispatch(createNotification({
           type: 'success',
-          content: `You completed your ${skillName} interview${scoreText}${levelText}. Your results are now available in your dashboard.`,
+          content: `You completed your ${skillName} interview. Your results are now available in your dashboard.`,
         }));
 
         // Notify company — fetch post owner userId then broadcast to them
@@ -223,7 +207,7 @@ export default function InterviewResults() {
             if (companyUserId) {
               const candidateName = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim() || 'A candidate';
               dispatch(broadcastSystemNotification({
-                content: `${candidateName} has just completed the ${skillName} interview${scoreText}. Check your dashboard to review their results.`,
+                content: `${candidateName} has just completed the ${skillName} interview. Check your dashboard to review their results.`,
                 recipientIds: [companyUserId],
               }));
             }

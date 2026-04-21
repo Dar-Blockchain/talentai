@@ -106,6 +106,13 @@ const profileSchema = new mongoose.Schema(
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
     planLimits: { type: mongoose.Schema.Types.ObjectId, ref: "PlanLimits" },
+    payments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payment",
+        description: "Array of payment records associated with this profile",
+      },
+    ],
     interviewDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "SkillInterviewAssessment" },
     ],
@@ -154,26 +161,6 @@ const profileSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    // ========== BIDDING INFORMATION ==========
-    companyBid: {
-      finalBid: Number,
-      dateBid: Date,
-      company: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      post: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Post",
-      },
-    },
-    usersBidedByCompany: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
   },
   { timestamps: true }
 );
@@ -208,5 +195,8 @@ profileSchema.post("save", async function (doc) {
 
 // Index to speed up queries filtering by visibility
 profileSchema.index({ isPublicProfile: 1 });
+profileSchema.index({ userId: 1 });
+profileSchema.index({ type: 1 });
+profileSchema.index({ payments: 1 });
 
 module.exports = mongoose.model("Profile", profileSchema);

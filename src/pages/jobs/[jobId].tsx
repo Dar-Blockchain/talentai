@@ -249,7 +249,7 @@ const JobLandingPage: React.FC = () => {
 
               {[
                 { num: 1, label: 'Fill in your details', sub: 'Name, email, phone' },
-                { num: 2, label: 'Upload your CV', sub: 'PDF format, optional' },
+                { num: 2, label: 'Upload your CV', sub: 'PDF format, required' },
                 { num: 3, label: 'Start AI Interview', sub: 'Takes ~20 minutes' },
               ].map(({ num, label, sub }) => (
                 <Box key={num} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.75 }}>

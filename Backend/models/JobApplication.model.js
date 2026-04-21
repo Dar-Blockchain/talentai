@@ -150,4 +150,4 @@ jobApplicationSchema.index({ appliedAt: -1 });
 jobApplicationSchema.index({ matchScore: -1 });
 jobApplicationSchema.index({ post: 1, status: 1 });
 
-module.exports = mongoose.model("JobApplication", jobApplicationSchema);
+module.exports = mongoose.models.JobApplication || mongoose.model("JobApplication", jobApplicationSchema);

@@ -11,7 +11,6 @@ Table globale contenant les définitions des plans d'abonnement.
 **Champs:**
 - `name` (String, required) - Nom du plan (Basic, Professional, Enterprise, Trial)
 - `postsLimit` (Number) - Limite maximale de posts pouvant être créés
-- `candidateUnlockLimit` (Number) - Limite maximale de déblocages de candidats
 - `monthlyInterviewLimit` (Number) - Limite maximale d'interviews par mois
 - `isActive` (Boolean) - Statut du plan
 - `description` (String) - Description du plan
@@ -43,7 +42,6 @@ Authorization: Bearer <token>
 {
   "name": "Premium",
   "postsLimit": 50,
-  "candidateUnlockLimit": 100,
   "monthlyInterviewLimit": 100,
   "description": "Plan premium pour entreprises en croissance",
   "isActive": true
@@ -68,8 +66,7 @@ Content-Type: application/json
 Authorization: Bearer <token>
 
 {
-  "postsLimit": 75,
-  "candidateUnlockLimit": 150
+  "postsLimit": 75
 }
 ```
 
