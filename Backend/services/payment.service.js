@@ -288,24 +288,8 @@ module.exports.updatePaymentStatusWithProfileLink = async (paymentId, status, ad
       throw err;
     }
 
-    const updateData = { status };
-
-    // If marking as completed, add completion date
-    if (status === "completed") {
-      updateData.completedAt = new Date();
-    }
-
-    // Add any additional data
-    Object.assign(updateData, additionalData);
-
-    const payment = await Payment.findByIdAndUpdate(
-      paymentId,
-      updateData,
-      { new: true, runValidators: true }
-    )
-      .populate("userId")
-      .populate("companyProfileId")
-      .populate("planId");
+    // Find the payment first
+    const payment = await Payment.findById(paymentId);
 
     if (!payment) {
       const err = new Error("Payment not found");
@@ -313,26 +297,24 @@ module.exports.updatePaymentStatusWithProfileLink = async (paymentId, status, ad
       throw err;
     }
 
-    // ✅ If payment is completed, ensure it's linked to the profile
-    if (status === "completed" && payment.companyProfileId) {
-      try {
-        const profile = await Profile.findById(payment.companyProfileId);
-        if (profile) {
-          if (!profile.payments) {
-            profile.payments = [];
-          }
-          // Add payment to profile if not already there
-          if (!profile.payments.includes(paymentId)) {
-            profile.payments.push(paymentId);
-            await profile.save();
-            console.log(`✅ Completed payment ${paymentId} linked to profile ${payment.companyProfileId}`);
-          }
-        }
-      } catch (err) {
-        console.warn(`⚠️  Warning: Could not link payment to profile during status update:`, err.message);
-        // Don't throw here - payment status update is already successful
-      }
+    // Update fields
+    payment.status = status;
+
+    // If marking as completed, add completion date
+    if (status === "completed") {
+      payment.completedAt = new Date();
     }
+
+    // Add any additional data
+    Object.assign(payment, additionalData);
+
+    // Save the payment (this will trigger post-save hook for profile linking)
+    await payment.save({ validateBeforeSave: true });
+
+    // Populate relations for response
+    await payment.populate("userId");
+    await payment.populate("companyProfileId");
+    await payment.populate("planId");
 
     return {
       success: true,
