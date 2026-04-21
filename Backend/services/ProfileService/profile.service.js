@@ -498,83 +498,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
   }
 };
 
-// Update the finalBid
-module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
-  try {
-    const profile = await Profile.findOne({ userId });
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
 
-    // Initialize companyBid if not defined
-    if (!profile.companyBid) {
-      profile.companyBid = {};
-    }
-
-    const lastCompanyId = profile.companyBid.company;
-
-    // 🚫 Check if same company wants to bid again
-    if (lastCompanyId && lastCompanyId.toString() === companyId.toString()) {
-      throw new Error("You cannot bid again if your company made the last bid");
-    }
-
-    // Valider et normaliser les valeurs de bid en nombres
-    const currentFinalBid =
-      profile.companyBid && profile.companyBid.finalBid
-        ? Number(profile.companyBid.finalBid)
-        : null;
-
-    const parsedNewBid = Number(newBid);
-    if (!Number.isFinite(parsedNewBid) || parsedNewBid <= 0) {
-      throw new Error("Invalid new bid. The bid must be a positive number.");
-    }
-
-    // Check if new bid is strictly greater than old (if present)
-    if (currentFinalBid !== null && parsedNewBid <= currentFinalBid) {
-      throw new Error(
-        `The new bid must be strictly greater than current bid (${currentFinalBid}). Received: ${parsedNewBid}`
-      );
-    }
-
-    // ✅ Update the bid
-    let finalBid = parsedNewBid;
-
-    // ✅ Update the bid
-    profile.companyBid.finalBid = finalBid;
-    profile.companyBid.company = companyId;
-    profile.companyBid.post = postId;
-    profile.companyBid.dateBid = new Date();
-    await profile.save();
-
-    // 🔄 Remove user from old company if there was one
-    if (lastCompanyId && lastCompanyId.toString() !== companyId.toString()) {
-      const oldCompanyProfile = await Profile.findOne({
-        userId: lastCompanyId,
-      });
-      if (oldCompanyProfile && oldCompanyProfile.type === "Company") {
-        oldCompanyProfile.usersBidedByCompany =
-          oldCompanyProfile.usersBidedByCompany.filter(
-            (id) => id.toString() !== userId.toString()
-          );
-        await oldCompanyProfile.save();
-      }
-    }
-
-    // ➕ Ajouter l'user dans la nouvelle compagnie
-    const newCompanyProfile = await Profile.findOne({ userId: companyId });
-    if (newCompanyProfile && newCompanyProfile.type === "Company") {
-      if (!newCompanyProfile.usersBidedByCompany.includes(userId)) {
-        newCompanyProfile.usersBidedByCompany.push(userId);
-        await newCompanyProfile.save();
-      }
-    }
-
-    return profile;
-  } catch (error) {
-    console.error("Error updating finalBid:", error);
-    throw error;
-  }
-};
 
 // Delete a specific skill (with cleanup of relationships and implications)
 // 🔹 Fonction pour supprimer un hard skill d’un profil utilisateur
@@ -816,55 +740,6 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 
   } catch (error) {
     console.error("🚨 Error deleting soft skill:", error.message);
-    throw error;
-  }
-};
-
-// Retrieve company bid information
-
-module.exports.getCompanyBids = async (companyId) => {
-  try {
-    // Retrieve the company profile
-    const companyProfile = await Profile.findOne({
-      userId: companyId,
-      type: "Company",
-    });
-
-    if (!companyProfile) {
-      throw new Error("Company profile not found");
-    }
-
-    // Retrieve the candidates bidded by the company
-    const candidates = await Profile.find({
-      userId: { $in: companyProfile.usersBidedByCompany },
-    })
-      .populate({
-        path: "userId",
-        select: "username email",
-      })
-      .populate({
-        path: "companyBid.post",
-        select: "jobDetails.title status createdAt",
-      });
-
-    // Build enriched result
-    const enrichedCandidates = candidates.map((candidate) => ({
-      _id: candidate._id,
-      userInfo: candidate.userId,
-      finalBid: candidate.companyBid?.finalBid || null,
-      dateBid: candidate.companyBid?.dateBid || null,
-      overallScore: candidate.overallScore,
-      skills: candidate.skills,
-      softSkills: candidate.softSkills,
-      post: candidate.companyBid?.post || null,
-    }));
-
-    return {
-      companyName: companyProfile.companyDetails?.name || "Unknown Company",
-      bidedCandidates: enrichedCandidates,
-    };
-  } catch (error) {
-    console.error("Error getting bidded candidates:", error);
     throw error;
   }
 };

@@ -34,10 +34,9 @@ exports.matchCandidatesToJob = async (req, res) => {
     ----------------------------------------- */
     const candidates = await Profile.find(
       { type: "Candidate" },
-      "skills firstName lastName softSkills targetRole companyBid userId workModePreference preferredContractType expectedSalary",
+      "skills firstName lastName softSkills targetRole userId workModePreference preferredContractType expectedSalary",
     )
       .populate("userId", "username email")
-      .populate("companyBid.company", "username email")
       .lean();
 
     console.log(`Found ${candidates.length} candidates.`);
@@ -178,8 +177,6 @@ exports.matchCandidatesToJob = async (req, res) => {
         matchScore,
         unlocked: isUnlocked,
         unlockPrice: 5,
-        finalBid: candidate.companyBid?.finalBid || null,
-        biddingCompany: candidate.companyBid?.company?.username || null,
         matchedSkills: candidateSkills.filter((cs) =>
           requiredNames.has(cs.name),
         ),

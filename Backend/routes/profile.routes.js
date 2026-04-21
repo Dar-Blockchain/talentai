@@ -44,8 +44,6 @@ router.post('/addSoftSkills', profileController.addSoftSkills);
 // GET /profile/getSoftSkills — soft skills courants
 router.get('/getSoftSkills',profileController.getSoftSkills);
 
-router.get('/getCompanyBid', profileController.getCompanyBids);
-
 // GET /profile/getSoftSkillsById/:userId — soft skills par utilisateur
 router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
 

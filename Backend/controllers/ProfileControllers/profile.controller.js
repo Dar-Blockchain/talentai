@@ -375,21 +375,6 @@ module.exports.updateFinalBid = async (req, res) => {
   }
 };
 
-// Get bidded candidates by connected company
-module.exports.getCompanyBids = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const result = await profileService.getCompanyBids(companyId);
-
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Error getting company bids:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Error getting company bids" });
-  }
-};
-
 exports.getCompanyWithAssessments = async (req, res) => {
   try {
     const { id } = req.user.profile;
