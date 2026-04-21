@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
 import CampaignDetail from "@/components/features/company/campaigns/details/CampaignDetail";
 import CampaignDetailSkeleton from "@/components/features/company/campaigns/details/CampaignDetailSkeleton";
 import CampaignDetailError from "@/components/features/company/campaigns/details/CampaignDetailError";
@@ -33,19 +32,8 @@ const EmployeeCampaignDetailsPage: React.FC = () => {
     return () => { dispatch(clearSelectedCampaign()); };
   }, [dispatch, id, authUser?._id]);
 
-  const breadcrumbTitle = loading ? "Loading…" : error ? "Not found" : campaign?.title ?? "";
-
   return (
     <DashboardLayout>
-      <PageHeader
-        title=""
-        breadcrumbs={[
-          { label: "Dashboard", href: "/employee/dashboard" },
-          { label: "My Campaigns", href: "/employee/campaigns" },
-          { label: breadcrumbTitle },
-        ]}
-      />
-
       {loading ? (
         <CampaignDetailSkeleton />
       ) : error ? (

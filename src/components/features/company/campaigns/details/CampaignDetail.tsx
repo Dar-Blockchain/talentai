@@ -113,7 +113,7 @@ const CampaignDetail: React.FC<Props> = ({
   const supportsResults = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
 
   const handleAssessmentAction = () => {
-    router.push(`/employee/campaigns/${campaign._id}/assessment`);
+    window.open(`/employee/campaigns/${campaign._id}/assessment`, "_blank", "noopener,noreferrer");
   };
 
   const handleViewResults = () => {
