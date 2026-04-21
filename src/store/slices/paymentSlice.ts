@@ -23,12 +23,16 @@ interface PaymentState {
   loading: boolean;
   error: string | null;
   lastUpdated: Payment | null;
+  history: Payment[];
+  historyLoading: boolean;
 }
 
 const initialState: PaymentState = {
   loading: false,
   error: null,
   lastUpdated: null,
+  history: [],
+  historyLoading: false,
 };
 
 // ─── Thunks ──────────────────────────────────────────────
@@ -72,6 +76,24 @@ export const verifyPayment = createAsyncThunk<
   }
 );
 
+export const fetchCompanyPaymentHistory = createAsyncThunk<
+  Payment[],
+  void,
+  { rejectValue: string }
+>(
+  "payment/fetchCompanyHistory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("payments/user/history");
+      return (res.data.data || res.data) as Payment[];
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || "Failed to fetch payment history"
+      );
+    }
+  }
+);
+
 // ─── Slice ───────────────────────────────────────────────
 
 const paymentSlice = createSlice({
@@ -110,6 +132,18 @@ const paymentSlice = createSlice({
         state.loading = false;
         state.error = action.payload || "Failed to verify payment";
       });
+
+    builder
+      .addCase(fetchCompanyPaymentHistory.pending, (state) => {
+        state.historyLoading = true;
+      })
+      .addCase(fetchCompanyPaymentHistory.fulfilled, (state, action) => {
+        state.historyLoading = false;
+        state.history = action.payload;
+      })
+      .addCase(fetchCompanyPaymentHistory.rejected, (state) => {
+        state.historyLoading = false;
+      });
   },
 });
 
@@ -118,6 +152,8 @@ const paymentSlice = createSlice({
 export const selectPaymentLoading = (state: RootState) => state.payment.loading;
 export const selectPaymentError = (state: RootState) => state.payment.error;
 export const selectLastUpdatedPayment = (state: RootState) => state.payment.lastUpdated;
+export const selectPaymentHistory = (state: RootState) => state.payment.history;
+export const selectPaymentHistoryLoading = (state: RootState) => state.payment.historyLoading;
 
 export const { clearPaymentError } = paymentSlice.actions;
 export default paymentSlice.reducer;

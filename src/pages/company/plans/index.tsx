@@ -2,11 +2,14 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
+import Link from "next/link";
 import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
 import PageHeader from "@/components/layout/dashboard/PageHeader";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, PlanLimit } from "@/store/slices/planLimitsSlice";
 import { payWithCard } from "@/services/stripeService";
+import { verifyPayment } from "@/store/slices/paymentSlice";
 import {
   Box,
   Grid,
@@ -15,10 +18,12 @@ import {
   Divider,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import AppButton from "@/components/ui/AppButton";
 
 const CreditCardOutlined = dynamic(() => import("@mui/icons-material/CreditCardOutlined"));
+const ReceiptLongOutlined = dynamic(() => import("@mui/icons-material/ReceiptLongOutlined"));
 const WorkOutlined = dynamic(() => import("@mui/icons-material/WorkOutlined"));
 const VideoCallOutlined = dynamic(() => import("@mui/icons-material/VideoCallOutlined"));
 const CheckCircleOutlined = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
@@ -212,9 +217,13 @@ const FeatureRow: React.FC<{ icon: React.ReactNode; label: string; color: string
 
 const PlansPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
   const plans = useSelector(selectPlanLimits);
   const loading = useSelector(selectPlanLimitsLoading);
   const currentPlanLimits = useSelector((state: RootState) => state.user.connectedUser.planLimits);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false, message: "", severity: "success",
+  });
 
   const currentPlanId = typeof currentPlanLimits === "object" && currentPlanLimits !== null
     ? (currentPlanLimits as any)._id ?? currentPlanLimits
@@ -223,6 +232,27 @@ const PlansPage: React.FC = () => {
   useEffect(() => {
     dispatch(fetchPlanLimits());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { status, session_id } = router.query;
+    if (status === "success" && session_id) {
+      dispatch(verifyPayment({ sessionId: session_id as string }))
+        .unwrap()
+        .then(() => {
+          localStorage.removeItem("pending_payment_id");
+          setSnackbar({ open: true, message: "Payment successful! Your plan has been activated.", severity: "success" });
+          dispatch(fetchPlanLimits());
+        })
+        .catch(() => {
+          setSnackbar({ open: true, message: "Payment received but verification failed. Please contact support.", severity: "error" });
+        });
+      router.replace("/company/plans", undefined, { shallow: true });
+    } else if (status === "cancel") {
+      setSnackbar({ open: true, message: "Payment was cancelled. No charges were made.", severity: "error" });
+      router.replace("/company/plans", undefined, { shallow: true });
+    }
+  }, [router.isReady]);
 
   const orderedPlanNames = ["Standard", "Gold", "Platinum", "Diamond"];
   const sortedPlans = [...plans]
@@ -235,6 +265,16 @@ const PlansPage: React.FC = () => {
 
   return (
     <DashboardLayout>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} sx={{ fontWeight: 600 }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
       <PageHeader
         title="Choose a Plan"
         subtitle="Upgrade your workspace to unlock more posts, interviews, and candidate insights"
@@ -243,6 +283,11 @@ const PlansPage: React.FC = () => {
           { label: "Settings", href: "/company/settings" },
           { label: "Plans" },
         ]}
+        actions={
+          <Link href="/company/billing">
+            <AppButton label="Payment History" variant="outlined" startIcon={<ReceiptLongOutlined />} />
+          </Link>
+        }
       />
 
       {loading ? (
