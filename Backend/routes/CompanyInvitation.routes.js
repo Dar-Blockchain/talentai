@@ -12,8 +12,27 @@ const { requireAuth } = require("../middleware/security/auth.middleware");
 const authLogMiddleware = require("../middleware/security/request-log.middleware");
 const resolveCompanyActor = require("../middleware/resolve-company-actor.middleware");
 
-// ========== MIDDLEWARE: Authentication (API Key or JWT) + Logging ==========
-// All routes below accept either API Key or JWT authentication and are logged
+// ========== PUBLIC ROUTES (no auth required) ==========
+
+/**
+ * GET /details/:invitationId
+ * Get invitation details by ID — public so unauthenticated users can view before accepting
+ */
+router.get(
+  "/details/:invitationId",
+  CompanyInvitationController.getInvitationDetails,
+);
+
+/**
+ * POST /respondInvitation/:invitationId
+ * Accept or reject an invitation — public so the invitee can respond before having an account
+ */
+router.post(
+  "/respondInvitation/:invitationId",
+  CompanyInvitationController.respondInvitation,
+);
+
+// ========== AUTHENTICATED ROUTES ==========
 router.use(requireAuth, authLogMiddleware("sentInvitation"));
 
 /**
