@@ -27,7 +27,6 @@ const ReceiptLongOutlined = dynamic(() => import("@mui/icons-material/ReceiptLon
 const WorkOutlined = dynamic(() => import("@mui/icons-material/WorkOutlined"));
 const VideoCallOutlined = dynamic(() => import("@mui/icons-material/VideoCallOutlined"));
 const CheckCircleOutlined = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
-const OpenInNewOutlined = dynamic(() => import("@mui/icons-material/OpenInNewOutlined"));
 
 const PLAN_CONFIG: Record<string, { color: string; badge?: string; priceLabel: string; priceNote: string; postsDisplay?: number; interviewsDisplay?: number }> = {
   Standard: { color: "#0D9488", priceLabel: "$99", priceNote: "/ month" },
@@ -36,7 +35,7 @@ const PLAN_CONFIG: Record<string, { color: string; badge?: string; priceLabel: s
   Diamond: { color: "#D97706", priceLabel: "$1,499", priceNote: "/ month", postsDisplay: 100, interviewsDisplay: 500 },
 };
 
-const PlanCard: React.FC<{ plan: PlanLimit; isCurrentPlan: boolean }> = ({ plan, isCurrentPlan }) => {
+const PlanCard: React.FC<{ plan: PlanLimit; isCurrentPlan: boolean; hasActivePlan: boolean }> = ({ plan, isCurrentPlan, hasActivePlan }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cfg = PLAN_CONFIG[plan.name] ?? { color: "#6b7280", priceLabel: "Contact us", priceNote: "" };
@@ -163,18 +162,18 @@ const PlanCard: React.FC<{ plan: PlanLimit; isCurrentPlan: boolean }> = ({ plan,
 
       {isCurrentPlan ? (
         <AppButton
-          label="Manage Subscription"
+          label="Your Current Subscription"
           variant="outlined"
           fullWidth
-          startIcon={<OpenInNewOutlined />}
-          onClick={() => window.open("https://billing.stripe.com/p/login/test_eVa6p10Fz2lH7pS000", "_blank", "noopener,noreferrer")}
+          disabled
+          startIcon={<CheckCircleOutlined />}
           sx={{
             borderColor: cfg.color,
             color: cfg.color,
             fontWeight: 700,
             borderRadius: 2,
             py: 1.2,
-            "&:hover": { borderColor: cfg.color, bgcolor: `${cfg.color}0a` },
+            "&.Mui-disabled": { borderColor: `${cfg.color}80`, color: `${cfg.color}80` },
           }}
         />
       ) : (
@@ -182,7 +181,7 @@ const PlanCard: React.FC<{ plan: PlanLimit; isCurrentPlan: boolean }> = ({ plan,
           label={loading ? "Redirecting…" : "Get Started"}
           variant="contained"
           fullWidth
-          disabled={loading}
+          disabled={loading || hasActivePlan}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <CreditCardOutlined />}
           onClick={handleSubscribe}
           sx={{
@@ -301,6 +300,7 @@ const PlansPage: React.FC = () => {
               <PlanCard
                 plan={plan}
                 isCurrentPlan={plan._id === currentPlanId?.toString()}
+                hasActivePlan={!!currentPlanId}
               />
             </Grid>
           ))}

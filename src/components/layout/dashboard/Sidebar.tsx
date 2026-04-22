@@ -51,7 +51,7 @@ const GROUPS = [
   { label: "JOBS",   ids: ["posts", "applications"] },
   { label: "CAMPAIGNS",   ids: ["campaigns"] },
   { label: "Team",     ids: ["employees", "departments"] },
-  { label: "Account",  ids: ["settings"] },
+  { label: "Account",  ids: ["settings", "subscription"] },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -76,6 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user              = useSelector((state: RootState) => state.user.connectedUser.user);
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
+  const planLimits        = useSelector((state: RootState) => state.user.connectedUser.planLimits);
   const employeePermissions = useSelector(selectEmployeePermissions);
 
   const isEmployee  = user?.role === "Employee";
@@ -349,9 +350,24 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {!isCollapsed && (
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
-                  {displayName}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Typography noWrap sx={{ fontSize: "12.5px", fontWeight: 600, color: "#E8F6F9", lineHeight: 1.35 }}>
+                    {displayName}
+                  </Typography>
+                  {(planLimits as any)?.name && (
+                    <Box sx={{
+                      display: "inline-flex", alignItems: "center", flexShrink: 0,
+                      px: 0.75, py: 0.15,
+                      borderRadius: "4px",
+                      bgcolor: `${TEAL}28`,
+                      border: `1px solid ${TEAL}55`,
+                    }}>
+                      <Typography sx={{ fontSize: "9px", fontWeight: 700, color: TEAL_LIGHT, letterSpacing: "0.04em", lineHeight: 1.4 }}>
+                        {(planLimits as any).name}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
                 {displayEmail && (
                   <Typography noWrap sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3 }}>
                     {displayEmail}
