@@ -17,6 +17,29 @@ export interface Payment {
   updatedAt: string;
 }
 
+export interface ActiveSubscription {
+  _id: string;
+  companyProfileId: string;
+  planId: {
+    _id: string;
+    name: string;
+    priceUsd: number;
+    postsLimit: number;
+    monthlyInterviewLimit: number;
+    durationDays: number;
+  };
+  paymentId: string;
+  startDate: string;
+  endDate: string;
+  renewalDate?: string;
+  postsUsed: number;
+  monthlyInterviewsUsed: number;
+  status: "active" | "expired" | "cancelled" | "suspended";
+  autoRenew: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface PaymentState {
   loading: boolean;
   cancelling: boolean;
@@ -24,6 +47,8 @@ interface PaymentState {
   lastUpdated: Payment | null;
   history: Payment[];
   historyLoading: boolean;
+  activeSubscription: ActiveSubscription | null;
+  activeSubscriptionLoading: boolean;
 }
 
 const initialState: PaymentState = {
@@ -33,6 +58,8 @@ const initialState: PaymentState = {
   lastUpdated: null,
   history: [],
   historyLoading: false,
+  activeSubscription: null,
+  activeSubscriptionLoading: false,
 };
 
 export const verifyPayment = createAsyncThunk<Payment, { sessionId: string }, { rejectValue: string }>(
@@ -66,6 +93,18 @@ export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { re
       return (res.data.data || res.data) as Payment[];
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch payment history");
+    }
+  }
+);
+
+export const fetchActiveSubscription = createAsyncThunk<ActiveSubscription, void, { rejectValue: string }>(
+  "payment/fetchActiveSubscription",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("subscriptions/active");
+      return res.data.data as ActiveSubscription;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "No active subscription");
     }
   }
 );
@@ -112,6 +151,11 @@ const paymentSlice = createSlice({
       .addCase(fetchCompanyPaymentHistory.rejected, (state) => { state.historyLoading = false; });
 
     builder
+      .addCase(fetchActiveSubscription.pending, (state) => { state.activeSubscriptionLoading = true; })
+      .addCase(fetchActiveSubscription.fulfilled, (state, action) => { state.activeSubscriptionLoading = false; state.activeSubscription = action.payload; })
+      .addCase(fetchActiveSubscription.rejected, (state) => { state.activeSubscriptionLoading = false; state.activeSubscription = null; });
+
+    builder
       .addCase(updatePaymentStatus.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(updatePaymentStatus.fulfilled, (state, action) => { state.loading = false; state.lastUpdated = action.payload; })
       .addCase(updatePaymentStatus.rejected, (state, action) => { state.loading = false; state.error = action.payload || "Failed to update payment status"; });
@@ -124,6 +168,8 @@ export const selectPaymentError = (state: RootState) => state.payment.error;
 export const selectLastUpdatedPayment = (state: RootState) => state.payment.lastUpdated;
 export const selectPaymentHistory = (state: RootState) => state.payment.history;
 export const selectPaymentHistoryLoading = (state: RootState) => state.payment.historyLoading;
+export const selectActiveSubscription = (state: RootState) => state.payment.activeSubscription;
+export const selectActiveSubscriptionLoading = (state: RootState) => state.payment.activeSubscriptionLoading;
 
 export const { clearPaymentError } = paymentSlice.actions;
 export default paymentSlice.reducer;
