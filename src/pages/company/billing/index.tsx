@@ -30,7 +30,10 @@ const BillingPage: React.FC = () => {
 
   const totalSpent = history
     .filter((p) => p.status === "completed")
-    .reduce((sum, p) => sum + (p.amountCents || 0) / 100, 0);
+    .reduce((sum, p) => {
+      const dollars = p.amountCents ? p.amountCents / 100 : (p.planPrice || 0);
+      return sum + dollars;
+    }, 0);
 
   const completedCount = history.filter((p) => p.status === "completed").length;
   const lastPayment = history[0];
@@ -77,7 +80,7 @@ const BillingPage: React.FC = () => {
           <StatCard
             icon={<AttachMoneyOutlined />}
             label="Last Payment"
-            value={lastPayment ? `$${((lastPayment.amountCents || 0) / 100).toFixed(0)}` : "—"}
+            value={lastPayment ? `$${(lastPayment.amountCents ? lastPayment.amountCents / 100 : (lastPayment.planPrice || 0)).toFixed(0)}` : "—"}
             color="#D97706"
           />
         </Grid>

@@ -9,6 +9,7 @@ import {
   PeopleAltOutlined,
   DashboardOutlined,
   SettingsOutlined,
+  CreditCardOutlined,
 } from "@mui/icons-material";
 import { EmployeePermissionKey } from "@/types/employeePermissions";
 
@@ -60,6 +61,12 @@ export const navigation = [
     icon: TuneOutlined,
     label: "Settings",
     href: "/company/settings",
+  },
+  {
+    id: "subscription",
+    icon: CreditCardOutlined,
+    label: "Subscription",
+    href: "/company/plans",
   },
 ];
 
