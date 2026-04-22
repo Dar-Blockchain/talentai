@@ -23,6 +23,14 @@ const planLimitsSchema = new mongoose.Schema(
       description: "Maximum number of interviews allowed per month",
     },
 
+    // ========== PLAN DURATION ==========
+    durationDays: {
+      type: Number,
+      required: true,
+      default: 30,
+      description: "Duration of the plan in days",
+    },
+
     // ========== PLAN METADATA ==========
     priceUsd: {
       type: Number,
