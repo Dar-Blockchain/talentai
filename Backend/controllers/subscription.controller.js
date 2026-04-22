@@ -16,7 +16,8 @@ const handleError = (res, error, defaultStatus = 500) => {
  */
 module.exports.getActiveSubscription = async (req, res) => {
   try {
-    const { companyProfileId } = req.params;
+    const companyProfileId = req.user.profile;
+    console.log(`Fetching active subscription for company profile: ${req.user}`);
 
     const result = await subscriptionService.getActiveSubscription(companyProfileId);
 
@@ -32,7 +33,7 @@ module.exports.getActiveSubscription = async (req, res) => {
  */
 module.exports.getCompanySubscriptions = async (req, res) => {
   try {
-    const { companyProfileId } = req.params;
+    const companyProfileId = req.user.profile;
 
     const result = await subscriptionService.getCompanySubscriptions(
       companyProfileId
