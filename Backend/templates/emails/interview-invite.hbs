@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Invitation</title>
+  <title>AI Interview Invitation</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8; padding:32px 0;">
@@ -27,30 +27,30 @@
           <!-- Title -->
           <tr>
             <td style="padding:36px 36px 8px 36px;">
-              <h1 style="margin:0; font-size:30px; font-weight:700; color:#4F5A68; line-height:1.2; font-family:'Segoe UI', Arial, sans-serif;">
-                Interview Invitation
+              <h1 style="margin:0; font-size:28px; font-weight:700; color:#111827; line-height:1.2; font-family:'Segoe UI', Arial, sans-serif;">
+                You're Invited to an AI Interview
               </h1>
             </td>
           </tr>
 
           <!-- Body text -->
           <tr>
-            <td style="padding:20px 36px 0 36px;">
-              <p style="margin:0 0 10px 0; font-size:16px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">Hello <strong>{{candidateName}}</strong>,</p>
-              <p style="margin:0; font-size:16px; color:#4F5A68; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
-                Congratulations! Your application has impressed us. <strong>{{companyName}}</strong> would like to invite you for an interview.
+            <td style="padding:16px 36px 0 36px;">
+              <p style="margin:0 0 10px 0; font-size:16px; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">Hello <strong>{{candidateName}}</strong>,</p>
+              <p style="margin:0; font-size:15px; color:#4B5563; line-height:1.7; font-family:'Segoe UI', Arial, sans-serif;">
+                <strong>{{companyName}}</strong> has reviewed your profile and selected you to move forward in their hiring process. You have been invited to complete an <strong>AI-powered interview</strong> — a flexible, on-demand experience you can take at any time, from anywhere, before the deadline.
               </p>
             </td>
           </tr>
 
           <!-- Success badge -->
           <tr>
-            <td style="padding:24px 36px 8px 36px;">
+            <td style="padding:20px 36px 8px 36px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="background-color:#ecfdf5; border:1.5px solid #6ee7b7; border-radius:10px; padding:14px 24px;">
                     <p style="margin:0; font-size:15px; font-weight:700; color:#059669; font-family:'Segoe UI', Arial, sans-serif;">
-                      🎉 &nbsp;You've been selected for an interview
+                      🎉 &nbsp;You've been selected — complete your interview before the deadline
                     </p>
                   </td>
                 </tr>
@@ -68,42 +68,51 @@
                       <tr>
                         <td style="padding-bottom:14px;">
                           <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Position</p>
-                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{jobTitle}}</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#111827; font-family:'Segoe UI', Arial, sans-serif;">{{jobTitle}}</p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding-bottom:14px;">
                           <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Company</p>
-                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{companyName}}</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#111827; font-family:'Segoe UI', Arial, sans-serif;">{{companyName}}</p>
                         </td>
                       </tr>
                       {{#if interviewDate}}
                       <tr>
                         <td style="padding-bottom:14px;">
-                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Date</p>
-                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{interviewDate}}</p>
-                        </td>
-                      </tr>
-                      {{/if}}
-                      {{#if interviewTime}}
-                      <tr>
-                        <td style="padding-bottom:14px;">
-                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Time</p>
-                          <p style="margin:0; font-size:15px; font-weight:700; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">{{interviewTime}}</p>
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Deadline</p>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#DC2626; font-family:'Segoe UI', Arial, sans-serif;">{{interviewDate}}</p>
                         </td>
                       </tr>
                       {{/if}}
                       {{#if interviewLink}}
                       <tr>
                         <td>
-                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Meeting Link</p>
-                          <p style="margin:0; font-size:14px; font-family:'Segoe UI', Arial, sans-serif;">
-                            <a href="{{interviewLink}}" style="color:#0ea5a0; text-decoration:none;">{{interviewLink}}</a>
+                          <p style="margin:0 0 3px 0; font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.5px; font-family:'Segoe UI', Arial, sans-serif;">Your Interview Link</p>
+                          <p style="margin:0; font-size:13px; font-family:'Segoe UI', Arial, sans-serif;">
+                            <a href="{{interviewLink}}" style="color:#0ea5a0; text-decoration:none; word-break:break-all;">{{interviewLink}}</a>
                           </p>
                         </td>
                       </tr>
                       {{/if}}
                     </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- How it works -->
+          <tr>
+            <td style="padding:16px 36px 8px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff; border-radius:10px; border:1px solid #bae6fd;">
+                <tr>
+                  <td style="padding:18px 22px;">
+                    <p style="margin:0 0 12px 0; font-size:13px; font-weight:700; color:#0369a1; font-family:'Segoe UI', Arial, sans-serif;">🤖 How the AI Interview works</p>
+                    <p style="margin:0 0 6px 0; font-size:13px; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">• <strong>No scheduling needed</strong> — start whenever you're ready, before the deadline</p>
+                    <p style="margin:0 0 6px 0; font-size:13px; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">• <strong>Conversational AI</strong> — an AI interviewer will guide you through questions naturally</p>
+                    <p style="margin:0 0 6px 0; font-size:13px; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">• <strong>Takes ~20–40 min</strong> — complete it in one sitting once you begin</p>
+                    <p style="margin:0; font-size:13px; color:#374151; font-family:'Segoe UI', Arial, sans-serif;">• <strong>Fair &amp; unbiased</strong> — every candidate is evaluated on the same criteria</p>
                   </td>
                 </tr>
               </table>
@@ -116,13 +125,16 @@
             <td align="center" style="padding:24px 36px 8px 36px;">
               <table cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="background-color:#0ea5a0; border-radius:8px;">
-                    <a href="{{interviewLink}}" target="_blank" style="display:inline-block; padding:14px 36px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif;">
-                      Join Interview
+                  <td align="center" style="background-color:#0ea5a0; border-radius:10px; box-shadow:0 4px 14px rgba(14,165,160,0.35);">
+                    <a href="{{interviewLink}}" target="_blank" style="display:inline-block; padding:15px 40px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif; letter-spacing:0.2px;">
+                      Start My AI Interview →
                     </a>
                   </td>
                 </tr>
               </table>
+              <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">
+                Click the button above or copy the link into your browser
+              </p>
             </td>
           </tr>
           {{/if}}
@@ -133,11 +145,11 @@
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb; border-left:4px solid #fcd34d; border-radius:0 6px 6px 0;">
                 <tr>
                   <td style="padding:16px 20px;">
-                    <p style="margin:0 0 10px 0; font-size:13px; font-weight:700; color:#d97706; font-family:'Segoe UI', Arial, sans-serif;">📋 How to prepare</p>
-                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Review the job description and responsibilities</p>
-                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Prepare to discuss your experience and qualifications</p>
-                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Test your internet connection, camera and microphone</p>
-                    <p style="margin:0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Find a quiet environment for the interview</p>
+                    <p style="margin:0 0 10px 0; font-size:13px; font-weight:700; color:#d97706; font-family:'Segoe UI', Arial, sans-serif;">📋 Before you begin</p>
+                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Use a laptop or desktop with a working camera and microphone</p>
+                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Choose a quiet, well-lit location with a stable internet connection</p>
+                    <p style="margin:0 0 5px 0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Review the job description and be ready to discuss your experience</p>
+                    <p style="margin:0; font-size:13px; color:#4F5A68; font-family:'Segoe UI', Arial, sans-serif;">• Once started, complete the interview in one session without interruptions</p>
                   </td>
                 </tr>
               </table>
@@ -155,7 +167,7 @@
           <tr>
             <td style="background-color:#f9fafb; padding:20px 36px; border-radius:0 0 12px 12px;">
               <p style="margin:0; font-size:13px; color:#6b7280; font-family:'Segoe UI', Arial, sans-serif;">
-                If you did not apply for this job, please ignore this email. For support, contact
+                If you did not apply for this position or received this email by mistake, please ignore it. For support, contact
                 <a href="mailto:contact@talentai.bid" style="color:#0ea5a0; text-decoration:none;">contact@talentai.bid</a>
               </p>
               <p style="margin:10px 0 0 0; font-size:12px; color:#9ca3af; font-family:'Segoe UI', Arial, sans-serif;">

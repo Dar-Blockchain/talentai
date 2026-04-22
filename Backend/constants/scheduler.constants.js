@@ -3,25 +3,29 @@
  * Configuration and constants for auto-invite and reminder schedulers
  */
 
+// ========== TEST MODE ==========
+// Set TEST_MODE=true to use short timings and run cron every minute
+const TEST_MODE = process.env.SCHEDULER_TEST_MODE === 'true';
+
 // ========== TIME WINDOWS ==========
 const SCHEDULER_TIME_WINDOW = {
-  START_HOUR: 12,        // 12:00 (noon)
-  END_HOUR: 21,          // 21:00 (9 PM)
-  DESCRIPTION: 'Emails only sent between 12:00 and 21:00'
+  START_HOUR: TEST_MODE ? 0  : 12,   // TEST: all hours | PROD: 12:00 noon
+  END_HOUR:   TEST_MODE ? 24 : 21,   // TEST: all hours | PROD: 21:00
+  DESCRIPTION: TEST_MODE ? 'TEST — no time restriction' : 'Emails only sent between 12:00 and 21:00'
 };
 
 // ========== AUTO INVITE SCHEDULER ==========
 const AUTO_INVITE_CONFIG = {
   // Time thresholds
-  FIRST_INVITE_HOURS: 5,       // Send first invitation 5 minutes after application
-  RECURRING_INVITE_HOURS: 24,  // Send recurring invitations every 24h
-  
+  FIRST_INVITE_HOURS: TEST_MODE ? (2 / 60) : 24,      // TEST: 2 min | PROD: 24h after application
+  RECURRING_INVITE_HOURS: TEST_MODE ? (5 / 60) : 48,  // TEST: 5 min | PROD: 48h
+
   // Batch processing
   BATCH_LIMIT: 10,             // Process max 10 applications per run
-  
-  // Cron schedule (hourly at minute 0)
-  CRON_PATTERN: '0 * * * *',
-  
+
+  // Cron schedule — every minute in test, every hour in prod
+  CRON_PATTERN: TEST_MODE ? '* * * * *' : '0 * * * *',
+
   // Application statuses to process
   VALID_STATUSES: ['visited'],
 
@@ -52,11 +56,13 @@ const AUTO_INVITE_CONFIG = {
 // ========== REMINDER SCHEDULER ==========
 const REMINDER_CONFIG = {
   // Reminder timings
-  FIRST_REMINDER_HOURS: 24,    // Send first reminder 24h after application
-  SECOND_REMINDER_HOURS: 24,   // Send second reminder when < 24h before post expiration
-  
-  // Cron schedule (hourly at minute 0)
-  CRON_PATTERN: '0 * * * *',
+  // TEST:  first after 5 min, second when expiry < 10 min away
+  // PROD:  first after 72h (3 days), second when expiry < 24h away
+  FIRST_REMINDER_HOURS:  TEST_MODE ? (5  / 60) : 72,
+  SECOND_REMINDER_HOURS: TEST_MODE ? (10 / 60) : 24,
+
+  // Cron schedule — every minute in test, daily 09:30 in prod
+  CRON_PATTERN: TEST_MODE ? '* * * * *' : '30 09 * * *',
   
   // Application statuses to process
   VALID_STATUSES: ['visited'],

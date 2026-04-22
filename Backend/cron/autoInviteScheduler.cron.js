@@ -3,7 +3,7 @@ const JobApplication = require('../models/JobApplication.model');
 const Profile = require('../models/Profile.model');
 const Post = require('../models/Post.model');
 const User = require('../models/User.model');
-const { sendInterviewInvitation } = require('../utils/email-service');
+const { sendInterviewNudge } = require('../utils/email-service');
 const { AUTO_INVITE_CONFIG, SCHEDULER_TIME_WINDOW } = require('../constants/scheduler.constants');
 
 /**
@@ -57,29 +57,23 @@ const sendAutoInvitation = async (application) => {
     }
 
     const candidateEmail = candidateProfile.userId.email;
-    const candidateName = `${candidateProfile.firstName} ${candidateProfile.lastName}`;
+    const firstName = candidateProfile.firstName || candidateProfile.userId.username || 'there';
     const jobTitle = post.jobDetails?.title || 'Position';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
-
-    // Build interview link
     const interviewLink = `${process.env.BASE_URL}interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
 
     console.log(`   📧 To: ${candidateEmail}`);
-    console.log(`   👤 Candidate: ${candidateName}`);
+    console.log(`   👤 Candidate: ${firstName}`);
     console.log(`   📋 Position: ${jobTitle}`);
     console.log(`   🏢 Company: ${companyName}`);
     console.log(`   🔗 Interview Link: ${interviewLink}`);
 
-    // Send interview invitation email
-    const emailSent = await sendInterviewInvitation(
+    // Nudge #1 — welcoming first invitation (24h after applying)
+    const emailSent = await sendInterviewNudge(
       candidateEmail,
-      candidateName,
-      jobTitle,
-      companyName,
-      null, // No specific date
-      null, // No specific time
-      interviewLink  // Interview link
+      { firstName, jobTitle, companyName, interviewLink, deadline: null },
+      1
     );
 
     if (!emailSent) {
@@ -108,15 +102,15 @@ const sendAutoInvitation = async (application) => {
   }
 };
 
-const runAutoInviteJob = async () => {
+const runAutoInviteJob = async ({ force = false } = {}) => {
   try {
     const MSG = AUTO_INVITE_CONFIG.MESSAGES;
     const CONFIG = AUTO_INVITE_CONFIG;
-    
-    console.log(`\n⏰ [AUTO INVITE SCHEDULER] Running at ${new Date().toLocaleString()}`);
 
-    // Check if we're within the time window
-    if (!isWithinTimeWindow()) {
+    console.log(`\n⏰ [AUTO INVITE SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
+
+    // Check if we're within the time window (skip when forced or in test mode)
+    if (!force && !isWithinTimeWindow()) {
       const currentHour = new Date().getHours();
       console.log(`${MSG.OUTSIDE_WINDOW}`);
       console.log(`   ⏰ Auto-invitations are only sent between ${SCHEDULER_TIME_WINDOW.START_HOUR}:00 and ${SCHEDULER_TIME_WINDOW.END_HOUR}:00`);
@@ -126,9 +120,9 @@ const runAutoInviteJob = async () => {
     console.log(`${MSG.WITHIN_WINDOW}`);
 
     // Find applications that need first-time invitations
-    // (Applied 5+ minutes ago and never invited)
+    // (Applied FIRST_INVITE_HOURS hours ago and never invited)
     const firstTimeInvites = await JobApplication.find({
-      appliedAt: { $lte: new Date(Date.now() - AUTO_INVITE_CONFIG.FIRST_INVITE_HOURS * 60 * 1000) },
+      appliedAt: { $lte: new Date(Date.now() - AUTO_INVITE_CONFIG.FIRST_INVITE_HOURS * 60 * 60 * 1000) },
       status: { $in: AUTO_INVITE_CONFIG.VALID_STATUSES },
       firstInvitationSentAt: null,
       isArchived: false,

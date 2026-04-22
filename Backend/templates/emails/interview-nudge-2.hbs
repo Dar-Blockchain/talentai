@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Still time to complete your interview</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F3F4F6; font-family:'Segoe UI', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6; padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.07);">
+
+          <!-- Logo -->
+          <tr>
+            <td style="padding:22px 32px; border-bottom:1px solid #F3F4F6;">
+              <table cellpadding="0" cellspacing="0" style="background-color:#141415; border-radius:24px; width:110px; height:28px;">
+                <tr>
+                  <td align="center" valign="middle" style="padding:0 12px;">
+                    <img src="cid:logocompany" alt="TalentAI" height="18" style="display:block; border:0; outline:none;">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding:38px 36px 16px 36px;">
+
+              <!-- Pill -->
+              <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background-color:#FFF7ED; border:1px solid #FED7AA; border-radius:999px; padding:5px 16px;">
+                    <p style="margin:0; font-size:12px; font-weight:700; color:#C2410C; font-family:'Segoe UI', Arial, sans-serif;">⏳ &nbsp;A friendly reminder</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 10px 0; font-size:23px; font-weight:700; color:#111827; line-height:1.3; font-family:'Segoe UI', Arial, sans-serif;">
+                We're still rooting for you, {{firstName}}
+              </p>
+              <p style="margin:0 0 22px 0; font-size:15px; color:#4B5563; line-height:1.75; font-family:'Segoe UI', Arial, sans-serif;">
+                We noticed you haven't completed your AI interview for <strong style="color:#111827;">{{jobTitle}}</strong> at <strong style="color:#111827;">{{companyName}}</strong> yet. We get it — life gets busy. But your application is still live and your spot is still open.
+              </p>
+
+              <!-- Reminder callout -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#EFF6FF; border-radius:12px; border:1px solid #BFDBFE; margin-bottom:22px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:#1D4ED8; font-family:'Segoe UI', Arial, sans-serif;">🤖 &nbsp;Quick reminder — this is an AI interview, not a meeting</p>
+                    <p style="margin:0; font-size:13px; color:#1E40AF; line-height:1.65; font-family:'Segoe UI', Arial, sans-serif;">
+                      There's no recruiter to call, no time slot to book. Just open the link and an AI interviewer walks you through the questions — from your desk, your sofa, wherever you are. It takes around 20 minutes.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Motivational block -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB; border-radius:12px; border-left:3px solid #0D9488; margin-bottom:22px;">
+                <tr>
+                  <td style="padding:18px 22px;">
+                    <p style="margin:0 0 12px 0; font-size:13px; font-weight:700; color:#111827; font-family:'Segoe UI', Arial, sans-serif;">A few things worth knowing</p>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#374151; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
+                      ✅ &nbsp;Candidates who complete early are reviewed first — it genuinely makes a difference.
+                    </p>
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#374151; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
+                      ✅ &nbsp;The AI evaluates you on your answers alone — no bias, no nerves, no small talk.
+                    </p>
+                    <p style="margin:0; font-size:13px; color:#374151; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
+                      ✅ &nbsp;Your results are encrypted and stored securely — your data stays yours.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              {{#if deadline}}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFBEB; border-radius:10px; border:1px solid #FDE68A; margin-bottom:26px;">
+                <tr>
+                  <td style="padding:14px 20px;">
+                    <p style="margin:0; font-size:13px; color:#92400E; line-height:1.6; font-family:'Segoe UI', Arial, sans-serif;">
+                      📅 &nbsp;The interview window closes on <strong>{{deadline}}</strong>. After that, your application will be marked as incomplete.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              {{/if}}
+
+              <!-- CTA -->
+              <table cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+                <tr>
+                  <td style="background-color:#0D9488; border-radius:10px; box-shadow:0 4px 14px rgba(13,148,136,0.28);">
+                    <a href="{{interviewLink}}" target="_blank" style="display:inline-block; padding:15px 40px; font-size:15px; font-weight:700; color:#ffffff; text-decoration:none; font-family:'Segoe UI', Arial, sans-serif;">
+                      Complete My Interview →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 6px 0; font-size:12px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">
+                Or copy this link into your browser:<br>
+                <a href="{{interviewLink}}" style="color:#0D9488; text-decoration:none; word-break:break-all;">{{interviewLink}}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:18px 36px 24px 36px; border-top:1px solid #F3F4F6;">
+              <p style="margin:0 0 4px 0; font-size:12px; color:#9CA3AF; font-family:'Segoe UI', Arial, sans-serif;">
+                A follow-up for your <strong>{{jobTitle}}</strong> application at <strong>{{companyName}}</strong>.
+              </p>
+              <p style="margin:0; font-size:11px; color:#D1D5DB; font-family:'Segoe UI', Arial, sans-serif;">
+                &copy; {{year}} TalentAI &nbsp;·&nbsp; <a href="mailto:contact@talentai.bid" style="color:#0D9488; text-decoration:none;">contact@talentai.bid</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

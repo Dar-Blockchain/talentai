@@ -629,25 +629,94 @@ module.exports.inviteToInterview = async (req, res) => {
 module.exports.triggerAutoInvite = async (req, res) => {
   try {
     const { runAutoInviteJob } = require("../cron/autoInviteScheduler.cron");
+    const { AUTO_INVITE_CONFIG } = require("../constants/scheduler.constants");
 
     console.log("\n" + "=".repeat(80));
     console.log("🚀 [JOB APPLICATION] - MANUAL AUTO INVITE TRIGGER");
     console.log("=".repeat(80) + "\n");
 
-    // Run the auto-invite job immediately
-    await runAutoInviteJob();
+    // ?reset=true clears firstInvitationSentAt so applications can be re-tested
+    if (req.query.reset === "true") {
+      const resetResult = await JobApplication.updateMany(
+        { status: { $in: AUTO_INVITE_CONFIG.VALID_STATUSES }, isArchived: false, isWithdrawn: false },
+        { $set: { firstInvitationSentAt: null } }
+      );
+      console.log(`🔄 [RESET] Cleared firstInvitationSentAt on ${resetResult.modifiedCount} applications`);
+    }
+
+    // Diagnostic: show what the query would find BEFORE running
+    const eligible = await JobApplication.find({
+      appliedAt: { $lte: new Date(Date.now() - AUTO_INVITE_CONFIG.FIRST_INVITE_HOURS * 60 * 60 * 1000) },
+      status: { $in: AUTO_INVITE_CONFIG.VALID_STATUSES },
+      firstInvitationSentAt: null,
+      isArchived: false,
+      isWithdrawn: false
+    }).select("_id status appliedAt firstInvitationSentAt profile").limit(20).lean();
+
+    console.log(`🔍 [DIAGNOSTIC] Eligible applications found: ${eligible.length}`);
+    eligible.forEach(a => console.log(`   - ${a._id} | status: ${a.status} | profile: ${a.profile} | firstInviteSent: ${a.firstInvitationSentAt}`));
+
+    await runAutoInviteJob({ force: true });
 
     console.log("=".repeat(80) + "\n");
 
     res.status(200).json({
       success: true,
       message: "Auto-invite scheduler triggered successfully",
-      note: "This endpoint is for testing purposes. In production, auto-invites run hourly between 12:00 - 21:00",
+      eligibleCount: eligible.length,
+      eligibleIds: eligible.map(a => a._id),
+      note: req.query.reset === "true" ? "firstInvitationSentAt was reset before running" : "Add ?reset=true to clear firstInvitationSentAt and re-test",
     });
   } catch (error) {
     console.error(`\n❌ [ERROR] Error in triggerAutoInvite: ${error.message}`);
     console.error("Stack trace:", error.stack);
     console.log("=".repeat(80) + "\n");
+    handleError(res, error, 400);
+  }
+};
+
+// ========== TRIGGER REMINDER (FOR TESTING) ==========
+module.exports.triggerReminder = async (req, res) => {
+  try {
+    const { runReminderJob } = require("../cron/reminderScheduler.cron");
+    const { REMINDER_CONFIG } = require("../constants/scheduler.constants");
+
+    console.log("\n" + "=".repeat(80));
+    console.log("🚀 [JOB APPLICATION] - MANUAL REMINDER TRIGGER");
+    console.log("=".repeat(80) + "\n");
+
+    // ?reset=true clears reminder timestamps so applications can be re-tested
+    if (req.query.reset === "true") {
+      const resetResult = await JobApplication.updateMany(
+        { status: { $in: REMINDER_CONFIG.VALID_STATUSES }, isArchived: false, isWithdrawn: false },
+        { $set: { firstReminderSentAt: null, secondReminderSentAt: null } }
+      );
+      console.log(`🔄 [RESET] Cleared reminder timestamps on ${resetResult.modifiedCount} applications`);
+    }
+
+    // Diagnostic: show pending applications before running
+    const pending = await JobApplication.find({
+      status: { $in: REMINDER_CONFIG.VALID_STATUSES },
+      isArchived: false,
+      isWithdrawn: false
+    }).select("_id status appliedAt firstReminderSentAt secondReminderSentAt").limit(20).lean();
+
+    console.log(`🔍 [DIAGNOSTIC] Pending applications found: ${pending.length}`);
+    pending.forEach(a => console.log(`   - ${a._id} | status: ${a.status} | 1st: ${a.firstReminderSentAt} | 2nd: ${a.secondReminderSentAt}`));
+
+    await runReminderJob({ force: true });
+
+    console.log("=".repeat(80) + "\n");
+
+    res.status(200).json({
+      success: true,
+      message: "Reminder scheduler triggered successfully",
+      pendingCount: pending.length,
+      pendingIds: pending.map(a => a._id),
+      note: req.query.reset === "true" ? "Reminder timestamps were reset before running" : "Add ?reset=true to clear reminder timestamps and re-test",
+    });
+  } catch (error) {
+    console.error(`\n❌ [ERROR] Error in triggerReminder: ${error.message}`);
     handleError(res, error, 400);
   }
 };

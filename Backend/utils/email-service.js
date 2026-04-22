@@ -26,6 +26,9 @@ const interviewAssessmentTemplate    = compileTemplate("interview-assessment-can
 const interviewCompletionTemplate    = compileTemplate("interview-assessment-company.hbs");
 const interviewInvitationTemplate    = compileTemplate("interview-invite.hbs");
 const contactCandidateTemplate       = compileTemplate("contact-candidate.hbs");
+const interviewNudge1Template        = compileTemplate("interview-nudge-1.hbs");
+const interviewNudge2Template        = compileTemplate("interview-nudge-2.hbs");
+const interviewNudge3Template        = compileTemplate("interview-nudge-3.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -137,6 +140,33 @@ const sendInterviewInvitation = async (candidateEmail, candidateName, jobTitle, 
   }
 };
 
+// ─── Send Interview Nudge Emails (cron-triggered reminders) ──────────────────
+const sendInterviewNudge = async (candidateEmail, { firstName, jobTitle, companyName, interviewLink, deadline }, nudgeNumber) => {
+  const templates = { 1: interviewNudge1Template, 2: interviewNudge2Template, 3: interviewNudge3Template };
+  const subjects  = {
+    1: `Your AI interview is ready — ${jobTitle} at ${companyName}`,
+    2: `Still waiting for you — ${jobTitle} at ${companyName}`,
+    3: `Last chance: interview closes tomorrow — ${jobTitle}`,
+  };
+  const template = templates[nudgeNumber];
+  if (!template) return false;
+  const mailOptions = {
+    from: '"TalentAI" <contact@talentai.bid>',
+    to: candidateEmail,
+    subject: subjects[nudgeNumber],
+    html: template({ firstName, jobTitle, companyName, interviewLink, deadline, year }),
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Interview nudge #${nudgeNumber} sent to ${candidateEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Interview nudge #${nudgeNumber} failed:`, error.message);
+    return false;
+  }
+};
+
 // ─── Send Direct Message to Candidate (from company) ─────────────────────────
 const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, message) => {
   const mailOptions = {
@@ -162,6 +192,7 @@ module.exports = {
   sendInterviewAssessmentEmail,
   sendInterviewCompletionNotificationToCompany,
   sendInterviewInvitation,
+  sendInterviewNudge,
   sendCandidateEmail,
   transporter,
 };

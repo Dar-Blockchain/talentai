@@ -54,8 +54,11 @@ router.get("/company/my/metrics", jobApplicationController.getApplicationMetrics
 // GET /job-applications/company/my/cvs/download — Download all matching CVs as a ZIP
 router.get("/company/my/cvs/download", jobApplicationController.downloadCVsByCompany);
 
-// POST /job-applications/auto-invite/trigger — Trigger auto-invite scheduler manually (for testing)
+// POST /job-applications/auto-invite/trigger — Trigger auto-invite (nudge #1), bypasses time window
 router.post("/auto-invite/trigger", jobApplicationController.triggerAutoInvite);
+
+// POST /job-applications/reminder/trigger — Trigger reminder (nudge #2 / #3), bypasses time window
+router.post("/reminder/trigger", jobApplicationController.triggerReminder);
 
 // GET /job-applications/:applicationId — Get single application by ID
 router.get("/:applicationId", jobApplicationController.getJobApplicationById);

@@ -3,7 +3,7 @@ const JobApplication = require('../models/JobApplication.model');
 const Profile = require('../models/Profile.model');
 const Post = require('../models/Post.model');
 const User = require('../models/User.model');
-const { sendInterviewInvitation } = require('../utils/email-service');
+const { sendInterviewNudge } = require('../utils/email-service');
 const { REMINDER_CONFIG, SCHEDULER_TIME_WINDOW } = require('../constants/scheduler.constants');
 
 /**
@@ -96,29 +96,27 @@ const sendReminderEmail = async (application, post, reminderType) => {
     }
 
     const candidateEmail = candidateProfile.userId.email;
-    const candidateName = `${candidateProfile.firstName} ${candidateProfile.lastName}`;
+    const firstName = candidateProfile.firstName || candidateProfile.userId.username || 'there';
     const jobTitle = post.jobDetails?.title || 'Position';
     const companyProfile = await Profile.findOne({ userId: post.user }).select('companyDetails').lean();
     const companyName = companyProfile?.companyDetails?.name || company.username || company.email || 'Our Company';
-
-    // Build interview link
     const interviewLink = `${process.env.BASE_URL}interview/hr/?jobId=${post._id}&companyId=${post.user}&ref=link`;
+    const deadline = post.expirationDate
+      ? new Date(post.expirationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : null;
 
     console.log(`   📧 To: ${candidateEmail}`);
-    console.log(`   👤 Candidate: ${candidateName}`);
+    console.log(`   👤 Candidate: ${firstName}`);
     console.log(`   💼 Position: ${jobTitle}`);
     console.log(`   🏢 Company: ${companyName}`);
     console.log(`   🔗 Interview Link: ${interviewLink}`);
 
-    // Send interview invitation email
-    const emailSent = await sendInterviewInvitation(
+    // Nudge #2 for first reminder (4 days), nudge #3 for second reminder (24h before deadline)
+    const nudgeNumber = reminderType === REMINDER_TYPES.SECOND_REMINDER ? 3 : 2;
+    const emailSent = await sendInterviewNudge(
       candidateEmail,
-      candidateName,
-      jobTitle,
-      companyName,
-      null, // No specific date
-      null, // No specific time
-      interviewLink  // Interview link
+      { firstName, jobTitle, companyName, interviewLink, deadline },
+      nudgeNumber
     );
 
     if (!emailSent) {
@@ -161,14 +159,14 @@ const updateApplicationWithReminder = async (applicationId, reminderType) => {
 
 // ========== MAIN SCHEDULER JOB ==========
 
-const runReminderJob = async () => {
+const runReminderJob = async ({ force = false } = {}) => {
   try {
     const MSG = REMINDER_CONFIG.MESSAGES;
-    
-    console.log(`\n⏰ [REMINDER SCHEDULER] Running at ${new Date().toLocaleString()}`);
 
-    // Check if we're within the time window
-    if (!isWithinTimeWindow()) {
+    console.log(`\n⏰ [REMINDER SCHEDULER] Running at ${new Date().toLocaleString()}${force ? ' (FORCED)' : ''}`);
+
+    // Check if we're within the time window (skip when forced or in test mode)
+    if (!force && !isWithinTimeWindow()) {
       const currentHour = new Date().getHours();
       console.log(`⏭️  Outside time window (current hour: ${currentHour}). Skipping.`);
       return;
@@ -268,4 +266,4 @@ const scheduleReminders = () => {
   console.log(`${MSG.EMAIL_WINDOW}\n`);
 };
 
-module.exports = { scheduleReminders };
+module.exports = { scheduleReminders, runReminderJob };
