@@ -105,7 +105,28 @@ const profileSchema = new mongoose.Schema(
 
     // ========== REFERENCES & ASSOCIATIONS ==========
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
-    planLimits: { type: mongoose.Schema.Types.ObjectId, ref: "PlanLimits" },
+    
+    // ========== SUBSCRIPTION MANAGEMENT ==========
+    activeSubscription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subscription",
+      description: "Currently active subscription for the company",
+    },
+    subscriptions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Subscription",
+        description: "Complete history of subscriptions",
+      },
+    ],
+    
+    // ========== DEPRECATED - KEPT FOR BACKWARD COMPATIBILITY ==========
+    planLimits: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PlanLimits",
+      description: "DEPRECATED: Use activeSubscription.planId instead. Kept for backward compatibility.",
+    },
+    
     payments: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -135,23 +156,6 @@ const profileSchema = new mongoose.Schema(
         required: false,
       },
     },
-    planUsage: {
-      postsUsed: {
-        type: Number,
-        default: 0,
-        description: "Current number of posts created",
-      },
-      monthlyInterviewsUsed: {
-        type: Number,
-        default: 0,
-        description: "Current number of interviews used this month",
-      },
-      lastMonthlyResetDate: {
-        type: Date,
-        default: Date.now,
-        description: "Last date when monthly interview count was reset",
-      },
-    },
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
@@ -167,6 +171,7 @@ const profileSchema = new mongoose.Schema(
 
 profileSchema.post("save", async function (doc) {
   try {
+    // ========== CREATE TODOLIST FOR CANDIDATES ==========
     if (doc.type === "Candidate" && !doc.todoList) {
       const todoList = await TodoList.create({ profile: doc._id });
 
@@ -175,17 +180,46 @@ profileSchema.post("save", async function (doc) {
       });
     }
 
-    if ((doc.type === "Company" || doc.type === "Member") && !doc.planLimits) {
-      // Get the Trial plan
-      const trialPlan = await PlanLimits.findOne({ name: "Trial" });
+    // ========== CREATE TRIAL SUBSCRIPTION FOR COMPANIES ==========
+    if ((doc.type === "Company" || doc.type === "Member") && !doc.activeSubscription) {
+      try {
+        // Get the Trial plan
+        const trialPlan = await PlanLimits.findOne({ name: "Trial" });
 
-      if (trialPlan) {
-        await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
-          planLimits: trialPlan._id,
+        if (!trialPlan) {
+          console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
+          return;
+        }
+
+        // Create a trial subscription (30 days from now)
+        const Subscription = mongoose.model("Subscription");
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + (trialPlan.durationDays || 30));
+
+        const subscription = await Subscription.create({
+          companyProfileId: doc._id,
+          planId: trialPlan._id,
+          startDate,
+          endDate,
+          status: "active",
+          autoRenew: false, // Trial doesn't auto-renew
         });
-        console.log(`✅ Trial plan assigned to ${doc.type.toLowerCase()} profile: ${doc._id}`);
-      } else {
-        console.warn(`⚠️  Trial plan not found. ${doc.type} profile ${doc._id} was not assigned a plan.`);
+
+        // Update profile with active subscription
+        await mongoose.model("Profile").findByIdAndUpdate(
+          doc._id,
+          {
+            activeSubscription: subscription._id,
+            subscriptions: [subscription._id],
+            planLimits: trialPlan._id, // Keep for backward compatibility
+          },
+          { runValidators: false }
+        );
+
+        console.log(`✅ Trial subscription created for ${doc.type.toLowerCase()} profile: ${doc._id}`);
+      } catch (subscriptionError) {
+        console.error(`⚠️  Error creating trial subscription: ${subscriptionError.message}`);
       }
     }
   } catch (error) {

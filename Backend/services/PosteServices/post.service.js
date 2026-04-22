@@ -81,9 +81,14 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile, 
     const post = await module.exports.createPost(postData, token);
 
     // ========== 3. INCREMENT USAGE (for companies only) ==========
-    if (userProfile.type === 'Company') {
+    if (userProfile.type === 'Company' && userProfile.activeSubscription) {
       try {
-        await profileService.incrementPlanUsage(postData.user, 'postsUsed');
+        const subscriptionService = require('../subscription.service');
+        await subscriptionService.incrementUsage(
+          userProfile.activeSubscription._id,
+          'postsUsed',
+          1
+        );
         console.log(`✅ [createPostWithSideEffects] Posts usage incremented`);
       } catch (usageError) {
         console.error('⚠️ [createPostWithSideEffects] Warning: Could not update posts usage:', usageError.message);

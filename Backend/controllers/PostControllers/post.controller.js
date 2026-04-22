@@ -1,5 +1,6 @@
 const { POST_STATUS } = require("../../constants/posts.constants");
 const postService = require("../../services/PosteServices/post.service");
+const subscriptionService = require("../../services/subscription.service");
 const {
   parseJsonFields,
 } = require("../../helpers/post.validation.helpers");
@@ -24,7 +25,7 @@ exports.createPost = async (req, res) => {
 
     // ========== 2. AUTHORIZATION & PROFILE CHECK ==========
     const userProfile = await Profile.findOne({ userId }).populate(
-      "planLimits",
+      "activeSubscription"
     );
     if (!userProfile) {
       return res.status(404).json({
@@ -35,25 +36,36 @@ exports.createPost = async (req, res) => {
 
     // ========== 3. RESOURCE LIMIT CHECK ==========
     if (userProfile.type === "Company") {
-      if (!userProfile.planLimits) {
+      if (!userProfile.activeSubscription) {
         return res.status(403).json({
           success: false,
-          error: "No plan assigned to your company",
-          message: "Please contact support to get a plan assigned",
+          error: "No active subscription found",
+          message: "Please purchase a plan to create posts",
         });
       }
 
-      const postsUsed = userProfile.planUsage?.postsUsed || 0;
-      const postsLimit = userProfile.planLimits.postsLimit;
+      try {
+        const limitCheck = await subscriptionService.checkSubscriptionLimit(
+          userProfile._id,
+          "posts"
+        );
 
-      if (postsUsed >= postsLimit) {
-        return res.status(403).json({
+        if (!limitCheck.canUse) {
+          return res.status(403).json({
+            success: false,
+            error: "Posts limit reached",
+            message: limitCheck.message,
+            planName: limitCheck.limitData?.planName,
+            postsLimit: limitCheck.limitData?.limit,
+            postsUsed: limitCheck.limitData?.used,
+          });
+        }
+      } catch (limitError) {
+        console.error("Error checking subscription limit:", limitError);
+        return res.status(400).json({
           success: false,
-          error: "Posts limit reached",
-          message: `You have reached the maximum number of posts (${postsLimit}) for your current plan: ${userProfile.planLimits.name}`,
-          planName: userProfile.planLimits.name,
-          postsLimit: postsLimit,
-          postsUsed: postsUsed,
+          error: "Error checking plan limits",
+          message: limitError.message,
         });
       }
     }
@@ -94,7 +106,6 @@ exports.createPost = async (req, res) => {
       success: true,
       data: result.post,
       matchingConfig: result.matchingConfig,
-      planLimits: userProfile.planLimits,
     });
   } catch (error) {
     handleError(res, error, 400);
@@ -529,23 +540,33 @@ exports.getJobInterviewConfig = async (req, res) => {
     // Check if company has reached monthly interview limit
     const companyProfile = await Profile.findOne({
       userId: post.user._id,
-    }).populate("planLimits");
-    if (companyProfile && companyProfile.planLimits) {
-      const monthlyInterviewsUsed =
-        companyProfile.planUsage?.monthlyInterviewsUsed || 0;
-      const monthlyInterviewLimit =
-        companyProfile.planLimits.monthlyInterviewLimit;
+    }).populate("activeSubscription");
 
-      if (monthlyInterviewsUsed >= monthlyInterviewLimit) {
-        console.log("❌ Company has reached maximum monthly interviews limit");
-        return res.status(429).json({
+    if (companyProfile && companyProfile.activeSubscription) {
+      try {
+        const limitCheck = await subscriptionService.checkSubscriptionLimit(
+          companyProfile._id,
+          "monthlyInterviews"
+        );
+
+        if (!limitCheck.canUse) {
+          console.log("❌ Company has reached maximum monthly interviews limit");
+          return res.status(429).json({
+            success: false,
+            error: "Monthly interview limit reached",
+            message: limitCheck.message,
+            monthlyInterviewLimit: limitCheck.limitData?.limit,
+            monthlyInterviewsUsed: limitCheck.limitData?.used,
+            planName: limitCheck.limitData?.planName,
+            jobTitle: post.jobDetails?.title || "",
+          });
+        }
+      } catch (limitError) {
+        console.error("Error checking interview limit:", limitError);
+        return res.status(400).json({
           success: false,
-          error: "Monthly interview limit reached",
-          message: `Your company has reached the maximum number of interviews (${monthlyInterviewLimit}) for this month`,
-          monthlyInterviewLimit: monthlyInterviewLimit,
-          monthlyInterviewsUsed: monthlyInterviewsUsed,
-          planName: companyProfile.planLimits.name,
-          jobTitle: post.jobDetails?.title || "",
+          error: "Error checking interview limits",
+          message: limitError.message,
         });
       }
     }

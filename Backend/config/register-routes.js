@@ -23,6 +23,7 @@ const CompanyInvitationRouters = require("../routes/CompanyInvitation.routes");
 const CompanyMembershipRoutes = require("../routes/CompanyMembership.routes");
 const chatRouter = require("../routes/chat.routes");
 const planLimitsRouter = require("../routes/planLimits.routes");
+const subscriptionRouter = require("../routes/subscription.routes");
 const internalCampaignRoutes = require('../routes/internalCampaign.routes');
 const campaignParticipantRoutes = require('../routes/campaignParticipant.routes');
 const departmentRoutes = require('../routes/department.routes');
@@ -53,6 +54,7 @@ function registerRoutes(app) {
   //app.use("/CompanyInvitation", CompanyInvitationRouters); // Company Invitation Management -> company-invitations
   //app.use("/CompanyMembership", CompanyMembershipRoutes); // Company Membership Management -> company-memberships
   app.use("/plan-limits", planLimitsRouter); //✅ Plan Limits Management -> plan-limits
+  app.use("/subscriptions", subscriptionRouter); //✅ Subscription Management -> subscriptions
   app.use('/company-invitations', CompanyInvitationRouters); //✅ Company Invitation Management
   app.use('/company-memberships', CompanyMembershipRoutes); //✅ Company Membership Management
 
