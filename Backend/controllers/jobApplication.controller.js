@@ -2,7 +2,7 @@ const jobApplicationService = require("../services/jobApplication.service");
 const { sendInterviewInvitation, sendCandidateEmail } = require("../utils/email-service");
 const profileService = require("../services/ProfileService/profile.service");
 const postService = require("../services/PosteServices/post.service");
-const JobApplication = require("../models/jobApplication.model");
+const JobApplication = require("../models/JobApplication.model");
 const Profile = require("../models/Profile.model");
 
 // Centralized error handler
