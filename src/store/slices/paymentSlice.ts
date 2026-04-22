@@ -2,8 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/utils/axiosInstance";
 import { RootState } from "../store";
 
-// ─── Types ───────────────────────────────────────────────
-
 export interface Payment {
   _id: string;
   userId: string;
@@ -21,6 +19,7 @@ export interface Payment {
 
 interface PaymentState {
   loading: boolean;
+  cancelling: boolean;
   error: string | null;
   lastUpdated: Payment | null;
   history: Payment[];
@@ -29,13 +28,47 @@ interface PaymentState {
 
 const initialState: PaymentState = {
   loading: false,
+  cancelling: false,
   error: null,
   lastUpdated: null,
   history: [],
   historyLoading: false,
 };
 
-// ─── Thunks ──────────────────────────────────────────────
+export const verifyPayment = createAsyncThunk<Payment, { sessionId: string }, { rejectValue: string }>(
+  "payment/verify",
+  async ({ sessionId }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("payments/verify", { sessionId });
+      return res.data.data as Payment;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to verify payment");
+    }
+  }
+);
+
+export const cancelSubscription = createAsyncThunk<void, void, { rejectValue: string }>(
+  "payment/cancel",
+  async (_, { rejectWithValue }) => {
+    try {
+      await axiosInstance.post("payments/cancel");
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to cancel subscription");
+    }
+  }
+);
+
+export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { rejectValue: string }>(
+  "payment/fetchCompanyHistory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("payments/user/history");
+      return (res.data.data || res.data) as Payment[];
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch payment history");
+    }
+  }
+);
 
 export const updatePaymentStatus = createAsyncThunk<
   Payment,
@@ -51,105 +84,42 @@ export const updatePaymentStatus = createAsyncThunk<
       });
       return res.data.data as Payment;
     } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to update payment status"
-      );
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to update payment status");
     }
   }
 );
-
-export const verifyPayment = createAsyncThunk<
-  Payment,
-  { sessionId: string },
-  { rejectValue: string }
->(
-  "payment/verify",
-  async ({ sessionId }, { rejectWithValue }) => {
-    try {
-      const res = await axiosInstance.post("payments/verify", { sessionId });
-      return res.data.data as Payment;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to verify payment"
-      );
-    }
-  }
-);
-
-export const fetchCompanyPaymentHistory = createAsyncThunk<
-  Payment[],
-  void,
-  { rejectValue: string }
->(
-  "payment/fetchCompanyHistory",
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await axiosInstance.get("payments/user/history");
-      return (res.data.data || res.data) as Payment[];
-    } catch (error: any) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to fetch payment history"
-      );
-    }
-  }
-);
-
-// ─── Slice ───────────────────────────────────────────────
 
 const paymentSlice = createSlice({
   name: "payment",
   initialState,
   reducers: {
-    clearPaymentError: (state) => {
-      state.error = null;
-    },
+    clearPaymentError: (state) => { state.error = null; },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(updatePaymentStatus.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
-        state.loading = false;
-        state.lastUpdated = action.payload;
-      })
-      .addCase(updatePaymentStatus.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to update payment status";
-      });
+      .addCase(verifyPayment.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(verifyPayment.fulfilled, (state, action) => { state.loading = false; state.lastUpdated = action.payload; })
+      .addCase(verifyPayment.rejected, (state, action) => { state.loading = false; state.error = action.payload || "Failed to verify payment"; });
 
     builder
-      .addCase(verifyPayment.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(verifyPayment.fulfilled, (state, action) => {
-        state.loading = false;
-        state.lastUpdated = action.payload;
-      })
-      .addCase(verifyPayment.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to verify payment";
-      });
+      .addCase(cancelSubscription.pending, (state) => { state.cancelling = true; state.error = null; })
+      .addCase(cancelSubscription.fulfilled, (state) => { state.cancelling = false; })
+      .addCase(cancelSubscription.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to cancel subscription"; });
 
     builder
-      .addCase(fetchCompanyPaymentHistory.pending, (state) => {
-        state.historyLoading = true;
-      })
-      .addCase(fetchCompanyPaymentHistory.fulfilled, (state, action) => {
-        state.historyLoading = false;
-        state.history = action.payload;
-      })
-      .addCase(fetchCompanyPaymentHistory.rejected, (state) => {
-        state.historyLoading = false;
-      });
+      .addCase(fetchCompanyPaymentHistory.pending, (state) => { state.historyLoading = true; })
+      .addCase(fetchCompanyPaymentHistory.fulfilled, (state, action) => { state.historyLoading = false; state.history = action.payload; })
+      .addCase(fetchCompanyPaymentHistory.rejected, (state) => { state.historyLoading = false; });
+
+    builder
+      .addCase(updatePaymentStatus.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(updatePaymentStatus.fulfilled, (state, action) => { state.loading = false; state.lastUpdated = action.payload; })
+      .addCase(updatePaymentStatus.rejected, (state, action) => { state.loading = false; state.error = action.payload || "Failed to update payment status"; });
   },
 });
 
-// ─── Selectors ───────────────────────────────────────────
-
 export const selectPaymentLoading = (state: RootState) => state.payment.loading;
+export const selectCancellingSubscription = (state: RootState) => state.payment.cancelling;
 export const selectPaymentError = (state: RootState) => state.payment.error;
 export const selectLastUpdatedPayment = (state: RootState) => state.payment.lastUpdated;
 export const selectPaymentHistory = (state: RootState) => state.payment.history;
