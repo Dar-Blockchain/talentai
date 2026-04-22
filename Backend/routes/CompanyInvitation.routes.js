@@ -64,4 +64,22 @@ router.get(
   CompanyInvitationController.getInvitationsByDepartment,
 );
 
+/**
+ * GET /details/:invitationId
+ * Get invitation details by ID (used on the invitation acceptance page)
+ */
+router.get(
+  "/details/:invitationId",
+  CompanyInvitationController.getInvitationDetails,
+);
+
+/**
+ * POST /respondInvitation/:invitationId
+ * Accept or reject an invitation
+ */
+router.post(
+  "/respondInvitation/:invitationId",
+  CompanyInvitationController.respondInvitation,
+);
+
 module.exports = router;
