@@ -26,12 +26,12 @@ router.get(
 );
 
 /**
- * GET /subscriptions/:companyProfileId
+ * GET /subscriptions
  * Get all subscriptions for a company (including expired/cancelled)
  * Auth: Required
  */
 router.get(
-  "/:companyProfileId",
+  "/",
   requireAuth,
   authLogMiddleware("subscription"),
   subscriptionController.getCompanySubscriptions

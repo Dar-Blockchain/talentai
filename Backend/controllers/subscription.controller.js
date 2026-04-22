@@ -28,7 +28,7 @@ module.exports.getActiveSubscription = async (req, res) => {
 };
 
 /**
- * GET /subscriptions/:companyProfileId
+ * GET /subscriptions
  * Get all subscriptions for a company
  */
 module.exports.getCompanySubscriptions = async (req, res) => {
