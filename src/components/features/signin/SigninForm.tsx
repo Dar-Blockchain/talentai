@@ -181,12 +181,12 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
             <Box>
               <Box sx={{
                 display: "flex", alignItems: "center", gap: 1.5,
-                bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`,
+                bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
                 borderRadius: "12px", px: 2, py: 1.5, mb: 3,
               }}>
                 <EmailOutlinedIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
                 <Box>
-                  <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
+                  <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
                     Code sent to
                   </Typography>
                   <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
@@ -204,11 +204,15 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                       sx={{
                         width: 58, height: 68,
                         borderRadius: "14px",
-                        border: `1.5px solid ${filled ? ACCENT : "#D1FAF5"}`,
-                        bgcolor: filled ? `${ACCENT}0C` : "#F8FFFE",
+                        border: `2px solid ${filled ? ACCENT : "#D1D5DB"}`,
+                        bgcolor: filled ? `${ACCENT}08` : "#F9FAFB",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         transition: "all 0.15s",
-                        "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` },
+                        "&:focus-within": {
+                          borderColor: ACCENT,
+                          bgcolor: "#fff",
+                          boxShadow: `0 0 0 4px ${ACCENT}1A`,
+                        },
                       }}
                     >
                       <Box
@@ -237,7 +241,7 @@ const SigninForm: React.FC<Props> = ({ themeColors }) => {
                         sx={{
                           width: "100%", height: "100%", border: "none", outline: "none",
                           background: "transparent", textAlign: "center",
-                          fontSize: "1.6rem", fontWeight: 700, color: "#0F172A",
+                          fontSize: "1.75rem", fontWeight: 700, color: ACCENT,
                           fontFamily: "Poppins", cursor: "text",
                         }}
                       />
