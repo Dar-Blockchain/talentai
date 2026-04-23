@@ -134,7 +134,7 @@ const DashboardOverview: React.FC = () => {
     dispatch(fetchDashboardStats());
     dispatch(fetchRichStats());
     dispatch(fetchCompanyApplicationMetrics());
-    dispatch(fetchCompanyApplications({}));
+    dispatch(fetchCompanyApplications({ limit: 1000 }));
     dispatch(fetchCampaignMetrics());
     dispatch(fetchDepartmentStats());
     dispatch(fetchMemberStats());
@@ -149,11 +149,13 @@ const DashboardOverview: React.FC = () => {
     }),
     [rawInterviews]);
 
-  // Applications over time — last 30 days
+  // Applications over time — last 30 days (uses appliedAt, falls back to createdAt)
   const appTrendData = useMemo(() => {
     const map = new Map<string, number>();
     allApplications.forEach((app: any) => {
-      const key = new Date(app.createdAt).toISOString().slice(0, 10);
+      const dateStr = app.appliedAt || app.createdAt;
+      if (!dateStr) return;
+      const key = new Date(dateStr).toISOString().slice(0, 10);
       map.set(key, (map.get(key) || 0) + 1);
     });
     const days = [];
@@ -169,13 +171,14 @@ const DashboardOverview: React.FC = () => {
   const appPerJobData = useMemo(() => {
     const map = new Map<string, number>();
     allApplications.forEach((app: any) => {
-      const title = app.post?.jobDetails?.title || app.jobPost?.jobDetails?.title || "Unknown";
+      const title = app.post?.jobDetails?.title || "Unknown";
+      if (title === "Unknown") return;
       map.set(title, (map.get(title) || 0) + 1);
     });
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
-      .map(([title, count]) => ({ title: title.length > 18 ? title.slice(0, 18) + "…" : title, count }));
+      .map(([title, count]) => ({ title: title.length > 20 ? title.slice(0, 20) + "…" : title, count }));
   }, [allApplications]);
 
   // Build 30-day trend — fill missing days with 0
