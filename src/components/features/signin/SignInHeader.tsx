@@ -1,6 +1,5 @@
 import { RootState } from "@/store/store";
 import { Box, Typography } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useSelector } from "react-redux";
 
 type Props = { themeColors: any };
@@ -11,38 +10,14 @@ const SignInHeader: React.FC<Props> = ({ themeColors }) => {
   const userType = useSelector((state: RootState) => state.user.userType);
 
   return (
-    <Box sx={{ mb: 3.5 }}>
+    <Box sx={{ mb: 3.5, textAlign: "center" }}>
       {/* Mobile-only logo */}
       <Box
         component="img"
         src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
         alt="TalentAI Logo"
-        sx={{ height: 26, display: { xs: "block", md: "none" }, mb: 3 }}
+        sx={{ height: 26, display: { xs: "block", md: "none" }, mb: 3, mx: "auto" }}
       />
-
-      {/* Icon avatar with glow ring */}
-      <Box sx={{ position: "relative", display: "inline-flex", mb: 2.5 }}>
-        {/* Outer glow ring */}
-        <Box sx={{
-          position: "absolute", inset: -6,
-          borderRadius: "22px",
-          background: `radial-gradient(circle, ${ACCENT}18 0%, transparent 70%)`,
-          border: `1px solid ${ACCENT}20`,
-        }} />
-        <Box sx={{
-          width: 56, height: 56,
-          borderRadius: "16px",
-          background: `linear-gradient(135deg, ${ACCENT}20 0%, ${ACCENT}0C 100%)`,
-          border: `1.5px solid ${ACCENT}40`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          zIndex: 1,
-        }}>
-          <LockOutlinedIcon sx={{ fontSize: 24, color: ACCENT }} />
-        </Box>
-      </Box>
 
       <Typography sx={{
         fontSize: "2rem",
