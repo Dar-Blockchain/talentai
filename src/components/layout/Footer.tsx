@@ -88,7 +88,9 @@ const Footer: React.FC = () => {
               mt: 0.5,
             }}
           >
-            By using TalentAI, you agree to our Terms of Service. TalentAI provides AI-powered hiring insights and candidate evaluations designed to support recruitment decisions. All final hiring decisions remain the sole responsibility of the employer.
+            By using TalentAI, you agree to our{" "}
+            <Link href="/terms" sx={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline", "&:hover": { color: "rgba(255,255,255,0.8)" } }}>Terms of Use</Link>.
+            {" "}TalentAI provides AI-powered hiring insights and candidate evaluations designed to support recruitment decisions. All final hiring decisions remain the sole responsibility of the employer.
           </Typography>
           {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
             *Numbers on this page are based on internal data compiled from existing customer base and speed assumption is based on the fact that standard onboarding may take 30 days and Remote's average onboarding time is 2.3 days.
@@ -109,13 +111,10 @@ const Footer: React.FC = () => {
           spacing={{ xs: 2, md: 0 }}
         >
           {/* Policy Links */}
-          {/* <Stack direction="row" spacing={3} flexWrap="wrap">
-            <FooterLink>Privacy Policy</FooterLink>
-            <FooterLink>Cookie Policy</FooterLink>
-            <FooterLink>Terms of Use</FooterLink>
-            <FooterLink>Disclaimer</FooterLink>
-            <FooterLink>Imprint</FooterLink>
-          </Stack> */}
+          <Stack direction="row" spacing={3} flexWrap="wrap">
+            <FooterLink href="/terms">Terms of Use</FooterLink>
+            <FooterLink href="/privacy">Privacy Policy</FooterLink>
+          </Stack>
 
           {/* Contact email */}
           <Link

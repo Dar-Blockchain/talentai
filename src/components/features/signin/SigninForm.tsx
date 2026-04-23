@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { Box, TextField, Button, Typography, Stack, CircularProgress } from "@mui/material";
-import EmailIcon from "@mui/icons-material/Email";
+import { Box, TextField, Button, Typography, Stack, CircularProgress, InputAdornment } from "@mui/material";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
@@ -13,92 +15,51 @@ import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/router";
 import { formatTimeLeft } from "@/utils/functions";
 
-type FormValues = {
-  email: string;
-  code: string;
-};
+type FormValues = { email: string; code: string };
 
-const emailSchema = Yup.object({
-  email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
-});
-
-const codeSchema = Yup.object({
-  code: Yup.string()
-    .length(6, "Code must be 6 digits")
-    .required("Verification code is required"),
-});
+const emailSchema = Yup.object({ email: Yup.string().email("Invalid email address").required("Email is required") });
+const codeSchema = Yup.object({ code: Yup.string().length(6, "Code must be 6 digits").required("Verification code is required") });
 
 const CODE_LENGTH = 6;
+const ACCENT = "#0D9488";
+const ACCENT2 = "#059669";
 
-interface Props {
-  themeColors: any;
-}
+interface Props { themeColors: any }
 
 const SigninForm: React.FC<Props> = ({ themeColors }) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { showToast } = useToast();
   const returnUrl = router.query.returnUrl as string | undefined;
-      console.log(returnUrl, "returnUrl.....")
 
-const invitationEmail = useMemo(() => {
-  if (!returnUrl) return "";
-
-  try {
-    // Provide a base URL so relative paths work
-    const url = new URL(decodeURIComponent(returnUrl), window.location.origin);
-
-    const token = url.searchParams.get("token");
-    if (!token) return "";
-
-    // Handle URL-safe Base64
-    const base64 = token.split(".")[1]?.replace(/-/g, "+").replace(/_/g, "/");
-    if (!base64) return "";
-
-    const payload = JSON.parse(atob(base64));
-    // Some JWTs use different keys for email
-    return payload.userEmail ?? payload.email ?? payload.inviteeEmail ?? "";
-  } catch (err) {
-    console.log("Error parsing invitation URL:", err);
-    return "";
-  }
-}, [returnUrl]);
+  const invitationEmail = useMemo(() => {
+    if (!returnUrl) return "";
+    try {
+      const url = new URL(decodeURIComponent(returnUrl), window.location.origin);
+      const token = url.searchParams.get("token");
+      if (!token) return "";
+      const base64 = token.split(".")[1]?.replace(/-/g, "+").replace(/_/g, "/");
+      if (!base64) return "";
+      const payload = JSON.parse(atob(base64));
+      return payload.userEmail ?? payload.email ?? payload.inviteeEmail ?? "";
+    } catch { return ""; }
+  }, [returnUrl]);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const codeInputsRef = useRef<Array<HTMLInputElement | null>>([]);
-  const CODE_TTL = 300; // 5 minutes
-  const CODE_EXPIRY_KEY = "email_code_expires_at";
-
-  const {
-    secondsLeft,
-    isExpired,
-    isRunning,
-    start: startTimer,
-    clear: clearTimer,
-  } = usePersistentCountdown({
-    ttl: CODE_TTL,
-    storageKey: CODE_EXPIRY_KEY,
-  });
+  const { secondsLeft, isExpired, isRunning, start: startTimer, clear: clearTimer } =
+    usePersistentCountdown({ ttl: 300, storageKey: "email_code_expires_at" });
 
   const handleSendCode = async (email: string) => {
-    const emailToSend = email.toLowerCase().trim();
     setLoading(true);
-
     try {
-      await dispatch(signinUser(emailToSend)).unwrap();
+      await dispatch(signinUser(email.toLowerCase().trim())).unwrap();
       startTimer();
       setStep(2);
     } catch (err: any) {
-      showToast({
-        message: err || "Sign in failed. Please try again.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
+      showToast({ message: err || "Sign in failed. Please try again.", severity: "error" });
+    } finally { setLoading(false); }
   };
 
   const handleVerifyCode = async (values: FormValues) => {
@@ -106,348 +67,276 @@ const invitationEmail = useMemo(() => {
     try {
       clearTimer();
       const userLocation = await getUserLocation();
-      const response = await dispatch(
-        verifyOTP({
-          email: values.email.toLowerCase().trim(),
-          otp: values.code,
-          location: userLocation,
-        })
-      ).unwrap();
-      if (!response.token) {
-        showToast({
-          message:
-            "Verification successful, but there was an issue signing you in. Please try again.",
-          severity: "error",
-        });
-        setLoading(false);
-        return;
-      }
-      // Fetch permissions for employees before redirecting
-      if (response.user?.role === "Employee" && response.user?._id) {
-        await dispatch(fetchEmployeePermissions(response.user._id));
-      }
-      // Keep loading state active during redirect
+      const response = await dispatch(verifyOTP({ email: values.email.toLowerCase().trim(), otp: values.code, location: userLocation })).unwrap();
+      if (!response.token) { showToast({ message: "Verification successful, but there was an issue signing you in.", severity: "error" }); setLoading(false); return; }
+      if (response.user?.role === "Employee" && response.user?._id) await dispatch(fetchEmployeePermissions(response.user._id));
       handleRedirectTo(response.user, response.profile);
-    } catch (err: any) {
-      showToast({
-        message:
-          "The code you entered didn't match. Please check and try again.",
-        severity: "error",
-      });
+    } catch {
+      showToast({ message: "The code you entered didn't match. Please check and try again.", severity: "error" });
       setLoading(false);
     }
   };
 
   const handleRedirectTo = (user: any, profile: any) => {
-    const userRole = user?.role;
-    const hasProfile = !!profile?._id;
-
-    if (userRole === "Admin") {
-      router.replace("/dashboard/admin");
-      return;
-    }
-
-    if (!hasProfile) {
-      router.replace(
-        returnUrl
-          ? `/register?returnUrl=${encodeURIComponent(returnUrl)}`
-          : "/register"
-      );
-      return;
-    }
-
-    if (returnUrl) {
-      router.replace(decodeURIComponent(returnUrl));
-      return;
-    }
-
-    if (userRole === "Employee") {
-      router.replace("/employee/dashboard");
-      return;
-    }
-
-    if (userRole === "Company") {
-      router.replace("/company/dashboard");
-      return;
-    }
-
+    const role = user?.role;
+    if (role === "Admin") { router.replace("/dashboard/admin"); return; }
+    if (!profile?._id) { router.replace(returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register"); return; }
+    if (returnUrl) { router.replace(decodeURIComponent(returnUrl)); return; }
+    if (role === "Employee") { router.replace("/employee/dashboard"); return; }
+    if (role === "Company") { router.replace("/company/dashboard"); return; }
     router.replace("/dashboard/candidate");
   };
 
-  useEffect(() => {
-    return () => {
-      clearTimer();
-    };
-  }, []);
+  useEffect(() => () => { clearTimer(); }, []);
+
+  const fieldSx = {
+    "& .MuiInputLabel-root": { color: "#9CA3AF", fontFamily: "Poppins", fontSize: "1rem" },
+    "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "14px",
+      fontFamily: "Poppins",
+      fontSize: "1rem",
+      height: 58,
+      bgcolor: "#F8FFFE",
+      "& fieldset": { borderColor: "#D1FAF5" },
+      "&:hover fieldset": { borderColor: `${ACCENT}66` },
+      "&:hover": { bgcolor: "#F0FDFA" },
+      "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
+      "&.Mui-focused": { bgcolor: "#fff" },
+    },
+  };
 
   return (
     <Formik<FormValues>
       enableReinitialize
       initialValues={{ email: invitationEmail, code: "" }}
       validationSchema={step === 1 ? emailSchema : codeSchema}
-      onSubmit={(values) => {
-        if (step === 1) {
-          handleSendCode(values.email);
-        } else {
-          handleVerifyCode(values);
-        }
-      }}
+      onSubmit={(values) => { if (step === 1) handleSendCode(values.email); else handleVerifyCode(values); }}
     >
-      {({
-        values,
-        errors,
-        touched,
-        handleChange,
-        handleSubmit,
-        setFieldValue,
-      }) => (
-        <Box component="form" onSubmit={handleSubmit} sx={{ mb: 2 }}>
-          {/* STEP 1 – EMAIL */}
+      {({ values, errors, touched, handleChange, handleSubmit, setFieldValue }) => (
+        <Box component="form" onSubmit={handleSubmit}>
+
+          {/* ── Step indicator ── */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3.5 }}>
+            {[
+              { n: 1, label: "Enter email" },
+              { n: 2, label: "Verify code" },
+            ].map(({ n, label }, i) => (
+              <React.Fragment key={n}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{
+                    width: 26, height: 26, borderRadius: "50%",
+                    bgcolor: step >= n ? ACCENT : "#E5E7EB",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.3s",
+                    flexShrink: 0,
+                  }}>
+                    <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: step >= n ? "#fff" : "#9CA3AF", fontFamily: "Poppins" }}>
+                      {n}
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: "0.8rem", fontWeight: step === n ? 600 : 400, color: step === n ? ACCENT : "#9CA3AF", fontFamily: "Poppins", transition: "color 0.3s", whiteSpace: "nowrap" }}>
+                    {label}
+                  </Typography>
+                </Box>
+                {i === 0 && (
+                  <Box sx={{ flex: 1, height: 2, borderRadius: 1, bgcolor: step === 2 ? ACCENT : "#E5E7EB", transition: "background 0.3s" }} />
+                )}
+              </React.Fragment>
+            ))}
+          </Box>
+
+          {/* ── Step 1: Email ── */}
           {step === 1 && (
-            <TextField
-              name="email"
-              value={values.email}
-              onChange={handleChange}
-              error={touched.email && Boolean(errors.email)}
-              helperText={
-                invitationEmail
-                  ? "Email pre-filled from your invitation"
-                  : touched.email && errors.email
-              }
-              fullWidth
-              label="Email Address"
-              disabled={loading || !!invitationEmail}
-              InputProps={{
-                startAdornment: (
-                  <EmailIcon sx={{ mr: 1, color: "rgba(0,0,0,0.6)" }} />
-                ),
-              }}
-              sx={{
-                "& .MuiInputLabel-root": {
-                  color: "#666",
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#666",
-                },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "rgb(203 203 203)",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "rgb(203 203 203)",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "rgb(203 203 203)",
-                  },
-                },
-              }}
-            />
+            <Box>
+              <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#374151", fontFamily: "Poppins", mb: 1, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Email address
+              </Typography>
+              <TextField
+                name="email"
+                value={values.email}
+                onChange={handleChange}
+                error={touched.email && Boolean(errors.email)}
+                helperText={invitationEmail ? "Email pre-filled from your invitation" : touched.email && errors.email}
+                fullWidth
+                placeholder="you@company.com"
+                disabled={loading || !!invitationEmail}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailOutlinedIcon sx={{ fontSize: 20, color: ACCENT }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={fieldSx}
+              />
+              <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", fontFamily: "Poppins", mt: 1 }}>
+                We'll send a 6-digit verification code to this address.
+              </Typography>
+            </Box>
           )}
 
-          {/* STEP 2 – 6 DIGIT CODE */}
+          {/* ── Step 2: OTP ── */}
           {step === 2 && (
-            <>
-              <Stack direction="row" spacing={1} justifyContent="center">
-                {Array.from({ length: CODE_LENGTH }).map((_, index) => (
-                  <TextField
-                    key={index}
-                    inputRef={(el) => (codeInputsRef.current[index] = el)}
-                    value={values.code[index] || ""}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, ""); // only digits
-                      if (!raw) {
-                        // allow clearing
-                        const arr = values.code.split("");
-                        arr[index] = "";
-                        setFieldValue("code", arr.join(""));
-                        return;
-                      }
+            <Box>
+              <Box sx={{
+                display: "flex", alignItems: "center", gap: 1.5,
+                bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`,
+                borderRadius: "12px", px: 2, py: 1.5, mb: 3,
+              }}>
+                <EmailOutlinedIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
+                <Box>
+                  <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
+                    Code sent to
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
+                    {values.email}
+                  </Typography>
+                </Box>
+              </Box>
 
-                      const arr = values.code.split("");
-                      arr[index] = raw[0]; // first digit typed
-                      setFieldValue("code", arr.join(""));
-
-                      if (index < CODE_LENGTH - 1) {
-                        codeInputsRef.current[index + 1]?.focus();
-                      }
-                    }}
-                    onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
-                      e.preventDefault();
-                      const paste = e.clipboardData
-                        .getData("text")
-                        .replace(/\D/g, ""); // keep only digits
-                      if (!paste) return;
-
-                      const arr = values.code.split("");
-                      for (let i = 0; i < CODE_LENGTH; i++) {
-                        arr[i] = paste[i] || arr[i] || "";
-                      }
-                      setFieldValue("code", arr.join(""));
-
-                      // focus last filled input
-                      const nextIndex = Math.min(paste.length, CODE_LENGTH - 1);
-                      codeInputsRef.current[nextIndex]?.focus();
-                    }}
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Backspace" &&
-                        !values.code[index] &&
-                        index > 0
-                      ) {
-                        codeInputsRef.current[index - 1]?.focus();
-                      }
-                    }}
-                    inputProps={{
-                      maxLength: 1,
-                      style: {
-                        textAlign: "center",
-                        fontSize: "1.25rem",
-                      },
-                    }}
-                    sx={{
-                      width: 48,
-                      "& .MuiInputLabel-root": {
-                        color: "#666",
-                      },
-                      "& .MuiInputLabel-root.Mui-focused": {
-                        color: "#666",
-                      },
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgb(203 203 203)",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "rgb(203 203 203)",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "rgb(203 203 203)",
-                        },
-                      },
-                    }}
-                  />
-                ))}
+              <Stack direction="row" spacing={1.5} justifyContent="center">
+                {Array.from({ length: CODE_LENGTH }).map((_, i) => {
+                  const filled = !!values.code[i];
+                  return (
+                    <Box
+                      key={i}
+                      sx={{
+                        width: 58, height: 68,
+                        borderRadius: "14px",
+                        border: `1.5px solid ${filled ? ACCENT : "#D1FAF5"}`,
+                        bgcolor: filled ? `${ACCENT}0C` : "#F8FFFE",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.15s",
+                        "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` },
+                      }}
+                    >
+                      <Box
+                        component="input"
+                        ref={(el: HTMLInputElement | null) => (codeInputsRef.current[i] = el)}
+                        value={values.code[i] || ""}
+                        maxLength={1}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          if (!raw) { const arr = values.code.split(""); arr[i] = ""; setFieldValue("code", arr.join("")); return; }
+                          const arr = values.code.split(""); arr[i] = raw[0]; setFieldValue("code", arr.join(""));
+                          if (i < CODE_LENGTH - 1) codeInputsRef.current[i + 1]?.focus();
+                        }}
+                        onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                          e.preventDefault();
+                          const paste = e.clipboardData.getData("text").replace(/\D/g, "");
+                          if (!paste) return;
+                          const arr = values.code.split("");
+                          for (let j = 0; j < CODE_LENGTH; j++) arr[j] = paste[j] || arr[j] || "";
+                          setFieldValue("code", arr.join(""));
+                          codeInputsRef.current[Math.min(paste.length, CODE_LENGTH - 1)]?.focus();
+                        }}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                          if (e.key === "Backspace" && !values.code[i] && i > 0) codeInputsRef.current[i - 1]?.focus();
+                        }}
+                        sx={{
+                          width: "100%", height: "100%", border: "none", outline: "none",
+                          background: "transparent", textAlign: "center",
+                          fontSize: "1.6rem", fontWeight: 700, color: "#0F172A",
+                          fontFamily: "Poppins", cursor: "text",
+                        }}
+                      />
+                    </Box>
+                  );
+                })}
               </Stack>
 
               {touched.code && errors.code && (
-                <Typography color="error" variant="caption" sx={{ mt: 1 }}>
+                <Typography sx={{ color: "#EF4444", fontSize: "0.78rem", fontFamily: "Poppins", mt: 1.5, textAlign: "center" }}>
                   {errors.code}
                 </Typography>
               )}
-              {!touched.code ||
-                (!errors.code && (
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary", textAlign: "center", mt: 1 }}
-                  >
-                    Enter the 6-digit code we sent to{" "}
-                    <strong>{values.email}</strong>
-                  </Typography>
-                ))}
-            </>
-          )}
-          {(isExpired || isRunning) && (
-            <Stack alignItems="center" spacing={0.5} sx={{ mt: 2 }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  textAlign: "center",
-                  mt: 1,
-                  fontWeight: 500,
-                  color:
-                    secondsLeft > 10
-                      ? "text.secondary"
-                      : secondsLeft > 0
-                      ? "warning.main"
-                      : "error.main",
-                  transition: "color 0.3s ease",
-                }}
-              >
-                {secondsLeft > 0
-                  ? `Code expires in ${formatTimeLeft(secondsLeft)}`
-                  : "The verification code has expired"}
-              </Typography>
-            </Stack>
+            </Box>
           )}
 
+          {/* ── Timer ── */}
+          {(isExpired || isRunning) && (
+            <Box sx={{ textAlign: "center", mt: 1.5 }}>
+              <Typography sx={{
+                fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500,
+                color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
+                transition: "color 0.3s",
+              }}>
+                {secondsLeft > 0 ? `Code expires in ${formatTimeLeft(secondsLeft)}` : "Code expired — request a new one"}
+              </Typography>
+            </Box>
+          )}
+
+          {/* ── Submit ── */}
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{
-              mt: 3,
-              textTransform: "none",
-              fontWeight: 600,
-              borderRadius: "38px",
-              padding: "12px 24px",
-              height: 42,
-              maxWidth: "100%",
-              background: themeColors.primary,
-              color: "#ffffff",
-              letterSpacing: 0.3,
-              boxShadow: "0 2px 8px themeColors.primaryLight",
-              "&:hover": {
-                background: themeColors.primaryLight,
-                boxShadow: "0 4px 12px themeColors.primaryHover",
-              },
-              "&.Mui-disabled": {
-                background: "rgba(0, 0, 0, 0.12)",
-                color: "rgba(0, 0, 0, 0.26)",
-              },
-            }}
-            disabled={
-              loading ||
-              (step === 2 && !isExpired && values.code.length < CODE_LENGTH)
-            }
+            disabled={loading || (step === 2 && !isExpired && values.code.length < CODE_LENGTH)}
             onClick={() => {
               if (step === 2 && isExpired) {
                 setFieldValue("code", "", false);
-                codeInputsRef.current.forEach((input) => {
-                  if (input) input.value = "";
-                });
+                codeInputsRef.current.forEach((el) => { if (el) el.value = ""; });
                 handleSendCode(values.email);
               }
             }}
-            startIcon={loading ? <CircularProgress size={20} sx={{ color: "#ffffff" }} /> : undefined}
+            endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
+            startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+            sx={{
+              mt: 3,
+              height: 56,
+              borderRadius: "14px",
+              textTransform: "none",
+              fontFamily: "Poppins",
+              fontWeight: 700,
+              fontSize: "1rem",
+              letterSpacing: "0.01em",
+              background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
+              boxShadow: `0 4px 20px ${ACCENT}50`,
+              color: "#fff",
+              transition: "all 0.2s",
+              "&:hover": {
+                background: `linear-gradient(135deg, #0caa9d 0%, #059669 100%)`,
+                boxShadow: `0 8px 28px ${ACCENT}60`,
+                transform: "translateY(-1px)",
+              },
+              "&:active": { transform: "translateY(0)" },
+              "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
+            }}
           >
             {loading
-              ? (step === 1 ? "Sending..." : step === 2 && isExpired ? "Resending..." : "Verifying...")
-              : (step === 1
-                ? "Send Code"
-                : step === 2 && isExpired
-                ? "Resend Code"
-                : "Verify & Sign In")
-            }
+              ? (step === 1 ? "Sending…" : isExpired ? "Resending…" : "Verifying…")
+              : (step === 1 ? "Send verification code" : isExpired ? "Resend code" : "Verify & sign in")}
           </Button>
+
+          {/* ── Security note ── */}
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75, mt: 1.5 }}>
+            <LockOutlinedIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />
+            <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
+              Secured with end-to-end encryption
+            </Typography>
+          </Box>
+
+          {/* ── Change email ── */}
           {step === 2 && (
             <Button
               variant="text"
               fullWidth
-              size="medium"
               sx={{
-                mt: 2,
-                px: 2,
-                py: 1,
-                color: themeColors.primary,
-                borderRadius: "38px",
+                mt: 1.5,
+                height: 42,
+                borderRadius: "10px",
+                fontFamily: "Poppins",
                 fontWeight: 500,
+                fontSize: "0.85rem",
                 textTransform: "none",
-                boxShadow: "none",
-                transition: "all 0.3s ease-in-out",
-                background: "rgba(0,0,0,0.05)",
-                ":hover": {
-                  transform: "scale(1.02)",
-                },
-                ":active": {
-                  transform: "scale(0.98)",
-                },
+                color: "#6B7280",
+                border: "1px solid #E5E7EB",
+                "&:hover": { bgcolor: `${ACCENT}08`, color: ACCENT, borderColor: `${ACCENT}44` },
               }}
-              onClick={() => {
-                clearTimer();
-                setStep(1);
-                setFieldValue("code", "");
-              }}
+              onClick={() => { clearTimer(); setStep(1); setFieldValue("code", ""); }}
             >
-              Change email
+              ← Use a different email
             </Button>
           )}
         </Box>
