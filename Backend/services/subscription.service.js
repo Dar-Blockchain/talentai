@@ -17,19 +17,24 @@ module.exports.getActiveSubscription = async (companyProfileId) => {
       throw err;
     }
 
-    const subscription = await Subscription.findOne({
+    // Fetch all active subscriptions sorted newest first, prefer paid plans over Trial
+    const allActive = await Subscription.find({
       companyProfileId,
       status: "active",
       endDate: { $gt: new Date() },
     })
       .populate("planId")
-      .populate("paymentId");
+      .populate("paymentId")
+      .sort({ createdAt: -1 });
 
-    if (!subscription) {
+    if (!allActive.length) {
       const err = new Error("No active subscription found for this company");
       err.status = 404;
       throw err;
     }
+
+    // Prefer any paid (non-Trial) subscription over Trial
+    const subscription = allActive.find((s) => s.planId?.name !== "Trial") ?? allActive[0];
 
     return {
       success: true,
@@ -249,7 +254,7 @@ module.exports.resetMonthlyInterviewIfNeeded = async (subscriptionId) => {
  */
 module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
   try {
-    const subscription = await Subscription.findById(subscriptionId);
+    const subscription = await Subscription.findById(subscriptionId).populate("planId");
 
     if (!subscription) {
       const err = new Error("Subscription not found");
@@ -257,9 +262,28 @@ module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
       throw err;
     }
 
-    await subscription.cancel(reason);
+    if (subscription.status === "cancelled") {
+      const err = new Error("Subscription is already cancelled");
+      err.status = 400;
+      throw err;
+    }
+
+    // Cancel the subscription
+    subscription.status = "cancelled";
+    subscription.cancellationReason = reason;
+    subscription.cancelledAt = new Date();
+    await subscription.save();
 
     console.log(`✅ Subscription ${subscriptionId} cancelled`);
+
+    // Reset profile planLimits back to Trial
+    const trialPlan = await PlanLimits.findOne({ name: "Trial" });
+    if (trialPlan && subscription.companyProfileId) {
+      await Profile.findByIdAndUpdate(subscription.companyProfileId, {
+        planLimits: trialPlan._id,
+      });
+      console.log(`✅ Profile ${subscription.companyProfileId} planLimits reset to Trial`);
+    }
 
     return {
       success: true,
