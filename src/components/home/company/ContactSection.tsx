@@ -141,10 +141,8 @@ const ContactSection: React.FC = () => {
         alignItems: "start",
       }}>
 
-        {/* ── LEFT column: stacked bento ── */}
+        {/* ── LEFT column ── */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, md: 2.5 } }}>
-
-          {/* Dark headline card */}
           <motion.div
             initial={{ opacity: 0, x: -28 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -152,76 +150,57 @@ const ContactSection: React.FC = () => {
             transition={{ duration: 0.6, ease }}
           >
             <Box sx={{
-              bgcolor: "#111827", borderRadius: "20px",
+              bgcolor: "#0F172A",
+              borderRadius: "20px",
               p: { xs: 3.5, md: 4 },
               position: "relative", overflow: "hidden",
-              display: "flex", flexDirection: "column", justifyContent: "space-between",
-              gap: 3,
-              border: "1px solid rgba(255,255,255,0.05)",
-              transition: "border-color 0.3s",
-              "&:hover": { borderColor: "rgba(13,148,136,0.22)" },
+              display: "flex", flexDirection: "column",
+              gap: 3.5,
+              border: "1px solid rgba(94,234,212,0.08)",
+              minHeight: { md: 420 },
             }}>
-              {/* Glow orbs */}
+              {/* Soft glow orbs */}
               <Box sx={{
-                position: "absolute", top: -60, right: -60, width: 240, height: 240,
+                position: "absolute", top: -80, right: -80, width: 280, height: 280,
                 borderRadius: "50%",
-                background: "radial-gradient(circle, rgba(13,148,136,0.22) 0%, transparent 70%)",
+                background: "radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 65%)",
                 pointerEvents: "none",
               }} />
               <Box sx={{
-                position: "absolute", bottom: -50, left: -50, width: 180, height: 180,
+                position: "absolute", bottom: -80, left: -60, width: 220, height: 220,
                 borderRadius: "50%",
-                background: "radial-gradient(circle, rgba(13,148,136,0.10) 0%, transparent 70%)",
+                background: "radial-gradient(circle, rgba(5,150,105,0.15) 0%, transparent 65%)",
                 pointerEvents: "none",
               }} />
 
-              {/* Dot grid */}
-              <Box sx={{
-                position: "absolute", inset: 0, pointerEvents: "none",
-                backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
-                backgroundSize: "22px 22px",
-              }} />
-
-              {/* Watermark */}
-              <Typography sx={{
-                position: "absolute", bottom: -16, right: 16,
-                fontFamily: "Poppins", fontWeight: 900, fontSize: "100px",
-                lineHeight: 1, color: "rgba(255,255,255,0.025)",
-                letterSpacing: "-6px", userSelect: "none", pointerEvents: "none",
-              }}>
-                AI
-              </Typography>
-
+              {/* Headline */}
               <Box sx={{ position: "relative" }}>
-                <Box sx={{
-                  display: "inline-flex", alignItems: "center",
-                  bgcolor: "rgba(13,148,136,0.12)", border: "1px solid rgba(13,148,136,0.25)",
-                  borderRadius: "20px", px: 1.5, py: 0.4, mb: 2,
-                }}>
-                  <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", fontWeight: 700, color: ACCENT, letterSpacing: "1px", textTransform: "uppercase" }}>
-                    Why TalentAI
-                  </Typography>
-                </Box>
                 <Typography sx={{
                   fontFamily: "Poppins", fontWeight: 700,
-                  fontSize: { xs: "20px", md: "22px" },
-                  color: "#fff", lineHeight: 1.3, mb: 2,
+                  fontSize: { xs: "22px", md: "24px" },
+                  color: "#fff", lineHeight: 1.3, mb: 2.5,
                 }}>
                   A process your team{" "}
-                  <Box component="span" sx={{ color: ACCENT }}>is proud of.</Box>
+                  <Box component="span" sx={{
+                    background: "linear-gradient(90deg, #5eead4 0%, #a7f3d0 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}>
+                    is proud of.
+                  </Box>
                 </Typography>
 
                 {/* Feature bullets */}
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.1 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {FEATURES.map((feat, i) => (
                     <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                       <Box sx={{
-                        width: 5, height: 5, borderRadius: "50%", flexShrink: 0,
-                        bgcolor: ACCENT, boxShadow: `0 0 6px ${ACCENT}55`,
+                        width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                        bgcolor: "#5eead4", boxShadow: "0 0 8px rgba(94,234,212,0.6)",
                       }} />
                       <Typography sx={{
-                        fontFamily: "Poppins", fontSize: "12.5px",
-                        color: "rgba(255,255,255,0.45)", lineHeight: 1.4,
+                        fontFamily: "Poppins", fontSize: "13px",
+                        color: "rgba(255,255,255,0.55)", lineHeight: 1.5,
                       }}>
                         {feat}
                       </Typography>
@@ -230,22 +209,26 @@ const ContactSection: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* Trust list */}
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, position: "relative" }}>
+              {/* Trust stats */}
+              <Box sx={{
+                display: "flex", flexDirection: "column", gap: 1.5,
+                pt: 2.5, borderTop: "1px solid rgba(94,234,212,0.08)",
+                position: "relative",
+              }}>
                 {TRUST_ITEMS.map((item, i) => (
                   <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <Box sx={{
-                      width: 28, height: 28, borderRadius: "8px", flexShrink: 0,
-                      bgcolor: `${item.color}18`,
+                      width: 32, height: 32, borderRadius: "10px", flexShrink: 0,
+                      bgcolor: "rgba(255,255,255,0.05)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      <item.Icon sx={{ fontSize: 14, color: item.color }} />
+                      <item.Icon sx={{ fontSize: 15, color: "#5eead4" }} />
                     </Box>
                     <Box>
-                      <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", color: "#fff", lineHeight: 1.2 }}>
+                      <Typography sx={{ fontFamily: "Poppins", fontWeight: 700, fontSize: "13px", color: "rgba(255,255,255,0.85)", lineHeight: 1.2 }}>
                         {item.label}
                       </Typography>
-                      <Typography sx={{ fontFamily: "Poppins", fontSize: "11.5px", color: "rgba(255,255,255,0.35)", lineHeight: 1.4 }}>
+                      <Typography sx={{ fontFamily: "Poppins", fontSize: "11.5px", color: "rgba(255,255,255,0.3)", lineHeight: 1.4 }}>
                         {item.desc}
                       </Typography>
                     </Box>
@@ -254,36 +237,33 @@ const ContactSection: React.FC = () => {
               </Box>
 
               {/* Email footer */}
-              <Box sx={{ position: "relative", pt: 2.5, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.25 }}>
+              <Box sx={{
+                position: "relative", mt: "auto",
+                pt: 2.5, borderTop: "1px solid rgba(94,234,212,0.08)",
+              }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box sx={{
-                    width: 32, height: 32, borderRadius: "9px",
-                    bgcolor: "rgba(13,148,136,0.12)",
+                    width: 34, height: 34, borderRadius: "10px",
+                    bgcolor: "rgba(94,234,212,0.08)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0,
                   }}>
-                    <EmailOutlinedIcon sx={{ fontSize: 15, color: ACCENT }} />
+                    <EmailOutlinedIcon sx={{ fontSize: 16, color: "#5eead4" }} />
                   </Box>
                   <Box sx={{ flex: 1 }}>
-                    <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.5px", textTransform: "uppercase", mb: 0.15 }}>
-                      Email us
+                    <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.5px", textTransform: "uppercase", mb: 0.2 }}>
+                      Email us directly
                     </Typography>
-                    <Typography sx={{ fontFamily: "Poppins", fontSize: "12.5px", color: "rgba(255,255,255,0.55)" }}>
+                    <Typography sx={{ fontFamily: "Poppins", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
                       contact@talentai.bid
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, flexShrink: 0 }}>
-                    <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#4ADE80", boxShadow: "0 0 7px #4ADE80" }} />
-                    <Typography sx={{ fontFamily: "Poppins", fontSize: "10px", color: "rgba(255,255,255,0.28)" }}>
+                    <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#4ADE80", boxShadow: "0 0 6px #4ADE80" }} />
+                    <Typography sx={{ fontFamily: "Poppins", fontSize: "10.5px", color: "rgba(255,255,255,0.25)" }}>
                       Online
                     </Typography>
                   </Box>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <AccessTimeOutlinedIcon sx={{ fontSize: 12, color: "rgba(255,255,255,0.18)" }} />
-                  <Typography sx={{ fontFamily: "Poppins", fontSize: "11px", color: "rgba(255,255,255,0.18)" }}>
-                    Average reply time: under 2 hours
-                  </Typography>
                 </Box>
               </Box>
             </Box>
