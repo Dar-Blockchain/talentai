@@ -9,12 +9,14 @@ import {
   Dialog,
   DialogContent,
   LinearProgress,
+  InputAdornment,
 } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -30,25 +32,29 @@ const CODE_LENGTH = 6;
 const CODE_TTL = 300;
 const CODE_EXPIRY_KEY = "candidate_reg_code_expires_at";
 
-const themeColors = {
-  primary: "rgba(131, 16, 255, 0.83)",
-  primaryHover: "rgba(131, 16, 255, 0.73)",
-  primaryLight: "rgba(131, 16, 255, 0.93)",
-};
+const ACCENT = "#0D9488";
+const ACCENT2 = "#059669";
 
 const fieldSx = {
-  "& .MuiInputLabel-root": { color: "#666", fontSize: "0.8rem" },
-  "& .MuiInputLabel-root.Mui-focused": { color: "#666" },
-  "& .MuiInputBase-input": { fontSize: "0.8rem" },
-  "& .MuiFormHelperText-root": { fontSize: "0.7rem" },
+  "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontSize: "0.95rem", fontWeight: 500 },
+  "& .MuiInputLabel-root.Mui-focused": { color: ACCENT },
+  "& .MuiInputBase-input": { fontSize: "1rem", fontFamily: "Poppins" },
+  "& .MuiInputBase-input::placeholder": { fontSize: "0.82rem", opacity: 1, color: "#C4CAD4" },
+  "& .MuiFormHelperText-root": { fontSize: "0.75rem" },
   "& .MuiOutlinedInput-root": {
-    "& fieldset": { borderColor: "rgb(203 203 203)" },
-    "&:hover fieldset": { borderColor: "rgb(203 203 203)" },
-    "&.Mui-focused fieldset": { borderColor: "rgb(203 203 203)" },
+    borderRadius: "14px",
+    fontSize: "1rem",
+    fontFamily: "Poppins",
+    bgcolor: "#F9FAFB",
+    "& fieldset": { borderColor: "#E5E7EB" },
+    "&:hover fieldset": { borderColor: "#D1D5DB" },
+    "&:hover": { bgcolor: "#F3F4F6" },
+    "&.Mui-focused fieldset": { borderColor: ACCENT, borderWidth: "1.5px" },
+    "&.Mui-focused": { bgcolor: "#fff" },
   },
 };
 
-const half = { flex: "1 1 calc(50% - 8px)", minWidth: 0 };
+const half = { flex: { xs: "1 1 100%", md: "1 1 calc(50% - 12px)" }, minWidth: 0 };
 const full = { flex: "1 1 100%" };
 
 type FormValues = {
@@ -61,6 +67,27 @@ type FormValues = {
 interface Props {
   onStepChange?: (step: 1 | 2) => void;
 }
+
+const submitBtnSx = {
+  textTransform: "none",
+  fontFamily: "Poppins",
+  fontWeight: 700,
+  borderRadius: "14px",
+  height: 56,
+  background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT2} 100%)`,
+  color: "#fff",
+  boxShadow: `0 4px 20px ${ACCENT}50`,
+  letterSpacing: "0.01em",
+  fontSize: "1rem",
+  transition: "all 0.2s",
+  "&:hover": {
+    background: `linear-gradient(135deg, #0caa9d 0%, ${ACCENT2} 100%)`,
+    boxShadow: `0 8px 28px ${ACCENT}60`,
+    transform: "translateY(-1px)",
+  },
+  "&:active": { transform: "translateY(0)" },
+  "&.Mui-disabled": { background: "#F3F4F6", color: "#9CA3AF", boxShadow: "none" },
+};
 
 const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -115,7 +142,6 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
   useEffect(() => {
     if (!analyzingCv) { setCvProgress(0); return; }
     setCvProgress(0);
-    // Simulate progress: fast to ~70%, then slow until the API resolves
     const timer = setInterval(() => {
       setCvProgress((prev) => {
         if (prev >= 90) { clearInterval(timer); return 90; }
@@ -234,7 +260,7 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
         <Box
           component="form"
           onSubmit={handleSubmit(handleSendCode)}
-          sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 2 }}
+          sx={{ mb: 2, textAlign: "left", display: "flex", flexWrap: "wrap", gap: 3 }}
         >
           {/* Row 1: First Name | Last Name */}
           <Box sx={half}>
@@ -242,13 +268,14 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               label="First Name"
               placeholder="John"
               fullWidth
-              size="small"
               disabled={loading}
               error={!!errors.firstName}
               helperText={errors.firstName?.message}
               InputProps={{
                 startAdornment: (
-                  <PersonIcon sx={{ mr: 1, color: "rgba(0,0,0,0.4)", fontSize: 18 }} />
+                  <InputAdornment position="start">
+                    <PersonIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
+                  </InputAdornment>
                 ),
               }}
               sx={fieldSx}
@@ -260,13 +287,14 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               label="Last Name"
               placeholder="Doe"
               fullWidth
-              size="small"
               disabled={loading}
               error={!!errors.lastName}
               helperText={errors.lastName?.message}
               InputProps={{
                 startAdornment: (
-                  <PersonIcon sx={{ mr: 1, color: "rgba(0,0,0,0.4)", fontSize: 18 }} />
+                  <InputAdornment position="start">
+                    <PersonIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
+                  </InputAdornment>
                 ),
               }}
               sx={fieldSx}
@@ -280,7 +308,6 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               label="Email Address"
               placeholder="john@example.com"
               fullWidth
-              size="small"
               type="email"
               disabled={loading || !!invitationEmail}
               error={!!errors.email}
@@ -291,7 +318,9 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               }
               InputProps={{
                 startAdornment: (
-                  <EmailIcon sx={{ mr: 1, color: "rgba(0,0,0,0.4)", fontSize: 18 }} />
+                  <InputAdornment position="start">
+                    <EmailIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
+                  </InputAdornment>
                 ),
               }}
               sx={fieldSx}
@@ -306,13 +335,14 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               label="Phone Number"
               placeholder="+1 234 567 890"
               fullWidth
-              size="small"
               disabled={loading}
               error={!!errors.phone}
               helperText={errors.phone?.message}
               InputProps={{
                 startAdornment: (
-                  <PhoneIcon sx={{ mr: 1, color: "rgba(0,0,0,0.4)", fontSize: 18 }} />
+                  <InputAdornment position="start">
+                    <PhoneIcon sx={{ fontSize: 20, color: "#9CA3AF" }} />
+                  </InputAdornment>
                 ),
               }}
               sx={fieldSx}
@@ -354,89 +384,69 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
                 }}
                 sx={{
                   border: "1.5px dashed",
-                  borderColor: cvError
-                    ? "error.main"
-                    : isDragging
-                    ? themeColors.primaryLight
-                    : cvFile
-                    ? themeColors.primary
-                    : "rgb(203 203 203)",
-                  borderRadius: 2,
-                  py: isDragging ? 3 : 1.5,
+                  borderColor: cvError ? "#EF4444" : isDragging ? ACCENT : cvFile ? ACCENT : "#E5E7EB",
+                  borderRadius: "12px",
+                  py: 1.5,
                   px: 2,
                   cursor: "pointer",
                   display: "flex",
-                  flexDirection: isDragging ? "column" : "row",
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: isDragging ? "center" : "flex-start",
-                  gap: isDragging ? 0.5 : 1,
-                  transition: "all 0.2s",
-                  background: isDragging
-                    ? "rgba(131,16,255,0.06)"
-                    : cvFile
-                    ? "rgba(131,16,255,0.04)"
-                    : "transparent",
+                  justifyContent: "flex-start",
+                  gap: 1.5,
+                  textAlign: "center",
+                  transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
+                  background: isDragging ? `${ACCENT}0C` : cvFile ? `${ACCENT}06` : "#FAFAFA",
+                  transform: isDragging ? "scale(1.015)" : "scale(1)",
+                  boxShadow: isDragging ? `0 8px 32px ${ACCENT}22` : "none",
                   "&:hover": {
-                    borderColor: themeColors.primary,
-                    background: "rgba(131,16,255,0.04)",
+                    borderColor: cvFile ? ACCENT : "#9CA3AF",
+                    background: cvFile ? `${ACCENT}08` : "#F5F5F5",
                   },
                 }}
               >
-                {isDragging ? (
-                  <>
-                    <UploadFileIcon sx={{ color: themeColors.primary, fontSize: 28 }} />
-                    <Typography variant="body2" sx={{ color: themeColors.primary, fontWeight: 600 }}>
-                      Drop your CV here
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "#999" }}>PDF, DOC or DOCX</Typography>
-                  </>
-                ) : (
-                  <>
-                    {cvFile ? (
-                      <CheckCircleOutlineIcon sx={{ color: themeColors.primary, fontSize: 20 }} />
-                    ) : (
-                      <UploadFileIcon sx={{ color: "rgba(0,0,0,0.4)", fontSize: 20 }} />
-                    )}
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: cvFile ? themeColors.primary : "#444",
-                          fontWeight: cvFile ? 500 : 400,
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {cvFile ? cvFile.name : "Drag & drop your CV or click to browse"}
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-                        <Typography variant="caption" sx={{ color: cvError ? "error.main" : "#999" }}>
-                          {cvError ? "CV is required" : "PDF, DOC or DOCX"}
-                        </Typography>
-                        {!cvError && (
-                          <Box
-                            component="span"
-                            sx={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 0.4,
-                              px: 0.7,
-                              py: 0.1,
-                              borderRadius: "4px",
-                              background: "rgba(131,16,255,0.08)",
-                              border: "1px solid rgba(131,16,255,0.2)",
-                              fontSize: "0.6rem",
-                              fontWeight: 600,
-                              color: themeColors.primary,
-                              letterSpacing: 0.4,
-                              lineHeight: 1.6,
-                            }}
-                          >
-                            🇬🇧 English only
-                          </Box>
-                        )}
+                {/* Icon */}
+                <Box sx={{
+                  width: 34, height: 34, borderRadius: "9px", flexShrink: 0,
+                  bgcolor: cvFile ? `${ACCENT}12` : isDragging ? `${ACCENT}18` : "#F0F0F0",
+                  border: cvFile ? `1px solid ${ACCENT}30` : "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s",
+                }}>
+                  {cvFile
+                    ? <CheckCircleOutlineIcon sx={{ fontSize: 18, color: ACCENT }} />
+                    : <UploadFileIcon sx={{ fontSize: 18, color: isDragging ? ACCENT : "#9CA3AF" }} />
+                  }
+                </Box>
+
+                {/* Text */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: "0.82rem", color: cvFile ? "#0F172A" : isDragging ? ACCENT : "#374151", fontFamily: "Poppins", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {cvFile ? cvFile.name : isDragging ? "Drop your CV here" : "Drag & drop or click to browse"}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", fontFamily: "Poppins" }}>
+                    {cvFile
+                      ? <>{(cvFile.size / 1024).toFixed(0)} KB · <Box component="span" sx={{ color: ACCENT, fontWeight: 600 }}>Replace</Box></>
+                      : cvError ? <Box component="span" sx={{ color: "#EF4444" }}>CV is required</Box>
+                      : "PDF, DOC or DOCX · English only"
+                    }
+                  </Typography>
+                </Box>
+
+                {/* Format badges — hidden when file selected or dragging */}
+                {!cvFile && !isDragging && (
+                  <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+                    {["PDF", "DOC"].map((fmt) => (
+                      <Box key={fmt} component="span" sx={{
+                        px: 0.75, py: 0.2, borderRadius: "5px",
+                        bgcolor: "#F3F4F6", border: "1px solid #E5E7EB",
+                        fontSize: "0.6rem", fontWeight: 700, color: "#6B7280",
+                        letterSpacing: "0.04em",
+                      }}>
+                        {fmt}
                       </Box>
-                    </Box>
-                  </>
+                    ))}
+                  </Box>
                 )}
               </Box>
             </Box>
@@ -450,25 +460,11 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               variant="contained"
               disabled={loading}
               onClick={() => { if (!isJoinTeam && !cvFile) setCvError(true); }}
-              startIcon={
-                loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : undefined
-              }
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: "38px",
-                height: 44,
-                background: themeColors.primary,
-                color: "#fff",
-                letterSpacing: 0.3,
-                "&:hover": { background: themeColors.primaryLight },
-                "&.Mui-disabled": {
-                  background: "rgba(0,0,0,0.12)",
-                  color: "rgba(0,0,0,0.26)",
-                },
-              }}
+              endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
+              startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+              sx={submitBtnSx}
             >
-              {loading ? "Sending code..." : "Continue"}
+              {loading ? "Sending code…" : "Continue"}
             </Button>
           </Box>
         </Box>
@@ -480,81 +476,72 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
         disableEscapeKeyDown
         PaperProps={{
           sx: {
-            borderRadius: 4,
+            borderRadius: "20px",
             p: 0,
             minWidth: 340,
             maxWidth: 380,
             overflow: "hidden",
-            boxShadow: "0 24px 60px rgba(131,16,255,0.15)",
+            boxShadow: `0 24px 60px ${ACCENT}25`,
           },
         }}
       >
-        {/* Purple gradient top bar */}
-        <Box sx={{ height: 4, background: `linear-gradient(90deg, ${themeColors.primary} ${cvProgress}%, rgba(131,16,255,0.15) ${cvProgress}%)`, transition: "background 0.4s ease" }} />
+        <Box sx={{ height: 4, background: `linear-gradient(90deg, ${ACCENT} ${cvProgress}%, ${ACCENT}22 ${cvProgress}%)`, transition: "background 0.4s ease" }} />
 
         <DialogContent sx={{ px: 4, py: 3.5, display: "flex", flexDirection: "column", gap: 2.5 }}>
-          {/* Icon + title */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 44, height: 44, borderRadius: "12px",
-                background: "rgba(131,16,255,0.08)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <CircularProgress size={22} thickness={5} sx={{ color: themeColors.primary }} />
+            <Box sx={{
+              width: 44, height: 44, borderRadius: "12px",
+              background: `${ACCENT}12`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}>
+              <CircularProgress size={22} thickness={5} sx={{ color: ACCENT }} />
             </Box>
             <Box>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#111", lineHeight: 1.3 }}>
+              <Typography sx={{ fontWeight: 700, color: "#111", lineHeight: 1.3, fontFamily: "Poppins" }}>
                 Analyzing your CV
               </Typography>
-              <Typography variant="caption" sx={{ color: "#888" }}>
+              <Typography sx={{ fontSize: "0.78rem", color: "#888", fontFamily: "Poppins" }}>
                 AI-powered extraction in progress
               </Typography>
             </Box>
           </Box>
 
-          {/* Steps */}
           {[
             { label: "Reading document", threshold: 0 },
             { label: "Extracting skills & experience", threshold: 30 },
             { label: "Building your profile", threshold: 65 },
           ].map(({ label, threshold }) => (
             <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-              <Box
-                sx={{
-                  width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: cvProgress > threshold ? "rgba(131,16,255,0.1)" : "rgba(0,0,0,0.04)",
-                  transition: "background 0.4s",
-                }}
-              >
+              <Box sx={{
+                width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: cvProgress > threshold ? `${ACCENT}15` : "rgba(0,0,0,0.04)",
+                transition: "background 0.4s",
+              }}>
                 {cvProgress > threshold
-                  ? <CheckCircleOutlineIcon sx={{ fontSize: 13, color: themeColors.primary }} />
-                  : <CircularProgress size={10} thickness={5} sx={{ color: cvProgress >= threshold ? themeColors.primary : "#ccc" }} />
+                  ? <CheckCircleOutlineIcon sx={{ fontSize: 13, color: ACCENT }} />
+                  : <CircularProgress size={10} thickness={5} sx={{ color: cvProgress >= threshold ? ACCENT : "#ccc" }} />
                 }
               </Box>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: cvProgress > threshold ? "#333" : "#aaa",
-                  fontWeight: cvProgress > threshold ? 600 : 400,
-                  transition: "color 0.4s",
-                }}
-              >
+              <Typography sx={{
+                fontSize: "0.82rem",
+                color: cvProgress > threshold ? "#333" : "#aaa",
+                fontWeight: cvProgress > threshold ? 600 : 400,
+                fontFamily: "Poppins",
+                transition: "color 0.4s",
+              }}>
                 {label}
               </Typography>
             </Box>
           ))}
 
-          {/* Progress bar */}
           <Box>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-              <Typography variant="caption" sx={{ color: "#999", fontSize: "0.65rem" }}>
+              <Typography sx={{ fontSize: "0.65rem", color: "#999", fontFamily: "Poppins" }}>
                 Processing...
               </Typography>
-              <Typography variant="caption" sx={{ color: themeColors.primary, fontWeight: 700, fontSize: "0.65rem" }}>
+              <Typography sx={{ fontSize: "0.65rem", color: ACCENT, fontWeight: 700, fontFamily: "Poppins" }}>
                 {cvProgress}%
               </Typography>
             </Box>
@@ -564,16 +551,16 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
               sx={{
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: "rgba(131,16,255,0.1)",
+                backgroundColor: `${ACCENT}15`,
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 3,
-                  background: `linear-gradient(90deg, ${themeColors.primary}, rgba(131,16,255,0.6))`,
+                  background: `linear-gradient(90deg, ${ACCENT}, ${ACCENT2})`,
                 },
               }}
             />
           </Box>
 
-          <Typography variant="caption" sx={{ color: "#bbb", textAlign: "center", mt: -1 }}>
+          <Typography sx={{ fontSize: "0.72rem", color: "#bbb", textAlign: "center", mt: -1, fontFamily: "Poppins" }}>
             Please don&apos;t close this page
           </Typography>
         </DialogContent>
@@ -582,123 +569,110 @@ const CandidateRegisterForm: React.FC<Props> = ({ onStepChange }) => {
       {/* STEP 2 – OTP */}
       {step === 2 && (
         <Box sx={{ mb: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{ color: "#555", mb: 2.5, textAlign: "center", lineHeight: 1.6 }}
-          >
-            Enter the 6-digit code sent to{" "}
-            <Typography component="span" fontWeight={600} variant="body2">
-              {savedEmail}
-            </Typography>
-          </Typography>
+          {/* Email info box */}
+          <Box sx={{
+            display: "flex", alignItems: "center", gap: 1.5,
+            bgcolor: `${ACCENT}0A`, border: `1px solid ${ACCENT}22`,
+            borderRadius: "12px", px: 2, py: 1.5, mb: 3,
+          }}>
+            <EmailIcon sx={{ fontSize: 18, color: ACCENT, flexShrink: 0 }} />
+            <Box>
+              <Typography sx={{ fontSize: "0.78rem", color: "#6B7280", fontFamily: "Poppins" }}>
+                Code sent to
+              </Typography>
+              <Typography sx={{ fontSize: "0.88rem", color: "#0F172A", fontFamily: "Poppins", fontWeight: 700 }}>
+                {savedEmail}
+              </Typography>
+            </Box>
+          </Box>
 
-          <Stack direction="row" spacing={1} justifyContent="center">
+          {/* OTP cells */}
+          <Stack direction="row" spacing={1.5} justifyContent="center">
             {otpCode.map((digit, index) => (
-              <TextField
+              <Box
                 key={index}
-                inputRef={(el) => (codeInputsRef.current[index] = el)}
-                value={digit}
-                onChange={(e) => handleOtpChange(index, e.target.value)}
-                onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                onPaste={index === 0 ? handleOtpPaste : undefined}
-                inputProps={{
-                  maxLength: 1,
-                  style: { textAlign: "center", fontSize: "1.25rem" },
+                sx={{
+                  width: 58, height: 68,
+                  borderRadius: "14px",
+                  border: `1.5px solid ${digit ? ACCENT : "#D1FAF5"}`,
+                  bgcolor: digit ? `${ACCENT}0C` : "#F8FFFE",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.15s",
+                  "&:focus-within": { borderColor: ACCENT, bgcolor: "#fff", boxShadow: `0 0 0 4px ${ACCENT}18` },
                 }}
-                sx={{ width: 48, ...fieldSx }}
-              />
+              >
+                <Box
+                  component="input"
+                  ref={(el: HTMLInputElement | null) => (codeInputsRef.current[index] = el)}
+                  value={digit}
+                  maxLength={1}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, e)}
+                  onPaste={index === 0 ? (handleOtpPaste as any) : undefined}
+                  sx={{
+                    width: "100%", height: "100%", border: "none", outline: "none",
+                    background: "transparent", textAlign: "center",
+                    fontSize: "1.6rem", fontWeight: 700, color: "#0F172A",
+                    fontFamily: "Poppins", cursor: "text",
+                  }}
+                />
+              </Box>
             ))}
           </Stack>
 
+          {/* Timer */}
           {(isExpired || isRunning) && (
-            <Typography
-              variant="caption"
-              sx={{
-                display: "block",
-                textAlign: "center",
-                mt: 1.5,
-                fontWeight: 500,
-                color:
-                  secondsLeft > 10
-                    ? "text.secondary"
-                    : secondsLeft > 0
-                    ? "warning.main"
-                    : "error.main",
-                transition: "color 0.3s ease",
-              }}
-            >
-              {secondsLeft > 0
-                ? `Code expires in ${formatTimeLeft(secondsLeft)}`
-                : "Verification code has expired"}
-            </Typography>
+            <Box sx={{ textAlign: "center", mt: 1.5 }}>
+              <Typography sx={{
+                fontSize: "0.8rem", fontFamily: "Poppins", fontWeight: 500,
+                color: secondsLeft > 60 ? "#9CA3AF" : secondsLeft > 0 ? "#F59E0B" : "#EF4444",
+                transition: "color 0.3s",
+              }}>
+                {secondsLeft > 0 ? `Code expires in ${formatTimeLeft(secondsLeft)}` : "Code expired — request a new one"}
+              </Typography>
+            </Box>
           )}
 
+          {/* Verify button */}
           <Button
             fullWidth
             variant="contained"
             onClick={handleVerifyAndRegister}
             disabled={loading || isExpired || otpCode.join("").length < CODE_LENGTH}
-            startIcon={loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : undefined}
-            sx={{
-              mt: 3,
-              textTransform: "none",
-              fontWeight: 600,
-              borderRadius: "38px",
-              height: 44,
-              background: themeColors.primary,
-              color: "#fff",
-              letterSpacing: 0.3,
-              "&:hover": { background: themeColors.primaryLight },
-              "&.Mui-disabled": { background: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)" },
-            }}
+            endIcon={!loading && <ArrowForwardIcon sx={{ fontSize: 18 }} />}
+            startIcon={loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+            sx={{ ...submitBtnSx, mt: 3 }}
           >
-            {loading ? "Creating account..." : "Verify & Create Account"}
+            {loading ? "Creating account…" : "Verify & Create Account"}
           </Button>
 
+          {/* Resend */}
           <Button
             fullWidth
             variant="text"
             onClick={handleResendCode}
             disabled={resendLoading || (!isExpired && isRunning)}
-            startIcon={resendLoading ? <CircularProgress size={14} sx={{ color: themeColors.primary }} /> : undefined}
+            startIcon={resendLoading ? <CircularProgress size={14} sx={{ color: ACCENT }} /> : undefined}
             sx={{
               mt: 1.5,
               textTransform: "none",
               fontWeight: 500,
-              fontSize: "13px",
-              borderRadius: "38px",
-              color: isExpired ? themeColors.primary : "#9CA3AF",
+              fontSize: "0.85rem",
+              fontFamily: "Poppins",
+              borderRadius: "10px",
+              height: 42,
+              border: "1px solid #E5E7EB",
+              color: isExpired ? ACCENT : "#9CA3AF",
+              "&:hover": { bgcolor: `${ACCENT}08`, color: ACCENT, borderColor: `${ACCENT}44` },
+              "&.Mui-disabled": { color: "#C4C4C4", borderColor: "#E5E7EB" },
             }}
           >
             {resendLoading
-              ? "Sending..."
+              ? "Sending…"
               : isRunning && !isExpired
               ? `Resend code in ${formatTimeLeft(secondsLeft)}`
               : "Resend Code"}
           </Button>
-
-          {/* <Button
-            variant="text"
-            fullWidth
-            onClick={() => {
-              clearTimer();
-              setStep(1);
-              setOtpCode(Array(CODE_LENGTH).fill(""));
-              onStepChange?.(1);
-            }}
-            sx={{
-              mt: 1.5,
-              color: themeColors.primary,
-              textTransform: "none",
-              borderRadius: "38px",
-              fontWeight: 500,
-              background: "rgba(0,0,0,0.05)",
-              ":hover": { transform: "scale(1.02)" },
-              ":active": { transform: "scale(0.98)" },
-            }}
-          >
-            Back & Edit Details
-          </Button> */}
         </Box>
       )}
     </Box>
