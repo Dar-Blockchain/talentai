@@ -17,7 +17,7 @@ module.exports.getActiveSubscription = async (companyProfileId) => {
       throw err;
     }
 
-    // Fetch all active subscriptions sorted newest first, prefer paid plans over Trial
+    // Fetch all active non-Trial subscriptions (multiple plans allowed)
     const allActive = await Subscription.find({
       companyProfileId,
       status: "active",
@@ -27,18 +27,28 @@ module.exports.getActiveSubscription = async (companyProfileId) => {
       .populate("paymentId")
       .sort({ createdAt: -1 });
 
-    if (!allActive.length) {
+    const paid = allActive.filter((s) => s.planId?.name !== "Trial");
+    const subscriptions = paid.length ? paid : allActive;
+
+    if (!subscriptions.length) {
       const err = new Error("No active subscription found for this company");
       err.status = 404;
       throw err;
     }
 
-    // Prefer any paid (non-Trial) subscription over Trial
-    const subscription = allActive.find((s) => s.planId?.name !== "Trial") ?? allActive[0];
+    // Combined limits across all active subscriptions
+    const combined = {
+      totalPostsLimit:      subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0),
+      totalInterviewLimit:  subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0),
+      totalPostsUsed:       subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0),
+      totalInterviewsUsed:  subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0),
+    };
 
     return {
       success: true,
-      data: subscription,
+      data: subscriptions[0],       // primary subscription (most recent paid)
+      subscriptions,                 // all active subscriptions
+      combined,
     };
   } catch (error) {
     console.error("Error getting active subscription:", error);
@@ -84,55 +94,51 @@ module.exports.getCompanySubscriptions = async (companyProfileId) => {
  */
 module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
   try {
-    const subscription = await Subscription.findOne({
+    const allActive = await Subscription.find({
       companyProfileId,
       status: "active",
       endDate: { $gt: new Date() },
     }).populate("planId");
 
-    if (!subscription) {
-      return {
-        canUse: false,
-        message: "No active subscription found",
-        limitData: null,
-      };
+    const subscriptions = allActive.filter((s) => s.planId?.name !== "Trial");
+    const active = subscriptions.length ? subscriptions : allActive;
+
+    if (!active.length) {
+      return { canUse: false, message: "No active subscription found", limitData: null };
     }
 
-    const planLimits = subscription.planId;
     let used = 0;
     let limit = 0;
 
-    switch (limitType) {
-      case "posts":
-        used = subscription.postsUsed || 0;
-        limit = planLimits.postsLimit || 0;
-        break;
-      case "monthlyInterviews":
-        // Reset if new month
-        await this.resetMonthlyInterviewIfNeeded(subscription._id);
-        const updated = await Subscription.findById(subscription._id);
-        used = updated.monthlyInterviewsUsed || 0;
-        limit = planLimits.monthlyInterviewLimit || 0;
-        break;
-      default:
-        throw new Error("Invalid limit type");
+    if (limitType === "posts") {
+      used  = active.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
+      limit = active.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
+    } else if (limitType === "monthlyInterviews") {
+      // Reset monthly counters if needed before summing
+      await Promise.all(active.map((s) => module.exports.resetMonthlyInterviewIfNeeded(s._id)));
+      const refreshed = await Subscription.find({ _id: { $in: active.map((s) => s._id) } });
+      used  = refreshed.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
+      limit = active.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
+    } else {
+      throw new Error("Invalid limit type");
     }
 
     const canUse = used < limit;
     const remaining = Math.max(0, limit - used);
+    const planNames = [...new Set(active.map((s) => s.planId?.name).filter(Boolean))].join(" + ");
 
     return {
       canUse,
       message: canUse
-        ? `You can create ${remaining} more ${limitType}`
-        : `You have reached the maximum ${limitType} (${limit}) for your plan`,
+        ? `You can use ${remaining} more ${limitType} (combined across ${active.length} plan${active.length > 1 ? "s" : ""})`
+        : `You have reached the combined ${limitType} limit (${limit}) across all your plans`,
       limitData: {
         used,
         limit,
         remaining,
-        planName: planLimits.name,
-        subscriptionId: subscription._id,
-        expiresAt: subscription.endDate,
+        planName: planNames,
+        subscriptionIds: active.map((s) => s._id),
+        expiresAt: active.map((s) => s.endDate),
       },
     };
   } catch (error) {
@@ -445,6 +451,84 @@ module.exports.getSubscriptionDetails = async (subscriptionId) => {
     };
   } catch (error) {
     console.error("Error getting subscription details:", error);
+    throw error;
+  }
+};
+
+// ========== COMBINED ACTIVE DETAILS ==========
+
+/**
+ * Get combined usage and limits across ALL active subscriptions for a company
+ * Used by the frontend banner when multiple plans are active simultaneously
+ */
+module.exports.getCombinedActiveDetails = async (companyProfileId) => {
+  try {
+    if (!companyProfileId) {
+      const err = new Error("Company profile ID is required");
+      err.status = 400;
+      throw err;
+    }
+
+    const allActive = await Subscription.find({
+      companyProfileId,
+      status: "active",
+      endDate: { $gt: new Date() },
+    }).populate("planId").sort({ createdAt: -1 });
+
+    const paid = allActive.filter((s) => s.planId?.name !== "Trial");
+    const subscriptions = paid.length ? paid : allActive;
+
+    if (!subscriptions.length) {
+      const err = new Error("No active subscription found");
+      err.status = 404;
+      throw err;
+    }
+
+    const now = new Date();
+    const totalPostsLimit     = subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
+    const totalInterviewLimit = subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
+    const totalPostsUsed      = subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
+    const totalInterviewsUsed = subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
+    // Earliest end date across all active subs (the one expiring soonest)
+    const soonestExpiry = subscriptions.reduce((min, s) => s.endDate < min ? s.endDate : min, subscriptions[0].endDate);
+    const daysRemaining = Math.max(0, Math.ceil((new Date(soonestExpiry) - now) / 86400000));
+
+    return {
+      success: true,
+      data: {
+        subscriptions: subscriptions.map((s) => ({
+          id: s._id,
+          planName: s.planId?.name,
+          status: s.status,
+          startDate: s.startDate,
+          endDate: s.endDate,
+          postsUsed: s.postsUsed,
+          postsLimit: s.planId?.postsLimit,
+          monthlyInterviewsUsed: s.monthlyInterviewsUsed,
+          monthlyInterviewLimit: s.planId?.monthlyInterviewLimit,
+          autoRenew: s.autoRenew,
+        })),
+        combined: {
+          planNames: subscriptions.map((s) => s.planId?.name).filter(Boolean),
+          daysRemaining,
+          soonestExpiry,
+          usage: {
+            posts: {
+              used: totalPostsUsed,
+              limit: totalPostsLimit,
+              remaining: Math.max(0, totalPostsLimit - totalPostsUsed),
+            },
+            monthlyInterviews: {
+              used: totalInterviewsUsed,
+              limit: totalInterviewLimit,
+              remaining: Math.max(0, totalInterviewLimit - totalInterviewsUsed),
+            },
+          },
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Error getting combined active details:", error);
     throw error;
   }
 };

@@ -65,6 +65,8 @@ export const fetchCompanyApplications = createAsyncThunk(
     scoreMax?: number;
     dateFrom?: string;
     dateTo?: string;
+    limit?: number;
+    page?: number;
   } = {}) => {
     const query = new URLSearchParams();
     if (params.candidateName) query.set('candidateName', params.candidateName);
@@ -74,6 +76,8 @@ export const fetchCompanyApplications = createAsyncThunk(
     if (params.scoreMax !== undefined && params.scoreMax < 100) query.set('scoreMax', String(params.scoreMax));
     if (params.dateFrom) query.set('dateFrom', params.dateFrom);
     if (params.dateTo) query.set('dateTo', params.dateTo);
+    if (params.limit !== undefined) query.set('limit', String(params.limit));
+    if (params.page !== undefined) query.set('page', String(params.page));
     const url = `job-applications/company/my${query.toString() ? `?${query}` : ''}`;
     const res = await axiosInstance.get(url);
     return (Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []) as any[];

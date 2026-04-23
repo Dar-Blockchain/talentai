@@ -20,8 +20,7 @@ import WorkOutlined from "@mui/icons-material/WorkOutlined";
 import VideoCallOutlined from "@mui/icons-material/VideoCallOutlined";
 import {
   fetchCompanyPaymentHistory, selectPaymentHistory, selectPaymentHistoryLoading,
-  fetchActiveSubscription, selectActiveSubscription, selectActiveSubscriptionLoading,
-  fetchSubscriptionDetails, selectSubscriptionDetails, selectSubscriptionDetailsLoading,
+  fetchCombinedSubscriptionDetails, selectCombinedDetails, selectCombinedDetailsLoading,
   fetchCompanySubscriptions, selectCompanySubscriptions,
   Payment,
 } from "@/store/slices/paymentSlice";
@@ -176,37 +175,25 @@ const downloadInvoice = async (payment: Payment) => {
 // ─── Active Subscription Card ─────────────────────────────
 
 const ActiveSubscriptionCard: React.FC = () => {
-  const dispatch   = useDispatch<AppDispatch>();
-  const activeSub  = useSelector(selectActiveSubscription);
-  const subLoading = useSelector(selectActiveSubscriptionLoading);
-  const details    = useSelector(selectSubscriptionDetails);
-  const detLoading = useSelector(selectSubscriptionDetailsLoading);
+  const combined   = useSelector(selectCombinedDetails);
+  const loading    = useSelector(selectCombinedDetailsLoading);
 
-  useEffect(() => {
-    if (activeSub?._id) {
-      dispatch(fetchSubscriptionDetails(activeSub._id));
-    }
-  }, [activeSub?._id, dispatch]);
-
-  if (subLoading || detLoading) return (
+  if (loading) return (
     <Paper sx={{ borderRadius: 3, p: 3, mb: 3, display: "flex", justifyContent: "center" }}>
       <CircularProgress size={24} sx={{ color: "#0D9488" }} />
     </Paper>
   );
-  if (!activeSub || !details || details.planName === "Trial") return null;
+  if (!combined || combined.subscriptions.length === 0) return null;
 
-  const planName = details.planName;
-  const color    = PLAN_COLORS[planName] ?? "#0D9488";
+  const { combined: c, subscriptions } = combined;
+  const isMulti  = subscriptions.length > 1;
+  const color    = "#0D9488";
   const fmt      = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-  const postsPct       = details.usage.posts.limit > 0
-    ? Math.min(100, Math.round((details.usage.posts.used / details.usage.posts.limit) * 100)) : 0;
-  const interviewsPct  = details.usage.monthlyInterviews.limit > 0
-    ? Math.min(100, Math.round((details.usage.monthlyInterviews.used / details.usage.monthlyInterviews.limit) * 100)) : 0;
-  const totalDays      = Math.max(1, Math.round(
-    (new Date(details.endDate).getTime() - new Date(details.startDate).getTime()) / 86400000
-  ));
-  const elapsedPct     = Math.min(100, Math.round(((totalDays - details.daysRemaining) / totalDays) * 100));
+  const postsPct      = c.usage.posts.limit > 0
+    ? Math.min(100, Math.round((c.usage.posts.used / c.usage.posts.limit) * 100)) : 0;
+  const interviewsPct = c.usage.monthlyInterviews.limit > 0
+    ? Math.min(100, Math.round((c.usage.monthlyInterviews.used / c.usage.monthlyInterviews.limit) * 100)) : 0;
 
   const UsageBar: React.FC<{ label: string; used: number; limit: number; remaining: number; pct: number; icon: React.ReactNode }> = ({ label, used, limit, remaining, pct, icon }) => (
     <Box>
@@ -228,7 +215,10 @@ const ActiveSubscriptionCard: React.FC = () => {
 
   return (
     <Paper sx={{ borderRadius: 3, overflow: "hidden", boxShadow: `0 4px 20px ${color}18`, border: `1.5px solid ${color}25`, mb: 3 }}>
-      <Box sx={{ height: 4, bgcolor: color }} />
+      {isMulti
+        ? <Box sx={{ height: 4, background: "linear-gradient(90deg, #0D9488, #7C3AED, #0891B2)" }} />
+        : <Box sx={{ height: 4, bgcolor: PLAN_COLORS[subscriptions[0].planName] ?? color }} />
+      }
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -237,59 +227,92 @@ const ActiveSubscriptionCard: React.FC = () => {
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827" }}>
-                Active — {planName} Plan
+                {isMulti ? `${subscriptions.length} Active Plans` : `Active — ${subscriptions[0].planName} Plan`}
               </Typography>
               <Typography sx={{ fontSize: "0.78rem", color: "#6b7280" }}>
-                {fmt(details.startDate)} → {fmt(details.endDate)}
+                {isMulti
+                  ? `Expires soonest: ${fmt(c.soonestExpiry)}`
+                  : `${fmt(subscriptions[0].startDate)} → ${fmt(subscriptions[0].endDate)}`
+                }
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+            {isMulti
+              ? subscriptions.map((s) => (
+                  <Chip
+                    key={s.id}
+                    label={s.planName}
+                    size="small"
+                    sx={{
+                      bgcolor: `${PLAN_COLORS[s.planName] ?? color}18`,
+                      color: PLAN_COLORS[s.planName] ?? color,
+                      fontWeight: 700, fontSize: "0.72rem",
+                      border: `1px solid ${PLAN_COLORS[s.planName] ?? color}40`,
+                    }}
+                  />
+                ))
+              : null
+            }
             <Chip
               icon={<CalendarTodayOutlined sx={{ fontSize: "13px !important" }} />}
-              label={`${details.daysRemaining} day${details.daysRemaining !== 1 ? "s" : ""} left`}
+              label={`${c.daysRemaining} day${c.daysRemaining !== 1 ? "s" : ""} left`}
               size="small"
               sx={{ bgcolor: `${color}12`, color, fontWeight: 700, fontSize: "0.75rem", "& .MuiChip-icon": { color } }}
-            />
-            <Chip
-              label={activeSub.autoRenew ? "Auto-renew on" : "Auto-renew off"}
-              size="small"
-              sx={{
-                bgcolor: activeSub.autoRenew ? "#f0fdf4" : "#fef2f2",
-                color: activeSub.autoRenew ? "#16a34a" : "#dc2626",
-                fontWeight: 600, fontSize: "0.75rem",
-              }}
             />
           </Box>
         </Box>
 
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.6 }}>
-                <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>Subscription period</Typography>
-                <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color }}>
-                  {100 - elapsedPct}% left
+            {isMulti ? (
+              <Box>
+                <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151", mb: 1 }}>Active Plans</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                  {subscriptions.map((s) => (
+                    <Box key={s.id} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
+                        <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: PLAN_COLORS[s.planName] ?? color }} />
+                        <Typography sx={{ fontSize: "0.75rem", color: "#374151", fontWeight: 600 }}>{s.planName}</Typography>
+                      </Box>
+                      <Typography sx={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                        {fmt(s.endDate)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            ) : (
+              <Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.6 }}>
+                  <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>Subscription period</Typography>
+                  <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color }}>
+                    {c.daysRemaining} days left
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(100, Math.max(0, 100 - Math.round(
+                    (c.daysRemaining / Math.max(1, Math.round(
+                      (new Date(subscriptions[0].endDate).getTime() - new Date(subscriptions[0].startDate).getTime()) / 86400000
+                    ))) * 100
+                  )))}
+                  sx={{ height: 7, borderRadius: 4, bgcolor: `${color}18`, "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 4 } }}
+                />
+                <Typography sx={{ fontSize: "0.69rem", color: "#9ca3af", mt: 0.4 }}>
+                  expires {fmt(subscriptions[0].endDate)}
                 </Typography>
               </Box>
-              <LinearProgress
-                variant="determinate"
-                value={elapsedPct}
-                sx={{ height: 7, borderRadius: 4, bgcolor: `${color}18`, "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 4 } }}
-              />
-              <Typography sx={{ fontSize: "0.69rem", color: "#9ca3af", mt: 0.4 }}>
-                {details.daysRemaining} of {totalDays} days remaining
-              </Typography>
-            </Box>
+            )}
           </Grid>
 
           <Grid size={{ xs: 12, sm: 4 }}>
             <UsageBar
-              label="Job Posts"
-              used={details.usage.posts.used}
-              limit={details.usage.posts.limit}
-              remaining={details.usage.posts.remaining}
+              label={isMulti ? "Job Posts (combined)" : "Job Posts"}
+              used={c.usage.posts.used}
+              limit={c.usage.posts.limit}
+              remaining={c.usage.posts.remaining}
               pct={postsPct}
               icon={<WorkOutlined sx={{ fontSize: 15 }} />}
             />
@@ -297,10 +320,10 @@ const ActiveSubscriptionCard: React.FC = () => {
 
           <Grid size={{ xs: 12, sm: 4 }}>
             <UsageBar
-              label="Interviews (this month)"
-              used={details.usage.monthlyInterviews.used}
-              limit={details.usage.monthlyInterviews.limit}
-              remaining={details.usage.monthlyInterviews.remaining}
+              label={isMulti ? "Interviews (combined)" : "Interviews (this month)"}
+              used={c.usage.monthlyInterviews.used}
+              limit={c.usage.monthlyInterviews.limit}
+              remaining={c.usage.monthlyInterviews.remaining}
               pct={interviewsPct}
               icon={<VideoCallOutlined sx={{ fontSize: 15 }} />}
             />
@@ -322,7 +345,7 @@ const BillingPage: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchCompanyPaymentHistory());
-    dispatch(fetchActiveSubscription());
+    dispatch(fetchCombinedSubscriptionDetails());
     dispatch(fetchCompanySubscriptions());
   }, [dispatch]);
 
@@ -335,8 +358,6 @@ const BillingPage: React.FC = () => {
     return map;
   }, [subscriptions]);
 
-  const totalSpent     = history.filter((p) => p.status === "completed")
-    .reduce((sum, p) => sum + (p.amountCents ? p.amountCents / 100 : (p.planPrice || 0)), 0);
   const completedCount = history.filter((p) => p.status === "completed").length;
   const lastPayment    = history[0];
 
@@ -357,16 +378,13 @@ const BillingPage: React.FC = () => {
 
       {/* Stats */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard icon={<AttachMoneyOutlined />} label="Total Spent" value={`$${totalSpent.toFixed(0)}`} color="#0D9488" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <StatCard icon={<CheckCircleOutlined />} label="Successful Payments" value={completedCount} color="#059669" />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <StatCard icon={<ReceiptLongOutlined />} label="Total Invoices" value={history.length} color="#7C3AED" />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
           <StatCard
             icon={<AttachMoneyOutlined />}
             label="Last Payment"

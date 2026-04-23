@@ -57,6 +57,30 @@ export interface SubscriptionDetails {
   updatedAt: string;
 }
 
+export interface CombinedSubscriptionDetails {
+  subscriptions: {
+    id: string;
+    planName: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    postsUsed: number;
+    postsLimit: number;
+    monthlyInterviewsUsed: number;
+    monthlyInterviewLimit: number;
+    autoRenew: boolean;
+  }[];
+  combined: {
+    planNames: string[];
+    daysRemaining: number;
+    soonestExpiry: string;
+    usage: {
+      posts: { used: number; limit: number; remaining: number };
+      monthlyInterviews: { used: number; limit: number; remaining: number };
+    };
+  };
+}
+
 export interface LimitCheck {
   canUse: boolean;
   message: string;
@@ -83,6 +107,8 @@ interface PaymentState {
   subscriptionDetailsLoading: boolean;
   companySubscriptions: CompanySubscription[];
   companySubscriptionsLoading: boolean;
+  combinedDetails: CombinedSubscriptionDetails | null;
+  combinedDetailsLoading: boolean;
   limitCheck: LimitCheck | null;
   limitCheckLoading: boolean;
 }
@@ -100,6 +126,8 @@ const initialState: PaymentState = {
   subscriptionDetailsLoading: false,
   companySubscriptions: [],
   companySubscriptionsLoading: false,
+  combinedDetails: null,
+  combinedDetailsLoading: false,
   limitCheck: null,
   limitCheckLoading: false,
 };
@@ -174,6 +202,18 @@ export const fetchCompanySubscriptions = createAsyncThunk<CompanySubscription[],
   }
 );
 
+export const fetchCombinedSubscriptionDetails = createAsyncThunk<CombinedSubscriptionDetails, void, { rejectValue: string }>(
+  "payment/fetchCombinedDetails",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("subscriptions/combined");
+      return res.data.data as CombinedSubscriptionDetails;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "No active subscriptions");
+    }
+  }
+);
+
 export const fetchSubscriptionDetails = createAsyncThunk<SubscriptionDetails, string, { rejectValue: string }>(
   "payment/fetchSubscriptionDetails",
   async (subscriptionId, { rejectWithValue }) => {
@@ -239,6 +279,7 @@ const paymentSlice = createSlice({
         state.cancelling = false;
         state.activeSubscription = null;
         state.subscriptionDetails = null;
+        state.combinedDetails = null;
       })
       .addCase(cancelSubscription.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to cancel subscription"; });
 
@@ -251,6 +292,11 @@ const paymentSlice = createSlice({
       .addCase(fetchActiveSubscription.pending, (state) => { state.activeSubscriptionLoading = true; })
       .addCase(fetchActiveSubscription.fulfilled, (state, action) => { state.activeSubscriptionLoading = false; state.activeSubscription = action.payload; })
       .addCase(fetchActiveSubscription.rejected, (state) => { state.activeSubscriptionLoading = false; state.activeSubscription = null; });
+
+    builder
+      .addCase(fetchCombinedSubscriptionDetails.pending, (state) => { state.combinedDetailsLoading = true; })
+      .addCase(fetchCombinedSubscriptionDetails.fulfilled, (state, action) => { state.combinedDetailsLoading = false; state.combinedDetails = action.payload; })
+      .addCase(fetchCombinedSubscriptionDetails.rejected, (state) => { state.combinedDetailsLoading = false; state.combinedDetails = null; });
 
     builder
       .addCase(fetchCompanySubscriptions.pending, (state) => { state.companySubscriptionsLoading = true; })
@@ -282,6 +328,8 @@ export const selectPaymentHistory = (state: RootState) => state.payment.history;
 export const selectPaymentHistoryLoading = (state: RootState) => state.payment.historyLoading;
 export const selectActiveSubscription = (state: RootState) => state.payment.activeSubscription;
 export const selectActiveSubscriptionLoading = (state: RootState) => state.payment.activeSubscriptionLoading;
+export const selectCombinedDetails = (state: RootState) => state.payment.combinedDetails;
+export const selectCombinedDetailsLoading = (state: RootState) => state.payment.combinedDetailsLoading;
 export const selectCompanySubscriptions = (state: RootState) => state.payment.companySubscriptions;
 export const selectCompanySubscriptionsLoading = (state: RootState) => state.payment.companySubscriptionsLoading;
 export const selectSubscriptionDetails = (state: RootState) => state.payment.subscriptionDetails;
