@@ -80,36 +80,57 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
 
     // ═══ STEP 3: Build AI prompt ═══
     console.log("\n[3️⃣  STEP] Building AI PROMPT with matching criteria...");
-    const prompt = `Analyze the compatibility between a candidate and a job position.
-Use the extracted resume analysis from the candidate's PDF, the candidate profile data, and the complete job posting content.
-Return ONLY valid JSON.
+    const prompt = `You are an expert recruiter. Your task is to evaluate how well a candidate matches a specific job posting.
 
-CANDIDATE:
+The job can be anything — software engineering, marketing, sales, design, finance, operations, etc.
+Do NOT apply a fixed scoring template. Instead, read the job description first, identify what truly matters for THIS role, then define 4–6 evaluation criteria that are relevant to it and assign each a weight so the total adds up to 100 points.
+
+Rules:
+- Criteria must reflect what the job actually requires, not generic assumptions.
+- Do NOT invent requirements not mentioned in the job posting.
+- Use resumeText and resumeAnalysis as the primary evidence source — they show real work, not just claimed skills.
+- Declared skills and profile data are secondary signals.
+- Do NOT penalize for skills or experience the job does not ask for.
+- Each criterion must have a short descriptive key (snake_case, no spaces), a human-readable label, a max score, and the score you award.
+
+---
+CANDIDATE DATA:
 ${JSON.stringify(candidateData, null, 2)}
 
-JOB:
+---
+JOB DATA:
 ${JSON.stringify(jobData, null, 2)}
 
-Based on this information, provide a matching score between 0 and 100, where:
-- 0-20: Poor match - candidate lacks critical skills or experience
-- 21-40: Below average - significant skill gaps or misalignment
-- 41-60: Average - some alignment but key gaps exist
-- 61-80: Good match - strong alignment with minor gaps
-- 81-100: Excellent match - strong alignment across most criteria
+---
+SCORING PROCESS
 
-Consider these factors WITH WEIGHTS:
-1. Technical Skills Match (80%): How well do candidate's technical skills match the job requirements?
-2. Soft Skills Match (10%): Do the candidate's soft skills align with the role's needs?
-3. Experience Level (10%): Does the candidate's experience level match the job's requirements?
-4. Resume Verification: Use the extracted CV text and structured resume analysis to verify real experience claims.
+Step 1 — Read the job description and identify what matters most for this specific role.
+Step 2 — Define 4–6 criteria relevant to this job. Distribute 100 points across them by importance.
+Step 3 — Score the candidate on each criterion based on evidence.
+Step 4 — Sum all scores → matchScore (0–100).
+Step 5 — Apply the recommendation threshold:
+  85–100 → "Top candidat"
+  70–84  → "Recommandé"
+  50–69  → "À considérer"
+  30–49  → "Non retenu"
+   0–29  → "Hors profil"
 
-IMPORTANT: Return ONLY a JSON object with this exact structure:
+---
+Return ONLY this JSON — no markdown, no extra text outside the object:
 {
-  "matchScore": <number 0-100>,
-  "reasoning": "<brief explanation of the score>"
-}
-
-Do not include any other text, markdown, or explanation outside of the JSON object.`;
+  "matchScore": <integer 0-100, sum of all criterion scores>,
+  "recommendation": "<Top candidat | Recommandé | À considérer | Non retenu | Hors profil>",
+  "breakdown": [
+    {
+      "key": "<snake_case_identifier>",
+      "label": "<Human readable criterion name>",
+      "maxScore": <integer, weight you assigned>,
+      "score": <integer, 0 to maxScore>,
+      "note": "<one sentence justification>"
+    }
+  ],
+  "reasoning": "<2–4 sentences: candidate strengths, gaps, and why this recommendation>"
+}`;
     console.log(`    ✓ AI Prompt length: ${prompt.length} characters`);
     console.log(`    ✓ Temperature: 0.7 (balanced creativity)`);
     console.log(`    ✓ Max Tokens: 2000`);
@@ -177,21 +198,25 @@ Do not include any other text, markdown, or explanation outside of the JSON obje
     console.log("\n[6️⃣  STEP] Validating and normalizing MATCH SCORE...");
     const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
     const reasoning = result.reasoning || "No reasoning provided";
-    
+    const recommendation = result.recommendation || "";
+    const breakdown = Array.isArray(result.breakdown) ? result.breakdown : [];
+
     console.log(`    ✓ Raw score from AI: ${result.matchScore}`);
     console.log(`    ✓ Normalized score: ${matchScore}/100`);
-    console.log(`    ✓ Score is valid (0-100 range)`);
-    console.log(`    💡 AI Reasoning (${reasoning.length} chars):`);
-    console.log(reasoning);
+    console.log(`    ✓ Recommendation: ${recommendation}`);
+    breakdown.forEach((c) => console.log(`    ✓ ${c.label}: ${c.score}/${c.maxScore} — ${c.note}`));
+    console.log(`    💡 AI Reasoning: ${reasoning}`);
 
     // ═══ FINAL RESULT ═══
     console.log("\n" + "─".repeat(80));
     console.log(`✅ BEDROCK MATCHING COMPLETE`);
-    console.log(`   Final Score: ${matchScore}/100`);
+    console.log(`   Final Score: ${matchScore}/100 — ${recommendation}`);
     console.log("─".repeat(80) + "\n");
-    
+
     return {
       matchScore,
+      recommendation,
+      breakdown,
       reasoning,
     };
   } catch (error) {
