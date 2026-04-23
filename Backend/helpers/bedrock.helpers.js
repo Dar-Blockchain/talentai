@@ -64,7 +64,6 @@ function stripThinkingTags(text) {
  * @param {number} [options.temperature=0.5]
  * @param {number} [options.maxTokens=1024]
  * @param {number} [options.timeout=15000] - Timeout in ms
- * @param {string} [options.modelId] - Optional custom model ID (overrides default)
  * @returns {Promise<{ content: string }>}
  */
 async function callLLM({
@@ -74,10 +73,9 @@ async function callLLM({
   maxTokens = 1024,
   timeout = 15000,
   useFastModel = false,
-  modelId = null,
 }) {
-  const activeModel = modelId || (useFastModel && FAST_MODEL_ID !== MODEL_ID ? FAST_MODEL_ID : MODEL_ID);
-  const useConverseAPI = modelId ? true : (useFastModel && FAST_MODEL_ID !== MODEL_ID);
+  const activeModel = useFastModel && FAST_MODEL_ID !== MODEL_ID ? FAST_MODEL_ID : MODEL_ID;
+  const useConverseAPI = useFastModel && FAST_MODEL_ID !== MODEL_ID;
 
   // Normalize message content to plain strings
   const normalizeContent = (content) =>
