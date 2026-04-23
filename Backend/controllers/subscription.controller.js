@@ -179,3 +179,17 @@ module.exports.resetMonthlyInterview = async (req, res) => {
     handleError(res, error, 404);
   }
 };
+
+/**
+ * GET /subscriptions/combined
+ * Get combined usage across all active subscriptions for a company
+ */
+module.exports.getCombinedActiveDetails = async (req, res) => {
+  try {
+    const companyProfileId = req.user.profile;
+    const result = await subscriptionService.getCombinedActiveDetails(companyProfileId);
+    res.status(200).json(result);
+  } catch (error) {
+    handleError(res, error, 404);
+  }
+};

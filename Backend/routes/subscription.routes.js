@@ -25,6 +25,13 @@ router.get(
   subscriptionController.getActiveSubscription
 );
 
+router.get(
+  "/combined",
+  requireAuth,
+  authLogMiddleware("subscription"),
+  subscriptionController.getCombinedActiveDetails
+);
+
 /**
  * GET /subscriptions
  * Get all subscriptions for a company (including expired/cancelled)
