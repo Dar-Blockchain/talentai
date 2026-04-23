@@ -9,6 +9,7 @@ import {
   InputBase,
   ListSubheader,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -20,6 +21,10 @@ import {
   selectMyPostsError,
   selectMyPostsPagination,
 } from "@/store/slices/postSlice";
+import {
+  fetchCombinedSubscriptionDetails,
+  selectCombinedDetails,
+} from "@/store/slices/paymentSlice";
 import { useToast } from "@/hooks/useToast";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
@@ -109,10 +114,15 @@ const PostsPage: React.FC = () => {
   const canDelete = user?.role !== "Employee" || !!empPerms?.canCreateJobPosts;
   const { showToast } = useToast();
 
-  const posts = useSelector(selectMyPosts);
-  const loading = useSelector(selectMyPostsLoading);
-  const error = useSelector(selectMyPostsError);
+  const posts      = useSelector(selectMyPosts);
+  const loading    = useSelector(selectMyPostsLoading);
+  const error      = useSelector(selectMyPostsError);
   const pagination = useSelector(selectMyPostsPagination);
+  const combined   = useSelector(selectCombinedDetails);
+
+  const postsUsed      = combined?.combined.usage.posts.used ?? 0;
+  const postsLimit     = combined?.combined.usage.posts.limit ?? Infinity;
+  const postsAtLimit   = combined && postsLimit !== Infinity && postsUsed >= postsLimit;
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -167,6 +177,10 @@ const PostsPage: React.FC = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    dispatch(fetchCombinedSubscriptionDetails());
+  }, [dispatch]);
+
   const filteredPosts = posts as any[];
   const totalCount = (pagination as any)?.total ?? filteredPosts.length;
 
@@ -175,7 +189,10 @@ const PostsPage: React.FC = () => {
     deletePostHook.handleOpen();
   };
 
-  const handleCreateClick = () => router.push("/company/posts/create");
+  const handleCreateClick = () => {
+    if (postsAtLimit) return;
+    router.push("/company/posts/create");
+  };
 
   return (
     <DashboardLayout>
@@ -524,41 +541,57 @@ const PostsPage: React.FC = () => {
               />
 
               {/* New Job Post button */}
-              <Box
-                component="button"
-                onClick={handleCreateClick}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.75,
-                  height: 36,
-                  px: 1.75,
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  outline: "none",
-                  background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
-                  boxShadow: `0 2px 8px ${TEAL}40`,
-                  color: "#fff",
-                  transition: "all 0.15s",
-                  "&:hover": {
-                    opacity: 0.9,
-                    boxShadow: `0 4px 14px ${TEAL}50`,
-                  },
-                }}
+              <Tooltip
+                title={postsAtLimit ? `Post limit reached (${postsUsed}/${postsLimit}). Upgrade your plan to post more jobs.` : ""}
+                arrow
+                disableHoverListener={!postsAtLimit}
               >
-                <AddOutlined sx={{ fontSize: 16 }} />
-                <Typography
-                  sx={{
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "#fff",
-                    lineHeight: 1,
-                  }}
-                >
-                  New Job Post
-                </Typography>
-              </Box>
+                <span>
+                  <Box
+                    component="button"
+                    onClick={handleCreateClick}
+                    disabled={!!postsAtLimit}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      height: 36,
+                      px: 1.75,
+                      border: "none",
+                      borderRadius: "10px",
+                      outline: "none",
+                      transition: "all 0.15s",
+                      ...(postsAtLimit ? {
+                        cursor: "not-allowed",
+                        background: "#E5E7EB",
+                        boxShadow: "none",
+                        color: "#9CA3AF",
+                      } : {
+                        cursor: "pointer",
+                        background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
+                        boxShadow: `0 2px 8px ${TEAL}40`,
+                        color: "#fff",
+                        "&:hover": {
+                          opacity: 0.9,
+                          boxShadow: `0 4px 14px ${TEAL}50`,
+                        },
+                      }),
+                    }}
+                  >
+                    <AddOutlined sx={{ fontSize: 16 }} />
+                    <Typography
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        color: "inherit",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {postsAtLimit ? `Limit reached (${postsUsed}/${postsLimit})` : "New Job Post"}
+                    </Typography>
+                  </Box>
+                </span>
+              </Tooltip>
             </Box>
           </Box>
         </Box>
