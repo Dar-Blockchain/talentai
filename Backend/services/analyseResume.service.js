@@ -203,7 +203,6 @@ Return this exact structure:
           temperature: 0,
           maxTokens: 4096,
           timeout: 120000,
-          modelId: "deepseek-ai.deepseek-v3-2",
         });
 
         const rawText = response.content || "{}";
