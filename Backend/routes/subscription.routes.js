@@ -14,24 +14,24 @@ const authLogMiddleware = require("../middleware/security/request-log.middleware
 // ========== PUBLIC ROUTES ==========
 
 /**
- * GET /subscriptions/active/:companyProfileId
+ * GET /subscriptions/active
  * Get active subscription for a company
  * Auth: Required (user must be the company or admin)
  */
 router.get(
-  "/active/:companyProfileId",
+  "/active",
   requireAuth,
   authLogMiddleware("subscription"),
   subscriptionController.getActiveSubscription
 );
 
 /**
- * GET /subscriptions/:companyProfileId
+ * GET /subscriptions
  * Get all subscriptions for a company (including expired/cancelled)
  * Auth: Required
  */
 router.get(
-  "/:companyProfileId",
+  "/",
   requireAuth,
   authLogMiddleware("subscription"),
   subscriptionController.getCompanySubscriptions

@@ -10,18 +10,24 @@ import { AppDispatch, RootState } from "@/store/store";
 import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, PlanLimit } from "@/store/slices/planLimitsSlice";
 import { getMyProfile } from "@/store/slices/userSlice";
 import { payWithCard } from "@/services/stripeService";
-import { verifyPayment, cancelSubscription, selectCancellingSubscription } from "@/store/slices/paymentSlice";
+import {
+  verifyPayment, cancelSubscription, selectCancellingSubscription,
+  fetchActiveSubscription, selectActiveSubscription, selectActiveSubscriptionLoading,
+  fetchSubscriptionDetails, selectSubscriptionDetails, selectSubscriptionDetailsLoading,
+} from "@/store/slices/paymentSlice";
 import {
   Box, Grid, Typography, Chip, Divider, CircularProgress, Alert, Snackbar,
-  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, LinearProgress,
 } from "@mui/material";
 import AppButton from "@/components/ui/AppButton";
 
-const CreditCardOutlined  = dynamic(() => import("@mui/icons-material/CreditCardOutlined"));
-const ReceiptLongOutlined = dynamic(() => import("@mui/icons-material/ReceiptLongOutlined"));
-const WorkOutlined        = dynamic(() => import("@mui/icons-material/WorkOutlined"));
-const VideoCallOutlined   = dynamic(() => import("@mui/icons-material/VideoCallOutlined"));
-const CheckCircleOutlined = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
+const CreditCardOutlined   = dynamic(() => import("@mui/icons-material/CreditCardOutlined"));
+const ReceiptLongOutlined  = dynamic(() => import("@mui/icons-material/ReceiptLongOutlined"));
+const WorkOutlined         = dynamic(() => import("@mui/icons-material/WorkOutlined"));
+const VideoCallOutlined    = dynamic(() => import("@mui/icons-material/VideoCallOutlined"));
+const CheckCircleOutlined  = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
+const CalendarTodayOutlined = dynamic(() => import("@mui/icons-material/CalendarTodayOutlined"));
+const AutorenewOutlined    = dynamic(() => import("@mui/icons-material/AutorenewOutlined"));
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -37,7 +43,114 @@ const PLAN_CONFIG: Record<string, {
 
 const ORDERED_PLANS = ["Standard", "Gold", "Platinum", "Diamond"];
 
-// ─── Sub-components ──────────────────────────────────────
+// ─── Active Subscription Banner ──────────────────────────
+
+const SubscriptionBanner: React.FC = () => {
+  const activeSub  = useSelector(selectActiveSubscription);
+  const subLoading = useSelector(selectActiveSubscriptionLoading);
+  const details    = useSelector(selectSubscriptionDetails);
+  const detLoading = useSelector(selectSubscriptionDetailsLoading);
+
+  if (subLoading || detLoading) return (
+    <Box sx={{ mb: 3, borderRadius: 3, bgcolor: "#fff", border: "1px solid #f3f4f6", p: 3, display: "flex", justifyContent: "center" }}>
+      <CircularProgress size={20} />
+    </Box>
+  );
+  if (!activeSub || !details || details.planName === "Trial") return null;
+
+  const color     = PLAN_CONFIG[details.planName]?.color ?? "#0D9488";
+  const totalDays = Math.max(1, Math.round(
+    (new Date(details.endDate).getTime() - new Date(details.startDate).getTime()) / 86400000
+  ));
+  const elapsedPct   = Math.min(100, Math.round(((totalDays - details.daysRemaining) / totalDays) * 100));
+  const postsPct     = details.usage.posts.limit > 0 ? Math.min(100, Math.round((details.usage.posts.used / details.usage.posts.limit) * 100)) : 0;
+  const intPct       = details.usage.monthlyInterviews.limit > 0 ? Math.min(100, Math.round((details.usage.monthlyInterviews.used / details.usage.monthlyInterviews.limit) * 100)) : 0;
+  const fmt          = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  return (
+    <Box sx={{ mb: 3, borderRadius: 3, bgcolor: "#fff", border: `1.5px solid ${color}30`, boxShadow: `0 4px 20px ${color}18`, overflow: "hidden" }}>
+      <Box sx={{ height: 4, bgcolor: color }} />
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 2.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: `${color}14`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CheckCircleOutlined sx={{ color, fontSize: 22 }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827" }}>
+                Active Subscription — {details.planName}
+              </Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: "#6b7280" }}>
+                {fmt(details.startDate)} → {fmt(details.endDate)}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Chip
+              icon={<CalendarTodayOutlined sx={{ fontSize: "13px !important" }} />}
+              label={`${details.daysRemaining} day${details.daysRemaining !== 1 ? "s" : ""} remaining`}
+              size="small"
+              sx={{ bgcolor: `${color}12`, color, fontWeight: 600, fontSize: "0.75rem", "& .MuiChip-icon": { color } }}
+            />
+            <Chip
+              icon={<AutorenewOutlined sx={{ fontSize: "13px !important" }} />}
+              label={activeSub.autoRenew ? "Auto-renew on" : "Auto-renew off"}
+              size="small"
+              sx={{
+                bgcolor: activeSub.autoRenew ? "#f0fdf4" : "#fef2f2",
+                color: activeSub.autoRenew ? "#16a34a" : "#dc2626",
+                fontWeight: 600, fontSize: "0.75rem",
+                "& .MuiChip-icon": { color: activeSub.autoRenew ? "#16a34a" : "#dc2626" },
+              }}
+            />
+          </Box>
+        </Box>
+
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>Subscription period</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color, fontWeight: 700 }}>{100 - elapsedPct}% left</Typography>
+              </Box>
+              <LinearProgress variant="determinate" value={elapsedPct}
+                sx={{ height: 6, borderRadius: 3, bgcolor: `${color}18`, "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 3 } }} />
+              <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>{details.daysRemaining} of {totalDays} days remaining</Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>Job posts used</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: postsPct >= 90 ? "#ef4444" : color, fontWeight: 700 }}>{postsPct}%</Typography>
+              </Box>
+              <LinearProgress variant="determinate" value={postsPct}
+                sx={{ height: 6, borderRadius: 3, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: postsPct >= 90 ? "#ef4444" : color, borderRadius: 3 } }} />
+              <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>
+                {details.usage.posts.used} / {details.usage.posts.limit} posts · {details.usage.posts.remaining} remaining
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 500 }}>Interviews this month</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: intPct >= 90 ? "#ef4444" : color, fontWeight: 700 }}>{intPct}%</Typography>
+              </Box>
+              <LinearProgress variant="determinate" value={intPct}
+                sx={{ height: 6, borderRadius: 3, bgcolor: "#f3f4f6", "& .MuiLinearProgress-bar": { bgcolor: intPct >= 90 ? "#ef4444" : color, borderRadius: 3 } }} />
+              <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af", mt: 0.5 }}>
+                {details.usage.monthlyInterviews.used} / {details.usage.monthlyInterviews.limit} interviews · {details.usage.monthlyInterviews.remaining} remaining
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+};
+
+// ─── Plan card ───────────────────────────────────────────
 
 const FeatureRow: React.FC<{ icon: React.ReactNode; label: string; color: string }> = ({ icon, label, color }) => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
@@ -83,7 +196,6 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isCurrentPlan, hasActivePlan,
       position: "relative", transition: "box-shadow 0.2s, transform 0.2s",
       "&:hover": { boxShadow: `0 12px 40px ${cfg.color}28`, transform: "translateY(-2px)" },
     }}>
-      {/* Top badge */}
       {(isCurrentPlan || cfg.badge) && (
         <Chip
           label={isCurrentPlan ? "Current Plan" : cfg.badge}
@@ -174,23 +286,40 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isCurrentPlan, hasActivePlan,
 const PlansPage: React.FC = () => {
   const dispatch     = useDispatch<AppDispatch>();
   const router       = useRouter();
-  const plans        = useSelector(selectPlanLimits);
-  const plansLoading = useSelector(selectPlanLimitsLoading);
-  const cancelling   = useSelector(selectCancellingSubscription);
+  const plans             = useSelector(selectPlanLimits);
+  const plansLoading      = useSelector(selectPlanLimitsLoading);
+  const cancelling        = useSelector(selectCancellingSubscription);
+  const activeSub         = useSelector(selectActiveSubscription);
   const currentPlanLimits = useSelector((state: RootState) => state.user.connectedUser.planLimits);
 
   const [snackbar, setSnackbar]       = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const currentPlanId = typeof currentPlanLimits === "object" && currentPlanLimits !== null
-    ? (currentPlanLimits as any)._id ?? currentPlanLimits
-    : currentPlanLimits;
+  // Derive current plan ID from the active subscription (most reliable source)
+  // Fall back to planLimits from user profile if subscription hasn't loaded yet
+  const currentPlanId = activeSub?.planId?._id
+    ?? (typeof currentPlanLimits === "object" && currentPlanLimits !== null
+      ? (currentPlanLimits as any)._id ?? String(currentPlanLimits)
+      : String(currentPlanLimits ?? ""));
 
   const showSnack = (message: string, severity: "success" | "error") =>
     setSnackbar({ open: true, message, severity });
 
+  const refreshAll = () => {
+    dispatch(getMyProfile());
+    dispatch(fetchPlanLimits());
+    dispatch(fetchActiveSubscription()).then((action: any) => {
+      const subId = action.payload?._id;
+      if (subId) dispatch(fetchSubscriptionDetails(subId));
+    });
+  };
+
   useEffect(() => {
     dispatch(fetchPlanLimits());
+    dispatch(fetchActiveSubscription()).then((action: any) => {
+      const subId = action.payload?._id;
+      if (subId) dispatch(fetchSubscriptionDetails(subId));
+    });
   }, [dispatch]);
 
   useEffect(() => {
@@ -202,8 +331,7 @@ const PlansPage: React.FC = () => {
         .then(() => {
           localStorage.removeItem("pending_payment_id");
           showSnack("Payment successful! Your plan has been activated.", "success");
-          dispatch(getMyProfile());
-          dispatch(fetchPlanLimits());
+          refreshAll();
         })
         .catch(() => showSnack("Payment received but verification failed. Please contact support.", "error"));
       router.replace("/company/plans", undefined, { shallow: true });
@@ -214,13 +342,17 @@ const PlansPage: React.FC = () => {
   }, [router.isReady]);
 
   const handleConfirmCancel = () => {
-    dispatch(cancelSubscription())
+    if (!activeSub?._id) {
+      setConfirmOpen(false);
+      showSnack("No active subscription found to cancel.", "error");
+      return;
+    }
+    dispatch(cancelSubscription({ subscriptionId: activeSub._id }))
       .unwrap()
       .then(() => {
         setConfirmOpen(false);
         showSnack("Subscription cancelled successfully.", "success");
-        dispatch(getMyProfile());
-        dispatch(fetchPlanLimits());
+        refreshAll();
       })
       .catch(() => {
         setConfirmOpen(false);
@@ -281,23 +413,31 @@ const PlansPage: React.FC = () => {
         }
       />
 
+      {/* Active subscription usage banner */}
+      <SubscriptionBanner />
+
       {plansLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
           <CircularProgress />
         </Box>
       ) : (
         <Grid container spacing={3} sx={{ mt: 0.5 }}>
-          {sortedPlans.map((plan) => (
-            <Grid key={plan._id} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <PlanCard
-                plan={plan}
-                isCurrentPlan={plan._id === currentPlanId?.toString()}
-                hasActivePlan={!!currentPlanId}
-                cancelling={cancelling}
-                onCancelClick={() => setConfirmOpen(true)}
-              />
-            </Grid>
-          ))}
+          {sortedPlans.map((plan) => {
+            const activeNonTrial = activeSub?.planId?.name !== "Trial" ? activeSub : null;
+            const byId   = !!activeNonTrial && plan._id === String(activeNonTrial.planId?._id);
+            const byName = !!activeNonTrial && activeNonTrial.planId?.name === plan.name;
+            return (
+              <Grid key={plan._id} size={{ xs: 12, sm: 6, lg: 3 }}>
+                <PlanCard
+                  plan={plan}
+                  isCurrentPlan={byId || byName}
+                  hasActivePlan={!!activeNonTrial}
+                  cancelling={cancelling}
+                  onCancelClick={() => setConfirmOpen(true)}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
       )}
     </DashboardLayout>
