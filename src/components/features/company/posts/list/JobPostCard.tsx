@@ -10,6 +10,7 @@ import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import OpenInNewOutlined from "@mui/icons-material/OpenInNewOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
 
@@ -40,10 +41,11 @@ interface JobPostCardProps {
   index?: number;
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onPublish?: (id: string) => void;
   canDelete?: boolean;
 }
 
-const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails, canDelete = true }) => {
+const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDetails, onPublish, canDelete = true }) => {
   const router = useRouter();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
@@ -95,8 +97,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           },
         }}
       >
-        {/* Top accent bar — subtle gray */}
-        <Box sx={{ height: 3, bgcolor: "#E5E7EB", flexShrink: 0 }} />
+        {/* Top accent bar */}
+        <Box sx={{ height: 3, bgcolor: isDraft ? "#F59E0B" : "#E5E7EB", flexShrink: 0 }} />
 
         <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
 
@@ -196,6 +198,24 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
                   <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Open full post page</Typography>
                 </Box>
               </MenuItem>
+
+              {isDraft && onPublish && (
+                <MenuItem
+                  onClick={(e) => { e.stopPropagation(); setMenuAnchor(null); onPublish(job._id); }}
+                  sx={{
+                    gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25,
+                    "&:hover": { bgcolor: "#ECFDF5", "& .menu-icon-box": { bgcolor: "#D1FAE5" } },
+                  }}
+                >
+                  <Box className="menu-icon-box" sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}>
+                    <PublishOutlined sx={{ fontSize: 13, color: "#059669" }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.2 }}>Publish Post</Typography>
+                    <Typography sx={{ fontSize: "10px", color: "#9CA3AF", lineHeight: 1.2 }}>Make visible to candidates</Typography>
+                  </Box>
+                </MenuItem>
+              )}
 
               {!isDraft && (
                 <MenuItem
@@ -321,6 +341,38 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             )}
           </Box>
         </Box>
+
+        {/* Draft publish banner */}
+        {isDraft && onPublish && (
+          <Box
+            onClick={(e) => { e.stopPropagation(); onPublish(job._id); }}
+            sx={{
+              mx: 2.5, mb: 2.5, px: 1.5, py: 1,
+              borderRadius: "8px",
+              border: "1.5px dashed #FCD34D",
+              bgcolor: "#FFFBEB",
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
+              cursor: "pointer",
+              transition: "all 0.15s",
+              "&:hover": { bgcolor: "#FEF3C7", borderColor: "#F59E0B" },
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <PublishOutlined sx={{ fontSize: 14, color: "#D97706", flexShrink: 0 }} />
+              <Typography sx={{ fontSize: "11.5px", color: "#92400E", lineHeight: 1.3 }}>
+                <strong>Not visible to candidates</strong> — click to publish
+              </Typography>
+            </Box>
+            <Box sx={{
+              px: 1.25, py: 0.4, borderRadius: "6px",
+              bgcolor: "#D97706", flexShrink: 0,
+            }}>
+              <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
+                Publish
+              </Typography>
+            </Box>
+          </Box>
+        )}
       </Box>
     </motion.div>
   );

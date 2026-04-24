@@ -12,10 +12,8 @@ import {
   selectCurrentJobLoading,
   selectCurrentJobError,
   selectJobMatches,
-  setSavedPost,
-  resetFlow,
+  updatePostStatus,
 } from "@/store/slices/postSlice";
-import { setCreationType } from "@/store/slices/postGenerationSlice";
 import { useToast } from "@/hooks/useToast";
 import { useDeletePost } from "@/components/features/company/posts/details/useDeletePost";
 import DeletePostModal from "@/components/features/company/posts/details/DeletePostModal";
@@ -24,7 +22,7 @@ import JobDetailContent from "@/components/features/company/posts/details/JobDet
 import ApplicationsView from "@/components/features/company/posts/details/ApplicationsView";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import EditOutlined from "@mui/icons-material/EditOutlined";
-import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
+import PublishOutlined from "@mui/icons-material/PublishOutlined";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import MoreVertOutlined from "@mui/icons-material/MoreVert";
 import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
@@ -90,12 +88,15 @@ const PostDetailsPage: React.FC = () => {
 
   const handleSaveSuccess = () => {};
 
-  const handleContinueSetup = () => {
-    if (!job) return;
-    dispatch(resetFlow());
-    dispatch(setSavedPost({ jobData: job }));
-    dispatch(setCreationType("manual"));
-    router.push("/company/posts/create");
+  const handlePublish = () => {
+    if (!job?._id) return;
+    dispatch(updatePostStatus({ postId: job._id, status: "open" }))
+      .unwrap()
+      .then(() => {
+        showToast({ message: "Post published successfully.", severity: "success" });
+        dispatch(fetchJobById(job._id));
+      })
+      .catch(() => showToast({ message: "Failed to publish post.", severity: "error" }));
   };
 
   const handleCopyLink = () => {
@@ -122,9 +123,9 @@ const PostDetailsPage: React.FC = () => {
           {!loading && !error && job && (
             <>
               {/* ── Rich Job Header ─────────────────────────────────────── */}
-              <Box sx={{ mb: 3, bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", borderTop: "3px solid #E5E7EB" }}>
+              <Box sx={{ mb: 3, bgcolor: "#fff", border: `1px solid ${isDraft ? "#FDE68A" : "#E5E7EB"}`, borderRadius: "16px", overflow: "hidden", boxShadow: isDraft ? "0 2px 12px #D9770618" : "0 1px 4px rgba(0,0,0,0.04)", borderTop: `3px solid ${isDraft ? "#F59E0B" : TEAL}` }}>
 
-                <Box sx={{ px: { xs: 2.5, md: 3 }, pt: 2.5, pb: 0 }}>
+                <Box sx={{ px: { xs: 2.5, md: 3 }, pt: 2.5, pb: isDraft ? 2.5 : 0 }}>
                   {/* Breadcrumbs */}
                   <Breadcrumbs
                     separator={<NavigateNextIcon sx={{ fontSize: 14, color: "#D1D5DB" }} />}
@@ -229,22 +230,21 @@ const PostDetailsPage: React.FC = () => {
                     {/* Right: actions */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
 
-                      {/* Continue Setup */}
+                      {/* Publish button */}
                       {isDraft && isOwner && (
                         <Box
-                          onClick={handleContinueSetup}
+                          onClick={handlePublish}
                           sx={{
                             display: "flex", alignItems: "center", gap: 0.75,
                             px: 1.75, height: 36, borderRadius: "10px", cursor: "pointer",
-                            background: `linear-gradient(135deg, ${TEAL}, #34D399)`,
-                            boxShadow: `0 4px 12px ${TEAL}40`,
-                            transition: "filter 0.15s, box-shadow 0.15s",
-                            "&:hover": { filter: "brightness(0.94)", boxShadow: `0 6px 16px ${TEAL}50` },
+                            bgcolor: "#D97706",
+                            transition: "background 0.15s",
+                            "&:hover": { bgcolor: "#B45309" },
                           }}
                         >
-                          <PlayArrowOutlined sx={{ fontSize: 15, color: "#fff" }} />
+                          <PublishOutlined sx={{ fontSize: 15, color: "#fff" }} />
                           <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>
-                            Continue Setup
+                            Publish Post
                           </Typography>
                         </Box>
                       )}

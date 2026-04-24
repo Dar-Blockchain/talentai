@@ -30,6 +30,7 @@ interface JobPostsListProps {
   onPageChange: (page: number) => void;
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;
+  onPublish?: (id: string) => void;
   onCreateClick: () => void;
   canCreate?: boolean;
   canDelete?: boolean;
@@ -81,6 +82,7 @@ const JobPostsList = memo<JobPostsListProps>(({
   onPageChange,
   onDelete,
   onViewDetails,
+  onPublish,
   onCreateClick,
   canCreate = true,
   canDelete = true,
@@ -136,7 +138,7 @@ const JobPostsList = memo<JobPostsListProps>(({
         mb: pagination.totalPages > 1 ? 3 : 0,
       }}>
         {jobs.map((job: any, i: number) => (
-          <JobPostCard key={job._id} job={job} index={i} onDelete={onDelete} onViewDetails={onViewDetails} />
+          <JobPostCard key={job._id} job={job} index={i} onDelete={onDelete} onViewDetails={onViewDetails} onPublish={onPublish} />
         ))}
       </Box>
 
