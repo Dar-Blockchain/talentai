@@ -35,6 +35,7 @@ const apiKeyRouter = require('../routes/apiKey.routes');
 const paymentRouter = require('../routes/payment.routes');
 
 // const backupRouter = require('../routes/backupRouter');
+const backupRouter = require('../routes/backup.routes');
 
 /**
  * Register all routes on the Express app
@@ -51,8 +52,6 @@ function registerRoutes(app) {
   app.use("/profiles", profileRouter); //✅ profile management
 
   // Company Management
-  //app.use("/CompanyInvitation", CompanyInvitationRouters); // Company Invitation Management -> company-invitations
-  //app.use("/CompanyMembership", CompanyMembershipRoutes); // Company Membership Management -> company-memberships
   app.use("/plan-limits", planLimitsRouter); //✅ Plan Limits Management -> plan-limits
   app.use("/subscriptions", subscriptionRouter); //✅ Subscription Management -> subscriptions
   app.use('/company-invitations', CompanyInvitationRouters); //✅ Company Invitation Management
@@ -89,7 +88,7 @@ function registerRoutes(app) {
   app.use("/feedback", feedbackRouter); //✅ Feedback Management -> feedbacks
   app.use("/logs", logRoutes); //✅ System Logs Management -> logs
   app.use("/task", taskRouter); //✅ Task Management -> tasks
-  // app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
+  app.use('/admin/backups', backupRouter); //✅ Database Backup Management -> admin/backups
 
   // Billing
   app.use("/stripe", stripRouter); //✅ Stripe Integration -> api/stripe

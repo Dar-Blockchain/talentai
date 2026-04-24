@@ -3,10 +3,12 @@ const path = require('path');
 const { exec } = require('child_process');
 const logger = require('../utils/logger');
 const moment = require('moment');
+const mongoose = require('mongoose');
 
 const BACKUP_DIR = path.join(__dirname, '../backups');
 const MAX_BACKUPS = 7; // Garder les 7 derniers backups
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/talentai';
+const MONGODB_TOOLS_PATH = 'C:\\mongodb-tools\\mongodb-database-tools-windows-x86_64-100.9.4\\bin';
 
 /**
  * Initialize backup directory if it doesn't exist
@@ -33,9 +35,23 @@ const getDatabaseName = () => {
 };
 
 /**
- * Perform database backup using mongodump
+ * Perform database backup using mongodump (primary method) or alternative method
  */
 const performBackup = async () => {
+  try {
+    // Try primary method first (mongodump)
+    return await performBackupPrimary();
+  } catch (error) {
+    logger.warn(`Primary backup method failed: ${error.message}. Trying alternative method...`);
+    // Fallback to alternative method
+    return await performBackupAlternative();
+  }
+};
+
+/**
+ * Perform database backup using mongodump (primary method)
+ */
+const performBackupPrimary = async () => {
   return new Promise((resolve, reject) => {
     try {
       initializeBackupDir();
@@ -45,20 +61,20 @@ const performBackup = async () => {
       const backupPath = path.join(BACKUP_DIR, backupName);
       const dbName = getDatabaseName();
 
-      logger.section(`📦 Starting database backup...`);
+      logger.section(`📦 Starting database backup (primary method)...`);
       logger.info(`Database: ${dbName}`);
       logger.info(`Backup path: ${backupPath}`);
 
-      // mongodump command
-      const command = `mongodump --uri="${MONGODB_URI}" --out="${backupPath}"`;
+      // mongodump command using updated MongoDB tools
+      const command = `"${MONGODB_TOOLS_PATH}\\mongodump.exe" --uri="${MONGODB_URI}" --out="${backupPath}"`;
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          logger.error(`Backup failed: ${error.message}`);
+          logger.error(`Primary backup failed: ${error.message}`);
           return reject(error);
         }
 
-        logger.success(`✅ Backup completed successfully`);
+        logger.success(`✅ Primary backup completed successfully`);
         logger.info(`Backup size: ${getDirectorySize(backupPath)}`);
 
         // Clean up old backups
@@ -68,14 +84,75 @@ const performBackup = async () => {
           success: true,
           backupName,
           backupPath,
-          timestamp
+          timestamp,
+          method: 'primary'
         });
       });
     } catch (error) {
-      logger.error(`Backup error: ${error.message}`);
+      logger.error(`Primary backup error: ${error.message}`);
       reject(error);
     }
   });
+};
+
+/**
+ * Perform database backup using Mongoose (alternative method for Atlas compatibility)
+ */
+const performBackupAlternative = async () => {
+  try {
+    initializeBackupDir();
+
+    const timestamp = moment().format('YYYY-MM-DD_HH-mm-ss');
+    const backupName = `backup_${timestamp}`;
+    const backupPath = path.join(BACKUP_DIR, backupName);
+
+    logger.section(`📦 Starting alternative database backup...`);
+    logger.info(`Backup path: ${backupPath}`);
+
+    // Connect to MongoDB using Mongoose
+    await mongoose.connect(MONGODB_URI);
+
+    // Get all collections
+    const db = mongoose.connection.db;
+    const collections = await db.listCollections().toArray();
+
+    // Create backup directory
+    if (!fs.existsSync(backupPath)) {
+      fs.mkdirSync(backupPath, { recursive: true });
+    }
+
+    // Export each collection to JSON
+    for (const collection of collections) {
+      const collectionName = collection.name;
+      logger.info(`Exporting collection: ${collectionName}`);
+
+      const collectionData = await db.collection(collectionName).find({}).toArray();
+
+      // Write to JSON file
+      const filePath = path.join(backupPath, `${collectionName}.json`);
+      fs.writeFileSync(filePath, JSON.stringify(collectionData, null, 2));
+    }
+
+    // Disconnect
+    await mongoose.disconnect();
+
+    logger.success(`✅ Alternative backup completed successfully`);
+    logger.info(`Backup size: ${getDirectorySize(backupPath)}`);
+
+    // Clean up old backups
+    cleanupOldBackups();
+
+    return {
+      success: true,
+      backupName,
+      backupPath,
+      timestamp,
+      method: 'alternative'
+    };
+  } catch (error) {
+    logger.error(`Alternative backup error: ${error.message}`);
+    throw error;
+  }
 };
 
 /**
@@ -182,6 +259,31 @@ const deleteDirectoryRecursive = (dirPath) => {
 };
 
 /**
+ * Delete a specific backup directory
+ */
+const deleteBackup = (backupName) => {
+  try {
+    const backupPath = path.join(BACKUP_DIR, backupName);
+
+    if (!fs.existsSync(backupPath) || !fs.statSync(backupPath).isDirectory()) {
+      throw new Error(`Backup not found: ${backupName}`);
+    }
+
+    deleteDirectoryRecursive(backupPath);
+    logger.info(`🗑️ Backup deleted: ${backupName}`);
+
+    return {
+      success: true,
+      backupName,
+      backupPath
+    };
+  } catch (error) {
+    logger.error(`Delete backup failed: ${error.message}`);
+    throw error;
+  }
+};
+
+/**
  * List all available backups
  */
 const listBackups = () => {
@@ -219,8 +321,8 @@ const restoreBackup = async (backupName) => {
 
       logger.section(`📥 Starting database restore from ${backupName}...`);
 
-      // mongorestore command
-      const command = `mongorestore --uri="${MONGODB_URI}" --dir="${backupPath}"`;
+      // mongorestore command using updated MongoDB tools
+      const command = `"${MONGODB_TOOLS_PATH}\\mongorestore.exe" --uri="${MONGODB_URI}" --dir="${backupPath}"`;
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -267,6 +369,7 @@ module.exports = {
   initializeDailyBackup,
   listBackups,
   restoreBackup,
+  deleteBackup,
   getBackupDir: () => BACKUP_DIR,
   getMaxBackups: () => MAX_BACKUPS
 };

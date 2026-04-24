@@ -1,6 +1,6 @@
 // cron/daily-backup.js
 const logger = require('../utils/logger');
-const backupService = require('../services/backupService');
+const backupService = require('../services/backup.service');
 const cron = require('node-cron');
 
 function initialize() {

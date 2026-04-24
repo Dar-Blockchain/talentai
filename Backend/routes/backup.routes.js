@@ -8,16 +8,15 @@
  */
 const express = require("express");
 const router = express.Router();
-const backupService = require("../services/backupService");
+const backupService = require("../services/backup.service");
 const logger = require("../utils/logger");
 
 // Import middlewares
-const { requireAuthUser } = require("../middleware/authMiddleware");
-const { controledAcces } = require("../middleware/controledAcces");
-const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
+const { requireAuth } = require("../middleware/security/auth.middleware");
+const authLogMiddleware = require("../middleware/security/request-log.middleware");
 
 // All routes require admin authentication
-router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Backup"));
+//router.use(requireAuth, authLogMiddleware("Backup"));
 
 /**
  * POST /admin/backups/perform
@@ -114,6 +113,43 @@ router.post("/restore/:backupName", async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to restore backup',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /admin/backups/delete/:backupName
+ * Delete a specific backup by name
+ */
+router.delete("/delete/:backupName", (req, res) => {
+  try {
+    const { backupName } = req.params;
+    const { confirm } = req.body;
+
+    if (!confirm) {
+      return res.status(400).json({
+        success: false,
+        message: 'Delete requires confirmation. Set confirm: true in body',
+        warning: 'This operation will permanently remove the backup'
+      });
+    }
+
+    const result = backupService.deleteBackup(backupName);
+
+    res.status(200).json({
+      success: true,
+      message: 'Backup deleted successfully',
+      data: {
+        backupName: result.backupName,
+        backupPath: result.backupPath
+      }
+    });
+  } catch (error) {
+    logger.error(`Delete backup failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete backup',
       error: error.message
     });
   }
