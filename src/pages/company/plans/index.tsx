@@ -11,7 +11,7 @@ import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, PlanLimit }
 import { getMyProfile } from "@/store/slices/userSlice";
 import { payWithCard } from "@/services/stripeService";
 import {
-  verifyPayment, cancelSubscription, selectCancellingSubscription,
+  verifyPayment, cancelSubscription, enableAutoRenew, selectCancellingSubscription,
   fetchCombinedSubscriptionDetails, selectCombinedDetails, selectCombinedDetailsLoading,
 } from "@/store/slices/paymentSlice";
 import {
@@ -153,9 +153,10 @@ interface PlanCardProps {
   autoRenew: boolean;
   cancelling: boolean;
   onCancelClick: (subscriptionId: string) => void;
+  onEnableAutoRenewClick: (subscriptionId: string) => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const cfg      = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
@@ -264,7 +265,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
               }}>
                 <NotificationsOffOutlined sx={{ fontSize: 15, color: "#D97706" }} />
               </Box>
-              <Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400E", lineHeight: 1.3 }}>
                   Auto-renewal off
                 </Typography>
@@ -272,6 +273,17 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
                   Active until expiry · won't renew
                 </Typography>
               </Box>
+              <AppButton
+                label={cancelling ? "…" : "Re-enable"}
+                variant="contained"
+                disabled={cancelling}
+                onClick={() => onEnableAutoRenewClick(activeSubscriptionId!)}
+                sx={{
+                  bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" },
+                  fontWeight: 700, borderRadius: 1.5, py: 0.5, px: 1.5,
+                  fontSize: "0.72rem", minWidth: 0, flexShrink: 0,
+                }}
+              />
             </Box>
           )}
         </Box>
@@ -343,6 +355,16 @@ const PlansPage: React.FC = () => {
   const handleCancelClick = (subscriptionId: string) => {
     setCancelSubId(subscriptionId);
     setConfirmOpen(true);
+  };
+
+  const handleEnableAutoRenew = (subscriptionId: string) => {
+    dispatch(enableAutoRenew({ subscriptionId }))
+      .unwrap()
+      .then(() => {
+        showSnack("Auto-renewal re-enabled. Your plan will renew automatically.", "success");
+        refreshAll();
+      })
+      .catch(() => showSnack("Failed to re-enable auto-renewal. Please try again.", "error"));
   };
 
   const handleConfirmCancel = () => {
@@ -443,6 +465,7 @@ const PlansPage: React.FC = () => {
                 autoRenew={activeSubByPlanName[plan.name]?.autoRenew ?? true}
                 cancelling={cancelling}
                 onCancelClick={handleCancelClick}
+                onEnableAutoRenewClick={handleEnableAutoRenew}
               />
             </Grid>
           ))}

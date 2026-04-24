@@ -155,6 +155,17 @@ export const cancelSubscription = createAsyncThunk<void, { subscriptionId: strin
   }
 );
 
+export const enableAutoRenew = createAsyncThunk<void, { subscriptionId: string }, { rejectValue: string }>(
+  "payment/enableAutoRenew",
+  async ({ subscriptionId }, { rejectWithValue }) => {
+    try {
+      await axiosInstance.post(`subscriptions/${subscriptionId}/enable-auto-renew`);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to enable auto-renewal");
+    }
+  }
+);
+
 export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { rejectValue: string }>(
   "payment/fetchCompanyHistory",
   async (_, { rejectWithValue }) => {
@@ -282,6 +293,16 @@ const paymentSlice = createSlice({
         state.combinedDetails = null;
       })
       .addCase(cancelSubscription.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to cancel subscription"; });
+
+    builder
+      .addCase(enableAutoRenew.pending, (state) => { state.cancelling = true; state.error = null; })
+      .addCase(enableAutoRenew.fulfilled, (state) => {
+        state.cancelling = false;
+        state.activeSubscription = null;
+        state.subscriptionDetails = null;
+        state.combinedDetails = null;
+      })
+      .addCase(enableAutoRenew.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to enable auto-renewal"; });
 
     builder
       .addCase(fetchCompanyPaymentHistory.pending, (state) => { state.historyLoading = true; })

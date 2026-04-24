@@ -294,6 +294,33 @@ module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
   }
 };
 
+// ========== RE-ENABLE AUTO-RENEWAL ==========
+
+module.exports.enableAutoRenew = async (subscriptionId) => {
+  try {
+    const subscription = await Subscription.findById(subscriptionId);
+    if (!subscription) {
+      const err = new Error("Subscription not found");
+      err.status = 404;
+      throw err;
+    }
+    if (subscription.autoRenew) {
+      const err = new Error("Auto-renewal is already enabled");
+      err.status = 400;
+      throw err;
+    }
+    subscription.autoRenew = true;
+    subscription.cancellationReason = undefined;
+    subscription.cancelledAt = undefined;
+    await subscription.save();
+    console.log(`✅ Subscription ${subscriptionId} auto-renewal re-enabled`);
+    return { success: true, data: subscription, message: "Auto-renewal has been re-enabled." };
+  } catch (error) {
+    console.error("Error enabling auto-renewal:", error);
+    throw error;
+  }
+};
+
 // ========== EXTEND SUBSCRIPTION ==========
 
 /**
