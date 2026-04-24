@@ -12,6 +12,12 @@ import {
   ParticipantStatus,
   NonParticipant,
 } from "@/types/campaign";
+import { isDeadlinePassed } from "@/utils/functions";
+
+const expireIfPastDeadline = (c: Campaign): Campaign =>
+  c.status !== "EXPIRED" && c.status !== "CLOSED" && isDeadlinePassed(c.deadline)
+    ? { ...c, status: "EXPIRED" as CampaignStatus }
+    : c;
 
 // ─── Employee campaign entry (campaign + participant context) ─────────────────
 
@@ -500,7 +506,7 @@ const campaignSlice = createSlice({
         fetchCampaigns.fulfilled,
         (state, action: PayloadAction<CampaignsResponse>) => {
           state.loading = false;
-          state.campaigns = action.payload.data;
+          state.campaigns = action.payload.data.map(expireIfPastDeadline);
           state.page = action.payload.pagination.page;
           state.limit = action.payload.pagination.limit;
           state.count = action.payload.pagination.total;
@@ -572,7 +578,7 @@ const campaignSlice = createSlice({
         fetchCampaignById.fulfilled,
         (state, action: PayloadAction<Campaign>) => {
           state.detailLoading = false;
-          state.selectedCampaign = action.payload;
+          state.selectedCampaign = expireIfPastDeadline(action.payload);
         },
       )
       .addCase(fetchCampaignById.rejected, (state, action) => {

@@ -127,7 +127,7 @@ const CampaignDetailsCard: React.FC<Props> = ({ campaign }) => {
           <InfoBlock icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />} iconColor={deadlineColor} label="Deadline">
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
               <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#0F172A" }}>
-                {fmtDate(campaign.deadline)}
+                {fmtDate("campaign.deadline")}
               </Typography>
               {remaining !== null && (
                 <Chip

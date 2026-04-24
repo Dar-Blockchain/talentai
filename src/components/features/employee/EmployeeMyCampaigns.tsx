@@ -70,8 +70,9 @@ const fmtDate = (iso?: string) => {
 
 const daysLeft = (iso?: string) => {
   if (!iso) return null;
-  const diff = new Date(iso).getTime() - Date.now();
-  return Math.ceil(diff / 86_400_000);
+  const end = new Date(iso);
+  end.setHours(23, 59, 59, 999);
+  return Math.ceil((end.getTime() - Date.now()) / 86_400_000);
 };
 
 const scoreColor = (s: number) => s >= 80 ? GREEN : s >= 60 ? TEAL : s >= 40 ? AMBER : ROSE;
@@ -88,7 +89,7 @@ const CampaignCard: React.FC<{ campaign: Campaign; index: number; onStart: (id: 
     const StatIcon = ps.icon;
     const remaining = daysLeft(campaign.deadline);
     const isExpired = campaign.deadline
-      ? new Date(campaign.deadline).getTime() < Date.now()
+      ? (() => { const e = new Date(campaign.deadline!); e.setHours(23,59,59,999); return e.getTime() < Date.now(); })()
       : false;
     const isPaused  = campaign.status === "PAUSED";
     const isClosed  = campaign.status === "CLOSED";
