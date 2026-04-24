@@ -186,6 +186,56 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
   }
 };
 
+// ─── Send Plan Upgrade Reminder to Company ───────────────────────────────────
+const sendPlanUpgradeReminder = async (companyEmail, companyName) => {
+  const mailOptions = {
+    from: '"TalentAI" <contact@talentai.bid>',
+    to: companyEmail,
+    subject: '🚀 Upgrade your TalentAI plan to unlock full access',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+        <div style="background:linear-gradient(135deg,#0D9488,#0891B2);padding:32px 40px;text-align:center;">
+          <img src="cid:logocompany" alt="TalentAI" style="height:40px;margin-bottom:12px;" />
+          <h1 style="color:#fff;margin:0;font-size:22px;font-weight:700;">Your plan needs an upgrade</h1>
+        </div>
+        <div style="padding:32px 40px;">
+          <p style="color:#374151;font-size:15px;margin-top:0;">Hi <strong>${companyName}</strong>,</p>
+          <p style="color:#6B7280;font-size:14px;line-height:1.7;">
+            Your company is currently on a <strong>Trial</strong> plan. To continue posting jobs, running AI interviews, and accessing candidate matching, you'll need to upgrade to a paid plan.
+          </p>
+          <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:20px;margin:24px 0;">
+            <p style="margin:0;color:#065F46;font-size:14px;font-weight:600;">✅ What you unlock with a paid plan:</p>
+            <ul style="color:#374151;font-size:13px;line-height:2;margin:8px 0 0 0;padding-left:20px;">
+              <li>More job posts &amp; monthly interviews</li>
+              <li>Priority candidate matching</li>
+              <li>Advanced analytics &amp; reporting</li>
+            </ul>
+          </div>
+          <div style="text-align:center;margin:28px 0;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://talentai.bid'}/company/plans"
+               style="background:linear-gradient(135deg,#0D9488,#0891B2);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;display:inline-block;">
+              View Plans &amp; Upgrade
+            </a>
+          </div>
+          <p style="color:#9CA3AF;font-size:12px;text-align:center;margin-bottom:0;">
+            If you have questions, reply to this email or contact our support team.<br/>
+            © ${year} TalentAI. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `,
+    attachments: [logoAttachment],
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Plan upgrade reminder sent to ${companyEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Plan upgrade reminder failed for ${companyEmail}:`, error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
@@ -194,5 +244,6 @@ module.exports = {
   sendInterviewInvitation,
   sendInterviewNudge,
   sendCandidateEmail,
+  sendPlanUpgradeReminder,
   transporter,
 };
