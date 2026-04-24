@@ -32,7 +32,7 @@ import TuneOutlined            from "@mui/icons-material/TuneOutlined";
 import RocketLaunchOutlined    from "@mui/icons-material/RocketLaunchOutlined";
 import VisibilityOffOutlined   from "@mui/icons-material/VisibilityOffOutlined";
 import { MODULE_CONFIG } from "@/constants/campaign";
-import { daysLeft } from "@/utils/functions";
+import { daysLeft, isDeadlinePassed } from "@/utils/functions";
 
 const PURPLE = "#8310FF";
 const CARD = { bgcolor: "#fff", border: "1px solid #EDEEF0", borderRadius: "18px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" } as const;
@@ -98,9 +98,7 @@ const CampaignDetail: React.FC<Props> = ({
   const modCfg    = MODULE_CONFIG[campaign.module?.type];
   const ModIcon   = modCfg?.icon;
   const remaining = daysLeft(campaign.deadline);
-  const isExpired = campaign.deadline
-    ? new Date(campaign.deadline).getTime() < Date.now()
-    : false;
+  const isExpired = isDeadlinePassed(campaign.deadline);
 
   // Employee-mode: participant status + CTA
   const pStatus   = campaign.participantStatus ?? "INVITED";

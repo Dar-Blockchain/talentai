@@ -24,7 +24,7 @@ import {
 import { fetchCampaignByLinkToken, joinCampaignByLink } from '@/store/slices/campaignSlice';
 import { AppDispatch, RootState } from '@/store/store';
 import { Campaign } from '@/types/campaign';
-import { fmtDate } from '@/utils/functions';
+import { fmtDate, isDeadlinePassed } from '@/utils/functions';
 
 /* ── palette ──────────────────────────────────────────────────────────────── */
 const P = {
@@ -160,7 +160,7 @@ const CampaignJoinPage: React.FC = () => {
     </Shell>
   );
 
-  const isExpired   = campaign.deadline ? new Date(campaign.deadline).getTime() < Date.now() : false;
+  const isExpired   = isDeadlinePassed(campaign.deadline);
   const isAnon      = campaign.anonymityMode === 'ANONYMOUS';
   const isAccounts  = campaign.accessMethod === 'ACCOUNTS';
   const mod         = MODULE_META[campaign.module?.type] ?? MODULE_META.QUESTIONNAIRE;

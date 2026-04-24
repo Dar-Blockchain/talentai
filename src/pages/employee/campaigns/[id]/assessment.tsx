@@ -17,7 +17,7 @@ import {
 import { GlobalStyles }           from '@/components/features/campaign/assessment/styles';
 import { InterviewSpinner, InterviewErrorState, InterviewExpiredState, InterviewPausedState, InterviewClosedState } from '@/components/features/campaign/assessment/InterviewLoadingState';
 import InterviewUnsupportedModule from '@/components/features/campaign/assessment/InterviewUnsupportedModule';
-import { daysLeft } from '@/utils/functions';
+import { daysLeft, isDeadlinePassed } from '@/utils/functions';
 import QuestionnaireAssessment    from '@/components/features/campaign/assessment/QuestionnaireAssessment';
 import InterviewAssessment        from '@/components/features/campaign/assessment/InterviewAssessment';
 
@@ -72,9 +72,7 @@ const EmployeeCampaignAssessment: React.FC = () => {
     );
   }
 
-  const isExpired = campaign.deadline
-    ? new Date(campaign.deadline).getTime() < Date.now()
-    : false;
+  const isExpired = isDeadlinePassed(campaign.deadline);
   const pStatus = campaign.participantStatus;
 
   if (isExpired && pStatus !== 'COMPLETED') {
