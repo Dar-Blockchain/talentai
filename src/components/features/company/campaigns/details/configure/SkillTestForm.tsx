@@ -298,12 +298,10 @@ const SkillTestForm: React.FC<Props> = ({ config, onChange }) => {
             type="number"
             placeholder="e.g. 3"
             value={String(config.maxAttempts ?? "")}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                maxAttempts: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
+            onChange={(e) => {
+              const n = e.target.value ? Number(e.target.value) : undefined;
+              onChange({ ...config, maxAttempts: n !== undefined ? Math.max(1, n) : undefined });
+            }}
           />
           <Typography sx={{ fontSize: "10.5px", color: "#9CA3AF", mt: 0.5 }}>
             Leave empty for unlimited

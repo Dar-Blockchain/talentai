@@ -18,6 +18,7 @@ interface UserDropdownMenuProps extends Omit<MenuProps, "children"> {
   avatarUrl?:   string | null;
   initials?:    string;
   isCompany?:   boolean;
+  isEmployee?:  boolean;
   onDashboard?: () => void;
 }
 
@@ -83,7 +84,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   email,
   avatarUrl,
   initials = "U",
-  isCompany = false,
+  isCompany  = false,
+  isEmployee = false,
   onDashboard,
   ...menuProps
 }) => {
@@ -181,7 +183,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
           sub="Go to your workspace"
           onClick={() => { onDashboard?.(); close(); }}
         />
-        {!isCompany && (
+        {!isCompany && !isEmployee && (
           <Item
             icon={<PersonOutlined />}
             label="View Profile"
@@ -189,22 +191,13 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             onClick={() => { router.push("/profile/candidate/" + user?._id); close(); }}
           />
         )}
-        <Item
-          icon={<SettingsOutlined />}
-          label="Settings"
-          sub="Account & preferences"
-          onClick={() => {
-            router.push(isCompany ? "/company/settings" : "/profile/candidate/settings");
-            close();
-          }}
-        />
-        {hasMembership && (
+        {!isEmployee && (
           <Item
-            icon={<SwapHorizOutlined />}
-            label="Switch Space"
-            sub={currentSpace === "personal" ? "Go to company space" : "Go to personal space"}
+            icon={<SettingsOutlined />}
+            label="Settings"
+            sub="Account & preferences"
             onClick={() => {
-              router.push(currentSpace === "personal" ? "/dashboard/member" : "/dashboard/" + user?.role?.toLowerCase());
+              router.push(isCompany ? "/company/settings" : "/profile/candidate/settings");
               close();
             }}
           />

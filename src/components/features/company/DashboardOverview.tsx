@@ -283,7 +283,7 @@ const DashboardOverview: React.FC = () => {
 
         {/* Team Members */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <Card sx={{ p: 2, cursor: "pointer", "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }} onClick={() => router.push("/company/team")}>
+          <Card sx={{ p: 2, cursor: "pointer", "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }, transition: "box-shadow 0.2s" }} onClick={() => router.push("/company/employees")}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#FDF4FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <GroupsOutlined sx={{ fontSize: 20, color: "#A855F7" }} />

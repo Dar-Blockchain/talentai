@@ -134,7 +134,8 @@ export const updateCampaign = createAsyncThunk<
       const response = await axiosInstance.put(`internal-campaigns/${campaignId}`, { ...updatePayload });
       return response.data.data as Campaign;
     } catch (err: any) {
-      return rejectWithValue(err.message);
+      const msg = err.response?.data?.error || err.response?.data?.message || err.message;
+      return rejectWithValue(msg);
     }
   },
 );

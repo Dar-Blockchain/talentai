@@ -68,7 +68,7 @@ const CampaignsGrid: React.FC = () => {
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms = useSelector(selectEmployeePermissions);
   const isEmp    = user?.role === "Employee";
-  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign;
+  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign || !!empPerms.canCreateCampaign;
   const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
   const canPublish = !isEmp || !!empPerms?.canPublishCampaign;
 

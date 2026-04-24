@@ -12,8 +12,8 @@ import {
 import KeyboardArrowDownOutlined from "@mui/icons-material/KeyboardArrowDownOutlined";
 import { LogoutOutlined, TuneOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import { logout } from "@/store/slices/authSlice";
 
 interface UserHeaderProps {
@@ -29,6 +29,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial, av
   const open = Boolean(anchorEl);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const userRole = useSelector((state: RootState) => state.user.connectedUser.user?.role);
+  const isEmployee = userRole === "Employee";
+  const settingsPath = isEmployee ? "/employee/settings" : "/company/settings";
 
   return (
     <>
@@ -84,7 +87,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ companyName, companyInitial, av
         <Box sx={{ height: "1px", bgcolor: "#F3F4F6", mx: 0.5, mb: 0.5 }} />
 
         <MenuItem
-          onClick={() => { setAnchorEl(null); router.push("/company/settings"); }}
+          onClick={() => { setAnchorEl(null); router.push(settingsPath); }}
           sx={{ gap: 1.25, borderRadius: "8px", py: 0.9, px: 1.25, "&:hover": { bgcolor: "#F9FAFB" } }}
         >
           <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
