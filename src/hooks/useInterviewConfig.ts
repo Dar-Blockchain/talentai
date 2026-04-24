@@ -22,6 +22,7 @@ export interface UseInterviewConfigReturn {
   jobData: any | null;
   limitReached: boolean;
   limitMessage: string;
+  limitJobTitle: string;
   isExpired: boolean;
 }
 
@@ -76,6 +77,7 @@ export const useInterviewConfig = ({
   const [jobData, setJobData] = useState<any | null>(null);
   const [limitReached, setLimitReached] = useState(false);
   const [limitMessage, setLimitMessage] = useState('');
+  const [limitJobTitle, setLimitJobTitle] = useState('');
   const [configLoading, setConfigLoading] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -251,7 +253,9 @@ export const useInterviewConfig = ({
           if (response.status === 429) {
             setLimitReached(true);
             setLimitMessage(errorData.message || 'Your company has reached the monthly interview limit.');
+            setLimitJobTitle(errorData.jobTitle || '');
             setPipelineLoading(false);
+            setConfigLoading(false);
             return;
           }
 
@@ -385,6 +389,7 @@ export const useInterviewConfig = ({
     jobData,
     limitReached,
     limitMessage,
+    limitJobTitle,
     isExpired,
   };
 };

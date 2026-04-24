@@ -142,6 +142,7 @@ const IntelligentInterviewTest = () => {
     jobData,
     limitReached,
     limitMessage,
+    limitJobTitle,
     isExpired,
   } = useInterviewConfig({ showNotification: notify });
 
@@ -334,7 +335,7 @@ const IntelligentInterviewTest = () => {
   const isActive = socket.interviewStatus === 'active';
 
   /* ── Checking assessment status / loading config ── */
-  if (assessmentChecking || (hasJobId && configLoading)) {
+  if (!limitReached && (assessmentChecking || (hasJobId && configLoading))) {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
@@ -546,21 +547,105 @@ const IntelligentInterviewTest = () => {
     return (
       <>
         <style jsx global>{GlobalStyles}</style>
-        <Box sx={{ minHeight: '100vh', bgcolor: '#F8F9FA' }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#F1F5F9', display: 'flex', flexDirection: 'column' }}>
           <Header />
-          <Container maxWidth="sm" sx={{ py: { xs: 6, md: 10 } }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', p: { xs: 4, md: 5 }, textAlign: 'center' }}>
-              <Box sx={{ width: 72, height: 72, borderRadius: '50%', bgcolor: 'rgba(255,87,51,0.08)', border: '2px solid rgba(255,87,51,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
-                <Typography sx={{ fontSize: '2rem' }}>🚫</Typography>
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 2, py: { xs: 5, md: 8 } }}>
+            <Box sx={{
+              width: '100%', maxWidth: 480,
+              bgcolor: '#fff', borderRadius: '24px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
+              overflow: 'hidden',
+            }}>
+              {/* Top accent bar — red gradient */}
+              <Box sx={{ height: 6, background: 'linear-gradient(90deg, #EF4444 0%, #F97316 100%)' }} />
+
+              <Box sx={{ p: { xs: 4, md: 5 }, textAlign: 'center' }}>
+                {/* Icon circle */}
+                <Box sx={{
+                  width: 80, height: 80, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FEE2E2 0%, #FFEDD5 100%)',
+                  border: '2px solid #FECACA',
+                  boxShadow: '0 4px 16px rgba(239,68,68,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  mx: 'auto', mb: 2.5,
+                }}>
+                  <Typography sx={{ fontSize: '2rem', lineHeight: 1, userSelect: 'none' }}>🔒</Typography>
+                </Box>
+
+                {/* Status badge */}
+                <Box sx={{
+                  display: 'inline-flex', alignItems: 'center', gap: 0.8,
+                  bgcolor: '#FEF2F2', border: '1px solid #FECACA',
+                  borderRadius: '20px', px: 1.8, py: 0.5, mb: 2.5,
+                }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#EF4444', flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    Interviews Paused
+                  </Typography>
+                </Box>
+
+                {/* Heading */}
+                <Typography sx={{ fontWeight: 800, fontSize: '1.45rem', color: '#0F172A', lineHeight: 1.25, mb: 1.5, letterSpacing: '-0.01em' }}>
+                  Interview Unavailable
+                </Typography>
+
+                {/* Job title pill */}
+                {limitJobTitle && (
+                  <Box sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 1,
+                    bgcolor: '#F8FAFC', border: '1px solid #E2E8F0',
+                    borderRadius: '10px', px: 2, py: 0.7, mb: 2.5,
+                  }}>
+                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#94A3B8', flexShrink: 0 }} />
+                    <Typography sx={{ fontSize: '0.83rem', fontWeight: 600, color: '#475569' }}>
+                      {limitJobTitle}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Divider */}
+                <Box sx={{ height: '1px', bgcolor: '#F1F5F9', mb: 2.5 }} />
+
+                {/* Description */}
+                <Typography sx={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.8, mb: 1.5 }}>
+                  The company has reached their monthly interview quota. New slots open at the start of next month.
+                </Typography>
+                <Typography sx={{ fontSize: '0.82rem', color: '#94A3B8', lineHeight: 1.7, mb: 4 }}>
+                  If you believe this is an error, please contact the recruiter directly.
+                </Typography>
+
+                {/* Buttons */}
+                <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => router.back()}
+                    sx={{
+                      textTransform: 'none', fontWeight: 600, fontSize: '0.875rem',
+                      borderRadius: '12px', px: 3, py: 1.2,
+                      borderColor: '#E2E8F0', color: '#475569',
+                      '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' },
+                    }}
+                  >
+                    ← Go Back
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => router.push('/')}
+                    sx={{
+                      textTransform: 'none', fontWeight: 700, fontSize: '0.875rem',
+                      borderRadius: '12px', px: 3, py: 1.2,
+                      background: 'linear-gradient(135deg, #0D9488 0%, #0891B2 100%)',
+                      color: '#fff',
+                      boxShadow: '0 4px 12px rgba(13,148,136,0.25)',
+                      '&:hover': { background: 'linear-gradient(135deg, #0F766E 0%, #0E7490 100%)', boxShadow: '0 6px 16px rgba(13,148,136,0.35)', color: '#fff' },
+                    }}
+                  >
+                    Go to Home
+                  </Button>
+                </Box>
               </Box>
-              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.3rem', color: '#111827', mb: 1 }}>
-                Interview limit reached
-              </Typography>
-              <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7, mb: 3.5 }}>
-                {limitMessage}
-              </Typography>
             </Box>
-          </Container>
+          </Box>
         </Box>
       </>
     );

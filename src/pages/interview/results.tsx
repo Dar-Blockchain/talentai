@@ -191,13 +191,14 @@ export default function InterviewResults() {
       dispatch(getMyProfile());
 
       try {
-        const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : 'Interview';
-        notifySkillTestCompleted(dispatch, skillName);
+        const skillName = effectiveSkill !== 'N/A' ? effectiveSkill : null;
+        notifySkillTestCompleted(dispatch, skillName || 'Interview');
 
         // Persistent notification saved to DB — visible in the notification bell
+        const interviewLabel = skillName ? `your ${skillName} interview` : 'your interview';
         dispatch(createNotification({
           type: 'success',
-          content: `You completed your ${skillName} interview. Your results are now available in your dashboard.`,
+          content: `You completed ${interviewLabel}. Your results are now available in your dashboard.`,
         }));
 
         // Notify company — fetch post owner userId then broadcast to them
@@ -206,8 +207,10 @@ export default function InterviewResults() {
             const companyUserId = result.data?.post?.user?._id || result.data?.post?.user;
             if (companyUserId) {
               const candidateName = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim() || 'A candidate';
+              const jobTitle = result.data?.post?.jobDetails?.title || null;
+              const companyInterviewLabel = jobTitle ? `the interview for "${jobTitle}"` : skillName ? `the ${skillName} interview` : 'an interview';
               dispatch(broadcastSystemNotification({
-                content: `${candidateName} has just completed the ${skillName} interview. Check your dashboard to review their results.`,
+                content: `${candidateName} has just completed ${companyInterviewLabel}. Check your dashboard to review their results.`,
                 recipientIds: [companyUserId],
               }));
             }

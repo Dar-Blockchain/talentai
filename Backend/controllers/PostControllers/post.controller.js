@@ -551,6 +551,23 @@ exports.getJobInterviewConfig = async (req, res) => {
 
         if (!limitCheck.canUse) {
           console.log("❌ Company has reached maximum monthly interviews limit");
+
+          // Notify the company (best-effort — don't fail the response if it errors)
+          try {
+            const notificationService = require("../../services/notificationSystem.service");
+            const jobTitle = post.jobDetails?.title || "a job post";
+            const planName = limitCheck.limitData?.planName || "your plan";
+            const used = limitCheck.limitData?.used ?? 0;
+            const limit = limitCheck.limitData?.limit ?? 0;
+            await notificationService.createNotification(
+              post.user._id,
+              `⚠️ Interview limit reached: A candidate tried to start an interview for "${jobTitle}" but your monthly interview limit (${used}/${limit}) has been reached. Upgrade your plan to continue receiving interviews.`,
+              "warning"
+            );
+          } catch (notifErr) {
+            console.warn("Failed to send limit notification to company:", notifErr.message);
+          }
+
           return res.status(429).json({
             success: false,
             error: "Monthly interview limit reached",
