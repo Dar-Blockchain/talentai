@@ -268,33 +268,25 @@ module.exports.cancelSubscription = async (subscriptionId, reason = "") => {
       throw err;
     }
 
-    if (subscription.status === "cancelled") {
-      const err = new Error("Subscription is already cancelled");
+    if (!subscription.autoRenew) {
+      const err = new Error("Auto-renewal is already disabled for this subscription");
       err.status = 400;
       throw err;
     }
 
-    // Cancel the subscription
-    subscription.status = "cancelled";
+    // Disable auto-renewal only — subscription stays active until endDate.
+    // Status remains "active"; posts and interview assessments are fully preserved.
+    subscription.autoRenew = false;
     subscription.cancellationReason = reason;
     subscription.cancelledAt = new Date();
     await subscription.save();
 
-    console.log(`✅ Subscription ${subscriptionId} cancelled`);
-
-    // Reset profile planLimits back to Trial
-    const trialPlan = await PlanLimits.findOne({ name: "Trial" });
-    if (trialPlan && subscription.companyProfileId) {
-      await Profile.findByIdAndUpdate(subscription.companyProfileId, {
-        planLimits: trialPlan._id,
-      });
-      console.log(`✅ Profile ${subscription.companyProfileId} planLimits reset to Trial`);
-    }
+    console.log(`✅ Subscription ${subscriptionId} auto-renewal disabled — active until ${subscription.endDate}`);
 
     return {
       success: true,
       data: subscription,
-      message: "Subscription cancelled successfully",
+      message: `Your plan remains active until ${subscription.endDate.toDateString()} and will not renew after that.`,
     };
   } catch (error) {
     console.error("Error cancelling subscription:", error);
