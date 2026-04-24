@@ -118,7 +118,8 @@ subscriptionSchema.methods.markExpired = async function () {
 };
 
 subscriptionSchema.methods.cancel = async function (reason = "") {
-  this.status = "cancelled";
+  // Disable auto-renewal — subscription stays active until endDate, then won't renew.
+  this.autoRenew = false;
   this.cancellationReason = reason;
   this.cancelledAt = new Date();
   return this.save();

@@ -100,6 +100,8 @@ const profileSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    lastPlanReminderSentAt: { type: Date, default: null },
+    planReminderCount: { type: Number, default: 0 },
     readyForMatch: { type: Boolean, default: false },
     isPublicProfile: { type: Boolean, default: false },
 

@@ -11,7 +11,7 @@ import { fetchPlanLimits, selectPlanLimits, selectPlanLimitsLoading, PlanLimit }
 import { getMyProfile } from "@/store/slices/userSlice";
 import { payWithCard } from "@/services/stripeService";
 import {
-  verifyPayment, cancelSubscription, selectCancellingSubscription,
+  verifyPayment, cancelSubscription, enableAutoRenew, selectCancellingSubscription,
   fetchCombinedSubscriptionDetails, selectCombinedDetails, selectCombinedDetailsLoading,
 } from "@/store/slices/paymentSlice";
 import {
@@ -26,7 +26,8 @@ const WorkOutlined          = dynamic(() => import("@mui/icons-material/WorkOutl
 const VideoCallOutlined     = dynamic(() => import("@mui/icons-material/VideoCallOutlined"));
 const CheckCircleOutlined   = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
 const CalendarTodayOutlined = dynamic(() => import("@mui/icons-material/CalendarTodayOutlined"));
-const AddCircleOutlined     = dynamic(() => import("@mui/icons-material/AddCircleOutlined"));
+const AddCircleOutlined        = dynamic(() => import("@mui/icons-material/AddCircleOutlined"));
+const NotificationsOffOutlined = dynamic(() => import("@mui/icons-material/NotificationsOffOutlined"));
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -148,12 +149,14 @@ const FeatureRow: React.FC<{ icon: React.ReactNode; label: string; color: string
 
 interface PlanCardProps {
   plan: PlanLimit;
-  activeSubscriptionId: string | null; // subscription ID if this plan is active, null otherwise
+  activeSubscriptionId: string | null;
+  autoRenew: boolean;
   cancelling: boolean;
   onCancelClick: (subscriptionId: string) => void;
+  onEnableAutoRenewClick: (subscriptionId: string) => void;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, cancelling, onCancelClick }) => {
+const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRenew, cancelling, onCancelClick, onEnableAutoRenewClick }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const cfg      = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
@@ -237,18 +240,52 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, cancell
               "&.Mui-disabled": { borderColor: `${cfg.color}80`, color: `${cfg.color}80` },
             }}
           />
-          <AppButton
-            label={cancelling ? "Cancelling…" : "Cancel This Plan"}
-            variant="outlined"
-            fullWidth
-            disabled={cancelling}
-            startIcon={cancelling ? <CircularProgress size={16} color="inherit" /> : undefined}
-            onClick={() => onCancelClick(activeSubscriptionId)}
-            sx={{
-              borderColor: "#ef4444", color: "#ef4444", fontWeight: 600, borderRadius: 2, py: 1, fontSize: "0.82rem",
-              "&:hover": { borderColor: "#dc2626", bgcolor: "#fef2f2" },
-            }}
-          />
+          {autoRenew ? (
+            <AppButton
+              label={cancelling ? "Processing…" : "Disable Auto-Renewal"}
+              variant="outlined"
+              fullWidth
+              disabled={cancelling}
+              startIcon={cancelling ? <CircularProgress size={16} color="inherit" /> : undefined}
+              onClick={() => onCancelClick(activeSubscriptionId!)}
+              sx={{
+                borderColor: "#ef4444", color: "#ef4444", fontWeight: 600, borderRadius: 2, py: 1, fontSize: "0.82rem",
+                "&:hover": { borderColor: "#dc2626", bgcolor: "#fef2f2" },
+              }}
+            />
+          ) : (
+            <Box sx={{
+              display: "flex", alignItems: "center", gap: 1.2,
+              px: 2, py: 1.2, borderRadius: 2,
+              bgcolor: "#FFFBEB", border: "1px solid #FDE68A",
+            }}>
+              <Box sx={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                bgcolor: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <NotificationsOffOutlined sx={{ fontSize: 15, color: "#D97706" }} />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400E", lineHeight: 1.3 }}>
+                  Auto-renewal off
+                </Typography>
+                <Typography sx={{ fontSize: "0.72rem", color: "#B45309", lineHeight: 1.3 }}>
+                  Active until expiry · won't renew
+                </Typography>
+              </Box>
+              <AppButton
+                label={cancelling ? "…" : "Re-enable"}
+                variant="contained"
+                disabled={cancelling}
+                onClick={() => onEnableAutoRenewClick(activeSubscriptionId!)}
+                sx={{
+                  bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" },
+                  fontWeight: 700, borderRadius: 1.5, py: 0.5, px: 1.5,
+                  fontSize: "0.72rem", minWidth: 0, flexShrink: 0,
+                }}
+              />
+            </Box>
+          )}
         </Box>
       ) : (
         <AppButton
@@ -320,6 +357,16 @@ const PlansPage: React.FC = () => {
     setConfirmOpen(true);
   };
 
+  const handleEnableAutoRenew = (subscriptionId: string) => {
+    dispatch(enableAutoRenew({ subscriptionId }))
+      .unwrap()
+      .then(() => {
+        showSnack("Auto-renewal re-enabled. Your plan will renew automatically.", "success");
+        refreshAll();
+      })
+      .catch(() => showSnack("Failed to re-enable auto-renewal. Please try again.", "error"));
+  };
+
   const handleConfirmCancel = () => {
     if (!cancelSubId) return;
     dispatch(cancelSubscription({ subscriptionId: cancelSubId }))
@@ -327,7 +374,7 @@ const PlansPage: React.FC = () => {
       .then(() => {
         setConfirmOpen(false);
         setCancelSubId(null);
-        showSnack("Subscription cancelled successfully.", "success");
+        showSnack("Auto-renewal disabled. Your plan stays active until it expires.", "success");
         refreshAll();
       })
       .catch(() => {
@@ -337,10 +384,10 @@ const PlansPage: React.FC = () => {
       });
   };
 
-  // Build planName → subscriptionId map from combined data
+  // Build planName → { id, autoRenew } map from combined data
   const activeSubByPlanName = React.useMemo(() => {
-    const map: Record<string, string> = {};
-    combined?.subscriptions.forEach((s) => { map[s.planName] = s.id; });
+    const map: Record<string, { id: string; autoRenew: boolean }> = {};
+    combined?.subscriptions.forEach((s) => { map[s.planName] = { id: s.id, autoRenew: s.autoRenew }; });
     return map;
   }, [combined]);
 
@@ -356,19 +403,16 @@ const PlansPage: React.FC = () => {
     <DashboardLayout>
       {/* Cancel confirm dialog */}
       <Dialog open={confirmOpen} onClose={() => { setConfirmOpen(false); setCancelSubId(null); }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Cancel {cancellingPlanName} Plan?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Disable Auto-Renewal?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to cancel the <strong>{cancellingPlanName}</strong> plan?
-            {(combined?.subscriptions.length ?? 0) > 1
-              ? " Your other active plans will remain unchanged."
-              : " Your account will be downgraded to Trial immediately."}
+            Your <strong>{cancellingPlanName}</strong> plan will remain fully active until its expiry date. After that, it will not renew and no further charges will be made.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <AppButton label="Keep Plan" variant="outlined" onClick={() => { setConfirmOpen(false); setCancelSubId(null); }} />
+          <AppButton label="Keep Auto-Renewal" variant="outlined" onClick={() => { setConfirmOpen(false); setCancelSubId(null); }} />
           <AppButton
-            label={cancelling ? "Cancelling…" : "Yes, Cancel"}
+            label={cancelling ? "Processing…" : "Yes, Disable Renewal"}
             variant="contained"
             disabled={cancelling}
             onClick={handleConfirmCancel}
@@ -417,9 +461,11 @@ const PlansPage: React.FC = () => {
             <Grid key={plan._id} size={{ xs: 12, sm: 6, lg: 3 }}>
               <PlanCard
                 plan={plan}
-                activeSubscriptionId={activeSubByPlanName[plan.name] ?? null}
+                activeSubscriptionId={activeSubByPlanName[plan.name]?.id ?? null}
+                autoRenew={activeSubByPlanName[plan.name]?.autoRenew ?? true}
                 cancelling={cancelling}
                 onCancelClick={handleCancelClick}
+                onEnableAutoRenewClick={handleEnableAutoRenew}
               />
             </Grid>
           ))}
