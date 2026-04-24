@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/useToast";
 import { CampaignModule, CampaignStatus, ModuleType } from "@/types/campaign";
 
 const CampaignDetailsPage: React.FC = () => {
-  useCompanyAccess("canViewCampaigns");
+  const { checking } = useCompanyAccess("canViewCampaigns");
 
   const router = useRouter();
   const { id } = router.query;
@@ -36,10 +36,11 @@ const CampaignDetailsPage: React.FC = () => {
   const user     = useSelector((state: RootState) => state.user.connectedUser.user);
   const empPerms = useSelector(selectEmployeePermissions);
   const isEmp    = user?.role === "Employee";
-  // While permissions are loading (null) treat as allowed; deny only once loaded and false
-  const canEdit    = !isEmp || empPerms === null || !!empPerms.canEditCampaign;
-  const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
-  const canPublish = !isEmp || !!empPerms?.canPublishCampaign;
+  // For employees: deny until permissions are actually loaded (null = still loading)
+  // canCreateCampaign implies the right to configure a just-created campaign
+  const canEdit    = !isEmp || (empPerms !== null && (!!empPerms.canEditCampaign || !!empPerms.canCreateCampaign));
+  const canDelete  = !isEmp || (empPerms !== null && !!empPerms.canDeleteCampaign);
+  const canPublish = !isEmp || (empPerms !== null && !!empPerms.canPublishCampaign);
 
   useEffect(() => {
     if (id && typeof id === "string") {
@@ -103,7 +104,7 @@ const CampaignDetailsPage: React.FC = () => {
   return (
       <DashboardLayout>
 
-        {loading ? (
+        {loading || checking ? (
           <CampaignDetailSkeleton />
         ) : error ? (
           <CampaignDetailError message={error} />

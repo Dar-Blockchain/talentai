@@ -23,8 +23,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
 
   const { user, profile } = useSelector((state: RootState) => state.user.connectedUser);
 
-  const isAdmin   = useMemo(() => profile?.type?.toLowerCase() === "admin",   [profile?.type]);
-  const isCompany = useMemo(() => profile?.type?.toLowerCase() === "company", [profile?.type]);
+  const isAdmin    = useMemo(() => user?.role === "Admin",    [user?.role]);
+  const isEmployee = useMemo(() => user?.role === "Employee", [user?.role]);
+  const isCompany  = useMemo(() => user?.role === "Company",  [user?.role]);
 
   const displayName = useMemo(() => {
     if (isCompany) return profile?.companyDetails?.name || profile?.userId?.username || "Company";
@@ -56,10 +57,11 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
   }, [dispatch, router]);
 
   const goToDashboard = useCallback(() => {
-    if (isAdmin)        router.push("/dashboard/admin");
-    else if (isCompany) router.push("/company/dashboard");
-    else                router.push("/dashboard/candidate");
-  }, [isAdmin, isCompany, router]);
+    if (isAdmin)         router.push("/dashboard/admin");
+    else if (isEmployee) router.push("/employee/dashboard");
+    else if (isCompany)  router.push("/company/dashboard");
+    else                 router.push("/dashboard/candidate");
+  }, [isAdmin, isEmployee, isCompany, router]);
 
   return (
     <>
@@ -155,6 +157,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ showDropdown = true }) => {
         avatarUrl={avatarUrl}
         initials={initials}
         isCompany={isCompany}
+        isEmployee={isEmployee}
         onDashboard={goToDashboard}
       />
 

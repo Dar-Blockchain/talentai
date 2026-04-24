@@ -52,10 +52,19 @@ export const isEmpty = (value: any) =>
 export const isInvalidNumber = (value: any) =>
   isEmpty(value) || isNaN(Number(value));
 
+export const isDeadlinePassed = (deadline?: string): boolean => {
+  if (!deadline) return false;
+  const end = new Date(deadline);
+  end.setHours(23, 59, 59, 999); // end of day in local timezone
+  return end.getTime() < Date.now();
+};
+
 export const daysLeft = (deadline?: string) => {
   if (!deadline) return null;
+  const end = new Date(deadline);
+  end.setHours(23, 59, 59, 999); // end of day in local timezone
   const diff = Math.ceil(
-    (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+    (end.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   );
   return diff > 0 ? diff : 0;
 };

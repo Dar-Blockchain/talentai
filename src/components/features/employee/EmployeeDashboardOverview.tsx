@@ -61,7 +61,9 @@ const greeting = () => {
 
 const daysLeft = (iso?: string) => {
   if (!iso) return null;
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  const end = new Date(iso);
+  end.setHours(23, 59, 59, 999);
+  return Math.ceil((end.getTime() - Date.now()) / 86_400_000);
 };
 
 const fmtDate = (iso?: string) => {
@@ -344,7 +346,7 @@ const EmployeeDashboardOverview: React.FC = () => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {pending.map(c => {
                 const isExpired = c.deadline
-                  ? new Date(c.deadline).getTime() < Date.now()
+                  ? (() => { const e = new Date(c.deadline!); e.setHours(23,59,59,999); return e.getTime() < Date.now(); })()
                   : false;
                 return (
                 <CampaignRow

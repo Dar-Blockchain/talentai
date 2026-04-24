@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Box, Typography, Button, TextField, Radio, RadioGroup, Checkbox,
-  FormControlLabel, LinearProgress, Chip, CircularProgress, Alert,
+  Box, Typography, Button, TextField, Radio, Checkbox,
+  LinearProgress, Chip, CircularProgress, Alert,
 } from '@mui/material';
 import CheckCircleRounded    from '@mui/icons-material/CheckCircleRounded';
 import ArrowForwardRounded   from '@mui/icons-material/ArrowForwardRounded';
@@ -123,43 +123,34 @@ const QuestionCard: React.FC<{
       )}
 
       {question.type === 'SINGLE_CHOICE' && question.options && (
-        <RadioGroup value={answer ?? ''} onChange={(e) => onChange(e.target.value)}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {question.options.map((opt, i) => (
-              <Box
-                key={i}
-                onClick={() => onChange(opt)}
-                sx={{
-                  display: 'flex', alignItems: 'center',
-                  px: 2, py: 1.25, borderRadius: 2.5, cursor: 'pointer',
-                  border: `1.5px solid ${answer === opt ? '#8B5CF6' : '#E5E7EB'}`,
-                  bgcolor: answer === opt ? '#F5F3FF' : '#FAFAFA',
-                  transition: 'all 0.15s',
-                  '&:hover': { borderColor: '#8B5CF6', bgcolor: '#F5F3FF' },
-                }}
-              >
-                <FormControlLabel
-                  value={opt}
-                  control={
-                    <Radio
-                      size="small"
-                      sx={{ color: '#D1D5DB', '&.Mui-checked': { color: '#8B5CF6' }, p: 0.5 }}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ fontSize: 14, color: '#374151', fontWeight: answer === opt ? 600 : 400 }}>
-                      {opt}
-                    </Typography>
-                  }
-                  sx={{ m: 0, flex: 1 }}
-                />
-                {answer === opt && (
-                  <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
-                )}
-              </Box>
-            ))}
-          </Box>
-        </RadioGroup>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {question.options.map((opt, i) => (
+            <Box
+              key={i}
+              onClick={() => onChange(opt)}
+              sx={{
+                display: 'flex', alignItems: 'center',
+                px: 2, py: 1.25, borderRadius: 2.5, cursor: 'pointer',
+                border: `1.5px solid ${answer === opt ? '#8B5CF6' : '#E5E7EB'}`,
+                bgcolor: answer === opt ? '#F5F3FF' : '#FAFAFA',
+                transition: 'all 0.15s',
+                '&:hover': { borderColor: '#8B5CF6', bgcolor: '#F5F3FF' },
+              }}
+            >
+              <Radio
+                checked={answer === opt}
+                size="small"
+                sx={{ color: '#D1D5DB', '&.Mui-checked': { color: '#8B5CF6' }, p: 0.5, mr: 1, pointerEvents: 'none' }}
+              />
+              <Typography sx={{ fontSize: 14, color: '#374151', fontWeight: answer === opt ? 600 : 400, flex: 1 }}>
+                {opt}
+              </Typography>
+              {answer === opt && (
+                <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
+              )}
+            </Box>
+          ))}
+        </Box>
       )}
 
       {question.type === 'MULTIPLE_CHOICE' && question.options && (() => {
@@ -185,23 +176,14 @@ const QuestionCard: React.FC<{
                     '&:hover': { borderColor: '#8B5CF6', bgcolor: '#F5F3FF' },
                   }}
                 >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={checked}
-                        size="small"
-                        sx={{ color: '#D1D5DB', '&.Mui-checked': { color: '#8B5CF6' }, p: 0.5 }}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => toggle(opt)}
-                      />
-                    }
-                    label={
-                      <Typography sx={{ fontSize: 14, color: '#374151', fontWeight: checked ? 600 : 400 }}>
-                        {opt}
-                      </Typography>
-                    }
-                    sx={{ m: 0, flex: 1 }}
+                  <Checkbox
+                    checked={checked}
+                    size="small"
+                    sx={{ color: '#D1D5DB', '&.Mui-checked': { color: '#8B5CF6' }, p: 0.5, mr: 1, pointerEvents: 'none' }}
                   />
+                  <Typography sx={{ fontSize: 14, color: '#374151', fontWeight: checked ? 600 : 400, flex: 1 }}>
+                    {opt}
+                  </Typography>
                   {checked && (
                     <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
                   )}

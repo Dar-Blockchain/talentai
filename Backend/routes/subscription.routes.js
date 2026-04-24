@@ -91,6 +91,18 @@ router.post(
 );
 
 /**
+ * POST /subscriptions/:subscriptionId/enable-auto-renew
+ * Re-enable auto-renewal on a subscription
+ * Auth: Required
+ */
+router.post(
+  "/:subscriptionId/enable-auto-renew",
+  requireAuth,
+  authLogMiddleware("subscription"),
+  subscriptionController.enableAutoRenew
+);
+
+/**
  * POST /subscriptions/:subscriptionId/extend
  * Extend subscription end date
  * Auth: Required

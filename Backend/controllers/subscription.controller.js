@@ -181,6 +181,20 @@ module.exports.resetMonthlyInterview = async (req, res) => {
 };
 
 /**
+ * POST /subscriptions/:subscriptionId/enable-auto-renew
+ * Re-enable auto-renewal on a subscription
+ */
+module.exports.enableAutoRenew = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const result = await subscriptionService.enableAutoRenew(subscriptionId);
+    res.status(200).json(result);
+  } catch (error) {
+    handleError(res, error, 404);
+  }
+};
+
+/**
  * GET /subscriptions/combined
  * Get combined usage across all active subscriptions for a company
  */

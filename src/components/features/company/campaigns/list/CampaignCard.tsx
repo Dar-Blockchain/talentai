@@ -60,6 +60,9 @@ const CampaignCard: React.FC<{
   const sc = STATUS_COLORS[campaign.status] || STATUS_COLORS.DRAFT;
   const accentColor = STATUS_ACCENT[campaign.status] || "#9CA3AF";
   const remaining = daysLeft(campaign.deadline);
+  const isToday = campaign.deadline
+    ? new Date(campaign.deadline).toDateString() === new Date().toDateString()
+    : false;
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   const moduleConf = campaign.module ? MODULE_CONFIG[campaign.module.type] : null;
@@ -323,30 +326,24 @@ const CampaignCard: React.FC<{
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
           <AccessTimeOutlined sx={{ fontSize: 14, color: isUrgent ? "#EF4444" : "#9CA3AF" }} />
-          <Typography sx={{ fontSize: "11px", color: isUrgent ? "#EF4444" : "#6B7280" }}>
-            {campaign.deadline ? (
-              <Tooltip
-                title={
-                  remaining === 0
-                    ? "Expired today"
-                    : remaining !== null && remaining > 0
-                      ? `${remaining} day${remaining !== 1 ? "s" : ""} left`
-                      : ""
+          {campaign.deadline ? (
+            <Tooltip title={fmtDate(campaign.deadline)} placement="top" arrow>
+              <Typography sx={{ fontSize: "11px", color: isUrgent ? "#EF4444" : "#6B7280", cursor: "default" }}>
+                {remaining === 0
+                  ? <strong style={{ color: "#EF4444" }}>Expired</strong>
+                  : isToday
+                    ? <><strong style={{ color: "#EF4444" }}>Expires today</strong></>
+                    : remaining === 1
+                      ? <><strong style={{ color: "#F59E0B" }}>Tomorrow</strong> · {fmtDate(campaign.deadline)}</>
+                      : remaining !== null && remaining <= 3
+                        ? <><strong style={{ color: "#F59E0B" }}>{remaining} days left</strong> · {fmtDate(campaign.deadline)}</>
+                        : <>Due: <strong style={{ color: "#374151" }}>{fmtDate(campaign.deadline)}</strong></>
                 }
-                placement="top"
-                arrow
-              >
-                <span>
-                  Due:{" "}
-                  <strong style={{ color: isUrgent ? "#EF4444" : "#374151" }}>
-                    {fmtDate(campaign.deadline)}
-                  </strong>
-                </span>
-              </Tooltip>
-            ) : (
-              <span style={{ color: "#9CA3AF" }}>No deadline</span>
-            )}
-          </Typography>
+              </Typography>
+            </Tooltip>
+          ) : (
+            <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>No deadline</Typography>
+          )}
         </Box>
         <Link href={`/company/campaigns/${campaign._id}`}>
           <AppButton

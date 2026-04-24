@@ -23,19 +23,20 @@ const {
 } = require("../services/internalCampaign.service");
 
 // ========== UTILITY FUNCTIONS ==========
-const verifyOwnership = async (campaignId, companyId) => {
+const verifyOwnership = async (campaignId, companyId, userId) => {
   const campaign = await getCampaignById(campaignId);
   if (!campaign) {
     const error = new Error("Campaign not found");
     error.status = 404;
     throw error;
   }
-  // campaign.company may be an unpopulated ObjectId or a populated object
   const campaignCompanyId = campaign.company?._id ?? campaign.company;
-  if (
-    !campaignCompanyId ||
-    campaignCompanyId.toString() !== companyId.toString()
-  ) {
+  const campaignCreatedBy  = campaign.createdBy?._id  ?? campaign.createdBy;
+
+  const isCompanyMatch = campaignCompanyId && campaignCompanyId.toString() === companyId.toString();
+  const isCreator      = userId && campaignCreatedBy && campaignCreatedBy.toString() === userId.toString();
+
+  if (!isCompanyMatch && !isCreator) {
     const error = new Error(
       "Unauthorized: You can only manage your own campaigns",
     );
@@ -65,7 +66,7 @@ exports.createInternalCampaign = async (req, res) => {
       skill,
       participants, // Array of user IDs
     } = req.body;
-    const companyId = req.user._id; // Use authenticated user's ID as company ID
+    const companyId = req.auth?.companyId || req.user._id;
     console.log(
       `📢 Creating campaign for company ${companyId} with title "${title}" and module type "${module?.type}"`,
     );
@@ -174,7 +175,7 @@ exports.createInternalCampaign = async (req, res) => {
  */
 exports.getCompanyCampaigns = async (req, res) => {
   try {
-    const companyId = req.user._id;
+    const companyId = req.auth?.companyId || req.user._id;
     const {
       status,
       type,
@@ -536,7 +537,7 @@ exports.updateInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
     const actorId = req.auth?.companyId || req.user._id;
-    await verifyOwnership(campaignId, actorId);
+    await verifyOwnership(campaignId, actorId, req.user._id);
     const updatedCampaign = await updateCampaign(campaignId, req.body);
     res.status(200).json({
       success: true,
@@ -558,7 +559,7 @@ exports.deleteInternalCampaign = async (req, res) => {
   try {
     const { campaignId } = req.params;
     const actorId = req.auth?.companyId || req.user._id;
-    await verifyOwnership(campaignId, actorId);
+    await verifyOwnership(campaignId, actorId, req.user._id);
     await deleteCampaign(campaignId);
     res.status(200).json({
       success: true,
@@ -614,7 +615,7 @@ exports.getAllCampaigns = async (req, res) => {
  */
 exports.getCampaignMetrics = async (req, res) => {
   try {
-    const companyId = req.user._id;
+    const companyId = req.auth?.companyId || req.user._id;
     const metrics = await getCampaignMetrics(companyId);
     res.status(200).json({
       success: true,
@@ -636,7 +637,7 @@ exports.updateCampaignStatus = async (req, res) => {
     const { campaignId } = req.params;
     const { status } = req.body;
     const actorId = req.auth?.companyId || req.user._id;
-    await verifyOwnership(campaignId, actorId);
+    await verifyOwnership(campaignId, actorId, req.user._id);
     const campaign = await updateCampaignStatus(campaignId, status);
     res.status(200).json({
       success: true,
