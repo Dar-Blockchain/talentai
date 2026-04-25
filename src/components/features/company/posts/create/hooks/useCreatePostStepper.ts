@@ -124,14 +124,9 @@ export const useCreatePostStepper = (
       ).unwrap();
 
 
-      // Directly publish and redirect (free during beta, no payment modal needed)
-      await dispatch(
-        updatePostStatus({ postId: savedPost.jobData._id, status: "open" })
-      ).unwrap();
-
       router.push("/company/posts");
       showToast({
-        message: "Job post created successfully.",
+        message: "Job post saved as draft.",
         severity: "success",
       });
     } catch (error) {
@@ -152,15 +147,9 @@ export const useCreatePostStepper = (
     try {
 
       if (creationType === "ai") {
-        await dispatch(
-          updatePostStatus({ postId: resolvedPostId, status: "open" })
-        ).unwrap();
-      }
-
-      if (creationType === "ai") {
         router.push("/company/posts");
         showToast({
-          message: "Job post created successfully.",
+          message: "Job post saved as draft.",
           severity: "success",
         });
         return;

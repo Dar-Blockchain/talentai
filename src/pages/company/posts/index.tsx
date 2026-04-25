@@ -20,6 +20,7 @@ import {
   selectMyPostsLoading,
   selectMyPostsError,
   selectMyPostsPagination,
+  updatePostStatus,
 } from "@/store/slices/postSlice";
 import {
   fetchCombinedSubscriptionDetails,
@@ -188,6 +189,16 @@ const PostsPage: React.FC = () => {
     setJobToDelete(id);
     deletePostHook.handleOpen();
   };
+
+  const handlePublish = useCallback((id: string) => {
+    dispatch(updatePostStatus({ postId: id, status: "open" }))
+      .unwrap()
+      .then(() => {
+        showToast({ message: "Post published successfully.", severity: "success" });
+        dispatch(fetchMyPosts({ page, limit: 12, search, sort: apiSort, status: apiStatus, creationType: typeFilter !== "all" ? typeFilter : "" }));
+      })
+      .catch(() => showToast({ message: "Failed to publish post.", severity: "error" }));
+  }, [dispatch, page, search, apiSort, apiStatus, typeFilter]);
 
   const handleCreateClick = () => {
     if (postsAtLimit) return;
@@ -607,6 +618,7 @@ const PostsPage: React.FC = () => {
           pagination={pagination}
           onPageChange={setPage}
           onDelete={handleDelete}
+          onPublish={handlePublish}
           onViewDetails={(id) => router.push(`/company/posts/${id}`)}
           onCreateClick={handleCreateClick}
         />
