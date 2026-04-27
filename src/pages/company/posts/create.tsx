@@ -27,7 +27,7 @@ const CreatePostPage: React.FC = () => {
 
   const postsUsed  = combined?.combined.usage.posts.used ?? 0;
   const postsLimit = combined?.combined.usage.posts.limit ?? Infinity;
-  const atLimit    = combined && postsLimit !== Infinity && postsUsed >= postsLimit;
+  const atLimit    = combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
 
   useEffect(() => { setMounted(true); }, []);
 
