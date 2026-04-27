@@ -22,6 +22,18 @@ const planLimitsSchema = new mongoose.Schema(
       default: 15,
       description: "Maximum number of interviews allowed per month",
     },
+    pipelineLimit: {
+      type: Number,
+      required: false,
+      default: 0,
+      description: "Maximum number of pipeline posts (0 = not available, -1 = unlimited)",
+    },
+    extraInterviewRateUsd: {
+      type: Number,
+      required: false,
+      default: null,
+      description: "Rate per extra interview beyond the monthly limit (USD)",
+    },
 
     // ========== PLAN DURATION ==========
     durationDays: {
