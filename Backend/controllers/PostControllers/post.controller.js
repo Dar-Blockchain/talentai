@@ -94,18 +94,16 @@ exports.createPost = async (req, res) => {
       postData.expirationDate = expirationDate;
     }
 
-    const result = await postService.createPostWithSideEffects(
+    const post = await postService.createPostWithSideEffects(
       postData,
       token,
       userProfile,
-      parsedData.matchingConfig,
     );
 
     // ========== 5. RETURN RESPONSE ==========
     res.status(201).json({
       success: true,
-      data: result.post,
-      matchingConfig: result.matchingConfig,
+      data: post,
     });
   } catch (error) {
     handleError(res, error, 400);

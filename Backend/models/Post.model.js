@@ -159,8 +159,6 @@ const postSchema = new mongoose.Schema({
     },
   ],
 
-  MatchingConfig: { type: mongoose.Schema.Types.ObjectId, ref: 'MatchingConfig' },
-
   // Post creation type
   creationType: {
     type: String,

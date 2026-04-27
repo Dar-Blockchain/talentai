@@ -60,14 +60,10 @@ module.exports.createPost = async (postData, token) => {
  * @param {Object} postData - Post data to create
  * @param {String} token - Auth token for technical test
  * @param {Object} userProfile - User profile with plan limits
- * @param {Object} matchingConfigData - Matching config data if provided
- * @returns {Promise<{post, matchingConfig}>}
+ * @returns {Promise<Object>}
  */
-module.exports.createPostWithSideEffects = async (postData, token, userProfile, matchingConfigData) => {
+module.exports.createPostWithSideEffects = async (postData, token, userProfile) => {
   try {
-    const profileService = require("../../services/ProfileService/profile.service");
-    const matchingConfigService = require("../../services/MatchingService/matchingConfig.service");
-
     // ========== 1. MAP workMode FROM employmentType ==========
     if (postData.jobDetails && !postData.jobDetails.workMode) {
       if (postData.companyDetails?.employmentType) {
@@ -96,28 +92,12 @@ module.exports.createPostWithSideEffects = async (postData, token, userProfile, 
       }
     }
 
-    // ========== 4. CREATE MATCHING CONFIG (non-blocking) ==========
-    let createdMatchingConfig = null;
-    if (matchingConfigData) {
-      matchingConfigService.addConfig(postData.user, {
-        ...matchingConfigData,
-        jobId: post._id
-      }).then(cfg => {
-        createdMatchingConfig = cfg;
-      }).catch(cfgErr => {
-        console.error('Error creating matching config:', cfgErr.message);
-      });
-    }
-
-    // ========== 5. NOTIFY MATCHING CANDIDATES (async, non-blocking) ==========
+    // ========== 4. NOTIFY MATCHING CANDIDATES (async, non-blocking) ==========
     module.exports.notifyMatchingCandidates(post).catch(notifErr => {
       console.error('❌ [createPostWithSideEffects] Failed to send notifications:', notifErr?.message || notifErr);
     });
 
-    return {
-      post,
-      matchingConfig: createdMatchingConfig
-    };
+    return post;
   } catch (error) {
     console.error('Error in createPostWithSideEffects:', error.message);
     throw error;
@@ -244,6 +224,7 @@ module.exports.getAllPosts = async (filters = {}) => {
     }
 
     return await Post.find(query)
+      .select('-MatchingConfig')
       .populate("user", "username email companyDetails")
       .sort({ createdAt: -1 });
   } catch (error) {
@@ -353,6 +334,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     // Execute query with pagination
     const posts = await Post.find(query)
+      .select('-MatchingConfig')
       .populate({
         path: "user",
         select: "companyDetails email username",
@@ -393,7 +375,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 // Get a post by its ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).populate("PostSteps").populate("user", "_id username email");
+    const post = await Post.findById(postId).select('-MatchingConfig').populate("PostSteps").populate("user", "_id username email");
     if (!post) {
       throw new Error("Post not found");
     }
@@ -407,6 +389,7 @@ module.exports.getPostById = async (postId) => {
 module.exports.getPipelineJobDetails = async (postId) => {
   try {
     const post = await Post.findById(postId)
+      .select('-MatchingConfig')
       .populate("user", "username email")
       .populate("PostSteps")
       .populate()
@@ -515,6 +498,7 @@ module.exports.getRequiredSkillsByPostId = async (postId) => {
 module.exports.getPostsByUserId = async (userId) => {
   try {
     return await Post.find({ user: userId })
+      .select('-MatchingConfig')
       .populate("user", "username email")
       .populate("PostSteps") // Populate the PostSteps reference
       .populate()
@@ -601,6 +585,7 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
     // Get total count with search filter and posts
     const [posts, total] = await Promise.all([
       Post.find(query)
+        .select('-MatchingConfig')
         .populate("user", "username email")
         .populate("PostSteps")
         .populate()
