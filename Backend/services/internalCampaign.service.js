@@ -221,11 +221,27 @@ exports.getCampaignStats = async (campaignId) => {
  */
 exports.getCampaignMetrics = async (companyId) => {
   try {
+    const now = new Date();
+
+    // Campaigns whose status is ACTIVE but whose deadline has passed are treated
+    // as expired for display purposes (the DB status field is never auto-updated).
     const metrics = await InternalCampaign.aggregate([
       { $match: { company: new mongoose.Types.ObjectId(companyId) } },
       {
         $group: {
-          _id: { $toLower: "$status" },
+          _id: {
+            $cond: {
+              if: {
+                $and: [
+                  { $eq: ["$status", "ACTIVE"] },
+                  { $gt: ["$deadline", null] },
+                  { $lt: ["$deadline", now] },
+                ],
+              },
+              then: "expired",
+              else: { $toLower: "$status" },
+            },
+          },
           count: { $sum: 1 },
         },
       },

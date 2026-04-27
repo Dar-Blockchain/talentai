@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 
 import {
   fetchCampaignById,
+  addCampaignParticipant,
   selectSelectedCampaign,
   selectDetailLoading,
   selectDetailError,
@@ -43,6 +44,14 @@ const EmployeeCampaignAssessment: React.FC = () => {
   useEffect(() => {
     if (id) dispatch(fetchCampaignById(id));
   }, [dispatch, id]);
+
+  // Ensure a CampaignParticipant record exists for this employee before the interview starts
+  useEffect(() => {
+    if (!id || !authUser?._id || !campaign) return;
+    if (campaign.anonymityMode === 'ANONYMOUS') return; // anonymous handled separately
+    if (campaign.participantStatus) return;             // already registered
+    dispatch(addCampaignParticipant({ campaignId: id, employeeId: authUser._id }));
+  }, [id, authUser?._id, campaign?.anonymityMode, campaign?.participantStatus, dispatch]);
 
   const handleBack = useCallback(
     () => router.push(`/employee/campaigns/${id}`),
@@ -120,6 +129,7 @@ const EmployeeCampaignAssessment: React.FC = () => {
           participantId={participantId}
           campaignId={id ?? ''}
           onBack={handleBack}
+          onComplete={handleResults}
         />
       ) : (
         <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC' }}>

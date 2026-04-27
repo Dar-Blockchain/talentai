@@ -1,10 +1,19 @@
+'use client';
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Box, CircularProgress, Typography } from '@mui/material';
-import axiosInstance from '@/utils/axiosInstance';
+import { useDispatch } from 'react-redux';
+import {
+  Box, Container, LinearProgress, Typography,
+  Dialog, DialogContent, DialogActions, Button,
+} from '@mui/material';
+import { Snackbar, Alert } from '@mui/material';
+import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
+import { AppDispatch } from '@/store/store';
+import { fetchParticipantResults } from '@/store/slices/campaignSlice';
 
-import { Campaign }  from '@/types/campaign';
-import { InterviewMessage, Coverage, InterviewStatus, AgentState, CameraStatus, ConnectionStatus } from '@/types/interview';
+import { Campaign } from '@/types/campaign';
+import { InterviewMessage, Coverage } from '@/types/interview';
 import { useCampaignInterviewConfig } from '@/hooks/useCampaignInterviewConfig';
 import { useNotification }            from '@/hooks/useNotification';
 import { useInterviewTimer }          from '@/hooks/useInterviewTimer';
@@ -18,178 +27,19 @@ import {
 } from '@/hooks/useInterviewSocket';
 import { useAudioTranscription } from '@/hooks/useAudioTranscription';
 
+// ── Shared start components (same as hr.tsx) ──────────────────────────────────
+import {
+  QuestionPanel,
+  CameraPreview,
+  AgentStatusPanel,
+  InterviewContainer,
+  InterviewTimer,
+  CoverageDashboard,
+} from '@/components/features/interview/start';
+import GDPRConsentModal from '@/components/features/interview/start/GDPRConsentModal';
+
+// ── Campaign-specific components ──────────────────────────────────────────────
 import InterviewPageHeader       from './InterviewPageHeader';
-import InterviewConnectionBanner from './InterviewConnectionBanner';
-import InterviewStatusPanel      from './InterviewStatusPanel';
-import CameraPreview             from './CameraPreview';
-import QuestionPanel             from './QuestionPanel';
-import AgentStatusPanel          from './AgentStatusPanel';
-import LiveStatusPanel           from './LiveStatusPanel';
-import InterviewScoresPanel      from './InterviewScoresPanel';
-import GDPRConsentModal          from './GDPRConsentModal';
-import SecurityModals            from './SecurityModals';
-import { Snackbar, Alert }       from '@mui/material';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Layout sub-components
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface CameraProps {
-  videoRef:        React.RefObject<HTMLVideoElement>;
-  cameraStatus:    CameraStatus;
-  cameraError:     string | null;
-  isConnecting:    boolean;
-  interviewStatus: InterviewStatus;
-  audioContextRef?: React.MutableRefObject<AudioContext | null>;
-  attachStream?:   () => void;
-}
-
-interface IdleViewProps extends CameraProps {
-  moduleType:       string;
-  isHydrated:       boolean;
-  connectionStatus: ConnectionStatus;
-  onStart:          () => void;
-  onViewResults:    () => void;
-}
-
-const IdleView: React.FC<IdleViewProps> = ({
-  moduleType, isHydrated, connectionStatus,
-  onStart, onViewResults,
-  ...cam
-}) => (
-  <Box sx={{
-    height: '100%',
-    display: 'grid',
-    gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
-    gap: 1.5, p: 1.5, overflow: 'auto',
-  }}>
-    <Box sx={{ width: '100%' }}>
-      <CameraPreview {...cam} />
-    </Box>
-    <Box sx={{ display: 'flex', alignItems: 'center', px: 2 }}>
-      <InterviewStatusPanel
-        interviewStatus={cam.interviewStatus}
-        moduleType={moduleType}
-        isHydrated={isHydrated}
-        connectionStatus={connectionStatus}
-        cameraStatus={cam.cameraStatus}
-        onStart={onStart}
-        onViewResults={onViewResults}
-      />
-    </Box>
-  </Box>
-);
-
-interface ActiveViewProps extends CameraProps {
-  agentState:       AgentState;
-  isVoiceActive:    boolean;
-  isRecording:      boolean;
-  conversationHistory: InterviewMessage[];
-  isInReadingTime:  boolean;
-  readingTimeLeft:  number;
-  questionHighlight: boolean;
-  sendAccumulatedAnswer: () => void;
-  connectionStatus: ConnectionStatus;
-  coverage:         Coverage | null;
-  elapsedTime:      number;
-  moduleType:       string;
-}
-
-const ActiveView: React.FC<ActiveViewProps> = ({
-  agentState, isVoiceActive, isRecording,
-  conversationHistory, isInReadingTime, readingTimeLeft, questionHighlight,
-  sendAccumulatedAnswer, connectionStatus, coverage, elapsedTime, moduleType,
-  ...cam
-}) => {
-  const lastMessage = conversationHistory.filter(m => m.type !== 'system').at(-1) ?? null;
-
-  return (
-    <Box sx={{
-      height: '100%',
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
-      gap: 1.5, p: 1.5, overflow: 'auto',
-    }}>
-      <Box sx={{ width: '100%' }}>
-        <CameraPreview {...cam} />
-      </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: '100%', overflow: 'hidden' }}>
-        <Box sx={{
-          flex: 1, bgcolor: '#FFFFFF', border: '1px solid #E2E8F0',
-          borderRadius: 3, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        }}>
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
-            {lastMessage ? (
-              <QuestionPanel
-                currentMessage={lastMessage}
-                isInReadingTime={isInReadingTime}
-                readingTimeLeft={readingTimeLeft}
-                questionHighlight={questionHighlight}
-              />
-            ) : (
-              <Box sx={{ p: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <CircularProgress size={20} sx={{ color: '#0D9488', flexShrink: 0 }} />
-                <Typography sx={{ fontSize: 14, color: '#64748B' }}>
-                  Preparing your first question…
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          <Box sx={{ p: 2, borderTop: '1px solid #E2E8F0', flexShrink: 0 }}>
-            <AgentStatusPanel
-              interviewStatus={cam.interviewStatus}
-              agentState={agentState}
-              onSubmitAnswer={sendAccumulatedAnswer}
-            />
-          </Box>
-        </Box>
-        <Box sx={{ flex: '0 0 auto' }}>
-          <LiveStatusPanel
-            agentState={agentState}
-            isVoiceActive={isVoiceActive}
-            cameraStatus={cam.cameraStatus}
-            connectionStatus={connectionStatus}
-            coverage={coverage}
-            elapsedTime={elapsedTime}
-            isRecording={isRecording}
-            moduleType={moduleType}
-          />
-        </Box>
-      </Box>
-    </Box>
-  );
-};
-
-interface EndedViewProps extends CameraProps {
-  finalReport: any;
-  coverage:    Coverage | null;
-  moduleType:  string;
-  onViewResults: () => void;
-}
-
-const EndedView: React.FC<EndedViewProps> = ({
-  finalReport, coverage, moduleType, onViewResults, ...cam
-}) => (
-  <Box sx={{ height: '100%', overflow: 'auto', py: 4, px: { xs: 2, md: 4 } }}>
-    <Box sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', md: '3fr 2fr' },
-      gap: 3, alignItems: 'start', maxWidth: 1100, mx: 'auto',
-    }}>
-      <InterviewScoresPanel
-        finalReport={finalReport}
-        coverage={coverage}
-        moduleType={moduleType}
-        onViewResults={onViewResults}
-      />
-      <CameraPreview {...cam} />
-    </Box>
-  </Box>
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main component
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface InterviewAssessmentProps {
@@ -197,16 +47,20 @@ interface InterviewAssessmentProps {
   participantId: string;
   campaignId:    string;
   onBack:        () => void;
+  /** Called once results are confirmed saved — defaults to employee results page */
+  onComplete?:   () => void;
 }
 
 const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
-  campaign, participantId, campaignId, onBack,
+  campaign, participantId, campaignId, onBack, onComplete,
 }) => {
   const router     = useRouter();
+  const dispatch   = useDispatch<AppDispatch>();
   const moduleType = campaign.module?.type ?? 'AI_INTERVIEW';
 
-  const [coverage,    setCoverage]    = useState<Coverage | null>(null);
-  const [finalReport, setFinalReport] = useState<any>(null);
+  const [coverage,                   setCoverage]                   = useState<Coverage | null>(null);
+  const [coverageDashboardExpanded,  setCoverageDashboardExpanded]  = useState(true);
+  const [showEndConfirm,             setShowEndConfirm]             = useState(false);
 
   const { notification, showNotification, hideNotification } = useNotification();
   const { interviewConfig } = useCampaignInterviewConfig(campaign);
@@ -237,7 +91,7 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
   const audio    = useAudioTranscription({ socketRef: socket.socketRef, sessionIdRef: socket.sessionIdRef, interviewConfig, interviewStatus: socket.interviewStatus, showNotification });
   const timer    = useInterviewTimer({ interviewStatus: socket.interviewStatus, onTimeUp: useCallback(() => endInterviewRef.current(), []), showNotification: showNotification as any });
   const camera   = useCamera({ showNotification: showNotification as any });
-  const security = useSecurityMonitoring({ interviewStatus: socket.interviewStatus });
+  useSecurityMonitoring({ interviewStatus: socket.interviewStatus, enabled: false });
 
   handlersRef.current = {
     onInterviewStarted: (data) => {
@@ -279,7 +133,6 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
     onInterviewEnded: (data) => {
       audio.setIsRecording(false);
       timer.stopTimer();
-      if (data.finalReport) setFinalReport(data.finalReport);
       if (data.sessionId) localStorage.setItem('last_interview_id', data.sessionId);
       if (data.finalReport || data.analytics) {
         localStorage.setItem('last_interview_analysis', JSON.stringify({
@@ -333,48 +186,64 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
 
   endInterviewRef.current = endInterview;
 
-  const handleViewResults = useCallback(
-    () => router.push(`/employee/campaigns/${campaignId}/results`),
-    [router, campaignId],
-  );
+  const goToResults = useCallback(() => {
+    if (onComplete) {
+      onComplete();
+    } else {
+      router.push(`/employee/campaigns/${campaignId}/results`);
+    }
+  }, [onComplete, router, campaignId]);
 
   // Poll for results in DB after interview ends, then redirect
   useEffect(() => {
     if (socket.interviewStatus !== 'ended') return;
     let cancelled = false;
+    const MAX_POLLS = 20; // 40 s max — then redirect anyway
     const poll = async () => {
-      while (!cancelled) {
+      for (let i = 0; i < MAX_POLLS && !cancelled; i++) {
         try {
-          const res = await axiosInstance.get(
-            `internal-campaigns/${campaignId}/results/${participantId}`
-          );
-          const status = res.data?.data?.participant?.status;
-          if (status === 'COMPLETED') {
-            if (!cancelled) router.push(`/employee/campaigns/${campaignId}/results`);
+          const result = await dispatch(fetchParticipantResults({ campaignId, participantId })).unwrap();
+          if (result.participant?.status === 'COMPLETED') {
+            if (!cancelled) goToResults();
             return;
           }
         } catch { /* keep polling */ }
-        await new Promise((r) => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 2000));
       }
+      // Redirect regardless after timeout so the user isn't stuck
+      if (!cancelled) goToResults();
     };
     poll();
     return () => { cancelled = true; };
-  }, [socket.interviewStatus, campaignId, participantId, router]);
+  }, [socket.interviewStatus, campaignId, participantId, goToResults, dispatch]);
 
-  const showConnectionBanner = socket.isHydrated && socket.connectionStatus !== 'connected';
+  // Warn on page refresh / tab close while active
+  useEffect(() => {
+    if (socket.interviewStatus !== 'active') return;
+    const handle = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handle);
+    return () => window.removeEventListener('beforeunload', handle);
+  }, [socket.interviewStatus]);
 
-  const camProps: CameraProps = {
-    videoRef:        camera.videoRef,
-    cameraStatus:    camera.cameraStatus,
-    cameraError:     camera.cameraError,
-    isConnecting:    audio.isConnecting,
-    interviewStatus: socket.interviewStatus,
-    audioContextRef: audio.audioContextRef,
-    attachStream:    camera.attachStream,
-  };
+  // Warn on browser back button while active
+  useEffect(() => {
+    if (socket.interviewStatus !== 'active') return;
+    router.beforePopState(() => {
+      setShowEndConfirm(true);
+      return false;
+    });
+    return () => router.beforePopState(() => true);
+  }, [socket.interviewStatus, router]);
+
+  const isActive = socket.interviewStatus === 'active';
+
+  const lastMessage = audio.conversationHistory.filter(m => m.type !== 'system').at(-1) ?? null;
+  const qCount      = audio.conversationHistory.filter(m => m.type === 'question' || m.type === 'follow_up').length;
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#F8FAFC', overflow: 'hidden' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#fff', userSelect: 'none', WebkitUserSelect: 'none' }}>
 
       <InterviewPageHeader
         campaign={campaign}
@@ -383,63 +252,123 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
         isVoiceActive={audio.isVoiceActive}
         agentState={audio.agentState}
         coverage={coverage}
-        elapsedTime={timer.elapsedTime}
-        timeWarning={timer.timeWarning}
         onBack={onBack}
-        onEnd={endInterview}
+        onEnd={() => setShowEndConfirm(true)}
       />
 
-      {showConnectionBanner && (
-        <InterviewConnectionBanner connectionStatus={socket.connectionStatus} />
+      {/* Connection warning banner */}
+      {socket.isHydrated && socket.connectionStatus !== 'connected' && (
+        <Box sx={{
+          bgcolor: '#fefce8', borderBottom: '1px solid #fde047',
+          px: { xs: 2, md: 4 }, py: 1,
+          display: 'flex', alignItems: 'center', gap: 1,
+        }}>
+          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#ca8a04' }} />
+          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.8rem', color: '#854d0e' }}>
+            {socket.connectionStatus === 'connecting'
+              ? 'Connecting to interview system…'
+              : socket.connectionStatus === 'error'
+              ? 'Connection error — please refresh'
+              : 'Disconnected — attempting to reconnect…'}
+          </Typography>
+        </Box>
       )}
 
-      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
 
-        {(socket.interviewStatus === 'idle' || socket.interviewStatus === 'connecting') && (
-          <IdleView
-            {...camProps}
-            moduleType={moduleType}
-            isHydrated={socket.isHydrated}
-            connectionStatus={socket.connectionStatus}
-            onStart={startInterview}
-            onViewResults={handleViewResults}
-          />
-        )}
-
-        {socket.interviewStatus === 'active' && (
-          <ActiveView
-            {...camProps}
-            agentState={audio.agentState}
-            isVoiceActive={audio.isVoiceActive}
-            isRecording={audio.isRecording}
-            conversationHistory={audio.conversationHistory}
-            isInReadingTime={audio.isInReadingTime}
-            readingTimeLeft={audio.readingTimeLeft}
-            questionHighlight={audio.questionHighlight}
-            sendAccumulatedAnswer={audio.sendAccumulatedAnswer}
-            connectionStatus={socket.connectionStatus}
-            coverage={coverage}
-            elapsedTime={timer.elapsedTime}
-            moduleType={moduleType}
-          />
-        )}
-
-        {socket.interviewStatus === 'ended' && (
+        {/* Coverage progress card — active only */}
+        {isActive && (
           <Box sx={{
-            height: '100%', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 2,
+            bgcolor: '#fff', borderRadius: '16px', border: '1px solid #e8e2f5',
+            px: { xs: 2.5, md: 3.5 }, py: 2, mb: 3,
           }}>
-            <CircularProgress size={40} sx={{ color: '#0D9488' }} />
-            <Typography sx={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>
-              Saving your results…
-            </Typography>
-            <Typography sx={{ fontSize: 13, color: '#9CA3AF' }}>
-              You'll be redirected automatically once they're ready.
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.82rem', color: '#374151' }}>
+                Interview completion
+              </Typography>
+              <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.82rem', color: '#8310FF' }}>
+                {Math.round(coverage?.overall ?? 0)}%
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(coverage?.overall ?? 0, 100)}
+              sx={{
+                height: 6, borderRadius: 4,
+                bgcolor: 'rgba(131,16,255,0.08)',
+                '& .MuiLinearProgress-bar': {
+                  background: 'linear-gradient(90deg, #8310FF, #a855f7)',
+                  borderRadius: 4,
+                },
+              }}
+            />
           </Box>
         )}
 
-      </Box>
+        {/* Main card */}
+        <Box sx={{
+          bgcolor: '#fff', borderRadius: '20px',
+          border: '1px solid #e8e2f5', overflow: 'hidden',
+        }}>
+          {/* Question panel — full width, active only */}
+          {isActive && lastMessage && (
+            <QuestionPanel
+              currentMessage={lastMessage}
+              isInReadingTime={audio.isInReadingTime}
+              readingTimeLeft={audio.readingTimeLeft}
+              questionHighlight={audio.questionHighlight}
+              questionNumber={lastMessage.type === 'question' || lastMessage.type === 'follow_up' ? qCount : 0}
+            />
+          )}
+
+          {/* Camera LEFT · Controls RIGHT */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 3fr' }, gap: 0 }}>
+            <Box sx={{ borderRight: { md: '1px solid #f0edf8' }, p: 2.5 }}>
+              <CameraPreview
+                videoRef={camera.videoRef}
+                cameraStatus={camera.cameraStatus}
+                cameraError={camera.cameraError}
+                isConnecting={audio.isConnecting}
+                interviewStatus={socket.interviewStatus}
+                audioContextRef={audio.audioContextRef}
+                attachStream={camera.attachStream}
+              />
+            </Box>
+            <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <InterviewContainer
+                interviewStatus={socket.interviewStatus}
+                isHydrated={socket.isHydrated}
+                connectionStatus={socket.connectionStatus}
+                cameraStatus={camera.cameraStatus}
+                agentState={audio.agentState}
+                currentTranscript={audio.accumulatedTranscript || audio.currentTranscript}
+                onStartInterview={startInterview}
+                onEndInterview={endInterview}
+                onViewResults={goToResults}
+              />
+              <AgentStatusPanel
+                interviewStatus={socket.interviewStatus}
+                agentState={audio.agentState}
+                isVoiceActive={audio.speechPhase === 'speaking'}
+                onSubmitAnswer={audio.sendAccumulatedAnswer}
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Coverage dashboard — shown once coverage data arrives */}
+        {coverage && (
+          <CoverageDashboard
+            interviewStatus={socket.interviewStatus}
+            coverage={coverage}
+            realTimeReport={null}
+            agentMessage=""
+            coverageDashboardExpanded={coverageDashboardExpanded}
+            onToggleExpand={() => setCoverageDashboardExpanded(p => !p)}
+          />
+        )}
+
+      </Container>
 
       <GDPRConsentModal
         open={!camera.consentGiven}
@@ -458,13 +387,67 @@ const InterviewAssessment: React.FC<InterviewAssessmentProps> = ({
         </Alert>
       </Snackbar>
 
-      <SecurityModals
-        showFirstViolationModal={security.showFirstViolationModal}
-        showSecurityModal={security.showSecurityModal}
-        onDismissFirst={() => security.setShowFirstViolationModal(false)}
-        onDismissSecond={() => security.setShowSecurityModal(false)}
-        onReturnToDashboard={onBack}
-      />
+      {isActive && (
+        <InterviewTimer elapsedTime={timer.elapsedTime} timeWarning={timer.timeWarning} />
+      )}
+
+      {/* ── End-interview confirmation ── */}
+      <Dialog
+        open={showEndConfirm}
+        onClose={() => setShowEndConfirm(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '20px', p: 1, maxWidth: 420, width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          },
+        }}
+      >
+        <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 2, px: 4 }}>
+          <Box sx={{
+            width: 64, height: 64, borderRadius: '50%',
+            bgcolor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            mx: 'auto', mb: 2.5,
+          }}>
+            <WarningAmberOutlined sx={{ fontSize: 30, color: '#DC2626' }} />
+          </Box>
+          <Typography sx={{ fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
+            End this interview?
+          </Typography>
+          <Typography sx={{ fontFamily: 'Poppins', fontSize: '0.85rem', color: '#6B7280', lineHeight: 1.7 }}>
+            This interview can only be taken <strong>once</strong>. Once you end it, you will not be able to retake it and your answers will be submitted for evaluation.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 4, pb: 3.5, pt: 1, gap: 1.5, flexDirection: 'column' }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => { setShowEndConfirm(false); endInterview(); }}
+            sx={{
+              bgcolor: '#DC2626', color: '#fff', borderRadius: '12px',
+              fontFamily: 'Poppins', fontWeight: 700, fontSize: '0.9rem',
+              textTransform: 'none', py: 1.25, boxShadow: 'none',
+              '&:hover': { bgcolor: '#B91C1C', boxShadow: 'none' },
+            }}
+          >
+            Yes, end the interview
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setShowEndConfirm(false)}
+            sx={{
+              borderColor: '#E5E7EB', color: '#374151', borderRadius: '12px',
+              fontFamily: 'Poppins', fontWeight: 600, fontSize: '0.9rem',
+              textTransform: 'none', py: 1.25,
+              '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
+            }}
+          >
+            Continue interview
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };
