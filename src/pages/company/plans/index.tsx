@@ -32,13 +32,13 @@ const NotificationsOffOutlined = dynamic(() => import("@mui/icons-material/Notif
 // ─── Constants ───────────────────────────────────────────
 
 const PLAN_CONFIG: Record<string, { color: string; badge?: string }> = {
-  Standard: { color: "#0D9488" },
-  Gold:     { color: "#7C3AED", badge: "Popular" },
-  Platinum: { color: "#0891B2" },
-  Diamond:  { color: "#D97706" },
+  Starter:   { color: "#0D9488" },
+  Pro:       { color: "#7C3AED", badge: "Popular" },
+  Business:  { color: "#0891B2" },
+  Unlimited: { color: "#D97706" },
 };
 
-const ORDERED_PLANS = ["Standard", "Gold", "Platinum", "Diamond"];
+const ORDERED_PLANS = ["Starter", "Pro", "Business", "Unlimited"];
 
 // ─── Combined Subscription Banner ────────────────────────
 
@@ -221,8 +221,16 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
       <Divider sx={{ mb: 2.5 }} />
 
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.5, mb: 3 }}>
-        <FeatureRow icon={<WorkOutlined sx={{ fontSize: 17 }} />} label={`${plan.postsLimit} job posts`} color={cfg.color} />
-        <FeatureRow icon={<VideoCallOutlined sx={{ fontSize: 17 }} />} label={`${plan.monthlyInterviewLimit} interviews / month`} color={cfg.color} />
+        <FeatureRow
+          icon={<VideoCallOutlined sx={{ fontSize: 17 }} />}
+          label={`${plan.monthlyInterviewLimit} AI interviews / month`}
+          color={cfg.color}
+        />
+        <FeatureRow
+          icon={<WorkOutlined sx={{ fontSize: 17 }} />}
+          label={plan.postsLimit === -1 ? "Unlimited job posts" : `${plan.postsLimit} job posts`}
+          color={cfg.color}
+        />
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 1.5, fontSize: "0.78rem", py: 0.5 }}>{error}</Alert>}
