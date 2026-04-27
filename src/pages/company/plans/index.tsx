@@ -28,8 +28,6 @@ const CheckCircleOutlined   = dynamic(() => import("@mui/icons-material/CheckCir
 const CalendarTodayOutlined = dynamic(() => import("@mui/icons-material/CalendarTodayOutlined"));
 const AddCircleOutlined        = dynamic(() => import("@mui/icons-material/AddCircleOutlined"));
 const NotificationsOffOutlined = dynamic(() => import("@mui/icons-material/NotificationsOffOutlined"));
-const AccountTreeOutlined      = dynamic(() => import("@mui/icons-material/AccountTreeOutlined"));
-const AttachMoneyOutlined      = dynamic(() => import("@mui/icons-material/AttachMoneyOutlined"));
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -233,24 +231,6 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, activeSubscriptionId, autoRen
           label={plan.postsLimit === -1 ? "Unlimited job posts" : `${plan.postsLimit} job posts`}
           color={cfg.color}
         />
-        <FeatureRow
-          icon={<AccountTreeOutlined sx={{ fontSize: 17 }} />}
-          label={
-            plan.pipelineLimit === -1
-              ? "Unlimited pipeline posts"
-              : plan.pipelineLimit > 0
-              ? `${plan.pipelineLimit} pipeline posts`
-              : "Pipeline builder — not included"
-          }
-          color={plan.pipelineLimit > 0 || plan.pipelineLimit === -1 ? cfg.color : "#9CA3AF"}
-        />
-        {plan.extraInterviewRateUsd != null && (
-          <FeatureRow
-            icon={<AttachMoneyOutlined sx={{ fontSize: 17 }} />}
-            label={`Extra interviews at $${plan.extraInterviewRateUsd} / interview`}
-            color={cfg.color}
-          />
-        )}
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 1.5, fontSize: "0.78rem", py: 0.5 }}>{error}</Alert>}

@@ -9,8 +9,6 @@ export interface PlanLimit {
   name: string;
   postsLimit: number;
   monthlyInterviewLimit: number;
-  pipelineLimit?: number;
-  extraInterviewRateUsd?: number | null;
   priceUsd?: number;
   stripePriceId?: string;
   isActive: boolean;
