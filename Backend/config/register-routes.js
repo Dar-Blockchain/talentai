@@ -71,8 +71,8 @@ function registerRoutes(app) {
   app.use("/chat", chatRouter); //✅ Chat functionalities chat -> chats (to be checked)
 
   // Matching & Recruitment Engine
-  app.use("/matching", matchingRoutes); //✅ Matching Engine matching -> matchings
-  app.use("/matchingConfig", matchingConfigRoutes); // Matching Configuration -> matching-configs
+  //app.use("/matching", matchingRoutes); //✅ Matching Engine matching -> matchings
+  //app.use("/matchingConfig", matchingConfigRoutes); // Matching Configuration -> matching-configs
   //app.use('/matching-configs', matchingConfigRoutes); // Matching Configuration -> matching-configs
 
   // Notifications
