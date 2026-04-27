@@ -164,33 +164,6 @@ const getDetailedPrompt = (description, companyLocation) =>
     - The soft skill must include a "percentage" field.
     - Never use vague or irrelevant soft skills.
 
-    Before generating the job details, include the following matching configuration exactly as structured:
-
-    "matchingConfig": {
-    "weights": {
-    "hardSkill": "DYNAMIC based on job description, very close to 'experience' weight",
-    "experience": "DYNAMIC based on job description, very close to 'hardSkill' weight",
-    "SoftSkill": "DYNAMIC based on job description, can be higher or lower than hardSkill/experience depending on job requirements",
-    "salary": "DYNAMIC based on job description, max 10",
-    "workMode": "DYNAMIC based on job description, max 10",
-    "contract": "DYNAMIC based on job description, max 10"
-      },
-
-      "exchangeRates": {
-        "USD": 1,
-        "EUR": 1.1,
-        "TND": 0.32
-      }
-    },
-
-    - The "weights" for "hardSkill" and "experience" must be dynamically adjusted but **always very close in value**, as both are crucial for technical projects.
-    - "SoftSkill" weight should be dynamically adjusted but always smaller than "hardSkill" and "experience".
-    - "salary", "workMode", and "contract" must also be dynamically determined but **always very low compared to the others**.
-    - The total sum of all weights must always equal 100%.
-    - Return only the defined JSON fields; do NOT add any extra fields.
-
-    The "exchangeRates" values must reflect today's real exchange rates.
-
     CRITICAL: Return ONLY the raw JSON object. Do NOT include any explanation, reasoning, or text before or after the JSON.
 `.trim();
 
