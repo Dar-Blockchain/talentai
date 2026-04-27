@@ -200,7 +200,7 @@ const CreateMethodSelector: React.FC = () => {
             onClick={() => dispatch(setCreationType("ai"))}
           />
 
-          <MethodCard
+          {/* <MethodCard
             title="Custom Pipeline"
             subtitle="Full control — 2 steps"
             description="Design your own recruitment workflow with custom tests, interviews, and evaluation conditions. Perfect for structured hiring processes."
@@ -216,7 +216,7 @@ const CreateMethodSelector: React.FC = () => {
               { text: "Multi-stage interview flows" },
             ]}
             onClick={() => dispatch(setCreationType("manual"))}
-          />
+          /> */}
         </Box>
 
         {/* Bottom hint */}
