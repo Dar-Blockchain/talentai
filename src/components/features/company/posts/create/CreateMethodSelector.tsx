@@ -181,7 +181,8 @@ const CreateMethodSelector: React.FC = () => {
           <Box sx={{ height: "1px", flex: 1, bgcolor: "#F3F4F6" }} />
         </Box>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Box sx={{ maxWidth: 420, width: "100%" }}>
           <MethodCard
             title="AI-Powered"
             subtitle="Fastest — 1 step"
@@ -200,7 +201,7 @@ const CreateMethodSelector: React.FC = () => {
             onClick={() => dispatch(setCreationType("ai"))}
           />
 
-          <MethodCard
+          {/* <MethodCard
             title="Custom Pipeline"
             subtitle="Full control — 2 steps"
             description="Design your own recruitment workflow with custom tests, interviews, and evaluation conditions. Perfect for structured hiring processes."
@@ -216,7 +217,8 @@ const CreateMethodSelector: React.FC = () => {
               { text: "Multi-stage interview flows" },
             ]}
             onClick={() => dispatch(setCreationType("manual"))}
-          />
+          /> */}
+          </Box>
         </Box>
 
         {/* Bottom hint */}
