@@ -130,7 +130,7 @@ const PostsPage: React.FC = () => {
 
   const postsUsed      = combined?.combined.usage.posts.used ?? 0;
   const postsLimit     = combined?.combined.usage.posts.limit ?? Infinity;
-  const postsAtLimit   = combined && postsLimit !== Infinity && postsUsed >= postsLimit;
+  const postsAtLimit   = combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
