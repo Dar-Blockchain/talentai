@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import {
   Box, Button, CircularProgress, Dialog, DialogActions, DialogContent,
@@ -30,6 +31,7 @@ interface Props {
 }
 
 const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSuccess }) => {
+  const { t } = useTranslation("dashboard");
   const dispatch              = useDispatch<AppDispatch>();
   const [sending, setSending] = useState(false);
   const [done, setDone]       = useState(false);
@@ -73,11 +75,11 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
           </Box>
           <Box>
             <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827", lineHeight: 1.25 }}>
-              Send Interview Invitation
+              {t("pages.applications.invite_modal.title")}
             </Typography>
             {target && (
               <Typography sx={{ fontSize: "12px", color: "#6B7280", mt: 0.25 }}>
-                To <strong style={{ color: "#374151" }}>{target.name}</strong>
+                {t("pages.applications.invite_modal.to_label")} <strong style={{ color: "#374151" }}>{target.name}</strong>
                 {target.postTitle ? <> · <span style={{ color: "#9CA3AF" }}>{target.postTitle}</span></> : null}
               </Typography>
             )}
@@ -95,15 +97,15 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
             <Box sx={{ width: 52, height: 52, borderRadius: "50%", bgcolor: "#ECFDF5", border: "2px solid #6EE7B7", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
               <CheckOutlined sx={{ fontSize: 26, color: "#059669" }} />
             </Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#059669" }}>Invitation sent!</Typography>
+            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#059669" }}>{t("pages.applications.invite_modal.success_title")}</Typography>
             <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.75 }}>
-              {target?.name} will receive an email with the interview link.
+              {t("pages.applications.invite_modal.success_body", { name: target?.name })}
             </Typography>
           </Box>
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75, pt: 0.5 }}>
             <Typography sx={{ fontSize: "13px", color: "#4B5563", lineHeight: 1.7 }}>
-              An invitation email will be sent to <strong style={{ color: "#111827" }}>{target?.name}</strong> with a direct link to start the interview.
+              {t("pages.applications.invite_modal.body_pre")}<strong style={{ color: "#111827" }}>{target?.name}</strong>{t("pages.applications.invite_modal.body_post")}
             </Typography>
 
             {/* Link preview */}
@@ -123,7 +125,7 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
             onClick={onClose}
             sx={{ textTransform: "none", color: "#6B7280", borderRadius: "10px", fontWeight: 500, fontSize: "13px" }}
           >
-            Cancel
+            {t("pages.applications.invite_modal.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -137,8 +139,8 @@ const InviteToInterviewModal: React.FC<Props> = ({ open, target, onClose, onSucc
             }}
           >
             {sending
-              ? <><CircularProgress size={14} sx={{ color: "#fff", mr: 1 }} />Sending…</>
-              : "Send Invitation"}
+              ? <><CircularProgress size={14} sx={{ color: "#fff", mr: 1 }} />{t("pages.applications.invite_modal.sending")}</>
+              : t("pages.applications.invite_modal.send")}
           </Button>
         </DialogActions>
       )}

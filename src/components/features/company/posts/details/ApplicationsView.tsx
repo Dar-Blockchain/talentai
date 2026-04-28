@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box, Chip, CircularProgress, Divider, FormControl,
@@ -27,58 +28,44 @@ import ApplicationCard from "@/components/features/company/applications/Applicat
 const TEAL = "#0D9488";
 const PAGE_SIZE = 10;
 
-const STATUS_STYLE: Record<string, { label: string }> = {
-  visited:             { label: "Visited" },
-  interview_completed: { label: "Interview Completed" },
+const STATUS_I18N_KEYS: Record<string, string> = {
+  visited:             "pages.applications.status.visited",
+  interview_completed: "pages.applications.status.interview_completed",
 };
 
-const SORT_GROUPS = [
-  {
-    label: "Date Applied",
-    Icon: CalendarTodayOutlined,
-    color: "#6B7280",
+const SORT_GROUP_DEFS = [
+  { labelKey: "pages.applications.sort.date_applied",    Icon: CalendarTodayOutlined, color: "#6B7280",
     options: [
-      { value: "appliedAt_desc", label: "Most recent first" },
-      { value: "appliedAt_asc",  label: "Earliest first"    },
+      { value: "appliedAt_desc", labelKey: "pages.applications.sort.most_recent" },
+      { value: "appliedAt_asc",  labelKey: "pages.applications.sort.earliest"    },
     ],
   },
-  {
-    label: "Match Score",
-    Icon: StarOutlineOutlined,
-    color: "#D97706",
+  { labelKey: "pages.applications.sort.match_score",     Icon: StarOutlineOutlined,  color: "#D97706",
     options: [
-      { value: "matchScore_desc", label: "Best match first" },
-      { value: "matchScore_asc",  label: "Worst match first" },
+      { value: "matchScore_desc", labelKey: "pages.applications.sort.best_match"  },
+      { value: "matchScore_asc",  labelKey: "pages.applications.sort.worst_match" },
     ],
   },
-  {
-    label: "Interview Score",
-    Icon: PsychologyOutlined,
-    color: "#7C3AED",
+  { labelKey: "pages.applications.sort.interview_score", Icon: PsychologyOutlined,   color: "#7C3AED",
     options: [
-      { value: "interviewScore_desc", label: "Top performers first"  },
-      { value: "interviewScore_asc",  label: "Low performers first" },
+      { value: "interviewScore_desc", labelKey: "pages.applications.sort.top_performers" },
+      { value: "interviewScore_asc",  labelKey: "pages.applications.sort.low_performers" },
     ],
   },
-  {
-    label: "Candidate Name",
-    Icon: SortByAlphaOutlined,
-    color: "#0891B2",
+  { labelKey: "pages.applications.sort.candidate_name",  Icon: SortByAlphaOutlined,  color: "#0891B2",
     options: [
-      { value: "name_asc",  label: "A to Z" },
-      { value: "name_desc", label: "Z to A" },
+      { value: "name_asc",  labelKey: "pages.applications.sort.a_to_z" },
+      { value: "name_desc", labelKey: "pages.applications.sort.z_to_a" },
     ],
   },
 ];
-
-// Flat list for label lookup
-const SORT_OPTIONS = SORT_GROUPS.flatMap(g => g.options);
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface Props { jobId: string }
 
 const ApplicationsView: React.FC<Props> = ({ jobId }) => {
+  const { t } = useTranslation("dashboard");
   const dispatch   = useDispatch<AppDispatch>();
   const rows       = useSelector(selectPostSummary);
   const loading    = useSelector(selectPostSummaryLoading);
@@ -126,7 +113,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
           <Box sx={{ width: 32, height: 32, borderRadius: "8px", bgcolor: `${TEAL}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <PeopleAltOutlined sx={{ fontSize: 17, color: TEAL }} />
           </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>Applications</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>{t("pages.applications.title")}</Typography>
           {!loading && (
             <Chip
               label={pagination.totalCount}
@@ -147,7 +134,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
           }}>
             <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
             <InputBase
-              placeholder="Search name or email…"
+              placeholder={t("pages.applications.search_placeholder")}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               sx={{ fontSize: "13px", flex: 1 }}
@@ -161,9 +148,9 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
               displayEmpty
               sx={selectSx}
             >
-              <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>All statuses</em></MenuItem>
-              {Object.entries(STATUS_STYLE).map(([val, { label }]) => (
-                <MenuItem key={val} value={val} sx={{ fontSize: "13px" }}>{label}</MenuItem>
+              <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
+              {Object.entries(STATUS_I18N_KEYS).map(([val, key]) => (
+                <MenuItem key={val} value={val} sx={{ fontSize: "13px" }}>{t(key)}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -174,25 +161,26 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
               onChange={(e) => setSort(e.target.value)}
               startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
               renderValue={(val) => {
-                const opt = SORT_OPTIONS.find(o => o.value === val);
-                return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt?.label ?? "Sort"}</Typography>;
+                const allOpts = SORT_GROUP_DEFS.flatMap(g => g.options);
+                const opt = allOpts.find(o => o.value === val);
+                return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt ? t(opt.labelKey) : t("pages.applications.sort.most_recent")}</Typography>;
               }}
               sx={selectSx}
               MenuProps={{ PaperProps: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", mt: 0.5, minWidth: 200 } } }}
             >
-              {SORT_GROUPS.flatMap((group, gi) => [
+              {SORT_GROUP_DEFS.flatMap((group, gi) => [
                 <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
                   <group.Icon sx={{ fontSize: 12 }} />
-                  {group.label}
+                  {t(group.labelKey)}
                 </ListSubheader>,
-                ...group.options.map(({ value, label }) => (
+                ...group.options.map(({ value, labelKey }) => (
                   <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12`, "&:hover": { bgcolor: `${group.color}1A` } } }}>
                     <Typography sx={{ fontSize: "13px", fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}>
-                      {label}
+                      {t(labelKey)}
                     </Typography>
                   </MenuItem>
                 )),
-                gi < SORT_GROUPS.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
+                gi < SORT_GROUP_DEFS.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
               ])}
             </Select>
           </FormControl>
@@ -211,10 +199,10 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
         }}>
           <PeopleAltOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
           <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
-            {search || status ? "No matching applicants" : "No applications yet"}
+            {search || status ? t("pages.applications.empty_filtered_title") : t("pages.applications.empty_no_apps_title")}
           </Typography>
           <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-            {search || status ? "Try adjusting your filters" : "Applications will appear here once candidates apply"}
+            {search || status ? t("pages.applications.empty_filtered_sub") : t("pages.applications.empty_no_apps_sub")}
           </Typography>
         </Box>
       ) : (

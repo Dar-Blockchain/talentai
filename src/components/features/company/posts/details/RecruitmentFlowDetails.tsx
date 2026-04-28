@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { selectCurrentJob } from "@/store/slices/postSlice";
 import {
@@ -53,6 +54,7 @@ interface Props {
 }
 
 const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
+  const { t } = useTranslation("dashboard");
   const job = useSelector(selectCurrentJob);
 
   if (!canEdit && !job?.PostSteps?.length) return null;
@@ -70,11 +72,11 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
           <AccountTreeOutlined sx={{ fontSize: 15 }} />
         </Box>
         <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 0.5 }}>
-          Recruitment Pipeline
+          {t("pages.post_detail.pipeline.title")}
         </Typography>
         {sortedSteps.length > 0 && (
           <Chip
-            label={`${sortedSteps.length} step${sortedSteps.length !== 1 ? "s" : ""}`}
+            label={t("pages.post_detail.pipeline.step_count", { count: sortedSteps.length })}
             size="small"
             sx={{ fontSize: "10px", height: 20, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}`, fontWeight: 700, ml: 0.5 }}
           />
@@ -87,8 +89,8 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
           <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: TEAL_BG, display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
             <AssignmentLateOutlined sx={{ fontSize: 28, color: TEAL }} />
           </Box>
-          <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>No Pipeline Steps Yet</Typography>
-          <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>Create a recruitment flow to manage your hiring process.</Typography>
+          <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>{t("pages.post_detail.pipeline.empty_title")}</Typography>
+          <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>{t("pages.post_detail.pipeline.empty_hint")}</Typography>
         </Box>
       )}
 
@@ -127,43 +129,43 @@ const RecruitmentFlowDetails: React.FC<Props> = ({ canEdit }) => {
                 <AccordionDetails sx={{ px: 2, pt: 0, pb: 2, borderTop: "1px solid #F3F4F6" }}>
                   <Stack spacing={1.5}>
                     {(config.assessmentLevel || config.passThreshold) && (
-                      <ConfigSection title="Assessment">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.assessment")}>
                         {config.assessmentLevel && <Tag label={`Level · ${config.assessmentLevel}`} />}
                         {config.passThreshold && <Tag label={`Pass ≥ ${config.passThreshold}%`} />}
                       </ConfigSection>
                     )}
                     {Array.isArray(config.skills) && config.skills.length > 0 && (
-                      <ConfigSection title="Technical Skills">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.technical_skills")}>
                         {config.skills.map((s: any, i: number) => (
                           <Tag key={i} label={s.requiredLevel ? `${s.name} · L${s.requiredLevel}` : s.name} />
                         ))}
                       </ConfigSection>
                     )}
                     {Array.isArray(config.softSkills) && config.softSkills.length > 0 && (
-                      <ConfigSection title="Soft Skills">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.soft_skills")}>
                         {config.softSkills.map((s: string, i: number) => <Tag key={i} label={s} />)}
                       </ConfigSection>
                     )}
                     {Array.isArray(config.categories) && config.categories.length > 0 && (
-                      <ConfigSection title="Categories">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.categories")}>
                         {config.categories.map((c: string, i: number) => <Tag key={i} label={c} />)}
                       </ConfigSection>
                     )}
                     {(config.interviewMode || config.focusAreas) && (
-                      <ConfigSection title="Interview">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.interview")}>
                         {config.interviewMode && <Tag label={`Mode · ${config.interviewMode}`} />}
                         {config.focusAreas?.map((area: string, i: number) => <Tag key={i} label={area.replace("_", " ")} />)}
                       </ConfigSection>
                     )}
                     {step.data?.type === "email" && (
-                      <ConfigSection title="Email">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.email")}>
                         {config.emailType && <Tag label={`Type · ${config.emailType}`} />}
                         {config.sendTo && <Tag label={`To · ${config.sendTo}`} />}
                         {config.subject && <Tag label={`Subject · ${config.subject}`} />}
                       </ConfigSection>
                     )}
                     {step.data?.type === "task" && (
-                      <ConfigSection title="Task">
+                      <ConfigSection title={t("pages.post_detail.pipeline.config.task")}>
                         {config.taskTitle && <Tag label={config.taskTitle} />}
                         {config.deliverableType && <Tag label={`Deliverable · ${config.deliverableType}`} />}
                       </ConfigSection>

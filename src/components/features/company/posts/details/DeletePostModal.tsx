@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogTitle,
@@ -23,6 +24,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
   onDelete,
   isDeleting,
 }) => {
+  const { t } = useTranslation("dashboard");
   const accent = "rgba(224, 62, 92, 1)";
 
   return (
@@ -59,15 +61,15 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
         }}
       >
         <ErrorIcon sx={{ color: accent, fontSize: 26 }} />
-        Delete Job Post
+        {t("pages.posts.delete_modal.title")}
       </DialogTitle>
 
       <DialogContent sx={{ px: 3, py: 3, color: "#444", background: "white" }}>
         <Typography sx={{ my: 1.5, fontSize: "0.95rem" }}>
-          Are you sure you want to delete this job post?
+          {t("pages.posts.delete_modal.body")}
         </Typography>
         <Typography sx={{ fontSize: "0.9rem", fontWeight: 600, color: "#5c5c5c" }}>
-          This action cannot be undone.
+          {t("pages.posts.delete_modal.warning")}
         </Typography>
       </DialogContent>
 
@@ -92,7 +94,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
             "&:hover": { background: "rgba(0,0,0,0.07)" },
           }}
         >
-          Cancel
+          {t("pages.posts.delete_modal.cancel")}
         </Button>
         <Button
           onClick={onDelete}
@@ -115,7 +117,7 @@ const DeletePostModal: React.FC<DeletePostModalProps> = ({
             },
           }}
         >
-          Delete
+          {t("pages.posts.delete_modal.confirm")}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Box, Divider, IconButton, ListItemIcon, Menu, MenuItem, Typography,
 } from "@mui/material";
@@ -78,6 +79,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
   menuAnchorEl, menuOpen, onMenuOpen, onMenuClose,
   onContact, onAssessment, onInvite,
 }) => {
+  const { t } = useTranslation("dashboard");
   const router       = useRouter();
   const hasInterview = !!app.completedAt;
   const isVisited    = app.status === "visited";
@@ -97,8 +99,8 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
     <>
       {/* Score circles */}
       <Box sx={{ display: "flex", gap: 2.5, flexShrink: 0 }}>
-        <ScoreCircle value={app.matchScore}     label="Match" />
-        <ScoreCircle value={app.interviewScore} label="Interview" />
+        <ScoreCircle value={app.matchScore}     label={t("pages.applications.actions.score_match")} />
+        <ScoreCircle value={app.interviewScore} label={t("pages.applications.actions.score_interview")} />
       </Box>
 
       {/* Divider */}
@@ -120,7 +122,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
         >
           <VideoCallOutlined sx={{ fontSize: 14 }} />
           <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
-            Send Invite
+            {t("pages.applications.actions.send_invite")}
           </Typography>
         </Box>
       ) : (
@@ -142,7 +144,7 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
         >
           <EmailOutlined sx={{ fontSize: 14, color: "inherit" }} />
           <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "inherit", lineHeight: 1, whiteSpace: "nowrap" }}>
-            Contact
+            {t("pages.applications.actions.contact")}
           </Typography>
         </Box>
       )}
@@ -183,8 +185,8 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
               </Box>
             </ListItemIcon>
             <Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>View Profile</Typography>
-              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>Full candidate details</Typography>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>{t("pages.applications.actions.menu.view_profile_title")}</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{t("pages.applications.actions.menu.view_profile_desc")}</Typography>
             </Box>
           </MenuItem>
 
@@ -200,9 +202,9 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
               </Box>
             </ListItemIcon>
             <Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: hasInterview ? "#111827" : "#9CA3AF", lineHeight: 1.3 }}>View Results</Typography>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: hasInterview ? "#111827" : "#9CA3AF", lineHeight: 1.3 }}>{t("pages.applications.actions.menu.view_results_title")}</Typography>
               <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>
-                {hasInterview ? "Interview assessment" : "Not completed yet"}
+                {hasInterview ? t("pages.applications.actions.menu.view_results_desc_done") : t("pages.applications.actions.menu.view_results_desc_pending")}
               </Typography>
             </Box>
           </MenuItem>
@@ -219,9 +221,9 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
               </Box>
             </ListItemIcon>
             <Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: app.resumeFile ? "#111827" : "#9CA3AF", lineHeight: 1.3 }}>Download CV</Typography>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: app.resumeFile ? "#111827" : "#9CA3AF", lineHeight: 1.3 }}>{t("pages.applications.actions.menu.download_cv_title")}</Typography>
               <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>
-                {app.resumeFile ? "Download PDF resume" : "No CV uploaded"}
+                {app.resumeFile ? t("pages.applications.actions.menu.download_cv_desc_done") : t("pages.applications.actions.menu.download_cv_desc_none")}
               </Typography>
             </Box>
           </MenuItem>
@@ -240,8 +242,8 @@ const ApplicationCardActions: React.FC<ApplicationCardActionsProps> = ({
               </Box>
             </ListItemIcon>
             <Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>Contact Candidate</Typography>
-              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{app.email || "No email"}</Typography>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>{t("pages.applications.actions.menu.contact_title")}</Typography>
+              <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.2 }}>{app.email || t("pages.applications.actions.menu.contact_desc_none")}</Typography>
             </Box>
           </MenuItem>
         </Box>
